@@ -9105,8 +9105,10 @@ class Component extends DCLogic {
           ';background:' + (got ? 'rgba(233,179,65,.05)' : 'radial-gradient(circle at 50% 40%,rgba(233,179,65,.05),transparent 70%)') +
           ';border:1px ' + (got ? 'solid #3A3026' : 'dashed #2C251D') + ';color:' + (got ? '#E8E2D6' : '#8C8172'),
         glyphStyle: 'display:block;width:44px;height:44px;margin:0 auto;image-rendering:pixelated;' +
-          'background:url("' + bossSvg(b, !got) + '") center/contain no-repeat' +
-          (got ? '' : ';animation:dormant 4.6s ease-in-out infinite')
+          'background:url("' + bossSvg(b, !got) + '") center/contain no-repeat;' +
+          (got
+            ? 'animation:bossFloat 3.4s ease-in-out infinite'
+            : 'opacity:.5;animation:bossBreathe 5s ease-in-out infinite')
       };
     });
     var beatN = items.filter(function (x) { return x.got; }).length;
@@ -9190,7 +9192,10 @@ class Component extends DCLogic {
       v.specDateLabel = '狀態';
       v.specGlyphStyle = 'display:block;width:150px;height:150px;flex:none;image-rendering:pixelated;' +
         'background:radial-gradient(circle at 50% 42%,' + bs.hue['#'] + '22,transparent 70%),url("' +
-        bossSvg(bs, !down) + '") center/contain no-repeat';
+        bossSvg(bs, !down) + '") center/contain no-repeat;' +
+        (down
+          ? 'animation:bossFloat 3.6s ease-in-out infinite;'
+          : 'opacity:.75;animation:bossBreathe 5.4s ease-in-out infinite;');
     }
   }
 
@@ -9232,7 +9237,8 @@ class Component extends DCLogic {
         kind: o.kind,
         glyph: got && o.sprite
           ? "display:block;width:34px;height:34px;margin:0 auto;image-rendering:pixelated;" +
-            "background:url(\"" + o.sprite + "\") center/contain no-repeat"
+            "background:url(\"" + o.sprite + "\") center/contain no-repeat" +
+            (o.alive ? ";animation:bossFloat 3.2s ease-in-out infinite" : "")
           : "display:block;width:22px;height:22px;margin:6px auto;border-radius:50%;" +
             "background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.35),transparent 72%);" +
             "animation:dormant 4.6s ease-in-out infinite",
@@ -9276,7 +9282,7 @@ class Component extends DCLogic {
 
     /* 這一層的守關生物 */
     if (bz && self !== "boss") {
-      out.push(tile({ name: bz.name, kind: "守關生物 · 擋在層底",
+      out.push(tile({ name: bz.name, kind: "守關生物 · 擋在層底", alive: true,
         got: cleared, sprite: bossSvg(bz, false),
         locked: "還沒走到那一層。牠現在只是一個影子。" }));
     }
