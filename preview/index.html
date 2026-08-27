@@ -9090,7 +9090,7 @@ class Component extends DCLogic {
           'background:url("' + bossSvg(b, !got, true) + '") center/contain no-repeat;' +
           (got
             ? 'animation:bossFloat 3.4s ease-in-out infinite'
-            : 'opacity:.5;animation:bossBreathe 5s ease-in-out infinite')
+            : 'opacity:.5')
       };
     });
     var beatN = items.filter(function (x) { return x.got; }).length;
@@ -9177,7 +9177,7 @@ class Component extends DCLogic {
         bossSvg(bs, !down) + '") center/contain no-repeat;' +
         (down
           ? 'animation:bossFloat 3.6s ease-in-out infinite;'
-          : 'opacity:.75;animation:bossBreathe 5.4s ease-in-out infinite;');
+          : 'opacity:.75;');
     }
   }
 
@@ -9189,8 +9189,8 @@ class Component extends DCLogic {
     var px = size || 38;
     return "display:block;width:" + px + "px;height:" + px + "px;margin:0 auto;" +
       "background:url(\"" + url + "\") center/contain no-repeat;image-rendering:pixelated;" +
-      "filter:brightness(0) invert(1) drop-shadow(0 0 7px rgba(233,179,65,.5));" +
-      "opacity:.62;animation:dormant 4.6s ease-in-out infinite";
+      "filter:brightness(0) invert(1);" +
+      "opacity:.52";
   }
 
   /* 收藏總覽的每一格：還沒拿到的換成造型黑影。
