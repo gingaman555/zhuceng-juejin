@@ -404,7 +404,7 @@
             rows: [
               { k: '這一層', v: got2 + ' / ' + veinN2 + ' 塊', hi: true },
               { k: '還差', v: Math.max(0, veinN2 - got2) + ' 塊' },
-              { k: '圖鑑', v: (next.tasks || []).filter(function (x) { return x.status === 'passed'; }).length + ' / 23' }
+              { k: '圖鑑', v: (next.tasks || []).filter(function (x) { return x.status === 'passed'; }).length + ' / ' + MINS_TOTAL }
             ],
             quoteLabel: '他寫的合格考量', quote: t.fb || '',
             lines: full
@@ -927,6 +927,7 @@
   }
 
   function decorate(L, v) {
+    trimMinerals(L);   /* 每一層最多四塊 */
     var S = L.state, demo = !!S.demoMode, sc = S.screen;
     var mob = S.device === 'mobile';
     var isRes = S.role === 'researcher';
@@ -2129,7 +2130,7 @@
                cleared: cleared, here: here };
     });
 
-    var totalVein = perLayer.reduce(function (a, x) { return a + x.vein.length; }, 0) || 23;
+    var totalVein = perLayer.reduce(function (a, x) { return a + x.vein.length; }, 0) || MINS_TOTAL;
     var totalOpen = perLayer.reduce(function (a, x) { return a + x.openedN; }, 0);
     v.boardDone = totalOpen + " / " + totalVein + " 塊已開";
     v.boardLeft = (totalVein - totalOpen) + " 塊";
@@ -2236,7 +2237,7 @@
     var seen = 0, done = 0, myCell = 0;
     var perLayer = [1, 2, 3, 4, 5].map(function (n) { return layerState(L, n); });
     perLayer.forEach(function (st) { done += st.gotN; });
-    var TOTAL = perLayer.reduce(function (a, st) { return a + st.veinN; }, 0) || 23;
+    var TOTAL = perLayer.reduce(function (a, st) { return a + st.veinN; }, 0) || MINS_TOTAL;
 
     v.boardDone = done + ' / ' + TOTAL + ' 塊';
     v.boardLeft = (TOTAL - done) + ' 塊';
@@ -2397,6 +2398,34 @@
      重要動作之後的「一頁」：擋在畫面前，按確認才回去。
      每一種動作有自己的圖與動態——做過的事要看得見。
      ============================================================ */
+
+  /* 每一層最多四塊礦石。原型的目錄裡有比較多，這裡只留骨幹的那幾塊——
+     項目太碎會讓學生失焦，而且老師一層要開六項也太重。
+     原型檔案不動，在這裡過濾。後端的 MINERALS_BY_LAYER 跟這份一致。 */
+  var KEEP_MINS = {
+    1: ['定名石', '裂晶', '初痕礦', '預兆砂'],
+    2: ['聽紋晶', '篩光石', '徑錄礦', '顯影砂'],
+    3: ['初型岩', '因由石', '反響礦', '二階水晶'],
+    4: ['再凝岩', '前後水晶', '磨心礦', '厚能量石'],
+    5: ['完成之光']
+  };
+  var MINS_TOTAL = 17;
+
+  function trimMinerals(L) {
+    if (!L || !L.MINS || L.MINS.__trimmed) return;
+    var keep = {};
+    Object.keys(KEEP_MINS).forEach(function (n) {
+      KEEP_MINS[n].forEach(function (name) { keep[name] = 1; });
+    });
+    var out = L.MINS.filter(function (m) { return keep[m.name]; });
+    /* 照 KEEP_MINS 的順序排，通道走起來才是有道理的先後 */
+    out.sort(function (a, b) {
+      if (a.L !== b.L) return a.L - b.L;
+      return KEEP_MINS[a.L].indexOf(a.name) - KEEP_MINS[b.L].indexOf(b.name);
+    });
+    out.__trimmed = true;
+    L.MINS = out;
+  }
 
   /* ---------- 守關生物：每一層難處的化身。四隻，第五層沒有 ---------- */
   var BOSSES = [
@@ -4232,7 +4261,7 @@
               sprite: crown || null,
               rows: [
                 { k: '這一組', v: sel.name, hi: true },
-                { k: '走完', v: '五層 · 23 塊' },
+                { k: '走完', v: '五層 · ' + MINS_TOTAL + ' 塊' },
                 { k: '你做的', v: '系統裡的最後一件事' }
               ],
               quoteLabel: '他們讀到的第一句', quote: txt2,
@@ -5295,7 +5324,7 @@
     /* R-01 的欄位說明還在講必要／延伸 */
     (rv.stats || []).forEach(function (r) {
       if (!r) return;
-      if (String(r.note || '') === '含必要項與延伸項') r.note = '五層礦脈全開就是 23 項';
+      if (String(r.note || '') === '含必要項與延伸項') r.note = '五層礦脈全開就是 ' + MINS_TOTAL + ' 項';
     });
     (rv.absent || []).forEach(function (r) {
       if (r && r.label === '延伸項') { r.label = '分段送審'; r.value = '0 次申請'; }
