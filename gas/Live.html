@@ -250,6 +250,7 @@
         weekOverride: k.weekOverride,
         teams: (byClass[k.id] || []).map(function (t) {
           return { id: t.id, name: t.name, layer: t.layer, weeks: t.weeks, passed: t.passed,
+                   got: t.got || null,
                    me: u.role === 'student' && t.id === u.teamId };
         })
       };
@@ -269,7 +270,7 @@
     next.minNames = b.minNames || {};              /* 這一組的拆分名稱（學生） */
     if (b.minNamesByTeam) next.minNamesByTeam = b.minNamesByTeam;   /* 每一組一份（老師） */
     (b.teams || []).forEach(function (t) {
-      next.teamState[t.id] = { layer: t.layer, weeks: t.weeks, passed: t.passed };
+      next.teamState[t.id] = { layer: t.layer, weeks: t.weeks, passed: t.passed, got: t.got || null };
     });
 
     if (u.role === 'student') {
@@ -1717,10 +1718,8 @@
     var fog = !!o.fog;
     var bz = bossOf(n);
     var showBoss = !!bz && !st.cleared;          /* 打贏了就換回打勾的關 */
-    var awake = !fog && st.complete && !st.cleared;
     var bt = (bz && BOSS_TEXT[bz.L]) || {};
     var hue = BOARD_HUE[n - 1];
-    var mob = L.state.device === 'mobile';
     var say = o.say || function (m) { L.say(m); };
 
     var open = function () {
@@ -1735,33 +1734,11 @@
       if (o.onPass) o.onPass();
     };
 
-    if (showBoss) {
-      return {
-        idx: '', sub: '', mark: '',
-        name: fog ? '？？？' : bz.name,
-        open: open,
-        /* 這是這一層的頭目：畫得比礦石大一截，而且探出通道條之上 */
-        dotStyle: 'display:block;width:100%;height:' + (mob ? 44 : 58) + 'px;' +
-          'margin-top:-' + (mob ? 24 : 34) + 'px;image-rendering:pixelated;' +
-          'background:url("' + bossSvg(bz, fog) + '") bottom center/contain no-repeat;' +
-          (fog
-            ? 'opacity:.4;animation:bossBreathe 5.2s ease-in-out infinite;'
-            : awake
-              ? 'animation:bossLoom .5s cubic-bezier(.2,.9,.3,1) both,' +
-                'bossFloat 2.8s ease-in-out infinite .5s,bossGlow 3.4s ease-in-out infinite .5s;'
-              : 'opacity:.85;filter:brightness(' + (o.dim || '.55') + ');' +
-                'animation:bossBreathe 4.4s ease-in-out infinite;'),
-        nameStyle: "display:block;font:600 11px/1.2 'C11';margin-top:4px;text-align:center;transform:scale(.8);" +
-          'letter-spacing:.06em;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.9);color:' +
-          (awake ? '#FFD98A' : fog ? '#3A322A' : '#9A9184'),
-        style: 'flex:0 0 auto;min-width:' + (mob ? 46 : 62) + 'px;display:flex;flex-direction:column;' +
-          'align-items:center;justify-content:flex-end;cursor:pointer;pointer-events:auto;position:relative;z-index:3'
-      };
-    }
-
+    /* 生物本身不畫在通道條裡——牠跟角色一樣站在地面上（見 bossOnGround）。
+       這裡只留層底那一格，格子底下寫牠的名字。 */
     return {
       idx: '', sub: '',
-      name: fog ? '？？？' : '關卡',
+      name: fog ? '？？？' : showBoss ? bz.name : '關卡',
       mark: st.cleared ? '✓' : st.complete ? '◉' : '關',
       open: open,
       dotStyle: 'display:flex;align-items:center;justify-content:center;width:100%;height:20px;' +
@@ -1773,9 +1750,41 @@
         (st.complete && !st.cleared ? 'box-shadow:0 0 12px rgba(233,179,65,.8);' : '') +
         'clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);',
       nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
-        'white-space:nowrap;color:' + (st.cleared || st.complete ? '#FFD98A' : fog ? '#332C25' : '#8A8073'),
-      style: 'flex:0 0 auto;min-width:34px;display:flex;flex-direction:column;align-items:center;' +
+        'white-space:nowrap;color:' +
+        (st.cleared || st.complete ? '#FFD98A' : fog ? '#332C25' : showBoss ? '#9A9184' : '#8A8073'),
+      style: 'flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;' +
         'cursor:pointer;pointer-events:auto'
+    };
+  }
+
+  /* 層底站著的那一隻。站在通道條的上緣，跟角色同一條地面線——
+     牠是擋路的東西，不是飄在半空的裝飾，所以不用 bossFloat，
+     呼吸的縮放也以腳底為原點。 */
+  function bossOnGround(L, n, st, o) {
+    o = o || {};
+    var bz = bossOf(n);
+    if (!bz || st.cleared) return null;          /* 打贏了就不站在那裡了 */
+    var mob = L.state.device === 'mobile';
+    var fog = !!o.fog;
+    var awake = !fog && st.complete;
+    var size = mob ? 44 : 56;
+    return {
+      tag: '', tagStyle: 'display:none',
+      figStyle: 'display:block;width:' + size + 'px;height:' + size + 'px;' +
+        'image-rendering:pixelated;transform-origin:bottom center;' +
+        'background:url("' + bossSvg(bz, fog) + '") bottom center/contain no-repeat;' +
+        (fog
+          ? 'opacity:.4;animation:bossBreathe 5.2s ease-in-out infinite;'
+          : awake
+            ? 'animation:bossLoom .5s cubic-bezier(.2,.9,.3,1) both,' +
+              'bossBreathe 3.2s ease-in-out infinite .5s,bossGlow 3.4s ease-in-out infinite .5s;'
+            : 'opacity:.85;filter:brightness(' + (o.dim || '.55') + ');' +
+              'animation:bossBreathe 4.4s ease-in-out infinite;'),
+      open: o.open || function () {},
+      style: 'position:absolute;z-index:2;left:' + cellLeft(o.idx, o.cellN, 0) + ';' +
+        'bottom:' + (stripH(mob) + 9) + 'px;transform:translateX(-50%);' +
+        'display:flex;flex-direction:column;align-items:center;' +
+        'cursor:pointer;pointer-events:auto;background:none;border:none;padding:0'
     };
   }
 
@@ -1879,10 +1888,6 @@
     var totalOpen = perLayer.reduce(function (a, x) { return a + x.openedN; }, 0);
     v.boardDone = totalOpen + " / " + totalVein + " 塊已開";
     v.boardLeft = (totalVein - totalOpen) + " 塊";
-    /* 原型那句寫「看得到每一組實際停在哪一格」，但通道上的位置是平均散開的，
-       不是各組真正採到第幾塊——那份資料不在這張圖的來源裡。說法照實改。 */
-    v.mapLede = '整班都在同一張剖面上。沒有迷霧，你看得到每一組在哪一層、走到第幾層底。點小人看那一組的紀錄。';
-
     v.boardStepNote = totalOpen >= totalVein
       ? "五層的礦脈都開完了。剩下就看各組採不採得齊。"
       : "通道上一格就是一塊礦石，也就是你要開的一項。還有 " + (totalVein - totalOpen) + " 塊沒開。";
@@ -1946,11 +1951,22 @@
       });
       m.runners = buildRunners(L, {
         cellN: cells.length, fog: false, mine: null, myIdx: 0, others: st.here,
+        bossIdx: bossOf(n) && !st.cleared ? cells.length - 1 : null,
+        /* 老師看的是真的：這一組在這一層採到第幾塊，就站在第幾格 */
+        realIdx: function (t) {
+          var g = Number((t.got || {})[n]) || 0;
+          return Math.min(cells.length - 1, g);
+        },
         openTeam: function (t) {
           return function () { L.setState({ screen: "T04", queueTeam: t.id }); };
         },
         openCrowd: function (list, sc) { crowdPage(L, n, list, sc); }
       });
+      var bgT = bossOnGround(L, n, { cleared: st.cleared, complete: st.openedN >= st.vein.length && st.vein.length > 0 }, {
+        fog: false, dim: '.7', idx: cells.length - 1, cellN: cells.length,
+        open: cells[cells.length - 1].open
+      });
+      if (bgT) m.runners.push(bgT);
 
       m.hasOthers = st.here.length > 0;
       m.othersStyle = "position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;" +
@@ -2085,10 +2101,11 @@
     };
     if (opt.mine) put(opt.myIdx, opt.mine, true);
     var rest = opt.others || [];
-    /* 別組不落在真正的格子上——那是他們的進度，不是給人看的。
-       平均散在這一層的礦石段，讀起來是「他們也在這一層」。 */
     var span = Math.max(1, cellN - 1);
     rest.forEach(function (t, i) {
+      /* 老師看得到各組真正採到第幾塊，就站在那一格；
+         學生端沒有那份資料（也不該有），平均散開，讀起來是「他們也在這一層」。 */
+      if (opt.realIdx) { put(opt.realIdx(t), t, false); return; }
       put(Math.round((i + 1) * (span - 1) / (rest.length + 1)), t, false);
     });
 
@@ -2098,6 +2115,10 @@
       var pack = at[k].slice().sort(function (a, b) { return (b.me ? 1 : 0) - (a.me ? 1 : 0); });
       var over = pack.length > 3 ? pack.slice(3) : [];
       var show = over.length ? pack.slice(0, 3) : pack;
+      /* 層底那一格站著生物，人要排在牠前面（左邊），不然疊在一起 */
+      var atBoss = opt.bossIdx != null && idx === opt.bossIdx;
+      var dxs = atBoss ? [-24, -42, -60] : RUN_DX;
+      var chipDx = atBoss ? -78 : 34;
       show.forEach(function (p, i) {
         var kind = p.me ? 'me' : opt.fog ? 'fog' : 'other';
         var size = p.me ? 30 : 26;
@@ -2116,7 +2137,7 @@
               : 'filter:saturate(.3) brightness(.8);opacity:.9;'),
           open: opt.openTeam(p.t, p.me),
           style: 'position:absolute;z-index:' + (p.me ? 6 : 4 - i) + ';' +
-            'left:' + cellLeft(idx, cellN, RUN_DX[i] || 0) + ';bottom:' + bottom + 'px;' +
+            'left:' + cellLeft(idx, cellN, dxs[i] || 0) + ';bottom:' + bottom + 'px;' +
             'transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px;' +
             'cursor:pointer;pointer-events:auto;background:none;border:none;padding:0'
         });
@@ -2131,7 +2152,7 @@
             'background:url("' + runnerSvg(false) + '") center bottom/contain no-repeat;' +
             'image-rendering:pixelated;filter:grayscale(1) brightness(.55);opacity:.75',
           open: function () { opt.openCrowd(names, 'tile'); },
-          style: 'position:absolute;z-index:3;left:' + cellLeft(idx, cellN, 34) + ';' +
+          style: 'position:absolute;z-index:3;left:' + cellLeft(idx, cellN, chipDx) + ';' +
             'bottom:' + bottom + 'px;transform:translateX(-50%);display:flex;flex-direction:column;' +
             'align-items:center;gap:3px;cursor:pointer;pointer-events:auto;background:none;border:none;padding:0'
         });
@@ -2346,6 +2367,7 @@
       m.runners = buildRunners(L, {
         cellN: cells.length,
         fog: fog,
+        bossIdx: bossOf(n) && !st.cleared ? cells.length - 1 : null,
         mine: (n === cur && mine) ? mine : null,
         myIdx: st.cleared ? cells.length - 1 : st.gotN,
         others: here,
@@ -2358,6 +2380,11 @@
         },
         openCrowd: function (list, sc) { crowdPage(L, n, list, sc); }
       });
+      var bgS = bossOnGround(L, n, st, {
+        fog: fog, idx: cells.length - 1, cellN: cells.length,
+        open: cells[cells.length - 1].open
+      });
+      if (bgS) m.runners.push(bgS);
 
       m.hasOthers = here.length > 0;   /* 別組不上迷霧：你本來就看得到別人的營火 */
       m.othersStyle = 'position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;gap:5px;justify-content:flex-end;max-width:58%;overflow:hidden';

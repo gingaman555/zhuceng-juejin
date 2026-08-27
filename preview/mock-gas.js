@@ -427,6 +427,24 @@
                   joinCode: kl ? kl.joinCode : '', teams: allTeams, taskDefs: defs,
                   minNames: API.minNamesOf(u.teamId || ''),
                   minNamesByTeam: u.role !== 'student' ? API.minNamesByTeam(classId) : undefined };
+      if (u.role !== 'student') {
+        /* 每一組在每一層採到幾塊——老師的地圖照真的位置擺人 */
+        var layerOf = {};
+        DB.Tasks.forEach(function (t) {
+          if (String(t.classId) !== String(classId)) return;
+          layerOf[String(t.taskId)] = Number(t.layer) || 1;
+        });
+        var gots = {};
+        DB.TeamTasks.forEach(function (r) {
+          if (String(r.status) !== 'passed') return;
+          var ly = layerOf[String(r.taskId)];
+          if (!ly) return;
+          var k = String(r.teamId);
+          if (!gots[k]) gots[k] = {};
+          gots[k][ly] = (gots[k][ly] || 0) + 1;
+        });
+        allTeams.forEach(function (t) { t.got = gots[t.id] || {}; });
+      }
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
         var me = teamById(u.teamId);

@@ -1042,6 +1042,26 @@ function classesOf_(u) {
 
 /* ================= 開機資料 ================= */
 
+/** 每一組在每一層採到幾塊。老師的地圖要照真的位置擺人，
+    學生端不給——別組走到第幾塊不是給同學看的。 */
+function gotByLayer_(classId) {
+  var layerOf = {};
+  readTable_('Tasks').forEach(function (t) {
+    if (String(t.classId) !== String(classId)) return;
+    layerOf[String(t.taskId)] = Number(t.layer) || 1;
+  });
+  var out = {};
+  readTable_('TeamTasks').forEach(function (r) {
+    if (String(r.status) !== 'passed') return;
+    var n = layerOf[String(r.taskId)];
+    if (!n) return;
+    var k = String(r.teamId);
+    if (!out[k]) out[k] = {};
+    out[k][n] = (out[k][n] || 0) + 1;
+  });
+  return out;
+}
+
 function teamPub_(t, courseWeek) {
   return {
     id: t.teamId, classId: t.classId, name: t.name, members: jparse_(t.members, []),
@@ -1251,7 +1271,11 @@ function apiBootstrap(token) {
       minNames: minNamesOf_(u.teamId || '')   /* 這一組的拆分名稱 */
     };
 
-    if (u.role !== 'student') out.minNamesByTeam = minNamesByTeam_(classId);
+    if (u.role !== 'student') {
+      out.minNamesByTeam = minNamesByTeam_(classId);
+      var gots = gotByLayer_(classId);
+      allTeams.forEach(function (t) { t.got = gots[t.id] || {}; });
+    }
 
     if (u.role === 'student') {
       var me = teamById_(u.teamId);
