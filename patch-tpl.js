@@ -2767,5 +2767,68 @@ must('                        <span style="{{ m.stepsTagStyle }}">{{ m.stepsTag 
 '                          <span style="{{ m.skyTagStyle }}">{{ m.skyTag }}</span>',
 '                        </sc-if>'].join('\n'));
 
+const Q = String.fromCharCode(39);
+const QM = String.fromCharCode(65311);
+
+/* 40. 地圖：貫穿五層的豎井／梯子那張大圖拿掉。
+       改成一層一層各自橫向走完再往下——像橫向過關的關卡。 */
+(function () {
+  const re = /\n[ \t]*<svg viewBox="0 0 640 750"[\s\S]*?<\/svg>/;
+  if (!re.test(t)) { console.error('MISS: 地圖豎井 SVG'); process.exit(1); }
+  t = t.replace(re, '');
+})();
+
+/* 41. 舊的小人（釘在豎井格上的 PNG）收掉 */
+must([
+'                <sc-for list="{{ diggers }}" as="d" hint-placeholder-count="6">',
+'                  <button onClick="{{ d.open }}" style="{{ d.style }}">',
+'                    <span style="{{ d.tagStyle }}">{{ d.tag }}</span>',
+'                    <span style="{{ d.figStyle }}"></span>',
+'                  </button>',
+'                </sc-for>'].join('\n'), '');
+
+/* 42. 角色改站在自己那一層的通道上 */
+must([
+'                        <span style="{{ m.stepsStyle }}">',
+'                          <sc-for list="{{ m.steps }}" as="st" hint-placeholder-count="6">',
+'                            <span onClick="{{ st.open }}" style="{{ st.style }}">',
+'                              <span style="{{ st.dotStyle }}">{{ st.mark }}</span>',
+'                              <span style="{{ st.nameStyle }}">{{ st.name }}</span>',
+'                            </span>',
+'                          </sc-for>',
+'                        </span>'].join('\n'),
+[
+'                        <span style="{{ m.stepsStyle }}">',
+'                          <sc-for list="{{ m.steps }}" as="st" hint-placeholder-count="6">',
+'                            <span onClick="{{ st.open }}" style="{{ st.style }}">',
+'                              <span style="{{ st.dotStyle }}">{{ st.mark }}</span>',
+'                              <span style="{{ st.nameStyle }}">{{ st.name }}</span>',
+'                            </span>',
+'                          </sc-for>',
+'                        </span>',
+'                        <sc-for list="{{ m.runners }}" as="rn" hint-placeholder-count="3">',
+'                          <span onClick="{{ rn.open }}" style="{{ rn.style }}">',
+'                            <span style="{{ rn.tagStyle }}">{{ rn.tag }}</span>',
+'                            <span style="{{ rn.figStyle }}"></span>',
+'                          </span>',
+'                        </sc-for>'].join('\n'));
+
+/* 43. 每一層點進去的介紹裡，補上層底那隻守關生物 */
+must(
+'                <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">礦物 · 一項任務一種礦</div>',
+[
+'                <sc-if value="{{ sel.hasBoss }}" hint-placeholder-val="{{ true }}">',
+'                  <span onClick="{{ sel.openBoss }}" style="{{ sel.bossCardStyle }}">',
+'                    <span style="{{ sel.bossArtStyle }}"></span>',
+'                    <span style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">',
+'                      <span style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.16em;color:{{ sel.bossKickerColor }}">{{ sel.bossKicker }}</span>',
+'                      <span style="font:700 22px/1.3 ' + Q + 'C11' + Q + ';color:{{ sel.bossNameColor }}">{{ sel.bossName }}</span>',
+'                      <span style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;text-wrap:pretty">{{ sel.bossNote }}</span>',
+'                    </span>',
+'                    <span style="{{ sel.bossMoreStyle }}">' + QM + '</span>',
+'                  </span>',
+'                </sc-if>',
+'                <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">礦物 · 一項任務一種礦</div>'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

@@ -1039,115 +1039,24 @@ window.JLZ_SPRITES = {
                             </span>
                           </sc-for>
                         </span>
+                        <sc-for list="{{ m.runners }}" as="rn" hint-placeholder-count="3">
+                          <span onClick="{{ rn.open }}" style="{{ rn.style }}">
+                            <span style="{{ rn.tagStyle }}">{{ rn.tag }}</span>
+                            <span style="{{ rn.figStyle }}"></span>
+                          </span>
+                        </sc-for>
                       </span>
                     </button>
                   </div>
                 </sc-for>
                 </div>
 
-                <svg viewBox="0 0 640 750" preserveAspectRatio="none" shape-rendering="crispEdges" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
-                  <g stroke="#8A8073" stroke-opacity=".32" stroke-width="2">
-                  <rect x="296" y="0" width="48" height="26" fill="#050409"></rect>
-                  <rect x="286" y="26" width="58" height="20" fill="#07060B"></rect>
-                  <rect x="298" y="46" width="42" height="24" fill="#07060B"></rect>
-                  <rect x="290" y="70" width="54" height="20" fill="#07060B"></rect>
-                  <rect x="176" y="96" width="192" height="40" fill="#07060B"></rect>
-                  <rect x="192" y="88" width="122" height="10" fill="#07060B"></rect>
-                  <rect x="166" y="110" width="22" height="26" fill="#07060B"></rect>
-                  <rect x="352" y="104" width="30" height="32" fill="#07060B"></rect>
-                  <rect x="228" y="96" width="10" height="14" fill="#241E18"></rect>
-                  <rect x="300" y="96" width="8" height="10" fill="#241E18"></rect>
-                  <rect x="262" y="128" width="18" height="8" fill="#241E18"></rect>
-                  <rect x="176" y="132" width="206" height="4" fill="#6E665A" opacity=".3"></rect>
-                  <rect x="192" y="136" width="48" height="30" fill="#07060B"></rect>
-                  <rect x="200" y="166" width="40" height="34" fill="#07060B"></rect>
-                  <rect x="186" y="200" width="50" height="38" fill="#07060B"></rect>
-                  <rect x="184" y="246" width="248" height="40" fill="#07060B"></rect>
-                  <rect x="200" y="238" width="162" height="8" fill="#07060B"></rect>
-                  <rect x="430" y="252" width="26" height="30" fill="#07060B"></rect>
-                  <rect x="238" y="246" width="10" height="16" fill="#182428"></rect>
-                  <rect x="330" y="246" width="8" height="12" fill="#182428"></rect>
-                  <rect x="392" y="246" width="10" height="14" fill="#182428"></rect>
-                  <rect x="286" y="278" width="20" height="8" fill="#182428"></rect>
-                  <rect x="184" y="282" width="272" height="4" fill="#6FD3E0" opacity=".22"></rect>
-                  <rect x="384" y="286" width="48" height="32" fill="#07060B"></rect>
-                  <rect x="392" y="318" width="40" height="32" fill="#07060B"></rect>
-                  <rect x="380" y="350" width="50" height="38" fill="#07060B"></rect>
-                  <rect x="232" y="396" width="208" height="40" fill="#07060B"></rect>
-                  <rect x="250" y="388" width="150" height="8" fill="#07060B"></rect>
-                  <rect x="212" y="402" width="22" height="34" fill="#07060B"></rect>
-                  <rect x="276" y="396" width="10" height="16" fill="#1C1826"></rect>
-                  <rect x="362" y="396" width="8" height="12" fill="#1C1826"></rect>
-                  <rect x="318" y="428" width="18" height="8" fill="#1C1826"></rect>
-                  <rect x="212" y="432" width="228" height="4" fill="#B9AEDC" opacity=".2"></rect>
-                  <rect x="240" y="436" width="48" height="32" fill="#07060B"></rect>
-                  <rect x="248" y="468" width="40" height="34" fill="#07060B"></rect>
-                  <rect x="236" y="502" width="50" height="36" fill="#07060B"></rect>
-                  <rect x="232" y="546" width="240" height="40" fill="#07060B"></rect>
-                  <rect x="250" y="538" width="170" height="8" fill="#07060B"></rect>
-                  <rect x="470" y="552" width="24" height="28" fill="#07060B"></rect>
-                  <rect x="288" y="546" width="10" height="14" fill="#2A1A0E"></rect>
-                  <rect x="398" y="546" width="8" height="12" fill="#2A1A0E"></rect>
-                  <rect x="340" y="578" width="20" height="8" fill="#2A1A0E"></rect>
-                  <rect x="232" y="582" width="262" height="4" fill="#F2A03C" opacity=".28"></rect>
-                  <rect x="416" y="586" width="48" height="32" fill="#07060B"></rect>
-                  <rect x="424" y="618" width="40" height="34" fill="#07060B"></rect>
-                  <rect x="412" y="652" width="50" height="36" fill="#07060B"></rect>
-                  <rect x="272" y="696" width="200" height="40" fill="#07060B"></rect>
-                  <rect x="288" y="688" width="152" height="8" fill="#07060B"></rect>
-                  <rect x="316" y="696" width="10" height="14" fill="#1E1A2A"></rect>
-                  <rect x="410" y="696" width="8" height="12" fill="#1E1A2A"></rect>
-                  <rect x="272" y="732" width="200" height="4" fill="#BEAAFF" opacity=".26"></rect>
-                  <rect x="344" y="736" width="48" height="14" fill="#07060B"></rect>
-                  </g>
-                  <rect x="286" y="0" width="4" height="96" fill="#6E665A" opacity=".26"></rect>
-                  <rect x="344" y="0" width="4" height="96" fill="#6E665A" opacity=".26"></rect>
-                  <rect x="176" y="92" width="206" height="4" fill="#6E665A" opacity=".26"></rect>
-                  <rect x="186" y="136" width="4" height="110" fill="#6E665A" opacity=".24"></rect>
-                  <rect x="236" y="136" width="4" height="110" fill="#6E665A" opacity=".24"></rect>
-                  <rect x="184" y="242" width="272" height="4" fill="#6FD3E0" opacity=".2"></rect>
-                  <rect x="380" y="286" width="4" height="110" fill="#6FD3E0" opacity=".18"></rect>
-                  <rect x="428" y="286" width="4" height="110" fill="#6FD3E0" opacity=".18"></rect>
-                  <rect x="212" y="392" width="228" height="4" fill="#B9AEDC" opacity=".18"></rect>
-                  <rect x="236" y="436" width="4" height="110" fill="#B9AEDC" opacity=".16"></rect>
-                  <rect x="284" y="436" width="4" height="110" fill="#B9AEDC" opacity=".16"></rect>
-                  <rect x="232" y="542" width="262" height="4" fill="#F2A03C" opacity=".24"></rect>
-                  <rect x="412" y="586" width="4" height="110" fill="#F2A03C" opacity=".2"></rect>
-                  <rect x="460" y="586" width="4" height="110" fill="#F2A03C" opacity=".2"></rect>
-                  <rect x="272" y="692" width="200" height="4" fill="#BEAAFF" opacity=".24"></rect>
-                  <rect x="344" y="736" width="4" height="14" fill="#BEAAFF" opacity=".2"></rect>
-                  <rect x="388" y="736" width="4" height="14" fill="#BEAAFF" opacity=".2"></rect>
-                  <g fill="rgba(233,179,65,.05)" stroke="#8A8073" stroke-opacity=".4" stroke-width="2">
-                    <rect x="184" y="110" width="24" height="24"></rect><rect x="214" y="110" width="24" height="24"></rect><rect x="244" y="110" width="24" height="24"></rect><rect x="274" y="110" width="24" height="24"></rect><rect x="304" y="110" width="24" height="24"></rect><rect x="334" y="110" width="24" height="24"></rect>
-                    <rect x="200" y="150" width="24" height="24"></rect><rect x="200" y="180" width="24" height="24"></rect><rect x="200" y="210" width="24" height="24"></rect>
-                  </g>
-                  <g fill="rgba(111,211,224,.05)" stroke="#6FD3E0" stroke-opacity=".34" stroke-width="2">
-                    <rect x="192" y="260" width="24" height="24"></rect><rect x="222" y="260" width="24" height="24"></rect><rect x="252" y="260" width="24" height="24"></rect><rect x="282" y="260" width="24" height="24"></rect><rect x="312" y="260" width="24" height="24"></rect><rect x="342" y="260" width="24" height="24"></rect><rect x="372" y="260" width="24" height="24"></rect><rect x="402" y="260" width="24" height="24"></rect>
-                    <rect x="392" y="300" width="24" height="24"></rect><rect x="392" y="330" width="24" height="24"></rect><rect x="392" y="360" width="24" height="24"></rect>
-                  </g>
-                  <g fill="rgba(185,174,220,.05)" stroke="#B9AEDC" stroke-opacity=".32" stroke-width="2">
-                    <rect x="240" y="410" width="24" height="24"></rect><rect x="270" y="410" width="24" height="24"></rect><rect x="300" y="410" width="24" height="24"></rect><rect x="330" y="410" width="24" height="24"></rect><rect x="360" y="410" width="24" height="24"></rect><rect x="390" y="410" width="24" height="24"></rect>
-                    <rect x="248" y="450" width="24" height="24"></rect><rect x="248" y="480" width="24" height="24"></rect><rect x="248" y="510" width="24" height="24"></rect>
-                  </g>
-                  <g fill="rgba(242,160,60,.05)" stroke="#F2A03C" stroke-opacity=".36" stroke-width="2">
-                    <rect x="240" y="560" width="24" height="24"></rect><rect x="270" y="560" width="24" height="24"></rect><rect x="300" y="560" width="24" height="24"></rect><rect x="330" y="560" width="24" height="24"></rect><rect x="360" y="560" width="24" height="24"></rect><rect x="390" y="560" width="24" height="24"></rect><rect x="420" y="560" width="24" height="24"></rect>
-                    <rect x="424" y="600" width="24" height="24"></rect><rect x="424" y="630" width="24" height="24"></rect><rect x="424" y="660" width="24" height="24"></rect>
-                  </g>
-                  <g fill="rgba(190,170,255,.06)" stroke="#BEAAFF" stroke-opacity=".38" stroke-width="2">
-                    <rect x="280" y="710" width="24" height="24"></rect><rect x="310" y="710" width="24" height="24"></rect><rect x="340" y="710" width="24" height="24"></rect><rect x="370" y="710" width="24" height="24"></rect><rect x="400" y="710" width="24" height="24"></rect><rect x="430" y="710" width="24" height="24"></rect>
-                  </g>
-                <span style="position: absolute; left: -38px; top: -4px"></span></svg>
 
                 <sc-for list="{{ fogBands }}" as="f" hint-placeholder-count="5">
                   
                 </sc-for>
 
-                <sc-for list="{{ diggers }}" as="d" hint-placeholder-count="6">
-                  <button onClick="{{ d.open }}" style="{{ d.style }}">
-                    <span style="{{ d.tagStyle }}">{{ d.tag }}</span>
-                    <span style="{{ d.figStyle }}"></span>
-                  </button>
-                </sc-for>
+
                 </div>
 
                 <sc-if value="{{ showSteps }}" hint-placeholder-val="{{ true }}">
@@ -1268,6 +1177,17 @@ window.JLZ_SPRITES = {
                     <div style="font:400 11px/1.6 'C11';color:#5F574C;margin-top:7px">關卡通過就給，不看做得多好。</div>
                   </button>
                 </div>
+                <sc-if value="{{ sel.hasBoss }}" hint-placeholder-val="{{ true }}">
+                  <span onClick="{{ sel.openBoss }}" style="{{ sel.bossCardStyle }}">
+                    <span style="{{ sel.bossArtStyle }}"></span>
+                    <span style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">
+                      <span style="font:400 11px/1 'C11';letter-spacing:.16em;color:{{ sel.bossKickerColor }}">{{ sel.bossKicker }}</span>
+                      <span style="font:700 22px/1.3 'C11';color:{{ sel.bossNameColor }}">{{ sel.bossName }}</span>
+                      <span style="font:400 11px/1.7 'C11';color:#8A8073;text-wrap:pretty">{{ sel.bossNote }}</span>
+                    </span>
+                    <span style="{{ sel.bossMoreStyle }}">？</span>
+                  </span>
+                </sc-if>
                 <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">礦物 · 一項任務一種礦</div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:7px">
                   <sc-for list="{{ sel.minerals }}" as="mi" hint-placeholder-count="6">
@@ -6463,7 +6383,7 @@ class Component extends DCLogic {
     momentVals(L, v);
     decorateAuth(L, v);
     if (S.role === 'student' && S.signedIn) decorateStudent(L, v);
-    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); decorateDayNight(L, v); }
+    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); decorateDayNight(L, v); decorateLayerPanel(L, v); }
     if (isRes) decorateResearcher(L, v);
     addBossCodex(L, v);   /* 學生與老師的收藏總覽都要有守關生物 */
     ghostCodex(L, v);      /* 還沒拿到的畫成造型黑影 */
@@ -7019,16 +6939,6 @@ class Component extends DCLogic {
       });
     }
 
-    /* 點他組小人＝閱讀事件 */
-    (v.diggers || []).forEach(function (fig) {
-      var orig = fig.open;
-      fig.open = function () {
-        orig();
-        var id = L.state.mapTeam;
-        var mine = L.teams().filter(function (t) { return t.me; })[0];
-        if (id && (!mine || id !== mine.id)) call('apiLogRead', LIVE.token, id).catch(function () {});
-      };
-    });
 
     /* 第五層的自訂命名要回寫 */
     if (v.setSpecName) {
@@ -7063,25 +6973,7 @@ class Component extends DCLogic {
     decorateCollect(L, v);
     decorateBoard(L, v);
     decorateDayNight(L, v);   /* 地表那一層照現實時間 */
-    /* 層詳情的道具卡：原型用「工具階級」判斷拿到沒，但工具校準整套移除之後
-       那個值永遠是空的——通過了也顯示 ？？？。改成跟寶物一樣看「這一層通過沒」。 */
-    (function () {
-      if (!v.sel) return;
-      var n = S.expanded || S.currentLayer || 1;
-      var lay = L.LAYERS[n - 1] || {};
-      var done = (S.passed || []).indexOf(n) >= 0 || S.role === 'teacher' || !!S.allOpen;
-      var bz = bossOf(n);
-      v.sel.toolName = done ? (lay.tool || '？？？') : '？？？';
-      v.sel.toolNameColor = done ? '#E9B341' : '#5A5044';
-      v.sel.toolDesc = done
-        ? (lay.toolFunc || '')
-        : (bz
-            ? '這一層的礦石採齊、老師准了，才鑄得出來——用它擊退' + bz.name + '。'
-            : '這一層的礦石採齊、老師准了，才鑄得出來。');
-      v.sel.toolCardStyle = 'padding:13px;background:' +
-        (done ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.25)') +
-        ';border:1px ' + (done ? 'solid #3A3026' : 'dashed #2E2822');
-    })();
+    decorateLayerPanel(L, v);
 
 
 
@@ -7767,6 +7659,10 @@ class Component extends DCLogic {
     var totalOpen = perLayer.reduce(function (a, x) { return a + x.openedN; }, 0);
     v.boardDone = totalOpen + " / " + totalVein + " 塊已開";
     v.boardLeft = (totalVein - totalOpen) + " 塊";
+    /* 原型那句寫「看得到每一組實際停在哪一格」，但通道上的位置是平均散開的，
+       不是各組真正採到第幾塊——那份資料不在這張圖的來源裡。說法照實改。 */
+    v.mapLede = '整班都在同一張剖面上。沒有迷霧，你看得到每一組在哪一層、走到第幾層底。點小人看那一組的紀錄。';
+
     v.boardStepNote = totalOpen >= totalVein
       ? "五層的礦脈都開完了。剩下就看各組採不採得齊。"
       : "通道上一格就是一塊礦石，也就是你要開的一項。還有 " + (totalVein - totalOpen) + " 塊沒開。";
@@ -7816,9 +7712,7 @@ class Component extends DCLogic {
       }));
 
       m.steps = cells;
-      m.stepsStyle = "position:absolute;left:var(--mcol);right:13px;bottom:9px;z-index:2;" +
-        "display:flex;align-items:flex-end;gap:3px;padding:5px 7px;background:rgba(6,5,4,.62);" +
-        "border-top:1px solid " + (st.here.length ? "rgba(233,179,65,.4)" : "rgba(255,255,255,.07)");
+      m.stepsStyle = stripStyle(mob, st.here.length > 0);
       m.stepsTag = "第 " + (base + 1) + "–" + (base + st.vein.length) + " 塊　·　你開了 " +
         st.openedN + "/" + st.vein.length;
       m.stepsTagStyle = "position:absolute;left:var(--mcol);top:9px;z-index:2;" +
@@ -7827,22 +7721,309 @@ class Component extends DCLogic {
         ";pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top";
 
       /* 哪幾組在這一層 */
-      m.others = st.here.map(function (t) {
-        return {
-          name: t.name,
-          meta: "停留 " + (t.weeks || 1) + " 週",
-          open: function () { L.setState({ screen: "T04", queueTeam: t.id }); },
-          style: "display:inline-flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;" +
-            "font:400 11px/1 'C11';white-space:nowrap;background:rgba(6,5,4,.72);" +
-            "border:1px solid " + ((t.passed || []).length ? "#5A4A2C" : "#3A3026") + ";color:#C3BAAA"
-        };
+      m.others = othersChips(L, n, st.here, function (t) {
+        return function () { L.setState({ screen: "T04", queueTeam: t.id }); };
       });
-      m.hasOthers = m.others.length > 0;
-      m.othersStyle = "position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:wrap;" +
-        "gap:5px;justify-content:flex-end;max-width:58%";
-      m.othersNote = m.others.length + " 組在這一層";
+      m.runners = buildRunners(L, {
+        cellN: cells.length, fog: false, mine: null, myIdx: 0, others: st.here,
+        openTeam: function (t) {
+          return function () { L.setState({ screen: "T04", queueTeam: t.id }); };
+        },
+        openCrowd: function (list, sc) { crowdPage(L, n, list, sc); }
+      });
+
+      m.hasOthers = st.here.length > 0;
+      m.othersStyle = "position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;" +
+        "gap:5px;justify-content:flex-end;max-width:58%;overflow:hidden";
+      m.othersNote = st.here.length + " 組在這一層";
       m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;align-self:center;transform:scale(.86)";
     });
+  }
+
+  /* ============================================================
+     地圖上的角色：一層一層橫向走過去，走完那一層才往下一層。
+     像素圖直接寫成 SVG data URI，兩張腳輪流開關——所以放在
+     background-image 裡也跑得動。自己那一隻會跑，別組的站著。
+     ============================================================ */
+  var RUNNER_HUE = {
+    H: '#E9B341',   /* 安全帽 */
+    L: '#FFF0B8',   /* 頭燈 */
+    N: '#3A3026',   /* 帽簷、領口 */
+    S: '#D8B48C',   /* 臉 */
+    D: '#2A241C',   /* 眼睛 */
+    '#': '#6B5A3E', /* 工作服 */
+    B: '#2E2822'    /* 靴子 */
+  };
+
+  /* 身體：y0–y10。面朝右。 */
+  var RUNNER_BODY = [
+    '...HHHHHH...',
+    '..HHHHHHHH..',
+    '.LHHHHHHHH..',
+    '.NNNNNNNNN..',
+    '...SSSSDS...',
+    '....SSSS....',
+    '...NNNNNN...',
+    '..########..',
+    '..########..',
+    '..###HH###..',
+    '...######...'
+  ];
+  /* 跨步：y11–y15 */
+  var RUNNER_LEG_A = [
+    '...##.##....',
+    '..##...##...',
+    '..##....##..',
+    '.##......#..',
+    'BBB.....BBB.'
+  ];
+  /* 併腳（這一格整個人抬高一格） */
+  var RUNNER_LEG_B = [
+    '...#####....',
+    '...##.##....',
+    '...##.##....',
+    '...##.##....',
+    '..BBB.BBB...'
+  ];
+
+  function pxRows(rows, y0, hue, out) {
+    rows.forEach(function (row, i) {
+      var y = y0 + i, x = 0;
+      while (x < row.length) {
+        var c = row[x];
+        if (c === '.') { x++; continue; }
+        var w = 1;
+        while (x + w < row.length && row[x + w] === c) w++;
+        out.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="1" fill="' +
+          (hue[c] || hue['#']) + '"/>');
+        x += w;
+      }
+    });
+  }
+
+  var RUNNER_CACHE = {};
+  var RUN_PHASE = ['0s', '-.08s', '-.16s', '-.24s'];
+  function runnerSvg(running, phase) {
+    var d = RUN_PHASE[(phase || 0) % RUN_PHASE.length];
+    var key = running ? ('run' + d) : 'idle';
+    if (RUNNER_CACHE[key]) return RUNNER_CACHE[key];
+    var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 16" shape-rendering="crispEdges">'];
+    if (running) {
+      out.push('<style>' +
+        '@keyframes jlzStepA{0%,49%{opacity:1}50%,100%{opacity:0}}' +
+        '@keyframes jlzStepB{0%,49%{opacity:0}50%,100%{opacity:1}}' +
+        '@keyframes jlzBob{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-1px)}}' +
+        '.la{animation:jlzStepA .32s steps(1,end) infinite ' + d + '}' +
+        '.lb{animation:jlzStepB .32s steps(1,end) infinite ' + d + '}' +
+        '.bd{animation:jlzBob .32s steps(1,end) infinite ' + d + '}' +
+        '</style>');
+    }
+    out.push('<g class="' + (running ? 'bd' : '') + '">');
+    pxRows(RUNNER_BODY, 0, RUNNER_HUE, out);
+    out.push('<g class="' + (running ? 'la' : '') + '">');
+    pxRows(RUNNER_LEG_A, 11, RUNNER_HUE, out);
+    out.push('</g>');
+    if (running) {
+      out.push('<g class="lb" opacity="0">');
+      pxRows(RUNNER_LEG_B, 11, RUNNER_HUE, out);
+      out.push('</g>');
+    }
+    out.push('</g></svg>');
+    RUNNER_CACHE[key] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join(''));
+    return RUNNER_CACHE[key];
+  }
+
+  /* 通道條固定高度，五層的地面才會齊平——踩在上面的人也才站得穩 */
+  function stripH(mob) { return mob ? 48 : 52; }
+  function stripStyle(mob, lit) {
+    return 'position:absolute;left:var(--mcol);right:13px;bottom:9px;z-index:2;box-sizing:border-box;' +
+      'height:' + stripH(mob) + 'px;display:flex;align-items:flex-end;gap:3px;padding:5px 7px;' +
+      'background:rgba(6,5,4,.62);border-top:2px solid ' +
+      (lit ? 'rgba(233,179,65,.45)' : 'rgba(255,255,255,.1)');
+  }
+
+  /* 第 idx 格的中心落在通道條的哪個比例上 */
+  function cellLeft(idx, cellN, dx) {
+    var frac = ((idx + 0.5) / Math.max(1, cellN)).toFixed(4);
+    var off = !dx ? '' : (dx > 0 ? ' + ' + dx + 'px' : ' - ' + (-dx) + 'px');
+    return 'calc(var(--mcol) + 7px + (100% - var(--mcol) - 27px) * ' + frac + off + ')';
+  }
+
+  /* 同一格站了好幾組時的排法：
+     自己永遠在正中間、最前面；別組往兩側各讓一步；超過三組收成一個「+N」，
+     點下去列出這一格有誰。人再多畫面也只會有四個東西。 */
+  var RUN_DX = [0, -17, 17, -34, 34];
+
+  function buildRunners(L, opt) {
+    var mob = L.state.device === 'mobile';
+    var bottom = stripH(mob) + 9;
+    var cellN = Math.max(1, opt.cellN);
+    var at = {};
+    var put = function (idx, t, isMe) {
+      idx = Math.max(0, Math.min(cellN - 1, idx));
+      (at[idx] = at[idx] || []).push({ t: t, me: isMe });
+    };
+    if (opt.mine) put(opt.myIdx, opt.mine, true);
+    var rest = opt.others || [];
+    /* 別組不落在真正的格子上——那是他們的進度，不是給人看的。
+       平均散在這一層的礦石段，讀起來是「他們也在這一層」。 */
+    var span = Math.max(1, cellN - 1);
+    rest.forEach(function (t, i) {
+      put(Math.round((i + 1) * (span - 1) / (rest.length + 1)), t, false);
+    });
+
+    var out = [];
+    Object.keys(at).forEach(function (k) {
+      var idx = +k;
+      var pack = at[k].slice().sort(function (a, b) { return (b.me ? 1 : 0) - (a.me ? 1 : 0); });
+      var over = pack.length > 3 ? pack.slice(3) : [];
+      var show = over.length ? pack.slice(0, 3) : pack;
+      show.forEach(function (p, i) {
+        var kind = p.me ? 'me' : opt.fog ? 'fog' : 'other';
+        var size = p.me ? 30 : 26;
+        var walking = kind !== 'fog';
+        out.push({
+          tag: p.me ? String.fromCharCode(20320) : '',
+          tagStyle: p.me
+            ? "font:500 11px/1 'C11';padding:3px 5px;white-space:nowrap;background:rgba(6,5,10,.85);" +
+              'border:1px solid #E9B341;color:#E9B341;transform:scale(.9)'
+            : 'display:none',
+          figStyle: 'display:block;width:' + size + 'px;height:' + size + 'px;' +
+            'background:url("' + runnerSvg(walking, idx + i) + '") center bottom/contain no-repeat;' +
+            'image-rendering:pixelated;' +
+            (kind === 'me' ? 'filter:drop-shadow(0 0 7px rgba(233,179,65,.75));'
+              : kind === 'fog' ? 'filter:grayscale(1) brightness(.34);opacity:.55;'
+              : 'filter:saturate(.3) brightness(.8);opacity:.9;'),
+          open: opt.openTeam(p.t, p.me),
+          style: 'position:absolute;z-index:' + (p.me ? 6 : 4 - i) + ';' +
+            'left:' + cellLeft(idx, cellN, RUN_DX[i] || 0) + ';bottom:' + bottom + 'px;' +
+            'transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px;' +
+            'cursor:pointer;pointer-events:auto;background:none;border:none;padding:0'
+        });
+      });
+      if (over.length) {
+        var names = pack.map(function (p) { return p.t; });
+        out.push({
+          tag: '+' + over.length,
+          tagStyle: "font:600 11px/1 'C11';padding:4px 6px;white-space:nowrap;" +
+            'background:rgba(6,5,10,.9);border:1px solid #5A5044;color:#C3BAAA;transform:scale(.9)',
+          figStyle: 'display:block;width:22px;height:22px;' +
+            'background:url("' + runnerSvg(false) + '") center bottom/contain no-repeat;' +
+            'image-rendering:pixelated;filter:grayscale(1) brightness(.55);opacity:.75',
+          open: function () { opt.openCrowd(names, 'tile'); },
+          style: 'position:absolute;z-index:3;left:' + cellLeft(idx, cellN, 34) + ';' +
+            'bottom:' + bottom + 'px;transform:translateX(-50%);display:flex;flex-direction:column;' +
+            'align-items:center;gap:3px;cursor:pointer;pointer-events:auto;background:none;border:none;padding:0'
+        });
+      }
+    });
+    return out;
+  }
+
+  /* 右上角的名牌只留一行——底下那排角色才是主角。
+     超過兩組就併成一顆，點下去把整層的人列出來。 */
+  function othersChips(L, n, list, openOne) {
+    /* 手機的層帶只有 132px 高、名牌會壓到走在通道上的角色。
+       小螢幕只留一句「幾組在這一層」，名字點角色去看。 */
+    if (L.state.device === 'mobile') return [];
+    var chip = function (border) {
+      return 'display:inline-flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;' +
+        "font:400 11px/1 'C11';white-space:nowrap;background:rgba(6,5,4,.72);" +
+        'border:1px solid ' + border + ';color:#C3BAAA';
+    };
+    var out = list.slice(0, 2).map(function (t) {
+      return {
+        name: t.name,
+        meta: '停留 ' + (t.weeks || 1) + ' 週',
+        open: openOne(t),
+        style: chip((t.passed || []).length ? '#5A4A2C' : '#3A3026')
+      };
+    });
+    if (list.length > 2) {
+      out.push({
+        name: '+' + (list.length - 2) + ' 組',
+        meta: '',
+        open: function () { crowdPage(L, n, list, 'layer'); },
+        style: chip('#5A5044')
+      });
+    }
+    return out;
+  }
+
+  /* 「這一格有誰」：人多的時候點 +N 開出來 */
+  function crowdPage(L, n, teams, scope) {
+    var lay = L.LAYERS[n - 1] || {};
+    /* scope：tile 是通道上那一格，layer 是整層 */
+    var lede = scope === 'tile'
+      ? '這一格站了 ' + teams.length + ' 組。'
+      : '這一層同時有 ' + teams.length + ' 組。';
+    showMoment(L, {
+      kind: 'help', art: 'help', accent: '#C3BAAA',
+      kicker: 'WHO IS HERE',
+      title: (lay.name || ('第' + n + '層')) + '上的人',
+      lede: lede + '站在哪一格不代表他們採到哪一塊——那是他們自己的進度。',
+      rows: teams.map(function (t) {
+        return { k: t.name, v: '停留 ' + (t.weeks || 1) + ' 週', hi: !!t.me };
+      }),
+      btn: '知道了', go: function () {}
+    });
+  }
+
+  /* 層詳情（在地圖上點某一層看介紹）。學生端與老師端共用。
+     道具卡：原型用「工具階級」判斷拿到沒，但工具校準整套移除之後那個值永遠是空的
+     ——通過了也顯示 ？？？。改成跟寶物一樣看「這一層通過沒」。 */
+  function decorateLayerPanel(L, v) {
+    var S = L.state;
+    if (!v.sel) return;
+    var n = S.expanded || S.currentLayer || 1;
+    var lay = L.LAYERS[n - 1] || {};
+    var done = (S.passed || []).indexOf(n) >= 0 || S.role === 'teacher' || !!S.allOpen;
+    var bz = bossOf(n);
+    /* done 是「這一層的東西可不可以揭露」，老師一律看得到；
+       擊退與否是學生自己的事，老師沒有在打。 */
+    var beaten = S.role !== 'teacher' && (S.passed || []).indexOf(n) >= 0;
+    v.sel.toolName = done ? (lay.tool || '？？？') : '？？？';
+    v.sel.toolNameColor = done ? '#E9B341' : '#5A5044';
+    v.sel.toolDesc = done
+      ? (lay.toolFunc || '')
+      : (bz
+          ? '這一層的礦石採齊、老師准了，才鑄得出來——用它擊退' + bz.name + '。'
+          : '這一層的礦石採齊、老師准了，才鑄得出來。');
+    v.sel.toolCardStyle = 'padding:13px;background:' +
+      (done ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.25)') +
+      ';border:1px ' + (done ? 'solid #3A3026' : 'dashed #2E2822');
+
+    /* 這一層層底站著誰。點下去就是那隻生物的完整介紹。 */
+    v.sel.hasBoss = !!bz;
+    if (bz) {
+      var bt2 = BOSS_TEXT[n] || {};
+      v.sel.bossCardStyle = 'display:flex;align-items:center;gap:14px;width:100%;text-align:left;' +
+        'padding:13px 15px;margin-bottom:13px;cursor:pointer;background:' +
+        (beaten ? 'rgba(0,0,0,.25)' : 'rgba(233,179,65,.06)') +
+        ';border:1px solid ' + (beaten ? '#2E2822' : '#3A3026');
+      v.sel.bossArtStyle = 'flex:none;display:block;width:62px;height:62px;image-rendering:pixelated;' +
+        'background:url("' + bossSvg(bz, false) + '") center/contain no-repeat;' +
+        (beaten
+          ? 'opacity:.42;filter:grayscale(1);'
+          : 'animation:bossFloat 2.8s ease-in-out infinite,bossBreathe 4.4s ease-in-out infinite;');
+      v.sel.bossKicker = beaten ? '已擊退' : '守關生物';
+      v.sel.bossKickerColor = beaten ? '#5F574C' : '#8A8073';
+      v.sel.bossName = bz.name;
+      v.sel.bossNameColor = beaten ? '#5F574C' : bz.hue['#'];
+      v.sel.bossNote = beaten
+        ? (bt2.beat || '這一層已經過了。')
+        : (bt2.trait || '擋在層底。');
+      v.sel.bossMoreStyle = "flex:none;font:400 22px/1 'C11';color:#E9B341;" +
+        "border:1px solid #5A4A2C;padding:9px 13px;background:rgba(233,179,65,.07)";
+      v.sel.openBoss = function () {
+        L.setState({ specFrom: S.screen, screen: 'S06', specId: bz.name });
+      };
+    } else {
+      v.sel.bossCardStyle = 'display:none'; v.sel.bossArtStyle = ''; v.sel.bossKicker = '';
+      v.sel.bossKickerColor = ''; v.sel.bossName = ''; v.sel.bossNameColor = '';
+      v.sel.bossNote = ''; v.sel.bossMoreStyle = 'display:none';
+      v.sel.openBoss = function () {};
+    }
   }
 
   function decorateBoard(L, v) {
@@ -7920,10 +8101,7 @@ class Component extends DCLogic {
       }));
 
       m.steps = cells;
-      m.stepsStyle = 'position:absolute;left:var(--mcol);right:13px;bottom:9px;z-index:2;' +
-        'display:flex;align-items:flex-end;gap:3px;' +
-        'padding:5px 7px;background:rgba(6,5,4,.62);border-top:1px solid ' +
-        (n === cur ? 'rgba(233,179,65,.4)' : 'rgba(255,255,255,.07)');
+      m.stepsStyle = stripStyle(mob, n === cur);
       m.stepsTag = fog ? '？？？'
         : '第 ' + (base + 1) + '–' + (base + st.veinN) + ' 塊' +
           (n === cur ? '　·　採到 ' + st.gotN + '/' + st.veinN : st.cleared ? '　·　採完了' : '');
@@ -7936,24 +8114,34 @@ class Component extends DCLogic {
       var here = (L.teams() || []).filter(function (t) {
         return (t.layer || 1) === n && (!mine || t.id !== mine.id);
       });
-      m.others = here.map(function (t) {
-        var passedN = (t.passed || []).length;
-        return {
-          name: t.name,
-          meta: '停留 ' + (t.weeks || 1) + ' 週',
-          open: function () {
-            call('apiLogRead', LIVE.token, t.id).catch(function () {});
-            /* 隊伍詳情是靠 mapView，不是 screen —— 兩個都要設 */
-            L.setState({ mapTeam: t.id, mapView: 'team', screen: 'S03' });
-          },
-          style: 'display:inline-flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;' +
-            "font:400 11px/1 'C11';white-space:nowrap;background:rgba(6,5,4,.72);" +
-            'border:1px solid ' + (passedN ? '#5A4A2C' : '#3A3026') + ';color:#C3BAAA'
+      m.others = othersChips(L, n, here, function (t) {
+        return function () {
+          call('apiLogRead', LIVE.token, t.id).catch(function () {});
+          /* 隊伍詳情是靠 mapView，不是 screen —— 兩個都要設 */
+          L.setState({ mapTeam: t.id, mapView: 'team', screen: 'S03' });
         };
       });
-      m.hasOthers = m.others.length > 0;   /* 別組不上迷霧：你本來就看得到別人的營火 */
-      m.othersStyle = 'position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;max-width:58%';
-      m.othersNote = m.others.length + ' 組也在這一層';
+      /* 走在這一層通道上的人。自己踩在採到第幾塊那一格上；
+         別組平均散開——他們採到哪一塊不是給你看的。 */
+      m.runners = buildRunners(L, {
+        cellN: cells.length,
+        fog: fog,
+        mine: (n === cur && mine) ? mine : null,
+        myIdx: st.cleared ? cells.length - 1 : st.gotN,
+        others: here,
+        openTeam: function (t, isMe) {
+          return function () {
+            if (isMe) { L.go('S02'); return; }
+            call('apiLogRead', LIVE.token, t.id).catch(function () {});
+            L.setState({ mapTeam: t.id, mapView: 'team', screen: 'S03' });
+          };
+        },
+        openCrowd: function (list, sc) { crowdPage(L, n, list, sc); }
+      });
+
+      m.hasOthers = here.length > 0;   /* 別組不上迷霧：你本來就看得到別人的營火 */
+      m.othersStyle = 'position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;gap:5px;justify-content:flex-end;max-width:58%;overflow:hidden';
+      m.othersNote = here.length + ' 組也在這一層';
       m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;align-self:center;transform:scale(.86)";
     });
   }
