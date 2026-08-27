@@ -160,6 +160,7 @@
       return ok(adminOverview());
     },
     apiAdminSaveRoster: function (t, classId, text) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       auth(t);
       var lines = String(text || '').split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
       var teamByName = {};
@@ -195,8 +196,10 @@
       persist();
       return ok(Object.assign(adminOverview(), { roster: rosterView(classId), added: added, groups: groups }));
     },
-    apiAdminRoster: function (t, classId) { auth(t); return ok({ roster: rosterView(classId) }); },
+    apiAdminRoster: function (t, classId) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。'); auth(t); return ok({ roster: rosterView(classId) }); },
     apiAdminUnclaim: function (t, rosterId) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       auth(t);
       var r = DB.Roster.filter(function (x) { return x.rosterId === rosterId; })[0];
       if (!r) return err('找不到這一筆。');
@@ -206,6 +209,7 @@
       return ok(Object.assign(adminOverview(), { roster: rosterView(r.classId) }));
     },
     apiAdminDeleteRosterTeam: function (t, teamId) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       auth(t);
       var tm = teamById(teamId);
       if (!tm) return err('找不到這一組。');
@@ -217,11 +221,13 @@
       return ok(Object.assign(adminOverview(), { roster: rosterView(tm.classId) }));
     },
     apiMyRoster: function (t) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t);
       var view = rosterView(u.classId);
       return ok({ roster: view, hasRoster: view.length > 0 });
     },
     apiClaimIdentity: function (t, rosterId) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t);
       var r = DB.Roster.filter(function (x) { return x.rosterId === rosterId; })[0];
       if (!r) return err('找不到這個名字。');
@@ -232,8 +238,10 @@
       persist();
       return ok({ name: r.memberName, teamId: r.teamId });
     },
-    apiAdminOverview: function (t) { auth(t); return ok(adminOverview()); },
+    apiAdminOverview: function (t) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。'); auth(t); return ok(adminOverview()); },
     apiAdminCreateClass: function (t, name, term, start, weeks, sandbox) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       auth(t);
       if (!String(name || '').trim()) return err('請填班級名稱。');
       DB.Classes.push({ classId: 'k' + uid(), name: name, term: term || '', started: true,
@@ -242,6 +250,7 @@
       return ok(adminOverview());
     },
     apiAdminUpdateClass: function (t, classId, patch) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       auth(t);
       var kl = classById(classId);
       if (!kl) return err('找不到這個班級。');
@@ -279,6 +288,7 @@
       return ok(adminOverview());
     },
     apiAdminDeleteClass: function (t, classId, confirmName) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       auth(t);
       var kl = classById(classId);
       if (!kl) return err('找不到這個班級。');
@@ -312,6 +322,7 @@
       return ok(Object.assign(adminOverview(), { removed: { teams: teams.length, tasks: tasks.length } }));
     },
     apiAdminCreateUser: function (t, p) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       auth(t);
       p = p || {};
       if (['teacher', 'student'].indexOf(p.role) < 0) return err('身分要選老師或學生。');
@@ -328,6 +339,7 @@
       return ok(adminOverview());
     },
     apiAdminUpdateUser: function (t, userId, patch) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       auth(t);
       var u = DB.Users.filter(function (x) { return x.userId === userId; })[0];
       if (!u) return err('找不到這個帳號。');
@@ -343,6 +355,7 @@
       return ok(adminOverview());
     },
     apiAdminResetPassword: function (t, userId, pw) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       auth(t);
       if (String(pw || '').length < 4) return err('新密碼至少 4 個字。');
       var u = DB.Users.filter(function (x) { return x.userId === userId; })[0];
@@ -353,6 +366,7 @@
       return ok(adminOverview());
     },
     apiAdminDeleteUser: function (t, userId) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       var me = auth(t);
       if (me.userId === userId) return err('不能刪除自己。');
       DB.Users = DB.Users.filter(function (x) { return x.userId !== userId; });
@@ -386,6 +400,7 @@
       return ok({ teamId: id });
     },
     apiJoinTeam: function (t, teamId) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t), tm = teamById(teamId);
       if (!tm) return err('找不到這個小隊。');
       if (tm.members.indexOf(u.name) < 0) tm.members.push(u.name);
@@ -460,6 +475,7 @@
     },
 
     apiSubmitItem: function (t, taskId, text, files, reflect) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t);
       reflect = reflect || {};
       if (['fast', 'onpar', 'slow'].indexOf(reflect.effort) < 0) return err('先說一次實際花的力氣跟原本估的差多少。');
@@ -482,6 +498,7 @@
       return ok({ attempt: attempt });
     },
     apiUploadFile: function (t, taskId, name, mime, b64) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t);
       var size = Math.floor(String(b64 || '').length * 3 / 4);
       if (size > 10 * 1024 * 1024) return err('單檔上限 10 MB。');
@@ -503,6 +520,7 @@
       return ok({ name: f.name, mimeType: f.mimeType, dataUrl: 'data:' + f.mimeType + ';base64,' + f.body });
     },
     apiDeleteFile: function (t, fileId) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       auth(t);
       DB.Files = (DB.Files || []).filter(function (x) { return x.fileId !== fileId; });
       persist();
@@ -525,6 +543,7 @@
                   rejected: rounds.filter(function (x) { return x.result === "needfix"; }).length });
     },
     apiFinale: function (t, teamId) {
+      if (auth(t).role === 'researcher') return err('沒有權限。');
       var u = auth(t);
       var tid = (u.role === "student") ? u.teamId : (teamId || "");
       var tm = teamById(tid); if (!tm) return err("找不到這一組。");
@@ -564,6 +583,7 @@
                   totalSubs: subs.length, finale: f });
     },
     apiSaveFinale: function (t, a, submit) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t);
       DB.Finales = DB.Finales || [];
       var f = DB.Finales.filter(function (x) { return x.teamId === u.teamId; })[0];
@@ -575,6 +595,7 @@
       return ok();
     },
     apiOpenFinale: function (t, teamId, words) {
+      if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       var u = auth(t);
       if (u.role !== "teacher") return err("只有老師能放行。");
       var tm = teamById(teamId);
@@ -590,6 +611,7 @@
       return ok({ opened: true });
     },
     apiFinaleQueue: function (t) {
+      if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       var u = auth(t);
       if (u.role !== "teacher") return err("只有老師看得到這一份。");
       DB.Finales = DB.Finales || [];
@@ -605,6 +627,7 @@
       return ok({ list: list, courseWeek: w });
     },
     apiSavePlan: function (t, taskId, from, to) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t);
       var a = Math.max(1, Math.floor(+from||1)), b = Math.max(a, Math.floor(+to||a));
       var p = DB.Plans.filter(function (x) { return x.teamId === u.teamId && x.taskId === taskId; })[0];
@@ -614,6 +637,7 @@
       return ok();
     },
     apiSetSemesterWeeks: function (t, classId, weeks) {
+      if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       var k = classById(classId); if (k) k.semesterWeeks = Math.max(2, Math.min(156, Math.floor(+weeks||18)));
       persist();
@@ -639,6 +663,7 @@
       });
     },
     apiSubmitGate: function (t, cells) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t), tm = teamById(u.teamId);
       var miss = API._missReq(u.teamId) || [];
       var vn = API._vein(tm.classId, tm.layer, tm.teamId);
@@ -650,6 +675,7 @@
       return ok();
     },
     apiLogRead: function (t, target) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t), kl = classById(u.classId), w = courseWeekOf(kl);
       var me = teamById(u.teamId), tg = teamById(target);
       if (!me || !tg) return ok();
@@ -716,6 +742,7 @@
                   minNamesByTeam: API.minNamesByTeam(tm.classId) });
     },
     apiSaveSpecName: function (t, key, name) {
+      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t), tm = teamById(u.teamId);
       if (tm) { tm.specNames[key] = name; persist(); }
       return ok();
@@ -737,6 +764,7 @@
       return (MIN_BY_LAYER[layer] || []).filter(function (n) { return !used[n]; });
     },
     apiSaveTask: function (t, classId, task) {
+      if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       var id = task.id || ('tk' + uid());
       if (!String(task.mineral || '').trim()) task.mineral = (API.freeMin(classId, task.layer, id, API.cleanTeams(classId, task.teams)) || [])[0] || '';
@@ -749,6 +777,7 @@
       return ok({ taskId: id });
     },
     apiDeleteTask: function (t, taskId) {
+      if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       DB.Tasks = DB.Tasks.filter(function (x) { return x.taskId !== taskId; });
       DB.TeamTasks = DB.TeamTasks.filter(function (x) { return x.taskId !== taskId; });
@@ -756,6 +785,7 @@
       return ok();
     },
     apiPublishList: function (t, classId, layer, items) {
+      if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       (items || []).forEach(function (it) {
         var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer, null, API.cleanTeams(classId, it.teams)) || [])[0] || '';
@@ -767,6 +797,7 @@
       return ok();
     },
     apiReviewItem: function (t, teamId, taskId, result, reason) {
+      if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       var tm = teamById(teamId), kl = classById(tm.classId), w = courseWeekOf(kl);
       var pass = result === 'pass';
@@ -787,6 +818,7 @@
       return ok();
     },
     apiReviewGate: function (t, teamId, pass, toolLevel, reason) {
+      if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       var tm = teamById(teamId), kl = classById(tm.classId), w = courseWeekOf(kl);
       if (pass) {
@@ -827,6 +859,7 @@
     },
 
     apiResearchSlice: function (t) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       var u = auth(t);
       var w = 1;
       DB.Classes.forEach(function (k) { w = Math.max(w, courseWeekOf(k)); });
@@ -867,6 +900,7 @@
       });
     },
     apiSaveCode: function (t, revId, code) {
+      if (auth(t).role !== 'researcher') return err('這個動作只有研究者可以做。');
       var u = auth(t);
       var c = DB.Codes.filter(function (x) { return x.revId === revId && x.coder === (u.coder || 'C1'); })[0];
       if (c) c.code = code; else DB.Codes.push({ revId: revId, coder: u.coder || 'C1', code: code });
@@ -891,8 +925,10 @@
         var args = arguments;
         setTimeout(function () {
           var out;
+          /* 真後端每一支都包 try/catch 回 { ok:false }，這裡照做，
+             不然假 token 之類的會變成 reject，前端的處理路徑就不一樣了 */
           try { out = API[fn].apply(null, args); }
-          catch (e) { f(e); return; }
+          catch (e) { out = { ok: false, error: String((e && e.message) || e) }; }
           s(out);
         }, 60);
       };
