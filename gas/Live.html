@@ -1731,6 +1731,82 @@
 
   /* 老師端的地圖剖面：他看的是自己開的清單鋪滿了沒，以及全班走到哪。
      跟學生端共用同一套視覺，但狀態來源不同——老師沒有「我採到幾塊」。 */
+  /* 層底那一格：BOSS 與「關卡」本來就是同一件事——這一層的出口。
+     行為完全一樣（判斷過不過得去），差別只在還沒打贏時畫的是那隻生物。
+     學生端與老師端共用這一個定義，不要再分兩套。
+
+     o.fog      還沒抵達（老師端沒有迷霧）
+     o.here     這是不是「現在該處理」的那一層
+     o.blocked  回傳擋住的原因；空字串＝過得去
+     o.onPass   過得去的時候要做什麼
+     o.say      要說話的時候用哪一個 */
+  function endCell(L, n, st, o) {
+    o = o || {};
+    var fog = !!o.fog;
+    var bz = bossOf(n);
+    var showBoss = !!bz && !st.cleared;          /* 打贏了就換回打勾的關 */
+    var awake = !fog && st.complete && !st.cleared;
+    var bt = (bz && BOSS_TEXT[bz.L]) || {};
+    var hue = BOARD_HUE[n - 1];
+    var mob = L.state.device === 'mobile';
+    var say = o.say || function (m) { L.say(m); };
+
+    var open = function () {
+      if (fog) { say(showBoss ? '還沒到那一層。牠現在只是一個影子。' : '還沒到那一層。'); return; }
+      if (o.here === false) { say('這不是你現在這一層。'); return; }
+      var why = typeof o.blocked === 'function' ? o.blocked() : '';
+      if (why) {
+        /* 擋住的時候讓那隻生物先說一句，再講原因 */
+        say((showBoss && bt.line ? '「' + bt.line + '」　' : '') + why);
+        return;
+      }
+      if (o.onPass) o.onPass();
+    };
+
+    if (showBoss) {
+      return {
+        idx: '', sub: '', mark: '',
+        name: fog ? '？？？' : bz.name,
+        open: open,
+        /* 這是這一層的頭目：畫得比礦石大一截，而且探出通道條之上 */
+        dotStyle: 'display:block;width:100%;height:' + (mob ? 44 : 58) + 'px;' +
+          'margin-top:-' + (mob ? 24 : 34) + 'px;image-rendering:pixelated;' +
+          'background:url("' + bossSvg(bz, fog) + '") bottom center/contain no-repeat;' +
+          (fog
+            ? 'opacity:.4;animation:bossBreathe 5.2s ease-in-out infinite;'
+            : awake
+              ? 'animation:bossLoom .5s cubic-bezier(.2,.9,.3,1) both,' +
+                'bossFloat 2.8s ease-in-out infinite .5s,bossGlow 3.4s ease-in-out infinite .5s;'
+              : 'opacity:.85;filter:brightness(' + (o.dim || '.55') + ');' +
+                'animation:bossBreathe 4.4s ease-in-out infinite;'),
+        nameStyle: "display:block;font:600 11px/1.2 'C11';margin-top:4px;text-align:center;transform:scale(.8);" +
+          'letter-spacing:.06em;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.9);color:' +
+          (awake ? '#FFD98A' : fog ? '#3A322A' : '#9A9184'),
+        style: 'flex:0 0 auto;min-width:' + (mob ? 46 : 62) + 'px;display:flex;flex-direction:column;' +
+          'align-items:center;justify-content:flex-end;cursor:pointer;pointer-events:auto;position:relative;z-index:3'
+      };
+    }
+
+    return {
+      idx: '', sub: '',
+      name: fog ? '？？？' : '關卡',
+      mark: st.cleared ? '✓' : st.complete ? '◉' : '關',
+      open: open,
+      dotStyle: 'display:flex;align-items:center;justify-content:center;width:100%;height:20px;' +
+        "font:700 11px/1 'C11';transform:scale(.85);" +
+        'color:' + (st.cleared || st.complete ? '#0B0A09' : fog ? '#3A3026' : hue) + ';' +
+        'border:1px solid ' + (st.cleared || st.complete ? '#FFD98A' : fog ? '#2A251F' : hue) + ';' +
+        'background:' + (st.cleared ? 'rgba(' + hexRgb(hue) + ',.9)' : st.complete ? '#E9B341'
+          : fog ? 'rgba(0,0,0,.55)' : 'rgba(' + hexRgb(hue) + ',.2)') + ';' +
+        (st.complete && !st.cleared ? 'box-shadow:0 0 12px rgba(233,179,65,.8);' : '') +
+        'clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);',
+      nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
+        'white-space:nowrap;color:' + (st.cleared || st.complete ? '#FFD98A' : fog ? '#332C25' : '#8A8073'),
+      style: 'flex:0 0 auto;min-width:34px;display:flex;flex-direction:column;align-items:center;' +
+        'cursor:pointer;pointer-events:auto'
+    };
+  }
+
   /* 微光荒原是地表那一層，所以它照現實時間有晝夜。
      地下四層不會變——洞窟裡本來就沒有天色。
      只改天色的疊層，場景圖本身不動。 */
@@ -1866,33 +1942,18 @@
         };
       });
 
-      /* 層底的守關生物：老師沒有迷霧，四隻都看得到 */
-      var bz = bossOf(n);
-      if (bz) {
-        var bt = BOSS_TEXT[n] || {};
-        var beaten = st.cleared;
-        var ready = !beaten && st.openedN >= st.vein.length && st.vein.length > 0;
-        cells.push({
-          idx: "", name: bz.name, sub: "", mark: "",
-          open: function () {
-            L.setState({ specFrom: S.screen, screen: "S06", specId: bz.name });
-          },
-          dotStyle: "display:block;width:100%;height:" + (mob ? 44 : 58) + "px;" +
-            "margin-top:-" + (mob ? 24 : 34) + "px;image-rendering:pixelated;" +
-            "background:url(\"" + bossSvg(bz, false) + "\") bottom center/contain no-repeat;" +
-            (beaten
-              ? "opacity:.3;filter:grayscale(1);"
-              : ready
-                ? "animation:bossFloat 2.8s ease-in-out infinite,bossGlow 3.4s ease-in-out infinite;"
-                : "opacity:.9;filter:brightness(.7);animation:bossBreathe 4.4s ease-in-out infinite;"),
-          nameStyle: "display:block;font:600 11px/1.2 'C11';margin-top:4px;text-align:center;" +
-            "transform:scale(.8);letter-spacing:.06em;white-space:nowrap;" +
-            "text-shadow:0 1px 3px rgba(0,0,0,.9);color:" +
-            (beaten ? "#5F574C" : ready ? "#FFD98A" : "#9A9184"),
-          style: "flex:0 0 auto;min-width:" + (mob ? 46 : 62) + "px;display:flex;flex-direction:column;" +
-            "align-items:center;justify-content:flex-end;cursor:pointer;pointer-events:auto;position:relative;z-index:3"
-        });
-      }
+      /* 層底那一格：跟學生端共用 endCell。老師沒有迷霧，
+         而且他不是要過關的人——點下去是看那隻生物的介紹。 */
+      cells.push(endCell(L, n, { cleared: st.cleared, complete: st.openedN >= st.vein.length && st.vein.length > 0 }, {
+        fog: false,
+        dim: '.7',
+        blocked: function () { return ''; },
+        onPass: function () {
+          var b2 = bossOf(n);
+          if (b2) { L.setState({ specFrom: S.screen, screen: 'S06', specId: b2.name }); return; }
+          L.setState({ screen: 'T02', editLayer: n });
+        }
+      }));
 
       m.steps = cells;
       m.stepsStyle = "position:absolute;left:var(--mcol);right:13px;bottom:9px;z-index:2;" +
@@ -1990,61 +2051,13 @@
         };
       });
 
-      /* 層底：前四層有守關生物擋著，過了牠就消失，格子換回打勾的關 */
-      var bz = bossOf(n);
-      if (bz && !st.cleared) {
-        var awake = !fog && st.complete;      /* 採齊了，牠醒著擋在面前 */
-        var bt = BOSS_TEXT[bz.L] || {};
-        cells.push({
-          idx: '',
-          name: fog ? '？？？' : bz.name,
-          sub: '',
-          mark: '',
-          open: function () {
-            if (fog) { L.say('還沒到那一層。牠現在只是一個影子。'); return; }
-            if (n !== cur) { L.say('這不是你現在這一層。'); return; }
-            var why = layerState(L).blockReason;
-            if (why) { L.say((bt.line ? '「' + bt.line + '」　' : '') + why); return; }
-            L.go('SUB');
-          },
-          /* 這是這一層的頭目：畫得比礦石大一截，而且探出通道條之上 */
-          dotStyle: 'display:block;width:100%;height:' + (mob ? 44 : 58) + 'px;' +
-            'margin-top:-' + (mob ? 24 : 34) + 'px;image-rendering:pixelated;' +
-            'background:url("' + bossSvg(bz, fog) + '") bottom center/contain no-repeat;' +
-            (fog
-              ? 'opacity:.4;animation:bossBreathe 5.2s ease-in-out infinite;'
-              : awake
-                ? 'animation:bossLoom .5s cubic-bezier(.2,.9,.3,1) both,' +
-                  'bossFloat 2.8s ease-in-out infinite .5s,bossGlow 3.4s ease-in-out infinite .5s;'
-                : 'opacity:.85;filter:brightness(.55);animation:bossBreathe 4.4s ease-in-out infinite;'),
-          nameStyle: "display:block;font:600 11px/1.2 'C11';margin-top:4px;text-align:center;transform:scale(.8);" +
-            'letter-spacing:.06em;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.9);color:' +
-            (awake ? '#FFD98A' : fog ? '#3A322A' : '#9A9184'),
-          style: 'flex:0 0 auto;min-width:' + (mob ? 46 : 62) + 'px;display:flex;flex-direction:column;' +
-            'align-items:center;justify-content:flex-end;cursor:pointer;pointer-events:auto;position:relative;z-index:3'
-        });
-      } else
-      cells.push({
-        idx: '', name: fog ? '？？？' : '關卡', sub: '',
-        mark: st.cleared ? '✓' : st.complete ? '◉' : '關',
-        open: function () {
-          if (n !== cur) { L.say(fog ? '還沒到那一層。' : '這不是你現在這一層。'); return; }
-          var why = layerState(L).blockReason;
-          if (why) { L.say(why); return; }
-          L.go('SUB');
-        },
-        dotStyle: 'display:flex;align-items:center;justify-content:center;width:100%;height:20px;' +
-          "font:700 11px/1 'C11';transform:scale(.85);" +
-          'color:' + (st.cleared ? '#0B0A09' : st.complete ? '#0B0A09' : fog ? '#3A3026' : hue) + ';' +
-          'border:1px solid ' + (st.cleared || st.complete ? '#FFD98A' : fog ? '#2A251F' : hue) + ';' +
-          'background:' + (st.cleared ? 'rgba(' + hexRgb(hue) + ',.9)' : st.complete ? '#E9B341'
-            : fog ? 'rgba(0,0,0,.55)' : 'rgba(' + hexRgb(hue) + ',.2)') + ';' +
-          (st.complete && !st.cleared ? 'box-shadow:0 0 12px rgba(233,179,65,.8);' : '') +
-          'clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);',
-        nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
-          'white-space:nowrap;color:' + (st.cleared || st.complete ? '#FFD98A' : fog ? '#332C25' : '#8A8073'),
-        style: 'flex:0 0 auto;min-width:34px;display:flex;flex-direction:column;align-items:center;cursor:pointer;pointer-events:auto'
-      });
+      /* 層底那一格：BOSS 與關卡是同一件事，共用 endCell */
+      cells.push(endCell(L, n, st, {
+        fog: fog,
+        here: n === cur,
+        blocked: function () { return layerState(L).blockReason; },
+        onPass: function () { L.go('SUB'); }
+      }));
 
       m.steps = cells;
       m.stepsStyle = 'position:absolute;left:var(--mcol);right:13px;bottom:9px;z-index:2;' +
