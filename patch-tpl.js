@@ -2749,5 +2749,14 @@ must('                <div>\n                  <div style="font:500 22px/1 \'C11
 '                <div>',
 '                  <div style="font:500 22px/1 \'C11\';margin-bottom:4px">要交的檔案與規格</div>'].join('\n'));
 
+/* 38. 生物還沒擊退時，明說還有東西沒揭曉 */
+must([
+'                  <sc-if value="{{ hasSpecRelated }}" hint-placeholder-val="{{ true }}">'].join('\n'),
+[
+'                  <sc-if value="{{ hasBossLocked }}" hint-placeholder-val="{{ false }}">',
+'                    <div style="{{ bossLockedStyle }}">{{ bossLockedNote }}</div>',
+'                  </sc-if>',
+'                  <sc-if value="{{ hasSpecRelated }}" hint-placeholder-val="{{ true }}">'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

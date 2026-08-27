@@ -3252,40 +3252,54 @@
   /* 收藏總覽多一組：守關生物。學生擊退才解鎖，老師端全開 */
   function addBossCodex(L, v) {
     var S = L.state;
-  /* 收藏總覽再加一組：擋在每一層路上的東西。擊退了才點得進去 */
+  /* 收藏總覽再加一組：擋在每一層路上的東西。三段式——
+       沒遇到 → 灰影，點不了
+       遇過了 → 顯現出來，點得進去，但只讀得到名字與介紹
+       擊退了 → 全部揭曉（剋牠的道具、牠說的話、擊退的那一刻） */
   if (v.collSections && v.collSections.length) {
     var openAll = S.role === 'teacher';
     var beaten = S.passed || [];
+    var here = S.currentLayer || 1;
     var items = BOSSES.map(function (b) {
-      var got = openAll || beaten.indexOf(b.L) >= 0;
+      var down = openAll || beaten.indexOf(b.L) >= 0;
+      var seen = down || here >= b.L;          /* 走到那一層就算遇過 */
       var lay = L.LAYERS[b.L - 1] || {};
       return {
-        name: got ? b.name : '？？？',
-        got: got,
-        sub: got ? lay.code + ' · 已擊退' : (lay.code || ('L' + b.L)),
-        open: got
+        name: seen ? b.name : '？？？',
+        got: seen,
+        sub: down ? lay.code + ' · 已擊退'
+           : seen ? lay.code + ' · 擋在前方'
+           : (lay.code || ('L' + b.L)),
+        open: seen
           ? function () { L.setState({ specFrom: S.screen, screen: 'S06', specId: b.name }); }
           : function () { L.say('還沒走到那一層。牠現在只是一個影子。'); },
-        style: 'padding:12px 8px;text-align:center;font:inherit;cursor:' + (got ? 'pointer' : 'default') +
-          ';background:' + (got ? 'rgba(233,179,65,.05)' : 'radial-gradient(circle at 50% 40%,rgba(233,179,65,.05),transparent 70%)') +
-          ';border:1px ' + (got ? 'solid #3A3026' : 'dashed #2C251D') + ';color:' + (got ? '#E8E2D6' : '#8C8172'),
-        glyphStyle: 'display:block;width:44px;height:44px;margin:0 auto;image-rendering:pixelated;' +
-          'background:url("' + bossSvg(b, !got, true) + '") center/contain no-repeat;' +
-          (got
-            ? 'animation:bossFloat 3.4s ease-in-out infinite'
-            : 'opacity:.5')
+        style: 'padding:12px 8px;text-align:center;font:inherit;cursor:' + (seen ? 'pointer' : 'default') +
+          ';background:' + (down ? 'rgba(233,179,65,.05)'
+            : seen ? 'rgba(233,179,65,.03)'
+            : 'rgba(0,0,0,.22)') +
+          ';border:1px ' + (down ? 'solid #3A3026' : seen ? 'solid #2C251D' : 'dashed #2C251D') +
+          ';color:' + (seen ? '#E8E2D6' : '#8C8172'),
+        glyphStyle: seen
+          ? 'display:block;width:44px;height:44px;margin:0 auto;image-rendering:pixelated;' +
+            'background:url("' + bossSvg(b, false, true) + '") center/contain no-repeat' +
+            (down ? '' : ';opacity:.88')
+          : ghostSprite(bossSvg(b, false, true), 44)
       };
     });
-    var beatN = items.filter(function (x) { return x.got; }).length;
+    var seenN = items.filter(function (x) { return x.got; }).length;
+    var beatN = openAll ? items.length
+      : items.filter(function (x) { return beaten.indexOf(BOSSES[items.indexOf(x)].L) >= 0; }).length;
     v.collSections = v.collSections.concat([{
       title: '守關生物',
       note: openAll
-        ? '前四層各一隻，是那一層難處的化身。學生擊退之後才讀得到介紹；老師端不上鎖。'
-        : '前四層各一隻，擋在往下的路上。牠長得就是那一層最難的那件事——擊退之後才看得到牠到底是什麼。第五層沒有：那一層擋你的是你自己。',
-      have: openAll ? '共 ' + items.length + ' 隻' : '已擊退 ' + beatN + ' 隻',
+        ? '前四層各一隻，是那一層難處的化身。老師端不上鎖，全部可讀。'
+        : '前四層各一隻，擋在往下的路上。走到那一層就看得到牠是誰；' +
+          '牠為什麼難、要用什麼打——擊退之後才知道。',
+      have: openAll ? '共 ' + items.length + ' 隻' : '遇過 ' + seenN + ' 隻',
       items: items
     }]);
   }
+
 
     /* S-06 各欄的標題平常用原本的說法 */
     v.specFuncLabel = '功能';
@@ -3328,39 +3342,55 @@
       }
     }
 
-    /* S-06 進到生物那一頁：原型不認得這個名字，整頁自己填 */
+    /* S-06 進到生物那一頁：原型不認得這個名字，整頁自己填。
+       遇過的只給名字與介紹（牠是什麼）；擊退之後才揭曉其餘
+       （剋牠的道具、牠說的話、擊退的那一刻）——那些是打贏的報酬。 */
     if (S.screen === 'S06' && S.specId && bossByName(S.specId)) {
       var bs = bossByName(S.specId);
       var bt = BOSS_TEXT[bs.L] || {};
       var blay = L.LAYERS[bs.L - 1] || {};
       var down = (S.passed || []).indexOf(bs.L) >= 0 || S.role === 'teacher';
-      v.specName = bs.name;
+      var seen = down || (S.currentLayer || 1) >= bs.L;
+
+      v.specName = seen ? bs.name : '？？？';
       v.specKind = '守關生物';
-      v.specLook = bt.look || '';
-      v.specTrait = bt.trait || '';
-      v.hasTrait = !!bt.trait;
-      v.specFunc = bt.weapon || '';
-      v.specAbility = bt.why || '';
-      v.hasFunc = !!bt.weapon;
-      v.specLine = '「' + (bt.line || '') + '」';
-      v.hasLine = !!bt.line;
-      v.specNotice = bt.beat || '';
-      v.hasNotice = !!bt.beat;
+      v.specLook = seen ? (bt.look || '') : '還沒走到那一層。牠在那裡，但你還沒看清楚。';
+      v.specTrait = seen ? (bt.trait || '') : '';
+      v.hasTrait = seen && !!bt.trait;
+
+      /* 以下三段是擊退之後的報酬 */
+      v.specFunc = down ? (bt.weapon || '') : '';
+      v.specAbility = down ? (bt.why || '') : '';
+      v.hasFunc = down && !!bt.weapon;
+      v.specLine = down ? '「' + (bt.line || '') + '」' : '';
+      v.hasLine = down && !!bt.line;
+      v.specNotice = down ? (bt.beat || '') : '';
+      v.hasNotice = down && !!bt.beat;
+
       v.specRec = ''; v.hasRec = false; v.specUnnamed = false;
       v.specFrom = (blay.name || ('第 ' + bs.L + ' 層')) + ' 深處';
-      v.specDate = down ? '已擊退' : '—';
+      v.specDate = down ? '已擊退' : seen ? '擋在你前面' : '還沒遇到';
       v.specFuncLabel = '剋牠的道具';
       v.specAbilityLabel = '為什麼剋得住';
       v.specLineLabel = '牠說的話';
       v.specNoticeLabel = '擊退的那一刻';
       v.specFromLabel = '牠守在哪裡';
       v.specDateLabel = '狀態';
-      v.specGlyphStyle = 'display:block;width:150px;height:150px;flex:none;image-rendering:pixelated;' +
-        'background:radial-gradient(circle at 50% 42%,' + bs.hue['#'] + '22,transparent 70%),url("' +
-        bossSvg(bs, !down) + '") center/contain no-repeat;' +
-        (down
-          ? 'animation:bossFloat 3.6s ease-in-out infinite;'
-          : 'opacity:.75;');
+
+      /* 還沒擊退的話，明說還有東西沒揭曉——那是收集的動力 */
+      v.hasBossLocked = seen && !down;
+      v.bossLockedNote = '擊退牠之後，這裡會多出三件事：用什麼打倒牠的、牠說了什麼、' +
+        '以及牠倒下的那一刻你看到什麼。';
+      v.bossLockedStyle = 'padding:13px 16px;background:rgba(0,0,0,.3);border-left:2px solid #3A3026;' +
+        "font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty";
+
+      v.specGlyphStyle = seen
+        ? 'display:block;width:150px;height:150px;flex:none;image-rendering:pixelated;' +
+          'background:radial-gradient(circle at 50% 42%,' + bs.hue['#'] + '22,transparent 70%),url("' +
+          bossSvg(bs, false) + '") center/contain no-repeat;' + (down ? '' : 'opacity:.9;')
+        : ghostSprite(bossSvg(bs, false, true), 150);
+    } else {
+      v.hasBossLocked = false; v.bossLockedNote = ''; v.bossLockedStyle = '';
     }
   }
 

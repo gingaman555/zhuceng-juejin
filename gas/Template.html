@@ -1285,6 +1285,9 @@
                     <div><div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ specFromLabel }}</div><div style="font:500 22px/1.5 'C11';margin-top:6px">{{ specFrom }}</div></div>
                     <div><div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ specDateLabel }}</div><div style="font:500 22px/1.5 'C11';margin-top:6px">{{ specDate }}</div></div>
                   </div>
+                  <sc-if value="{{ hasBossLocked }}" hint-placeholder-val="{{ false }}">
+                    <div style="{{ bossLockedStyle }}">{{ bossLockedNote }}</div>
+                  </sc-if>
                   <sc-if value="{{ hasSpecRelated }}" hint-placeholder-val="{{ true }}">
                     <div style="padding-top:15px;border-top:1px solid #221E19">
                       <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">{{ specRelatedLabel }}</div>
