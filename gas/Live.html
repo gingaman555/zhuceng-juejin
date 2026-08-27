@@ -266,7 +266,8 @@
       teamState: {}, otherSubs: [], teamTasks: b.teamTasks || {}, gates: b.gates || [],
       authError: '', busy: false
     };
-    next.minNames = b.minNames || {};   /* 老師改過的拆分名稱 */
+    next.minNames = b.minNames || {};              /* 這一組的拆分名稱（學生） */
+    if (b.minNamesByTeam) next.minNamesByTeam = b.minNamesByTeam;   /* 每一組一份（老師） */
     (b.teams || []).forEach(function (t) {
       next.teamState[t.id] = { layer: t.layer, weeks: t.weeks, passed: t.passed };
     });
@@ -2006,10 +2007,19 @@
   };
   var MINS_TOTAL = 17;
 
+  /* 老師改過的拆分名稱要套哪一份：
+     學生看自己那一組的；老師看他在 T-05 選到的那一組。 */
+  function activeMinNames(L) {
+    var S = (L && L.state) || {};
+    if (S.role === "student") return S.minNames || {};
+    var byTeam = S.minNamesByTeam || {};
+    return byTeam[S.minTeam] || {};
+  }
+
   function trimMinerals(L) {
     if (!L || !L.MINS) return;
-    /* 老師照自己的規劃改過拆分名稱的話，套上去。改了就要重算。 */
-    var names = (L.state && L.state.minNames) || {};
+    /* 老師照每一組的狀況改過拆分名稱的話，套上去。改了就要重算。 */
+    var names = activeMinNames(L);
     var stamp = JSON.stringify(names);
     if (L.MINS.__trimmed && L.MINS.__names === stamp) return;
     if (L.MINS.__trimmed) {
@@ -3008,9 +3018,31 @@
 
     /* 老師照自己的規劃改這一層的拆分名稱。礦石本身不動，改的是它對應的工作。 */
     (function () {
-      var names = S.minNames || {};
+      /* 一組一份：先選要改哪一組，沒選就先預設第一組 */
+      var teamList = (L.teams() || []);
+      var pickTeam = S.minTeam || (teamList[0] || {}).id || "";
+      if (pickTeam !== S.minTeam) setTimeout(function () { L.setState({ minTeam: pickTeam }); }, 0);
+      var byTeam = S.minNamesByTeam || {};
+      var names = byTeam[pickTeam] || {};
+      var curTeam = teamList.filter(function (t) { return t.id === pickTeam; })[0] || {};
+
+      v.minTeamPicks = teamList.map(function (t) {
+        var on = t.id === pickTeam;
+        var n = Object.keys(byTeam[t.id] || {}).length;
+        return {
+          label: t.name + (n ? "（改了 " + n + " 塊）" : ""),
+          pick: function () { L.setState({ minTeam: t.id, minRename: "" }); },
+          style: "font:500 22px/1 'C11';padding:9px 13px;white-space:nowrap;cursor:pointer;background:" +
+            (on ? "rgba(233,179,65,.14)" : "rgba(0,0,0,.26)") + ";border:1px solid " +
+            (on ? "#E9B341" : "#2E2822") + ";color:" + (on ? "#E9B341" : "#8A8073")
+        };
+      });
+      v.hasMinTeams = v.minTeamPicks.length > 0;
+      v.minTeamNote = curTeam.name
+        ? "現在改的是「" + curTeam.name + "」。只有這一組看得到，別組不受影響。"
+        : "這一班還沒有組別。先貼名單才能分組改名稱。";
+
       var openOne = S.minRename || '';
-      var f2 = S.admForm || {};
       var val = function (mn, key, dflt) {
         var k = 'mn_' + mn + '_' + key;
         var cur = (L.state.minForm || {})[k];
@@ -3025,7 +3057,7 @@
         };
       };
 
-      v.veinRenameNote = '系統的拆分只是預設。跟你的規劃不一樣的話，改成你自己的說法——' +
+      v.veinRenameNote = '系統的拆分只是預設。哪一組的專案跟它對不上，就照那一組的狀況改——' +
         '學生那邊的地圖、圖鑑、任務清單都會跟著改。礦石本身（' + '定名石、裂晶那些' + '）不會變。';
 
       v.veinRenames = veinAll.map(function (m) {
@@ -3057,11 +3089,13 @@
           save: function () {
             var lb = val(m.name, 'label', o.label || '');
             var nt = val(m.name, 'note', o.note || '');
-            call('apiSetMineralName', LIVE.token, kid, m.name, lb, nt)
+            call('apiSetMineralName', LIVE.token, pickTeam, m.name, lb, nt)
               .then(function (r) {
                 if (!r || !r.ok) { L.say((r && r.error) || '存不起來。'); return; }
-                L.setState({ minNames: r.minNames || {}, minRename: '' });
-                L.say(lb ? '「' + m.name + '」改叫「' + lb + '」了。' : '改回系統預設了。');
+                L.setState({ minNamesByTeam: r.minNamesByTeam || {}, minRename: '' });
+                L.say(lb
+                  ? '「' + curTeam.name + '」的「' + m.name + '」改叫「' + lb + '」了。'
+                  : '改回系統預設了。');
               })
               .catch(function (e) { L.say(e.message); });
           },
@@ -3070,11 +3104,11 @@
             n['mn_' + m.name + '_label'] = '';
             n['mn_' + m.name + '_note'] = '';
             L.setState({ minForm: n });
-            call('apiSetMineralName', LIVE.token, kid, m.name, '', '')
+            call('apiSetMineralName', LIVE.token, pickTeam, m.name, '', '')
               .then(function (r) {
                 if (!r || !r.ok) { L.say((r && r.error) || '改不回去。'); return; }
-                L.setState({ minNames: r.minNames || {}, minRename: '' });
-                L.say('改回系統預設了。');
+                L.setState({ minNamesByTeam: r.minNamesByTeam || {}, minRename: '' });
+                L.say('「' + curTeam.name + '」的這一塊改回系統預設了。');
               })
               .catch(function (e) { L.say(e.message); });
           }

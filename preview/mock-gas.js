@@ -405,7 +405,8 @@
       var defs = tasksOfClass(classId);
       var out = { user: pub(u), classes: classes, classId: classId, courseWeek: w,
                   joinCode: kl ? kl.joinCode : '', teams: allTeams, taskDefs: defs,
-                  minNames: API.minNamesOf(classId) };
+                  minNames: API.minNamesOf(u.teamId || ''),
+                  minNamesByTeam: u.role !== 'student' ? API.minNamesByTeam(classId) : undefined };
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
         var me = teamById(u.teamId);
@@ -653,29 +654,42 @@
       persist();
       return ok();
     },
-    minNamesOf: function (classId) {
+    minNamesOf: function (teamId) {
       var out = {};
+      if (!teamId) return out;
       (DB.MinNames || []).forEach(function (r) {
-        if (String(r.classId) !== String(classId)) return;
+        if (String(r.teamId) !== String(teamId)) return;
         out[String(r.mineral)] = { label: String(r.label || ''), note: String(r.note || '') };
       });
       return out;
     },
-    apiSetMineralName: function (t, classId, mineral, label, note) {
+    minNamesByTeam: function (classId) {
+      var mine = {};
+      DB.Teams.forEach(function (t) { if (String(t.classId) === String(classId)) mine[String(t.teamId)] = {}; });
+      (DB.MinNames || []).forEach(function (r) {
+        var tid = String(r.teamId);
+        if (!mine[tid]) return;
+        mine[tid][String(r.mineral)] = { label: String(r.label || ''), note: String(r.note || '') };
+      });
+      return mine;
+    },
+    apiSetMineralName: function (t, teamId, mineral, label, note) {
       var u = auth(t);
       if (u.role !== 'teacher' && u.role !== 'researcher') return err('只有老師可以改拆分名稱。');
-      if (!classById(classId)) return err('找不到這個班級。');
+      var tm = teamById(teamId);
+      if (!tm) return err('找不到這一組。');
       var name = String(mineral || '').trim();
       if (!name) return err('要改哪一塊？');
       var lb = String(label || '').trim(), nt = String(note || '').trim();
       if (lb.length > 40) return err('工作名稱請控制在 40 個字以內。');
       if (nt.length > 200) return err('說法請控制在 200 個字以內。');
       DB.MinNames = (DB.MinNames || []).filter(function (r) {
-        return !(String(r.classId) === String(classId) && String(r.mineral) === name);
+        return !(String(r.teamId) === String(teamId) && String(r.mineral) === name);
       });
-      if (lb || nt) DB.MinNames.push({ classId: classId, mineral: name, label: lb, note: nt });
+      if (lb || nt) DB.MinNames.push({ teamId: teamId, mineral: name, label: lb, note: nt });
       persist();
-      return ok({ minNames: API.minNamesOf(classId) });
+      return ok({ teamId: teamId, minNames: API.minNamesOf(teamId),
+                  minNamesByTeam: API.minNamesByTeam(tm.classId) });
     },
     apiSaveSpecName: function (t, key, name) {
       var u = auth(t), tm = teamById(u.teamId);

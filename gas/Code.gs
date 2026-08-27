@@ -49,7 +49,7 @@ var SHEET_DEFS = {
   Reads:       ['readId', 'readerTeam', 'targetTeam', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected', 'ts'],
   Codes:       ['revId', 'coder', 'code', 'ts'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
-  MinNames:    ['classId', 'mineral', 'label', 'note']
+  MinNames:    ['teamId', 'mineral', 'label', 'note']
 };
 
 function ss_() {
@@ -1224,8 +1224,10 @@ function apiBootstrap(token) {
       user: pubUser_(u), classes: classes, classId: classId,
       courseWeek: courseWeek, joinCode: kl ? kl.joinCode : '',
       teams: allTeams, taskDefs: defs, serverTime: new Date().toISOString(),
-      minNames: minNamesOf_(classId)   /* 老師改過的拆分名稱 */
+      minNames: minNamesOf_(u.teamId || '')   /* 這一組的拆分名稱 */
     };
+
+    if (u.role !== 'student') out.minNamesByTeam = minNamesByTeam_(classId);
 
     if (u.role === 'student') {
       var me = teamById_(u.teamId);
@@ -1656,27 +1658,45 @@ function apiSaveSpecName(token, key, name) {
 }
 
 /** 這一班的拆分改名：mineral 是礦石名（固定），label 是老師自己的工作名稱。 */
-function minNamesOf_(classId) {
+/** 某一組的拆分名稱。老師可以照每一組的專案狀況分別命名。 */
+function minNamesOf_(teamId) {
   var out = {};
+  if (!teamId) return out;
   readTable_('MinNames').forEach(function (r) {
-    if (String(r.classId) !== String(classId)) return;
+    if (String(r.teamId) !== String(teamId)) return;
     out[String(r.mineral)] = { label: String(r.label || ''), note: String(r.note || '') };
   });
   return out;
+}
+
+/** 這一班每一組各自的拆分名稱，老師端要一次拿到。 */
+function minNamesByTeam_(classId) {
+  var mine = {};
+  readTable_('Teams').forEach(function (t) {
+    if (String(t.classId) === String(classId)) mine[String(t.teamId)] = {};
+  });
+  readTable_('MinNames').forEach(function (r) {
+    var tid = String(r.teamId);
+    if (!mine[tid]) return;
+    mine[tid][String(r.mineral)] = { label: String(r.label || ''), note: String(r.note || '') };
+  });
+  return mine;
 }
 
 /**
  * 老師改這一層某一塊礦石對應的工作名稱與說法。
  * label 留空＝改回系統預設。
  */
-function apiSetMineralName(token, classId, mineral, label, note) {
+function apiSetMineralName(token, teamId, mineral, label, note) {
   try {
     var u = auth_(token);
     if (u.role !== 'teacher' && u.role !== 'researcher') return err_('只有老師可以改拆分名稱。');
-    var kl = classById_(classId);
+    var tm = teamById_(teamId);
+    if (!tm) return err_('找不到這一組。');
+    var kl = classById_(tm.classId);
     if (!kl) return err_('找不到這個班級。');
     if (u.role === 'teacher' && String(kl.teacherId) !== String(u.userId) &&
-        String(u.classId) !== String(classId)) {
+        String(u.classId) !== String(tm.classId)) {
       return err_('這不是你帶的班。');
     }
     var name = String(mineral || '').trim();
@@ -1689,13 +1709,14 @@ function apiSetMineralName(token, classId, mineral, label, note) {
     if (!lb && !nt) {
       /* 兩個都空＝改回預設，那就把這一列刪掉 */
       writeTable_('MinNames', readTable_('MinNames').filter(function (r) {
-        return !(String(r.classId) === String(classId) && String(r.mineral) === name);
+        return !(String(r.teamId) === String(teamId) && String(r.mineral) === name);
       }));
     } else {
-      upsert_('MinNames', ['classId', 'mineral'],
-        { classId: classId, mineral: name, label: lb, note: nt });
+      upsert_('MinNames', ['teamId', 'mineral'],
+        { teamId: teamId, mineral: name, label: lb, note: nt });
     }
-    return ok_({ minNames: minNamesOf_(classId) });
+    return ok_({ teamId: teamId, minNames: minNamesOf_(teamId),
+                 minNamesByTeam: minNamesByTeam_(tm.classId) });
   } catch (e) { return err_(e); }
 }
 

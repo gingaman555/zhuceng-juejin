@@ -2711,5 +2711,24 @@ must([
 '                <div style="padding:14px 16px;background:rgba(0,0,0,.24);border:1px dashed #2E2822;margin-top:14px">',
 '                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">這一項是哪一塊礦石　{{ veinCount }}</div>'].join('\n'));
 
+/* 36. 拆分名稱一組一份：先選組別 */
+must([
+'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">這一層的拆分</div>',
+'                  <div style="font:400 22px/1.6 \'C11\';color:#8A8073;margin-top:7px;text-wrap:pretty">{{ veinRenameNote }}</div>'].join('\n'),
+[
+'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">這一層的拆分</div>',
+'                  <div style="font:400 22px/1.6 \'C11\';color:#8A8073;margin-top:7px;text-wrap:pretty">{{ veinRenameNote }}</div>',
+'                  <sc-if value="{{ hasMinTeams }}" hint-placeholder-val="{{ true }}">',
+'                    <div style="margin-top:11px;padding-top:11px;border-top:1px solid #26211C">',
+'                      <div style="font:400 11px/1 \'C11\';letter-spacing:.16em;color:#5F574C;margin-bottom:8px">改哪一組的</div>',
+'                      <div style="display:flex;flex-wrap:wrap;gap:6px">',
+'                        <sc-for list="{{ minTeamPicks }}" as="mt" hint-placeholder-count="2">',
+'                          <button onClick="{{ mt.pick }}" style="{{ mt.style }}">{{ mt.label }}</button>',
+'                        </sc-for>',
+'                      </div>',
+'                      <div style="font:400 11px/1.6 \'C11\';color:#E9B341;margin-top:9px;text-wrap:pretty">{{ minTeamNote }}</div>',
+'                    </div>',
+'                  </sc-if>'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
