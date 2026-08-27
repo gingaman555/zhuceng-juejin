@@ -6423,6 +6423,7 @@ class Component extends DCLogic {
     if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); }
     if (isRes) decorateResearcher(L, v);
     addBossCodex(L, v);   /* 學生與老師的收藏總覽都要有守關生物 */
+    ghostCodex(L, v);      /* 還沒拿到的畫成造型黑影 */
     decorateRelated(L, v);
     return v;
   }
@@ -9180,6 +9181,68 @@ class Component extends DCLogic {
     }
   }
 
+  /* 還沒拿到的收藏品：真正的輪廓，壓成一片黑影。
+     brightness(0) 把圖壓成純黑，invert(1) 翻成白，再壓低不透明度，
+     在深色底上就是一個看得出造型、但看不出細節的影子。 */
+  function ghostSprite(url, size) {
+    if (!url) return null;
+    var px = size || 38;
+    return "display:block;width:" + px + "px;height:" + px + "px;margin:0 auto;" +
+      "background:url(\"" + url + "\") center/contain no-repeat;image-rendering:pixelated;" +
+      "filter:brightness(0) invert(1) drop-shadow(0 0 7px rgba(233,179,65,.5));" +
+      "opacity:.62;animation:dormant 4.6s ease-in-out infinite";
+  }
+
+  /* 收藏總覽的每一格：還沒拿到的換成造型黑影。
+     未取得的格子名稱是 ？？？，查不到圖，所以照區塊內的順序對回真正的東西。 */
+  function ghostCodex(L, v) {
+    var secs = v.collSections || [];
+    if (!secs.length) return;
+
+    var realName = function (title, i) {
+      var lay = L.LAYERS || [];
+      if (title.indexOf('道具') >= 0) return (lay[i] || {}).tool || null;
+      if (title.indexOf('寶物') >= 0) return (lay[i] || {}).treasure || null;
+      if (title.indexOf('礦') >= 0) return ((L.MINS || [])[i] || {}).name || null;
+      return null;
+    };
+    var layerOf = function (title, i) {
+      if (title.indexOf('礦') >= 0) return ((L.MINS || [])[i] || {}).L || 1;
+      return i + 1;
+    };
+
+    var cache = {};
+    var spriteFor = function (title, i) {
+      var key = title + '::' + i;
+      if (cache[key] !== undefined) return cache[key];
+      var name = realName(title, i);
+      var n = layerOf(title, i);
+      var url = null;
+      if (name) {
+        if (title.indexOf('礦') >= 0) {
+          url = mineralSprite(L, name, n);
+        } else {
+          var sp = layerSprites(L, n);
+          url = title.indexOf('道具') >= 0 ? sp.tool : sp.treasure;
+        }
+      }
+      cache[key] = url;
+      return url;
+    };
+
+    secs.forEach(function (sec) {
+      var title = String(sec.title || '');
+      /* 守關生物那一組本來就是黑影了 */
+      if (title.indexOf('生物') >= 0) return;
+      (sec.items || []).forEach(function (it, i) {
+        if (it.got) return;
+        var url = spriteFor(title, i);
+        if (!url) return;
+        it.glyphStyle = ghostSprite(url, 38);
+      });
+    });
+  }
+
   /* 一件東西跟同一層的其他東西是什麼關係，攤出來讓人點得過去 */
   function decorateRelated(L, v) {
     var S = L.state;
@@ -9220,9 +9283,11 @@ class Component extends DCLogic {
           ? "display:block;width:34px;height:34px;margin:0 auto;image-rendering:pixelated;" +
             "background:url(\"" + o.sprite + "\") center/contain no-repeat" +
             (o.alive ? ";animation:bossFloat 3.2s ease-in-out infinite" : "")
-          : "display:block;width:22px;height:22px;margin:6px auto;border-radius:50%;" +
-            "background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.35),transparent 72%);" +
-            "animation:dormant 4.6s ease-in-out infinite",
+          : (o.sprite
+              ? ghostSprite(o.sprite, 34)
+              : "display:block;width:22px;height:22px;margin:6px auto;border-radius:50%;" +
+                "background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.35),transparent 72%);" +
+                "animation:dormant 4.6s ease-in-out infinite"),
         style: "padding:11px 8px;text-align:center;font:inherit;cursor:" + (got ? "pointer" : "default") +
           ";background:" + (got ? "rgba(233,179,65,.05)" : "rgba(0,0,0,.22)") +
           ";border:1px " + (got ? "solid #3A3026" : "dashed #2C251D") +
