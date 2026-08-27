@@ -5020,7 +5020,8 @@ class Component extends DCLogic {
       unlockEvery: (DB.Config || {}).unlockEvery || 1,
       classes: DB.Classes.map(function (k) {
         return { id: k.classId, name: k.name, term: k.term, courseStart: k.courseStart,
-                 courseWeek: courseWeekOf(k), semesterWeeks: Math.max(2, Math.min(156, +(k.semesterWeeks||18))), joinCode: k.joinCode };
+                 courseWeek: courseWeekOf(k), semesterWeeks: Math.max(2, Math.min(156, +(k.semesterWeeks||18))), joinCode: k.joinCode,
+                 sandbox: String(k.sandbox) === 'Y' };
       }),
       users: DB.Users.map(function (u) {
         return { userId: u.userId, account: u.account, role: u.role, name: u.name,
@@ -9906,7 +9907,7 @@ class Component extends DCLogic {
     v.klassCards = L.KLASSES.map(function (k, i) {
       var on = i === S.klass;
       return {
-        name: k.name,
+        name: (k.sandbox ? '▨ ' : '') + k.name,
         nameColor: on ? '#FFD98A' : '#E8E2D6',
         badge: on ? '目前這一班' : '切過去',
         badgeStyle: "font:500 11px/1 'C11';letter-spacing:.1em;padding:6px 9px;white-space:nowrap;background:" +
@@ -10666,15 +10667,21 @@ class Component extends DCLogic {
         var delText = val('del', '');
         var armed = delText.trim() === String(k.name).trim();
         return {
-          name: k.name, code: k.joinCode || '—',
+          name: (k.sandbox ? '▨ ' : '') + k.name, code: k.joinCode || '—',
           meta: (k.term ? k.term + ' · ' : '') + '開課 ' + k.courseStart + ' · 現在第 ' + k.courseWeek + ' 週',
           copy: cb.copy, copyLabel: cb.copyLabel, copyStyle: st,
           isSandbox: !!k.sandbox,
-          sandboxChip: "font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;" +
-            "padding:4px 8px;border-radius:999px;background:rgba(95,87,76,.28);" +
-            "border:1px solid #59636E;color:#B7C3CC",
-          sandboxBtnLabel: k.sandbox ? "✓ 試用班（不進研究紀錄）" : "設為試用班",
-          sandboxBtnStyle: btn(k.sandbox ? "go" : ""),
+          sandboxChip: "font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;" +
+            "padding:5px 10px;border-radius:999px;color:#E4D9C4;" +
+            "background:repeating-linear-gradient(135deg,rgba(120,104,76,.55) 0 6px,rgba(70,60,44,.55) 6px 12px);" +
+            "border:1px solid #8A7A58",
+          sandboxBtnLabel: (k.sandbox ? "☑" : "☐") + "　試用班 · 不進研究紀錄",
+          sandboxBtnStyle: "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 15px;" +
+            "border-radius:6px;cursor:pointer;letter-spacing:.06em;" +
+            (k.sandbox
+              ? "background:repeating-linear-gradient(135deg,rgba(120,104,76,.5) 0 6px,rgba(70,60,44,.5) 6px 12px);" +
+                "border:1px solid #8A7A58;color:#F0E6D2"
+              : "background:transparent;border:1px dashed #59636E;color:#8393A0"),
           sandboxNote: k.sandbox
             ? "這一班的提交、審核、閱讀紀錄都不會出現在 R-01～R-08，也不會被匯出。"
             : "自己要試流程的話設成試用班，資料就不會混進研究紀錄。",
@@ -10757,11 +10764,13 @@ class Component extends DCLogic {
         };
       }),
       /* 開班時先決定是不是試用班 */
-      newSandboxLabel: f.newSandbox ? "✓ 試用班" : "設為試用班",
+      newSandboxLabel: (f.newSandbox ? "☑" : "☐") + "　試用班",
       newSandboxStyle: "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 14px;" +
-        "border-radius:6px;cursor:pointer;background:" + (f.newSandbox ? "#2A2E33" : "transparent") +
-        ";border:1px solid " + (f.newSandbox ? "#59636E" : "#1D2831") +
-        ";color:" + (f.newSandbox ? "#DFE6EB" : "#8393A0"),
+        "border-radius:6px;cursor:pointer;letter-spacing:.06em;" +
+        (f.newSandbox
+          ? "background:repeating-linear-gradient(135deg,rgba(120,104,76,.5) 0 6px,rgba(70,60,44,.5) 6px 12px);" +
+            "border:1px solid #8A7A58;color:#F0E6D2"
+          : "background:transparent;border:1px dashed #59636E;color:#8393A0"),
       toggleNewSandbox: function () {
         var n = Object.assign({}, L.state.admForm || f);
         n.newSandbox = !n.newSandbox;

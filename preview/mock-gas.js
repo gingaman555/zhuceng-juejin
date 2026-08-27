@@ -109,7 +109,8 @@
       unlockEvery: (DB.Config || {}).unlockEvery || 1,
       classes: DB.Classes.map(function (k) {
         return { id: k.classId, name: k.name, term: k.term, courseStart: k.courseStart,
-                 courseWeek: courseWeekOf(k), semesterWeeks: Math.max(2, Math.min(156, +(k.semesterWeeks||18))), joinCode: k.joinCode };
+                 courseWeek: courseWeekOf(k), semesterWeeks: Math.max(2, Math.min(156, +(k.semesterWeeks||18))), joinCode: k.joinCode,
+                 sandbox: String(k.sandbox) === 'Y' };
       }),
       users: DB.Users.map(function (u) {
         return { userId: u.userId, account: u.account, role: u.role, name: u.name,
