@@ -22,7 +22,9 @@ window.SEED = async function () {
   var sr = await api('apiRegister', { account: 'stu01', password: 'pw1234', role: 'student', joinCode: code });
   var stk = sr.token;
   var mr = await api('apiMyRoster', stk);
-  await api('apiClaimIdentity', stk, mr.roster[0].rosterId);
+  /* roster 回傳的是「組」，成員在 members 裡 */
+  var first = ((mr.roster || [])[0] || {}).members || [];
+  if (first.length) await api('apiClaimIdentity', stk, first[0].rosterId);
   /* 老師開第一層的第一項 */
   await api('apiPublishList', tk, cid, 1, [{
     layer: 1, type: 'required', title: '寫下你們要做什麼',

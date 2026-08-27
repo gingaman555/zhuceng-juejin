@@ -1,0 +1,43 @@
+# 推到 master 就自動部署到 Firebase。
+# 需要一組 repo secret：FIREBASE_SERVICE_ACCOUNT（Firebase 主控台產的服務帳號 JSON）
+#                     FIREBASE_PROJECT_ID
+name: Deploy to Firebase
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 後端自我測試（Code.gs 在 Node 上跑得起來嗎）
+        run: |
+          cp gas/Code.gs functions/Code.gs
+          cd functions && npm ci && node selftest.js
+
+      - name: 建前端
+        run: |
+          node patch-tpl.js
+          node build-gas.js
+          node build-web.js
+
+      - name: 檢查沒有把假後端帶上線
+        run: |
+          if grep -q "本機預覽用的假後端" public/index.html; then
+            echo "正式版夾帶了假後端，停止部署"; exit 1
+          fi
+
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          channelId: live

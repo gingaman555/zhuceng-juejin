@@ -5631,6 +5631,8 @@ class Component extends DCLogic {
   'use strict';
 
   var HAS_GAS = (typeof google !== 'undefined' && google.script && google.script.run);
+  /* Firebase 版：build 時會把 Cloud Functions 的網址塞進 window.JLZ_API */
+  var API_URL = (typeof window !== 'undefined' && window.JLZ_API) || '';
   var TOKEN_KEY = 'jlz.token';
 
   function call(fn) {
@@ -5638,6 +5640,17 @@ class Component extends DCLogic {
     /* 演練模式完全不碰真實資料：所有寫入當成功、所有讀取回空 */
     if (App.logic && App.logic.state && App.logic.state.demoMode) {
       return Promise.resolve({ ok: true, demo: true });
+    }
+    /* Firebase：一支 HTTPS Function 依名稱分派，回傳格式跟 GAS 版一模一樣 */
+    if (API_URL) {
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api: fn, args: args })
+      }).then(function (r) {
+        if (!r.ok) throw new Error('伺服器沒有回應（' + r.status + '）。');
+        return r.json();
+      });
     }
     return new Promise(function (resolve, reject) {
       if (!HAS_GAS) { reject(new Error('本機預覽沒有後端；請部署到 Google Apps Script 後使用。')); return; }
@@ -10648,7 +10661,7 @@ class Component extends DCLogic {
     startPolling();
 
     var t = load(TOKEN_KEY);
-    if (!t || !HAS_GAS) return;
+    if (!t || (!HAS_GAS && !API_URL)) return;
     call('apiResume', t).then(function (r) {
       if (!r || !r.ok) { store(TOKEN_KEY, null); return; }
       return afterSignIn({ token: t, user: r.user }, true, true);

@@ -1,0 +1,7 @@
+rules_version = '2';
+/* 繳交的檔案只能透過後端存取（權限在 canReadFile_ 判斷）。 */
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

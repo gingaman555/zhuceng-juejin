@@ -1,0 +1,18 @@
+# 每次 push 與 PR 都跑一次後端測試
+name: Backend self-test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cp gas/Code.gs functions/Code.gs
+      - run: cd functions && npm ci
+      - run: node functions/selftest.js

@@ -1,0 +1,11 @@
+{
+  "name": "jlz-functions",
+  "description": "逐層掘進 後端：Code.gs 的商業邏輯原封不動跑在 Cloud Functions 上",
+  "main": "index.js",
+  "engines": { "node": "20" },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^5.1.1"
+  },
+  "private": true
+}
