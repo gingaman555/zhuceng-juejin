@@ -3,7 +3,11 @@
    這四個原語碰資料，所以換掉它們就等於換掉整個底座，48 支 API 一行都不用改。
 
    一張工作表 = 一個 collection，一列 = 一份文件。
-   文件 ID 由該表的主鍵組出來，upsert 才能是天然的 set(merge)。 */
+   文件 ID 由該表的主鍵組出來，才有辦法只寫「真的改掉的那幾列」。
+
+   併發：Apps Script 版靠 LockService 排他。這裡改用樂觀鎖——
+   讀的時候記下每張表的版本號，寫回前在交易裡確認沒人動過，
+   有人動過就整個請求重跑。效果一樣，但不用真的鎖住整個後端。 */
 
 const admin = require('firebase-admin');
 
@@ -26,47 +30,38 @@ const PK = {
   Codes: ['revId', 'coder']
 };
 
-/* Firestore 的文件 ID 不能有 / 也不能太長 */
+/* Firestore 文件 ID 不能有 / . # $ [ ] 也不能太長 */
 function docId(name, row) {
   const keys = PK[name];
   if (!keys) return null;
-  const parts = keys.map(k => String(row[k] === undefined || row[k] === null ? '' : row[k]));
-  if (parts.some(p => p === '')) return null;
-  const id = parts.join('__').replace(/[\/\.#$\[\]]/g, '_');
+  const parts = keys.map((k) => String(row[k] === undefined || row[k] === null ? '' : row[k]));
+  if (parts.some((p) => p === '')) return null;
+  const id = parts.join('__').replace(/[/\\.#$[\]]/g, '_');
   return id.length > 480 ? id.slice(0, 480) : id;
 }
 
 function db() { return admin.firestore(); }
-
-/* 版本號：跨執行個體讓快取失效。一次呼叫只讀這一份文件。 */
-const VER_DOC = () => db().collection('_meta').doc('versions');
+const verRef = () => db().collection('_meta').doc('versions');
 
 async function loadVersions() {
-  const snap = await VER_DOC().get();
+  const snap = await verRef().get();
   return snap.exists ? (snap.data() || {}) : {};
 }
 
-async function bumpVersion(name) {
-  await VER_DOC().set(
-    { [name]: admin.firestore.FieldValue.increment(1) },
-    { merge: true }
-  );
-}
-
-/* 讀一整張表。Date 交給 Code.gs 自己格式化，這裡先還原成 JS Date。 */
+/* 讀一整張表 */
 async function readCollection(name, head) {
   const snap = await db().collection(name).get();
   const out = [];
-  snap.forEach(doc => {
+  snap.forEach((doc) => {
     const d = doc.data() || {};
     const row = {};
-    head.forEach(k => {
+    head.forEach((k) => {
       let v = d[k];
       if (v === undefined || v === null) v = '';
-      else if (v && typeof v.toDate === 'function') v = v.toDate();
+      else if (v && typeof v.toDate === 'function') v = v.toDate();   /* Timestamp → Date */
       row[k] = v;
     });
-    row.__row = doc.id;          /* upsert_ 用得到；readTable_ 會把它濾掉 */
+    row.__row = doc.id;
     out.push(row);
   });
   return out;
@@ -81,51 +76,90 @@ function cellOut(v) {
 
 function rowOut(head, r) {
   const o = {};
-  head.forEach(k => { o[k] = cellOut(r[k]); });
+  head.forEach((k) => { o[k] = cellOut(r[k]); });
   return o;
 }
 
-async function replaceCollection(name, head, rows) {
-  const col = db().collection(name);
-  const old = await col.get();
-  let batch = db().batch(), n = 0;
-  const flush = async () => { if (n) { await batch.commit(); batch = db().batch(); n = 0; } };
-  for (const doc of old.docs) { batch.delete(doc.ref); if (++n >= 400) await flush(); }
-  await flush();
-  for (const r of (rows || [])) {
-    const id = docId(name, r);
-    batch.set(id ? col.doc(id) : col.doc(), rowOut(head, r));
-    if (++n >= 400) await flush();
+/* 比較前後兩份快照，算出真的要動的文件 */
+function diff(name, head, before, after) {
+  const key = (r) => docId(name, r) || ('auto__' + JSON.stringify(head.map((k) => r[k])));
+  const was = new Map();
+  (before || []).forEach((r) => { was.set(r.__row || key(r), r); });
+
+  const writes = [];
+  const seen = new Set();
+
+  (after || []).forEach((r) => {
+    const id = key(r);
+    seen.add(id);
+    const old = was.get(id);
+    if (!old) { writes.push({ id, data: rowOut(head, r) }); return; }
+    const changed = head.some((k) => {
+      const a = old[k], b = r[k];
+      if (a instanceof Date || b instanceof Date) {
+        return String(a && a.getTime ? a.getTime() : a) !== String(b && b.getTime ? b.getTime() : b);
+      }
+      return String(a === undefined || a === null ? '' : a) !== String(b === undefined || b === null ? '' : b);
+    });
+    if (changed) writes.push({ id, data: rowOut(head, r) });
+  });
+
+  const deletes = [];
+  was.forEach((_r, id) => { if (!seen.has(id)) deletes.push(id); });
+
+  return { writes, deletes };
+}
+
+/**
+ * 把這一次請求改掉的東西寫回去。
+ * base 是讀取當下的版本號；寫之前會在交易裡確認沒人插隊。
+ * 回傳 false 代表有人插隊，呼叫端應該整個請求重跑。
+ */
+async function commit(plans, base) {
+  const names = plans.map((p) => p.name);
+  if (!names.length) return true;
+
+  const ops = plans.reduce((n, p) => n + p.writes.length + p.deletes.length, 0);
+
+  /* 交易一次最多 500 個動作。超過的是管理端的大批操作（貼名單、清空資料），
+     那些本來就只有研究者一個人在做，直接分批寫。 */
+  if (ops > 400) {
+    for (const p of plans) {
+      let batch = db().batch(), n = 0;
+      const flush = async () => { if (n) { await batch.commit(); batch = db().batch(); n = 0; } };
+      for (const w of p.writes) {
+        batch.set(db().collection(p.name).doc(w.id), w.data);
+        if (++n >= 400) await flush();
+      }
+      for (const id of p.deletes) {
+        batch.delete(db().collection(p.name).doc(id));
+        if (++n >= 400) await flush();
+      }
+      await flush();
+    }
+    const bump = {};
+    names.forEach((nm) => { bump[nm] = admin.firestore.FieldValue.increment(1); });
+    await verRef().set(bump, { merge: true });
+    return true;
   }
-  await flush();
-  await bumpVersion(name);
+
+  let clean = true;
+  await db().runTransaction(async (t) => {
+    clean = true;
+    const snap = await t.get(verRef());
+    const now = snap.exists ? (snap.data() || {}) : {};
+    for (const nm of names) {
+      if ((now[nm] || 0) !== (base[nm] || 0)) { clean = false; return; }
+    }
+    for (const p of plans) {
+      p.writes.forEach((w) => { t.set(db().collection(p.name).doc(w.id), w.data); });
+      p.deletes.forEach((id) => { t.delete(db().collection(p.name).doc(id)); });
+    }
+    const bump = {};
+    names.forEach((nm) => { bump[nm] = (now[nm] || 0) + 1; });
+    t.set(verRef(), bump, { merge: true });
+  });
+  return clean;
 }
 
-async function appendDoc(name, head, obj) {
-  const col = db().collection(name);
-  const id = docId(name, obj);
-  await (id ? col.doc(id) : col.doc()).set(rowOut(head, obj));
-  await bumpVersion(name);
-}
-
-/* upsert：主鍵組得出 ID 就直接 merge；組不出來（少了鍵）就退回全表掃描 */
-async function upsertDoc(name, head, keys, obj, existing) {
-  const col = db().collection(name);
-  const id = docId(name, obj);
-  if (id && (PK[name] || []).join() === (keys || []).join()) {
-    const snap = await col.doc(id).get();
-    const merged = Object.assign({}, snap.exists ? snap.data() : {}, rowOut(head, obj));
-    await col.doc(id).set(merged);
-    await bumpVersion(name);
-    return;
-  }
-  const hit = (existing || []).find(r =>
-    (keys || []).every(k => String(r[k]) === String(obj[k])));
-  if (!hit) { await appendDoc(name, head, obj); return; }
-  const merged = Object.assign({}, hit, obj);
-  delete merged.__row;
-  await col.doc(String(hit.__row)).set(rowOut(head, merged));
-  await bumpVersion(name);
-}
-
-module.exports = { db, PK, docId, loadVersions, bumpVersion, readCollection, replaceCollection, appendDoc, upsertDoc, rowOut };
+module.exports = { db, PK, docId, loadVersions, readCollection, rowOut, diff, commit };

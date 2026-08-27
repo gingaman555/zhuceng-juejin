@@ -40,6 +40,8 @@ const TABLES = Object.keys(HEADS);
 function newUnit() {
   return {
     tables: {},          /* name -> rows（含 __row） */
+    original: {},        /* 讀進來時的樣子，用來算差異 */
+    baseVersions: {},
     dirty: {},           /* name -> true，代表要寫回 */
     props: {},
     propWrites: {},
@@ -57,6 +59,7 @@ const copy = (rows) => rows.map((r) => Object.assign({}, r));
 
 async function loadSnapshot(unit) {
   const versions = await store.loadVersions();
+  unit.baseVersions = versions;
   const missing = [];
   TABLES.forEach((name) => {
     const v = versions[name] || 0;
@@ -69,6 +72,8 @@ async function loadSnapshot(unit) {
     CACHE.tables[name] = { v, rows: copy(rows) };
     unit.tables[name] = rows;
   }));
+  /* 原始副本：flush 時用來算出真的動到哪幾列 */
+  TABLES.forEach((name) => { unit.original[name] = copy(unit.tables[name] || []); });
 }
 
 /* ---------- Code.gs 的執行環境 ---------- */
@@ -140,16 +145,19 @@ function buildContext(unit) {
 
 /* ---------- 寫回 ---------- */
 
+/* 寫回：只寫真的改掉的那幾列，而且寫之前先確認沒人插隊。
+   回傳 false 代表有人插隊，整個請求要重跑。 */
 async function flush(unit) {
+  const plans = [];
   for (const name of Object.keys(unit.dirty)) {
-    const rows = unit.rows(name).map((r) => {
-      const o = Object.assign({}, r);
-      delete o.__row;
-      return o;
-    });
-    await store.replaceCollection(name, HEADS[name], rows);
-    delete CACHE.tables[name];
+    const after = unit.rows(name).map((r) => { const o = Object.assign({}, r); delete o.__row; return o; });
+    const d = store.diff(name, HEADS[name], unit.original[name] || [], after);
+    if (d.writes.length || d.deletes.length) plans.push({ name, writes: d.writes, deletes: d.deletes });
   }
+
+  const clean = await store.commit(plans, unit.baseVersions);
+  if (!clean) return false;
+  plans.forEach((p) => { delete CACHE.tables[p.name]; });
 
   const keys = Object.keys(unit.propWrites);
   if (keys.length) {
@@ -171,6 +179,7 @@ async function flush(unit) {
   for (const p of unit.drive.deletes) {
     try { await admin.storage().bucket().file(p).delete(); } catch (e) { /* 已經不在就算了 */ }
   }
+  return true;
 }
 
 /* 讀檔是同步的，Code.gs 跑之前要先把內容備妥 */
@@ -209,28 +218,42 @@ exports.api = onRequest(
     }
 
     try {
-      const unit = newUnit();
+      /* 樂觀鎖：有人插隊就整個重跑，最多三次 */
+      let out = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const unit = newUnit();
 
-      const propSnap = await store.db().collection('_meta').doc('props').get();
-      unit.props = propSnap.exists ? Object.assign({}, propSnap.data()) : {};
+        const propSnap = await store.db().collection('_meta').doc('props').get();
+        unit.props = propSnap.exists ? Object.assign({}, propSnap.data()) : {};
 
-      if (name === 'apiGetFile') await preloadFile(unit, args[1]);
+        if (name === 'apiGetFile') await preloadFile(unit, args[1]);
 
-      await loadSnapshot(unit);
+        await loadSnapshot(unit);
 
-      const ctx = buildContext(unit);
-      const fn = ctx[name];
-      if (typeof fn !== 'function') {
-        res.status(404).json({ ok: false, error: '沒有這支 API。' });
-        return;
+        const ctx = buildContext(unit);
+        const fn = ctx[name];
+        if (typeof fn !== 'function') {
+          res.status(404).json({ ok: false, error: '沒有這支 API。' });
+          return;
+        }
+
+        out = fn.apply(null, args);
+
+        const wrote = Object.keys(unit.dirty).length || Object.keys(unit.propWrites).length ||
+          unit.drive.uploads.length || unit.drive.deletes.length;
+        if (!wrote) break;
+
+        if (await flush(unit)) break;
+
+        /* 有人先寫進去了：把快取清掉，重讀重算 */
+        Object.keys(unit.dirty).forEach((t) => { delete CACHE.tables[t]; });
+        out = null;
       }
 
-      const out = fn.apply(null, args);
-
-      const wrote = Object.keys(unit.dirty).length || Object.keys(unit.propWrites).length ||
-        unit.drive.uploads.length || unit.drive.deletes.length;
-      if (wrote) await flush(unit);
-
+      if (out === null) {
+        res.json({ ok: false, error: '剛好有人同時在存，請再按一次。' });
+        return;
+      }
       res.json(out === undefined ? { ok: true } : out);
     } catch (e) {
       logger.error(name, e);

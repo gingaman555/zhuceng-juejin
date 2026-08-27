@@ -27,6 +27,8 @@ function run(name, args) {
     rows(n) { if (!this.tables[n]) this.tables[n] = []; return this.tables[n]; }
   };
   Object.keys(HEADS).forEach((n) => { unit.tables[n] = copy(DB[n]); });
+  const original = {};
+  Object.keys(HEADS).forEach((n) => { original[n] = copy(DB[n]); });
 
   const sandbox = {
     console, JSON, Math, Date, String, Number, Boolean, Array, Object, RegExp, Error,
