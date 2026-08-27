@@ -2472,5 +2472,92 @@ must([
 '                          </sc-if>',
 '                        </div>'].join('\n'));
 
+/* 30. S-01：標頭放這一層的 BOSS；「這一層怎麼走」收進按鈕，只留「下一件要做的事」 */
+must([
+'                  <div style="flex:1;min-width:200px">',
+'                    <div style="font:400 11px/1 \'C11\';letter-spacing:.26em;color:#8A8073">DEPTH {{ depthCode }} · 目前所在</div>',
+'                    <div style="font:900 33px/1.2 \'C11\';letter-spacing:.08em;margin-top:9px;color:#F2EADA">{{ layerName }}</div>',
+'                    <div style="font:400 22px/1.7 \'C11\';color:#8A8073;margin-top:6px;text-wrap:pretty">{{ layerHard }}</div>',
+'                  </div>'].join('\n'),
+[
+'                  <div style="flex:1;min-width:200px">',
+'                    <div style="font:400 11px/1 \'C11\';letter-spacing:.26em;color:#8A8073">DEPTH {{ depthCode }} · 目前所在</div>',
+'                    <div style="font:900 33px/1.2 \'C11\';letter-spacing:.08em;margin-top:9px;color:#F2EADA">{{ layerName }}</div>',
+'                    <div style="font:400 22px/1.7 \'C11\';color:#8A8073;margin-top:6px;text-wrap:pretty">{{ layerHard }}</div>',
+'                  </div>',
+'                  <sc-if value="{{ hasHomeBoss }}" hint-placeholder-val="{{ true }}">',
+'                    <div style="{{ homeBossBox }}">',
+'                      <span style="{{ homeBossArt }}"></span>',
+'                      <span style="min-width:0">',
+'                        <span style="display:block;font:400 11px/1 \'C11\';letter-spacing:.2em;color:{{ homeBossKickerColor }}">{{ homeBossKicker }}</span>',
+'                        <span style="display:block;font:700 22px/1.3 \'C11\';color:{{ homeBossNameColor }};margin-top:6px">{{ homeBossName }}</span>',
+'                        <span style="display:block;font:400 11px/1.6 \'C11\';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ homeBossNote }}</span>',
+'                      </span>',
+'                    </div>',
+'                  </sc-if>'].join('\n'));
+
+must([
+'              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),#14110E;border:1px solid #3A3026">',
+'                <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">這一層怎麼走</div>',
+'                <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">',
+'                  <sc-for list="{{ ruleSteps }}" as="rs" hint-placeholder-count="3">',
+'                    <div style="{{ rs.box }}">',
+'                      <span style="{{ rs.num }}">{{ rs.n }}</span>',
+'                      <span style="flex:1;min-width:180px">',
+'                        <span style="display:block;font:700 22px/1.4 \'C11\';color:{{ rs.color }}">{{ rs.title }}</span>',
+'                        <span style="display:block;font:400 22px/1.6 \'C11\';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ rs.desc }}</span>',
+'                      </span>',
+'                      <span style="{{ rs.stateStyle }}">{{ rs.state }}</span>',
+'                    </div>',
+'                  </sc-for>',
+'                </div>',
+'                <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">',
+'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">下一件要做的事</div>'].join('\n'),
+[
+'              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),#14110E;border:1px solid #3A3026">',
+'                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">',
+'                  <span style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">這一層的進度</span>',
+'                  <span style="font:700 22px/1 \'C11\';color:#F2EADA">{{ ruleProgress }}</span>',
+'                  <span style="flex:1"></span>',
+'                  <button onClick="{{ openLayerHow }}" style="{{ layerHowStyle }}">{{ layerHowLabel }}</button>',
+'                </div>',
+'                <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">',
+'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">下一件要做的事</div>'].join('\n'));
+
+/* 31. S-06：底下列出相關的礦石／道具／寶物／守關生物，可以直接點過去 */
+must([
+'                    <div><div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">{{ specFromLabel }}</div><div style="font:500 22px/1.5 \'C11\';margin-top:6px">{{ specFrom }}</div></div>',
+'                    <div><div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">{{ specDateLabel }}</div><div style="font:500 22px/1.5 \'C11\';margin-top:6px">{{ specDate }}</div></div>'].join('\n'),
+[
+'                    <div><div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">{{ specFromLabel }}</div><div style="font:500 22px/1.5 \'C11\';margin-top:6px">{{ specFrom }}</div></div>',
+'                    <div><div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">{{ specDateLabel }}</div><div style="font:500 22px/1.5 \'C11\';margin-top:6px">{{ specDate }}</div></div>'].join('\n'));
+
+must('              <div style="padding:var(--pad);display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start">',
+[
+'              <div style="padding:var(--pad);display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start">'].join('\n'));
+
+/* 相關區塊接在整個 S-06 內容的最後 */
+must([
+'                    <div><div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">{{ specDateLabel }}</div><div style="font:500 22px/1.5 \'C11\';margin-top:6px">{{ specDate }}</div></div>',
+'                  </div>'].join('\n'),
+[
+'                    <div><div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">{{ specDateLabel }}</div><div style="font:500 22px/1.5 \'C11\';margin-top:6px">{{ specDate }}</div></div>',
+'                  </div>',
+'                  <sc-if value="{{ hasSpecRelated }}" hint-placeholder-val="{{ true }}">',
+'                    <div style="padding-top:15px;border-top:1px solid #221E19">',
+'                      <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">{{ specRelatedLabel }}</div>',
+'                      <div style="font:400 11px/1.6 \'C11\';color:#6E665A;margin-top:6px;text-wrap:pretty">{{ specRelatedNote }}</div>',
+'                      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:7px;margin-top:11px">',
+'                        <sc-for list="{{ specRelated }}" as="sr" hint-placeholder-count="4">',
+'                          <button onClick="{{ sr.open }}" style="{{ sr.style }}">',
+'                            <span style="{{ sr.glyph }}"></span>',
+'                            <span style="display:block;font:500 11px/1.4 \'C11\';margin-top:7px">{{ sr.name }}</span>',
+'                            <span style="display:block;font:400 11px/1.3 \'C11\';color:#5F574C;margin-top:4px">{{ sr.kind }}</span>',
+'                          </button>',
+'                        </sc-for>',
+'                      </div>',
+'                    </div>',
+'                  </sc-if>'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

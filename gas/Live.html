@@ -961,9 +961,10 @@
       momentVals(L, v);
       decorateAuth(L, v);
       if (S.role === 'student') decorateStudent(L, v);
-      if (S.role === 'teacher') { decorateTeacher(L, v); decorateTfin(L, v); }
+      if (S.role === 'teacher') { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); }
       if (isRes) decorateResearcher(L, v);
       addBossCodex(L, v);
+      decorateRelated(L, v);
       if (v.resVals) v.resVals.toggleDemo = exitDemo;
       return v;
     }
@@ -1005,9 +1006,10 @@
     momentVals(L, v);
     decorateAuth(L, v);
     if (S.role === 'student' && S.signedIn) decorateStudent(L, v);
-    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); }
+    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); }
     if (isRes) decorateResearcher(L, v);
     addBossCodex(L, v);   /* 學生與老師的收藏總覽都要有守關生物 */
+    decorateRelated(L, v);
     return v;
   }
 
@@ -2107,8 +2109,126 @@
 
   var BOARD_HUE = ['#C9A227', '#5FA8C7', '#8C7BC7', '#D9603F', '#E9B341'];
 
+  /* 老師端的地圖剖面：他看的是自己開的清單鋪滿了沒，以及全班走到哪。
+     跟學生端共用同一套視覺，但狀態來源不同——老師沒有「我採到幾塊」。 */
+  function decorateBoardTeacher(L, v) {
+    var S = L.state;
+    var mob = S.device === "mobile";
+    var teams = L.teams() || [];
+
+    var perLayer = [1, 2, 3, 4, 5].map(function (n) {
+      var vein = (L.MINS || []).filter(function (m) { return m.L === n; });
+      var items = (S.tasks || []).filter(function (t) { return t.layer === n; });
+      var taken = {};
+      items.forEach(function (t) { if (t.mineral) taken[t.mineral] = t; });
+      var cleared = teams.length > 0 && teams.every(function (t) {
+        return (t.passed || []).indexOf(n) >= 0;
+      });
+      var here = teams.filter(function (t) { return (t.layer || 1) === n; });
+      return { n: n, vein: vein, byMineral: taken, openedN: Object.keys(taken).length,
+               cleared: cleared, here: here };
+    });
+
+    var totalVein = perLayer.reduce(function (a, x) { return a + x.vein.length; }, 0) || 23;
+    var totalOpen = perLayer.reduce(function (a, x) { return a + x.openedN; }, 0);
+    v.boardDone = totalOpen + " / " + totalVein + " 塊已開";
+    v.boardLeft = (totalVein - totalOpen) + " 塊";
+    v.boardStepNote = totalOpen >= totalVein
+      ? "五層的礦脈都開完了。剩下就看各組採不採得齊。"
+      : "通道上一格就是一塊礦石，也就是你要開的一項。還有 " + (totalVein - totalOpen) + " 塊沒開。";
+
+    (v.mapLayers || []).forEach(function (m, i) {
+      var n = i + 1;
+      var st = perLayer[n - 1];
+      var hue = BOARD_HUE[n - 1];
+      var base = perLayer.slice(0, n - 1).reduce(function (a, x) { return a + x.vein.length; }, 0);
+
+      var cells = st.vein.map(function (min, k) {
+        var task = st.byMineral[min.name] || null;
+        var open = !!task;
+        return {
+          idx: String(base + k + 1),
+          name: open ? (task.title || min.task) : min.task,
+          sub: min.name,
+          mark: open ? "✓" : "·",
+          open: function () {
+            if (open) { L.setState({ screen: "T02", editLayer: n }); return; }
+            L.setState({ screen: "T05", editLayer: n });
+            L.say("「" + min.task + "」（" + min.name + "）還沒開。");
+          },
+          dotStyle: "display:flex;align-items:center;justify-content:center;width:100%;height:20px;" +
+            "font:600 11px/1 'C11';transform:scale(.85);" +
+            "color:" + (open ? "#0B0A09" : "#8A8073") + ";" +
+            "border:1px solid " + (open ? hue : "#3A3026") + ";" +
+            "background:" + (open ? "rgba(" + hexRgb(hue) + ",.85)" : "rgba(0,0,0,.4)") + ";",
+          nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;" +
+            "transform:scale(.72);white-space:nowrap;color:" + (open ? "#FFD98A" : "#6E665A"),
+          style: "flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;" +
+            "cursor:pointer;pointer-events:auto"
+        };
+      });
+
+      /* 層底的守關生物：老師沒有迷霧，四隻都看得到 */
+      var bz = bossOf(n);
+      if (bz) {
+        var bt = BOSS_TEXT[n] || {};
+        var beaten = st.cleared;
+        var ready = !beaten && st.openedN >= st.vein.length && st.vein.length > 0;
+        cells.push({
+          idx: "", name: bz.name, sub: "", mark: "",
+          open: function () {
+            L.setState({ specFrom: S.screen, screen: "S06", specId: bz.name });
+          },
+          dotStyle: "display:block;width:100%;height:" + (mob ? 44 : 58) + "px;" +
+            "margin-top:-" + (mob ? 24 : 34) + "px;image-rendering:pixelated;" +
+            "background:url(\"" + bossSvg(bz, false) + "\") bottom center/contain no-repeat;" +
+            (beaten
+              ? "opacity:.3;filter:grayscale(1);"
+              : ready
+                ? "animation:bossFloat 2.8s ease-in-out infinite,bossGlow 3.4s ease-in-out infinite;"
+                : "opacity:.9;filter:brightness(.7);animation:bossBreathe 4.4s ease-in-out infinite;"),
+          nameStyle: "display:block;font:600 11px/1.2 'C11';margin-top:4px;text-align:center;" +
+            "transform:scale(.8);letter-spacing:.06em;white-space:nowrap;" +
+            "text-shadow:0 1px 3px rgba(0,0,0,.9);color:" +
+            (beaten ? "#5F574C" : ready ? "#FFD98A" : "#9A9184"),
+          style: "flex:0 0 auto;min-width:" + (mob ? 46 : 62) + "px;display:flex;flex-direction:column;" +
+            "align-items:center;justify-content:flex-end;cursor:pointer;pointer-events:auto;position:relative;z-index:3"
+        });
+      }
+
+      m.steps = cells;
+      m.stepsStyle = "position:absolute;left:var(--mcol);right:13px;bottom:9px;z-index:2;" +
+        "display:flex;align-items:flex-end;gap:3px;padding:5px 7px;background:rgba(6,5,4,.62);" +
+        "border-top:1px solid " + (st.here.length ? "rgba(233,179,65,.4)" : "rgba(255,255,255,.07)");
+      m.stepsTag = "第 " + (base + 1) + "–" + (base + st.vein.length) + " 塊　·　你開了 " +
+        st.openedN + "/" + st.vein.length;
+      m.stepsTagStyle = "position:absolute;left:var(--mcol);top:9px;z-index:2;" +
+        "font:400 11px/1 'C11';letter-spacing:.1em;color:" +
+        (st.openedN >= st.vein.length ? "#FFD98A" : "#8A8073") +
+        ";pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top";
+
+      /* 哪幾組在這一層 */
+      m.others = st.here.map(function (t) {
+        return {
+          name: t.name,
+          meta: "停留 " + (t.weeks || 1) + " 週",
+          open: function () { L.setState({ screen: "T04", queueTeam: t.id }); },
+          style: "display:inline-flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;" +
+            "font:400 11px/1 'C11';white-space:nowrap;background:rgba(6,5,4,.72);" +
+            "border:1px solid " + ((t.passed || []).length ? "#5A4A2C" : "#3A3026") + ";color:#C3BAAA"
+        };
+      });
+      m.hasOthers = m.others.length > 0;
+      m.othersStyle = "position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:wrap;" +
+        "gap:5px;justify-content:flex-end;max-width:58%";
+      m.othersNote = m.others.length + " 組在這一層";
+      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;align-self:center;transform:scale(.86)";
+    });
+  }
+
   function decorateBoard(L, v) {
     var S = L.state;
+    var mob = S.device === 'mobile';
     var cur = S.currentLayer || 1;
     var openAll = S.role === 'teacher' || !!S.allOpen;
 
@@ -2189,14 +2309,21 @@
             if (why) { L.say((bt.line ? '「' + bt.line + '」　' : '') + why); return; }
             L.go('SUB');
           },
-          dotStyle: 'display:block;width:100%;height:26px;image-rendering:pixelated;' +
-            'background:url("' + bossSvg(bz, fog) + '") center/contain no-repeat;' +
-            (awake
-              ? 'filter:drop-shadow(0 0 7px rgba(233,179,65,.75));animation:bossFloat 2.6s ease-in-out infinite;'
-              : fog ? 'opacity:.45;' : 'opacity:.9;filter:brightness(.5);'),
-          nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
-            'white-space:nowrap;color:' + (awake ? '#FFD98A' : fog ? '#332C25' : '#8A8073'),
-          style: 'flex:0 0 auto;min-width:38px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer;pointer-events:auto'
+          /* 這是這一層的頭目：畫得比礦石大一截，而且探出通道條之上 */
+          dotStyle: 'display:block;width:100%;height:' + (mob ? 44 : 58) + 'px;' +
+            'margin-top:-' + (mob ? 24 : 34) + 'px;image-rendering:pixelated;' +
+            'background:url("' + bossSvg(bz, fog) + '") bottom center/contain no-repeat;' +
+            (fog
+              ? 'opacity:.4;animation:bossBreathe 5.2s ease-in-out infinite;'
+              : awake
+                ? 'animation:bossLoom .5s cubic-bezier(.2,.9,.3,1) both,' +
+                  'bossFloat 2.8s ease-in-out infinite .5s,bossGlow 3.4s ease-in-out infinite .5s;'
+                : 'opacity:.85;filter:brightness(.55);animation:bossBreathe 4.4s ease-in-out infinite;'),
+          nameStyle: "display:block;font:600 11px/1.2 'C11';margin-top:4px;text-align:center;transform:scale(.8);" +
+            'letter-spacing:.06em;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.9);color:' +
+            (awake ? '#FFD98A' : fog ? '#3A322A' : '#9A9184'),
+          style: 'flex:0 0 auto;min-width:' + (mob ? 46 : 62) + 'px;display:flex;flex-direction:column;' +
+            'align-items:center;justify-content:flex-end;cursor:pointer;pointer-events:auto;position:relative;z-index:3'
         });
       } else
       cells.push({
@@ -2223,7 +2350,7 @@
 
       m.steps = cells;
       m.stepsStyle = 'position:absolute;left:var(--mcol);right:13px;bottom:9px;z-index:2;' +
-        'display:flex;align-items:flex-start;gap:3px;' +
+        'display:flex;align-items:flex-end;gap:3px;' +
         'padding:5px 7px;background:rgba(6,5,4,.62);border-top:1px solid ' +
         (n === cur ? 'rgba(233,179,65,.4)' : 'rgba(255,255,255,.07)');
       m.stepsTag = fog ? '？？？'
@@ -2536,6 +2663,32 @@
     help:     { glow: 'rgba(195,186,170,.16)', anim: 'momentIn .42s ease both' }
   };
 
+  /* 說明不攤在畫面上，收成一顆按鈕，按了用同一套跳頁開出來。
+     介面清爽，但要看的時候一定找得到。 */
+  function helpButton(L, opts) {
+    var tone = opts.tone || "#E9B341";
+    return {
+      label: opts.label || "？　這是什麼",
+      style: "flex:none;font:400 22px/1 'C11';color:" + tone +
+        ";background:rgba(233,179,65,.07);border:1px solid #5A4A2C;padding:11px 16px;" +
+        "cursor:pointer;white-space:nowrap",
+      open: function () {
+        showMoment(L, {
+          kind: "help", art: "help", accent: "#C3BAAA",
+          kicker: opts.kicker || "HOW IT WORKS",
+          title: opts.title || "",
+          lede: opts.lede || "",
+          sprite: opts.sprite || null,
+          rows: opts.rows || [],
+          lines: opts.lines || [],
+          quoteLabel: opts.quoteLabel || "",
+          quote: opts.quote || "",
+          btn: opts.btn || "知道了", go: function () {}
+        });
+      }
+    };
+  }
+
   function showMoment(L, m) {
     if (!m) return;
     L.setState({ moment: m });
@@ -2837,6 +2990,68 @@
         box: box(step3On), num: num(step3On), color: step3On ? '#E9B341' : '#8A8073'
       }, done ? tag('已拿到', '#E9B341') : tag('未開始', '#5F574C'))
     ];
+
+    /* 首頁標頭：這一層擋路的是誰，一眼看到 */
+    (function () {
+      var HL = S.currentLayer || 1;
+      var hz = bossOf(HL);
+      var hst = layerState(L, HL);
+      var down = (S.passed || []).indexOf(HL) >= 0;
+      v.hasHomeBoss = !!hz;
+      if (!hz) {
+        v.homeBossBox = "display:none"; v.homeBossArt = ""; v.homeBossName = "";
+        v.homeBossKicker = ""; v.homeBossNote = "";
+        v.homeBossKickerColor = "#8A8073"; v.homeBossNameColor = "#E8E2D6";
+        return;
+      }
+      var ready = hst.complete && !down;
+      var bt = BOSS_TEXT[HL] || {};
+      v.homeBossBox = "flex:none;display:flex;align-items:center;gap:14px;max-width:340px;" +
+        "padding:12px 16px;background:rgba(6,5,4,.55);border:1px solid " +
+        (down ? "#2E2822" : ready ? "#5A4A2C" : "#3A3026");
+      v.homeBossArt = "flex:none;display:block;width:76px;height:76px;image-rendering:pixelated;" +
+        "background:url(\"" + bossSvg(hz, false) + "\") center/contain no-repeat;" +
+        (down
+          ? "opacity:.3;filter:grayscale(1);"
+          : ready
+            ? "animation:bossFloat 2.8s ease-in-out infinite,bossGlow 3.4s ease-in-out infinite;"
+            : "filter:brightness(.62);animation:bossBreathe 4.4s ease-in-out infinite;");
+      v.homeBossKicker = down ? "已擊退" : ready ? "牠醒著，擋在層底" : "守關生物";
+      v.homeBossKickerColor = down ? "#5F574C" : ready ? "#E9B341" : "#8A8073";
+      v.homeBossName = hz.name;
+      v.homeBossNameColor = down ? "#5F574C" : hz.hue["#"];
+      v.homeBossNote = down
+        ? "你們已經打過去了。"
+        : ready
+          ? "礦石採齊了。去送關卡，他准了就鑄得成" + ((L.LAYERS[HL - 1] || {}).tool || "道具") + "。"
+          : "還差 " + (hst.missingN + hst.unopenedN) + " 塊礦石。採齊才鑄得出剋牠的道具。";
+    })();
+
+    /* 「這一層怎麼走」收進一顆按鈕 */
+    (function () {
+      var HL = S.currentLayer || 1;
+      var hst = layerState(L, HL);
+      var lay2 = L.LAYERS[HL - 1] || {};
+      var hz = bossOf(HL);
+      v.ruleProgress = hst.gotN + " / " + hst.veinN + " 塊";
+      var hb = helpButton(L, {
+        label: "？　這一層怎麼走",
+        kicker: "HOW THIS LAYER WORKS",
+        title: "這一層怎麼走",
+        lede: (lay2.name || "這一層") + "：" + (lay2.hard || ""),
+        rows: [
+          { k: "這一層的礦脈", v: hst.veinN + " 塊" },
+          { k: "你們採到", v: hst.gotN + " 塊", hi: true },
+          { k: "還差", v: (hst.missingN + hst.unopenedN) + " 塊" }
+        ],
+        lines: (v.ruleSteps || []).map(function (r) { return r.n + "　" + r.title + "——" + r.desc; })
+          .concat(hz ? ["層底站著" + hz.name + "。採齊、他准了，礦石才鑄得成" +
+            (lay2.tool || "道具") + "，牠才會讓開。"] : [])
+      });
+      v.layerHowLabel = hb.label;
+      v.layerHowStyle = hb.style;
+      v.openLayerHow = hb.open;
+    })();
 
     /* 下一件要做的事：只講一件 */
     var needFix = all.filter(function (t) { return t.status === 'needs_more'; })[0];
@@ -3248,6 +3463,107 @@
     }
   }
 
+  /* 一件東西跟同一層的其他東西是什麼關係，攤出來讓人點得過去 */
+  function decorateRelated(L, v) {
+    var S = L.state;
+    v.hasSpecRelated = false; v.specRelated = [];
+    v.specRelatedLabel = ""; v.specRelatedNote = "";
+    if (S.screen !== "S06" || !S.specId) return;
+
+    var openAll = S.role === "teacher" || !!S.allOpen;
+    var passed = S.passed || [];
+    var tasks = S.tasks || [];
+
+    /* 這個 specId 屬於哪一層 */
+    var layer = 0, self = "";
+    var mn = (L.MINS || []).filter(function (m) { return m.name === S.specId; })[0];
+    if (mn) { layer = mn.L; self = "mineral"; }
+    if (!layer) {
+      var li = (L.LAYERS || []).filter(function (x) {
+        return x.tool === S.specId || x.treasure === S.specId;
+      })[0];
+      if (li) { layer = li.n; self = li.tool === S.specId ? "tool" : "treasure"; }
+    }
+    if (!layer) {
+      var bz0 = bossByName(S.specId);
+      if (bz0) { layer = bz0.L; self = "boss"; }
+    }
+    if (!layer) return;
+
+    var lay = L.LAYERS[layer - 1] || {};
+    var bz = bossOf(layer);
+    var cleared = passed.indexOf(layer) >= 0;
+
+    var tile = function (o) {
+      var got = openAll || o.got;
+      return {
+        name: got ? o.name : "？？？",
+        kind: o.kind,
+        glyph: got && o.sprite
+          ? "display:block;width:34px;height:34px;margin:0 auto;image-rendering:pixelated;" +
+            "background:url(\"" + o.sprite + "\") center/contain no-repeat"
+          : "display:block;width:22px;height:22px;margin:6px auto;border-radius:50%;" +
+            "background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.35),transparent 72%);" +
+            "animation:dormant 4.6s ease-in-out infinite",
+        style: "padding:11px 8px;text-align:center;font:inherit;cursor:" + (got ? "pointer" : "default") +
+          ";background:" + (got ? "rgba(233,179,65,.05)" : "rgba(0,0,0,.22)") +
+          ";border:1px " + (got ? "solid #3A3026" : "dashed #2C251D") +
+          ";color:" + (got ? "#E8E2D6" : "#8C8172"),
+        open: got
+          ? function () { L.setState({ specFrom: S.specFrom || "S03", screen: "S06", specId: o.name }); }
+          : function () { L.say(o.locked || "還沒拿到。走到那一層才看得到它是什麼。"); }
+      };
+    };
+
+    var out = [];
+
+    /* 這一層的礦石 */
+    var vein = (L.MINS || []).filter(function (m) { return m.L === layer; });
+    vein.forEach(function (m) {
+      if (m.name === S.specId) return;
+      var t = tasks.filter(function (x) { return x.mineral === m.name; })[0];
+      out.push(tile({
+        name: m.name, kind: "礦石 · " + m.task,
+        got: !!t && t.status === "passed",
+        sprite: mineralSprite(L, m.name, layer),
+        locked: "還沒採到。通過這一項才看得到它是什麼。"
+      }));
+    });
+
+    /* 這一層的道具與寶物 */
+    var sp = layerSprites(L, layer);
+    if (self !== "tool" && lay.tool) {
+      out.push(tile({ name: lay.tool, kind: "道具 · 這一層的武器",
+        got: cleared, sprite: sp.tool,
+        locked: "這一層的礦石採齊、老師准了，才鑄得出來。" }));
+    }
+    if (self !== "treasure" && lay.treasure) {
+      out.push(tile({ name: lay.treasure, kind: "寶物 · 看品質才給",
+        got: cleared, sprite: sp.treasure,
+        locked: "通過這一層，而且他覺得你們做得夠了才會出現。" }));
+    }
+
+    /* 這一層的守關生物 */
+    if (bz && self !== "boss") {
+      out.push(tile({ name: bz.name, kind: "守關生物 · 擋在層底",
+        got: cleared, sprite: bossSvg(bz, false),
+        locked: "還沒走到那一層。牠現在只是一個影子。" }));
+    }
+
+    v.specRelated = out;
+    v.hasSpecRelated = out.length > 0;
+    v.specRelatedLabel = "同一層的其他東西";
+    v.specRelatedNote = self === "boss"
+      ? "牠守的是" + (lay.name || "這一層") + "。下面是這一層的礦石，以及採齊之後才拿得到的道具與寶物。"
+      : self === "tool"
+        ? "鑄成它的是下面這些礦石" + (bz ? "，它剋的是" + bz.name : "") + "。"
+        : self === "treasure"
+          ? "同一層的東西。寶物跟道具不一樣——道具是採齊就鑄得出來，寶物是他看你們做得怎麼樣才給。"
+          : "同一層的其他礦石，以及採齊之後才鑄得出來的道具、才拿得到的寶物"
+            + (bz ? "，還有擋在層底的" + bz.name : "") + "。";
+  }
+
+  function decorateRelated_END() {}
   function decorateProtoLeftovers(L, v) {
     var S = L.state;
     /* gateDesc 是原型算出來的，直接依「整層採齊」重寫 */
