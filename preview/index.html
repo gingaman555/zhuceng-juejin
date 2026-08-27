@@ -5631,8 +5631,9 @@ class Component extends DCLogic {
   'use strict';
 
   var HAS_GAS = (typeof google !== 'undefined' && google.script && google.script.run);
-  /* Firebase 版：build 時會把 Cloud Functions 的網址塞進 window.JLZ_API */
-  var API_URL = (typeof window !== 'undefined' && window.JLZ_API) || '';
+  /* Firebase 版：build 時把 Cloud Functions 的網址塞進 window.JLZ_API。
+     那一行在頁尾才跑，所以要呼叫的當下才讀，不能在載入時就抓。 */
+  function apiUrl() { return (typeof window !== 'undefined' && window.JLZ_API) || ''; }
   var TOKEN_KEY = 'jlz.token';
 
   function call(fn) {
@@ -5642,8 +5643,9 @@ class Component extends DCLogic {
       return Promise.resolve({ ok: true, demo: true });
     }
     /* Firebase：一支 HTTPS Function 依名稱分派，回傳格式跟 GAS 版一模一樣 */
-    if (API_URL) {
-      return fetch(API_URL, {
+    var url = apiUrl();
+    if (url) {
+      return fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ api: fn, args: args })
@@ -10661,7 +10663,7 @@ class Component extends DCLogic {
     startPolling();
 
     var t = load(TOKEN_KEY);
-    if (!t || (!HAS_GAS && !API_URL)) return;
+    if (!t || (!HAS_GAS && !apiUrl())) return;
     call('apiResume', t).then(function (r) {
       if (!r || !r.ok) { store(TOKEN_KEY, null); return; }
       return afterSignIn({ token: t, user: r.user }, true, true);
