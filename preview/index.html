@@ -1573,13 +1573,36 @@ window.JLZ_SPRITES = {
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin:18px 0 8px">班級</div>
                     <div style="display:flex;flex-direction:column;gap:7px">
                       <sc-for list="{{ adm.classes }}" as="k" hint-placeholder-count="1">
-                        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;padding:12px 14px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
-                          <span style="font-family:'Noto Sans TC',sans-serif;font-size:13.5px;color:#DFE6EB">{{ k.name }}</span>
-                          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ k.meta }}</span>
-                          <span style="flex:1"></span>
-                          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874">邀請碼</span>
-                          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.1em;color:#7FC4D8">{{ k.code }}</span>
-                          <button onClick="{{ k.copy }}" style="{{ k.copyStyle }}">{{ k.copyLabel }}</button>
+                        <div style="padding:12px 14px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
+                          <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline">
+                            <span style="font-family:'Noto Sans TC',sans-serif;font-size:13.5px;color:#DFE6EB">{{ k.name }}</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ k.meta }}</span>
+                            <span style="flex:1"></span>
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874">邀請碼</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.1em;color:#7FC4D8">{{ k.code }}</span>
+                            <button onClick="{{ k.copy }}" style="{{ k.copyStyle }}">{{ k.copyLabel }}</button>
+                            <button onClick="{{ k.toggleEdit }}" style="{{ k.editStyle }}">{{ k.editLabel }}</button>
+                          </div>
+                          <sc-if value="{{ k.editing }}" hint-placeholder-val="{{ false }}">
+                            <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1D2831">
+                              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:stretch">
+                                <sc-for list="{{ k.fields }}" as="kf" hint-placeholder-count="5">
+                                  <label style="{{ kf.wrap }}">
+                                    <span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874;margin-bottom:5px">{{ kf.label }}</span>
+                                    <input value="{{ kf.value }}" onChange="{{ kf.set }}" placeholder="{{ kf.ph }}" style="{{ kf.input }}">
+                                  </label>
+                                </sc-for>
+                              </div>
+                              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;align-items:center">
+                                <button onClick="{{ k.save }}" style="{{ k.saveStyle }}">{{ k.saveLabel }}</button>
+                                <button onClick="{{ k.cancel }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 15px;background:none;border:1px solid #1D2831;color:#8393A0;cursor:pointer;border-radius:6px">取消</button>
+                                <span style="flex:1"></span>
+                                <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ k.delHint }}</span>
+                                <input value="{{ k.delText }}" onChange="{{ k.setDelText }}" placeholder="{{ k.delPh }}" style="flex:0 1 210px;min-width:150px;padding:9px 11px;background:#0C1116;border:1px solid #3A2226;border-radius:6px;color:#DFE6EB;font-family:'Noto Sans TC',sans-serif;font-size:12.5px;outline:none">
+                                <button onClick="{{ k.remove }}" style="{{ k.delStyle }}">刪掉這個班</button>
+                              </div>
+                            </div>
+                          </sc-if>
                         </div>
                       </sc-for>
                     </div>
@@ -5096,6 +5119,75 @@ class Component extends DCLogic {
         courseStart: start || '2026-09-14', weekOverride: '', semesterWeeks: Math.max(2, Math.min(156, Math.floor(+weeks||18))), joinCode: 'J' + uid().slice(0, 5).toUpperCase(), teacherId: '' });
       persist();
       return ok(adminOverview());
+    },
+    apiAdminUpdateClass: function (t, classId, patch) {
+      auth(t);
+      var kl = classById(classId);
+      if (!kl) return err('找不到這個班級。');
+      patch = patch || {};
+      if (patch.name !== undefined) {
+        if (!String(patch.name).trim()) return err('班級名稱不能是空的。');
+        kl.name = String(patch.name).trim();
+      }
+      if (patch.term !== undefined) kl.term = String(patch.term).trim();
+      if (patch.courseStart !== undefined) {
+        var d = String(patch.courseStart).trim();
+        if (d && !/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/.test(d)) return err('開課日期要寫成 2026-09-14 這種格式。');
+        kl.courseStart = d;
+      }
+      if (patch.semesterWeeks !== undefined) {
+        var w = Math.floor(Number(patch.semesterWeeks) || 0);
+        if (w < 2 || w > 156) return err('學期週數要在 2 到 156 之間。');
+        kl.semesterWeeks = w;
+      }
+      if (patch.weekOverride !== undefined) {
+        var o = String(patch.weekOverride).trim();
+        kl.weekOverride = o === '' ? '' : Math.max(1, Math.floor(Number(o) || 1));
+      }
+      if (patch.joinCode !== undefined) {
+        var code = String(patch.joinCode).trim().toUpperCase();
+        if (!/^[A-Z0-9]{4,10}$/.test(code)) return err('邀請碼只能用 4 到 10 個英數字。');
+        var clash = DB.Classes.filter(function (k) {
+          return String(k.joinCode).toUpperCase() === code && String(k.classId) !== String(classId);
+        })[0];
+        if (clash) return err('這組邀請碼已經被「' + clash.name + '」用了。');
+        kl.joinCode = code;
+      }
+      persist();
+      return ok(adminOverview());
+    },
+    apiAdminDeleteClass: function (t, classId, confirmName) {
+      auth(t);
+      var kl = classById(classId);
+      if (!kl) return err('找不到這個班級。');
+      if (String(confirmName || '').trim() !== String(kl.name).trim()) {
+        return err('要刪掉「' + kl.name + '」的話，請把班級名稱一字不差地再打一次。');
+      }
+      var users = DB.Users.filter(function (u) { return String(u.classId) === String(classId); });
+      if (users.length) {
+        return err('這個班還有 ' + users.length + ' 個帳號（' +
+          users.slice(0, 3).map(function (u) { return u.account; }).join('、') +
+          (users.length > 3 ? ' 等' : '') + '）。先把帳號刪掉或移到別班，才能刪這個班。');
+      }
+      var teams = DB.Teams.filter(function (x) { return String(x.classId) === String(classId); });
+      var ids = {};
+      teams.forEach(function (x) { ids[String(x.teamId)] = 1; });
+      var tasks = DB.Tasks.filter(function (x) { return String(x.classId) === String(classId); });
+      var byTeam = function (name, field) {
+        DB[name] = DB[name].filter(function (r) { return !ids[String(r[field])]; });
+      };
+      ['Teams|teamId', 'TeamTasks|teamId', 'Submissions|teamId', 'Reviews|teamId',
+       'Plans|teamId', 'Passes|teamId', 'Finales|teamId', 'Files|teamId'].forEach(function (pair) {
+        var a = pair.split('|'); byTeam(a[0], a[1]);
+      });
+      DB.Reads = DB.Reads.filter(function (r) {
+        return !ids[String(r.readerTeam)] && !ids[String(r.targetTeam)];
+      });
+      DB.Roster = DB.Roster.filter(function (r) { return String(r.classId) !== String(classId); });
+      DB.Tasks = DB.Tasks.filter(function (x) { return String(x.classId) !== String(classId); });
+      DB.Classes = DB.Classes.filter(function (k) { return String(k.classId) !== String(classId); });
+      persist();
+      return ok(Object.assign(adminOverview(), { removed: { teams: teams.length, tasks: tasks.length } }));
     },
     apiAdminCreateUser: function (t, p) {
       auth(t);
@@ -10261,9 +10353,89 @@ class Component extends DCLogic {
       classes: d.classes.map(function (k) {
         var cb = copyBtn(L, k.joinCode || '');
         var st = cb.copyStyle.split("font:500 11px/1 'C11';").join("font-family:'IBM Plex Mono',monospace;font-size:10.5px;border-radius:5px;");
-        return { name: k.name, code: k.joinCode || '—',
-                 meta: (k.term ? k.term + ' · ' : '') + '開課 ' + k.courseStart + ' · 現在第 ' + k.courseWeek + ' 週',
-                 copy: cb.copy, copyLabel: cb.copyLabel, copyStyle: st };
+        var open = S.admClassEdit === k.id;
+        var ek = function (key) { return 'ck_' + k.id + '_' + key; };
+        var val = function (key, dflt) {
+          var f2 = L.state.admForm || {};
+          return f2[ek(key)] !== undefined ? f2[ek(key)] : String(dflt === undefined || dflt === null ? '' : dflt);
+        };
+        var mono = "width:100%;padding:9px 11px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none";
+        var sans = "width:100%;padding:9px 11px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none";
+        var btn = function (tone) {
+          return "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 15px;border-radius:6px;cursor:pointer;background:" +
+            (tone === 'danger' ? '#2A1518' : tone === 'go' ? '#1E2024' : 'transparent') +
+            ';border:1px solid ' + (tone === 'danger' ? '#5A2A31' : '#2A2E33') +
+            ';color:' + (tone === 'danger' ? '#E88A93' : '#DFE6EB');
+        };
+        var delText = val('del', '');
+        var armed = delText.trim() === String(k.name).trim();
+        return {
+          name: k.name, code: k.joinCode || '—',
+          meta: (k.term ? k.term + ' · ' : '') + '開課 ' + k.courseStart + ' · 現在第 ' + k.courseWeek + ' 週',
+          copy: cb.copy, copyLabel: cb.copyLabel, copyStyle: st,
+          editing: open,
+          editLabel: open ? '收起來' : '編輯',
+          editStyle: btn(open ? 'go' : ''),
+          toggleEdit: function () {
+            L.setState({ admClassEdit: open ? null : k.id, admMsg: '' });
+          },
+          fields: [
+            { label: '班級名稱', ph: '設計專題 · 週三班', value: val('name', k.name), set: setF(ek('name')),
+              wrap: 'flex:2;min-width:180px', input: sans },
+            { label: '學期', ph: '2026 秋', value: val('term', k.term), set: setF(ek('term')),
+              wrap: 'flex:1;min-width:110px', input: sans },
+            { label: '開課日', ph: '2026-09-14', value: val('start', k.courseStart), set: setF(ek('start')),
+              wrap: 'flex:1;min-width:130px', input: mono },
+            { label: '總週數', ph: '18', value: val('weeks', k.semesterWeeks || 18), set: setF(ek('weeks')),
+              wrap: 'flex:0 0 100px', input: mono },
+            { label: '邀請碼', ph: 'J8OBN4', value: val('code', k.joinCode), set: setF(ek('code')),
+              wrap: 'flex:0 0 130px', input: mono }
+          ],
+          saveLabel: '存起來',
+          saveStyle: btn('go'),
+          save: function () {
+            var patch = {
+              name: val('name', k.name),
+              term: val('term', k.term),
+              courseStart: val('start', k.courseStart),
+              semesterWeeks: val('weeks', k.semesterWeeks || 18),
+              joinCode: val('code', k.joinCode)
+            };
+            call('apiAdminUpdateClass', LIVE.token, k.id, patch)
+              .then(function (r) {
+                if (!r || !r.ok) { L.setState({ admMsg: (r && r.error) || '存不起來。', admMsgKind: 'err' }); return; }
+                L.setState({
+                  admData: { classes: r.classes, users: r.users, unlockEvery: r.unlockEvery },
+                  admMsg: '「' + patch.name + '」改好了。', admMsgKind: 'ok',
+                  admClassEdit: null
+                });
+              })
+              .catch(function (e) { L.setState({ admMsg: e.message, admMsgKind: 'err' }); });
+          },
+          cancel: function () { L.setState({ admClassEdit: null, admMsg: '' }); },
+          delText: delText,
+          setDelText: setF(ek('del')),
+          delPh: k.name,
+          delHint: armed ? '確定了，按右邊那顆。' : '要刪的話，把班級名稱重打一次：',
+          delStyle: btn('danger') + (armed ? '' : ';opacity:.45'),
+          remove: function () {
+            if (!armed) {
+              L.setState({ admMsg: '先把班級名稱一字不差地打進旁邊那格，才刪得掉。', admMsgKind: 'err' });
+              return;
+            }
+            call('apiAdminDeleteClass', LIVE.token, k.id, delText)
+              .then(function (r) {
+                if (!r || !r.ok) { L.setState({ admMsg: (r && r.error) || '刪不掉。', admMsgKind: 'err' }); return; }
+                var gone = r.removed || {};
+                L.setState({
+                  admData: { classes: r.classes, users: r.users, unlockEvery: r.unlockEvery },
+                  admMsg: '「' + k.name + '」刪掉了（連同 ' + (gone.teams || 0) + ' 組、' + (gone.tasks || 0) + ' 項任務）。',
+                  admMsgKind: 'ok', admClassEdit: null
+                });
+              })
+              .catch(function (e) { L.setState({ admMsg: e.message, admMsgKind: 'err' }); });
+          }
+        };
       }),
       kname: f.kname || '', kterm: f.kterm || '', kstart: f.kstart || '', kweeks: f.kweeks || '',
       setKname: setF('kname'), setKterm: setF('kterm'), setKstart: setF('kstart'), setKweeks: setF('kweeks'),

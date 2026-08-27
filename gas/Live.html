@@ -4643,9 +4643,89 @@
       classes: d.classes.map(function (k) {
         var cb = copyBtn(L, k.joinCode || '');
         var st = cb.copyStyle.split("font:500 11px/1 'C11';").join("font-family:'IBM Plex Mono',monospace;font-size:10.5px;border-radius:5px;");
-        return { name: k.name, code: k.joinCode || '—',
-                 meta: (k.term ? k.term + ' · ' : '') + '開課 ' + k.courseStart + ' · 現在第 ' + k.courseWeek + ' 週',
-                 copy: cb.copy, copyLabel: cb.copyLabel, copyStyle: st };
+        var open = S.admClassEdit === k.id;
+        var ek = function (key) { return 'ck_' + k.id + '_' + key; };
+        var val = function (key, dflt) {
+          var f2 = L.state.admForm || {};
+          return f2[ek(key)] !== undefined ? f2[ek(key)] : String(dflt === undefined || dflt === null ? '' : dflt);
+        };
+        var mono = "width:100%;padding:9px 11px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none";
+        var sans = "width:100%;padding:9px 11px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none";
+        var btn = function (tone) {
+          return "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 15px;border-radius:6px;cursor:pointer;background:" +
+            (tone === 'danger' ? '#2A1518' : tone === 'go' ? '#1E2024' : 'transparent') +
+            ';border:1px solid ' + (tone === 'danger' ? '#5A2A31' : '#2A2E33') +
+            ';color:' + (tone === 'danger' ? '#E88A93' : '#DFE6EB');
+        };
+        var delText = val('del', '');
+        var armed = delText.trim() === String(k.name).trim();
+        return {
+          name: k.name, code: k.joinCode || '—',
+          meta: (k.term ? k.term + ' · ' : '') + '開課 ' + k.courseStart + ' · 現在第 ' + k.courseWeek + ' 週',
+          copy: cb.copy, copyLabel: cb.copyLabel, copyStyle: st,
+          editing: open,
+          editLabel: open ? '收起來' : '編輯',
+          editStyle: btn(open ? 'go' : ''),
+          toggleEdit: function () {
+            L.setState({ admClassEdit: open ? null : k.id, admMsg: '' });
+          },
+          fields: [
+            { label: '班級名稱', ph: '設計專題 · 週三班', value: val('name', k.name), set: setF(ek('name')),
+              wrap: 'flex:2;min-width:180px', input: sans },
+            { label: '學期', ph: '2026 秋', value: val('term', k.term), set: setF(ek('term')),
+              wrap: 'flex:1;min-width:110px', input: sans },
+            { label: '開課日', ph: '2026-09-14', value: val('start', k.courseStart), set: setF(ek('start')),
+              wrap: 'flex:1;min-width:130px', input: mono },
+            { label: '總週數', ph: '18', value: val('weeks', k.semesterWeeks || 18), set: setF(ek('weeks')),
+              wrap: 'flex:0 0 100px', input: mono },
+            { label: '邀請碼', ph: 'J8OBN4', value: val('code', k.joinCode), set: setF(ek('code')),
+              wrap: 'flex:0 0 130px', input: mono }
+          ],
+          saveLabel: '存起來',
+          saveStyle: btn('go'),
+          save: function () {
+            var patch = {
+              name: val('name', k.name),
+              term: val('term', k.term),
+              courseStart: val('start', k.courseStart),
+              semesterWeeks: val('weeks', k.semesterWeeks || 18),
+              joinCode: val('code', k.joinCode)
+            };
+            call('apiAdminUpdateClass', LIVE.token, k.id, patch)
+              .then(function (r) {
+                if (!r || !r.ok) { L.setState({ admMsg: (r && r.error) || '存不起來。', admMsgKind: 'err' }); return; }
+                L.setState({
+                  admData: { classes: r.classes, users: r.users, unlockEvery: r.unlockEvery },
+                  admMsg: '「' + patch.name + '」改好了。', admMsgKind: 'ok',
+                  admClassEdit: null
+                });
+              })
+              .catch(function (e) { L.setState({ admMsg: e.message, admMsgKind: 'err' }); });
+          },
+          cancel: function () { L.setState({ admClassEdit: null, admMsg: '' }); },
+          delText: delText,
+          setDelText: setF(ek('del')),
+          delPh: k.name,
+          delHint: armed ? '確定了，按右邊那顆。' : '要刪的話，把班級名稱重打一次：',
+          delStyle: btn('danger') + (armed ? '' : ';opacity:.45'),
+          remove: function () {
+            if (!armed) {
+              L.setState({ admMsg: '先把班級名稱一字不差地打進旁邊那格，才刪得掉。', admMsgKind: 'err' });
+              return;
+            }
+            call('apiAdminDeleteClass', LIVE.token, k.id, delText)
+              .then(function (r) {
+                if (!r || !r.ok) { L.setState({ admMsg: (r && r.error) || '刪不掉。', admMsgKind: 'err' }); return; }
+                var gone = r.removed || {};
+                L.setState({
+                  admData: { classes: r.classes, users: r.users, unlockEvery: r.unlockEvery },
+                  admMsg: '「' + k.name + '」刪掉了（連同 ' + (gone.teams || 0) + ' 組、' + (gone.tasks || 0) + ' 項任務）。',
+                  admMsgKind: 'ok', admClassEdit: null
+                });
+              })
+              .catch(function (e) { L.setState({ admMsg: e.message, admMsgKind: 'err' }); });
+          }
+        };
       }),
       kname: f.kname || '', kterm: f.kterm || '', kstart: f.kstart || '', kweeks: f.kweeks || '',
       setKname: setF('kname'), setKterm: setF('kterm'), setKstart: setF('kstart'), setKweeks: setF('kweeks'),

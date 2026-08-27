@@ -55,8 +55,11 @@ function newUnit() {
   };
 }
 
-/* 執行個體層級的表格快取；版本號放在 _meta/versions，跨執行個體失效 */
+/* 執行個體層級的表格快取；版本號放在 _meta/versions，跨執行個體失效。
+   另外壓一個存活時間：有人繞過 API 直接改 Firestore（主控台、CLI）時，
+   版本號不會動，只靠版本號會一直吃到舊資料。 */
 const CACHE = { tables: {} };
+const CACHE_TTL_MS = 30000;
 const copy = (rows) => rows.map((r) => Object.assign({}, r));
 
 async function loadSnapshot(unit) {
@@ -66,12 +69,13 @@ async function loadSnapshot(unit) {
   TABLES.forEach((name) => {
     const v = versions[name] || 0;
     const hit = CACHE.tables[name];
-    if (hit && hit.v === v) unit.tables[name] = copy(hit.rows);
+    const fresh = hit && hit.v === v && (Date.now() - hit.at) < CACHE_TTL_MS;
+    if (fresh) unit.tables[name] = copy(hit.rows);
     else missing.push({ name, v });
   });
   await Promise.all(missing.map(async ({ name, v }) => {
     const rows = await store.readCollection(name, HEADS[name]);
-    CACHE.tables[name] = { v, rows: copy(rows) };
+    CACHE.tables[name] = { v, at: Date.now(), rows: copy(rows) };
     unit.tables[name] = rows;
   }));
   /* 原始副本：flush 時用來算出真的動到哪幾列 */

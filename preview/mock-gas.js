@@ -235,6 +235,75 @@
       persist();
       return ok(adminOverview());
     },
+    apiAdminUpdateClass: function (t, classId, patch) {
+      auth(t);
+      var kl = classById(classId);
+      if (!kl) return err('找不到這個班級。');
+      patch = patch || {};
+      if (patch.name !== undefined) {
+        if (!String(patch.name).trim()) return err('班級名稱不能是空的。');
+        kl.name = String(patch.name).trim();
+      }
+      if (patch.term !== undefined) kl.term = String(patch.term).trim();
+      if (patch.courseStart !== undefined) {
+        var d = String(patch.courseStart).trim();
+        if (d && !/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/.test(d)) return err('開課日期要寫成 2026-09-14 這種格式。');
+        kl.courseStart = d;
+      }
+      if (patch.semesterWeeks !== undefined) {
+        var w = Math.floor(Number(patch.semesterWeeks) || 0);
+        if (w < 2 || w > 156) return err('學期週數要在 2 到 156 之間。');
+        kl.semesterWeeks = w;
+      }
+      if (patch.weekOverride !== undefined) {
+        var o = String(patch.weekOverride).trim();
+        kl.weekOverride = o === '' ? '' : Math.max(1, Math.floor(Number(o) || 1));
+      }
+      if (patch.joinCode !== undefined) {
+        var code = String(patch.joinCode).trim().toUpperCase();
+        if (!/^[A-Z0-9]{4,10}$/.test(code)) return err('邀請碼只能用 4 到 10 個英數字。');
+        var clash = DB.Classes.filter(function (k) {
+          return String(k.joinCode).toUpperCase() === code && String(k.classId) !== String(classId);
+        })[0];
+        if (clash) return err('這組邀請碼已經被「' + clash.name + '」用了。');
+        kl.joinCode = code;
+      }
+      persist();
+      return ok(adminOverview());
+    },
+    apiAdminDeleteClass: function (t, classId, confirmName) {
+      auth(t);
+      var kl = classById(classId);
+      if (!kl) return err('找不到這個班級。');
+      if (String(confirmName || '').trim() !== String(kl.name).trim()) {
+        return err('要刪掉「' + kl.name + '」的話，請把班級名稱一字不差地再打一次。');
+      }
+      var users = DB.Users.filter(function (u) { return String(u.classId) === String(classId); });
+      if (users.length) {
+        return err('這個班還有 ' + users.length + ' 個帳號（' +
+          users.slice(0, 3).map(function (u) { return u.account; }).join('、') +
+          (users.length > 3 ? ' 等' : '') + '）。先把帳號刪掉或移到別班，才能刪這個班。');
+      }
+      var teams = DB.Teams.filter(function (x) { return String(x.classId) === String(classId); });
+      var ids = {};
+      teams.forEach(function (x) { ids[String(x.teamId)] = 1; });
+      var tasks = DB.Tasks.filter(function (x) { return String(x.classId) === String(classId); });
+      var byTeam = function (name, field) {
+        DB[name] = DB[name].filter(function (r) { return !ids[String(r[field])]; });
+      };
+      ['Teams|teamId', 'TeamTasks|teamId', 'Submissions|teamId', 'Reviews|teamId',
+       'Plans|teamId', 'Passes|teamId', 'Finales|teamId', 'Files|teamId'].forEach(function (pair) {
+        var a = pair.split('|'); byTeam(a[0], a[1]);
+      });
+      DB.Reads = DB.Reads.filter(function (r) {
+        return !ids[String(r.readerTeam)] && !ids[String(r.targetTeam)];
+      });
+      DB.Roster = DB.Roster.filter(function (r) { return String(r.classId) !== String(classId); });
+      DB.Tasks = DB.Tasks.filter(function (x) { return String(x.classId) !== String(classId); });
+      DB.Classes = DB.Classes.filter(function (k) { return String(k.classId) !== String(classId); });
+      persist();
+      return ok(Object.assign(adminOverview(), { removed: { teams: teams.length, tasks: tasks.length } }));
+    },
     apiAdminCreateUser: function (t, p) {
       auth(t);
       p = p || {};

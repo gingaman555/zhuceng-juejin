@@ -513,6 +513,104 @@ function apiAdminCreateClass(token, name, term, courseStart, weeks) {
   } catch (e) { return err_(e); }
 }
 
+
+/** 研究者改班級：名稱、學期、開課日、學期週數、邀請碼都可以改。 */
+function apiAdminUpdateClass(token, classId, patch) {
+  try {
+    assertResearcher_(token);
+    var kl = classById_(classId);
+    if (!kl) return err_("找不到這個班級。");
+    patch = patch || {};
+    var row = { classId: classId };
+    if (patch.name !== undefined) {
+      if (!String(patch.name).trim()) return err_("班級名稱不能是空的。");
+      row.name = String(patch.name).trim();
+    }
+    if (patch.term !== undefined) row.term = String(patch.term).trim();
+    if (patch.courseStart !== undefined) {
+      var d = String(patch.courseStart).trim();
+      if (d && !/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/.test(d)) return err_("開課日期要寫成 2026-09-14 這種格式。");
+      row.courseStart = d;
+    }
+    if (patch.semesterWeeks !== undefined) {
+      var w = Math.floor(Number(patch.semesterWeeks) || 0);
+      if (w < 2 || w > 156) return err_("學期週數要在 2 到 156 之間。");
+      row.semesterWeeks = w;
+    }
+    if (patch.weekOverride !== undefined) {
+      var o = String(patch.weekOverride).trim();
+      row.weekOverride = o === "" ? "" : Math.max(1, Math.floor(Number(o) || 1));
+    }
+    if (patch.joinCode !== undefined) {
+      var code = String(patch.joinCode).trim().toUpperCase();
+      if (!/^[A-Z0-9]{4,10}$/.test(code)) return err_("邀請碼只能用 4 到 10 個英數字。");
+      var clash = readTable_("Classes").filter(function (k) {
+        return String(k.joinCode).toUpperCase() === code && String(k.classId) !== String(classId);
+      })[0];
+      if (clash) return err_("這組邀請碼已經被「" + clash.name + "」用了。");
+      row.joinCode = code;
+    }
+    upsert_("Classes", ["classId"], row);
+    return ok_(adminOverview_());
+  } catch (e) { return err_(e); }
+}
+
+/** 研究者刪班級。有人在裡面就先擋下來，講清楚要先處理什麼。 */
+function apiAdminDeleteClass(token, classId, confirmName) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_("系統忙碌，請再試一次。"); }
+  try {
+    assertResearcher_(token);
+    var kl = classById_(classId);
+    if (!kl) return err_("找不到這個班級。");
+    /* 打錯字就整班消失太危險，要把名稱重打一次 */
+    if (String(confirmName || "").trim() !== String(kl.name).trim()) {
+      return err_("要刪掉「" + kl.name + "」的話，請把班級名稱一字不差地再打一次。");
+    }
+    var users = readTable_("Users").filter(function (u) {
+      return String(u.classId) === String(classId);
+    });
+    if (users.length) {
+      return err_("這個班還有 " + users.length + " 個帳號（" +
+        users.slice(0, 3).map(function (u) { return u.account; }).join("、") +
+        (users.length > 3 ? " 等" : "") + "）。先把帳號刪掉或移到別班，才能刪這個班。");
+    }
+    var teams = readTable_("Teams").filter(function (t) { return String(t.classId) === String(classId); });
+    var teamIds = {};
+    teams.forEach(function (t) { teamIds[String(t.teamId)] = 1; });
+    var taskIds = {};
+    readTable_("Tasks").forEach(function (t) {
+      if (String(t.classId) === String(classId)) taskIds[String(t.taskId)] = 1;
+    });
+
+    var byTeam = function (name, field) {
+      writeTable_(name, readTable_(name).filter(function (r) { return !teamIds[String(r[field])]; }));
+    };
+    byTeam("Teams", "teamId");
+    byTeam("TeamTasks", "teamId");
+    byTeam("Submissions", "teamId");
+    byTeam("Reviews", "teamId");
+    byTeam("Plans", "teamId");
+    byTeam("Passes", "teamId");
+    byTeam("Finales", "teamId");
+    byTeam("Files", "teamId");
+    writeTable_("Reads", readTable_("Reads").filter(function (r) {
+      return !teamIds[String(r.readerTeam)] && !teamIds[String(r.targetTeam)];
+    }));
+    writeTable_("Roster", readTable_("Roster").filter(function (r) {
+      return String(r.classId) !== String(classId);
+    }));
+    writeTable_("Tasks", readTable_("Tasks").filter(function (t) {
+      return String(t.classId) !== String(classId);
+    }));
+    writeTable_("Classes", readTable_("Classes").filter(function (k) {
+      return String(k.classId) !== String(classId);
+    }));
+    return ok_(Object.assign(adminOverview_(), {
+      removed: { teams: teams.length, tasks: Object.keys(taskIds).length }
+    }));
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
 /** 研究者建立老師或學生帳號：名字由研究者定，對方登入就能用。 */
 function apiAdminCreateUser(token, p) {
   var lock = LockService.getScriptLock();
@@ -689,7 +787,10 @@ function apiAdminUnclaim(token, rosterId) {
     var rows = readTable_('Roster'), hit = null;
     rows.forEach(function (r) { if (String(r.rosterId) === String(rosterId)) hit = r; });
     if (!hit) return err_('找不到這一筆。');
-    if (hit.claimedBy) upsert_('Users', ['userId'], { userId: hit.claimedBy, teamId: '' });
+    /* 認領的人可能已經被刪帳號了；upsert 一個不存在的 userId 會生出空白幽靈列 */
+    if (hit.claimedBy && userById_(hit.claimedBy)) {
+      upsert_('Users', ['userId'], { userId: hit.claimedBy, teamId: '' });
+    }
     upsert_('Roster', ['rosterId'], { rosterId: rosterId, claimedBy: '', claimedAt: '' });
     return ok_(Object.assign(adminOverview_(), { roster: rosterView_(hit.classId) }));
   } catch (e) { return err_(e); }
@@ -764,6 +865,12 @@ function apiAdminDeleteUser(token, userId) {
     if (!u) return err_('找不到這個帳號。');
     writeTable_('Users', readTable_('Users').filter(function (x) { return String(x.userId) !== String(userId); }));
     writeTable_('Sessions', readTable_('Sessions').filter(function (s) { return String(s.userId) !== String(userId); }));
+    /* 他認領過的名字要放回去，不然名單上會卡著一個指向不存在帳號的認領 */
+    readTable_('Roster').forEach(function (r) {
+      if (String(r.claimedBy) === String(userId)) {
+        upsert_('Roster', ['rosterId'], { rosterId: r.rosterId, claimedBy: '', claimedAt: '' });
+      }
+    });
     return ok_(adminOverview_());
   } catch (e) { return err_(e); }
 }

@@ -2429,5 +2429,48 @@ must('                <div style="font:400 11px/1 \'C11\';letter-spacing:.3em;co
   '<div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">{{ specDateLabel }}</div>']
 ].forEach(function (p) { must(p[0], p[1]); });
 
+/* 29. 研究者端：班級可以編輯與刪除 */
+must([
+'                        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;padding:12px 14px;background:#121A21;border:1px solid #1D2831;border-radius:9px">',
+'                          <span style="font-family:\'Noto Sans TC\',sans-serif;font-size:13.5px;color:#DFE6EB">{{ k.name }}</span>',
+'                          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:#5A6874">{{ k.meta }}</span>',
+'                          <span style="flex:1"></span>',
+'                          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874">邀請碼</span>',
+'                          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:13px;letter-spacing:.1em;color:#7FC4D8">{{ k.code }}</span>',
+'                          <button onClick="{{ k.copy }}" style="{{ k.copyStyle }}">{{ k.copyLabel }}</button>',
+'                        </div>'].join('\n'),
+[
+'                        <div style="padding:12px 14px;background:#121A21;border:1px solid #1D2831;border-radius:9px">',
+'                          <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline">',
+'                            <span style="font-family:\'Noto Sans TC\',sans-serif;font-size:13.5px;color:#DFE6EB">{{ k.name }}</span>',
+'                            <span style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:#5A6874">{{ k.meta }}</span>',
+'                            <span style="flex:1"></span>',
+'                            <span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874">邀請碼</span>',
+'                            <span style="font-family:\'IBM Plex Mono\',monospace;font-size:13px;letter-spacing:.1em;color:#7FC4D8">{{ k.code }}</span>',
+'                            <button onClick="{{ k.copy }}" style="{{ k.copyStyle }}">{{ k.copyLabel }}</button>',
+'                            <button onClick="{{ k.toggleEdit }}" style="{{ k.editStyle }}">{{ k.editLabel }}</button>',
+'                          </div>',
+'                          <sc-if value="{{ k.editing }}" hint-placeholder-val="{{ false }}">',
+'                            <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1D2831">',
+'                              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:stretch">',
+'                                <sc-for list="{{ k.fields }}" as="kf" hint-placeholder-count="5">',
+'                                  <label style="{{ kf.wrap }}">',
+'                                    <span style="display:block;font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874;margin-bottom:5px">{{ kf.label }}</span>',
+'                                    <input value="{{ kf.value }}" onChange="{{ kf.set }}" placeholder="{{ kf.ph }}" style="{{ kf.input }}">',
+'                                  </label>',
+'                                </sc-for>',
+'                              </div>',
+'                              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;align-items:center">',
+'                                <button onClick="{{ k.save }}" style="{{ k.saveStyle }}">{{ k.saveLabel }}</button>',
+'                                <button onClick="{{ k.cancel }}" style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;padding:9px 15px;background:none;border:1px solid #1D2831;color:#8393A0;cursor:pointer;border-radius:6px">取消</button>',
+'                                <span style="flex:1"></span>',
+'                                <span style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:#5A6874">{{ k.delHint }}</span>',
+'                                <input value="{{ k.delText }}" onChange="{{ k.setDelText }}" placeholder="{{ k.delPh }}" style="flex:0 1 210px;min-width:150px;padding:9px 11px;background:#0C1116;border:1px solid #3A2226;border-radius:6px;color:#DFE6EB;font-family:\'Noto Sans TC\',sans-serif;font-size:12.5px;outline:none">',
+'                                <button onClick="{{ k.remove }}" style="{{ k.delStyle }}">刪掉這個班</button>',
+'                              </div>',
+'                            </div>',
+'                          </sc-if>',
+'                        </div>'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
