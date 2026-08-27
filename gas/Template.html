@@ -1,49 +1,6 @@
 <template id="jlz-tpl">
 <div style="{{ shellStyle }}{{ uiVars }}">
 
-  <sc-if value="{{ protoChrome }}" hint-placeholder-val="{{ false }}">
-  <div style="position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:12px 22px;background:rgba(11,10,9,.93);backdrop-filter:blur(10px);border-bottom:1px solid #26211C">
-    <div style="display:flex;align-items:baseline;gap:9px">
-      <span style="font:700 22px/1 'C11';letter-spacing:.14em">逐層掘進</span>
-      <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#8A8073">FLOW PROTOTYPE</span>
-    </div>
-    <div style="display:flex;border:1px solid #2E2822">
-      <button onClick="{{ setStudent }}" style="{{ roleStuStyle }}">學生端</button>
-      <button onClick="{{ setTeacher }}" style="{{ roleTeaStyle }}">老師端</button>
-      <button onClick="{{ setResearcher }}" style="{{ roleResStyle }}">研究者端</button>
-    </div>
-    <div style="display:flex;border:1px solid #2E2822">
-      <button onClick="{{ setDesktop }}" style="{{ devDeskStyle }}">桌機</button>
-      <button onClick="{{ setMobile }}" style="{{ devMobStyle }}">手機</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
-      <span style="font:600 11px/1 'C11';letter-spacing:.12em;color:#E9B341;padding:5px 9px;background:rgba(233,179,65,.1)">{{ screenCode }}</span>
-      <span style="font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;white-space:nowrap">{{ screenName }}</span>
-      <button onClick="{{ demoRestart }}" style="font:500 11px/1 'C11';letter-spacing:.1em;color:#8A8073;background:none;border:1px solid #2E2822;padding:7px 10px;cursor:pointer;white-space:nowrap">從頭</button>
-      <button onClick="{{ exitDemo }}" style="margin-left:6px;font:500 11px/1 'C11';letter-spacing:.1em;color:#C9A227;background:rgba(201,162,39,.12);border:1px solid #4A4238;padding:7px 10px;cursor:pointer;white-space:nowrap">離開演練</button>
-    </div>
-  </div>
-  <div style="position:sticky;top:53px;z-index:39;padding:11px 22px;background:rgba(11,10,9,.96);border-bottom:1px solid #26211C;display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-    <button onClick="{{ demoPrev }}" style="font:500 11px/1 'C11';letter-spacing:.1em;padding:8px 12px;cursor:pointer;background:none;border:1px solid #2E2822;color:#8A8073;white-space:nowrap">← 上一步</button>
-    <div style="display:flex;gap:3px;flex-wrap:wrap">
-      <sc-for list="{{ demoJumps }}" as="dj" hint-placeholder-count="11">
-        <button onClick="{{ dj.pick }}" style="{{ dj.style }}">{{ dj.label }}</button>
-      </sc-for>
-    </div>
-    <button onClick="{{ demoNext }}" style="font:500 11px/1 'C11';letter-spacing:.1em;padding:8px 12px;cursor:pointer;background:rgba(233,179,65,.12);border:1px solid #5A4A2C;color:#E9B341;white-space:nowrap">下一步 →</button>
-    <div style="flex:1;min-width:200px">
-      <div style="font:400 11px/1 'C11';letter-spacing:.14em;color:#E9B341">{{ demoStepLabel }}</div>
-      <div style="font:500 11px/1.5 'C11';color:#DCD4C6;margin-top:4px">{{ demoStepTitle }}</div>
-      <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:3px;text-wrap:pretty">{{ demoStepNote }}</div>
-    </div>
-    <div style="display:flex;gap:5px">
-      <sc-for list="{{ demoRoles }}" as="dr" hint-placeholder-count="3">
-        <button onClick="{{ dr.pick }}" style="{{ dr.style }}">{{ dr.label }}</button>
-      </sc-for>
-    </div>
-  </div>
-  </sc-if>
-
   <div style="{{ stageWrapStyle }}">
     <div style="{{ stageStyle }}">
 
@@ -1456,13 +1413,6 @@
                   </div>
                 </sc-if>
 
-                <sc-if value="{{ resVals.demoOn }}" hint-placeholder-val="{{ false }}">
-                  <div style="flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 24px;background:#242017;border-bottom:1px solid #4A4238">
-                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#C9A227">DEMO</span>
-                    <span style="font-family:'Noto Sans TC',sans-serif;font-size:12.5px;line-height:1.7;color:#C8C2B4;flex:1;min-width:200px">演練模式：所有頁面已解除延遲揭露，畫面上的語料與數值是示範樣本，不是實際課堂紀錄。</span>
-                    <button onClick="{{ resVals.toggleDemo }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 12px;background:transparent;border:1px solid #4A4238;color:#C8C2B4;cursor:pointer;border-radius:4px;white-space:nowrap">關閉</button>
-                  </div>
-                </sc-if>
 
                 <sc-if value="{{ resVals.lockedNotice }}" hint-placeholder-val="{{ false }}">
                   <div style="padding:32px 24px;font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.9;color:#8393A0">尚未到解鎖時點，其餘入口不可進入。{{ resVals.weekNow }}。<br><br>延遲揭露是部署前設定的：學期進行中不提供即時資料，預設每四週解鎖一次。看得到即時資料，你會忍不住去影響老師。</div>

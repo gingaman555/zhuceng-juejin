@@ -21,9 +21,7 @@
   function call(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
     /* 演練模式完全不碰真實資料：所有寫入當成功、所有讀取回空 */
-    if (App.logic && App.logic.state && App.logic.state.demoMode) {
-      return Promise.resolve({ ok: true, demo: true });
-    }
+
     /* Firebase：一支 HTTPS Function 依名稱分派，回傳格式跟 GAS 版一模一樣 */
     var url = apiUrl();
     if (url) {
@@ -95,7 +93,7 @@
     };
 
     /* 真實使用時任務全部來自後端，不用原型的示範清單 */
-    P.mkTasks = function () { return (this.state && this.state.demoMode) ? ORIG.mkTasks.call(this) : []; };
+    P.mkTasks = function () { return []; };   /* 實際使用版沒有假任務 */
 
     P.courseStart = function () {
       if (!this.state) return ORIG.courseStart.call(this);
@@ -139,7 +137,7 @@
     /* 研究者端：非演練模式一律吃後端切片（延遲揭露已在後端做掉） */
     P.research = function () {
       var S = this.state;
-      if (S.resDemo || S.demoMode) return ORIG.research.call(this);
+
       var d = S.resSlice || { unlockedThrough: 0, nextUnlock: 4, week: S.courseWeek || 1, locked: true,
                               subLog: [], revLog: [], readLog: [], teams: [], assigned: 0 };
       var revs = d.revLog || [], subs = d.subLog || [], reads = d.readLog || [];
@@ -160,40 +158,7 @@
 
     /* 演練模式的示範語料要跟現在的成品同一個結構：
        每一筆審核都接得回學生那一輪的提交與自評，R-01／R-02 才不會空一半。 */
-    ORIG.demoLogs = P.demoLogs;
-    P.demoLogs = function () {
-      var out = ORIG.demoLogs.call(this);
-      var SELF = [
-        ['onpar', '照原本估的走完，沒有特別卡。', ''],
-        ['slow',  '訪談約不到人，等了一週才排上。', '兩個人對範圍的理解還不一樣。'],
-        ['fast',  '比想像中快，因為前一項的資料可以直接用。', ''],
-        ['slow',  '低估了整理逐字稿的時間。', '不確定要收斂到多細才算夠。'],
-        ['onpar', '跟上一次差不多，流程比較熟了。', '']
-      ];
-      var BODY = [
-        '把題目收斂成一句話，並標出排除掉的兩個方向。',
-        '訪了三位使用者，逐字稿附上，矛盾的地方標成紅字。',
-        '兩個方案並排比較，附上放棄那一個的代價。',
-        '第二版原型，跟第一版的差別列在最前面。',
-        '依上一次的回饋改了範圍，前後對照放在同一頁。'
-      ];
-      (out.revLog || []).forEach(function (r, i) {
-        var s = SELF[i % SELF.length];
-        r.attempt = (i % 3) + 1;
-        r.effort = s[0]; r.effortNote = s[1]; r.blocker = s[2];
-        r.subText = BODY[i % BODY.length];
-        r.subLen = r.subText.length;
-        r.subFiles = i % 3;
-        r.subWeek = r.week;
-      });
-      (out.subLog || []).forEach(function (x, i) {
-        var s = SELF[i % SELF.length];
-        x.effort = s[0]; x.effortNote = s[1]; x.blocker = s[2];
-        x.hasBlocker = !!s[2];
-        if (!x.attempt) x.attempt = (i % 3) + 1;
-      });
-      return out;
-    };
+
 
     /* 原型只寫了第二層的抵達故事，其餘層會退回去播開頭那三頁。
        這裡用交付包裡每一層自己的文字補齊，不新增設定。 */
@@ -262,6 +227,10 @@
     };
   }
 
+  /* 外殼：學生／老師是像素風滿版，研究者是儀器風滿版 */
+  var SHELL_LIVE = "height:100vh;height:100dvh;overflow:hidden;background:#0B0A09;font-family:'C11';color:#E8E2D6;padding:0;";
+  var SHELL_RES  = "height:100vh;height:100dvh;overflow:hidden;background:#0A0E12;font-family:'Noto Sans TC',sans-serif;color:#DFE6EB;padding:0;";
+
   /* ================= 狀態同步 ================= */
 
   function LAYERNAME(n) { return (App.logic.LAYERS[(n || 1) - 1] || {}).name || ''; }
@@ -292,7 +261,7 @@
     L.KLASSES.forEach(function (k, i) { if (k.id === b.classId) idx = i; });
 
     var next = {
-      signedIn: true, role: u.role, klass: idx, demoMode: false,
+      signedIn: true, role: u.role, klass: idx,
       courseWeek: b.courseWeek, weeksHere: b.courseWeek, joinCode: b.joinCode || '',
       teamState: {}, otherSubs: [], teamTasks: b.teamTasks || {}, gates: b.gates || [],
       authError: '', busy: false
@@ -425,7 +394,7 @@
   }
 
   function refresh(force) {
-    if (!LIVE.token || App.logic.state.demoMode) return Promise.resolve();
+    if (!LIVE.token) return Promise.resolve();
     /* 先問一聲有沒有動過。沒動就不抓整包——一個班同時掛著輪詢也不會把配額吃光 */
     var pre = force ? Promise.resolve(true) : call('apiPing', LIVE.token).then(function (p) {
       if (!p || !p.ok || !p.rev) return true;              /* 舊後端沒這支：照舊 */
@@ -437,7 +406,7 @@
     return call('apiBootstrap', LIVE.token).then(function (r) {
       if (typeof go === 'string') LIVE.lastRev = go;
       if (!r || !r.ok) return;
-      if (App.logic.state.demoMode) return;
+
       applyBootstrap(r);
       if (r.user.role === 'researcher') return loadSlice();
     }).catch(function () {});
@@ -446,7 +415,7 @@
 
   function loadSlice() {
     return call('apiResearchSlice', LIVE.token).then(function (r) {
-      if (!r || !r.ok || App.logic.state.demoMode) return;
+      if (!r || !r.ok) return;
       var L = App.logic;
       L.KLASSES = [{ id: 'res', name: '研究資料', term: '', started: true,
                      teams: (r.teams || []).map(function (t) {
@@ -503,379 +472,13 @@
     }).catch(function () { App.logic.setState({ identityList: [] }); loadJoinable(); });
   }
 
-  /* ================= 演練模式 ================= */
-
-  function enterDemo() {
-    var L = App.logic;
-    LIVE.snapshot = { state: Object.assign({}, L.state), KLASSES: L.KLASSES, TEACHER: L.TEACHER, LOGS: L.LOGS };
-    L.LOGS = {};
-    /* 從頭開始走：預設進學生端第一步 */
-    demoApply(0, 'student');
-  }
-
-  function exitDemo() {
-    var L = App.logic, s = LIVE.snapshot;
-    if (s) {
-      L.KLASSES = s.KLASSES; L.TEACHER = s.TEACHER; L.LOGS = s.LOGS;
-      L.setState(Object.assign({}, s.state, {
-        demoMode: false, resDemo: false, screen: 'R00', role: 'researcher',
-        subLog: [], revLog: [], readLog: [], reward: null, toast: ''
-      }));
-      LIVE.snapshot = null;
-    } else {
-      L.setState({ demoMode: false, resDemo: false, screen: 'R00', role: 'researcher',
-                   subLog: [], revLog: [], readLog: [] });
-    }
-    refresh();
-  }
-
-  /* ================= 畫面值加工 ================= */
-
-  var SHELL_PROTO = "min-height:100vh;background:#0B0A09;background-image:radial-gradient(1100px 560px at 50% -12%,rgba(233,179,65,.07),transparent 70%);font-family:'C11';color:#E8E2D6;padding:0 0 56px;";
-  /* 實際使用版：外殼固定滿版、不讓整頁捲，側欄才會一直留在原地 */
-  var SHELL_LIVE  = "height:100vh;height:100dvh;overflow:hidden;background:#0B0A09;font-family:'C11';color:#E8E2D6;padding:0;";
-  var SHELL_RES   = "height:100vh;height:100dvh;overflow:hidden;background:#0A0E12;font-family:'Noto Sans TC',sans-serif;color:#DFE6EB;padding:0;";
-
-  var REG_LABEL = { student: '註冊 · 學生', teacher: '註冊 · 老師', researcher: '註冊 · 研究者' };
-
-  /* 演練模式跑的是原型資料，但畫面是現在的成品。
-     成品新增的那些欄位在這裡也要接上，不然演練時會出現按不動的按鈕。 */
-
-  /* ============================================================
-     演練模式：跑的是實際使用版的同一套邏輯，只是資料在記憶體裡。
-     系統改了什麼，演練模式自動跟著改——因為它們是同一段程式。
-     有一條腳本可以一步一步走完整套流程，三端看到的是同一個時刻。
-     ============================================================ */
-
-  var DEMO_TEAMS = ['挖到再說', '慢慢掘', '石頭人'];
-
-  /* 腳本：每一步是整個班的一個時刻 */
-  var DEMO_SCRIPT = [
-    { k: '開學', t: '老師還沒開清單',
-      d: '學生登入了，但這一層還沒有任務。S-01 會叫他們等，S-02 是空的。' },
-    { k: '第一層 · 開清單', t: '老師把第一層的六塊礦脈開出來',
-      d: 'T-05 一次寫一項、加入清單、整份發派。學生的 S-02 這時候才有東西。' },
-    { k: '第一層 · 排時程', t: '學生排完六項的交件週',
-      d: '沒排過就交不出去。期末回顧的「你排的 對 實際發生的」就是從這裡開始累積。' },
-    { k: '第一層 · 交了兩件', t: '兩件在老師手上',
-      d: 'T-01 收攏成一組一張卡；T-03 點進去，那一組的兩件一起看。' },
-    { k: '第一層 · 一過一退', t: '老師通過一件、退回一件',
-      d: '退件要附理由。學生端那一項會標「要補」，重交次數不限，前面幾次都留著。' },
-    { k: '第一層 · 採齊六塊', t: '六塊都通過了',
-      d: '這時候才送得出關卡。少一塊、或老師少開一塊，兩邊都會被擋。' },
-    { k: '第一層 · 送關卡', t: '學生送出三格，等老師審',
-      d: '你在這一層的路上做了什麼／你們有什麼變化／接下來要做什麼。' },
-    { k: '第二層 · 通過了', t: '老師放行，交出道具與寶物',
-      d: '礦石鑄成道具、擊退層底那一隻；寶物是他看你們做得怎麼樣才給的。地圖上的小人往下一層。' },
-    { k: '第四層 · 進行中', t: '走到第四層，前三層都採齊了',
-      d: '地圖上的通道走過三段，圖鑑收了 17 塊。' },
-    { k: '第五層 · 採齊', t: '最後一塊也到手了',
-      d: '第五層只有一塊礦石，老師不給清單——要交什麼你們自己決定。' },
-    { k: '走到地心', t: '五層全過，期末回顧開了',
-      d: '側欄的 ？？？ 亮出來：故事結局四頁、整學期的你排的對實際發生的、最後三題。' }
-  ];
-
-  /* 每一步整個班在哪：cur＝現在第幾層、passed＝過了哪幾層、open＝開到第幾層 */
-  var DEMO_AT = [
-    { cur: 1, passed: [],           open: 0, week: 1  },   /* 0 開學 */
-    { cur: 1, passed: [],           open: 1, week: 2  },   /* 1 開清單 */
-    { cur: 1, passed: [],           open: 1, week: 2  },   /* 2 排時程 */
-    { cur: 1, passed: [],           open: 1, week: 3  },   /* 3 交兩件 */
-    { cur: 1, passed: [],           open: 1, week: 4  },   /* 4 一過一退 */
-    { cur: 1, passed: [],           open: 1, week: 5  },   /* 5 採齊六塊 */
-    { cur: 1, passed: [],           open: 1, week: 6  },   /* 6 送關卡 */
-    { cur: 2, passed: [1],          open: 2, week: 7  },   /* 7 通過了 */
-    { cur: 4, passed: [1, 2, 3],    open: 4, week: 12 },   /* 8 第四層進行中 */
-    { cur: 5, passed: [1, 2, 3, 4], open: 5, week: 16 },   /* 9 第五層採齊 */
-    { cur: 5, passed: [1,2,3,4,5],  open: 5, week: 17 }    /* 10 走到地心 */
-  ];
-
-  function demoBuild(step) {
-    var L = App.logic;
-    step = Math.max(0, Math.min(DEMO_SCRIPT.length - 1, step | 0));
-    var at = DEMO_AT[step];
-    var mins = L.MINS || [];
-
-    /* 這一層每一塊礦石的狀態，只看步數 */
-    var curStatus = function (k) {
-      switch (step) {
-        case 3: return k < 2 ? 'submitted' : 'todo';
-        case 4: return k === 0 ? 'passed' : k === 1 ? 'needs_more' : 'todo';
-        case 5: case 6: return 'passed';
-        case 8: return k < 2 ? 'passed' : k === 2 ? 'submitted' : 'todo';
-        case 9: case 10: return 'passed';
-        default: return 'todo';
-      }
-    };
-
-    var tasks = [];
-    mins.forEach(function (m, i) {
-      if (m.L > at.open) return;
-      var k = mins.filter(function (x) { return x.L === m.L; }).indexOf(m);
-      var st = m.L < at.cur ? 'passed' : m.L === at.cur ? curStatus(k) : 'todo';
-      var fb = '', fbType = '', rounds = [];
-      if (st === 'passed') { fb = '這一項可以。' + (m.rec || ''); fbType = 'pass'; }
-      if (st === 'needs_more') { fb = '拆出來的三塊還是一樣大，看不出先後。再拆一次。'; fbType = 'needfix'; }
-      if (step >= 5 && m.L === at.cur && k === 1) rounds = ['拆出來的三塊還是一樣大，看不出先後。再拆一次。'];
-      tasks.push({
-        id: 'd' + i, klass: 'demo', layer: m.L, type: 'required',
-        title: m.L === 5 ? '由你決定要交什麼' : m.task,
-        cond: '把' + m.task + '做到別人看得懂的程度。',
-        note: '寫提醒，不要寫步驟。', due: '第 ' + Math.min(18, m.L * 3) + ' 週 · 週五',
-        mineral: m.name, spec: '', status: st,
-        text: st === 'todo' ? '' : m.task + '的交付內容', files: [],
-        fb: fb, fbType: fbType, over: false, rounds: rounds
-      });
-    });
-
-    var plan = {}, passedWeek = {};
-    if (step >= 2) tasks.forEach(function (t, i) {
-      var w = Math.min(18, (t.layer - 1) * 3 + (i % 3) + 2);
-      plan[t.id] = { a: w, b: w };
-      if (t.status === 'passed') passedWeek[t.id] = Math.min(18, w + (i % 3 === 0 ? 1 : 0));
-    });
-
-    var teams = DEMO_TEAMS.map(function (nm, i) {
-      return { id: 'dt' + i, name: '第' + ['一', '二', '三'][i] + '組 · ' + nm,
-        layer: i === 0 ? at.cur : Math.max(1, at.cur - i),
-        weeks: i === 0 ? 2 : i === 1 ? 4 : 1,
-        passed: i === 0 ? at.passed : at.passed.slice(0, Math.max(0, at.passed.length - i)),
-        me: i === 0 };
-    });
-
-    var queue = [], teamTasks = {}, gates = [];
-    teams.forEach(function (tm, ti) {
-      teamTasks[tm.id] = tasks.map(function (t) {
-        return Object.assign({}, t, { status: ti === 0 ? t.status : (t.layer < tm.layer ? 'passed' : 'todo') });
-      });
-    });
-    tasks.forEach(function (t) {
-      if (t.status !== 'submitted') return;
-      queue.push({ id: 'q' + t.id, klass: 'demo', team: teams[0].name, teamId: teams[0].id,
-        taskId: t.id, title: t.title, layer: t.layer, tag: 'L' + t.layer,
-        cond: t.cond, due: t.due, over: false, text: t.text, files: [],
-        effort: 'slow', effortNote: '比想的久，約人就花了兩週', blocker: '約不到第三位受訪者' });
-    });
-    if (step === 3) {
-      queue.push({ id: 'qo1', klass: 'demo', team: teams[1].name, teamId: teams[1].id,
-        taskId: 'd0', title: '專案定義', layer: 1, tag: 'L1', cond: '把專案定義說清楚。',
-        due: '第 3 週 · 週五', over: true, text: '我們這一組的專案定義', files: [],
-        effort: 'onpar', effortNote: '還行', blocker: '' });
-    }
-    if (step === 6) {
-      gates.push({ teamId: teams[0].id, teamName: teams[0].name, layer: at.cur, weeks: 2,
-        cells: ['我們把訪談從六個人收斂到三個人，中間繞了一次路。',
-                '比較知道什麼時候該停手了。',
-                '下一層先把原型的範圍定小一點。'] });
-    }
-
-    return {
-      klass: { id: 'demo', name: '演練班 · 設計專題', term: '2026 秋', started: true, joinCode: 'DEMO01',
-               courseStart: '2026-09-14', courseWeek: at.week, semesterWeeks: 18, teams: teams },
-      tasks: tasks, plan: plan, passedWeek: passedWeek,
-      queue: queue, teamTasks: teamTasks, gates: gates,
-      cur: at.cur, passed: at.passed, week: at.week, step: step
-    };
-  }
-
-  function demoApply(step, keepRole) {
-    var L = App.logic;
-    var d = demoBuild(step);
-    L.KLASSES = [d.klass];
-    L.TEACHER = '林老師';
-    var role = keepRole || L.state.role || 'student';
-    var screen = L.state.screen;
-    if (['C01', 'C02', 'C03', 'C04', 'C05'].indexOf(screen) >= 0) screen = role === 'teacher' ? 'T01' : role === 'researcher' ? 'R01' : 'S01';
-    L.setState({
-      demoMode: true, demoStep: step, resDemo: true, resConsent: true,
-      signedIn: true, role: role, screen: screen, klass: 0,
-      courseWeek: d.week, weeksHere: d.week, stayWeeks: d.klass.teams[0].weeks,
-      currentLayer: d.cur, passed: d.passed, tasks: d.tasks,
-      teamId: d.klass.teams[0].id, plan: d.plan, passedWeek: d.passedWeek,
-      teamTasks: d.teamTasks, gates: d.gates,
-      otherSubs: d.queue, reviewedOthers: [], queueTeam: null, reviewId: null,
-      gateSubmitted: d.step === 6, gateText: d.step === 6 ? d.gates.length ? d.gates[0].cells : ['', '', ''] : ['', '', ''],
-      finData: null, finQ1: '', finQ2: '', finQ3: '',
-      marks: [], allOpen: false, specNames: {}, reward: null, draftSet: [], editId: null,
-      editLayer: d.cur, expanded: d.cur, mapView: 'board', mapTab: 'map', mapTeam: null
-    });
-  }
-
-  function demoStepInfo(L) {
-    var i = L.state.demoStep || 0;
-    var sc = DEMO_SCRIPT[i] || DEMO_SCRIPT[0];
-    return { i: i, n: DEMO_SCRIPT.length, k: sc.k, t: sc.t, d: sc.d };
-  }
-
-
-  /* 演練模式的工具列：一步一步走完整套流程，三端看到同一個時刻 */
-  function demoBar(L, v) {
-    var info = demoStepInfo(L);
-    v.demoStepLabel = '第 ' + (info.i + 1) + ' / ' + info.n + ' 步　·　' + info.k;
-    v.demoStepTitle = info.t;
-    v.demoStepNote = info.d;
-    v.demoHasPrev = info.i > 0;
-    v.demoHasNext = info.i < info.n - 1;
-    v.demoPrev = function () { demoApply(info.i - 1, L.state.role); };
-    v.demoNext = function () { demoApply(info.i + 1, L.state.role); };
-    v.demoRestart = function () { demoApply(0, L.state.role); };
-    v.demoJumps = DEMO_SCRIPT.map(function (sc, i) {
-      var on = i === info.i;
-      return {
-        label: String(i + 1), title: sc.k,
-        pick: function () { demoApply(i, L.state.role); },
-        style: "font:500 11px/1 'C11';min-width:24px;padding:6px 7px;cursor:pointer;text-align:center;background:" +
-          (on ? '#E9B341' : i < info.i ? 'rgba(233,179,65,.18)' : 'rgba(0,0,0,.3)') +
-          ';border:1px solid ' + (on ? '#E9B341' : i < info.i ? '#5A4A2C' : '#2E2822') +
-          ';color:' + (on ? '#0B0A09' : i < info.i ? '#E9B341' : '#6E665A')
-      };
-    });
-    /* 三端切換：切過去看的是同一個時刻 */
-    v.demoRoles = [
-      { k: 'student', label: '學生端' }, { k: 'teacher', label: '老師端' }, { k: 'researcher', label: '研究者端' }
-    ].map(function (r) {
-      var on = L.state.role === r.k;
-      return {
-        label: r.label,
-        pick: function () {
-          L.setState({ role: r.k, screen: r.k === 'teacher' ? 'T01' : r.k === 'researcher' ? 'R01' : 'S01',
-                       queueTeam: null, reviewId: null, mapView: 'board' });
-        },
-        style: "font:500 11px/1 'C11';letter-spacing:.1em;padding:7px 12px;cursor:pointer;background:" +
-          (on ? 'rgba(233,179,65,.16)' : 'rgba(0,0,0,.3)') + ';border:1px solid ' + (on ? '#E9B341' : '#2E2822') +
-          ';color:' + (on ? '#E9B341' : '#8A8073')
-      };
-    });
-  }
-
-  function demoExtras(L, v) {
-    var S = L.state;
-    v.scC05 = false;                     /* 原型沒有註冊頁 */
-    v.showRegisterLink = false;
-    v.showAuthToggle = true;
-    v.authToggleLabel = '這是我第一次登入';
-    v.showMemberRows = true;
-    v.liveMemberNote = false;
-    v.hasIdentityList = false;
-    v.showTeamMaker = true;
-    v.c04Kicker = 'C-04 · NEW TEAM';
-    v.c04Title = '建立你的小隊';
-    v.c04Hint = '隊名和成員之後都可以再改。';
-
-    /* S-05 的自我判斷區塊 */
-    var EFF = [['fast', '比預估快', '#E9B341'], ['onpar', '跟預估差不多', '#C3BAAA'], ['slow', '比預估慢', '#D9603F']];
-    v.effortPicks = EFF.map(function (o) {
-      var on = S.draftEffort === o[0];
-      return {
-        label: o[1], pick: function () { L.setState({ draftEffort: o[0] }); },
-        style: "font:500 22px/1 'C11';padding:11px 15px;white-space:nowrap;cursor:pointer;background:" +
-          (on ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.26)') + ';border:1px solid ' + (on ? o[2] : '#2E2822') +
-          ';color:' + (on ? o[2] : '#8A8073')
-      };
-    });
-    v.reflectReqStyle = "font:600 11px/1 'C11';letter-spacing:.14em;padding:5px 9px;background:" +
-      (S.draftEffort ? 'rgba(195,186,170,.12);color:#8A8073' : '#D9603F;color:#0B0A09');
-    /* 只有比預估慢的才要交代原因——快跟差不多不用寫 */
-    v.needEffortNote = S.draftEffort === 'slow';
-    v.effortNoteLabel = '為什麼比預估慢（必填，一句話就好）';
-    v.effortNote = S.draftEffortNote || '';
-    v.setEffortNote = function (e) { L.setState({ draftEffortNote: e.target.value }); };
-    v.blocker = S.draftBlocker || '';
-    v.setBlocker = function (e) { L.setState({ draftBlocker: e.target.value }); };
-    v.uploadHint = '演練模式不會真的上傳檔案。實際使用時，截圖／文件／影片會存進課程的雲端硬碟。';
-    v.uploading = false; v.linkOpen = false; v.linkDraft = '';
-    v.setLinkDraft = function () {}; v.addLink = function () { L.say('演練模式不加附件。'); };
-    v.isRetry = false; v.hasHistory = false; v.history = []; v.canCopyPrev = false;
-    v.copyPrev = function () {};
-    v.hasSpec = false; v.openTaskSpec = '';
-
-    /* T-05 的檔案規格 */
-    v.nfSpec = (S.nf || {}).spec || '';
-    v.setNfSpec = function (e) { L.setState({ nf: Object.assign({}, L.state.nf, { spec: e.target.value }) }); };
-    v.specPresets = ['PDF 一份', '簡報 10 頁以內', '含原始檔', '檔名格式', '影片放連結'].map(function (lb) {
-      return {
-        label: lb,
-        add: function () {
-          var cur = String((L.state.nf || {}).spec || '').trim();
-          L.setState({ nf: Object.assign({}, L.state.nf, { spec: cur ? cur + '\n' + lb : lb }) });
-        },
-        style: "font:400 22px/1 'C11';padding:9px 12px;cursor:pointer;white-space:nowrap;background:rgba(0,0,0,.26);border:1px dashed #3A3026;color:#8A8073"
-      };
-    });
-    v.revHasSpec = false; v.revSpec = '';
-    v.hasSelfCall = false; v.hasSelfNote = false; v.hasBlocker = false;
-    v.hasTeamFinale = false; v.teamFinale = [];
-
-    /* T-04 的三個分頁 */
-    var tab = S.mapTab || 'map';
-    v.showRosterTab = S.screen === 'T04';
-    v.mapTabRoster = function () { L.setState({ mapTab: 'roster', mapView: 'board' }); };
-    v.mapTabRosterStyle = L.pill(tab === 'roster');
-    v.mapTabMapStyle = L.pill(tab === 'map');
-    v.mapTabCollStyle = L.pill(tab === 'coll');
-    if (S.screen === 'T04') {
-      v.scMap = tab === 'map';
-      v.scColl = tab === 'coll';
-      v.scT04 = tab === 'roster';
-    }
-
-    /* 班級切換在演練模式維持原型的原地展開 */
-    v.scKlass = false;
-    v.klassCards = [];
-
-    /* 期末回顧在演練模式直接可看 */
-    v.scFinale = S.screen === 'FINALE';
-    v.finLocked = false; v.finOpen = false;
-    v.endingPages = []; v.hasEnding = false;
-    v.subBlocked = false; v.subBlockedWhy = ''; v.submitGateLabel = ''; v.submitGateStyle = 'display:none';
-    v.hasSpecNeed = false; v.specNeeds = [];
-    v.scTFIN = false; v.hasTfin = false; v.tfinEmpty = false; v.hasTfinSel = false; v.hasTfinPick = false;
-    v.tfinList = []; v.tfinStats = []; v.tfinAnswers = []; v.tfinHow = ''; v.tfinEmptyNote = '';
-    v.finGateSteps = []; v.hasFinGateReason = false; v.finGateBox = 'display:none';
-    v.crownSlots = []; v.finStats = []; v.finWeeks = []; v.finRows = [];
-    v.finLegend = []; v.finCross = []; v.finalFields = [];
-    v.finKicker = 'FINALE'; v.finTitle = '期末回顧';
-    v.finLede = '演練模式沒有整學期的真實資料，所以這一頁在這裡是空的。實際使用時，走完第五層才會打開。';
-    v.finLockNote = '';
-
-    if (v.resVals) decorateSource(L, v.resVals);
-    if (v.resVals) { v.resVals.fullTextPicks = []; v.resVals.fullTextNote = ''; }
-
-    /* 送審三格：演練模式維持原型的三題 */
-    v.gateWhy = ''; v.gateWhyRows = [];
-
-    /* S-01 的規則與下一步 */
-    v.ruleSteps = []; v.hasNextAction = false; v.nextAction = ''; v.nextActionWhy = '';
-    v.myPhrases = []; v.hasMyPhrases = false; v.myPhrasesNote = '';
-    v.hasWritingNote = false; v.writingNote = '';
-    v.hasDuePeak = false; v.duePeakNote = ''; v.duePeakRows = []; v.hasDueSpread = false;
-    v.tfinOpened = false; v.tfinHasWords = false; v.tfinWordsOld = ''; v.tfinWordsBy = '';
-    v.tfinReply = ''; v.hasTfinAnswers = false; v.tfinAnsLabel = ''; v.tfinAnsColor = '#5F574C';
-    v.needPlan = false; v.planPicks = []; v.planLabel = ''; v.planNote = ''; v.planBox = 'display:none';
-    v.nextActionBtn = ''; v.goNextAction = function () {};
-    /* 原型的環節說明還在講延伸項 */
-    v.openWhat = ''; v.openChain = []; v.layerShape = ''; v.editStageNote = '';
-    v.veinCount = ''; v.veinPickNote = '';
-    v.collectCells = []; v.collectBars = []; v.collectChain = [];
-    v.momentOpen = false; v.momentRows = []; v.momentLines = []; v.momentBox = 'display:none';
-    v.hasMomentRows = false; v.hasMomentLines = false; v.hasMomentQuote = false;
-    v.hasMomentBadge = false; v.hasMomentAlt = false; v.closeMoment = function () {};
-    v.doMomentAlt = function () {};
-    v.boardDone = ''; v.boardLeft = ''; v.boardStepNote = ''; v.boardPos = 0;
-    v.gateMinerals = []; v.gateNeed = ''; v.gateNeedNote = '';
-    v.ganttLegend = []; v.ganttHowToStyle = "font:400 22px/1.6 'C11';color:#8A8073;margin-bottom:12px";
-    v.ganttZoomPicks = []; v.ganttSpanNote = ''; v.jumpNow = function () {};
-    v.hasDueWindow = false; v.dueWindowNote = '';
-    v.dueDateValue = ''; v.dueDateNote = ''; v.setDueDate = function () {};
-    v.semesterWeeksPicks = [];
-  }
 
   /* 側欄的額外入口：學生的期末回顧、老師的 T-09。演練模式也要有。 */
   function addNavExtras(L, v, sc) {
     var S = L.state;
     /* 走完第五層之後，側欄多一項期末回顧 */
     if (S.role === 'student' && v.navItems) {
-      var fin5 = (S.passed || []).indexOf(5) >= 0 && (!!S.finOpened || !!S.demoMode);
+      var fin5 = (S.passed || []).indexOf(5) >= 0 && !!S.finOpened;
       var waitOpen = (S.passed || []).indexOf(5) >= 0 && !S.finOpened;
       if (!v.navItems.some(function (n) { return n.code === '結局'; })) {
         v.navItems.push({
@@ -928,7 +531,7 @@
 
   function decorate(L, v) {
     trimMinerals(L);   /* 每一層最多四塊 */
-    var S = L.state, demo = !!S.demoMode, sc = S.screen;
+    var S = L.state, sc = S.screen;
     var mob = S.device === 'mobile';
     var isRes = S.role === 'researcher';
     var chromeScreen = ['C01', 'C02', 'C03', 'C04', 'C05', 'STORY'].indexOf(sc) >= 0 || sc.charAt(0) === 'R';
@@ -944,7 +547,7 @@
     /* 沙盒班級：功能一樣，但這一班的資料不進研究紀錄。要讓人看得出來。 */
     (function () {
       var kl = (L.KLASSES || [])[S.klass || 0] || {};
-      var on = !demo && !!S.signedIn && !!kl.sandbox;
+      var on = !!S.signedIn && !!kl.sandbox;
       v.inSandbox = on;
       v.sandboxBarText = on
         ? "試用班「" + (kl.name || "") + "」——這一班怎麼點都可以，資料不會進研究紀錄。"
@@ -955,34 +558,11 @@
         "font:400 11px/1.4 'C11';letter-spacing:.1em;color:#DCD4C6;text-shadow:0 1px 2px rgba(0,0,0,.8)";
     })();
 
-    v.protoChrome = demo;
-    v.exitDemo = exitDemo;
+    v.protoChrome = false;        /* 演練模式已移除，一律滿版 */
+    v.exitDemo = function () {};
     v.scC05 = sc === 'C05';
-    v.showMemberRows = demo;      /* 實際使用版：組員名字不開放自由輸入 */
-    v.liveMemberNote = !demo && sc === 'C04';
-    if (demo) {
-      v.shellStyle = SHELL_PROTO;
-      v.stageWrapStyle = 'display:flex;justify-content:center;padding:26px 20px 0';
-      v.stageStyle = 'position:relative;width:100%;max-width:' + v.stageW + ';height:' + v.stageH +
-        ';background:#100E0C;border:1px solid #2E2822;box-shadow:0 30px 90px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column;border-radius:' + v.stageRadius;
-      demoExtras(L, v);
-      demoBar(L, v);
-      addNavExtras(L, v, sc);
-      v.showSignOut = false;
-      v.showSideNav = !mob && !chromeScreen;
-      v.showTabBar = mob && !chromeScreen;
-      v.showIdBar = !isRes && !chromeScreen;
-      /* 關鍵：演練模式跑的是同一套 live 加工，不是原型自己的邏輯 */
-      momentVals(L, v);
-      decorateAuth(L, v);
-      if (S.role === 'student') decorateStudent(L, v);
-      if (S.role === 'teacher') { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); }
-      if (isRes) decorateResearcher(L, v);
-      addBossCodex(L, v);
-      decorateRelated(L, v);
-      if (v.resVals) v.resVals.toggleDemo = exitDemo;
-      return v;
-    }
+    v.showMemberRows = false;     /* 組員名字不開放自由輸入 */
+    v.liveMemberNote = sc === 'C04';
 
     v.shellStyle = isRes ? SHELL_RES : SHELL_LIVE;
     v.stageWrapStyle = 'display:block;width:100%;height:100%';
@@ -3822,38 +3402,10 @@
   /* ---------- 期末回顧：結局、整學期比對、最後的檢討 ---------- */
 
   /* 演練模式：期末的整學期比對表自己算，不打 API */
-  function demoFinale(L) {
-    var S = L.state;
-    var rows = (S.tasks || []).map(function (t, i) {
-      var pl = (S.plan || {})[t.id];
-      var planTo = pl ? (pl.b || pl.a) : 0;
-      var real = (S.passedWeek || {})[t.id] || 0;
-      return {
-        id: t.id, layer: t.layer, type: 'required', title: t.title, mineral: t.mineral,
-        status: t.status, planFrom: pl ? pl.a : 0, planTo: planTo, realWeek: real,
-        attempts: i % 4 === 1 ? 2 : 1, rejected: i % 4 === 1 ? 1 : 0,
-        effort: ['onpar', 'slow', 'fast', 'onpar'][i % 4],
-        lastEffort: ['onpar', 'slow', 'fast', 'onpar'][i % 4],
-        lastResult: t.status === 'passed' ? 'pass' : ''
-      };
-    });
-    var subs = rows.reduce(function (a, r) { return a + r.attempts; }, 0);
-    var rej = rows.reduce(function (a, r) { return a + r.rejected; }, 0);
-    var agree = rows.filter(function (r) { return r.effort !== 'slow'; }).length;
-    return {
-      ok: true, team: (L.teams().filter(function (t) { return t.me; })[0] || {}).name || '',
-      layer: S.currentLayer, passed: S.passed || [], specNames: S.specNames || {},
-      rows: rows, totalSubs: subs, totalRejected: rej,
-      cross: { total: rows.length, agree: agree, optimistic: rej, conservative: Math.max(0, rows.length - agree - rej) },
-      /* 演練模式直接視為已放行，才走得到結局 */
-      finale: { q1: '', q2: '', q3: '', lightName: '', submitted: false,
-                opened: true, openedBy: '林老師',
-                openWords: '你們寫的東西我教了十年才有人講出來。接下來那一頁是你們自己的——好好看完。' }
-    };
-  }
+
 
   function loadFinale(L) {
-    if (L.state.demoMode) { L.setState({ finLoading: false, finData: demoFinale(L) }); return; }
+
     if (L.state.finLoading) return;
     L.setState({ finLoading: true });
     call('apiFinale', LIVE.token, '').then(function (r) {
@@ -3887,7 +3439,7 @@
     var cleared5 = (S.passed || []).indexOf(5) >= 0;
     var finData0 = S.finData || {};
     var fin0 = finData0.finale || {};
-    var opened = !!fin0.opened || !!S.finOpened || !!S.demoMode;
+    var opened = !!fin0.opened || !!S.finOpened;
     var done5 = cleared5 && opened;
     var lay5 = L.LAYERS[4] || {};
     var extra = (L.EXTRA || [])[0] || {};
@@ -5410,7 +4962,7 @@
     v.resLockedNav = locked;
     rv.locked = locked;
     rv.lockedNotice = locked && L.state.screen !== 'R00' && L.state.screen !== 'R09' && L.state.screen !== 'RADM';
-    if (!L.state.demoMode && !L.state.resDemo) {
+    {
       var every = (L.state.resSlice && L.state.resSlice.unlockEvery) || 1;
       rv.unlockLine = every <= 1
         ? '揭露節奏：每週　·　目前可見：第 1–' + dd.unlockedThrough + ' 週（學期進行到第 ' + dd.week + ' 週）'
@@ -5475,8 +5027,10 @@
     var rv = v.resVals;
     if (!rv) return;
 
-    rv.toggleDemo = function () { enterDemo(); };
-    rv.demoLabel = '進入演練模式';
+    /* 演練模式已移除：要試流程請開一個試用班，那是真的系統、真的資料庫，
+       只是不會進研究紀錄。比模擬的可信，也不用另外維護一套假資料。 */
+    rv.toggleDemo = function () { L.setState({ screen: 'RADM', admMsg: '要試流程的話，在下面開一個「試用班」——那是真的系統，只是資料不會進研究紀錄。', admMsgKind: 'ok' }); };
+    rv.demoLabel = '開一個試用班';
 
     decorateResearchCross(L, v, rv);
 
@@ -5570,7 +5124,7 @@
 
   function syncDevice() {
     var L = App.logic;
-    if (!L || L.state.demoMode) return;
+    if (!L) return;
     var want = window.innerWidth < 768 ? 'mobile' : 'desktop';
     if (L.state.device !== want) L.setState({ device: want });
   }
@@ -5583,12 +5137,12 @@
   function startPolling() {
     if (LIVE.pollTimer) return;
     LIVE.pollTimer = setInterval(function () {
-      if (!LIVE.token || App.logic.state.demoMode) return;
+      if (!LIVE.token) return;
       if (document.visibilityState !== 'visible' || typing()) return;
       refresh();
     }, 30000);
     document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible' && LIVE.token && !App.logic.state.demoMode) refresh();
+      if (document.visibilityState === 'visible' && LIVE.token) refresh();
     });
   }
 
@@ -5598,7 +5152,7 @@
     LIVE.protoKlasses = JSON.parse(JSON.stringify(App.logic.KLASSES));
     App.logic.KLASSES = [{ id: 'k0', name: '（載入中）', term: '', started: false, teams: [] }];
     App.logic.setState({
-      demoMode: false, signedIn: false, tasks: [], otherSubs: [], teamState: {}, marks: [],
+      signedIn: false, tasks: [], otherSubs: [], teamState: {}, marks: [],
       teamTasks: {}, gates: [], joinable: [], reg: {}, remember: true, busy: false, authError: '',
       stayWeeks: 1, courseWeek: 1, resSlice: null, gateTeamId: null,
       device: window.innerWidth < 768 ? 'mobile' : 'desktop'

@@ -2652,5 +2652,25 @@ must('      <sc-if value="{{ momentOpen }}" hint-placeholder-val="{{ false }}">'
 '',
 '      <sc-if value="{{ momentOpen }}" hint-placeholder-val="{{ false }}">'].join('\n'));
 
+/* 34. 演練模式整套移除：原型工具列與研究者端的 DEMO 橫幅都拿掉 */
+(function () {
+  var NLx = String.fromCharCode(10);
+
+  /* 頂部那一整條原型工具列 */
+  var a = t.indexOf('  <sc-if value="{{ protoChrome }}" hint-placeholder-val="{{ false }}">');
+  var b = t.indexOf('  <div style="{{ stageWrapStyle }}">');
+  if (a < 0 || b < 0) { console.error('MISS 34 工具列', a, b); process.exit(1); }
+  t = t.slice(0, a) + t.slice(b);
+
+  /* 研究者端的 DEMO 橫幅 */
+  var c = t.indexOf('                <sc-if value="{{ resVals.demoOn }}" hint-placeholder-val="{{ false }}">');
+  if (c < 0) { console.error('MISS 34 橫幅'); process.exit(1); }
+  var d = t.indexOf('                </sc-if>', c);
+  if (d < 0) { console.error('MISS 34 橫幅結尾'); process.exit(1); }
+  t = t.slice(0, c) + t.slice(d + '                </sc-if>'.length + 1);
+
+  console.log('34. 演練模式的版面整套移除');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
