@@ -2758,5 +2758,14 @@ must([
 '                  </sc-if>',
 '                  <sc-if value="{{ hasSpecRelated }}" hint-placeholder-val="{{ true }}">'].join('\n'));
 
+/* 39. 微光荒原：地表那一層照現實時間顯示天色，加上日月與時段 */
+must('                        <span style="{{ m.stepsTagStyle }}">{{ m.stepsTag }}</span>',
+[
+'                        <span style="{{ m.stepsTagStyle }}">{{ m.stepsTag }}</span>',
+'                        <sc-if value="{{ m.hasSky }}" hint-placeholder-val="{{ false }}">',
+'                          <span style="{{ m.skyOrbStyle }}"></span>',
+'                          <span style="{{ m.skyTagStyle }}">{{ m.skyTag }}</span>',
+'                        </sc-if>'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

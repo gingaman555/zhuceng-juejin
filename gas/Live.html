@@ -603,7 +603,7 @@
     momentVals(L, v);
     decorateAuth(L, v);
     if (S.role === 'student' && S.signedIn) decorateStudent(L, v);
-    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); }
+    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); decorateDayNight(L, v); }
     if (isRes) decorateResearcher(L, v);
     addBossCodex(L, v);   /* 學生與老師的收藏總覽都要有守關生物 */
     ghostCodex(L, v);      /* 還沒拿到的畫成造型黑影 */
@@ -1202,6 +1202,7 @@
     decorateProtoLeftovers(L, v);
     decorateCollect(L, v);
     decorateBoard(L, v);
+    decorateDayNight(L, v);   /* 地表那一層照現實時間 */
 
     (v.ganttRows || []).forEach(function (row, i) {
       var t = L.myTasks()[i];
@@ -1709,6 +1710,84 @@
 
   /* 老師端的地圖剖面：他看的是自己開的清單鋪滿了沒，以及全班走到哪。
      跟學生端共用同一套視覺，但狀態來源不同——老師沒有「我採到幾塊」。 */
+  /* 微光荒原是地表那一層，所以它照現實時間有晝夜。
+     地下四層不會變——洞窟裡本來就沒有天色。
+     只改天色的疊層，場景圖本身不動。 */
+  function skyPhase(now) {
+    var h = (now || new Date()).getHours();
+    if (h >= 5 && h < 7) {
+      return {
+        key: 'dawn', label: '清晨',
+        /* 天光剛起，霧還沒散 */
+        wash: 'linear-gradient(180deg,rgba(120,96,72,.30),rgba(40,34,26,.34) 55%,rgba(16,13,9,.42))',
+        orb: '#F0D9A8', orbGlow: 'rgba(240,217,168,.45)', orbTop: 62, orbRight: 16,
+        note: '天剛亮'
+      };
+    }
+    if (h >= 7 && h < 17) {
+      return {
+        key: 'day', label: '白天',
+        /* 荒原本來就沒什麼遮蔽，白天是亮的 */
+        wash: 'linear-gradient(180deg,rgba(196,168,116,.26),rgba(120,100,70,.20) 50%,rgba(30,25,18,.34))',
+        orb: '#FFE9B0', orbGlow: 'rgba(255,233,176,.55)', orbTop: 24, orbRight: 22,
+        note: '看得見路'
+      };
+    }
+    if (h >= 17 && h < 20) {
+      return {
+        key: 'dusk', label: '黃昏',
+        wash: 'linear-gradient(180deg,rgba(190,104,52,.30),rgba(96,52,32,.26) 52%,rgba(22,15,10,.44))',
+        orb: '#FF9B54', orbGlow: 'rgba(255,155,84,.5)', orbTop: 66, orbRight: 18,
+        note: '光要收了'
+      };
+    }
+    return {
+      key: 'night', label: '夜晚',
+      /* 微光荒原的「微光」在夜裡才看得出來 */
+      wash: 'linear-gradient(180deg,rgba(18,26,48,.52),rgba(10,14,28,.50) 50%,rgba(4,5,10,.60))',
+      orb: '#DDE6F5', orbGlow: 'rgba(221,230,245,.4)', orbTop: 22, orbRight: 20,
+      note: '只剩礦石在發光'
+    };
+  }
+
+  /* 夜裡撒幾顆星。位置固定（用索引算），不要每次重畫都跳位 */
+  function starField(n) {
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var x = ((i * 37) % 100);
+      var y = ((i * 61) % 46);
+      var a = 0.25 + ((i * 17) % 40) / 100;
+      out.push('radial-gradient(1px 1px at ' + x + '% ' + y + '%,rgba(255,255,255,' + a.toFixed(2) + '),transparent)');
+    }
+    return out.join(',');
+  }
+
+  function decorateDayNight(L, v) {
+    var layers = v.mapLayers || [];
+    if (!layers.length) return;
+    var m = layers[0];                      /* 只有第一層是地表 */
+    if (!m || !m.bandStyle) return;
+
+    var ph = skyPhase();
+    var extra = ph.key === 'night' ? starField(26) + ',' : '';
+
+    /* 原本的 bandStyle 是 background:<漸層> , url(場景圖)…
+       在最前面插一層天色，其餘原封不動 */
+    m.bandStyle = String(m.bandStyle).replace('background:', 'background:' + extra + ph.wash + ',');
+
+    m.hasSky = true;
+    m.skyTag = ph.label + '　' + ph.note;
+    m.skyOrbStyle = 'position:absolute;top:' + ph.orbTop + 'px;right:' + ph.orbRight + '%;z-index:1;' +
+      'width:14px;height:14px;background:' + ph.orb + ';' +
+      'box-shadow:0 0 18px 6px ' + ph.orbGlow + ';pointer-events:none;' +
+      (ph.key === 'night'
+        ? 'clip-path:polygon(50% 0,100% 22%,100% 78%,50% 100%,68% 50%);'   /* 月 */
+        : 'border-radius:50%;');
+    m.skyTagStyle = 'position:absolute;left:var(--mcol);top:26px;z-index:2;' +
+      "font:400 11px/1 'C11';letter-spacing:.16em;color:rgba(233,179,65,.7);" +
+      'pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top';
+  }
+
   function decorateBoardTeacher(L, v) {
     var S = L.state;
     var mob = S.device === "mobile";

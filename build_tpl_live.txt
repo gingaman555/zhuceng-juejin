@@ -920,6 +920,10 @@
                           <span style="{{ m.stateStyle }}">{{ m.state }}</span>
                         </span>
                         <span style="{{ m.stepsTagStyle }}">{{ m.stepsTag }}</span>
+                        <sc-if value="{{ m.hasSky }}" hint-placeholder-val="{{ false }}">
+                          <span style="{{ m.skyOrbStyle }}"></span>
+                          <span style="{{ m.skyTagStyle }}">{{ m.skyTag }}</span>
+                        </sc-if>
                         <sc-if value="{{ m.hasOthers }}" hint-placeholder-val="{{ false }}">
                           <span style="{{ m.othersStyle }}">
                             <span style="{{ m.othersNoteStyle }}">{{ m.othersNote }}</span>
