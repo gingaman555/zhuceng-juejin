@@ -1,0 +1,296 @@
+<script>
+/* ============================================================
+   逐層掘進 · 最小渲染執行環境（GAS 版）
+   ------------------------------------------------------------
+   只負責三件事：
+     1. 解析原型的樣板語法（{{ }} / <sc-if> / <sc-for>）
+     2. 把 renderVals() 回傳的扁平物件綁上去
+     3. 以 keyed diff 就地更新 DOM（輸入框焦點與游標不會跳掉）
+   圖像：所有 style 內的 assets/jlz/KEY.png 一律換成 Sprites 的 base64。
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ---------- 圖像路徑改寫 ---------- */
+  var ASSET_RE = /assets\/jlz\/([A-Za-z0-9_\-]+)\.png/g;
+  function rewriteAssets(s) {
+    if (!s || s.indexOf('assets/jlz/') < 0) return s;
+    var M = window.JLZ_SPRITES || {};
+    return s.replace(ASSET_RE, function (m, k) { return M[k] || m; });
+  }
+  window.JLZ_SPR = function (key) { return (window.JLZ_SPRITES || {})[key] || ''; };
+
+  /* ---------- 可讀性：把過暗的文字色統一提亮 ----------
+     原型的次級文字（#5F574C 之類）在 #0B0A09 上只有 2.8:1，讀不出來。
+     這裡只動 `color:`，不碰 border 與 background，色相與明暗層次維持原樣。 */
+  var TEXT_COLOR = {
+    /* 學生／老師端 暖黑 */
+    '#3a3026': '#6f6456', '#4a443c': '#82796c', '#4a5560': '#87929c',
+    '#5a5044': '#988e7e', '#5f574c': '#a0968a', '#6e665a': '#aba294',
+    '#8a8073': '#bcb3a6', '#8c8172': '#bcb3a6', '#9a9184': '#c6beb2',
+    '#b6ac9c': '#d2c9ba', '#c3baaa': '#dad2c4', '#dcd4c6': '#e8e2d6',
+    /* 研究者端 灰階 */
+    '#5a6874': '#96a3ae', '#8393a0': '#aebac4', '#b7c3cc': '#d2dae0',
+    '#8a9aa8': '#b4bfc8'
+  };
+  var COLOR_RE = /(^|[;\s])color:\s*(#[0-9A-Fa-f]{6})/g;
+  /* 研究者端不是點陣字，小字可以直接放大一級 */
+  var FSIZE_RE = /font-size:\s*(\d+(?:\.\d+)?)px/g;
+  var FSIZE_UP = { '10': '11.5', '10.5': '12', '11': '12.5', '11.5': '12.5', '12': '13',
+                   '12.5': '13.5', '13': '14', '13.5': '14.5', '14': '15' };
+
+  function rewriteText(s) {
+    if (!s) return s;
+    if (s.indexOf('color:') >= 0) {
+      s = s.replace(COLOR_RE, function (m, pre, hex) {
+        var to = TEXT_COLOR[hex.toLowerCase()];
+        return to ? pre + 'color:' + to : m;
+      });
+    }
+    if (s.indexOf('font-size:') >= 0 && (s.indexOf('Plex Mono') >= 0 || s.indexOf('Noto ') >= 0)) {
+      s = s.replace(FSIZE_RE, function (m, px) {
+        var to = FSIZE_UP[px];
+        return to ? 'font-size:' + to + 'px' : m;
+      });
+    }
+    return s;
+  }
+
+  /* ---------- 邏輯基底類別 ---------- */
+  window.DCLogic = class DCLogic {
+    constructor(props) { this.props = props || {}; this.state = {}; }
+    setState(update, cb) { App.commit(this, update, cb); }
+    forceUpdate() { App.schedule(); }
+    componentDidMount() {}
+    renderVals() { return {}; }
+  };
+
+  /* ---------- 樣板編譯 ---------- */
+  var tid = 0;
+  var XHTML = 'http://www.w3.org/1999/xhtml';
+
+  function parseParts(str) {
+    if (str == null) return { fixed: '' };
+    if (str.indexOf('{{') < 0) return { fixed: str };
+    var parts = [], re = /\{\{\s*([^}]*?)\s*\}\}/g, last = 0, m;
+    while ((m = re.exec(str))) {
+      if (m.index > last) parts.push(str.slice(last, m.index));
+      parts.push({ p: m[1] });
+      last = m.index + m[0].length;
+    }
+    if (last < str.length) parts.push(str.slice(last));
+    return { parts: parts };
+  }
+  function soleExpr(v) {
+    var m = /\{\{\s*([^}]*?)\s*\}\}/.exec(v || '');
+    return m ? m[1] : null;
+  }
+
+  function compileChildren(node) {
+    var out = [];
+    for (var i = 0; i < node.childNodes.length; i++) {
+      var c = compileNode(node.childNodes[i]);
+      if (c) out.push(c);
+    }
+    return out;
+  }
+
+  function compileNode(node) {
+    if (node.nodeType === 3) return { k: 't', tid: ++tid, v: parseParts(node.nodeValue) };
+    if (node.nodeType !== 1) return null;
+    var tag = node.tagName.toLowerCase();
+    if (tag === 'sc-if')
+      return { k: 'if', tid: ++tid, expr: soleExpr(node.getAttribute('value')), c: compileChildren(node) };
+    if (tag === 'sc-for')
+      return { k: 'for', tid: ++tid, expr: soleExpr(node.getAttribute('list')),
+               as: node.getAttribute('as') || 'it', c: compileChildren(node) };
+
+    var attrs = [], events = [], valueBind = null, checkedBind = null;
+    for (var i = 0; i < node.attributes.length; i++) {
+      var a = node.attributes[i], n = a.name, v = a.value, ln = n.toLowerCase();
+      if (ln.indexOf('hint-placeholder') === 0 || ln === 'data-dc-tpl' || ln === 'sc-name') continue;
+      if (ln === 'onclick' || ln === 'onchange' || ln === 'oninput' || ln === 'onscroll' ||
+          ln === 'onkeydown' || ln === 'onkeyup' || ln === 'onfocus' || ln === 'onblur' ||
+          ln === 'onsubmit' || ln === 'onmouseenter' || ln === 'onmouseleave') {
+        events.push({ type: ln.slice(2), expr: soleExpr(v) });
+        continue;
+      }
+      if (ln === 'value' && (tag === 'input' || tag === 'textarea' || tag === 'select')) {
+        valueBind = parseParts(v); continue;
+      }
+      if (ln === 'checked' && tag === 'input') { checkedBind = parseParts(v); continue; }
+      attrs.push({ name: n, v: parseParts(v) });
+    }
+    return {
+      k: 'e', tid: ++tid, tag: node.tagName,
+      ns: node.namespaceURI === XHTML ? null : node.namespaceURI,
+      attrs: attrs, events: events, valueBind: valueBind, checkedBind: checkedBind,
+      c: compileChildren(node)
+    };
+  }
+
+  /* ---------- 取值 ---------- */
+  function get(scope, path) {
+    if (!path) return undefined;
+    if (path === 'true') return true;
+    if (path === 'false') return false;
+    if (path === 'null') return null;
+    var segs = path.split('.'), cur = scope[segs[0]];
+    for (var i = 1; i < segs.length; i++) {
+      if (cur == null) return undefined;
+      cur = cur[segs[i]];
+    }
+    return cur;
+  }
+  function evalParts(spec, scope) {
+    if (spec.fixed !== undefined) return spec.fixed;
+    var s = '';
+    for (var i = 0; i < spec.parts.length; i++) {
+      var p = spec.parts[i];
+      if (typeof p === 'string') { s += p; continue; }
+      var v = get(scope, p.p);
+      s += (v === undefined || v === null || v === false) ? '' : v;
+    }
+    return s;
+  }
+
+  /* ---------- 產生 vnode ---------- */
+  function renderList(list, scope, kp, out) {
+    for (var i = 0; i < list.length; i++) renderNode(list[i], scope, kp, out);
+  }
+  function renderNode(c, scope, kp, out) {
+    if (c.k === 't') { out.push({ t: '#text', key: kp + '/' + c.tid, s: evalParts(c.v, scope) }); return; }
+    if (c.k === 'if') { if (get(scope, c.expr)) renderList(c.c, scope, kp + '/' + c.tid, out); return; }
+    if (c.k === 'for') {
+      var arr = get(scope, c.expr);
+      if (!arr || !arr.length) return;
+      for (var i = 0; i < arr.length; i++) {
+        var s2 = Object.create(scope);
+        s2[c.as] = arr[i]; s2.$i = i; s2.$index = i;
+        renderList(c.c, s2, kp + '/' + c.tid + '#' + i, out);
+      }
+      return;
+    }
+    var kids = [];
+    renderList(c.c, scope, kp + '/' + c.tid, kids);
+    var attrs = {};
+    for (var j = 0; j < c.attrs.length; j++) attrs[c.attrs[j].name] = evalParts(c.attrs[j].v, scope);
+    var ev = null;
+    if (c.events.length) { ev = {}; for (var m = 0; m < c.events.length; m++) ev[c.events[m].type] = get(scope, c.events[m].expr); }
+    out.push({
+      t: c.tag, ns: c.ns, key: kp + '/' + c.tid, a: attrs, ev: ev, c: kids,
+      val: c.valueBind ? evalParts(c.valueBind, scope) : null,
+      chk: c.checkedBind ? evalParts(c.checkedBind, scope) : null
+    });
+  }
+
+  /* ---------- DOM 套用 ---------- */
+  function setAttr(el, name, val) {
+    if (name === 'style') { el.setAttribute('style', rewriteText(rewriteAssets(val))); return; }
+    if (val === '' && (name === 'disabled' || name === 'readonly')) { el.removeAttribute(name); return; }
+    el.setAttribute(name, rewriteAssets(val));
+  }
+  function applyAttrs(el, oldA, newA) {
+    var k;
+    for (k in newA) if (!oldA || oldA[k] !== newA[k]) setAttr(el, k, newA[k]);
+    if (oldA) for (k in oldA) if (!(k in newA)) el.removeAttribute(k);
+  }
+  function ensureListener(el, type) {
+    var flag = '__L_' + type;
+    if (el[flag]) return;
+    el[flag] = true;
+    var domType = type === 'change' ? 'input' : type;
+    el.addEventListener(domType, function (e) {
+      var fn = el['__H_' + type];
+      if (typeof fn === 'function') fn(e);
+    });
+  }
+  function applyEvents(el, ev) {
+    if (!ev) return;
+    for (var t in ev) { el['__H_' + t] = ev[t]; ensureListener(el, t); }
+  }
+
+  function createEl(v) {
+    if (v.t === '#text') { v.el = document.createTextNode(v.s); return v.el; }
+    var el = v.ns ? document.createElementNS(v.ns, v.t) : document.createElement(v.t);
+    v.el = el;
+    applyAttrs(el, null, v.a);
+    applyEvents(el, v.ev);
+    if (v.val !== null) el.value = v.val;
+    if (v.chk !== null) el.checked = !!v.chk;
+    for (var i = 0; i < v.c.length; i++) el.appendChild(createEl(v.c[i]));
+    return el;
+  }
+
+  function patch(ov, nv) {
+    var el = nv.el = ov.el;
+    if (nv.t === '#text') { if (ov.s !== nv.s) el.nodeValue = nv.s; return; }
+    applyAttrs(el, ov.a, nv.a);
+    applyEvents(el, nv.ev);
+    if (nv.val !== null && el.value !== nv.val) el.value = nv.val;
+    if (nv.chk !== null && el.checked !== !!nv.chk) el.checked = !!nv.chk;
+    patchChildren(el, ov.c, nv.c);
+  }
+
+  function patchChildren(parent, oldVs, newVs) {
+    var map = Object.create(null), i, k;
+    for (i = 0; i < oldVs.length; i++) map[oldVs[i].key] = oldVs[i];
+    for (i = 0; i < newVs.length; i++) {
+      var nv = newVs[i], ov = map[nv.key];
+      if (ov && ov.t === nv.t) { patch(ov, nv); delete map[nv.key]; }
+      else createEl(nv);
+    }
+    for (k in map) { var o = map[k]; if (o.el && o.el.parentNode === parent) parent.removeChild(o.el); }
+    var ref = parent.firstChild;
+    for (i = 0; i < newVs.length; i++) {
+      var e = newVs[i].el;
+      if (e !== ref) parent.insertBefore(e, ref);
+      else ref = ref.nextSibling;
+    }
+    while (ref) { var nx = ref.nextSibling; parent.removeChild(ref); ref = nx; }
+  }
+
+  /* ---------- 應用程式外殼 ---------- */
+  var App = window.App = {
+    logic: null, root: null, vtree: null, tpl: null, queued: false, hooks: [],
+
+    commit: function (comp, update, cb) {
+      var patchObj = (typeof update === 'function') ? update(comp.state, comp.props) : update;
+      if (patchObj) comp.state = Object.assign({}, comp.state, patchObj);
+      App.schedule();
+      if (cb) setTimeout(cb, 0);
+      for (var i = 0; i < App.hooks.length; i++) App.hooks[i](comp.state, patchObj);
+    },
+
+    schedule: function () {
+      if (App.queued) return;
+      App.queued = true;
+      /* 不用 requestAnimationFrame：背景分頁會停住 */
+      setTimeout(function () { App.queued = false; App.render(); }, 16);
+    },
+
+    render: function () {
+      if (!App.logic) return;
+      var vals;
+      try { vals = App.logic.renderVals() || {}; }
+      catch (err) { console.error('renderVals 失敗：', err); return; }
+      var out = [];
+      try { renderList(App.tpl, vals, '', out); }
+      catch (err2) { console.error('render 失敗：', err2); return; }
+      patchChildren(App.root, App.vtree || [], out);
+      App.vtree = out;
+    },
+
+    onChange: function (fn) { App.hooks.push(fn); },
+
+    boot: function () {
+      var tplEl = document.getElementById('jlz-tpl');
+      App.tpl = compileChildren(tplEl.content);
+      App.root = document.getElementById('jlz-root');
+      App.logic = new Component({});
+      App.render();
+      if (App.logic.componentDidMount) App.logic.componentDidMount();
+    }
+  };
+})();
+</script>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'C11';src:url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@v1.500/fonts/web/Cubic_11.woff2') format('woff2');font-weight:100 900;font-display:block}
+@keyframes seep{0%,100%{opacity:.28}50%{opacity:.62}}
+body{margin:0;background:#0B0A09;color:#E8E2D6;font-family:'C11',system-ui,sans-serif}
+a{color:#E9B341;text-decoration:none}
+a:hover{color:#F2E6C8}
+</style>
+</helmet>
+
+<div style="max-width:1120px;margin:0 auto;padding:48px 32px 80px;background:#0B0A09">
+
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:18px;padding-bottom:22px;border-bottom:1px solid #26211C">
+    <div style="flex:1;min-width:260px">
+      <div style="font:400 11px/1 'C11';letter-spacing:.32em;color:#5F574C">ZHU CENG JUE JIN · SYSTEM MAP</div>
+      <h1 style="font:700 44px/1.25 'C11';letter-spacing:.06em;margin:14px 0 0">逐層掘進 · 系統總覽</h1>
+    </div>
+    <p style="flex:1;min-width:280px;font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">把一學期的專題課程包成從地表挖到地心的五層。老師在每一層開任務，學生逐項交付、老師逐項確認，全層通過才拿到往下一層的道具。這一頁是整體運作，單一畫面在原型檔。</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:11px;margin-top:26px">
+    <div style="padding:19px;background:linear-gradient(140deg,rgba(233,179,65,.10),transparent 62%),#14110E;border:1px solid #3A3026">
+      <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#E9B341">學生端 · S</div>
+      <div style="font:700 22px/1.5 'C11';margin-top:10px">看任務、排程、交付、看地圖</div>
+      <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:9px;text-wrap:pretty">一週開很多次。要能立刻回答：我在哪一層、還差哪幾項、下一件要交的是哪一天。</div>
+    </div>
+    <div style="padding:19px;background:#14110E;border:1px solid #26211C">
+      <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#C3BAAA">老師端 · T</div>
+      <div style="font:700 22px/1.5 'C11';margin-top:10px">逐項確認、寫合格考量、開清單</div>
+      <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:9px;text-wrap:pretty">一週一到兩次，每次要快。審核是這套系統唯一的單點失效——寫理由太貴，就會退化成只按通過。</div>
+    </div>
+    <div style="padding:19px;background:#0F1216;border:1px solid #1D2831">
+      <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#8393A0">研究者端 · R</div>
+      <div style="font:700 22px/1.5 'C11';margin-top:10px">讀審核語料、修正序列、匯出</div>
+      <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:9px;text-wrap:pretty">每四週解鎖一次。全灰階、沒有主要按鈕，唯一的寫入是研究者自己的編碼。</div>
+    </div>
+  </div>
+
+  <div style="margin-top:44px">
+    <div style="font:400 11px/1 'C11';letter-spacing:.24em;color:#5F574C">FIVE LAYERS</div>
+    <h2 style="font:700 33px/1.4 'C11';margin:11px 0 6px">五層對應課程的五個階段</h2>
+    <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0 0 18px;max-width:640px;text-wrap:pretty">每一層的難處是可預期的，路徑不是。老師定義要交什麼，學生決定怎麼挖。</p>
+
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;flex-wrap:wrap;gap:0;align-items:stretch;background:#14110E;border:1px solid #26211C">
+        <span style="width:210px;flex:none;height:98px;background:url(assets/jlz/scene-L1.png) center/cover no-repeat;image-rendering:pixelated;border-right:1px solid #26211C"></span>
+        <div style="flex:1;min-width:280px;padding:15px 18px">
+          <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
+            <span style="font:600 11px/1 'C11';color:#E9B341">L1</span>
+            <span style="font:700 22px/1.3 'C11'">微光荒原</span>
+            <span style="font:400 11px/1 'C11';color:#8A8073">第 1-2 週 · 專案定義</span>
+          </div>
+          <div style="font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">難的不是挖不動，是不知道從哪裡開始挖。</div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:9px">
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">道具 · 礦脈羅盤（辨認方向真假）</span>
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">寶物 · 銹金羅經盤</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:0;align-items:stretch;background:#14110E;border:1px solid #26211C">
+        <span style="width:210px;flex:none;height:98px;background:url(assets/jlz/scene-L2.png) center/cover no-repeat;image-rendering:pixelated;border-right:1px solid #26211C"></span>
+        <div style="flex:1;min-width:280px;padding:15px 18px">
+          <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
+            <span style="font:600 11px/1 'C11';color:#E9B341">L2</span>
+            <span style="font:700 22px/1.3 'C11'">水晶迴廊</span>
+            <span style="font:400 11px/1 'C11';color:#8A8073">第 3-6 週 · 調查分析</span>
+          </div>
+          <div style="font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">難的是採不完，不知道什麼時候該收。</div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:9px">
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">道具 · 地層切割器（切開擋路的東西）</span>
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">寶物 · 七稜燈</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:0;align-items:stretch;background:#14110E;border:1px solid #26211C">
+        <span style="width:210px;flex:none;height:98px;background:url(assets/jlz/scene-L3.png) center/cover no-repeat;image-rendering:pixelated;border-right:1px solid #26211C"></span>
+        <div style="flex:1;min-width:280px;padding:15px 18px">
+          <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
+            <span style="font:600 11px/1 'C11';color:#E9B341">L3</span>
+            <span style="font:700 22px/1.3 'C11'">迴聲迷宮</span>
+            <span style="font:400 11px/1 'C11';color:#8A8073">第 7-10 週 · 設計發展</span>
+          </div>
+          <div style="font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">難的是你以為知道的其實不知道。</div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:9px">
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">道具 · 壓力量規（偵測應力）</span>
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">寶物 · 啞鈴</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:0;align-items:stretch;background:#14110E;border:1px solid #26211C">
+        <span style="width:210px;flex:none;height:98px;background:url(assets/jlz/scene-L4.png) center/cover no-repeat;image-rendering:pixelated;border-right:1px solid #26211C"></span>
+        <div style="flex:1;min-width:280px;padding:15px 18px">
+          <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
+            <span style="font:600 11px/1 'C11';color:#E9B341">L4</span>
+            <span style="font:700 22px/1.3 'C11'">熔火深淵</span>
+            <span style="font:400 11px/1 'C11';color:#8A8073">第 11-14 週 · 設計修正</span>
+          </div>
+          <div style="font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">難的是時間在漲，必須取捨。</div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:9px">
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">道具 · 熱流導航儀（在無規律中找路）</span>
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">寶物 · 冷玉印</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:0;align-items:stretch;background:#14110E;border:1px solid #3A3026">
+        <span style="width:210px;flex:none;height:98px;background:url(assets/jlz/scene-L5.png) center/cover no-repeat;image-rendering:pixelated;border-right:1px solid #26211C"></span>
+        <div style="flex:1;min-width:280px;padding:15px 18px">
+          <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
+            <span style="font:600 11px/1 'C11';color:#E9B341">L5</span>
+            <span style="font:700 22px/1.3 'C11'">星核聖殿</span>
+            <span style="font:400 11px/1 'C11';color:#8A8073">最後 2-3 週 · 期末發表</span>
+          </div>
+          <div style="font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">這一層他沒有給你清單。你自己寫下要交什麼，以及做到什麼程度算完成。</div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:9px">
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">道具 · 核心共振器（判斷何時該開口）</span>
+            <span style="font:400 11px/1.5 'C11';color:#8A8073">寶物 · 空冠 → 空冠（復原）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:44px">
+    <div style="font:400 11px/1 'C11';letter-spacing:.24em;color:#5F574C">CORE LOOP</div>
+    <h2 style="font:700 33px/1.4 'C11';margin:11px 0 18px">核心迴圈：一項任務的一生</h2>
+
+    <div style="display:flex;flex-wrap:wrap;align-items:stretch;gap:9px">
+      <div style="flex:1;min-width:172px;padding:15px;background:#14110E;border:1px solid #26211C;border-top:2px solid #C3BAAA">
+        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#C3BAAA">老師 T-05</div>
+        <div style="font:500 22px/1.5 'C11';margin-top:8px">開一項</div>
+        <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:7px">名稱、通過條件、注意事項、期限（週次＋哪一天）、對應環節</div>
+      </div>
+      <div style="flex:1;min-width:172px;padding:15px;background:#14110E;border:1px solid #26211C;border-top:2px solid #E9B341">
+        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#E9B341">學生 甘特</div>
+        <div style="font:500 22px/1.5 'C11';margin-top:8px">排哪一週交</div>
+        <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:7px">老師看不到這個排程。他只訂期限</div>
+      </div>
+      <div style="flex:1;min-width:172px;padding:15px;background:#14110E;border:1px solid #26211C;border-top:2px solid #E9B341">
+        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#E9B341">學生 S-05</div>
+        <div style="font:500 22px/1.5 'C11';margin-top:8px">交出去</div>
+        <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:7px">文字＋附件。逾期只標示，不阻擋</div>
+      </div>
+      <div style="flex:1;min-width:172px;padding:15px;background:#14110E;border:1px solid #26211C;border-top:2px solid #C3BAAA">
+        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#C3BAAA">老師 T-06</div>
+        <div style="font:500 22px/1.5 'C11';margin-top:8px">逐項確認</div>
+        <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:7px">通過或退回，並寫合格考量——學生會看到這一段</div>
+      </div>
+      <div style="flex:1;min-width:172px;padding:15px;background:linear-gradient(140deg,rgba(233,179,65,.12),transparent 62%),#14110E;border:1px solid #3A3026;border-top:2px solid #E9B341">
+        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#E9B341">系統</div>
+        <div style="font:500 22px/1.5 'C11';margin-top:8px">發物證</div>
+        <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:7px">通過就留下一塊礦。一項任務對一種礦，指回一件做過的工作</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:9px">
+      <div style="flex:1;min-width:250px;padding:14px 16px;background:rgba(0,0,0,.28);border-left:2px solid #D9603F">
+        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#D9603F">退回</div>
+        <div style="font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">狀態改為需補充並附理由，重交次數不限。退回不是懲罰，是這條線唯一會產生教材的地方。</div>
+      </div>
+      <div style="flex:1;min-width:250px;padding:14px 16px;background:rgba(0,0,0,.28);border-left:2px solid #5F574C">
+        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#8A8073">逾時未審</div>
+        <div style="font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">自動暫准，學生照樣前進；但那一次不計入工具階級，也不對其他組解鎖。</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:44px">
+    <div style="font:400 11px/1 'C11';letter-spacing:.24em;color:#5F574C">GATE</div>
+    <h2 style="font:700 33px/1.4 'C11';margin:11px 0 18px">關卡與換層</h2>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:11px">
+      <span style="padding:12px 15px;background:#14110E;border:1px solid #26211C;font:500 22px/1.3 'C11'">必要項全數通過</span>
+      <span style="font:400 22px/1 'C11';color:#5F574C">▸</span>
+      <span style="padding:12px 15px;background:#14110E;border:1px solid #26211C;font:500 22px/1.3 'C11'">送審三格</span>
+      <span style="font:400 22px/1 'C11';color:#5F574C">▸</span>
+      <span style="padding:12px 15px;background:#14110E;border:1px solid #26211C;font:500 22px/1.3 'C11'">T-07 老師審核</span>
+      <span style="font:400 22px/1 'C11';color:#5F574C">▸</span>
+      <span style="padding:12px 15px;background:rgba(233,179,65,.12);border:1px solid #5A4A2C;font:500 22px/1.3 'C11';color:#E9B341">發道具＋定工具階級</span>
+      <span style="font:400 22px/1 'C11';color:#5F574C">▸</span>
+      <span style="padding:12px 15px;background:#14110E;border:1px solid #26211C;font:500 22px/1.3 'C11'">下一層解鎖</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:13px">
+      <div style="flex:1;min-width:230px;padding:13px 15px;background:rgba(0,0,0,.26);border-left:2px solid #3A3026;font:400 22px/1.6 'C11';color:#8A8073;text-wrap:pretty">送審三格＝這一層你做了什麼／你怎麼判斷做到了／下一層你要注意什麼。通過後公開給全班。</div>
+      <div style="flex:1;min-width:230px;padding:13px 15px;background:rgba(0,0,0,.26);border-left:2px solid #3A3026;font:400 22px/1.6 'C11';color:#8A8073;text-wrap:pretty">延伸項不影響能不能過，只影響工具校準到第幾階。系統試算，最終由老師定。</div>
+    </div>
+  </div>
+
+  <div style="margin-top:44px">
+    <div style="font:400 11px/1 'C11';letter-spacing:.24em;color:#5F574C">RULES</div>
+    <h2 style="font:700 33px/1.4 'C11';margin:11px 0 18px">七條規則</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:9px">
+      <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C;font:400 22px/1.6 'C11';color:#C3BAAA;text-wrap:pretty"><span style="color:#E9B341">01</span>　必要項全數通過才能送關卡；延伸項只影響工具校準到哪一階。</div>
+      <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C;font:400 22px/1.6 'C11';color:#C3BAAA;text-wrap:pretty"><span style="color:#E9B341">02</span>　逾期只標示，不阻擋。仍可提交、仍可確認、仍計入等級。</div>
+      <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C;font:400 22px/1.6 'C11';color:#C3BAAA;text-wrap:pretty"><span style="color:#E9B341">03</span>　老師的佇列依各組停留週數排序，不是先交先看。</div>
+      <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C;font:400 22px/1.6 'C11';color:#C3BAAA;text-wrap:pretty"><span style="color:#E9B341">04</span>　審核要寫合格考量，學生看得到。沒附理由會被標示出來。</div>
+      <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C;font:400 22px/1.6 'C11';color:#C3BAAA;text-wrap:pretty"><span style="color:#E9B341">05</span>　迷霧規則：沒抵達的層只顯示深度與 ？？？，內容全部隱藏。</div>
+      <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C;font:400 22px/1.6 'C11';color:#C3BAAA;text-wrap:pretty"><span style="color:#E9B341">06</span>　排程是學生自己的計畫，老師看不到；學生可以事後比對排的與實際的。</div>
+      <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C;font:400 22px/1.6 'C11';color:#C3BAAA;text-wrap:pretty"><span style="color:#E9B341">07</span>　研究者端每四週解鎖一次，學期中看不到即時資料。</div>
+    </div>
+  </div>
+
+  <div style="margin-top:44px">
+    <div style="font:400 11px/1 'C11';letter-spacing:.24em;color:#5F574C">SCREENS</div>
+    <h2 style="font:700 33px/1.4 'C11';margin:11px 0 18px">全部畫面</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:11px">
+      <div style="padding:17px;background:#14110E;border:1px solid #3A3026">
+        <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#E9B341">學生端</div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">S-00</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">故事說明（4 頁，可跳過）</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">S-01</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">首頁</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">S-02</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">任務清單</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">S-05</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">提交一項</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">關卡</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">送審三格</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">S-03</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">地圖剖面／收藏總覽</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">S-06</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">物件介紹（道具／寶物／礦物）</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">S-04</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">其他隊伍在哪一層</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">甘特</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">排程與比對</span></div>
+        </div>
+      </div>
+      <div style="padding:17px;background:#14110E;border:1px solid #26211C">
+        <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#C3BAAA">老師端</div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">T-00</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">系統說明（6 頁）</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">T-01</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">待你驗收（含班級切換）</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">T-02</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">五個週期的任務清單</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">T-05</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">撰寫任務內容</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">T-03</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">逐項確認</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">T-06</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">單項審核＋合格考量</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">T-07</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">關卡審核與發道具</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">T-04</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">全班位置／收藏（不上鎖）</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5F574C">T-08</span><span style="font:400 22px/1.4 'C11';color:#C3BAAA">學生端的世界</span></div>
+        </div>
+      </div>
+      <div style="padding:17px;background:#0F1216;border:1px solid #1D2831">
+        <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#8393A0">研究者端</div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-00</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">進入與同意（＋演練模式）</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-01</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">總覽＋尚未發生的事</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-02</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">審核語料＋自行編碼</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-03</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">回饋與修正序列</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-04</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">天然對照（非隨機分派）</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-05</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">閱讀行為</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-06</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">提交節律</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-07</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">停留與介入</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-08</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">匯出（強制匿名）</span></div>
+          <div style="display:flex;gap:10px"><span style="width:44px;flex:none;font:400 11px/1.6 'C11';color:#5A6874">R-09</span><span style="font:400 22px/1.4 'C11';color:#B7C3CC">設計修訂記錄</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:44px">
+    <div style="font:400 11px/1 'C11';letter-spacing:.24em;color:#5F574C">DATA</div>
+    <h2 style="font:700 33px/1.4 'C11';margin:11px 0 18px">資料誰寫、誰讀</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px">
+      <div style="padding:15px;background:#14110E;border:1px solid #26211C">
+        <div style="font:500 22px/1.3 'C11';color:#E8E2D6">提交</div>
+        <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-top:8px">學生寫入。學生、老師、研究者都讀得到（研究者需解鎖）</div>
+      </div>
+      <div style="padding:15px;background:#14110E;border:1px solid #26211C">
+        <div style="font:500 22px/1.3 'C11';color:#E8E2D6">審核與合格考量</div>
+        <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-top:8px">老師寫入。這是研究者端最重要的語料</div>
+      </div>
+      <div style="padding:15px;background:#14110E;border:1px solid #3A3026">
+        <div style="font:500 22px/1.3 'C11';color:#E9B341">排程</div>
+        <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-top:8px">學生寫入。老師與研究者都看不到</div>
+      </div>
+      <div style="padding:15px;background:#14110E;border:1px solid #26211C">
+        <div style="font:500 22px/1.3 'C11';color:#E8E2D6">他組紀錄的閱讀</div>
+        <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-top:8px">系統記錄。只有研究者讀，用來看觀摩行為</div>
+      </div>
+      <div style="padding:15px;background:#0F1216;border:1px solid #1D2831">
+        <div style="font:500 22px/1.3 'C11';color:#B7C3CC">研究者編碼</div>
+        <div style="font:400 11px/1.7 'C11';color:#8393A0;margin-top:8px">研究者寫入，與課堂資料分表。學生與老師看不到</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:44px;padding:20px;background:#191610;border:1px solid #4A4238">
+    <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px">
+      <span style="font:400 11px/1 'C11';letter-spacing:.22em;color:#C9A227">DEMO</span>
+      <span style="font:700 22px/1.4 'C11';color:#E8E2D6">演練模式</span>
+    </div>
+    <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:11px;max-width:720px;text-wrap:pretty">研究者端 R-00 的第二顆按鈕。開啟後解除四週一次的延遲揭露、灌入示範語料，每一頁上方常駐 DEMO 橫幅。用於對老師、口委或研究團隊展示這一端能看到什麼，不必等到第四週、也不必動用真實課堂資料。關閉時一併清除示範樣本。</div>
+  </div>
+
+  <div style="margin-top:26px;padding-top:18px;border-top:1px solid #26211C;font:400 11px/1.8 'C11';color:#5F574C;text-wrap:pretty">完整逐頁規格、資料模型與 Google Apps Script 架構見交付包：README.md／PRODUCT.md／SYSTEM.md／FLOWS.md／SCREENS.md。可點擊的原型在「逐層掘進 原型」。</div>
+
+</div>
+</x-dc>
+</body>
+</html>

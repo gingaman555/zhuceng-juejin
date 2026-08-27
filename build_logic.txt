@@ -1,0 +1,1476 @@
+const AC = '#E9B341', DIM = '#8A8073', FAINT = '#5F574C', LINE = '#26211C', PANEL = '#14110E', TEXT = '#E8E2D6';
+
+const SPRITE = {
+  '礦脈羅盤': 'tool-compass', '地層切割器': 'tool-cutter', '壓力量規': 'tool-gauge', '熱流導航儀': 'tool-thermal', '核心共振器': 'tool-resonator',
+  '銹金羅經盤': 'tre-golddisc', '七稜燈': 'tre-prismlamp', '啞鈴': 'tre-mutebell', '冷玉印': 'tre-jadeseal', '空冠': 'tre-emptycrown', '空冠（復原）': 'tre-crown-restored',
+  '定名石': 'min-L1-01-dingming', '裂晶': 'min-L1-02-liejing', '初痕礦': 'min-L1-03-chuhen', '拓影石': 'min-L1-04-tuoying', '預兆砂': 'min-L1-05-yuzhao', '岔路晶': 'min-L1-06-chalu',
+  '聽紋晶': 'min-L2-01-tingwen', '篩光石': 'min-L2-02-shaiguang', '徑錄礦': 'min-L2-03-jinglu', '迴訪晶': 'min-L2-04-huifang', '對映石': 'min-L2-05-duiying', '顯影砂': 'min-L2-06-xianying',
+  '初型岩': 'min-L3-01-chuxing', '因由石': 'min-L3-02-yinyou', '二階水晶': 'min-L3-03-erjie', '反響礦': 'min-L3-04-shixiang', '歧路水晶': 'min-L3-05-qilu',
+  '再凝岩': 'min-L4-01-gairong', '前後水晶': 'min-L4-02-qianhou', '再熔鑽': 'min-L4-03-zairong', '磨心礦': 'min-L4-04-moxin', '厚能量石': 'min-L4-05-quanzai',
+  '完成之光': 'min-L5-00-template'
+};
+const SPR = n => SPRITE[n] ? 'assets/jlz/' + SPRITE[n] + '.png' : null;
+const SPRBG = (n, extra) => { const u = SPR(n); return u ? `background:url(${u}) center/contain no-repeat;image-rendering:pixelated;${extra || ''}` : null; };
+
+const GLYPHS = ['polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%)', 'polygon(50% 0,100% 50%,50% 100%,0 50%)', 'polygon(20% 0,100% 15%,85% 100%,0 80%)', 'circle(46% at 50% 50%)', 'polygon(50% 4%,90% 30%,72% 96%,28% 96%,10% 30%)', 'polygon(10% 10%,90% 0,100% 90%,25% 100%)'];
+
+const MAPBG = [
+  'linear-gradient(180deg,rgba(40,34,26,.16),rgba(16,13,9,.30))',
+  'linear-gradient(180deg,rgba(8,13,16,.18),rgba(5,8,10,.34))',
+  'linear-gradient(180deg,rgba(10,9,15,.22),rgba(5,4,9,.40))',
+  'linear-gradient(180deg,rgba(15,8,4,.20),rgba(7,4,2,.38))',
+  'linear-gradient(180deg,rgba(6,5,11,.26),rgba(2,2,6,.44))'
+];
+const MAPBG_DARK = [
+  'linear-gradient(180deg,rgba(20,17,13,.72),rgba(8,7,5,.84))',
+  'linear-gradient(180deg,rgba(6,10,12,.76),rgba(3,5,7,.88))',
+  'linear-gradient(180deg,rgba(7,6,11,.80),rgba(3,3,6,.90))',
+  'linear-gradient(180deg,rgba(11,6,3,.78),rgba(5,3,2,.90))',
+  'linear-gradient(180deg,rgba(4,4,8,.84),rgba(1,1,4,.94))'
+];
+const MAPTX = [
+  'repeating-linear-gradient(90deg,rgba(233,179,65,.05) 0 2px,transparent 2px 26px),radial-gradient(160px 44px at 50% 100%,rgba(233,179,65,.16),transparent 70%)',
+  'repeating-linear-gradient(58deg,rgba(120,200,220,.14) 0 3px,transparent 3px 22px),repeating-linear-gradient(-58deg,rgba(120,200,220,.09) 0 3px,transparent 3px 30px)',
+  'repeating-linear-gradient(0deg,rgba(180,170,200,.07) 0 2px,transparent 2px 16px),repeating-linear-gradient(90deg,rgba(180,170,200,.07) 0 2px,transparent 2px 24px)',
+  'radial-gradient(70px 26px at 22% 88%,rgba(232,110,40,.34),transparent 70%),radial-gradient(90px 30px at 64% 96%,rgba(232,140,40,.28),transparent 70%),repeating-linear-gradient(90deg,rgba(232,110,40,.07) 0 4px,transparent 4px 20px)',
+  'radial-gradient(84px 60px at 50% 50%,rgba(190,170,255,.2),transparent 72%),repeating-linear-gradient(90deg,rgba(190,170,255,.06) 0 2px,transparent 2px 34px)'
+];
+
+class Component extends DCLogic {
+  LAYERS = [
+    { n: 1, code: 'L1', name: '微光荒原', sub: '一望無際的未開發平原，能感覺到地下的能量', hard: '難的不是挖不動，是不知道從哪裡開始挖。', course: '第 1-2 週 · 專案定義',
+      scene: '一望無際、未開發的大平原。黃昏光線，地上散落微弱發光的礦石碎片，地平線上一層薄霧。沒有任何地標——難處就是不知道從哪裡開始挖。',
+      tool: '礦脈羅盤', toolDesc: '辨認方向真假',
+      toolLook: '掌心大的黃銅圓盤，附一條皮繩。盤面沒有指針——那是一層渾濁的液體，裡面懸著一絲金屬粉末。盤緣刻著三圈同心刻度。',
+      toolTrait: '朝真實礦脈的方向，粉末會聚成一條線。假的方向會讓它四散。',
+      toolFunc: '辨認方向真假——這條路通不通、值不值得追。', toolAbility: '判斷一個新方向該不該投入。',
+      toolRec: '你在什麼都沒有的平原上選了一個點開挖，並且為那個選擇負責。多數隊伍在這裡花掉的時間不是挖得慢，是改了三次地點。',
+      treasure: '銹金羅經盤', treDesc: '背面有一個被磨平的印記，像是刻意抹去的。',
+      treLook: '直徑約一個手掌的薄金盤，鏽蝕嚴重，表面斑駁的墨綠與赭褐。邊緣一圈精細刻度，但符號不屬於任何已知系統。厚度極薄，比看起來輕。',
+      treLine: '（他什麼也沒說。）',
+      treNotice: '它明顯不是從土裡挖出來的。加工過、對稱、有人手的痕跡——你在一個沒有人來過的地底，收到了一件人造的物品。' },
+    { n: 2, code: 'L2', name: '水晶迴廊', sub: '到處是水晶與發光礦石，整個洞穴閃閃發光', hard: '難的是採不完，不知道什麼時候該收。', course: '第 3-6 週 · 調查分析',
+      scene: '上下對生的巨大水晶柱交錯成蜿蜒走廊。地下水穿過晶體折射出稜鏡光帶，越深處水晶越密、通道越窄。五層裡最亮的一張。',
+      tool: '地層切割器', toolDesc: '切開擋路的東西',
+      toolLook: '前臂長的手持器械，握把包著皮革。前端不是刀刃，是一根細長的石英棒。握把上有個小玻璃窗顯示共振頻率。',
+      toolTrait: '靠頻率讓晶體沿自然紋理裂開，不是硬切。棒身有使用後的細微崩口。',
+      toolFunc: '切開擋路的東西——被卡住時開出一條路。', toolAbility: '遇到阻礙時找到替代做法。',
+      toolRec: '你在採不完的地方決定了「夠了」。沒有人是採完才離開水晶迴廊的——那個判斷本身就是這一層要學的東西。',
+      treasure: '七稜燈', treDesc: '內部沒有燭芯，也沒有任何光源。玻璃是無色的——但拿到水晶旁邊，它會自己折出七道光。',
+      treLook: '約掌心高的小提燈，黃銅骨架包著七片切面玻璃。提環磨得發亮，顯示被拿了很多年。',
+      treLine: '「亮不是它給的。」', treNotice: '第二件人造物。你開始注意到它們的共同點。' },
+    { n: 3, code: 'L3', name: '迴聲迷宮', sub: '漆黑扭曲，回音會騙人，但埋著稀有礦物', hard: '難的是你以為知道的其實不知道。', course: '第 7-10 週 · 設計發展',
+      scene: '方塊狀的黑暗迷宮牆，中間一條蜿蜒通道。牆上有前人刻的箭頭，但方向全部是錯的。幾乎沒有光源。',
+      tool: '壓力量規', toolDesc: '偵測應力，提前知道哪裡會斷',
+      toolLook: '可貼在岩壁上的扁圓儀器，背面有三支短探針。正面是凸出的表玻璃，底下一根極細的指針與一圈紅色危險區。比其他道具厚重，帶著被敲擊過的凹痕。',
+      toolTrait: '能讀出岩層內部的應力分布——在裂開之前。',
+      toolFunc: '偵測應力——提前知道哪裡會斷。', toolAbility: '預見任務之間的依賴會在哪裡崩。',
+      toolRec: '你在漆黑裡發現自己以為知道的事其實不知道，然後重新排了順序。這是第一次「回音會騙人」變得無法忽視。',
+      treasure: '啞鈴', treDesc: '倒過來看，裡面是空的——沒有鈴舌。搖它沒有聲音。但你搖它的時候，迴聲會停下來一瞬間。',
+      treLook: '拇指大的青銅小鈴，表面有極細的雲雷紋。鈴口有一圈被長期摩擦的亮邊。',
+      treLine: '「安靜一下比較好想事情。」', treNotice: '在一個所有聲音都會騙人的地方，他給了你一個不發出聲音的東西。' },
+    { n: 4, code: 'L4', name: '熔火深淵', sub: '到處是熱騰騰的岩漿，沒有能久站的位置', hard: '難的是時間在漲，必須取捨。', course: '第 11-14 週 · 設計修正',
+      scene: '暗紅色熔岩河從下方發光，中間浮著幾道搖搖欲墜的岩橋，兩根火柱竄起，空中飄著灰燼般的光點。唯一光源在下方的一層。',
+      tool: '熱流導航儀', toolDesc: '在無規律中找路',
+      toolLook: '可掛在胸前的方形儀器，外殼是隔熱的深色陶瓷而不是黃銅。正面一片薄玻璃，內部是不斷流動的彩色熱圖——藍是可走的路，紅是不能踩的。邊角有熔燒過的痕跡。',
+      toolTrait: '熱源沒有規律，所以它只能告訴你「現在」哪裡能走。下一波潮汐來，圖就變了。',
+      toolFunc: '在無規律中找路——壓力下重新排序。', toolAbility: '時間被壓縮時重排優先序。',
+      toolRec: '你承認了原路是死的，然後改。改計畫在這一層不是失敗，是能力——但你要能說出為什麼這樣改是對的。',
+      treasure: '冷玉印', treDesc: '在岩漿旁邊也不會熱。底面刻著一個字，筆畫像篆書但不是——刻痕很深，是常用的印。',
+      treLook: '方形玉印，邊長約三指寬，玉色是帶灰的青，內有一縷絮狀白紋。頂端是簡單的方鈕，沒有雕飾。',
+      treLine: '「總有一天你會認得。」', treNotice: '一枚常用的印，代表有人反覆用它蓋過什麼。那個人是誰？' },
+    { n: 5, code: 'L5', name: '星核聖殿', sub: '被能量核心照亮的神殿，牆上是空的', hard: '這一層他沒有給你清單。', course: '最後 2-3 週 · 期末發表',
+      scene: '中央能量核心的光向外擴散成同心圈，四周漂浮著從前四層帶下來的水晶碎片（金／青／紫／橘四色）。牆是空的——標記要留給學生自己刻。',
+      tool: '核心共振器', toolDesc: '判斷何時該自己扛、何時該開口',
+      toolLook: '形制最簡單的一件：一個沒有面板的黃銅環，直徑約一個手掌。中央懸著一顆不接觸任何部件的小球體。',
+      toolTrait: '它不顯示任何讀數。你得自己聽它的音高。',
+      toolFunc: '讀取頻率——判斷何時該自己扛、何時該開口。', toolAbility: '求助的時機。',
+      toolRec: '你走到了核心，並且把自己做過的事說清楚了。這是唯一一件不告訴你答案的道具——因為到這裡沒有答案可給。',
+      treasure: '空冠', treDesc: '冠身正面有四個大小不一的空鑲嵌槽——一個圓形、一個方形、兩個不規則。槽底有舊的鑲嵌痕與微量氧化。',
+      treLook: '細窄的金屬環冠，直徑約一個頭圍，樣式極簡。整體很輕。',
+      treLine: '「本來就是空的。」', treNotice: '槽底的痕跡說明這裡本來有東西。而你身上剛好有四件。' }
+  ];
+
+  EXTRA = [
+    { name: '空冠（復原）', from: '星核聖殿 · 四件湊齊之後',
+      look: '同一頂細窄環冠，四個槽現在都填滿了：銹金羅經盤在正中圓槽、冷玉印在方槽、七稜燈與啞鈴分居兩側。',
+      trait: '復原之後它並沒有變得更華麗。它只是完整了。而且比想像中輕。',
+      line: '「這就是那份大秘寶。你現在拿到了。」　「沒什麼感覺對不對。因為冠不重要——重要的是你為了湊齊它做過的那些事。」',
+      notice: '他是這座神殿的上一任主人。他不想讓它被遺忘，也不想隨便送人，所以設下了考驗。而考驗從來不是那四層路。' }
+  ];
+
+  MINS = [
+    { L: 1, name: '定名石', task: '專案定義', look: '扁平近似書頁的板狀，蜜色帶土黃，表面粗糙。', trait: '很好找所以很容易被取各種不同的名字，最後就決定以此命名了。', rec: '你替一件還不存在的事取了名字。名字取得夠準，別人才知道你在說什麼——包括三週後的你自己。' },
+    { L: 1, name: '裂晶', task: '任務拆分', look: '整體是一塊，但布滿平行的天然裂理，像未剝開的頁岩。一角已自然分離。', trait: '輕輕一敲就會沿著紋理分開。強行敲會碎成粉。', rec: '你把一件事拆開了。順著它本來的紋理拆，比照你想要的樣子硬拆容易得多。' },
+    { L: 1, name: '初痕礦', task: '第一版路線圖', look: '圓潤的卵形，表面有一道橫貫的淺刻痕，邊緣不整齊。', trait: '刻痕像是徒手畫的。第二次看的時候，位置好像不太一樣。', rec: '你畫了第一條路線。它幾乎一定會改，但沒有它就沒有東西可以改。' },
+    { L: 1, name: '拓影石', task: '前例調查', look: '薄片狀，半透，內部有不屬於自己的紋路。', trait: '靠近另一塊礦石，會浮現那塊礦石內部的紋路。', rec: '你去看了別人怎麼做。看過之後，你的判斷不再只有自己的經驗。' },
+    { L: 1, name: '預兆砂', task: '風險清單', look: '不是整塊，是一小撮聚集的粗砂，顆粒間有橘色餘熱。', trait: '會在塌方前幾秒微微發熱。但它不會告訴你哪裡會塌。', rec: '你先想了哪裡可能會塌。想過不代表不會塌，但塌的時候你不會完全沒準備。' },
+    { L: 1, name: '岔路晶', task: '備用開挖點', look: '雙生晶，兩個晶體從同一個底部朝不同方向長出，角度約六十度。', trait: '同時朝兩個方向反光。看習慣了就不會只盯著一條路。', rec: '你替自己留了第二條路。多數人是在第一條走不通的時候才開始找。' },
+    { L: 2, name: '聽紋晶', task: '使用者調查', look: '六角柱體，表面布滿同心環紋，頂端微微內凹。', trait: '貼近耳朵會聽到別人說過的話，但語氣是你自己的。', rec: '你去聽了別人怎麼說。難的不是聽，是聽完之後不把它翻譯成自己本來就想做的事。' },
+    { L: 2, name: '篩光石', task: '資料分析', look: '不是柱狀，是一片打磨過的薄板，各面色澤不同。', trait: '光穿過它之後只剩下一種顏色。哪一種，取決於你怎麼拿它。', rec: '你從一堆東西裡挑出了一件事。挑什麼取決於你怎麼看——這件事沒辦法完全客觀。' },
+    { L: 2, name: '徑錄礦', task: '調查方法說明', look: '柱體內部封著一條彎曲的細絲，從底部一路走到頂端。', trait: '細絲記錄著它被搬運過的路徑，途中有幾個轉折。', rec: '你寫下了自己怎麼走到這個結論的。沒有這段，別人只能選擇相信或不相信你。' },
+    { L: 2, name: '迴訪晶', task: '追加訪談', look: '兩根幾乎相同的柱體並生，一根略短、色略深。', trait: '第二次敲它，聲音跟第一次不一樣。', rec: '你回頭再問了一次。第二次聽到的東西跟第一次不一樣——那個差別才是重點。' },
+    { L: 2, name: '對映石', task: '跨案例比較', look: '對稱的雙錐體，兩端的內含物互補。', trait: '兩塊放在一起，會互相浮現對方沒有的紋路。', rec: '你把兩個案例擺在一起看。單獨看的時候都合理，並排之後才看得出誰缺了什麼。' },
+    { L: 2, name: '顯影砂', task: '調查結果的視覺整理', look: '細小的晶砂聚成一堆，整體透出微光。', trait: '撒在暗處會照出形狀的輪廓，但照不出細節。', rec: '你把散落的東西排成一張圖。排的過程你會發現哪裡其實還是空的。' },
+    { L: 3, name: '初型岩', task: '原型或初版設計', look: '已被磨成明確的形狀，但有一側還留著未加工的原始粗面。', trait: '摸起來像成品，但邊緣還沒收乾淨。', rec: '你把想法做成了可以拿在手上的東西。做出來之後你才知道原本哪裡沒想清楚。' },
+    { L: 3, name: '因由石', task: '設計決策說明', look: '緻密的板狀石，表面有兩道平行刻痕。', trait: '一道淺而舊，一道深而新。深的那道明顯是後來補的。', rec: '你寫下了為什麼這樣選。多數人只記得結論，忘了當初排除了什麼。' },
+    { L: 3, name: '二階水晶', task: '第二版原型', look: '比初型岩小一圈，但外觀完成度更高。', trait: '比初型岩重，但體積更小。', rec: '你做了第二次。比第一次小，但更確定——這通常是進步的樣子。' },
+    { L: 3, name: '反響礦', task: '使用者測試', look: '中空，表面有一個小孔，內部結構隱約可見。', trait: '敲它會發出你沒預期的聲音，透過他做出的樂器十分昂貴。', rec: '你讓別人碰了你的東西。他們用錯的方式，比你用對的方式更有價值。' },
+    { L: 3, name: '歧路水晶', task: '替代方案比較', look: '不規則多面體，每一面都是平整的。', trait: '從不同角度看是不同的形狀，而且都對。', rec: '你認真對待了沒有選的那條路——認真到能說出為什麼不選它。' },
+    { L: 4, name: '再凝岩', task: '依回饋完成修正', look: '被熔過又重新凝固，底部仍看得出原本更大的輪廓。', trait: '比原來的形狀小，但更緻密。', rec: '你照著回饋改了。改比做難，因為你得先承認原本那版不夠好。' },
+    { L: 4, name: '前後水晶', task: '修正前後對比說明', look: '半紅半藍，一半渾濁一半透明，中間有一條筆直清楚的界線。', trait: '界線兩側的質地完全不同。', rec: '你把改之前和改之後擺在一起。看得見差別，才證明你知道自己改了什麼。' },
+    { L: 4, name: '再熔鑽', task: '第二輪修正', look: '表面有兩層不同方向的流動痕跡疊在一起。', trait: '熔過兩次。已有幾道細微的應力裂紋——第三次就會碎。', rec: '你改了第二次。到這裡你會開始感覺到，有些東西不能再改了。' },
+    { L: 4, name: '磨心礦', task: '細節優化', look: '表面拋光到像鏡子，但有一道裂縫。', trait: '透過裂縫看得見內部完全未經處理。', rec: '你把表面磨亮了。這是最後才做的事——太早磨，磨的是還會被打掉的東西。' },
+    { L: 4, name: '厚能量石', task: '完整規格文件', look: '唯一的大件：厚重的方形板，密度極高。', trait: '很重。採集者常常在最後一段路把它丟掉。', rec: '你把整件事寫完整了。它很重、很少人讀，但下一個接手的人只有它。' },
+    { L: 5, name: '完成之光', task: '由你決定', look: '一團還沒定形的柔光體，內部隱約帶著前四層的顏色緩慢流轉。', trait: '它還沒有名字。前面四層你都是拿別人命名好的東西——這一層沒有人替它命名過。', rec: '你採到了什麼、叫它什麼、寫下它是什麼，全部由你決定。你填的內容會刻在聖殿的牆上。' }
+  ];
+
+  TEACHER = '林老師';
+
+  ITER = [
+    { n: 1, phase: '介面基礎', from: '研究者自評', what: '全介面換成 11×11 點陣字（Cubic 11），字級鎖在 11 的倍數', why: '7×7 與 9×9 的點陣字在繁體筆畫下會糊成一團，小字讀不出來', where: '全端', open: '長段落是否該退回非點陣字，尚未定案' },
+    { n: 2, phase: '學生端 · 地圖', from: '使用者觀察', what: '地圖從「未抵達全遮」改成全層可見，並為五層各畫實際剖面與生態動態', why: '受測者看不出整體有多深、也看不出自己在哪，失去「逐層」的空間感', where: 'S-03 / S-04', open: '' },
+    { n: 3, phase: '學生端 · 地圖', from: '使用者觀察', what: '坑道改成一條連續開鑿路徑，並加上大富翁式的格子與小人前進', why: '五張獨立圖看起來像五個關卡選單，不像同一條挖下去的路', where: 'S-03 / S-04', open: '' },
+    { n: 4, phase: '學生端 · 迷霧規則', from: '設計原則', what: '未解開的層只顯示深度與 ？？？，敘述與詳情全部隱藏；已抵達層大幅提亮', why: '原本點未解開的層會冒出完整介紹，等於預告內容，破壞迷霧規則', where: 'S-03 / S-06', open: '' },
+    { n: 5, phase: '世界觀 · 敘事', from: '課程需求', what: '斗篷人的定位改寫：手上有工具但不直接給，用一份份任務換往下一層的道具', why: '原本的寫法像是他在給路線，與「你定義要交什麼、學生決定怎麼挖」矛盾', where: 'S-00 / T-00', open: '' },
+    { n: 6, phase: '學生端 · 甘特圖', from: '功能稽核', what: '甘特圖從靜態圖改成可排程：週次方格可點，期限／你排／實際通過／待確認四種標記疊在同一列', why: '原本只有裝飾用的長條，沒有任何互動，也沒接到真實任務資料', where: '甘特', open: '要不要記錄排程的修改歷程（v1/v2/v3）尚未決定' },
+    { n: 7, phase: '老師端 · 任務', from: '教師訪談', what: 'T-02 改成完整發派總覽：每項顯示六組的即時分布，每項可隨時編輯或刪除', why: '老師只能新增，看不到已發派的項目正在被誰做、卡在哪', where: 'T-02 / T-05', open: '' },
+    { n: 8, phase: '老師端 · 語言', from: '教師訪談', what: '獎勵改為次要資訊：先選規畫環節，物證名稱降為小字', why: '老師看不懂礦物與寶物的設定，對他重要的是這一項屬於哪個專案規畫橋段', where: 'T-05 / T-02', open: '' },
+    { n: 9, phase: '老師端 · 審核', from: '設計原則', what: '「一項三十秒」整段移除，理由欄改為「合格考量 · 學生會看到這一段」', why: '快速通過的框架會讓學生以為交出去就算做完；審核理由才是教材', where: 'T-03 / T-06 / T-00', open: '寫理由的時間成本仍未實測' },
+    { n: 10, phase: '全端 · 起始狀態', from: '流程檢查', what: '示範資料全部歸零，改成學期第 1 週；加入「＋1 週」推進，其他組會依清單交件並累積停留週數', why: '原本一進來就是做了一半的狀態，看不出流程從零開始怎麼跑；其他組永遠不動，老師端佇列永遠只有一組', where: '全端', open: '' },
+    { n: 11, phase: '全端 · 資訊架構', from: '功能稽核', what: 'S-07 岩壁標記整頁移除，紀錄改由 S-04 的小人進入；並補上常駐身分列', where: 'S-04', why: '同一份資料出現在兩個地方，且合併後留下無入口的孤兒畫面', open: '' },
+    { n: 12, phase: '老師端 · 理解', from: '教師訪談', what: '新增 T-08 學生端的世界：五層場景、道具寶物、規畫環節對照，並可用學生視角讀故事', why: '老師需要知道整套設定怎麼運作，才知道自己開的清單在學生那邊長成什麼', where: 'T-08', open: '' },
+    { n: 13, phase: '研究者端', from: '研究方法', what: '新增研究者端九個畫面：全灰階唯讀、延遲揭露、審核語料編碼、天然對照、匯出強制匿名', why: 'RTD 需要一個不介入課堂的資料來源，而且要在介面上看得出研究者不是參與者', where: 'R-00 ~ R-08', open: '雙編碼者一致率尚未實作' }
+  ];
+
+  KLASSES = [
+    { id: 'wed', name: '設計專題 · 週三班', term: '2026 春 · 第 1 週', started: true, teams: [
+      { id: 'A', name: '第一組 · 兩噸半', layer: 1, weeks: 1, passed: [] },
+      { id: 'B', name: '第二組 · 慢慢掘', layer: 1, weeks: 1, passed: [] },
+      { id: 'C', name: '第三組 · 掘到再說', layer: 1, weeks: 1, passed: [], me: true },
+      { id: 'D', name: '第四組 · 見底', layer: 1, weeks: 1, passed: [] },
+      { id: 'E', name: '第五組 · 一銙', layer: 1, weeks: 1, passed: [] },
+      { id: 'F', name: '第六組 · 深呼吸', layer: 1, weeks: 1, passed: [] }
+    ] },
+    { id: 'fri', name: '設計專題 · 週五班', term: '2026 春 · 第 1 週', started: false, teams: [
+      { id: 'G', name: '第一組 · 下午三點', layer: 1, weeks: 1, passed: [] },
+      { id: 'H', name: '第二組 · 小火', layer: 1, weeks: 1, passed: [] },
+      { id: 'I', name: '第三組 · 尚未命名', layer: 1, weeks: 1, passed: [] },
+      { id: 'J', name: '第四組 · 兩人', layer: 1, weeks: 1, passed: [] },
+      { id: 'K', name: '第五組 · 山上', layer: 1, weeks: 1, passed: [] }
+    ] },
+    { id: 'night', name: '專題實作 · 進修班', term: '2026 春 · 尚未開課', started: false, teams: [
+      { id: 'M', name: '第一組 · 夜班 A', layer: 1, weeks: 1, passed: [] },
+      { id: 'N', name: '第二組 · 夜班 B', layer: 1, weeks: 1, passed: [] },
+      { id: 'O', name: '第三組 · 夜班 C', layer: 1, weeks: 1, passed: [] }
+    ] }
+  ];
+
+  klass() { return this.KLASSES[this.state.klass] || this.KLASSES[0]; }
+  teams() {
+    const base = this.state.role === 'teacher' ? this.klass().teams : this.KLASSES[0].teams;
+    const ts = this.state.teamState || {};
+    const S = this.state;
+    return base.map(t => Object.assign({}, t, ts[t.id] || {}, t.me ? { weeks: S.weeksHere, layer: S.currentLayer, passed: S.passed } : {}));
+  }
+
+  courseStart() { return new Date(2026, 8, 14); }
+  weekDate(n, dow) { const d = new Date(this.courseStart()); d.setDate(d.getDate() + (n - 1) * 7 + (dow - 1)); return d; }
+  fmtDate(d) { return (d.getMonth() + 1) + '/' + d.getDate(); }
+  dowName(dow) { return ['一', '二', '三', '四', '五', '六', '日'][dow - 1]; }
+  dueDow(t) { const m = String(t.due || '').match(/週([一二三四五六日])/); const i = ['一','二','三','四','五','六','日'].indexOf(m ? m[1] : '五'); return i < 0 ? 5 : i + 1; }
+  dueLabel(t) {
+    if (String(t.due || '') === '不設限') return '不設限';
+    const n = this.dueWeek(t), dw = this.dueDow(t);
+    return 'W' + n + ' · ' + this.fmtDate(this.weekDate(n, dw)) + '（' + this.dowName(dw) + '）';
+  }
+  weekRange(n) { return this.fmtDate(this.weekDate(n, 1)) + '–' + this.fmtDate(this.weekDate(n, 7)); }
+  dueWeek(t) {
+    const m = String(t.due || '').match(/第\s*(\d+)\s*週/);
+    if (m) return Math.min(6, Math.max(1, +m[1]));
+    const d = String(t.due || '').match(/(\d+)\/(\d+)/);
+    if (d) return Math.min(6, Math.max(1, Math.ceil((+d[2] - 2) / 7)));
+    return 6;
+  }
+  planWeek(t) { return this.state.plan[t.id] || this.dueWeek(t); }
+
+  demoLogs() {
+    const S = this.state;
+    const TEAMS = ['A隊', 'B隊', 'C隊', 'D隊', 'E隊', 'F隊'];
+    const REASONS = [
+      ['pass', '三個定義都寫了，第二個最清楚：你說明了為什麼排除另一種做法。可以往下。'],
+      ['needfix', '缺一個判準。你寫了要做什麼，沒寫做到什麼程度算完成——補這一句就通過。'],
+      ['pass', '訪談紀錄有引用原話，不是只有結論。這一點做對了。'],
+      ['needfix', '兩個方案的比較只寫了優點。把你放棄的那一個的代價也寫出來。'],
+      ['pass', ''],
+      ['pass', '修正前後有對照，看得出你改了什麼。下一層開始要自己訂標準。'],
+      ['needfix', '第二版跟第一版差在哪，我從檔案看不出來。標出來。'],
+      ['pass', '這一項你比計畫慢了兩週，但內容是完整的。時間估算下一層再調。']
+    ];
+    const subs = [], revs = [], reads = [];
+    let n = 0;
+    for (let w = 1; w <= Math.max(4, S.weeksHere); w++) {
+      const per = w === 1 ? 2 : 3;
+      for (let k = 0; k < per; k++) {
+        const src = this.MINS[(n + k) % this.MINS.length];
+        const g = TEAMS[(n + k) % TEAMS.length];
+        const rr = REASONS[(n + k) % REASONS.length];
+        const id = 'demo' + n + '-' + k;
+        subs.push({ taskId: id, group: g, title: src.task, layer: src.L, week: w, dueWeek: Math.min(6, src.L + 1), overdue: src.L + 1 < w, len: 120 + ((n * 37 + k * 11) % 260) });
+        revs.push({ id: id, group: g, title: src.task, layer: src.L, result: rr[0], reason: rr[1], len: rr[1].length, hasReason: !!rr[1], week: w, latency: 12 + ((n * 17 + k * 29) % 96) });
+      }
+      if (w >= 2) reads.push({ reader: TEAMS[w % TEAMS.length], target: TEAMS[(w + 2) % TEAMS.length], layer: Math.min(5, w), week: w, readerLayer: Math.max(1, Math.min(5, w - 1)), readerStay: 1 + (w % 3), recentlyRejected: w % 2 === 0 });
+      n += per;
+    }
+    return { subLog: subs, revLog: revs, readLog: reads };
+  }
+
+  research() {
+    const S = this.state;
+    const unlockedThrough = S.resDemo ? 6 : Math.floor(S.weeksHere / 4) * 4;
+    const visible = x => x.week <= unlockedThrough;
+    const revs = S.revLog.filter(visible), subs = S.subLog.filter(visible), reads = S.readLog.filter(visible);
+    const teams = this.KLASSES[0].teams.map(t => Object.assign({}, t, (S.teamState || {})[t.id] || {}, t.me ? { weeks: S.weeksHere } : {}));
+    const withReason = revs.filter(r => r.hasReason), noReason = revs.filter(r => !r.hasReason);
+    const extPicked = this.state.tasks.filter(t => t.type === 'extended' && (t.text || t.status !== 'todo')).length;
+    return {
+      unlockedThrough, nextUnlock: unlockedThrough + 4, locked: unlockedThrough === 0,
+      week: S.weeksHere, revs, subs, reads, teams,
+      groups: teams.length,
+      assigned: this.state.tasks.filter(t => (t.klass || 'wed') === 'wed').length,
+      reviews: revs.length, reasons: withReason.length, noReason: noReason.length,
+      noReasonPct: revs.length ? Math.round(noReason.length / revs.length * 100) : 0,
+      avgLen: withReason.length ? Math.round(withReason.reduce((a, r) => a + r.len, 0) / withReason.length) : 0,
+      avgStay: teams.length ? (teams.reduce((a, t) => a + (t.weeks || 1), 0) / teams.length).toFixed(1) : '0',
+      extPicked
+    };
+  }
+
+  itemProgress(t) {
+    let passed = 0, wait = 0, doing = 0, none = 0;
+    const teams = this.teams();
+    teams.forEach(tm => {
+      const layer = tm.me ? this.state.currentLayer : tm.layer;
+      if (layer > t.layer) { passed++; return; }
+      if (layer < t.layer) { none++; return; }
+      if (tm.me) {
+        if (t.status === 'passed') passed++;
+        else if (t.status === 'submitted') wait++;
+        else if (t.status === 'needs_more' || t.text || (t.files && t.files.length)) doing++;
+        else none++;
+        return;
+      }
+      none++;
+    });
+    const parts = [];
+    if (passed) parts.push('已通過 ' + passed);
+    if (wait) parts.push('待你確認 ' + wait);
+    if (doing) parts.push('進行中 ' + doing);
+    if (none) parts.push('未開始 ' + none);
+    return { text: parts.join(' · ') + '（共 ' + teams.length + ' 組）', live: passed + wait + doing };
+  }
+
+  editItem(t) {
+    this.setState({
+      screen: 'T05', editLayer: t.layer, editId: t.id,
+      nf: { title: t.title, type: t.type, cond: t.cond, note: t.note, due: t.due === '不設限' ? '不設限' : t.due, mineral: t.mineral || '' }
+    });
+  }
+
+  mineralCells(n, big) {
+    const S = this.state;
+    const openAll = S.role === 'teacher';
+    return this.MINS.filter(m => m.L === n).map((m, i) => {
+      const t = S.tasks.find(x => x.mineral === m.name);
+      const got = openAll || (!!t && t.status === 'passed');
+      const sp = got && SPRBG(m.name);
+      return {
+        name: got ? m.name : '？？？',
+        open: () => { if (got) { this.setState({ specFrom: this.state.screen, screen: 'S06', specId: m.name }); } else { this.say('還沒採到。通過這一項才看得到它是什麼。'); } },
+        style: `padding:13px 8px;background:${got ? 'rgba(233,179,65,.05)' : 'radial-gradient(circle at 50% 40%,rgba(233,179,65,.055),transparent 70%)'};border:1px ${got ? 'solid #3A3026' : 'dashed #2C251D'};cursor:${got ? 'pointer' : 'default'};color:${got ? TEXT : '#8C8172'};text-align:center`,
+        glyphStyle: sp
+          ? `display:block;width:${big ? 40 : 26}px;height:${big ? 40 : 26}px;margin:0 auto;${sp}`
+          : got
+            ? `display:block;width:26px;height:26px;margin:${big ? 7 : 0}px auto;background:linear-gradient(140deg,#E9B341,#6B4C15);clip-path:${GLYPHS[i % GLYPHS.length]}`
+            : `display:block;width:22px;height:22px;margin:${big ? 9 : 2}px auto;background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.42),rgba(233,179,65,.06) 62%,transparent 74%);animation:dormant 4.6s ease-in-out infinite ${(i % 5) * 0.42}s`
+      };
+    });
+  }
+
+  LOGS = {};
+  logOf(id) { return this.LOGS[id] || [['W1', '進入微光荒原']]; }
+
+  get TEAMS() { return this.KLASSES[0].teams; }
+
+  mkTasks() {
+    const R = (id, title, cond, note, due, over, mineral, mDesc) => ({ id, klass: 'wed', layer: 1, type: 'required', title, cond, note, due, over, mineral, mDesc, status: 'todo', text: '', files: [], fb: '', fbType: '' });
+    const E = (id, title, cond, note, due, mineral, mDesc) => ({ id, klass: 'wed', layer: 1, type: 'extended', title, cond, note, due, over: false, mineral, mDesc, status: 'todo', text: '', files: [], fb: '', fbType: '' });
+    return [
+      R('r1', '專案定義', '一句話說得清楚這個專題要處理什麼、給誰。', '定義寫得太大，等於沒有定義。', '03/07', false, '定名石', '表面刻著字，但只有握著它的人看得清楚。放下之後字就模糊了。'),
+      R('r2', '任務拆分', '每一項都指得出負責的人，和完成時看起來的樣子。', '拆到你能開始動手就夠了，不用再細。', '03/12', false, '裂晶', '輕輕一敲就會沿著自然的紋理分開。強行敲會碎成粉。'),
+      R('r3', '第一版路線圖', '標出四個階段的時間區段，以及各自要交出的東西。', '第一版本來就會改。先畫出來。', '03/17', false, '初痕礦', '上面有一道很淺的刻痕。第二次看的時候，位置好像不太一樣。'),
+      E('e1', '前例調查', '至少三個可對照的案例，並說出它們和你的差別。', '找得到的不一定是像的。', '03/17', '拓影石', '靠近另一塊礦石，會浮現那塊礦石內部的紋路。'),
+      E('e2', '風險清單', '列出會讓路線圖失效的事，以及你會從哪裡察覺。', '寫得出察覺方式的才算數。', '03/17', '預兆砂', '會在塌方前幾秒微微發熱。但它不會告訴你哪裡會塌。'),
+      E('e3', '備用開挖點', '說明第二個可行方向，以及什麼情況會切過去。', '備案不是換題目。', '03/17', '岔路晶', '同時朝兩個方向反光。採集者說，看習慣了就不會只盯著一條路。')
+    ];
+  }
+
+  OTHERS = [];
+
+  MARKS = [];
+
+  state = {
+    role: 'student', device: 'desktop', screen: 'C01',
+    loginRole: 'student', loginTeam: '第三組 · 挖到再說',
+    acct: '', pw: '', firstLogin: true, teamName: '', members: ['', '', ''],
+    storyIdx: 0, storyFrom: 'S01', storyLayer: 1,
+    tasks: this.mkTasks(), openTaskId: null, draftText: '', draftFiles: [],
+    gateText: ['', '', ''], gateSubmitted: false, gateVerdict: '',
+    currentLayer: 1, weeksHere: 1, passed: [], toolLevels: {}, klass: 0, klassOpen: false,
+    expanded: 1, mapTeam: null, mapTab: 'map', allOpen: false, gateLevelPick: null, specId: null, specNames: {}, previewStory: null,
+    reviewId: null, reason: '', reviewedOthers: [], specFrom: null,
+    markId: null, plan: {}, passedWeek: {}, otherSubs: [], marks: [], teamState: {},
+    subLog: [], revLog: [], readLog: [], codes: {},
+    resConsent: false, resScrolled: false, resDemo: false, resFilter: 'all', resCoder: 'C1', resPick: null, resExport: { review: true, submit: true, read: false, stay: false },
+    nf: { title: '', type: 'required', cond: '', note: '', due: '第 6 週', mineral: '' }, draftSet: [], editLayer: 2, editId: null, layer2Published: false,
+    gateReason: '', reward: null, toast: '', toastId: 0
+  };
+
+  layer() { return this.LAYERS[this.state.currentLayer - 1]; }
+
+  layerPanel(n) {
+    const S = this.state, l = this.LAYERS[n - 1];
+    const openAll = S.role === 'teacher';
+    const reached = openAll || l.n <= S.currentLayer, done = openAll || S.passed.indexOf(l.n) >= 0, lvl = openAll ? (S.toolLevels[l.n] || true) : S.toolLevels[l.n];
+    return {
+      code: l.code, name: l.name, sub: l.sub, hard: l.hard, course: l.course,
+      state: done ? '已通過' : reached ? '進行中' : '未抵達',
+      stateStyle: `font:400 11px/1 'C11';letter-spacing:.1em;color:${done ? AC : reached ? '#C3BAAA' : '#6E665A'}`,
+      toolCardStyle: `padding:13px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:${lvl ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.25)'};border:1px ${lvl ? 'solid #3A3026' : 'dashed #2E2822'}`,
+      scene: l.scene,
+      openTool: () => { if (lvl) this.setState({ specFrom: this.state.screen, screen: 'S06', specId: l.tool }); else this.say('還沒拿到這一層的道具。'); },
+      openTre: () => { if (done) this.setState({ specFrom: this.state.screen, screen: 'S06', specId: l.treasure }); else this.say('通過這一層才會拿到它。'); },
+      treCardStyle: `padding:13px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:rgba(0,0,0,.25);border:1px ${done ? 'solid ' + LINE : 'dashed #2E2822'}`,
+      toolName: lvl ? l.tool : '？？？', toolNameColor: lvl ? AC : '#5A5044',
+      toolDesc: lvl ? (typeof lvl === 'string' ? l.toolFunc + ' · ' + lvl : l.toolFunc) : '校準之後才知道它是什麼',
+      treName: done ? l.treasure : '？？？', treNameColor: done ? '#E8E2D6' : '#5A5044',
+      treDesc: done ? l.treDesc : '通過這一層才知道它是什麼',
+      toolIconStyle: `display:block;width:40px;height:40px;margin-bottom:9px;${lvl && SPRBG(l.tool) ? SPRBG(l.tool) : 'background:radial-gradient(circle at 50% 38%,#4A3F2A,#171410);clip-path:polygon(50% 0,100% 30%,82% 100%,18% 100%,0 30%);box-shadow:0 0 14px rgba(233,179,65,.12);animation:dormant 5s ease-in-out infinite'}`,
+      treIconStyle: `display:block;width:40px;height:40px;margin-bottom:9px;${done && SPRBG(l.treasure) ? SPRBG(l.treasure) : 'background:radial-gradient(circle at 50% 38%,#4A3F2A,#171410);clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%);box-shadow:0 0 14px rgba(233,179,65,.12);animation:dormant 5s ease-in-out infinite .9s'}`,
+      sceneStyle: `display:block;width:100%;height:64px;margin-bottom:13px;background:url(assets/jlz/scene-${l.code}.png) center/cover no-repeat;image-rendering:pixelated;border:1px solid #26211C`,
+      minerals: this.mineralCells(l.n, true)
+    };
+  }
+  myTasks() { return this.state.tasks.filter(t => (t.klass || 'wed') === 'wed' && t.layer === this.state.currentLayer); }
+  req() { return this.myTasks().filter(t => t.type === 'required'); }
+  ext() { return this.myTasks().filter(t => t.type === 'extended'); }
+  reqPassed() { return this.req().filter(t => t.status === 'passed').length; }
+  extPassed() { return this.ext().filter(t => t.status === 'passed').length; }
+  levelOf(n) { return n >= 3 ? 'Lv.4 精密' : n === 2 ? 'Lv.3 精調' : n === 1 ? 'Lv.2 校正' : 'Lv.1 粗製'; }
+  go(screen) { this.setState({ screen, mapView: 'board', previewStory: null }); }
+  say(toast) { const id = this.state.toastId + 1; this.setState({ toast, toastId: id }); setTimeout(() => { if (this.state.toastId === id) this.setState({ toast: '' }); }, 3400); }
+
+  storyPages() {
+    if (this.state.role === 'teacher' && !this.state.previewStory) return [
+      { k: '作品的故事 · 一', t: '一封信、一張地圖，和一片荒原', b: '學生登入看到的第一件事：他們收到一封神祕的信與一張地圖。圖上是一片未開發的荒原，底下埋著前所未見的大秘寶，但沒有人告訴他們要從哪裡開挖。\n\n整個學期就是從地表挖到地心：五層洞窟，一層一個週期，挖過一層才看得到下一層。名字就是這樣來的——逐層掘進。' },
+      { k: '作品的故事 · 二', t: '你是站在旁邊的那個斗篷人', b: '在學生的故事裡，你不是發分數的人，是一直默默在旁邊的那個斗篷人。你手上有他們需要的工具，但你不會直接給。\n\n你給的是一份一份的任務。做完並經你確認，他們才拿到能往下一層的道具。他們不會從你那裡得到路線，只會得到「要交什麼」與「做到什麼程度算完成」。' },
+      { k: '系統說明 · 為什麼這樣設', t: '困境是可預期的，路徑不是', b: '斗篷人的「先知感」不是設定。是你看過二十屆學生卡在同一個地方——所以每一層的任務清單可以事先開出來。\n\n你定義要交什麼，學生決定怎麼挖。這是這套系統唯一不能退讓的分工。' },
+      { k: '系統說明 · 五個週期', t: '每一層對應一個課程階段', cards: this.LAYERS.map(l => ({ a: l.name, b: l.course, c: l.hard })) },
+      { k: '系統說明 · 清單怎麼開', t: '必要與延伸怎麼分', b: '必要項是這一層的核心交付，你認定的最低完成標準。全數通過才能送關卡。建議 3-5 個。\n\n延伸項是可選的深入方向。不影響過關，只影響工具校準到哪一階。建議 3-4 個。學生只做必要項而順利過關，沒有做錯任何事。\n\n「要注意的地方」寫提醒，不要寫步驟。「這一層的調查很容易越做越多」可以；「先訪談三個人再整理」不行——那是他們的決定。' },
+      { k: '系統說明 · 你的判斷', t: '你的合格考量就是教材', b: '學生最容易誤解的一件事是「交出去就算做完」。這套系統靠你的那一段字打破它——每一次確認都要寫下這一項憑什麼通過、或還缺哪一塊，學生會拿它當下一次的標準。\n\n起頭句是為了讓你不用從空白開始，不是為了讓你少寫。沒附考量的確認，學生端會標示「未附理由」，那一次也不會被其他隊伍看到。', q: '退回不是懲罰，重新提交次數不限。逾時未審會自動暫准，學生照樣前進，但那一次不計入工具階級。' }
+    ];
+    if (this.state.storyLayer === 2) return [
+      { k: '第二層 · 抵達', t: '水晶迴廊', b: '到處都是不可思議的水晶與礦物，整個洞穴因為會發光的礦石而閃閃發光。\n\n亮，而且到處都是值得採的東西。這就是問題所在。' },
+      { k: '第二層 · 難處', b: '你敲下一塊水晶，整條晶脈跟著亮起來，露出三條你剛才沒看見的通道。每一條都通往更多水晶。走得越深，可採的東西越多，路越窄。', q: '沒有人是「採完了」才離開的。每一支隊伍都是在某個時刻決定「夠了」，然後轉身往下。' },
+      { k: '第二層 · 這一層會發生的事', t: '手上有羅盤了', cards: [{ a: '敲開一塊水晶，露出三條沒預料到的通道', b: '礦脈羅盤', c: '判斷要不要接下對應的延伸任務；不追就在送審第三格說明' }, { a: '採到停不下來，不知道什麼時候該收', b: '沒有道具告訴你「夠了」', c: '自行決定，並在送審說明判斷依據' }, { a: '光越走越暗，發現離開挖點太遠', b: '礦脈羅盤能指回去', c: '對照關卡頁的剩餘週數與未完成必要項' }] }
+    ];
+    return [
+      { art: 'letter', k: '序', t: '有一天，你收到了一個神祕的信件及地圖', q: '有一個神祕的荒原，那個荒原下面隱藏著前所未見的大秘寶，只要能一路堅持進行探索的話就能得到那份大祕寶!!' },
+      { art: 'depart', k: '序', b: '就這樣，為了找尋這份傳說中的大秘寶，你與其他的冒險者前往了地圖上的神秘荒原，決定試著一步步的挖掘到地下來找出那份大秘寶' },
+      { art: 'cloak', k: '第一層 · 微光荒原', t: '荒原上有一個穿斗篷的人', b: '他默默的在你旁邊，手上有你需要的工具，但他說他不會直接給你。他給了你一系列任務，當你完成後，他才會給你能到下一部份的道具。' }
+    ];
+  }
+
+
+  seg(on) { return `font:500 22px/1 'C11';padding:8px 13px;border:none;cursor:pointer;white-space:nowrap;background:${on ? AC : 'transparent'};color:${on ? '#0B0A09' : DIM}`; }
+  navBtn(on) { return `display:flex;align-items:center;gap:8px;padding:9px 10px;border:none;cursor:pointer;text-align:left;background:${on ? 'rgba(233,179,65,.12)' : 'transparent'};color:${on ? AC : '#9A9184'};border-left:2px solid ${on ? AC : 'transparent'}`; }
+  tabBtn(on) { return `flex:1;display:flex;flex-direction:column;align-items:center;gap:0;padding:8px 2px;background:none;border:none;cursor:pointer;color:${on ? AC : '#6E665A'};position:relative`; }
+  card(on) { return `text-align:left;padding:16px;background:${on ? 'rgba(233,179,65,.07)' : PANEL};border:1px solid ${on ? '#5A4A2C' : LINE};cursor:pointer;color:${TEXT}`; }
+  chip(bg, fg, bd) { return `font:500 22px/1 'C11';padding:6px 9px;white-space:nowrap;flex:none;background:${bg};color:${fg};border:1px solid ${bd || 'transparent'}`; }
+  pill(on) { return `font:400 22px/1 'C11';padding:9px 13px;cursor:pointer;white-space:nowrap;background:${on ? 'rgba(233,179,65,.14)' : 'transparent'};color:${on ? AC : DIM};border:1px solid ${on ? '#5A4A2C' : '#2E2822'}`; }
+  statusMeta(s) {
+    if (s === 'passed') return { label: '已通過', bg: 'rgba(233,179,65,.16)', fg: AC, bd: 'rgba(233,179,65,.3)' };
+    if (s === 'submitted') return { label: '待他驗收', bg: 'rgba(195,186,170,.1)', fg: '#C3BAAA', bd: '#3A3026' };
+    if (s === 'needs_more') return { label: '需補充', bg: 'rgba(217,96,63,.14)', fg: '#D9603F', bd: 'rgba(217,96,63,.35)' };
+    if (s === 'auto') return { label: '未經確認', bg: 'transparent', fg: DIM, bd: '#3A3026' };
+    return { label: '未開始', bg: 'transparent', fg: FAINT, bd: '#2E2822' };
+  }
+
+  renderVals() {
+    const S = this.state, L = this.layer(), me = this.teams().find(t => t.me) || this.KLASSES[0].teams[2];
+    const isStu = S.role === 'student', isRes = S.role === 'researcher', mob = S.device === 'mobile';
+    const sc = S.screen;
+    const NAMES = { C01: '啟動頁', C02: '身分', C03: '登入', C04: '建立小隊', STORY: isStu || S.previewStory ? '故事說明' : '系統說明', T08: '學生端的世界', S01: '學生首頁', S02: '任務介面', S05: '完成任務並給予證明', SUB: '關卡送審三格', S03: '迷霧地圖與圖鑑', S06: '礦物與寶物介紹', S04: '其他組別在哪一層', COLL: '收藏總覽', S07: '其他組別的通過紀錄', GANTT: '甘特圖', T01: '老師首頁', T02: '給予任務頁', T05: '撰寫任務內容', T03: '確認組別是否完成', T06: '逐項確認', T07: '確認完成，給予道具', T04: '目前各組在哪一層', T08: '學生端的世界', R00: '進入與同意', R01: '研究者總覽', R02: '審核語料', R03: '回饋與修正序列', R04: '天然對照', R05: '閱讀行為', R06: '提交節律', R07: '停留與介入', R08: '匯出', R09: '設計修訂記錄' };
+    const CODES = { C01: 'C-01', C02: 'C-02', C03: 'C-03', C04: 'C-04', STORY: isStu || S.previewStory ? 'S-00' : 'T-00', S01: 'S-01', S02: 'S-02', S05: 'S-05', SUB: '關卡', S03: 'S-03', S06: 'S-06', S04: 'S-04', GANTT: '甘特', COLL: 'S-08', T01: 'T-01', T02: 'T-02', T05: 'T-05', T03: 'T-03', T06: 'T-06', T07: 'T-07', T04: 'T-04', T08: 'T-08', R00: 'R-00', R01: 'R-01', R02: 'R-02', R03: 'R-03', R04: 'R-04', R05: 'R-05', R06: 'R-06', R07: 'R-07', R08: 'R-08', R09: 'R-09' };
+
+    const resLocked = !S.resDemo && Math.floor(S.weeksHere / 4) * 4 === 0;
+    const chrome = sc === 'C01' || sc === 'C02' || sc === 'C03' || sc === 'C04' || sc === 'STORY' || sc.charAt(0) === 'R';
+    const nav = isStu
+      ? [{ c: 'S-01', s: 'S01', l: '首頁', sh: '首頁' }, { c: 'S-02', s: 'S02', l: '任務清單', sh: '任務' }, { c: 'S-03', s: 'S03', l: '地圖 · 圖鑑', sh: '地圖' }, { c: '甘特', s: 'GANTT', l: '甘特圖', sh: '甘特' }, { c: 'S-04', s: 'S04', l: '其他隊伍', sh: '他組' }]
+      : (mob
+        ? [{ c: 'T-01', s: 'T01', l: '待你驗收', sh: '首頁' }, { c: 'T-02', s: 'T02', l: '任務清單', sh: '清單' }, { c: 'T-03', s: 'T03', l: '逐項確認', sh: '確認' }, { c: 'T-04', s: 'T04', l: '全班位置', sh: '全班' }]
+        : [{ c: 'T-01', s: 'T01', l: '待你驗收', sh: '首頁' }, { c: 'T-02', s: 'T02', l: '任務清單', sh: '清單' }, { c: 'T-03', s: 'T03', l: '逐項確認', sh: '確認' }, { c: 'T-07', s: 'T07', l: '關卡審核', sh: '關卡' }, { c: 'T-04', s: 'T04', l: '全班位置', sh: '全班' }, { c: 'T-00', s: 'STORY', l: '系統說明', sh: '說明' }, { c: 'T-08', s: 'T08', l: '學生端的世界', sh: '世界' }]);
+
+    const pendingMine = this.myTasks().filter(t => t.status === 'submitted').length;
+    const pendingAll = pendingMine + S.otherSubs.filter(o => S.reviewedOthers.indexOf(o.id) < 0).length;
+    const needMore = this.myTasks().filter(t => t.status === 'needs_more');
+    const overdueOpen = this.myTasks().filter(t => t.over && t.status !== 'passed');
+
+    const NAVICON = {
+      S01: 'polygon(50% 4%,100% 42%,86% 42%,86% 100%,58% 100%,58% 64%,42% 64%,42% 100%,14% 100%,14% 42%,0 42%)',
+      S02: 'polygon(0 0,100% 0,100% 18%,0 18%,0 0,0 41%,100% 41%,100% 59%,0 59%,0 82%,100% 82%,100% 100%,0 100%)',
+      S03: 'polygon(50% 0,100% 30%,100% 72%,50% 100%,0 72%,0 30%)',
+      GANTT: 'polygon(0 8%,58% 8%,58% 30%,0 30%,0 42%,100% 42%,100% 64%,0 64%,0 76%,74% 76%,74% 98%,0 98%)',
+      S04: 'polygon(20% 0,80% 0,100% 34%,84% 100%,16% 100%,0 34%)',
+      T01: 'polygon(50% 0,100% 26%,100% 74%,50% 100%,0 74%,0 26%)',
+      T02: 'polygon(0 0,100% 0,100% 18%,0 18%,0 41%,100% 41%,100% 59%,0 59%,0 82%,100% 82%,100% 100%,0 100%)',
+      T03: 'polygon(14% 52%,38% 78%,88% 12%,100% 26%,40% 100%,2% 64%)',
+      T07: 'polygon(50% 0,100% 34%,82% 100%,18% 100%,0 34%)',
+      T04: 'polygon(0 22%,34% 6%,68% 22%,100% 8%,100% 78%,66% 94%,32% 78%,0 92%)',
+      STORY: 'polygon(6% 0,94% 0,94% 84%,50% 68%,6% 84%)',
+      T08: 'circle(46% at 50% 50%)'
+    };
+    const navItems = nav.map(n => ({
+      code: n.c, label: n.l, short: n.sh, go: () => this.go(n.s),
+      iconStyle: `display:block;width:14px;height:14px;flex:none;margin-right:8px;background:${sc === n.s ? AC : '#5F574C'};clip-path:${NAVICON[n.s] || 'circle(44% at 50% 50%)'}`,
+      tabIconStyle: `display:block;width:16px;height:16px;background:${sc === n.s ? AC : '#6E665A'};clip-path:${NAVICON[n.s] || 'circle(44% at 50% 50%)'}`,
+      style: this.navBtn(sc === n.s),
+      tabStyle: this.tabBtn(sc === n.s),
+      badge: (!isStu && n.s === 'T03' && pendingAll) ? String(pendingAll) : '',
+      dotStyle: (!isStu && n.s === 'T03' && pendingAll) ? `font:600 11px/1 'C11';background:${AC};color:#0B0A09;padding:3px 5px` : 'display:none',
+      tabDotStyle: (!isStu && n.s === 'T03' && pendingAll) ? `position:absolute;top:5px;right:calc(50% - 15px);width:5px;height:5px;background:${AC};border-radius:50%` : 'display:none'
+    }));
+
+    const gauge = this.LAYERS.map(l => {
+      const reached = isStu ? l.n <= S.currentLayer : true;
+      const done = S.passed.indexOf(l.n) >= 0;
+      const cur = isStu && l.n === S.currentLayer;
+      return {
+        n: l.code, name: reached ? l.name : '？？？', tail: done ? '✓' : cur ? '現在' : '',
+        style: `display:flex;align-items:center;gap:8px;padding:6px 8px;background:${cur ? 'rgba(233,179,65,.1)' : 'transparent'};color:${cur ? AC : reached ? '#C3BAAA' : '#8C8172'};border-left:2px solid ${done ? AC : cur ? 'rgba(233,179,65,.5)' : '#221E19'}`
+      };
+    });
+
+    const pages = this.storyPages(), p = pages[Math.min(S.storyIdx, pages.length - 1)] || {};
+    const last = S.storyIdx >= pages.length - 1;
+
+    const groups = [];
+    const rq = this.req(), ex = this.ext();
+    const mkRow = t => {
+      const m = this.statusMeta(t.status);
+      return {
+        title: t.title, cond: t.cond, note: t.note,
+        statusLabel: m.label, chipStyle: this.chip(m.bg, m.fg, m.bd),
+        dueLabel: t.over && t.status !== 'passed' ? '逾期 · ' + this.dueLabel(t) : '期限 ' + this.dueLabel(t),
+        dueStyle: `font:400 11px/1 'C11';color:${t.over && t.status !== 'passed' ? '#D9603F' : FAINT}`,
+        rowStyle: `text-align:left;width:100%;padding:15px 17px;background:${t.status === 'passed' ? 'rgba(233,179,65,.05)' : PANEL};border:1px solid ${t.status === 'needs_more' ? 'rgba(217,96,63,.3)' : t.status === 'passed' ? '#3A3026' : LINE};cursor:pointer;color:${TEXT}`,
+        hasFeedback: !!t.fb, feedback: t.fb, fbColor: t.fbType === 'pass' ? AC : '#D9603F',
+        fbLabel: t.fbType === 'pass' ? '他的判斷' : '需補充 · 他的理由',
+        open: () => this.setState({ screen: 'S05', openTaskId: t.id, draftText: t.text, draftFiles: t.files.slice() })
+      };
+    };
+    if (rq.length) groups.push({ tag: '必要項', tagStyle: this.chip('rgba(233,179,65,.16)', AC, 'rgba(233,179,65,.3)'), desc: '這一層的核心交付。全數通過才能送交關卡審核。', items: rq.map(mkRow) });
+    if (ex.length) groups.push({ tag: '延伸項', tagStyle: this.chip('transparent', '#C3BAAA', '#3A3026'), desc: '可選的深入方向。不影響過關，只影響工具校準到哪一階。', items: ex.map(mkRow) });
+
+    const allReq = rq.length > 0 && this.reqPassed() === rq.length;
+    const passedThis = S.passed.indexOf(S.currentLayer) >= 0;
+
+    const ot = this.state.tasks.find(t => t.id === S.openTaskId) || {};
+    const adders = [{ label: '截圖', f: '工作截圖.png' }, { label: '文件', f: '定義文件.pdf' }, { label: '影片', f: '討論錄影.mp4' }, { label: '連結', f: 'figma.com/file/…' }];
+
+    const GQ = [
+      { q: '這一層做到什麼程度', hint: '寫程度，不是寫「有做」。', ph: '例：三項必要都收斂完成，中途換過一次開挖點。' },
+      { q: '證據是什麼', hint: '彙整這一層的交付與過程證明。', ph: '例：定義文件 v3、拆分表、路線圖前後兩版。' },
+      { q: '你是怎麼安排的、為什麼', hint: '這一格是 HOW 歸你之後，唯一能被檢視、也被別人學習的地方。', ph: '例：前兩週三個方向同時試，第三週發現分不出優先序就砍到剩一個。砍掉的留在備用開挖點。' }
+    ];
+
+    const others = S.otherSubs.filter(o => S.reviewedOthers.indexOf(o.id) < 0 && o.klass === this.klass().id);
+    const mineSubs = this.myTasks().filter(t => t.status === 'submitted').map(t => ({ id: t.id, team: me.name, teamId: 'C', title: t.title, tag: t.type === 'required' ? '必要' : '延伸', cond: t.cond, due: t.over ? '逾期' : t.due, over: t.over, text: t.text, files: t.files }));
+    const reviewAll = mineSubs.concat(others);
+    const rev = reviewAll.find(r => r.id === S.reviewId) || reviewAll[0] || {};
+
+    const qTeams = this.teams().filter(t => !t.me).concat(this.teams().some(t => t.me) ? [me] : []).sort((a, b) => b.weeks - a.weeks).map(t => {
+      const isMe = !!t.me;
+      const pend = isMe ? pendingMine : others.filter(o => o.teamId === t.id).length;
+      const over = isMe ? overdueOpen.length : others.filter(o => o.teamId === t.id && o.over).length;
+      const flag = t.weeks >= 3;
+      return {
+        team: t.name, weeks: t.weeks, layer: this.LAYERS[t.layer - 1].name, pending: pend, overdue: over, flag,
+        detail: flag ? '停留超過門檻。他知道你待了幾週——這一組該由你先開口。' : pend ? '有東西等你驗收。' : '這一週沒有新的提交。',
+        weekStyle: this.chip(flag ? 'rgba(217,96,63,.14)' : 'rgba(195,186,170,.08)', flag ? '#D9603F' : '#C3BAAA', flag ? 'rgba(217,96,63,.35)' : '#3A3026'),
+        style: `text-align:left;width:100%;padding:15px 17px;background:${PANEL};border:1px solid ${flag ? 'rgba(217,96,63,.28)' : LINE};cursor:pointer;color:${TEXT}`,
+        open: () => this.go('T03')
+      };
+    });
+
+    const kid = this.klass().id;
+    const setStates = this.LAYERS.map(l => {
+      const items = S.tasks.filter(t => (t.klass || 'wed') === kid && t.layer === l.n);
+      const draftish = S.editLayer === l.n && S.draftSet.length > 0;
+      const st = items.length ? '已發派' : draftish ? '草稿 ' + S.draftSet.length + ' 項' : l.n === 5 ? '不發清單' : '未建立';
+      return {
+        code: l.code, name: l.name, course: l.course, state: st,
+        stateStyle: this.chip(st === '已發派' ? 'rgba(233,179,65,.14)' : 'transparent', st === '已發派' ? AC : DIM, st === '已發派' ? 'rgba(233,179,65,.3)' : '#2E2822'),
+        style: `padding:15px 17px;background:${PANEL};border:1px solid ${l.n === S.editLayer ? '#3A3026' : LINE}`,
+        btn: l.n === 5 ? '—' : (st === '已發派' ? '＋ 新增一項' : '開清單'),
+        btnStyle: `font:500 22px/1 'C11';padding:8px 13px;white-space:nowrap;cursor:${l.n === 5 ? 'default' : 'pointer'};background:none;border:1px solid #2E2822;color:${l.n === 5 ? '#3A3026' : DIM}`,
+        edit: () => { if (l.n !== 5) this.setState({ screen: 'T05', editLayer: l.n, editId: null, nf: { title: '', type: 'required', cond: '', note: '', due: '第 6 週', mineral: '' } }); },
+        hasItems: items.length > 0,
+        items: items.map(i => {
+          const pg = this.itemProgress(i);
+          return {
+            title: i.title, tag: i.type === 'required' ? '必要' : '延伸',
+            tagStyle: this.chip(i.type === 'required' ? 'rgba(233,179,65,.14)' : 'transparent', i.type === 'required' ? AC : '#9A9184', i.type === 'required' ? 'rgba(233,179,65,.28)' : '#2E2822'),
+            due: i.due === '不設限' ? '不設限' : '期限 ' + this.dueLabel(i),
+            cond: i.cond, prog: pg.text, min: i.mineral ? '環節 · ' + ((this.MINS.find(m => m.name === i.mineral) || {}).task || i.mineral) + '（物證 ' + i.mineral + '）' : '未指定環節',
+            rowStyle: `padding:12px 14px;background:rgba(0,0,0,.26);border-left:2px solid ${i.type === 'required' ? '#5A4A2C' : '#3A3026'}`,
+            editStyle: `font:500 22px/1 'C11';padding:7px 12px;min-height:var(--tap);background:none;border:1px solid #3A3026;color:${DIM};cursor:pointer`,
+            edit: () => this.editItem(i)
+          };
+        })
+      };
+    });
+
+    const dueW = (() => { const m = String(S.nf.due || '').match(/第\s*(\d+)\s*週/); return m ? +m[1] : 0; })();
+    const dueD = (() => { const m = String(S.nf.due || '').match(/週([一二三四五六日])/); const i = ['一','二','三','四','五','六','日'].indexOf(m ? m[1] : '五'); return i < 0 ? 5 : i + 1; })();
+    const composeDue = (w, d) => '第 ' + w + ' 週 · ' + this.fmtDate(this.weekDate(w, d)) + '（週' + this.dowName(d) + '）';
+    const specSource = (() => {
+      const D = { name: '—', kind: '', look: '', trait: '', rec: '', func: '', ability: '', line: '', notice: '', from: '—', date: '—' };
+      const m = this.MINS.find(x => x.name === S.specId);
+      if (m) {
+        const t = this.state.tasks.find(x => x.mineral === m.name);
+        return Object.assign(D, { name: m.name, kind: '礦物', look: m.look, trait: m.trait, rec: m.rec, from: m.task, date: t && t.status === 'passed' ? '2026 / 03 / 18' : '—' });
+      }
+      const l = this.LAYERS.find(x => x.treasure === S.specId);
+      if (l) return Object.assign(D, { name: l.treasure, kind: '寶物', look: l.treLook, trait: l.treDesc, line: l.treLine, notice: l.treNotice, from: l.name + ' 關卡通過', date: '2026 / 03 / 18' });
+      const tl = this.LAYERS.find(x => x.tool === S.specId);
+      if (tl) return Object.assign(D, { name: tl.tool, kind: '道具', look: tl.toolLook, trait: tl.toolTrait, func: tl.toolFunc, ability: tl.toolAbility, rec: tl.toolRec, from: tl.name + ' 關卡通過', date: '2026 / 03 / 18' });
+      const e = this.EXTRA.find(x => x.name === S.specId);
+      if (e) return Object.assign(D, { name: e.name, kind: '寶物', look: e.look, trait: e.trait, line: e.line, notice: e.notice, from: e.from, date: '2026 / 03 / 18' });
+      return D;
+    })();
+
+
+
+    return {
+      stageW: mob ? '392px' : '1180px', stageH: mob ? '812px' : '760px', stageRadius: mob ? '34px' : '2px',
+      isMobile: mob, appDir: mob ? 'column' : 'row', ganttHeadPad: mob ? '0px' : '176px',
+      uiVars: mob
+        ? '--pad:15px;--card:100%;--gcol:100%;--ccol:96px;--mcol:112px;--band:132px;--tcol:70px;--cell:50px;--tap:44px'
+        : '--pad:26px;--card:210px;--gcol:176px;--ccol:176px;--mcol:142px;--band:150px;--tcol:104px;--cell:34px;--tap:auto',
+      showSideNav: !mob && !chrome, showTabBar: mob && !chrome,
+      screenCode: CODES[sc] || '', screenName: NAMES[sc] || '',
+      roleStuStyle: this.seg(isStu), roleTeaStyle: this.seg(S.role === 'teacher'), roleResStyle: this.seg(isRes),
+      setResearcher: () => this.setState({ role: 'researcher', previewStory: null, screen: S.screen === 'C01' || S.screen === 'C02' ? S.screen : (S.resConsent ? 'R01' : 'R00') }),
+      devDeskStyle: this.seg(!mob), devMobStyle: this.seg(mob),
+      setStudent: () => this.setState({ role: 'student', previewStory: null, screen: S.screen === 'C01' || S.screen === 'C02' ? S.screen : 'S01' }),
+      setTeacher: () => this.setState({ role: 'teacher', previewStory: null, screen: S.screen === 'C01' || S.screen === 'C02' ? S.screen : 'T01' }),
+      setDesktop: () => this.setState({ device: 'desktop' }), setMobile: () => this.setState({ device: 'mobile' }),
+      reset: () => this.setState({ role: 'student', screen: 'C01', gateLevelPick: null, tasks: this.mkTasks(), currentLayer: 1, passed: [], toolLevels: {}, gateSubmitted: false, gateText: ['', '', ''], reviewedOthers: [], layer2Published: false, draftSet: [], reward: null, toast: '', weeksHere: 1, expanded: 1, storyIdx: 0, gateReason: '', reason: '', otherSubs: [], marks: [], teamState: {}, plan: {}, passedWeek: {}, specNames: {}, klass: 0, allOpen: false }),
+
+      navRoleTag: isStu ? 'TEAM' : 'CLOAK', navName: isStu ? me.name : this.klass().name,
+      isTeacher: S.role === 'teacher', klassTerm: this.klass().term,
+      showIdBar: !isRes && !chrome,
+      idRole: isStu ? '學生端' : '老師端',
+      idRoleStyle: `font:500 11px/1 'C11';letter-spacing:.14em;padding:5px 8px;flex:none;white-space:nowrap;background:${isStu ? 'rgba(233,179,65,.14)' : 'rgba(195,186,170,.1)'};border:1px solid ${isStu ? 'rgba(233,179,65,.32)' : '#3A3026'};color:${isStu ? AC : '#DCD4C6'}`,
+      idIcon: isStu ? 'assets/jlz/role-student.png' : 'assets/jlz/role-teacher.png',
+      idName: isStu ? me.name : this.TEACHER,
+      idMeta: isStu ? L.name + ' · 停留 ' + S.weeksHere + ' 週' : this.klass().name + ' · ' + this.teams().length + ' 組',
+      klassOpen: S.klassOpen, toggleKlass: () => this.setState({ klassOpen: !S.klassOpen }),
+      klassOptions: this.KLASSES.map((k, i) => {
+        const on = i === S.klass;
+        const dispatched = S.tasks.some(t => (t.klass || 'wed') === k.id);
+        return {
+          name: k.name, sub: dispatched ? k.teams.length + ' 組 · 已發派第一個週期' : k.teams.length + ' 組 · 還沒發任何清單',
+          pick: () => this.setState({ klass: i, klassOpen: false, screen: 'T01', editId: null, draftSet: [] }),
+          style: `text-align:left;padding:10px 12px;font:inherit;cursor:pointer;background:${on ? 'rgba(233,179,65,.14)' : 'transparent'};border:1px ${on ? 'solid ' + AC : 'solid #221E19'};color:${on ? '#FFD98A' : TEXT}`
+        };
+      }),
+      queueEmptyHome: qTeams.every(q => q.pending === 0),
+      klassFresh: !S.tasks.some(t => (t.klass || 'wed') === this.klass().id),
+      klassFreshNote: this.klass().name + ' 還沒有任何清單。先開第一個週期的必要項，發派之後學生端才看得到任務。',
+      navSub: isStu ? L.name + ' · 停留 ' + S.weeksHere + ' 週' : this.teams().length + ' 組 · ' + (pendingAll ? pendingAll + ' 項待驗收' : '沒有待驗收'),
+      navItems, gauge, gaugeTitle: isStu ? '迷霧地圖' : '課程五階段',
+
+      scC01: sc === 'C01', goLogin: () => this.go('C02'), goStart: () => this.go('C01'),
+      scC02: sc === 'C02', loginIsStudent: S.loginRole === 'student',
+      pickStudent: () => this.setState({ loginRole: 'student' }), pickTeacher: () => this.setState({ loginRole: 'teacher' }),
+      pickResearcher: () => this.setState({ loginRole: 'researcher' }),
+      pickStuStyle: this.card(S.loginRole === 'student'), pickTeaStyle: this.card(S.loginRole === 'teacher'), pickResStyle: this.card(S.loginRole === 'researcher'),
+      goAuth: () => this.go('C03'), goIdentity: () => this.go('C02'),
+
+      scC03: sc === 'C03', authIsStudent: S.loginRole === 'student',
+      authTitle: S.loginRole === 'student' ? '學生登入' : S.loginRole === 'researcher' ? '研究者登入' : '老師登入',
+      acct: S.acct, pw: S.pw,
+      setAcct: e => this.setState({ acct: e.target.value }),
+      setPw: e => this.setState({ pw: e.target.value }),
+      toggleFirst: () => this.setState({ firstLogin: !S.firstLogin }),
+      firstToggleStyle: 'display:flex;align-items:center;gap:11px;width:100%;background:none;border:none;padding:2px 0;cursor:pointer;color:#C3BAAA',
+      firstBoxStyle: `font:700 22px/1 'C11';width:26px;height:26px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid ${S.firstLogin ? AC : '#2E2822'};background:${S.firstLogin ? 'rgba(233,179,65,.14)' : 'transparent'};color:${AC}`,
+      firstMark: S.firstLogin ? '✓' : '',
+      doLogin: () => {
+        const stu = S.loginRole === 'student';
+        if (stu && S.firstLogin) return this.setState({ role: 'student', screen: 'C04' });
+        if (S.loginRole === 'researcher') return this.setState({ role: 'researcher', screen: S.resConsent ? 'R01' : 'R00' });
+        this.setState({ role: S.loginRole, screen: 'STORY', storyIdx: 0, storyLayer: S.currentLayer, storyFrom: stu ? 'S01' : 'T01' });
+      },
+
+      scC04: sc === 'C04', teamName: S.teamName,
+      setTeamName: e => this.setState({ teamName: e.target.value }),
+      memberRows: S.members.map((v, i) => ({
+        n: String(i + 1).padStart(2, '0'), value: v,
+        set: e => { const m = S.members.slice(); m[i] = e.target.value; this.setState({ members: m }); },
+        remove: () => { const m = S.members.slice(); m.splice(i, 1); this.setState({ members: m.length ? m : [''] }); }
+      })),
+      addMember: () => this.setState({ members: S.members.concat(['']) }),
+      finishTeam: () => this.setState({ role: 'student', screen: 'STORY', storyIdx: 0, storyLayer: S.currentLayer, storyFrom: 'S01' }),
+
+      scStory: sc === 'STORY',
+      storyKicker: p.k || '', storyHasTitle: !!p.t, storyTitle: p.t || '', storyBody: p.b || '',
+      storyHasQuote: !!p.q, storyQuote: p.q || '', storyHasAfter: !!p.a, storyAfter: p.a || '',
+      storyArtLetter: p.art === 'letter', storyArtDepart: p.art === 'depart', storyArtCloak: p.art === 'cloak',
+      storyHasCards: !!p.cards, storyCards: (p.cards || []).map(c => ({ a: c.a, b: c.b, c: c.c })),
+      storyDots: pages.map((_, i) => ({ style: `width:${i === S.storyIdx ? 20 : 6}px;height:3px;background:${i === S.storyIdx ? AC : i < S.storyIdx ? '#5A4A2C' : '#2E2822'}` })),
+      storyNextLabel: last ? (isStu ? '進入荒原' : S.previewStory ? '回到世界頁' : '進入控制台') : '繼續',
+      storyNext: () => { if (last) this.setState({ screen: S.storyFrom, previewStory: null }); else this.setState({ storyIdx: S.storyIdx + 1 }); },
+      storyPrev: () => this.setState({ storyIdx: Math.max(0, S.storyIdx - 1) }),
+      storyPrevStyle: `font:400 22px/1 'C11';color:${DIM};background:none;border:1px solid #2E2822;padding:13px 20px;cursor:pointer;visibility:${S.storyIdx === 0 ? 'hidden' : 'visible'}`,
+      skipStory: () => this.setState({ screen: S.storyFrom, previewStory: null }),
+
+      scS01: sc === 'S01', depthCode: L.code, layerName: L.name, layerHard: L.hard, weeksHere: S.weeksHere,
+      reqDone: this.reqPassed(), reqTotal: rq.length, extDone: this.extPassed(), extTotal: ex.length,
+      mineralCount: this.state.tasks.filter(t => t.status === 'passed').length,
+      hasAlerts: needMore.length > 0 || overdueOpen.length > 0,
+      alerts: [].concat(
+        needMore.length ? [{ text: '有 ' + needMore.length + ' 項被退回需補充。重新提交次數不限。', style: `display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;background:rgba(217,96,63,.08);border:1px solid rgba(217,96,63,.28);color:#E8C4B6;cursor:pointer`, go: () => this.go('S02') }] : [],
+        overdueOpen.length ? [{ text: '有 ' + overdueOpen.length + ' 項已逾期。逾期只標示，仍然可以提交、確認、計入等級。', style: `display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;background:${PANEL};border:1px solid #3A3026;color:#C3BAAA;cursor:pointer`, go: () => this.go('S02') }] : []
+      ),
+      goTasks: () => this.go('S02'), goMap: () => this.go('S03'),
+      replayStory: () => this.setState({ screen: 'STORY', storyIdx: 0, storyLayer: 1, storyFrom: 'S01' }),
+
+      scS02: sc === 'S02',
+      briefRows: S.currentLayer === 1
+        ? [{ what: '做到一半發現題目方向不對，需要改', tool: '改了要在送審說明原因', toolColor: DIM }, { what: '組員對題目的理解不一致', tool: '用任務清單逐項對照', toolColor: DIM }, { what: '不知道從哪一項開始做', tool: '可以直接問老師', toolColor: DIM }]
+        : [{ what: '資料越查越多，範圍一直擴大', tool: '延伸項可做可不做', toolColor: AC }, { what: '不知道什麼時候該收斂', tool: '在送審說明你的判斷依據', toolColor: DIM }, { what: '做到偏離原本的題目', tool: '對照關卡頁的未完成必要項', toolColor: AC }],
+      noTasksYet: this.myTasks().length === 0, hasTasks: this.myTasks().length > 0, taskGroups: groups,
+      estLevel: this.levelOf(this.extPassed()),
+      estExt: this.extPassed() + ' / ' + Math.max(this.ext().length, 1) + ' 項通過',
+      hasWaiting: pendingMine > 0, waitCount: pendingMine,
+      gateBg: allReq && !S.gateSubmitted ? 'linear-gradient(140deg,rgba(233,179,65,.12),transparent 65%),' + PANEL : PANEL,
+      gateBorder: allReq && !S.gateSubmitted ? '#5A4A2C' : LINE,
+      gateTitle: passedThis ? '這一層已經通過' : S.gateSubmitted ? '已送出，等他驗收' : allReq ? '必要項全數通過' : '還不能送關卡',
+      gateDesc: passedThis ? '工具校準完成，下一層開了。' : S.gateSubmitted ? '他有時候不在。逾時未審會自動暫准，但那一次不計入工具階級。' : allReq ? '可以送交關卡審核了。延伸項還能繼續做，會影響工具校準到哪一階。' : '還有 ' + (rq.length - this.reqPassed()) + ' 項必要項沒有通過。',
+      gateBtn: S.gateSubmitted || passedThis ? '已送出' : '送交關卡審核',
+      gateBtnStyle: allReq && !S.gateSubmitted && !passedThis
+        ? `font:500 22px/1 'C11';letter-spacing:.12em;color:#0B0A09;background:${AC};border:none;padding:14px 22px;cursor:pointer;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)`
+        : `font:500 22px/1 'C11';color:#4A443C;background:none;border:1px solid #2E2822;padding:14px 22px;cursor:not-allowed`,
+      goSubmitGate: () => { if (allReq && !S.gateSubmitted && !passedThis) this.go('SUB'); },
+
+      scS05: sc === 'S05', openTaskTitle: ot.title || '', openTaskCond: ot.cond || '', openTaskNote: ot.note || '',
+      openTaskHasFeedback: ot.status === 'needs_more', openTaskFeedback: ot.fb || '',
+      submitText: S.draftText, setSubmitText: e => this.setState({ draftText: e.target.value }),
+      evidence: S.draftFiles.map((f, i) => ({ name: f, remove: () => this.setState({ draftFiles: S.draftFiles.filter((_, j) => j !== i) }) })),
+      evidenceAdders: adders.map(a => ({ label: a.label, add: () => this.setState({ draftFiles: S.draftFiles.concat([a.f]) }) })),
+      submitBtnLabel: ot.status === 'needs_more' ? '重新提交' : '提交這一項',
+      submitBtnStyle: S.draftText.trim()
+        ? `font:500 22px/1 'C11';letter-spacing:.12em;color:#0B0A09;background:${AC};border:none;padding:15px 26px;cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)`
+        : `font:500 22px/1 'C11';color:#4A443C;background:none;border:1px solid #2E2822;padding:15px 26px;cursor:not-allowed`,
+      submitTask: () => {
+        if (!S.draftText.trim()) { this.say('先寫下做到什麼程度。'); return; }
+        const st = S.tasks.find(t => t.id === S.openTaskId) || {};
+        const attempt = S.subLog.filter(x => x.taskId === S.openTaskId).length + 1;
+        this.setState({
+          subLog: S.subLog.concat([{ taskId: S.openTaskId, group: 'A隊', title: st.title, layer: st.layer, week: S.weeksHere, dueWeek: this.dueWeek(st), overdue: this.dueWeek(st) < S.weeksHere, len: S.draftText.trim().length, files: S.draftFiles.length, attempt }]),
+          tasks: S.tasks.map(t => t.id === S.openTaskId ? Object.assign({}, t, { status: 'submitted', text: S.draftText, files: S.draftFiles, fb: '', fbType: '' }) : t), screen: 'S02' });
+        this.say('交出去了。他會驗，然後用它校準工具。');
+      },
+
+      scSUB: sc === 'SUB', weeksLeft: 2, reqLeft: rq.length - this.reqPassed(),
+      gateFields: GQ.map((g, i) => ({ n: String(i + 1), q: g.q, hint: g.hint, ph: g.ph, value: S.gateText[i], set: e => { const v = S.gateText.slice(); v[i] = e.target.value; this.setState({ gateText: v }); } })),
+      submitGate: () => {
+        if (!S.gateText[2].trim()) { this.say('第三格是這裡教學密度最高的欄位，不能空著。'); return; }
+        this.setState({ gateSubmitted: true, screen: 'S02' });
+        this.say('送出了。切到老師端 T-07 驗收。');
+      },
+
+      tickWeek: () => {
+        const w = S.weeksHere + 1, kid = 'wed';
+        const items = S.tasks.filter(t => (t.klass || 'wed') === kid && t.layer === 1);
+        const ts = Object.assign({}, S.teamState), subs = S.otherSubs.slice(), marks = S.marks.slice();
+        let added = 0;
+        this.KLASSES[0].teams.filter(t => !t.me).forEach((t, i) => {
+          const cur = Object.assign({ layer: t.layer, weeks: t.weeks, passed: t.passed }, ts[t.id] || {});
+          cur.weeks = (cur.weeks || 1) + 1;
+          const it = items[(w + i) % Math.max(1, items.length)];
+          if (it && cur.layer === 1 && (w + i) % 2 === 0) {
+            const id = 'os' + t.id + w;
+            if (!subs.some(s => s.id === id)) {
+              subs.push({
+                id, klass: kid, team: t.name, teamId: t.id, title: it.title,
+                tag: it.type === 'required' ? '必要' : '延伸', cond: it.cond, due: it.due,
+                over: this.dueWeek(it) < w, text: t.name.split(' · ')[1] + ' 交出的內容。', files: ['工作截圖.png']
+              });
+              added++;
+            }
+          }
+          if (t.id === 'A' && w >= 3 && cur.layer === 1) {
+            cur.layer = 2; cur.weeks = 1; cur.passed = [1];
+            marks.push({
+              id: 'A', name: t.name, layer: '微光荒原', teaser: '換了兩次開挖點，第三格寫的是為什麼換。',
+              cells: ['把題目從「校園導覽」收斂到「新生第一週」。', '第一次的開挖點找不到可對照的案例。', '因為前例調查全部落在觀光導覽，跟我們的對象不一樣。'],
+              verdict: '通過。理由寫得清楚。', files: ['定義文件.pdf']
+            });
+          }
+          ts[t.id] = cur;
+        });
+        this.setState({
+          weeksHere: w, teamState: ts, otherSubs: subs, marks,
+          tasks: S.tasks.map(t => Object.assign({}, t, { over: t.status !== 'passed' && this.dueWeek(t) < w }))
+        });
+        this.say('進到第 ' + w + ' 週。' + (added ? '有 ' + added + ' 組交了東西，老師端佇列已更新。' : '這一週沒有新的提交。'));
+      },
+      unlockStyle: `margin-left:auto;font:500 11px/1 'C11';letter-spacing:.1em;padding:7px 10px;cursor:pointer;white-space:nowrap;border:1px solid ${S.allOpen ? AC : '#2E2822'};color:${S.allOpen ? '#0B0A09' : '#8A8073'};background:${S.allOpen ? AC : 'none'}`,
+      unlockAll: () => {
+        if (S.allOpen) { this.setState({ allOpen: false, tasks: this.mkTasks(), currentLayer: 1, passed: [], toolLevels: {} }); return; }
+        const EXTRA = this.MINS.filter(x => x.L >= 2).map(x => [x.L, x.task, x.name]);
+        const have = {};
+        S.tasks.forEach(t => { have[t.mineral] = true; });
+        const add = EXTRA.filter(e => !have[e[2]]).map((e, i) => ({
+          id: 'x' + i, layer: e[0], type: 'required', title: e[1], cond: '（示範資料）', note: '',
+          due: '—', over: false, mineral: e[2], mDesc: '這一項通過時留下的物證。', status: 'passed', text: '', files: [], fb: '通過。', fbType: 'pass'
+        }));
+        this.setState({
+          allOpen: true, currentLayer: 5, passed: [1, 2, 3, 4, 5],
+          toolLevels: { 1: '第一階', 2: '第二階', 3: '第二階', 4: '第三階', 5: '第三階' },
+          tasks: S.tasks.map(t => Object.assign({}, t, { status: 'passed', fb: t.fb || '通過。', fbType: 'pass' })).concat(add)
+        });
+      },
+      scS03: sc === 'S03', scMap: ((sc === 'S03' || sc === 'T04') && S.mapTab !== 'coll') || sc === 'S04',
+      mapTabMap: () => this.setState({ mapTab: 'map' }), mapTabColl: () => this.setState({ mapTab: 'coll' }),
+      mapTabMapStyle: this.pill(S.mapTab !== 'coll'), mapTabCollStyle: this.pill(S.mapTab === 'coll'),
+      showMapTabs: sc === 'S03' || sc === 'T04',
+      showSteps: sc !== 'T04',
+      mapKicker: sc === 'T04' ? 'T-04 · CLASS MAP' : sc === 'S04' ? 'S-04 · OTHER TEAMS' : 'S-03 · FOG MAP',
+      mapTitle: sc === 'T04' ? '全班位置' : sc === 'S04' ? '其他隊伍在哪一層' : '目前的地圖',
+      mapLede: sc === 'T04'
+        ? '整班都在同一張剖面上。沒有迷霧，你看得到每一組實際停在哪一格。點小人看那一組的紀錄。'
+        : sc === 'S04'
+          ? '在同一片荒原上，你本來就看得到別人的營火在哪。點任何一個小人，看他們公開的通過紀錄。'
+          : '剖面由上往下，一格一步。挖到的那一層才看得見裡面；還沒到的，只有岩壁後透出來的一點光。',
+      stepsDone: [0, 9, 20, 29, 39][S.currentLayer - 1],
+      stepsLeft: 45 - [0, 9, 20, 29, 39][S.currentLayer - 1],
+      myStepInfo: (() => {
+        const done = this.myTasks().filter(t => t.status === 'passed').length;
+        return done + ' / ' + Math.max(this.myTasks().length, 1) + ' \u683c';
+      })(),
+      fogBands: (() => {
+        const TILES = [
+          [196, 226, 256, 286, 316, 346],
+          [204, 234, 264, 294, 324, 354, 384, 414],
+          [252, 282, 312, 342, 372, 402],
+          [252, 282, 312, 342, 372, 402, 432],
+          [292, 322, 352, 382, 412, 442]
+        ];
+        const myStep = this.myTasks().filter(t => t.status === 'passed').length;
+        const FOG = 'repeating-linear-gradient(180deg,rgba(20,17,24,.055) 0 2px,transparent 2px 4px),repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 2px,transparent 2px 4px),linear-gradient(180deg,#0A0910,#07060B)';
+        return this.LAYERS.map(l => {
+          const n = l.n, base = `position:absolute;left:0;right:0;top:${(n - 1) * 20}%;height:20%;z-index:2;pointer-events:none;background:${FOG}`;
+          if (sc === 'T04') return { style: 'display:none' };
+          if (S.passed.indexOf(n) >= 0) return { style: 'display:none' };
+          if (n < S.currentLayer) return { style: 'display:none' };
+          if (n > S.currentLayer) return { style: base + ';opacity:.965' };
+          const row = TILES[n - 1];
+          const evens = row.length % 2 ? row.length - 1 : row.length - 2;
+          const idx = Math.min(myStep * 2, evens);
+          const r = ((row[idx] + 22) / 640 * 100).toFixed(1);
+          const m = `linear-gradient(90deg,transparent 0 ${r}%,rgba(0,0,0,.55) ${r}%,#000 ${Math.min(100, +r + 7)}%)`;
+          return { style: base + `;opacity:.93;-webkit-mask-image:${m};mask-image:${m}` };
+        });
+      })(),
+      diggers: (() => {
+        const TILES = [
+          [196, 226, 256, 286, 316, 346],
+          [204, 234, 264, 294, 324, 354, 384, 414],
+          [252, 282, 312, 342, 372, 402],
+          [252, 282, 312, 342, 372, 402, 432],
+          [292, 322, 352, 382, 412, 442]
+        ];
+        const bandH = mob ? 132 : 150;
+        const YS = [1, 2, 3, 4, 5].map(n => n * bandH - 16);
+        const myStep = this.myTasks().filter(t => t.status === 'passed').length;
+        const out = [];
+        this.LAYERS.forEach(l => {
+          const tl = t => t.me ? S.currentLayer : t.layer;
+          const row = TILES[l.n - 1], b = { y: YS[l.n - 1] };
+          const here = this.teams().filter(t => tl(t) === l.n && (sc === 'S04' || sc === 'T04' || t.me));
+          const mine = here.filter(t => t.me), rest = here.filter(t => !t.me);
+          const myIdx = Math.min(myStep * 2, row.length % 2 ? row.length - 1 : row.length - 2);
+          const free = row.map((x, i) => i).filter(i => !(mine.length && i === myIdx));
+          const slotOf = new Map();
+          rest.forEach((t, i) => slotOf.set(t.id, free.length ? free[Math.round(i * (free.length - 1) / Math.max(1, rest.length - 1))] : 0));
+          let slot = 0;
+          here.forEach(t => {
+            const idx = t.me ? myIdx : slotOf.get(t.id);
+            b.x = row[idx];
+            b.lift = t.me ? 0 : (rest.indexOf(t) % 2) * 26;
+            const on = S.mapTeam === t.id, col = t.me ? AC : on ? '#EDE4CF' : '#9A9184';
+            out.push({
+              tag: t.me ? '你' : t.name.charAt(1),
+              figStyle: `display:block;width:30px;height:30px;background:url(assets/jlz/role-student.png) center bottom/contain no-repeat;image-rendering:pixelated;filter:${t.me ? 'drop-shadow(0 0 7px rgba(233,179,65,.75))' : on ? 'drop-shadow(0 0 7px rgba(237,228,207,.5))' : 'saturate(.35) brightness(.82)'}`,
+              open: () => {
+                const isRead = !t.me && S.role === 'student';
+                this.setState(Object.assign({ mapTeam: t.id, mapView: 'team' }, isRead ? {
+                  readLog: S.readLog.concat([{ reader: 'A隊', target: t.name.split(' · ')[0], layer: t.layer, week: S.weeksHere, readerLayer: S.currentLayer, readerStay: S.weeksHere, recentlyRejected: this.myTasks().some(x => x.status === 'needs_more') }])
+                } : {}));
+              },
+              style: `position:absolute;left:${(b.x / 640 * 100).toFixed(2)}%;top:${b.y - (b.lift || 0)}px;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;padding:0;cursor:pointer;z-index:${t.me ? 6 : 3};color:${col};filter:drop-shadow(0 0 6px rgba(0,0,0,.9))`,
+              tagStyle: `font:500 11px/1 'C11';padding:3px 5px;white-space:nowrap;background:rgba(6,5,10,.85);border:1px solid ${t.me ? AC : on ? '#8A8073' : '#3A3026'};color:${col}`
+            });
+          });
+        });
+        return out;
+      })(),
+      sel: this.layerPanel(S.expanded || S.currentLayer),
+      vBoard: (S.mapView || 'board') === 'board',
+      vLayer: S.mapView === 'layer',
+      vTeam: S.mapView === 'team',
+      backBoard: () => this.setState({ mapView: 'board' }),
+      selTeam: (() => {
+        const t = this.teams().find(x => x.id === S.mapTeam);
+        if (!t) return { name: '', layerName: '', weeks: 0, passedCount: 0, hasMark: false, noMark: false, cells: [], log: [] };
+        const mk = S.marks.find(x => x.id === t.id);
+        const lay = t.me ? S.currentLayer : t.layer, pass = t.me ? S.passed : t.passed;
+        const raw = this.logOf(t.id).slice(0, t.me ? 1 : 1).concat(t.me ? S.passed.filter(n => n > 1).map(n => ['W' + (n + 1), '通過' + this.LAYERS[n - 1].name + '，往下一層']) : []);
+        const myMax = isStu ? S.currentLayer : 5;
+        const hid = this.LAYERS.filter(x => x.n > myMax);
+        const veil = s => hid.reduce((a, x) => a.split(x.name).join('▓▓▓▓'), String(s || ''));
+        const dirty = s => hid.some(x => String(s || '').indexOf(x.name) >= 0);
+        const mkN = mk ? this.LAYERS.findIndex(x => x.name === mk.layer) + 1 : 0;
+        const locked = !!mk && mkN > myMax;
+        const blk = n => '▓'.repeat(n);
+        return {
+          name: t.me ? t.name + '（你）' : t.name,
+          layerName: lay > myMax ? this.LAYERS[lay - 1].code + ' · ▓▓▓▓' : this.LAYERS[lay - 1].name,
+          weeks: t.weeks, passedCount: pass.length,
+          hasMark: !!mk, noMark: !mk,
+          locked, showCells: !!mk && !locked,
+          lockDepth: this.LAYERS[Math.min(4, mkN - 1 < 0 ? 0 : mkN - 1)].code + ' · 深度 ' + (mkN * 200) + 'm',
+          blanks: [blk(22), blk(17), blk(26)].map(t => ({ t })),
+          teaser: mk ? (locked ? '這一組的關卡紀錄在你還沒抵達的地層。' : veil(mk.teaser)) : '',
+          cells: mk && !locked ? mk.cells.map((c, i) => ({ n: String(i + 1), q: (GQ[i] || {}).q || '', t: veil(c) })) : [],
+          hasVerdict: !!(mk && !locked && mk.verdict), verdict: mk && !locked ? veil(mk.verdict) : '',
+          files: mk && !locked ? (mk.files || []).map(x => ({ name: x })) : [],
+          log: raw.map((g, i) => {
+            const bad = dirty(g[1]);
+            return {
+              w: g[0], t: bad ? blk(20) : g[1],
+              tStyle: bad
+                ? "font:400 11px/1.7 'C11';color:#4A443C;letter-spacing:.12em"
+                : "font:400 11px/1.7 'C11';color:#C3BAAA;text-wrap:pretty",
+              dotStyle: `width:7px;height:7px;flex:none;margin-top:6px;background:${bad ? '#2E2822' : i === raw.length - 1 ? AC : '#3A3026'}`
+            };
+          })
+        };
+      })(),
+      mapLayers: this.LAYERS.map(l => {
+        const openAll = S.role === 'teacher';
+        const reached = openAll || l.n <= S.currentLayer, done = openAll || S.passed.indexOf(l.n) >= 0, open = S.expanded === l.n && reached;
+        const lvl = S.toolLevels[l.n];
+        const dark = !reached && !done && sc !== 'T04' && sc !== 'T08';
+        return {
+          code: l.code, name: l.name, sub: l.sub,
+          depth: '深度 ' + (l.n * 200) + 'm',
+          nameShown: dark ? '？？？' : l.name,
+          nameStyle: dark
+            ? `font:700 22px/1.3 'C11';letter-spacing:.24em;margin-top:6px;color:#8C8172;text-shadow:0 0 14px rgba(233,179,65,.34),0 2px 6px rgba(0,0,0,.9);white-space:nowrap;animation:dormant 5.4s ease-in-out infinite`
+            : `font:700 22px/1.3 'C11';letter-spacing:0;margin-top:6px;color:#F2ECE0;white-space:nowrap;text-shadow:0 2px 8px rgba(0,0,0,.95)`,
+          fogStyle: dark
+            ? `position:absolute;inset:0;background:radial-gradient(230px 92px at 64% 52%,rgba(233,179,65,.10),rgba(5,4,4,.66) 62%,rgba(2,2,2,.82) 100%);animation:dormant 6.2s ease-in-out infinite`
+            : 'display:none',
+          isL1: l.n === 1, isL2: l.n === 2, isL3: l.n === 3, isL4: l.n === 4, isL5: l.n === 5,
+          showScene: !dark,
+          state: done ? '已通過' : reached ? '進行中' : '未抵達',
+          stateStyle: `font:400 11px/1 'C11';letter-spacing:.1em;margin-top:7px;color:${done ? AC : reached ? '#DCD4C6' : '#8C8172'};text-shadow:0 1px 4px rgba(0,0,0,.9)`,
+          bandStyle: `display:flex;align-items:stretch;width:100%;height:var(--band);position:relative;overflow:hidden;background:${(dark ? MAPBG_DARK : MAPBG)[l.n - 1]} , url(assets/jlz/scene-${l.code}.png) center/100% 100% no-repeat;image-rendering:pixelated;box-shadow:${S.expanded === l.n ? 'inset 0 0 0 1px ' + AC : 'none'}`,
+          teams: this.teams().filter(t => t.layer === l.n).map(t => ({
+            name: t.name.split(' · ')[0] + (t.me ? ' · 你' : ''),
+            style: `display:inline-flex;align-items:center;gap:6px;font:500 11px/1 'C11';letter-spacing:.08em;padding:6px 9px;white-space:nowrap;background:${t.me ? 'rgba(233,179,65,.22)' : 'rgba(0,0,0,.62)'};border:1px solid ${t.me ? AC : '#4A4238'};color:${t.me ? '#FFD98A' : '#DCD4C6'}`,
+            dotStyle: `width:7px;height:7px;flex:none;background:${t.me ? AC : '#8A8073'}`
+          })),
+          wrapStyle: 'display:block',
+          headStyle: `display:block;width:100%;padding:0;background:none;border:none;cursor:pointer;color:${TEXT}`,
+          toggle: () => {
+            if (dark) { this.say('這一層還沒抵達。挖到了才看得見裡面有什麼。'); return; }
+            this.setState({ expanded: l.n, mapView: 'layer' });
+          },
+          expanded: S.expanded === l.n,
+          headStyleCursor: dark ? 'default' : 'pointer',
+          toolCardStyle: `padding:13px;background:${lvl ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.25)'};border:1px ${lvl ? 'solid #3A3026' : 'dashed #2E2822'}`,
+          treCardStyle: `padding:13px;background:${done ? 'rgba(0,0,0,.25)' : 'rgba(0,0,0,.25)'};border:1px ${done ? 'solid ' + LINE : 'dashed #2E2822'}`,
+          toolName: lvl ? l.tool : '？？？', toolNameColor: lvl ? AC : '#5A5044',
+          toolDesc: lvl ? l.toolDesc + ' · ' + lvl : '校準之後才知道它是什麼',
+          treName: done ? l.treasure : '？？？', treNameColor: done ? '#E8E2D6' : '#5A5044',
+          treDesc: done ? l.treDesc : '通過這一層才知道它是什麼',
+          minerals: this.mineralCells(l.n, false)
+        };
+      }),
+      collSections: (() => {
+        const tile = (name, got, spr, on) => ({
+          name: got ? name : '？？？', got, open: on,
+          style: `padding:12px 8px;text-align:center;font:inherit;cursor:${got ? 'pointer' : 'default'};background:${got ? 'rgba(233,179,65,.05)' : 'radial-gradient(circle at 50% 40%,rgba(233,179,65,.05),transparent 70%)'};border:1px ${got ? 'solid #3A3026' : 'dashed #2C251D'};color:${got ? TEXT : '#8C8172'}`,
+          glyphStyle: got && SPRBG(name)
+            ? 'display:block;width:38px;height:38px;margin:0 auto;' + SPRBG(name)
+            : got
+              ? 'display:block;width:26px;height:26px;margin:6px auto;background:linear-gradient(140deg,#E9B341,#6B4C15);clip-path:' + GLYPHS[(name.length + name.charCodeAt(0)) % GLYPHS.length]
+              : 'display:block;width:22px;height:22px;margin:8px auto;background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.4),rgba(233,179,65,.05) 62%,transparent 74%);animation:dormant 4.6s ease-in-out infinite'
+        });
+        const openSpec = n => () => this.setState({ specFrom: sc, screen: 'S06', specId: n });
+        const say = () => this.say('還沒拿到。走到那一層才看得到它是什麼。');
+        const openAll = S.role === 'teacher';
+        const tools = this.LAYERS.map(l => {
+          const got = openAll || !!S.toolLevels[l.n];
+          return Object.assign(tile(l.tool, got, 0, got ? openSpec(l.tool) : say), { sub: got ? l.code + ' · ' + S.toolLevels[l.n] : l.code });
+        });
+        const tres = this.LAYERS.map(l => {
+          const got = openAll || S.passed.indexOf(l.n) >= 0;
+          return Object.assign(tile(l.treasure, got, 0, got ? openSpec(l.treasure) : say), { sub: l.code });
+        });
+        const mins = this.MINS.map(m => {
+          const t = S.tasks.find(x => x.mineral === m.name);
+          const got = openAll || (!!t && t.status === 'passed');
+          return Object.assign(tile(m.name, got, 0, got ? openSpec(m.name) : say), { sub: 'L' + m.L + ' · ' + m.task });
+        });
+        const cnt = a => a.filter(x => x.got).length;
+        return [
+          { title: '道具', note: openAll ? '過關才給，一層一件。老師端不上鎖，全部可讀。' : '過關才給，一層一件。道具決定工具校準到哪一階。', have: openAll ? '共 ' + tools.length + ' 件' : '已取得 ' + cnt(tools) + ' 件', items: tools },
+          { title: '寶物', note: openAll ? '過關就給，不看做得多好。老師端不上鎖。' : '過關就給，不看做得多好。', have: openAll ? '共 ' + tres.length + ' 件' : '已取得 ' + cnt(tres) + ' 件', items: tres },
+          { title: '礦物', note: openAll ? '一項任務一種礦。這是學生會逐項採到的物證。' : '一項任務一種礦，每一塊指回一件你做過的工作。', have: openAll ? '共 ' + mins.length + ' 塊' : '已採 ' + cnt(mins) + ' 塊', items: mins }
+        ];
+      })(),
+
+      rack: this.LAYERS.map(l => {
+        const openAll = S.role === 'teacher';
+        const lvl = S.toolLevels[l.n], have = openAll || !!lvl;
+        return {
+          label: have ? l.tool : '？？？', lv: openAll ? '' : (lvl || ''),
+          layerLabel: l.code + ' · ' + (have ? l.name : '尚未取得'),
+          open: () => { if (have) { this.setState({ specFrom: sc, screen: 'S06', specId: l.tool, specFrom: sc }); } else { this.say('這一層的道具要過關才拿到。'); } },
+          style: `width:104px;padding:13px 8px;text-align:center;cursor:${have ? 'pointer' : 'default'};font:inherit;background:${have ? 'rgba(233,179,65,.06)' : 'transparent'};border:1px ${have ? 'solid #3A3026' : 'dashed #251F1A'};color:${have ? TEXT : '#5A5044'}`,
+          iconStyle: `display:block;width:36px;height:36px;margin:0 auto;${have && SPRBG(l.tool) ? SPRBG(l.tool) : 'background:#1C1915;clip-path:polygon(50% 0,100% 30%,82% 100%,18% 100%,0 30%)'}`
+        };
+      }),
+
+      scS06: sc === 'S06', scColl: (sc === 'S03' || sc === 'T04') && S.mapTab === 'coll', specName: S.specNames[S.specId] || specSource.name, specKind: specSource.kind,
+      specLook: specSource.look, specTrait: specSource.trait, specRec: specSource.rec,
+      specFunc: specSource.func, specAbility: specSource.ability, specLine: specSource.line, specNotice: specSource.notice,
+      hasTrait: !!specSource.trait, hasRec: !!specSource.rec, hasFunc: !!specSource.func, hasLine: !!specSource.line, hasNotice: !!specSource.notice,
+      specFrom: specSource.from, specDate: specSource.date,
+      specUnnamed: (() => { const m = this.MINS.find(x => x.name === S.specId); return !!m && m.L === 5 && !S.specNames[S.specId]; })(),
+      specInput: S.specNames[S.specId] || '',
+      setSpecName: e => this.setState({ specNames: Object.assign({}, S.specNames, { [S.specId]: e.target.value }) }),
+      specGlyphStyle: SPRBG(S.specNames[S.specId] || specSource.name) || SPRBG(S.specId)
+        ? `width:150px;height:150px;flex:none;${SPRBG(S.specId) || SPRBG(specSource.name)};filter:drop-shadow(0 0 34px rgba(233,179,65,.28))`
+        : `width:130px;height:130px;flex:none;background:linear-gradient(140deg,#E9B341,#6B4C15);clip-path:polygon(50% 0,100% 36%,80% 100%,20% 100%,0 36%);box-shadow:0 0 60px rgba(233,179,65,.2)`,
+
+      scS04: sc === 'S04',
+      teamDepths: this.teams().map(t => ({
+        name: t.me ? t.name + '（你）' : t.name, depthLabel: this.LAYERS[t.layer - 1].code,
+        style: `display:flex;align-items:center;gap:12px;padding:12px 14px;background:${t.me ? 'rgba(233,179,65,.06)' : PANEL};border:1px solid ${t.me ? '#3A3026' : LINE}`,
+        bars: this.LAYERS.map(l => ({ style: `flex:1;height:7px;background:${l.n <= t.layer ? (t.me ? AC : '#5A5348') : '#1C1915'}` }))
+      })),
+
+      scGantt: sc === 'GANTT',
+      weekNow: 'W' + S.weeksHere,
+      ganttWeeks: [1, 2, 3, 4, 5, 6].map(n => ({
+        label: 'W' + n, date: this.weekRange(n),
+        style: `flex:1;font:500 11px/1 'C11';text-align:center;padding-bottom:6px;color:${n === S.weeksHere ? AC : '#8A8073'}`,
+        dateStyle: `display:block;font:400 11px/1 'C11';margin-top:5px;color:${n === S.weeksHere ? 'rgba(233,179,65,.7)' : '#5F574C'}`
+      })),
+      ganttRows: this.myTasks().map(t => {
+        const dw = this.dueWeek(t), pw = this.planWeek(t), got = t.status === 'passed';
+        const gotWeek = S.passedWeek[t.id] || 0;
+        const hasPlan = !!S.plan[t.id], late = hasPlan && pw > dw;
+        const st = got ? 'W' + (gotWeek || S.weeksHere) + ' 通過'
+          : t.status === 'submitted' ? '等老師確認'
+            : t.status === 'needs_more' ? '退回，要補'
+              : !hasPlan ? '期限 ' + this.dueLabel(t) + ' · 還沒排'
+                : late ? '期限 ' + this.dueLabel(t) + ' · 你排 W' + pw + '，排在期限之後'
+                  : '期限 ' + this.dueLabel(t) + ' · 你排 W' + pw;
+        return {
+          name: t.title, tag: t.type === 'required' ? '必要' : '延伸',
+          tagStyle: this.chip(t.type === 'required' ? 'rgba(233,179,65,.14)' : 'transparent', t.type === 'required' ? AC : '#9A9184', t.type === 'required' ? 'rgba(233,179,65,.28)' : '#2E2822'),
+          meta: st,
+          metaStyle: `font:400 11px/1.5 'C11';color:${got ? AC : (t.over || late) ? '#D9603F' : hasPlan ? '#8A8073' : '#6E665A'}`,
+          open: () => this.setState({ screen: 'S05', openTaskId: t.id, draftText: t.text, draftFiles: t.files }),
+          cells: [1, 2, 3, 4, 5, 6].map(n => {
+            const planned = hasPlan && n === pw, done = got && n === (gotWeek || S.weeksHere);
+            const wait = !got && t.status === 'submitted' && n === S.weeksHere;
+            const past = n > dw, edge = n === dw ? ';border-right:2px solid ' + (t.over && !got ? 'rgba(217,96,63,.65)' : '#8A8073') : '';
+            const hatch = past ? 'repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 3px,transparent 3px 7px),' : '';
+            return {
+              set: () => { if (!got) this.setState({ plan: Object.assign({}, S.plan, { [t.id]: n }) }); },
+              mark: done ? '✓' : wait ? '…' : '',
+              style: `flex:1;align-self:stretch;margin:3px 1px;cursor:${got ? 'default' : 'pointer'};display:flex;align-items:center;justify-content:center;font:500 11px/1 'C11';`
+                + (done ? `background:${AC};color:#0B0A09;border:1px solid ${AC}`
+                  : wait ? `background:${hatch}rgba(233,179,65,.14);color:${AC};border:1px dashed ${AC}` + edge
+                    : planned ? `background:${hatch}rgba(233,179,65,${past ? '.13' : '.18'});color:transparent;border:1px solid ${past ? 'rgba(217,96,63,.5)' : '#5A4A2C'}` + edge
+                      : `background:${hatch}${n === S.weeksHere ? 'rgba(255,255,255,.035)' : 'transparent'};color:#3A3026;border:1px solid #1C1915` + edge)
+            };
+          })
+        };
+      }),
+      ganttGate: (() => {
+        const gw = S.plan.gate || 6, sent = S.gateSubmitted, done = passedThis;
+        return {
+          meta: done ? '已通過' : sent ? '已送審，等老師審核' : '你排 W' + gw + ' 送審',
+          cells: [1, 2, 3, 4, 5, 6].map(n => ({
+            set: () => { if (!sent && !done) this.setState({ plan: Object.assign({}, S.plan, { gate: n }) }); },
+            mark: done && n === S.weeksHere ? '✓' : sent && n === S.weeksHere ? '…' : '',
+            style: `flex:1;align-self:stretch;margin:3px 1px;cursor:${sent || done ? 'default' : 'pointer'};display:flex;align-items:center;justify-content:center;font:500 11px/1 'C11';`
+              + ((done || sent) && n === S.weeksHere ? `background:${done ? AC : 'rgba(233,179,65,.14)'};color:${done ? '#0B0A09' : AC};border:1px ${done ? 'solid' : 'dashed'} ${AC}`
+                : n === gw ? `background:rgba(195,186,170,.14);color:transparent;border:1px solid #4A4238`
+                  : `background:transparent;color:#3A3026;border:1px solid #1C1915`)
+          }))
+        };
+      })(),
+      ganttFresh: Object.keys(S.plan).filter(k => k !== 'gate').length === 0,
+      dueTrack: (() => {
+        const counts = {};
+        this.myTasks().forEach(t => { const w = this.dueWeek(t); counts[w] = (counts[w] || 0) + 1; });
+        return [1, 2, 3, 4, 5, 6].map(n => ({
+          label: counts[n] ? counts[n] + ' 項' : '',
+          style: `flex:1;align-self:stretch;margin:3px 1px;display:flex;align-items:center;justify-content:center;font:500 11px/1 'C11';`
+            + (counts[n]
+              ? `background:rgba(195,186,170,.10);color:#DCD4C6;border:1px solid #4A4238`
+              : `background:${n === S.weeksHere ? 'rgba(255,255,255,.035)' : 'transparent'};color:transparent;border:1px solid #1C1915`)
+        }));
+      })(),
+      diffRows: (() => {
+        return this.myTasks().filter(t => t.status === 'passed' && S.passedWeek[t.id]).map(t => {
+          const pw = this.planWeek(t), rw = S.passedWeek[t.id], d = rw - pw;
+          const col = d > 0 ? '#D9603F' : d < 0 ? AC : '#8A8073';
+          return {
+            name: t.title, plan: 'W' + pw, real: 'W' + rw, edge: d > 0 ? 'rgba(217,96,63,.5)' : d < 0 ? AC : '#3A3026',
+            gap: d === 0 ? '照計畫' : d > 0 ? '慢 ' + d + ' 週' : '快 ' + (-d) + ' 週',
+            gapStyle: `font:500 11px/1 'C11';white-space:nowrap;padding:4px 7px;background:${d > 0 ? 'rgba(217,96,63,.12)' : d < 0 ? 'rgba(233,179,65,.12)' : 'transparent'};border:1px solid ${d > 0 ? 'rgba(217,96,63,.35)' : d < 0 ? 'rgba(233,179,65,.3)' : '#2E2822'};color:${col}`
+          };
+        });
+      })(),
+      hasDiff: this.myTasks().some(t => t.status === 'passed' && S.passedWeek[t.id]),
+      diffSummary: (() => {
+        const done = this.myTasks().filter(t => t.status === 'passed' && S.passedWeek[t.id]);
+        if (!done.length) return '還沒有可以比對的項目';
+        const ds = done.map(t => S.passedWeek[t.id] - this.planWeek(t));
+        const on = ds.filter(d => d <= 0).length;
+        return '已完成 ' + done.length + ' 項 · 照計畫或更快 ' + on + ' 項';
+      })(),
+      diffNote: (() => {
+        const done = this.myTasks().filter(t => t.status === 'passed' && S.passedWeek[t.id]);
+        if (!done.length) return '第一項通過之後，這裡會開始累積你排的週次與實際通過的週次。差距本身不扣分，它只是讓你知道自己估得準不準。';
+        const late = done.filter(t => S.passedWeek[t.id] - this.planWeek(t) > 0);
+        if (!late.length) return '目前每一項都在你自己排的時間內完成。下一層的期限會更緊，這個估算習慣留著。';
+        const worst = late.reduce((a, b) => (S.passedWeek[b.id] - this.planWeek(b)) > (S.passedWeek[a.id] - this.planWeek(a)) ? b : a);
+        return '慢最多的是「' + worst.title + '」。差距的來源通常不是做得慢，是排的時候沒把等老師確認的時間算進去。';
+      })(),
+      ganttFlow: (() => {
+        const counts = {};
+        this.myTasks().filter(t => t.status !== 'passed').forEach(t => { if (S.plan[t.id]) { const w = this.planWeek(t); counts[w] = (counts[w] || 0) + 1; } });
+        const heavy = Object.keys(counts).filter(w => counts[w] >= 3);
+        const dot = c => `width:5px;height:5px;flex:none;margin-top:8px;background:${c}`;
+        const txt = c => `font:400 22px/1.6 'C11';color:${c};text-wrap:pretty`;
+        return [
+          { text: '排程是你自己的計畫，老師看不到。他只訂期限——上面那一欄就是他的安排。', dotStyle: dot('#4A4238'), style: txt('#8A8073') },
+          heavy.length
+            ? { text: '你把 ' + counts[heavy[0]] + ' 項排在 W' + heavy.join('、W') + '。那一週他的佇列會同時收到這幾項，回覆也會一起變慢。', dotStyle: dot(AC), style: txt('#DCD4C6') }
+            : { text: '目前沒有哪一週壓超過兩項。他的佇列依各組停留週數排序，不是先交先看。', dotStyle: dot('#4A4238'), style: txt('#8A8073') },
+          { text: '排程不等於送出。他只在你按下送出之後才看到內容。', dotStyle: dot('#4A4238'), style: txt('#8A8073') }
+        ];
+      })(),
+
+      scT01: sc === 'T01',
+      showTeacherLinks: mob,
+      teacherLinks: [
+        { code: 'T-07', label: '關卡審核', note: S.gateSubmitted && !passedThis ? '有一組送審中' : '送審三格與發道具', s: 'T07' },
+        { code: 'T-08', label: '學生端的世界', note: '場景、道具、規畫環節對照', s: 'T08' },
+        { code: 'T-00', label: '系統說明', note: '作品的故事與你的角色', s: 'STORY' }
+      ].map(k => ({
+        code: k.code, label: k.label, note: k.note,
+        go: () => { if (k.s === 'STORY') { this.setState({ screen: 'STORY', storyIdx: 0, storyFrom: 'T01' }); } else { this.go(k.s); } },
+        style: `text-align:left;padding:13px 15px;background:${PANEL};border:1px solid ${k.code === 'T-07' && S.gateSubmitted && !passedThis ? '#5A4A2C' : LINE};cursor:pointer;color:${TEXT};font:inherit`
+      })),
+      teacherStats: [
+        { label: '待確認', value: pendingAll, color: AC, hint: '每一項都留下合格考量', style: `padding:15px;background:${PANEL};border:1px solid #3A3026` },
+        { label: '停留 ≥ 3 週', value: this.teams().filter(t => t.weeks >= 3).length, color: '#D9603F', hint: '注意力預設流向卡住的隊伍', style: `padding:15px;background:${PANEL};border:1px solid rgba(217,96,63,.25)` },
+        { label: '待審關卡', value: S.gateSubmitted && !passedThis ? 1 : 0, color: TEXT, hint: '每學期 4-5 次', style: `padding:15px;background:${PANEL};border:1px solid ${LINE}` }
+      ],
+      queue: qTeams,
+
+      scT02: sc === 'T02', layerSets: setStates, goT02: () => this.go('T02'), goT01: () => this.go('T01'), goT03: () => this.go('T03'),
+
+      scT05: sc === 'T05', editLayerName: this.LAYERS[S.editLayer - 1].name,
+      isEditing: !!S.editId, notEditing: !S.editId,
+      editHeading: S.editId ? this.LAYERS[S.editLayer - 1].name + ' · 編輯項目' : this.LAYERS[S.editLayer - 1].name + ' · 新增一項',
+      editLiveNote: (() => {
+        if (!S.editId) return '';
+        const t = S.tasks.find(x => x.id === S.editId);
+        if (!t) return '';
+        const live = this.itemProgress(t).live;
+        return live ? '已經有 ' + live + ' 組在做這一項。存檔後他們的清單立刻更新，已通過的不會被收回。' : '還沒有組別開始這一項，可以自由修改。';
+      })(),
+      saveItem: () => {
+        if (!S.nf.title.trim()) { this.say('項目名稱不能空白。'); return; }
+        this.setState({
+          tasks: S.tasks.map(t => t.id === S.editId ? Object.assign({}, t, { title: S.nf.title, type: S.nf.type, cond: S.nf.cond, note: S.nf.note, due: S.nf.due, mineral: S.nf.mineral || t.mineral }) : t),
+          editId: null, nf: { title: '', type: 'required', cond: '', note: '', due: S.nf.due, mineral: '' }, screen: 'T02'
+        });
+        this.say('改好了。學生端看到的就是這一版。');
+      },
+      deleteItem: () => {
+        this.setState({ tasks: S.tasks.filter(t => t.id !== S.editId), editId: null, nf: { title: '', type: 'required', cond: '', note: '', due: S.nf.due, mineral: '' }, screen: 'T02' });
+        this.say('已從清單移除。');
+      },
+      cancelEdit: () => this.setState({ editId: null, nf: { title: '', type: 'required', cond: '', note: '', due: S.nf.due, mineral: '' }, screen: 'T02' }),
+      nfTitle: S.nf.title, nfCond: S.nf.cond, nfNote: S.nf.note,
+      setNfTitle: e => this.setState({ nf: Object.assign({}, S.nf, { title: e.target.value }) }),
+      setNfCond: e => this.setState({ nf: Object.assign({}, S.nf, { cond: e.target.value }) }),
+      setNfNote: e => this.setState({ nf: Object.assign({}, S.nf, { note: e.target.value }) }),
+      setNfReq: () => this.setState({ nf: Object.assign({}, S.nf, { type: 'required' }) }),
+      setNfExt: () => this.setState({ nf: Object.assign({}, S.nf, { type: 'extended' }) }),
+      nfReqStyle: this.pill(S.nf.type === 'required'), nfExtStyle: this.pill(S.nf.type === 'extended'),
+      dueOptions: [1, 2, 3, 4, 5, 6].map(w => ({
+        label: 'W' + w, sub: this.weekRange(w),
+        subStyle: `display:block;font:400 11px/1 'C11';margin-top:5px;color:${dueW === w ? 'rgba(11,10,9,.7)' : '#6E665A'}`,
+        pick: () => this.setState({ nf: Object.assign({}, S.nf, { due: composeDue(w, dueD) }) }),
+        style: this.pill(dueW === w)
+      })).concat([{
+        label: '不設限', sub: '沒有交件日',
+        subStyle: `display:block;font:400 11px/1 'C11';margin-top:5px;color:${S.nf.due === '不設限' ? 'rgba(11,10,9,.7)' : '#6E665A'}`,
+        pick: () => this.setState({ nf: Object.assign({}, S.nf, { due: '不設限' }) }),
+        style: this.pill(S.nf.due === '不設限')
+      }]),
+      dueHasWeek: dueW > 0,
+      dowOptions: [1, 3, 5, 7].map(d => ({
+        label: '週' + this.dowName(d), sub: dueW ? this.fmtDate(this.weekDate(dueW, d)) : '',
+        subStyle: `display:block;font:400 11px/1 'C11';margin-top:5px;color:${dueD === d ? 'rgba(11,10,9,.7)' : '#6E665A'}`,
+        pick: () => { if (dueW) this.setState({ nf: Object.assign({}, S.nf, { due: composeDue(dueW, d) }) }); },
+        style: this.pill(dueD === d)
+      })),
+      duePreview: dueW ? this.fmtDate(this.weekDate(dueW, dueD)) + '（週' + this.dowName(dueD) + '）· 第 ' + dueW + ' 週' : '不設限',
+      minOptions: this.MINS.filter(m => m.L === S.editLayer).map(m => {
+        const owner = S.tasks.find(t => t.mineral === m.name);
+        const taken = !!owner && owner.id !== S.editId;
+        const dTaken = S.draftSet.some(d => d.mineral === m.name);
+        const on = S.nf.mineral === m.name;
+        return {
+          name: m.task, sub: taken ? '已配給 · ' + owner.title : dTaken ? '草稿已使用' : '學生端物證 · ' + m.name,
+          pick: () => { if (taken || dTaken) { this.say('這一種礦已經配給別的項目了。'); return; } this.setState({ nf: Object.assign({}, S.nf, { mineral: m.name }) }); },
+          style: `text-align:left;padding:11px 13px;font:inherit;cursor:${taken || dTaken ? 'default' : 'pointer'};background:${on ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.26)'};border:1px ${on ? 'solid ' + AC : taken || dTaken ? 'dashed #2A241E' : 'solid #2E2822'};color:${on ? '#FFD98A' : taken || dTaken ? '#5F574C' : TEXT}`
+        };
+      }),
+      nfMinName: S.nf.mineral || '尚未指定',
+      hasNfMin: !!S.nf.mineral,
+      nfMinLook: (this.MINS.find(m => m.name === S.nf.mineral) || {}).look || '',
+      nfMinTrait: (this.MINS.find(m => m.name === S.nf.mineral) || {}).trait || '',
+      layerToolName: this.LAYERS[S.editLayer - 1].tool, layerToolFunc: this.LAYERS[S.editLayer - 1].toolFunc,
+      layerTreName: this.LAYERS[S.editLayer - 1].treasure,
+      editCourse: this.LAYERS[S.editLayer - 1].course,
+      editStageNote: '學生端看到的名稱是「' + this.LAYERS[S.editLayer - 1].name + '」。這一週期的必要項全數通過，他們才能進入下一個週期；延伸項不影響能不能進，只影響他們在這一週期做得多深。',
+      addTaskStyle: S.nf.title.trim() ? `font:500 22px/1 'C11';color:#0B0A09;background:${AC};border:none;padding:14px 22px;cursor:pointer` : `font:500 22px/1 'C11';color:#4A443C;background:none;border:1px solid #2E2822;padding:14px 22px;cursor:not-allowed`,
+      addTask: () => {
+        if (!S.nf.title.trim()) { this.say('先給這一項一個名字。'); return; }
+        this.setState({ draftSet: S.draftSet.concat([Object.assign({}, S.nf)]), nf: { title: '', type: S.nf.type, cond: '', note: '', due: S.nf.due, mineral: '' } });
+      },
+      draftHasItems: S.draftSet.length > 0,
+      draftItems: S.draftSet.map((d, i) => ({
+        title: d.title, due: d.due, tag: d.type === 'required' ? '必要' : '延伸',
+        tagStyle: this.chip(d.type === 'required' ? 'rgba(233,179,65,.14)' : 'transparent', d.type === 'required' ? AC : '#9A9184', d.type === 'required' ? 'rgba(233,179,65,.3)' : '#2E2822'),
+        remove: () => this.setState({ draftSet: S.draftSet.filter((_, j) => j !== i) })
+      })),
+      publishLabel: '發派給全班（' + S.draftSet.length + ' 項）',
+      publishStyle: S.draftSet.length ? `font:500 22px/1 'C11';color:${AC};background:none;border:1px solid #5A4A2C;padding:14px 22px;cursor:pointer` : `font:500 22px/1 'C11';color:#4A443C;background:none;border:1px solid #2E2822;padding:14px 22px;cursor:not-allowed`,
+      publishSet: () => {
+        if (!S.draftSet.length) return;
+        const free = this.MINS.filter(m => m.L === S.editLayer && !S.tasks.some(t => t.mineral === m.name)).map(m => m.name);
+        const add = S.draftSet.map((d, i) => ({ id: 'n' + Date.now() + i, klass: this.klass().id, layer: S.editLayer, type: d.type, title: d.title, cond: d.cond || '（未填通過條件）', note: d.note || '（未填提醒）', due: d.due, over: false, mineral: d.mineral || free[i % Math.max(1, free.length)] || '未指定礦物', mDesc: '這一項工作留下的物證。', status: 'todo', text: '', files: [], fb: '', fbType: '' }));
+        this.setState({ tasks: S.tasks.concat(add), draftSet: [], layer2Published: S.editLayer === 2 ? true : S.layer2Published, screen: 'T02' });
+        this.say('清單發出去了。學生端 S-02 已經看得到。');
+      },
+
+      scT03: sc === 'T03', queueEmpty: reviewAll.length === 0,
+      reviewItems: reviewAll.map(r => ({
+        title: r.title, team: r.team, tag: r.tag, due: r.over ? '逾期' : '期限 ' + r.due,
+        tagStyle: this.chip(r.tag === '必要' ? 'rgba(233,179,65,.14)' : 'transparent', r.tag === '必要' ? AC : '#9A9184', r.tag === '必要' ? 'rgba(233,179,65,.3)' : '#2E2822'),
+        dueStyle: `font:400 11px/1 'C11';color:${r.over ? '#D9603F' : FAINT}`,
+        excerpt: r.text, style: `text-align:left;width:100%;padding:15px 17px;background:${PANEL};border:1px solid ${LINE};cursor:pointer;color:${TEXT}`,
+        open: () => this.setState({ screen: 'T06', reviewId: r.id, reason: '' })
+      })),
+
+      rounds: (() => {
+        const t = this.state.tasks.find(x => x.id === rev.id);
+        const rs = (t && t.rounds) || [];
+        return rs.map((r, i) => ({ n: String(i + 1), reason: r }));
+      })(),
+      hasRounds: (() => { const t = this.state.tasks.find(x => x.id === rev.id); return !!(t && t.rounds && t.rounds.length); })(),
+      roundCount: (() => { const t = this.state.tasks.find(x => x.id === rev.id); return ((t && t.rounds) || []).length; })(),
+      scT06: sc === 'T06', revTitle: rev.title || '', revTeam: rev.team || '', revCond: rev.cond || '', revText: rev.text || '',
+      revTag: rev.tag || '', revTagStyle: this.chip(rev.tag === '必要' ? 'rgba(233,179,65,.14)' : 'transparent', rev.tag === '必要' ? AC : '#9A9184', rev.tag === '必要' ? 'rgba(233,179,65,.3)' : '#2E2822'),
+      revDue: rev.over ? '逾期 · 仍可確認、仍計入等級' : '期限內', revDueStyle: `font:400 11px/1 'C11';color:${rev.over ? '#D9603F' : FAINT}`,
+      revFiles: (rev.files || []).map(f => ({ name: f })),
+      quickReasons: ['條件都對上了', '程度寫得夠具體', '缺少證據', '範圍比條件大', '看不出判斷依據'].map(q => ({ label: q, pick: () => this.setState({ reason: S.reason ? S.reason + '　' + q : q }) })),
+      reason: S.reason, setReason: e => this.setState({ reason: e.target.value }),
+      passItem: () => {
+        const id = rev.id;
+        if (!id) return;
+        const logRev = (result) => S.revLog.concat([{
+          id: 'rv' + (S.revLog.length + 1), reviewId: id, teacher: 'T1',
+          group: rev.teamId === 'C' ? 'A隊' : String.fromCharCode(65 + Math.max(0, 'ABCDEFGHIJKMNO'.indexOf(rev.teamId || 'B'))) + '隊',
+          title: rev.title || '', layer: 1, result, reason: S.reason, len: S.reason.trim().length,
+          hasReason: !!S.reason.trim(), week: S.weeksHere, latency: Math.max(1, (S.weeksHere - 1) * 168 + 12)
+        }]);
+        if (this.state.tasks.some(t => t.id === id)) {
+          this.setState({ revLog: logRev('pass'), tasks: S.tasks.map(t => t.id === id ? Object.assign({}, t, { status: 'passed', fb: S.reason || '（未附理由）', fbType: 'pass' }) : t), passedWeek: Object.assign({}, S.passedWeek, { [id]: S.weeksHere }), screen: 'T03', reason: '' });
+          this.say(S.reason ? '通過。理由會跟著這一項留在學生端。' : '通過。沒附理由——學生端會標示「未附理由」。');
+        } else {
+          this.setState({ revLog: logRev('pass'), reviewedOthers: S.reviewedOthers.concat([id]), screen: 'T03', reason: '' });
+          this.say('通過。');
+        }
+      },
+      rejectItem: () => {
+        const id = rev.id;
+        if (!id) return;
+        if (!S.reason.trim()) { this.say('需補充一定要附理由。'); return; }
+        const logRev = (result) => S.revLog.concat([{
+          id: 'rv' + (S.revLog.length + 1), reviewId: id, teacher: 'T1',
+          group: rev.teamId === 'C' ? 'A隊' : String.fromCharCode(65 + Math.max(0, 'ABCDEFGHIJKMNO'.indexOf(rev.teamId || 'B'))) + '隊',
+          title: rev.title || '', layer: 1, result, reason: S.reason, len: S.reason.trim().length,
+          hasReason: true, week: S.weeksHere, latency: Math.max(1, (S.weeksHere - 1) * 168 + 20)
+        }]);
+        if (this.state.tasks.some(t => t.id === id)) {
+          this.setState({ revLog: logRev('needfix'), tasks: S.tasks.map(t => t.id === id ? Object.assign({}, t, { status: 'needs_more', fb: S.reason, fbType: 'more', rounds: (t.rounds || []).concat([S.reason]) }) : t), screen: 'T03', reason: '' });
+          this.say('退回。學生端可以重新提交，次數不限。');
+        } else {
+          this.setState({ revLog: logRev('needfix'), reviewedOthers: S.reviewedOthers.concat([id]), screen: 'T03', reason: '' });
+          this.say('退回。');
+        }
+      },
+
+      scT07: sc === 'T07', gateTeamName: me.name, noGate: !S.gateSubmitted || passedThis, hasGate: S.gateSubmitted && !passedThis,
+      gateChecklist: rq.map(t => ({ title: t.title, state: t.status === 'passed' ? '已確認' : '未通過', mark: t.status === 'passed' ? '✓' : '·', markStyle: `font:700 22px/1 'C11';width:18px;color:${t.status === 'passed' ? AC : '#4A443C'}` })),
+      gateReview: GQ.map((g, i) => ({ n: String(i + 1), q: g.q, a: S.gateText[i] || '（未填）' })),
+      levelPicks: (() => {
+        const auto = this.levelOf(this.extPassed());
+        const opts = [null, 'Lv.1 粗製', 'Lv.2 校正', 'Lv.3 精調', 'Lv.4 精密'];
+        return opts.map(o => {
+          const on = (S.gateLevelPick || null) === o;
+          return {
+            label: o === null ? '用試算（' + auto + '）' : o,
+            pick: () => this.setState({ gateLevelPick: o }),
+            style: `padding:9px 12px;font:500 11px/1 'C11';cursor:pointer;border:1px solid ${on ? AC : '#2E2822'};background:${on ? 'rgba(233,179,65,.14)' : 'none'};color:${on ? AC : '#8A8073'}`
+          };
+        });
+      })(),
+      calcLevel: this.levelOf(this.extPassed()),
+      calcReason: '必要項 ' + this.reqPassed() + '/' + rq.length + ' 全通過，延伸項確認通過 ' + this.extPassed() + ' 項。等級量的是他們選擇挖多深，不是做得多好。',
+      gateReason: S.gateReason, setGateReason: e => this.setState({ gateReason: e.target.value }),
+      passGate: () => {
+        const lvl = S.gateLevelPick || this.levelOf(this.extPassed());
+        this.setState({ gateLevelPick: null, passed: S.passed.concat([S.currentLayer]), toolLevels: Object.assign({}, S.toolLevels, { [S.currentLayer]: lvl }), reward: { tool: L.tool, treasure: L.treasure, level: lvl }, gateVerdict: S.gateReason });
+      },
+      rejectGate: () => { if (!S.gateReason.trim()) { this.say('需補充一定要附理由。'); return; } this.setState({ gateSubmitted: false, screen: 'T01' }); this.say('退回。學生端可以補完再送。'); },
+      replanGate: () => { if (!S.gateReason.trim()) { this.say('需重新規劃一定要附理由。'); return; } this.setState({ gateSubmitted: false, screen: 'T01' }); this.say('判為需重新規劃。這一次不解鎖給其他隊伍。'); },
+
+      isResearcher: isRes, showRes: isRes && sc.charAt(0) === 'R' && !mob, resMobileNote: isRes && sc.charAt(0) === 'R' && mob,
+      resLockedNav: resLocked,
+      resVals: (() => {
+        const d = this.research();
+        const CT = [['desc', '描述型', '#8393A0'], ['eval', '評價型', '#B4B6BE'], ['inst', '指示型', '#5FC5E8'], ['ask', '提問型', '#9A8CD0'], ['none', '未附理由', '#5A6874']];
+        const codeOf = id => S.codes[id] || '';
+        const nav = [['R-00', 'R00', '進入與同意'], ['R-01', 'R01', '總覽'], ['R-02', 'R02', '審核語料'], ['R-03', 'R03', '回饋與修正'], ['R-04', 'R04', '天然對照'], ['R-05', 'R05', '閱讀行為'], ['R-06', 'R06', '提交節律'], ['R-07', 'R07', '停留與介入'], ['R-08', 'R08', '匯出'], ['R-09', 'R09', '設計修訂']];
+        const pick = d.revs.find(r => r.id === S.resPick) || d.revs[0] || null;
+        const cnt = {};
+        CT.forEach(c => { cnt[c[0]] = d.revs.filter(r => (r.hasReason ? codeOf(r.id) : 'none') === c[0]).length; });
+        const seqs = d.revs.filter(r => r.result === 'needfix').map(r => {
+          const later = d.subs.filter(s => s.title === r.title && s.week >= r.week);
+          return {
+            reason: r.reason, code: codeOf(r.id) ? (CT.find(c => c[0] === codeOf(r.id)) || [,'—'])[1] : '未編碼',
+            group: r.group, title: r.title,
+            before: '第 ' + r.week + ' 週版本',
+            after: later.length ? '第 ' + later[later.length - 1].week + ' 週重交（第 ' + later[later.length - 1].attempt + ' 次）' : '尚未重交',
+            gap: later.length ? Math.max(1, (later[later.length - 1].week - r.week) * 168) + ' 小時' : '—',
+            result: later.length ? '已重交' : '等待中'
+          };
+        });
+        return {
+          nav: nav.map(n => {
+            const lockedEntry = d.locked && n[1] !== 'R00' && n[1] !== 'R09';
+            return {
+            code: n[0], label: n[2],
+            go: () => { if (lockedEntry) { this.say('第 ' + d.nextUnlock + ' 週才解鎖。學期進行中不提供即時資料。'); return; } this.setState({ screen: n[1] }); },
+            style: 'display:flex;gap:9px;align-items:baseline;width:100%;text-align:left;padding:9px 11px;cursor:' + (lockedEntry ? 'not-allowed' : 'pointer') + ';opacity:' + (lockedEntry ? '.42' : '1') + ';border:none;background:' + (sc === n[1] ? '#1E2024' : 'transparent') + ';color:' + (sc === n[1] ? '#DFE6EB' : '#8393A0') + ";font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em"
+          }; }),
+          unlockLine: S.resDemo ? '演練模式　·　全部可見（示範樣本，非實際課堂紀錄）' : (d.locked ? '目前可見：尚未解鎖　·　下次解鎖：第 4 週（每四週一次）' : '目前可見：第 1–' + d.unlockedThrough + ' 週　·　下次解鎖：第 ' + d.nextUnlock + ' 週'),
+          locked: d.locked, lockedNotice: d.locked && sc !== 'R00' && sc !== 'R09', weekNow: '學期進行到第 ' + d.week + ' 週',
+          consented: S.resConsent, notConsented: !S.resConsent,
+          demoOn: S.resDemo,
+          demoStyle: S.resDemo
+            ? "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:11px 18px;background:#2A2E33;border:1px solid #59636E;color:#EDF2F6;cursor:pointer;border-radius:5px"
+            : "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:11px 18px;background:transparent;border:1px solid #2A2E33;color:#B7C3CC;cursor:pointer;border-radius:5px",
+          demoLabel: S.resDemo ? '關閉演練模式' : '進入演練模式',
+          toggleDemo: () => {
+            if (S.resDemo) { this.setState({ resDemo: false, subLog: [], revLog: [], readLog: [], screen: 'R00' }); return; }
+            const L = this.demoLogs();
+            this.setState({ resDemo: true, resConsent: true, subLog: L.subLog, revLog: L.revLog, readLog: L.readLog, screen: 'R01' });
+          },
+          scrolled: S.resScrolled,
+          onConsentScroll: e => { const el = e.target; if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8 && !S.resScrolled) this.setState({ resScrolled: true }); },
+          acceptStyle: S.resScrolled ? "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:11px 18px;background:#1E2024;border:1px solid #2A2E33;color:#DFE6EB;cursor:pointer;border-radius:5px" : "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:11px 18px;background:transparent;border:1px solid #1D2831;color:#4A5560;cursor:not-allowed;border-radius:5px",
+          accept: () => { if (S.resScrolled) this.setState({ resConsent: true, resDemo: false, screen: 'R01' }); },
+          stats: [
+            ['組數', String(d.groups), '以組為單位，不記個人'],
+            ['已發派任務項', String(d.assigned), '含必要項與延伸項'],
+            ['已提交', String(d.subs.length), '被動記錄，無自陳'],
+            ['已確認', String(d.reviews), '逐項確認事件'],
+            ['審核理由則數', String(d.reasons), '有寫字的確認'],
+            ['未附理由比例', d.noReasonPct + '%', '只按通過的比例'],
+            ['他組紀錄閱讀', String(d.reads.length), '公開機制的實際使用'],
+            ['平均停留週數', d.avgStay, '唯一的卡關偵測管道']
+          ].map(s => ({ label: s[0], value: s[1], note: s[2] })),
+          absent: [
+            { label: '他組紀錄', value: d.reads.length + ' 次閱讀', flag: d.reads.length === 0 },
+            { label: '分段通過', value: '0 次申請', flag: true },
+            { label: '延伸項', value: d.extPicked === 0 ? '全數未選' : d.extPicked + ' 項被選', flag: d.extPicked === 0 },
+            { label: '逾時自動暫准', value: '0 次觸發', flag: true }
+          ].map(a => ({ label: a.label, value: a.value, style: 'display:flex;gap:16px;align-items:baseline;padding:11px 13px;background:' + (a.flag ? '#16202A' : 'transparent') + ';border-left:2px solid ' + (a.flag ? '#D9A45C' : '#1D2831') })),
+          corpus: d.revs.map(r => ({
+            id: r.id, group: r.group, title: r.title, week: 'W' + r.week,
+            result: r.result === 'pass' ? '通過' : '需補充',
+            len: r.hasReason ? r.len + ' 字' : '未附理由',
+            excerpt: r.hasReason ? r.reason.slice(0, 34) : '（只按了通過）',
+            code: codeOf(r.id) ? (CT.find(c => c[0] === codeOf(r.id)) || [,''])[1] : '',
+            pick: () => this.setState({ resPick: r.id }),
+            style: 'width:100%;text-align:left;padding:11px 13px;cursor:pointer;background:' + (pick && pick.id === r.id ? '#16202A' : '#121A21') + ';border:1px solid ' + (pick && pick.id === r.id ? '#2A2E33' : '#1D2831') + ';border-radius:9px;color:#B7C3CC'
+          })),
+          hasPick: !!pick, noCorpus: d.revs.length === 0,
+          pickGroup: pick ? pick.group : '', pickTitle: pick ? pick.title : '',
+          pickText: pick ? (pick.hasReason ? pick.reason : '（老師只按了通過，沒有留下理由。）') : '',
+          pickMeta: pick ? ['T1', 'W' + pick.week, pick.result === 'pass' ? '通過' : '需補充', pick.len + ' 字', '延遲 ' + pick.latency + ' 小時'].join('　·　') : '',
+          codeChips: CT.map(c => ({
+            label: c[1],
+            set: () => { if (pick) this.setState({ codes: Object.assign({}, S.codes, { [pick.id]: c[0] }) }); },
+            style: "font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:7px 11px;border-radius:999px;cursor:pointer;background:" + (pick && codeOf(pick.id) === c[0] ? '#1E2024' : 'transparent') + ';border:1px solid ' + (pick && codeOf(pick.id) === c[0] ? c[2] : '#1D2831') + ';color:' + (pick && codeOf(pick.id) === c[0] ? '#DFE6EB' : '#8393A0')
+          })),
+          codeBars: CT.map(c => ({
+            label: c[1], n: String(cnt[c[0]]),
+            style: 'height:8px;width:' + (d.revs.length ? Math.round(cnt[c[0]] / d.revs.length * 100) : 0) + '%;min-width:2px;background:' + c[2]
+          })),
+          seqs, noSeqs: seqs.length === 0,
+          contrastA: [
+            { label: '有理由通過', n: d.reasons, note: '後續提交平均 ' + (d.subs.length ? Math.round(d.subs.reduce((a, s) => a + s.len, 0) / d.subs.length) : 0) + ' 字' },            { label: '未附理由通過', n: d.noReason, note: '樣本不足時不做比較' }
+          ],
+          contrastB: [
+            { label: '老師確認', n: d.reviews, note: '實際有人按下' },
+            { label: '逾時自動暫准', n: 0, note: '本學期未觸發' }
+          ],
+          readRows: d.reads.map(r => ({ reader: r.reader, target: r.target, layer: 'L' + r.layer, week: 'W' + r.week, ctx: '閱讀者在 L' + r.readerLayer + '、停留 ' + r.readerStay + ' 週' + (r.recentlyRejected ? '、剛被退回' : '') })),
+          noReads: d.reads.length === 0,
+          rhythmRows: d.subs.map(s => ({ group: s.group, title: s.title, week: 'W' + s.week, offset: (s.week - s.dueWeek) === 0 ? '準時' : (s.week - s.dueWeek > 0 ? '逾期 ' + (s.week - s.dueWeek) + ' 週' : '提前 ' + (s.dueWeek - s.week) + ' 週'), attempt: '第 ' + s.attempt + ' 次', len: s.len + ' 字' })),
+          noRhythm: d.subs.length === 0,
+          stayRows: d.teams.slice().sort((a, b) => (b.weeks || 1) - (a.weeks || 1)).map(t => ({
+            group: t.me ? 'A隊' : String.fromCharCode(65 + 'ABCDEFGHIJKMNO'.indexOf(t.id)) + '隊',
+            weeks: (t.weeks || 1) + ' 週', layer: 'L' + (t.me ? S.currentLayer : t.layer),
+            barStyle: 'height:8px;width:' + Math.min(100, (t.weeks || 1) * 18) + '%;min-width:3px;background:' + ((t.weeks || 1) >= 3 ? '#D9A45C' : '#5A6874'),
+            flagged: (t.weeks || 1) >= 3 ? '已出現建議聯繫' : '未觸發'
+          })),
+          iterCount: String(this.ITER.length),
+          iterOpenCount: String(this.ITER.filter(x => x.open).length),
+          iterPhases: ['全部'].concat(this.ITER.map(x => x.from).filter((v, i, a) => a.indexOf(v) === i)).map(p => ({
+            label: p,
+            pick: () => this.setState({ resFilter: p }),
+            style: "font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;flex:none;background:" + ((S.resFilter === p || (p === '全部' && S.resFilter === 'all')) ? '#1E2024' : 'transparent') + ";border:1px solid #1D2831;color:" + ((S.resFilter === p || (p === '全部' && S.resFilter === 'all')) ? '#DFE6EB' : '#8393A0')
+          })),
+          iterRows: this.ITER.filter(x => S.resFilter === 'all' || S.resFilter === '全部' || x.from === S.resFilter).slice().reverse().map(x => ({
+            n: '#' + (x.n < 10 ? '0' + x.n : x.n), phase: x.phase, from: x.from, where: x.where,
+            what: x.what, why: x.why, open: x.open, hasOpen: !!x.open
+          })),
+          exportRows: [
+            ['review', '逐項確認', 'review_id · submission_id · teacher · result · reason_text · has_reason · latency_hours'],
+            ['submit', '任務提交', 'submission_id · task_id · group · body_len · submitted_at · is_overdue · attempt_no'],
+            ['read', '他組紀錄閱讀', 'read_id · reader_group · target_group · reader_layer · reader_stay_weeks'],
+            ['stay', '停留狀態', 'group · layer · entered_at · stay_weeks · flagged_at · teacher_acted_at']
+          ].map(e => ({
+            label: e[1], fields: e[2],
+            mark: S.resExport[e[0]] ? '■' : '□',
+            toggle: () => this.setState({ resExport: Object.assign({}, S.resExport, { [e[0]]: !S.resExport[e[0]] }) }),
+            style: 'display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:12px 14px;cursor:pointer;background:#121A21;border:1px solid #1D2831;border-radius:9px;color:#B7C3CC'
+          }))
+        };
+      })(),
+
+      scR00: sc === 'R00', scR01: sc === 'R01', scR02: sc === 'R02', scR03: sc === 'R03',
+      scR04: sc === 'R04', scR05: sc === 'R05', scR06: sc === 'R06', scR07: sc === 'R07', scR08: sc === 'R08', scR09: sc === 'R09',
+      openR01: sc === 'R01' && !resLocked, openR02: sc === 'R02' && !resLocked, openR03: sc === 'R03' && !resLocked,
+      openR04: sc === 'R04' && !resLocked, openR05: sc === 'R05' && !resLocked, openR06: sc === 'R06' && !resLocked,
+      openR07: sc === 'R07' && !resLocked, openR08: sc === 'R08' && !resLocked,
+
+      scT04: sc === 'T04',
+      scT08: sc === 'T08',
+      worldLayers: this.LAYERS.map(l => ({
+        code: l.code, name: l.name, course: l.course, scene: l.scene, hard: l.hard,
+        sceneStyle: `display:block;width:100%;height:120px;background:${MAPBG[l.n - 1]} , url(assets/jlz/scene-${l.code}.png) center/100% 100% no-repeat;image-rendering:pixelated;border:1px solid #26211C`,
+        tool: l.tool, toolFunc: l.toolFunc, toolAbility: l.toolAbility,
+        toolIcon: `display:block;width:34px;height:34px;flex:none;${SPRBG(l.tool) || 'background:#1C1915'}`,
+        treasure: l.treasure, treLine: l.treLine,
+        treIcon: `display:block;width:34px;height:34px;flex:none;${SPRBG(l.treasure) || 'background:#1C1915'}`,
+        segs: this.MINS.filter(m => m.L === l.n).map(m => ({
+          task: m.task, name: m.name,
+          open: () => this.setState({ specFrom: sc, screen: 'S06', specId: m.name }),
+          style: "padding:9px 11px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:rgba(0,0,0,.24);border:1px solid #221E19"
+        })),
+        openTool: () => this.setState({ specFrom: sc, screen: 'S06', specId: l.tool }),
+        openTre: () => this.setState({ specFrom: sc, screen: 'S06', specId: l.treasure }),
+        readStory: () => this.setState({ screen: 'STORY', storyIdx: 0, storyLayer: l.n, previewStory: l.n, storyFrom: 'T08' })
+      })),
+      readOpening: () => this.setState({ screen: 'STORY', storyIdx: 0, storyLayer: 1, previewStory: 1, storyFrom: 'T08' }),
+      openClassMap: () => this.go('T04'),
+      specBack: () => this.setState({ screen: S.specFrom || (isStu ? 'S03' : 'T08') }),
+      classRows: this.teams().slice().sort((a, b) => b.weeks - a.weeks).map(t => {
+        const isMe = !!t.me, pend = isMe ? pendingMine : others.filter(o => o.teamId === t.id).length;
+        const over = isMe ? overdueOpen.length : others.filter(o => o.teamId === t.id && o.over).length;
+        return {
+          name: isMe ? t.name + '（示範組）' : t.name, layer: this.LAYERS[t.layer - 1].name, weeks: t.weeks + ' 週', pending: pend,
+          overdue: over, open: () => this.go('T03'),
+          style: `display:flex;width:100%;align-items:center;flex-wrap:wrap;padding:14px 0;border:none;border-bottom:1px solid #1C1915;cursor:pointer;color:#E8E2D6;background:${isMe ? 'rgba(233,179,65,.04)' : 'transparent'}`,
+          weekStyle: `flex:0 0 52px;text-align:right;font:700 22px/1 'C11';color:${t.weeks >= 3 ? '#D9603F' : '#9A9184'}`,
+          overdueStyle: `flex:0 0 48px;text-align:right;font:400 22px/1 'C11';color:${over ? '#D9603F' : '#4A443C'}`
+        };
+      }),
+
+      hasToast: !!S.toast, toast: S.toast,
+      rewardOpen: !!S.reward, rewardTool: (S.reward || {}).tool || '', rewardLevel: (S.reward || {}).level || '', rewardTreasure: (S.reward || {}).treasure || '',
+      rewardCopy: '校準完成。下一層需要它——沒有它，你看不見路。\n\n寶物是另一回事：他遞給你一件加工過、對稱、明顯不是從土裡挖出來的東西。',
+      closeReward: () => {
+        const next = Math.min(5, S.currentLayer + 1);
+        const m5 = this.MINS.find(m => m.L === 5);
+        const needsOwn = next === 5 && !S.tasks.some(t => t.layer === 5);
+        const own = needsOwn ? [{
+          id: 'own5', klass: 'wed', layer: 5, type: 'required', title: '由你決定要交什麼',
+          cond: '這一層他沒有給清單。你自己寫下要交的東西，以及做到什麼程度算完成。',
+          note: '寫完之後這一項就是你的驗收標準，老師只確認你有沒有做到自己說的。',
+          due: '不設限', over: false, mineral: m5 ? m5.name : '完成之光',
+          mDesc: '你自己命名的那一件。', status: 'todo', text: '', files: [], fb: '', fbType: ''
+        }] : [];
+        this.setState({ reward: null, currentLayer: next, weeksHere: 1, expanded: next, role: 'student', screen: 'STORY', storyIdx: 0, storyLayer: next, storyFrom: 'S01', gateSubmitted: false, gateText: ['', '', ''], editLayer: next, tasks: S.tasks.concat(own) });
+      }
+    };
+  }
+}

@@ -1,0 +1,2011 @@
+/*  逐層掘進 ZHU CENG JUE JIN — Google Apps Script 後端（實際使用版）
+ *  ---------------------------------------------------------------
+ *  · 自建帳號密碼註冊／登入（Users + Sessions，密碼加鹽雜湊）
+ *  · 真正多組同時運作：任務定義（Tasks）與各組狀態（TeamTasks）分離
+ *  · 學期週次依真實日期自動計算，老師可手動覆寫
+ *  · 延遲揭露在後端做：未解鎖區間的資料不會離開伺服器
+ *  · 匯出後端強制匿名
+ *  --------------------------------------------------------------- */
+
+var APP_TITLE   = '逐層掘進';
+var SHEET_PROP  = 'JLZ_SPREADSHEET_ID';
+var FOLDER_PROP = 'JLZ_FOLDER_ID';
+var MAX_UPLOAD  = 10 * 1024 * 1024;   // 單檔上限 10 MB
+
+/* ================= 網頁進入點 ================= */
+
+function doGet() {
+  return HtmlService.createTemplateFromFile('Index').evaluate()
+    .setTitle(APP_TITLE)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function include(n) {
+  return HtmlService.createHtmlOutputFromFile(n).getContent();
+}
+
+/* ================= 工作表定義 ================= */
+
+var SHEET_DEFS = {
+  Config:      ['key', 'value'],
+  Users:       ['userId', 'account', 'salt', 'hash', 'role', 'name', 'classId', 'teamId', 'coder', 'createdAt', 'lastLogin'],
+  Sessions:    ['token', 'userId', 'createdAt', 'expiresAt'],
+  Classes:     ['classId', 'name', 'term', 'started', 'courseStart', 'weekOverride', 'semesterWeeks', 'joinCode', 'teacherId'],
+  Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'passed', 'toolLevels',
+                'gateText', 'gateSubmitted', 'gateVerdict', 'specNames', 'createdAt', 'gateTs'],
+  Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'createdAt'],
+  TeamTasks:   ['teamId', 'taskId', 'status', 'text', 'files', 'fb', 'fbType', 'passedWeek',
+                'effort', 'effortNote', 'blocker', 'updatedAt'],
+  Submissions: ['subId', 'taskId', 'teamId', 'week', 'dueWeek', 'overdue', 'len', 'files', 'attempt', 'text',
+                'effort', 'effortNote', 'blocker', 'fileList', 'ts'],
+  Files:       ['fileId', 'teamId', 'taskId', 'name', 'mimeType', 'size', 'kind', 'uploadedBy', 'ts'],
+  Roster:      ['rosterId', 'classId', 'teamId', 'teamName', 'memberName', 'claimedBy', 'claimedAt'],
+  Finales:     ['teamId', 'q1', 'q2', 'q3', 'lightName', 'submitted', 'ts',
+                'opened', 'openWords', 'openedBy', 'openedAt'],
+  Reviews:     ['revId', 'subId', 'teamId', 'taskId', 'title', 'layer', 'result', 'reason', 'len', 'hasReason', 'week', 'latency', 'ts'],
+  Plans:       ['teamId', 'taskId', 'week', 'fromWeek', 'toWeek'],
+  Passes:      ['passId', 'teamId', 'layer', 'week', 'toolLevel', 'gateCell1', 'gateCell2', 'gateCell3', 'verdict', 'reason', 'ts'],
+  Reads:       ['readId', 'readerTeam', 'targetTeam', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected', 'ts'],
+  Codes:       ['revId', 'coder', 'code', 'ts']
+};
+
+function ss_() {
+  if (MEMO_.ss) return MEMO_.ss;
+  var bound = null;
+  try { bound = SpreadsheetApp.getActiveSpreadsheet(); } catch (e) { bound = null; }
+  if (bound) return (MEMO_.ss = bound);
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty(SHEET_PROP);
+  if (id) { try { return (MEMO_.ss = SpreadsheetApp.openById(id)); } catch (e) {} }
+  var created = SpreadsheetApp.create(APP_TITLE + ' · 資料庫');
+  props.setProperty(SHEET_PROP, created.getId());
+  return (MEMO_.ss = created);
+}
+
+function sheet_(name) {
+  if (MEMO_.sheets[name]) return MEMO_.sheets[name];
+  var s = ss_(), sh = s.getSheetByName(name);
+  if (!sh) {
+    sh = s.insertSheet(name);
+    var head = SHEET_DEFS[name];
+    if (head) {
+      sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
+      sh.setFrozenRows(1);
+    }
+    /* 帳號與登入權杖不該在試算表裡被隨手看到；只有一張表時不能隱藏 */
+    if ((name === 'Users' || name === 'Sessions') && s.getSheets().length > 1) {
+      try { sh.hideSheet(); } catch (e) {}
+    }
+  }
+  return (MEMO_.sheets[name] = sh);
+}
+
+/* ================= 讀取快取 =================
+   一次 apiBootstrap 要讀十幾張表，每一次 getValues() 都是一趟往返。
+   一個班二十幾個人每 30 秒輪詢一次，光是讀表就會把執行時間吃光——
+   上課上到一半會開始出現「同時執行數過多」。
+   這裡加兩層：同一次執行的記憶體快取，以及跨呼叫的 CacheService。
+   任何寫入都會把那張表作廢，所以讀到的資料一定不比最後一次寫入舊。
+   注意：upsert_ 依賴 __row，一律讀原始表格，不吃快取。 */
+
+var MEMO_ = { ss: null, sheets: {}, tables: {} };
+var CACHE_TTL_ = 300;        /* 秒。寫入時就作廢了，這只是保險 */
+var CACHE_CHUNK_ = 90000;    /* CacheService 單值上限 100KB，留餘裕 */
+var CACHE_MAX_CHUNK_ = 40;   /* 超過就不快取，避免把 8MB 總額吃掉 */
+
+function cache_() {
+  try { return CacheService.getScriptCache(); } catch (e) { return null; }
+}
+
+function cacheGet_(name) {
+  var c = cache_();
+  if (!c) return null;
+  var n = Number(c.get('t:' + name + ':n'));
+  if (!(n > 0)) return null;
+  var keys = [];
+  for (var i = 0; i < n; i++) keys.push('t:' + name + ':' + i);
+  var got = c.getAll(keys), buf = '';
+  for (var j = 0; j < n; j++) {
+    var part = got['t:' + name + ':' + j];
+    if (part == null) return null;     /* 少一塊就當作沒有 */
+    buf += part;
+  }
+  try { return JSON.parse(buf); } catch (e) { return null; }
+}
+
+function cachePut_(name, rows) {
+  var c = cache_();
+  if (!c) return;
+  var s = JSON.stringify(rows);
+  var n = Math.ceil(s.length / CACHE_CHUNK_) || 1;
+  if (n > CACHE_MAX_CHUNK_) return;
+  var obj = {};
+  for (var i = 0; i < n; i++) obj['t:' + name + ':' + i] = s.substr(i * CACHE_CHUNK_, CACHE_CHUNK_);
+  obj['t:' + name + ':n'] = String(n);
+  try { c.putAll(obj, CACHE_TTL_); } catch (e) {}
+}
+
+function cacheVer_(name) {
+  var c = cache_();
+  return c ? String(c.get('v:' + name) || '') : '';
+}
+
+function cacheBust_(name) {
+  delete MEMO_.tables[name];
+  var c = cache_();
+  if (!c) return;
+  /* 版本戳一換，慢一步的讀取就不會把舊資料塞回來 */
+  try { c.put('v:' + name, String(Date.now()) + ':' + Math.random(), 21600); } catch (e) {}
+  /* 資料動了就換總戳——輪詢先問這個，沒變就不用整包重抓 */
+  if (name !== 'Sessions') { try { c.put('rev', String(Date.now()) + ':' + Math.random(), 21600); } catch (e) {} }
+  var n = Number(c.get('t:' + name + ':n')) || 0;
+  var keys = ['t:' + name + ':n'];
+  for (var i = 0; i < n; i++) keys.push('t:' + name + ':' + i);
+  try { c.removeAll(keys); } catch (e) {}
+}
+
+/** 整批作廢：資料表結構或大量資料變動之後用。 */
+function resetTableCache_() {
+  MEMO_.tables = {};
+  Object.keys(SHEET_DEFS).forEach(function (n) { cacheBust_(n); });
+}
+
+function readTable_(name) {
+  if (MEMO_.tables[name]) return MEMO_.tables[name];
+  var hit = cacheGet_(name);
+  if (hit) return (MEMO_.tables[name] = hit);
+  var ver = cacheVer_(name);
+  var rows = readRaw_(name);
+  /* __row 是暫時的實作細節，不進快取。
+     Date 先轉成本地時間字串——JSON 會把 Date 變成 UTC，台北時間的日期會差一天。 */
+  var tz = Session.getScriptTimeZone() || 'Asia/Taipei';
+  var clean = rows.map(function (r) {
+    var o = {};
+    for (var k in r) {
+      if (k === '__row') continue;
+      o[k] = (r[k] instanceof Date) ? Utilities.formatDate(r[k], tz, 'yyyy-MM-dd HH:mm:ss') : r[k];
+    }
+    return o;
+  });
+  if (cacheVer_(name) === ver) cachePut_(name, clean);   /* 讀的期間有人寫過就不要放 */
+  return (MEMO_.tables[name] = clean);
+}
+
+function readRaw_(name) {
+  var sh = sheet_(name), head = SHEET_DEFS[name], last = sh.getLastRow();
+  if (last < 2) return [];
+  var vals = sh.getRange(2, 1, last - 1, head.length).getValues();
+  var out = [];
+  for (var i = 0; i < vals.length; i++) {
+    if (String(vals[i][0]) === '') continue;
+    var o = {};
+    for (var j = 0; j < head.length; j++) o[head[j]] = vals[i][j];
+    o.__row = i + 2;
+    out.push(o);
+  }
+  return out;
+}
+
+function writeTable_(name, rows) {
+  cacheBust_(name);
+  var sh = sheet_(name), head = SHEET_DEFS[name], last = sh.getLastRow();
+  if (last > 1) sh.getRange(2, 1, last - 1, head.length).clearContent();
+  if (!rows || !rows.length) return;
+  var out = rows.map(function (r) {
+    return head.map(function (k) {
+      var v = r[k];
+      if (v === undefined || v === null) return '';
+      if (typeof v === 'object') return JSON.stringify(v);
+      return v;
+    });
+  });
+  sh.getRange(2, 1, out.length, head.length).setValues(out);
+}
+
+function appendRow_(name, obj) {
+  cacheBust_(name);
+  var sh = sheet_(name), head = SHEET_DEFS[name];
+  sh.appendRow(head.map(function (k) {
+    var v = obj[k];
+    if (v === undefined || v === null) return '';
+    if (typeof v === 'object') return JSON.stringify(v);
+    return v;
+  }));
+}
+
+function upsert_(name, keys, obj) {
+  cacheBust_(name);
+  var rows = readRaw_(name), hit = -1;
+  for (var i = 0; i < rows.length; i++) {
+    var ok = true;
+    for (var k = 0; k < keys.length; k++) {
+      if (String(rows[i][keys[k]]) !== String(obj[keys[k]])) { ok = false; break; }
+    }
+    if (ok) { hit = i; break; }
+  }
+  if (hit < 0) { appendRow_(name, obj); return; }
+  var sh = sheet_(name), head = SHEET_DEFS[name];
+  var merged = Object.assign({}, rows[hit], obj);
+  sh.getRange(rows[hit].__row, 1, 1, head.length).setValues([head.map(function (k) {
+    var v = merged[k];
+    if (v === undefined || v === null) return '';
+    if (typeof v === 'object') return JSON.stringify(v);
+    return v;
+  })]);
+}
+
+function jparse_(v, dflt) {
+  if (v === '' || v === null || v === undefined) return dflt;
+  if (typeof v === 'object') return v;
+  try { return JSON.parse(v); } catch (e) { return dflt; }
+}
+
+/* ================= 繳交檔案（Google Drive） ================= */
+
+function rootFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty(FOLDER_PROP);
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  var f = DriveApp.createFolder(APP_TITLE + ' · 繳交檔案');
+  props.setProperty(FOLDER_PROP, f.getId());
+  return f;
+}
+
+function subFolder_(parent, name) {
+  var it = parent.getFoldersByName(name);
+  return it.hasNext() ? it.next() : parent.createFolder(name);
+}
+
+function teamFolder_(classId, teamId) {
+  var kl = classById_(classId), t = teamById_(teamId);
+  var kName = (kl && kl.name) ? String(kl.name) : classId;
+  var tName = (t && t.name) ? String(t.name) : teamId;
+  return subFolder_(subFolder_(rootFolder_(), kName), tName);
+}
+
+function fileRow_(fileId) {
+  var rows = readTable_('Files');
+  for (var i = 0; i < rows.length; i++) if (String(rows[i].fileId) === String(fileId)) return rows[i];
+  return null;
+}
+
+/** 這個人能不能看這個檔：只有自己組的人、以及帶這個班的老師。研究者看不到內容。 */
+function canReadFile_(u, row) {
+  if (!row) return false;
+  if (u.role === 'student') return String(u.teamId) === String(row.teamId);
+  if (u.role === 'teacher') {
+    var t = teamById_(row.teamId);
+    if (!t) return false;
+    var kl = classById_(t.classId);
+    return !!kl && (String(kl.teacherId) === String(u.userId) || String(u.classId) === String(t.classId));
+  }
+  return false;
+}
+
+/**
+ * 學生上傳一個檔案。前端把檔案讀成 base64 再送過來。
+ * 回傳的物件會直接放進提交的證據清單。
+ */
+function apiUploadFile(token, taskId, fileName, mimeType, base64) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以上傳證據。');
+    var raw = String(base64 || '');
+    var approx = Math.floor(raw.length * 3 / 4);
+    if (!raw) return err_('檔案是空的。');
+    if (approx > MAX_UPLOAD) return err_('單檔上限 10 MB。影片建議上傳到雲端硬碟或 YouTube，再用「連結」附上來。');
+
+    var blob = Utilities.newBlob(Utilities.base64Decode(raw), mimeType || 'application/octet-stream', fileName || '未命名檔案');
+    var file = teamFolder_(u.classId, u.teamId).createFile(blob);
+    file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+
+    var kind = /^image\//.test(mimeType) ? 'image'
+             : /^video\//.test(mimeType) ? 'video'
+             : /pdf|word|document|sheet|presentation|text/.test(String(mimeType)) ? 'doc' : 'file';
+
+    appendRow_('Files', {
+      fileId: file.getId(), teamId: u.teamId, taskId: taskId || '', name: file.getName(),
+      mimeType: file.getMimeType(), size: file.getSize(), kind: kind,
+      uploadedBy: u.userId, ts: new Date()
+    });
+    return ok_({ file: { id: file.getId(), name: file.getName(), mimeType: file.getMimeType(),
+                         size: file.getSize(), kind: kind } });
+  } catch (e) { return err_(e); }
+}
+
+/** 讀回一個檔案（權限在後端擋）。回傳 data URL，前端直接開。 */
+function apiGetFile(token, fileId) {
+  try {
+    var u = auth_(token);
+    var row = fileRow_(fileId);
+    if (!canReadFile_(u, row)) return err_('你沒有權限看這個檔案。');
+    var file = DriveApp.getFileById(fileId);
+    if (file.getSize() > MAX_UPLOAD) return err_('這個檔案太大，無法在畫面上開啟。');
+    var blob = file.getBlob();
+    return ok_({
+      name: file.getName(), mimeType: blob.getContentType(),
+      dataUrl: 'data:' + blob.getContentType() + ';base64,' + Utilities.base64Encode(blob.getBytes())
+    });
+  } catch (e) { return err_(e); }
+}
+
+/** 學生刪掉還沒被確認通過的證據。 */
+function apiDeleteFile(token, fileId) {
+  try {
+    var u = auth_(token);
+    var row = fileRow_(fileId);
+    if (!row || u.role !== 'student' || String(u.teamId) !== String(row.teamId)) return err_('沒有權限。');
+    try { DriveApp.getFileById(fileId).setTrashed(true); } catch (e) {}
+    writeTable_('Files', readTable_('Files').filter(function (f) { return String(f.fileId) !== String(fileId); }));
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/* ================= 設定與週次 ================= */
+
+function cfg_(key, dflt) {
+  var rows = readTable_('Config');
+  for (var i = 0; i < rows.length; i++) if (String(rows[i].key) === key) return rows[i].value;
+  return dflt;
+}
+function setCfg_(key, value) { upsert_('Config', ['key'], { key: key, value: value }); }
+
+function toDate_(v) {
+  if (v instanceof Date) return v;
+  var s = String(v || '');
+  var m = /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/.exec(s);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  return new Date(2026, 8, 14);
+}
+
+/** 學期第幾週：依真實日期自動計算；老師若設了覆寫值就用覆寫值。 */
+function courseWeekOf_(klass) {
+  if (klass && String(klass.weekOverride) !== '') {
+    var w = Number(klass.weekOverride);
+    if (w >= 1) return Math.floor(w);
+  }
+  var start = toDate_(klass ? klass.courseStart : cfg_('courseStart', '2026-09-14'));
+  var today = new Date();
+  var days = Math.floor((today - new Date(start.getFullYear(), start.getMonth(), start.getDate())) / 86400000);
+  return Math.max(1, Math.floor(days / 7) + 1);
+}
+
+/* ================= 帳號 ================= */
+
+function hash_(salt, pw) {
+  var raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + '|' + pw, Utilities.Charset.UTF_8);
+  return raw.map(function (b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
+}
+
+function findUser_(account) {
+  var rows = readTable_('Users');
+  var a = String(account || '').trim().toLowerCase();
+  for (var i = 0; i < rows.length; i++) if (String(rows[i].account).trim().toLowerCase() === a) return rows[i];
+  return null;
+}
+function userById_(id) {
+  var rows = readTable_('Users');
+  for (var i = 0; i < rows.length; i++) if (String(rows[i].userId) === String(id)) return rows[i];
+  return null;
+}
+
+function newToken_(userId, remember) {
+  var t = Utilities.getUuid();
+  var now = new Date();
+  var exp = new Date(now.getTime() + (remember ? 30 : 1) * 24 * 3600 * 1000);
+  /* 順手清掉過期的權杖，這張表才不會無限長 */
+  var rows = readTable_('Sessions').filter(function (s) { return new Date(s.expiresAt) > now; });
+  if (rows.length !== readTable_('Sessions').length) writeTable_('Sessions', rows);
+  appendRow_('Sessions', { token: t, userId: userId, createdAt: now, expiresAt: exp });
+  return t;
+}
+
+function auth_(token) {
+  if (!token) throw new Error('未登入');
+  var rows = readTable_('Sessions'), now = new Date();
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].token) !== String(token)) continue;
+    if (new Date(rows[i].expiresAt) < now) throw new Error('登入已逾期，請重新登入。');
+    var u = userById_(rows[i].userId);
+    if (!u) throw new Error('帳號不存在');
+    return u;
+  }
+  throw new Error('登入已失效，請重新登入。');
+}
+
+function pubUser_(u) {
+  return {
+    userId: u.userId, account: u.account, role: u.role, name: u.name,
+    classId: u.classId, teamId: u.teamId, coder: u.coder || ''
+  };
+}
+
+function ok_(o) { return Object.assign({ ok: true }, o || {}); }
+function err_(m) { return { ok: false, error: String(m && m.message ? m.message : m) }; }
+
+/* --------- 註冊 --------- */
+
+/** 只有研究者能自行註冊。老師與學生的帳號由研究者在 R-ADM 建立後發放。 */
+function apiRegister(p) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    p = p || {};
+    var account = String(p.account || '').trim();
+    var pw = String(p.password || '');
+    var name = String(p.name || '').trim();
+
+    var role = String(p.role || '');
+    if (role !== 'researcher' && role !== 'student') {
+      return err_('老師的帳號由研究者建立，拿到帳號密碼直接登入即可。');
+    }
+    if (account.length < 3) return err_('帳號至少 3 個字。');
+    if (pw.length < 4) return err_('密碼至少 4 個字。');
+    if (findUser_(account)) return err_('這個帳號已經有人用了。');
+
+    var classId = '';
+    if (role === 'student') {
+      var kl = findClassByCode_(String(p.joinCode || '').trim().toUpperCase());
+      if (!kl) return err_('找不到這個班級邀請碼，跟老師或研究者確認一次。');
+      classId = kl.classId;
+      /* 名字之後從名單挑，這裡先留空 */
+      name = '';
+    } else if (!name) {
+      return err_('請填姓名。');
+    }
+
+    var salt = Utilities.getUuid();
+    var userId = 'u' + Utilities.getUuid().slice(0, 8);
+    appendRow_('Users', {
+      userId: userId, account: account, salt: salt, hash: hash_(salt, pw),
+      role: role, name: name, classId: classId, teamId: '',
+      coder: role === 'researcher' ? (String(p.coder || 'C1').trim() || 'C1') : '',
+      createdAt: new Date(), lastLogin: new Date()
+    });
+
+    var token = newToken_(userId, !!p.remember);
+    return ok_({ token: token, user: pubUser_(userById_(userId)) });
+  } catch (e) {
+    return err_(e);
+  } finally { lock.releaseLock(); }
+}
+
+/* --------- 帳號管理（研究者專用） --------- */
+
+function assertResearcher_(token) {
+  var u = auth_(token);
+  if (u.role !== 'researcher') throw new Error('這個動作只有研究者可以做。');
+  return u;
+}
+
+function adminOverview_() {
+  var classes = readTable_('Classes');
+  var className = {};
+  classes.forEach(function (k) { className[k.classId] = k.name; });
+  return {
+    unlockEvery: Math.max(1, Math.floor(Number(cfg_('unlockEvery', 1)) || 1)),
+    classes: classes.map(function (k) {
+      return { id: k.classId, name: k.name, term: k.term,
+               courseStart: Utilities.formatDate(toDate_(k.courseStart), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+               courseWeek: courseWeekOf_(k), semesterWeeks: semWeeksOf_(k), joinCode: k.joinCode };
+    }),
+    users: readTable_('Users').map(function (u) {
+      return { userId: u.userId, account: u.account, role: u.role, name: u.name,
+               classId: u.classId, className: className[u.classId] || '',
+               teamId: u.teamId || '',
+               lastLogin: u.lastLogin ? Utilities.formatDate(new Date(u.lastLogin), Session.getScriptTimeZone(), 'MM/dd HH:mm') : '' };
+    })
+  };
+}
+
+function apiAdminOverview(token) {
+  try { assertResearcher_(token); return ok_(adminOverview_()); }
+  catch (e) { return err_(e); }
+}
+
+function apiAdminCreateClass(token, name, term, courseStart, weeks) {
+  try {
+    assertResearcher_(token);
+    if (!String(name || '').trim()) return err_('請填班級名稱。');
+    createClass_(String(name).trim(), String(term || ''), String(courseStart || ''), '', weeks);
+    return ok_(adminOverview_());
+  } catch (e) { return err_(e); }
+}
+
+/** 研究者建立老師或學生帳號：名字由研究者定，對方登入就能用。 */
+function apiAdminCreateUser(token, p) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    assertResearcher_(token);
+    p = p || {};
+    var role = String(p.role || '');
+    var name = String(p.name || '').trim();
+    var account = String(p.account || '').trim();
+    var pw = String(p.password || '');
+    var classId = String(p.classId || '');
+
+    if (['teacher', 'student'].indexOf(role) < 0) return err_('身分要選老師或學生。');
+    if (!name) return err_('請填姓名。');
+    if (account.length < 3) return err_('帳號至少 3 個字。');
+    if (pw.length < 4) return err_('初始密碼至少 4 個字。');
+    if (findUser_(account)) return err_('這個帳號已經有人用了。');
+    if (!classById_(classId)) return err_('先選一個班級（沒有的話先開一個班）。');
+
+    var salt = Utilities.getUuid();
+    var userId = 'u' + Utilities.getUuid().slice(0, 8);
+    appendRow_('Users', {
+      userId: userId, account: account, salt: salt, hash: hash_(salt, pw),
+      role: role, name: name, classId: classId, teamId: '', coder: '',
+      createdAt: new Date(), lastLogin: ''
+    });
+    if (role === 'teacher') {
+      var kl = classById_(classId);
+      if (kl && !String(kl.teacherId)) upsert_('Classes', ['classId'], { classId: classId, teacherId: userId });
+    }
+    return ok_(adminOverview_());
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+function apiAdminUpdateUser(token, userId, patch) {
+  try {
+    assertResearcher_(token);
+    var u = userById_(userId);
+    if (!u) return err_('找不到這個帳號。');
+    patch = patch || {};
+    var row = { userId: userId };
+    if (patch.name !== undefined && String(patch.name).trim()) row.name = String(patch.name).trim();
+    if (patch.classId !== undefined) row.classId = patch.classId;
+    upsert_('Users', ['userId'], row);
+    /* 改名要同步到已加入的小隊名單 */
+    if (row.name && u.teamId) {
+      var t = teamById_(u.teamId);
+      if (t) {
+        var mem = jparse_(t.members, []);
+        var i = mem.indexOf(u.name);
+        if (i >= 0) { mem[i] = row.name; upsert_('Teams', ['teamId'], { teamId: u.teamId, members: JSON.stringify(mem) }); }
+      }
+    }
+    return ok_(adminOverview_());
+  } catch (e) { return err_(e); }
+}
+
+function apiAdminResetPassword(token, userId, newPassword) {
+  try {
+    assertResearcher_(token);
+    if (String(newPassword || '').length < 4) return err_('新密碼至少 4 個字。');
+    var u = userById_(userId);
+    if (!u) return err_('找不到這個帳號。');
+    var salt = Utilities.getUuid();
+    upsert_('Users', ['userId'], { userId: userId, salt: salt, hash: hash_(salt, String(newPassword)) });
+    /* 舊的登入全部登出 */
+    writeTable_('Sessions', readTable_('Sessions').filter(function (s) { return String(s.userId) !== String(userId); }));
+    return ok_(adminOverview_());
+  } catch (e) { return err_(e); }
+}
+
+/* --------- 名單與分組（研究者先把拿到的名單建進來） --------- */
+
+function rosterOf_(classId) {
+  return readTable_('Roster').filter(function (r) { return String(r.classId) === String(classId); });
+}
+
+function rosterView_(classId) {
+  var claimedName = {};
+  readTable_('Users').forEach(function (u) { claimedName[u.userId] = u.name + '（' + u.account + '）'; });
+  var byTeam = {}, order = [];
+  rosterOf_(classId).forEach(function (r) {
+    if (!byTeam[r.teamId]) { byTeam[r.teamId] = { teamId: r.teamId, teamName: r.teamName, members: [] }; order.push(r.teamId); }
+    byTeam[r.teamId].members.push({
+      rosterId: r.rosterId, name: r.memberName,
+      claimed: !!String(r.claimedBy),
+      claimedBy: String(r.claimedBy) ? (claimedName[r.claimedBy] || r.claimedBy) : ''
+    });
+  });
+  return order.map(function (id) { return byTeam[id]; });
+}
+
+/** 一次貼上整份名單。每一行： 組名：成員, 成員, 成員 */
+function apiAdminSaveRoster(token, classId, text) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    assertResearcher_(token);
+    if (!classById_(classId)) return err_('先選一個班級。');
+    var lines = String(text || '').split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!lines.length) return err_('名單是空的。每一行寫「組名：成員, 成員」。');
+
+    var existing = rosterOf_(classId);
+    var seen = {};
+    existing.forEach(function (r) { seen[r.teamName + '||' + r.memberName] = r; });
+
+    var teams = readTable_('Teams').filter(function (t) { return String(t.classId) === String(classId); });
+    var teamByName = {};
+    teams.forEach(function (t) { teamByName[t.name] = t; });
+
+    var added = 0, groups = 0;
+    var courseWeek = courseWeekOf_(classById_(classId));
+
+    lines.forEach(function (line) {
+      var m = /^(.+?)\s*[：:]\s*(.+)$/.exec(line);
+      if (!m) return;
+      var gname = m[1].trim();
+      var members = m[2].split(/[,，、\s]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+      if (!gname || !members.length) return;
+      groups++;
+
+      var full = /^第.+組/.test(gname) ? gname : '第' + numCn_(Object.keys(teamByName).length + 1) + '組 · ' + gname;
+      var t = teamByName[full];
+      if (!t) {
+        var id = 't' + Utilities.getUuid().slice(0, 6);
+        appendRow_('Teams', {
+          teamId: id, classId: classId, name: full, members: JSON.stringify(members),
+          layer: 1, enteredWeek: courseWeek, passed: '[]', toolLevels: '{}',
+          gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: '', specNames: '{}', createdAt: new Date()
+        });
+        t = teamById_(id);
+        teamByName[full] = t;
+      } else {
+        var mem = jparse_(t.members, []);
+        members.forEach(function (n) { if (mem.indexOf(n) < 0) mem.push(n); });
+        upsert_('Teams', ['teamId'], { teamId: t.teamId, members: JSON.stringify(mem) });
+      }
+
+      members.forEach(function (n) {
+        if (seen[full + '||' + n]) return;
+        appendRow_('Roster', {
+          rosterId: 'r' + Utilities.getUuid().slice(0, 8), classId: classId,
+          teamId: t.teamId, teamName: full, memberName: n, claimedBy: '', claimedAt: ''
+        });
+        added++;
+      });
+    });
+
+    if (!groups) return err_('看不懂這份名單。每一行要寫成「組名：成員, 成員」。');
+    return ok_(Object.assign(adminOverview_(), { roster: rosterView_(classId), added: added, groups: groups }));
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+/** 揭露節奏：1＝每週都看得到（預設），4＝原設計的每四週一次。 */
+function apiAdminSetUnlock(token, every) {
+  try {
+    assertResearcher_(token);
+    var n = Math.max(1, Math.floor(Number(every) || 1));
+    setCfg_('unlockEvery', n);
+    return ok_(adminOverview_());
+  } catch (e) { return err_(e); }
+}
+
+function apiAdminRoster(token, classId) {
+  try { assertResearcher_(token); return ok_({ roster: rosterView_(classId) }); }
+  catch (e) { return err_(e); }
+}
+
+/** 放掉一個已被認領的名字（改綁或學生選錯時用）。 */
+function apiAdminUnclaim(token, rosterId) {
+  try {
+    assertResearcher_(token);
+    var rows = readTable_('Roster'), hit = null;
+    rows.forEach(function (r) { if (String(r.rosterId) === String(rosterId)) hit = r; });
+    if (!hit) return err_('找不到這一筆。');
+    if (hit.claimedBy) upsert_('Users', ['userId'], { userId: hit.claimedBy, teamId: '' });
+    upsert_('Roster', ['rosterId'], { rosterId: rosterId, claimedBy: '', claimedAt: '' });
+    return ok_(Object.assign(adminOverview_(), { roster: rosterView_(hit.classId) }));
+  } catch (e) { return err_(e); }
+}
+
+/** 刪掉名單裡的一整組（連同還沒有人用的小隊）。 */
+function apiAdminDeleteRosterTeam(token, teamId) {
+  try {
+    assertResearcher_(token);
+    var t = teamById_(teamId);
+    if (!t) return err_('找不到這一組。');
+    var claimed = rosterOf_(t.classId).filter(function (r) {
+      return String(r.teamId) === String(teamId) && String(r.claimedBy);
+    });
+    if (claimed.length) return err_('這一組已經有 ' + claimed.length + ' 個人登入認領了，不能直接刪。要改的話先逐一「放掉」。');
+    writeTable_('Roster', readTable_('Roster').filter(function (r) { return String(r.teamId) !== String(teamId); }));
+    writeTable_('Teams', readTable_('Teams').filter(function (x) { return String(x.teamId) !== String(teamId); }));
+    return ok_(Object.assign(adminOverview_(), { roster: rosterView_(t.classId) }));
+  } catch (e) { return err_(e); }
+}
+
+/* --------- 學生認領自己的身分 --------- */
+
+/** 學生註冊完之後，看自己班上還沒被認領的名字。 */
+function apiMyRoster(token) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student') return err_('只有學生要選身分。');
+    var view = rosterView_(u.classId).map(function (g) {
+      return {
+        teamId: g.teamId, teamName: g.teamName,
+        members: g.members.map(function (m) {
+          return { rosterId: m.rosterId, name: m.name, claimed: m.claimed };
+        })
+      };
+    });
+    return ok_({ roster: view, hasRoster: view.length > 0 });
+  } catch (e) { return err_(e); }
+}
+
+/** 學生點自己的名字：綁定姓名與小隊。 */
+function apiClaimIdentity(token, rosterId) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student') return err_('只有學生要選身分。');
+    var rows = readTable_('Roster'), hit = null;
+    rows.forEach(function (r) { if (String(r.rosterId) === String(rosterId)) hit = r; });
+    if (!hit) return err_('找不到這個名字。');
+    if (String(hit.classId) !== String(u.classId)) return err_('這個名字不在你的班上。');
+    if (String(hit.claimedBy) && String(hit.claimedBy) !== String(u.userId)) {
+      return err_('「' + hit.memberName + '」已經有人用了。如果那是你，請找研究者處理。');
+    }
+    /* 一個帳號只能佔一個名字 */
+    rows.forEach(function (r) {
+      if (String(r.claimedBy) === String(u.userId) && String(r.rosterId) !== String(rosterId)) {
+        upsert_('Roster', ['rosterId'], { rosterId: r.rosterId, claimedBy: '', claimedAt: '' });
+      }
+    });
+    upsert_('Roster', ['rosterId'], { rosterId: rosterId, claimedBy: u.userId, claimedAt: new Date() });
+    upsert_('Users', ['userId'], { userId: u.userId, name: hit.memberName, teamId: hit.teamId });
+    return ok_({ name: hit.memberName, teamId: hit.teamId });
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+function apiAdminDeleteUser(token, userId) {
+  try {
+    var me = assertResearcher_(token);
+    if (String(me.userId) === String(userId)) return err_('不能刪除自己。');
+    var u = userById_(userId);
+    if (!u) return err_('找不到這個帳號。');
+    writeTable_('Users', readTable_('Users').filter(function (x) { return String(x.userId) !== String(userId); }));
+    writeTable_('Sessions', readTable_('Sessions').filter(function (s) { return String(s.userId) !== String(userId); }));
+    return ok_(adminOverview_());
+  } catch (e) { return err_(e); }
+}
+
+function apiLogin(p) {
+  try {
+    p = p || {};
+    var u = findUser_(p.account);
+    if (!u) return err_('帳號或密碼不對。');
+    if (hash_(u.salt, String(p.password || '')) !== String(u.hash)) return err_('帳號或密碼不對。');
+    upsert_('Users', ['userId'], { userId: u.userId, lastLogin: new Date() });
+    return ok_({ token: newToken_(u.userId, !!p.remember), user: pubUser_(u) });
+  } catch (e) { return err_(e); }
+}
+
+function apiResume(token) {
+  try { return ok_({ user: pubUser_(auth_(token)) }); }
+  catch (e) { return err_(e); }
+}
+
+function apiLogout(token) {
+  try {
+    var rows = readTable_('Sessions').filter(function (r) { return String(r.token) !== String(token); });
+    writeTable_('Sessions', rows);
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/* ================= 班級與小隊 ================= */
+
+function findClassByCode_(code) {
+  if (!code) return null;
+  var rows = readTable_('Classes');
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].joinCode).trim().toUpperCase() === code) return rows[i];
+  }
+  return null;
+}
+
+function makeCode_() {
+  var abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = '';
+  for (var i = 0; i < 6; i++) s += abc.charAt(Math.floor(Math.random() * abc.length));
+  return s;
+}
+
+function createClass_(name, term, courseStart, teacherId, semesterWeeks) {
+  var id = 'k' + Utilities.getUuid().slice(0, 6);
+  var code = makeCode_();
+  while (findClassByCode_(code)) code = makeCode_();
+  appendRow_('Classes', {
+    classId: id, name: name, term: term || '', started: 'Y',
+    courseStart: courseStart || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+    weekOverride: '', semesterWeeks: Math.max(2, Math.min(156, Math.floor(Number(semesterWeeks) || 18))),
+    joinCode: code, teacherId: teacherId || ''
+  });
+  return id;
+}
+
+function semWeeksOf_(kl) {
+  var n = Math.floor(Number(kl && kl.semesterWeeks) || 0);
+  return n >= 2 ? Math.min(156, n) : 18;
+}
+
+/** 老師調整這一班的學期總週數（甘特圖的欄位數就是它）。 */
+function apiSetSemesterWeeks(token, classId, weeks) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'teacher' && u.role !== 'researcher') return err_('沒有權限。');
+    var n = Math.max(2, Math.min(156, Math.floor(Number(weeks) || 18)));
+    upsert_('Classes', ['classId'], { classId: classId, semesterWeeks: n });
+    return ok_({ semesterWeeks: n });
+  } catch (e) { return err_(e); }
+}
+
+/** 老師新增一個班級。 */
+function apiCreateClass(token, name, term, courseStart) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'teacher') return err_('只有老師可以開班。');
+    var id = createClass_(String(name || '').trim() || '未命名班級', term, courseStart, u.userId);
+    return ok_({ classId: id, classes: classesOf_(u) });
+  } catch (e) { return err_(e); }
+}
+
+/** 學生建立小隊。組員名單不開放自由輸入——建立者的名字（研究者定的）自動掛上。 */
+function apiCreateTeam(token, teamName) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student') return err_('只有學生可以建立小隊。');
+    if (!u.classId) return err_('你的帳號還沒被分到班級，請找研究者。');
+    var name = String(teamName || '').trim();
+    if (!name) return err_('請填小隊名稱。');
+
+    var teams = readTable_('Teams').filter(function (t) { return String(t.classId) === String(u.classId); });
+    var id = 't' + Utilities.getUuid().slice(0, 6);
+    appendRow_('Teams', {
+      teamId: id, classId: u.classId, name: '第' + numCn_(teams.length + 1) + '組 · ' + name,
+      members: JSON.stringify([u.name]),
+      layer: 1, enteredWeek: courseWeekOf_(classById_(u.classId)), passed: '[]', toolLevels: '{}',
+      gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: '', specNames: '{}', createdAt: new Date()
+    });
+    upsert_('Users', ['userId'], { userId: u.userId, teamId: id });
+    return ok_({ teamId: id });
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+/** 學生加入已存在的小隊。掛上的名字一律用帳號上的姓名。 */
+function apiJoinTeam(token, teamId) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student') return err_('只有學生可以加入小隊。');
+    var t = teamById_(teamId);
+    if (!t || String(t.classId) !== String(u.classId)) return err_('找不到這個小隊。');
+    var mem = jparse_(t.members, []);
+    if (mem.indexOf(u.name) < 0) mem.push(u.name);
+    upsert_('Teams', ['teamId'], { teamId: teamId, members: JSON.stringify(mem) });
+    upsert_('Users', ['userId'], { userId: u.userId, teamId: teamId });
+    return ok_({ teamId: teamId });
+  } catch (e) { return err_(e); }
+}
+
+/** 尚未建隊的學生，用來看班上有哪些隊可以加入。 */
+function apiClassTeams(token) {
+  try {
+    var u = auth_(token);
+    var teams = readTable_('Teams').filter(function (t) { return String(t.classId) === String(u.classId); });
+    return ok_({ teams: teams.map(function (t) {
+      return { teamId: t.teamId, name: t.name, members: jparse_(t.members, []) };
+    }) });
+  } catch (e) { return err_(e); }
+}
+
+function numCn_(n) {
+  var s = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+  return n <= 10 ? s[n] : String(n);
+}
+function classById_(id) {
+  var rows = readTable_('Classes');
+  for (var i = 0; i < rows.length; i++) if (String(rows[i].classId) === String(id)) return rows[i];
+  return null;
+}
+function teamById_(id) {
+  var rows = readTable_('Teams');
+  for (var i = 0; i < rows.length; i++) if (String(rows[i].teamId) === String(id)) return rows[i];
+  return null;
+}
+function classesOf_(u) {
+  var all = readTable_('Classes');
+  var mine = u.role === 'teacher'
+    ? all.filter(function (k) { return String(k.teacherId) === String(u.userId) || String(k.classId) === String(u.classId); })
+    : all.filter(function (k) { return String(k.classId) === String(u.classId); });
+  if (!mine.length) mine = all;
+  return mine.map(function (k) {
+    return {
+      id: k.classId, name: k.name, term: k.term, started: String(k.started) !== 'N',
+      courseStart: Utilities.formatDate(toDate_(k.courseStart), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+      weekOverride: k.weekOverride === '' ? null : Number(k.weekOverride),
+      semesterWeeks: semWeeksOf_(k),
+      joinCode: k.joinCode, courseWeek: courseWeekOf_(k)
+    };
+  });
+}
+
+/* ================= 開機資料 ================= */
+
+function teamPub_(t, courseWeek) {
+  return {
+    id: t.teamId, classId: t.classId, name: t.name, members: jparse_(t.members, []),
+    layer: Number(t.layer) || 1,
+    enteredWeek: Number(t.enteredWeek) || 1,
+    weeks: Math.max(1, courseWeek - (Number(t.enteredWeek) || 1) + 1),
+    passed: jparse_(t.passed, []),
+    toolLevels: jparse_(t.toolLevels, {}),
+    gateText: jparse_(t.gateText, ['', '', '']),
+    gateSubmitted: String(t.gateSubmitted) === 'Y',
+    gateVerdict: t.gateVerdict || '',
+    specNames: jparse_(t.specNames, {})
+  };
+}
+
+function tasksOfClass_(classId) {
+  return readTable_('Tasks')
+    .filter(function (t) { return String(t.classId) === String(classId); })
+    .map(function (t) {
+      return {
+        id: t.taskId, klass: t.classId, layer: Number(t.layer) || 1, type: t.type || 'required',
+        title: t.title, cond: t.cond, note: t.note, spec: t.spec || '', due: t.due,
+        mineral: t.mineral || '', mDesc: t.mDesc || '', published: String(t.published) !== 'N'
+      };
+    });
+}
+
+function teamTaskMap_(teamId) {
+  var m = {};
+  readTable_('TeamTasks').forEach(function (r) {
+    if (String(r.teamId) !== String(teamId)) return;
+    m[String(r.taskId)] = {
+      status: r.status || 'todo', text: r.text || '', files: jparse_(r.files, []),
+      fb: r.fb || '', fbType: r.fbType || '', passedWeek: r.passedWeek === '' ? null : Number(r.passedWeek),
+      effort: r.effort || '', effortNote: r.effortNote || '', blocker: r.blocker || ''
+    };
+  });
+  return m;
+}
+
+function mergeTasks_(defs, tmap, courseWeek, dueWeekFn) {
+  return defs.map(function (d) {
+    var s = tmap[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', passedWeek: null,
+                            effort: '', effortNote: '', blocker: '' };
+    var dw = dueWeekOf_(d.due);
+    return Object.assign({}, d, {
+      status: s.status, text: s.text, files: s.files, fb: s.fb, fbType: s.fbType,
+      effort: s.effort, effortNote: s.effortNote, blocker: s.blocker,
+      over: dw !== null && dw < courseWeek && s.status !== 'passed'
+    });
+  });
+}
+
+function dueWeekOf_(due) {
+  var s = String(due || '');
+  if (s === '不設限') return null;
+  var m = /第\s*(\d+)\s*週/.exec(s);
+  if (m) return Math.max(1, Math.min(156, +m[1]));
+  return null;
+}
+
+/**
+ * 一次回傳該端需要的整包狀態。
+ * 學生：自己組的任務與排程、全班各組位置（超前的層由前端遮蔽）
+ * 老師：全班所有組的任務狀態與待確認佇列
+ * 研究者：不在這裡給資料，走 apiResearchSlice
+ */
+/** 每一層的礦脈開了幾塊，前端拿來標示與擋。 */
+function veinStatus_(classId) {
+  var out = {};
+  for (var n = 1; n <= 5; n++) {
+    var vein = MINERALS_BY_LAYER[n] || [];
+    var left = unopenedMinerals_(classId, n);
+    out[n] = { total: vein.length, open: vein.length - left.length, left: left };
+  }
+  return out;
+}
+
+/* ================= 逾時自動暫准 =================
+   介面從一開始就承諾「老師缺席時，成本不由學生承擔」——
+   交出去超過 N 天沒人驗，系統先放行，老師回來再補看。
+   GAS 免費方案不能掛穩定的排程，所以走「有人開頁面就順手檢查」：
+   apiBootstrap 先掃一次，有逾時的才拿鎖寫入。
+   兩個時間都留下來：該被暫准的時間（研究資料）與實際補寫的時間（實作紀錄）。 */
+
+function autoDays_() {
+  var v = Number(getCfg_('autoDays', 7));
+  return v >= 1 ? Math.floor(v) : 7;
+}
+
+function sweepOverdue_() {
+  var days = autoDays_(), ms = days * 86400000, now = new Date();
+
+  /* 便宜的預檢：全部走快取，一筆逾時都沒有就直接離開 */
+  var subs = readTable_('Submissions');
+  var lastSub = {};
+  subs.forEach(function (s) {
+    var k = s.teamId + '|' + s.taskId;
+    if (!lastSub[k] || new Date(s.ts) > new Date(lastSub[k].ts)) lastSub[k] = s;
+  });
+  var overItems = readTable_('TeamTasks').filter(function (r) {
+    if (r.status !== 'submitted') return false;
+    var s = lastSub[r.teamId + '|' + r.taskId];
+    return s && (now - new Date(s.ts)) > ms;
+  });
+  var overGates = readTable_('Teams').filter(function (t) {
+    return String(t.gateSubmitted) === 'Y' && t.gateTs && (now - new Date(t.gateTs)) > ms;
+  });
+  if (!overItems.length && !overGates.length) return;
+
+  var lock = LockService.getScriptLock();
+  try { if (!lock.tryLock(5000)) return; } catch (e) { return; }
+  try {
+    /* 拿到鎖之後重讀原始資料再判斷一次，避免跟老師的驗收撞在一起 */
+    overItems.forEach(function (r) {
+      var cur = readRaw_('TeamTasks').filter(function (x) {
+        return String(x.teamId) === String(r.teamId) && String(x.taskId) === String(r.taskId);
+      })[0];
+      if (!cur || cur.status !== 'submitted') return;
+      var s = lastSub[r.teamId + '|' + r.taskId];
+      var team = teamById_(r.teamId);
+      if (!team) return;
+      var kl = classById_(team.classId), courseWeek = courseWeekOf_(kl);
+      var def = tasksOfClass_(team.classId).filter(function (d) { return String(d.id) === String(r.taskId); })[0];
+      var txt = '（逾時自動暫准）交出去超過 ' + days + ' 天還沒被驗收，系統先放行。他回來補看時，這一段會換成他寫的判斷。';
+      appendRow_('Reviews', {
+        revId: 'rv' + Utilities.getUuid().slice(0, 8), subId: s ? s.subId : '',
+        teamId: r.teamId, taskId: r.taskId, title: def ? def.title : '', layer: def ? def.layer : '',
+        result: 'auto', reason: txt, len: 0, hasReason: 'N', week: courseWeek,
+        latency: s ? Math.max(0, Math.round((now - new Date(s.ts)) / 3600000)) : 0, ts: now
+      });
+      upsert_('TeamTasks', ['teamId', 'taskId'], {
+        teamId: r.teamId, taskId: r.taskId,
+        status: 'passed', fb: txt, fbType: 'pass', passedWeek: courseWeek
+      });
+    });
+
+    overGates.forEach(function (t0) {
+      var t = teamById_(t0.teamId);
+      if (!t || String(t.gateSubmitted) !== 'Y') return;
+      var layer = Number(t.layer) || 1;
+      /* 全收集的兩道門檻照樣要過——沒過就留給老師，不自動放行 */
+      if ((unopenedMinerals_(t.classId, layer) || []).length) return;
+      if ((missingRequired_(t.teamId) || []).length) return;
+      var kl = classById_(t.classId), courseWeek = courseWeekOf_(kl);
+      var cells = jparse_(t.gateText, ['', '', '']);
+      var txt = '（逾時自動暫准）關卡送出超過 ' + days + ' 天沒被審，系統先放行。';
+      appendRow_('Passes', {
+        passId: 'p' + Utilities.getUuid().slice(0, 8), teamId: t.teamId, layer: layer, week: courseWeek,
+        toolLevel: '', gateCell1: cells[0] || '', gateCell2: cells[1] || '', gateCell3: cells[2] || '',
+        verdict: 'auto', reason: txt, ts: now
+      });
+      var passedArr = jparse_(t.passed, []);
+      if (passedArr.indexOf(layer) < 0) passedArr.push(layer);
+      var levels = jparse_(t.toolLevels, {});
+      levels[layer] = '已交出';
+      upsert_('Teams', ['teamId'], {
+        teamId: t.teamId, layer: Math.min(5, layer + 1), enteredWeek: courseWeek,
+        passed: JSON.stringify(passedArr), toolLevels: JSON.stringify(levels),
+        gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: 'pass'
+      });
+    });
+  } finally { lock.releaseLock(); }
+}
+
+function apiBootstrap(token) {
+  try {
+    var u = auth_(token);
+    try { sweepOverdue_(); } catch (e) {}   /* 逾時自動暫准：有人開頁面就順手檢查 */
+    var classes = classesOf_(u);
+    var classId = u.classId || (classes[0] && classes[0].id) || '';
+    var kl = classById_(classId);
+    var courseWeek = kl ? courseWeekOf_(kl) : 1;
+
+    var allTeams = readTable_('Teams')
+      .filter(function (t) { return String(t.classId) === String(classId); })
+      .map(function (t) { return teamPub_(t, courseWeek); });
+
+    var defs = tasksOfClass_(classId);
+    var out = {
+      user: pubUser_(u), classes: classes, classId: classId,
+      courseWeek: courseWeek, joinCode: kl ? kl.joinCode : '',
+      teams: allTeams, taskDefs: defs, serverTime: new Date().toISOString()
+    };
+
+    if (u.role === 'student') {
+      var me = teamById_(u.teamId);
+      out.myTeamId = u.teamId || '';
+      if (me) {
+        var mp = teamPub_(me, courseWeek);
+        var fMine = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(me.teamId); })[0];
+        mp.finaleOpened = !!(fMine && String(fMine.opened) === 'Y');
+        out.myTeam = mp;
+        out.tasks = mergeTasks_(defs, teamTaskMap_(me.teamId), courseWeek);
+        out.plan = {};
+        readTable_('Plans').forEach(function (p) {
+          if (String(p.teamId) !== String(me.teamId)) return;
+          var b = Number(p.toWeek) || Number(p.week) || 1;
+          var a = Number(p.fromWeek) || b;
+          out.plan[String(p.taskId)] = { a: Math.min(a, b), b: b };
+        });
+        out.passedWeek = {};
+        var tm = teamTaskMap_(me.teamId);
+        Object.keys(tm).forEach(function (k) { if (tm[k].passedWeek) out.passedWeek[k] = tm[k].passedWeek; });
+        var classTeamIds = {};
+        allTeams.forEach(function (t) { classTeamIds[t.id] = true; });
+        out.publicPasses = readTable_('Passes')
+          .filter(function (p) { return String(p.verdict) === 'pass' && classTeamIds[p.teamId]; })
+          .map(function (p) {
+            return { teamId: p.teamId, layer: Number(p.layer), week: Number(p.week),
+                     cells: [p.gateCell1, p.gateCell2, p.gateCell3], reason: p.reason || '' };
+          });
+      }
+    }
+
+    if (u.role === 'teacher') {
+      out.teamTasks = {};
+      allTeams.forEach(function (t) {
+        out.teamTasks[t.id] = mergeTasks_(defs, teamTaskMap_(t.id), courseWeek);
+      });
+      out.queue = [];
+      allTeams.forEach(function (t) {
+        out.teamTasks[t.id].forEach(function (task) {
+          if (task.status === 'submitted') {
+            out.queue.push({
+              id: t.id + '::' + task.id, teamId: t.id, teamName: t.name,
+              taskId: task.id, title: task.title, layer: task.layer, type: task.type,
+              text: task.text, files: task.files, over: task.over, due: task.due, spec: task.spec || '',
+              effort: task.effort, effortNote: task.effortNote, blocker: task.blocker,
+              weeks: t.weeks, cond: task.cond, mineral: task.mineral
+            });
+          }
+        });
+      });
+      /* 這一位老師自己寫過的合格考量：拿來做常用句與書寫量對照 */
+      var myIds = {};
+      allTeams.forEach(function (t) { myIds[String(t.id)] = 1; });
+      var mine = readTable_('Reviews').filter(function (r) {
+        return myIds[String(r.teamId)] && String(r.reason || '').trim();
+      });
+      var heads = {};
+      mine.forEach(function (r) {
+        var h = String(r.reason).trim().split(/[。，、；\n]/)[0].trim();
+        if (h.length >= 4 && h.length <= 18) heads[h] = (heads[h] || 0) + 1;
+      });
+      out.myPhrases = Object.keys(heads).filter(function (h) { return heads[h] >= 3; })
+        .sort(function (a, b) { return heads[b] - heads[a]; }).slice(0, 5)
+        .map(function (h) { return { text: h, n: heads[h] }; });
+      /* 每一層的平均字數：讓老師看得見自己的書寫量在變 */
+      var byLayer = {};
+      mine.forEach(function (r) {
+        var n = Number(r.layer) || 1;
+        if (!byLayer[n]) byLayer[n] = { n: 0, len: 0 };
+        byLayer[n].n++; byLayer[n].len += String(r.reason).trim().length;
+      });
+      out.myWriting = [1, 2, 3, 4, 5].map(function (n) {
+        var b = byLayer[n];
+        return { layer: n, count: b ? b.n : 0, avg: b ? Math.round(b.len / b.n) : 0 };
+      });
+      out.gates = allTeams.filter(function (t) { return t.gateSubmitted && !t.gateVerdict; })
+        .map(function (t) {
+          return { teamId: t.id, teamName: t.name, layer: t.layer, cells: t.gateText, weeks: t.weeks };
+        });
+    }
+
+    return ok_(out);
+  } catch (e) { return err_(e); }
+}
+
+/* ================= 學生動作 ================= */
+
+/**
+ * 學生提交一項。reflect＝這一組對自己現在狀態的判斷：
+ * { effort:'fast'|'onpar'|'slow', effortNote, blocker }
+ * 老師在 T-06 會先看到這一段，再寫合格考量——這是這套系統的來回。
+ */
+function apiSubmitItem(token, taskId, text, files, reflect) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以提交。');
+    reflect = reflect || {};
+    var effort = ['fast', 'onpar', 'slow'].indexOf(String(reflect.effort)) >= 0 ? String(reflect.effort) : '';
+    if (!effort) return err_('先說一次這一項實際花的力氣跟你們原本估的差多少。');
+    var kl = classById_(u.classId), courseWeek = courseWeekOf_(kl);
+    var defs = tasksOfClass_(u.classId);
+    var def = null;
+    for (var i = 0; i < defs.length; i++) if (String(defs[i].id) === String(taskId)) def = defs[i];
+    if (!def) return err_('找不到這一項任務。');
+
+    /* 排程納入主流程：交之前一定要先說打算哪一週交，期末才對得出估得準不準 */
+    var planned = readTable_('Plans').some(function (x) {
+      return String(x.teamId) === String(u.teamId) && String(x.taskId) === String(taskId);
+    });
+    if (!planned) return err_('先在甘特圖或提交頁上說你打算哪一週交這一項。');
+
+    files = files || [];
+    var dw = dueWeekOf_(def.due);
+    var attempt = readTable_('Submissions').filter(function (s) {
+      return String(s.taskId) === String(taskId) && String(s.teamId) === String(u.teamId);
+    }).length + 1;
+
+    appendRow_('Submissions', {
+      subId: 's' + Utilities.getUuid().slice(0, 8), taskId: taskId, teamId: u.teamId,
+      week: courseWeek, dueWeek: dw === null ? '' : dw, overdue: (dw !== null && dw < courseWeek) ? 'Y' : 'N',
+      len: String(text || '').trim().length, files: files.length, attempt: attempt,
+      text: String(text || ''),
+      effort: effort, effortNote: String(reflect.effortNote || ''), blocker: String(reflect.blocker || ''),
+      fileList: JSON.stringify(files), ts: new Date()
+    });
+    upsert_('TeamTasks', ['teamId', 'taskId'], {
+      teamId: u.teamId, taskId: taskId, status: 'submitted',
+      text: String(text || ''), files: JSON.stringify(files),
+      effort: effort, effortNote: String(reflect.effortNote || ''), blocker: String(reflect.blocker || ''),
+      updatedAt: new Date()
+    });
+    return ok_({ attempt: attempt });
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+/** 學生排程：可以排一段區間（from 到 to）。to 是他們打算交出去的那一週。 */
+/**
+ * 一項任務的往返紀錄：第幾次交、交了什麼、當時對自己的判斷、老師退回的理由。
+ * 學生只看得到自己組的；老師看得到自己班的任何一組。
+ */
+function apiTaskHistory(token, teamId, taskId) {
+  try {
+    var u = auth_(token);
+    var tid = teamId || u.teamId;
+    if (u.role === 'student') tid = u.teamId;
+    else if (u.role === 'teacher') {
+      var t = teamById_(tid);
+      if (!t || String(t.classId) !== String(u.classId)) return err_('沒有權限。');
+    } else return err_('沒有權限。');
+
+    var subs = readTable_('Submissions').filter(function (s) {
+      return String(s.taskId) === String(taskId) && String(s.teamId) === String(tid);
+    }).sort(function (a, b) { return (Number(a.attempt) || 0) - (Number(b.attempt) || 0); });
+
+    var revs = readTable_('Reviews').filter(function (r) {
+      return String(r.taskId) === String(taskId) && String(r.teamId) === String(tid);
+    }).sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
+
+    var rounds = subs.map(function (s, i) {
+      var r = revs[i] || null;
+      return {
+        n: Number(s.attempt) || (i + 1),
+        week: Number(s.week) || 1,
+        text: s.text || '',
+        len: Number(s.len) || 0,
+        files: jparse_(s.fileList, []),
+        effort: s.effort || '', effortNote: s.effortNote || '', blocker: s.blocker || '',
+        result: r ? r.result : '', reason: r ? (r.reason || '') : '',
+        reviewWeek: r ? Number(r.week) || 0 : 0,
+        hasReason: r ? String(r.hasReason) === 'Y' : false
+      };
+    });
+    var rejected = rounds.filter(function (x) { return x.result === 'needfix'; }).length;
+    return ok_({ rounds: rounds, attempts: rounds.length, rejected: rejected });
+  } catch (e) { return err_(e); }
+}
+
+/**
+ * 期末回顧的整學期資料：一項一項的「你排的 vs 實際通過」、被退回幾次、
+ * 每一次自評跟老師判斷合不合。學生用來看自己一學期估得準不準。
+ */
+function apiFinale(token, teamId) {
+  try {
+    var u = auth_(token);
+    var tid = (u.role === 'student') ? u.teamId : (teamId || '');
+    var t = teamById_(tid);
+    if (!t) return err_('找不到這一組。');
+    if (u.role === 'teacher' && String(t.classId) !== String(u.classId)) return err_('沒有權限。');
+    if (u.role === 'researcher') return err_('沒有權限。');
+
+    var defs = tasksOfClass_(t.classId);
+    var tmap = teamTaskMap_(tid);
+    var plans = {};
+    readTable_('Plans').forEach(function (p) {
+      if (String(p.teamId) !== String(tid)) return;
+      var b = Number(p.toWeek) || Number(p.week) || 0;
+      plans[String(p.taskId)] = { a: Number(p.fromWeek) || b, b: b };
+    });
+    var subs = readTable_('Submissions').filter(function (s) { return String(s.teamId) === String(tid); });
+    var revs = readTable_('Reviews').filter(function (r) { return String(r.teamId) === String(tid); });
+
+    var rows = defs.map(function (d) {
+      var st = tmap[d.id] || {};
+      var mySubs = subs.filter(function (s) { return String(s.taskId) === String(d.id); });
+      var myRevs = revs.filter(function (r) { return String(r.taskId) === String(d.id); });
+      var rejected = myRevs.filter(function (r) { return r.result === 'needfix'; }).length;
+      var plan = plans[d.id] || null;
+      var first = mySubs[0] || null;
+      var lastRev = myRevs[myRevs.length - 1] || null;
+      return {
+        id: d.id, layer: d.layer, type: d.type, title: d.title, mineral: d.mineral,
+        status: st.status || 'todo',
+        planFrom: plan ? plan.a : 0, planTo: plan ? plan.b : 0,
+        realWeek: st.passedWeek || 0,
+        attempts: mySubs.length, rejected: rejected,
+        effort: first ? (first.effort || '') : '',
+        lastEffort: mySubs.length ? (mySubs[mySubs.length - 1].effort || '') : '',
+        lastResult: lastRev ? lastRev.result : ''
+      };
+    });
+
+    /* 自評 vs 老師判斷：每一輪配對 */
+    var seen = {}, cross = { agree: 0, optimistic: 0, conservative: 0, total: 0 };
+    revs.forEach(function (r) {
+      var k = r.taskId;
+      var i = seen[k] = (seen[k] || 0) + 1;
+      var mine = subs.filter(function (s) { return String(s.taskId) === String(r.taskId); })
+        .sort(function (a, b) { return (Number(a.attempt) || 0) - (Number(b.attempt) || 0); });
+      var s = mine[i - 1];
+      if (!s || !s.effort) return;
+      cross.total++;
+      if (s.effort === 'slow' && r.result === 'needfix') cross.agree++;
+      else if (s.effort !== 'slow' && r.result === 'pass') cross.agree++;
+      else if (s.effort !== 'slow' && r.result === 'needfix') cross.optimistic++;
+      else cross.conservative++;
+    });
+
+    var f = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(tid); })[0] || null;
+    return ok_({
+      team: t.name, layer: Number(t.layer) || 1,
+      passed: jparse_(t.passed, []), toolLevels: jparse_(t.toolLevels, {}),
+      specNames: jparse_(t.specNames, {}),
+      rows: rows, cross: cross,
+      totalRejected: revs.filter(function (r) { return r.result === 'needfix'; }).length,
+      totalSubs: subs.length,
+      finale: f ? { q1: f.q1 || '', q2: f.q2 || '', q3: f.q3 || '',
+                    lightName: f.lightName || '', submitted: String(f.submitted) === 'Y',
+                    opened: String(f.opened) === 'Y', openWords: f.openWords || '',
+                    openedBy: f.openedBy || '',
+                    openedAt: f.openedAt ? String(f.openedAt) : '' } : null
+    });
+  } catch (e) { return err_(e); }
+}
+
+/** 學生寫完期末回顧送出。送出之後老師看得到。 */
+function apiSaveFinale(token, answers, submit) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生寫這一份。');
+    var fOpen = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(u.teamId); })[0];
+    if (!fOpen || String(fOpen.opened) !== 'Y') return err_('結局還沒開。老師放行之後才寫得了。');
+    answers = answers || {};
+    var prevF = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(u.teamId); })[0] || {};
+    upsert_('Finales', ['teamId'], {
+      teamId: u.teamId, q1: String(answers.q1 || ''), q2: String(answers.q2 || ''),
+      q3: String(answers.q3 || ''), lightName: String(answers.lightName || ''),
+      submitted: submit ? 'Y' : 'N', ts: new Date(),
+      opened: prevF.opened || '', openWords: prevF.openWords || '',
+      openedBy: prevF.openedBy || '', openedAt: prevF.openedAt || ''
+    });
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/** 老師端：走完第五層、送出最後檢討的小隊。純閱讀，沒有審核。 */
+function apiFinaleQueue(token) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'teacher') return err_('只有老師看得到這一份。');
+    var teams = readTable_('Teams').filter(function (t) { return String(t.classId) === String(u.classId); });
+    var fin = {};
+    readTable_('Finales').forEach(function (f) { fin[String(f.teamId)] = f; });
+    var w = courseWeekOf_(classById_(u.classId));
+    var list = teams.map(function (t) {
+      var f = fin[String(t.teamId)] || {};
+      var done5 = jparse_(t.passed, []).indexOf(5) >= 0;
+      return {
+        teamId: t.teamId, name: t.name, layer: Number(t.layer) || 1,
+        weeks: Math.max(1, w - (Number(t.enteredWeek) || 1) + 1),
+        done5: done5,
+        applied: String(f.submitted) === 'Y',
+        opened: String(f.opened) === 'Y',
+        openWords: f.openWords || '',
+        submittedAt: f.ts ? String(f.ts) : ''
+      };
+    });
+    return ok_({ list: list, courseWeek: w });
+  } catch (e) { return err_(e); }
+}
+
+/**
+ * 老師在系統裡的最後一個動作：准許這一組進入結局。
+ * 走完第五層不會自動開結局——側欄那一項維持 ？？？，直到他放行。
+ * 放行時寫的那一段話，是學生在結局最上面讀到的第一句。
+ */
+function apiOpenFinale(token, teamId, words) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var u = auth_(token);
+    if (u.role !== 'teacher') return err_('只有老師能放行。');
+    var t = teamById_(teamId);
+    if (!t) return err_('找不到這一組。');
+    if (String(t.classId) !== String(u.classId)) return err_('沒有權限。');
+    if (jparse_(t.passed, []).indexOf(5) < 0) return err_('這一組還沒走完第五層，結局開不了。');
+    if (!String(words || '').trim()) return err_('先寫下你要說的話。這是他們在結局最上面讀到的第一句。');
+    var f = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(teamId); })[0] || {};
+    upsert_('Finales', ['teamId'], {
+      teamId: teamId, q1: f.q1 || '', q2: f.q2 || '', q3: f.q3 || '',
+      lightName: f.lightName || '', submitted: f.submitted || 'N', ts: f.ts || new Date(),
+      opened: 'Y', openWords: String(words),
+      openedBy: u.name || u.account || '', openedAt: new Date()
+    });
+    return ok_({ opened: true });
+  } catch (e) { return err_(e); } finally { try { lock.releaseLock(); } catch (e2) {} }
+}
+
+function apiSavePlan(token, taskId, from, to) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生有排程。');
+    var a = Math.max(1, Math.floor(Number(from) || 1));
+    var b = Math.max(a, Math.floor(Number(to) || a));
+    upsert_('Plans', ['teamId', 'taskId'], { teamId: u.teamId, taskId: taskId, week: b, fromWeek: a, toWeek: b });
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/** 這一層的礦脈裡，老師還沒開出來的礦石。空陣列＝這一層開完了。 */
+function unopenedMinerals_(classId, layer) {
+  var vein = MINERALS_BY_LAYER[layer] || [];
+  var used = {};
+  tasksOfClass_(classId).forEach(function (d) {
+    if (d.layer === layer && d.mineral) used[d.mineral] = 1;
+  });
+  return vein.filter(function (n) { return !used[n]; });
+}
+
+/** 這一層還沒採到的礦石。空陣列＝這一層全收集了，可以送關卡。
+    全收集是這套系統的核心：那一層的礦脈要開完，也要採完。 */
+function missingRequired_(teamId) {
+  var t = teamById_(teamId);
+  if (!t) return null;
+  var layer = Number(t.layer) || 1;
+  var tmap = teamTaskMap_(teamId);
+  return tasksOfClass_(t.classId).filter(function (d) {
+    if (d.layer !== layer) return false;
+    var s = tmap[d.id];
+    return !s || s.status !== 'passed';
+  });
+}
+
+function apiSubmitGate(token, cells) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以送關卡。');
+
+    /* 核心規則：這一層的礦石全部採齊才送得出關卡 */
+    var miss = missingRequired_(u.teamId);
+    if (miss === null) return err_('找不到這一組。');
+    var t0 = teamById_(u.teamId);
+    var lay0 = Number(t0.layer) || 1;
+    var vein0 = MINERALS_BY_LAYER[lay0] || [];
+    var unopened = unopenedMinerals_(t0.classId, lay0);
+    if (unopened.length === vein0.length) {
+      return err_('這一層還沒有任務，老師還沒把清單開出來。');
+    }
+    if (unopened.length) {
+      return err_('這一層的礦脈有 ' + vein0.length + ' 塊，老師只開了 ' + (vein0.length - unopened.length) +
+        ' 塊。要全部開出來、也全部採齊，才拿得到這一層的道具——去跟他說還缺 ' + unopened.length + ' 塊。');
+    }
+    if (miss.length) {
+      return err_('這一層還差 ' + miss.length + ' 塊礦石：' +
+        miss.map(function (d) { return d.title; }).join('、') + '。這一層要全部採齊才送得出關卡。');
+    }
+
+    upsert_('Teams', ['teamId'], {
+      teamId: u.teamId, gateText: JSON.stringify(cells || ['', '', '']),
+      gateSubmitted: 'Y', gateVerdict: '', gateTs: new Date()
+    });
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+function apiLogRead(token, targetTeamId) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return ok_();
+    var kl = classById_(u.classId), courseWeek = courseWeekOf_(kl);
+    var me = teamPub_(teamById_(u.teamId), courseWeek);
+    var target = teamById_(targetTeamId);
+    if (!target) return ok_();
+    var rejected = false;
+    var tm = teamTaskMap_(u.teamId);
+    Object.keys(tm).forEach(function (k) { if (tm[k].status === 'needs_more') rejected = true; });
+    appendRow_('Reads', {
+      readId: 'r' + Utilities.getUuid().slice(0, 8), readerTeam: u.teamId, targetTeam: targetTeamId,
+      layer: Number(target.layer) || 1, week: courseWeek, readerLayer: me.layer,
+      readerStay: me.weeks, recentlyRejected: rejected ? 'Y' : 'N', ts: new Date()
+    });
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/** 第五層「完成之光」由學生自行命名。 */
+function apiSaveSpecName(token, key, name) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以命名。');
+    var t = teamById_(u.teamId);
+    var names = jparse_(t.specNames, {});
+    names[key] = name;
+    upsert_('Teams', ['teamId'], { teamId: u.teamId, specNames: JSON.stringify(names) });
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/* ================= 老師動作 ================= */
+
+function assertTeacher_(token) {
+  var u = auth_(token);
+  if (u.role !== 'teacher') throw new Error('這個動作只有老師可以做。');
+  return u;
+}
+
+function apiSaveTask(token, classId, task) {
+  try {
+    assertTeacher_(token);
+    var id = task.id || ('tk' + Utilities.getUuid().slice(0, 8));
+    /* 一項一定要對到一塊礦石，不然這一層的「開了幾塊」跟「還沒開幾塊」會對不起來 */
+    var min = String(task.mineral || '').trim();
+    if (!min) {
+      var mine = readTable_('Tasks').filter(function (x) { return String(x.taskId) === String(id); })[0];
+      var free = freeMinerals_(classId, task.layer);
+      if (mine && String(mine.mineral || '')) free = [String(mine.mineral)].concat(free);
+      min = free.length ? free[0] : '';
+    }
+    upsert_('Tasks', ['taskId'], {
+      taskId: id, classId: classId, layer: task.layer, type: task.type,
+      title: task.title, cond: task.cond, note: task.note, spec: task.spec || '', due: task.due,
+      mineral: min, mDesc: task.mDesc || '',
+      published: 'Y', createdAt: new Date()
+    });
+    return ok_({ taskId: id });
+  } catch (e) { return err_(e); }
+}
+
+function apiDeleteTask(token, taskId) {
+  try {
+    assertTeacher_(token);
+    writeTable_('Tasks', readTable_('Tasks').filter(function (t) { return String(t.taskId) !== String(taskId); }));
+    writeTable_('TeamTasks', readTable_('TeamTasks').filter(function (t) { return String(t.taskId) !== String(taskId); }));
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/** 一次發派一整層的清單。 */
+/** 這一層還沒被別的任務佔走的礦物名稱。 */
+function freeMinerals_(classId, layer) {
+  var used = {};
+  readTable_('Tasks').forEach(function (t) {
+    if (String(t.classId) === String(classId) && String(t.mineral)) used[String(t.mineral)] = true;
+  });
+  return MINERALS_BY_LAYER[layer] ? MINERALS_BY_LAYER[layer].filter(function (n) { return !used[n]; }) : [];
+}
+
+/* 交付包裡每一層的礦物名稱（順序照 MINS） */
+var MINERALS_BY_LAYER = {
+  1: ['定名石', '裂晶', '初痕礦', '拓影石', '預兆砂', '岔路晶'],
+  2: ['聽紋晶', '篩光石', '徑錄礦', '迴訪晶', '對映石', '顯影砂'],
+  3: ['初型岩', '因由石', '二階水晶', '反響礦', '歧路水晶'],
+  4: ['再凝岩', '前後水晶', '再熔鑽', '磨心礦', '厚能量石'],
+  5: ['完成之光']
+};
+
+function apiPublishList(token, classId, layer, items) {
+  try {
+    assertTeacher_(token);
+    (items || []).forEach(function (it) {
+      /* 沒指定環節就自動配一塊還沒被用掉的礦——任務不該沒有物證 */
+      var min = String(it.mineral || '').trim();
+      if (!min) {
+        var free = freeMinerals_(classId, layer);
+        min = free.length ? free[0] : '';
+      }
+      upsert_('Tasks', ['taskId'], {
+        taskId: it.id || ('tk' + Utilities.getUuid().slice(0, 8)), classId: classId,
+        layer: layer, type: it.type, title: it.title, cond: it.cond, note: it.note,
+        spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc || '', published: 'Y', createdAt: new Date()
+      });
+    });
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/** 逐項確認。合格考量（reason）學生會看到；沒寫也能送出。 */
+function apiReviewItem(token, teamId, taskId, result, reason) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    var u = assertTeacher_(token);
+    var t = teamById_(teamId);
+    if (!t) return err_('找不到這一組。');
+    var kl = classById_(t.classId), courseWeek = courseWeekOf_(kl);
+    var defs = tasksOfClass_(t.classId), def = null;
+    for (var i = 0; i < defs.length; i++) if (String(defs[i].id) === String(taskId)) def = defs[i];
+
+    var subs = readTable_('Submissions').filter(function (s) {
+      return String(s.taskId) === String(taskId) && String(s.teamId) === String(teamId);
+    });
+    var lastSub = subs.length ? subs[subs.length - 1] : null;
+    var latency = lastSub ? Math.max(0, Math.round((new Date() - new Date(lastSub.ts)) / 3600000)) : 0;
+    var pass = (result === 'pass');
+    var txt = String(reason || '');
+
+    appendRow_('Reviews', {
+      revId: 'rv' + Utilities.getUuid().slice(0, 8), subId: lastSub ? lastSub.subId : '',
+      teamId: teamId, taskId: taskId, title: def ? def.title : '', layer: def ? def.layer : '',
+      result: pass ? 'pass' : 'needfix', reason: txt, len: txt.length,
+      hasReason: txt.trim() ? 'Y' : 'N', week: courseWeek, latency: latency, ts: new Date()
+    });
+    upsert_('TeamTasks', ['teamId', 'taskId'], {
+      teamId: teamId, taskId: taskId,
+      status: pass ? 'passed' : 'needs_more',
+      fb: txt || (pass ? '（未附理由）' : ''), fbType: pass ? 'pass' : 'more',
+      passedWeek: pass ? courseWeek : '', updatedAt: new Date()
+    });
+    return ok_();
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+/** 關卡審核：通過就發道具、定工具階級、換層。 */
+function apiReviewGate(token, teamId, pass, toolLevel, reason) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    assertTeacher_(token);
+    var t = teamById_(teamId);
+    if (!t) return err_('找不到這一組。');
+    var kl = classById_(t.classId), courseWeek = courseWeekOf_(kl);
+    var layer = Number(t.layer) || 1;
+    var cells = jparse_(t.gateText, ['', '', '']);
+
+    /* 通過關卡＝發道具換層，這一層沒全收集就不能過（退回不受限制） */
+    if (pass) {
+      var veinT = MINERALS_BY_LAYER[layer] || [];
+      var unopenT = unopenedMinerals_(t.classId, layer);
+      if (unopenT.length) {
+        return err_('這一層的礦脈有 ' + veinT.length + ' 塊，你只開了 ' + (veinT.length - unopenT.length) +
+          ' 塊。先在 T-05 把剩下的 ' + unopenT.length + ' 塊開出來（' + unopenT.join('、') + '），或把這一次關卡退回。');
+      }
+      var miss = missingRequired_(teamId) || [];
+      if (miss.length) {
+        return err_('這一組這一層還差 ' + miss.length + ' 塊礦石：' +
+          miss.map(function (d) { return d.title; }).join('、') +
+          '。先在逐項確認裡把它們處理完，或把這一次關卡退回。');
+      }
+    }
+
+    appendRow_('Passes', {
+      passId: 'p' + Utilities.getUuid().slice(0, 8), teamId: teamId, layer: layer, week: courseWeek,
+      toolLevel: toolLevel || '', gateCell1: cells[0] || '', gateCell2: cells[1] || '', gateCell3: cells[2] || '',
+      verdict: pass ? 'pass' : 'needfix', reason: String(reason || ''), ts: new Date()
+    });
+
+    if (!pass) {
+      upsert_('Teams', ['teamId'], { teamId: teamId, gateSubmitted: 'N', gateVerdict: 'needfix' });
+      return ok_({ passed: false });
+    }
+
+    var passedArr = jparse_(t.passed, []);
+    if (passedArr.indexOf(layer) < 0) passedArr.push(layer);
+    var levels = jparse_(t.toolLevels, {});
+    levels[layer] = '已交出';   /* 只當作「這一層的道具已交給他們」的標記 */
+
+    var nextLayer = Math.min(5, layer + 1);
+    upsert_('Teams', ['teamId'], {
+      teamId: teamId, layer: nextLayer, enteredWeek: courseWeek,
+      passed: JSON.stringify(passedArr), toolLevels: JSON.stringify(levels),
+      gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: 'pass'
+    });
+
+    /* 第五層他不給清單：進到 L5 時自動放一項「由你決定要交什麼」 */
+    if (nextLayer === 5) {
+      var hasL5 = readTable_('Tasks').some(function (x) {
+        return String(x.classId) === String(t.classId) && Number(x.layer) === 5;
+      });
+      if (!hasL5) {
+        appendRow_('Tasks', {
+          taskId: 'own5-' + t.classId, classId: t.classId, layer: 5, type: 'required',
+          title: '由你決定要交什麼',
+          cond: '這一層他沒有給清單。你自己寫下要交的東西，以及做到什麼程度算完成。',
+          note: '寫完之後這一項就是你的驗收標準，老師只確認你有沒有做到自己說的。',
+          due: '不設限', mineral: '完成之光', mDesc: '你自己命名的那一件。',
+          published: 'Y', createdAt: new Date()
+        });
+      }
+    }
+    return ok_({ passed: true, layer: nextLayer, toolLevel: levels[layer] });
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+/** 老師手動覆寫目前週次（＋1 週／指定週次／回到自動）。 */
+function apiSetWeek(token, classId, week) {
+  try {
+    assertTeacher_(token);
+    upsert_('Classes', ['classId'], { classId: classId, weekOverride: (week === null || week === '') ? '' : week });
+    var kl = classById_(classId);
+    return ok_({ courseWeek: courseWeekOf_(kl), weekOverride: kl.weekOverride === '' ? null : Number(kl.weekOverride) });
+  } catch (e) { return err_(e); }
+}
+
+function apiSetCourseStart(token, classId, dateStr) {
+  try {
+    assertTeacher_(token);
+    upsert_('Classes', ['classId'], { classId: classId, courseStart: dateStr });
+    return ok_({ courseWeek: courseWeekOf_(classById_(classId)) });
+  } catch (e) { return err_(e); }
+}
+
+function apiSwitchClass(token, classId) {
+  try {
+    var u = assertTeacher_(token);
+    upsert_('Users', ['userId'], { userId: u.userId, classId: classId });
+    return apiBootstrap(token);
+  } catch (e) { return err_(e); }
+}
+
+/* ================= 研究者端 ================= */
+
+/**
+ * 延遲揭露在這裡做：每四週解鎖一次，未解鎖區間的列根本不會送到前端。
+ * 演練模式不呼叫這支（示範語料由前端合成）。
+ */
+function apiResearchSlice(token) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'researcher') return err_('只有研究者可以讀這一份。');
+
+    var classes = readTable_('Classes');
+    var courseWeek = 1;
+    classes.forEach(function (k) { courseWeek = Math.max(courseWeek, courseWeekOf_(k)); });
+    /* 揭露節奏由研究者自己設。預設 1＝每週都看得到（研究要每週做）。
+       設成 4 就是原設計的「每四週解鎖一次」。 */
+    var every = Math.max(1, Math.floor(Number(cfg_('unlockEvery', 1)) || 1));
+    var unlockedThrough = every <= 1 ? courseWeek : Math.floor(courseWeek / every) * every;
+    var vis = function (w) { return Number(w) <= unlockedThrough; };
+
+    var teamName = {}, teamLayer = {}, teamEntered = {};
+    readTable_('Teams').forEach(function (t) {
+      teamName[t.teamId] = t.name; teamLayer[t.teamId] = Number(t.layer) || 1;
+      teamEntered[t.teamId] = Number(t.enteredWeek) || 1;
+    });
+
+    if (!unlockedThrough) {
+      return ok_({ unlockedThrough: 0, nextUnlock: every, week: courseWeek, locked: true,
+                   unlockEvery: every, subLog: [], revLog: [], readLog: [], teams: [] });
+    }
+
+    var subLog = readTable_('Submissions').filter(function (s) { return vis(s.week); }).map(function (s) {
+      return { taskId: s.taskId, group: teamName[s.teamId] || s.teamId, title: '', layer: '',
+               week: Number(s.week), dueWeek: Number(s.dueWeek) || 6, overdue: String(s.overdue) === 'Y',
+               len: Number(s.len) || 0, files: Number(s.files) || 0, attempt: Number(s.attempt) || 1,
+               effort: s.effort || '', effortNote: s.effortNote || '', blocker: s.blocker || '',
+               text: s.text || '', hasBlocker: !!String(s.blocker || '').trim() };
+    });
+    /* 把每一次審核接回學生那一輪的提交：研究要看的是整個來回，不是單邊 */
+    var allSubs = readTable_('Submissions');
+    var seenRound = {};
+    var revLog = readTable_('Reviews').filter(function (r) { return vis(r.week); }).map(function (r) {
+      var key = r.teamId + '::' + r.taskId;
+      var idx = seenRound[key] = (seenRound[key] || 0) + 1;
+      var mine = allSubs.filter(function (s) {
+        return String(s.teamId) === String(r.teamId) && String(s.taskId) === String(r.taskId);
+      }).sort(function (a, b) { return (Number(a.attempt) || 0) - (Number(b.attempt) || 0); });
+      var s = mine[idx - 1] || null;
+      return { id: r.revId, reviewId: r.taskId, teacher: 'T1', group: teamName[r.teamId] || r.teamId,
+               title: r.title, layer: Number(r.layer) || 1, result: r.result, reason: r.reason || '',
+               len: Number(r.len) || 0, hasReason: String(r.hasReason) === 'Y',
+               week: Number(r.week), latency: Number(r.latency) || 0,
+               attempt: s ? (Number(s.attempt) || idx) : idx,
+               subText: s ? (s.text || '') : '', subLen: s ? (Number(s.len) || 0) : 0,
+               subFiles: s ? (Number(s.files) || 0) : 0,
+               effort: s ? (s.effort || '') : '', effortNote: s ? (s.effortNote || '') : '',
+               blocker: s ? (s.blocker || '') : '', subWeek: s ? Number(s.week) || 0 : 0 };
+    });
+    var readLog = readTable_('Reads').filter(function (r) { return vis(r.week); }).map(function (r) {
+      return { reader: teamName[r.readerTeam] || r.readerTeam, target: teamName[r.targetTeam] || r.targetTeam,
+               layer: Number(r.layer) || 1, week: Number(r.week), readerLayer: Number(r.readerLayer) || 1,
+               readerStay: Number(r.readerStay) || 1, recentlyRejected: String(r.recentlyRejected) === 'Y' };
+    });
+    var teams = readTable_('Teams').map(function (t) {
+      return { id: t.teamId, name: t.name, layer: Number(t.layer) || 1,
+               weeks: Math.max(1, unlockedThrough - (Number(t.enteredWeek) || 1) + 1),
+               passed: jparse_(t.passed, []) };
+    });
+
+    return ok_({
+      unlockedThrough: unlockedThrough, nextUnlock: unlockedThrough + every, week: courseWeek,
+      locked: false, unlockEvery: every, subLog: subLog, revLog: revLog, readLog: readLog, teams: teams,
+      assigned: readTable_('Tasks').length,
+      codes: codesOf_(u.coder || 'C1')
+    });
+  } catch (e) { return err_(e); }
+}
+
+function codesOf_(coder) {
+  var m = {};
+  readTable_('Codes').forEach(function (c) {
+    if (String(c.coder) === String(coder)) m[String(c.revId)] = c.code;
+  });
+  return m;
+}
+
+function apiSaveCode(token, revId, code) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'researcher') return err_('只有研究者可以編碼。');
+    upsert_('Codes', ['revId', 'coder'], { revId: revId, coder: u.coder || 'C1', code: code, ts: new Date() });
+    return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/**
+ * 匯出。後端強制匿名：隊名換成 G1…Gn，永遠不輸出姓名、帳號、組員名單、隊名原文、附件檔名。
+ * fullText＝是否連自由文本原文（學生的交付內容、關卡三格、期末回顧）一起帶出來。
+ * 這是研究者自己的選擇，畫面上會標示選了哪一種。
+ */
+function apiExportCsv(token, kinds, fullText) {
+  try {
+    var slice = apiResearchSlice(token);
+    if (!slice.ok) return slice;
+    kinds = kinds || [];
+    var FT = !!fullText;
+
+    var alias = {}, seq = 0;
+    var anon = function (g) { if (!g) return ''; if (!alias[g]) alias[g] = 'G' + (++seq); return alias[g]; };
+    var body = function (s) { return FT ? String(s || '') : ''; };
+    var esc = function (v) {
+      var s = (v === undefined || v === null) ? '' : String(v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    var block = function (title, head, rows) {
+      return '# ' + title + '\n' + head.join(',') + '\n' +
+        rows.map(function (r) { return head.map(function (k) { return esc(r[k]); }).join(','); }).join('\n') + '\n\n';
+    };
+
+    var out = '# 逐層掘進 · 事件記錄匯出\n';
+    out += '# 已強制匿名：隊名以 G1…Gn 取代。永遠移除：學生姓名、帳號、組員名單、隊名原文、附件檔名、教師身分（一律記為 T1）\n';
+    out += FT
+      ? '# 自由文本：本次含原文（學生的交付內容、關卡三格、期末回顧）。內文可能出現人名，請依知情同意書處理。\n'
+      : '# 自由文本：本次不含原文，只輸出字數與結構欄位。老師的合格考量一律輸出（那是研究對象本身）。\n';
+    out += '# 延遲揭露：僅含第 1–' + slice.unlockedThrough + ' 週\n\n';
+
+    if (kinds.indexOf('review') >= 0) {
+      out += block('審核事件 reviews', ['revId', 'group', 'layer', 'week', 'result', 'hasReason', 'reasonLen', 'reasonText', 'latencyHours'],
+        slice.revLog.map(function (r) {
+          return { revId: r.id, group: anon(r.group), layer: r.layer, week: r.week, result: r.result,
+                   hasReason: r.hasReason ? 1 : 0, reasonLen: r.len, reasonText: r.reason, latencyHours: r.latency };
+        }));
+    }
+    if (kinds.indexOf('submit') >= 0) {
+      out += block('提交事件 submissions',
+        ['taskId', 'group', 'week', 'dueWeek', 'overdue', 'textLen', 'files', 'attempt',
+         'selfEffort', 'selfEffortNote', 'hasBlocker', 'blockerText', 'submissionText'],
+        slice.subLog.map(function (x) {
+          return { taskId: x.taskId, group: anon(x.group), week: x.week, dueWeek: x.dueWeek,
+                   overdue: x.overdue ? 1 : 0, textLen: x.len, files: x.files, attempt: x.attempt,
+                   selfEffort: x.effort, selfEffortNote: x.effortNote,
+                   hasBlocker: x.hasBlocker ? 1 : 0, blockerText: x.blocker,
+                   submissionText: body(x.text) };
+        }));
+    }
+
+    /* 老師開的任務內容：他寫給全班的那些字 */
+    if (kinds.indexOf('tasks') >= 0) {
+      out += block('任務內容 tasks（老師寫的）',
+        ['taskId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral'],
+        readTable_('Tasks').map(function (t) {
+          return { taskId: t.taskId, layer: t.layer, type: t.type, title: t.title,
+                   cond: t.cond, note: t.note, spec: t.spec, due: t.due, mineral: t.mineral };
+        }));
+    }
+
+    /* 關卡三格：學生一層寫一次的反思，加上老師的審核理由 */
+    if (kinds.indexOf('gate') >= 0) {
+      var vis2 = function (w) { return Number(w) <= slice.unlockedThrough; };
+      var tn = {};
+      readTable_('Teams').forEach(function (t) { tn[t.teamId] = t.name; });
+      out += block('關卡送審與審核 gates',
+        ['group', 'layer', 'week', 'verdict', 'teacherReason',
+         'q1_做了什麼', 'q2_有什麼變化', 'q3_接下來要做什麼'],
+        readTable_('Passes').filter(function (p) { return vis2(p.week); }).map(function (p) {
+          return { group: anon(tn[p.teamId] || p.teamId), layer: p.layer, week: p.week,
+                   verdict: p.verdict, teacherReason: p.reason,
+                   'q1_做了什麼': body(p.gateCell1), 'q2_有什麼變化': body(p.gateCell2),
+                   'q3_接下來要做什麼': body(p.gateCell3) };
+        }));
+    }
+
+    /* 期末回顧：整學期的最後檢討 */
+    if (kinds.indexOf('finale') >= 0) {
+      var tn2 = {};
+      readTable_('Teams').forEach(function (t) { tn2[t.teamId] = t.name; });
+      out += block('期末回顧 finales',
+        ['group', 'opened_by_teacher', 'teacher_words', 'submitted', 'lightName',
+         'q1_最大的誤判', 'q2_會改變哪一層', 'q3_怎麼估時間'],
+        readTable_('Finales').map(function (f) {
+          return { group: anon(tn2[f.teamId] || f.teamId),
+                   opened_by_teacher: String(f.opened) === 'Y' ? 1 : 0, teacher_words: f.openWords || '',
+                   submitted: String(f.submitted) === 'Y' ? 1 : 0,
+                   lightName: body(f.lightName), 'q1_最大的誤判': body(f.q1),
+                   'q2_會改變哪一層': body(f.q2), 'q3_怎麼估時間': body(f.q3) };
+        }));
+    }
+    if (kinds.indexOf('read') >= 0) {
+      out += block('他組紀錄閱讀 reads', ['reader', 'target', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected'],
+        slice.readLog.map(function (r) {
+          return { reader: anon(r.reader), target: anon(r.target), layer: r.layer, week: r.week,
+                   readerLayer: r.readerLayer, readerStay: r.readerStay, recentlyRejected: r.recentlyRejected ? 1 : 0 };
+        }));
+    }
+    if (kinds.indexOf('stay') >= 0) {
+      out += block('停留狀態 stay', ['group', 'layer', 'stayWeeks', 'passedLayers'],
+        slice.teams.map(function (t) {
+          return { group: anon(t.name), layer: t.layer, stayWeeks: t.weeks, passedLayers: (t.passed || []).length };
+        }));
+    }
+    return ok_({ csv: out });
+  } catch (e) { return err_(e); }
+}
+
+function apiExportToDrive(token, kinds, fullText) {
+  try {
+    var r = apiExportCsv(token, kinds, fullText);
+    if (!r.ok) return r;
+    var name = '逐層掘進_事件記錄_' +
+      Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd_HHmmss') + '.csv';
+    var file = DriveApp.createFile(name, '﻿' + r.csv, MimeType.CSV);
+    return ok_({ name: name, url: file.getUrl() });
+  } catch (e) { return err_(e); }
+}
+
+/* ================= 安裝 ================= */
+
+/** 第一次部署前在編輯器裡執行一次：建立全部工作表與繳交檔案的資料夾。 */
+function setup() {
+  Object.keys(SHEET_DEFS).forEach(function (n) {
+    var sh = sheet_(n), head = SHEET_DEFS[n];
+    /* 舊版升級：欄位有變動時把表頭補齊 */
+    var cur = sh.getLastColumn() ? sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0] : [];
+    if (cur.join('') !== head.join('')) {
+      sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
+    }
+  });
+  var s = ss_();
+  var d = s.getSheetByName('工作表1') || s.getSheetByName('Sheet1');
+  if (d && s.getSheets().length > 1) s.deleteSheet(d);
+  if (!cfg_('courseStart', '')) setCfg_('courseStart', '2026-09-14');
+  if (!cfg_('appName', '')) setCfg_('appName', APP_TITLE);
+  return { sheet: s.getUrl(), folder: rootFolder_().getUrl() };
+}
+
+/** 清空全部課堂資料（保留帳號）。 */
+/** 輪詢用：資料有沒有動過。比整包 bootstrap 便宜非常多。 */
+function apiPing(token) {
+  try {
+    auth_(token);
+    var c = cache_();
+    if (!c) return ok_({ rev: String(Date.now()) });   /* 沒快取就永遠當作有變 */
+    var r = c.get('rev');
+    if (!r) { r = String(Date.now()) + ':' + Math.random(); try { c.put('rev', r, 21600); } catch (e) {} }
+    return ok_({ rev: r });
+  } catch (e) { return err_(e); }
+}
+
+function resetClassData() {
+  ['Tasks', 'TeamTasks', 'Submissions', 'Reviews', 'Plans', 'Passes', 'Reads', 'Codes']
+    .forEach(function (n) { writeTable_(n, []); });
+  resetTableCache_();
+  return { ok: true };
+}

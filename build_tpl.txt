@@ -1,0 +1,1903 @@
+
+<div style="min-height:100vh;background:#0B0A09;background-image:radial-gradient(1100px 560px at 50% -12%,rgba(233,179,65,.07),transparent 70%);font-family:'C11';color:#E8E2D6;padding:0 0 56px;{{ uiVars }}">
+
+  <div style="position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:12px 22px;background:rgba(11,10,9,.93);backdrop-filter:blur(10px);border-bottom:1px solid #26211C">
+    <div style="display:flex;align-items:baseline;gap:9px">
+      <span style="font:700 22px/1 'C11';letter-spacing:.14em">逐層掘進</span>
+      <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#8A8073">FLOW PROTOTYPE</span>
+    </div>
+    <div style="display:flex;border:1px solid #2E2822">
+      <button onClick="{{ setStudent }}" style="{{ roleStuStyle }}">學生端</button>
+      <button onClick="{{ setTeacher }}" style="{{ roleTeaStyle }}">老師端</button>
+      <button onClick="{{ setResearcher }}" style="{{ roleResStyle }}">研究者端</button>
+    </div>
+    <div style="display:flex;border:1px solid #2E2822">
+      <button onClick="{{ setDesktop }}" style="{{ devDeskStyle }}">桌機</button>
+      <button onClick="{{ setMobile }}" style="{{ devMobStyle }}">手機</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+      <span style="font:600 11px/1 'C11';letter-spacing:.12em;color:#E9B341;padding:5px 9px;background:rgba(233,179,65,.1)">{{ screenCode }}</span>
+      <span style="font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;white-space:nowrap">{{ screenName }}</span>
+      <button onClick="{{ tickWeek }}" style="font:500 11px/1 'C11';letter-spacing:.1em;color:#E9B341;background:rgba(233,179,65,.1);border:1px solid #5A4A2C;padding:7px 10px;cursor:pointer;white-space:nowrap">＋1 週</button>
+      <button onClick="{{ unlockAll }}" style="{{ unlockStyle }}">全開</button>
+      <button onClick="{{ reset }}" style="margin-left:6px;font:500 11px/1 'C11';letter-spacing:.1em;color:#8A8073;background:none;border:1px solid #2E2822;padding:7px 10px;cursor:pointer;white-space:nowrap">重置</button>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:center;padding:26px 20px 0">
+    <div style="position:relative;width:100%;max-width:{{ stageW }};height:{{ stageH }};background:#100E0C;border:1px solid #2E2822;box-shadow:0 30px 90px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column;border-radius:{{ stageRadius }}">
+
+      <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px 6px;font:500 22px/1 'C11';color:#E8E2D6;flex:none">
+          <span>09:41</span>
+          <span style="width:17px;height:9px;border:1px solid #8A8073;border-radius:2px;display:inline-block"></span>
+        </div>
+      </sc-if>
+
+      <div style="flex:1;min-height:0;display:flex;flex-direction:{{ appDir }};{{ uiVars }}">
+
+        <sc-if value="{{ showSideNav }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:none;width:264px;border-right:1px solid #221E19;background:#0E0C0A;display:flex;flex-direction:column;padding:20px 0">
+            <div style="padding:0 18px 16px">
+              <div style="font:400 11px/1 'C11';letter-spacing:.24em;color:#5F574C;margin-bottom:7px">{{ navRoleTag }}</div>
+              <div style="font:700 22px/1.6 'C11'">{{ navName }}</div>
+              <div style="font:400 22px/1.5 'C11';color:#8A8073;margin-top:4px">{{ navSub }}</div>
+              <sc-if value="{{ isTeacher }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ toggleKlass }}" style="margin-top:10px;width:100%;display:flex;align-items:center;gap:7px;padding:8px 10px;background:rgba(233,179,65,.06);border:1px solid #2E2822;color:#C3BAAA;font:400 11px/1 'C11';letter-spacing:.1em;cursor:pointer;text-align:left">
+                  <span style="flex:1">{{ klassTerm }}</span><span style="color:#E9B341">切換班級</span>
+                </button>
+                <sc-if value="{{ klassOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:5px;margin-top:6px">
+                    <sc-for list="{{ klassOptions }}" as="k" hint-placeholder-count="3">
+                      <button onClick="{{ k.pick }}" style="{{ k.style }}">
+                        <span style="display:block;font:500 22px/1.3 'C11'">{{ k.name }}</span>
+                        <span style="display:block;font:400 11px/1.5 'C11';color:#8A8073;margin-top:4px">{{ k.sub }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:1px;padding:0 10px">
+              <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="5">
+                <button onClick="{{ it.go }}" style="{{ it.style }}"><span style="{{ it.iconStyle }}"></span><span style="font:500 11px/1 'C11';letter-spacing:.08em;opacity:.5;width:34px;flex:none;text-align:left;white-space:nowrap">{{ it.code }}</span><span style="font:500 22px/1 'C11';flex:1;text-align:left">{{ it.label }}</span><span style="{{ it.dotStyle }}">{{ it.badge }}</span></button>
+              </sc-for>
+            </div>
+            <div style="margin-top:auto;padding:16px 18px 0;border-top:1px solid #1C1915">
+              <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C;margin-bottom:10px">{{ gaugeTitle }}</div>
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <sc-for list="{{ gauge }}" as="g" hint-placeholder-count="5">
+                  <div style="{{ g.style }}"><span style="font:500 11px/1 'C11';opacity:.55">{{ g.n }}</span><span style="font:500 11px/1 'C11';letter-spacing:.05em;flex:1">{{ g.name }}</span><span style="font:400 11px/1 'C11';opacity:.6">{{ g.tail }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="flex:1;min-width:0;min-height:0;overflow-y:auto;position:relative">
+
+          <sc-if value="{{ showIdBar }}" hint-placeholder-val="{{ false }}">
+            <div style="position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px var(--pad);background:rgba(11,10,9,.94);border-bottom:1px solid #221E19">
+              <span style="{{ idRoleStyle }}">{{ idRole }}</span>
+              <span style="display:block;width:20px;height:20px;flex:none;background:url({{ idIcon }}) center/contain no-repeat;image-rendering:pixelated"></span>
+              <span style="font:500 22px/1.3 'C11';color:#E8E2D6">{{ idName }}</span>
+              <span style="flex:1"></span>
+              <span style="font:400 11px/1 'C11';color:#8A8073;text-align:right">{{ idMeta }}</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scC01 }}" hint-placeholder-val="{{ true }}">
+            <div data-screen-label="C-01 啟動頁" style="height:100%;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:radial-gradient(680px 420px at 50% 120%,rgba(233,179,65,.17),transparent 72%),#0B0A09;position:relative">
+              <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>
+              <div style="font:400 11px/1 'C11';letter-spacing:.42em;color:#8A8073;margin-bottom:26px">ZHU CENG JUE JIN</div>
+              <span style="display:block;width:84px;height:84px;margin:0 auto 22px;background:url(assets/jlz/tool-compass.png) center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 0 22px rgba(233,179,65,.4))"></span>
+              <div style="font:700 44px/1.2 'C11';letter-spacing:.2em;text-indent:.2em;color:#F2E6C8;text-align:center;text-shadow:0 0 26px rgba(233,179,65,.35)">逐層掘進</div>
+              <div style="width:56px;height:1px;background:#E9B341;margin:var(--pad) 0;opacity:.5"></div>
+              <button onClick="{{ goLogin }}" style="margin-top:8px;font:500 22px/1 'C11';letter-spacing:.28em;text-indent:.28em;color:#0B0A09;background:#E9B341;border:none;padding:15px 40px;cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">出　發</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scC02 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="C-02 登入與身分" style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:34px var(--pad)">
+              <div style="width:100%;max-width:400px">
+                <div style="font:400 11px/1 'C11';letter-spacing:.3em;color:#5F574C">C-02 · IDENTIFY</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:12px 0 24px;letter-spacing:.03em">你是</h1>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:22px">
+                  <button onClick="{{ pickStudent }}" style="{{ pickStuStyle }}">
+                    <span style="display:block;width:56px;height:56px;margin:0 auto 10px;background:url(assets/jlz/role-student.png) center/contain no-repeat;image-rendering:pixelated"></span>
+                    <span style="font:700 33px/1.2 'C11';display:block;text-align:center">學生</span>
+                  </button>
+                  <button onClick="{{ pickTeacher }}" style="{{ pickTeaStyle }}">
+                    <span style="display:block;width:56px;height:56px;margin:0 auto 10px;background:url(assets/jlz/role-teacher.png) center/contain no-repeat;image-rendering:pixelated"></span>
+                    <span style="font:700 33px/1.2 'C11';display:block;text-align:center">老師</span>
+                  </button>
+                  <button onClick="{{ pickResearcher }}" style="{{ pickResStyle }}">
+                    <span style="display:block;width:56px;height:56px;margin:0 auto 10px;background:repeating-linear-gradient(135deg,#2A2E33 0 4px,#1E2024 4px 8px);filter:grayscale(1)"></span>
+                    <span style="font:700 33px/1.2 'C11';display:block;text-align:center;color:#B4B6BE">研究者</span>
+                    <span style="display:block;font:400 11px/1.4 'C11';color:#5F574C;text-align:center;margin-top:6px">唯讀</span>
+                  </button>
+                </div>
+                <button onClick="{{ goAuth }}" style="width:100%;font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:#0B0A09;background:#E9B341;border:none;padding:15px;cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">下一步</button>
+                <button onClick="{{ goStart }}" style="width:100%;margin-top:9px;font:400 22px/1 'C11';color:#6E665A;background:none;border:none;padding:8px;cursor:pointer">回啟動頁</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scC03 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="C-03 登入" style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:34px var(--pad)">
+              <div style="width:100%;max-width:400px">
+                <div style="font:400 11px/1 'C11';letter-spacing:.3em;color:#5F574C">C-03 · SIGN IN</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:12px 0 22px;letter-spacing:.03em">{{ authTitle }}</h1>
+                <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+                  <div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C;margin-bottom:8px">帳號</div>
+                    <input value="{{ acct }}" onChange="{{ setAcct }}" placeholder="學號或教師編號" style="width:100%;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.4 'C11';outline:none">
+                  </div>
+                  <div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C;margin-bottom:8px">密碼</div>
+                    <input type="password" value="{{ pw }}" onChange="{{ setPw }}" placeholder="••••••••" style="width:100%;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.4 'C11';outline:none">
+                  </div>
+                </div>
+                <sc-if value="{{ authIsStudent }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ toggleFirst }}" style="{{ firstToggleStyle }}"><span style="{{ firstBoxStyle }}">{{ firstMark }}</span><span style="font:400 22px/1.4 'C11';text-align:left">這是我第一次登入</span></button>
+                </sc-if>
+                <button onClick="{{ doLogin }}" style="width:100%;margin-top:18px;font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:#0B0A09;background:#E9B341;border:none;padding:15px;cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">登入</button>
+                <button onClick="{{ goIdentity }}" style="width:100%;margin-top:9px;font:400 22px/1 'C11';color:#6E665A;background:none;border:none;padding:8px;cursor:pointer">回上一步</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scC04 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="C-04 建立小隊" style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:34px var(--pad)">
+              <div style="width:100%;max-width:440px">
+                <div style="font:400 11px/1 'C11';letter-spacing:.3em;color:#5F574C">C-04 · NEW TEAM</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:12px 0 6px;letter-spacing:.03em">建立你的小隊</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0 0 22px;text-wrap:pretty">隊名和成員之後都可以再改。</p>
+                <div style="margin-bottom:20px">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C;margin-bottom:8px">小隊名稱</div>
+                  <input value="{{ teamName }}" onChange="{{ setTeamName }}" placeholder="例：挖到再說" style="width:100%;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.4 'C11';outline:none">
+                </div>
+                <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C;margin-bottom:8px">組員</div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:11px">
+                  <sc-for list="{{ memberRows }}" as="m" hint-placeholder-count="3">
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <span style="font:400 11px/1 'C11';color:#5F574C;width:22px;flex:none">{{ m.n }}</span>
+                      <input value="{{ m.value }}" onChange="{{ m.set }}" placeholder="姓名" style="flex:1;min-width:0;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.4 'C11';outline:none">
+                      <button onClick="{{ m.remove }}" style="font:400 22px/1 'C11';color:#6E665A;background:none;border:1px solid #2E2822;padding:11px 13px;cursor:pointer;flex:none;white-space:nowrap">移除</button>
+                    </div>
+                  </sc-for>
+                </div>
+                <button onClick="{{ addMember }}" style="font:400 22px/1 'C11';color:#E9B341;background:none;border:1px dashed #5A4A2C;padding:11px 15px;cursor:pointer;width:100%">＋ 新增組員</button>
+                <button onClick="{{ finishTeam }}" style="width:100%;margin-top:20px;font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:#0B0A09;background:#E9B341;border:none;padding:15px;cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">建立小隊</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scStory }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="故事說明" style="min-height:100%;display:flex;flex-direction:column;position:relative">
+              <div style="position:absolute;inset:0;background:radial-gradient(620px 400px at 50% 108%,rgba(233,179,65,.13),transparent 70%);pointer-events:none"></div>
+              <div style="position:relative;display:flex;align-items:center;justify-content:space-between;padding:18px var(--pad);flex:none">
+                <div style="display:flex;gap:5px;align-items:center">
+                  <sc-for list="{{ storyDots }}" as="d" hint-placeholder-count="7">
+                    <span style="{{ d.style }}"></span>
+                  </sc-for>
+                </div>
+                <button onClick="{{ skipStory }}" style="font:400 22px/1 'C11';color:#6E665A;background:none;border:1px solid #26211C;padding:9px 14px;cursor:pointer;white-space:nowrap">跳過故事</button>
+              </div>
+              <div style="position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px 30px 24px;max-width:640px;margin:0 auto;width:100%">
+                <sc-if value="{{ storyArtLetter }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-bottom:22px;display:flex;justify-content:center">
+                    <svg viewBox="0 0 320 150" width="320" height="150" shape-rendering="crispEdges" style="max-width:100%;height:auto">
+                      <rect x="0" y="0" width="320" height="150" fill="#0E0C0A"></rect>
+                      <rect x="24" y="36" width="136" height="88" fill="#2A241C"></rect>
+                      <rect x="32" y="44" width="120" height="72" fill="#C3BAAA"></rect>
+                      <polygon points="32,44 152,44 92,92" fill="#8A8073"></polygon>
+                      <polygon points="32,44 152,44 92,92" fill="none" stroke="#5F574C" stroke-width="4"></polygon>
+                      <rect x="84" y="84" width="16" height="16" fill="#E9B341"></rect>
+                      <rect x="176" y="30" width="120" height="96" fill="#1A1611"></rect>
+                      <rect x="184" y="38" width="104" height="80" fill="#14110E"></rect>
+                      <rect x="184" y="38" width="104" height="80" fill="none" stroke="#3A3026" stroke-width="4"></rect>
+                      <rect x="192" y="62" width="88" height="4" fill="#3A3026"></rect>
+                      <rect x="192" y="86" width="56" height="4" fill="#3A3026"></rect>
+                      <rect x="240" y="94" width="8" height="8" fill="#E9B341"></rect>
+                      <rect x="248" y="86" width="8" height="8" fill="#E9B341"></rect>
+                      <rect x="240" y="86" width="8" height="8" fill="#0E0C0A"></rect>
+                      <rect x="248" y="94" width="8" height="8" fill="#0E0C0A"></rect>
+                    </svg>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ storyArtDepart }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-bottom:22px;display:flex;justify-content:center">
+                    <svg viewBox="0 0 320 150" width="320" height="150" shape-rendering="crispEdges" style="max-width:100%;height:auto">
+                      <rect x="0" y="0" width="320" height="150" fill="#0E0C0A"></rect>
+                      <rect x="0" y="104" width="320" height="46" fill="#1A1611"></rect>
+                      <rect x="0" y="104" width="320" height="4" fill="#3A3026"></rect>
+                      <rect x="212" y="108" width="72" height="42" fill="#0B0A09"></rect>
+                      <rect x="212" y="108" width="72" height="4" fill="#5F574C"></rect>
+                      <rect x="228" y="128" width="40" height="22" fill="#2A1F10"></rect>
+                      <rect x="240" y="138" width="16" height="12" fill="#E9B341" opacity=".55"></rect>
+                      <rect x="40" y="76" width="10" height="12" fill="#C3BAAA"></rect>
+                      <rect x="38" y="88" width="14" height="16" fill="#8A8073"></rect>
+                      <rect x="70" y="80" width="10" height="10" fill="#C3BAAA"></rect>
+                      <rect x="68" y="90" width="14" height="14" fill="#8A8073"></rect>
+                      <rect x="100" y="74" width="10" height="12" fill="#C3BAAA"></rect>
+                      <rect x="98" y="86" width="14" height="18" fill="#8A8073"></rect>
+                      <rect x="130" y="80" width="10" height="10" fill="#E9B341"></rect>
+                      <rect x="128" y="90" width="14" height="14" fill="#C69C4E"></rect>
+                      <rect x="146" y="70" width="4" height="34" fill="#5F574C"></rect>
+                      <rect x="142" y="66" width="12" height="6" fill="#8A8073"></rect>
+                      <rect x="26" y="26" width="6" height="6" fill="#3A3026"></rect>
+                      <rect x="96" y="18" width="6" height="6" fill="#3A3026"></rect>
+                      <rect x="188" y="30" width="6" height="6" fill="#3A3026"></rect>
+                      <rect x="266" y="20" width="6" height="6" fill="#3A3026"></rect>
+                    </svg>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ storyArtCloak }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-bottom:22px;display:flex;justify-content:center">
+                    <svg viewBox="0 0 320 150" width="320" height="150" shape-rendering="crispEdges" style="max-width:100%;height:auto">
+                      <rect x="0" y="0" width="320" height="150" fill="#0E0C0A"></rect>
+                      <rect x="0" y="96" width="320" height="54" fill="#1A1611"></rect>
+                      <rect x="0" y="96" width="320" height="4" fill="#3A3026"></rect>
+                      <rect x="0" y="132" width="320" height="18" fill="#241C10"></rect>
+                      <rect x="24" y="138" width="32" height="6" fill="#E9B341" opacity=".3"></rect>
+                      <rect x="120" y="142" width="48" height="6" fill="#E9B341" opacity=".3"></rect>
+                      <rect x="242" y="136" width="40" height="6" fill="#E9B341" opacity=".3"></rect>
+                      <polygon points="140,96 132,52 156,40 180,52 172,96" fill="#2A241C"></polygon>
+                      <polygon points="146,52 156,44 166,52 164,66 148,66" fill="#0B0A09"></polygon>
+                      <rect x="148" y="56" width="6" height="4" fill="#E9B341"></rect>
+                      <rect x="160" y="56" width="6" height="4" fill="#E9B341"></rect>
+                      <rect x="132" y="94" width="48" height="4" fill="#3A3026"></rect>
+                      <rect x="196" y="62" width="6" height="34" fill="#5F574C"></rect>
+                      <rect x="190" y="58" width="18" height="6" fill="#8A8073"></rect>
+                      <rect x="72" y="70" width="12" height="14" fill="#C3BAAA"></rect>
+                      <rect x="70" y="84" width="16" height="12" fill="#8A8073"></rect>
+                    </svg>
+                  </div>
+                </sc-if>
+                <div style="font:400 11px/1 'C11';letter-spacing:.3em;color:#5F574C;margin-bottom:14px">{{ storyKicker }}</div>
+                <sc-if value="{{ storyHasTitle }}" hint-placeholder-val="{{ true }}">
+                  <h2 style="font:700 33px/1.5 'C11';margin:0 0 16px;letter-spacing:.05em;color:#F2EADA">{{ storyTitle }}</h2>
+                </sc-if>
+                <div style="font:400 22px/1.7 'C11';color:#C3BAAA;white-space:pre-line;text-wrap:pretty">{{ storyBody }}</div>
+                <sc-if value="{{ storyHasQuote }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:20px;padding:16px 20px;border-left:2px solid #E9B341;background:rgba(233,179,65,.05);font:400 22px/1.7 'C11';color:#F0DFB4;letter-spacing:.03em;text-wrap:pretty">{{ storyQuote }}</div>
+                </sc-if>
+                <sc-if value="{{ storyHasAfter }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:18px;font:400 22px/1.7 'C11';color:#8A8073;white-space:pre-line;text-wrap:pretty">{{ storyAfter }}</div>
+                </sc-if>
+                <sc-if value="{{ storyHasCards }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(176px,1fr));gap:9px">
+                    <sc-for list="{{ storyCards }}" as="c" hint-placeholder-count="3">
+                      <div style="padding:14px;background:#14110E;border:1px solid #26211C">
+                        <div style="font:500 22px/1.6 'C11';color:#E8E2D6;text-wrap:pretty">{{ c.a }}</div>
+                        <div style="font:400 11px/1.5 'C11';color:#E9B341;margin-top:9px">{{ c.b }}</div>
+                        <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ c.c }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="position:relative;display:flex;gap:10px;justify-content:space-between;align-items:center;padding:0 30px var(--pad);max-width:640px;margin:0 auto;width:100%;flex:none">
+                <button onClick="{{ storyPrev }}" style="{{ storyPrevStyle }}">上一段</button>
+                <button onClick="{{ storyNext }}" style="font:500 22px/1 'C11';letter-spacing:.16em;text-indent:.16em;color:#0B0A09;background:#E9B341;border:none;padding:13px 30px;cursor:pointer;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)">{{ storyNextLabel }}</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scS01 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-01 學生首頁" style="padding:0 0 30px">
+              <div style="position:relative;padding:28px var(--pad) 24px;background:linear-gradient(180deg,rgba(233,179,65,.1),transparent),#0E0C0A;border-bottom:1px solid #221E19;overflow:hidden">
+                <div style="position:absolute;top:-40px;right:-30px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(233,179,65,.17),transparent 65%);animation:pulseGlow 6s ease-in-out infinite"></div>
+                <div style="position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px">
+                  <div style="flex:1;min-width:200px">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#8A8073">DEPTH {{ depthCode }} · 目前所在</div>
+                    <div style="font:900 33px/1.2 'C11';letter-spacing:.08em;margin-top:9px;color:#F2EADA">{{ layerName }}</div>
+                    <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:6px;max-width:400px;text-wrap:pretty">{{ layerHard }}</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">停留週數</div>
+                    <div style="font:700 33px/1 'C11';color:#E9B341;margin-top:6px">{{ weeksHere }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
+                <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
+                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#E9B341"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#E9B341"></div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">必要項</div>
+                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ reqDone }}<span style="font:400 22px/1 'C11';color:#5F574C"> / {{ reqTotal }}</span></div>
+                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">全數通過才能送交關卡審核</div>
+                </div>
+                <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
+                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">延伸項</div>
+                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ extDone }}<span style="font:400 22px/1 'C11';color:#5F574C"> / {{ extTotal }}</span></div>
+                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">決定工具校準到哪一階</div>
+                </div>
+                <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
+                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">已採礦物</div>
+                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ mineralCount }}</div>
+                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">做過什麼的物證，不是分數</div>
+                </div>
+              </div>
+
+              <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:0 var(--pad) 16px;display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="1">
+                    <button onClick="{{ a.go }}" style="{{ a.style }}"><span style="font:500 22px/1.5 'C11';text-align:left">{{ a.text }}</span><span style="font:400 11px/1 'C11';opacity:.7;flex:none">前往 →</span></button>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <div style="padding:0 var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
+                <button onClick="{{ goTasks }}" style="text-align:left;padding:19px;background:linear-gradient(140deg,rgba(233,179,65,.12),transparent 60%),#14110E;border:1px solid #3A3026;cursor:pointer;color:#E8E2D6">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">S-02</div>
+                  <div style="font:700 22px/1.4 'C11';margin-top:9px">這一層的任務清單</div>
+                  <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty">他說了要交什麼。怎麼挖，你說了算。</div>
+                </button>
+                <button onClick="{{ replayStory }}" style="text-align:left;padding:19px;background:#14110E;border:1px solid #26211C;cursor:pointer;color:#E8E2D6">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">S-00</div>
+                  <div style="font:700 22px/1.4 'C11';margin-top:9px">重看開頭故事</div>
+                  <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty">跳過不會少一份資訊，摘要固定在任務頁頂端。</div>
+                </button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scS02 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-02 任務介面" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 18px;border-bottom:1px solid #221E19">
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-02 · TASK LIST</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 0;letter-spacing:.04em">{{ layerName }} · 任務清單</h1>
+              </div>
+
+              <div style="margin:18px var(--pad);padding:17px 19px;background:linear-gradient(140deg,rgba(233,179,65,.09),transparent 65%),#14110E;border:1px solid #3A3026">
+                <div style="font:400 11px/1 'C11';letter-spacing:.2em;color:#E9B341;margin-bottom:12px">常見狀況 · 這一階段容易卡在哪</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:9px">
+                  <sc-for list="{{ briefRows }}" as="b" hint-placeholder-count="3">
+                    <div style="padding:12px 13px;background:rgba(0,0,0,.28);border-left:2px solid #3A3026">
+                      <div style="font:500 22px/1.6 'C11';color:#E8E2D6;text-wrap:pretty">{{ b.what }}</div>
+                      <div style="font:400 22px/1.5 'C11';color:{{ b.toolColor }};margin-top:9px">{{ b.tool }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <sc-if value="{{ noTasksYet }}" hint-placeholder-val="{{ false }}">
+                <div style="margin:0 var(--pad);padding:38px 22px;border:1px dashed #2E2822;text-align:center">
+                  <div style="font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty">他還沒把清單拿出來。這一層要交什麼，等他開口。</div>
+                  <div style="font:400 11px/1 'C11';color:#5F574C;margin-top:14px">切到老師端 T-05 發派後，這裡會出現項目</div>
+                </div>
+              </sc-if>
+
+              <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:24px">
+                <sc-for list="{{ taskGroups }}" as="g" hint-placeholder-count="2">
+                  <div>
+                    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:11px;flex-wrap:wrap">
+                      <span style="{{ g.tagStyle }}">{{ g.tag }}</span>
+                      <span style="font:400 22px/1.5 'C11';color:#8A8073;text-wrap:pretty">{{ g.desc }}</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="3">
+                        <button onClick="{{ t.open }}" style="{{ t.rowStyle }}">
+                          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
+                            <span style="{{ t.chipStyle }}">{{ t.statusLabel }}</span>
+                            <span style="font:700 22px/1.4 'C11';color:#E8E2D6">{{ t.title }}</span>
+                            <span style="{{ t.dueStyle }}">{{ t.dueLabel }}</span>
+                          </div>
+                          <div style="font:400 22px/1.7 'C11';color:#9A9184;margin-top:9px;text-wrap:pretty"><span style="color:#5F574C">通過條件　</span>{{ t.cond }}</div>
+                          <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:2px;text-wrap:pretty"><span style="color:#5F574C">要注意的　</span>{{ t.note }}</div>
+                          <sc-if value="{{ t.hasFeedback }}" hint-placeholder-val="{{ false }}">
+                            <div style="margin-top:11px;padding:10px 12px;background:rgba(0,0,0,.3);border-left:2px solid {{ t.fbColor }}">
+                              <div style="font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C">{{ t.fbLabel }}</div>
+                              <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:6px;text-wrap:pretty">{{ t.feedback }}</div>
+                            </div>
+                          </sc-if>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
+                <div style="margin:24px var(--pad) 0;padding:16px 19px;background:#14110E;border:1px solid #26211C;display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+                  <div style="flex:1;min-width:210px">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">工具校準 · 預估階級</div>
+                    <div style="display:flex;align-items:baseline;gap:11px;margin-top:9px">
+                      <span style="font:700 33px/1 'C11';color:#E9B341">{{ estLevel }}</span>
+                      <span style="font:400 11px/1.6 'C11';color:#8A8073">延伸項 {{ estExt }}</span>
+                    </div>
+                  </div>
+                  <div style="flex:1.4;min-width:230px;font:400 11px/1.7 'C11';color:#8A8073;text-wrap:pretty">階級只看你做了幾項延伸項，不看做得多好。這是系統試算，最後由他在關卡審核時定。</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ hasWaiting }}" hint-placeholder-val="{{ false }}">
+                <div style="margin:12px var(--pad) 0;padding:13px 16px;border-left:2px solid #3A3026;background:rgba(0,0,0,.24);font:400 11px/1.7 'C11';color:#8A8073;text-wrap:pretty">已送出 {{ waitCount }} 項。他的佇列依各組停留週數排序，不是先交先看。等的時候可以繼續交其他項。</div>
+              </sc-if>
+
+              <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
+                <div style="margin:14px var(--pad) 0;padding:19px;background:{{ gateBg }};border:1px solid {{ gateBorder }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between">
+                    <div style="flex:1;min-width:200px">
+                      <div style="font:700 22px/1.4 'C11'">{{ gateTitle }}</div>
+                      <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ gateDesc }}</div>
+                    </div>
+                    <button onClick="{{ goSubmitGate }}" style="{{ gateBtnStyle }}">{{ gateBtn }}</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scS05 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-05 完成任務並給予證明" style="padding:0 0 32px">
+              <div style="padding:20px var(--pad);border-bottom:1px solid #221E19;display:flex;align-items:center;gap:13px">
+                <button onClick="{{ goTasks }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #26211C;padding:8px 12px;cursor:pointer">←</button>
+                <div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-05 · SUBMIT ITEM</div>
+                  <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ openTaskTitle }}</h1>
+                </div>
+              </div>
+              <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:17px;max-width:640px">
+                <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C">
+                  <div style="font:400 22px/1.7 'C11';color:#9A9184;text-wrap:pretty"><span style="color:#5F574C">通過條件　</span>{{ openTaskCond }}</div>
+                  <div style="font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty"><span style="color:#5F574C">要注意的　</span>{{ openTaskNote }}</div>
+                </div>
+                <sc-if value="{{ openTaskHasFeedback }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:14px 16px;background:rgba(217,96,63,.07);border-left:2px solid #D9603F">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.14em;color:#D9603F">需補充 · 他的理由</div>
+                    <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:7px;text-wrap:pretty">{{ openTaskFeedback }}</div>
+                    <div style="font:400 11px/1 'C11';color:#5F574C;margin-top:9px">重新提交次數不限</div>
+                  </div>
+                </sc-if>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">做到什麼程度</div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">寫程度，不是寫「有做」。</div>
+                  <textarea onChange="{{ setSubmitText }}" value="{{ submitText }}" placeholder="例：訪談三位大三生之後，把題目收斂成「畢製組隊後的分工失衡」，範圍縮到系上，排除跨校比較。" style="width:100%;min-height:108px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                </div>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:9px">證據</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px">
+                    <sc-for list="{{ evidence }}" as="e" hint-placeholder-count="2">
+                      <span style="display:inline-flex;align-items:center;gap:8px;padding:8px 11px;background:#14110E;border:1px solid #2E2822;font:400 22px/1 'C11';color:#C3BAAA">{{ e.name }}<button onClick="{{ e.remove }}" style="background:none;border:none;color:#6E665A;cursor:pointer;font:400 22px/1 'C11';padding:0">×</button></span>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:7px">
+                    <sc-for list="{{ evidenceAdders }}" as="a" hint-placeholder-count="4">
+                      <button onClick="{{ a.add }}" style="padding:9px 13px;background:none;border:1px dashed #3A3026;color:#8A8073;font:400 22px/1 'C11';cursor:pointer">＋ {{ a.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:4px">
+                  <button onClick="{{ submitTask }}" style="{{ submitBtnStyle }}">{{ submitBtnLabel }}</button>
+                  <button onClick="{{ goTasks }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #2E2822;padding:14px 20px;cursor:pointer">先回清單</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scSUB }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="關卡送審三格" style="padding:0 0 32px">
+              <div style="padding:20px var(--pad);border-bottom:1px solid #221E19;display:flex;align-items:center;gap:13px">
+                <button onClick="{{ goTasks }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #26211C;padding:8px 12px;cursor:pointer">←</button>
+                <div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">GATE · 送審三格</div>
+                  <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ layerName }} · 關卡送審</h1>
+                </div>
+              </div>
+              <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:19px;max-width:660px">
+                <div style="display:flex;flex-wrap:wrap;gap:22px;padding:14px 16px;background:#14110E;border:1px solid #26211C">
+                  <div><div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">剩餘週數</div><div style="font:700 33px/1.2 'C11';color:#E9B341;margin-top:5px">{{ weeksLeft }}</div></div>
+                  <div><div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">未完成必要項</div><div style="font:700 33px/1.2 'C11';margin-top:5px">{{ reqLeft }}</div></div>
+                  <div><div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">延伸已通過</div><div style="font:700 33px/1.2 'C11';margin-top:5px">{{ extDone }}</div></div>
+                </div>
+                <sc-for list="{{ gateFields }}" as="f" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:5px">
+                      <span style="font:600 11px/1 'C11';color:#0B0A09;background:#E9B341;padding:5px 8px">{{ f.n }}</span>
+                      <span style="font:700 22px/1.4 'C11'">{{ f.q }}</span>
+                    </div>
+                    <div style="font:400 22px/1.6 'C11';color:#6E665A;margin-bottom:9px;text-wrap:pretty">{{ f.hint }}</div>
+                    <textarea onChange="{{ f.set }}" value="{{ f.value }}" placeholder="{{ f.ph }}" style="width:100%;min-height:94px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                  </div>
+                </sc-for>
+                <div>
+                  <button onClick="{{ submitGate }}" style="font:500 22px/1 'C11';letter-spacing:.16em;text-indent:.16em;color:#0B0A09;background:#E9B341;border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">送出關卡審核</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scMap }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-03 迷霧地圖與圖鑑" style="padding:0 0 32px;background:linear-gradient(180deg,#181410 0%,#0D0B08 26%,#060505 62%,#020202 100%)">
+              <sc-if value="{{ vBoard }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:22px var(--pad) 16px">
+                <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+                    <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
+                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  </div>
+                </sc-if>
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">{{ mapKicker }}</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">{{ mapTitle }}</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:460px;text-wrap:pretty">{{ mapLede }}</p>
+                <sc-if value="{{ showSteps }}" hint-placeholder-val="{{ true }}">
+                <div style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:14px;padding:8px 12px;background:rgba(233,179,65,.07);border:1px solid #3A3026">
+                  <span style="font:400 11px/1 'C11';letter-spacing:.16em;color:#8A8073;white-space:nowrap">距離地心</span>
+                  <span style="font:700 22px/1 'C11';color:#E9B341;white-space:nowrap">{{ stepsLeft }} 格</span>
+                  <span style="font:400 11px/1 'C11';color:#8A8073;white-space:nowrap">已走 {{ stepsDone }} 格</span>
+                </div>
+                </sc-if>
+              </div>
+              <div style="padding:0 var(--pad)">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:8px">
+                  <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">地表 · 荒原</span>
+                  <span style="flex:1;height:1px;background:#26211C"></span>
+                </div>
+                <div style="position:relative;border:1px solid #26211C;overflow:hidden">
+                <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ mapLayers }}" as="m" hint-placeholder-count="5">
+                  <div style="{{ m.wrapStyle }}">
+                    <button onClick="{{ m.toggle }}" style="{{ m.headStyle }}">
+                      <span style="{{ m.bandStyle }}">
+                        <span style="position:absolute;inset:0;overflow:hidden">
+                          <sc-if value="{{ m.showScene }}" hint-placeholder-val="{{ true }}">
+                          <sc-if value="{{ m.isL1 }}" hint-placeholder-val="{{ false }}">
+                            <svg viewBox="0 0 640 168" preserveAspectRatio="none" shape-rendering="crispEdges" style="position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;max-width:100%">
+                              <rect x="0" y="150" width="640" height="18" fill="#E9B341" opacity=".09"></rect>
+                              <rect x="88" y="132" width="56" height="6" fill="#E9B341" style="animation:seep 3.4s ease-in-out infinite"></rect>
+                              <rect x="300" y="146" width="80" height="6" fill="#E9B341" style="animation:seep 4.2s ease-in-out infinite .8s"></rect>
+                              <rect x="500" y="128" width="48" height="6" fill="#E9B341" style="animation:seep 2.9s ease-in-out infinite 1.6s"></rect>
+                              <rect x="236" y="52" width="4" height="34" fill="#5F574C"></rect>
+                              <rect x="240" y="52" width="22" height="12" fill="#E9B341"></rect>
+                            </svg>
+                          </sc-if>
+                          <sc-if value="{{ m.isL2 }}" hint-placeholder-val="{{ false }}">
+                            <svg viewBox="0 0 640 168" preserveAspectRatio="none" shape-rendering="crispEdges" style="position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;max-width:100%">
+                              <polygon points="104,132 112,98 120,132" fill="#8FE4F0" style="animation:facet 2.6s ease-in-out infinite"></polygon>
+                              <polygon points="264,132 272,90 280,132" fill="#8FE4F0" style="animation:facet 3.3s ease-in-out infinite .7s"></polygon>
+                              <polygon points="446,132 452,106 458,132" fill="#8FE4F0" style="animation:facet 2.2s ease-in-out infinite 1.4s"></polygon>
+                              <polygon points="528,132 538,98 548,132" fill="#6FD3E0" style="animation:facet 3.9s ease-in-out infinite 2.1s"></polygon>
+                            </svg>
+                          </sc-if>
+                          <sc-if value="{{ m.isL3 }}" hint-placeholder-val="{{ false }}">
+                            <svg viewBox="0 0 640 168" preserveAspectRatio="none" shape-rendering="crispEdges" style="position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;max-width:100%">
+                              <rect x="172" y="66" width="8" height="8" fill="#B9AEDC" opacity=".55"></rect>
+                              <rect x="164" y="58" width="24" height="4" fill="#B9AEDC" opacity=".3" style="transform-origin:176px 60px;animation:echo 2.8s linear infinite"></rect>
+                              <rect x="164" y="78" width="24" height="4" fill="#B9AEDC" opacity=".3" style="transform-origin:176px 80px;animation:echo 2.8s linear infinite"></rect>
+                              <rect x="156" y="50" width="40" height="4" fill="#B9AEDC" opacity=".16" style="transform-origin:176px 52px;animation:echo 2.8s linear infinite .5s"></rect>
+                              <rect x="452" y="140" width="8" height="8" fill="#B9AEDC" opacity=".45"></rect>
+                              <rect x="444" y="132" width="24" height="4" fill="#B9AEDC" opacity=".24" style="transform-origin:456px 134px;animation:echo 3.4s linear infinite 1.2s"></rect>
+                            </svg>
+                          </sc-if>
+                          <sc-if value="{{ m.isL4 }}" hint-placeholder-val="{{ false }}">
+                            <svg viewBox="0 0 640 168" preserveAspectRatio="none" shape-rendering="crispEdges" style="position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;max-width:100%">
+                              <rect x="0" y="130" width="640" height="6" fill="#F2A03C" opacity=".75" style="animation:boil 2.4s ease-in-out infinite"></rect>
+                              <rect x="176" y="94" width="10" height="10" fill="#F2A03C" style="animation:ember 3.6s linear infinite"></rect>
+                              <rect x="204" y="72" width="8" height="8" fill="#F2A03C" style="animation:ember 4.4s linear infinite 1.1s"></rect>
+                              <rect x="400" y="80" width="8" height="8" fill="#F2A03C" style="animation:ember 3.9s linear infinite 2.2s"></rect>
+                              <rect x="424" y="56" width="6" height="6" fill="#F2A03C" style="animation:ember 5.1s linear infinite .6s"></rect>
+                              <rect x="300" y="88" width="8" height="8" fill="#F2A03C" style="animation:ember 4.1s linear infinite 3s"></rect>
+                            </svg>
+                          </sc-if>
+                          <sc-if value="{{ m.isL5 }}" hint-placeholder-val="{{ false }}">
+                            <svg viewBox="0 0 640 168" preserveAspectRatio="none" shape-rendering="crispEdges" style="position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;max-width:100%">
+                              <rect x="296" y="62" width="48" height="48" fill="#BEAAFF" style="transform-origin:320px 86px;animation:corepulse 3.2s ease-in-out infinite"></rect>
+                              <rect x="308" y="74" width="24" height="24" fill="#BEAAFF" opacity=".55"></rect>
+                              <rect x="314" y="80" width="12" height="12" fill="#EDE4FF"></rect>
+                              <rect x="288" y="54" width="64" height="4" fill="#BEAAFF" opacity=".28" style="transform-origin:320px 56px;animation:corering 3.2s linear infinite"></rect>
+                              <rect x="288" y="114" width="64" height="4" fill="#BEAAFF" opacity=".28" style="transform-origin:320px 116px;animation:corering 3.2s linear infinite"></rect>
+                            </svg>
+                          </sc-if>
+                          </sc-if>
+                          <span style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,5,4,.94) 0,rgba(6,5,4,.82) 158px,rgba(6,5,4,.26) 282px,rgba(6,5,4,.06) 100%)"></span>
+                          <span style="{{ m.fogStyle }}"></span>
+                        </span>
+                        <span style="position:relative;display:flex;flex-direction:column;justify-content:flex-start;padding:11px 14px 0;width:var(--mcol);flex:none">
+                          <span style="font:600 11px/1 'C11';letter-spacing:.18em;color:#B6AC9C">{{ m.code }}</span>
+                          <span style="{{ m.nameStyle }}">{{ m.nameShown }}</span>
+                          <span style="font:400 11px/1 'C11';color:#9A9184;margin-top:5px">{{ m.depth }}</span>
+                          <span style="{{ m.stateStyle }}">{{ m.state }}</span>
+                        </span>
+                      </span>
+                    </button>
+                  </div>
+                </sc-for>
+                </div>
+
+                <svg viewBox="0 0 640 750" preserveAspectRatio="none" shape-rendering="crispEdges" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+                  <g stroke="#8A8073" stroke-opacity=".32" stroke-width="2">
+                  <rect x="296" y="0" width="48" height="26" fill="#050409"></rect>
+                  <rect x="286" y="26" width="58" height="20" fill="#07060B"></rect>
+                  <rect x="298" y="46" width="42" height="24" fill="#07060B"></rect>
+                  <rect x="290" y="70" width="54" height="20" fill="#07060B"></rect>
+                  <rect x="176" y="96" width="192" height="40" fill="#07060B"></rect>
+                  <rect x="192" y="88" width="122" height="10" fill="#07060B"></rect>
+                  <rect x="166" y="110" width="22" height="26" fill="#07060B"></rect>
+                  <rect x="352" y="104" width="30" height="32" fill="#07060B"></rect>
+                  <rect x="228" y="96" width="10" height="14" fill="#241E18"></rect>
+                  <rect x="300" y="96" width="8" height="10" fill="#241E18"></rect>
+                  <rect x="262" y="128" width="18" height="8" fill="#241E18"></rect>
+                  <rect x="176" y="132" width="206" height="4" fill="#6E665A" opacity=".3"></rect>
+                  <rect x="192" y="136" width="48" height="30" fill="#07060B"></rect>
+                  <rect x="200" y="166" width="40" height="34" fill="#07060B"></rect>
+                  <rect x="186" y="200" width="50" height="38" fill="#07060B"></rect>
+                  <rect x="184" y="246" width="248" height="40" fill="#07060B"></rect>
+                  <rect x="200" y="238" width="162" height="8" fill="#07060B"></rect>
+                  <rect x="430" y="252" width="26" height="30" fill="#07060B"></rect>
+                  <rect x="238" y="246" width="10" height="16" fill="#182428"></rect>
+                  <rect x="330" y="246" width="8" height="12" fill="#182428"></rect>
+                  <rect x="392" y="246" width="10" height="14" fill="#182428"></rect>
+                  <rect x="286" y="278" width="20" height="8" fill="#182428"></rect>
+                  <rect x="184" y="282" width="272" height="4" fill="#6FD3E0" opacity=".22"></rect>
+                  <rect x="384" y="286" width="48" height="32" fill="#07060B"></rect>
+                  <rect x="392" y="318" width="40" height="32" fill="#07060B"></rect>
+                  <rect x="380" y="350" width="50" height="38" fill="#07060B"></rect>
+                  <rect x="232" y="396" width="208" height="40" fill="#07060B"></rect>
+                  <rect x="250" y="388" width="150" height="8" fill="#07060B"></rect>
+                  <rect x="212" y="402" width="22" height="34" fill="#07060B"></rect>
+                  <rect x="276" y="396" width="10" height="16" fill="#1C1826"></rect>
+                  <rect x="362" y="396" width="8" height="12" fill="#1C1826"></rect>
+                  <rect x="318" y="428" width="18" height="8" fill="#1C1826"></rect>
+                  <rect x="212" y="432" width="228" height="4" fill="#B9AEDC" opacity=".2"></rect>
+                  <rect x="240" y="436" width="48" height="32" fill="#07060B"></rect>
+                  <rect x="248" y="468" width="40" height="34" fill="#07060B"></rect>
+                  <rect x="236" y="502" width="50" height="36" fill="#07060B"></rect>
+                  <rect x="232" y="546" width="240" height="40" fill="#07060B"></rect>
+                  <rect x="250" y="538" width="170" height="8" fill="#07060B"></rect>
+                  <rect x="470" y="552" width="24" height="28" fill="#07060B"></rect>
+                  <rect x="288" y="546" width="10" height="14" fill="#2A1A0E"></rect>
+                  <rect x="398" y="546" width="8" height="12" fill="#2A1A0E"></rect>
+                  <rect x="340" y="578" width="20" height="8" fill="#2A1A0E"></rect>
+                  <rect x="232" y="582" width="262" height="4" fill="#F2A03C" opacity=".28"></rect>
+                  <rect x="416" y="586" width="48" height="32" fill="#07060B"></rect>
+                  <rect x="424" y="618" width="40" height="34" fill="#07060B"></rect>
+                  <rect x="412" y="652" width="50" height="36" fill="#07060B"></rect>
+                  <rect x="272" y="696" width="200" height="40" fill="#07060B"></rect>
+                  <rect x="288" y="688" width="152" height="8" fill="#07060B"></rect>
+                  <rect x="316" y="696" width="10" height="14" fill="#1E1A2A"></rect>
+                  <rect x="410" y="696" width="8" height="12" fill="#1E1A2A"></rect>
+                  <rect x="272" y="732" width="200" height="4" fill="#BEAAFF" opacity=".26"></rect>
+                  <rect x="344" y="736" width="48" height="14" fill="#07060B"></rect>
+                  </g>
+                  <rect x="286" y="0" width="4" height="96" fill="#6E665A" opacity=".26"></rect>
+                  <rect x="344" y="0" width="4" height="96" fill="#6E665A" opacity=".26"></rect>
+                  <rect x="176" y="92" width="206" height="4" fill="#6E665A" opacity=".26"></rect>
+                  <rect x="186" y="136" width="4" height="110" fill="#6E665A" opacity=".24"></rect>
+                  <rect x="236" y="136" width="4" height="110" fill="#6E665A" opacity=".24"></rect>
+                  <rect x="184" y="242" width="272" height="4" fill="#6FD3E0" opacity=".2"></rect>
+                  <rect x="380" y="286" width="4" height="110" fill="#6FD3E0" opacity=".18"></rect>
+                  <rect x="428" y="286" width="4" height="110" fill="#6FD3E0" opacity=".18"></rect>
+                  <rect x="212" y="392" width="228" height="4" fill="#B9AEDC" opacity=".18"></rect>
+                  <rect x="236" y="436" width="4" height="110" fill="#B9AEDC" opacity=".16"></rect>
+                  <rect x="284" y="436" width="4" height="110" fill="#B9AEDC" opacity=".16"></rect>
+                  <rect x="232" y="542" width="262" height="4" fill="#F2A03C" opacity=".24"></rect>
+                  <rect x="412" y="586" width="4" height="110" fill="#F2A03C" opacity=".2"></rect>
+                  <rect x="460" y="586" width="4" height="110" fill="#F2A03C" opacity=".2"></rect>
+                  <rect x="272" y="692" width="200" height="4" fill="#BEAAFF" opacity=".24"></rect>
+                  <rect x="344" y="736" width="4" height="14" fill="#BEAAFF" opacity=".2"></rect>
+                  <rect x="388" y="736" width="4" height="14" fill="#BEAAFF" opacity=".2"></rect>
+                  <g fill="rgba(233,179,65,.05)" stroke="#8A8073" stroke-opacity=".4" stroke-width="2">
+                    <rect x="184" y="110" width="24" height="24"></rect><rect x="214" y="110" width="24" height="24"></rect><rect x="244" y="110" width="24" height="24"></rect><rect x="274" y="110" width="24" height="24"></rect><rect x="304" y="110" width="24" height="24"></rect><rect x="334" y="110" width="24" height="24"></rect>
+                    <rect x="200" y="150" width="24" height="24"></rect><rect x="200" y="180" width="24" height="24"></rect><rect x="200" y="210" width="24" height="24"></rect>
+                  </g>
+                  <g fill="rgba(111,211,224,.05)" stroke="#6FD3E0" stroke-opacity=".34" stroke-width="2">
+                    <rect x="192" y="260" width="24" height="24"></rect><rect x="222" y="260" width="24" height="24"></rect><rect x="252" y="260" width="24" height="24"></rect><rect x="282" y="260" width="24" height="24"></rect><rect x="312" y="260" width="24" height="24"></rect><rect x="342" y="260" width="24" height="24"></rect><rect x="372" y="260" width="24" height="24"></rect><rect x="402" y="260" width="24" height="24"></rect>
+                    <rect x="392" y="300" width="24" height="24"></rect><rect x="392" y="330" width="24" height="24"></rect><rect x="392" y="360" width="24" height="24"></rect>
+                  </g>
+                  <g fill="rgba(185,174,220,.05)" stroke="#B9AEDC" stroke-opacity=".32" stroke-width="2">
+                    <rect x="240" y="410" width="24" height="24"></rect><rect x="270" y="410" width="24" height="24"></rect><rect x="300" y="410" width="24" height="24"></rect><rect x="330" y="410" width="24" height="24"></rect><rect x="360" y="410" width="24" height="24"></rect><rect x="390" y="410" width="24" height="24"></rect>
+                    <rect x="248" y="450" width="24" height="24"></rect><rect x="248" y="480" width="24" height="24"></rect><rect x="248" y="510" width="24" height="24"></rect>
+                  </g>
+                  <g fill="rgba(242,160,60,.05)" stroke="#F2A03C" stroke-opacity=".36" stroke-width="2">
+                    <rect x="240" y="560" width="24" height="24"></rect><rect x="270" y="560" width="24" height="24"></rect><rect x="300" y="560" width="24" height="24"></rect><rect x="330" y="560" width="24" height="24"></rect><rect x="360" y="560" width="24" height="24"></rect><rect x="390" y="560" width="24" height="24"></rect><rect x="420" y="560" width="24" height="24"></rect>
+                    <rect x="424" y="600" width="24" height="24"></rect><rect x="424" y="630" width="24" height="24"></rect><rect x="424" y="660" width="24" height="24"></rect>
+                  </g>
+                  <g fill="rgba(190,170,255,.06)" stroke="#BEAAFF" stroke-opacity=".38" stroke-width="2">
+                    <rect x="280" y="710" width="24" height="24"></rect><rect x="310" y="710" width="24" height="24"></rect><rect x="340" y="710" width="24" height="24"></rect><rect x="370" y="710" width="24" height="24"></rect><rect x="400" y="710" width="24" height="24"></rect><rect x="430" y="710" width="24" height="24"></rect>
+                  </g>
+                <span style="position: absolute; left: -38px; top: -4px"></span></svg>
+
+                <sc-for list="{{ fogBands }}" as="f" hint-placeholder-count="5">
+                  
+                </sc-for>
+
+                <sc-for list="{{ diggers }}" as="d" hint-placeholder-count="6">
+                  <button onClick="{{ d.open }}" style="{{ d.style }}">
+                    <span style="{{ d.tagStyle }}">{{ d.tag }}</span>
+                    <span style="{{ d.figStyle }}"></span>
+                  </button>
+                </sc-for>
+                </div>
+
+                <sc-if value="{{ showSteps }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:flex-start;gap:9px;padding-top:11px">
+                  <span style="width:7px;height:7px;flex:none;margin-top:6px;background:#E9B341"></span>
+                  <span style="font:400 11px/1.7 'C11';color:#8A8073;text-wrap:pretty">每通過一項任務，你的小人往前一格，迷霧也掃開一格。這一層已前進 {{ myStepInfo }}。</span>
+                </div>
+                </sc-if>
+
+                <div style="display:flex;align-items:center;gap:12px;padding-top:10px">
+                  <span style="flex:1;height:1px;background:#26211C"></span>
+                  <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">地心</span>
+                  <span style="flex:1;height:1px;background:#26211C"></span>
+                </div>
+              </div>
+              </sc-if>
+
+              <sc-if value="{{ vTeam }}" hint-placeholder-val="{{ false }}">
+                <div style="margin:18px var(--pad) 0;padding:17px 19px;background:linear-gradient(140deg,rgba(233,179,65,.08),transparent 65%),#14110E;border:1px solid #3A3026">
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                    <button onClick="{{ backBoard }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #2E2822;padding:6px 11px;cursor:pointer">←</button>
+                    <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#E9B341">其他隊伍的紀錄</span>
+                  </div>
+                  <div style="font:700 22px/1.4 'C11';color:#E8E2D6;margin-top:11px">{{ selTeam.name }}</div>
+                  <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:9px">
+                    <span style="font:400 11px/1.6 'C11';color:#8A8073">所在　{{ selTeam.layerName }}</span>
+                    <span style="font:400 11px/1.6 'C11';color:#8A8073">停留　{{ selTeam.weeks }} 週</span>
+                    <span style="font:400 11px/1.6 'C11';color:#8A8073">通過關卡　{{ selTeam.passedCount }}</span>
+                  </div>
+                  <sc-if value="{{ selTeam.hasMark }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #26211C">
+                      <div style="font:400 22px/1.7 'C11';color:#C3BAAA;text-wrap:pretty">{{ selTeam.teaser }}</div>
+                      <sc-if value="{{ selTeam.showCells }}" hint-placeholder-val="{{ true }}">
+                      <div style="display:flex;flex-direction:column;gap:12px;margin-top:13px">
+                        <sc-for list="{{ selTeam.cells }}" as="c" hint-placeholder-count="3">
+                          <div style="padding:12px 14px;background:rgba(0,0,0,.28);border-left:2px solid #3A3026">
+                            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:7px">
+                              <span style="font:600 11px/1 'C11';color:#0B0A09;background:#8A8073;padding:4px 7px">{{ c.n }}</span>
+                              <span style="font:400 11px/1.6 'C11';color:#6E665A;text-wrap:pretty">{{ c.q }}</span>
+                            </div>
+                            <div style="font:400 11px/1.7 'C11';color:#C3BAAA;text-wrap:pretty">{{ c.t }}</div>
+                          </div>
+                        </sc-for>
+                        <sc-if value="{{ selTeam.hasVerdict }}" hint-placeholder-val="{{ true }}">
+                        <div style="padding:13px 15px;background:rgba(233,179,65,.06);border-left:2px solid #E9B341">
+                          <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#E9B341">他的判斷</div>
+                          <div style="font:400 11px/1.7 'C11';color:#C3BAAA;margin-top:7px;text-wrap:pretty">{{ selTeam.verdict }}</div>
+                        </div>
+                        </sc-if>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px">
+                          <sc-for list="{{ selTeam.files }}" as="fl" hint-placeholder-count="2">
+                            <span style="padding:7px 11px;background:#0E0C0A;border:1px solid #2E2822;font:400 11px/1 'C11';color:#8A8073">{{ fl.name }}</span>
+                          </sc-for>
+                        </div>
+                      </div>
+                      </sc-if>
+                      <sc-if value="{{ selTeam.locked }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+                        <sc-for list="{{ selTeam.blanks }}" as="b" hint-placeholder-count="3">
+                          <div style="padding:11px 13px;background:repeating-linear-gradient(90deg,rgba(90,80,64,.16) 0 6px,transparent 6px 12px),rgba(0,0,0,.34);border-left:2px dashed #3A3026;font:400 11px/1.7 'C11';color:#4A443C;letter-spacing:.12em">{{ b.t }}</div>
+                        </sc-for>
+                        <div style="display:flex;align-items:flex-start;gap:9px;padding-top:3px">
+                          <span style="width:7px;height:7px;flex:none;margin-top:5px;background:#5F574C"></span>
+                          <span style="font:400 11px/1.7 'C11';color:#6E665A;text-wrap:pretty">這一組已經挖到 {{ selTeam.lockDepth }}，你還沒有。比你深的那些層，他們寫了什麼你看不到——挖到就解鎖。</span>
+                        </div>
+                      </div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ selTeam.noMark }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:12px;font:400 11px/1.7 'C11';color:#5F574C">這一組還沒有通過任何關卡，沒有可看的關卡紀錄。</div>
+                  </sc-if>
+                  <div style="margin-top:16px;padding-top:15px;border-top:1px solid #26211C">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:12px">一路以來 · 掘進紀錄</div>
+                    <div style="display:flex;flex-direction:column">
+                      <sc-for list="{{ selTeam.log }}" as="g" hint-placeholder-count="4">
+                        <div style="display:flex;gap:13px;align-items:flex-start;padding:8px 0">
+                          <span style="font:400 11px/1.7 'C11';color:#5F574C;width:34px;flex:none">{{ g.w }}</span>
+                          <span style="{{ g.dotStyle }}"></span>
+                          <span style="{{ g.tStyle }}">{{ g.t }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ vLayer }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:20px var(--pad) 0;display:flex;align-items:center;gap:11px">
+                <button onClick="{{ backBoard }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #2E2822;padding:6px 11px;cursor:pointer">←</button>
+                <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">回到地圖</span>
+              </div>
+              <div style="margin:14px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #26211C">
+                <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+                  <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">{{ sel.code }}</span>
+                  <span style="font:700 22px/1.3 'C11';color:#E8E2D6">{{ sel.name }}</span>
+                  <span style="{{ sel.stateStyle }}">{{ sel.state }}</span>
+                </div>
+                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ sel.sub }}</div>
+                <span style="{{ sel.sceneStyle }}"></span>
+                <p style="font:400 22px/1.7 'C11';color:#B6AC9C;margin:0 0 14px;max-width:620px;text-wrap:pretty">{{ sel.scene }}</p>
+                <div style="display:flex;flex-wrap:wrap;gap:9px;margin-bottom:14px">
+                  <span style="flex:1;min-width:180px;padding:11px 13px;background:rgba(0,0,0,.28);border-left:2px solid #3A3026"><span style="display:block;font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C;margin-bottom:6px">這一層難在哪</span><span style="font:400 11px/1.7 'C11';color:#C3BAAA;text-wrap:pretty">{{ sel.hard }}</span></span>
+                  <span style="flex:1;min-width:180px;padding:11px 13px;background:rgba(0,0,0,.28);border-left:2px solid #3A3026"><span style="display:block;font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C;margin-bottom:6px">對應課程進度</span><span style="font:400 11px/1.7 'C11';color:#C3BAAA;text-wrap:pretty">{{ sel.course }}</span></span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:9px;margin:14px 0 13px">
+                  <button onClick="{{ sel.openTool }}" style="{{ sel.toolCardStyle }}">
+                    <span style="{{ sel.toolIconStyle }}"></span>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">道具</div>
+                    <div style="font:700 22px/1.4 'C11';margin-top:7px;color:{{ sel.toolNameColor }}">{{ sel.toolName }}</div>
+                    <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:4px;text-wrap:pretty">{{ sel.toolDesc }}</div>
+                  </button>
+                  <button onClick="{{ sel.openTre }}" style="{{ sel.treCardStyle }}">
+                    <span style="{{ sel.treIconStyle }}"></span>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">寶物</div>
+                    <div style="font:700 22px/1.4 'C11';margin-top:7px;color:{{ sel.treNameColor }}">{{ sel.treName }}</div>
+                    <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:4px;text-wrap:pretty">{{ sel.treDesc }}</div>
+                    <div style="font:400 11px/1.6 'C11';color:#5F574C;margin-top:7px">關卡通過就給，不看做得多好。</div>
+                  </button>
+                </div>
+                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">礦物 · 一項任務一種礦</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:7px">
+                  <sc-for list="{{ sel.minerals }}" as="mi" hint-placeholder-count="6">
+                    <button onClick="{{ mi.open }}" style="{{ mi.style }}"><span style="{{ mi.glyphStyle }}"></span><span style="font:500 11px/1.4 'C11';margin-top:8px;display:block">{{ mi.name }}</span></button>
+                  </sc-for>
+                </div>
+              </div>
+              </sc-if>
+              <sc-if value="{{ vLayer }}" hint-placeholder-val="{{ false }}">
+              <div style="margin:20px var(--pad) 0;padding:15px 17px;background:#14110E;border:1px solid #26211C">
+                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:11px">工具架 · 五個位置</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                  <sc-for list="{{ rack }}" as="r" hint-placeholder-count="5">
+                    <button onClick="{{ r.open }}" style="{{ r.style }}"><span style="{{ r.iconStyle }}"></span><span style="font:500 11px/1.3 'C11';margin-top:7px;display:block">{{ r.label }}</span><span style="font:400 11px/1.4 'C11';color:#8A8073;margin-top:5px;display:block">{{ r.layerLabel }}</span><span style="font:400 11px/1 'C11';color:#5F574C;margin-top:4px;display:block">{{ r.lv }}</span></button>
+                  </sc-for>
+                </div>
+              </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scColl }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-03 收藏總覽" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                </div>
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-03 · COLLECTION</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">收藏總覽</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:460px;text-wrap:pretty">一次攤開所有收集要素。已取得的點得進去看介紹；還沒拿到的只留下位置與微光。</p>
+              </div>
+              <div style="padding:18px var(--pad);display:flex;flex-direction:column;gap:22px">
+                <sc-for list="{{ collSections }}" as="s" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-bottom:5px">
+                      <span style="font:700 22px/1.4 'C11';color:#E8E2D6">{{ s.title }}</span>
+                      <span style="font:400 11px/1 'C11';color:#E9B341">{{ s.have }}</span>
+                    </div>
+                    <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:11px;text-wrap:pretty">{{ s.note }}</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:7px">
+                      <sc-for list="{{ s.items }}" as="i" hint-placeholder-count="6">
+                        <button onClick="{{ i.open }}" style="{{ i.style }}">
+                          <span style="{{ i.glyphStyle }}"></span>
+                          <span style="display:block;font:500 11px/1.4 'C11';margin-top:8px">{{ i.name }}</span>
+                          <span style="display:block;font:400 11px/1.3 'C11';color:#5F574C;margin-top:5px">{{ i.sub }}</span>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scS06 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-06 礦物與寶物介紹" style="padding:0 0 32px">
+              <div style="padding:20px var(--pad);border-bottom:1px solid #221E19;display:flex;align-items:center;gap:13px">
+                <button onClick="{{ specBack }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #26211C;padding:8px 12px;cursor:pointer">←</button>
+                <div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-06 · SPECIMEN</div>
+                  <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ specName }}</h1>
+                </div>
+              </div>
+              <div style="padding:var(--pad);display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start">
+                <div style="{{ specGlyphStyle }}"></div>
+                <div style="flex:1;min-width:230px;display:flex;flex-direction:column;gap:15px">
+                  <div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">{{ specKind }} · 樣貌</div>
+                    <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:7px;text-wrap:pretty">{{ specLook }}</div>
+                  </div>
+                  <sc-if value="{{ hasTrait }}" hint-placeholder-val="{{ true }}">
+                    <div style="padding-top:13px;border-top:1px solid #221E19">
+                      <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">特性</div>
+                      <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:7px;text-wrap:pretty">{{ specTrait }}</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ hasFunc }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:9px">
+                      <div style="flex:1;min-width:190px;padding:12px 14px;background:rgba(233,179,65,.07);border-left:2px solid #E9B341">
+                        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#E9B341">功能</div>
+                        <div style="font:400 22px/1.6 'C11';color:#E8E2D6;margin-top:6px;text-wrap:pretty">{{ specFunc }}</div>
+                      </div>
+                      <div style="flex:1;min-width:190px;padding:12px 14px;background:rgba(0,0,0,.28);border-left:2px solid #3A3026">
+                        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">對應的專案能力</div>
+                        <div style="font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:6px;text-wrap:pretty">{{ specAbility }}</div>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ hasLine }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:14px 16px;background:rgba(0,0,0,.3);border-left:2px solid #5F574C">
+                      <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">他交給你的時候說</div>
+                      <div style="font:400 22px/1.8 'C11';color:#DCD4C6;margin-top:8px;text-wrap:pretty">{{ specLine }}</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ hasNotice }}" hint-placeholder-val="{{ false }}">
+                    <div>
+                      <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">你注意到的事</div>
+                      <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:7px;text-wrap:pretty">{{ specNotice }}</div>
+                    </div>
+                  </sc-if>
+                  <div style="display:flex;flex-wrap:wrap;gap:22px;padding-top:13px;border-top:1px solid #221E19">
+                    <div><div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">來自哪一項任務</div><div style="font:500 22px/1.5 'C11';margin-top:6px">{{ specFrom }}</div></div>
+                    <div><div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">取得日期</div><div style="font:500 22px/1.5 'C11';margin-top:6px">{{ specDate }}</div></div>
+                  </div>
+                  <sc-if value="{{ specUnnamed }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:14px 16px;background:rgba(237,230,210,.05);border:1px solid #2E2822">
+                      <div style="font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty">這裡的東西沒有名字。他沒有給清單，也沒有人替這裡命名過。</div>
+                      <input value="{{ specInput }}" onChange="{{ setSpecName }}" placeholder="替它取一個名字" style="width:100%;margin-top:11px;padding:11px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.6 'C11';outline:none">
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scT08 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="T-08 學生端的世界" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-08 · WORLD</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">學生端的世界</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:470px;text-wrap:pretty">你定的每一項，學生那邊看到的是一層洞窟、一件物證、一段故事。這一頁把對應關係攤出來。</p>
+                <button onClick="{{ openClassMap }}" style="margin-top:14px;margin-right:8px;font:500 22px/1 'C11';color:#E9B341;background:none;border:1px solid #5A4A2C;padding:12px 18px;cursor:pointer">看整張地圖剖面（不上鎖）</button>
+                <button onClick="{{ readOpening }}" style="margin-top:14px;font:500 22px/1 'C11';color:#0B0A09;background:#E9B341;border:none;padding:12px 20px;cursor:pointer;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)">用學生視角讀開頭故事</button>
+              </div>
+              <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:13px">
+                <sc-for list="{{ worldLayers }}" as="w" hint-placeholder-count="5">
+                  <div style="background:#14110E;border:1px solid #26211C">
+                    <span style="{{ w.sceneStyle }}"></span>
+                    <div style="padding:16px 18px">
+                      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px">
+                        <span style="font:600 11px/1 'C11';color:#5F574C">{{ w.code }}</span>
+                        <span style="font:700 22px/1.4 'C11';color:#E8E2D6">{{ w.course }}</span>
+                        <span style="font:400 11px/1 'C11';color:#8A8073">學生端 · {{ w.name }}</span>
+                        <span style="flex:1"></span>
+                        <button onClick="{{ w.readStory }}" style="font:500 11px/1 'C11';letter-spacing:.08em;color:#E9B341;background:none;border:1px solid #5A4A2C;padding:7px 11px;cursor:pointer;white-space:nowrap">讀這一層的故事</button>
+                      </div>
+                      <div style="font:400 22px/1.7 'C11';color:#B6AC9C;margin-top:10px;text-wrap:pretty">{{ w.scene }}</div>
+                      <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:7px;text-wrap:pretty">這一層難在：{{ w.hard }}</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:14px">
+                        <button onClick="{{ w.openTool }}" style="flex:1;min-width:210px;display:flex;gap:11px;padding:12px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:rgba(233,179,65,.06);border:none;border-left:2px solid #E9B341">
+                          <span style="{{ w.toolIcon }}"></span>
+                          <div>
+                            <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#E9B341">過關給的道具</div>
+                            <div style="font:500 22px/1.4 'C11';color:#E8E2D6;margin-top:6px">{{ w.tool }}</div>
+                            <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ w.toolFunc }}</div>
+                            <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-top:4px;text-wrap:pretty">對應能力 · {{ w.toolAbility }}</div>
+                          </div>
+                        </button>
+                        <button onClick="{{ w.openTre }}" style="flex:1;min-width:210px;display:flex;gap:11px;padding:12px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:rgba(0,0,0,.28);border:none;border-left:2px solid #3A3026">
+                          <span style="{{ w.treIcon }}"></span>
+                          <div>
+                            <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">過關給的寶物</div>
+                            <div style="font:500 22px/1.4 'C11';color:#E8E2D6;margin-top:6px">{{ w.treasure }}</div>
+                            <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ w.treLine }}</div>
+                          </div>
+                        </button>
+                      </div>
+                      <div style="margin-top:13px;padding-top:12px;border-top:1px solid #221E19">
+                        <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">這一層的規畫環節 · 對應物證</div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:6px">
+                          <sc-for list="{{ w.segs }}" as="g" hint-placeholder-count="6">
+                            <button onClick="{{ g.open }}" style="{{ g.style }}">
+                              <span style="display:block;font:500 22px/1.3 'C11';color:#DCD4C6">{{ g.task }}</span>
+                              <span style="display:block;font:400 11px/1.4 'C11';color:#6E665A;margin-top:4px">{{ g.name }}</span>
+                            </button>
+                          </sc-for>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ resMobileNote }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:28px 18px;background:#080B0F;min-height:100%;font-family:'Noto Sans TC',sans-serif;color:#B7C3CC">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">RESEARCHER</div>
+              <div style="font-family:'Noto Serif TC',serif;font-size:21px;font-weight:700;color:#DFE6EB;margin:10px 0 12px">這一端只在桌機使用</div>
+              <div style="font-size:13.5px;line-height:2">研究者端是分析用的儀器，版面按 1440 × 1024 設計：語料清單與詳情要並排、對照分布要左右比對、匯出欄位要看得完整。壓成手機寬度會讓這些比較失去意義，所以這裡不提供手機版。</div>
+              <div style="margin-top:16px;padding:12px 14px;background:#121A21;border-left:2px solid #D9A45C;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.8;color:#D9A45C">切回桌機檢視即可進入 R-00 ~ R-09。</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ showRes }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="研究者端" style="display:flex;min-height:100%;background:#080B0F;font-family:'Noto Sans TC',sans-serif;color:#DFE6EB">
+              <div style="flex:none;width:172px;border-right:1px solid #1D2831;background:#0C1116;padding:18px 0;display:flex;flex-direction:column">
+                <div style="padding:0 13px 16px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">RESEARCHER</div>
+                  <div style="font-family:'Noto Serif TC',serif;font-size:17px;font-weight:700;margin-top:8px;color:#DFE6EB">唯讀觀察端</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874;margin-top:6px">論文作者 · 不參與課堂</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:1px;padding:0 6px">
+                  <sc-for list="{{ resVals.nav }}" as="n" hint-placeholder-count="9">
+                    <button onClick="{{ n.go }}" style="{{ n.style }}"><span style="width:34px;flex:none;opacity:.65">{{ n.code }}</span><span style="flex:1">{{ n.label }}</span></button>
+                  </sc-for>
+                </div>
+                <div style="margin-top:auto;padding:14px 13px 0;border-top:1px solid #1D2831;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.7;color:#5A6874">全端唯讀。沒有主按鈕，只有篩選、排序、展開、匯出。</div>
+              </div>
+
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+                <div style="flex:none;padding:11px 24px;border-bottom:1px solid #1D2831;background:#0C1116;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em;color:#B7C3CC">{{ resVals.unlockLine }}</div>
+
+                <sc-if value="{{ resVals.demoOn }}" hint-placeholder-val="{{ false }}">
+                  <div style="flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 24px;background:#242017;border-bottom:1px solid #4A4238">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#C9A227">DEMO</span>
+                    <span style="font-family:'Noto Sans TC',sans-serif;font-size:12.5px;line-height:1.7;color:#C8C2B4;flex:1;min-width:200px">演練模式：所有頁面已解除延遲揭露，畫面上的語料與數值是示範樣本，不是實際課堂紀錄。</span>
+                    <button onClick="{{ resVals.toggleDemo }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 12px;background:transparent;border:1px solid #4A4238;color:#C8C2B4;cursor:pointer;border-radius:4px;white-space:nowrap">關閉</button>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ resVals.lockedNotice }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:32px 24px;font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.9;color:#8393A0;max-width:560px">尚未到解鎖時點，其餘入口不可進入。{{ resVals.weekNow }}。<br><br>延遲揭露是部署前設定的：學期進行中不提供即時資料，預設每四週解鎖一次。看得到即時資料，你會忍不住去影響老師。</div>
+                </sc-if>
+
+                <sc-if value="{{ scR00 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-00 進入" style="padding:var(--pad) 24px;max-width:720px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-00 · CONSENT</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 6px">知情同意狀態</h1>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13.5px;line-height:1.9;color:#8393A0;margin:0 0 16px">必須捲到底才能繼續。</p>
+                    <div onScroll="{{ resVals.onConsentScroll }}" style="height:230px;overflow-y:auto;padding:16px 18px;background:#121A21;border:1px solid #1D2831;border-radius:9px;font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:2;color:#B7C3CC">
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin-bottom:8px">蒐集哪些資料</div>
+                      任務發派、任務提交、逐項確認（含審核理由全文）、關卡送審與審核、他組紀錄閱讀事件、停留狀態。全部以組為單位，不記個人。
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin:16px 0 8px">保存期限</div>
+                      論文口試後兩年，屆期刪除原始事件記錄，僅保留去識別化後的統計結果。
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin:16px 0 8px">匿名方式</div>
+                      組別顯示為代號（Ａ隊／Ｂ隊），老師顯示為〔T1〕〔T2〕。代號對照表不存在系統裡。匯出強制匿名，沒有關閉選項。
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin:16px 0 8px">老師是否已簽署</div>
+                      〔T1〕已簽署（部署前）。老師事先知道自己的審核理由會被分析——這個效應無法消除：知道有人在看，教師回饋的品質就會改變。這一點必須寫進研究限制。
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin:16px 0 8px">研究者能做什麼</div>
+                      只有篩選、排序、展開、匯出，以及在審核語料上做自己的編碼。編碼不進入課堂資料，學生與老師都看不到。研究者不得寫入、編輯、通知或標記任何東西給老師看。
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                      <button onClick="{{ resVals.accept }}" style="{{ resVals.acceptStyle }}">已讀完，進入總覽</button>
+                      <button onClick="{{ resVals.toggleDemo }}" style="{{ resVals.demoStyle }}">{{ resVals.demoLabel }}</button>
+                    </div>
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874;margin-top:10px">「已讀完」要捲到底才會啟用。</div>
+                    <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:12px;max-width:560px">演練模式用於對老師、口委或研究團隊展示這一端能看到什麼：解除四週一次的延遲揭露、填入示範語料，每一頁上方會持續標示 DEMO。示範樣本不可用於任何研究判讀，關閉時一併清除。</div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ openR01 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-01 總覽" style="padding:var(--pad) 24px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-01 · OVERVIEW</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 18px">資料量摘要</h1>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px">
+                      <sc-for list="{{ resVals.stats }}" as="s" hint-placeholder-count="8">
+                        <div style="padding:14px 16px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
+                          <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5A6874">{{ s.label }}</div>
+                          <div style="font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:500;margin-top:10px;color:#DFE6EB;font-variant-numeric:tabular-nums">{{ s.value }}</div>
+                          <div style="font-family:'Noto Sans TC',sans-serif;font-size:11px;line-height:1.6;color:#5A6874;margin-top:7px">{{ s.note }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <h2 style="font-family:'Noto Serif TC',serif;font-size:19px;font-weight:700;margin:28px 0 6px">尚未發生的事</h2>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 12px;max-width:620px">機制的缺席比它的使用更值得寫。若某個機制整學期無人使用，那不是資料不足，那是發現。</p>
+                    <div style="display:flex;flex-direction:column;gap:6px;max-width:620px">
+                      <sc-for list="{{ resVals.absent }}" as="a" hint-placeholder-count="4">
+                        <div style="{{ a.style }}">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#B7C3CC;width:120px;flex:none">{{ a.label }}</span>
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#DFE6EB">{{ a.value }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ openR02 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-02 審核語料" style="padding:var(--pad) 24px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-02 · REVIEW CORPUS</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 6px">審核語料</h1>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 18px;max-width:640px">老師寫下的每一則判斷理由，逐項、有時間戳、綁定特定交付物。正常的設計評圖是口頭的、不留紀錄的。</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+                      <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:7px">
+                        <sc-if value="{{ resVals.noCorpus }}" hint-placeholder-val="{{ true }}">
+                          <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;padding:14px 0">本區間沒有任何確認事件。這代表老師在這幾週沒有按下確認，不是資料遺失。</div>
+                        </sc-if>
+                        <sc-for list="{{ resVals.corpus }}" as="c" hint-placeholder-count="4">
+                          <button onClick="{{ c.pick }}" style="{{ c.style }}">
+                            <span style="display:flex;gap:10px;align-items:baseline;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">
+                              <span>{{ c.group }}</span><span>{{ c.week }}</span><span>{{ c.result }}</span><span style="flex:1"></span><span>{{ c.len }}</span>
+                            </span>
+                            <span style="display:block;font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.8;color:#DFE6EB;margin-top:8px">{{ c.excerpt }}</span>
+                            <span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8393A0;margin-top:7px">{{ c.title }}　{{ c.code }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                      <sc-if value="{{ resVals.hasPick }}" hint-placeholder-val="{{ false }}">
+                      <div style="flex:1;min-width:290px;padding:18px 20px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
+                        <sc-if value="{{ resVals.hasPick }}" hint-placeholder-val="{{ false }}">
+                          <div>
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#5A6874">{{ resVals.pickMeta }}</div>
+                            <div style="font-family:'Noto Serif TC',serif;font-size:17px;font-weight:700;margin-top:10px">{{ resVals.pickGroup }} · {{ resVals.pickTitle }}</div>
+                            <div style="font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:2;color:#DFE6EB;margin-top:12px">{{ resVals.pickText }}</div>
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#5A6874;margin:20px 0 9px">語言類型編碼 · 只存在研究者端</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px">
+                              <sc-for list="{{ resVals.codeChips }}" as="k" hint-placeholder-count="5">
+                                <button onClick="{{ k.set }}" style="{{ k.style }}">{{ k.label }}</button>
+                              </sc-for>
+                            </div>
+                          </div>
+                        </sc-if>
+                      </div>
+                      </sc-if>
+                    </div>
+                    <div style="margin-top:24px;padding-top:18px;border-top:1px solid #1D2831">
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#5A6874;margin-bottom:12px">四型比例</div>
+                      <div style="display:flex;flex-direction:column;gap:9px;max-width:620px">
+                        <sc-for list="{{ resVals.codeBars }}" as="b" hint-placeholder-count="5">
+                          <div style="display:flex;align-items:center;gap:12px">
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8393A0;width:74px;flex:none">{{ b.label }}</span>
+                            <span style="flex:1;display:flex;align-items:center"><span style="{{ b.style }}"></span></span>
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B7C3CC;width:28px;text-align:right;font-variant-numeric:tabular-nums">{{ b.n }}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ openR03 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-03 回饋與修正序列" style="padding:var(--pad) 24px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-03 · FEEDBACK → REVISION</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 6px">回饋與修正序列</h1>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 18px;max-width:640px">因為需補充可重新提交且次數不限，系統會累積成對的「理由 → 修正」序列。待檢驗的假設：指示型修得快但學不到東西，提問型修得慢但遷移較好。</p>
+                    <sc-if value="{{ resVals.noSeqs }}" hint-placeholder-val="{{ true }}">
+                      <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0">本區間沒有任何退回。沒有退回就沒有修正序列可分析。</div>
+                    </sc-if>
+                    <div style="display:flex;flex-direction:column;gap:9px">
+                      <sc-for list="{{ resVals.seqs }}" as="q" hint-placeholder-count="2">
+                        <div style="display:flex;flex-wrap:wrap;gap:0;background:#121A21;border:1px solid #1D2831;border-radius:9px;overflow:hidden">
+                          <div style="flex:1;min-width:220px;padding:14px 16px;border-right:1px solid #1D2831">
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">老師的理由 · {{ q.code }}</div>
+                            <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#DFE6EB;margin-top:8px">{{ q.reason }}</div>
+                          </div>
+                          <div style="flex:1;min-width:200px;padding:14px 16px;border-right:1px solid #1D2831">
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">前後兩版</div>
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#E27A6A;margin-top:8px">− {{ q.before }}</div>
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4FBF9A;margin-top:4px">+ {{ q.after }}</div>
+                          </div>
+                          <div style="flex:none;width:170px;padding:14px 16px">
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">後設資料</div>
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#B7C3CC;margin-top:8px;line-height:1.9">間隔 {{ q.gap }}<br>{{ q.group }}<br>{{ q.result }}</div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ openR04 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-04 天然對照" style="padding:var(--pad) 24px;max-width:760px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-04 · NATURAL CONTRASTS</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 18px">天然對照</h1>
+                    <div style="padding:16px 18px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
+                      <div style="font-family:'Noto Serif TC',serif;font-size:17px;font-weight:700">對照一 · 有理由通過 vs 未附理由通過</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:14px">
+                        <sc-for list="{{ resVals.contrastA }}" as="c" hint-placeholder-count="2">
+                          <div style="flex:1;min-width:180px;padding:13px 15px;background:#16202A;border:1px solid #1D2831;border-radius:9px">
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ c.label }}</div>
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;margin-top:8px;font-variant-numeric:tabular-nums">{{ c.n }}</div>
+                            <div style="font-family:'Noto Sans TC',sans-serif;font-size:11.5px;color:#8393A0;margin-top:6px">{{ c.note }}</div>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <div style="margin-top:14px;padding:10px 13px;background:rgba(217,164,92,.08);border-left:2px solid #D9A45C;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#D9A45C">非隨機分派，僅能談關聯，不可推論因果。</div>
+                    </div>
+                    <div style="padding:16px 18px;background:#121A21;border:1px solid #1D2831;border-radius:9px;margin-top:14px">
+                      <div style="font-family:'Noto Serif TC',serif;font-size:17px;font-weight:700">對照二 · 老師確認 vs 逾時自動暫准</div>
+                      <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:8px">直接檢驗整個關卡阻擋性論證的核心假設：老師的確認到底有沒有份量？若兩群後續行為沒有差異，那是對本設計最重要的一個反面發現。</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:14px">
+                        <sc-for list="{{ resVals.contrastB }}" as="c" hint-placeholder-count="2">
+                          <div style="flex:1;min-width:180px;padding:13px 15px;background:#16202A;border:1px solid #1D2831;border-radius:9px">
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ c.label }}</div>
+                            <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;margin-top:8px;font-variant-numeric:tabular-nums">{{ c.n }}</div>
+                            <div style="font-family:'Noto Sans TC',sans-serif;font-size:11.5px;color:#8393A0;margin-top:6px">{{ c.note }}</div>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <div style="margin-top:14px;padding:10px 13px;background:rgba(217,164,92,.08);border-left:2px solid #D9A45C;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#D9A45C">非隨機分派，僅能談關聯，不可推論因果。</div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ openR05 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-05 閱讀行為" style="padding:var(--pad) 24px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-05 · READING</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 6px">閱讀行為</h1>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 18px;max-width:640px">核心問題：誰的紀錄被讀得最多——是做得最好的那組，還是處境最像自己的那組？</p>
+                    <sc-if value="{{ resVals.noReads }}" hint-placeholder-val="{{ true }}">
+                      <div style="font-family:'Noto Sans TC',sans-serif;font-size:13.5px;line-height:2;color:#B7C3CC;max-width:620px">本學期無人開啟他組紀錄。整個公開機制的核心主張因此失去支撐——這一點要寫進發現，不是資料不足。</div>
+                    </sc-if>
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      <sc-for list="{{ resVals.readRows }}" as="r" hint-placeholder-count="3">
+                        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;padding:12px 14px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#DFE6EB">{{ r.reader }} → {{ r.target }}</span>
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ r.layer }}　{{ r.week }}</span>
+                          <span style="font-family:'Noto Sans TC',sans-serif;font-size:11.5px;color:#8393A0">{{ r.ctx }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ openR06 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-06 提交節律" style="padding:var(--pad) 24px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-06 · SUBMISSION RHYTHM</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 6px">提交節律</h1>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 18px;max-width:640px">看的是分布有沒有隨學期往前移。不做組別排行，不標示最準時的組。</p>
+                    <sc-if value="{{ resVals.noRhythm }}" hint-placeholder-val="{{ true }}">
+                      <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0">本區間沒有提交事件。</div>
+                    </sc-if>
+                    <div style="display:flex;flex-direction:column;gap:5px">
+                      <sc-for list="{{ resVals.rhythmRows }}" as="r" hint-placeholder-count="4">
+                        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:baseline;padding:11px 14px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5A6874;width:40px;flex:none">{{ r.group }}</span>
+                          <span style="font-family:'Noto Sans TC',sans-serif;font-size:13px;color:#DFE6EB;flex:1;min-width:120px">{{ r.title }}</span>
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B7C3CC">{{ r.week }}</span>
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8393A0">{{ r.offset }}</span>
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5A6874">{{ r.attempt }}　{{ r.len }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ openR07 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-07 停留與介入" style="padding:var(--pad) 24px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-07 · STAY & INTERVENTION</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 6px">停留與介入</h1>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 18px;max-width:640px">本版沒有學生主動求助的功能，停留週數是唯一的卡關偵測管道。看分布的形狀：單峰代表節奏接近，雙峰代表多數順利、少數嚴重卡住。</p>
+                    <div style="display:flex;flex-direction:column;gap:7px;max-width:660px">
+                      <sc-for list="{{ resVals.stayRows }}" as="s" hint-placeholder-count="6">
+                        <div style="display:flex;align-items:center;gap:14px;padding:11px 14px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B7C3CC;width:40px;flex:none">{{ s.group }}</span>
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5A6874;width:34px;flex:none">{{ s.layer }}</span>
+                          <span style="flex:1;display:flex;align-items:center"><span style="{{ s.barStyle }}"></span></span>
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#DFE6EB;width:44px;text-align:right;font-variant-numeric:tabular-nums">{{ s.weeks }}</span>
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8393A0;width:110px;text-align:right">{{ s.flagged }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <div style="margin-top:18px;padding:13px 15px;background:#121A21;border:1px solid #1D2831;border-radius:9px;font-family:'Noto Sans TC',sans-serif;font-size:12.5px;line-height:1.9;color:#8393A0;max-width:660px">時序要能看到每一段的間隔：卡住起點 → 老師端出現建議聯繫 → 老師實際採取行動 → 該組恢復提交。這直接檢驗只靠被動偵測，老師能不能及時發現卡住的組。</div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ scR09 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-09 設計修訂記錄" style="padding:var(--pad) 24px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-09 · DESIGN ITERATIONS</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 6px">設計修訂記錄</h1>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 18px;max-width:660px">Research Through Design 的主要產出不是最後那一版，是每一次改動的理由。這一頁記錄系統本身被改了幾次、每次改了什麼、為什麼改、還有什麼沒解決。</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+                      <div style="padding:14px 16px;background:#121A21;border:1px solid #1D2831;border-radius:9px;min-width:150px">
+                        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5A6874">累計修訂次數</div>
+                        <div style="font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:500;margin-top:10px;font-variant-numeric:tabular-nums">{{ resVals.iterCount }}</div>
+                      </div>
+                      <div style="padding:14px 16px;background:#121A21;border:1px solid #1D2831;border-radius:9px;min-width:150px">
+                        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5A6874">仍未解決的問題</div>
+                        <div style="font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:500;margin-top:10px;font-variant-numeric:tabular-nums">{{ resVals.iterOpenCount }}</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+                      <sc-for list="{{ resVals.iterPhases }}" as="p" hint-placeholder-count="4">
+                        <button onClick="{{ p.pick }}" style="{{ p.style }}">{{ p.label }}</button>
+                      </sc-for>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <sc-for list="{{ resVals.iterRows }}" as="r" hint-placeholder-count="6">
+                        <div style="padding:15px 17px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
+                          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:baseline">
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#DFE6EB;font-variant-numeric:tabular-nums">{{ r.n }}</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:4px 9px;border-radius:999px;background:#16202A;border:1px solid #1D2831;color:#B7C3CC">{{ r.phase }}</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">觸發 · {{ r.from }}</span>
+                            <span style="flex:1"></span>
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ r.where }}</span>
+                          </div>
+                          <div style="font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.9;color:#DFE6EB;margin-top:11px">{{ r.what }}</div>
+                          <div style="display:flex;gap:9px;margin-top:9px">
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874;flex:none;padding-top:3px">為什麼</span>
+                            <span style="font-family:'Noto Sans TC',sans-serif;font-size:12.5px;line-height:1.9;color:#8393A0">{{ r.why }}</span>
+                          </div>
+                          <sc-if value="{{ r.hasOpen }}" hint-placeholder-val="{{ false }}">
+                            <div style="margin-top:11px;padding:10px 13px;background:rgba(217,164,92,.08);border-left:2px solid #D9A45C;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.8;color:#D9A45C">未解決 · {{ r.open }}</div>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <div style="margin-top:16px;padding:12px 14px;background:#16202A;border:1px solid #1D2831;border-radius:9px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.8;color:#8393A0">此頁只記錄設計者對系統的修訂，不記錄課堂內任何人的行為。與 R-01 的「尚未發生的事」對讀：無人使用的機制若在下一版被改動，改動理由會出現在這裡。</div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ openR08 }}" hint-placeholder-val="{{ false }}">
+                  <div data-screen-label="R-08 匯出" style="padding:var(--pad) 24px;max-width:720px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-08 · EXPORT</div>
+                    <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 6px">匯出</h1>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 18px">匯出給 NVivo／MAXQDA，或 R／Python 做描述統計。研究者端本身不做統計檢定。</p>
+                    <div style="display:flex;flex-direction:column;gap:7px">
+                      <sc-for list="{{ resVals.exportRows }}" as="e" hint-placeholder-count="4">
+                        <button onClick="{{ e.toggle }}" style="{{ e.style }}">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#DFE6EB;flex:none">{{ e.mark }}</span>
+                          <span style="flex:1">
+                            <span style="display:block;font-family:'Noto Sans TC',sans-serif;font-size:13.5px;color:#DFE6EB">{{ e.label }}</span>
+                            <span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.8;color:#5A6874;margin-top:6px">{{ e.fields }}</span>
+                          </span>
+                        </button>
+                      </sc-for>
+                    </div>
+                    <div style="margin-top:16px;padding:12px 14px;background:rgba(217,164,92,.08);border-left:2px solid #D9A45C;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.8;color:#D9A45C">已套用匿名化：組別→代號、老師→〔T1〕、時間戳日期偏移。已移除欄位：學生姓名、帳號、隊名原文。沒有關閉選項。</div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scGantt }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="甘特圖" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">GANTT</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">甘特圖</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:440px;text-wrap:pretty">點一格，就是決定你哪一週交那一項。老師只訂期限，不排你的順序。</p>
+              </div>
+              <sc-if value="{{ ganttFresh }}" hint-placeholder-val="{{ true }}">
+                <div style="margin:16px var(--pad) 0;padding:15px 17px;background:linear-gradient(140deg,rgba(233,179,65,.09),transparent 65%),#14110E;border:1px solid #3A3026">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">第一次用這一頁</div>
+                  <div style="font:700 22px/1.5 'C11';color:#E8E2D6;margin-top:9px">這一頁只有一個動作：點一格</div>
+                  <div style="display:flex;flex-direction:column;gap:9px;margin-top:13px">
+                    <div style="display:flex;align-items:center;gap:11px">
+                      <span style="width:28px;height:20px;flex:none;background:rgba(233,179,65,.16);border:1px solid #5A4A2C"></span>
+                      <span style="font:400 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">你排的那一週</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:11px">
+                      <span style="width:28px;height:20px;flex:none;background:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 3px,transparent 3px 7px);border:1px solid #3A3026;border-right:2px solid #8A8073"></span>
+                      <span style="font:400 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">老師訂的期限。右邊斜紋是逾期區，排進去也可以，只是會被標示</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:11px">
+                      <span style="width:28px;height:20px;flex:none;background:#E9B341;color:#0B0A09;display:flex;align-items:center;justify-content:center;font:500 11px/1 'C11'">✓</span>
+                      <span style="font:400 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">老師確認通過的那一週。你排的還留著，兩者差多少就看得出來</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <div style="padding:16px var(--pad)">
+                <div style="display:flex;gap:0;padding-left:{{ ganttHeadPad }};border-bottom:1px solid #221E19;margin-bottom:9px">
+                  <sc-for list="{{ ganttWeeks }}" as="w" hint-placeholder-count="6">
+                    <span style="{{ w.style }}">{{ w.label }}<span style="{{ w.dateStyle }}">{{ w.date }}</span></span>
+                  </sc-for>
+                </div>
+                <div style="display:flex;align-items:stretch;min-height:34px;margin-bottom:7px;padding-bottom:8px;border-bottom:1px solid #1C1915;flex-wrap:wrap">
+                  <div style="width:var(--gcol);flex:none;padding-right:12px">
+                    <span style="display:block;font:500 22px/1.3 'C11';color:#DCD4C6">老師訂的期限</span>
+                    <span style="display:block;font:400 11px/1.5 'C11';color:#6E665A;margin-top:5px">這一欄不能動</span>
+                  </div>
+                  <span style="flex:1;min-width:180px;display:flex;align-self:stretch;min-height:var(--cell)">
+                    <sc-for list="{{ dueTrack }}" as="d" hint-placeholder-count="6">
+                      <span style="{{ d.style }}">{{ d.label }}</span>
+                    </sc-for>
+                  </span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <sc-for list="{{ ganttRows }}" as="r" hint-placeholder-count="6">
+                    <div style="display:flex;align-items:stretch;gap:0;min-height:40px;flex-wrap:wrap">
+                      <button onClick="{{ r.open }}" style="width:var(--gcol);flex:none;text-align:left;background:none;border:none;padding:0 12px 0 0;cursor:pointer;color:#C3BAAA;font:inherit">
+                        <span style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                          <span style="{{ r.tagStyle }}">{{ r.tag }}</span>
+                          <span style="font:500 22px/1.3 'C11';color:#E8E2D6">{{ r.name }}</span>
+                        </span>
+                        <span style="{{ r.metaStyle }}">{{ r.meta }}</span>
+                      </button>
+                      <span style="flex:1;min-width:180px;display:flex;align-self:stretch;min-height:var(--cell)">
+                        <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
+                          <button onClick="{{ c.set }}" style="{{ c.style }}">{{ c.mark }}</button>
+                        </sc-for>
+                      </span>
+                    </div>
+                  </sc-for>
+                  <div style="display:flex;align-items:stretch;gap:0;min-height:40px;padding-top:6px;border-top:1px solid #1C1915;flex-wrap:wrap">
+                    <div style="width:var(--gcol);flex:none;padding-right:12px">
+                      <span style="display:block;font:500 22px/1.3 'C11';color:#DCD4C6">關卡送審</span>
+                      <span style="display:block;font:400 11px/1 'C11';color:#8A8073;margin-top:6px">{{ ganttGate.meta }}</span>
+                    </div>
+                    <span style="flex:1;min-width:180px;display:flex;align-self:stretch;min-height:var(--cell)">
+                      <sc-for list="{{ ganttGate.cells }}" as="c" hint-placeholder-count="6">
+                        <button onClick="{{ c.set }}" style="{{ c.style }}">{{ c.mark }}</button>
+                      </sc-for>
+                    </span>
+                  </div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font:400 11px/1 'C11';color:#5F574C">
+                  <span>實心 · 你排的那一週</span><span>斜紋 · 期限之後</span><span>✓ · 已通過</span><span>… · 待老師確認</span>
+                </div>
+                <div style="margin-top:14px;padding:15px 17px;background:#14110E;border:1px solid #26211C">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">這一頁跟老師怎麼接</div>
+                  <div style="display:flex;flex-direction:column;gap:9px;margin-top:12px">
+                    <sc-for list="{{ ganttFlow }}" as="g" hint-placeholder-count="3">
+                      <div style="display:flex;gap:10px;align-items:flex-start">
+                        <span style="{{ g.dotStyle }}"></span>
+                        <span style="{{ g.style }}">{{ g.text }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="margin-top:14px;padding:15px 17px;background:linear-gradient(140deg,rgba(233,179,65,.06),transparent 65%),#14110E;border:1px solid #26211C">
+                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
+                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">你排的 對 實際發生的</span>
+                    <span style="font:400 11px/1 'C11';color:#6E665A">{{ diffSummary }}</span>
+                  </div>
+                  <sc-if value="{{ hasDiff }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
+                      <sc-for list="{{ diffRows }}" as="d" hint-placeholder-count="3">
+                        <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;padding:9px 11px;background:rgba(0,0,0,.26);border-left:2px solid {{ d.edge }}">
+                          <span style="font:500 22px/1.4 'C11';color:#E8E2D6;flex:1;min-width:120px">{{ d.name }}</span>
+                          <span style="font:400 11px/1 'C11';color:#8A8073;white-space:nowrap">你排 {{ d.plan }}</span>
+                          <span style="font:400 11px/1 'C11';color:#6E665A">→</span>
+                          <span style="font:400 11px/1 'C11';color:#DCD4C6;white-space:nowrap">實際 {{ d.real }}</span>
+                          <span style="{{ d.gapStyle }}">{{ d.gap }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:12px;text-wrap:pretty">{{ diffNote }}</div>
+                </div>
+
+                
+</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scT01 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="T-01 老師首頁" style="padding:0 0 32px">
+              <div style="padding:var(--pad);background:linear-gradient(180deg,rgba(233,179,65,.07),transparent),#0E0C0A;border-bottom:1px solid #221E19">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+                  <span style="font:400 11px/1 'C11';letter-spacing:.26em;color:#8A8073">T-01 · CONSOLE</span>
+                  <span style="flex:1"></span>
+                  <button onClick="{{ toggleKlass }}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 11px;background:rgba(233,179,65,.08);border:1px solid #3A3026;color:#E8E2D6;font:500 22px/1.3 'C11';cursor:pointer">
+                    <span style="white-space:nowrap">{{ navName }}</span><span style="font:400 11px/1 'C11';color:#E9B341;white-space:nowrap">切換</span>
+                  </button>
+                </div>
+                <sc-if value="{{ klassOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:7px;margin-top:12px">
+                    <sc-for list="{{ klassOptions }}" as="k" hint-placeholder-count="3">
+                      <button onClick="{{ k.pick }}" style="{{ k.style }}">
+                        <span style="display:block;font:500 22px/1.3 'C11'">{{ k.name }}</span>
+                        <span style="display:block;font:400 11px/1.5 'C11';color:#8A8073;margin-top:4px">{{ k.sub }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <h1 style="font:900 33px/1.2 'C11';margin:14px 0 0;letter-spacing:.07em;color:#F2EADA">待你驗收</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:8px 0 0;max-width:420px;text-wrap:pretty">依停留週數排序。排最前面的不是進度最快的，是待最久的。</p>
+              </div>
+              <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px">
+                <sc-for list="{{ teacherStats }}" as="s" hint-placeholder-count="3">
+                  <div style="{{ s.style }}">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ s.label }}</div>
+                    <div style="font:700 33px/1 'C11';margin-top:10px;color:{{ s.color }}">{{ s.value }}</div>
+                    <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px;text-wrap:pretty">{{ s.hint }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <sc-if value="{{ showTeacherLinks }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:0 var(--pad) 4px;display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                  <sc-for list="{{ teacherLinks }}" as="k" hint-placeholder-count="3">
+                    <button onClick="{{ k.go }}" style="{{ k.style }}">
+                      <span style="display:block;font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">{{ k.code }}</span>
+                      <span style="display:block;font:500 22px/1.4 'C11';margin-top:7px">{{ k.label }}</span>
+                      <span style="display:block;font:400 11px/1.5 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ k.note }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <div style="padding:0 var(--pad) 8px;display:flex;align-items:baseline;gap:10px">
+                <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">待確認佇列</span>
+                <span style="flex:1;height:1px;background:#221E19"></span>
+              </div>
+              <sc-if value="{{ queueEmptyHome }}" hint-placeholder-val="{{ false }}">
+                <div style="margin:0 var(--pad) 14px;padding:17px 19px;background:rgba(0,0,0,.26);border:1px dashed #2E2822">
+                  <div style="font:500 22px/1.5 'C11';color:#C3BAAA">還沒有人送出東西。</div>
+                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:8px;text-wrap:pretty">學期剛開始。學生交出第一項之後，這裡會依停留週數排序，最久的排最前面。下面仍列出全班，可以先確認每一組都進來了。</div>
+                </div>
+              </sc-if>
+              <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
+                  <button onClick="{{ q.open }}" style="{{ q.style }}">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
+                      <span style="{{ q.weekStyle }}">停留 {{ q.weeks }} 週</span>
+                      <span style="font:700 22px/1.4 'C11'">{{ q.team }}</span>
+                      <span style="font:400 11px/1 'C11';color:#5F574C">{{ q.layer }}</span>
+                      <sc-if value="{{ q.flag }}" hint-placeholder-val="{{ false }}">
+                        <span style="font:500 11px/1 'C11';color:#D9603F;border:1px solid rgba(217,96,63,.4);padding:5px 7px;white-space:nowrap;flex:none">建議聯繫</span>
+                      </sc-if>
+                    </div>
+                    <div style="font:400 22px/1.7 'C11';color:#9A9184;margin-top:8px;text-align:left;text-wrap:pretty">{{ q.detail }}</div>
+                    <div style="display:flex;gap:14px;margin-top:9px;font:400 11px/1 'C11';color:#5F574C">
+                      <span>待確認 {{ q.pending }}</span><span>逾期 {{ q.overdue }}</span>
+                    </div>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scT02 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="T-02 給予任務頁" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-02 · TASK SETS</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">五個週期的任務清單</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:450px;text-wrap:pretty">一個週期對應學生端的一層。你定義要交什麼，不定義怎麼做。</p>
+              </div>
+              <sc-if value="{{ klassFresh }}" hint-placeholder-val="{{ false }}">
+                <div style="margin:18px var(--pad) 0;padding:15px 17px;background:rgba(233,179,65,.06);border-left:2px solid #E9B341;font:400 22px/1.7 'C11';color:#E8E2D6;text-wrap:pretty">{{ klassFreshNote }}</div>
+              </sc-if>
+              <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ layerSets }}" as="s" hint-placeholder-count="5">
+                  <div style="{{ s.style }}">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+                      <span style="font:600 11px/1 'C11';color:#5F574C;width:26px">{{ s.code }}</span>
+                      <span style="font:700 22px/1.4 'C11';letter-spacing:.04em">{{ s.course }}</span>
+                      <span style="font:400 11px/1 'C11';color:#5F574C">學生端 · {{ s.name }}</span>
+                      <span style="{{ s.stateStyle }}">{{ s.state }}</span>
+                      <span style="flex:1"></span>
+                      <button onClick="{{ s.edit }}" style="{{ s.btnStyle }}">{{ s.btn }}</button>
+                    </div>
+                    <sc-if value="{{ s.hasItems }}" hint-placeholder-val="{{ true }}">
+                      <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
+                        <sc-for list="{{ s.items }}" as="i" hint-placeholder-count="6">
+                          <div style="{{ i.rowStyle }}">
+                            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
+                              <span style="{{ i.tagStyle }}">{{ i.tag }}</span>
+                              <span style="font:500 22px/1.4 'C11';flex:1;min-width:140px">{{ i.title }}</span>
+                              <span style="font:400 11px/1 'C11';color:#8A8073;white-space:nowrap">{{ i.due }}</span>
+                              <button onClick="{{ i.edit }}" style="{{ i.editStyle }}">編輯</button>
+                            </div>
+                            <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ i.cond }}</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px">
+                              <div style="font:400 11px/1 'C11';color:#E9B341">{{ i.prog }}</div>
+                              <div style="font:400 11px/1 'C11';color:#8A8073">{{ i.min }}</div>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scT05 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="T-05 撰寫任務內容" style="padding:0 0 32px">
+              <div style="padding:20px var(--pad);border-bottom:1px solid #221E19;display:flex;align-items:center;gap:13px">
+                <button onClick="{{ goT02 }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #26211C;padding:8px 12px;cursor:pointer">←</button>
+                <div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-05 · WRITE ITEM</div>
+                  <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ editHeading }}</h1>
+                </div>
+              </div>
+              <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:17px;max-width:640px">
+                <div style="padding:15px 17px;background:linear-gradient(140deg,rgba(233,179,65,.09),transparent 65%),#14110E;border:1px solid #3A3026">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">這一項屬於哪個環節</div>
+                  <div style="font:700 22px/1.5 'C11';color:#E8E2D6;margin-top:9px">{{ editCourse }}</div>
+                  <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:7px;text-wrap:pretty">{{ editStageNote }}</div>
+                </div>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:9px">項目名稱</div>
+                  <input value="{{ nfTitle }}" onChange="{{ setNfTitle }}" placeholder="例：使用者調查" style="width:100%;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.6 'C11';outline:none">
+                </div>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:9px">必要或延伸</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button onClick="{{ setNfReq }}" style="{{ nfReqStyle }}">必要項 · 過關的最低標準</button>
+                    <button onClick="{{ setNfExt }}" style="{{ nfExtStyle }}">延伸項 · 選擇挖多深</button>
+                  </div>
+                </div>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:9px">通過條件</div>
+                  <textarea onChange="{{ setNfCond }}" value="{{ nfCond }}" placeholder="例：至少三位目標使用者的訪談紀錄，並標出彼此矛盾的地方。" style="width:100%;min-height:76px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                </div>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">要注意的地方</div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">寫提醒，不要寫步驟。這一欄是提醒他們會踩到什麼，不是告訴他們怎麼走。</div>
+                  <textarea onChange="{{ setNfNote }}" value="{{ nfNote }}" placeholder="例：這一層的調查很容易越做越多。" style="width:100%;min-height:66px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                </div>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">時間限制</div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">逾期只標示，不阻擋。仍可提交、仍可確認、仍計入等級。</div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;margin-bottom:7px">哪一週</div>
+                  <div style="display:flex;gap:7px;flex-wrap:wrap">
+                    <sc-for list="{{ dueOptions }}" as="d" hint-placeholder-count="7">
+                      <button onClick="{{ d.pick }}" style="{{ d.style }}">
+                        <span style="display:block">{{ d.label }}</span>
+                        <span style="{{ d.subStyle }}">{{ d.sub }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ dueHasWeek }}" hint-placeholder-val="{{ true }}">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;margin:13px 0 7px">那一週的哪一天</div>
+                    <div style="display:flex;gap:7px;flex-wrap:wrap">
+                      <sc-for list="{{ dowOptions }}" as="d" hint-placeholder-count="4">
+                        <button onClick="{{ d.pick }}" style="{{ d.style }}">
+                          <span style="display:block">{{ d.label }}</span>
+                          <span style="{{ d.subStyle }}">{{ d.sub }}</span>
+                        </button>
+                      </sc-for>
+                    </div>
+                    <div style="margin-top:12px;padding:11px 13px;background:rgba(233,179,65,.07);border:1px solid #3A3026;font:400 22px/1.5 'C11';color:#E8E2D6">學生看到的期限：{{ duePreview }}</div>
+                  </sc-if>
+                </div>
+                <div style="padding:14px 16px;background:rgba(0,0,0,.24);border:1px dashed #2E2822">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">這一項屬於哪個規畫環節</div>
+                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:7px;text-wrap:pretty">選這一項對應的專案規畫環節。學生端會拿到一件對應的物證（小字那一行），選哪一件不改變驗收標準。</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:11px">
+                    <sc-for list="{{ minOptions }}" as="m" hint-placeholder-count="6">
+                      <button onClick="{{ m.pick }}" style="{{ m.style }}">
+                        <span style="display:block;font:500 22px/1.3 'C11'">{{ m.name }}</span>
+                        <span style="display:block;font:400 11px/1.5 'C11';color:#6E665A;margin-top:4px">{{ m.sub }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+                <sc-if value="{{ isEditing }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:13px 16px;background:rgba(233,179,65,.07);border-left:2px solid #E9B341;font:400 22px/1.7 'C11';color:#E8E2D6;text-wrap:pretty">{{ editLiveNote }}</div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:4px">
+                    <button onClick="{{ saveItem }}" style="font:500 22px/1 'C11';color:#0B0A09;background:#E9B341;border:none;padding:14px 22px;cursor:pointer">儲存修改</button>
+                    <button onClick="{{ cancelEdit }}" style="font:500 22px/1 'C11';color:#8A8073;background:none;border:1px solid #2E2822;padding:14px 20px;cursor:pointer">取消</button>
+                    <span style="flex:1"></span>
+                    <button onClick="{{ deleteItem }}" style="font:500 22px/1 'C11';color:#D9603F;background:none;border:1px solid rgba(217,96,63,.35);padding:14px 20px;cursor:pointer">刪除此項</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ notEditing }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:4px">
+                    <button onClick="{{ addTask }}" style="{{ addTaskStyle }}">加入清單</button>
+                    <button onClick="{{ publishSet }}" style="{{ publishStyle }}">{{ publishLabel }}</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ draftHasItems }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:15px 17px;background:#14110E;border:1px solid #26211C">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:11px">草稿中的項目</div>
+                    <div style="display:flex;flex-direction:column;gap:7px">
+                      <sc-for list="{{ draftItems }}" as="d" hint-placeholder-count="2">
+                        <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                          <span style="{{ d.tagStyle }}">{{ d.tag }}</span>
+                          <span style="font:500 22px/1.4 'C11';flex:1">{{ d.title }}</span>
+                          <span style="font:400 11px/1 'C11';color:#5F574C">{{ d.due }}</span>
+                          <button onClick="{{ d.remove }}" style="background:none;border:none;color:#6E665A;cursor:pointer;font:400 22px/1 'C11'">×</button>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scT03 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="T-03 確認組別是否完成" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-03 · REVIEW QUEUE</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">逐項確認</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:440px;text-wrap:pretty">每一項都要寫下合格考量。學生看到的不是通過或退回，是你憑什麼這樣判斷。</p>
+              </div>
+              <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:8px">
+                <sc-if value="{{ queueEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:36px 22px;border:1px dashed #2E2822;text-align:center;font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty">目前沒有待確認的項目。<br><span style="font:400 11px/1 'C11';color:#5F574C">切到學生端提交任務，這裡就會出現</span></div>
+                </sc-if>
+                <sc-for list="{{ reviewItems }}" as="r" hint-placeholder-count="3">
+                  <button onClick="{{ r.open }}" style="{{ r.style }}">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
+                      <span style="{{ r.tagStyle }}">{{ r.tag }}</span>
+                      <span style="font:700 22px/1.4 'C11'">{{ r.title }}</span>
+                      <span style="font:400 11px/1 'C11';color:#5F574C">{{ r.team }}</span>
+                      <span style="{{ r.dueStyle }}">{{ r.due }}</span>
+                    </div>
+                    <div style="font:400 22px/1.7 'C11';color:#9A9184;margin-top:8px;text-align:left;text-wrap:pretty">{{ r.excerpt }}</div>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scT06 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="T-06 逐項確認" style="padding:0 0 32px">
+              <div style="padding:20px var(--pad);border-bottom:1px solid #221E19;display:flex;align-items:center;gap:13px">
+                <button onClick="{{ goT03 }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #26211C;padding:8px 12px;cursor:pointer">←</button>
+                <div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-06 · VERIFY</div>
+                  <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ revTitle }}</h1>
+                </div>
+              </div>
+              <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:17px;max-width:660px">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                  <span style="{{ revTagStyle }}">{{ revTag }}</span>
+                  <span style="font:400 22px/1 'C11';color:#8A8073">{{ revTeam }}</span>
+                  <span style="{{ revDueStyle }}">{{ revDue }}</span>
+                </div>
+                <div style="padding:15px 17px;background:#14110E;border:1px solid #26211C">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">通過條件</div>
+                  <div style="font:400 22px/1.7 'C11';color:#9A9184;margin-top:7px;text-wrap:pretty">{{ revCond }}</div>
+                </div>
+                <div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">他們交了什麼</div>
+                  <div style="padding:16px 18px;background:#0E0C0A;border:1px solid #2E2822;font:400 22px/1.7 'C11';color:#C3BAAA;text-wrap:pretty">{{ revText }}</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:9px">
+                    <sc-for list="{{ revFiles }}" as="f" hint-placeholder-count="2">
+                      <span style="padding:7px 11px;background:#14110E;border:1px solid #2E2822;font:400 11px/1 'C11';color:#8A8073">{{ f.name }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+                <sc-if value="{{ hasRounds }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#D9603F;margin-bottom:9px">往返紀錄 · 這一項已退回 {{ roundCount }} 次</div>
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      <sc-for list="{{ rounds }}" as="r" hint-placeholder-count="1">
+                        <div style="padding:11px 13px;background:rgba(217,96,63,.06);border-left:2px solid rgba(217,96,63,.4)">
+                          <div style="font:400 11px/1 'C11';color:#5F574C">第 {{ r.n }} 輪 · 你當時的理由</div>
+                          <div style="font:400 11px/1.7 'C11';color:#C3BAAA;margin-top:6px;text-wrap:pretty">{{ r.reason }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">合格考量 · 學生會看到這一段</div>
+                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:9px;text-wrap:pretty">寫出這一項憑什麼算通過、或還缺哪一塊。交出去不等於做完——學生要從這一段知道下一次的標準在哪裡。起頭句只是開頭，補完才送出。</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px">
+                    <sc-for list="{{ quickReasons }}" as="q" hint-placeholder-count="4">
+                      <button onClick="{{ q.pick }}" style="padding:8px 12px;background:#14110E;border:1px solid #2E2822;color:#9A9184;font:400 22px/1 'C11';cursor:pointer">{{ q.label }}</button>
+                    </sc-for>
+                  </div>
+                  <textarea onChange="{{ setReason }}" value="{{ reason }}" placeholder="例：三位受訪者的說法你有標出互相矛盾的地方，這一項的重點就在這裡，所以通過。下一項要記得把你怎麼選這三個人寫進來。" style="width:100%;min-height:84px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                </div>
+                <div style="display:flex;gap:9px;flex-wrap:wrap">
+                  <button onClick="{{ passItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#0B0A09;background:#E9B341;border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">通過</button>
+                  <button onClick="{{ rejectItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#D9603F;background:none;border:1px solid rgba(217,96,63,.45);padding:15px var(--pad);cursor:pointer">需補充</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scT07 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="T-07 確認完成並給予道具" style="padding:0 0 32px">
+              <div style="padding:20px var(--pad);border-bottom:1px solid #221E19;display:flex;align-items:center;gap:13px">
+                <button onClick="{{ goT01 }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #26211C;padding:8px 12px;cursor:pointer">←</button>
+                <div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-07 · GATE REVIEW</div>
+                  <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ gateTeamName }} · {{ layerName }}</h1>
+                </div>
+              </div>
+              <sc-if value="{{ noGate }}" hint-placeholder-val="{{ true }}">
+                <div style="margin:22px var(--pad);padding:36px 22px;border:1px dashed #2E2822;text-align:center;font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty">沒有待審的關卡。<br><span style="font:400 11px/1 'C11';color:#5F574C">學生必要項全通過並送出送審三格後，這裡才會有東西</span></div>
+              </sc-if>
+              <sc-if value="{{ hasGate }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:18px;max-width:680px">
+                  <div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:10px">必要項對照</div>
+                    <div style="display:flex;flex-direction:column;gap:5px">
+                      <sc-for list="{{ gateChecklist }}" as="c" hint-placeholder-count="3">
+                        <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;background:#14110E;border:1px solid #26211C">
+                          <span style="{{ c.markStyle }}">{{ c.mark }}</span>
+                          <span style="font:500 22px/1.4 'C11';flex:1">{{ c.title }}</span>
+                          <span style="font:400 11px/1 'C11';color:#5F574C">{{ c.state }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <sc-for list="{{ gateReview }}" as="g" hint-placeholder-count="3">
+                    <div>
+                      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px"><span style="font:600 11px/1 'C11';color:#0B0A09;background:#E9B341;padding:4px 7px">{{ g.n }}</span><span style="font:500 22px/1.4 'C11';color:#9A9184">{{ g.q }}</span></div>
+                      <div style="padding:14px 16px;background:#0E0C0A;border:1px solid #2E2822;font:400 22px/1.7 'C11';color:#C3BAAA;text-wrap:pretty">{{ g.a }}</div>
+                    </div>
+                  </sc-for>
+                  <div style="padding:17px 19px;background:linear-gradient(140deg,rgba(233,179,65,.1),transparent 65%),#14110E;border:1px solid #3A3026">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">系統試算 · 工具校準階級</div>
+                    <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-top:11px">
+                      <span style="font:900 33px/1 'C11';letter-spacing:.05em;color:#F2EADA">{{ calcLevel }}</span>
+                      <span style="font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty">{{ calcReason }}</span>
+                    </div>
+                    <div style="margin-top:14px;padding-top:13px;border-top:1px solid #26211C">
+                      <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-bottom:9px">試算只是建議。最後交出去的階級由你決定：</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:6px">
+                        <sc-for list="{{ levelPicks }}" as="p" hint-placeholder-count="4">
+                          <button onClick="{{ p.pick }}" style="{{ p.style }}">{{ p.label }}</button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <div style="font:500 22px/1 'C11';margin-bottom:9px">你的判斷理由</div>
+                    <textarea onChange="{{ setGateReason }}" value="{{ gateReason }}" placeholder="這一格會對通過的其他隊伍公開。他們讀的不是結論，是你怎麼判斷。" style="width:100%;min-height:92px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                  </div>
+                  <div style="display:flex;gap:9px;flex-wrap:wrap">
+                    <button onClick="{{ passGate }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#0B0A09;background:#E9B341;border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">通過 · 交出工具與寶物</button>
+                    <button onClick="{{ rejectGate }}" style="font:500 22px/1 'C11';color:#D9603F;background:none;border:1px solid rgba(217,96,63,.45);padding:15px 22px;cursor:pointer">需補充</button>
+                    <button onClick="{{ replanGate }}" style="font:500 22px/1 'C11';color:#8A8073;background:none;border:1px solid #2E2822;padding:15px 22px;cursor:pointer">需重新規劃</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ scT04 }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="T-04 各組在哪一層" style="padding:0 0 32px">
+              <div style="padding:20px var(--pad) 0;display:flex;align-items:baseline;gap:10px">
+                <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">名單 · 依停留週數排序</span>
+                <span style="flex:1;height:1px;background:#221E19"></span>
+              </div>
+              <div style="padding:16px var(--pad) 0;display:flex;gap:0;flex-wrap:wrap;font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;border-bottom:1px solid #221E19;padding-bottom:9px">
+                <span style="flex:2.6;min-width:110px">組別</span><span style="flex:0 0 var(--tcol);min-width:64px">地層</span><span style="flex:0 0 52px;text-align:right">停留</span><span style="flex:0 0 60px;text-align:right">待確認</span><span style="flex:0 0 48px;text-align:right">逾期</span>
+              </div>
+              <div style="padding:0 var(--pad);display:flex;flex-direction:column">
+                <sc-for list="{{ classRows }}" as="c" hint-placeholder-count="6">
+                  <button onClick="{{ c.open }}" style="{{ c.style }}">
+                    <span style="flex:2.6;min-width:110px;font:500 22px/1.4 'C11';text-align:left">{{ c.name }}</span>
+                    <span style="flex:0 0 var(--tcol);min-width:64px;font:400 22px/1.4 'C11';color:#9A9184;text-align:left">{{ c.layer }}</span>
+                    <span style="{{ c.weekStyle }}">{{ c.weeks }}</span>
+                    <span style="flex:0 0 60px;text-align:right;font:400 22px/1 'C11';color:#9A9184">{{ c.pending }}</span>
+                    <span style="{{ c.overdueStyle }}">{{ c.overdue }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <div style="padding:14px var(--pad) 0;font:400 11px/1.7 'C11';color:#5F574C">點任一列進逐項確認。</div>
+            </div>
+          </sc-if>
+
+        </div>
+
+        <sc-if value="{{ showTabBar }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:none;display:flex;border-top:1px solid #221E19;background:#0E0C0A;padding:6px 4px 14px">
+            <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="5">
+              <button onClick="{{ it.go }}" style="{{ it.tabStyle }}"><span style="{{ it.tabIconStyle }}"></span><span style="font:500 11px/1 'C11';margin-top:5px">{{ it.short }}</span><span style="{{ it.tabDotStyle }}"></span></button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:30;max-width:86%;padding:13px 20px;background:#1B1712;border:1px solid #3A3026;box-shadow:0 14px 40px rgba(0,0,0,.6);animation:riseIn .28s ease both;display:flex;align-items:center;gap:11px">
+          <span style="width:6px;height:6px;background:#E9B341;flex:none"></span>
+          <span style="font:400 22px/1.6 'C11';color:#E8E2D6;text-wrap:pretty">{{ toast }}</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ rewardOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:50;background:rgba(6,5,4,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:34px;text-align:center">
+          <div style="position:absolute;inset:0;background:radial-gradient(560px 420px at 50% 50%,rgba(233,179,65,.16),transparent 70%);animation:pulseGlow 4s ease-in-out infinite;pointer-events:none"></div>
+          <div style="position:relative;font:400 11px/1 'C11';letter-spacing:.34em;color:#8A8073">CALIBRATION COMPLETE</div>
+          <div style="position:relative;display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:28px 0 24px">
+            <div style="width:150px;padding:20px 16px;background:#14110E;border:1px solid #3A3026;clip-path:polygon(13px 0,100% 0,100% calc(100% - 13px),calc(100% - 13px) 100%,0 100%,0 13px)">
+              <div style="width:46px;height:46px;margin:0 auto;background:linear-gradient(140deg,#E9B341,#6B4C15);clip-path:polygon(50% 0,100% 30%,82% 100%,18% 100%,0 30%)"></div>
+              <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-top:14px">道具</div>
+              <div style="font:700 22px/1.4 'C11';margin-top:6px;color:#F2EADA">{{ rewardTool }}</div>
+              <div style="font:400 11px/1 'C11';color:#E9B341;margin-top:6px">{{ rewardLevel }}</div>
+            </div>
+            <div style="width:150px;padding:20px 16px;background:#14110E;border:1px solid #2E2822;clip-path:polygon(13px 0,100% 0,100% calc(100% - 13px),calc(100% - 13px) 100%,0 100%,0 13px)">
+              <div style="width:46px;height:46px;margin:0 auto;background:linear-gradient(140deg,#C3BAAA,#4A443C);border-radius:50%"></div>
+              <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-top:14px">寶物</div>
+              <div style="font:700 22px/1.4 'C11';margin-top:6px;color:#F2EADA">{{ rewardTreasure }}</div>
+              <div style="font:400 11px/1 'C11';color:#5F574C;margin-top:6px">無等級</div>
+            </div>
+          </div>
+          <div style="position:relative;max-width:390px;font:400 22px/1.7 'C11';color:#C3BAAA;text-wrap:pretty">{{ rewardCopy }}</div>
+          <button onClick="{{ closeReward }}" style="position:relative;margin-top:26px;font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:#0B0A09;background:#E9B341;border:none;padding:14px 32px;cursor:pointer;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)">往下一層</button>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
