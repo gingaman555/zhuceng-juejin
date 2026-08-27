@@ -2,7 +2,7 @@
    只墊 Code.gs 真的用到的那些（已逐一比對過）。 */
 
 const crypto = require('crypto');
-const admin = require('firebase-admin');
+const { getStorage } = require('firebase-admin/storage');
 
 const TZ = 'Asia/Taipei';
 
@@ -74,7 +74,7 @@ function makeProperties(cache, onSet) {
 
 /* Cloud Storage 當 Drive 用。資料夾＝物件路徑前綴。 */
 function makeDrive(pending) {
-  const bucket = () => admin.storage().bucket();
+  const bucket = () => getStorage().bucket();
 
   function fileHandle(path, meta) {
     return {

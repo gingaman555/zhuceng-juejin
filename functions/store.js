@@ -9,7 +9,7 @@
    讀的時候記下每張表的版本號，寫回前在交易裡確認沒人動過，
    有人動過就整個請求重跑。效果一樣，但不用真的鎖住整個後端。 */
 
-const admin = require('firebase-admin');
+const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
 
 const PK = {
   Config: ['key'],
@@ -40,7 +40,7 @@ function docId(name, row) {
   return id.length > 480 ? id.slice(0, 480) : id;
 }
 
-function db() { return admin.firestore(); }
+function db() { return getFirestore(); }
 const verRef = () => db().collection('_meta').doc('versions');
 
 async function loadVersions() {
@@ -69,7 +69,7 @@ async function readCollection(name, head) {
 
 function cellOut(v) {
   if (v === undefined || v === null) return '';
-  if (v instanceof Date) return admin.firestore.Timestamp.fromDate(v);
+  if (v instanceof Date) return Timestamp.fromDate(v);
   if (typeof v === 'object') return JSON.stringify(v);
   return v;
 }
@@ -138,7 +138,7 @@ async function commit(plans, base) {
       await flush();
     }
     const bump = {};
-    names.forEach((nm) => { bump[nm] = admin.firestore.FieldValue.increment(1); });
+    names.forEach((nm) => { bump[nm] = FieldValue.increment(1); });
     await verRef().set(bump, { merge: true });
     return true;
   }

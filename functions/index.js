@@ -16,11 +16,13 @@ const vm = require('vm');
 const { onRequest } = require('firebase-functions/v2/https');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const logger = require('firebase-functions/logger');
-const admin = require('firebase-admin');
+const { initializeApp } = require('firebase-admin/app');
+const { FieldValue } = require('firebase-admin/firestore');
+const { getStorage } = require('firebase-admin/storage');
 const shim = require('./shim');
 const store = require('./store');
 
-admin.initializeApp();
+initializeApp();
 setGlobalOptions({ region: 'asia-east1', maxInstances: 10 });
 
 const SRC = fs.readFileSync(path.join(__dirname, 'Code.gs'), 'utf8');
@@ -164,20 +166,20 @@ async function flush(unit) {
     const patch = {};
     keys.forEach((k) => {
       patch[k] = unit.propWrites[k] === null
-        ? admin.firestore.FieldValue.delete()
+        ? FieldValue.delete()
         : unit.propWrites[k];
     });
     await store.db().collection('_meta').doc('props').set(patch, { merge: true });
   }
 
   for (const up of unit.drive.uploads) {
-    await admin.storage().bucket().file(up.path).save(up.buf, {
+    await getStorage().bucket().file(up.path).save(up.buf, {
       contentType: up.mime,
       metadata: { metadata: { originalName: up.name } }
     });
   }
   for (const p of unit.drive.deletes) {
-    try { await admin.storage().bucket().file(p).delete(); } catch (e) { /* 已經不在就算了 */ }
+    try { await getStorage().bucket().file(p).delete(); } catch (e) { /* 已經不在就算了 */ }
   }
   return true;
 }
@@ -187,7 +189,7 @@ async function preloadFile(unit, fileId) {
   const id = String(fileId || '');
   if (!id) return;
   try {
-    const f = admin.storage().bucket().file(id);
+    const f = getStorage().bucket().file(id);
     const [buf] = await f.download();
     const [meta] = await f.getMetadata();
     const name = (meta.metadata && meta.metadata.originalName) || path.basename(id);

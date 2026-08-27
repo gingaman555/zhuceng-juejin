@@ -1,6 +1,10 @@
 # 推到 master 就自動部署到 Firebase。
-# 需要一組 repo secret：FIREBASE_SERVICE_ACCOUNT（Firebase 主控台產的服務帳號 JSON）
-#                     FIREBASE_PROJECT_ID
+#
+# 需要一組 repo secret：FIREBASE_SERVICE_ACCOUNT
+# 設定方式（在專案目錄下跑一次就好，它會自己把 secret 寫進 GitHub）：
+#     firebase init hosting:github
+#
+# 還沒設定之前，這個 workflow 會直接跳過部署，不會讓 CI 變紅。
 name: Deploy to Firebase
 
 on:
@@ -16,9 +20,19 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: 後端自我測試（Code.gs 在 Node 上跑得起來嗎）
+      - name: 有沒有部署憑證
+        id: creds
+        run: |
+          if [ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
+            echo "ready=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=no" >> "$GITHUB_OUTPUT"
+            echo "::notice::還沒設定 FIREBASE_SERVICE_ACCOUNT，跳過部署。在本機跑一次 firebase init hosting:github 就會自動設定。"
+          fi
+
+      - name: 後端自我測試
         run: |
           cp gas/Code.gs functions/Code.gs
           cd functions && npm ci && node selftest.js
@@ -35,9 +49,21 @@ jobs:
             echo "正式版夾帶了假後端，停止部署"; exit 1
           fi
 
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: 部署 Hosting
+        if: steps.creds.outputs.ready == 'yes'
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          projectId: boss-fight-816f3
           channelId: live
+
+      - name: 部署後端與規則
+        if: steps.creds.outputs.ready == 'yes'
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx firebase-tools@latest deploy \
+            --only functions,firestore:rules,storage \
+            --project boss-fight-816f3 --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"

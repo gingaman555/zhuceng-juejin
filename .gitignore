@@ -12,3 +12,5 @@ functions/node_modules/
 # build 產物（CI 會自己重建）
 public/
 functions/Code.gs
+firebase-debug.log
+*.log
