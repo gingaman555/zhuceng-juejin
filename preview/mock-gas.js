@@ -5,7 +5,7 @@
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], Config: { unlockEvery: 1 } };
+             Files: [], Roster: [], MinNames: [], Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
     if (saved) DB = JSON.parse(saved);
@@ -404,7 +404,8 @@
         .map(function (x) { return teamPub(x, w); });
       var defs = tasksOfClass(classId);
       var out = { user: pub(u), classes: classes, classId: classId, courseWeek: w,
-                  joinCode: kl ? kl.joinCode : '', teams: allTeams, taskDefs: defs };
+                  joinCode: kl ? kl.joinCode : '', teams: allTeams, taskDefs: defs,
+                  minNames: API.minNamesOf(classId) };
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
         var me = teamById(u.teamId);
@@ -651,6 +652,30 @@
         week: w, readerLayer: me.layer, readerStay: Math.max(1, w - me.enteredWeek + 1), recentlyRejected: rejected });
       persist();
       return ok();
+    },
+    minNamesOf: function (classId) {
+      var out = {};
+      (DB.MinNames || []).forEach(function (r) {
+        if (String(r.classId) !== String(classId)) return;
+        out[String(r.mineral)] = { label: String(r.label || ''), note: String(r.note || '') };
+      });
+      return out;
+    },
+    apiSetMineralName: function (t, classId, mineral, label, note) {
+      var u = auth(t);
+      if (u.role !== 'teacher' && u.role !== 'researcher') return err('只有老師可以改拆分名稱。');
+      if (!classById(classId)) return err('找不到這個班級。');
+      var name = String(mineral || '').trim();
+      if (!name) return err('要改哪一塊？');
+      var lb = String(label || '').trim(), nt = String(note || '').trim();
+      if (lb.length > 40) return err('工作名稱請控制在 40 個字以內。');
+      if (nt.length > 200) return err('說法請控制在 200 個字以內。');
+      DB.MinNames = (DB.MinNames || []).filter(function (r) {
+        return !(String(r.classId) === String(classId) && String(r.mineral) === name);
+      });
+      if (lb || nt) DB.MinNames.push({ classId: classId, mineral: name, label: lb, note: nt });
+      persist();
+      return ok({ minNames: API.minNamesOf(classId) });
     },
     apiSaveSpecName: function (t, key, name) {
       var u = auth(t), tm = teamById(u.teamId);

@@ -2385,6 +2385,37 @@ window.JLZ_SPRITES = {
                   </sc-if>
                 </div>
                 <div style="padding:14px 16px;background:rgba(0,0,0,.24);border:1px dashed #2E2822">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">這一層的拆分</div>
+                  <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:7px;text-wrap:pretty">{{ veinRenameNote }}</div>
+                  <div style="display:flex;flex-direction:column;gap:6px;margin-top:11px">
+                    <sc-for list="{{ veinRenames }}" as="vr" hint-placeholder-count="4">
+                      <div>
+                        <div style="{{ vr.rowStyle }}">
+                          <span style="font:500 22px/1.3 'C11';color:#E8E2D6;flex:1;min-width:120px">{{ vr.label }}</span>
+                          <span style="font:400 11px/1 'C11';color:#6E665A;white-space:nowrap">{{ vr.mineral }}</span>
+                          <sc-if value="{{ vr.isChanged }}" hint-placeholder-val="{{ false }}">
+                            <span style="{{ vr.tagStyle }}">{{ vr.tag }}</span>
+                          </sc-if>
+                          <button onClick="{{ vr.toggle }}" style="{{ vr.toggleStyle }}">{{ vr.toggleLabel }}</button>
+                        </div>
+                        <sc-if value="{{ vr.open }}" hint-placeholder-val="{{ false }}">
+                          <div style="padding:12px 13px;background:rgba(0,0,0,.34);border-left:2px solid #5A4A2C;margin-top:4px">
+                            <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">你要叫它什麼</div>
+                            <input value="{{ vr.labelValue }}" onChange="{{ vr.setLabel }}" placeholder="{{ vr.labelPh }}" style="width:100%;margin-top:6px;padding:11px 12px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.4 'C11';outline:none">
+                            <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C;margin-top:11px">你的說法（學生點開礦石會看到）</div>
+                            <textarea onChange="{{ vr.setNote }}" value="{{ vr.noteValue }}" placeholder="{{ vr.notePh }}" style="width:100%;margin-top:6px;min-height:110px;padding:11px 12px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.6 'C11';resize:vertical;outline:none"></textarea>
+                            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;align-items:center">
+                              <button onClick="{{ vr.save }}" style="font:500 22px/1 'C11';color:#0B0A09;background:#E9B341;border:none;padding:11px 17px;cursor:pointer">存起來</button>
+                              <button onClick="{{ vr.reset }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #2E2822;padding:11px 15px;cursor:pointer">改回系統預設</button>
+                              <span style="flex:1;min-width:150px;font:400 11px/1.6 'C11';color:#5F574C">預設是「{{ vr.origin }}」</span>
+                            </div>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="padding:14px 16px;background:rgba(0,0,0,.24);border:1px dashed #2E2822;margin-top:14px">
                   <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">這一項是哪一塊礦石　{{ veinCount }}</div>
                   <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:7px;text-wrap:pretty">{{ veinPickNote }}</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:11px">
@@ -4861,7 +4892,7 @@ class Component extends DCLogic {
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], Config: { unlockEvery: 1 } };
+             Files: [], Roster: [], MinNames: [], Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
     if (saved) DB = JSON.parse(saved);
@@ -5260,7 +5291,8 @@ class Component extends DCLogic {
         .map(function (x) { return teamPub(x, w); });
       var defs = tasksOfClass(classId);
       var out = { user: pub(u), classes: classes, classId: classId, courseWeek: w,
-                  joinCode: kl ? kl.joinCode : '', teams: allTeams, taskDefs: defs };
+                  joinCode: kl ? kl.joinCode : '', teams: allTeams, taskDefs: defs,
+                  minNames: API.minNamesOf(classId) };
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
         var me = teamById(u.teamId);
@@ -5507,6 +5539,30 @@ class Component extends DCLogic {
         week: w, readerLayer: me.layer, readerStay: Math.max(1, w - me.enteredWeek + 1), recentlyRejected: rejected });
       persist();
       return ok();
+    },
+    minNamesOf: function (classId) {
+      var out = {};
+      (DB.MinNames || []).forEach(function (r) {
+        if (String(r.classId) !== String(classId)) return;
+        out[String(r.mineral)] = { label: String(r.label || ''), note: String(r.note || '') };
+      });
+      return out;
+    },
+    apiSetMineralName: function (t, classId, mineral, label, note) {
+      var u = auth(t);
+      if (u.role !== 'teacher' && u.role !== 'researcher') return err('只有老師可以改拆分名稱。');
+      if (!classById(classId)) return err('找不到這個班級。');
+      var name = String(mineral || '').trim();
+      if (!name) return err('要改哪一塊？');
+      var lb = String(label || '').trim(), nt = String(note || '').trim();
+      if (lb.length > 40) return err('工作名稱請控制在 40 個字以內。');
+      if (nt.length > 200) return err('說法請控制在 200 個字以內。');
+      DB.MinNames = (DB.MinNames || []).filter(function (r) {
+        return !(String(r.classId) === String(classId) && String(r.mineral) === name);
+      });
+      if (lb || nt) DB.MinNames.push({ classId: classId, mineral: name, label: lb, note: nt });
+      persist();
+      return ok({ minNames: API.minNamesOf(classId) });
     },
     apiSaveSpecName: function (t, key, name) {
       var u = auth(t), tm = teamById(u.teamId);
@@ -5955,6 +6011,7 @@ class Component extends DCLogic {
       teamState: {}, otherSubs: [], teamTasks: b.teamTasks || {}, gates: b.gates || [],
       authError: '', busy: false
     };
+    next.minNames = b.minNames || {};   /* 老師改過的拆分名稱 */
     (b.teams || []).forEach(function (t) {
       next.teamState[t.id] = { layer: t.layer, weeks: t.weeks, passed: t.passed };
     });
@@ -7695,7 +7752,20 @@ class Component extends DCLogic {
   var MINS_TOTAL = 17;
 
   function trimMinerals(L) {
-    if (!L || !L.MINS || L.MINS.__trimmed) return;
+    if (!L || !L.MINS) return;
+    /* 老師照自己的規劃改過拆分名稱的話，套上去。改了就要重算。 */
+    var names = (L.state && L.state.minNames) || {};
+    var stamp = JSON.stringify(names);
+    if (L.MINS.__trimmed && L.MINS.__names === stamp) return;
+    if (L.MINS.__trimmed) {
+      L.MINS.forEach(function (m) {
+        var o = names[m.name];
+        m.task = (o && o.label) || m.__task0 || m.task;
+        m.rec = (o && o.note) || m.__rec0 || m.rec;
+      });
+      L.MINS.__names = stamp;
+      return;
+    }
     var keep = {};
     Object.keys(KEEP_MINS).forEach(function (n) {
       KEEP_MINS[n].forEach(function (name) { keep[name] = 1; });
@@ -7706,7 +7776,16 @@ class Component extends DCLogic {
       if (a.L !== b.L) return a.L - b.L;
       return KEEP_MINS[a.L].indexOf(a.name) - KEEP_MINS[b.L].indexOf(b.name);
     });
+    /* 原本的名稱留一份，老師改回預設時要用得到 */
+    out.forEach(function (m) {
+      if (m.__task0 === undefined) m.__task0 = m.task;
+      if (m.__rec0 === undefined) m.__rec0 = m.rec;
+      var o = names[m.name];
+      m.task = (o && o.label) || m.__task0;
+      m.rec = (o && o.note) || m.__rec0;
+    });
     out.__trimmed = true;
+    out.__names = stamp;
     L.MINS = out;
   }
 
@@ -8671,6 +8750,82 @@ class Component extends DCLogic {
       ? '這一層的礦脈是固定的 ' + vein + ' 塊，每一塊本來就對應一項工作。標「已配給」的是開過的，剩下 ' +
         leftVein.length + ' 塊還沒開——礦脈開完，學生才拿得到道具、通過這一層。'
       : '這一層的 ' + vein + ' 塊都開完了。要改哪一項的內容，回 T-02 逐項編輯。';
+
+    /* 老師照自己的規劃改這一層的拆分名稱。礦石本身不動，改的是它對應的工作。 */
+    (function () {
+      var names = S.minNames || {};
+      var openOne = S.minRename || '';
+      var f2 = S.admForm || {};
+      var val = function (mn, key, dflt) {
+        var k = 'mn_' + mn + '_' + key;
+        var cur = (L.state.minForm || {})[k];
+        return cur !== undefined ? cur : String(dflt || '');
+      };
+      var setV = function (mn, key) {
+        var k = 'mn_' + mn + '_' + key;
+        return function (e) {
+          var n = Object.assign({}, L.state.minForm || {});
+          n[k] = e.target.value;
+          L.setState({ minForm: n });
+        };
+      };
+
+      v.veinRenameNote = '系統的拆分只是預設。跟你的規劃不一樣的話，改成你自己的說法——' +
+        '學生那邊的地圖、圖鑑、任務清單都會跟著改。礦石本身（' + '定名石、裂晶那些' + '）不會變。';
+
+      v.veinRenames = veinAll.map(function (m) {
+        var o = names[m.name] || {};
+        var open = openOne === m.name;
+        var changed = !!(o.label || o.note);
+        return {
+          mineral: m.name,
+          label: m.task,
+          origin: m.__task0 || m.task,
+          isChanged: changed,
+          tag: changed ? '已改名' : '',
+          tagStyle: "font:400 11px/1 'C11';letter-spacing:.12em;padding:4px 7px;flex:none;" +
+            "background:rgba(233,179,65,.14);border:1px solid #5A4A2C;color:#E9B341",
+          open: open,
+          toggleLabel: open ? '收起來' : '改名稱',
+          toggleStyle: "font:400 11px/1 'C11';padding:7px 11px;cursor:pointer;white-space:nowrap;" +
+            "background:" + (open ? 'rgba(233,179,65,.12)' : 'none') +
+            ";border:1px solid " + (open ? '#5A4A2C' : '#2E2822') + ";color:" + (open ? '#E9B341' : '#8A8073'),
+          toggle: function () { L.setState({ minRename: open ? '' : m.name }); },
+          labelValue: val(m.name, 'label', o.label || ''),
+          setLabel: setV(m.name, 'label'),
+          labelPh: m.__task0 || m.task,
+          noteValue: val(m.name, 'note', o.note || ''),
+          setNote: setV(m.name, 'note'),
+          notePh: m.__rec0 || '',
+          rowStyle: "display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:9px 11px;" +
+            "background:rgba(0,0,0,.26);border-left:2px solid " + (changed ? '#5A4A2C' : '#2E2822'),
+          save: function () {
+            var lb = val(m.name, 'label', o.label || '');
+            var nt = val(m.name, 'note', o.note || '');
+            call('apiSetMineralName', LIVE.token, kid, m.name, lb, nt)
+              .then(function (r) {
+                if (!r || !r.ok) { L.say((r && r.error) || '存不起來。'); return; }
+                L.setState({ minNames: r.minNames || {}, minRename: '' });
+                L.say(lb ? '「' + m.name + '」改叫「' + lb + '」了。' : '改回系統預設了。');
+              })
+              .catch(function (e) { L.say(e.message); });
+          },
+          reset: function () {
+            var n = Object.assign({}, L.state.minForm || {});
+            n['mn_' + m.name + '_label'] = '';
+            n['mn_' + m.name + '_note'] = '';
+            L.setState({ minForm: n });
+            call('apiSetMineralName', LIVE.token, kid, m.name, '', '')
+              .then(function (r) {
+                if (!r || !r.ok) { L.say((r && r.error) || '改不回去。'); return; }
+                L.setState({ minNames: r.minNames || {}, minRename: '' });
+                L.say('改回系統預設了。');
+              })
+              .catch(function (e) { L.say(e.message); });
+          }
+        };
+      });
+    })();
 
     /* 桌機把整個寬度用滿：左邊表單、右邊固定跟著捲的側欄 */
     var mob = L.state.device === 'mobile';

@@ -47,7 +47,9 @@ var SHEET_DEFS = {
   Plans:       ['teamId', 'taskId', 'week', 'fromWeek', 'toWeek'],
   Passes:      ['passId', 'teamId', 'layer', 'week', 'toolLevel', 'gateCell1', 'gateCell2', 'gateCell3', 'verdict', 'reason', 'ts'],
   Reads:       ['readId', 'readerTeam', 'targetTeam', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected', 'ts'],
-  Codes:       ['revId', 'coder', 'code', 'ts']
+  Codes:       ['revId', 'coder', 'code', 'ts'],
+  /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
+  MinNames:    ['classId', 'mineral', 'label', 'note']
 };
 
 function ss_() {
@@ -1221,7 +1223,8 @@ function apiBootstrap(token) {
     var out = {
       user: pubUser_(u), classes: classes, classId: classId,
       courseWeek: courseWeek, joinCode: kl ? kl.joinCode : '',
-      teams: allTeams, taskDefs: defs, serverTime: new Date().toISOString()
+      teams: allTeams, taskDefs: defs, serverTime: new Date().toISOString(),
+      minNames: minNamesOf_(classId)   /* 老師改過的拆分名稱 */
     };
 
     if (u.role === 'student') {
@@ -1649,6 +1652,50 @@ function apiSaveSpecName(token, key, name) {
     names[key] = name;
     upsert_('Teams', ['teamId'], { teamId: u.teamId, specNames: JSON.stringify(names) });
     return ok_();
+  } catch (e) { return err_(e); }
+}
+
+/** 這一班的拆分改名：mineral 是礦石名（固定），label 是老師自己的工作名稱。 */
+function minNamesOf_(classId) {
+  var out = {};
+  readTable_('MinNames').forEach(function (r) {
+    if (String(r.classId) !== String(classId)) return;
+    out[String(r.mineral)] = { label: String(r.label || ''), note: String(r.note || '') };
+  });
+  return out;
+}
+
+/**
+ * 老師改這一層某一塊礦石對應的工作名稱與說法。
+ * label 留空＝改回系統預設。
+ */
+function apiSetMineralName(token, classId, mineral, label, note) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'teacher' && u.role !== 'researcher') return err_('只有老師可以改拆分名稱。');
+    var kl = classById_(classId);
+    if (!kl) return err_('找不到這個班級。');
+    if (u.role === 'teacher' && String(kl.teacherId) !== String(u.userId) &&
+        String(u.classId) !== String(classId)) {
+      return err_('這不是你帶的班。');
+    }
+    var name = String(mineral || '').trim();
+    if (!name) return err_('要改哪一塊？');
+    var lb = String(label || '').trim();
+    var nt = String(note || '').trim();
+    if (lb.length > 40) return err_('工作名稱請控制在 40 個字以內。');
+    if (nt.length > 200) return err_('說法請控制在 200 個字以內。');
+
+    if (!lb && !nt) {
+      /* 兩個都空＝改回預設，那就把這一列刪掉 */
+      writeTable_('MinNames', readTable_('MinNames').filter(function (r) {
+        return !(String(r.classId) === String(classId) && String(r.mineral) === name);
+      }));
+    } else {
+      upsert_('MinNames', ['classId', 'mineral'],
+        { classId: classId, mineral: name, label: lb, note: nt });
+    }
+    return ok_({ minNames: minNamesOf_(classId) });
   } catch (e) { return err_(e); }
 }
 
