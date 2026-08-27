@@ -2830,5 +2830,13 @@ must(
 '                </sc-if>',
 '                <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">礦物 · 一項任務一種礦</div>'].join('\n'));
 
+/* 44. T-08 那張「過關給的寶物」換成層底的守關生物：外框與小標改成可換 */
+must(
+'                        <button onClick="{{ w.openTre }}" style="flex:1;min-width:210px;display:flex;gap:11px;padding:12px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:rgba(0,0,0,.28);border:none;border-left:2px solid #3A3026">',
+'                        <button onClick="{{ w.openTre }}" style="{{ w.treCardStyle }}">');
+must(
+'                            <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.16em;color:#5F574C">過關給的寶物</div>',
+'                            <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.16em;color:{{ w.treKickerColor }}">{{ w.treKicker }}</div>');
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

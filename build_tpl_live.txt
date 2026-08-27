@@ -1271,10 +1271,10 @@
                             <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-top:4px;text-wrap:pretty">對應能力 · {{ w.toolAbility }}</div>
                           </div>
                         </button>
-                        <button onClick="{{ w.openTre }}" style="flex:1;min-width:210px;display:flex;gap:11px;padding:12px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:rgba(0,0,0,.28);border:none;border-left:2px solid #3A3026">
+                        <button onClick="{{ w.openTre }}" style="{{ w.treCardStyle }}">
                           <span style="{{ w.treIcon }}"></span>
                           <div>
-                            <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">過關給的寶物</div>
+                            <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:{{ w.treKickerColor }}">{{ w.treKicker }}</div>
                             <div style="font:500 22px/1.4 'C11';color:#E8E2D6;margin-top:6px">{{ w.treasure }}</div>
                             <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ w.treLine }}</div>
                           </div>

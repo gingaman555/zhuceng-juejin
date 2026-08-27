@@ -605,6 +605,7 @@
     decorateAuth(L, v);
     if (S.role === 'student' && S.signedIn) decorateStudent(L, v);
     if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); decorateDayNight(L, v); decorateLayerPanel(L, v); }
+    decorateWorld(L, v);
     if (isRes) decorateResearcher(L, v);
     addBossCodex(L, v);   /* 學生與老師的收藏總覽都要有守關生物 */
     ghostCodex(L, v);      /* 還沒拿到的畫成造型黑影 */
@@ -2265,6 +2266,37 @@
       v.sel.bossNote = ''; v.sel.bossMoreStyle = 'display:none';
       v.sel.openBoss = function () {};
     }
+  }
+
+  /* T-08「學生端的世界」右邊那張卡：本來是過關給的寶物，
+     改成層底站著誰。老師要先知道學生會撞上什麼，寶物在圖鑑
+     與層詳情裡本來就看得到。第五層沒有生物，維持原本的寶物。 */
+  function decorateWorld(L, v) {
+    (v.worldLayers || []).forEach(function (w, i) {
+      var n = i + 1;
+      var bz = bossOf(n);
+      if (!bz) {
+        w.treKicker = '過關給的寶物';
+        w.treKickerColor = '#5F574C';
+        w.treCardStyle = 'flex:1;min-width:210px;display:flex;gap:11px;padding:12px 14px;' +
+          'text-align:left;font:inherit;color:inherit;cursor:pointer;' +
+          'background:rgba(0,0,0,.28);border:none;border-left:2px solid #3A3026';
+        return;
+      }
+      var bt = BOSS_TEXT[n] || {};
+      w.treKicker = '層底的守關生物';
+      w.treKickerColor = bz.hue['#'];
+      w.treCardStyle = 'flex:1;min-width:210px;display:flex;gap:11px;padding:12px 14px;' +
+        'text-align:left;font:inherit;color:inherit;cursor:pointer;' +
+        'background:rgba(0,0,0,.34);border:none;border-left:2px solid ' + bz.hue['#'];
+      w.treIcon = 'display:block;width:34px;height:34px;flex:none;image-rendering:pixelated;' +
+        'background:url("' + bossSvg(bz, false) + '") center/contain no-repeat';
+      w.treasure = bz.name;
+      w.treLine = bt.trait || '';
+      w.openTre = function () {
+        L.setState({ specFrom: L.state.screen, screen: 'S06', specId: bz.name });
+      };
+    });
   }
 
   function decorateBoard(L, v) {
