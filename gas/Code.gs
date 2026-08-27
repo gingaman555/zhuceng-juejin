@@ -31,7 +31,7 @@ var SHEET_DEFS = {
   Config:      ['key', 'value'],
   Users:       ['userId', 'account', 'salt', 'hash', 'role', 'name', 'classId', 'teamId', 'coder', 'createdAt', 'lastLogin'],
   Sessions:    ['token', 'userId', 'createdAt', 'expiresAt'],
-  Classes:     ['classId', 'name', 'term', 'started', 'courseStart', 'weekOverride', 'semesterWeeks', 'joinCode', 'teacherId'],
+  Classes:     ['classId', 'name', 'term', 'started', 'courseStart', 'weekOverride', 'semesterWeeks', 'joinCode', 'teacherId', 'sandbox'],
   Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'passed', 'toolLevels',
                 'gateText', 'gateSubmitted', 'gateVerdict', 'specNames', 'createdAt', 'gateTs'],
   Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'createdAt'],
@@ -504,11 +504,11 @@ function apiAdminOverview(token) {
   catch (e) { return err_(e); }
 }
 
-function apiAdminCreateClass(token, name, term, courseStart, weeks) {
+function apiAdminCreateClass(token, name, term, courseStart, weeks, sandbox) {
   try {
     assertResearcher_(token);
     if (!String(name || '').trim()) return err_('請填班級名稱。');
-    createClass_(String(name).trim(), String(term || ''), String(courseStart || ''), '', weeks);
+    createClass_(String(name).trim(), String(term || ''), String(courseStart || ''), '', weeks, sandbox);
     return ok_(adminOverview_());
   } catch (e) { return err_(e); }
 }
@@ -541,6 +541,7 @@ function apiAdminUpdateClass(token, classId, patch) {
       var o = String(patch.weekOverride).trim();
       row.weekOverride = o === "" ? "" : Math.max(1, Math.floor(Number(o) || 1));
     }
+    if (patch.sandbox !== undefined) row.sandbox = patch.sandbox ? 'Y' : '';
     if (patch.joinCode !== undefined) {
       var code = String(patch.joinCode).trim().toUpperCase();
       if (!/^[A-Z0-9]{4,10}$/.test(code)) return err_("邀請碼只能用 4 到 10 個英數字。");
@@ -916,7 +917,7 @@ function makeCode_() {
   return s;
 }
 
-function createClass_(name, term, courseStart, teacherId, semesterWeeks) {
+function createClass_(name, term, courseStart, teacherId, semesterWeeks, sandbox) {
   var id = 'k' + Utilities.getUuid().slice(0, 6);
   var code = makeCode_();
   while (findClassByCode_(code)) code = makeCode_();
@@ -924,7 +925,7 @@ function createClass_(name, term, courseStart, teacherId, semesterWeeks) {
     classId: id, name: name, term: term || '', started: 'Y',
     courseStart: courseStart || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
     weekOverride: '', semesterWeeks: Math.max(2, Math.min(156, Math.floor(Number(semesterWeeks) || 18))),
-    joinCode: code, teacherId: teacherId || ''
+    joinCode: code, teacherId: teacherId || '', sandbox: sandbox ? 'Y' : ''
   });
   return id;
 }
@@ -1031,7 +1032,7 @@ function classesOf_(u) {
       courseStart: Utilities.formatDate(toDate_(k.courseStart), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
       weekOverride: k.weekOverride === '' ? null : Number(k.weekOverride),
       semesterWeeks: semWeeksOf_(k),
-      joinCode: k.joinCode, courseWeek: courseWeekOf_(k)
+      joinCode: k.joinCode, courseWeek: courseWeekOf_(k), sandbox: String(k.sandbox) === 'Y'
     };
   });
 }
@@ -1882,8 +1883,18 @@ function apiResearchSlice(token) {
     var unlockedThrough = every <= 1 ? courseWeek : Math.floor(courseWeek / every) * every;
     var vis = function (w) { return Number(w) <= unlockedThrough; };
 
+    /* 沙盒班級不進研究紀錄——研究者自己試流程用的，不能汙染收案資料 */
+    var sandboxClass = {};
+    classes.forEach(function (k) { if (String(k.sandbox) === 'Y') sandboxClass[String(k.classId)] = 1; });
+    var skipTeam = {};
+    readTable_('Teams').forEach(function (t) {
+      if (sandboxClass[String(t.classId)]) skipTeam[String(t.teamId)] = 1;
+    });
+    var realTeam = function (id) { return !skipTeam[String(id)]; };
+
     var teamName = {}, teamLayer = {}, teamEntered = {};
     readTable_('Teams').forEach(function (t) {
+      if (skipTeam[String(t.teamId)]) return;
       teamName[t.teamId] = t.name; teamLayer[t.teamId] = Number(t.layer) || 1;
       teamEntered[t.teamId] = Number(t.enteredWeek) || 1;
     });
@@ -1893,7 +1904,9 @@ function apiResearchSlice(token) {
                    unlockEvery: every, subLog: [], revLog: [], readLog: [], teams: [] });
     }
 
-    var subLog = readTable_('Submissions').filter(function (s) { return vis(s.week); }).map(function (s) {
+    var subLog = readTable_('Submissions').filter(function (s) {
+      return vis(s.week) && realTeam(s.teamId);
+    }).map(function (s) {
       return { taskId: s.taskId, group: teamName[s.teamId] || s.teamId, title: '', layer: '',
                week: Number(s.week), dueWeek: Number(s.dueWeek) || 6, overdue: String(s.overdue) === 'Y',
                len: Number(s.len) || 0, files: Number(s.files) || 0, attempt: Number(s.attempt) || 1,
@@ -1903,7 +1916,9 @@ function apiResearchSlice(token) {
     /* 把每一次審核接回學生那一輪的提交：研究要看的是整個來回，不是單邊 */
     var allSubs = readTable_('Submissions');
     var seenRound = {};
-    var revLog = readTable_('Reviews').filter(function (r) { return vis(r.week); }).map(function (r) {
+    var revLog = readTable_('Reviews').filter(function (r) {
+      return vis(r.week) && realTeam(r.teamId);
+    }).map(function (r) {
       var key = r.teamId + '::' + r.taskId;
       var idx = seenRound[key] = (seenRound[key] || 0) + 1;
       var mine = allSubs.filter(function (s) {
@@ -1920,12 +1935,16 @@ function apiResearchSlice(token) {
                effort: s ? (s.effort || '') : '', effortNote: s ? (s.effortNote || '') : '',
                blocker: s ? (s.blocker || '') : '', subWeek: s ? Number(s.week) || 0 : 0 };
     });
-    var readLog = readTable_('Reads').filter(function (r) { return vis(r.week); }).map(function (r) {
+    var readLog = readTable_('Reads').filter(function (r) {
+      return vis(r.week) && realTeam(r.readerTeam) && realTeam(r.targetTeam);
+    }).map(function (r) {
       return { reader: teamName[r.readerTeam] || r.readerTeam, target: teamName[r.targetTeam] || r.targetTeam,
                layer: Number(r.layer) || 1, week: Number(r.week), readerLayer: Number(r.readerLayer) || 1,
                readerStay: Number(r.readerStay) || 1, recentlyRejected: String(r.recentlyRejected) === 'Y' };
     });
-    var teams = readTable_('Teams').map(function (t) {
+    var teams = readTable_('Teams').filter(function (t) {
+      return realTeam(t.teamId);
+    }).map(function (t) {
       return { id: t.teamId, name: t.name, layer: Number(t.layer) || 1,
                weeks: Math.max(1, unlockedThrough - (Number(t.enteredWeek) || 1) + 1),
                passed: jparse_(t.passed, []) };

@@ -1484,6 +1484,9 @@
                           <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline">
                             <span style="font-family:'Noto Sans TC',sans-serif;font-size:13.5px;color:#DFE6EB">{{ k.name }}</span>
                             <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ k.meta }}</span>
+                            <sc-if value="{{ k.isSandbox }}" hint-placeholder-val="{{ false }}">
+                              <span style="{{ k.sandboxChip }}">試用班 · 不進研究紀錄</span>
+                            </sc-if>
                             <span style="flex:1"></span>
                             <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874">邀請碼</span>
                             <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.1em;color:#7FC4D8">{{ k.code }}</span>
@@ -1499,6 +1502,10 @@
                                     <input value="{{ kf.value }}" onChange="{{ kf.set }}" placeholder="{{ kf.ph }}" style="{{ kf.input }}">
                                   </label>
                                 </sc-for>
+                              </div>
+                              <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:11px">
+                                <button onClick="{{ k.toggleSandbox }}" style="{{ k.sandboxBtnStyle }}">{{ k.sandboxBtnLabel }}</button>
+                                <span style="flex:1;min-width:200px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.8;color:#5A6874">{{ k.sandboxNote }}</span>
                               </div>
                               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;align-items:center">
                                 <button onClick="{{ k.save }}" style="{{ k.saveStyle }}">{{ k.saveLabel }}</button>
@@ -1518,6 +1525,7 @@
                       <input value="{{ adm.kterm }}" onChange="{{ adm.setKterm }}" placeholder="學期（例：2026 秋）" style="flex:1;min-width:110px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none">
                       <input value="{{ adm.kstart }}" onChange="{{ adm.setKstart }}" placeholder="開課日 2026-09-14" style="flex:1;min-width:130px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none">
                       <input value="{{ adm.kweeks }}" onChange="{{ adm.setKweeks }}" placeholder="總週數 18" style="flex:0 0 110px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none">
+                      <button onClick="{{ adm.toggleNewSandbox }}" style="{{ adm.newSandboxStyle }}">{{ adm.newSandboxLabel }}</button>
                       <button onClick="{{ adm.createClass }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 16px;background:#1E2024;border:1px solid #2A2E33;color:#DFE6EB;cursor:pointer;border-radius:6px">開一個班</button>
                     </div>
                     <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:8px">總週數決定甘特圖有幾欄、期限可以訂到第幾週。一學期 18、一學年 36、整整一年 52、兩年 104，<b>最多 156 週（三年）</b>。跨年度的專案照樣可以開——甘特圖會自動縮格寬，學生端也有寬／中／窄與「跳到本週」。開完之後在下面每一班那一列還可以改。</div>
@@ -2940,6 +2948,10 @@
           <span style="width:6px;height:6px;background:#E9B341;flex:none"></span>
           <span style="font:400 22px/1.6 'C11';color:#E8E2D6;text-wrap:pretty">{{ toast }}</span>
         </div>
+      </sc-if>
+
+      <sc-if value="{{ inSandbox }}" hint-placeholder-val="{{ false }}">
+        <div style="{{ sandboxBarStyle }}">{{ sandboxBarText }}</div>
       </sc-if>
 
       <sc-if value="{{ momentOpen }}" hint-placeholder-val="{{ false }}">

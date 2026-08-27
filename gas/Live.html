@@ -276,7 +276,7 @@
 
     L.KLASSES = (b.classes || []).map(function (k) {
       return {
-        id: k.id, name: k.name, term: k.term || '', started: k.started,
+        id: k.id, name: k.name, term: k.term || '', started: k.started, sandbox: !!k.sandbox,
         joinCode: k.joinCode, courseStart: k.courseStart, courseWeek: k.courseWeek,
         weekOverride: k.weekOverride,
         teams: (byClass[k.id] || []).map(function (t) {
@@ -940,6 +940,20 @@
       v.storyArtBeast = cur.art === 'beast';
       v.storyArtTrade = cur.art === 'trade';
     } else { v.storyArtBeast = false; v.storyArtTrade = false; }
+
+    /* 沙盒班級：功能一樣，但這一班的資料不進研究紀錄。要讓人看得出來。 */
+    (function () {
+      var kl = (L.KLASSES || [])[S.klass || 0] || {};
+      var on = !demo && !!S.signedIn && !!kl.sandbox;
+      v.inSandbox = on;
+      v.sandboxBarText = on
+        ? "試用班「" + (kl.name || "") + "」——這一班怎麼點都可以，資料不會進研究紀錄。"
+        : "";
+      v.sandboxBarStyle = "position:absolute;left:0;right:0;bottom:0;z-index:40;padding:9px 16px;" +
+        "background:repeating-linear-gradient(135deg,rgba(95,87,76,.5) 0 10px,rgba(60,54,46,.5) 10px 20px);" +
+        "border-top:1px solid #5F574C;text-align:center;pointer-events:none;" +
+        "font:400 11px/1.4 'C11';letter-spacing:.1em;color:#DCD4C6;text-shadow:0 1px 2px rgba(0,0,0,.8)";
+    })();
 
     v.protoChrome = demo;
     v.exitDemo = exitDemo;
@@ -5097,6 +5111,29 @@
           name: k.name, code: k.joinCode || '—',
           meta: (k.term ? k.term + ' · ' : '') + '開課 ' + k.courseStart + ' · 現在第 ' + k.courseWeek + ' 週',
           copy: cb.copy, copyLabel: cb.copyLabel, copyStyle: st,
+          isSandbox: !!k.sandbox,
+          sandboxChip: "font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;" +
+            "padding:4px 8px;border-radius:999px;background:rgba(95,87,76,.28);" +
+            "border:1px solid #59636E;color:#B7C3CC",
+          sandboxBtnLabel: k.sandbox ? "✓ 試用班（不進研究紀錄）" : "設為試用班",
+          sandboxBtnStyle: btn(k.sandbox ? "go" : ""),
+          sandboxNote: k.sandbox
+            ? "這一班的提交、審核、閱讀紀錄都不會出現在 R-01～R-08，也不會被匯出。"
+            : "自己要試流程的話設成試用班，資料就不會混進研究紀錄。",
+          toggleSandbox: function () {
+            call("apiAdminUpdateClass", LIVE.token, k.id, { sandbox: !k.sandbox })
+              .then(function (r) {
+                if (!r || !r.ok) { L.setState({ admMsg: (r && r.error) || "改不了。", admMsgKind: "err" }); return; }
+                L.setState({
+                  admData: { classes: r.classes, users: r.users, unlockEvery: r.unlockEvery },
+                  admMsg: k.sandbox
+                    ? "「" + k.name + "」改回正式班，之後的資料會進研究紀錄。"
+                    : "「" + k.name + "」設成試用班了，這一班的資料不會進研究紀錄。",
+                  admMsgKind: "ok"
+                });
+              })
+              .catch(function (e) { L.setState({ admMsg: e.message, admMsgKind: "err" }); });
+          },
           editing: open,
           editLabel: open ? '收起來' : '編輯',
           editStyle: btn(open ? 'go' : ''),
@@ -5161,6 +5198,17 @@
           }
         };
       }),
+      /* 開班時先決定是不是試用班 */
+      newSandboxLabel: f.newSandbox ? "✓ 試用班" : "設為試用班",
+      newSandboxStyle: "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 14px;" +
+        "border-radius:6px;cursor:pointer;background:" + (f.newSandbox ? "#2A2E33" : "transparent") +
+        ";border:1px solid " + (f.newSandbox ? "#59636E" : "#1D2831") +
+        ";color:" + (f.newSandbox ? "#DFE6EB" : "#8393A0"),
+      toggleNewSandbox: function () {
+        var n = Object.assign({}, L.state.admForm || f);
+        n.newSandbox = !n.newSandbox;
+        L.setState({ admForm: n });
+      },
       kname: f.kname || '', kterm: f.kterm || '', kstart: f.kstart || '', kweeks: f.kweeks || '',
       setKname: setF('kname'), setKterm: setF('kterm'), setKstart: setF('kstart'), setKweeks: setF('kweeks'),
       classWeeks: d.classes.map(function (k) {
@@ -5182,7 +5230,7 @@
       createClass: function () {
         var n = L.state.admForm || {};
         if (!String(n.kname || '').trim()) { L.setState({ admMsg: '請填班級名稱。', admMsgKind: 'err' }); return; }
-        call('apiAdminCreateClass', LIVE.token, n.kname, n.kterm || '', n.kstart || '', n.kweeks || 18)
+        call('apiAdminCreateClass', LIVE.token, n.kname, n.kterm || '', n.kstart || '', n.kweeks || 18, !!n.newSandbox)
           .then(admDone(L, '班級開好了。'))
           .then(function () {
             var m = Object.assign({}, L.state.admForm); m.kname = ''; m.kterm = ''; m.kstart = '';

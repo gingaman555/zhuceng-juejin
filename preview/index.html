@@ -1583,6 +1583,9 @@ window.JLZ_SPRITES = {
                           <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline">
                             <span style="font-family:'Noto Sans TC',sans-serif;font-size:13.5px;color:#DFE6EB">{{ k.name }}</span>
                             <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ k.meta }}</span>
+                            <sc-if value="{{ k.isSandbox }}" hint-placeholder-val="{{ false }}">
+                              <span style="{{ k.sandboxChip }}">試用班 · 不進研究紀錄</span>
+                            </sc-if>
                             <span style="flex:1"></span>
                             <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874">邀請碼</span>
                             <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.1em;color:#7FC4D8">{{ k.code }}</span>
@@ -1598,6 +1601,10 @@ window.JLZ_SPRITES = {
                                     <input value="{{ kf.value }}" onChange="{{ kf.set }}" placeholder="{{ kf.ph }}" style="{{ kf.input }}">
                                   </label>
                                 </sc-for>
+                              </div>
+                              <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:11px">
+                                <button onClick="{{ k.toggleSandbox }}" style="{{ k.sandboxBtnStyle }}">{{ k.sandboxBtnLabel }}</button>
+                                <span style="flex:1;min-width:200px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.8;color:#5A6874">{{ k.sandboxNote }}</span>
                               </div>
                               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;align-items:center">
                                 <button onClick="{{ k.save }}" style="{{ k.saveStyle }}">{{ k.saveLabel }}</button>
@@ -1617,6 +1624,7 @@ window.JLZ_SPRITES = {
                       <input value="{{ adm.kterm }}" onChange="{{ adm.setKterm }}" placeholder="學期（例：2026 秋）" style="flex:1;min-width:110px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none">
                       <input value="{{ adm.kstart }}" onChange="{{ adm.setKstart }}" placeholder="開課日 2026-09-14" style="flex:1;min-width:130px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none">
                       <input value="{{ adm.kweeks }}" onChange="{{ adm.setKweeks }}" placeholder="總週數 18" style="flex:0 0 110px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none">
+                      <button onClick="{{ adm.toggleNewSandbox }}" style="{{ adm.newSandboxStyle }}">{{ adm.newSandboxLabel }}</button>
                       <button onClick="{{ adm.createClass }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 16px;background:#1E2024;border:1px solid #2A2E33;color:#DFE6EB;cursor:pointer;border-radius:6px">開一個班</button>
                     </div>
                     <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:8px">總週數決定甘特圖有幾欄、期限可以訂到第幾週。一學期 18、一學年 36、整整一年 52、兩年 104，<b>最多 156 週（三年）</b>。跨年度的專案照樣可以開——甘特圖會自動縮格寬，學生端也有寬／中／窄與「跳到本週」。開完之後在下面每一班那一列還可以改。</div>
@@ -3039,6 +3047,10 @@ window.JLZ_SPRITES = {
           <span style="width:6px;height:6px;background:#E9B341;flex:none"></span>
           <span style="font:400 22px/1.6 'C11';color:#E8E2D6;text-wrap:pretty">{{ toast }}</span>
         </div>
+      </sc-if>
+
+      <sc-if value="{{ inSandbox }}" hint-placeholder-val="{{ false }}">
+        <div style="{{ sandboxBarStyle }}">{{ sandboxBarText }}</div>
       </sc-if>
 
       <sc-if value="{{ momentOpen }}" hint-placeholder-val="{{ false }}">
@@ -4948,7 +4960,8 @@ class Component extends DCLogic {
     return mine.map(function (k) {
       return { id: k.classId, name: k.name, term: k.term, started: true, courseStart: k.courseStart,
                weekOverride: k.weekOverride == null || k.weekOverride === '' ? null : +k.weekOverride,
-               joinCode: k.joinCode, courseWeek: courseWeekOf(k), semesterWeeks: Math.max(2, Math.min(156, +(k.semesterWeeks||18))) };
+               joinCode: k.joinCode, courseWeek: courseWeekOf(k), semesterWeeks: Math.max(2, Math.min(156, +(k.semesterWeeks||18))),
+               sandbox: String(k.sandbox) === 'Y' };
     });
   }
   function teamPub(t, w) {
@@ -5121,11 +5134,11 @@ class Component extends DCLogic {
       return ok({ name: r.memberName, teamId: r.teamId });
     },
     apiAdminOverview: function (t) { auth(t); return ok(adminOverview()); },
-    apiAdminCreateClass: function (t, name, term, start, weeks) {
+    apiAdminCreateClass: function (t, name, term, start, weeks, sandbox) {
       auth(t);
       if (!String(name || '').trim()) return err('請填班級名稱。');
       DB.Classes.push({ classId: 'k' + uid(), name: name, term: term || '', started: true,
-        courseStart: start || '2026-09-14', weekOverride: '', semesterWeeks: Math.max(2, Math.min(156, Math.floor(+weeks||18))), joinCode: 'J' + uid().slice(0, 5).toUpperCase(), teacherId: '' });
+        courseStart: start || '2026-09-14', weekOverride: '', semesterWeeks: Math.max(2, Math.min(156, Math.floor(+weeks||18))), joinCode: 'J' + uid().slice(0, 5).toUpperCase(), teacherId: '', sandbox: sandbox ? 'Y' : '' });
       persist();
       return ok(adminOverview());
     },
@@ -5153,6 +5166,7 @@ class Component extends DCLogic {
         var o = String(patch.weekOverride).trim();
         kl.weekOverride = o === '' ? '' : Math.max(1, Math.floor(Number(o) || 1));
       }
+      if (patch.sandbox !== undefined) kl.sandbox = patch.sandbox ? 'Y' : '';
       if (patch.joinCode !== undefined) {
         var code = String(patch.joinCode).trim().toUpperCase();
         if (!/^[A-Z0-9]{4,10}$/.test(code)) return err('邀請碼只能用 4 到 10 個英數字。');
@@ -5651,17 +5665,23 @@ class Component extends DCLogic {
       DB.Classes.forEach(function (k) { w = Math.max(w, courseWeekOf(k)); });
       var every = Math.max(1, (DB.Config||{}).unlockEvery || 1); var unlocked = every<=1 ? w : Math.floor(w / every) * every;
       var vis = function (x) { return x.week <= unlocked; };
+      /* 試用班的資料不進研究紀錄 */
+      var sandboxClass = {};
+      DB.Classes.forEach(function (k) { if (String(k.sandbox) === 'Y') sandboxClass[String(k.classId)] = 1; });
+      var skipTeam = {};
+      DB.Teams.forEach(function (x) { if (sandboxClass[String(x.classId)]) skipTeam[String(x.teamId)] = 1; });
+      var realTeam = function (id) { return !skipTeam[String(id)]; };
       var nameOf = {};
-      DB.Teams.forEach(function (x) { nameOf[x.teamId] = x.name; });
+      DB.Teams.forEach(function (x) { if (!skipTeam[x.teamId]) nameOf[x.teamId] = x.name; });
       if (!unlocked) return ok({ unlockedThrough: 0, nextUnlock: every, week: w, locked: true, unlockEvery: every, subLog: [], revLog: [], readLog: [], teams: [], codes: {} });
       var codes = {};
       DB.Codes.forEach(function (c) { if (c.coder === (u.coder || 'C1')) codes[c.revId] = c.code; });
       return ok({
         unlockedThrough: unlocked, nextUnlock: unlocked + every, week: w, locked: false, unlockEvery: every,
-        subLog: DB.Submissions.filter(vis).map(function (s) {
+        subLog: DB.Submissions.filter(function(x){return vis(x)&&realTeam(x.teamId);}).map(function (s) {
           return { taskId: s.taskId, group: nameOf[s.teamId] || s.teamId, title: '', layer: 1, week: s.week,
                    dueWeek: s.dueWeek || 6, overdue: !!s.overdue, len: s.len, files: s.files, attempt: s.attempt, effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'', hasBlocker: !!(s.blocker||'').trim() }; }),
-        revLog: (function(){ var seen={}; return DB.Reviews.filter(vis).map(function (r) {
+        revLog: (function(){ var seen={}; return DB.Reviews.filter(function(x){return vis(x)&&realTeam(x.teamId);}).map(function (r) {
           var k=r.teamId+'::'+r.taskId; var i=seen[k]=(seen[k]||0)+1;
           var ms=DB.Submissions.filter(function(x){return x.teamId===r.teamId&&x.taskId===r.taskId;}).sort(function(a,b){return (a.attempt||0)-(b.attempt||0);});
           var s2=ms[i-1]||null;
@@ -5671,10 +5691,10 @@ class Component extends DCLogic {
                    attempt: s2 ? (s2.attempt||i) : i, subText: s2 ? (s2.text||'') : '', subLen: s2 ? (s2.len||0) : 0,
                    subFiles: s2 ? (s2.files||0) : 0, effort: s2 ? (s2.effort||'') : '',
                    effortNote: s2 ? (s2.effortNote||'') : '', blocker: s2 ? (s2.blocker||'') : '', subWeek: s2 ? s2.week : 0 }; }); })(),
-        readLog: DB.Reads.filter(vis).map(function (r) {
+        readLog: DB.Reads.filter(function(x){return vis(x)&&realTeam(x.readerTeam)&&realTeam(x.targetTeam);}).map(function (r) {
           return { reader: nameOf[r.readerTeam], target: nameOf[r.targetTeam], layer: r.layer, week: r.week,
                    readerLayer: r.readerLayer, readerStay: r.readerStay, recentlyRejected: r.recentlyRejected }; }),
-        teams: DB.Teams.map(function (x) {
+        teams: DB.Teams.filter(function (x) { return realTeam(x.teamId); }).map(function (x) {
           return { id: x.teamId, name: x.name, layer: x.layer, weeks: Math.max(1, unlocked - x.enteredWeek + 1), passed: x.passed }; }),
         assigned: DB.Tasks.length, codes: codes
       });
@@ -5995,7 +6015,7 @@ class Component extends DCLogic {
 
     L.KLASSES = (b.classes || []).map(function (k) {
       return {
-        id: k.id, name: k.name, term: k.term || '', started: k.started,
+        id: k.id, name: k.name, term: k.term || '', started: k.started, sandbox: !!k.sandbox,
         joinCode: k.joinCode, courseStart: k.courseStart, courseWeek: k.courseWeek,
         weekOverride: k.weekOverride,
         teams: (byClass[k.id] || []).map(function (t) {
@@ -6659,6 +6679,20 @@ class Component extends DCLogic {
       v.storyArtBeast = cur.art === 'beast';
       v.storyArtTrade = cur.art === 'trade';
     } else { v.storyArtBeast = false; v.storyArtTrade = false; }
+
+    /* 沙盒班級：功能一樣，但這一班的資料不進研究紀錄。要讓人看得出來。 */
+    (function () {
+      var kl = (L.KLASSES || [])[S.klass || 0] || {};
+      var on = !demo && !!S.signedIn && !!kl.sandbox;
+      v.inSandbox = on;
+      v.sandboxBarText = on
+        ? "試用班「" + (kl.name || "") + "」——這一班怎麼點都可以，資料不會進研究紀錄。"
+        : "";
+      v.sandboxBarStyle = "position:absolute;left:0;right:0;bottom:0;z-index:40;padding:9px 16px;" +
+        "background:repeating-linear-gradient(135deg,rgba(95,87,76,.5) 0 10px,rgba(60,54,46,.5) 10px 20px);" +
+        "border-top:1px solid #5F574C;text-align:center;pointer-events:none;" +
+        "font:400 11px/1.4 'C11';letter-spacing:.1em;color:#DCD4C6;text-shadow:0 1px 2px rgba(0,0,0,.8)";
+    })();
 
     v.protoChrome = demo;
     v.exitDemo = exitDemo;
@@ -10816,6 +10850,29 @@ class Component extends DCLogic {
           name: k.name, code: k.joinCode || '—',
           meta: (k.term ? k.term + ' · ' : '') + '開課 ' + k.courseStart + ' · 現在第 ' + k.courseWeek + ' 週',
           copy: cb.copy, copyLabel: cb.copyLabel, copyStyle: st,
+          isSandbox: !!k.sandbox,
+          sandboxChip: "font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;" +
+            "padding:4px 8px;border-radius:999px;background:rgba(95,87,76,.28);" +
+            "border:1px solid #59636E;color:#B7C3CC",
+          sandboxBtnLabel: k.sandbox ? "✓ 試用班（不進研究紀錄）" : "設為試用班",
+          sandboxBtnStyle: btn(k.sandbox ? "go" : ""),
+          sandboxNote: k.sandbox
+            ? "這一班的提交、審核、閱讀紀錄都不會出現在 R-01～R-08，也不會被匯出。"
+            : "自己要試流程的話設成試用班，資料就不會混進研究紀錄。",
+          toggleSandbox: function () {
+            call("apiAdminUpdateClass", LIVE.token, k.id, { sandbox: !k.sandbox })
+              .then(function (r) {
+                if (!r || !r.ok) { L.setState({ admMsg: (r && r.error) || "改不了。", admMsgKind: "err" }); return; }
+                L.setState({
+                  admData: { classes: r.classes, users: r.users, unlockEvery: r.unlockEvery },
+                  admMsg: k.sandbox
+                    ? "「" + k.name + "」改回正式班，之後的資料會進研究紀錄。"
+                    : "「" + k.name + "」設成試用班了，這一班的資料不會進研究紀錄。",
+                  admMsgKind: "ok"
+                });
+              })
+              .catch(function (e) { L.setState({ admMsg: e.message, admMsgKind: "err" }); });
+          },
           editing: open,
           editLabel: open ? '收起來' : '編輯',
           editStyle: btn(open ? 'go' : ''),
@@ -10880,6 +10937,17 @@ class Component extends DCLogic {
           }
         };
       }),
+      /* 開班時先決定是不是試用班 */
+      newSandboxLabel: f.newSandbox ? "✓ 試用班" : "設為試用班",
+      newSandboxStyle: "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 14px;" +
+        "border-radius:6px;cursor:pointer;background:" + (f.newSandbox ? "#2A2E33" : "transparent") +
+        ";border:1px solid " + (f.newSandbox ? "#59636E" : "#1D2831") +
+        ";color:" + (f.newSandbox ? "#DFE6EB" : "#8393A0"),
+      toggleNewSandbox: function () {
+        var n = Object.assign({}, L.state.admForm || f);
+        n.newSandbox = !n.newSandbox;
+        L.setState({ admForm: n });
+      },
       kname: f.kname || '', kterm: f.kterm || '', kstart: f.kstart || '', kweeks: f.kweeks || '',
       setKname: setF('kname'), setKterm: setF('kterm'), setKstart: setF('kstart'), setKweeks: setF('kweeks'),
       classWeeks: d.classes.map(function (k) {
@@ -10901,7 +10969,7 @@ class Component extends DCLogic {
       createClass: function () {
         var n = L.state.admForm || {};
         if (!String(n.kname || '').trim()) { L.setState({ admMsg: '請填班級名稱。', admMsgKind: 'err' }); return; }
-        call('apiAdminCreateClass', LIVE.token, n.kname, n.kterm || '', n.kstart || '', n.kweeks || 18)
+        call('apiAdminCreateClass', LIVE.token, n.kname, n.kterm || '', n.kstart || '', n.kweeks || 18, !!n.newSandbox)
           .then(admDone(L, '班級開好了。'))
           .then(function () {
             var m = Object.assign({}, L.state.admForm); m.kname = ''; m.kterm = ''; m.kstart = '';

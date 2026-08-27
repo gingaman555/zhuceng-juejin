@@ -54,7 +54,8 @@
     return mine.map(function (k) {
       return { id: k.classId, name: k.name, term: k.term, started: true, courseStart: k.courseStart,
                weekOverride: k.weekOverride == null || k.weekOverride === '' ? null : +k.weekOverride,
-               joinCode: k.joinCode, courseWeek: courseWeekOf(k), semesterWeeks: Math.max(2, Math.min(156, +(k.semesterWeeks||18))) };
+               joinCode: k.joinCode, courseWeek: courseWeekOf(k), semesterWeeks: Math.max(2, Math.min(156, +(k.semesterWeeks||18))),
+               sandbox: String(k.sandbox) === 'Y' };
     });
   }
   function teamPub(t, w) {
@@ -227,11 +228,11 @@
       return ok({ name: r.memberName, teamId: r.teamId });
     },
     apiAdminOverview: function (t) { auth(t); return ok(adminOverview()); },
-    apiAdminCreateClass: function (t, name, term, start, weeks) {
+    apiAdminCreateClass: function (t, name, term, start, weeks, sandbox) {
       auth(t);
       if (!String(name || '').trim()) return err('請填班級名稱。');
       DB.Classes.push({ classId: 'k' + uid(), name: name, term: term || '', started: true,
-        courseStart: start || '2026-09-14', weekOverride: '', semesterWeeks: Math.max(2, Math.min(156, Math.floor(+weeks||18))), joinCode: 'J' + uid().slice(0, 5).toUpperCase(), teacherId: '' });
+        courseStart: start || '2026-09-14', weekOverride: '', semesterWeeks: Math.max(2, Math.min(156, Math.floor(+weeks||18))), joinCode: 'J' + uid().slice(0, 5).toUpperCase(), teacherId: '', sandbox: sandbox ? 'Y' : '' });
       persist();
       return ok(adminOverview());
     },
@@ -259,6 +260,7 @@
         var o = String(patch.weekOverride).trim();
         kl.weekOverride = o === '' ? '' : Math.max(1, Math.floor(Number(o) || 1));
       }
+      if (patch.sandbox !== undefined) kl.sandbox = patch.sandbox ? 'Y' : '';
       if (patch.joinCode !== undefined) {
         var code = String(patch.joinCode).trim().toUpperCase();
         if (!/^[A-Z0-9]{4,10}$/.test(code)) return err('邀請碼只能用 4 到 10 個英數字。');
@@ -757,17 +759,23 @@
       DB.Classes.forEach(function (k) { w = Math.max(w, courseWeekOf(k)); });
       var every = Math.max(1, (DB.Config||{}).unlockEvery || 1); var unlocked = every<=1 ? w : Math.floor(w / every) * every;
       var vis = function (x) { return x.week <= unlocked; };
+      /* 試用班的資料不進研究紀錄 */
+      var sandboxClass = {};
+      DB.Classes.forEach(function (k) { if (String(k.sandbox) === 'Y') sandboxClass[String(k.classId)] = 1; });
+      var skipTeam = {};
+      DB.Teams.forEach(function (x) { if (sandboxClass[String(x.classId)]) skipTeam[String(x.teamId)] = 1; });
+      var realTeam = function (id) { return !skipTeam[String(id)]; };
       var nameOf = {};
-      DB.Teams.forEach(function (x) { nameOf[x.teamId] = x.name; });
+      DB.Teams.forEach(function (x) { if (!skipTeam[x.teamId]) nameOf[x.teamId] = x.name; });
       if (!unlocked) return ok({ unlockedThrough: 0, nextUnlock: every, week: w, locked: true, unlockEvery: every, subLog: [], revLog: [], readLog: [], teams: [], codes: {} });
       var codes = {};
       DB.Codes.forEach(function (c) { if (c.coder === (u.coder || 'C1')) codes[c.revId] = c.code; });
       return ok({
         unlockedThrough: unlocked, nextUnlock: unlocked + every, week: w, locked: false, unlockEvery: every,
-        subLog: DB.Submissions.filter(vis).map(function (s) {
+        subLog: DB.Submissions.filter(function(x){return vis(x)&&realTeam(x.teamId);}).map(function (s) {
           return { taskId: s.taskId, group: nameOf[s.teamId] || s.teamId, title: '', layer: 1, week: s.week,
                    dueWeek: s.dueWeek || 6, overdue: !!s.overdue, len: s.len, files: s.files, attempt: s.attempt, effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'', hasBlocker: !!(s.blocker||'').trim() }; }),
-        revLog: (function(){ var seen={}; return DB.Reviews.filter(vis).map(function (r) {
+        revLog: (function(){ var seen={}; return DB.Reviews.filter(function(x){return vis(x)&&realTeam(x.teamId);}).map(function (r) {
           var k=r.teamId+'::'+r.taskId; var i=seen[k]=(seen[k]||0)+1;
           var ms=DB.Submissions.filter(function(x){return x.teamId===r.teamId&&x.taskId===r.taskId;}).sort(function(a,b){return (a.attempt||0)-(b.attempt||0);});
           var s2=ms[i-1]||null;
@@ -777,10 +785,10 @@
                    attempt: s2 ? (s2.attempt||i) : i, subText: s2 ? (s2.text||'') : '', subLen: s2 ? (s2.len||0) : 0,
                    subFiles: s2 ? (s2.files||0) : 0, effort: s2 ? (s2.effort||'') : '',
                    effortNote: s2 ? (s2.effortNote||'') : '', blocker: s2 ? (s2.blocker||'') : '', subWeek: s2 ? s2.week : 0 }; }); })(),
-        readLog: DB.Reads.filter(vis).map(function (r) {
+        readLog: DB.Reads.filter(function(x){return vis(x)&&realTeam(x.readerTeam)&&realTeam(x.targetTeam);}).map(function (r) {
           return { reader: nameOf[r.readerTeam], target: nameOf[r.targetTeam], layer: r.layer, week: r.week,
                    readerLayer: r.readerLayer, readerStay: r.readerStay, recentlyRejected: r.recentlyRejected }; }),
-        teams: DB.Teams.map(function (x) {
+        teams: DB.Teams.filter(function (x) { return realTeam(x.teamId); }).map(function (x) {
           return { id: x.teamId, name: x.name, layer: x.layer, weeks: Math.max(1, unlocked - x.enteredWeek + 1), passed: x.passed }; }),
         assigned: DB.Tasks.length, codes: codes
       });

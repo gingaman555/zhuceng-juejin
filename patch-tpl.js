@@ -2611,5 +2611,46 @@ must([
 '                <div style="margin:16px var(--pad) 0;padding:15px 17px;background:linear-gradient(140deg,rgba(233,179,65,.09),transparent 65%),#14110E;border:1px solid #3A3026">',
 '                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">第一次用這一頁</div>'].join('\n'));
 
+/* 33. 沙盒班級：開班時可以勾，班級列上標示，學生／老師端掛橫幅 */
+must('                      <button onClick="{{ adm.createClass }}" style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;padding:10px 16px;background:#1E2024;border:1px solid #2A2E33;color:#DFE6EB;cursor:pointer;border-radius:6px">開一個班</button>',
+[
+'                      <button onClick="{{ adm.toggleNewSandbox }}" style="{{ adm.newSandboxStyle }}">{{ adm.newSandboxLabel }}</button>',
+'                      <button onClick="{{ adm.createClass }}" style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;padding:10px 16px;background:#1E2024;border:1px solid #2A2E33;color:#DFE6EB;cursor:pointer;border-radius:6px">開一個班</button>'].join('\n'));
+
+must('                            <span style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:#5A6874">{{ k.meta }}</span>',
+[
+'                            <span style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:#5A6874">{{ k.meta }}</span>',
+'                            <sc-if value="{{ k.isSandbox }}" hint-placeholder-val="{{ false }}">',
+'                              <span style="{{ k.sandboxChip }}">試用班 · 不進研究紀錄</span>',
+'                            </sc-if>'].join('\n'));
+
+must([
+'                                  <label style="{{ kf.wrap }}">',
+'                                    <span style="display:block;font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874;margin-bottom:5px">{{ kf.label }}</span>',
+'                                    <input value="{{ kf.value }}" onChange="{{ kf.set }}" placeholder="{{ kf.ph }}" style="{{ kf.input }}">',
+'                                  </label>',
+'                                </sc-for>',
+'                              </div>'].join('\n'),
+[
+'                                  <label style="{{ kf.wrap }}">',
+'                                    <span style="display:block;font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.14em;color:#5A6874;margin-bottom:5px">{{ kf.label }}</span>',
+'                                    <input value="{{ kf.value }}" onChange="{{ kf.set }}" placeholder="{{ kf.ph }}" style="{{ kf.input }}">',
+'                                  </label>',
+'                                </sc-for>',
+'                              </div>',
+'                              <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:11px">',
+'                                <button onClick="{{ k.toggleSandbox }}" style="{{ k.sandboxBtnStyle }}">{{ k.sandboxBtnLabel }}</button>',
+'                                <span style="flex:1;min-width:200px;font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;line-height:1.8;color:#5A6874">{{ k.sandboxNote }}</span>',
+'                              </div>'].join('\n'));
+
+/* 學生端與老師端：在沙盒班級裡要看得出來 */
+must('      <sc-if value="{{ momentOpen }}" hint-placeholder-val="{{ false }}">',
+[
+'      <sc-if value="{{ inSandbox }}" hint-placeholder-val="{{ false }}">',
+'        <div style="{{ sandboxBarStyle }}">{{ sandboxBarText }}</div>',
+'      </sc-if>',
+'',
+'      <sc-if value="{{ momentOpen }}" hint-placeholder-val="{{ false }}">'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
