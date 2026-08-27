@@ -7063,6 +7063,27 @@ class Component extends DCLogic {
     decorateCollect(L, v);
     decorateBoard(L, v);
     decorateDayNight(L, v);   /* 地表那一層照現實時間 */
+    /* 層詳情的道具卡：原型用「工具階級」判斷拿到沒，但工具校準整套移除之後
+       那個值永遠是空的——通過了也顯示 ？？？。改成跟寶物一樣看「這一層通過沒」。 */
+    (function () {
+      if (!v.sel) return;
+      var n = S.expanded || S.currentLayer || 1;
+      var lay = L.LAYERS[n - 1] || {};
+      var done = (S.passed || []).indexOf(n) >= 0 || S.role === 'teacher' || !!S.allOpen;
+      var bz = bossOf(n);
+      v.sel.toolName = done ? (lay.tool || '？？？') : '？？？';
+      v.sel.toolNameColor = done ? '#E9B341' : '#5A5044';
+      v.sel.toolDesc = done
+        ? (lay.toolFunc || '')
+        : (bz
+            ? '這一層的礦石採齊、老師准了，才鑄得出來——用它擊退' + bz.name + '。'
+            : '這一層的礦石採齊、老師准了，才鑄得出來。');
+      v.sel.toolCardStyle = 'padding:13px;background:' +
+        (done ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.25)') +
+        ';border:1px ' + (done ? 'solid #3A3026' : 'dashed #2E2822');
+    })();
+
+
 
     (v.ganttRows || []).forEach(function (row, i) {
       var t = L.myTasks()[i];
