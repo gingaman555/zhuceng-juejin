@@ -2242,6 +2242,19 @@
                   <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">寫提醒，不要寫步驟。這一欄是提醒他們會踩到什麼，不是告訴他們怎麼走。</div>
                   <textarea onChange="{{ setNfNote }}" value="{{ nfNote }}" placeholder="例：這一層的調查很容易越做越多。" style="width:100%;min-height:130px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
                 </div>
+                <sc-if value="{{ hasTaskTargets }}" hint-placeholder-val="{{ true }}">
+                  <div>
+                    <div style="font:500 22px/1 'C11';margin-bottom:4px">這一項要發給誰</div>
+                    <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-bottom:9px;text-wrap:pretty">預設發給全班。有哪一組的專案不需要這一項，就只勾要給的那幾組——沒被指定的組看不到，關卡也不會被它卡住。</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <button onClick="{{ taskTargetAll.pick }}" style="{{ taskTargetAll.style }}">{{ taskTargetAll.label }}</button>
+                      <sc-for list="{{ taskTargetPicks }}" as="tt" hint-placeholder-count="3">
+                        <button onClick="{{ tt.pick }}" style="{{ tt.style }}">{{ tt.label }}</button>
+                      </sc-for>
+                    </div>
+                    <div style="font:400 11px/1.6 'C11';color:#E9B341;margin-top:9px;text-wrap:pretty">{{ taskTargetNote }}</div>
+                  </div>
+                </sc-if>
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">要交的檔案與規格</div>
                   <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-bottom:9px;text-wrap:pretty">寫清楚你要收到什麼：格式、份數、命名、長度、要不要含原始檔。學生在提交頁會看到這一段，附錯東西的來回就少一次。留空就是不限。</div>

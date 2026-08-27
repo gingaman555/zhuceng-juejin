@@ -3016,6 +3016,62 @@
         leftVein.length + ' 塊還沒開——礦脈開完，學生才拿得到道具、通過這一層。'
       : '這一層的 ' + vein + ' 塊都開完了。要改哪一項的內容，回 T-02 逐項編輯。';
 
+    /* 加進草稿時把「發給誰」一起記下來，之後每一項可以不一樣 */
+    (function () {
+      var orig = v.addTask;
+      if (typeof orig !== "function") return;
+      v.addTask = function () {
+        var before = (L.state.draftSet || []).length;
+        var target = (L.state.nfTeams || []).slice();
+        orig();
+        setTimeout(function () {
+          var ds = (L.state.draftSet || []).slice();
+          if (ds.length <= before) return;   /* 原型自己擋掉了（沒填名字） */
+          ds[ds.length - 1] = Object.assign({}, ds[ds.length - 1], { teams: target });
+          L.setState({ draftSet: ds });
+        }, 0);
+      };
+    })();
+
+    /* 這一項要發給誰：全班，或只給某幾組 */
+    (function () {
+      var all = (L.teams() || []);
+      var picked = S.nfTeams || [];
+      var allOn = !picked.length;
+      v.taskTargetNote = allOn
+        ? "這一項會發給全班 " + all.length + " 組。"
+        : "只發給 " + picked.length + " 組：" +
+          all.filter(function (t) { return picked.indexOf(t.id) >= 0; })
+             .map(function (t) { return t.name; }).join("、") +
+          "。其他組看不到，關卡也不會被它卡住。";
+      var chip = function (on) {
+        return "font:500 22px/1 'C11';padding:9px 13px;white-space:nowrap;cursor:pointer;background:" +
+          (on ? "rgba(233,179,65,.14)" : "rgba(0,0,0,.26)") + ";border:1px solid " +
+          (on ? "#E9B341" : "#2E2822") + ";color:" + (on ? "#E9B341" : "#8A8073");
+      };
+      v.taskTargetAll = {
+        label: "全班",
+        style: chip(allOn),
+        pick: function () { L.setState({ nfTeams: [] }); }
+      };
+      v.taskTargetPicks = all.map(function (t) {
+        var on = picked.indexOf(t.id) >= 0;
+        return {
+          label: t.name,
+          style: chip(on),
+          pick: function () {
+            var now = (L.state.nfTeams || []).slice();
+            var at = now.indexOf(t.id);
+            if (at >= 0) now.splice(at, 1); else now.push(t.id);
+            /* 全部都選＝等於全班，存成空的比較不會過期 */
+            if (now.length >= all.length) now = [];
+            L.setState({ nfTeams: now });
+          }
+        };
+      });
+      v.hasTaskTargets = all.length > 1;
+    })();
+
     /* 老師照自己的規劃改這一層的拆分名稱。礦石本身不動，改的是它對應的工作。 */
     (function () {
       /* 一組一份：先選要改哪一組，沒選就先預設第一組 */
@@ -4305,6 +4361,7 @@
       }).map(function (m) { return m.name; });
       var items = st.draftSet.map(function (d, i) {
         return { type: d.type, title: d.title, cond: d.cond || '（未填通過條件）', note: d.note || '（未填提醒）',
+                 teams: d.teams || [],
                  spec: d.spec || '', due: d.due, mineral: d.mineral || free[i % Math.max(1, free.length)] || '',
                  mDesc: '這一項工作留下的物證。' };
       });

@@ -2341,6 +2341,19 @@ window.JLZ_SPRITES = {
                   <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">寫提醒，不要寫步驟。這一欄是提醒他們會踩到什麼，不是告訴他們怎麼走。</div>
                   <textarea onChange="{{ setNfNote }}" value="{{ nfNote }}" placeholder="例：這一層的調查很容易越做越多。" style="width:100%;min-height:130px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
                 </div>
+                <sc-if value="{{ hasTaskTargets }}" hint-placeholder-val="{{ true }}">
+                  <div>
+                    <div style="font:500 22px/1 'C11';margin-bottom:4px">這一項要發給誰</div>
+                    <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-bottom:9px;text-wrap:pretty">預設發給全班。有哪一組的專案不需要這一項，就只勾要給的那幾組——沒被指定的組看不到，關卡也不會被它卡住。</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <button onClick="{{ taskTargetAll.pick }}" style="{{ taskTargetAll.style }}">{{ taskTargetAll.label }}</button>
+                      <sc-for list="{{ taskTargetPicks }}" as="tt" hint-placeholder-count="3">
+                        <button onClick="{{ tt.pick }}" style="{{ tt.style }}">{{ tt.label }}</button>
+                      </sc-for>
+                    </div>
+                    <div style="font:400 11px/1.6 'C11';color:#E9B341;margin-top:9px;text-wrap:pretty">{{ taskTargetNote }}</div>
+                  </div>
+                </sc-if>
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">要交的檔案與規格</div>
                   <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-bottom:9px;text-wrap:pretty">寫清楚你要收到什麼：格式、份數、命名、長度、要不要含原始檔。學生在提交頁會看到這一段，附錯東西的來回就少一次。留空就是不限。</div>
@@ -4964,11 +4977,15 @@ class Component extends DCLogic {
              gateText: t.gateText || ['', '', ''], gateSubmitted: !!t.gateSubmitted,
              gateVerdict: t.gateVerdict || '', specNames: t.specNames || {} };
   }
-  function tasksOfClass(cid) {
-    return DB.Tasks.filter(function (t) { return t.classId === cid; }).map(function (t) {
+  /* 給 teamId 就只回那一組看得到的——關卡判定一定要用這個版本 */
+  function tasksOfClass(cid, teamId) {
+    var all = DB.Tasks.filter(function (t) { return t.classId === cid; }).map(function (t) {
       return { id: t.taskId, klass: t.classId, layer: t.layer, type: t.type, title: t.title,
-               cond: t.cond, note: t.note, spec: t.spec || '', due: t.due, mineral: t.mineral, mDesc: t.mDesc, published: true };
+               cond: t.cond, note: t.note, spec: t.spec || '', due: t.due, mineral: t.mineral, mDesc: t.mDesc, published: true,
+               teams: API.taskTeams(t) };
     });
+    if (!teamId) return all;
+    return all.filter(function (d) { return !d.teams.length || d.teams.indexOf(String(teamId)) >= 0; });
   }
   function ttmap(teamId) {
     var m = {};
@@ -5312,7 +5329,7 @@ class Component extends DCLogic {
           out.myTeam = teamPub(me, w);
           var fM = (DB.Finales||[]).filter(function (x) { return x.teamId === me.teamId; })[0];
           out.myTeam.finaleOpened = !!(fM && fM.opened);
-          out.tasks = mergeTasks(defs, ttmap(me.teamId), w);
+          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w);
           out.plan = {};
           DB.Plans.forEach(function (p) { if (p.teamId !== me.teamId) return; var b = p.toWeek||p.week||1, a = p.fromWeek||b; out.plan[p.taskId] = { a: Math.min(a,b), b: b }; });
           out.passedWeek = {};
@@ -5337,7 +5354,7 @@ class Component extends DCLogic {
           return { layer: n, count: b?b.n:0, avg: b?Math.round(b.len/b.n):0 }; });
         out.teamTasks = {}; out.queue = []; out.gates = [];
         allTeams.forEach(function (tm) {
-          var list = mergeTasks(defs, ttmap(tm.id), w);
+          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w);
           out.teamTasks[tm.id] = list;
           list.forEach(function (task) {
             if (task.status === 'submitted') out.queue.push({
@@ -5421,7 +5438,7 @@ class Component extends DCLogic {
       var u = auth(t);
       var tid = (u.role === "student") ? u.teamId : (teamId || "");
       var tm = teamById(tid); if (!tm) return err("找不到這一組。");
-      var defs = tasksOfClass(tm.classId), m = ttmap(tid);
+      var defs = tasksOfClass(tm.classId, tid), m = ttmap(tid);
       var plans = {}; DB.Plans.forEach(function (p) { if (p.teamId === tid) plans[p.taskId] = { a: p.fromWeek || p.toWeek || p.week, b: p.toWeek || p.week }; });
       var subs = DB.Submissions.filter(function (s) { return s.teamId === tid; });
       var revs = DB.Reviews.filter(function (r) { return r.teamId === tid; });
@@ -5512,10 +5529,10 @@ class Component extends DCLogic {
       persist();
       return ok({ semesterWeeks: k ? k.semesterWeeks : 18 });
     },
-    _vein: function (classId, layer) {
+    _vein: function (classId, layer, teamId) {
       var all = MIN_BY_LAYER[layer] || [];
       var used = {};
-      tasksOfClass(classId).forEach(function (d) { if (d.layer === layer && d.mineral) used[d.mineral] = 1; });
+      tasksOfClass(classId, teamId).forEach(function (d) { if (d.layer === layer && d.mineral) used[d.mineral] = 1; });
       return { total: all.length, left: all.filter(function (n) { return !used[n]; }) };
     },
     _veinStatus: function (classId) {
@@ -5526,7 +5543,7 @@ class Component extends DCLogic {
     _missReq: function (tid) {
       var tm = teamById(tid); if (!tm) return null;
       var m = ttmap(tid);
-      return tasksOfClass(tm.classId).filter(function (d) {
+      return tasksOfClass(tm.classId, tid).filter(function (d) {
         if (d.layer !== tm.layer) return false;
         var s = m[d.id]; return !s || s.status !== "passed";
       });
@@ -5534,7 +5551,7 @@ class Component extends DCLogic {
     apiSubmitGate: function (t, cells) {
       var u = auth(t), tm = teamById(u.teamId);
       var miss = API._missReq(u.teamId) || [];
-      var vn = API._vein(tm.classId, tm.layer);
+      var vn = API._vein(tm.classId, tm.layer, tm.teamId);
       if (vn.left.length === vn.total) return err("這一層還沒有任務，老師還沒把清單開出來。");
       if (vn.left.length) return err("這一層的礦脈有 " + vn.total + " 塊，老師只開了 " + (vn.total - vn.left.length) + " 塊。要全部開出來、也全部採齊，才拿得到這一層的道具——去跟他說還缺 " + vn.left.length + " 塊。");
       if (miss.length) return err("這一層還差 " + miss.length + " 塊礦石：" + miss.map(function (d) { return d.title; }).join("、") + "。這一層要全部採齊才送得出關卡。");
@@ -5551,6 +5568,25 @@ class Component extends DCLogic {
         week: w, readerLayer: me.layer, readerStay: Math.max(1, w - me.enteredWeek + 1), recentlyRejected: rejected });
       persist();
       return ok();
+    },
+    taskTeams: function (t) {
+      var raw = t && t.teams;
+      if (raw === undefined || raw === null || String(raw).trim() === '') return [];
+      var a = typeof raw === 'object' ? raw : (function () { try { return JSON.parse(raw); } catch (e) { return null; } })();
+      if (!a || !a.length) return [];
+      return a.map(function (x) { return String(x); });
+    },
+    forTeam: function (t, teamId) {
+      var only = API.taskTeams(t);
+      return !only.length || only.indexOf(String(teamId)) >= 0;
+    },
+    cleanTeams: function (classId, list) {
+      if (!list || !list.length) return [];
+      var ok = {};
+      DB.Teams.forEach(function (t) { if (String(t.classId) === String(classId)) ok[String(t.teamId)] = 1; });
+      var out = [];
+      list.forEach(function (x) { var id = String(x); if (ok[id] && out.indexOf(id) < 0) out.push(id); });
+      return out.length >= Object.keys(ok).length ? [] : out;
     },
     minNamesOf: function (teamId) {
       var out = {};
@@ -5595,20 +5631,29 @@ class Component extends DCLogic {
       return ok();
     },
 
-    freeMin: function (classId, layer, selfId) {
+    /* 礦脈是每一組各自的四格：只給某幾組的任務，只佔用那幾組的格子 */
+    freeMin: function (classId, layer, selfId, forTeams) {
+      var all = DB.Teams.filter(function (t) { return String(t.classId) === String(classId); })
+                        .map(function (t) { return String(t.teamId); });
+      var targets = (forTeams && forTeams.length) ? forTeams.map(String) : all;
       var used = {};
       DB.Tasks.forEach(function (x) {
-        if (String(x.classId) === String(classId) && x.mineral && x.taskId !== selfId) used[x.mineral] = 1;
+        if (String(x.classId) !== String(classId) || !x.mineral) return;
+        if (x.taskId === selfId) return;
+        if (Number(x.layer) !== Number(layer)) return;
+        var clash = !targets.length || targets.some(function (tid) { return API.forTeam(x, tid); });
+        if (clash) used[x.mineral] = 1;
       });
       return (MIN_BY_LAYER[layer] || []).filter(function (n) { return !used[n]; });
     },
     apiSaveTask: function (t, classId, task) {
       auth(t);
       var id = task.id || ('tk' + uid());
-      if (!String(task.mineral || '').trim()) task.mineral = (API.freeMin(classId, task.layer, id) || [])[0] || '';
+      if (!String(task.mineral || '').trim()) task.mineral = (API.freeMin(classId, task.layer, id, API.cleanTeams(classId, task.teams)) || [])[0] || '';
       var ex = DB.Tasks.filter(function (x) { return x.taskId === id; })[0];
       var row = { taskId: id, classId: classId, layer: task.layer, type: task.type, title: task.title,
-                  cond: task.cond, note: task.note, spec: task.spec || '', due: task.due, mineral: task.mineral, mDesc: task.mDesc };
+                  cond: task.cond, note: task.note, spec: task.spec || '', due: task.due, mineral: task.mineral, mDesc: task.mDesc,
+                  teams: JSON.stringify(API.cleanTeams(classId, task.teams)) };
       if (ex) Object.assign(ex, row); else DB.Tasks.push(row);
       persist();
       return ok({ taskId: id });
@@ -5623,9 +5668,10 @@ class Component extends DCLogic {
     apiPublishList: function (t, classId, layer, items) {
       auth(t);
       (items || []).forEach(function (it) {
-        var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer) || [])[0] || '';
+        var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer, null, API.cleanTeams(classId, it.teams)) || [])[0] || '';
         DB.Tasks.push({ taskId: 'tk' + uid(), classId: classId, layer: layer, type: it.type,
-          title: it.title, cond: it.cond, note: it.note, spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc });
+          title: it.title, cond: it.cond, note: it.note, spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc,
+          teams: JSON.stringify(API.cleanTeams(classId, it.teams)) });
       });
       persist();
       return ok();
@@ -5654,7 +5700,7 @@ class Component extends DCLogic {
       auth(t);
       var tm = teamById(teamId), kl = classById(tm.classId), w = courseWeekOf(kl);
       if (pass) {
-        var vt = API._vein(tm.classId, tm.layer);
+        var vt = API._vein(tm.classId, tm.layer, tm.teamId);
         if (vt.left.length) return err("這一層的礦脈有 " + vt.total + " 塊，你只開了 " + (vt.total - vt.left.length) + " 塊。先在 T-05 把剩下的 " + vt.left.length + " 塊開出來（" + vt.left.join("、") + "），或把這一次關卡退回。");
         var mr = API._missReq(teamId) || []; if (mr.length) return err("這一組這一層還差 " + mr.length + " 塊礦石。");
       }
@@ -8786,6 +8832,62 @@ class Component extends DCLogic {
         leftVein.length + ' 塊還沒開——礦脈開完，學生才拿得到道具、通過這一層。'
       : '這一層的 ' + vein + ' 塊都開完了。要改哪一項的內容，回 T-02 逐項編輯。';
 
+    /* 加進草稿時把「發給誰」一起記下來，之後每一項可以不一樣 */
+    (function () {
+      var orig = v.addTask;
+      if (typeof orig !== "function") return;
+      v.addTask = function () {
+        var before = (L.state.draftSet || []).length;
+        var target = (L.state.nfTeams || []).slice();
+        orig();
+        setTimeout(function () {
+          var ds = (L.state.draftSet || []).slice();
+          if (ds.length <= before) return;   /* 原型自己擋掉了（沒填名字） */
+          ds[ds.length - 1] = Object.assign({}, ds[ds.length - 1], { teams: target });
+          L.setState({ draftSet: ds });
+        }, 0);
+      };
+    })();
+
+    /* 這一項要發給誰：全班，或只給某幾組 */
+    (function () {
+      var all = (L.teams() || []);
+      var picked = S.nfTeams || [];
+      var allOn = !picked.length;
+      v.taskTargetNote = allOn
+        ? "這一項會發給全班 " + all.length + " 組。"
+        : "只發給 " + picked.length + " 組：" +
+          all.filter(function (t) { return picked.indexOf(t.id) >= 0; })
+             .map(function (t) { return t.name; }).join("、") +
+          "。其他組看不到，關卡也不會被它卡住。";
+      var chip = function (on) {
+        return "font:500 22px/1 'C11';padding:9px 13px;white-space:nowrap;cursor:pointer;background:" +
+          (on ? "rgba(233,179,65,.14)" : "rgba(0,0,0,.26)") + ";border:1px solid " +
+          (on ? "#E9B341" : "#2E2822") + ";color:" + (on ? "#E9B341" : "#8A8073");
+      };
+      v.taskTargetAll = {
+        label: "全班",
+        style: chip(allOn),
+        pick: function () { L.setState({ nfTeams: [] }); }
+      };
+      v.taskTargetPicks = all.map(function (t) {
+        var on = picked.indexOf(t.id) >= 0;
+        return {
+          label: t.name,
+          style: chip(on),
+          pick: function () {
+            var now = (L.state.nfTeams || []).slice();
+            var at = now.indexOf(t.id);
+            if (at >= 0) now.splice(at, 1); else now.push(t.id);
+            /* 全部都選＝等於全班，存成空的比較不會過期 */
+            if (now.length >= all.length) now = [];
+            L.setState({ nfTeams: now });
+          }
+        };
+      });
+      v.hasTaskTargets = all.length > 1;
+    })();
+
     /* 老師照自己的規劃改這一層的拆分名稱。礦石本身不動，改的是它對應的工作。 */
     (function () {
       /* 一組一份：先選要改哪一組，沒選就先預設第一組 */
@@ -10075,6 +10177,7 @@ class Component extends DCLogic {
       }).map(function (m) { return m.name; });
       var items = st.draftSet.map(function (d, i) {
         return { type: d.type, title: d.title, cond: d.cond || '（未填通過條件）', note: d.note || '（未填提醒）',
+                 teams: d.teams || [],
                  spec: d.spec || '', due: d.due, mineral: d.mineral || free[i % Math.max(1, free.length)] || '',
                  mDesc: '這一項工作留下的物證。' };
       });

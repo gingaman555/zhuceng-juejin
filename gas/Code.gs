@@ -34,7 +34,7 @@ var SHEET_DEFS = {
   Classes:     ['classId', 'name', 'term', 'started', 'courseStart', 'weekOverride', 'semesterWeeks', 'joinCode', 'teacherId', 'sandbox'],
   Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'passed', 'toolLevels',
                 'gateText', 'gateSubmitted', 'gateVerdict', 'specNames', 'createdAt', 'gateTs'],
-  Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'createdAt'],
+  Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'teams', 'createdAt'],
   TeamTasks:   ['teamId', 'taskId', 'status', 'text', 'files', 'fb', 'fbType', 'passedWeek',
                 'effort', 'effortNote', 'blocker', 'updatedAt'],
   Submissions: ['subId', 'taskId', 'teamId', 'week', 'dueWeek', 'overdue', 'len', 'files', 'attempt', 'text',
@@ -1056,16 +1056,39 @@ function teamPub_(t, courseWeek) {
   };
 }
 
-function tasksOfClass_(classId) {
-  return readTable_('Tasks')
+/** 一項任務發給誰：空陣列＝全班。 */
+function taskTeams_(t) {
+  var raw = t && t.teams;
+  if (raw === undefined || raw === null || String(raw).trim() === '') return [];
+  var a = jparse_(raw, null);
+  if (!a || !a.length) return [];
+  return a.map(function (x) { return String(x); });
+}
+
+/** 這一組看不看得到這一項。沒指定組別的就是全班都看得到。 */
+function taskForTeam_(def, teamId) {
+  var only = def.teams || [];
+  return !only.length || only.indexOf(String(teamId)) >= 0;
+}
+
+/**
+ * 這一班的任務定義。
+ * 給 teamId 就只回那一組看得到的——關卡判定一定要用這個版本，
+ * 不然只發給甲組的任務會把乙組也卡住。
+ */
+function tasksOfClass_(classId, teamId) {
+  var all = readTable_('Tasks')
     .filter(function (t) { return String(t.classId) === String(classId); })
     .map(function (t) {
       return {
         id: t.taskId, klass: t.classId, layer: Number(t.layer) || 1, type: t.type || 'required',
         title: t.title, cond: t.cond, note: t.note, spec: t.spec || '', due: t.due,
-        mineral: t.mineral || '', mDesc: t.mDesc || '', published: String(t.published) !== 'N'
+        mineral: t.mineral || '', mDesc: t.mDesc || '', published: String(t.published) !== 'N',
+        teams: taskTeams_(t)
       };
     });
+  if (!teamId) return all;
+  return all.filter(function (d) { return taskForTeam_(d, teamId); });
 }
 
 function teamTaskMap_(teamId) {
@@ -1183,7 +1206,7 @@ function sweepOverdue_() {
       if (!t || String(t.gateSubmitted) !== 'Y') return;
       var layer = Number(t.layer) || 1;
       /* 全收集的兩道門檻照樣要過——沒過就留給老師，不自動放行 */
-      if ((unopenedMinerals_(t.classId, layer) || []).length) return;
+      if ((unopenedMinerals_(t.classId, layer, t.teamId) || []).length) return;
       if ((missingRequired_(t.teamId) || []).length) return;
       var kl = classById_(t.classId), courseWeek = courseWeekOf_(kl);
       var cells = jparse_(t.gateText, ['', '', '']);
@@ -1237,7 +1260,7 @@ function apiBootstrap(token) {
         var fMine = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(me.teamId); })[0];
         mp.finaleOpened = !!(fMine && String(fMine.opened) === 'Y');
         out.myTeam = mp;
-        out.tasks = mergeTasks_(defs, teamTaskMap_(me.teamId), courseWeek);
+        out.tasks = mergeTasks_(tasksOfClass_(classId, me.teamId), teamTaskMap_(me.teamId), courseWeek);
         out.plan = {};
         readTable_('Plans').forEach(function (p) {
           if (String(p.teamId) !== String(me.teamId)) return;
@@ -1262,7 +1285,7 @@ function apiBootstrap(token) {
     if (u.role === 'teacher') {
       out.teamTasks = {};
       allTeams.forEach(function (t) {
-        out.teamTasks[t.id] = mergeTasks_(defs, teamTaskMap_(t.id), courseWeek);
+        out.teamTasks[t.id] = mergeTasks_(tasksOfClass_(classId, t.id), teamTaskMap_(t.id), courseWeek);
       });
       out.queue = [];
       allTeams.forEach(function (t) {
@@ -1330,7 +1353,7 @@ function apiSubmitItem(token, taskId, text, files, reflect) {
     var effort = ['fast', 'onpar', 'slow'].indexOf(String(reflect.effort)) >= 0 ? String(reflect.effort) : '';
     if (!effort) return err_('先說一次這一項實際花的力氣跟你們原本估的差多少。');
     var kl = classById_(u.classId), courseWeek = courseWeekOf_(kl);
-    var defs = tasksOfClass_(u.classId);
+    var defs = tasksOfClass_(u.classId, u.teamId);
     var def = null;
     for (var i = 0; i < defs.length; i++) if (String(defs[i].id) === String(taskId)) def = defs[i];
     if (!def) return err_('找不到這一項任務。');
@@ -1420,7 +1443,7 @@ function apiFinale(token, teamId) {
     if (u.role === 'teacher' && String(t.classId) !== String(u.classId)) return err_('沒有權限。');
     if (u.role === 'researcher') return err_('沒有權限。');
 
-    var defs = tasksOfClass_(t.classId);
+    var defs = tasksOfClass_(t.classId, t.teamId);
     var tmap = teamTaskMap_(tid);
     var plans = {};
     readTable_('Plans').forEach(function (p) {
@@ -1569,10 +1592,11 @@ function apiSavePlan(token, taskId, from, to) {
 }
 
 /** 這一層的礦脈裡，老師還沒開出來的礦石。空陣列＝這一層開完了。 */
-function unopenedMinerals_(classId, layer) {
+/** 這一層的礦脈裡，這一組還沒被開出來的礦石。 */
+function unopenedMinerals_(classId, layer, teamId) {
   var vein = MINERALS_BY_LAYER[layer] || [];
   var used = {};
-  tasksOfClass_(classId).forEach(function (d) {
+  tasksOfClass_(classId, teamId).forEach(function (d) {
     if (d.layer === layer && d.mineral) used[d.mineral] = 1;
   });
   return vein.filter(function (n) { return !used[n]; });
@@ -1585,7 +1609,7 @@ function missingRequired_(teamId) {
   if (!t) return null;
   var layer = Number(t.layer) || 1;
   var tmap = teamTaskMap_(teamId);
-  return tasksOfClass_(t.classId).filter(function (d) {
+  return tasksOfClass_(t.classId, teamId).filter(function (d) {
     if (d.layer !== layer) return false;
     var s = tmap[d.id];
     return !s || s.status !== 'passed';
@@ -1603,7 +1627,7 @@ function apiSubmitGate(token, cells) {
     var t0 = teamById_(u.teamId);
     var lay0 = Number(t0.layer) || 1;
     var vein0 = MINERALS_BY_LAYER[lay0] || [];
-    var unopened = unopenedMinerals_(t0.classId, lay0);
+    var unopened = unopenedMinerals_(t0.classId, lay0, u.teamId);
     if (unopened.length === vein0.length) {
       return err_('這一層還沒有任務，老師還沒把清單開出來。');
     }
@@ -1736,7 +1760,7 @@ function apiSaveTask(token, classId, task) {
     var min = String(task.mineral || '').trim();
     if (!min) {
       var mine = readTable_('Tasks').filter(function (x) { return String(x.taskId) === String(id); })[0];
-      var free = freeMinerals_(classId, task.layer);
+      var free = freeMinerals_(classId, task.layer, cleanTeams_(classId, task.teams));
       if (mine && String(mine.mineral || '')) free = [String(mine.mineral)].concat(free);
       min = free.length ? free[0] : '';
     }
@@ -1744,6 +1768,7 @@ function apiSaveTask(token, classId, task) {
       taskId: id, classId: classId, layer: task.layer, type: task.type,
       title: task.title, cond: task.cond, note: task.note, spec: task.spec || '', due: task.due,
       mineral: min, mDesc: task.mDesc || '',
+      teams: JSON.stringify(cleanTeams_(classId, task.teams)),
       published: 'Y', createdAt: new Date()
     });
     return ok_({ taskId: id });
@@ -1761,10 +1786,43 @@ function apiDeleteTask(token, taskId) {
 
 /** 一次發派一整層的清單。 */
 /** 這一層還沒被別的任務佔走的礦物名稱。 */
-function freeMinerals_(classId, layer) {
+/** 只留這一班真的存在的組別。空陣列＝全班。 */
+function cleanTeams_(classId, list) {
+  if (!list || !list.length) return [];
+  var ok = {};
+  readTable_('Teams').forEach(function (t) {
+    if (String(t.classId) === String(classId)) ok[String(t.teamId)] = 1;
+  });
+  var out = [];
+  list.forEach(function (x) {
+    var id = String(x);
+    if (ok[id] && out.indexOf(id) < 0) out.push(id);
+  });
+  /* 全班都選＝當成全班，不要存一份會過期的清單 */
+  return out.length >= Object.keys(ok).length ? [] : out;
+}
+
+/** 這一班有哪些組。 */
+function teamIdsOf_(classId) {
+  return readTable_('Teams')
+    .filter(function (t) { return String(t.classId) === String(classId); })
+    .map(function (t) { return String(t.teamId); });
+}
+
+/**
+ * 還沒被用掉的礦石。
+ * 礦脈是「每一組各自要收集的四格」，不是全班共用一份——
+ * 所以只給某幾組的任務，只佔用那幾組的格子，別組那一格還是空的。
+ * forTeams 空＝這一項要發給全班。
+ */
+function freeMinerals_(classId, layer, forTeams) {
+  var targets = (forTeams && forTeams.length) ? forTeams.map(String) : teamIdsOf_(classId);
   var used = {};
-  readTable_('Tasks').forEach(function (t) {
-    if (String(t.classId) === String(classId) && String(t.mineral)) used[String(t.mineral)] = true;
+  tasksOfClass_(classId).forEach(function (d) {
+    if (!d.mineral || d.layer !== Number(layer)) return;
+    /* 只有跟這次的目標組別有交集的任務，才算佔走了格子 */
+    var clash = !targets.length || targets.some(function (tid) { return taskForTeam_(d, tid); });
+    if (clash) used[String(d.mineral)] = true;
   });
   return MINERALS_BY_LAYER[layer] ? MINERALS_BY_LAYER[layer].filter(function (n) { return !used[n]; }) : [];
 }
@@ -1785,13 +1843,14 @@ function apiPublishList(token, classId, layer, items) {
       /* 沒指定環節就自動配一塊還沒被用掉的礦——任務不該沒有物證 */
       var min = String(it.mineral || '').trim();
       if (!min) {
-        var free = freeMinerals_(classId, layer);
+        var free = freeMinerals_(classId, layer, cleanTeams_(classId, it.teams));
         min = free.length ? free[0] : '';
       }
       upsert_('Tasks', ['taskId'], {
         taskId: it.id || ('tk' + Utilities.getUuid().slice(0, 8)), classId: classId,
         layer: layer, type: it.type, title: it.title, cond: it.cond, note: it.note,
-        spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc || '', published: 'Y', createdAt: new Date()
+        spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc || '', published: 'Y',
+        teams: JSON.stringify(cleanTeams_(classId, it.teams)), createdAt: new Date()
       });
     });
     return ok_();
@@ -1807,7 +1866,7 @@ function apiReviewItem(token, teamId, taskId, result, reason) {
     var t = teamById_(teamId);
     if (!t) return err_('找不到這一組。');
     var kl = classById_(t.classId), courseWeek = courseWeekOf_(kl);
-    var defs = tasksOfClass_(t.classId), def = null;
+    var defs = tasksOfClass_(t.classId, t.teamId), def = null;
     for (var i = 0; i < defs.length; i++) if (String(defs[i].id) === String(taskId)) def = defs[i];
 
     var subs = readTable_('Submissions').filter(function (s) {
@@ -1849,7 +1908,7 @@ function apiReviewGate(token, teamId, pass, toolLevel, reason) {
     /* 通過關卡＝發道具換層，這一層沒全收集就不能過（退回不受限制） */
     if (pass) {
       var veinT = MINERALS_BY_LAYER[layer] || [];
-      var unopenT = unopenedMinerals_(t.classId, layer);
+      var unopenT = unopenedMinerals_(t.classId, layer, t.teamId);
       if (unopenT.length) {
         return err_('這一層的礦脈有 ' + veinT.length + ' 塊，你只開了 ' + (veinT.length - unopenT.length) +
           ' 塊。先在 T-05 把剩下的 ' + unopenT.length + ' 塊開出來（' + unopenT.join('、') + '），或把這一次關卡退回。');

@@ -2730,5 +2730,24 @@ must([
 '                    </div>',
 '                  </sc-if>'].join('\n'));
 
+/* 37. T-05：這一項要發給誰 */
+must('                <div>\n                  <div style="font:500 22px/1 \'C11\';margin-bottom:4px">要交的檔案與規格</div>',
+[
+'                <sc-if value="{{ hasTaskTargets }}" hint-placeholder-val="{{ true }}">',
+'                  <div>',
+'                    <div style="font:500 22px/1 \'C11\';margin-bottom:4px">這一項要發給誰</div>',
+'                    <div style="font:400 22px/1.6 \'C11\';color:#8A8073;margin-bottom:9px;text-wrap:pretty">預設發給全班。有哪一組的專案不需要這一項，就只勾要給的那幾組——沒被指定的組看不到，關卡也不會被它卡住。</div>',
+'                    <div style="display:flex;flex-wrap:wrap;gap:6px">',
+'                      <button onClick="{{ taskTargetAll.pick }}" style="{{ taskTargetAll.style }}">{{ taskTargetAll.label }}</button>',
+'                      <sc-for list="{{ taskTargetPicks }}" as="tt" hint-placeholder-count="3">',
+'                        <button onClick="{{ tt.pick }}" style="{{ tt.style }}">{{ tt.label }}</button>',
+'                      </sc-for>',
+'                    </div>',
+'                    <div style="font:400 11px/1.6 \'C11\';color:#E9B341;margin-top:9px;text-wrap:pretty">{{ taskTargetNote }}</div>',
+'                  </div>',
+'                </sc-if>',
+'                <div>',
+'                  <div style="font:500 22px/1 \'C11\';margin-bottom:4px">要交的檔案與規格</div>'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

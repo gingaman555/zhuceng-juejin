@@ -66,11 +66,15 @@
              gateText: t.gateText || ['', '', ''], gateSubmitted: !!t.gateSubmitted,
              gateVerdict: t.gateVerdict || '', specNames: t.specNames || {} };
   }
-  function tasksOfClass(cid) {
-    return DB.Tasks.filter(function (t) { return t.classId === cid; }).map(function (t) {
+  /* 給 teamId 就只回那一組看得到的——關卡判定一定要用這個版本 */
+  function tasksOfClass(cid, teamId) {
+    var all = DB.Tasks.filter(function (t) { return t.classId === cid; }).map(function (t) {
       return { id: t.taskId, klass: t.classId, layer: t.layer, type: t.type, title: t.title,
-               cond: t.cond, note: t.note, spec: t.spec || '', due: t.due, mineral: t.mineral, mDesc: t.mDesc, published: true };
+               cond: t.cond, note: t.note, spec: t.spec || '', due: t.due, mineral: t.mineral, mDesc: t.mDesc, published: true,
+               teams: API.taskTeams(t) };
     });
+    if (!teamId) return all;
+    return all.filter(function (d) { return !d.teams.length || d.teams.indexOf(String(teamId)) >= 0; });
   }
   function ttmap(teamId) {
     var m = {};
@@ -414,7 +418,7 @@
           out.myTeam = teamPub(me, w);
           var fM = (DB.Finales||[]).filter(function (x) { return x.teamId === me.teamId; })[0];
           out.myTeam.finaleOpened = !!(fM && fM.opened);
-          out.tasks = mergeTasks(defs, ttmap(me.teamId), w);
+          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w);
           out.plan = {};
           DB.Plans.forEach(function (p) { if (p.teamId !== me.teamId) return; var b = p.toWeek||p.week||1, a = p.fromWeek||b; out.plan[p.taskId] = { a: Math.min(a,b), b: b }; });
           out.passedWeek = {};
@@ -439,7 +443,7 @@
           return { layer: n, count: b?b.n:0, avg: b?Math.round(b.len/b.n):0 }; });
         out.teamTasks = {}; out.queue = []; out.gates = [];
         allTeams.forEach(function (tm) {
-          var list = mergeTasks(defs, ttmap(tm.id), w);
+          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w);
           out.teamTasks[tm.id] = list;
           list.forEach(function (task) {
             if (task.status === 'submitted') out.queue.push({
@@ -523,7 +527,7 @@
       var u = auth(t);
       var tid = (u.role === "student") ? u.teamId : (teamId || "");
       var tm = teamById(tid); if (!tm) return err("找不到這一組。");
-      var defs = tasksOfClass(tm.classId), m = ttmap(tid);
+      var defs = tasksOfClass(tm.classId, tid), m = ttmap(tid);
       var plans = {}; DB.Plans.forEach(function (p) { if (p.teamId === tid) plans[p.taskId] = { a: p.fromWeek || p.toWeek || p.week, b: p.toWeek || p.week }; });
       var subs = DB.Submissions.filter(function (s) { return s.teamId === tid; });
       var revs = DB.Reviews.filter(function (r) { return r.teamId === tid; });
@@ -614,10 +618,10 @@
       persist();
       return ok({ semesterWeeks: k ? k.semesterWeeks : 18 });
     },
-    _vein: function (classId, layer) {
+    _vein: function (classId, layer, teamId) {
       var all = MIN_BY_LAYER[layer] || [];
       var used = {};
-      tasksOfClass(classId).forEach(function (d) { if (d.layer === layer && d.mineral) used[d.mineral] = 1; });
+      tasksOfClass(classId, teamId).forEach(function (d) { if (d.layer === layer && d.mineral) used[d.mineral] = 1; });
       return { total: all.length, left: all.filter(function (n) { return !used[n]; }) };
     },
     _veinStatus: function (classId) {
@@ -628,7 +632,7 @@
     _missReq: function (tid) {
       var tm = teamById(tid); if (!tm) return null;
       var m = ttmap(tid);
-      return tasksOfClass(tm.classId).filter(function (d) {
+      return tasksOfClass(tm.classId, tid).filter(function (d) {
         if (d.layer !== tm.layer) return false;
         var s = m[d.id]; return !s || s.status !== "passed";
       });
@@ -636,7 +640,7 @@
     apiSubmitGate: function (t, cells) {
       var u = auth(t), tm = teamById(u.teamId);
       var miss = API._missReq(u.teamId) || [];
-      var vn = API._vein(tm.classId, tm.layer);
+      var vn = API._vein(tm.classId, tm.layer, tm.teamId);
       if (vn.left.length === vn.total) return err("這一層還沒有任務，老師還沒把清單開出來。");
       if (vn.left.length) return err("這一層的礦脈有 " + vn.total + " 塊，老師只開了 " + (vn.total - vn.left.length) + " 塊。要全部開出來、也全部採齊，才拿得到這一層的道具——去跟他說還缺 " + vn.left.length + " 塊。");
       if (miss.length) return err("這一層還差 " + miss.length + " 塊礦石：" + miss.map(function (d) { return d.title; }).join("、") + "。這一層要全部採齊才送得出關卡。");
@@ -653,6 +657,25 @@
         week: w, readerLayer: me.layer, readerStay: Math.max(1, w - me.enteredWeek + 1), recentlyRejected: rejected });
       persist();
       return ok();
+    },
+    taskTeams: function (t) {
+      var raw = t && t.teams;
+      if (raw === undefined || raw === null || String(raw).trim() === '') return [];
+      var a = typeof raw === 'object' ? raw : (function () { try { return JSON.parse(raw); } catch (e) { return null; } })();
+      if (!a || !a.length) return [];
+      return a.map(function (x) { return String(x); });
+    },
+    forTeam: function (t, teamId) {
+      var only = API.taskTeams(t);
+      return !only.length || only.indexOf(String(teamId)) >= 0;
+    },
+    cleanTeams: function (classId, list) {
+      if (!list || !list.length) return [];
+      var ok = {};
+      DB.Teams.forEach(function (t) { if (String(t.classId) === String(classId)) ok[String(t.teamId)] = 1; });
+      var out = [];
+      list.forEach(function (x) { var id = String(x); if (ok[id] && out.indexOf(id) < 0) out.push(id); });
+      return out.length >= Object.keys(ok).length ? [] : out;
     },
     minNamesOf: function (teamId) {
       var out = {};
@@ -697,20 +720,29 @@
       return ok();
     },
 
-    freeMin: function (classId, layer, selfId) {
+    /* 礦脈是每一組各自的四格：只給某幾組的任務，只佔用那幾組的格子 */
+    freeMin: function (classId, layer, selfId, forTeams) {
+      var all = DB.Teams.filter(function (t) { return String(t.classId) === String(classId); })
+                        .map(function (t) { return String(t.teamId); });
+      var targets = (forTeams && forTeams.length) ? forTeams.map(String) : all;
       var used = {};
       DB.Tasks.forEach(function (x) {
-        if (String(x.classId) === String(classId) && x.mineral && x.taskId !== selfId) used[x.mineral] = 1;
+        if (String(x.classId) !== String(classId) || !x.mineral) return;
+        if (x.taskId === selfId) return;
+        if (Number(x.layer) !== Number(layer)) return;
+        var clash = !targets.length || targets.some(function (tid) { return API.forTeam(x, tid); });
+        if (clash) used[x.mineral] = 1;
       });
       return (MIN_BY_LAYER[layer] || []).filter(function (n) { return !used[n]; });
     },
     apiSaveTask: function (t, classId, task) {
       auth(t);
       var id = task.id || ('tk' + uid());
-      if (!String(task.mineral || '').trim()) task.mineral = (API.freeMin(classId, task.layer, id) || [])[0] || '';
+      if (!String(task.mineral || '').trim()) task.mineral = (API.freeMin(classId, task.layer, id, API.cleanTeams(classId, task.teams)) || [])[0] || '';
       var ex = DB.Tasks.filter(function (x) { return x.taskId === id; })[0];
       var row = { taskId: id, classId: classId, layer: task.layer, type: task.type, title: task.title,
-                  cond: task.cond, note: task.note, spec: task.spec || '', due: task.due, mineral: task.mineral, mDesc: task.mDesc };
+                  cond: task.cond, note: task.note, spec: task.spec || '', due: task.due, mineral: task.mineral, mDesc: task.mDesc,
+                  teams: JSON.stringify(API.cleanTeams(classId, task.teams)) };
       if (ex) Object.assign(ex, row); else DB.Tasks.push(row);
       persist();
       return ok({ taskId: id });
@@ -725,9 +757,10 @@
     apiPublishList: function (t, classId, layer, items) {
       auth(t);
       (items || []).forEach(function (it) {
-        var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer) || [])[0] || '';
+        var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer, null, API.cleanTeams(classId, it.teams)) || [])[0] || '';
         DB.Tasks.push({ taskId: 'tk' + uid(), classId: classId, layer: layer, type: it.type,
-          title: it.title, cond: it.cond, note: it.note, spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc });
+          title: it.title, cond: it.cond, note: it.note, spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc,
+          teams: JSON.stringify(API.cleanTeams(classId, it.teams)) });
       });
       persist();
       return ok();
@@ -756,7 +789,7 @@
       auth(t);
       var tm = teamById(teamId), kl = classById(tm.classId), w = courseWeekOf(kl);
       if (pass) {
-        var vt = API._vein(tm.classId, tm.layer);
+        var vt = API._vein(tm.classId, tm.layer, tm.teamId);
         if (vt.left.length) return err("這一層的礦脈有 " + vt.total + " 塊，你只開了 " + (vt.total - vt.left.length) + " 塊。先在 T-05 把剩下的 " + vt.left.length + " 塊開出來（" + vt.left.join("、") + "），或把這一次關卡退回。");
         var mr = API._missReq(teamId) || []; if (mr.length) return err("這一組這一層還差 " + mr.length + " 塊礦石。");
       }
