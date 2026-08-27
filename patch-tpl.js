@@ -2559,5 +2559,57 @@ must([
 '                    </div>',
 '                  </sc-if>'].join('\n'));
 
+/* 32. 說明一律收進按鈕：S-02 常見狀況、SUB 為什麼問這三題、甘特第一次用這一頁 */
+
+/* S-02：常見狀況那一整塊 → 一顆鈕 */
+must([
+'              <div style="margin:18px var(--pad);padding:17px 19px;background:linear-gradient(140deg,rgba(233,179,65,.09),transparent 65%),#14110E;border:1px solid #3A3026">',
+'                <div style="font:400 11px/1 \'C11\';letter-spacing:.2em;color:#E9B341;margin-bottom:12px">常見狀況 · 這一階段容易卡在哪</div>',
+'                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:9px">',
+'                  <sc-for list="{{ briefRows }}" as="b" hint-placeholder-count="3">',
+'                    <div style="padding:12px 13px;background:rgba(0,0,0,.28);border-left:2px solid #3A3026">',
+'                      <div style="font:500 22px/1.6 \'C11\';color:#E8E2D6;text-wrap:pretty">{{ b.what }}</div>',
+'                      <div style="font:400 22px/1.5 \'C11\';color:{{ b.toolColor }};margin-top:9px">{{ b.tool }}</div>',
+'                    </div>',
+'                  </sc-for>',
+'                </div>',
+'              </div>'].join('\n'),
+[
+'              <div style="margin:14px var(--pad) 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center">',
+'                <button onClick="{{ openBrief }}" style="{{ briefBtnStyle }}">{{ briefBtnLabel }}</button>',
+'              </div>'].join('\n'));
+
+/* SUB：為什麼問這三題 → 一顆鈕，擺在三格上面 */
+must([
+'                <div style="padding:15px 17px;background:linear-gradient(140deg,rgba(233,179,65,.06),transparent 62%),#14110E;border:1px solid #3A3026">',
+'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">為什麼問這三題</div>',
+'                  <div style="font:400 22px/1.7 \'C11\';color:#C3BAAA;margin-top:9px;text-wrap:pretty">{{ gateWhy }}</div>',
+'                  <div style="display:flex;flex-direction:column;gap:7px;margin-top:13px">',
+'                    <sc-for list="{{ gateWhyRows }}" as="w" hint-placeholder-count="3">',
+'                      <div style="display:flex;gap:10px;align-items:flex-start">',
+'                        <span style="font:600 11px/1 \'C11\';color:#0B0A09;background:#5A4A2C;padding:5px 7px;flex:none">{{ w.n }}</span>',
+'                        <span style="font:400 22px/1.6 \'C11\';color:#8A8073;text-wrap:pretty">{{ w.t }}</span>',
+'                      </div>',
+'                    </sc-for>',
+'                  </div>'].join('\n'),
+[
+'                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">',
+'                  <button onClick="{{ openGateWhy }}" style="{{ gateWhyBtnStyle }}">{{ gateWhyBtnLabel }}</button>',
+'                </div>',
+'                <div style="display:none">'].join('\n'));
+
+/* 甘特：第一次用這一頁 → 一顆鈕 */
+must([
+'              <sc-if value="{{ ganttFresh }}" hint-placeholder-val="{{ true }}">',
+'                <div style="margin:16px var(--pad) 0;padding:15px 17px;background:linear-gradient(140deg,rgba(233,179,65,.09),transparent 65%),#14110E;border:1px solid #3A3026">',
+'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">第一次用這一頁</div>'].join('\n'),
+[
+'              <div style="margin:14px var(--pad) 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center">',
+'                <button onClick="{{ openGanttHow }}" style="{{ ganttHowBtnStyle }}">{{ ganttHowBtnLabel }}</button>',
+'              </div>',
+'              <sc-if value="{{ ganttNever }}" hint-placeholder-val="{{ false }}">',
+'                <div style="margin:16px var(--pad) 0;padding:15px 17px;background:linear-gradient(140deg,rgba(233,179,65,.09),transparent 65%),#14110E;border:1px solid #3A3026">',
+'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#E9B341">第一次用這一頁</div>'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

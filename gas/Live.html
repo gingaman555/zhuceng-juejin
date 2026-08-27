@@ -2545,25 +2545,59 @@
          weapon: '熱流導航儀', why: '導航儀在無規律裡找路——壓力下重新排序。捨掉一些東西，剩下的才走得完。' }
   };
 
-  /* 像素列 → SVG data URI。dim = 還沒擊退，只留輪廓與微光 */
-  function bossSvg(b, dim) {
+  /* 每一隻專屬的動態：動的是牠「為什麼難」的那個部位 */
+  var BOSS_ANIM = {
+    1: { chars: "~", css:
+      "@keyframes jlzFog{0%,100%{transform:translateX(0);opacity:.5}" +
+      "50%{transform:translateX(1.4px);opacity:.85}}" +
+      ".a{animation:jlzFog 4.6s ease-in-out infinite}" },
+    2: { chars: "o", css:
+      "@keyframes jlzGrow{0%,100%{opacity:.35}45%{opacity:1}}" +
+      ".a{animation:jlzGrow 2.4s ease-in-out infinite}" },
+    3: { chars: "o", css:
+      "@keyframes jlzEcho{0%,100%{transform:translateX(-.7px);opacity:.45}" +
+      "50%{transform:translateX(.7px);opacity:.9}}" +
+      ".a{animation:jlzEcho 3.1s ease-in-out infinite}" },
+    4: { chars: "~*", css:
+      "@keyframes jlzTide{0%,100%{transform:translateY(.6px);opacity:.5}" +
+      "50%{transform:translateY(-.9px);opacity:.9}}" +
+      "@keyframes jlzEmber{0%{transform:translateY(0);opacity:.9}" +
+      "100%{transform:translateY(-3px);opacity:0}}" +
+      ".a{animation:jlzTide 2.8s ease-in-out infinite}" +
+      ".b{animation:jlzEmber 2.2s ease-out infinite}" }
+  };
+
+  /* 像素列 → SVG data URI。dim = 還沒擊退，只留輪廓與微光。
+     still = 不要內部動畫（縮圖太小時動起來只是雜訊）。 */
+  function bossSvg(b, dim, still) {
     var rows = b.px, out = [], S = 24;
+    var an = still ? null : BOSS_ANIM[b.L];
     out.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + S + ' ' + S + '" shape-rendering="crispEdges">');
+    if (an) out.push("<style>" + an.css + "</style>");
+    var nth = 0;
     rows.forEach(function (row, y) {
       var x = 0;
       while (x < row.length) {
         var c = row[x];
-        if (c === '.') { x++; continue; }
+        if (c === ".") { x++; continue; }
         var w = 1;
         while (x + w < row.length && row[x + w] === c) w++;
-        var fill = dim ? '#2C251D' : (b.hue[c] || b.hue['#']);
-        var op = c === '~' ? (dim ? '.35' : '.55') : (dim ? '.9' : '1');
-        out.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="1" fill="' + fill + '" opacity="' + op + '"/>');
+        var fill = dim ? "#2C251D" : (b.hue[c] || b.hue["#"]);
+        var op = c === "~" ? (dim ? ".35" : ".55") : (dim ? ".9" : "1");
+        var cls = "";
+        if (an && an.chars.indexOf(c) >= 0) {
+          cls = (b.L === 4 && c === "*") ? "b" : "a";
+          nth++;
+        }
+        out.push("<rect x=\"" + x + "\" y=\"" + y + "\" width=\"" + w + "\" height=\"1\" fill=\"" + fill +
+          "\" opacity=\"" + op + "\"" +
+          (cls ? " class=\"" + cls + "\" style=\"animation-delay:" + ((nth % 7) * 0.18).toFixed(2) + "s\"" : "") +
+          "/>");
         x += w;
       }
     });
-    out.push('</svg>');
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join(''));
+    out.push("</svg>");
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(out.join(""));
   }
 
   function bossOf(layer) {
@@ -2991,6 +3025,55 @@
       }, done ? tag('已拿到', '#E9B341') : tag('未開始', '#5F574C'))
     ];
 
+    /* 說明一律收進按鈕：S-02 常見狀況 */
+    (function () {
+      var rows = v.briefRows || [];
+      var hb = helpButton(L, {
+        label: "？　這一階段容易卡在哪",
+        kicker: "COMMON TRAPS",
+        title: "這一階段容易卡在哪",
+        lede: (L.LAYERS[(S.currentLayer || 1) - 1] || {}).hard || "",
+        lines: rows.map(function (r) { return r.what + "　→　" + r.tool; })
+      });
+      v.briefBtnLabel = hb.label;
+      v.briefBtnStyle = hb.style;
+      v.openBrief = hb.open;
+    })();
+
+    /* 說明一律收進按鈕：SUB 為什麼問這三題 */
+    (function () {
+      var hb = helpButton(L, {
+        label: "？　為什麼問這三題",
+        kicker: "WHY THESE THREE",
+        title: "為什麼問這三題",
+        lede: v.gateWhy || "",
+        lines: (v.gateWhyRows || []).map(function (w) { return w.n + "　" + w.t; })
+      });
+      v.gateWhyBtnLabel = hb.label;
+      v.gateWhyBtnStyle = hb.style;
+      v.openGateWhy = hb.open;
+    })();
+
+    /* 說明一律收進按鈕：甘特圖怎麼用 */
+    (function () {
+      v.ganttNever = false;   /* 原本那一塊改成按鈕開，不再自己攤開 */
+      var hb = helpButton(L, {
+        label: "？　這一頁怎麼用",
+        kicker: "HOW TO SCHEDULE",
+        title: "這一頁只有一個動作：點一格",
+        lede: "點一格，就是決定你哪一週交那一項。老師只訂期限，不排你的順序。",
+        lines: [
+          "亮起來的那一格＝你排的那一週。",
+          "斜紋區＝老師訂的期限之後。排進去也可以，只是會被標示逾期。",
+          "拖過去可以排一段區間，代表這一項要跨好幾週。",
+          String(v.ganttHowTo || "")
+        ].filter(Boolean)
+      });
+      v.ganttHowBtnLabel = hb.label;
+      v.ganttHowBtnStyle = hb.style;
+      v.openGanttHow = hb.open;
+    })();
+
     /* 首頁標頭：這一層擋路的是誰，一眼看到 */
     (function () {
       var HL = S.currentLayer || 1;
@@ -3374,7 +3457,7 @@
           ';background:' + (got ? 'rgba(233,179,65,.05)' : 'radial-gradient(circle at 50% 40%,rgba(233,179,65,.05),transparent 70%)') +
           ';border:1px ' + (got ? 'solid #3A3026' : 'dashed #2C251D') + ';color:' + (got ? '#E8E2D6' : '#8C8172'),
         glyphStyle: 'display:block;width:44px;height:44px;margin:0 auto;image-rendering:pixelated;' +
-          'background:url("' + bossSvg(b, !got) + '") center/contain no-repeat;' +
+          'background:url("' + bossSvg(b, !got, true) + '") center/contain no-repeat;' +
           (got
             ? 'animation:bossFloat 3.4s ease-in-out infinite'
             : 'opacity:.5;animation:bossBreathe 5s ease-in-out infinite')
@@ -3552,7 +3635,7 @@
     /* 這一層的守關生物 */
     if (bz && self !== "boss") {
       out.push(tile({ name: bz.name, kind: "守關生物 · 擋在層底", alive: true,
-        got: cleared, sprite: bossSvg(bz, false),
+        got: cleared, sprite: bossSvg(bz, false, true),
         locked: "還沒走到那一層。牠現在只是一個影子。" }));
     }
 
