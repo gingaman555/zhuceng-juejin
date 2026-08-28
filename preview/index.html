@@ -38,6 +38,8 @@ textarea,input{font-family:'C11'}
 @keyframes bossGlow{0%,100%{filter:drop-shadow(0 0 6px rgba(233,179,65,.5))}50%{filter:drop-shadow(0 0 16px rgba(233,179,65,.95))}}
 @keyframes bossLoom{0%{opacity:0;transform:translateY(10px) scale(.86)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes bossFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes jlzWalk{0%{left:-12%}100%{left:108%}}
+@keyframes jlzSway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
 @keyframes dormant{0%,100%{opacity:.18;filter:brightness(.8)}50%{opacity:.5;filter:brightness(1.25)}}
 </style>
 
@@ -157,7 +159,13 @@ window.JLZ_SPRITES = {
           </sc-if>
 
           <sc-if value="{{ scC01 }}" hint-placeholder-val="{{ true }}">
-            <div data-screen-label="C-01 啟動頁" style="height:100%;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:radial-gradient(680px 420px at 50% 120%,rgba(233,179,65,.17),transparent 72%),#0B0A09;position:relative">
+            <div data-screen-label="C-01 啟動頁" style="height:100%;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:radial-gradient(680px 420px at 50% 120%,rgba(233,179,65,.17),transparent 72%),#0B0A09;position:relative;overflow:hidden;isolation:isolate">
+              <span style="{{ bootSkyStyle }}"></span>
+              <span style="{{ bootStrataStyle }}"></span>
+              <sc-for list="{{ bootGhosts }}" as="bgh" hint-placeholder-count="4">
+                <span style="{{ bgh.style }}"></span>
+              </sc-for>
+              <span style="{{ bootWalkerStyle }}"></span>
               <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>
               <span style="display:block;width:84px;height:84px;margin:0 auto 22px;background:url(assets/jlz/tool-compass.png) center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 0 22px rgba(233,179,65,.4))"></span>
               <div style="font:700 44px/1.2 'C11';letter-spacing:.2em;text-indent:.2em;color:#F2E6C8;text-align:center;text-shadow:0 0 26px rgba(233,179,65,.35)">逐層掘進</div>
@@ -6501,6 +6509,7 @@ class Component extends DCLogic {
 
     momentVals(L, v);
     decorateAuth(L, v);
+    decorateBoot(L, v);
     if (S.role === 'student' && S.signedIn) decorateStudent(L, v);
     if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); decorateDayNight(L, v); decorateLayerPanel(L, v); decorateMirror(L, v); }
     decorateWorld(L, v);
@@ -8330,6 +8339,68 @@ class Component extends DCLogic {
     if (la.again) foot.push(la.again + ' 件退了又退——那幾件值得回頭看你寫了什麼');
     v.mirrorFoot = foot.join('　·　') + (foot.length ? '。' : '');
     v.mirrorFootStyle = "font:400 11px/1.7 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty";
+  }
+
+  /* ============================================================
+     啟動頁。原本只有一顆羅盤跟標題，靜的。
+     改成：標題浮在地表上，礦工從左邊走過去，腳下是五層岩層，
+     深處有四個還看不清楚的東西。天色照現實時間，跟第一層同一套。
+     ============================================================ */
+
+  /* 岩層固定 112px 高：畫面拉高拉低，地表線都不會跑上去壓到按鈕 */
+  var BOOT_DEPTH = 112;
+
+  function strataBg() {
+    var st = [];
+    for (var i = 0; i < 5; i++) {
+      var a = (i * 20) + '%', b = ((i + 1) * 20) + '%';
+      /* 每一層的頂緣留一條那一層的顏色，越深越暗 */
+      st.push('rgba(' + hexRgb(BOARD_HUE[i]) + ',' + (0.46 - i * 0.06).toFixed(2) + ') ' + a +
+        ' calc(' + a + ' + 1px)');
+      st.push('rgba(' + (15 - i * 2) + ',' + (13 - i * 2) + ',' + (11 - i * 2) + ',.97)' +
+        ' calc(' + a + ' + 1px) ' + b);
+    }
+    return 'linear-gradient(180deg,' + st.join(',') + ')';
+  }
+
+  function decorateBoot(L, v) {
+    if (L.state.screen !== 'C01') {
+      v.bootSkyStyle = 'display:none'; v.bootStrataStyle = 'display:none';
+      v.bootWalkerStyle = 'display:none'; v.bootGhosts = [];
+      return;
+    }
+    var ph = skyPhase();
+
+    /* 天色：跟微光荒原用同一支 skyPhase，早上暖、半夜冷 */
+    v.bootSkyStyle = 'position:absolute;left:0;right:0;top:0;bottom:' + BOOT_DEPTH + 'px;' +
+      'z-index:-1;pointer-events:none;background:' + ph.wash;
+
+    /* 腳下的五層。上緣那一條就是地表。 */
+    v.bootStrataStyle = 'position:absolute;left:0;right:0;bottom:0;height:' + BOOT_DEPTH + 'px;' +
+      'z-index:-1;pointer-events:none;border-top:2px solid rgba(233,179,65,.4);' +
+      'background:' + strataBg();
+
+    /* 深處那四個。還沒下去，所以只有輪廓。 */
+    var X = [8, 74, 26, 89], Y = [74, 52, 30, 7], SZ = [40, 36, 32, 30];
+    v.bootGhosts = [1, 2, 3, 4].map(function (n, i) {
+      var b = bossOf(n);
+      if (!b) return { style: 'display:none' };
+      return {
+        style: 'position:absolute;z-index:-1;pointer-events:none;' +
+          'left:' + X[i] + '%;bottom:' + Y[i] + 'px;' +
+          'width:' + SZ[i] + 'px;height:' + SZ[i] + 'px;image-rendering:pixelated;' +
+          'background:url("' + bossSvg(b, true, true) + '") center bottom/contain no-repeat;' +
+          'opacity:' + (0.5 - i * 0.07).toFixed(2) + ';filter:brightness(.55);' +
+          'animation:bossBreathe ' + (5.2 + i * 0.9).toFixed(1) + 's ease-in-out infinite ' + (i * 0.7).toFixed(1) + 's'
+      };
+    });
+
+    /* 一直有人在往下挖 */
+    v.bootWalkerStyle = 'position:absolute;z-index:-1;pointer-events:none;bottom:' + BOOT_DEPTH + 'px;' +
+      'width:38px;height:38px;image-rendering:pixelated;' +
+      'background:url("' + runnerSvg(true, 0) + '") center bottom/contain no-repeat;' +
+      'filter:drop-shadow(0 0 9px rgba(233,179,65,.45));' +
+      'animation:jlzWalk 15s linear infinite';
   }
 
   function decorateBoard(L, v) {

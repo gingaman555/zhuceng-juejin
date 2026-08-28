@@ -58,7 +58,13 @@
           </sc-if>
 
           <sc-if value="{{ scC01 }}" hint-placeholder-val="{{ true }}">
-            <div data-screen-label="C-01 啟動頁" style="height:100%;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:radial-gradient(680px 420px at 50% 120%,rgba(233,179,65,.17),transparent 72%),#0B0A09;position:relative">
+            <div data-screen-label="C-01 啟動頁" style="height:100%;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:radial-gradient(680px 420px at 50% 120%,rgba(233,179,65,.17),transparent 72%),#0B0A09;position:relative;overflow:hidden;isolation:isolate">
+              <span style="{{ bootSkyStyle }}"></span>
+              <span style="{{ bootStrataStyle }}"></span>
+              <sc-for list="{{ bootGhosts }}" as="bgh" hint-placeholder-count="4">
+                <span style="{{ bgh.style }}"></span>
+              </sc-for>
+              <span style="{{ bootWalkerStyle }}"></span>
               <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>
               <span style="display:block;width:84px;height:84px;margin:0 auto 22px;background:url(assets/jlz/tool-compass.png) center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 0 22px rgba(233,179,65,.4))"></span>
               <div style="font:700 44px/1.2 'C11';letter-spacing:.2em;text-indent:.2em;color:#F2E6C8;text-align:center;text-shadow:0 0 26px rgba(233,179,65,.35)">逐層掘進</div>

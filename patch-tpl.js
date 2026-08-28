@@ -2869,5 +2869,20 @@ must(
 '              </sc-if>',
 '              <sc-if value="{{ showTeacherLinks }}" hint-placeholder-val="{{ false }}">'].join('\n'));
 
+/* 46. 啟動頁：標題底下是那座礦坑 */
+must(
+'            <div data-screen-label="C-01 啟動頁" style="height:100%;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:radial-gradient(680px 420px at 50% 120%,rgba(233,179,65,.17),transparent 72%),#0B0A09;position:relative">',
+'            <div data-screen-label="C-01 啟動頁" style="height:100%;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:radial-gradient(680px 420px at 50% 120%,rgba(233,179,65,.17),transparent 72%),#0B0A09;position:relative;overflow:hidden;isolation:isolate">');
+must(
+'              <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>',
+[
+'              <span style="{{ bootSkyStyle }}"></span>',
+'              <span style="{{ bootStrataStyle }}"></span>',
+'              <sc-for list="{{ bootGhosts }}" as="bgh" hint-placeholder-count="4">',
+'                <span style="{{ bgh.style }}"></span>',
+'              </sc-for>',
+'              <span style="{{ bootWalkerStyle }}"></span>',
+'              <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
