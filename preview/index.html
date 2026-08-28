@@ -8436,6 +8436,37 @@ class Component extends DCLogic {
     document.addEventListener('mouseleave', function () { aim(0); });
   }
 
+  /* 背景輪播。五關的場景洗牌，礦工每跑完一輪換下一張。
+     跟指針一樣走 CSS 變數，不進 setState——那會把走到一半的
+     動畫整個重來。 */
+  function armScenes() {
+    if (LIVE.scenesArmed) return;
+    LIVE.scenesArmed = true;
+    var root = document.documentElement;
+    var order = [1, 2, 3, 4, 5];
+    for (var k = order.length - 1; k > 0; k--) {
+      var j = Math.floor(Math.random() * (k + 1));
+      var tmp = order[k]; order[k] = order[j]; order[j] = tmp;
+    }
+    var at = 0;
+    var put = function () {
+      var n = order[at % order.length];
+      /* Runtime 只改 style 屬性裡的路徑，CSS 變數它看不到，所以自己拿 base64 */
+      var url = (window.JLZ_SPR && window.JLZ_SPR('scene-L' + n)) || ('assets/jlz/scene-L' + n + '.png');
+      root.style.setProperty('--jlz-scene', 'url("' + url + '")');
+      root.style.setProperty('--jlz-scene-hue', 'rgba(' + hexRgb(BOARD_HUE[n - 1]) + ',.42)');
+    };
+    put();
+    document.addEventListener('animationiteration', function (e) {
+      if (e.animationName !== 'jlzWalk') return;
+      root.style.setProperty('--jlz-scene-o', '0');
+      setTimeout(function () {
+        at++; put();
+        root.style.setProperty('--jlz-scene-o', '1');
+      }, 460);
+    });
+  }
+
   function decorateBoot(L, v) {
     if (L.state.screen !== 'C01') {
       v.bootSceneStyle = 'display:none';
@@ -8456,21 +8487,26 @@ class Component extends DCLogic {
 
     var ph = skyPhase();
 
-    /* 背景就是第一關的荒原本身，整張放大。上面是你現在站的地方，
-       下面那 112px 是還沒下去的五層。路徑寫成 assets/jlz/*.png，
-       Runtime 套進 DOM 的時候會換成內嵌的 base64。 */
+    armScenes();
+
+    /* 壓得夠暗，還沒挖到的人只看得出氣氛，看不出這是哪一層。
+       中間留一圈亮、邊緣收黑——燈只照得到那麼遠。 */
     v.bootSceneStyle = 'position:absolute;left:0;right:0;top:0;bottom:' + BOOT_DEPTH + 'px;' +
       'z-index:-1;pointer-events:none;image-rendering:pixelated;' +
-      'background:linear-gradient(180deg,rgba(11,10,9,.46) 0,rgba(11,10,9,.66) 54%,' +
-      'rgba(11,10,9,.9) 100%),url(assets/jlz/scene-L1.png) center bottom/cover no-repeat';
+      'opacity:var(--jlz-scene-o,1);transition:opacity .46s ease;background:' +
+      'radial-gradient(154% 118% at 50% 42%,rgba(11,10,9,.24) 0,rgba(11,10,9,.54) 36%,' +
+      'rgba(11,10,9,.80) 64%,rgba(11,10,9,.95) 86%,#0B0A09 100%),' +
+      'linear-gradient(180deg,rgba(11,10,9,.52) 0,rgba(11,10,9,.72) 56%,rgba(11,10,9,.92) 100%),' +
+      'var(--jlz-scene) center bottom/cover no-repeat';
 
-    /* 天色：跟微光荒原用同一支 skyPhase，早上暖、半夜冷 */
+    /* 標題頁的天色照現實時間，淡淡蓋一層就好 */
     v.bootSkyStyle = 'position:absolute;left:0;right:0;top:0;bottom:' + BOOT_DEPTH + 'px;' +
-      'z-index:-1;pointer-events:none;background:' + ph.wash;
+      'z-index:-1;pointer-events:none;opacity:.4;background:' + ph.wash;
 
-    /* 腳下的五層。上緣那一條就是地表。 */
+    /* 腳下的五層。上緣那一條跟著現在這張背景的顏色。 */
     v.bootStrataStyle = 'position:absolute;left:0;right:0;bottom:0;height:' + BOOT_DEPTH + 'px;' +
-      'z-index:-1;pointer-events:none;border-top:2px solid rgba(233,179,65,.4);' +
+      'z-index:-1;pointer-events:none;' +
+      'border-top:2px solid var(--jlz-scene-hue,rgba(233,179,65,.42));' +
       'background:' + strataBg();
 
     /* 深處那四個。還沒下去，所以只有輪廓。 */
