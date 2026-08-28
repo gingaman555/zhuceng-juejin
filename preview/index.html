@@ -6546,6 +6546,25 @@ class Component extends DCLogic {
       v.idMeta = L.klass().name + ' · ' + L.teams().length + ' 組　·　學期第 ' + (S.courseWeek || 1) + ' 週';
     }
 
+    /* 左上角那顆身分牌：三個角色三個顏色，一眼分得出現在是誰在看。
+       三個顏色都避開系統裡已經有意思的那幾支——金是進度、青紫橘是各層、
+       紅是被退回。身分牌只負責講「現在是誰」，不該跟那些撞。
+       原型寫死 isStu ? 學生端 : 老師端——研究者登入會顯示「老師端」。 */
+    (function () {
+      var ROLE = {
+        student:    { label: String.fromCharCode(23416,29983) + String.fromCharCode(31471), hue: "#E58BA8" },   /* 掘進的人：玫瑰 */
+        teacher:    { label: String.fromCharCode(32769,24107) + String.fromCharCode(31471), hue: "#7CC98F" },   /* 在另一邊看的人：綠 */
+        researcher: { label: String.fromCharCode(30740,31350,32773) + String.fromCharCode(31471), hue: "#8FA6C4" } /* 不介入的人：鋼藍 */
+      };
+      var r = ROLE[S.role];
+      if (!r || !S.signedIn) return;
+      v.idRole = r.label;
+      v.idRoleStyle = "font:500 11px/1 " + String.fromCharCode(39) + "C11" + String.fromCharCode(39) +
+        ";letter-spacing:.14em;padding:5px 8px;flex:none;white-space:nowrap;" +
+        "background:rgba(" + hexRgb(r.hue) + ",.14);border:1px solid rgba(" + hexRgb(r.hue) + ",.4);" +
+        "color:" + r.hue;
+    })();
+
     addNavExtras(L, v, sc);
 
     retellTreasures(L);
