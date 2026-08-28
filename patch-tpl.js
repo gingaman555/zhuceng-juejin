@@ -2876,6 +2876,7 @@ must(
 must(
 '              <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>',
 [
+'              <span style="{{ bootSceneStyle }}"></span>',
 '              <span style="{{ bootSkyStyle }}"></span>',
 '              <span style="{{ bootStrataStyle }}"></span>',
 '              <sc-for list="{{ bootGhosts }}" as="bgh" hint-placeholder-count="4">',
@@ -2887,7 +2888,8 @@ must(
 /* 47. 啟動頁那顆羅盤改成自己畫的（指針要會動，PNG 動不了） */
 must(
 '              <span style="display:block;width:84px;height:84px;margin:0 auto 22px;background:url(assets/jlz/tool-compass.png) center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 0 22px rgba(233,179,65,.4))"></span>',
-'              <span style="{{ bootOrbStyle }}"></span>');
+'              <span data-jlz-orb style="{{ bootOrbStyle }}">' +
+'<span style="{{ bootNeedleStyle }}"></span></span>');
 
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

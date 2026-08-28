@@ -160,6 +160,7 @@ window.JLZ_SPRITES = {
 
           <sc-if value="{{ scC01 }}" hint-placeholder-val="{{ true }}">
             <div data-screen-label="C-01 啟動頁" style="height:100%;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:radial-gradient(680px 420px at 50% 120%,rgba(233,179,65,.17),transparent 72%),#0B0A09;position:relative;overflow:hidden;isolation:isolate">
+              <span style="{{ bootSceneStyle }}"></span>
               <span style="{{ bootSkyStyle }}"></span>
               <span style="{{ bootStrataStyle }}"></span>
               <sc-for list="{{ bootGhosts }}" as="bgh" hint-placeholder-count="4">
@@ -167,7 +168,7 @@ window.JLZ_SPRITES = {
               </sc-for>
               <span style="{{ bootWalkerStyle }}"></span>
               <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>
-              <span style="{{ bootOrbStyle }}"></span>
+              <span data-jlz-orb style="{{ bootOrbStyle }}"><span style="{{ bootNeedleStyle }}"></span></span>
               <div style="font:700 44px/1.2 'C11';letter-spacing:.2em;text-indent:.2em;color:#F2E6C8;text-align:center;text-shadow:0 0 26px rgba(233,179,65,.35)">逐層掘進</div>
               <div style="width:56px;height:1px;background:#E9B341;margin:var(--pad) 0;opacity:.5"></div>
               <button onClick="{{ goLogin }}" style="margin-top:8px;font:500 22px/1 'C11';letter-spacing:.28em;text-indent:.28em;color:#0B0A09;background:#E9B341;border:none;padding:15px 40px;cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">出　發</button>
@@ -8363,13 +8364,13 @@ class Component extends DCLogic {
     return 'linear-gradient(180deg,' + st.join(',') + ')';
   }
 
-  /* 標題上那一顆：一個像素羅盤。指針每隔幾秒晃一輪，
-     晃完一定停在正下方——這個作品只有一個方向。 */
-  var ORB_CACHE = null;
-  function compassSvg() {
-    if (ORB_CACHE) return ORB_CACHE;
-    var S = 24, c = (S - 1) / 2;
-    var rows = [];
+  /* 標題上那一顆羅盤。錶面跟指針拆成兩張圖：
+     指針要能被外面轉，烤在同一張 SVG 裡就轉不動了。 */
+  var ORB_CACHE = {};
+
+  function dialSvg() {
+    if (ORB_CACHE.dial) return ORB_CACHE.dial;
+    var S = 24, c = (S - 1) / 2, rows = [];
     for (var y = 0; y < S; y++) {
       var line = '';
       for (var x = 0; x < S; x++) {
@@ -8379,46 +8380,89 @@ class Component extends DCLogic {
       rows.push(line);
     }
     var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">'];
-    out.push('<style>' +
-      '@keyframes jlzNeedle{' +
-      '0%,8%{transform:rotate(0deg)}' +
-      '16%{transform:rotate(-132deg)}' +
-      '30%{transform:rotate(84deg)}' +
-      '44%{transform:rotate(-46deg)}' +
-      '56%{transform:rotate(18deg)}' +
-      '66%{transform:rotate(-6deg)}' +
-      '74%,100%{transform:rotate(0deg)}}' +
-      '.nd{transform-box:view-box;transform-origin:12px 12px;' +
-      'animation:jlzNeedle 6.4s cubic-bezier(.3,.85,.35,1) infinite}' +
-      '</style>');
     pxRows(rows, 0, { '#': '#E9B341', o: '#12161F' }, out);
-    /* 四個方位的刻度，正下方那一個亮一點 */
+    /* 四個方位的刻度，正下方那一個亮——沒人拉的時候它就指在那裡 */
     [[11, 3, '#5A5044'], [20, 11, '#5A5044'], [3, 11, '#5A5044'], [11, 19, '#E9B341']]
       .forEach(function (t) {
         out.push('<rect x="' + t[0] + '" y="' + t[1] + '" width="2" height="2" fill="' + t[2] + '"/>');
       });
-    /* 指針：亮的那一頭朝下，暗的是配重 */
-    out.push('<g class="nd">');
-    out.push('<polygon points="12,19.5 9.6,11.5 14.4,11.5" fill="#FFE9B0"/>');
-    out.push('<polygon points="12,4.5 10.6,12.5 13.4,12.5" fill="#6B5A3E"/>');
-    out.push('</g>');
+    out.push('</svg>');
+    ORB_CACHE.dial = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join(''));
+    return ORB_CACHE.dial;
+  }
+
+  function needleSvg() {
+    if (ORB_CACHE.needle) return ORB_CACHE.needle;
+    var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'];
+    out.push('<polygon points="12,19.5 9.6,11.5 14.4,11.5" fill="#FFE9B0"/>');   /* 亮的那頭 */
+    out.push('<polygon points="12,4.5 10.6,12.5 13.4,12.5" fill="#6B5A3E"/>');   /* 配重 */
     out.push('<rect x="11" y="11" width="2" height="2" fill="#E9B341"/>');
     out.push('</svg>');
-    ORB_CACHE = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join(''));
-    return ORB_CACHE;
+    ORB_CACHE.needle = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join(''));
+    return ORB_CACHE.needle;
+  }
+
+  /* 指針追游標。只掛一次，而且只寫一個 CSS 變數——
+     不進 setState，所以不會為了轉根針把整頁重繪一遍。 */
+  function armCompass() {
+    if (LIVE.compassArmed) return;
+    LIVE.compassArmed = true;
+    var raf = 0, mx = 0, my = 0, cur = 0;
+    /* 角度要展開著累加，不能讓它在 ±180 跳。
+       游標繞過正上方的時候，跳一下就會讓指針整圈甩回去。 */
+    var aim = function (target) {
+      var d = (((target - cur + 180) % 360) + 360) % 360 - 180;
+      cur += d;
+      document.documentElement.style.setProperty('--jlz-needle', cur.toFixed(1) + 'deg');
+    };
+    var apply = function () {
+      raf = 0;
+      var el = document.querySelector('[data-jlz-orb]');
+      if (!el) return;
+      var r = el.getBoundingClientRect();
+      if (!r.width) return;
+      var dx = mx - (r.left + r.width / 2);
+      var dy = my - (r.top + r.height / 2);
+      if (!dx && !dy) return;
+      /* 指針原本朝下（0,1）。CSS 順時針轉 t 度會把它轉到 (-sin t, cos t)，
+         要它對準 (dx, dy) 就是 t = atan2(-dx, dy)。 */
+      aim(Math.atan2(-dx, dy) * 180 / Math.PI);
+    };
+    window.addEventListener('mousemove', function (e) {
+      mx = e.clientX; my = e.clientY;
+      if (!raf) raf = requestAnimationFrame(apply);
+    }, { passive: true });
+    /* 滑鼠離開視窗就放手，指針自己回到地心 */
+    document.addEventListener('mouseleave', function () { aim(0); });
   }
 
   function decorateBoot(L, v) {
     if (L.state.screen !== 'C01') {
+      v.bootSceneStyle = 'display:none';
       v.bootSkyStyle = 'display:none'; v.bootStrataStyle = 'display:none';
-      v.bootWalkerStyle = 'display:none'; v.bootGhosts = []; v.bootOrbStyle = 'display:none';
+      v.bootWalkerStyle = 'display:none'; v.bootGhosts = [];
+      v.bootOrbStyle = 'display:none'; v.bootNeedleStyle = 'display:none';
       return;
     }
-    v.bootOrbStyle = 'display:block;width:84px;height:84px;margin:0 auto 22px;' +
-      'background:url("' + compassSvg() + '") center/contain no-repeat;image-rendering:pixelated;' +
+    armCompass();
+    v.bootOrbStyle = 'position:relative;display:block;width:84px;height:84px;margin:0 auto 22px;' +
+      'background:url("' + dialSvg() + '") center/contain no-repeat;image-rendering:pixelated;' +
       'filter:drop-shadow(0 0 22px rgba(233,179,65,.4))';
+    /* 沒有滑鼠（手機、還沒動過）就是 0 度＝朝下。轉場給一點重量。 */
+    v.bootNeedleStyle = 'position:absolute;inset:0;display:block;' +
+      'background:url("' + needleSvg() + '") center/contain no-repeat;' +
+      'transform:rotate(var(--jlz-needle,0deg));' +
+      'transition:transform .3s cubic-bezier(.22,.9,.3,1)';
 
     var ph = skyPhase();
+
+    /* 背景就是第一關的荒原本身，整張放大。上面是你現在站的地方，
+       下面那 112px 是還沒下去的五層。路徑寫成 assets/jlz/*.png，
+       Runtime 套進 DOM 的時候會換成內嵌的 base64。 */
+    v.bootSceneStyle = 'position:absolute;left:0;right:0;top:0;bottom:' + BOOT_DEPTH + 'px;' +
+      'z-index:-1;pointer-events:none;image-rendering:pixelated;' +
+      'background:linear-gradient(180deg,rgba(11,10,9,.46) 0,rgba(11,10,9,.66) 54%,' +
+      'rgba(11,10,9,.9) 100%),url(assets/jlz/scene-L1.png) center bottom/cover no-repeat';
 
     /* 天色：跟微光荒原用同一支 skyPhase，早上暖、半夜冷 */
     v.bootSkyStyle = 'position:absolute;left:0;right:0;top:0;bottom:' + BOOT_DEPTH + 'px;' +

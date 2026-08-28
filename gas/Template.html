@@ -59,6 +59,7 @@
 
           <sc-if value="{{ scC01 }}" hint-placeholder-val="{{ true }}">
             <div data-screen-label="C-01 啟動頁" style="height:100%;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:radial-gradient(680px 420px at 50% 120%,rgba(233,179,65,.17),transparent 72%),#0B0A09;position:relative;overflow:hidden;isolation:isolate">
+              <span style="{{ bootSceneStyle }}"></span>
               <span style="{{ bootSkyStyle }}"></span>
               <span style="{{ bootStrataStyle }}"></span>
               <sc-for list="{{ bootGhosts }}" as="bgh" hint-placeholder-count="4">
@@ -66,7 +67,7 @@
               </sc-for>
               <span style="{{ bootWalkerStyle }}"></span>
               <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>
-              <span style="{{ bootOrbStyle }}"></span>
+              <span data-jlz-orb style="{{ bootOrbStyle }}"><span style="{{ bootNeedleStyle }}"></span></span>
               <div style="font:700 44px/1.2 'C11';letter-spacing:.2em;text-indent:.2em;color:#F2E6C8;text-align:center;text-shadow:0 0 26px rgba(233,179,65,.35)">逐層掘進</div>
               <div style="width:56px;height:1px;background:#E9B341;margin:var(--pad) 0;opacity:.5"></div>
               <button onClick="{{ goLogin }}" style="margin-top:8px;font:500 22px/1 'C11';letter-spacing:.28em;text-indent:.28em;color:#0B0A09;background:#E9B341;border:none;padding:15px 40px;cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">出　發</button>
