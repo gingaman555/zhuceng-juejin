@@ -1671,7 +1671,7 @@ window.JLZ_SPRITES = {
                       <button onClick="{{ resVals.toggleDemo }}" style="{{ resVals.demoStyle }}">{{ resVals.demoLabel }}</button>
                     </div>
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874;margin-top:10px">「已讀完」要捲到底才會啟用。</div>
-                    <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:12px">演練模式用於對老師、口委或研究團隊展示這一端能看到什麼：解除四週一次的延遲揭露、填入示範語料，每一頁上方會持續標示 DEMO。示範樣本不可用於任何研究判讀，關閉時一併清除。</div>
+                    <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:12px">要對老師、口委或研究團隊示範這一端看得到什麼，或是自己想把流程走一遍，就開一個試用班。試用班是真的系統，差別只在那一班的資料不會進研究紀錄；班級清單上會一直標著記號，用完可以整班刪掉。</div>
                   </div>
                 </sc-if>
 
@@ -6247,9 +6247,7 @@ class Component extends DCLogic {
         passWeek[p.teamId + ':' + p.layer] = p.week;
       });
       L.LOGS = {};
-      (b.teams || []).forEach(function (t) {
-        var log = [];
-        (t.passed || []).slice().sort(function (x, y) { return x - y; }).forEach(function (n) {
+      /* passed 正常是陣列。萬一哪一列壞了（型別不對），這裡不設防的話
           var w = passWeek[t.id + ':' + n];
           log.push([w ? 'W' + w : '—', '通過' + LAYERNAME(n) + '，進入' + LAYERNAME(Math.min(5, n + 1))]);
         });
@@ -9563,6 +9561,7 @@ class Component extends DCLogic {
       if (!hz) {
         v.homeBossBox = "display:none"; v.homeBossArt = ""; v.homeBossName = "";
         v.homeBossKicker = ""; v.homeBossNote = "";
+        v.homeBossMore = "display:none"; v.openHomeBoss = function () {};
         v.homeBossKickerColor = "#8A8073"; v.homeBossNameColor = "#E8E2D6";
         return;
       }

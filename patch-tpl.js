@@ -2958,5 +2958,11 @@ must([
 '                      <span style="{{ homeBossMore }}">' + String.fromCharCode(65311) + '</span>',
 '                    </span>'].join('\n'));
 
+/* 51. R-00 那段還在說明「演練模式」——那套早就換成試用班了，
+       旁邊那顆按鈕現在也寫「開一個試用班」，兩邊對不起來 */
+must(
+'                    <div style="font-family:' + Q + 'Noto Sans TC' + Q + ',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:12px">演練模式用於對老師、口委或研究團隊展示這一端能看到什麼：解除四週一次的延遲揭露、填入示範語料，每一頁上方會持續標示 DEMO。示範樣本不可用於任何研究判讀，關閉時一併清除。</div>',
+'                    <div style="font-family:' + Q + 'Noto Sans TC' + Q + ',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:12px">要對老師、口委或研究團隊示範這一端看得到什麼，或是自己想把流程走一遍，就開一個試用班。試用班是真的系統，差別只在那一班的資料不會進研究紀錄；班級清單上會一直標著記號，用完可以整班刪掉。</div>');
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

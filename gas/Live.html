@@ -302,9 +302,7 @@
         passWeek[p.teamId + ':' + p.layer] = p.week;
       });
       L.LOGS = {};
-      (b.teams || []).forEach(function (t) {
-        var log = [];
-        (t.passed || []).slice().sort(function (x, y) { return x - y; }).forEach(function (n) {
+      /* passed 正常是陣列。萬一哪一列壞了（型別不對），這裡不設防的話
           var w = passWeek[t.id + ':' + n];
           log.push([w ? 'W' + w : '—', '通過' + LAYERNAME(n) + '，進入' + LAYERNAME(Math.min(5, n + 1))]);
         });
@@ -3618,6 +3616,7 @@
       if (!hz) {
         v.homeBossBox = "display:none"; v.homeBossArt = ""; v.homeBossName = "";
         v.homeBossKicker = ""; v.homeBossNote = "";
+        v.homeBossMore = "display:none"; v.openHomeBoss = function () {};
         v.homeBossKickerColor = "#8A8073"; v.homeBossNameColor = "#E8E2D6";
         return;
       }
