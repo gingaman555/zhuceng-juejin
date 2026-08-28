@@ -140,6 +140,15 @@ window.__AUDIT = function () {
     return api('apiAdminCreateClass', TK, '老師偷開班', '', '2026-09-01', 18);
   }).then(function (r) {
     T('老師不能開班', !r.ok, r);
+    return api('apiTeacherMirror', STK);
+  }).then(function (r) {
+    T('學生看不到老師的鏡子', !r.ok, r);
+    return api('apiTeacherMirror', TK);
+  }).then(function (r) {
+    T('老師的鏡子算得出東西', r.ok && r.total && r.total.n > 0, r.total);
+    T('鏡子的退回追得到下場', r.ok && r.landed &&
+      (r.landed.n + r.landed.again + r.landed.waiting) === r.total.needfix,
+      r.landed);
     return { pass: pass, fail: fail, notes: notes };
   }).catch(function (e) {
     return { pass: pass, fail: fail + 1, notes: notes.concat(['✗ 例外：' + (e && e.message || e)]) };

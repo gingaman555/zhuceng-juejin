@@ -2838,5 +2838,36 @@ must(
 '                            <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.16em;color:#5F574C">過關給的寶物</div>',
 '                            <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.16em;color:{{ w.treKickerColor }}">{{ w.treKicker }}</div>');
 
+/* 45. 老師首頁補一塊「你寫的東西」：他寫的合格考量在學生那邊發生了什麼 */
+must(
+'              <sc-if value="{{ showTeacherLinks }}" hint-placeholder-val="{{ false }}">',
+[
+'              <sc-if value="{{ hasMirror }}" hint-placeholder-val="{{ true }}">',
+'                <div style="{{ mirrorBox }}">',
+'                  <div style="{{ mirrorKickStyle }}">{{ mirrorKick }}</div>',
+'                  <div style="{{ mirrorHeadStyle }}">{{ mirrorHead }}</div>',
+'                  <span style="{{ mirrorFateStyle }}"></span>',
+'                  <div style="{{ mirrorLedeStyle }}">{{ mirrorLede }}</div>',
+'                  <div style="{{ mirrorRowsStyle }}">',
+'                    <sc-for list="{{ mirrorRows }}" as="mr" hint-placeholder-count="5">',
+'                      <div style="{{ mr.rowStyle }}">',
+'                        <span style="{{ mr.nameStyle }}">{{ mr.name }}</span>',
+'                        <span style="{{ mr.barStyle }}"></span>',
+'                        <span style="{{ mr.metaStyle }}">{{ mr.meta }}</span>',
+'                      </div>',
+'                    </sc-for>',
+'                  </div>',
+'                  <div style="{{ mirrorKeyStyle }}">{{ mirrorKey }}</div>',
+'                  <sc-if value="{{ hasMirrorCase }}" hint-placeholder-val="{{ true }}">',
+'                    <div style="{{ mirrorCaseBox }}">',
+'                      <div style="{{ mirrorCaseQStyle }}">{{ mirrorCaseQ }}</div>',
+'                      <div style="{{ mirrorCaseAStyle }}">{{ mirrorCaseA }}</div>',
+'                    </div>',
+'                  </sc-if>',
+'                  <div style="{{ mirrorFootStyle }}">{{ mirrorFoot }}</div>',
+'                </div>',
+'              </sc-if>',
+'              <sc-if value="{{ showTeacherLinks }}" hint-placeholder-val="{{ false }}">'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

@@ -820,11 +820,15 @@
       var tm = teamById(teamId), kl = classById(tm.classId), w = courseWeekOf(kl);
       var pass = result === 'pass';
       var txt = String(reason || '');
-      DB.Reviews.push({ revId: 'rv' + uid(), teamId: teamId, taskId: taskId,
+      /* 審的是最後那一次提交——subId 要記下來，之後才追得出「退回後怎麼了」 */
+      var lastSub = DB.Submissions.filter(function (x) {
+        return x.taskId === taskId && x.teamId === teamId;
+      }).slice(-1)[0] || null;
+      DB.Reviews.push({ revId: 'rv' + uid(), subId: lastSub ? lastSub.subId : '', teamId: teamId, taskId: taskId,
         title: (DB.Tasks.filter(function (x) { return x.taskId === taskId; })[0] || {}).title || '',
         layer: (DB.Tasks.filter(function (x) { return x.taskId === taskId; })[0] || {}).layer || 1,
         result: pass ? 'pass' : 'needfix', reason: txt, len: txt.length, hasReason: !!txt.trim(),
-        week: w, latency: 12 });
+        week: w, latency: 12, ts: NOW() });
       var m = ttmap(teamId)[taskId];
       if (m) {
         m.status = pass ? 'passed' : 'needs_more';
@@ -874,6 +878,75 @@
       u.classId = classId;
       persist();
       return API.apiBootstrap(t);
+    },
+
+    /* 老師的鏡子：他寫的合格考量在學生那邊發生了什麼 */
+    apiTeacherMirror: function (t) {
+      var u = auth(t);
+      if (u.role !== 'teacher') return err('只有老師看得到這一頁。');
+      var mine = {}, teamN = 0;
+      DB.Teams.forEach(function (x) {
+        if (String(x.classId) !== String(u.classId)) return;
+        mine[String(x.teamId)] = x.name || '（未命名）';
+        teamN++;
+      });
+      var subs = DB.Submissions.filter(function (x) { return mine[String(x.teamId)]; });
+      var revs = (DB.Reviews || []).filter(function (r) {
+        return mine[String(r.teamId)] && String(r.result) !== 'auto';
+      });
+      var subById = {}, subByTry = {}, maxTry = {};
+      subs.forEach(function (x) {
+        var k = String(x.teamId) + '|' + String(x.taskId);
+        var a = Number(x.attempt) || 1;
+        subById[String(x.subId)] = x;
+        subByTry[k + '|' + a] = x;
+        if (!maxTry[k] || a > maxTry[k]) maxTry[k] = a;
+      });
+      var revBySub = {};
+      revs.forEach(function (r) { if (r.subId) revBySub[String(r.subId)] = r; });
+      var blank = function () { return { n:0, needfix:0, len:0, lat:0, landed:0, again:0, waiting:0 }; };
+      var byLayer = {}, all = blank(), cases = [];
+      [1,2,3,4,5].forEach(function (n) { byLayer[n] = blank(); });
+      revs.forEach(function (r) {
+        var n = Number(r.layer) || 1;
+        var b = byLayer[n] || (byLayer[n] = blank());
+        var len = Number(r.len) || String(r.reason || '').trim().length;
+        var lat = Number(r.latency) || 0;
+        b.n++; b.len += len; b.lat += lat;
+        all.n++; all.len += len; all.lat += lat;
+        if (String(r.result) !== 'needfix') return;
+        b.needfix++; all.needfix++;
+        var sb = subById[String(r.subId)];
+        var nx = sb && subByTry[String(r.teamId) + '|' + String(r.taskId) + '|' + ((Number(sb.attempt) || 1) + 1)];
+        var nr = nx && revBySub[String(nx.subId)];
+        if (!nx || !nr) { b.waiting++; all.waiting++; return; }
+        if (String(nr.result) === 'needfix') { b.again++; all.again++; return; }
+        b.landed++; all.landed++;
+        cases.push({ team: mine[String(r.teamId)], title: r.title || '', layer: n,
+                     reason: String(r.reason || ''), before: Number(sb.len) || 0,
+                     after: Number(nx.len) || 0, week: Number(r.week) || 0 });
+      });
+      var passedN = 0, totalTry = 0;
+      DB.TeamTasks.forEach(function (x) {
+        if (!mine[String(x.teamId)] || String(x.status) !== 'passed') return;
+        var m = maxTry[String(x.teamId) + '|' + String(x.taskId)];
+        if (m) { passedN++; totalTry += m; }
+      });
+      var avg1 = function (a, n) { return n ? Math.round(a / n * 10) / 10 : 0; };
+      var avgI = function (a, n) { return n ? Math.round(a / n) : 0; };
+      cases.sort(function (a, b) { return (b.after - b.before) - (a.after - a.before); });
+      return ok({
+        total: { n: all.n, needfix: all.needfix, pass: all.n - all.needfix, words: all.len,
+                 avgLen: avgI(all.len, all.n), avgLat: avgI(all.lat, all.n),
+                 avgRounds: avg1(totalTry, passedN), passedN: passedN, teams: teamN },
+        landed: { n: all.landed, again: all.again, waiting: all.waiting },
+        layers: [1,2,3,4,5].map(function (n) {
+          var b = byLayer[n];
+          return { layer: n, n: b.n, needfix: b.needfix, landed: b.landed, again: b.again,
+                   waiting: b.waiting, avgLen: avgI(b.len, b.n), avgLat: avgI(b.lat, b.n) };
+        }),
+        cases: cases.slice(0, 3)
+      });
     },
 
     apiResearchSlice: function (t) {

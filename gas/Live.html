@@ -411,6 +411,8 @@
       if (!r || !r.ok) return;
 
       applyBootstrap(r);
+      /* 有人動過資料，老師首頁那塊鏡子就得重算 */
+      if (r.user && r.user.role === 'teacher') App.logic.setState({ mirrorData: null });
       if (r.user.role === 'researcher') return loadSlice();
     }).catch(function () {});
     });
@@ -604,7 +606,7 @@
     momentVals(L, v);
     decorateAuth(L, v);
     if (S.role === 'student' && S.signedIn) decorateStudent(L, v);
-    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); decorateDayNight(L, v); decorateLayerPanel(L, v); }
+    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); decorateDayNight(L, v); decorateLayerPanel(L, v); decorateMirror(L, v); }
     decorateWorld(L, v);
     if (isRes) decorateResearcher(L, v);
     addBossCodex(L, v);   /* 學生與老師的收藏總覽都要有守關生物 */
@@ -2297,6 +2299,141 @@
         L.setState({ specFrom: L.state.screen, screen: 'S06', specId: bz.name });
       };
     });
+  }
+
+  /* ============================================================
+     老師首頁的「你寫的東西」。
+     他整學期都在寫合格考量，卻沒有一個地方告訴他那些字後來怎麼了。
+     一層一列，一格＝一件他審過的；顏色說的是那一件的下場。
+     ============================================================ */
+
+  /* 一排像素方格，畫成 SVG data URI——跟地圖同一套語言 */
+  var MARK_PX = 13;   /* 一格在畫面上多大 */
+  function markBar(groups, cap) {
+    var CELL = 7, GAP = 2, H = 9;
+    var flat = [];
+    groups.forEach(function (g) {
+      for (var i = 0; i < g.n && flat.length < cap; i++) flat.push(g);
+    });
+    if (!flat.length) return { url: '', n: 0 };
+    /* 尾巴留一個間隙，viewBox 就是 n:1，height 給 MARK_PX 時每格剛好是正方形 */
+    var w = flat.length * (CELL + GAP);
+    var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + H +
+               '" shape-rendering="crispEdges">'];
+    flat.forEach(function (g, i) {
+      var x = i * (CELL + GAP);
+      out.push('<rect x="' + x + '" y="1" width="' + CELL + '" height="' + CELL +
+        '" fill="' + g.fill + '" stroke="' + g.stroke + '" stroke-width="1"/>');
+    });
+    out.push('</svg>');
+    return { url: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join('')), n: flat.length };
+  }
+
+  function markStyle(bar) {
+    return 'flex:0 0 auto;display:block;height:' + MARK_PX + 'px;width:' + (bar.n * MARK_PX) + 'px;' +
+      'image-rendering:pixelated;background:url("' + bar.url + '") left center/100% 100% no-repeat';
+  }
+
+  function loadMirror(L) {
+    if (L.state.mirrorLoading) return;
+    L.setState({ mirrorLoading: true });
+    call('apiTeacherMirror', LIVE.token)
+      .then(function (r) { L.setState({ mirrorLoading: false, mirrorData: (r && r.ok) ? r : null }); })
+      .catch(function () { L.setState({ mirrorLoading: false, mirrorData: null }); });
+  }
+
+  function decorateMirror(L, v) {
+    var S = L.state;
+    v.hasMirror = false;
+    v.mirrorRows = [];
+    v.mirrorBox = 'display:none';
+    v.hasMirrorCase = false;
+    v.mirrorFateStyle = 'display:none';
+    v.mirrorCaseBox = 'display:none';
+    v.mirrorCaseQ = ''; v.mirrorCaseA = '';
+    v.mirrorCaseQStyle = 'display:none'; v.mirrorCaseAStyle = 'display:none';
+    if (S.role !== 'teacher' || !S.signedIn) return;
+    if (S.screen !== 'T01') return;
+    if (!S.mirrorData && !S.mirrorLoading) { loadMirror(L); return; }
+
+    var mob = S.device === 'mobile';
+    var d = S.mirrorData;
+    if (!d || !d.total || !d.total.n) return;   /* 還沒審過東西就先不出現 */
+    var t = d.total, la = d.landed || { n: 0, again: 0, waiting: 0 };
+
+    v.hasMirror = true;
+    v.mirrorBox = 'margin:0 var(--pad) 16px;padding:16px 18px;background:#14110E;border:1px solid #26211C';
+    v.mirrorKick = 'YOUR WORDS';
+    v.mirrorKickStyle = "font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C";
+
+    v.mirrorHead = t.needfix
+      ? '你退回 ' + t.needfix + ' 件，其中 ' + la.n + ' 件下一次就過了。'
+      : '你寫了 ' + t.n + ' 件合格考量，還沒退回過任何一件。';
+    v.mirrorHeadStyle = "font:700 22px/1.5 'C11';color:#E8E2D6;margin-top:9px;text-wrap:pretty";
+
+    /* 退回的那些後來怎麼了：一格一件，最重要的一條 */
+    var fate = markBar([
+      { n: la.n,       fill: '#E9B341', stroke: '#E9B341' },
+      { n: la.again,   fill: 'rgba(217,96,63,.18)', stroke: '#D9603F' },
+      { n: la.waiting, fill: 'rgba(0,0,0,.4)', stroke: '#4A443C' }
+    ], 40);
+    v.mirrorFateStyle = fate.n ? markStyle(fate) + ';margin-top:11px' : 'display:none';
+
+    v.mirrorLede = '你寫了 ' + t.n + ' 件、共 ' + t.words + ' 字。學生拿這些字當下一次的標準。';
+    v.mirrorLedeStyle = "font:400 11px/1.7 'C11';color:#8A8073;margin-top:6px;text-wrap:pretty";
+
+    v.mirrorRowsStyle = 'display:flex;flex-direction:column;gap:7px;margin-top:14px';
+
+    var CAP = 28;
+    v.mirrorRows = (d.layers || []).filter(function (x) { return x.n > 0; }).map(function (x) {
+      var hue = BOARD_HUE[x.layer - 1];
+      var bar = markBar([
+        { n: x.landed,  fill: '#E9B341', stroke: '#E9B341' },                    /* 接住了 */
+        { n: x.n - x.needfix, fill: 'rgba(' + hexRgb(hue) + ',.5)', stroke: hue },/* 你放行的 */
+        { n: x.again,   fill: 'rgba(217,96,63,.18)', stroke: '#D9603F' },        /* 又被退 */
+        { n: x.waiting, fill: 'rgba(0,0,0,.4)', stroke: '#4A443C' }              /* 還在路上 */
+      ], CAP);
+      var over = x.n > CAP ? '　+' + (x.n - CAP) : '';
+      return {
+        name: 'L' + x.layer + '　' + LAYERNAME(x.layer),
+        nameStyle: "flex:0 0 auto;min-width:104px;font:400 11px/1 'C11';color:#9A9184;white-space:nowrap",
+        barStyle: markStyle(bar),
+        meta: x.needfix
+          ? x.n + ' 件 · 退 ' + x.needfix + ' → 接住 ' + x.landed + '　平均 ' + x.avgLen + ' 字' + over
+          : x.n + ' 件 · 沒退過　平均 ' + x.avgLen + ' 字' + over,
+        /* 窄螢幕放不下就整句掉到下一行，不要被切掉 */
+        metaStyle: (mob ? "flex:1 1 100%;text-align:left;margin-top:2px;" : "flex:1 1 130px;text-align:right;") +
+          "min-width:0;font:400 11px/1.6 'C11';color:#6E665A;text-wrap:pretty",
+        rowStyle: 'display:flex;align-items:center;gap:10px;flex-wrap:wrap'
+      };
+    });
+
+    v.mirrorKey = '■ 退回後下一次就過　■ 你放行的　□ 又被退　□ 還沒重交';
+    v.mirrorKeyStyle = "font:400 11px/1.6 'C11';color:#5F574C;margin-top:12px;text-wrap:pretty";
+
+    /* 一個實例：你寫了這一句，他們重寫成什麼樣子然後過了。
+       數字說不了「我的話有落地」，這一句可以。 */
+    var c0 = (d.cases || [])[0];
+    v.hasMirrorCase = !!c0;
+    if (c0) {
+      var q = String(c0.reason || '').replace(/\s+/g, ' ');
+      if (q.length > 22) q = q.slice(0, 21) + '…';
+      v.mirrorCaseBox = 'margin-top:12px;padding:9px 12px;background:rgba(233,179,65,.05);' +
+        'border-left:2px solid #5A4A2C';
+      v.mirrorCaseQ = '「' + q + '」　→　' + c0.before + ' 字變 ' + c0.after + ' 字，過了';
+      v.mirrorCaseQStyle = "font:400 11px/1.6 'C11';color:#C3BAAA;text-wrap:pretty";
+      v.mirrorCaseA = ''; v.mirrorCaseAStyle = 'display:none';
+    } else {
+      v.mirrorCaseBox = 'display:none'; v.mirrorCaseQ = ''; v.mirrorCaseQStyle = 'display:none';
+      v.mirrorCaseA = ''; v.mirrorCaseAStyle = 'display:none';
+    }
+
+    var foot = [];
+    if (t.avgLat) foot.push('他們平均等你 ' + t.avgLat + ' 小時');
+    if (t.passedN) foot.push('每一項平均來回 ' + t.avgRounds + ' 次');
+    if (la.again) foot.push(la.again + ' 件退了又退——那幾件值得回頭看你寫了什麼');
+    v.mirrorFoot = foot.join('　·　') + (foot.length ? '。' : '');
+    v.mirrorFootStyle = "font:400 11px/1.7 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty";
   }
 
   function decorateBoard(L, v) {

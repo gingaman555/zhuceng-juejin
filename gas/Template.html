@@ -2022,6 +2022,31 @@
                   </div>
                 </sc-for>
               </div>
+              <sc-if value="{{ hasMirror }}" hint-placeholder-val="{{ true }}">
+                <div style="{{ mirrorBox }}">
+                  <div style="{{ mirrorKickStyle }}">{{ mirrorKick }}</div>
+                  <div style="{{ mirrorHeadStyle }}">{{ mirrorHead }}</div>
+                  <span style="{{ mirrorFateStyle }}"></span>
+                  <div style="{{ mirrorLedeStyle }}">{{ mirrorLede }}</div>
+                  <div style="{{ mirrorRowsStyle }}">
+                    <sc-for list="{{ mirrorRows }}" as="mr" hint-placeholder-count="5">
+                      <div style="{{ mr.rowStyle }}">
+                        <span style="{{ mr.nameStyle }}">{{ mr.name }}</span>
+                        <span style="{{ mr.barStyle }}"></span>
+                        <span style="{{ mr.metaStyle }}">{{ mr.meta }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="{{ mirrorKeyStyle }}">{{ mirrorKey }}</div>
+                  <sc-if value="{{ hasMirrorCase }}" hint-placeholder-val="{{ true }}">
+                    <div style="{{ mirrorCaseBox }}">
+                      <div style="{{ mirrorCaseQStyle }}">{{ mirrorCaseQ }}</div>
+                      <div style="{{ mirrorCaseAStyle }}">{{ mirrorCaseA }}</div>
+                    </div>
+                  </sc-if>
+                  <div style="{{ mirrorFootStyle }}">{{ mirrorFoot }}</div>
+                </div>
+              </sc-if>
               <sc-if value="{{ showTeacherLinks }}" hint-placeholder-val="{{ false }}">
                 <div style="padding:0 var(--pad) 4px;display:grid;grid-template-columns:1fr 1fr;gap:7px">
                   <sc-for list="{{ teacherLinks }}" as="k" hint-placeholder-count="3">

@@ -2021,6 +2021,106 @@ function apiSwitchClass(token, classId) {
  * 延遲揭露在這裡做：每四週解鎖一次，未解鎖區間的列根本不會送到前端。
  * 演練模式不呼叫這支（示範語料由前端合成）。
  */
+/**
+ * 老師自己的紀錄。T-09 讀的是學生走完之後寫的東西；這一支讀的是他自己：
+ * 他寫了多少、學生等他多久、他退回的那些後來怎麼了。
+ *
+ * 「退回之後怎麼了」的算法：一筆 needfix 對到它審的那一次提交，
+ * 找同一組同一項的下一次提交，看那一次的審核結果——
+ *   下一次就過   → 這句話學生接住了
+ *   又被退       → 還沒講到點上
+ *   還沒重交     → 話還在路上
+ */
+function apiTeacherMirror(token) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'teacher') return err_('只有老師看得到這一頁。');
+    var classId = u.classId || '';
+
+    var mine = {}, teamN = 0;
+    readTable_('Teams').forEach(function (t) {
+      if (String(t.classId) !== String(classId)) return;
+      mine[String(t.teamId)] = t.name || '（未命名）';
+      teamN++;
+    });
+
+    var subs = readTable_('Submissions').filter(function (s) { return mine[String(s.teamId)]; });
+    /* result 是 auto 的是逾時自動暫准，不是他寫的，不算進來 */
+    var revs = readTable_('Reviews').filter(function (r) {
+      return mine[String(r.teamId)] && String(r.result) !== 'auto';
+    });
+
+    var subById = {}, subByTry = {}, maxTry = {};
+    subs.forEach(function (s) {
+      var k = String(s.teamId) + '|' + String(s.taskId);
+      var a = Number(s.attempt) || 1;
+      subById[String(s.subId)] = s;
+      subByTry[k + '|' + a] = s;
+      if (!maxTry[k] || a > maxTry[k]) maxTry[k] = a;
+    });
+    var revBySub = {};
+    revs.forEach(function (r) { if (r.subId) revBySub[String(r.subId)] = r; });
+
+    var blank = function () {
+      return { n: 0, needfix: 0, len: 0, lat: 0, landed: 0, again: 0, waiting: 0 };
+    };
+    var byLayer = {}, all = blank(), cases = [];
+    [1, 2, 3, 4, 5].forEach(function (n) { byLayer[n] = blank(); });
+
+    revs.forEach(function (r) {
+      var n = Number(r.layer) || 1;
+      var b = byLayer[n] || (byLayer[n] = blank());
+      var len = Number(r.len) || String(r.reason || '').trim().length;
+      var lat = Number(r.latency) || 0;
+      b.n++; b.len += len; b.lat += lat;
+      all.n++; all.len += len; all.lat += lat;
+      if (String(r.result) !== 'needfix') return;
+      b.needfix++; all.needfix++;
+
+      var s = subById[String(r.subId)];
+      var next = s && subByTry[String(r.teamId) + '|' + String(r.taskId) + '|' + ((Number(s.attempt) || 1) + 1)];
+      var nr = next && revBySub[String(next.subId)];
+      if (!next || !nr) { b.waiting++; all.waiting++; return; }
+      if (String(nr.result) === 'needfix') { b.again++; all.again++; return; }
+      b.landed++; all.landed++;
+      cases.push({
+        team: mine[String(r.teamId)], title: r.title || '', layer: n,
+        reason: String(r.reason || ''),
+        before: Number(s.len) || 0, after: Number(next.len) || 0,
+        week: Number(r.week) || 0
+      });
+    });
+
+    /* 通過的項目平均來回幾次 */
+    var passedN = 0, totalTry = 0;
+    readTable_('TeamTasks').forEach(function (t) {
+      if (!mine[String(t.teamId)] || String(t.status) !== 'passed') return;
+      var m = maxTry[String(t.teamId) + '|' + String(t.taskId)];
+      if (m) { passedN++; totalTry += m; }
+    });
+
+    var avg1 = function (sum, n) { return n ? Math.round(sum / n * 10) / 10 : 0; };
+    var avgI = function (sum, n) { return n ? Math.round(sum / n) : 0; };
+
+    cases.sort(function (a, b) { return (b.after - b.before) - (a.after - a.before); });
+
+    return ok_({
+      total: {
+        n: all.n, needfix: all.needfix, pass: all.n - all.needfix,
+        words: all.len, avgLen: avgI(all.len, all.n), avgLat: avgI(all.lat, all.n),
+        avgRounds: avg1(totalTry, passedN), passedN: passedN, teams: teamN
+      },
+      landed: { n: all.landed, again: all.again, waiting: all.waiting },
+      layers: [1, 2, 3, 4, 5].map(function (n) {
+        var b = byLayer[n];
+        return { layer: n, n: b.n, needfix: b.needfix, landed: b.landed, again: b.again,
+                 waiting: b.waiting, avgLen: avgI(b.len, b.n), avgLat: avgI(b.lat, b.n) };
+      }),
+      cases: cases.slice(0, 3)
+    });
+  } catch (e) { return err_(e); }
+}
+
 function apiResearchSlice(token) {
   try {
     var u = auth_(token);
