@@ -603,6 +603,7 @@
 
     addNavExtras(L, v, sc);
 
+    retellTreasures(L);
     momentVals(L, v);
     decorateAuth(L, v);
     decorateBoot(L, v);
@@ -1199,6 +1200,7 @@
     decorateBoard(L, v);
     decorateDayNight(L, v);   /* 地表那一層照現實時間 */
     decorateLayerPanel(L, v);
+    decorateHomeBand(L, v);   /* 首頁的「你在這裡」吃的是同一份 */
 
 
 
@@ -2239,6 +2241,11 @@
       ';border:1px ' + (done ? 'solid #3A3026' : 'dashed #2E2822');
 
     /* 這一層層底站著誰。點下去就是那隻生物的完整介紹。 */
+    /* 寶物卡下面那句：它是誰留下的 */
+    v.sel.treFrom = bz
+      ? '擊退' + bz.name + '之後，牠站的地方留下的。'
+      : '走到最深處才拿得到。';
+
     v.sel.hasBoss = !!bz;
     if (bz) {
       var bt2 = BOSS_TEXT[n] || {};
@@ -2562,6 +2569,63 @@
     });
   }
 
+  /* ============================================================
+     寶物：改成擊退層底那一隻之後，牠站的地方留下的東西。
+
+     四件本來就剛好是各自那隻的反面——霧面者沒有臉、羅經盤沒有
+     指針；千晶母說「永遠還有」、七稜燈自己不發光；擬聲者靠迴聲
+     活著、啞鈴不出聲；漲潮者是熱、冷玉印不會熱。原本缺的只是
+     沒有一句話把這件事說出來，而且來源被寫成斗篷人給的。
+
+     這樣三件東西才串得起來：
+       礦石 →（斗篷人）→ 道具 → 打贏生物 → 生物留下的寶物
+     而第五層那頂空冠的四個槽，正好收四隻生物留下的那四件。
+
+     原型檔案不動，開機的時候就地改寫 LAYERS 的文字。 */
+  var TREASURE_TEXT = {
+    1: {
+      desc: '霧散開之後，牠站的地方只剩這個。盤面的刻度都在，指針的位置是空的——跟牠一樣，沒有臉。',
+      look: '直徑約一個手掌的薄金盤，鏽蝕嚴重，表面斑駁的墨綠與赭褐。邊緣一圈精細刻度，但符號不屬於任何已知系統。厚度極薄，比看起來輕。撿起來的時候還帶著霧的濕氣。',
+      line: '「牠沒有臉。這個也沒有指針。」',
+      notice: '它明顯不是從土裡長出來的——加工過、對稱、有人手的痕跡。一隻沒有人到過的地底生物，身上為什麼會有一件人造的東西？'
+    },
+    2: {
+      desc: '外圍的碎晶停止增生之後，中央那一顆熄了，位置上留下這個。內部沒有燭芯，也沒有任何光源——但拿到水晶旁邊，它會自己折出七道光。',
+      look: '約掌心高的小提燈，黃銅骨架包著七片切面玻璃。提環磨得發亮，顯示被拿了很多年。',
+      line: '「亮不是它給的。」',
+      notice: '第二件人造物。牠說「這裡永遠還有」，留下來的卻是一件自己不發光的東西。'
+    },
+    3: {
+      desc: '殘影收攏成一個之後，牠原地留下這個。倒過來是空的，沒有鈴舌，搖它不出聲——但你搖的時候，迴聲會停一瞬間。',
+      look: '拇指大的青銅小鈴，表面有極細的雲雷紋。鈴口有一圈被長期摩擦的亮邊。',
+      line: '「安靜一下比較好想事情。」',
+      notice: '一個靠迴聲活著的東西，留下一件不出聲的物品。第三件了，而且三件都不屬於這裡。'
+    },
+    4: {
+      desc: '岩漿退下去、牠整個站起來之後，原地剩下這一枚。在岩漿旁邊也不會熱。底面刻著一個字，筆畫像篆書但不是——刻痕很深，是常用的印。',
+      look: '方形玉印，邊長約三指寬，玉色是帶灰的青，內有一縷絮狀白紋。頂端是簡單的方鈕，沒有雕飾。',
+      line: '「總有一天你會認得。」',
+      notice: '一枚被反覆使用的印，代表有人拿它蓋過很多次。四件湊齊了——是誰把它們一件一件放在那四隻身上的？'
+    },
+    5: {
+      desc: '冠身正面有四個大小不一的空鑲嵌槽——一個圓形、一個方形、兩個不規則。槽底有舊的鑲嵌痕與微量氧化。你身上剛好有四件。',
+      look: '細窄的金屬環冠，直徑約一個頭圍，樣式極簡。整體很輕。',
+      line: '「本來就是空的。」',
+      notice: '四隻生物身上各留下一件。全部帶到這裡，這頂冠才有東西可以鑲——那四件本來就是從這裡拆下去的。'
+    }
+  };
+
+  function retellTreasures(L) {
+    if (LIVE.treasuresRetold) return;
+    LIVE.treasuresRetold = true;
+    (L.LAYERS || []).forEach(function (l) {
+      var t = TREASURE_TEXT[l.n];
+      if (!t) return;
+      l.treDesc = t.desc; l.treLook = t.look;
+      l.treLine = t.line; l.treNotice = t.notice;
+    });
+  }
+
   function decorateBoot(L, v) {
     if (L.state.screen !== 'C01') {
       v.bootSceneStyle = 'display:none';
@@ -2625,6 +2689,32 @@
       'background:url("' + runnerSvg(true, 0) + '") center bottom/contain no-repeat;' +
       'filter:drop-shadow(0 0 9px rgba(233,179,65,.45));' +
       'animation:jlzWalk 15s linear infinite';
+  }
+
+  /* 學生首頁的「你在這裡」。
+     首頁本來整頁都是字：進度是數字、下一件事是一段話、狀態是文字。
+     這裡把地圖上他所在的那一層整條搬過來——同一份 mapLayers、
+     同一批格子、同一隻角色，不另外算一套，所以永遠跟地圖一致。 */
+  function decorateHomeBand(L, v) {
+    var S = L.state;
+    v.hasHomeBand = false;
+    v.homeBand = { steps: [], runners: [] };
+    v.goHomeMap = function () { L.go('S03'); };
+    v.homeBandNote = '';
+    if (S.role !== 'student' || !S.signedIn || S.screen !== 'S01') return;
+    var n = S.currentLayer || 1;
+    var m = (v.mapLayers || [])[n - 1];
+    if (!m || !m.steps) return;
+    v.hasHomeBand = true;
+    /* 淺拷貝：首頁這一條要關掉天色的文字（那一行會跟角色的名牌疊在一起），
+       但地圖上那一條要留著，所以不能直接改 m。太陽本身留著。 */
+    v.homeBand = Object.assign({}, m, { skyTagStyle: 'display:none', skyTag: '' });
+    var st = layerState(L, n);
+    var bz = bossOf(n);
+    v.homeBandNote = st.cleared
+      ? '這一層採完了，通道往下一層開了。'
+      : '一格一塊礦石，點下去就是那一項。你站在採到 ' + st.gotN + ' / ' + st.veinN +
+        ' 塊的位置' + (bz ? '，層底站著' + bz.name : '') + '。';
   }
 
   function decorateBoard(L, v) {
@@ -4001,8 +4091,8 @@
       ['他有時候不在。逾時未審會自動暫准，但那一次不計入工具階級。', '他有時候不在。逾時未審會自動暫准。'],
       ['可選的深入方向。不影響過關，只影響工具校準到哪一階。', '可選的深入方向。不影響過關，做了就多一塊礦石進圖鑑。'],
       ['過關才給，一層一件。道具決定工具校準到哪一階。', '一層一件，用這一層的礦石鑄成——擊退擋在層底的那一隻，才走得到下一層。'],
-      ['過關就給，不看做得多好。老師端不上鎖。', '老師審核你們這一層做得怎麼樣，覺得夠了才給。老師端不上鎖。'],
-      ['過關就給，不看做得多好。', '老師審核你們這一層做得怎麼樣，覺得夠了才給——它看的是品質，不是有沒有交完。'],
+      ['過關就給，不看做得多好。老師端不上鎖。', '一層一件——擊退那一層的守關生物之後，牠站的地方留下的。老師端不上鎖。'],
+      ['過關就給，不看做得多好。', '一層一件——擊退那一層的守關生物之後，牠站的地方留下的。'],
       ['過關才給，一層一件。老師端不上鎖，全部可讀。', '一層一件，用那一層的礦石鑄成，剋的就是那一層的守關生物。老師端不上鎖，全部可讀。'],
     ['不影響過關，只影響工具校準到哪一階。', '不影響過關，做了就多一塊礦石進圖鑑。'],
     ['交出去了。他會驗，然後用它校準工具。', '交出去了。他會驗，通過就多一塊礦石。'],
@@ -4025,6 +4115,16 @@
        遇過了 → 顯現出來，點得進去，但只讀得到名字與介紹
        擊退了 → 全部揭曉（剋牠的道具、牠說的話、擊退的那一刻） */
   if (v.collSections && v.collSections.length) {
+    /* 這幾句的修正原本只掛在學生那條路上，老師端看到的還是原型的舊說法。
+       這支兩端都會跑，在這裡補一次。 */
+    v.collSections.forEach(function (g) {
+      g.note = fixCal(g.note);
+      /* 工具校準整套移除之後，道具那排的階級是 undefined，會印成「L1 · undefined」 */
+      (g.items || []).forEach(function (it) {
+        if (typeof it.sub === 'string') it.sub = it.sub.replace(/\s*·\s*undefined$/, '');
+      });
+    });
+
     var openAll = S.role === 'teacher';
     var beaten = S.passed || [];
     var here = S.currentLayer || 1;
@@ -4076,6 +4176,15 @@
     v.specNoticeLabel = '你注意到的事';
     v.specFromLabel = '來自哪一項任務';
     v.specDateLabel = '取得日期';
+
+    /* 寶物不是誰交給你的，是那一隻倒下的地方留下的 */
+    (function () {
+      var lt = (L.LAYERS || []).filter(function (x) { return x.treasure === S.specId; })[0];
+      if (!lt) return;
+      var bzL = bossOf(lt.n);
+      v.specLineLabel = bzL ? '撿起來的時候' : '拿到的時候';
+      v.specFromLabel = '哪裡撿到的';
+    })();
 
     /* 老師端的 S-06 不記「取得時間」——原型寫死的 2026/03/18 是給展示用的 */
     if (S.screen === 'S06' && S.role === 'teacher' && String(v.specDate || '').indexOf('2026 / 03 / 18') >= 0) {
@@ -4244,6 +4353,11 @@
         return x.tool === S.specId || x.treasure === S.specId;
       })[0];
       if (li) { layer = li.n; self = li.tool === S.specId ? "tool" : "treasure"; }
+      /* 寶物的來源是那一隻，不是「關卡通過」 */
+      if (li && self === "treasure") {
+        var bzT = bossOf(li.n);
+        v.specFrom = bzT ? (li.name + ' 層底 · ' + bzT.name + '留下的') : (li.name + ' 最深處');
+      }
     }
     if (!layer) {
       var bz0 = bossByName(S.specId);
@@ -4302,7 +4416,7 @@
         locked: "這一層的礦石採齊、老師准了，才鑄得出來。" }));
     }
     if (self !== "treasure" && lay.treasure) {
-      out.push(tile({ name: lay.treasure, kind: "寶物 · 看品質才給",
+      out.push(tile({ name: lay.treasure, kind: bossOf(layer) ? "寶物 · 生物留下的" : "寶物 · 最深處",
         got: cleared, sprite: sp.treasure,
         locked: "通過這一層，而且他覺得你們做得夠了才會出現。" }));
     }
@@ -4322,7 +4436,9 @@
       : self === "tool"
         ? "鑄成它的是下面這些礦石" + (bz ? "，它剋的是" + bz.name : "") + "。"
         : self === "treasure"
-          ? "同一層的東西。寶物跟道具不一樣——道具是採齊就鑄得出來，寶物是他看你們做得怎麼樣才給。"
+          ? (bz
+              ? "這一件是" + bz.name + "倒下的地方留下的。下面是打得贏牠的那些東西——礦石鑄成道具，道具剋牠。"
+              : "同一層的東西。這一件不在任何一隻身上，它在最深處等著。")
           : "同一層的其他礦石，以及採齊之後才鑄得出來的道具、才拿得到的寶物"
             + (bz ? "，還有擋在層底的" + bz.name : "") + "。";
   }

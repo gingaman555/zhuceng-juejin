@@ -2891,5 +2891,55 @@ must(
 '              <span data-jlz-orb style="{{ bootOrbStyle }}">' +
 '<span style="{{ bootNeedleStyle }}"></span></span>');
 
+/* 48. 寶物不是「過關就給」，是層底那一隻留下的 */
+must(
+'                    <div style="font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#5F574C;margin-top:7px">關卡通過就給，不看做得多好。</div>',
+'                    <div style="font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#5F574C;margin-top:7px">{{ sel.treFrom }}</div>');
+
+/* 49. 學生首頁補一條「你在這裡」：地圖上他所在那一層，原封不動 */
+must(
+'              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),#14110E;border:1px solid #3A3026">',
+[
+'              <sc-if value="{{ hasHomeBand }}" hint-placeholder-val="{{ true }}">',
+'                <div style="margin:20px var(--pad) 0">',
+'                  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:9px">',
+'                    <span style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.2em;color:#5F574C">你在這裡</span>',
+'                    <span style="flex:1;height:1px;background:#221E19"></span>',
+'                    <button onClick="{{ goHomeMap }}" style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.1em;color:#E9B341;background:none;border:1px solid #3A3026;padding:6px 10px;cursor:pointer;white-space:nowrap">看整張地圖</button>',
+'                  </div>',
+'                  <div style="position:relative;border:1px solid #26211C;overflow:hidden">',
+'                    <span style="{{ homeBand.bandStyle }}">',
+'                      <span style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,5,4,.94) 0,rgba(6,5,4,.82) 158px,rgba(6,5,4,.26) 282px,rgba(6,5,4,.06) 100%)"></span>',
+'                      <span style="position:relative;display:flex;flex-direction:column;justify-content:flex-start;padding:11px 14px 0;width:var(--mcol);flex:none">',
+'                        <span style="font:600 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#B6AC9C">{{ homeBand.code }}</span>',
+'                        <span style="{{ homeBand.nameStyle }}">{{ homeBand.nameShown }}</span>',
+'                        <span style="{{ homeBand.stateStyle }}">{{ homeBand.state }}</span>',
+'                      </span>',
+'                      <span style="{{ homeBand.stepsTagStyle }}">{{ homeBand.stepsTag }}</span>',
+'                      <sc-if value="{{ homeBand.hasSky }}" hint-placeholder-val="{{ false }}">',
+'                        <span style="{{ homeBand.skyOrbStyle }}"></span>',
+'                        <span style="{{ homeBand.skyTagStyle }}">{{ homeBand.skyTag }}</span>',
+'                      </sc-if>',
+'                      <span style="{{ homeBand.stepsStyle }}">',
+'                        <sc-for list="{{ homeBand.steps }}" as="hs" hint-placeholder-count="5">',
+'                          <span onClick="{{ hs.open }}" style="{{ hs.style }}">',
+'                            <span style="{{ hs.dotStyle }}">{{ hs.mark }}</span>',
+'                            <span style="{{ hs.nameStyle }}">{{ hs.name }}</span>',
+'                          </span>',
+'                        </sc-for>',
+'                      </span>',
+'                      <sc-for list="{{ homeBand.runners }}" as="hr" hint-placeholder-count="2">',
+'                        <span onClick="{{ hr.open }}" style="{{ hr.style }}">',
+'                          <span style="{{ hr.tagStyle }}">{{ hr.tag }}</span>',
+'                          <span style="{{ hr.figStyle }}"></span>',
+'                        </span>',
+'                      </sc-for>',
+'                    </span>',
+'                  </div>',
+'                  <div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin-top:9px;text-wrap:pretty">{{ homeBandNote }}</div>',
+'                </div>',
+'              </sc-if>',
+'              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),#14110E;border:1px solid #3A3026">'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
