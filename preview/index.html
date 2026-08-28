@@ -6247,7 +6247,18 @@ class Component extends DCLogic {
         passWeek[p.teamId + ':' + p.layer] = p.week;
       });
       L.LOGS = {};
-      /* passed 正常是陣列。萬一哪一列壞了（型別不對），這裡不設防的話
+      /* passed 正常是陣列。萬一哪一列壞了（型別不對），這裡不設防的話，
+         整個登入會炸在一句看不懂的錯誤上，而且是全班一起。 */
+      var passList = function (x) {
+        if (Array.isArray(x)) return x;
+        if (typeof x === "string") {
+          try { var a = JSON.parse(x); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+        }
+        return [];
+      };
+      (b.teams || []).forEach(function (t) {
+        var log = [];
+        passList(t.passed).slice().sort(function (x, y) { return x - y; }).forEach(function (n) {
           var w = passWeek[t.id + ':' + n];
           log.push([w ? 'W' + w : '—', '通過' + LAYERNAME(n) + '，進入' + LAYERNAME(Math.min(5, n + 1))]);
         });
