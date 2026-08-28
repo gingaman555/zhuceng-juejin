@@ -1146,7 +1146,7 @@
               ],
               lines: [
                 '他准了，這一層的礦石就鑄成「' + (lay.tool || '道具') + '」——擋在層底的那一隻會退開。',
-                '寶物不一樣：他會看你們這一層做得怎麼樣，覺得夠了才給。'
+                '牠倒下的地方會留下一件東西——那就是這一層的寶物。'
               ],
               btn: '知道了', go: function () {}
             });
@@ -3535,7 +3535,7 @@
       Object.assign({
         n: '4', title: '老師審核 → 鑄成道具、擊退擋路的那一隻',
         desc: '他准了，這一層的礦石就鑄成' + (lay.tool ? '「' + lay.tool + '」' : '道具') + '——擋在層底的那一隻退開，你們才下一層。' +
-          '寶物不一樣——他會看你們這一層做得怎麼樣，覺得夠了才給。',
+          '牠倒下的地方會留下一件東西，那就是這一層的寶物。',
         box: box(step3On), num: num(step3On), color: step3On ? '#E9B341' : '#8A8073'
       }, done ? tag('已拿到', '#E9B341') : tag('未開始', '#5F574C'))
     ];
@@ -3605,8 +3605,16 @@
       var ready = hst.complete && !down;
       var bt = BOSS_TEXT[HL] || {};
       v.homeBossBox = "flex:none;display:flex;align-items:center;gap:14px;max-width:340px;" +
-        "padding:12px 16px;background:rgba(6,5,4,.55);border:1px solid " +
+        "padding:12px 16px;background:rgba(6,5,4,.55);cursor:pointer;text-align:left;border:1px solid " +
         (down ? "#2E2822" : ready ? "#5A4A2C" : "#3A3026");
+      v.homeBossMore = "flex:none;font:400 22px/1 " + String.fromCharCode(39) + "C11" +
+        String.fromCharCode(39) + ";color:#E9B341;border:1px solid #5A4A2C;padding:8px 11px;" +
+        "background:rgba(233,179,65,.07)";
+      /* 點開牠的那一頁。要不要揭曉什麼由 S-06 自己判斷——
+         沒打贏之前，剋牠的道具、牠說的話、倒下的那一刻都不給。 */
+      v.openHomeBoss = function () {
+        L.setState({ specFrom: 'S01', screen: 'S06', specId: hz.name });
+      };
       v.homeBossArt = "flex:none;display:block;width:76px;height:76px;image-rendering:pixelated;" +
         "background:url(\"" + bossSvg(hz, false) + "\") center/contain no-repeat;" +
         (down

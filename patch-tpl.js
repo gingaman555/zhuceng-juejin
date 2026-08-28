@@ -2941,5 +2941,22 @@ must(
 '              </sc-if>',
 '              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),#14110E;border:1px solid #3A3026">'].join('\n'));
 
+/* 50. 學生首頁右上角那隻可以點開介紹 */
+must([
+'                    <div style="{{ homeBossBox }}">',
+'                      <span style="{{ homeBossArt }}"></span>'].join('\n'),
+[
+'                    <span onClick="{{ openHomeBoss }}" style="{{ homeBossBox }}">',
+'                      <span style="{{ homeBossArt }}"></span>'].join('\n'));
+must([
+'                        <span style="display:block;font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ homeBossNote }}</span>',
+'                      </span>',
+'                    </div>'].join('\n'),
+[
+'                        <span style="display:block;font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ homeBossNote }}</span>',
+'                      </span>',
+'                      <span style="{{ homeBossMore }}">' + String.fromCharCode(65311) + '</span>',
+'                    </span>'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
