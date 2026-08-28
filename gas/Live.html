@@ -2459,12 +2459,61 @@
     return 'linear-gradient(180deg,' + st.join(',') + ')';
   }
 
+  /* 標題上那一顆：一個像素羅盤。指針每隔幾秒晃一輪，
+     晃完一定停在正下方——這個作品只有一個方向。 */
+  var ORB_CACHE = null;
+  function compassSvg() {
+    if (ORB_CACHE) return ORB_CACHE;
+    var S = 24, c = (S - 1) / 2;
+    var rows = [];
+    for (var y = 0; y < S; y++) {
+      var line = '';
+      for (var x = 0; x < S; x++) {
+        var d = Math.sqrt((x - c) * (x - c) + (y - c) * (y - c));
+        line += d >= 9.4 && d <= 11.6 ? '#' : d < 9.4 ? 'o' : '.';
+      }
+      rows.push(line);
+    }
+    var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">'];
+    out.push('<style>' +
+      '@keyframes jlzNeedle{' +
+      '0%,8%{transform:rotate(0deg)}' +
+      '16%{transform:rotate(-132deg)}' +
+      '30%{transform:rotate(84deg)}' +
+      '44%{transform:rotate(-46deg)}' +
+      '56%{transform:rotate(18deg)}' +
+      '66%{transform:rotate(-6deg)}' +
+      '74%,100%{transform:rotate(0deg)}}' +
+      '.nd{transform-box:view-box;transform-origin:12px 12px;' +
+      'animation:jlzNeedle 6.4s cubic-bezier(.3,.85,.35,1) infinite}' +
+      '</style>');
+    pxRows(rows, 0, { '#': '#E9B341', o: '#12161F' }, out);
+    /* 四個方位的刻度，正下方那一個亮一點 */
+    [[11, 3, '#5A5044'], [20, 11, '#5A5044'], [3, 11, '#5A5044'], [11, 19, '#E9B341']]
+      .forEach(function (t) {
+        out.push('<rect x="' + t[0] + '" y="' + t[1] + '" width="2" height="2" fill="' + t[2] + '"/>');
+      });
+    /* 指針：亮的那一頭朝下，暗的是配重 */
+    out.push('<g class="nd">');
+    out.push('<polygon points="12,19.5 9.6,11.5 14.4,11.5" fill="#FFE9B0"/>');
+    out.push('<polygon points="12,4.5 10.6,12.5 13.4,12.5" fill="#6B5A3E"/>');
+    out.push('</g>');
+    out.push('<rect x="11" y="11" width="2" height="2" fill="#E9B341"/>');
+    out.push('</svg>');
+    ORB_CACHE = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join(''));
+    return ORB_CACHE;
+  }
+
   function decorateBoot(L, v) {
     if (L.state.screen !== 'C01') {
       v.bootSkyStyle = 'display:none'; v.bootStrataStyle = 'display:none';
-      v.bootWalkerStyle = 'display:none'; v.bootGhosts = [];
+      v.bootWalkerStyle = 'display:none'; v.bootGhosts = []; v.bootOrbStyle = 'display:none';
       return;
     }
+    v.bootOrbStyle = 'display:block;width:84px;height:84px;margin:0 auto 22px;' +
+      'background:url("' + compassSvg() + '") center/contain no-repeat;image-rendering:pixelated;' +
+      'filter:drop-shadow(0 0 22px rgba(233,179,65,.4))';
+
     var ph = skyPhase();
 
     /* 天色：跟微光荒原用同一支 skyPhase，早上暖、半夜冷 */
