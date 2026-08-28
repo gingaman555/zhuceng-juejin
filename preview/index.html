@@ -795,7 +795,7 @@ window.JLZ_SPRITES = {
                 </div>
                 <sc-if value="{{ hasSpec }}" hint-placeholder-val="{{ false }}">
                   <div style="padding:14px 16px;background:rgba(195,186,170,.05);border:1px solid #3A3026;border-left:2px solid #8A8073">
-                    <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#8A8073">他要收到的檔案與規格</div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#8A8073">他要求的規格</div>
                     <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">{{ openTaskSpec }}</div>
                   </div>
                 </sc-if>
@@ -855,8 +855,25 @@ window.JLZ_SPRITES = {
                   </div>
                 </sc-if>
                 <div>
-                  <div style="font:500 22px/1 'C11';margin-bottom:4px">要提交的東西</div>
-                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">先把檔案、截圖或連結放上來。他要收到的規格寫在上面。</div>
+                  <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">
+                    <div style="{{ checkBoxStyle }}">
+                      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px">
+                        <span style="font:500 22px/1 'C11';color:#E8E2D6">他要你做到這些</span>
+                        <span style="{{ checkCountStyle }}">{{ checkCount }}</span>
+                      </div>
+                      <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:11px">{{ checkHint }}</div>
+                      <div style="display:flex;flex-direction:column;gap:7px">
+                        <sc-for list="{{ checkItems }}" as="ck" hint-placeholder-count="3">
+                          <span onClick="{{ ck.toggle }}" style="{{ ck.style }}">
+                            <span style="{{ ck.boxStyle }}">{{ ck.mark }}</span>
+                            <span style="{{ ck.textStyle }}">{{ ck.text }}</span>
+                          </span>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">交在哪裡　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">作業照老師原本要求的方式交。這裡放個連結或截圖，讓他知道去哪裡看——不放也可以。</div>
                   <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px">
                     <sc-for list="{{ evidence }}" as="e" hint-placeholder-count="2">
                       <span style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:#14110E;border:1px solid #2E2822">
@@ -889,8 +906,8 @@ window.JLZ_SPRITES = {
                   <div style="margin-top:9px;font:400 22px/1.6 'C11';color:#5F574C;text-wrap:pretty">{{ uploadHint }}</div>
                 </div>
                 <div>
-                  <div style="font:500 22px/1 'C11';margin-bottom:4px">提交內容</div>
-                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">說明你交出來的是什麼、做到哪個程度。寫程度，不是寫「有做」。</div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">你做了什麼　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">一句話讓他對得上你交出去的東西。真正要寫的是下面那一題。</div>
                   <textarea onChange="{{ setSubmitText }}" value="{{ submitText }}" placeholder="例：訪談三位大三生之後，把題目收斂成「畢製組隊後的分工失衡」，範圍縮到系上，排除跨校比較。" style="width:100%;min-height:220px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
                 </div>
                 <div style="padding:15px 16px;background:linear-gradient(140deg,rgba(233,179,65,.055),transparent 62%),#14110E;border:1px solid #3A3026">
@@ -2336,6 +2353,12 @@ window.JLZ_SPRITES = {
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:9px">通過條件</div>
                   <textarea onChange="{{ setNfCond }}" value="{{ nfCond }}" placeholder="例：至少三位目標使用者的訪談紀錄，並標出彼此矛盾的地方。" style="width:100%;min-height:150px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                </div>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">要做到哪些　<span style="font:400 11px/1 'C11';color:#6E665A">一行一條</span></div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">作業本身照你原本的方式收。這張清單只是讓學生對照自己做到哪裡——他們全部勾完，你才會收到通知。留白就沒有清單。</div>
+                  <textarea onChange="{{ setNfChecks }}" value="{{ nfChecks }}" placeholder="訪談三位目標使用者&#10;整理成逐字稿&#10;標出彼此矛盾的地方" style="width:100%;min-height:120px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.9 'C11';resize:vertical;outline:none"></textarea>
+                  <div style="{{ nfChecksHintStyle }}">{{ nfChecksHint }}</div>
                 </div>
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">要注意的地方</div>
@@ -4979,11 +5002,19 @@ class Component extends DCLogic {
              gateVerdict: t.gateVerdict || '', specNames: t.specNames || {} };
   }
   /* 給 teamId 就只回那一組看得到的——關卡判定一定要用這個版本 */
+  /* 老師寫的清單：一行一條，去空白、丟空行、最多 12 條 */
+  function checkList(raw) {
+    var a = raw;
+    if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
+    if (!a || !a.length) return [];
+    return a.map(function (x) { return String(x || '').trim(); })
+            .filter(function (x) { return x; }).slice(0, 12);
+  }
   function tasksOfClass(cid, teamId) {
     var all = DB.Tasks.filter(function (t) { return t.classId === cid; }).map(function (t) {
       return { id: t.taskId, klass: t.classId, layer: t.layer, type: t.type, title: t.title,
                cond: t.cond, note: t.note, spec: t.spec || '', due: t.due, mineral: t.mineral, mDesc: t.mDesc, published: true,
-               teams: API.taskTeams(t) };
+               teams: API.taskTeams(t), checks: checkList(t.checks) };
     });
     if (!teamId) return all;
     return all.filter(function (d) { return !d.teams.length || d.teams.indexOf(String(teamId)) >= 0; });
@@ -4995,11 +5026,19 @@ class Component extends DCLogic {
   }
   function mergeTasks(defs, m, w) {
     return defs.map(function (d) {
-      var s = m[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', effort: '', effortNote: '', blocker: '' };
+      var s = m[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', effort: '', effortNote: '', blocker: '', checked: [] };
       var dw = dueWeekOf(d.due);
       return Object.assign({}, d, { status: s.status, text: s.text, files: s.files || [], effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'',
-        fb: s.fb || '', fbType: s.fbType || '', over: dw !== null && dw < w && s.status !== 'passed' });
+        fb: s.fb || '', fbType: s.fbType || '', checked: checkList2(s.checked),
+        over: dw !== null && dw < w && s.status !== 'passed' });
     });
+  }
+
+  /* 勾到哪幾條：存成陣列，但舊資料可能是字串 */
+  function checkList2(raw) {
+    var a = raw;
+    if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
+    return Array.isArray(a) ? a.map(Number) : [];
   }
 
   function rosterView(classId) {
@@ -5701,10 +5740,33 @@ class Component extends DCLogic {
       var ex = DB.Tasks.filter(function (x) { return x.taskId === id; })[0];
       var row = { taskId: id, classId: classId, layer: task.layer, type: task.type, title: task.title,
                   cond: task.cond, note: task.note, spec: task.spec || '', due: task.due, mineral: task.mineral, mDesc: task.mDesc,
-                  teams: JSON.stringify(API.cleanTeams(classId, task.teams)) };
+                  teams: JSON.stringify(API.cleanTeams(classId, task.teams)),
+                  checks: JSON.stringify(checkList(task.checks)) };
       if (ex) Object.assign(ex, row); else DB.Tasks.push(row);
       persist();
       return ok({ taskId: id });
+    },
+    /* 學生勾／取消勾清單上的一條 */
+    apiSetCheck: function (t, taskId, idx, on) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以勾。');
+      var def = tasksOfClass(u.classId, u.teamId).filter(function (d) { return d.id === taskId; })[0];
+      if (!def) return err('找不到這一項任務。');
+      var n = Number(idx);
+      if (!(n >= 0 && n < def.checks.length)) return err('沒有這一條。');
+      var row = ttmap(u.teamId)[taskId];
+      if (row && row.status === 'passed') return err('這一項已經通過了，不用再改。');
+      var set = {};
+      checkList2(row && row.checked).forEach(function (x) { set[x] = true; });
+      if (on) set[n] = true; else delete set[n];
+      var next = Object.keys(set).map(Number)
+        .filter(function (x) { return x >= 0 && x < def.checks.length; })
+        .sort(function (a, b) { return a - b; });
+      if (row) row.checked = next;
+      else DB.TeamTasks.push({ teamId: u.teamId, taskId: taskId, status: 'todo',
+        text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: next });
+      persist();
+      return ok({ checked: next, total: def.checks.length });
     },
     apiDeleteTask: function (t, taskId) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
@@ -5721,7 +5783,8 @@ class Component extends DCLogic {
         var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer, null, API.cleanTeams(classId, it.teams)) || [])[0] || '';
         DB.Tasks.push({ taskId: 'tk' + uid(), classId: classId, layer: layer, type: it.type,
           title: it.title, cond: it.cond, note: it.note, spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc,
-          teams: JSON.stringify(API.cleanTeams(classId, it.teams)) });
+          teams: JSON.stringify(API.cleanTeams(classId, it.teams)),
+          checks: JSON.stringify(checkList(it.checks)) });
       });
       persist();
       return ok();
@@ -6581,7 +6644,7 @@ class Component extends DCLogic {
     decorateAuth(L, v);
     decorateBoot(L, v);
     if (S.role === 'student' && S.signedIn) decorateStudent(L, v);
-    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); decorateDayNight(L, v); decorateLayerPanel(L, v); decorateMirror(L, v); }
+    if (S.role === 'teacher' && S.signedIn) { decorateTeacher(L, v); decorateTfin(L, v); decorateBoardTeacher(L, v); decorateDayNight(L, v); decorateLayerPanel(L, v); decorateMirror(L, v); decorateChecklistEditor(L, v); }
     decorateWorld(L, v);
     if (isRes) decorateResearcher(L, v);
     addBossCodex(L, v);   /* 學生與老師的收藏總覽都要有守關生物 */
@@ -6891,8 +6954,10 @@ class Component extends DCLogic {
     v.retryCount = rejected ? '這一項已經被退回 ' + rejected + ' 次' : '';
     v.retryHint = '這一頁是空的——他要看的是你「改過之後」的版本，不是同一份再送一次。' +
       '先讀他退回的理由，再重寫一遍。上一次交的內容留在下面的往返紀錄裡，需要的話可以帶進來改。';
-    v.submitBtnLabel = v.isRetry ? '第 ' + (attempts + 1) + ' 次提交' :
-      (attempts ? '第 ' + (attempts + 1) + ' 次提交' : '提交這一項');
+    /* 作業不是交在這裡，這一顆是「我做完了，請他確認」 */
+    v.submitBtnLabel = (v.isRetry || attempts)
+      ? '改好了，第 ' + (attempts + 1) + ' 次請他確認'
+      : '我做完了，請他確認';
 
     v.hasHistory = !!(hist && hist.rounds && hist.rounds.length);
     v.history = roundRows(L, hist && hist.rounds, true);
@@ -6965,8 +7030,12 @@ class Component extends DCLogic {
       var st = L.state;
       var taskId = st.openTaskId, text = st.draftText, files = (st.draftFiles || []).slice();
       if (!planOf(st, taskId)) { L.say('先在上面說你打算哪一週交。有估過，期末才對得出你估得準不準。'); return; }
-      if (!String(text || '').trim()) { L.say('先寫下提交內容——你交出來的是什麼、做到哪個程度。'); return; }
-      if (!st.draftEffort) { L.say('「這一組現在的狀態」是必填——先說這一項實際花的力氣，跟你們原本估的差多少。'); return; }
+      /* 作業交在老師原本收的地方，所以文字與檔案都是選填。
+         真正必填的是「做了如何」——勾完成之前一定要回答。 */
+      if (v.hasChecks && !v.checkAllDone) {
+        L.say('清單還有 ' + v.checkLeft + ' 條沒勾。做完一條勾一條，全部勾完才請得動他。'); return;
+      }
+      if (!st.draftEffort) { L.say('勾完成之前先回答「這一組現在的狀態」——這一項實際花的力氣，跟你們原本估的差多少。'); return; }
       if (st.draftEffort === 'slow' && !String(st.draftEffortNote || '').trim()) {
         L.say('你們說比預估慢——寫一句為什麼。期末回顧時，這一句就是你們自己留下的線索。'); return;
       }
@@ -6981,16 +7050,16 @@ class Component extends DCLogic {
         var EFFL = { fast: '比預估快', onpar: '跟預估差不多', slow: '比預估慢' };
         showMoment(L, {
           kind: 'submit', accent: '#C3BAAA',
-          kicker: again ? 'RESUBMITTED' : 'SUBMITTED',
-          title: again ? '重交出去了' : '交出去了',
-          lede: '「' + (task.title || '這一項') + '」在他手上了。',
+          kicker: again ? 'RECHECKED' : 'MARKED DONE',
+          title: again ? '改好了，等他再看一次' : '你勾了做完',
+          lede: '「' + (task.title || '這一項') + '」等他去看。作業本身在他收的地方。',
           sprite: null,
           rows: [
             { k: '你們說', v: EFFL[reflect.effort] || '—', hi: reflect.effort === 'slow' },
-            { k: '附了幾件證據', v: (files.length || 0) + ' 件' },
+            { k: '留了幾個入口', v: (files.length || 0) + ' 個' },
             { k: '這一層還差', v: Math.max(0, LSx.missingN + LSx.unopenedN - 1) + ' 塊' }
           ],
-          quoteLabel: again ? '你這次改了什麼' : '你寫的',
+          quoteLabel: again ? '你這次改了什麼' : '你寫的（選填）',
           quote: String(text || '').slice(0, 160) + (String(text || '').length > 160 ? '…' : ''),
           lines: [ again
             ? '他會看到你前幾次交了什麼、他自己退回的理由，還有你這一次改了哪裡。'
@@ -7029,7 +7098,7 @@ class Component extends DCLogic {
     });
     v.uploading = !!S.uploading;
     v.uploadNote = '上傳中：' + (S.uploadName || '') + '　·　檔案越大越久，先別離開這一頁。';
-    v.uploadHint = '檔案存進課程的雲端硬碟，只有你們這一組和老師看得到。單檔 10 MB，更大的用「連結」。';
+    v.uploadHint = '不用把作業本體傳上來——那個照老師原本的方式交。這裡只是給他一個找得到的入口。單檔 10 MB，更大的用「連結」。';
     v.linkOpen = !!S.linkOpen;
     v.linkDraft = S.linkDraft || '';
     v.setLinkDraft = function (e) { L.setState({ linkDraft: e.target.value }); };
@@ -7174,6 +7243,7 @@ class Component extends DCLogic {
     decorateDayNight(L, v);   /* 地表那一層照現實時間 */
     decorateLayerPanel(L, v);
     decorateHomeBand(L, v);   /* 首頁的「你在這裡」吃的是同一份 */
+    decorateChecklist(L, v);  /* 老師開了清單就逐條勾 */
 
 
 
@@ -7357,7 +7427,7 @@ class Component extends DCLogic {
   var SECTIONS = [
     { key: 'needs_more', tag: '要補的', desc: '他退回來了。看他的理由改完再交一次——重交次數不限。',
       accent: '#D9603F', bg: 'rgba(217,96,63,.06)', border: 'rgba(217,96,63,.34)' },
-    { key: 'todo', tag: '還沒交', desc: '這一區是你現在該動手的。點進去附上要交的東西、寫提交內容、送出。',
+    { key: 'todo', tag: '還沒交', desc: '這一區是你現在該動手的。作業照老師原本的方式交，交完點進去把清單勾完、回答一題。',
       accent: '#E9B341', bg: 'rgba(233,179,65,.045)', border: '#5A4A2C' },
     { key: 'submitted', tag: '等他驗收', desc: '已經送出去了。他的佇列依各組停留週數排序，不是先交先看。',
       accent: '#C3BAAA', bg: 'rgba(195,186,170,.04)', border: '#3A3026' },
@@ -8688,6 +8758,113 @@ class Component extends DCLogic {
       ? '這一層採完了，通道往下一層開了。'
       : '一格一塊礦石，點下去就是那一項。你站在採到 ' + st.gotN + ' / ' + st.veinN +
         ' 塊的位置' + (bz ? '，層底站著' + bz.name : '') + '。';
+  }
+
+  /* ============================================================
+     老師編一張清單、學生逐條勾。
+
+     教授的回饋：每個老師收作業的地方都不一樣，系統不該搶著當收件通道。
+     所以這裡收的不是作業，是「他們說自己做到哪幾條」——作業本身照老師
+     原本的方式交，老師去那裡看完，再回來寫合格考量。
+     ============================================================ */
+
+  /* 老師那邊：一行一條的文字框 ←→ 陣列 */
+  function checkLines(txt) {
+    return String(txt || '').split(/\r?\n/)
+      .map(function (x) { return x.trim(); })
+      .filter(function (x) { return x; })
+      .slice(0, 12);
+  }
+
+  function decorateChecklistEditor(L, v) {
+    var S = L.state;
+    if (S.role !== 'teacher') return;
+    var raw = (S.nf || {}).checks;
+    if (raw === undefined) {
+      /* 編既有的一項時，把它的清單帶進文字框 */
+      var cur = (S.tasks || []).filter(function (t) { return t.id === S.editId; })[0];
+      raw = cur && cur.checks && cur.checks.length ? cur.checks.join('\n') : '';
+    }
+    v.nfChecks = raw;
+    v.setNfChecks = function (e) {
+      var nf = Object.assign({}, L.state.nf || {}, { checks: e.target.value });
+      L.setState({ nf: nf });
+    };
+    var n = checkLines(raw).length;
+    v.nfChecksHint = n
+      ? '這一項會有 ' + n + ' 條給學生勾。'
+      : '沒有清單也可以——那學生就是整項一起勾完成。';
+    v.nfChecksHintStyle = "font:400 11px/1.6 'C11';color:" +
+      (n ? '#E9B341' : '#5F574C') + ';margin-top:7px';
+  }
+
+  /* 學生那邊：逐條勾 */
+  function decorateChecklist(L, v) {
+    var S = L.state;
+    v.hasChecks = false;
+    v.checkItems = [];
+    v.checkBoxStyle = 'display:none';
+    v.checkCount = ''; v.checkCountStyle = 'display:none'; v.checkHint = '';
+    v.checkAllDone = true; v.checkLeft = 0;
+    if (S.role !== 'student' || S.screen !== 'S05') return;
+    var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
+    if (!task) return;
+    var list = task.checks || [];
+    if (!list.length) return;
+
+    var on = {};
+    (task.checked || []).forEach(function (i) { on[Number(i)] = true; });
+    var got = list.filter(function (_x, i) { return on[i]; }).length;
+    var locked = task.status === 'passed';
+    var full = got >= list.length;
+
+    v.hasChecks = true;
+    v.checkAllDone = full;
+    v.checkLeft = list.length - got;
+    v.checkBoxStyle = 'padding:15px 16px;margin-bottom:18px;background:' +
+      (full ? 'rgba(233,179,65,.06)' : 'rgba(0,0,0,.26)') +
+      ';border:1px solid ' + (full ? '#5A4A2C' : '#2E2822');
+    v.checkCount = got + ' / ' + list.length;
+    v.checkCountStyle = "font:700 22px/1 'C11';color:" + (full ? '#E9B341' : '#C3BAAA');
+    v.checkHint = locked
+      ? '這一項已經通過了。'
+      : full
+        ? '都勾完了。下面回答一題，就可以請他去看。'
+        : '作業照老師原本要求的方式交。交完回來勾——勾完才請得動他。';
+
+    v.checkItems = list.map(function (txt, i) {
+      var hit = !!on[i];
+      return {
+        text: txt,
+        mark: hit ? '✓' : '',
+        toggle: function () {
+          if (locked) { L.say('這一項已經通過了，不用再改。'); return; }
+          /* 先在畫面上翻過去，再回寫——按下去要有反應 */
+          var next = (task.checked || []).filter(function (x) { return Number(x) !== i; });
+          if (!hit) next = next.concat([i]);
+          task.checked = next;
+          L.setState({ checkNudge: (L.state.checkNudge || 0) + 1 });
+          call('apiSetCheck', LIVE.token, task.id, i, !hit)
+            .then(function (r) {
+              if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。');
+              return refresh();
+            })
+            .catch(function () { L.say('沒有存到伺服器。'); });
+        },
+        style: 'display:flex;align-items:flex-start;gap:11px;padding:10px 12px;text-align:left;' +
+          'background:' + (hit ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.3)') + ';' +
+          'border:1px solid ' + (hit ? '#5A4A2C' : '#2E2822') + ';' +
+          (locked ? 'cursor:default;opacity:.72' : 'cursor:pointer'),
+        boxStyle: 'flex:none;display:flex;align-items:center;justify-content:center;' +
+          'width:20px;height:20px;margin-top:2px;' +
+          "font:700 11px/1 'C11';" +
+          'color:' + (hit ? '#0B0A09' : '#3A3026') + ';' +
+          'background:' + (hit ? '#E9B341' : 'rgba(0,0,0,.4)') + ';' +
+          'border:1px solid ' + (hit ? '#E9B341' : '#4A443C'),
+        textStyle: "flex:1;min-width:0;font:400 22px/1.6 'C11';text-wrap:pretty;color:" +
+          (hit ? '#E8E2D6' : '#B6AC9C')
+      };
+    });
   }
 
   function decorateBoard(L, v) {
@@ -11015,13 +11192,32 @@ class Component extends DCLogic {
       if (!byTeam[o.teamId]) { byTeam[o.teamId] = []; order.push(o.teamId); }
       byTeam[o.teamId].push(o);
     });
-    var weekOf = {};
-    (L.teams() || []).forEach(function (t) { weekOf[t.id] = t.weeks || 1; });
-    /* 排序不變：等最久的排最前面，不是先交先看 */
-    order.sort(function (a, b) { return (weekOf[b] || 0) - (weekOf[a] || 0); });
+    var weekOf = {}, layerOf = {};
+    (L.teams() || []).forEach(function (t) { weekOf[t.id] = t.weeks || 1; layerOf[t.id] = t.layer || 1; });
+
+    /* 作業交在老師原本收的地方，這裡只收「我做完了」的勾。
+       一組要把那一層全部勾完，才算真的等他去看。 */
+    var tick = function (id) {
+      var all = ((L.state.teamTasks || {})[id] || []).filter(function (t) {
+        return Number(t.layer) === Number(layerOf[id]);
+      });
+      if (!all.length) return { done: 0, total: 0, ready: false };
+      var n = all.filter(function (t) {
+        return t.status === 'submitted' || t.status === 'passed';
+      }).length;
+      return { done: n, total: all.length, ready: n >= all.length };
+    };
+
+    /* 全部勾完的排前面；其餘照舊——等最久的優先，不是先交先看 */
+    order.sort(function (a, b) {
+      var ra = tick(a).ready ? 1 : 0, rb = tick(b).ready ? 1 : 0;
+      if (ra !== rb) return rb - ra;
+      return (weekOf[b] || 0) - (weekOf[a] || 0);
+    });
     return order.map(function (id) {
-      var items = byTeam[id];
-      return { teamId: id, teamName: items[0].team, weeks: weekOf[id] || 1, items: items };
+      var items = byTeam[id], tk = tick(id);
+      return { teamId: id, teamName: items[0].team, weeks: weekOf[id] || 1, items: items,
+               ready: tk.ready, tickDone: tk.done, tickTotal: tk.total };
     });
   }
 
@@ -11093,14 +11289,25 @@ class Component extends DCLogic {
     var groups = reviewGroups(L);
     var allOpen = groups.reduce(function (a, g) { return a.concat(g.items); }, []);
 
+    /* 全部勾完的有幾組——這是老師該被通知的那一件事 */
+    (function () {
+      var ready = groups.filter(function (g) { return g.ready; });
+      v.queueLede0 = ready.length
+        ? ready.length + ' 組把這一層全部勾完了，等你去看。'
+        : '';
+    })();
+
     /* T-01：每一組一張卡，點進去直接鎖定那一組 */
     (v.queue || []).forEach(function (card) {
       var g = groups.filter(function (x) { return x.teamName === card.team; })[0] || null;
       card.pending = g ? g.items.length : 0;
       card.detail = !g
-        ? (card.weeks >= 3 ? '停留超過門檻，但這一週沒有新的提交——該由你先開口。' : '這一週沒有新的提交。')
-        : '有 ' + g.items.length + ' 件等你驗收' +
-          (groupPattern(g.items).length ? '（' + groupPattern(g.items).join('、') + '）' : '') + '。一次審完。';
+        ? (card.weeks >= 3 ? '停留超過門檻，但這一週沒有新的動靜——該由你先開口。' : '這一週沒有新的動靜。')
+        : (g.ready
+            ? '這一層全部勾完了，' + g.items.length + ' 件等你去看'
+            : '勾到 ' + g.tickDone + '/' + g.tickTotal + '，' + g.items.length + ' 件等你去看') +
+          (groupPattern(g.items).length ? '（' + groupPattern(g.items).join('、') + '）' : '') +
+          '。作業本身在你原本收的地方。';
       card.open = function () {
         L.setState({ queueTeam: g ? g.teamId : null, screen: 'T03' });
       };
@@ -11113,14 +11320,17 @@ class Component extends DCLogic {
     v.queueGroupCount = groups.length;
     v.queueTotal = allOpen.length;
     v.queueLede = groups.length
-      ? '待審的 ' + allOpen.length + ' 件收攏成 ' + groups.length + ' 組。點一組，他們的東西一次攤開——同一組一起看，跨項的問題才看得出來。'
-      : '目前沒有待驗收的項目。';
+      ? (v.queueLede0 ? v.queueLede0 + '　' : '') +
+        '他們勾的是「我做完了」，作業本身在你原本收的地方——去那裡看完，再回來寫合格考量。' +
+        '待看的 ' + allOpen.length + ' 件收攏成 ' + groups.length + ' 組，同一組一起看，跨項的問題才看得出來。'
+      : '目前沒有等你確認的項目。';
     v.queueGroups = groups.map(function (g) {
       var on = picked && g.teamId === picked.teamId;
       var flag = g.weeks >= 3;
       return {
         name: g.teamName,
-        sub: g.items.length + ' 件 · 停留 ' + g.weeks + ' 週',
+        sub: (g.ready ? '全部勾完了 · ' : '還在勾 ' + g.tickDone + '/' + g.tickTotal + ' · ') +
+          g.items.length + ' 件待看 · 停留 ' + g.weeks + ' 週',
         pick: function () { L.setState({ queueTeam: g.teamId, reviewId: null }); },
         style: 'text-align:left;padding:11px 14px;font:inherit;cursor:pointer;background:' +
           (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' +
@@ -11363,7 +11573,8 @@ class Component extends DCLogic {
       var t = (st.tasks || []).filter(function (x) { return x.id === st.editId; })[0] || {};
       var task = { id: st.editId, layer: st.editLayer, type: st.nf.type, title: st.nf.title,
                    cond: st.nf.cond, note: st.nf.note, spec: st.nf.spec || '', due: st.nf.due, mineral: st.nf.mineral || t.mineral || '',
-                   mDesc: t.mDesc || '這一項工作留下的物證。' };
+                   mDesc: t.mDesc || '這一項工作留下的物證。',
+                   checks: checkLines((st.nf || {}).checks) };
       L.setState({ editId: null, nf: { title: '', type: 'required', cond: '', note: '', due: st.nf.due, mineral: '' }, screen: 'T02' });
       call('apiSaveTask', LIVE.token, L.klass().id, task)
         .then(function (r) {

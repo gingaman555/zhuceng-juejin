@@ -67,11 +67,19 @@
              gateVerdict: t.gateVerdict || '', specNames: t.specNames || {} };
   }
   /* 給 teamId 就只回那一組看得到的——關卡判定一定要用這個版本 */
+  /* 老師寫的清單：一行一條，去空白、丟空行、最多 12 條 */
+  function checkList(raw) {
+    var a = raw;
+    if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
+    if (!a || !a.length) return [];
+    return a.map(function (x) { return String(x || '').trim(); })
+            .filter(function (x) { return x; }).slice(0, 12);
+  }
   function tasksOfClass(cid, teamId) {
     var all = DB.Tasks.filter(function (t) { return t.classId === cid; }).map(function (t) {
       return { id: t.taskId, klass: t.classId, layer: t.layer, type: t.type, title: t.title,
                cond: t.cond, note: t.note, spec: t.spec || '', due: t.due, mineral: t.mineral, mDesc: t.mDesc, published: true,
-               teams: API.taskTeams(t) };
+               teams: API.taskTeams(t), checks: checkList(t.checks) };
     });
     if (!teamId) return all;
     return all.filter(function (d) { return !d.teams.length || d.teams.indexOf(String(teamId)) >= 0; });
@@ -83,11 +91,19 @@
   }
   function mergeTasks(defs, m, w) {
     return defs.map(function (d) {
-      var s = m[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', effort: '', effortNote: '', blocker: '' };
+      var s = m[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', effort: '', effortNote: '', blocker: '', checked: [] };
       var dw = dueWeekOf(d.due);
       return Object.assign({}, d, { status: s.status, text: s.text, files: s.files || [], effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'',
-        fb: s.fb || '', fbType: s.fbType || '', over: dw !== null && dw < w && s.status !== 'passed' });
+        fb: s.fb || '', fbType: s.fbType || '', checked: checkList2(s.checked),
+        over: dw !== null && dw < w && s.status !== 'passed' });
     });
+  }
+
+  /* 勾到哪幾條：存成陣列，但舊資料可能是字串 */
+  function checkList2(raw) {
+    var a = raw;
+    if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
+    return Array.isArray(a) ? a.map(Number) : [];
   }
 
   function rosterView(classId) {
@@ -789,10 +805,33 @@
       var ex = DB.Tasks.filter(function (x) { return x.taskId === id; })[0];
       var row = { taskId: id, classId: classId, layer: task.layer, type: task.type, title: task.title,
                   cond: task.cond, note: task.note, spec: task.spec || '', due: task.due, mineral: task.mineral, mDesc: task.mDesc,
-                  teams: JSON.stringify(API.cleanTeams(classId, task.teams)) };
+                  teams: JSON.stringify(API.cleanTeams(classId, task.teams)),
+                  checks: JSON.stringify(checkList(task.checks)) };
       if (ex) Object.assign(ex, row); else DB.Tasks.push(row);
       persist();
       return ok({ taskId: id });
+    },
+    /* 學生勾／取消勾清單上的一條 */
+    apiSetCheck: function (t, taskId, idx, on) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以勾。');
+      var def = tasksOfClass(u.classId, u.teamId).filter(function (d) { return d.id === taskId; })[0];
+      if (!def) return err('找不到這一項任務。');
+      var n = Number(idx);
+      if (!(n >= 0 && n < def.checks.length)) return err('沒有這一條。');
+      var row = ttmap(u.teamId)[taskId];
+      if (row && row.status === 'passed') return err('這一項已經通過了，不用再改。');
+      var set = {};
+      checkList2(row && row.checked).forEach(function (x) { set[x] = true; });
+      if (on) set[n] = true; else delete set[n];
+      var next = Object.keys(set).map(Number)
+        .filter(function (x) { return x >= 0 && x < def.checks.length; })
+        .sort(function (a, b) { return a - b; });
+      if (row) row.checked = next;
+      else DB.TeamTasks.push({ teamId: u.teamId, taskId: taskId, status: 'todo',
+        text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: next });
+      persist();
+      return ok({ checked: next, total: def.checks.length });
     },
     apiDeleteTask: function (t, taskId) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
@@ -809,7 +848,8 @@
         var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer, null, API.cleanTeams(classId, it.teams)) || [])[0] || '';
         DB.Tasks.push({ taskId: 'tk' + uid(), classId: classId, layer: layer, type: it.type,
           title: it.title, cond: it.cond, note: it.note, spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc,
-          teams: JSON.stringify(API.cleanTeams(classId, it.teams)) });
+          teams: JSON.stringify(API.cleanTeams(classId, it.teams)),
+          checks: JSON.stringify(checkList(it.checks)) });
       });
       persist();
       return ok();

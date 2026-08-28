@@ -34,9 +34,9 @@ var SHEET_DEFS = {
   Classes:     ['classId', 'name', 'term', 'started', 'courseStart', 'weekOverride', 'semesterWeeks', 'joinCode', 'teacherId', 'sandbox'],
   Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'passed', 'toolLevels',
                 'gateText', 'gateSubmitted', 'gateVerdict', 'specNames', 'createdAt', 'gateTs'],
-  Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'teams', 'createdAt'],
+  Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'teams', 'checks', 'createdAt'],
   TeamTasks:   ['teamId', 'taskId', 'status', 'text', 'files', 'fb', 'fbType', 'passedWeek',
-                'effort', 'effortNote', 'blocker', 'updatedAt'],
+                'effort', 'effortNote', 'blocker', 'checked', 'updatedAt'],
   Submissions: ['subId', 'taskId', 'teamId', 'week', 'dueWeek', 'overdue', 'len', 'files', 'attempt', 'text',
                 'effort', 'effortNote', 'blocker', 'fileList', 'ts'],
   Files:       ['fileId', 'teamId', 'taskId', 'name', 'mimeType', 'size', 'kind', 'uploadedBy', 'ts'],
@@ -1105,7 +1105,7 @@ function tasksOfClass_(classId, teamId) {
         id: t.taskId, klass: t.classId, layer: Number(t.layer) || 1, type: t.type || 'required',
         title: t.title, cond: t.cond, note: t.note, spec: t.spec || '', due: t.due,
         mineral: t.mineral || '', mDesc: t.mDesc || '', published: String(t.published) !== 'N',
-        teams: taskTeams_(t)
+        teams: taskTeams_(t), checks: jparse_(t.checks, [])
       };
     });
   if (!teamId) return all;
@@ -1119,7 +1119,8 @@ function teamTaskMap_(teamId) {
     m[String(r.taskId)] = {
       status: r.status || 'todo', text: r.text || '', files: jparse_(r.files, []),
       fb: r.fb || '', fbType: r.fbType || '', passedWeek: r.passedWeek === '' ? null : Number(r.passedWeek),
-      effort: r.effort || '', effortNote: r.effortNote || '', blocker: r.blocker || ''
+      effort: r.effort || '', effortNote: r.effortNote || '', blocker: r.blocker || '',
+      checked: jparse_(r.checked, [])
     };
   });
   return m;
@@ -1128,11 +1129,12 @@ function teamTaskMap_(teamId) {
 function mergeTasks_(defs, tmap, courseWeek, dueWeekFn) {
   return defs.map(function (d) {
     var s = tmap[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', passedWeek: null,
-                            effort: '', effortNote: '', blocker: '' };
+                            effort: '', effortNote: '', blocker: '', checked: [] };
     var dw = dueWeekOf_(d.due);
     return Object.assign({}, d, {
       status: s.status, text: s.text, files: s.files, fb: s.fb, fbType: s.fbType,
       effort: s.effort, effortNote: s.effortNote, blocker: s.blocker,
+      checked: s.checked || [],
       over: dw !== null && dw < courseWeek && s.status !== 'passed'
     });
   });
@@ -1777,6 +1779,52 @@ function assertTeacher_(token) {
   return u;
 }
 
+/** 老師寫的那張清單：一行一條，去頭尾空白、丟掉空行，最多 12 條。 */
+function checkList_(raw) {
+  var a = raw;
+  if (typeof a === 'string') a = jparse_(a, []);
+  if (!a || !a.length) return [];
+  return a.map(function (x) { return String(x || '').trim(); })
+          .filter(function (x) { return x; })
+          .slice(0, 12);
+}
+
+/**
+ * 學生勾／取消勾清單上的一條。作業本身交在老師原本收的地方，
+ * 這裡只記「他們說自己做到哪幾條」。
+ */
+function apiSetCheck(token, taskId, idx, on) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以勾。');
+    var defs = tasksOfClass_(u.classId, u.teamId), def = null;
+    for (var i = 0; i < defs.length; i++) if (String(defs[i].id) === String(taskId)) def = defs[i];
+    if (!def) return err_('找不到這一項任務。');
+    var list = def.checks || [];
+    var n = Number(idx);
+    if (!(n >= 0 && n < list.length)) return err_('沒有這一條。');
+
+    var row = readTable_('TeamTasks').filter(function (r) {
+      return String(r.teamId) === String(u.teamId) && String(r.taskId) === String(taskId);
+    })[0] || null;
+    if (row && String(row.status) === 'passed') return err_('這一項已經通過了，不用再改。');
+
+    var cur = jparse_(row && row.checked, []) || [];
+    var set = {};
+    cur.forEach(function (x) { set[Number(x)] = true; });
+    if (on) set[n] = true; else delete set[n];
+    var next = Object.keys(set).map(Number).filter(function (x) { return x >= 0 && x < list.length; })
+                     .sort(function (a, b) { return a - b; });
+
+    upsert_('TeamTasks', ['teamId', 'taskId'], {
+      teamId: u.teamId, taskId: taskId,
+      status: (row && row.status) || 'todo',
+      checked: JSON.stringify(next), updatedAt: new Date()
+    });
+    return ok_({ checked: next, total: list.length });
+  } catch (e) { return err_(e); }
+}
+
 function apiSaveTask(token, classId, task) {
   try {
     assertTeacher_(token);
@@ -1794,6 +1842,7 @@ function apiSaveTask(token, classId, task) {
       title: task.title, cond: task.cond, note: task.note, spec: task.spec || '', due: task.due,
       mineral: min, mDesc: task.mDesc || '',
       teams: JSON.stringify(cleanTeams_(classId, task.teams)),
+      checks: JSON.stringify(checkList_(task.checks)),
       published: 'Y', createdAt: new Date()
     });
     return ok_({ taskId: id });
@@ -1875,7 +1924,8 @@ function apiPublishList(token, classId, layer, items) {
         taskId: it.id || ('tk' + Utilities.getUuid().slice(0, 8)), classId: classId,
         layer: layer, type: it.type, title: it.title, cond: it.cond, note: it.note,
         spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc || '', published: 'Y',
-        teams: JSON.stringify(cleanTeams_(classId, it.teams)), createdAt: new Date()
+        teams: JSON.stringify(cleanTeams_(classId, it.teams)),
+        checks: JSON.stringify(checkList_(it.checks)), createdAt: new Date()
       });
     });
     return ok_();

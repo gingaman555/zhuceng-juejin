@@ -694,7 +694,7 @@
                 </div>
                 <sc-if value="{{ hasSpec }}" hint-placeholder-val="{{ false }}">
                   <div style="padding:14px 16px;background:rgba(195,186,170,.05);border:1px solid #3A3026;border-left:2px solid #8A8073">
-                    <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#8A8073">他要收到的檔案與規格</div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#8A8073">他要求的規格</div>
                     <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">{{ openTaskSpec }}</div>
                   </div>
                 </sc-if>
@@ -754,8 +754,25 @@
                   </div>
                 </sc-if>
                 <div>
-                  <div style="font:500 22px/1 'C11';margin-bottom:4px">要提交的東西</div>
-                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">先把檔案、截圖或連結放上來。他要收到的規格寫在上面。</div>
+                  <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">
+                    <div style="{{ checkBoxStyle }}">
+                      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px">
+                        <span style="font:500 22px/1 'C11';color:#E8E2D6">他要你做到這些</span>
+                        <span style="{{ checkCountStyle }}">{{ checkCount }}</span>
+                      </div>
+                      <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:11px">{{ checkHint }}</div>
+                      <div style="display:flex;flex-direction:column;gap:7px">
+                        <sc-for list="{{ checkItems }}" as="ck" hint-placeholder-count="3">
+                          <span onClick="{{ ck.toggle }}" style="{{ ck.style }}">
+                            <span style="{{ ck.boxStyle }}">{{ ck.mark }}</span>
+                            <span style="{{ ck.textStyle }}">{{ ck.text }}</span>
+                          </span>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">交在哪裡　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">作業照老師原本要求的方式交。這裡放個連結或截圖，讓他知道去哪裡看——不放也可以。</div>
                   <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px">
                     <sc-for list="{{ evidence }}" as="e" hint-placeholder-count="2">
                       <span style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:#14110E;border:1px solid #2E2822">
@@ -788,8 +805,8 @@
                   <div style="margin-top:9px;font:400 22px/1.6 'C11';color:#5F574C;text-wrap:pretty">{{ uploadHint }}</div>
                 </div>
                 <div>
-                  <div style="font:500 22px/1 'C11';margin-bottom:4px">提交內容</div>
-                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">說明你交出來的是什麼、做到哪個程度。寫程度，不是寫「有做」。</div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">你做了什麼　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">一句話讓他對得上你交出去的東西。真正要寫的是下面那一題。</div>
                   <textarea onChange="{{ setSubmitText }}" value="{{ submitText }}" placeholder="例：訪談三位大三生之後，把題目收斂成「畢製組隊後的分工失衡」，範圍縮到系上，排除跨校比較。" style="width:100%;min-height:220px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
                 </div>
                 <div style="padding:15px 16px;background:linear-gradient(140deg,rgba(233,179,65,.055),transparent 62%),#14110E;border:1px solid #3A3026">
@@ -2235,6 +2252,12 @@
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:9px">通過條件</div>
                   <textarea onChange="{{ setNfCond }}" value="{{ nfCond }}" placeholder="例：至少三位目標使用者的訪談紀錄，並標出彼此矛盾的地方。" style="width:100%;min-height:150px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                </div>
+                <div>
+                  <div style="font:500 22px/1 'C11';margin-bottom:4px">要做到哪些　<span style="font:400 11px/1 'C11';color:#6E665A">一行一條</span></div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">作業本身照你原本的方式收。這張清單只是讓學生對照自己做到哪裡——他們全部勾完，你才會收到通知。留白就沒有清單。</div>
+                  <textarea onChange="{{ setNfChecks }}" value="{{ nfChecks }}" placeholder="訪談三位目標使用者&#10;整理成逐字稿&#10;標出彼此矛盾的地方" style="width:100%;min-height:120px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.9 'C11';resize:vertical;outline:none"></textarea>
+                  <div style="{{ nfChecksHintStyle }}">{{ nfChecksHint }}</div>
                 </div>
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">要注意的地方</div>

@@ -2964,5 +2964,61 @@ must(
 '                    <div style="font-family:' + Q + 'Noto Sans TC' + Q + ',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:12px">演練模式用於對老師、口委或研究團隊展示這一端能看到什麼：解除四週一次的延遲揭露、填入示範語料，每一頁上方會持續標示 DEMO。示範樣本不可用於任何研究判讀，關閉時一併清除。</div>',
 '                    <div style="font-family:' + Q + 'Noto Sans TC' + Q + ',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:12px">要對老師、口委或研究團隊示範這一端看得到什麼，或是自己想把流程走一遍，就開一個試用班。試用班是真的系統，差別只在那一班的資料不會進研究紀錄；班級清單上會一直標著記號，用完可以整班刪掉。</div>');
 
+/* 52. 作業本身在老師原本收的地方交。這一頁只負責「勾完成」與「說做了如何」 */
+must([
+'                  <div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">要提交的東西</div>',
+'                  <div style="font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#6E665A;margin-bottom:9px">先把檔案、截圖或連結放上來。他要收到的規格寫在上面。</div>'].join('\n'),
+[
+'                  <div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">交在哪裡　<span style="font:400 11px/1 ' + Q + 'C11' + Q + ';color:#6E665A">選填</span></div>',
+'                  <div style="font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#6E665A;margin-bottom:9px">作業照老師原本要求的方式交。這裡放個連結或截圖，讓他知道去哪裡看——不放也可以。</div>'].join('\n'));
+must([
+'                  <div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">提交內容</div>',
+'                  <div style="font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#6E665A;margin-bottom:9px">說明你交出來的是什麼、做到哪個程度。寫程度，不是寫「有做」。</div>'].join('\n'),
+[
+'                  <div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">你做了什麼　<span style="font:400 11px/1 ' + Q + 'C11' + Q + ';color:#6E665A">選填</span></div>',
+'                  <div style="font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#6E665A;margin-bottom:9px">一句話讓他對得上你交出去的東西。真正要寫的是下面那一題。</div>'].join('\n'));
+
+/* 53. T-05：老師編一張學生可以逐條勾的清單 */
+must([
+'                <div>',
+'                  <div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">要注意的地方</div>'].join('\n'),
+[
+'                <div>',
+'                  <div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">要做到哪些　<span style="font:400 11px/1 ' + Q + 'C11' + Q + ';color:#6E665A">一行一條</span></div>',
+'                  <div style="font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#6E665A;margin-bottom:9px">作業本身照你原本的方式收。這張清單只是讓學生對照自己做到哪裡——他們全部勾完，你才會收到通知。留白就沒有清單。</div>',
+'                  <textarea onChange="{{ setNfChecks }}" value="{{ nfChecks }}" placeholder="訪談三位目標使用者&#10;整理成逐字稿&#10;標出彼此矛盾的地方" style="width:100%;min-height:120px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.9 ' + Q + 'C11' + Q + ';resize:vertical;outline:none"></textarea>',
+'                  <div style="{{ nfChecksHintStyle }}">{{ nfChecksHint }}</div>',
+'                </div>',
+'                <div>',
+'                  <div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">要注意的地方</div>'].join('\n'));
+
+/* 54. S-05：老師開了清單就先顯示，逐條勾 */
+must(
+'                  <div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">交在哪裡　<span style="font:400 11px/1 ' + Q + 'C11' + Q + ';color:#6E665A">選填</span></div>',
+[
+'                  <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">',
+'                    <div style="{{ checkBoxStyle }}">',
+'                      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px">',
+'                        <span style="font:500 22px/1 ' + Q + 'C11' + Q + ';color:#E8E2D6">他要你做到這些</span>',
+'                        <span style="{{ checkCountStyle }}">{{ checkCount }}</span>',
+'                      </div>',
+'                      <div style="font:400 11px/1.6 ' + Q + 'C11' + Q + ';color:#6E665A;margin-bottom:11px">{{ checkHint }}</div>',
+'                      <div style="display:flex;flex-direction:column;gap:7px">',
+'                        <sc-for list="{{ checkItems }}" as="ck" hint-placeholder-count="3">',
+'                          <span onClick="{{ ck.toggle }}" style="{{ ck.style }}">',
+'                            <span style="{{ ck.boxStyle }}">{{ ck.mark }}</span>',
+'                            <span style="{{ ck.textStyle }}">{{ ck.text }}</span>',
+'                          </span>',
+'                        </sc-for>',
+'                      </div>',
+'                    </div>',
+'                  </sc-if>',
+'                  <div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">交在哪裡　<span style="font:400 11px/1 ' + Q + 'C11' + Q + ';color:#6E665A">選填</span></div>'].join('\n'));
+
+/* 55. 規格那一段的標題：老師不是在這裡收檔案 */
+must(
+'                    <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.16em;color:#8A8073">他要收到的檔案與規格</div>',
+'                    <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.16em;color:#8A8073">他要求的規格</div>');
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
