@@ -27,7 +27,8 @@ const PK = {
   Plans: ['teamId', 'taskId'],
   Passes: ['passId'],
   Reads: ['readId'],
-  Codes: ['revId', 'coder']
+  Codes: ['revId', 'coder'],
+  Digs: ['digId']
 };
 
 /* Firestore 文件 ID 不能有 / . # $ [ ] 也不能太長 */

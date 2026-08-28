@@ -48,6 +48,8 @@ var SHEET_DEFS = {
   Passes:      ['passId', 'teamId', 'layer', 'week', 'toolLevel', 'gateCell1', 'gateCell2', 'gateCell3', 'verdict', 'reason', 'ts'],
   Reads:       ['readId', 'readerTeam', 'targetTeam', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected', 'ts'],
   Codes:       ['revId', 'coder', 'code', 'ts'],
+  Digs:        ['digId', 'teamId', 'classId', 'layer', 'text', 'estDays', 'bet',
+                'result', 'page', 'openedAt', 'closedAt'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
   MinNames:    ['teamId', 'mineral', 'label', 'note']
 };
@@ -1282,6 +1284,9 @@ function apiBootstrap(token) {
     if (u.role === 'student') {
       var me = teamById_(u.teamId);
       out.myTeamId = u.teamId || '';
+      out.digs = digsOf_(u.teamId);
+      out.digPages = digPages_(u.teamId);
+      out.digTotal = DIG_PAGES;
       if (me) {
         var mp = teamPub_(me, courseWeek);
         var fMine = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(me.teamId); })[0];
@@ -1823,6 +1828,113 @@ function apiSetCheck(token, taskId, idx, on) {
     });
     return ok_({ checked: next, total: list.length });
   } catch (e) { return err_(e); }
+}
+
+/* ================= 試挖 =================
+   學生自己開一條岔路去試一個方向。不經過老師、不影響過關。
+   收尾記三種結果：成立、塌了、沒結論——塌掉的也留著，那是他們試過的證據。
+
+   當天第一次收尾會挖到一片斗篷人的日誌。一天一片、不重複、共 24 片，
+   剛好是一個學期的長度。刷不完也刷不快，而且進度只會往前。 */
+
+var DIG_PAGES = 24;
+
+/** 只比日期，不比時間；照腳本時區算，不然台北的今天會差一天。 */
+function ymd_(d) {
+  var tz = Session.getScriptTimeZone() || 'Asia/Taipei';
+  return Utilities.formatDate(d, tz, 'yyyy-MM-dd');
+}
+
+/** 這一組已經挖到哪幾片 */
+function digPages_(teamId) {
+  var out = [];
+  readTable_('Digs').forEach(function (d) {
+    if (String(d.teamId) !== String(teamId)) return;
+    var n = Number(d.page);
+    if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
+  });
+  return out.sort(function (a, b) { return a - b; });
+}
+
+function digsOf_(teamId) {
+  return readTable_('Digs')
+    .filter(function (d) { return String(d.teamId) === String(teamId); })
+    .map(function (d) {
+      return { id: d.digId, layer: Number(d.layer) || 1, text: d.text || '',
+               estDays: Number(d.estDays) || 0, bet: d.bet || '',
+               result: d.result || '', page: Number(d.page) || 0,
+               openedAt: d.openedAt ? String(d.openedAt) : '',
+               closedAt: d.closedAt ? String(d.closedAt) : '' };
+    });
+}
+
+/** 開一條。方向要寫、估幾天要給、押不押隨意。 */
+function apiOpenDig(token, layer, text, estDays, bet) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以開試挖。');
+    var txt = String(text || '').trim();
+    if (!txt) return err_('先寫一句你要試什麼方向。');
+    if (txt.length > 120) txt = txt.slice(0, 120);
+    var days = Math.max(1, Math.min(60, Math.round(Number(estDays) || 0)));
+    if (!days) return err_('估一下這個方向要試幾天。');
+    var b = ['yes', 'no', 'unsure'].indexOf(String(bet)) >= 0 ? String(bet) : 'unsure';
+
+    var open = readTable_('Digs').filter(function (d) {
+      return String(d.teamId) === String(u.teamId) && !String(d.result || '');
+    });
+    if (open.length >= 6) return err_('同時最多開六條。先收掉幾條再開。');
+
+    var id = 'dg' + Utilities.getUuid().slice(0, 8);
+    appendRow_('Digs', {
+      digId: id, teamId: u.teamId, classId: u.classId,
+      layer: Math.max(1, Math.min(5, Number(layer) || 1)),
+      text: txt, estDays: days, bet: b, result: '', page: '',
+      openedAt: new Date(), closedAt: ''
+    });
+    return ok_({ digId: id });
+  } catch (e) { return err_(e); }
+}
+
+/** 收尾。當天第一次收尾就挖到一片還沒拿過的日誌。 */
+function apiCloseDig(token, digId, result) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以收試挖。');
+    var res = ['ok', 'dead', 'none'].indexOf(String(result)) >= 0 ? String(result) : '';
+    if (!res) return err_('先說這個方向的結果：成立、塌了，還是沒結論。');
+
+    var rows = readTable_('Digs');
+    var row = null;
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].digId) === String(digId) && String(rows[i].teamId) === String(u.teamId)) row = rows[i];
+    }
+    if (!row) return err_('找不到這一條試挖。');
+    if (String(row.result || '')) return err_('這一條已經收過了。');
+
+    /* 今天收過了沒？一天一片，不然二十分鐘就刷完了 */
+    var today = ymd_(new Date());
+    var gotToday = rows.some(function (d) {
+      return String(d.teamId) === String(u.teamId) && Number(d.page) > 0 &&
+             d.closedAt && ymd_(new Date(d.closedAt)) === today;
+    });
+
+    var page = 0;
+    if (!gotToday) {
+      var have = digPages_(u.teamId), left = [];
+      for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
+      if (left.length) page = left[Math.floor(Math.random() * left.length)];
+    }
+
+    upsert_('Digs', ['digId'], {
+      digId: row.digId, teamId: row.teamId, classId: row.classId, layer: row.layer,
+      text: row.text, estDays: row.estDays, bet: row.bet,
+      result: res, page: page || '', openedAt: row.openedAt, closedAt: new Date()
+    });
+    return ok_({ result: res, page: page, pages: digPages_(u.teamId), total: DIG_PAGES });
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 
 function apiSaveTask(token, classId, task) {

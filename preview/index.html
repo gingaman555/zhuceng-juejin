@@ -994,7 +994,7 @@ window.JLZ_SPRITES = {
                 <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                     <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
                     <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                       <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                     </sc-if>
@@ -1266,12 +1266,86 @@ window.JLZ_SPRITES = {
             </div>
           </sc-if>
 
+          <sc-if value="{{ scDig }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-09 試挖" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
+                </div>
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-09 · PROBE</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">試挖</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">想到一個方向就開一條岔路去試。不用等老師，也不影響過關。試出來不成立也留著——那是你試過的證據。</p>
+              </div>
+              <div style="margin:20px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #3A3026">
+                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341;margin-bottom:11px">開一條</div>
+                <input value="{{ digDraftText }}" onChange="{{ setDigText }}" placeholder="例：訪談對象改成大一新生" style="width:100%;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.6 'C11';outline:none">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:11px">
+                  <span style="font:400 11px/1 'C11';color:#8A8073">估幾天</span>
+                  <input value="{{ digDraftDays }}" onChange="{{ setDigDays }}" placeholder="3" style="width:74px;padding:9px 11px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1 'C11';outline:none">
+                  <span style="font:400 11px/1 'C11';color:#8A8073;margin-left:6px">你覺得</span>
+                  <sc-for list="{{ digBetPicks }}" as="bp" hint-placeholder-count="3">
+                    <button onClick="{{ bp.pick }}" style="{{ bp.style }}">{{ bp.label }}</button>
+                  </sc-for>
+                </div>
+                <button onClick="{{ openDig }}" style="margin-top:14px;font:500 22px/1 'C11';letter-spacing:.16em;color:#0B0A09;background:#E9B341;border:none;padding:13px 22px;cursor:pointer;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)">挖下去</button>
+              </div>
+              <div style="padding:20px var(--pad) 0">
+                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:5px">還開著的</div>
+                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:11px">{{ digOpenNote }}</div>
+                <div style="display:flex;flex-direction:column;gap:9px">
+                  <sc-for list="{{ digOpen }}" as="dg" hint-placeholder-count="2">
+                    <div style="{{ dg.boxStyle }}">
+                      <div style="{{ dg.textStyle }}">{{ dg.text }}</div>
+                      <div style="{{ dg.metaStyle }}">{{ dg.meta }}</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:10px">
+                        <sc-for list="{{ dg.picks }}" as="pk" hint-placeholder-count="3">
+                          <button onClick="{{ pk.pick }}" style="{{ pk.style }}">{{ pk.label }}</button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="padding:22px var(--pad) 0">
+                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:5px">挖過的</div>
+                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:11px">{{ digDoneNote }}</div>
+                <div style="display:flex;flex-direction:column;gap:7px">
+                  <sc-for list="{{ digDone }}" as="dd" hint-placeholder-count="3">
+                    <div style="{{ dd.boxStyle }}">
+                      <div style="display:flex;align-items:flex-start;gap:10px">
+                        <span style="{{ dd.tagStyle }}">{{ dd.tag }}</span>
+                        <span style="{{ dd.textStyle }}">{{ dd.text }}</span>
+                      </div>
+                      <div style="{{ dd.metaStyle }}">{{ dd.meta }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="padding:26px var(--pad) 0">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
+                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">斗篷人的日誌</span>
+                  <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ digLogCount }}</span>
+                </div>
+                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px">{{ digLogLeft }}</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:7px">
+                  <sc-for list="{{ digPages }}" as="pg" hint-placeholder-count="24">
+                    <div style="{{ pg.style }}">
+                      <span style="{{ pg.numStyle }}">{{ pg.n }}</span>
+                      <span style="{{ pg.textStyle }}">{{ pg.text }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
           <sc-if value="{{ scColl }}" hint-placeholder-val="{{ false }}">
             <div data-screen-label="S-03 收藏總覽" style="padding:0 0 32px">
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
                   <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                     <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                   </sc-if>
@@ -3035,7 +3109,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 0">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
                   <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-04 · CLASS ROSTER</div>
@@ -4940,13 +5014,14 @@ class Component extends DCLogic {
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Config: { unlockEvery: 1 } };
+             Files: [], Roster: [], MinNames: [], Digs: [], Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
     if (saved) DB = JSON.parse(saved);
   } catch (e) {}
   function persist() { DB._rev = (DB._rev || 0) + 1; try { localStorage.setItem('jlz.mockdb', JSON.stringify(DB)); } catch (e) {} }
 
+  if (!DB.Digs) DB.Digs = [];   /* 舊的 localStorage 沒有這張表 */
   var uid = function () { return Math.random().toString(36).slice(2, 10); };
   var NOW = function () { return new Date().toISOString(); };
   window.MOCK_TODAY = window.MOCK_TODAY || null; /* 可在 console 設 '2026-10-20' 模擬日期 */
@@ -5039,6 +5114,28 @@ class Component extends DCLogic {
     var a = raw;
     if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
     return Array.isArray(a) ? a.map(Number) : [];
+  }
+
+  var DIG_PAGES = 24;
+  function ymd(d) {
+    var x = new Date(d);
+    return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2);
+  }
+  function digPages(teamId) {
+    var out = [];
+    DB.Digs.forEach(function (d) {
+      if (d.teamId !== teamId) return;
+      var n = Number(d.page);
+      if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
+    });
+    return out.sort(function (a, b) { return a - b; });
+  }
+  function digsOf(teamId) {
+    return DB.Digs.filter(function (d) { return d.teamId === teamId; }).map(function (d) {
+      return { id: d.digId, layer: Number(d.layer) || 1, text: d.text || '',
+               estDays: Number(d.estDays) || 0, bet: d.bet || '', result: d.result || '',
+               page: Number(d.page) || 0, openedAt: d.openedAt || '', closedAt: d.closedAt || '' };
+    });
   }
 
   function rosterView(classId) {
@@ -5398,6 +5495,9 @@ class Component extends DCLogic {
       }
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
+        out.digs = digsOf(u.teamId);
+        out.digPages = digPages(u.teamId);
+        out.digTotal = DIG_PAGES;
         var me = teamById(u.teamId);
         if (me) {
           out.myTeam = teamPub(me, w);
@@ -5767,6 +5867,46 @@ class Component extends DCLogic {
         text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: next });
       persist();
       return ok({ checked: next, total: def.checks.length });
+    },
+    apiOpenDig: function (t, layer, text, estDays, bet) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以開試挖。');
+      var txt = String(text || '').trim();
+      if (!txt) return err('先寫一句你要試什麼方向。');
+      if (txt.length > 120) txt = txt.slice(0, 120);
+      var days = Math.max(1, Math.min(60, Math.round(Number(estDays) || 0)));
+      var b = ['yes', 'no', 'unsure'].indexOf(String(bet)) >= 0 ? String(bet) : 'unsure';
+      var open = DB.Digs.filter(function (d) { return d.teamId === u.teamId && !d.result; });
+      if (open.length >= 6) return err('同時最多開六條。先收掉幾條再開。');
+      var id = 'dg' + uid();
+      DB.Digs.push({ digId: id, teamId: u.teamId, classId: u.classId,
+        layer: Math.max(1, Math.min(5, Number(layer) || 1)),
+        text: txt, estDays: days, bet: b, result: '', page: '',
+        openedAt: NOW(), closedAt: '' });
+      persist();
+      return ok({ digId: id });
+    },
+    apiCloseDig: function (t, digId, result) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以收試挖。');
+      var res = ['ok', 'dead', 'none'].indexOf(String(result)) >= 0 ? String(result) : '';
+      if (!res) return err('先說這個方向的結果：成立、塌了，還是沒結論。');
+      var row = DB.Digs.filter(function (d) { return d.digId === digId && d.teamId === u.teamId; })[0];
+      if (!row) return err('找不到這一條試挖。');
+      if (row.result) return err('這一條已經收過了。');
+      var todayKey = ymd(today());
+      var gotToday = DB.Digs.some(function (d) {
+        return d.teamId === u.teamId && Number(d.page) > 0 && d.closedAt && ymd(d.closedAt) === todayKey;
+      });
+      var page = 0;
+      if (!gotToday) {
+        var have = digPages(u.teamId), left = [];
+        for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
+        if (left.length) page = left[Math.floor(Math.random() * left.length)];
+      }
+      row.result = res; row.page = page || ''; row.closedAt = NOW();
+      persist();
+      return ok({ result: res, page: page, pages: digPages(u.teamId), total: DIG_PAGES });
     },
     apiDeleteTask: function (t, taskId) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
@@ -6285,6 +6425,9 @@ class Component extends DCLogic {
       next.tasks = b.tasks || [];
       next.plan = b.plan || {};
       next.passedWeek = b.passedWeek || {};
+      next.digs = b.digs || [];
+      next.digPages = b.digPages || [];
+      next.digTotal = b.digTotal || 24;
       var mt = b.myTeam;
       if (mt) {
         next.currentLayer = mt.layer; next.passed = mt.passed || [];
@@ -7244,6 +7387,7 @@ class Component extends DCLogic {
     decorateLayerPanel(L, v);
     decorateHomeBand(L, v);   /* 首頁的「你在這裡」吃的是同一份 */
     decorateChecklist(L, v);  /* 老師開了清單就逐條勾 */
+    decorateDig(L, v);        /* 試挖與斗篷人的日誌 */
 
 
 
@@ -8865,6 +9009,209 @@ class Component extends DCLogic {
           (hit ? '#E8E2D6' : '#B6AC9C')
       };
     });
+  }
+
+  /* ============================================================
+     試挖。學生自己開一條岔路去試一個方向，不用老師同意。
+
+     專案管理有一半是「提很多方向，大部分行不通」。這一段本來整個
+     不在系統裡——老師給四項、做四項、過關，沒有提案也沒有死路。
+
+     收尾的時候當天第一次會挖到一片斗篷人的日誌。24 片、不重複、
+     一天一片，剛好一個學期。塌掉的方向也留著，那是他們試過的證據。
+     ============================================================ */
+
+  /* 斗篷人的日誌。順序是亂的——一片一片撿，自己拼。 */
+  var DIG_LOG = [
+    '出發第一天。他們說底下有東西，沒有人說有多深。',
+    '我在第一層繞了十天。不是挖不動，是我說不出自己要挖什麼。',
+    '霧裡那個東西不會動。我對它說話，它沒有臉可以回答。',
+    '第二層我待了七週。每採掉一叢，旁邊又亮起兩叢。',
+    '今天我砍掉了三個月的東西。手在抖。',
+    '停手是一個決定，不是放棄。這句話我學了很久。',
+    '第三次了。這一層我還是沒找到。',
+    '我聽到的都是自己的回音。聽久了會以為那是答案。',
+    '我開始記下走不通的路。比記走得通的有用。',
+    '量規給的是量出來的數字。它不會安慰我。',
+    '岩漿在漲。我知道它會漲，但我一直以為還有時間。',
+    '時間不等我挑要先做哪一個。它只是漲。',
+    '我在牆上刻了記號。下一個人看得懂就好。',
+    '最深的地方比我想的安靜。',
+    '冠是空的。我到的時候就已經是空的。',
+    '我在那裡坐了三天，然後決定把它拆了。',
+    '四塊。一塊給一個。',
+    '因為一個人走到底，沒有意義。',
+    '那四個不是我放的守衛。是我把自己遇到的難處留在那裡。',
+    '羅經盤沒有指針——方向不是別人給的。',
+    '燈自己不會亮——它只是把旁邊的光折出來。',
+    '鈴不出聲——安靜的時候才聽得見自己在講什麼。',
+    '印不會熱——有些事再急也不能改。',
+    '這本日誌我也撕開了，散在你會挖到的地方。你撿到這一頁，代表你也在挖。'
+  ];
+
+  var DIG_RESULT = {
+    ok:   { label: '成立',   short: '成立',  hue: '#E9B341' },
+    dead: { label: '塌了',   short: '塌了',  hue: '#D9603F' },
+    none: { label: '沒結論', short: '沒結論', hue: '#8A8073' }
+  };
+  var DIG_BET = { yes: '押會成立', no: '押不會成立', unsure: '不確定' };
+
+  function decorateDig(L, v) {
+    var S = L.state;
+    v.hasDig = false;
+    v.digOpen = []; v.digDone = []; v.digPages = [];
+    v.digDraftText = ''; v.digDraftDays = ''; v.digBetPicks = [];
+    if (S.role !== 'student' || !S.signedIn) return;
+    v.hasDig = true;
+
+    /* 分頁：地圖剖面／收藏總覽／試挖。學生才有第三個。 */
+    var tab = S.mapTab || 'map';
+    v.showDigTab = true;
+    v.mapTabDig = function () { L.setState({ mapTab: 'dig', screen: 'S03' }); };
+    v.mapTabDigStyle = L.pill(tab === 'dig');
+    if (S.screen === 'S03') {
+      v.scDig = tab === 'dig';
+      if (tab === 'dig') { v.scMap = false; v.scColl = false; }
+    } else {
+      v.scDig = false;
+    }
+
+    var all = S.digs || [];
+    var open = all.filter(function (d) { return !d.result; });
+    var done = all.filter(function (d) { return d.result; });
+
+    /* ---- 還開著的 ---- */
+    v.digOpenCount = open.length;
+    v.digOpenNote = open.length
+      ? '你手上有 ' + open.length + ' 條沒收尾。'
+      : '現在沒有開著的坑。想到一個方向就開一條。';
+    v.digOpen = open.map(function (d) {
+      return {
+        text: d.text,
+        meta: 'L' + d.layer + '　估 ' + d.estDays + ' 天　' + (DIG_BET[d.bet] || ''),
+        boxStyle: 'padding:13px 15px;background:rgba(0,0,0,.28);border-left:2px solid #5A4A2C',
+        textStyle: "font:500 22px/1.5 'C11';color:#E8E2D6;text-wrap:pretty",
+        metaStyle: "font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px",
+        picks: ['ok', 'dead', 'none'].map(function (k) {
+          var r = DIG_RESULT[k];
+          return {
+            label: r.label,
+            pick: function () { closeDig(L, d.id, k); },
+            style: "padding:8px 12px;font:500 11px/1 'C11';letter-spacing:.1em;cursor:pointer;" +
+              'background:rgba(0,0,0,.3);border:1px solid ' + r.hue + ';color:' + r.hue
+          };
+        })
+      };
+    });
+
+    /* ---- 收過的 ---- */
+    v.digDone = done.slice().reverse().map(function (d) {
+      var r = DIG_RESULT[d.result] || DIG_RESULT.none;
+      /* 押對了亮，押錯了暗——地圖上看得出你哪裡讀對了地形 */
+      var hit = (d.bet === 'yes' && d.result === 'ok') || (d.bet === 'no' && d.result === 'dead');
+      return {
+        text: d.text,
+        tag: r.short,
+        meta: 'L' + d.layer + '　估 ' + d.estDays + ' 天' + (hit ? '　· 你押對了' : ''),
+        boxStyle: 'padding:11px 13px;background:' + (hit ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.24)') +
+          ';border-left:2px solid ' + (hit ? '#5A4A2C' : '#2E2822'),
+        textStyle: "font:400 22px/1.5 'C11';text-wrap:pretty;color:" + (hit ? '#E8E2D6' : '#9A9184'),
+        tagStyle: "flex:none;font:600 11px/1 'C11';letter-spacing:.1em;padding:5px 8px;" +
+          'background:rgba(0,0,0,.35);border:1px solid ' + r.hue + ';color:' + r.hue,
+        metaStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:5px"
+      };
+    });
+    v.digDoneNote = done.length
+      ? '挖過 ' + done.length + ' 條：' +
+        ['ok', 'dead', 'none'].map(function (k) {
+          return DIG_RESULT[k].short + ' ' + done.filter(function (d) { return d.result === k; }).length;
+        }).join('　') + '。'
+      : '還沒有收過的坑。塌掉的也會留在這裡——那是你試過的證據。';
+
+    /* ---- 斗篷人的日誌 ---- */
+    var got = S.digPages || [];
+    var total = S.digTotal || DIG_LOG.length;
+    v.digLogCount = got.length + ' / ' + total;
+    v.digLogLeft = got.length >= total
+      ? '拼完了。'
+      : '還差 ' + (total - got.length) + ' 片。當天第一次收尾就會挖到一片沒拿過的。';
+    v.digPages = [];
+    for (var n = 1; n <= total; n++) {
+      var have = got.indexOf(n) >= 0;
+      v.digPages.push({
+        n: String(n),
+        text: have ? (DIG_LOG[n - 1] || '') : '',
+        style: 'padding:11px 13px;min-height:60px;background:' +
+          (have ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.3)') +
+          ';border:1px ' + (have ? 'solid #3A3026' : 'dashed #26211C'),
+        numStyle: "font:400 11px/1 'C11';letter-spacing:.14em;color:" + (have ? '#8A8073' : '#332C25'),
+        textStyle: "display:block;font:400 11px/1.7 'C11';margin-top:7px;text-wrap:pretty;color:" +
+          (have ? '#C3BAAA' : 'transparent') +
+          (have ? '' : ';background:repeating-linear-gradient(90deg,rgba(90,80,64,.16) 0 6px,transparent 6px 12px);height:34px')
+      });
+    }
+
+    /* ---- 開一條 ---- */
+    v.digDraftText = S.digText || '';
+    v.setDigText = function (e) { L.setState({ digText: e.target.value }); };
+    v.digDraftDays = S.digDays === undefined ? '' : String(S.digDays);
+    v.setDigDays = function (e) { L.setState({ digDays: e.target.value }); };
+    v.digBetPicks = ['yes', 'no', 'unsure'].map(function (k) {
+      var on = (S.digBet || 'unsure') === k;
+      return {
+        label: DIG_BET[k],
+        pick: function () { L.setState({ digBet: k }); },
+        style: "padding:9px 13px;font:500 11px/1 'C11';letter-spacing:.08em;cursor:pointer;background:" +
+          (on ? 'rgba(233,179,65,.16)' : 'rgba(0,0,0,.3)') + ';border:1px solid ' +
+          (on ? '#E9B341' : '#2E2822') + ';color:' + (on ? '#E9B341' : '#8A8073')
+      };
+    });
+    v.openDig = function () {
+      var st = L.state;
+      var txt = String(st.digText || '').trim();
+      if (!txt) { L.say('先寫一句你要試什麼方向。'); return; }
+      var days = Math.round(Number(st.digDays) || 0);
+      if (!(days >= 1)) { L.say('估一下這個方向要試幾天。'); return; }
+      call('apiOpenDig', LIVE.token, st.currentLayer || 1, txt, days, st.digBet || 'unsure')
+        .then(function (r) {
+          if (!r || !r.ok) { L.say((r && r.error) || '沒有存到伺服器。'); return; }
+          L.setState({ digText: '', digDays: '', digBet: 'unsure' });
+          L.say('挖下去了。試出結果再回來收。');
+          return refresh();
+        })
+        .catch(function () { L.say('沒有存到伺服器。'); });
+    };
+  }
+
+  /* 收一條。挖到日誌就開一頁給他看——那是這個循環的報酬。 */
+  function closeDig(L, digId, result) {
+    call('apiCloseDig', LIVE.token, digId, result)
+      .then(function (r) {
+        if (!r || !r.ok) { L.say((r && r.error) || '沒有存到伺服器。'); return; }
+        var res = DIG_RESULT[result] || DIG_RESULT.none;
+        if (r.page) {
+          showMoment(L, {
+            kind: 'mined', art: 'gem', accent: '#E9B341',
+            kicker: 'A TORN PAGE',
+            title: '你在碎石裡挖到一張紙',
+            lede: '這一條' + res.label + '。清土的時候翻出一頁被撕下來的東西。',
+            rows: [
+              { k: '第幾片', v: r.page + ' / ' + (r.total || 24), hi: true },
+              { k: '你已經有', v: (r.pages || []).length + ' 片' }
+            ],
+            quoteLabel: '上面寫著',
+            quote: DIG_LOG[r.page - 1] || '',
+            lines: (r.pages || []).length >= (r.total || 24)
+              ? ['最後一片。整本拼起來了。']
+              : ['順序是亂的。撿齊了才看得懂他在講什麼。'],
+            btn: '收好', go: function () {}
+          });
+        } else {
+          L.say('這一條記成「' + res.label + '」了。今天的那一片已經挖到過，明天再收一條。');
+        }
+        return refresh();
+      })
+      .catch(function () { L.say('沒有存到伺服器。'); });
   }
 
   function decorateBoard(L, v) {

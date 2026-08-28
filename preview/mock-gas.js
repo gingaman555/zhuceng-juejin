@@ -5,13 +5,14 @@
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Config: { unlockEvery: 1 } };
+             Files: [], Roster: [], MinNames: [], Digs: [], Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
     if (saved) DB = JSON.parse(saved);
   } catch (e) {}
   function persist() { DB._rev = (DB._rev || 0) + 1; try { localStorage.setItem('jlz.mockdb', JSON.stringify(DB)); } catch (e) {} }
 
+  if (!DB.Digs) DB.Digs = [];   /* 舊的 localStorage 沒有這張表 */
   var uid = function () { return Math.random().toString(36).slice(2, 10); };
   var NOW = function () { return new Date().toISOString(); };
   window.MOCK_TODAY = window.MOCK_TODAY || null; /* 可在 console 設 '2026-10-20' 模擬日期 */
@@ -104,6 +105,28 @@
     var a = raw;
     if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
     return Array.isArray(a) ? a.map(Number) : [];
+  }
+
+  var DIG_PAGES = 24;
+  function ymd(d) {
+    var x = new Date(d);
+    return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2);
+  }
+  function digPages(teamId) {
+    var out = [];
+    DB.Digs.forEach(function (d) {
+      if (d.teamId !== teamId) return;
+      var n = Number(d.page);
+      if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
+    });
+    return out.sort(function (a, b) { return a - b; });
+  }
+  function digsOf(teamId) {
+    return DB.Digs.filter(function (d) { return d.teamId === teamId; }).map(function (d) {
+      return { id: d.digId, layer: Number(d.layer) || 1, text: d.text || '',
+               estDays: Number(d.estDays) || 0, bet: d.bet || '', result: d.result || '',
+               page: Number(d.page) || 0, openedAt: d.openedAt || '', closedAt: d.closedAt || '' };
+    });
   }
 
   function rosterView(classId) {
@@ -463,6 +486,9 @@
       }
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
+        out.digs = digsOf(u.teamId);
+        out.digPages = digPages(u.teamId);
+        out.digTotal = DIG_PAGES;
         var me = teamById(u.teamId);
         if (me) {
           out.myTeam = teamPub(me, w);
@@ -832,6 +858,46 @@
         text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: next });
       persist();
       return ok({ checked: next, total: def.checks.length });
+    },
+    apiOpenDig: function (t, layer, text, estDays, bet) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以開試挖。');
+      var txt = String(text || '').trim();
+      if (!txt) return err('先寫一句你要試什麼方向。');
+      if (txt.length > 120) txt = txt.slice(0, 120);
+      var days = Math.max(1, Math.min(60, Math.round(Number(estDays) || 0)));
+      var b = ['yes', 'no', 'unsure'].indexOf(String(bet)) >= 0 ? String(bet) : 'unsure';
+      var open = DB.Digs.filter(function (d) { return d.teamId === u.teamId && !d.result; });
+      if (open.length >= 6) return err('同時最多開六條。先收掉幾條再開。');
+      var id = 'dg' + uid();
+      DB.Digs.push({ digId: id, teamId: u.teamId, classId: u.classId,
+        layer: Math.max(1, Math.min(5, Number(layer) || 1)),
+        text: txt, estDays: days, bet: b, result: '', page: '',
+        openedAt: NOW(), closedAt: '' });
+      persist();
+      return ok({ digId: id });
+    },
+    apiCloseDig: function (t, digId, result) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以收試挖。');
+      var res = ['ok', 'dead', 'none'].indexOf(String(result)) >= 0 ? String(result) : '';
+      if (!res) return err('先說這個方向的結果：成立、塌了，還是沒結論。');
+      var row = DB.Digs.filter(function (d) { return d.digId === digId && d.teamId === u.teamId; })[0];
+      if (!row) return err('找不到這一條試挖。');
+      if (row.result) return err('這一條已經收過了。');
+      var todayKey = ymd(today());
+      var gotToday = DB.Digs.some(function (d) {
+        return d.teamId === u.teamId && Number(d.page) > 0 && d.closedAt && ymd(d.closedAt) === todayKey;
+      });
+      var page = 0;
+      if (!gotToday) {
+        var have = digPages(u.teamId), left = [];
+        for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
+        if (left.length) page = left[Math.floor(Math.random() * left.length)];
+      }
+      row.result = res; row.page = page || ''; row.closedAt = NOW();
+      persist();
+      return ok({ result: res, page: page, pages: digPages(u.teamId), total: DIG_PAGES });
     },
     apiDeleteTask: function (t, taskId) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');

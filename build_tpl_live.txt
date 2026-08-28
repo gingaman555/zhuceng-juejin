@@ -893,7 +893,7 @@
                 <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                     <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
                     <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                       <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                     </sc-if>
@@ -1165,12 +1165,86 @@
             </div>
           </sc-if>
 
+          <sc-if value="{{ scDig }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-09 試挖" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
+                </div>
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-09 · PROBE</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">試挖</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">想到一個方向就開一條岔路去試。不用等老師，也不影響過關。試出來不成立也留著——那是你試過的證據。</p>
+              </div>
+              <div style="margin:20px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #3A3026">
+                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341;margin-bottom:11px">開一條</div>
+                <input value="{{ digDraftText }}" onChange="{{ setDigText }}" placeholder="例：訪談對象改成大一新生" style="width:100%;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.6 'C11';outline:none">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:11px">
+                  <span style="font:400 11px/1 'C11';color:#8A8073">估幾天</span>
+                  <input value="{{ digDraftDays }}" onChange="{{ setDigDays }}" placeholder="3" style="width:74px;padding:9px 11px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1 'C11';outline:none">
+                  <span style="font:400 11px/1 'C11';color:#8A8073;margin-left:6px">你覺得</span>
+                  <sc-for list="{{ digBetPicks }}" as="bp" hint-placeholder-count="3">
+                    <button onClick="{{ bp.pick }}" style="{{ bp.style }}">{{ bp.label }}</button>
+                  </sc-for>
+                </div>
+                <button onClick="{{ openDig }}" style="margin-top:14px;font:500 22px/1 'C11';letter-spacing:.16em;color:#0B0A09;background:#E9B341;border:none;padding:13px 22px;cursor:pointer;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)">挖下去</button>
+              </div>
+              <div style="padding:20px var(--pad) 0">
+                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:5px">還開著的</div>
+                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:11px">{{ digOpenNote }}</div>
+                <div style="display:flex;flex-direction:column;gap:9px">
+                  <sc-for list="{{ digOpen }}" as="dg" hint-placeholder-count="2">
+                    <div style="{{ dg.boxStyle }}">
+                      <div style="{{ dg.textStyle }}">{{ dg.text }}</div>
+                      <div style="{{ dg.metaStyle }}">{{ dg.meta }}</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:10px">
+                        <sc-for list="{{ dg.picks }}" as="pk" hint-placeholder-count="3">
+                          <button onClick="{{ pk.pick }}" style="{{ pk.style }}">{{ pk.label }}</button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="padding:22px var(--pad) 0">
+                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:5px">挖過的</div>
+                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:11px">{{ digDoneNote }}</div>
+                <div style="display:flex;flex-direction:column;gap:7px">
+                  <sc-for list="{{ digDone }}" as="dd" hint-placeholder-count="3">
+                    <div style="{{ dd.boxStyle }}">
+                      <div style="display:flex;align-items:flex-start;gap:10px">
+                        <span style="{{ dd.tagStyle }}">{{ dd.tag }}</span>
+                        <span style="{{ dd.textStyle }}">{{ dd.text }}</span>
+                      </div>
+                      <div style="{{ dd.metaStyle }}">{{ dd.meta }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="padding:26px var(--pad) 0">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
+                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">斗篷人的日誌</span>
+                  <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ digLogCount }}</span>
+                </div>
+                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px">{{ digLogLeft }}</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:7px">
+                  <sc-for list="{{ digPages }}" as="pg" hint-placeholder-count="24">
+                    <div style="{{ pg.style }}">
+                      <span style="{{ pg.numStyle }}">{{ pg.n }}</span>
+                      <span style="{{ pg.textStyle }}">{{ pg.text }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
           <sc-if value="{{ scColl }}" hint-placeholder-val="{{ false }}">
             <div data-screen-label="S-03 收藏總覽" style="padding:0 0 32px">
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
                   <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                     <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                   </sc-if>
@@ -2934,7 +3008,7 @@
               <div style="padding:22px var(--pad) 0">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
                   <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-04 · CLASS ROSTER</div>
