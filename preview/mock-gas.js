@@ -227,10 +227,11 @@
     var layers = tm ? (tm.passed || []).filter(function (n) {
       return Number(n) >= 1 && Number(n) <= 4;
     }).length : 0;
+    /* 全部是十的倍數 —— 比例跟原本一樣，只是不讓畫面上出現個位數。 */
     return { ticks: ticks, pages: pages, vows: vows, finds: finds, layers: layers,
-             base: ticks + (pages + vows) * 10 + finds,
-             bonus: vows * 20 + layers * 100,
-             total: ticks + pages * 10 + vows * 30 + finds + layers * 100 };
+             base: ticks * 10 + (pages + vows) * 100 + finds * 10,
+             bonus: vows * 200 + layers * 1000,
+             total: ticks * 10 + pages * 100 + vows * 300 + finds * 10 + layers * 1000 };
   }
   function firstsOf(classId) {
     var teams = {};
