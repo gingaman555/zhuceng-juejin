@@ -1295,14 +1295,11 @@ function apiBootstrap(token) {
       var me = teamById_(u.teamId);
       out.myTeamId = u.teamId || '';
       out.record = recordOf_(u.teamId, u.classId);
-      out.digs = digsOf_(u.teamId);
       /* 收藏是個人的：跨班、跨組、跨專案累積 */
       out.finds = findsOfUser_(u.userId);
       out.codex = codexOfUser_(u.userId);
       out.findsTotal = FINDS_N;
-      out.digPages = digPagesOfUser_(u.userId);
       out.clears = clearsOfUser_(u.userId);
-      out.digTotal = DIG_PAGES;
       if (me) {
         var mp = teamPub_(me, courseWeek);
         var fMine = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(me.teamId); })[0];
@@ -1940,39 +1937,6 @@ function recordOf_(teamId, classId) {
    一個學生換班、換組、換專案，圖鑑跟坑屑都還是他的。
    Roster.claimedBy 記著誰認領了哪一組的哪一個身分，用它把使用者
    待過的每一組串起來。 */
-/** 這一組現在有哪些人 */
-function usersOfTeam_(teamId) {
-  var out = [];
-  readTable_('Roster').forEach(function (r) {
-    if (String(r.teamId) !== String(teamId)) return;
-    var c = String(r.claimedBy || '');
-    if (c && out.indexOf(c) < 0) out.push(c);
-  });
-  return out;
-}
-
-/** 這個人撿到的日誌，跨專案累積。TeamTasks 與 Digs 兩個來源都算。 */
-function digPagesOfUser_(userId) {
-  var mine = teamsOfUser_(userId), out = [];
-  if (!mine.length) return out;
-  var take = function (v) {
-    var n = Number(v);
-    if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
-  };
-  readTable_('TeamTasks').forEach(function (r) { if (mine.indexOf(String(r.teamId)) >= 0) take(r.page); });
-  readTable_('Digs').forEach(function (d) { if (mine.indexOf(String(d.teamId)) >= 0) take(d.page); });
-  return out.sort(function (a, b) { return a - b; });
-}
-
-/** 抽新的一片時要排除的：這一組自己的，加上組員各自帶過來的。 */
-function digPagesSeenBy_(teamId) {
-  var out = digPages_(teamId).slice();
-  usersOfTeam_(teamId).forEach(function (uid) {
-    digPagesOfUser_(uid).forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
-  });
-  return out.sort(function (a, b) { return a - b; });
-}
-
 /**
  * 這個人每一區走完過幾次，跨專案累加。
  * 守關的那四隻不換——換的是牠站的地方留下的東西，這個數字決定給第幾件。
@@ -2270,157 +2234,10 @@ function apiSetCheck(token, taskId, idx, on) {
    當天第一次收尾會挖到一片斗篷人的日誌。一天一片、不重複、共 24 片，
    剛好是一個學期的長度。刷不完也刷不快，而且進度只會往前。 */
 
-var DIG_PAGES = 24;
-
 /** 只比日期，不比時間；照腳本時區算，不然台北的今天會差一天。 */
 function ymd_(d) {
   var tz = Session.getScriptTimeZone() || 'Asia/Taipei';
   return Utilities.formatDate(d, tz, 'yyyy-MM-dd');
-}
-
-/** 這一組已經挖到哪幾片 */
-/** 這一組挖到哪幾片日誌。過關時給，一天最多一片。 */
-function digPages_(teamId) {
-  var out = [];
-  readTable_('TeamTasks').forEach(function (r) {
-    if (String(r.teamId) !== String(teamId)) return;
-    var n = Number(r.page);
-    if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
-  });
-  return out.sort(function (a, b) { return a - b; });
-}
-
-/** 過關時抽一片還沒拿過的。今天已經拿過就不給——一天一片，
-    不然一次判五項就掉五片，那本日誌兩天就翻完了。 */
-function rollPage_(teamId) {
-  var today = ymd_(new Date());
-  var gotToday = readTable_('TeamTasks').some(function (r) {
-    return String(r.teamId) === String(teamId) && Number(r.page) > 0 &&
-           r.pageAt && ymd_(new Date(r.pageAt)) === today;
-  });
-  if (gotToday) return 0;
-  var have = digPagesSeenBy_(teamId), left = [];
-  for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
-  return left.length ? left[Math.floor(Math.random() * left.length)] : 0;
-}
-
-function digsOf_(teamId) {
-  return readTable_('Digs')
-    .filter(function (d) { return String(d.teamId) === String(teamId); })
-    .map(function (d) {
-      return { id: d.digId, layer: Number(d.layer) || 1, text: d.text || '',
-               estDays: Number(d.estDays) || 0, bet: d.bet || '',
-               result: d.result || '', page: Number(d.page) || 0,
-               openedAt: d.openedAt ? String(d.openedAt) : '',
-               closedAt: d.closedAt ? String(d.closedAt) : '' };
-    });
-}
-
-/** 開一條。方向要寫、估幾天要給、押不押隨意。 */
-/* ---- 坑屑 ----
-   24 種，12 常見／8 少見／4 罕見。全部零分，稀有度只影響機率。
-   罕見那四件都是人造物 —— 跟寶物同一條線，指向斗篷人。 */
-var FINDS_N = 24;
-var FIND_WEIGHT = [];   /* 展開成加權池，抽的時候直接取一個 */
-(function () {
-  var i;
-  for (i = 1; i <= 12; i++) { var k; for (k = 0; k < 6; k++) FIND_WEIGHT.push(i); }   /* 常見 */
-  for (i = 13; i <= 20; i++) { var k2; for (k2 = 0; k2 < 3; k2++) FIND_WEIGHT.push(i); } /* 少見 */
-  for (i = 21; i <= 24; i++) FIND_WEIGHT.push(i);                                     /* 罕見 */
-})();
-
-function rollFind_() {
-  return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)];
-}
-
-/** 有多做的時候用這一支：稀有的機率高一倍。
-    注意它給的是「更多次機會」，不是「更值錢的東西」——
-    每一件坑屑的價值完全一樣，那一條不能破。 */
-function rollFindGood_() {
-  var a = rollFind_(), b = rollFind_();
-  return b > a ? b : a;   /* 編號越大越稀有，取兩次裡好的那一次 */
-}
-
-/** 這一組撿到的坑屑：編號 -> 幾件 */
-/** 撿到的坑屑：編號 -> 幾件。過關時掉，一項一件。 */
-function findsOf_(teamId) {
-  var out = {};
-  readTable_('TeamTasks').forEach(function (r) {
-    if (String(r.teamId) !== String(teamId)) return;
-    [r.find, r.find2].forEach(function (x) {
-      var n = Number(x);
-      if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
-    });
-  });
-  return out;
-}
-
-function apiOpenDig(token, layer, text, estDays, bet) {
-  try {
-    var u = auth_(token);
-    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以開試挖。');
-    var txt = String(text || '').trim();
-    if (!txt) return err_('先寫一句你要試什麼方向。');
-    if (txt.length > 120) txt = txt.slice(0, 120);
-    var days = Math.max(1, Math.min(60, Math.round(Number(estDays) || 0)));
-    if (!days) return err_('估一下這個方向要試幾天。');
-    var b = ['yes', 'no', 'unsure'].indexOf(String(bet)) >= 0 ? String(bet) : 'unsure';
-
-    var open = readTable_('Digs').filter(function (d) {
-      return String(d.teamId) === String(u.teamId) && !String(d.result || '');
-    });
-    if (open.length >= 6) return err_('同時最多開六條。先收掉幾條再開。');
-
-    var id = 'dg' + Utilities.getUuid().slice(0, 8);
-    appendRow_('Digs', {
-      digId: id, teamId: u.teamId, classId: u.classId,
-      layer: Math.max(1, Math.min(4, Number(layer) || 1)),
-      text: txt, estDays: days, bet: b, result: '', page: '',
-      openedAt: new Date(), closedAt: ''
-    });
-    return ok_({ digId: id });
-  } catch (e) { return err_(e); }
-}
-
-/** 收尾。當天第一次收尾就挖到一片還沒拿過的日誌。 */
-function apiCloseDig(token, digId, result) {
-  var lock = LockService.getScriptLock();
-  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
-  try {
-    var u = auth_(token);
-    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以收試挖。');
-    var res = ['ok', 'dead', 'none'].indexOf(String(result)) >= 0 ? String(result) : '';
-    if (!res) return err_('先說這個方向的結果：成立、塌了，還是沒結論。');
-
-    var rows = readTable_('Digs');
-    var row = null;
-    for (var i = 0; i < rows.length; i++) {
-      if (String(rows[i].digId) === String(digId) && String(rows[i].teamId) === String(u.teamId)) row = rows[i];
-    }
-    if (!row) return err_('找不到這一條試挖。');
-    if (String(row.result || '')) return err_('這一條已經收過了。');
-
-    /* 今天收過了沒？一天一片，不然二十分鐘就刷完了 */
-    var today = ymd_(new Date());
-    var gotToday = rows.some(function (d) {
-      return String(d.teamId) === String(u.teamId) && Number(d.page) > 0 &&
-             d.closedAt && ymd_(new Date(d.closedAt)) === today;
-    });
-
-    var page = 0;
-    if (!gotToday) {
-      var have = digPagesSeenBy_(u.teamId), left = [];
-      for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
-      if (left.length) page = left[Math.floor(Math.random() * left.length)];
-    }
-
-    upsert_('Digs', ['digId'], {
-      digId: row.digId, teamId: row.teamId, classId: row.classId, layer: row.layer,
-      text: row.text, estDays: row.estDays, bet: row.bet,
-      result: res, page: page || '', openedAt: row.openedAt, closedAt: new Date()
-    });
-    return ok_({ result: res, page: page, pages: digPagesOfUser_(u.userId), total: DIG_PAGES });
-  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 
 function apiSaveTask(token, classId, task) {
@@ -2573,16 +2390,15 @@ function apiReviewItem(token, teamId, taskId, result, reason) {
       find = extra ? rollFindGood_() : rollFind_();
       if (extra) find2 = rollFindGood_();
     } else if (prev) { find = prev.find; find2 = prev.find2 || ''; }
-    var page = (pass && !(prev && Number(prev.page))) ? rollPage_(teamId) : (prev ? prev.page : '');
 
     upsert_('TeamTasks', ['teamId', 'taskId'], {
       teamId: teamId, taskId: taskId,
       status: pass ? 'passed' : 'needs_more',
       fb: txt || (pass ? '（未附理由）' : ''), fbType: pass ? 'pass' : 'more',
-      find: find || '', find2: find2 || '', page: page || '', pageAt: page ? new Date() : (prev ? prev.pageAt : ''),
+      find: find || '', find2: find2 || '',
       passedWeek: pass ? courseWeek : '', updatedAt: new Date()
     });
-    return ok_({ find: pass ? find : 0, find2: pass ? find2 : 0, page: pass ? page : 0, extra: extra });
+    return ok_({ find: pass ? find : 0, find2: pass ? find2 : 0, extra: extra });
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 

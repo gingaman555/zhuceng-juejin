@@ -1461,21 +1461,7 @@ window.JLZ_SPRITES = {
                   </div>
                 </div>
               </sc-if>
-<div style="padding:26px var(--pad) 0">
-                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
-                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">斗篷人的日誌</span>
-                  <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ digLogCount }}</span>
-                </div>
-                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px">{{ digLogLeft }}</div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:7px">
-                  <sc-for list="{{ digPages }}" as="pg" hint-placeholder-count="24">
-                    <div style="{{ pg.style }}">
-                      <span style="{{ pg.numStyle }}">{{ pg.n }}</span>
-                      <span style="{{ pg.textStyle }}">{{ pg.text }}</span>
-                    </div>
-                  </sc-for>
-                </div>
-              </div>
+
             </div>
 </div>
           </sc-if>
@@ -3185,7 +3171,7 @@ window.JLZ_SPRITES = {
             </div>
             <div style="width:150px;padding:20px 16px;background:#14110E;border:1px solid #2E2822;clip-path:polygon(13px 0,100% 0,100% calc(100% - 13px),calc(100% - 13px) 100%,0 100%,0 13px)">
               <div style="width:46px;height:46px;margin:0 auto;background:linear-gradient(140deg,#C3BAAA,#4A443C);border-radius:50%"></div>
-              <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-top:14px">寶物</div>
+              <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-top:14px">守關掉落</div>
               <div style="font:700 22px/1.4 'C11';margin-top:6px;color:#F2EADA">{{ rewardTreasure }}</div>
             </div>
           </div>
@@ -5224,38 +5210,6 @@ class Component extends DCLogic {
   function rollFindGood() { var a = rollFind(), b = rollFind(); return b > a ? b : a; }
   /* 收藏是個人的：跨班、跨組、跨專案累積。Roster.claimedBy 把使用者
      連到他待過的每一組。 */
-  function usersOfTeam(teamId) {
-    var out = [];
-    DB.Roster.forEach(function (r) {
-      if (String(r.teamId) !== String(teamId)) return;
-      var c = String(r.claimedBy || '');
-      if (c && out.indexOf(c) < 0) out.push(c);
-    });
-    return out;
-  }
-
-  /* 這個人撿到的日誌，跨專案累積 */
-  function digPagesOfUser(userId) {
-    var mine = teamsOfUser(userId), out = [];
-    if (!mine.length) return out;
-    var take = function (v) {
-      var n = Number(v);
-      if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
-    };
-    DB.TeamTasks.forEach(function (r) { if (mine.indexOf(String(r.teamId)) >= 0) take(r.page); });
-    (DB.Digs || []).forEach(function (d) { if (mine.indexOf(String(d.teamId)) >= 0) take(d.page); });
-    return out.sort(function (a, b) { return a - b; });
-  }
-
-  /* 抽新的一片時要排除的：這一組的，加上組員各自帶過來的 */
-  function digPagesSeenBy(teamId) {
-    var out = digPages(teamId).slice();
-    usersOfTeam(teamId).forEach(function (uid) {
-      digPagesOfUser(uid).forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
-    });
-    return out.sort(function (a, b) { return a - b; });
-  }
-
   /* 這個人每一區走完過幾次，跨專案累加 */
   function clearsOfUser(userId) {
     var mine = teamsOfUser(userId), out = [0, 0, 0, 0];
@@ -5307,38 +5261,10 @@ class Component extends DCLogic {
     return out;
   }
 
-  var DIG_PAGES = 24;
   function ymd(d) {
     var x = new Date(d);
     return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2);
   }
-  function digPages(teamId) {
-    var out = [];
-    DB.TeamTasks.forEach(function (r) {
-      if (r.teamId !== teamId) return;
-      var n = Number(r.page);
-      if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
-    });
-    return out.sort(function (a, b) { return a - b; });
-  }
-  function rollPage(teamId) {
-    var todayKey = ymd(today());
-    var gotToday = DB.TeamTasks.some(function (r) {
-      return r.teamId === teamId && Number(r.page) > 0 && r.pageAt && ymd(r.pageAt) === todayKey;
-    });
-    if (gotToday) return 0;
-    var have = digPagesSeenBy(teamId), left = [];
-    for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
-    return left.length ? left[Math.floor(Math.random() * left.length)] : 0;
-  }
-  function digsOf(teamId) {
-    return DB.Digs.filter(function (d) { return d.teamId === teamId; }).map(function (d) {
-      return { id: d.digId, layer: Number(d.layer) || 1, text: d.text || '',
-               estDays: Number(d.estDays) || 0, bet: d.bet || '', result: d.result || '',
-               page: Number(d.page) || 0, openedAt: d.openedAt || '', closedAt: d.closedAt || '' };
-    });
-  }
-
   function rosterView(classId) {
     var claimedName = {};
     DB.Users.forEach(function (u) { claimedName[u.userId] = u.name + '（' + u.account + '）'; });
@@ -5703,13 +5629,10 @@ class Component extends DCLogic {
           if (p.reason) out.layerSaid[into] = String(p.reason);
         });
         out.record = recordOf(u.teamId, u.classId);
-        out.digs = digsOf(u.teamId);
         out.finds = findsOf(u.userId);
         out.codex = codexOfUser(u.userId);
         out.findsTotal = FINDS_N;
-        out.digPages = digPagesOfUser(u.userId);
         out.clears = clearsOfUser(u.userId);
-        out.digTotal = DIG_PAGES;
         var me = teamById(u.teamId);
         if (me) {
           out.myTeam = teamPub(me, w);
@@ -6139,46 +6062,6 @@ class Component extends DCLogic {
       });
       return ok({ roster: out, claims: claims });
     },
-    apiOpenDig: function (t, layer, text, estDays, bet) {
-      var u = auth(t);
-      if (u.role !== 'student' || !u.teamId) return err('只有學生可以開試挖。');
-      var txt = String(text || '').trim();
-      if (!txt) return err('先寫一句你要試什麼方向。');
-      if (txt.length > 120) txt = txt.slice(0, 120);
-      var days = Math.max(1, Math.min(60, Math.round(Number(estDays) || 0)));
-      var b = ['yes', 'no', 'unsure'].indexOf(String(bet)) >= 0 ? String(bet) : 'unsure';
-      var open = DB.Digs.filter(function (d) { return d.teamId === u.teamId && !d.result; });
-      if (open.length >= 6) return err('同時最多開六條。先收掉幾條再開。');
-      var id = 'dg' + uid();
-      DB.Digs.push({ digId: id, teamId: u.teamId, classId: u.classId,
-        layer: Math.max(1, Math.min(4, Number(layer) || 1)),
-        text: txt, estDays: days, bet: b, result: '', page: '',
-        openedAt: NOW(), closedAt: '' });
-      persist();
-      return ok({ digId: id });
-    },
-    apiCloseDig: function (t, digId, result) {
-      var u = auth(t);
-      if (u.role !== 'student' || !u.teamId) return err('只有學生可以收試挖。');
-      var res = ['ok', 'dead', 'none'].indexOf(String(result)) >= 0 ? String(result) : '';
-      if (!res) return err('先說這個方向的結果：成立、塌了，還是沒結論。');
-      var row = DB.Digs.filter(function (d) { return d.digId === digId && d.teamId === u.teamId; })[0];
-      if (!row) return err('找不到這一條試挖。');
-      if (row.result) return err('這一條已經收過了。');
-      var todayKey = ymd(today());
-      var gotToday = DB.Digs.some(function (d) {
-        return d.teamId === u.teamId && Number(d.page) > 0 && d.closedAt && ymd(d.closedAt) === todayKey;
-      });
-      var page = 0;
-      if (!gotToday) {
-        var have = digPagesSeenBy(u.teamId), left = [];
-        for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
-        if (left.length) page = left[Math.floor(Math.random() * left.length)];
-      }
-      row.result = res; row.page = page || ''; row.closedAt = NOW();
-      persist();
-      return ok({ result: res, page: page, pages: digPagesOfUser(u.userId), total: DIG_PAGES });
-    },
     apiDeleteTask: function (t, taskId) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
@@ -6244,10 +6127,9 @@ class Component extends DCLogic {
           m.find = find;
           if (extra) m.find2 = rollFindGood();
         } else if (pass) find = Number(m.find);
-        if (pass && !Number(m.page)) { var pg = rollPage(teamId); if (pg) { m.page = pg; m.pageAt = NOW(); } }
       }
       persist();
-      return ok({ find: find, find2: (m && Number(m.find2)) || 0, page: (m && Number(m.page)) || 0 });
+      return ok({ find: find, find2: (m && Number(m.find2)) || 0 });
     },
     apiReviewGate: function (t, teamId, pass, toolLevel, reason) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
@@ -6633,20 +6515,16 @@ class Component extends DCLogic {
         });
       }
       var n = S.storyLayer || 1;
-      /* 開頭那三頁沒講「路上有東西擋」跟「礦石可以換武器」——補在斗篷人之後 */
+      /* 原型那三頁沒說白他是誰——補一頁直說 */
       if (n === 1) {
         return ORIG.storyPages.call(this).concat([
-          { art: 'beast', k: '第一層 · 微光荒原', t: '而且路上不是空的',
-            b: '你接下的每一項任務，都有一隻東西擋在它前面。牠不追你、也不咬人，就只是站在那裡。' +
+          { art: 'trade', k: '第一層 · 微光荒原', t: '說白了：這底下是一個專案',
+            b: '那個穿斗篷的人就是帶你們做完這個專案的人。他不是謎。' +
                String.fromCharCode(10) + String.fromCharCode(10) +
-               '牠會擋到那一項被認可為止。認可了，牠讓開，並且在原地留下一件東西——那件是隨機的，每一件都一樣重，純粹是給你收的。' },
-          { art: 'trade', k: '第一層 · 微光荒原', t: '往下一層，要他點頭',
-            b: '斗篷人不會給你路線。他給的是任務，還有「做到什麼程度算完成」。' +
+               '他一項一項給你任務，說清楚做到什麼程度算完成；你交出去之後，他會寫下他判過或判不過的理由。那段字是這裡最重要的東西。' +
                String.fromCharCode(10) + String.fromCharCode(10) +
-               '覺得這一層告一段落了就去找他，跟他說你走過哪裡、你們變成什麼樣子、接下來要做什麼。他覺得可以往下了，就點頭。' +
-               String.fromCharCode(10) + String.fromCharCode(10) +
-               '那一層的道具會在這時候到你手上，層底那一隻退開——牠站的地方還留著一件東西，只有走到這一步才拿得到。',
-            q: '所以順序是：一項一項做 → 他一項一項認可 → 這一層你說夠了 → 他點頭 → 往下。' }
+               '路上會有東西擋著、會撿到一些沒有用處的小東西、會跟別組比分數。那些是這趟路的樣子。你真正在做的事只有一件：把一個專案做完。',
+            q: '一項一項做 → 他一項一項認可 → 這一層你說夠了 → 他點頭 → 往下。四個領域走完，就是做完了。' }
         ]);
       }
       if (n === 2) return ORIG.storyPages.call(this);   /* 第二層原型自己有 */
@@ -6731,8 +6609,6 @@ class Component extends DCLogic {
       next.layerSaid = b.layerSaid || {};
       next.digs = b.digs || [];
       next.finds = b.finds || {};
-      next.digPages = b.digPages || [];
-      next.digTotal = b.digTotal || 24;
       next.clears = b.clears || [];   /* 每一區走完過幾次，跨專案累加 */
       /* 老師在我們沒看的時候動過了——把變化演出來 */
       (function () {
@@ -7020,7 +6896,7 @@ class Component extends DCLogic {
     if (v.navItems) {
       v.navItems = v.navItems.filter(function (n) { return n.code !== '甘特'; });
     }
-    /* 走完第五層之後，側欄多一項期末回顧 */
+    /* 四個領域都走完之後，側欄多一項期末回顧 */
     if (S.role === 'student' && v.navItems) {
       var fin5 = (S.passed || []).indexOf(4) >= 0 && !!S.finOpened;
       var waitOpen = (S.passed || []).indexOf(4) >= 0 && !S.finOpened;
@@ -7029,7 +6905,7 @@ class Component extends DCLogic {
           code: fin5 ? '結局' : '？？', label: fin5 ? '期末回顧' : '？？？', short: fin5 ? '回顧' : '？？',
           go: function () {
             if (!fin5) {
-              L.say(waitOpen ? '五層都過了。等他放行，這裡才會打開。' : '還沒到。走完第五層，這裡才會打開。');
+              L.say(waitOpen ? '四個領域都走完了。等他放行，這裡才會打開。' : '還沒到。四個領域都走完，這裡才會打開。');
               return;
             }
             L.setState({ screen: 'FINALE' });
@@ -7166,11 +7042,11 @@ class Component extends DCLogic {
     if ((L.LAYERS || []).length > 4) L.LAYERS = L.LAYERS.slice(0, 4);
     /* 結局的那段話。原型的 EXTRA[0] 是空冠，連同第五層一起沒了。 */
     L.EXTRA = [{
-      name: '你帶回來的那本', from: '四個領域都走完之後',
-      look: '沒有冠，也沒有箱子。走到底的時候手上只有一本圖鑑：你認得的每一隻、你撿到的每一塊。',
-      trait: '它不會因為專案結束而清空。下一次下來，它還在你手上。',
-      line: '「底下是空的。我第一次到的時候就發現了。」　「但我不是空手回去的——我帶著那一本上去。所以我又下來了一次，第二次比第一次深。」',
-      notice: '他比你們早來過一次。路上擋著的每一隻，都是他自己卡住過的地方；撿得到的那些人造物，是他掉的。他不給路線，因為他的路線不是你的路線。'
+      name: '一個做完的專案', from: '四個領域都走完之後',
+      look: '沒有寶藏。走到底的時候，手上有的是一個從頭做到尾的專案，還有一本跟著你走的圖鑑。',
+      trait: '圖鑑不會因為專案結束而清空。下一次下來，它還在你手上。',
+      line: '「做完了。」　「下一個專案，還是一樣從不知道要挖哪裡開始。」',
+      notice: '他從第一頁就說了他是誰：帶你做完一個專案的人。這裡沒有要揭曉的東西。'
     }];
     if ((L.MINS || []).length) L.MINS = L.MINS.filter(function (m) { return m.L <= 4; });
     retellLayers(L);
@@ -7767,12 +7643,18 @@ class Component extends DCLogic {
       };
     }
 
+    /* 過關那張卡：原型寫死的說法還在講工具校準，而且說寶物是他遞給你的。
+       兩件事都不對了——校準整套拿掉，守關掉落是那一隻退開之後留在原地的。 */
+    v.rewardCopy = '他准了。這一層的礦石鑄成了它——擋在層底的那一隻退開了。' +
+      String.fromCharCode(10) + String.fromCharCode(10) +
+      '牠站的地方還留著一件東西。那件只有走到這一層的盡頭才拿得到。';
+
     /* 發道具動畫關閉後進新一層的故事頁 */
     v.closeReward = function () {
       var st = L.state;
       var lay = st.currentLayer;
-      /* 第五層過了＝整套走完，直接進期末回顧（結局在那一頁） */
-      if ((st.passed || []).indexOf(5) >= 0) {
+      /* 第四個領域過了＝整套走完，直接進期末回顧（結局在那一頁） */
+      if ((st.passed || []).indexOf(4) >= 0) {
         L.setState({ reward: null, screen: 'FINALE', finData: null });
         return;
       }
@@ -7792,7 +7674,6 @@ class Component extends DCLogic {
     decorateChecklist(L, v);  /* 老師開了清單就逐條勾 */
     decorateVow(L, v);        /* 這一項要拿哪一樣破法 */
     decorateGamble(L, v);     /* 勾完之後，送出前的那一下 */
-    decorateDig(L, v);        /* 試挖與斗篷人的日誌 */
     decorateFinds(L, v);      /* 坑屑：隨機、零分、純收集 */
     decorateBestiary(L, v);   /* 圖鑑：打贏過誰、怎麼贏的 */
     decorateHaul(L, v);       /* 採量：全班的分數 */
@@ -9548,125 +9429,6 @@ class Component extends DCLogic {
   }
 
   /* ============================================================
-     試挖。學生自己開一條岔路去試一個方向，不用老師同意。
-
-     專案管理有一半是「提很多方向，大部分行不通」。這一段本來整個
-     不在系統裡——老師給四項、做四項、過關，沒有提案也沒有死路。
-
-     收尾的時候當天第一次會挖到一片斗篷人的日誌。24 片、不重複、
-     一天一片，剛好一個學期。塌掉的方向也留著，那是他們試過的證據。
-     ============================================================ */
-
-  /* 斗篷人的日誌。順序是亂的——一片一片撿，自己拼。 */
-  var DIG_LOG = [
-    '出發第一天。他們說底下有東西，沒有人說有多深。',
-    '我在第一層繞了十天。不是挖不動，是我說不出自己要挖什麼。',
-    '霧裡那個東西不會動。我對它說話，它沒有臉可以回答。',
-    '第二層我待了七週。每採掉一叢，旁邊又亮起兩叢。',
-    '今天我砍掉了三個月的東西。手在抖。',
-    '停手是一個決定，不是放棄。這句話我學了很久。',
-    '第三層我照著牆上的箭頭走。走了四天才發現箭頭是錯的。',
-    '我聽到的都是自己的回音。聽久了會以為那是答案。',
-    '我開始記下走不通的路。比記走得通的有用。',
-    '量規給的是量出來的數字。它不會安慰我。',
-    '岩漿在漲。我知道它會漲，但我一直以為還有時間。',
-    '時間不等我挑要先做哪一個。它只是漲。',
-    '我在牆上刻了記號。下一個人看得懂就好。',
-    '最深的地方比我想的安靜。',
-    '底下是空的。我到的時候就已經是空的。',
-    '我在那裡坐了三天，然後決定往回走。',
-    '回程我留下四樣東西。一層一件。',
-    '因為一個人走到底，沒有意義。',
-    '路上擋著的那些不是我放的守衛。是我卡住過的地方，一個一個留在那裡。',
-    '羅經盤沒有指針——方向不是別人給的。',
-    '燈自己不會亮——它只是把旁邊的光折出來。',
-    '鈴不出聲——安靜的時候才聽得見自己在講什麼。',
-    '印不會熱——有些事再急也不能改。',
-    '這本日誌我也撕開了，散在你會挖到的地方。你撿到這一頁，代表你也在挖。'
-  ];
-
-  var DIG_RESULT = {
-    ok:   { label: '成立',   short: '成立',  hue: '#E9B341' },
-    dead: { label: '塌了',   short: '塌了',  hue: '#D9603F' },
-    none: { label: '沒結論', short: '沒結論', hue: '#8A8073' }
-  };
-  var DIG_BET = { yes: '押會成立', no: '押不會成立', unsure: '不確定' };
-
-  /* ============================================================
-     校準：試挖唯一的回報。
-
-     試挖不給分——給分就變成刷的。它給的是兩個你自己看的數字：
-       押中率  你說會成立的，有幾條真的成立
-       估時    你估三天的事，從開到收實際花了幾天
-
-     這兩件事就是專案管理在練的東西，而且完全不需要老師。
-     樣本太少不給數字——n=1 顯示 100% 比不顯示還糟。 */
-  var CALIB_MIN = 3;
-
-  function digCalib(all) {
-    var bet = 0, hit = 0, est = 0, estSum = 0, actSum = 0, over = 0;
-    (all || []).forEach(function (d) {
-      if (!d.result) return;
-      /* 押中率：只算真的押了的。沒結論的不算對也不算錯。 */
-      if ((d.bet === 'yes' || d.bet === 'no') && d.result !== 'none') {
-        bet++;
-        if ((d.bet === 'yes' && d.result === 'ok') ||
-            (d.bet === 'no' && d.result === 'dead')) hit++;
-      }
-      /* 估時：量的是「從開到收」，不是做了幾天。」收得晚」本身就是資料。 */
-      if (d.estDays && d.openedAt && d.closedAt) {
-        var a = (new Date(d.closedAt) - new Date(d.openedAt)) / 86400000;
-        if (a >= 0) { est++; estSum += Number(d.estDays); actSum += a; if (a > d.estDays) over++; }
-      }
-    });
-    return { bet: bet, hit: hit, est: est, estSum: estSum, actSum: actSum, over: over };
-  }
-
-  function gauge(head, sub, frac, hue, live) {
-    return {
-      head: head, sub: sub,
-      headStyle: "font:400 22px/1.5 'C11';color:" + (live ? '#E8E2D6' : '#6E665A') + ';text-wrap:pretty',
-      barStyle: 'margin-top:9px;height:5px;background:rgba(0,0,0,.4);border:1px solid #2E2822',
-      fillStyle: 'height:100%;width:' + Math.round(Math.max(0, Math.min(1, frac)) * 100) + '%;' +
-        'background:' + (live ? hue : '#2E2822'),
-      subStyle: "font:400 11px/1.7 'C11';color:#6E665A;margin-top:7px;text-wrap:pretty"
-    };
-  }
-
-  function decorateCalib(v, all) {
-    var c = digCalib(all), g = [];
-
-    if (c.bet >= CALIB_MIN) {
-      g.push(gauge(
-        '押了 ' + c.bet + ' 次，中了 ' + c.hit + ' 次。',
-        '「不確定」的沒有算進去。',
-        c.hit / c.bet, '#E9B341', true));
-    } else {
-      g.push(gauge(
-        '押過 ' + c.bet + ' 次。',
-        '再 ' + (CALIB_MIN - c.bet) + ' 次就看得出準度了。太少的時候算出來的比例沒有意義。',
-        0, '#E9B341', false));
-    }
-
-    if (c.est >= CALIB_MIN) {
-      var e = c.estSum / c.est, a = c.actSum / c.est;
-      var d1 = function (x) { return (Math.round(x * 10) / 10).toFixed(1); };
-      g.push(gauge(
-        '你估 ' + d1(e) + ' 天的方向，從開到收平均 ' + d1(a) + ' 天。',
-        c.over + ' / ' + c.est + ' 條超過自己估的。',
-        e > 0 ? Math.min(1, e / Math.max(a, 0.01)) : 0, '#7CC98F', true));
-    } else {
-      g.push(gauge(
-        '收過 ' + c.est + ' 條有估天數的。',
-        '再 ' + (CALIB_MIN - c.est) + ' 條就看得出估得準不準。',
-        0, '#7CC98F', false));
-    }
-
-    v.digGauges = g;
-    v.digCalibShow = true;
-  }
-
-  /* ============================================================
      採量：全班挖出多少，以隊伍為單位。
 
      只有三條，全部能心算：
@@ -10674,166 +10436,6 @@ class Component extends DCLogic {
     });
   }
 
-  function decorateDig(L, v) {
-    var S = L.state;
-    v.hasDig = false;
-    v.digOpen = []; v.digDone = []; v.digPages = [];
-    v.digDraftText = ''; v.digDraftDays = ''; v.digBetPicks = [];
-    v.digGauges = []; v.digCalibShow = false;
-    if (S.role !== 'student' || !S.signedIn) return;
-    v.hasDig = true;
-
-    /* 分頁：地圖剖面／收藏總覽／試挖。學生才有第三個。 */
-    var tab = S.mapTab || 'map';
-    v.showDigTab = false;   /* 試挖整個拿掉了 */
-    v.mapTabDig = function () { L.setState({ mapTab: 'dig', screen: 'S03' }); };
-    v.mapTabDigStyle = L.pill(tab === 'dig');
-    if (S.screen === 'S03') {
-      v.scDig = false;   /* 試挖拿掉了 */
-      if (tab === 'dig') { v.scMap = false; v.scColl = false; }
-    } else {
-      v.scDig = false;
-    }
-
-    var all = S.digs || [];
-    decorateCalib(v, all);
-    var open = all.filter(function (d) { return !d.result; });
-    var done = all.filter(function (d) { return d.result; });
-
-    /* ---- 還開著的 ---- */
-    v.digOpenCount = open.length;
-    v.digOpenNote = open.length
-      ? '你手上有 ' + open.length + ' 條沒收尾。'
-      : '現在沒有開著的坑。想到一個方向就開一條。';
-    v.digOpen = open.map(function (d) {
-      return {
-        text: d.text,
-        meta: 'L' + d.layer + '　估 ' + d.estDays + ' 天　' + (DIG_BET[d.bet] || ''),
-        boxStyle: 'padding:13px 15px;background:rgba(0,0,0,.28);border-left:2px solid #5A4A2C',
-        textStyle: "font:500 22px/1.5 'C11';color:#E8E2D6;text-wrap:pretty",
-        metaStyle: "font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px",
-        picks: ['ok', 'dead', 'none'].map(function (k) {
-          var r = DIG_RESULT[k];
-          return {
-            label: r.label,
-            pick: function () { closeDig(L, d.id, k); },
-            style: "padding:8px 12px;font:500 11px/1 'C11';letter-spacing:.1em;cursor:pointer;" +
-              'background:rgba(0,0,0,.3);border:1px solid ' + r.hue + ';color:' + r.hue
-          };
-        })
-      };
-    });
-
-    /* ---- 收過的 ---- */
-    v.digDone = done.slice().reverse().map(function (d) {
-      var r = DIG_RESULT[d.result] || DIG_RESULT.none;
-      /* 押對了亮，押錯了暗——地圖上看得出你哪裡讀對了地形 */
-      var hit = (d.bet === 'yes' && d.result === 'ok') || (d.bet === 'no' && d.result === 'dead');
-      return {
-        text: d.text,
-        tag: r.short,
-        meta: 'L' + d.layer + '　估 ' + d.estDays + ' 天' + (hit ? '　· 你押對了' : ''),
-        boxStyle: 'padding:11px 13px;background:' + (hit ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.24)') +
-          ';border-left:2px solid ' + (hit ? '#5A4A2C' : '#2E2822'),
-        textStyle: "font:400 22px/1.5 'C11';text-wrap:pretty;color:" + (hit ? '#E8E2D6' : '#9A9184'),
-        tagStyle: "flex:none;font:600 11px/1 'C11';letter-spacing:.1em;padding:5px 8px;" +
-          'background:rgba(0,0,0,.35);border:1px solid ' + r.hue + ';color:' + r.hue,
-        metaStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:5px"
-      };
-    });
-    v.digDoneNote = done.length
-      ? '挖過 ' + done.length + ' 條：' +
-        ['ok', 'dead', 'none'].map(function (k) {
-          return DIG_RESULT[k].short + ' ' + done.filter(function (d) { return d.result === k; }).length;
-        }).join('　') + '。'
-      : '還沒有收過的坑。塌掉的也會留在這裡——那是你試過的證據。';
-
-    /* ---- 斗篷人的日誌 ---- */
-    var got = S.digPages || [];
-    var total = S.digTotal || DIG_LOG.length;
-    v.digLogCount = got.length + ' / ' + total;
-    v.digLogLeft = got.length >= total
-      ? '拼完了。'
-      : '還差 ' + (total - got.length) + ' 片。當天第一次收尾就會挖到一片沒拿過的。';
-    v.digPages = [];
-    for (var n = 1; n <= total; n++) {
-      var have = got.indexOf(n) >= 0;
-      v.digPages.push({
-        n: String(n),
-        text: have ? (DIG_LOG[n - 1] || '') : '',
-        style: 'padding:11px 13px;min-height:60px;background:' +
-          (have ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.3)') +
-          ';border:1px ' + (have ? 'solid #3A3026' : 'dashed #26211C'),
-        numStyle: "font:400 11px/1 'C11';letter-spacing:.14em;color:" + (have ? '#8A8073' : '#332C25'),
-        textStyle: "display:block;font:400 11px/1.7 'C11';margin-top:7px;text-wrap:pretty;color:" +
-          (have ? '#C3BAAA' : 'transparent') +
-          (have ? '' : ';background:repeating-linear-gradient(90deg,rgba(90,80,64,.16) 0 6px,transparent 6px 12px);height:34px')
-      });
-    }
-
-    /* ---- 開一條 ---- */
-    v.digDraftText = S.digText || '';
-    v.setDigText = function (e) { L.setState({ digText: e.target.value }); };
-    v.digDraftDays = S.digDays === undefined ? '' : String(S.digDays);
-    v.setDigDays = function (e) { L.setState({ digDays: e.target.value }); };
-    v.digBetPicks = ['yes', 'no', 'unsure'].map(function (k) {
-      var on = (S.digBet || 'unsure') === k;
-      return {
-        label: DIG_BET[k],
-        pick: function () { L.setState({ digBet: k }); },
-        style: "padding:9px 13px;font:500 11px/1 'C11';letter-spacing:.08em;cursor:pointer;background:" +
-          (on ? 'rgba(233,179,65,.16)' : 'rgba(0,0,0,.3)') + ';border:1px solid ' +
-          (on ? '#E9B341' : '#2E2822') + ';color:' + (on ? '#E9B341' : '#8A8073')
-      };
-    });
-    v.openDig = function () {
-      var st = L.state;
-      var txt = String(st.digText || '').trim();
-      if (!txt) { L.say('先寫一句你要試什麼方向。'); return; }
-      var days = Math.round(Number(st.digDays) || 0);
-      if (!(days >= 1)) { L.say('估一下這個方向要試幾天。'); return; }
-      call('apiOpenDig', LIVE.token, st.currentLayer || 1, txt, days, st.digBet || 'unsure')
-        .then(function (r) {
-          if (!r || !r.ok) { L.say((r && r.error) || '沒有存到伺服器。'); return; }
-          L.setState({ digText: '', digDays: '', digBet: 'unsure' });
-          L.say('挖下去了。試出結果再回來收。');
-          return refresh();
-        })
-        .catch(function () { L.say('沒有存到伺服器。'); });
-    };
-  }
-
-  /* 收一條。挖到日誌就開一頁給他看——那是這個循環的報酬。 */
-  function closeDig(L, digId, result) {
-    call('apiCloseDig', LIVE.token, digId, result)
-      .then(function (r) {
-        if (!r || !r.ok) { L.say((r && r.error) || '沒有存到伺服器。'); return; }
-        var res = DIG_RESULT[result] || DIG_RESULT.none;
-        if (r.page) {
-          showMoment(L, {
-            kind: 'mined', art: 'gem', accent: '#E9B341',
-            kicker: 'A TORN PAGE',
-            title: '你在碎石裡挖到一張紙',
-            lede: '這一條' + res.label + '。清土的時候翻出一頁被撕下來的東西。',
-            rows: [
-              { k: '第幾片', v: r.page + ' / ' + (r.total || 24), hi: true },
-              { k: '你已經有', v: (r.pages || []).length + ' 片' }
-            ],
-            quoteLabel: '上面寫著',
-            quote: DIG_LOG[r.page - 1] || '',
-            lines: (r.pages || []).length >= (r.total || 24)
-              ? ['最後一片。整本拼起來了。']
-              : ['順序是亂的。撿齊了才看得懂他在講什麼。'],
-            btn: '收好', go: function () {}
-          });
-        } else {
-          L.say('這一條記成「' + res.label + '」了。');
-        }
-        return refresh();
-      })
-      .catch(function () { L.say('沒有存到伺服器。'); });
-  }
-
   function decorateBoard(L, v) {
     var S = L.state;
     var mob = S.device === 'mobile';
@@ -11075,7 +10677,7 @@ class Component extends DCLogic {
       kicker: (lay.name || '') + ' · 守關掉落',
       title: got ? d.name : '？？？',
       lede: got ? d.look : '走完這一區才拿得到。層底那一隻退開之後，牠站的地方留著它。',
-      quoteLabel: got ? '斗篷人的日誌' : '',
+      quoteLabel: got ? '他留了一句話' : '',
       quote: got ? d.log : '',
       btn: '關上'
     });
@@ -12830,30 +12432,30 @@ class Component extends DCLogic {
 
   function decorateFinale(L, v) {
     var S = L.state;
-    var cleared5 = (S.passed || []).indexOf(5) >= 0;
+    var cleared5 = (S.passed || []).indexOf(4) >= 0;   /* 四個領域都走完 */
     var finData0 = S.finData || {};
     var fin0 = finData0.finale || {};
     var opened = !!fin0.opened || !!S.finOpened;
     var done5 = cleared5 && opened;
-    var lay5 = L.LAYERS[4] || {};
+    var lay5 = L.LAYERS[3] || {};
     var extra = (L.EXTRA || [])[0] || {};
 
     v.scFinale = S.screen === 'FINALE';
     v.finKicker = 'FINALE';
-    v.finTitle = done5 ? '你走到地心了' : '期末回顧';
+    v.finTitle = done5 ? '你完成了一個專案' : '期末回顧';
     v.finLede = done5
-      ? '五層都過了。這一頁不是成績單——是把你這一學期實際走過的路攤開來，讓你自己看一次。'
-      : '走完第五層之後，這裡會攤開你這一學期實際走過的路。';
+      ? '四個領域都走完了。這一頁不是成績單——是把你這一學期實際走過的路攤開來，讓你自己看一次。'
+      : '四個領域都走完之後，這裡會攤開你這一學期實際走過的路。';
     v.finLocked = !done5;
     v.finOpen = done5;
     v.finKicker = done5 ? 'FINALE' : '？？？';
-    v.finTitle = done5 ? '你走到地心了' : '？？？';
+    v.finTitle = done5 ? '你完成了一個專案' : '？？？';
     v.finLede = done5
-      ? '五層都過了。這一頁把你這一學期實際走過的路攤開來，讓你自己看一次。'
+      ? '四個領域都走完了。這一頁把你這一學期實際走過的路攤開來，讓你自己看一次。'
       : '';
     v.finLockNote = cleared5
-      ? '五層都過了。結局不是自動開的——等他放行。'
-      : '還沒到。走完第五層才會打開。';
+      ? '四個領域都走完了。結局不是自動開的——等他放行。'
+      : '還沒到。四個領域都走完才會打開。';
 
     if (!done5) {
       if (cleared5 && !S.finData && !S.finLoading) loadFinale(L);
@@ -12981,33 +12583,42 @@ class Component extends DCLogic {
     var fin = (d.finale || {});
     var submitted = !!fin.submitted;
 
-    /* --- 故事結局：斗篷人把話說完 ---
-       說多少看你撿到幾片日誌。二十四片是他一路上掉的，撿得越齊，
-       這裡看到的越完整——那也是日誌唯一的出口。 */
+    /* --- 結局：你完成了一個專案 ---
+       不揭曉任何東西。斗篷人開頭就說明白他是誰了，這裡只把學生
+       實際做過的事攤出來——那才是這個作品要他們看見的。 */
     (function () {
       var ex = (L.EXTRA || [])[0] || {};
-      var pages = (S.digPages || []).length;
-      var tot = S.digTotal || 24;
-      var deep = pages >= tot * 0.75, some = pages >= tot * 0.25;
+      var rowsE = d.rows || [];
+      var passedE = rowsE.filter(function (r) { return r.status === 'passed'; }).length;
+      var subsE = d.totalSubs || 0, rejE = d.totalRejected || 0;
+      var vr = vowRate(L);
+      var mobsE = (S.codex || []).length;
+      var findsE = Object.keys(S.finds || {}).length;
+      var dropsE = (S.clears || []).reduce(function (a, n) {
+        return a + Math.min(Math.max(0, Number(n) || 0), 3);
+      }, 0);
       v.endingPages = [
-        { k: '結局 · 一', t: '走到底了',
-          b: '四個領域都走完了，而且他點了頭。\n\n' +
-             '你們一路帶下來的四件道具：' +
+        { k: '結局 · 一', t: '你完成了一個專案',
+          b: '四個領域都走完了，而且他點了頭。' + String.fromCharCode(10) + String.fromCharCode(10) +
+             '從第一項任務到現在，你們一直在做的那件事有一個名字：把一件還不存在的事定義出來、拆開、排順序、交出去、被退回來、改、再交。這一趟就是那件事。' },
+        { k: '結局 · 二', t: '你們做過的',
+          b: '通過的任務　' + passedE + ' 項' + String.fromCharCode(10) +
+             '送出的次數　' + subsE + ' 次' + (rejE ? '（其中 ' + rejE + ' 次被退回來重做）' : '') + String.fromCharCode(10) +
+             '宣告做到　' + (vr.n ? vr.hit + ' / ' + vr.n + ' 次' : '沒有宣告過') +
+             String.fromCharCode(10) + String.fromCharCode(10) +
+             (rejE
+               ? '被退回來的那 ' + rejE + ' 次，是你們拿到他那段字的方式。'
+               : '一次都沒有被退回來。') },
+        { k: '結局 · 三', t: '你們收到的',
+          b: '打倒的生物　' + mobsE + ' 隻' + String.fromCharCode(10) +
+             '撿到的坑屑　' + findsE + ' 種' + String.fromCharCode(10) +
+             '守關掉落　' + dropsE + ' 件' + String.fromCharCode(10) +
+             '一路帶下來的道具　' +
              (L.LAYERS || []).slice(0, 4).map(function (x) { return x.tool; }).join('、') +
-             '。每一件都是某一次卡住之後才拿到的。' },
-        { k: '結局 · 二', t: '他是誰',
-          b: deep
-            ? (ex.notice || '')
-            : some
-              ? '你撿到的日誌拼得出一半：有人比你們早來，一路留下記號。剩下的那幾片還在土裡。'
-              : '你幾乎沒撿到他的日誌，所以他是誰仍然沒有答案。那些紙還在下面。' },
-        { k: '結局 · 三', t: '他最後說的話',
-          b: deep ? (ex.line || '') : '（他沒有說完。缺的那幾片日誌裡。）' },
-        { k: '結局 · 四', t: '你們撿到的',
-          b: '斗篷人的日誌　' + pages + ' / ' + tot + ' 片\n\n' +
-             (pages >= tot
-               ? '全部撿齊了。整本拼起來，他從頭到尾說了什麼你們都知道。'
-               : '還有 ' + (tot - pages) + ' 片在土裡。下一個專案繼續挖，圖鑑跟日誌都跟著你走。') }
+             String.fromCharCode(10) + String.fromCharCode(10) +
+             '這些跟著你走。下一個專案換了組、換了班，圖鑑還在你手上，沒收到的繼續收。' },
+        { k: '結局 · 四', t: '他最後說的',
+          b: (ex.line || '') }
       ].map(function (pg, i) {
         return Object.assign(pg, {
           kStyle: "font:400 11px/1 'C11';letter-spacing:.24em;color:#8A8073",
@@ -13105,16 +12716,16 @@ class Component extends DCLogic {
     v.scTFIN = S.screen === 'TFIN';
     if (S.role !== 'teacher') { v.scTFIN = false; }
 
-    v.tfinHow = '**這是你在系統裡的最後一個動作。** 走完五層的小隊在這裡，但結局不會自動開——' +
+    v.tfinHow = '**這是你在系統裡的最後一個動作。** 四個領域都走完的小隊在這裡，但結局不會自動開——' +
       '你讀完他們整學期的紀錄、寫下要說的話，按下放行，他們側欄那個 ？？？ 才會亮成結局。'.replace(/\*\*/g, '');
 
     if (!S.tfinData && !S.tfinLoading && v.scTFIN) loadTfin(L);
     var list = ((S.tfinData || {}).list || []).filter(function (x) { return x.done5; });
-    var applied = list;   /* 走完五層就進來，不用等他們先寫 */
+    var applied = list;   /* 四個領域走完就進來，不用等他們先寫 */
 
     v.hasTfin = applied.length > 0;
     v.tfinEmpty = applied.length === 0;
-    v.tfinEmptyNote = '還沒有小隊走到這裡。要五層全部通過，才會出現在這一頁。';
+    v.tfinEmptyNote = '還沒有小隊走到這裡。要四個領域全部通過，才會出現在這一頁。';
 
     var sel = applied.filter(function (x) { return x.teamId === S.tfinTeamId; })[0] || applied[0] || null;
     v.hasTfinPick = applied.length > 1;
@@ -13122,7 +12733,7 @@ class Component extends DCLogic {
       var on = sel && x.teamId === sel.teamId;
       return {
         name: x.name,
-        sub: x.opened ? (x.applied ? '已放行 · 他們寫完了' : '已放行 · 等他們寫') : '五層走完 · 等你放行',
+        sub: x.opened ? (x.applied ? '已放行 · 他們寫完了' : '已放行 · 等他們寫') : '四區走完 · 等你放行',
         pick: function () { L.setState({ tfinTeamId: x.teamId, finTeamId: null, finTeamData: null }); },
         style: 'text-align:left;padding:11px 14px;font:inherit;cursor:pointer;background:' +
           (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' + (on ? '#E9B341' : '#2E2822') +
@@ -13228,7 +12839,7 @@ class Component extends DCLogic {
               sprite: crown || null,
               rows: [
                 { k: '這一組', v: sel.name, hi: true },
-                { k: '走完', v: '五層 · ' + MINS_TOTAL + ' 塊' },
+                { k: '走完', v: '四個領域 · ' + MINS_TOTAL + ' 塊' },
                 { k: '你做的', v: '系統裡的最後一件事' }
               ],
               quoteLabel: '他們讀到的第一句', quote: txt2,

@@ -246,38 +246,6 @@
   function rollFindGood() { var a = rollFind(), b = rollFind(); return b > a ? b : a; }
   /* 收藏是個人的：跨班、跨組、跨專案累積。Roster.claimedBy 把使用者
      連到他待過的每一組。 */
-  function usersOfTeam(teamId) {
-    var out = [];
-    DB.Roster.forEach(function (r) {
-      if (String(r.teamId) !== String(teamId)) return;
-      var c = String(r.claimedBy || '');
-      if (c && out.indexOf(c) < 0) out.push(c);
-    });
-    return out;
-  }
-
-  /* 這個人撿到的日誌，跨專案累積 */
-  function digPagesOfUser(userId) {
-    var mine = teamsOfUser(userId), out = [];
-    if (!mine.length) return out;
-    var take = function (v) {
-      var n = Number(v);
-      if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
-    };
-    DB.TeamTasks.forEach(function (r) { if (mine.indexOf(String(r.teamId)) >= 0) take(r.page); });
-    (DB.Digs || []).forEach(function (d) { if (mine.indexOf(String(d.teamId)) >= 0) take(d.page); });
-    return out.sort(function (a, b) { return a - b; });
-  }
-
-  /* 抽新的一片時要排除的：這一組的，加上組員各自帶過來的 */
-  function digPagesSeenBy(teamId) {
-    var out = digPages(teamId).slice();
-    usersOfTeam(teamId).forEach(function (uid) {
-      digPagesOfUser(uid).forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
-    });
-    return out.sort(function (a, b) { return a - b; });
-  }
-
   /* 這個人每一區走完過幾次，跨專案累加 */
   function clearsOfUser(userId) {
     var mine = teamsOfUser(userId), out = [0, 0, 0, 0];
@@ -329,38 +297,10 @@
     return out;
   }
 
-  var DIG_PAGES = 24;
   function ymd(d) {
     var x = new Date(d);
     return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2);
   }
-  function digPages(teamId) {
-    var out = [];
-    DB.TeamTasks.forEach(function (r) {
-      if (r.teamId !== teamId) return;
-      var n = Number(r.page);
-      if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
-    });
-    return out.sort(function (a, b) { return a - b; });
-  }
-  function rollPage(teamId) {
-    var todayKey = ymd(today());
-    var gotToday = DB.TeamTasks.some(function (r) {
-      return r.teamId === teamId && Number(r.page) > 0 && r.pageAt && ymd(r.pageAt) === todayKey;
-    });
-    if (gotToday) return 0;
-    var have = digPagesSeenBy(teamId), left = [];
-    for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
-    return left.length ? left[Math.floor(Math.random() * left.length)] : 0;
-  }
-  function digsOf(teamId) {
-    return DB.Digs.filter(function (d) { return d.teamId === teamId; }).map(function (d) {
-      return { id: d.digId, layer: Number(d.layer) || 1, text: d.text || '',
-               estDays: Number(d.estDays) || 0, bet: d.bet || '', result: d.result || '',
-               page: Number(d.page) || 0, openedAt: d.openedAt || '', closedAt: d.closedAt || '' };
-    });
-  }
-
   function rosterView(classId) {
     var claimedName = {};
     DB.Users.forEach(function (u) { claimedName[u.userId] = u.name + '（' + u.account + '）'; });
@@ -725,13 +665,10 @@
           if (p.reason) out.layerSaid[into] = String(p.reason);
         });
         out.record = recordOf(u.teamId, u.classId);
-        out.digs = digsOf(u.teamId);
         out.finds = findsOf(u.userId);
         out.codex = codexOfUser(u.userId);
         out.findsTotal = FINDS_N;
-        out.digPages = digPagesOfUser(u.userId);
         out.clears = clearsOfUser(u.userId);
-        out.digTotal = DIG_PAGES;
         var me = teamById(u.teamId);
         if (me) {
           out.myTeam = teamPub(me, w);
@@ -1161,46 +1098,6 @@
       });
       return ok({ roster: out, claims: claims });
     },
-    apiOpenDig: function (t, layer, text, estDays, bet) {
-      var u = auth(t);
-      if (u.role !== 'student' || !u.teamId) return err('只有學生可以開試挖。');
-      var txt = String(text || '').trim();
-      if (!txt) return err('先寫一句你要試什麼方向。');
-      if (txt.length > 120) txt = txt.slice(0, 120);
-      var days = Math.max(1, Math.min(60, Math.round(Number(estDays) || 0)));
-      var b = ['yes', 'no', 'unsure'].indexOf(String(bet)) >= 0 ? String(bet) : 'unsure';
-      var open = DB.Digs.filter(function (d) { return d.teamId === u.teamId && !d.result; });
-      if (open.length >= 6) return err('同時最多開六條。先收掉幾條再開。');
-      var id = 'dg' + uid();
-      DB.Digs.push({ digId: id, teamId: u.teamId, classId: u.classId,
-        layer: Math.max(1, Math.min(4, Number(layer) || 1)),
-        text: txt, estDays: days, bet: b, result: '', page: '',
-        openedAt: NOW(), closedAt: '' });
-      persist();
-      return ok({ digId: id });
-    },
-    apiCloseDig: function (t, digId, result) {
-      var u = auth(t);
-      if (u.role !== 'student' || !u.teamId) return err('只有學生可以收試挖。');
-      var res = ['ok', 'dead', 'none'].indexOf(String(result)) >= 0 ? String(result) : '';
-      if (!res) return err('先說這個方向的結果：成立、塌了，還是沒結論。');
-      var row = DB.Digs.filter(function (d) { return d.digId === digId && d.teamId === u.teamId; })[0];
-      if (!row) return err('找不到這一條試挖。');
-      if (row.result) return err('這一條已經收過了。');
-      var todayKey = ymd(today());
-      var gotToday = DB.Digs.some(function (d) {
-        return d.teamId === u.teamId && Number(d.page) > 0 && d.closedAt && ymd(d.closedAt) === todayKey;
-      });
-      var page = 0;
-      if (!gotToday) {
-        var have = digPagesSeenBy(u.teamId), left = [];
-        for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
-        if (left.length) page = left[Math.floor(Math.random() * left.length)];
-      }
-      row.result = res; row.page = page || ''; row.closedAt = NOW();
-      persist();
-      return ok({ result: res, page: page, pages: digPagesOfUser(u.userId), total: DIG_PAGES });
-    },
     apiDeleteTask: function (t, taskId) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
@@ -1266,10 +1163,9 @@
           m.find = find;
           if (extra) m.find2 = rollFindGood();
         } else if (pass) find = Number(m.find);
-        if (pass && !Number(m.page)) { var pg = rollPage(teamId); if (pg) { m.page = pg; m.pageAt = NOW(); } }
       }
       persist();
-      return ok({ find: find, find2: (m && Number(m.find2)) || 0, page: (m && Number(m.page)) || 0 });
+      return ok({ find: find, find2: (m && Number(m.find2)) || 0 });
     },
     apiReviewGate: function (t, teamId, pass, toolLevel, reason) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');

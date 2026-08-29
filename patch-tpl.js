@@ -3574,5 +3574,33 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('73. 排行榜的列可以點了');
 })();
 
+
+/* 74. 斗篷人的日誌那面 24 格的牆拿掉——整條敘事線收掉了。 */
+/*     它是試挖留下的最後一塊，拿掉之後試挖整套就沒有出口了。 */
+(function () {
+  var head = '<span style="font:400 11px/1 &#39;C11&#39;;letter-spacing:.18em;color:#E9B341">斗篷人的日誌</span>';
+  var a = t.indexOf('斗篷人的日誌');
+  if (a < 0) { console.error('74. 日誌區塊找不到'); process.exit(1); }
+  /* 往前找到包住它的那個 <div style="padding:26px ...">，往後找到它的收尾 */
+  var open = t.lastIndexOf('<div style="padding:26px', a);
+  if (open < 0) { console.error('74. 外層 div 找不到'); process.exit(1); }
+  var end = t.indexOf('</sc-for>', a);
+  if (end < 0) { console.error('74. sc-for 收尾找不到'); process.exit(1); }
+  end = t.indexOf('</div>', end);          /* grid */
+  end = t.indexOf('</div>', end + 6);      /* 外層 */
+  if (end < 0) { console.error('74. 收尾算不出來'); process.exit(1); }
+  t = t.slice(0, open) + t.slice(end + 6);
+  console.log('74. 斗篷人的日誌拿掉');
+})();
+
+
+/* 75. 過關獎勵卡的「寶物」標籤改成「守關掉落」 */
+(function () {
+  var a = '>寶物</div>';
+  if (t.split(a).length - 1 !== 1) { console.error('75. 寶物標籤找不到'); process.exit(1); }
+  t = t.replace(a, '>守關掉落</div>');
+  console.log('75. 獎勵卡標籤改成守關掉落');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
