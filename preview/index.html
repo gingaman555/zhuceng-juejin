@@ -606,22 +606,17 @@ window.JLZ_SPRITES = {
               <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
                 <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
                   <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#E9B341"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#E9B341"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">這一層採到幾塊</div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadA }}</div>
                   <div style="font:700 33px/1 'C11';margin-top:10px">{{ reqDone }}<span style="font:400 22px/1 'C11';color:#5F574C"> / {{ reqTotal }}</span></div>
-                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">採不採齊都送得出關卡</div>
+                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">{{ statNoteA }}</div>
                 </div>
                 <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
                   <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">還差幾塊</div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadB }}</div>
                   <div style="font:700 33px/1 'C11';margin-top:10px">{{ extDone }}</div>
-                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">{{ layerLeftNote }}</div>
+                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">{{ statNoteB }}</div>
                 </div>
-                <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
-                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">已採礦物</div>
-                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ mineralCount }}</div>
-                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">做過什麼的物證，不是分數</div>
-                </div>
+                
               </div>
 
               <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">
@@ -7776,6 +7771,7 @@ class Component extends DCLogic {
     decorateRecord(L, v);     /* 任務紀錄與宣告命中率 */
     decorateHomeHaul(L, v);   /* 首頁的名冊摘要 */
     decorateTerm(L, v);       /* 時間軸：唯一共同的尺 */
+    decorateSlimStats(L, v);  /* 首頁三張卡：礦石改成任務 */
     markVerdicts(L, v);       /* 地圖每一格直接顯示老師給不給過 */
 
 
@@ -9288,9 +9284,8 @@ class Component extends DCLogic {
     var st = layerState(L, n);
     var bz = bossOf(n);
     v.homeBandNote = st.cleared
-      ? '這一層採完了，通道往下一層開了。'
-      : '一格一塊礦石，點下去就是那一項。你站在採到 ' + st.gotN + ' / ' + st.veinN +
-        ' 塊的位置' + (bz ? '，層底站著' + bz.name : '') + '。';
+      ? '他讓你們過了這一層。'
+      : '你在這一層' + (bz ? '，層底站著' + bz.name : '') + '。他還沒讓你們往下。';
   }
 
   /* ============================================================
@@ -9964,6 +9959,35 @@ class Component extends DCLogic {
     var n = Math.max(6, Math.min(156, Number(kl.semesterWeeks) || Number(S.semesterWeeks) || 18));
     var w = Math.max(1, Number(S.courseWeek) || 1);
     return { week: w, total: n, pct: Math.max(0, Math.min(100, Math.round(w / n * 100))) };
+  }
+
+  /* ============================================================
+     首頁的三張卡：從礦石改成任務。
+
+     礦石在舊概念裡是門檻，所以首頁到處是「還差幾塊」。新概念裡門檻
+     是老師，礦石只是紀錄——那三張卡就變成在講一件已經不成立的事。
+
+     改成講這一層的任務跑到哪：開了幾項、幾項在等他看、他判過幾項。 */
+  function decorateSlimStats(L, v) {
+    var S = L.state;
+    if (S.role !== 'student' || !S.signedIn) return;
+
+    var lay = S.currentLayer || 1;
+    var mine = (S.tasks || []).filter(function (t) { return (t.layer || 1) === lay; });
+    var waiting = mine.filter(function (t) { return t.status === 'submitted'; }).length;
+    var passed = mine.filter(function (t) { return t.status === 'passed'; }).length;
+    var fix = mine.filter(function (t) { return t.status === 'needs_more'; }).length;
+
+    v.reqDone = String(passed);
+    v.reqTotal = String(mine.length);
+    v.statHeadA = '他判過幾項';
+    v.statNoteA = mine.length ? '這一層他開了 ' + mine.length + ' 項' : '他還沒開清單';
+
+    v.extDone = String(waiting);
+    v.statHeadB = '等他看的';
+    v.statNoteB = fix ? fix + ' 項他要你再改' : waiting ? '送出去了，等他判' : '沒有在等的';
+
+    /* 第三張卡拿掉了——礦石不是進度，它在收藏跟紀錄裡就好 */
   }
 
   function decorateTerm(L, v) {
@@ -11202,7 +11226,7 @@ class Component extends DCLogic {
         ? "你們已經打過去了。"
         : ready
           ? "礦石採齊了。去送關卡，他准了就鑄得成" + ((L.LAYERS[HL - 1] || {}).tool || "道具") + "。"
-          : "還有 " + (hst.missingN + hst.unopenedN) + " 塊沒採到。採不採齊都送得出關卡——過不過是他決定。";
+          : "牠是這一層的刻度。追不追得上不影響過關——過不過是他決定。";
     })();
 
     /* 「這一層怎麼走」收進一顆按鈕 */
@@ -11211,7 +11235,10 @@ class Component extends DCLogic {
       var hst = layerState(L, HL);
       var lay2 = L.LAYERS[HL - 1] || {};
       var hz = bossOf(HL);
-      v.ruleProgress = hst.gotN + " / " + hst.veinN + " 塊";
+      /* 進度講任務，不講礦石——礦石已經不是門檻了 */
+      var myLay = (S.tasks || []).filter(function (t) { return (t.layer || 1) === (S.currentLayer || 1); });
+      v.ruleProgress = myLay.filter(function (t) { return t.status === "passed"; }).length +
+        " / " + myLay.length + " 項";
       var hb = helpButton(L, {
         label: "？　這一層怎麼走",
         kicker: "HOW THIS LAYER WORKS",

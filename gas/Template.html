@@ -505,22 +505,17 @@
               <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
                 <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
                   <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#E9B341"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#E9B341"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">這一層採到幾塊</div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadA }}</div>
                   <div style="font:700 33px/1 'C11';margin-top:10px">{{ reqDone }}<span style="font:400 22px/1 'C11';color:#5F574C"> / {{ reqTotal }}</span></div>
-                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">採不採齊都送得出關卡</div>
+                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">{{ statNoteA }}</div>
                 </div>
                 <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
                   <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">還差幾塊</div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadB }}</div>
                   <div style="font:700 33px/1 'C11';margin-top:10px">{{ extDone }}</div>
-                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">{{ layerLeftNote }}</div>
+                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">{{ statNoteB }}</div>
                 </div>
-                <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
-                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">已採礦物</div>
-                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ mineralCount }}</div>
-                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">做過什麼的物證，不是分數</div>
-                </div>
+                
               </div>
 
               <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">

@@ -1742,15 +1742,15 @@ must([
 [
 '                <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">',
 '                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#E9B341"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#E9B341"></div>',
-'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">這一層採到幾塊</div>',
+'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">{{ statHeadA }}</div>',
 '                  <div style="font:700 33px/1 \'C11\';margin-top:10px">{{ reqDone }}<span style="font:400 22px/1 \'C11\';color:#5F574C"> / {{ reqTotal }}</span></div>',
-'                  <div style="font:400 11px/1.5 \'C11\';color:#8A8073;margin-top:7px">採不採齊都送得出關卡</div>',
+'                  <div style="font:400 11px/1.5 \'C11\';color:#8A8073;margin-top:7px">{{ statNoteA }}</div>',
 '                </div>',
 '                <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">',
 '                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>',
-'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">還差幾塊</div>',
+'                  <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">{{ statHeadB }}</div>',
 '                  <div style="font:700 33px/1 \'C11\';margin-top:10px">{{ extDone }}</div>',
-'                  <div style="font:400 11px/1.5 \'C11\';color:#8A8073;margin-top:7px">{{ layerLeftNote }}</div>',
+'                  <div style="font:400 11px/1.5 \'C11\';color:#8A8073;margin-top:7px">{{ statNoteB }}</div>',
 '                </div>'].join('\n'));
 
 must(
@@ -3356,6 +3356,19 @@ must(
 '                    </div>',
 '                  </sc-if>',
 '                  <div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin:12px 0 9px;text-wrap:pretty">{{ homeClaimNote }}</div>'].join(String.fromCharCode(10)));
+
+
+/* 65. 首頁第三張卡（已採礦物）拿掉。礦石不是進度——它在收藏與紀錄裡就好。 */
+(function () {
+  var a = t.indexOf('>已採礦物</div>');
+  if (a < 0) { console.error('MISS 已採礦物'); process.exit(1); }
+  var open = t.lastIndexOf('<div style="padding:15px;background:#14110E', a);
+  var close = t.indexOf('</div>', t.indexOf('做過什麼的物證，不是分數', a)) ;
+  close = t.indexOf('</div>', close + 6);
+  if (open < 0 || close < 0) { console.error('MISS 第三張卡邊界'); process.exit(1); }
+  t = t.slice(0, open) + t.slice(close + 6);
+  console.log('65. 首頁第三張卡拿掉');
+})();
 
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
