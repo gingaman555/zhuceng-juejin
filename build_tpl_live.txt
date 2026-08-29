@@ -1244,7 +1244,7 @@
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ haulMine }}</p>
               </div>
               <div style="padding:18px var(--pad) 0">
-                <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:14px;max-width:560px;text-wrap:pretty">{{ haulNote }}</div>
+                <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:14px;max-width:560px;text-wrap:pretty">{{ haulNote }}</div><sc-if value="{{ hasHaulMap }}" hint-placeholder-val="{{ true }}"><div style="{{ haulMapBox }}"><div style="{{ haulMapHeadStyle }}"><span>{{ haulMapTop }}</span><span>{{ haulMapBottom }}</span></div><div style="{{ haulMapTrack }}"><sc-for list="{{ haulMapBands }}" as="bd" hint-placeholder-count="3"><div style="{{ bd.rowStyle }}"><span style="{{ bd.depthStyle }}">{{ bd.depth }}</span><div style="{{ bd.pinsStyle }}"><sc-for list="{{ bd.pins }}" as="pn" hint-placeholder-count="2"><button onClick="{{ pn.go }}" style="{{ pn.style }}"><span style="{{ pn.dotStyle }}"></span><span style="{{ pn.nameStyle }}">{{ pn.name }}</span><span style="{{ pn.scoreStyle }}">{{ pn.score }}</span></button></sc-for></div></div></sc-for></div><div style="{{ haulMapNoteStyle }}">{{ haulMapNote }}</div></div></sc-if>
                 <sc-if value="{{ hasClaims }}" hint-placeholder-val="{{ true }}">
                   <div style="margin-bottom:22px;padding:16px 18px;background:#14110E;border:1px solid #3A3026">
                     <div style="font:500 22px/1.3 'C11';color:#E9B341;margin-bottom:5px">{{ claimHead }}</div>
@@ -2605,6 +2605,7 @@
                   </div>
                   <textarea onChange="{{ setReason }}" value="{{ reason }}" placeholder="例：三位受訪者的說法你有標出互相矛盾的地方，這一項的重點就在這裡，所以通過。下一項要記得把你怎麼選這三個人寫進來。" style="width:100%;min-height:170px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
                 </div>
+                <div style="margin-bottom:13px"><div style="font:400 11px/1.7 &#39;C11&#39;;color:#6E665A;margin-bottom:7px;text-wrap:pretty">{{ gaveNote }}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ gavePicks }}" as="gv" hint-placeholder-count="5"><button onClick="{{ gv.pick }}" style="{{ gv.style }}">{{ gv.label }}</button></sc-for></div><div style="font:400 11px/1.7 &#39;C11&#39;;color:#8A8073;margin-top:7px">{{ gaveWhat }}</div></div>
                 <div style="display:flex;gap:9px;flex-wrap:wrap">
                   <button onClick="{{ passItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#0B0A09;background:#E9B341;border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">通過</button>
                   <button onClick="{{ rejectItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#D9603F;background:none;border:1px solid rgba(217,96,63,.45);padding:15px var(--pad);cursor:pointer">需補充</button>

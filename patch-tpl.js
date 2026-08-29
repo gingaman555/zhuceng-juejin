@@ -3602,5 +3602,59 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('75. 獎勵卡標籤改成守關掉落');
 })();
 
+
+/* 76. 審核多一排 1–5：他們是不是不只交了作業。只影響掉幾件。 */
+(function () {
+  var anchor = '<div style="display:flex;gap:9px;flex-wrap:wrap">' +
+               String.fromCharCode(10) +
+               '                  <button onClick="{{ passItem }}"';
+  if (t.split(anchor).length - 1 !== 1) { console.error('76. 通過鍵找不到'); process.exit(1); }
+  var row = '<div style="margin-bottom:13px">' +
+    '<div style="font:400 11px/1.7 &#39;C11&#39;;color:#6E665A;margin-bottom:7px;text-wrap:pretty">{{ gaveNote }}</div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+      '<sc-for list="{{ gavePicks }}" as="gv" hint-placeholder-count="5">' +
+        '<button onClick="{{ gv.pick }}" style="{{ gv.style }}">{{ gv.label }}</button>' +
+      '</sc-for>' +
+    '</div>' +
+    '<div style="font:400 11px/1.7 &#39;C11&#39;;color:#8A8073;margin-top:7px">{{ gaveWhat }}</div>' +
+  '</div>';
+  t = t.replace(anchor, row + String.fromCharCode(10) + '                ' + anchor);
+  console.log('76. 審核多一排 1-5');
+})();
+
+
+/* 77. 排行榜的坑道圖：名次表講差幾分，這一條講誰在你前面。
+       所有樣式都由 Live 給，這裡不出現任何字面引號。 */
+(function () {
+  var anchor = '{{ haulNote }}</div>';
+  if (t.split(anchor).length - 1 !== 1) { console.error('77. haulNote 找不到'); process.exit(1); }
+  var map = '<sc-if value="{{ hasHaulMap }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="{{ haulMapBox }}">' +
+      '<div style="{{ haulMapHeadStyle }}">' +
+        '<span>{{ haulMapTop }}</span><span>{{ haulMapBottom }}</span>' +
+      '</div>' +
+      '<div style="{{ haulMapTrack }}">' +
+        '<sc-for list="{{ haulMapBands }}" as="bd" hint-placeholder-count="3">' +
+          '<div style="{{ bd.rowStyle }}">' +
+            '<span style="{{ bd.depthStyle }}">{{ bd.depth }}</span>' +
+            '<div style="{{ bd.pinsStyle }}">' +
+              '<sc-for list="{{ bd.pins }}" as="pn" hint-placeholder-count="2">' +
+                '<button onClick="{{ pn.go }}" style="{{ pn.style }}">' +
+                  '<span style="{{ pn.dotStyle }}"></span>' +
+                  '<span style="{{ pn.nameStyle }}">{{ pn.name }}</span>' +
+                  '<span style="{{ pn.scoreStyle }}">{{ pn.score }}</span>' +
+                '</button>' +
+              '</sc-for>' +
+            '</div>' +
+          '</div>' +
+        '</sc-for>' +
+      '</div>' +
+      '<div style="{{ haulMapNoteStyle }}">{{ haulMapNote }}</div>' +
+    '</div>' +
+  '</sc-if>';
+  t = t.replace(anchor, anchor + map);
+  console.log('77. 排行榜的坑道圖');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

@@ -181,7 +181,8 @@
         rounds: nRounds,
         sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
         say: last ? String(last.reason || '') : '',
-        mineral: d.mineral || '', find: Number(st.find) || 0, find2: Number(st.find2) || 0 };
+        mineral: d.mineral || '', find: Number(st.find) || 0, find2: Number(st.find2) || 0,
+        finds: Array.isArray(st.finds) ? st.finds : [], gave: Number(st.gave) || 1 };
     });
   }
 
@@ -243,16 +244,36 @@
     return out;
   }
 
-  var FINDS_N = 24, FIND_WEIGHT = [];
-  (function () {
-    var i, k;
-    for (i = 1; i <= 12; i++) for (k = 0; k < 6; k++) FIND_WEIGHT.push(i);
-    for (i = 13; i <= 20; i++) for (k = 0; k < 3; k++) FIND_WEIGHT.push(i);
-    for (i = 21; i <= 24; i++) FIND_WEIGHT.push(i);
-  })();
-  function rollFind() { return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)]; }
-  /* 有多做：兩次取好的。給的是更多次機會，不是更值錢的東西。 */
-  function rollFindGood() { var a = rollFind(), b = rollFind(); return b > a ? b : a; }
+  var FINDS_N = 24;
+
+  /* 第幾層撿得到這一件。常見 12（一層 3）、少見 8（一層 2）、罕見 4（一層 1）。
+     跟 gas/Code.gs 的 findLayer_ 與前端的 findLayer 是同一個公式。 */
+  function findLayer(n) {
+    n = Number(n);
+    if (n <= 12) return Math.ceil(n / 3);
+    if (n <= 20) return Math.ceil((n - 12) / 2);
+    return n - 20;
+  }
+  /* 走到第 L 層時抽得到的池子：第 1..L 層都算。常見 : 少見 : 罕見 = 5 : 3 : 1。 */
+  function findPool(maxLayer) {
+    var out = [], mx = Math.max(1, Math.min(4, Number(maxLayer) || 1));
+    for (var n = 1; n <= FINDS_N; n++) {
+      if (findLayer(n) > mx) continue;
+      var w = n <= 12 ? 5 : n <= 20 ? 3 : 1;
+      for (var i = 0; i < w; i++) out.push(n);
+    }
+    return out;
+  }
+  function rollFindIn(maxLayer) {
+    var pool = findPool(maxLayer);
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : 0;
+  }
+  /* 掉幾件：層數 ＋（老師給的 1–5 − 1）。最少 1、最多 8。 */
+  function findCount(layer, gave) {
+    var L = Math.max(1, Math.min(4, Number(layer) || 1));
+    var g = Math.max(1, Math.min(5, Number(gave) || 1));
+    return Math.max(1, Math.min(8, L + g - 1));
+  }
   /* 收藏是個人的：跨班、跨組、跨專案累積。Roster.claimedBy 把使用者
      連到他待過的每一組。 */
   /* 這個人每一區走完過幾次，跨專案累加 */
@@ -298,7 +319,8 @@
     var out = {};
     DB.TeamTasks.forEach(function (r) {
       if (mine.indexOf(String(r.teamId)) < 0) return;
-      [r.find, r.find2].forEach(function (x) {
+      var arr = Array.isArray(r.finds) && r.finds.length ? r.finds : [r.find, r.find2];
+      arr.forEach(function (x) {
         var n = Number(x);
         if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
       });
@@ -1136,7 +1158,7 @@
       persist();
       return ok();
     },
-    apiReviewItem: function (t, teamId, taskId, result, reason) {
+    apiReviewItem: function (t, teamId, taskId, result, reason, gave) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       var tm = teamById(teamId), kl = classById(tm.classId), w = courseWeekOf(kl);
@@ -1159,7 +1181,8 @@
               fb: '', fbType: '', passedWeek: null, checked: [], vow: '' };
         DB.TeamTasks.push(m);
       }
-      var find = 0;
+      var find = 0, findsArr = [];
+      var gaveN = Math.max(1, Math.min(5, Number(gave) || 1));
       if (m) {
         m.status = pass ? 'passed' : 'needs_more';
         m.fb = txt || (pass ? '（未附理由）' : '');
@@ -1167,15 +1190,26 @@
         if (pass) m.passedWeek = w;
         /* 過關掉一件坑屑。已經掉過的不重掉（重審不會多給）。 */
         var defNow = tasksOfClass(tm.classId, teamId).filter(function (d) { return d.id === taskId; })[0];
-        var extra = !!(pass && m.vow && defNow && vowWon(teamId, taskId, defNow, kl, String(m.vow)));
-        if (pass && !Number(m.find)) {
-          find = extra ? rollFindGood() : rollFind();
-          m.find = find;
-          if (extra) m.find2 = rollFindGood();
-        } else if (pass) find = Number(m.find);
+        /* 掉幾件＝層數 ＋（老師給的 1–5 − 1）。已經掉過的不重掉。 */
+        var prevFinds = Array.isArray(m.finds) ? m.finds : [];
+        findsArr = prevFinds;
+        if (pass && !prevFinds.length) {
+          var layerNow = defNow ? (Number(defNow.layer) || 1) : 1;
+          var cnt = findCount(layerNow, gaveN);
+          findsArr = [];
+          for (var fi = 0; fi < cnt; fi++) findsArr.push(rollFindIn(layerNow));
+        }
+        if (pass) {
+          m.finds = findsArr;
+          m.gave = gaveN;
+          m.find = findsArr[0] || '';
+          m.find2 = findsArr[1] || '';
+          find = Number(m.find) || 0;
+        }
       }
       persist();
-      return ok({ find: find, find2: (m && Number(m.find2)) || 0 });
+      return ok({ find: find, find2: (m && Number(m.find2)) || 0,
+                  finds: pass ? findsArr : [], gave: gaveN });
     },
     apiReviewGate: function (t, teamId, pass, toolLevel, reason) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');

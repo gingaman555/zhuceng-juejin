@@ -35,7 +35,7 @@ var SHEET_DEFS = {
   Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'passed', 'toolLevels',
                 'gateText', 'gateSubmitted', 'gateVerdict', 'specNames', 'createdAt', 'gateTs'],
   Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'teams', 'checks', 'createdAt'],
-  TeamTasks:   ['teamId', 'taskId', 'status', 'vow', 'find', 'find2', 'page', 'pageAt', 'text', 'files', 'fb', 'fbType', 'passedWeek',
+  TeamTasks:   ['teamId', 'taskId', 'status', 'vow', 'find', 'find2', 'finds', 'gave', 'page', 'pageAt', 'text', 'files', 'fb', 'fbType', 'passedWeek',
                 'effort', 'effortNote', 'blocker', 'checked', 'updatedAt'],
   Submissions: ['subId', 'taskId', 'teamId', 'week', 'dueWeek', 'overdue', 'len', 'files', 'attempt', 'text',
                 'effort', 'effortNote', 'blocker', 'fileList', 'ts'],
@@ -1940,7 +1940,9 @@ function recordOf_(teamId, classId) {
       say: last ? String(last.reason || '') : '',
       mineral: d.mineral || '',
       find: Number(st.find) || 0,
-      find2: Number(st.find2) || 0
+      find2: Number(st.find2) || 0,
+      finds: (jparse_(st.finds, []) || []),
+      gave: Number(st.gave) || 1
     };
   });
 }
@@ -1981,7 +1983,9 @@ function findsOfUser_(userId) {
   if (!mine.length) return out;
   readTable_('TeamTasks').forEach(function (r) {
     if (mine.indexOf(String(r.teamId)) < 0) return;
-    [r.find, r.find2].forEach(function (x) {
+    var arr = (jparse_(r.finds, []) || []);
+    if (!arr.length) arr = [r.find, r.find2];   /* 舊資料 */
+    arr.forEach(function (x) {
       var n = Number(x);
       if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
     });
@@ -2334,8 +2338,7 @@ var MINERALS_BY_LAYER = {
   1: ['定名石', '裂晶', '初痕礦', '預兆砂'],
   2: ['聽紋晶', '篩光石', '徑錄礦', '顯影砂'],
   3: ['初型岩', '因由石', '反響礦', '二階水晶'],
-  4: ['再凝岩', '前後水晶', '磨心礦', '厚能量石'],
-  4: ['冷玉印']
+  4: ['再凝岩', '前後水晶', '磨心礦', '厚能量石']
 };
 
 function apiPublishList(token, classId, layer, items) {
@@ -2361,7 +2364,7 @@ function apiPublishList(token, classId, layer, items) {
 }
 
 /** 逐項確認。合格考量（reason）學生會看到；沒寫也能送出。 */
-function apiReviewItem(token, teamId, taskId, result, reason) {
+function apiReviewItem(token, teamId, taskId, result, reason, gave) {
   var lock = LockService.getScriptLock();
   try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
   try {
@@ -2398,21 +2401,69 @@ function apiReviewItem(token, teamId, taskId, result, reason) {
     var vowNow = prev ? String(prev.vow || '') : '';
     var extra = !!(pass && vowNow && defNow && vowWon_(teamId, taskId, defNow, kl, vowNow));
 
-    var find = '', find2 = '';
-    if (pass && !(prev && Number(prev.find))) {
-      find = extra ? rollFindGood_() : rollFind_();
-      if (extra) find2 = rollFindGood_();
-    } else if (prev) { find = prev.find; find2 = prev.find2 || ''; }
+    /* 掉幾件＝層數 ＋（老師給的 1–5 − 1）。已經掉過的不重掉。 */
+    var gaveN = Math.max(1, Math.min(5, Number(gave) || 1));
+    var prevFinds = prev ? (jparse_(prev.finds, []) || []) : [];
+    var findsArr = prevFinds;
+    if (pass && !prevFinds.length) {
+      var layerNow = defNow ? (Number(defNow.layer) || 1) : 1;
+      var cnt = findCount_(layerNow, gaveN);
+      findsArr = [];
+      for (var fi = 0; fi < cnt; fi++) findsArr.push(rollFindIn_(layerNow));
+    }
+    var find = findsArr[0] || '', find2 = findsArr[1] || '';
 
     upsert_('TeamTasks', ['teamId', 'taskId'], {
       teamId: teamId, taskId: taskId,
       status: pass ? 'passed' : 'needs_more',
       fb: txt || (pass ? '（未附理由）' : ''), fbType: pass ? 'pass' : 'more',
       find: find || '', find2: find2 || '',
+      finds: JSON.stringify(findsArr), gave: pass ? gaveN : (prev ? prev.gave : ''),
       passedWeek: pass ? courseWeek : '', updatedAt: new Date()
     });
-    return ok_({ find: pass ? find : 0, find2: pass ? find2 : 0, extra: extra });
+    return ok_({ find: pass ? find : 0, find2: pass ? find2 : 0,
+                 finds: pass ? findsArr : [], gave: gaveN, extra: extra });
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+/* ---------------- 坑屑 ----------------
+   一項任務通過就掉。件數＝那一項的層數 ＋（老師給的 1–5 − 1），
+   所以越深掉越多、老師覺得有多做的也掉越多。抽的池子包含前面每一層。
+
+   這一整段本來只存在於 preview/mock-gas.js —— 真後端引用了 FINDS_N、
+   rollFind_、rollFindGood_ 卻沒有定義，所以正式環境一過任務就會
+   ReferenceError。補上。 */
+var FINDS_N = 24;
+
+/** 第幾層撿得到這一件。常見 12（一層 3）、少見 8（一層 2）、罕見 4（一層 1）。 */
+function findLayer_(n) {
+  n = Number(n);
+  if (n <= 12) return Math.ceil(n / 3);
+  if (n <= 20) return Math.ceil((n - 12) / 2);
+  return n - 20;
+}
+
+/** 走到第 L 層時抽得到的池子：第 1..L 層都算。常見 : 少見 : 罕見 = 5 : 3 : 1。 */
+function findPool_(maxLayer) {
+  var out = [], mx = Math.max(1, Math.min(4, Number(maxLayer) || 1));
+  for (var n = 1; n <= FINDS_N; n++) {
+    if (findLayer_(n) > mx) continue;
+    var w = n <= 12 ? 5 : n <= 20 ? 3 : 1;
+    for (var i = 0; i < w; i++) out.push(n);
+  }
+  return out;
+}
+
+function rollFindIn_(maxLayer) {
+  var pool = findPool_(maxLayer);
+  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : 0;
+}
+
+/** 掉幾件：層數 ＋（老師給的 1–5 − 1）。最少 1、最多 8。 */
+function findCount_(layer, gave) {
+  var L = Math.max(1, Math.min(4, Number(layer) || 1));
+  var g = Math.max(1, Math.min(5, Number(gave) || 1));
+  return Math.max(1, Math.min(8, L + g - 1));
 }
 
 /** 關卡審核：通過就發道具、定工具階級、換層。 */

@@ -673,7 +673,7 @@
       drops.push({
         name: n ? f.name : '？？？',
         got: !!n,
-        sub: '+1 分　' + (n ? (n > 1 ? '撿到 ' + n + ' 件' : '撿到了') : '還沒撿到'),
+        sub: '+1 分　L' + findLayer(f.n) + ' 起　' + (n ? (n > 1 ? '×' + n : '撿到了') : '還沒撿到'),
         open: (function (ff, nn) { return function () { openFind(L, ff, nn); }; })(f, n),
         style: 'padding:12px 8px;text-align:center;font:inherit;cursor:' + (n ? 'pointer' : 'default') +
           ';background:' + (n ? 'rgba(255,255,255,.022)' : 'rgba(0,0,0,.26)') +
@@ -3337,6 +3337,90 @@
     if (!rows.length) v.haulNote = '這一組還沒有任何紀錄。';
   }
 
+  /* 坑道圖：一條由上往下的路，挖得越深＝分數越高。
+
+     重疊怎麼處理：分數一樣或很接近的會落在同一個深度，所以先照位置
+     分桶（每 6% 一桶），同一桶的水平排開。一桶最多排四個，超過就收成
+     一顆「＋N 組」——這樣不會有標記疊在一起看不到，也不會爆版。 */
+  function haulMap(L, v, rows) {
+    v.hasHaulMap = false; v.haulMapBands = [];
+    if (!rows || rows.length < 2) return;
+
+    var top = Math.max.apply(null, rows.map(function (r) { return r.total; })) || 1;
+    var BUCKET = 6;   /* 每 6% 算同一個深度 */
+
+    var byBand = {}, order = [];
+    rows.forEach(function (r) {
+      var pct = Math.round(r.total / top * 100);
+      var key = Math.min(100, Math.round(pct / BUCKET) * BUCKET);   /* 四捨五入會超過 100，夾住 */
+      if (!byBand[key]) { byBand[key] = []; order.push(key); }
+      byBand[key].push(r);
+    });
+    order.sort(function (a, b) { return b - a; });   /* 深的在下面 */
+
+    v.hasHaulMap = true;
+    v.haulMapTop = '地表';
+    v.haulMapBottom = '挖得最深　' + top + ' 分';
+    v.haulMapBox = 'margin-bottom:22px;padding:16px 18px;background:' +
+      'linear-gradient(180deg,rgba(233,179,65,.05),rgba(0,0,0,.32) 45%,rgba(217,96,63,.06))' +
+      ';border:1px solid #2E2822';
+    v.haulMapTrack = 'display:flex;flex-direction:column;gap:5px;border-left:2px solid #3A3026;padding-left:12px';
+    v.haulMapHeadStyle = "display:flex;justify-content:space-between;font:400 11px/1 'C11';color:#5F574C;margin-bottom:10px";
+    v.haulMapNoteStyle = "font:400 11px/1.7 'C11';color:#6E665A;margin-top:11px;text-wrap:pretty";
+    v.haulMapNote = order.length === 1
+      ? '所有人都在同一個深度。'
+      : '同一排就是分數差不多的。點任何一組看他們的紀錄。';
+
+    v.haulMapBands = order.map(function (key) {
+      var list = byBand[key].slice().sort(function (a, b) { return b.total - a.total; });
+      var shown = list.slice(0, 4), rest = list.length - shown.length;
+
+      var pins = shown.map(function (r) {
+        var hue = r.me ? '#E9B341' : '#8A8073';
+        return {
+          name: r.name.split('　')[0],
+          score: String(r.total),
+          go: (function (tid, nm) {
+            return function () { peekTeam(L, tid, nm); };
+          })(r.teamId, r.name),
+          style: 'display:flex;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;font:inherit;' +
+            'background:' + (r.me ? 'rgba(233,179,65,.12)' : 'rgba(0,0,0,.34)') +
+            ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
+          dotStyle: 'display:block;width:9px;height:9px;flex:none;background:' + hue +
+            ';clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)',
+          nameStyle: "font:500 11px/1.3 'C11';color:" + (r.me ? '#F2E6C8' : '#C3BAAA') +
+            ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:108px',
+          scoreStyle: "flex:none;font:700 11px/1 'C11';font-variant-numeric:tabular-nums;color:" + hue
+        };
+      });
+
+      /* 同一深度太多組就收起來，不要疊成一團 */
+      if (rest > 0) {
+        pins.push({
+          name: '＋' + rest + ' 組',
+          score: '',
+          go: function () { L.say('這個深度還有 ' + rest + ' 組：' +
+            list.slice(4).map(function (x) { return x.name.split('　')[0]; }).join('、')); },
+          style: 'display:flex;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;font:inherit;' +
+            'background:rgba(0,0,0,.34);border:1px dashed #3A3026',
+          dotStyle: 'display:none',
+          nameStyle: "font:400 11px/1.3 'C11';color:#6E665A;white-space:nowrap",
+          scoreStyle: 'display:none'
+        });
+      }
+
+      var mine = list.some(function (r) { return r.me; });
+      return {
+        depth: key + '%',
+        pins: pins,
+        rowStyle: 'display:flex;align-items:center;gap:11px;padding:3px 0',
+        depthStyle: "flex:none;width:38px;font:400 11px/1 'C11';font-variant-numeric:tabular-nums;color:" +
+          (mine ? '#E9B341' : '#4A443C'),
+        pinsStyle: 'display:flex;flex-wrap:wrap;gap:5px;flex:1 1 auto;min-width:0'
+      };
+    });
+  }
+
   function decorateHaul(L, v) {
     var S = L.state;
     v.hasHaul = false; v.haulRows = []; v.scHaul = false;
@@ -3354,7 +3438,7 @@
     if (!v.scHaul) return;
 
     /* 正在看某一組的紀錄 */
-    if (S.peekTeam) { haulPeek(L, v); return; }
+    if (S.peekTeam) { v.hasHaulMap = false; haulPeek(L, v); return; }
     if (S.peekLoading) { v.haulNote = '讀一下……'; return; }
 
     if (!S.haulData && !S.haulLoading) { loadHaul(L); return; }
@@ -3410,6 +3494,7 @@
     v.haulNote = '勾一條 1 分　·　撿到一件坑屑 1 分　·　通過一項 10 分　·　通過而且做到宣告的破法 30 分（取代 10）　·　老師放行一層 100 分（道具 50 ＋ 守關掉落 50）。' +
       '走到第幾層先把大家分成幾段（一層 100 分），同一段裡面的差距才是宣告成功了幾次。';
 
+    haulMap(L, v, rows);   /* 同一份資料的另一種讀法：誰在你前面 */
     v.haulRows = rows.map(function (r, i) {
       var basePct = Math.round(r.base / top * 100);
       var bonusPct = Math.round(r.bonus / top * 100);
@@ -3744,36 +3829,46 @@
      在說一件學生沒做過的事），沒意義的東西才隨機得起來。
 
      最後四件是人造物 —— 跟寶物同一條線，指向斗篷人。 */
+  /* 坑屑照領域分：陣列順序就是層數（常見一層 3、少見一層 2、罕見一層 1），
+     兩邊後端都用同一個公式算，所以順序不能亂動。
+     走到第 L 層時，第 1..L 層的都抽得到。 */
   var FINDS = [
-    /* 常見 12 */
-    { n: 1,  name: '雲母片',   look: '一撕就散成更薄的一片。怎麼撕都還有下一層。' },
-    { n: 2,  name: '炭化根',   look: '某種植物的根，已經全黑了，形狀還完整。' },
-    { n: 3,  name: '磨圓石英', look: '稜角全被磨掉了，看不出原本多大。' },
-    { n: 4,  name: '鏽釘',     look: '鏽到只剩下形狀。不知道是誰釘的。' },
-    { n: 5,  name: '空螺殼',   look: '這裡離海很遠。' },
-    { n: 6,  name: '沉泥塊',   look: '捏得碎。捏碎之後聞得到水的味道。' },
-    { n: 7,  name: '白脈石',   look: '一條白線橫過去，兩邊的顏色不一樣。' },
-    { n: 8,  name: '蜂窩岩',   look: '全是小孔，比看起來輕很多。' },
-    { n: 9,  name: '焦玻璃',   look: '邊緣是圓的，像被燒過又冷掉。' },
-    { n: 10, name: '層積片',   look: '一層一層疊起來，每一層厚度都不同。' },
-    { n: 11, name: '鹽晶粒',   look: '舔起來是鹹的。' },
-    { n: 12, name: '灰砂團',   look: '抓在手上會慢慢散開。' },
-    /* 少見 8 */
-    { n: 13, name: '雙色晶',   look: '從中間分成兩半，一半透明一半不透。' },
-    { n: 14, name: '迴聲石',   look: '敲它，聲音會慢半拍才出來。' },
-    { n: 15, name: '冷斑岩',   look: '表面有一塊永遠比周圍冷。' },
-    { n: 16, name: '空心球',   look: '搖起來裡面有東西，但敲不開。' },
-    { n: 17, name: '逆紋木',   look: '木紋是反方向長的。' },
-    { n: 18, name: '定針砂',   look: '撒開之後會自己排成同一個方向。' },
-    { n: 19, name: '半面鏡',   look: '只有一半照得出東西。' },
-    { n: 20, name: '停時晶',   look: '裡面有一個氣泡，從來不動。' },
-    /* 罕見 4 —— 都是人造物 */
+    /* 常見 12 —— 一層三件 */
+    { n: 1,  name: '灰砂團',   look: '抓在手上會慢慢散開。' },
+    { n: 2,  name: '沉泥塊',   look: '捏得碎。捏碎之後聞得到水的味道。' },
+    { n: 3,  name: '炭化根',   look: '某種植物的根，已經全黑了，形狀還完整。' },
+    { n: 4,  name: '雲母片',   look: '一撕就散成更薄的一片。怎麼撕都還有下一層。' },
+    { n: 5,  name: '白脈石',   look: '一條白線橫過去，兩邊的顏色不一樣。' },
+    { n: 6,  name: '磨圓石英', look: '稜角全被磨掉了，看不出原本多大。' },
+    { n: 7,  name: '蜂窩岩',   look: '全是小孔，比看起來輕很多。' },
+    { n: 8,  name: '空螺殼',   look: '這裡離海很遠。' },
+    { n: 9,  name: '層積片',   look: '一層一層疊起來，每一層厚度都不同。' },
+    { n: 10, name: '焦玻璃',   look: '邊緣是圓的，像被燒過又冷掉。' },
+    { n: 11, name: '鏽釘',     look: '鏽到只剩下形狀。不知道是誰釘的。' },
+    { n: 12, name: '鹽晶粒',   look: '舔起來是鹹的。' },
+    /* 少見 8 —— 一層兩件 */
+    { n: 13, name: '定針砂',   look: '撒開之後會自己排成同一個方向。' },
+    { n: 14, name: '半面鏡',   look: '只有一半照得出東西。' },
+    { n: 15, name: '雙色晶',   look: '從中間分成兩半，一半透明一半不透。' },
+    { n: 16, name: '停時晶',   look: '裡面有一個氣泡，從來不動。' },
+    { n: 17, name: '迴聲石',   look: '敲它，聲音會慢半拍才出來。' },
+    { n: 18, name: '空心球',   look: '搖起來裡面有東西，但敲不開。' },
+    { n: 19, name: '逆紋木',   look: '木紋是反方向長的。' },
+    { n: 20, name: '冷斑岩',   look: '表面有一塊永遠比周圍冷。' },
+    /* 罕見 4 —— 都是人造物，一層一件 */
     { n: 21, name: '刻痕板',   look: '上面有人為的刻痕。數了三次，每次數出來的條數不一樣。' },
     { n: 22, name: '反光紙',   look: '薄得像紙，但是金屬的。上面好像有字，看不清楚。' },
     { n: 23, name: '斷鏈',     look: '一截鏈子，兩頭都是斷的。做工很細。' },
     { n: 24, name: '無名鑰',   look: '一把鑰匙。不知道開什麼。' }
   ];
   function findTier(n) { return n <= 12 ? '常見' : n <= 20 ? '少見' : '罕見'; }
+  /* 跟兩邊後端同一個公式：常見一層 3、少見一層 2、罕見一層 1 */
+  function findLayer(n) {
+    n = Number(n);
+    if (n <= 12) return Math.ceil(n / 3);
+    if (n <= 20) return Math.ceil((n - 12) / 2);
+    return n - 20;
+  }
   function findOf(n) {
     for (var i = 0; i < FINDS.length; i++) if (FINDS[i].n === Number(n)) return FINDS[i];
     return null;
@@ -3990,14 +4085,16 @@
       accent: tier === '罕見' ? '#E9B341' : '#8A8073',
       kicker: 'A FIND',
       title: f.name,
-      lede: '通過任務的時候在碎石裡撿到的。',
+      lede: '第 ' + findLayer(f.n) + ' 層開始撿得到。通過任務的時候在碎石裡翻出來的。',
       rows: [
         { k: '稀有度', v: tier, hi: tier === '罕見' },
+        { k: '哪裡撿得到', v: '第 ' + findLayer(f.n) + ' 層以後' },
         { k: '你有幾件', v: n + ' 件' }
       ],
       quoteLabel: '它長這樣',
       quote: f.look,
-      lines: ['每一件都一樣重。稀有只是比較少見，不影響任何分數。'],
+      lines: ['每一件都是 1 分，一樣重——稀有只是比較少見。',
+              '一項任務掉幾件＝那一層的層數 ＋（老師給的 1–5 − 1）。越往下掉越多。'],
       btn: '收好', go: function () {}
     });
   }
@@ -4048,22 +4145,41 @@
     if (!task) return;
     var m = mobOfTask(task);
     var rec = (L.state.record || []).filter(function (r) { return r.id === task.id; })[0] || {};
-    var f1 = findOf(rec.find), f2 = findOf(rec.find2);
+    /* 掉幾件＝層數 ＋（老師給的 1–5 − 1）。越深掉越多，老師覺得有多做
+       的也掉越多——所以同一份作業，結果不會每次都一樣。 */
+    var arr = (rec.finds && rec.finds.length ? rec.finds : [rec.find, rec.find2])
+      .map(Number).filter(function (n) { return n >= 1; });
+    var gave = Math.max(1, Math.min(5, Number(rec.gave) || 1));
     var hue = BOARD_HUE[Math.max(0, Math.min(4, (task.layer || 1) - 1))];
+
+    /* 同一件掉兩次就疊起來，不要列兩行 */
+    var tally = {}, order = [];
+    arr.forEach(function (n) {
+      if (!tally[n]) { tally[n] = 0; order.push(n); }
+      tally[n]++;
+    });
 
     var rows = [];
     if (m) rows.push({ k: '打贏了', v: m.name });
-    rows.push({ k: '做到什麼程度', v: f2 ? '有多做' : '做到基本', hi: !!f2 });
-    if (f1) rows.push({ k: '牠留下', v: f1.name + '（' + findTier(f1.n) + '）' });
-    if (f2) rows.push({ k: '還多留了', v: f2.name + '（' + findTier(f2.n) + '）', hi: true });
+    rows.push({ k: '牠留下', v: arr.length + ' 件', hi: arr.length > 1 });
+    rows.push({ k: '怎麼算的', v: '第 ' + (task.layer || 1) + ' 層 ＋ 他給的 ' + gave + ' − 1' });
+    order.forEach(function (n) {
+      var f = findOf(n);
+      if (!f) return;
+      rows.push({
+        k: '　', v: f.name + '（' + findTier(n) + '）' + (tally[n] > 1 ? '　×' + tally[n] : ''),
+        hi: findTier(n) === '罕見'
+      });
+    });
     if (rec.won) rows.push({ k: '宣告', v: '★ ' + vowName(rec.vow) });
+    var f2 = gave > 1;
 
     showMoment(L, {
       kind: 'mined', art: 'gem', accent: hue,
       kicker: f2 ? 'CLEARED · WENT FURTHER' : 'CLEARED',
       title: task.title || '過了',
       lede: f2
-        ? '他判過了，而且你先講的那一樣真的做到了。'
+        ? '他判過了，而且他覺得你們不只是把作業交出來。'
         : '他判過了。',
       sprite: m
         ? 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
@@ -4072,9 +4188,12 @@
       rows: rows,
       quoteLabel: rec.say ? '他寫的' : '',
       quote: rec.say || '',
-      lines: f2
-        ? ['多做的那一次會多留一件——不是更值錢，是多一次抽的機會。']
-        : ['下一項開工前先宣告要拿哪一樣。做到的話，牠會多留一件。'],
+      lines: [
+        '越往下掉越多：第一層掉一件，第四層就是四件起跳。' +
+        (gave > 1 ? '　他這次給了 ' + gave + '，所以又多了 ' + (gave - 1) + ' 件。'
+                  : '　他這次給了 1——多做一點的話，這裡會再多幾件。'),
+        '每一件都一樣重，撿到哪一件不影響分數。'
+      ],
       btn: '收好', go: function () {}
     });
   }
@@ -6943,7 +7062,9 @@
     v.passItem = function () {
       if (!cur) return;
       var reason = L.state.reason;
+      var gave = Math.max(1, Math.min(5, Number(L.state.gave) || 1));
       origPass();
+      L.setState({ gave: 1 });   /* 換下一項就歸位 */
       v.__afterReview();
       (function () {
         var mineral = cur.mineral || '';
@@ -6958,17 +7079,39 @@
           rows: [
             { k: '這一塊', v: mineral || '—', hi: true },
             { k: '給誰', v: cur.team },
-            { k: '你寫了', v: String(reason || '').trim().length + ' 字' }
+            { k: '你寫了', v: String(reason || '').trim().length + ' 字' },
+            { k: '你給的', v: gave + ' / 5　→　掉 ' + Math.max(1, Math.min(8, (cur.layer || 1) + gave - 1)) + ' 件', hi: gave > 1 }
           ],
           quoteLabel: '學生會讀到這一段', quote: reason,
           lines: [ minDef.rec ? '這一塊在他們那邊的意思是：' + minDef.rec : '' ].filter(Boolean),
           btn: '知道了', go: function () {}
         });
       })();
-      call('apiReviewItem', LIVE.token, cur.teamId, cur.taskId, 'pass', reason)
+      call('apiReviewItem', LIVE.token, cur.teamId, cur.taskId, 'pass', reason, gave)
         .then(function (r) { if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。'); return refresh(); })
         .catch(function () { L.say('沒有存到伺服器。'); });
     };
+    /* 這一項他們是不是不只交了作業。只影響掉幾件——不影響過不過，
+       也不影響分數的主結構。不點就是 1。 */
+    (function () {
+      var g = Math.max(1, Math.min(5, Number(S.gave) || 1));
+      var LAB = ['只交了作業', '多做了一點', '有明顯多做', '做得比要求深', '遠超出要求'];
+      v.gaveNote = '他們是不是不只是交了作業？這一格只影響他們會撿到幾件東西，不影響過不過。';
+      v.gaveWhat = LAB[g - 1] + '　·　這一項在第 ' + (cur ? (cur.layer || 1) : 1) + ' 層，' +
+        '所以會掉 ' + Math.max(1, Math.min(8, (cur ? (cur.layer || 1) : 1) + g - 1)) + ' 件（層數 ＋ 這一格 − 1）';
+      v.gavePicks = [1, 2, 3, 4, 5].map(function (n) {
+        var on = n === g;
+        return {
+          label: String(n),
+          pick: (function (k) { return function () { L.setState({ gave: k }); }; })(n),
+          style: "font:600 22px/1 'C11';min-width:40px;padding:10px 0;cursor:pointer;" +
+            'background:' + (on ? '#E9B341' : '#14110E') +
+            ';color:' + (on ? '#0B0A09' : '#6E665A') +
+            ';border:1px solid ' + (on ? '#E9B341' : '#2E2822')
+        };
+      });
+    })();
+
     v.rejectItem = function () {
       if (!cur) return;
       if (!String(L.state.reason || '').trim()) { L.say('需補充一定要附理由。'); return; }
