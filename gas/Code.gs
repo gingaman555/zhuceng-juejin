@@ -1865,8 +1865,8 @@ function scoreOf_(teamId, classId) {
   readTable_('TeamTasks').forEach(function (r) {
     if (String(r.teamId) !== String(teamId)) return;
     ticks += (jparse_(r.checked, []) || []).length;
-    /* 戰利品：每一件都一樣重，所以撿到哪一件不影響名次，只有件數影響。
-       要數整串——一項最多掉 8 件，只數 find / find2 會少算。 */
+    /* 掉落物：每一件都一樣重，所以掉到哪一件不影響名次，只有件數影響。
+       要數整串——一項最多掉 8 件，只數 find / find2 會少算六件。 */
     var fArr = (jparse_(r.finds, []) || []);
     if (!fArr.length) fArr = [r.find, r.find2];   /* 舊資料 */
     fArr.forEach(function (x) { if (Number(x) > 0) finds++; });
@@ -1950,7 +1950,7 @@ function recordOf_(teamId, classId) {
 }
 
 /* ---- 收藏屬於個人 ----
-   一個學生換班、換組、換專案，圖鑑跟戰利品都還是他的。
+   一個學生換班、換組、換專案，圖鑑跟掉落物都還是他的。
    Roster.claimedBy 記著誰認領了哪一組的哪一個身分，用它把使用者
    待過的每一組串起來。 */
 /**
@@ -1979,7 +1979,7 @@ function teamsOfUser_(userId) {
   return out;
 }
 
-/** 這個人撿到的戰利品，跨專案累積 */
+/** 這個人撿到的掉落物，跨專案累積 */
 function findsOfUser_(userId) {
   var mine = teamsOfUser_(userId), out = {};
   if (!mine.length) return out;
@@ -2391,7 +2391,7 @@ function apiReviewItem(token, teamId, taskId, result, reason, gave) {
       result: pass ? 'pass' : 'needfix', reason: txt, len: txt.length,
       hasReason: txt.trim() ? 'Y' : 'N', week: courseWeek, latency: latency, ts: new Date()
     });
-    /* 過關就掉一件戰利品。隨機、零分、純收集 —— 獎勵發生在「給獎勵」
+    /* 過關就掉一件掉落物。隨機、零分、純收集 —— 獎勵發生在「給獎勵」
        那一步，不掛在支線上。已經掉過的不重掉（重審不會多給）。 */
     var prev = readTable_('TeamTasks').filter(function (r) {
       return String(r.teamId) === String(teamId) && String(r.taskId) === String(taskId);
@@ -2428,7 +2428,7 @@ function apiReviewItem(token, teamId, taskId, result, reason, gave) {
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 
-/* ---------------- 戰利品 ----------------
+/* ---------------- 掉落物 ----------------
    一項任務通過就掉。件數＝那一項的層數 ＋（老師給的 1–5 − 1），
    所以越深掉越多、老師覺得有多做的也掉越多。抽的池子包含前面每一層。
 

@@ -1442,7 +1442,7 @@ window.JLZ_SPRITES = {
 <sc-if value="{{ hasFinds }}" hint-placeholder-val="{{ true }}">
                 <div style="padding:26px var(--pad) 0">
                   <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">戰利品</span>
+                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">掉落物</span>
                     <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ findCount }}</span>
                   </div>
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ findNote }}</div>
@@ -5177,8 +5177,8 @@ class Component extends DCLogic {
     DB.TeamTasks.forEach(function (r) {
       if (r.teamId !== teamId) return;
       ticks += checkList2(r.checked).length;
-      /* 戰利品：每一件都一樣重，撿到哪一件不影響名次，只有件數影響。
-         要數整串——一項最多掉 8 件，只數 find / find2 會少算。 */
+      /* 掉落物：每一件都一樣重，掉到哪一件不影響名次，只有件數影響。
+         要數整串——一項最多掉 8 件，只數 find / find2 會少算六件。 */
       var fArr = Array.isArray(r.finds) && r.finds.length ? r.finds : [r.find, r.find2];
       fArr.forEach(function (x) { if (Number(x) > 0) finds++; });
       if (r.status !== 'passed') return;
@@ -6154,7 +6154,7 @@ class Component extends DCLogic {
         m.fb = txt || (pass ? '（未附理由）' : '');
         m.fbType = pass ? 'pass' : 'more';
         if (pass) m.passedWeek = w;
-        /* 過關掉一件戰利品。已經掉過的不重掉（重審不會多給）。 */
+        /* 過關掉一件掉落物。已經掉過的不重掉（重審不會多給）。 */
         var defNow = tasksOfClass(tm.classId, teamId).filter(function (d) { return d.id === taskId; })[0];
         /* 掉幾件＝層數 ＋（老師給的 1–5 − 1）。已經掉過的不重掉。 */
         var prevFinds = Array.isArray(m.finds) ? m.finds : [];
@@ -6997,7 +6997,7 @@ class Component extends DCLogic {
 
   /* 物品攤成一份清單。
 
-     本來分成礦物／道具／守關戰利品／任務戰利品四區，但那四個分的是「怎麼拿到
+     本來分成礦物／道具／戰利品／掉落物四區，但那四個分的是「怎麼拿到
      的」——那件事點進去看那一件的時候再說就好，清單上先分只是讓人多
      跳三次。都是物品，就放在一起。
 
@@ -7024,7 +7024,7 @@ class Component extends DCLogic {
       });
     });
 
-    /* 戰利品本來是另一個區塊，形狀不一樣，轉成同一種格子接上來 */
+    /* 掉落物本來是另一個區塊，形狀不一樣，轉成同一種格子接上來 */
     var got = S.finds || {};
     FINDS.forEach(function (f) {
       var n = got[f.n] || 0;
@@ -7135,15 +7135,15 @@ class Component extends DCLogic {
       items: mobs
     }, {
       title: '物品',
-      note: '礦石、道具、戰利品，全部在這裡。點進去才會說那一件是怎麼拿到的。' +
+      note: '礦石、道具、戰利品、掉落物，全部在這裡。點進去才會說那一件是怎麼拿到的。' +
         '　守關那兩件（道具、戰利品）各 50 分——老師放行一層就是 100 分，' +
-        '所以榜上拉得開的是走到第幾層，不是撿了幾件。任務通過掉的那些每一件都是 1 分，' +
+        '所以榜上拉得開的是走到第幾層，不是撿了幾件。掉落物每一件都是 1 分，' +
         '掉到哪一件都一樣，運氣不會影響名次。',
       have: gotN + ' / ' + drops.length + ' 種',
       items: drops
     }];
 
-    v.hasFinds = false;   /* 戰利品已經併進物品那一份 */
+    v.hasFinds = false;   /* 掉落物已經併進物品那一份 */
     v.hasBest = false;    /* 生物改成上面那一份網格 */
   }
 
@@ -7875,7 +7875,7 @@ class Component extends DCLogic {
     decorateChecklist(L, v);  /* 老師開了清單就逐條勾 */
     decorateVow(L, v);        /* 這一項要拿哪一樣破法 */
     decorateGamble(L, v);     /* 勾完之後，送出前的那一下 */
-    decorateFinds(L, v);      /* 戰利品：隨機、零分、純收集 */
+    decorateFinds(L, v);      /* 掉落物：隨機、零分、純收集 */
     decorateBestiary(L, v);   /* 圖鑑：打贏過誰、怎麼贏的 */
     decorateHaul(L, v);       /* 採量：全班的分數 */
     decorateRecord(L, v);     /* 任務紀錄與宣告命中率 */
@@ -9941,7 +9941,7 @@ class Component extends DCLogic {
           : '四隻都追過了。') +
         '　追不追得上不影響過關——過關只看他。';
     }
-    v.haulNote = '勾一條 1 分　·　撿到一件戰利品 1 分　·　通過一項 10 分　·　通過而且做到宣告的破法 30 分（取代 10）　·　老師放行一層 100 分（道具 50 ＋ 戰利品 50）。' +
+    v.haulNote = '勾一條 1 分　·　撿到一件掉落物 1 分　·　通過一項 10 分　·　通過而且做到宣告的破法 30 分（取代 10）　·　老師放行一層 100 分（道具 50 ＋ 戰利品 50）。' +
       '走到第幾層先把大家分成幾段（一層 100 分），同一段裡面的差距才是宣告成功了幾次。';
 
     haulMap(L, v, rows);   /* 同一份資料的另一種讀法：誰在你前面 */
@@ -9956,7 +9956,7 @@ class Component extends DCLogic {
         detail: '勾 ' + r.ticks + ' 條 = ' + r.ticks + ' 分　·　' +
           '通過 ' + r.pages + ' 項 = ' + (r.pages * 10) + ' 分　·　' +
           '宣告做到 ' + r.vows + ' 項 = ' + (r.vows * 30) + ' 分' +
-          (r.finds ? '　·　戰利品 ' + r.finds + ' 件 = ' + r.finds + ' 分' : '') +
+          (r.finds ? '　·　掉落物 ' + r.finds + ' 件 = ' + r.finds + ' 分' : '') +
           (r.layers ? '　·　走完 ' + r.layers + ' 層 = ' + (r.layers * 100) + ' 分' : '') +
           (r.firsts ? '　·　初採 ' + r.firsts + ' 塊' : ''),
         go: (function (tid, nm) {
@@ -10269,17 +10269,17 @@ class Component extends DCLogic {
   }
 
   /* ============================================================
-     戰利品：挖岔路的時候順手撿到的東西。
+     掉落物：挖岔路的時候順手撿到的東西。
 
      跟礦石完全分開 ——
        礦石  一項任務一塊，說的是「你做到了什麼」，不隨機
-       戰利品  什麼都不說，純收集，隨機，零分
+       掉落物  什麼都不說，純收集，隨機，零分
 
      刻意不讓它們有任何意義。有意義的東西不能隨機（隨機的礦石會
      在說一件學生沒做過的事），沒意義的東西才隨機得起來。
 
      最後四件是人造物 —— 跟寶物同一條線，指向斗篷人。 */
-  /* 戰利品照領域分：陣列順序就是層數（常見一層 3、少見一層 2、罕見一層 1），
+  /* 掉落物照領域分：陣列順序就是層數（常見一層 3、少見一層 2、罕見一層 1），
      兩邊後端都用同一個公式算，所以順序不能亂動。
      走到第 L 層時，第 1..L 層的都抽得到。 */
   var FINDS = [
@@ -10481,7 +10481,7 @@ class Component extends DCLogic {
   /* ============================================================
      圖鑑：打贏過哪幾隻，以及是怎麼打贏的。
 
-     這是收集的核心。礦石說的是「你做到了什麼」，戰利品什麼都不說，
+     這是收集的核心。礦石說的是「你做到了什麼」，掉落物什麼都不說，
      圖鑑說的是「你遇過誰、怎麼贏的」——三種各管一件事。
 
      「怎麼贏的」記三件：一次過、去了幾輪、有沒有宣告成功。
@@ -10526,7 +10526,7 @@ class Component extends DCLogic {
     });
   }
 
-  /* ---- 點開一件戰利品 ---- */
+  /* ---- 點開一件掉落物 ---- */
   function openFind(L, f, n) {
     if (!n) { L.say('還沒撿到這一件。通過任務的時候會隨機掉一件。'); return; }
     var tier = findTier(f.n);
@@ -10773,7 +10773,7 @@ class Component extends DCLogic {
     v.findRows = FINDS.map(function (f) {
       var n = got[f.n] || 0;
       var tier = findTier(f.n);
-      /* 戰利品刻意零分，所以刻意不給它琥珀色 —— 灰是誠實的。
+      /* 掉落物刻意零分，所以刻意不給它琥珀色 —— 灰是誠實的。
          三階只差在亮度與有沒有微光，不差在色相。 */
       var line = !n ? '#221E19' : tier === '罕見' ? '#E9B341' : tier === '少見' ? '#6E665A' : '#3A342C';
       return {
@@ -12971,7 +12971,7 @@ class Component extends DCLogic {
                : '一次都沒有被退回來。') },
         { k: '結局 · 三', t: '你們收到的',
           b: '打倒的生物　' + mobsE + ' 隻' + String.fromCharCode(10) +
-             '撿到的戰利品　' + findsE + ' 種' + String.fromCharCode(10) +
+             '撿到的掉落物　' + findsE + ' 種' + String.fromCharCode(10) +
              '戰利品　' + dropsE + ' 件' + String.fromCharCode(10) +
              '一路帶下來的道具　' +
              (L.LAYERS || []).slice(0, 4).map(function (x) { return x.tool; }).join('、') +

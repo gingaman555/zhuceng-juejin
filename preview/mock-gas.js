@@ -212,8 +212,8 @@
     DB.TeamTasks.forEach(function (r) {
       if (r.teamId !== teamId) return;
       ticks += checkList2(r.checked).length;
-      /* 戰利品：每一件都一樣重，撿到哪一件不影響名次，只有件數影響。
-         要數整串——一項最多掉 8 件，只數 find / find2 會少算。 */
+      /* 掉落物：每一件都一樣重，掉到哪一件不影響名次，只有件數影響。
+         要數整串——一項最多掉 8 件，只數 find / find2 會少算六件。 */
       var fArr = Array.isArray(r.finds) && r.finds.length ? r.finds : [r.find, r.find2];
       fArr.forEach(function (x) { if (Number(x) > 0) finds++; });
       if (r.status !== 'passed') return;
@@ -1189,7 +1189,7 @@
         m.fb = txt || (pass ? '（未附理由）' : '');
         m.fbType = pass ? 'pass' : 'more';
         if (pass) m.passedWeek = w;
-        /* 過關掉一件戰利品。已經掉過的不重掉（重審不會多給）。 */
+        /* 過關掉一件掉落物。已經掉過的不重掉（重審不會多給）。 */
         var defNow = tasksOfClass(tm.classId, teamId).filter(function (d) { return d.id === taskId; })[0];
         /* 掉幾件＝層數 ＋（老師給的 1–5 − 1）。已經掉過的不重掉。 */
         var prevFinds = Array.isArray(m.finds) ? m.finds : [];

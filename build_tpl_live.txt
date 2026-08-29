@@ -1341,7 +1341,7 @@
 <sc-if value="{{ hasFinds }}" hint-placeholder-val="{{ true }}">
                 <div style="padding:26px var(--pad) 0">
                   <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">戰利品</span>
+                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">掉落物</span>
                     <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ findCount }}</span>
                   </div>
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ findNote }}</div>
