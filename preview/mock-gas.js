@@ -172,21 +172,6 @@
     return false;
   }
 
-  function gridOf(teamId, classId) {
-    var kl = classById(classId);
-    var byId = {};
-    tasksOfClass(classId, teamId).forEach(function (d) { byId[String(d.id)] = d; });
-    var out = {};
-    DB.TeamTasks.forEach(function (r) {
-      if (r.teamId !== teamId || r.status !== 'passed') return;
-      var vow = String(r.vow || '');
-      if (!vow) return;
-      var def = byId[String(r.taskId)];
-      if (!def || !vowWon(teamId, r.taskId, def, kl, vow)) return;
-      out[(Number(def.layer) || 1) + '-' + vow] = true;
-    });
-    return Object.keys(out);
-  }
   function recordOf(teamId, classId) {
     var kl = classById(classId);
     var m = ttmap(teamId);
@@ -195,10 +180,12 @@
       var myRevs = DB.Reviews.filter(function (r) { return r.teamId === teamId && r.taskId === d.id; });
       var last = myRevs[myRevs.length - 1] || null;
       var vow = String(st.vow || '');
+      var nRounds = DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === d.id; }).length;
       return { id: d.id, layer: Number(d.layer) || 1, title: d.title,
         status: st.status || 'todo', vow: vow,
-        won: (vow && st.status === 'passed') ? vowWon(teamId, d.id, d, kl, vow) : false,
-        rounds: DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === d.id; }).length,
+        settled: !!(vow && nRounds),
+        won: (vow && nRounds) ? vowWon(teamId, d.id, d, kl, vow) : false,
+        rounds: nRounds,
         sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
         say: last ? String(last.reason || '') : '',
         mineral: d.mineral || '' };
@@ -633,7 +620,6 @@
       }
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
-        out.grid = gridOf(u.teamId, u.classId);
         out.record = recordOf(u.teamId, u.classId);
         out.digs = digsOf(u.teamId);
         out.digPages = digPages(u.teamId);
@@ -1039,11 +1025,17 @@
                    firsts: mine[String(x.teamId)] || 0 };
         });
       out.sort(function (a, b) { return b.total - a.total; });
+      var racing = {};
+      DB.TeamTasks.forEach(function (r) {
+        if (r.status !== 'submitted') return;
+        racing[String(r.taskId)] = (racing[String(r.taskId)] || 0) + 1;
+      });
       var claims = tasksOfClass(u.classId, '').map(function (d) {
         var f = firsts[String(d.id)];
         return { taskId: d.id, layer: Number(d.layer) || 1,
                  mineral: d.mineral || d.title, title: d.title,
-                 by: f ? f.name : '', mine: !!(f && String(f.teamId) === String(u.teamId || '')) };
+                 by: f ? f.name : '', mine: !!(f && String(f.teamId) === String(u.teamId || '')),
+                 racing: f ? 0 : (racing[String(d.id)] || 0) };
       });
       return ok({ roster: out, claims: claims });
     },

@@ -1283,13 +1283,21 @@ window.JLZ_SPRITES = {
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-11 · RECORD</div>
                 <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin:10px 0 5px">
-                  <h1 style="font:700 33px/1.4 'C11';margin:0;letter-spacing:.04em">破法</h1>
+                  <h1 style="font:700 33px/1.4 'C11';margin:0;letter-spacing:.04em">宣告</h1>
                   <span style="font:700 22px/1 'C11';color:#E9B341">{{ recCount }}</span>
                 </div>
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ recNote }}</p>
               </div>
-              <div style="padding:16px var(--pad) 0">
-                <div style="font:400 11px/1.8 'C11';color:#8A8073;letter-spacing:.04em">{{ gridLine }}</div>
+              <div style="padding:18px var(--pad) 0">
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px">
+                  <sc-for list="{{ rateRows }}" as="rt" hint-placeholder-count="5">
+                    <div>
+                      <div style="{{ rt.nameStyle }}">{{ rt.name }}</div>
+                      <div style="{{ rt.barStyle }}"><div style="{{ rt.fillStyle }}"></div></div>
+                      <div style="{{ rt.txtStyle }}">{{ rt.txt }}</div>
+                    </div>
+                  </sc-for>
+                </div>
               </div>
               <div style="padding:26px var(--pad) 0">
                 <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:12px">走過的每一項</div>
@@ -5293,21 +5301,6 @@ class Component extends DCLogic {
     return false;
   }
 
-  function gridOf(teamId, classId) {
-    var kl = classById(classId);
-    var byId = {};
-    tasksOfClass(classId, teamId).forEach(function (d) { byId[String(d.id)] = d; });
-    var out = {};
-    DB.TeamTasks.forEach(function (r) {
-      if (r.teamId !== teamId || r.status !== 'passed') return;
-      var vow = String(r.vow || '');
-      if (!vow) return;
-      var def = byId[String(r.taskId)];
-      if (!def || !vowWon(teamId, r.taskId, def, kl, vow)) return;
-      out[(Number(def.layer) || 1) + '-' + vow] = true;
-    });
-    return Object.keys(out);
-  }
   function recordOf(teamId, classId) {
     var kl = classById(classId);
     var m = ttmap(teamId);
@@ -5316,10 +5309,12 @@ class Component extends DCLogic {
       var myRevs = DB.Reviews.filter(function (r) { return r.teamId === teamId && r.taskId === d.id; });
       var last = myRevs[myRevs.length - 1] || null;
       var vow = String(st.vow || '');
+      var nRounds = DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === d.id; }).length;
       return { id: d.id, layer: Number(d.layer) || 1, title: d.title,
         status: st.status || 'todo', vow: vow,
-        won: (vow && st.status === 'passed') ? vowWon(teamId, d.id, d, kl, vow) : false,
-        rounds: DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === d.id; }).length,
+        settled: !!(vow && nRounds),
+        won: (vow && nRounds) ? vowWon(teamId, d.id, d, kl, vow) : false,
+        rounds: nRounds,
         sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
         say: last ? String(last.reason || '') : '',
         mineral: d.mineral || '' };
@@ -5754,7 +5749,6 @@ class Component extends DCLogic {
       }
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
-        out.grid = gridOf(u.teamId, u.classId);
         out.record = recordOf(u.teamId, u.classId);
         out.digs = digsOf(u.teamId);
         out.digPages = digPages(u.teamId);
@@ -6160,11 +6154,17 @@ class Component extends DCLogic {
                    firsts: mine[String(x.teamId)] || 0 };
         });
       out.sort(function (a, b) { return b.total - a.total; });
+      var racing = {};
+      DB.TeamTasks.forEach(function (r) {
+        if (r.status !== 'submitted') return;
+        racing[String(r.taskId)] = (racing[String(r.taskId)] || 0) + 1;
+      });
       var claims = tasksOfClass(u.classId, '').map(function (d) {
         var f = firsts[String(d.id)];
         return { taskId: d.id, layer: Number(d.layer) || 1,
                  mineral: d.mineral || d.title, title: d.title,
-                 by: f ? f.name : '', mine: !!(f && String(f.teamId) === String(u.teamId || '')) };
+                 by: f ? f.name : '', mine: !!(f && String(f.teamId) === String(u.teamId || '')),
+                 racing: f ? 0 : (racing[String(d.id)] || 0) };
       });
       return ok({ roster: out, claims: claims });
     },
@@ -9679,6 +9679,21 @@ class Component extends DCLogic {
     });
   }
 
+  /* 分數階梯。沒有人會想要 347 這個數字，但會想要「開路人」。
+     沿用《冒險之書》第 05 章的五級，換成礦坑的說法。 */
+  var RANKS = [
+    { at: 0,   name: '學徒' },
+    { at: 50,  name: '掘進工' },
+    { at: 150, name: '老手' },
+    { at: 300, name: '開路人' },
+    { at: 500, name: '首席' }
+  ];
+  function rankOf(total) {
+    var i = 0;
+    for (var k = 0; k < RANKS.length; k++) if (total >= RANKS[k].at) i = k;
+    return { name: RANKS[i].name, next: RANKS[i + 1] || null };
+  }
+
   function decorateHaul(L, v) {
     var S = L.state;
     v.hasHaul = false; v.haulRows = []; v.scHaul = false;
@@ -9711,20 +9726,24 @@ class Component extends DCLogic {
     var myFirst = claims.filter(function (c) { return c.mine; });
     v.hasClaims = claims.length > 0;
     v.claimHead = '初採　' + myFirst.length + ' / ' + claims.length;
+    var racingN = claims.filter(function (c) { return !c.by && c.racing; }).length;
     v.claimNote = open.length
-      ? '還有 ' + open.length + ' 塊沒有人採到。第一個採到的隊伍會永久記在那一塊上。'
+      ? '還有 ' + open.length + ' 塊沒有人採到' +
+        (racingN ? '，其中 ' + racingN + ' 塊已經有人送出去在等判' : '') +
+        '。第一個採到的隊伍會永久記在那一塊上。'
       : '每一塊都有人採到了。';
     v.claimRows = claims.map(function (c) {
       return {
         name: c.mineral,
-        by: c.by ? (c.mine ? '你們' : c.by) : '還沒有人',
+        by: c.by ? (c.mine ? '你們' : c.by)
+          : (c.racing ? '有 ' + c.racing + ' 組正在爭奪' : '還沒有人'),
         meta: 'L' + c.layer + '　' + c.title,
         boxStyle: 'padding:11px 13px;background:' +
           (c.mine ? 'rgba(233,179,65,.1)' : c.by ? 'rgba(0,0,0,.26)' : 'rgba(0,0,0,.4)') +
           ';border:1px ' + (c.mine ? 'solid #E9B341' : c.by ? 'solid #2E2822' : 'dashed #4A3F30'),
         nameStyle: "font:500 22px/1.3 'C11';color:" + (c.mine ? '#E8E2D6' : c.by ? '#9A9184' : '#C3BAAA'),
         byStyle: "flex:none;font:400 11px/1 'C11';color:" +
-          (c.mine ? '#E9B341' : c.by ? '#6E665A' : '#D9603F'),
+          (c.mine ? '#E9B341' : c.by ? '#6E665A' : c.racing ? '#C3BAAA' : '#D9603F'),
         metaStyle: "font:400 11px/1.6 'C11';color:#5F574C;margin-top:4px"
       };
     });
@@ -9734,10 +9753,10 @@ class Component extends DCLogic {
     /* 只描述，不評價——這一句照文件「走過的路」那條硬規則。 */
     if (mine) {
       var place = rows.indexOf(mine) + 1;
-      v.haulMine = '你們第 ' + place + ' 名，' + mine.total + ' 分。' +
-        (mine.vows
-          ? '其中 ' + mine.vows + ' 項是宣告之後真的做到的，那些一項多 20 分。'
-          : '還沒有宣告成功過。宣告做到的那一項算 30 分，不是 10。');
+      var rk = rankOf(mine.total);
+      v.haulMine = '你們是「' + rk.name + '」，' + mine.total + ' 分，第 ' + place + ' 名。' +
+        (rk.next ? '再 ' + (rk.next.at - mine.total) + ' 分變成「' + rk.next.name + '」。'
+                 : '已經是最深的那一階了。');
     }
     v.haulNote = '勾一條 1 分　·　通過一項 10 分　·　通過而且做到宣告的破法 30 分（取代 10）。' +
       '跑幾輪之後基本盤都差不多——名次的差距全部來自宣告成功了幾次。';
@@ -9777,25 +9796,27 @@ class Component extends DCLogic {
      生物之後會變成一項任務一隻——綁生物的話，內容一換格子就對不
      起來，而且第五層根本沒有守關生物。層是結構性的：每一班、每一
      個老師、每一個專案都會走過五個階段。 */
-  var GRID_LAYERS = [1, 2, 3, 4, 5];
+  /* 25 格拿掉了。進度只看老師有沒有讓這一組過這個階段。
 
-  function gridCells(L) {
-    var have = {};
-    (L.state.grid || []).forEach(function (k) { have[k] = true; });
-    var out = [];
-    GRID_LAYERS.forEach(function (n) {
-      var lay = (L.LAYERS || [])[n - 1] || {};
-      var reached = (L.state.currentLayer || 1) >= n;
-      VOW_DEF.forEach(function (d) {
-        var got = !!have[n + '-' + d.k];
-        out.push({
-          layer: n, vow: d.k, got: got, reached: reached,
-          mob: reached ? ('L' + n + '　' + (lay.name || '')) : ('L' + n + '　？？？'),
-          name: d.name
-        });
-      });
+     格子唯一在做的事是逼人換招（同層同種只算一格）。拿掉之後那個
+     功能交給命中率那張表——它會列出「還沒宣告過」的那幾種，同樣是
+     「你還沒碰過這一個」的訊號，但不用另外養一套系統。
+
+     而且命中率在送出當下就算得出來，不用等老師。 */
+  function vowRate(L) {
+    var rows = (L.state.record || []).filter(function (r) { return r.vow && r.settled; });
+    var by = {};
+    VOW_DEF.forEach(function (d) { by[d.k] = { n: 0, hit: 0 }; });
+    rows.forEach(function (r) {
+      if (!by[r.vow]) return;
+      by[r.vow].n++;
+      if (r.won) by[r.vow].hit++;
     });
-    return out;
+    return {
+      n: rows.length,
+      hit: rows.filter(function (r) { return r.won; }).length,
+      by: by
+    };
   }
 
   /* ============================================================
@@ -9849,7 +9870,7 @@ class Component extends DCLogic {
     var S = L.state;
     v.hasRecord = false; v.recRows = []; v.scRec = false;
     v.showRecTab = false; v.recNote = ''; v.recCount = '';
-    v.gridRows = [];
+    v.rateRows = [];
     if (S.role !== 'student' || !S.signedIn) return;
 
     v.showRecTab = true;
@@ -9862,42 +9883,29 @@ class Component extends DCLogic {
     if (!v.scRec) return;
     v.hasRecord = true;
 
-    /* ---- 格子牆：一列一隻生物 ---- */
-    var cells = gridCells(L);
-    var got = cells.filter(function (c) { return c.got; }).length;
-    v.recCount = got + ' / ' + cells.length;
-    v.recNote = got >= cells.length
-      ? '全部收齊了。'
-      : '一項任務宣告一樣，做到才掉。同一層同一種只算一格——要跨層去湊。';
-
-    v.recNote = got >= cells.length
-      ? '二十五格全收齊了。'
-      : '一項任務宣告一樣，做到才掉。同一層同一種只算一格。這一頁只有你自己，沒有別人。';
-    /* 格子牆收成一行——一條一條的紀錄才是主角，牆只是摘要 */
-    v.gridLine = GRID_LAYERS.map(function (n) {
-      var mine = cells.filter(function (c) { return c.layer === n; });
-      return 'L' + n + ' ' + mine.filter(function (c) { return c.got; }).length + '/5';
-    }).join('　·　');
-    v.gridRows = GRID_LAYERS.map(function (n) {
-      var mine = cells.filter(function (c) { return c.layer === n; });
+    /* ---- 宣告命中率 ----
+       不扣一分，卻讓宣告從許願變成有紀錄的承諾。
+       樣本少於 3 筆不給比例——n=1 顯示 100% 比不顯示還糟。 */
+    var vr = vowRate(L);
+    v.recCount = vr.n ? (vr.hit + ' / ' + vr.n) : '—';
+    v.recNote = vr.n
+      ? '宣告過 ' + vr.n + ' 次，做到 ' + vr.hit + ' 次。送出的當下就算，不用等他判。'
+      : '每一項任務開工前先宣告要拿哪一樣，做到才算。做不到不扣任何東西。';
+    v.rateRows = VOW_DEF.map(function (d) {
+      var b = vr.by[d.k] || { n: 0, hit: 0 };
+      var enough = b.n >= 3;
+      var txt = !b.n ? '還沒宣告過'
+        : enough ? ('宣告 ' + b.n + ' 次，做到 ' + b.hit + ' 次')
+                 : ('宣告 ' + b.n + ' 次　（太少，先不算比例）');
       return {
-        mob: mine[0].mob,
-        tally: mine.filter(function (c) { return c.got; }).length + ' / ' + mine.length,
-        mobStyle: "font:500 22px/1.3 'C11';color:" + (mine[0].reached ? '#E8E2D6' : '#5A5044'),
-        tallyStyle: "font:400 11px/1 'C11';color:#6E665A",
-        cells: mine.map(function (c) {
-          return {
-            name: c.name.replace('的證據', ''),
-            style: 'padding:9px 7px;text-align:center;background:' +
-              (c.got ? 'rgba(233,179,65,.12)' : 'rgba(0,0,0,.3)') +
-              ';border:1px ' + (c.got ? 'solid #E9B341' : c.reached ? 'dashed #332C24' : 'dashed #241F1A'),
-            textStyle: "display:block;font:400 11px/1.4 'C11';color:" +
-              (c.got ? '#E9B341' : c.reached ? '#6E665A' : '#3A332B')
-          };
-        })
+        name: d.name, txt: txt,
+        barStyle: 'margin-top:7px;height:4px;background:rgba(0,0,0,.4);border:1px solid #2E2822',
+        fillStyle: 'height:100%;width:' + (enough ? Math.round(b.hit / b.n * 100) : 0) + '%;' +
+          'background:' + (enough ? '#E9B341' : '#2E2822'),
+        nameStyle: "font:500 22px/1.3 'C11';color:" + (b.n ? '#E8E2D6' : '#6E665A'),
+        txtStyle: "font:400 11px/1.6 'C11';color:" + (b.n ? '#8A8073' : '#5F574C')
       };
     });
-
     /* ---- 一項一列的紀錄 ---- */
     var STAT = {
       todo: { t: '還沒送', hue: '#6E665A' },
@@ -9909,9 +9917,9 @@ class Component extends DCLogic {
       var st = STAT[r.status] || STAT.todo;
       var vowTxt = !r.vow
         ? '沒有宣告'
-        : (r.status === 'passed'
+        : (r.settled
             ? (r.won ? '★ ' + vowName(r.vow) : '沒拿到 ' + vowName(r.vow))
-            : '宣告了 ' + vowName(r.vow));
+            : '宣告了 ' + vowName(r.vow) + '，還沒送');
       var bits = ['L' + r.layer];
       if (r.rounds) bits.push('送了 ' + r.rounds + ' 次');
       if (r.sentBack) bits.push('被退 ' + r.sentBack + ' 次');

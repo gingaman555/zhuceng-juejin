@@ -1293,7 +1293,6 @@ function apiBootstrap(token) {
     if (u.role === 'student') {
       var me = teamById_(u.teamId);
       out.myTeamId = u.teamId || '';
-      out.grid = gridOf_(u.teamId, u.classId);
       out.record = recordOf_(u.teamId, u.classId);
       out.digs = digsOf_(u.teamId);
       out.digPages = digPages_(u.teamId);
@@ -1887,29 +1886,6 @@ function firstsOf_(classId) {
 }
 
 /** 全班名冊。以隊伍為單位，不做個人排名。 */
-/**
- * 這一組收到的格子：'層-破法' 的集合。
- * 同一層同一種只算一格——所以要跨層去湊，不能在同一層刷同一樣。
- */
-function gridOf_(teamId, classId) {
-  var kl = classById_(classId);
-  var defs = tasksOfClass_(classId, teamId);
-  var byId = {};
-  defs.forEach(function (d) { byId[String(d.id)] = d; });
-
-  var out = {};
-  readTable_('TeamTasks').forEach(function (r) {
-    if (String(r.teamId) !== String(teamId)) return;
-    if (String(r.status) !== 'passed') return;
-    var vow = String(r.vow || '');
-    if (!vow) return;
-    var def = byId[String(r.taskId)];
-    if (!def) return;
-    if (!vowWon_(teamId, r.taskId, def, kl, vow)) return;
-    out[(Number(def.layer) || 1) + '-' + vow] = true;
-  });
-  return Object.keys(out);
-}
 
 /** 這一組每一項任務的紀錄：宣告了什麼、拿到沒、老師說了什麼。 */
 function recordOf_(teamId, classId) {
@@ -1928,7 +1904,11 @@ function recordOf_(teamId, classId) {
       id: d.id, layer: Number(d.layer) || 1, title: d.title,
       status: st.status || 'todo',
       vow: vow,
-      won: (vow && String(st.status) === 'passed') ? vowWon_(teamId, d.id, d, kl, vow) : false,
+      /* 送出當下就算得出來——五種破法沒有一種需要老師的判斷。
+         格子那一套已經拿掉，這裡是唯一的即時回饋，不能再卡在裁決後面。 */
+      settled: !!(vow && subs.filter(function (s) { return String(s.taskId) === String(d.id); }).length),
+      won: (vow && subs.filter(function (s) { return String(s.taskId) === String(d.id); }).length)
+        ? vowWon_(teamId, d.id, d, kl, vow) : false,
       rounds: subs.filter(function (s) { return String(s.taskId) === String(d.id); }).length,
       sentBack: myRevs.filter(function (r) { return String(r.result) === 'needfix'; }).length,
       say: last ? String(last.reason || '') : '',
@@ -1960,11 +1940,20 @@ function apiRoster(token) {
     out.sort(function (a, b) { return b.total - a.total; });
 
     /* 初採清單：哪一塊礦被誰先採走，哪幾塊還沒有人碰 */
+    /* 誰正在爭奪：送出了、老師還沒判。只給組數不給名字——
+       張力夠了，又不會變成公開處刑。 */
+    var racing = {};
+    readTable_('TeamTasks').forEach(function (r) {
+      if (String(r.status) !== 'submitted') return;
+      racing[String(r.taskId)] = (racing[String(r.taskId)] || 0) + 1;
+    });
+
     var claims = tasksOfClass_(u.classId, '').map(function (d) {
       var f = firsts[String(d.id)];
       return { taskId: d.id, layer: Number(d.layer) || 1,
                mineral: d.mineral || d.title, title: d.title,
-               by: f ? f.name : '', mine: !!(f && String(f.teamId) === String(u.teamId || '')) };
+               by: f ? f.name : '', mine: !!(f && String(f.teamId) === String(u.teamId || '')),
+               racing: f ? 0 : (racing[String(d.id)] || 0) };
     });
     return ok_({ roster: out, claims: claims });
   } catch (e) { return err_(e); }

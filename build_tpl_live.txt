@@ -1182,13 +1182,21 @@
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-11 · RECORD</div>
                 <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin:10px 0 5px">
-                  <h1 style="font:700 33px/1.4 'C11';margin:0;letter-spacing:.04em">破法</h1>
+                  <h1 style="font:700 33px/1.4 'C11';margin:0;letter-spacing:.04em">宣告</h1>
                   <span style="font:700 22px/1 'C11';color:#E9B341">{{ recCount }}</span>
                 </div>
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ recNote }}</p>
               </div>
-              <div style="padding:16px var(--pad) 0">
-                <div style="font:400 11px/1.8 'C11';color:#8A8073;letter-spacing:.04em">{{ gridLine }}</div>
+              <div style="padding:18px var(--pad) 0">
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px">
+                  <sc-for list="{{ rateRows }}" as="rt" hint-placeholder-count="5">
+                    <div>
+                      <div style="{{ rt.nameStyle }}">{{ rt.name }}</div>
+                      <div style="{{ rt.barStyle }}"><div style="{{ rt.fillStyle }}"></div></div>
+                      <div style="{{ rt.txtStyle }}">{{ rt.txt }}</div>
+                    </div>
+                  </sc-for>
+                </div>
               </div>
               <div style="padding:26px var(--pad) 0">
                 <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:12px">走過的每一項</div>
