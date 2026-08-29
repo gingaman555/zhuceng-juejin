@@ -1973,7 +1973,7 @@
     v.boardLeft = (totalVein - totalOpen) + " 塊";
     v.boardStepNote = totalOpen >= totalVein
       ? "五層的礦脈都開完了。剩下就看各組採不採得齊。"
-      : "通道上一格就是一塊礦石，也就是你要開的一項。還有 " + (totalVein - totalOpen) + " 塊沒開。";
+      : "一格就是你開的一項。還有 " + (totalVein - totalOpen) + " 塊沒開——開多開少不影響他們過不過關。";
 
     (v.mapLayers || []).forEach(function (m, i) {
       var n = i + 1;
@@ -3247,14 +3247,18 @@
     });
   }
 
-  /* 分數階梯。沒有人會想要 347 這個數字，但會想要「開路人」。
-     沿用《冒險之書》第 05 章的五級，換成礦坑的說法。 */
+  /* 分數的刻度：用四隻生物，不用抽象的階級名。
+     牠們本來就有名字、有立繪、有身世——而「再 17 分就追得上霧面者」
+     比「再 17 分變掘進工」具體得多。
+
+     這不是門檻：追不上牠照樣過得了關（過關只看老師）。它只是把一個
+     要不到的數字，換成一個有臉的目標。 */
   var RANKS = [
-    { at: 0,   name: '學徒' },
-    { at: 50,  name: '掘進工' },
-    { at: 150, name: '老手' },
-    { at: 300, name: '開路人' },
-    { at: 500, name: '首席' }
+    { at: 0,   name: '剛下來的' },
+    { at: 50,  name: '霧面者' },
+    { at: 150, name: '千晶母' },
+    { at: 300, name: '擬聲者' },
+    { at: 500, name: '漲潮者' }
   ];
   function rankOf(total) {
     var i = 0;
@@ -3322,9 +3326,11 @@
     if (mine) {
       var place = rows.indexOf(mine) + 1;
       var rk = rankOf(mine.total);
-      v.haulMine = '你們是「' + rk.name + '」，' + mine.total + ' 分，第 ' + place + ' 名。' +
-        (rk.next ? '再 ' + (rk.next.at - mine.total) + ' 分變成「' + rk.next.name + '」。'
-                 : '已經是最深的那一階了。');
+      v.haulMine = mine.total + ' 分，第 ' + place + ' 名。' +
+        (rk.next
+          ? '再 ' + (rk.next.at - mine.total) + ' 分就追得上「' + rk.next.name + '」。'
+          : '四隻都追過了。') +
+        '　追不追得上不影響過關——過關只看他。';
     }
     v.haulNote = '勾一條 1 分　·　通過一項 10 分　·　通過而且做到宣告的破法 30 分（取代 10）。' +
       '跑幾輪之後基本盤都差不多——名次的差距全部來自宣告成功了幾次。';
@@ -3460,9 +3466,9 @@
     v.hasHomeHaul = true;
 
     var rk = rankOf(mine.total);
-    v.homeRank = rk.name;
-    v.homeRankNote = mine.total + ' 分　·　第 ' + (rows.indexOf(mine) + 1) + ' 名 / ' + rows.length + ' 組' +
-      (rk.next ? '　·　再 ' + (rk.next.at - mine.total) + ' 分變「' + rk.next.name + '」' : '');
+    v.homeRank = mine.total + ' 分';
+    v.homeRankNote = '第 ' + (rows.indexOf(mine) + 1) + ' 名 / ' + rows.length + ' 組' +
+      (rk.next ? '　·　再 ' + (rk.next.at - mine.total) + ' 分追上「' + rk.next.name + '」' : '　·　四隻都追過了');
 
     /* 只列還沒被拿走的，最多三塊。已經有人拿走的擺首頁只剩打擊。 */
     var open = (S.haulClaims || []).filter(function (c) { return !c.by; });
@@ -3737,10 +3743,14 @@
     v.boardDone = done + ' / ' + TOTAL + ' 塊';
     v.boardLeft = (TOTAL - done) + ' 塊';
     var LSc = perLayer[cur - 1];
+    /* 原型那句還在講「一格一步」，但階段已經拿掉了 */
+    if (v.mapLede && v.mapLede.indexOf('一格一步') >= 0) {
+      v.mapLede = '剖面由上往下，一層一階。每一層過不過由老師決定；挖到的那一層才看得見裡面。';
+    }
     v.boardStepNote = LSc.cleared
-      ? '這一層採完了，通道往下一層開了。'
-      : '通道上一格就是一塊礦石。這一層採到 ' + LSc.gotN + ' / ' + LSc.veinN +
-        ' 塊，全部踩過才走得到層底那一格「關」。';
+      ? '他讓你們過了這一層。'
+      : '這一層採到 ' + LSc.gotN + ' / ' + LSc.veinN + ' 塊——那是你做過什麼的紀錄，' +
+        '不是往下的門票。覺得這一層告一段落了就去找他。';
 
     /* 把通道鋪到剖面的每一層上 */
     (v.mapLayers || []).forEach(function (m, i) {
@@ -3796,11 +3806,15 @@
         onPass: function () { L.go('SUB'); }
       }));
 
-      m.steps = cells;
+      /* 階段拿掉。一層不再是「第 1 格走到第 4 格」——那是系統在替
+         學生排順序。現在一層就是一層，過不過只看老師。
+         留下來的只有角色（你在哪一層）跟層底那一隻。 */
+      m.steps = [cells[cells.length - 1]];
       m.stepsStyle = stripStyle(mob, n === cur);
       m.stepsTag = fog ? '？？？'
-        : '第 ' + (base + 1) + '–' + (base + st.veinN) + ' 塊' +
-          (n === cur ? '　·　採到 ' + st.gotN + '/' + st.veinN : st.cleared ? '　·　採完了' : '');
+        : st.cleared ? '他讓你們過了'
+        : n === cur ? '他還沒讓你們過'
+        : '';
       m.stepsTagStyle = 'position:absolute;left:var(--mcol);top:9px;z-index:2;' +
         "font:400 11px/1 'C11';letter-spacing:.1em;color:" + (n === cur ? '#FFD98A' : fog ? '#4A443C' : '#8A8073') +
         ';pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top';
