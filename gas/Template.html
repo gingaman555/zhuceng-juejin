@@ -771,6 +771,21 @@
                       </div>
                     </div>
                   </sc-if>
+                  <sc-if value="{{ gambleShow }}" hint-placeholder-val="{{ true }}">
+                    <div style="{{ gambleBoxStyle }}">
+                      <div style="font:500 22px/1 'C11';color:#E9B341;margin-bottom:7px">{{ gambleTitle }}</div>
+                      <div style="font:400 22px/1.65 'C11';color:#C3BAAA;margin-bottom:9px;max-width:520px;text-wrap:pretty">{{ gambleBody }}</div>
+                      <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:13px;max-width:520px;text-wrap:pretty">{{ gambleCost }}</div>
+                      <div style="display:flex;flex-direction:column;gap:7px">
+                        <sc-for list="{{ gambleItems }}" as="gb" hint-placeholder-count="3">
+                          <button onClick="{{ gb.pick }}" style="{{ gb.style }}">
+                            {{ gb.label }}
+                            <span style="{{ gb.textStyle }}">{{ gb.text }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">交在哪裡　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
                   <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">作業照老師原本要求的方式交。這裡放個連結或截圖，讓他知道去哪裡看——不放也可以。</div>
                   <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px">
@@ -893,7 +908,7 @@
                 <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                     <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
+                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if>
                     <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                       <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                     </sc-if>
@@ -1165,6 +1180,40 @@
             </div>
           </sc-if>
 
+          <sc-if value="{{ scHaul }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-10 採量" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
+                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
+                </div>
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-10 · HAUL</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">採量</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ haulMine }}</p>
+              </div>
+              <div style="padding:18px var(--pad) 0">
+                <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:14px;max-width:560px;text-wrap:pretty">{{ haulNote }}</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ haulRows }}" as="hl" hint-placeholder-count="4">
+                    <div style="{{ hl.rowStyle }}">
+                      <div style="display:flex;align-items:baseline;gap:11px">
+                        <span style="{{ hl.rankStyle }}">{{ hl.rank }}</span>
+                        <span style="{{ hl.nameStyle }}">{{ hl.name }}</span>
+                        <span style="{{ hl.totalStyle }}">{{ hl.total }}</span>
+                      </div>
+                      <div style="{{ hl.barStyle }}">
+                        <div style="{{ hl.baseStyle }}"></div>
+                        <div style="{{ hl.bonusStyle }}"></div>
+                      </div>
+                      <div style="{{ hl.detailStyle }}">{{ hl.detail }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
           <sc-if value="{{ scDig }}" hint-placeholder-val="{{ false }}">
             <div data-screen-label="S-09 試挖" style="padding:0 0 32px">
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
@@ -1172,6 +1221,7 @@
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
                   <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
+                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-09 · PROBE</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">試挖</h1>
@@ -1207,6 +1257,21 @@
                   </sc-for>
                 </div>
               </div>
+              <sc-if value="{{ digCalibShow }}" hint-placeholder-val="{{ true }}">
+                <div style="margin:22px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #3A3026">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341;margin-bottom:4px">你的準度</div>
+                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:15px;max-width:460px;text-wrap:pretty">試挖不給分。它只給你這兩個數字——押得準不準、估得準不準。</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:26px">
+                    <sc-for list="{{ digGauges }}" as="gg" hint-placeholder-count="2">
+                      <div style="flex:1 1 230px;min-width:0">
+                        <div style="{{ gg.headStyle }}">{{ gg.head }}</div>
+                        <div style="{{ gg.barStyle }}"><div style="{{ gg.fillStyle }}"></div></div>
+                        <div style="{{ gg.subStyle }}">{{ gg.sub }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
               <div style="padding:22px var(--pad) 0">
                 <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:5px">挖過的</div>
                 <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:11px">{{ digDoneNote }}</div>
@@ -1244,7 +1309,7 @@
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if>
                   <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                     <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                   </sc-if>
@@ -3008,7 +3073,7 @@
               <div style="padding:22px var(--pad) 0">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if>
                   <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-04 · CLASS ROSTER</div>

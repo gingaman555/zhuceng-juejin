@@ -5,7 +5,7 @@
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Digs: [], Config: { unlockEvery: 1 } };
+             Files: [], Roster: [], MinNames: [], Digs: [], Checks: [], Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
     if (saved) DB = JSON.parse(saved);
@@ -90,12 +90,13 @@
     DB.TeamTasks.forEach(function (r) { if (r.teamId === teamId) m[r.taskId] = r; });
     return m;
   }
-  function mergeTasks(defs, m, w) {
+  function mergeTasks(defs, m, w, teamId) {
     return defs.map(function (d) {
       var s = m[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', effort: '', effortNote: '', blocker: '', checked: [] };
       var dw = dueWeekOf(d.due);
       return Object.assign({}, d, { status: s.status, text: s.text, files: s.files || [], effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'',
         fb: s.fb || '', fbType: s.fbType || '', checked: checkList2(s.checked),
+        star: teamId ? starOf(teamId, d.id) : false,
         over: dw !== null && dw < w && s.status !== 'passed' });
     });
   }
@@ -105,6 +106,37 @@
     var a = raw;
     if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
     return Array.isArray(a) ? a.map(Number) : [];
+  }
+
+  var STAR_GAP_MS = 6 * 60 * 60 * 1000;
+  function starOf(teamId, taskId) {
+    var ev = DB.Checks
+      .filter(function (c) { return c.teamId === teamId && c.taskId === taskId; })
+      .sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
+    var lastOn = {}, opened = {};
+    for (var i = 0; i < ev.length; i++) {
+      var k = String(ev[i].idx), t = new Date(ev[i].ts).getTime();
+      if (ev[i].act === 'on') {
+        if (opened[k]) return true;
+        lastOn[k] = t;
+      } else {
+        if (lastOn[k] && (t - lastOn[k]) >= STAR_GAP_MS) opened[k] = true;
+        delete lastOn[k];
+      }
+    }
+    return false;
+  }
+  function scoreOf(teamId) {
+    var ticks = 0, pages = 0, stars = 0;
+    DB.TeamTasks.forEach(function (r) {
+      if (r.teamId !== teamId) return;
+      ticks += checkList2(r.checked).length;
+      if (r.status === 'passed') { if (starOf(teamId, r.taskId)) stars++; else pages++; }
+    });
+    return { ticks: ticks, pages: pages, stars: stars,
+             base: ticks + pages * 10 + stars * 10,
+             bonus: stars * 20,
+             total: ticks + pages * 10 + stars * 30 };
   }
 
   var DIG_PAGES = 24;
@@ -494,7 +526,7 @@
           out.myTeam = teamPub(me, w);
           var fM = (DB.Finales||[]).filter(function (x) { return x.teamId === me.teamId; })[0];
           out.myTeam.finaleOpened = !!(fM && fM.opened);
-          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w);
+          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w, me.teamId);
           out.plan = {};
           DB.Plans.forEach(function (p) { if (p.teamId !== me.teamId) return; var b = p.toWeek||p.week||1, a = p.fromWeek||b; out.plan[p.taskId] = { a: Math.min(a,b), b: b }; });
           out.passedWeek = {};
@@ -519,7 +551,7 @@
           return { layer: n, count: b?b.n:0, avg: b?Math.round(b.len/b.n):0 }; });
         out.teamTasks = {}; out.queue = []; out.gates = [];
         allTeams.forEach(function (tm) {
-          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w);
+          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w, tm.id);
           out.teamTasks[tm.id] = list;
           list.forEach(function (task) {
             if (task.status === 'submitted') out.queue.push({
@@ -856,8 +888,23 @@
       if (row) row.checked = next;
       else DB.TeamTasks.push({ teamId: u.teamId, taskId: taskId, status: 'todo',
         text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: next });
+      DB.Checks.push({ ckId: 'ck' + uid(), teamId: u.teamId, taskId: taskId,
+        idx: n, act: on ? 'on' : 'off', ts: NOW() });
       persist();
-      return ok({ checked: next, total: def.checks.length });
+      return ok({ checked: next, total: def.checks.length, star: starOf(u.teamId, taskId) });
+    },
+    apiRoster: function (t) {
+      var u = auth(t);
+      var out = DB.Teams.filter(function (x) { return x.classId === u.classId; })
+        .map(function (x) {
+          var sc = scoreOf(x.teamId);
+          return { teamId: x.teamId, name: x.name || x.teamId,
+                   me: x.teamId === (u.teamId || ''),
+                   ticks: sc.ticks, pages: sc.pages, stars: sc.stars,
+                   base: sc.base, bonus: sc.bonus, total: sc.total };
+        });
+      out.sort(function (a, b) { return b.total - a.total; });
+      return ok({ roster: out });
     },
     apiOpenDig: function (t, layer, text, estDays, bet) {
       var u = auth(t);

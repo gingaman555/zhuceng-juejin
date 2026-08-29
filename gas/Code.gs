@@ -48,6 +48,7 @@ var SHEET_DEFS = {
   Passes:      ['passId', 'teamId', 'layer', 'week', 'toolLevel', 'gateCell1', 'gateCell2', 'gateCell3', 'verdict', 'reason', 'ts'],
   Reads:       ['readId', 'readerTeam', 'targetTeam', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected', 'ts'],
   Codes:       ['revId', 'coder', 'code', 'ts'],
+  Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'ts'],
   Digs:        ['digId', 'teamId', 'classId', 'layer', 'text', 'estDays', 'bet',
                 'result', 'page', 'openedAt', 'closedAt'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
@@ -1128,7 +1129,7 @@ function teamTaskMap_(teamId) {
   return m;
 }
 
-function mergeTasks_(defs, tmap, courseWeek, dueWeekFn) {
+function mergeTasks_(defs, tmap, courseWeek, dueWeekFn, teamId) {
   return defs.map(function (d) {
     var s = tmap[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', passedWeek: null,
                             effort: '', effortNote: '', blocker: '', checked: [] };
@@ -1137,6 +1138,7 @@ function mergeTasks_(defs, tmap, courseWeek, dueWeekFn) {
       status: s.status, text: s.text, files: s.files, fb: s.fb, fbType: s.fbType,
       effort: s.effort, effortNote: s.effortNote, blocker: s.blocker,
       checked: s.checked || [],
+      star: teamId ? starOf_(teamId, d.id) : false,
       over: dw !== null && dw < courseWeek && s.status !== 'passed'
     });
   });
@@ -1292,7 +1294,7 @@ function apiBootstrap(token) {
         var fMine = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(me.teamId); })[0];
         mp.finaleOpened = !!(fMine && String(fMine.opened) === 'Y');
         out.myTeam = mp;
-        out.tasks = mergeTasks_(tasksOfClass_(classId, me.teamId), teamTaskMap_(me.teamId), courseWeek);
+        out.tasks = mergeTasks_(tasksOfClass_(classId, me.teamId), teamTaskMap_(me.teamId), courseWeek, null, me.teamId);
         out.plan = {};
         readTable_('Plans').forEach(function (p) {
           if (String(p.teamId) !== String(me.teamId)) return;
@@ -1317,7 +1319,7 @@ function apiBootstrap(token) {
     if (u.role === 'teacher') {
       out.teamTasks = {};
       allTeams.forEach(function (t) {
-        out.teamTasks[t.id] = mergeTasks_(tasksOfClass_(classId, t.id), teamTaskMap_(t.id), courseWeek);
+        out.teamTasks[t.id] = mergeTasks_(tasksOfClass_(classId, t.id), teamTaskMap_(t.id), courseWeek, null, t.id);
       });
       out.queue = [];
       allTeams.forEach(function (t) {
@@ -1798,6 +1800,91 @@ function checkList_(raw) {
  * 學生勾／取消勾清單上的一條。作業本身交在老師原本收的地方，
  * 這裡只記「他們說自己做到哪幾條」。
  */
+/* ================= 回掘與計分 =================
+   回掘（★）：送出之前，自己把一項已經勾好的打開、補完、再勾回去。
+
+   這是整套設計裡唯一一個老師給不了的東西——只能學生自己走那條路
+   產生。所以它值 30 分，而不是通過的 10 分；而且是取代不是相加。
+
+   防刷：取消必須距離該項「上一次勾起來」至少 6 小時。十分鐘之內
+   勾了又取消不算——那不是發現問題，那是在刷分。
+
+   一項任務的 ★ 只計一次。它是「那一頁」的屬性，不是「那一條」的。 */
+
+var STAR_GAP_MS = 6 * 60 * 60 * 1000;
+
+function checksOf_(teamId, taskId) {
+  return readTable_('Checks')
+    .filter(function (c) {
+      return String(c.teamId) === String(teamId) && String(c.taskId) === String(taskId);
+    })
+    .sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
+}
+
+/** 這一組在這一項任務上，有沒有回掘過。 */
+function starOf_(teamId, taskId) {
+  var ev = checksOf_(teamId, taskId);
+  var lastOn = {};   /* idx -> 上一次勾起來的時間 */
+  var opened = {};   /* idx -> 有效地打開過（距上次勾 >= 6h） */
+  for (var i = 0; i < ev.length; i++) {
+    var k = String(ev[i].idx), t = new Date(ev[i].ts).getTime();
+    if (String(ev[i].act) === 'on') {
+      /* 打開過又勾回來 —— 成立 */
+      if (opened[k]) return true;
+      lastOn[k] = t;
+    } else {
+      if (lastOn[k] && (t - lastOn[k]) >= STAR_GAP_MS) opened[k] = true;
+      delete lastOn[k];
+    }
+  }
+  return false;
+}
+
+/* ---- 最小計分 ----
+   只有三條，全部能心算，而且全部從既有事件重算，不落地：
+     勾一項條目      1 分
+     一項任務通過   10 分
+     回掘過的那一項  30 分（取代 10，不是加上去）
+
+   刻意不把試挖算進去。試挖給分就會有人為了分數去刷，
+   而它的價值在於誠實記錄自己押錯了。 */
+function scoreOf_(teamId) {
+  var ticks = 0, pages = 0, stars = 0;
+
+  readTable_('TeamTasks').forEach(function (r) {
+    if (String(r.teamId) !== String(teamId)) return;
+    ticks += (jparse_(r.checked, []) || []).length;
+    if (String(r.status) === 'passed') {
+      if (starOf_(teamId, r.taskId)) stars++; else pages++;
+    }
+  });
+
+  return {
+    ticks: ticks, pages: pages, stars: stars,
+    base: ticks + pages * 10 + stars * 10,
+    bonus: stars * 20,
+    total: ticks + pages * 10 + stars * 30
+  };
+}
+
+/** 全班名冊。以隊伍為單位，不做個人排名。 */
+function apiRoster(token) {
+  try {
+    var u = auth_(token);
+    var out = readTable_('Teams')
+      .filter(function (t) { return String(t.classId) === String(u.classId); })
+      .map(function (t) {
+        var s = scoreOf_(t.teamId);
+        return { teamId: t.teamId, name: t.name || t.teamId,
+                 me: String(t.teamId) === String(u.teamId || ''),
+                 ticks: s.ticks, pages: s.pages, stars: s.stars,
+                 base: s.base, bonus: s.bonus, total: s.total };
+      });
+    out.sort(function (a, b) { return b.total - a.total; });
+    return ok_({ roster: out });
+  } catch (e) { return err_(e); }
+}
+
 function apiSetCheck(token, taskId, idx, on) {
   try {
     var u = auth_(token);
@@ -1826,7 +1913,15 @@ function apiSetCheck(token, taskId, idx, on) {
       status: (row && row.status) || 'todo',
       checked: JSON.stringify(next), updatedAt: new Date()
     });
-    return ok_({ checked: next, total: list.length });
+
+    /* 事件才是事實來源。狀態是它算出來的，不是反過來。 */
+    appendRow_('Checks', {
+      ckId: 'ck' + Utilities.getUuid().slice(0, 8),
+      teamId: u.teamId, taskId: taskId, idx: n,
+      act: on ? 'on' : 'off', ts: new Date()
+    });
+
+    return ok_({ checked: next, total: list.length, star: starOf_(u.teamId, taskId) });
   } catch (e) { return err_(e); }
 }
 

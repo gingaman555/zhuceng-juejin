@@ -28,7 +28,8 @@ const PK = {
   Passes: ['passId'],
   Reads: ['readId'],
   Codes: ['revId', 'coder'],
-  Digs: ['digId']
+  Digs: ['digId'],
+  Checks: ['ckId']
 };
 
 /* Firestore 文件 ID 不能有 / . # $ [ ] 也不能太長 */

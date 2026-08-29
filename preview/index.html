@@ -872,6 +872,21 @@ window.JLZ_SPRITES = {
                       </div>
                     </div>
                   </sc-if>
+                  <sc-if value="{{ gambleShow }}" hint-placeholder-val="{{ true }}">
+                    <div style="{{ gambleBoxStyle }}">
+                      <div style="font:500 22px/1 'C11';color:#E9B341;margin-bottom:7px">{{ gambleTitle }}</div>
+                      <div style="font:400 22px/1.65 'C11';color:#C3BAAA;margin-bottom:9px;max-width:520px;text-wrap:pretty">{{ gambleBody }}</div>
+                      <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:13px;max-width:520px;text-wrap:pretty">{{ gambleCost }}</div>
+                      <div style="display:flex;flex-direction:column;gap:7px">
+                        <sc-for list="{{ gambleItems }}" as="gb" hint-placeholder-count="3">
+                          <button onClick="{{ gb.pick }}" style="{{ gb.style }}">
+                            {{ gb.label }}
+                            <span style="{{ gb.textStyle }}">{{ gb.text }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">交在哪裡　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
                   <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">作業照老師原本要求的方式交。這裡放個連結或截圖，讓他知道去哪裡看——不放也可以。</div>
                   <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px">
@@ -994,7 +1009,7 @@ window.JLZ_SPRITES = {
                 <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                     <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
+                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if>
                     <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                       <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                     </sc-if>
@@ -1266,6 +1281,40 @@ window.JLZ_SPRITES = {
             </div>
           </sc-if>
 
+          <sc-if value="{{ scHaul }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-10 採量" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
+                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
+                </div>
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-10 · HAUL</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">採量</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ haulMine }}</p>
+              </div>
+              <div style="padding:18px var(--pad) 0">
+                <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:14px;max-width:560px;text-wrap:pretty">{{ haulNote }}</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ haulRows }}" as="hl" hint-placeholder-count="4">
+                    <div style="{{ hl.rowStyle }}">
+                      <div style="display:flex;align-items:baseline;gap:11px">
+                        <span style="{{ hl.rankStyle }}">{{ hl.rank }}</span>
+                        <span style="{{ hl.nameStyle }}">{{ hl.name }}</span>
+                        <span style="{{ hl.totalStyle }}">{{ hl.total }}</span>
+                      </div>
+                      <div style="{{ hl.barStyle }}">
+                        <div style="{{ hl.baseStyle }}"></div>
+                        <div style="{{ hl.bonusStyle }}"></div>
+                      </div>
+                      <div style="{{ hl.detailStyle }}">{{ hl.detail }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
           <sc-if value="{{ scDig }}" hint-placeholder-val="{{ false }}">
             <div data-screen-label="S-09 試挖" style="padding:0 0 32px">
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
@@ -1273,6 +1322,7 @@ window.JLZ_SPRITES = {
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
                   <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
+                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-09 · PROBE</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">試挖</h1>
@@ -1308,6 +1358,21 @@ window.JLZ_SPRITES = {
                   </sc-for>
                 </div>
               </div>
+              <sc-if value="{{ digCalibShow }}" hint-placeholder-val="{{ true }}">
+                <div style="margin:22px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #3A3026">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341;margin-bottom:4px">你的準度</div>
+                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:15px;max-width:460px;text-wrap:pretty">試挖不給分。它只給你這兩個數字——押得準不準、估得準不準。</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:26px">
+                    <sc-for list="{{ digGauges }}" as="gg" hint-placeholder-count="2">
+                      <div style="flex:1 1 230px;min-width:0">
+                        <div style="{{ gg.headStyle }}">{{ gg.head }}</div>
+                        <div style="{{ gg.barStyle }}"><div style="{{ gg.fillStyle }}"></div></div>
+                        <div style="{{ gg.subStyle }}">{{ gg.sub }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
               <div style="padding:22px var(--pad) 0">
                 <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:5px">挖過的</div>
                 <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:11px">{{ digDoneNote }}</div>
@@ -1345,7 +1410,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if>
                   <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                     <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                   </sc-if>
@@ -3109,7 +3174,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 0">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if>
                   <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-04 · CLASS ROSTER</div>
@@ -5014,7 +5079,7 @@ class Component extends DCLogic {
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Digs: [], Config: { unlockEvery: 1 } };
+             Files: [], Roster: [], MinNames: [], Digs: [], Checks: [], Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
     if (saved) DB = JSON.parse(saved);
@@ -5099,12 +5164,13 @@ class Component extends DCLogic {
     DB.TeamTasks.forEach(function (r) { if (r.teamId === teamId) m[r.taskId] = r; });
     return m;
   }
-  function mergeTasks(defs, m, w) {
+  function mergeTasks(defs, m, w, teamId) {
     return defs.map(function (d) {
       var s = m[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', effort: '', effortNote: '', blocker: '', checked: [] };
       var dw = dueWeekOf(d.due);
       return Object.assign({}, d, { status: s.status, text: s.text, files: s.files || [], effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'',
         fb: s.fb || '', fbType: s.fbType || '', checked: checkList2(s.checked),
+        star: teamId ? starOf(teamId, d.id) : false,
         over: dw !== null && dw < w && s.status !== 'passed' });
     });
   }
@@ -5114,6 +5180,37 @@ class Component extends DCLogic {
     var a = raw;
     if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
     return Array.isArray(a) ? a.map(Number) : [];
+  }
+
+  var STAR_GAP_MS = 6 * 60 * 60 * 1000;
+  function starOf(teamId, taskId) {
+    var ev = DB.Checks
+      .filter(function (c) { return c.teamId === teamId && c.taskId === taskId; })
+      .sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
+    var lastOn = {}, opened = {};
+    for (var i = 0; i < ev.length; i++) {
+      var k = String(ev[i].idx), t = new Date(ev[i].ts).getTime();
+      if (ev[i].act === 'on') {
+        if (opened[k]) return true;
+        lastOn[k] = t;
+      } else {
+        if (lastOn[k] && (t - lastOn[k]) >= STAR_GAP_MS) opened[k] = true;
+        delete lastOn[k];
+      }
+    }
+    return false;
+  }
+  function scoreOf(teamId) {
+    var ticks = 0, pages = 0, stars = 0;
+    DB.TeamTasks.forEach(function (r) {
+      if (r.teamId !== teamId) return;
+      ticks += checkList2(r.checked).length;
+      if (r.status === 'passed') { if (starOf(teamId, r.taskId)) stars++; else pages++; }
+    });
+    return { ticks: ticks, pages: pages, stars: stars,
+             base: ticks + pages * 10 + stars * 10,
+             bonus: stars * 20,
+             total: ticks + pages * 10 + stars * 30 };
   }
 
   var DIG_PAGES = 24;
@@ -5503,7 +5600,7 @@ class Component extends DCLogic {
           out.myTeam = teamPub(me, w);
           var fM = (DB.Finales||[]).filter(function (x) { return x.teamId === me.teamId; })[0];
           out.myTeam.finaleOpened = !!(fM && fM.opened);
-          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w);
+          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w, me.teamId);
           out.plan = {};
           DB.Plans.forEach(function (p) { if (p.teamId !== me.teamId) return; var b = p.toWeek||p.week||1, a = p.fromWeek||b; out.plan[p.taskId] = { a: Math.min(a,b), b: b }; });
           out.passedWeek = {};
@@ -5528,7 +5625,7 @@ class Component extends DCLogic {
           return { layer: n, count: b?b.n:0, avg: b?Math.round(b.len/b.n):0 }; });
         out.teamTasks = {}; out.queue = []; out.gates = [];
         allTeams.forEach(function (tm) {
-          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w);
+          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w, tm.id);
           out.teamTasks[tm.id] = list;
           list.forEach(function (task) {
             if (task.status === 'submitted') out.queue.push({
@@ -5865,8 +5962,23 @@ class Component extends DCLogic {
       if (row) row.checked = next;
       else DB.TeamTasks.push({ teamId: u.teamId, taskId: taskId, status: 'todo',
         text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: next });
+      DB.Checks.push({ ckId: 'ck' + uid(), teamId: u.teamId, taskId: taskId,
+        idx: n, act: on ? 'on' : 'off', ts: NOW() });
       persist();
-      return ok({ checked: next, total: def.checks.length });
+      return ok({ checked: next, total: def.checks.length, star: starOf(u.teamId, taskId) });
+    },
+    apiRoster: function (t) {
+      var u = auth(t);
+      var out = DB.Teams.filter(function (x) { return x.classId === u.classId; })
+        .map(function (x) {
+          var sc = scoreOf(x.teamId);
+          return { teamId: x.teamId, name: x.name || x.teamId,
+                   me: x.teamId === (u.teamId || ''),
+                   ticks: sc.ticks, pages: sc.pages, stars: sc.stars,
+                   base: sc.base, bonus: sc.bonus, total: sc.total };
+        });
+      out.sort(function (a, b) { return b.total - a.total; });
+      return ok({ roster: out });
     },
     apiOpenDig: function (t, layer, text, estDays, bet) {
       var u = auth(t);
@@ -7387,7 +7499,9 @@ class Component extends DCLogic {
     decorateLayerPanel(L, v);
     decorateHomeBand(L, v);   /* 首頁的「你在這裡」吃的是同一份 */
     decorateChecklist(L, v);  /* 老師開了清單就逐條勾 */
+    decorateGamble(L, v);     /* 勾完之後，送出前的那一下 */
     decorateDig(L, v);        /* 試挖與斗篷人的日誌 */
+    decorateHaul(L, v);       /* 採量：全班的分數 */
 
 
 
@@ -8943,6 +9057,78 @@ class Component extends DCLogic {
   }
 
   /* 學生那邊：逐條勾 */
+  /* ============================================================
+     送出之前。
+
+     清單全部勾完之後，先不要讓他直接送。攤開來問一句：
+     有沒有哪一項，你其實不太確定？
+
+     按下去 → 那一項打開，而且至少要隔 6 小時才能勾回來。
+     所以它有真實的代價：今天送不出去了。
+
+     不按 → 現在就送。
+
+     這是整個系統裡唯一一個真的賭局，也是唯一一個老師給不了的
+     東西——★ 只能自己在他開口之前先發現才拿得到。 */
+  function decorateGamble(L, v) {
+    var S = L.state;
+    v.gambleShow = false; v.gambleItems = [];
+    v.gambleTitle = ''; v.gambleBody = ''; v.gambleCost = '';
+    v.gambleStar = false; v.gambleBoxStyle = 'display:none';
+    if (S.role !== 'student' || S.screen !== 'S05') return;
+
+    var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
+    if (!task) return;
+    var list = task.checks || [];
+    if (!list.length) return;
+    if (task.status === 'passed') return;
+
+    var on = {};
+    (task.checked || []).forEach(function (i) { on[Number(i)] = true; });
+    if (list.filter(function (_x, i) { return on[i]; }).length < list.length) return;  /* 還沒勾完 */
+
+    v.gambleShow = true;
+    v.gambleStar = !!task.star;
+
+    if (task.star) {
+      /* 已經回掘過了。這一頁的星拿到了，不用再賭一次。 */
+      v.gambleBoxStyle = 'margin:0 0 18px;padding:16px 18px;background:rgba(233,179,65,.07);' +
+        'border:1px solid #7A6432';
+      v.gambleTitle = '★　這一頁有星了';
+      v.gambleBody = '你在他開口之前自己發現了一項，補完之後才勾回來。這顆星老師給不了，只有走過那條路才有。';
+      v.gambleCost = '送出去吧。';
+      return;
+    }
+
+    v.gambleBoxStyle = 'margin:0 0 18px;padding:16px 18px;background:rgba(0,0,0,.32);' +
+      'border:1px solid #3A3026';
+    v.gambleTitle = '送出之前';
+    v.gambleBody = '都勾完了。有沒有哪一項，你其實不太確定？現在打開它、補完、再勾回來——這一頁會留下一顆星。';
+    v.gambleCost = '打開之後至少要隔 6 小時才能勾回來，所以今天就送不出去了。不想賭就直接送，沒有任何損失。';
+
+    v.gambleItems = list.map(function (txt, i) {
+      return {
+        label: '第 ' + (i + 1) + ' 條　我不確定',
+        text: txt,
+        pick: function () {
+          /* 先在畫面上打開，再回寫——跟勾選同一套手感 */
+          task.checked = (task.checked || []).filter(function (x) { return Number(x) !== i; });
+          L.setState({ checkNudge: (L.state.checkNudge || 0) + 1 });
+          call('apiSetCheck', LIVE.token, task.id, i, false)
+            .then(function (r) {
+              if (!r || !r.ok) { L.say((r && r.error) || '沒有存到伺服器。'); return refresh(); }
+              L.say('第 ' + (i + 1) + ' 條打開了。補完之後再勾回來——至少要隔 6 小時，那顆星才算數。');
+              return refresh();
+            })
+            .catch(function () { L.say('沒有存到伺服器。'); });
+        },
+        style: 'text-align:left;padding:9px 12px;background:rgba(0,0,0,.4);border:1px solid #4A3F30;' +
+          "color:#C3BAAA;font:400 11px/1.5 'C11';cursor:pointer",
+        textStyle: "display:block;font:400 11px/1.5 'C11';color:#6E665A;margin-top:4px;text-wrap:pretty"
+      };
+    });
+  }
+
   function decorateChecklist(L, v) {
     var S = L.state;
     v.hasChecks = false;
@@ -9056,11 +9242,201 @@ class Component extends DCLogic {
   };
   var DIG_BET = { yes: '押會成立', no: '押不會成立', unsure: '不確定' };
 
+  /* ============================================================
+     校準：試挖唯一的回報。
+
+     試挖不給分——給分就變成刷的。它給的是兩個你自己看的數字：
+       押中率  你說會成立的，有幾條真的成立
+       估時    你估三天的事，從開到收實際花了幾天
+
+     這兩件事就是專案管理在練的東西，而且完全不需要老師。
+     樣本太少不給數字——n=1 顯示 100% 比不顯示還糟。 */
+  var CALIB_MIN = 3;
+
+  function digCalib(all) {
+    var bet = 0, hit = 0, est = 0, estSum = 0, actSum = 0, over = 0;
+    (all || []).forEach(function (d) {
+      if (!d.result) return;
+      /* 押中率：只算真的押了的。沒結論的不算對也不算錯。 */
+      if ((d.bet === 'yes' || d.bet === 'no') && d.result !== 'none') {
+        bet++;
+        if ((d.bet === 'yes' && d.result === 'ok') ||
+            (d.bet === 'no' && d.result === 'dead')) hit++;
+      }
+      /* 估時：量的是「從開到收」，不是做了幾天。」收得晚」本身就是資料。 */
+      if (d.estDays && d.openedAt && d.closedAt) {
+        var a = (new Date(d.closedAt) - new Date(d.openedAt)) / 86400000;
+        if (a >= 0) { est++; estSum += Number(d.estDays); actSum += a; if (a > d.estDays) over++; }
+      }
+    });
+    return { bet: bet, hit: hit, est: est, estSum: estSum, actSum: actSum, over: over };
+  }
+
+  function gauge(head, sub, frac, hue, live) {
+    return {
+      head: head, sub: sub,
+      headStyle: "font:400 22px/1.5 'C11';color:" + (live ? '#E8E2D6' : '#6E665A') + ';text-wrap:pretty',
+      barStyle: 'margin-top:9px;height:5px;background:rgba(0,0,0,.4);border:1px solid #2E2822',
+      fillStyle: 'height:100%;width:' + Math.round(Math.max(0, Math.min(1, frac)) * 100) + '%;' +
+        'background:' + (live ? hue : '#2E2822'),
+      subStyle: "font:400 11px/1.7 'C11';color:#6E665A;margin-top:7px;text-wrap:pretty"
+    };
+  }
+
+  function decorateCalib(v, all) {
+    var c = digCalib(all), g = [];
+
+    if (c.bet >= CALIB_MIN) {
+      g.push(gauge(
+        '押了 ' + c.bet + ' 次，中了 ' + c.hit + ' 次。',
+        '「不確定」的沒有算進去。',
+        c.hit / c.bet, '#E9B341', true));
+    } else {
+      g.push(gauge(
+        '押過 ' + c.bet + ' 次。',
+        '再 ' + (CALIB_MIN - c.bet) + ' 次就看得出準度了。太少的時候算出來的比例沒有意義。',
+        0, '#E9B341', false));
+    }
+
+    if (c.est >= CALIB_MIN) {
+      var e = c.estSum / c.est, a = c.actSum / c.est;
+      var d1 = function (x) { return (Math.round(x * 10) / 10).toFixed(1); };
+      g.push(gauge(
+        '你估 ' + d1(e) + ' 天的方向，從開到收平均 ' + d1(a) + ' 天。',
+        c.over + ' / ' + c.est + ' 條超過自己估的。',
+        e > 0 ? Math.min(1, e / Math.max(a, 0.01)) : 0, '#7CC98F', true));
+    } else {
+      g.push(gauge(
+        '收過 ' + c.est + ' 條有估天數的。',
+        '再 ' + (CALIB_MIN - c.est) + ' 條就看得出估得準不準。',
+        0, '#7CC98F', false));
+    }
+
+    v.digGauges = g;
+    v.digCalibShow = true;
+  }
+
+  /* ============================================================
+     採量：全班挖出多少，以隊伍為單位。
+
+     只有三條，全部能心算：
+       勾一條條目        1 分
+       一項任務通過     10 分
+       回掘過的那一項   30 分（取代 10，不是加上去）
+
+     條子分兩段畫：基本盤與加分分色。這是刻意的——
+     跑完幾輪之後每一組的基本盤都差不多，名次上的差距
+     一分都不是來自「有沒有交作業」，全部來自 ★。
+
+     而 ★ 是老師給不了的，只能自己在他開口之前先發現。 */
+  function loadHaul(L) {
+    if (L.state.haulLoading) return;
+    L.setState({ haulLoading: true });
+    call('apiRoster', LIVE.token)
+      .then(function (r) { L.setState({ haulLoading: false, haulData: (r && r.ok) ? r.roster : null }); })
+      .catch(function () { L.setState({ haulLoading: false, haulData: null }); });
+  }
+
+  /* ============================================================
+     收藏總覽裡的 ★ 記述。
+
+     文件 4.6 講三種頁面：空白頁、一般記述、★ 記述（金框加星）。
+     這裡把第三種做出來——回掘過的那一塊礦，框是金的。
+
+     為什麼是「頁的樣子」不是「一個數字」：分數會被忽略，
+     但一整排灰框裡有一個金的，收藏的人自己會去把它補滿。 */
+  function starCollection(L, v) {
+    var S = L.state;
+    if (S.role !== 'student') return;
+    var secs = v.collSections || [];
+    var byMineral = {};
+    (S.tasks || []).forEach(function (t) { if (t.mineral) byMineral[t.mineral] = t; });
+
+    var starred = 0, total = 0;
+    secs.forEach(function (g) {
+      if (g.title !== '礦物') return;
+      (g.items || []).forEach(function (it) {
+        if (!it.got) return;
+        total++;
+        var t = byMineral[it.name];
+        if (!t || !t.star) return;
+        starred++;
+        it.sub = '★　' + it.sub;
+        it.style = it.style
+          .replace('background:rgba(233,179,65,.05)', 'background:rgba(233,179,65,.12)')
+          .replace('border:1px solid #3A3026', 'border:1px solid #E9B341');
+      });
+      /* 標題那一行順便說清楚金框是什麼，不然沒有人知道 */
+      g.note = g.note + (starred
+        ? '　金框的 ' + starred + ' 塊是你在他開口之前自己發現、補完再勾回來的。'
+        : (total ? '　還沒有金框的。金框只能自己在送出前發現才有。' : ''));
+    });
+  }
+
+  function decorateHaul(L, v) {
+    var S = L.state;
+    v.hasHaul = false; v.haulRows = []; v.scHaul = false;
+    v.showHaulTab = false; v.haulNote = ''; v.haulMine = '';
+    if (S.role !== 'student' || !S.signedIn) return;
+
+    v.showHaulTab = true;
+    var tab = S.mapTab || 'map';
+    v.mapTabHaul = function () { L.setState({ mapTab: 'haul', screen: 'S03' }); };
+    v.mapTabHaulStyle = L.pill(tab === 'haul');
+    if (S.screen === 'S03' && tab === 'haul') {
+      v.scHaul = true; v.scMap = false; v.scColl = false; v.scDig = false;
+    }
+    if (!v.scHaul) return;
+
+    if (!S.haulData && !S.haulLoading) { loadHaul(L); return; }
+    var rows = S.haulData || [];
+    if (!rows.length) {
+      v.haulNote = S.haulLoading ? '算一下……' : '還沒有分數。勾第一條就開始了。';
+      return;
+    }
+
+    v.hasHaul = true;
+    var top = Math.max.apply(null, rows.map(function (r) { return r.total; }).concat([1]));
+    var mine = rows.filter(function (r) { return r.me; })[0];
+
+    /* 只描述，不評價——這一句照文件「走過的路」那條硬規則。 */
+    if (mine) {
+      var place = rows.indexOf(mine) + 1;
+      v.haulMine = '你們第 ' + place + ' 名，' + mine.total + ' 分。' +
+        (mine.stars ? '其中 ' + mine.stars + ' 顆星是自己發現的。'
+                    : '還沒有星。星只能在他開口之前自己找出來。');
+    }
+    v.haulNote = '勾一條 1 分　·　通過一項 10 分　·　回掘過的那一項 30 分。跑幾輪之後基本盤都差不多——' +
+      '名次上的差距全部來自星。';
+
+    v.haulRows = rows.map(function (r, i) {
+      var basePct = Math.round(r.base / top * 100);
+      var bonusPct = Math.round(r.bonus / top * 100);
+      return {
+        rank: String(i + 1),
+        name: r.name + (r.me ? '　（你們）' : ''),
+        total: String(r.total),
+        detail: '勾 ' + r.ticks + '　通過 ' + (r.pages + r.stars) + '　★ ' + r.stars,
+        rowStyle: 'padding:13px 15px;background:' + (r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
+          ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
+        rankStyle: "flex:none;width:26px;font:700 22px/1 'C11';color:" + (r.me ? '#E9B341' : '#5F574C'),
+        nameStyle: "flex:1 1 auto;min-width:0;font:500 22px/1.3 'C11';color:" + (r.me ? '#E8E2D6' : '#C3BAAA'),
+        totalStyle: "flex:none;font:700 22px/1 'C11';font-variant-numeric:tabular-nums;color:" +
+          (r.me ? '#E9B341' : '#8A8073'),
+        barStyle: 'display:flex;margin-top:9px;height:6px;background:rgba(0,0,0,.4);border:1px solid #2E2822',
+        baseStyle: 'height:100%;width:' + basePct + '%;background:#5A5044',
+        bonusStyle: 'height:100%;width:' + bonusPct + '%;background:#E9B341',
+        detailStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px"
+      };
+    });
+  }
+
   function decorateDig(L, v) {
     var S = L.state;
     v.hasDig = false;
     v.digOpen = []; v.digDone = []; v.digPages = [];
     v.digDraftText = ''; v.digDraftDays = ''; v.digBetPicks = [];
+    v.digGauges = []; v.digCalibShow = false;
     if (S.role !== 'student' || !S.signedIn) return;
     v.hasDig = true;
 
@@ -9077,6 +9453,7 @@ class Component extends DCLogic {
     }
 
     var all = S.digs || [];
+    decorateCalib(v, all);
     var open = all.filter(function (d) { return !d.result; });
     var done = all.filter(function (d) { return d.result; });
 
@@ -10877,9 +11254,11 @@ class Component extends DCLogic {
 
     var tile = function (o) {
       var got = openAll || o.got;
+      /* 三種頁面：沒拿到／一般／★。★ 只有回掘過才有，老師給不了。 */
+      var star = got && !!o.star;
       return {
         name: got ? o.name : "？？？",
-        kind: o.kind,
+        kind: star ? "★　" + o.kind : o.kind,
         glyph: got && o.sprite
           ? "display:block;width:34px;height:34px;margin:0 auto;image-rendering:pixelated;" +
             "background:url(\"" + o.sprite + "\") center/contain no-repeat" +
@@ -10890,8 +11269,8 @@ class Component extends DCLogic {
                 "background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.35),transparent 72%);" +
                 "animation:dormant 4.6s ease-in-out infinite"),
         style: "padding:11px 8px;text-align:center;font:inherit;cursor:" + (got ? "pointer" : "default") +
-          ";background:" + (got ? "rgba(233,179,65,.05)" : "rgba(0,0,0,.22)") +
-          ";border:1px " + (got ? "solid #3A3026" : "dashed #2C251D") +
+          ";background:" + (star ? "rgba(233,179,65,.12)" : got ? "rgba(233,179,65,.05)" : "rgba(0,0,0,.22)") +
+          ";border:1px " + (star ? "solid #E9B341" : got ? "solid #3A3026" : "dashed #2C251D") +
           ";color:" + (got ? "#E8E2D6" : "#8C8172"),
         open: got
           ? function () { L.setState({ specFrom: S.specFrom || "S03", screen: "S06", specId: o.name }); }
@@ -10909,6 +11288,7 @@ class Component extends DCLogic {
       out.push(tile({
         name: m.name, kind: "礦石 · " + m.task,
         got: !!t && t.status === "passed",
+        star: !!(t && t.star),
         sprite: mineralSprite(L, m.name, layer),
         locked: "還沒採到。通過這一項才看得到它是什麼。"
       }));
@@ -10969,6 +11349,7 @@ class Component extends DCLogic {
     })();
     (v.taskGroups || []).forEach(function (g) { g.desc = fixCal(g.desc); });
     (v.collSections || []).forEach(function (g) { g.note = fixCal(g.note); });
+    starCollection(L, v);   /* 回掘過的那一塊：金框加星 */
 
 
     var S = L.state;
