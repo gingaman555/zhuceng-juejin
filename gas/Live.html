@@ -533,23 +533,41 @@
   /* 側欄的額外入口：學生的期末回顧、老師的 T-09。演練模式也要有。 */
   function addNavExtras(L, v, sc) {
     var S = L.state;
-    /* 排行榜自己一格。原本要點「地圖 → 採量」兩層才到得了，
-       而它是最需要被看到的東西之一。 */
-    if (S.role === 'student' && v.navItems &&
-        !v.navItems.some(function (n) { return n.code === '排行'; })) {
-      var onBoard = sc === 'S03' && (S.mapTab === 'haul');
-      v.navItems.push({
-        code: '排行', label: '排行榜', short: '排行',
-        go: function () { L.setState({ screen: 'S03', mapTab: 'haul' }); },
-        iconStyle: 'display:block;width:14px;height:14px;flex:none;margin-right:8px;background:' +
-          (onBoard ? '#E9B341' : '#5F574C') +
-          ';clip-path:polygon(0 62%,26% 62%,26% 100%,0 100%,0 62%,37% 30%,63% 30%,63% 100%,37% 100%,37% 30%,74% 0,100% 0,100% 100%,74% 100%)',
-        tabIconStyle: 'display:block;width:16px;height:16px;background:' + (onBoard ? '#E9B341' : '#6E665A') +
-          ';clip-path:polygon(0 62%,26% 62%,26% 100%,0 100%,0 62%,37% 30%,63% 30%,63% 100%,37% 100%,37% 30%,74% 0,100% 0,100% 100%,74% 100%)',
-        style: L.navBtn(onBoard), tabStyle: L.tabBtn(onBoard),
-        badge: '', dotStyle: 'display:none', tabDotStyle: 'display:none'
+    /* 側欄五格。原型的清單改不了，在這裡重排。
+       地圖不再佔一格（資訊首頁都有，氣氛從首頁的「看整張地圖」進去），
+       其他隊伍也不佔（它講的事排行榜跟地圖都在講）。
+       收集是主角，所以圖鑑跟紀錄各自一格，不要藏在地圖底下。 */
+    if (S.role === 'student' && v.navItems) {
+      v.navItems = v.navItems.filter(function (n) {
+        return n.code !== '甘特' && n.code !== 'S-03' && n.code !== 'S-04';
+      });
+      var tabNow = S.mapTab || 'map';
+      var onS03 = sc === 'S03';
+      [
+        { code: 'S-08', label: '圖鑑', short: '圖鑑', tab: 'coll',
+          clip: 'polygon(50% 0,100% 26%,100% 74%,50% 100%,0 74%,0 26%)' },
+        { code: 'S-10', label: '排行榜', short: '排行', tab: 'haul',
+          clip: 'polygon(0 62%,26% 62%,26% 100%,0 100%,0 62%,37% 30%,63% 30%,63% 100%,37% 100%,37% 30%,74% 0,100% 0,100% 100%,74% 100%)' },
+        { code: 'S-11', label: '紀錄', short: '紀錄', tab: 'rec',
+          clip: 'polygon(0 0,100% 0,100% 20%,0 20%,0 40%,100% 40%,100% 60%,0 60%,0 80%,72% 80%,72% 100%,0 100%)' }
+      ].forEach(function (it) {
+        if (v.navItems.some(function (n) { return n.code === it.code; })) return;
+        var here = onS03 && tabNow === it.tab;
+        v.navItems.push({
+          code: it.code, label: it.label, short: it.short,
+          go: function () { L.setState({ screen: 'S03', mapTab: it.tab }); },
+          iconStyle: 'display:block;width:14px;height:14px;flex:none;margin-right:8px;background:' +
+            (here ? '#E9B341' : '#5F574C') + ';clip-path:' + it.clip,
+          tabIconStyle: 'display:block;width:16px;height:16px;background:' +
+            (here ? '#E9B341' : '#6E665A') + ';clip-path:' + it.clip,
+          style: L.navBtn(here), tabStyle: L.tabBtn(here),
+          badge: '', dotStyle: 'display:none', tabDotStyle: 'display:none'
+        });
       });
     }
+
+    /* 排行榜自己一格。原本要點「地圖 → 採量」兩層才到得了，
+       而它是最需要被看到的東西之一。 */
 
 
     /* 甘特圖整頁拿掉：側欄那一格濾掉，畫面本身也關起來。
