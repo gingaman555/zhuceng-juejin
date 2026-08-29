@@ -207,19 +207,28 @@
     var kl = classById(classId);
     var byId = {};
     if (classId) tasksOfClass(classId, teamId).forEach(function (d) { byId[String(d.id)] = d; });
-    var ticks = 0, pages = 0, vows = 0;
+    var ticks = 0, pages = 0, vows = 0, finds = 0;
     DB.TeamTasks.forEach(function (r) {
       if (r.teamId !== teamId) return;
       ticks += checkList2(r.checked).length;
+      /* 坑屑：每一件都一樣重，掉到哪一件不影響名次，只有件數影響 */
+      if (Number(r.find) > 0) finds++;
+      if (Number(r.find2) > 0) finds++;
       if (r.status !== 'passed') return;
       var def = byId[String(r.taskId)];
       var won = !!(def && r.vow && vowWon(teamId, r.taskId, def, kl, String(r.vow)));
       if (won) vows++; else pages++;
     });
-    return { ticks: ticks, pages: pages, vows: vows,
-             base: ticks + (pages + vows) * 10,
-             bonus: vows * 20,
-             total: ticks + pages * 10 + vows * 30 };
+    /* 老師放行一層 → 道具一件 ＋ 守關掉落一件，各 50。
+       那是一整個階段的門檻，在榜上就是一個台階。 */
+    var tm = DB.Teams.filter(function (x) { return String(x.teamId) === String(teamId); })[0];
+    var layers = tm ? (tm.passed || []).filter(function (n) {
+      return Number(n) >= 1 && Number(n) <= 4;
+    }).length : 0;
+    return { ticks: ticks, pages: pages, vows: vows, finds: finds, layers: layers,
+             base: ticks + (pages + vows) * 10 + finds,
+             bonus: vows * 20 + layers * 100,
+             total: ticks + pages * 10 + vows * 30 + finds + layers * 100 };
   }
   function firstsOf(classId) {
     var teams = {};
@@ -1080,6 +1089,7 @@
           return { teamId: x.teamId, name: x.name || x.teamId,
                    me: x.teamId === (u.teamId || ''),
                    ticks: sc.ticks, pages: sc.pages, vows: sc.vows,
+                   finds: sc.finds, layers: sc.layers,
                    base: sc.base, bonus: sc.bonus, total: sc.total,
                    firsts: mine[String(x.teamId)] || 0 };
         });

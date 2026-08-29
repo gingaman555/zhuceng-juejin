@@ -635,6 +635,70 @@
     }
   }
 
+  /* 掉落物攤成一份清單。
+
+     本來分成礦物／道具／守關掉落／坑屑四區，但那四個分的是「怎麼拿到
+     的」——那件事點進去看那一件的時候再說就好，清單上先分只是讓人多
+     跳三次。都是掉落物，就放在一起。
+
+     要放在 decorate 的最後：starCollection 與 ghostCodex 都靠區塊標題
+     找東西，得等它們先跑完。 */
+  function flattenDrops(L, v) {
+    var S = L.state;
+    if (S.role !== 'student') return;
+    var secs = v.collSections || [];
+    if (!secs.length) return;
+
+    /* 每一件值幾分，直接標在格子上。守關那兩件給得重（各 50），
+       所以老師放行一層＝100 分——那在榜上是一個台階，不是一小步。 */
+    var PTS = { '礦物': 0, '道具': 50, '守關掉落': 50 };
+    var drops = [];
+    ['礦物', '道具', '守關掉落'].forEach(function (t) {
+      secs.forEach(function (g) {
+        if (g.title !== t) return;
+        (g.items || []).forEach(function (it) {
+          var pt = PTS[t];
+          it.sub = (pt ? '+' + pt + ' 分　' : '') + (it.sub || '');
+          drops.push(it);
+        });
+      });
+    });
+
+    /* 坑屑本來是另一個區塊，形狀不一樣，轉成同一種格子接上來 */
+    var got = S.finds || {};
+    FINDS.forEach(function (f) {
+      var n = got[f.n] || 0;
+      var tier = findTier(f.n);
+      var hue = tier === '罕見' ? '#E9B341' : tier === '少見' ? '#8A8073' : '#5F574C';
+      drops.push({
+        name: n ? f.name : '？？？',
+        got: !!n,
+        sub: '+1 分　' + (n ? (n > 1 ? '撿到 ' + n + ' 件' : '撿到了') : '還沒撿到'),
+        open: (function (ff, nn) { return function () { openFind(L, ff, nn); }; })(f, n),
+        style: 'padding:12px 8px;text-align:center;font:inherit;cursor:' + (n ? 'pointer' : 'default') +
+          ';background:' + (n ? 'rgba(255,255,255,.022)' : 'rgba(0,0,0,.26)') +
+          ';border:1px ' + (n ? 'solid #3A3026' : 'dashed #2C251D') +
+          ';color:' + (n ? '#E8E2D6' : '#8C8172'),
+        glyphStyle: 'display:block;width:22px;height:22px;margin:6px auto;background:' +
+          (n ? hue : '#3A3026') + ';clip-path:polygon(20% 0,80% 0,100% 45%,50% 100%,0 45%)' +
+          (n ? '' : ';opacity:.5')
+      });
+    });
+
+    var gotN = drops.filter(function (x) { return x.got; }).length;
+    v.collSections = [{
+      title: '掉落物',
+      note: '礦石、道具、守關掉落、坑屑，全部在這裡。點進去才會說那一件是怎麼拿到的。' +
+        '　守關那兩件（道具、守關掉落）各 50 分——老師放行一層就是 100 分，' +
+        '所以榜上拉得開的是走到第幾層，不是撿了幾件。坑屑每一件都是 1 分，' +
+        '掉到哪一件都一樣，運氣不會影響名次。',
+      have: gotN + ' / ' + drops.length + ' 種',
+      items: drops
+    }];
+
+    v.hasFinds = false;   /* 坑屑已經併進上面那一份 */
+  }
+
   function decorate(L, v) {
     trimMinerals(L);   /* 每一層最多四塊 */
     var S = L.state, sc = S.screen;
@@ -750,6 +814,7 @@
     /* 巢狀分頁整排收掉——側欄那五格（首頁·任務·圖鑑·排行榜·紀錄）已經涵蓋，
        留著只是同一組頁面有兩個入口。放在最後一行，因為前面好幾支各自會
        把自己那一顆打開。 */
+    flattenDrops(L, v);   /* 掉落物攤成一份，要在 ghostCodex 之後 */
     if (S.role === 'student') {
       v.showRecTab = false; v.showHaulTab = false; v.showDigTab = false;
       v.mapTabMapStyle = 'display:none';
@@ -3342,8 +3407,8 @@
           : '四隻都追過了。') +
         '　追不追得上不影響過關——過關只看他。';
     }
-    v.haulNote = '勾一條 1 分　·　通過一項 10 分　·　通過而且做到宣告的破法 30 分（取代 10）。' +
-      '跑幾輪之後基本盤都差不多——名次的差距全部來自宣告成功了幾次。';
+    v.haulNote = '勾一條 1 分　·　撿到一件坑屑 1 分　·　通過一項 10 分　·　通過而且做到宣告的破法 30 分（取代 10）　·　老師放行一層 100 分（道具 50 ＋ 守關掉落 50）。' +
+      '走到第幾層先把大家分成幾段（一層 100 分），同一段裡面的差距才是宣告成功了幾次。';
 
     v.haulRows = rows.map(function (r, i) {
       var basePct = Math.round(r.base / top * 100);
@@ -3356,6 +3421,8 @@
         detail: '勾 ' + r.ticks + ' 條 = ' + r.ticks + ' 分　·　' +
           '通過 ' + r.pages + ' 項 = ' + (r.pages * 10) + ' 分　·　' +
           '宣告做到 ' + r.vows + ' 項 = ' + (r.vows * 30) + ' 分' +
+          (r.finds ? '　·　坑屑 ' + r.finds + ' 件 = ' + r.finds + ' 分' : '') +
+          (r.layers ? '　·　走完 ' + r.layers + ' 層 = ' + (r.layers * 100) + ' 分' : '') +
           (r.firsts ? '　·　初採 ' + r.firsts + ' 塊' : ''),
         go: (function (tid, nm) {
           return function () { peekTeam(L, tid, nm); };
@@ -4032,13 +4099,50 @@
 
     var won = codex.filter(function (c) { return !c.live; }).length;
     v.hasBest = true;
-    v.bestCount = won + ' 隻';
+    v.bestCount = (won + BOSSES.length) + ' 種';
     v.bestNote = codex.length
-      ? '一項任務擋著一隻。打贏了牠會留下一件東西——那件是隨機的，但每一件都一樣重。' +
+      ? '一項任務擋著一隻，打贏 +10 分（宣告也做到就是 +30）。' +
+        '每一層的盡頭另外站著一隻大的（框比較粗那幾隻），擊退牠 +100 分。' +
         '　圖鑑是你的，換組換專案都跟著你走。'
-      : '還沒遇過任何一隻。老師開了任務就會出現。';
+      : '每一項任務都有一隻擋在前面，每一層的盡頭還有一隻大的。老師開了任務就會出現。';
 
-    v.bestRows = codex.slice().reverse().map(function (c) {
+    /* 守關生物併進來：牠也是生物，只是階層高一階。左框加粗就分得出來，
+       不需要自己佔一區。 */
+    var beatenB = S.passed || [];
+    var hereB = S.currentLayer || 1;
+    var bossRows = BOSSES.map(function (b) {
+      var layB = (L.LAYERS || [])[b.L - 1] || {};
+      var downB = beatenB.indexOf(b.L) >= 0;
+      var seenB = downB || hereB >= b.L;
+      var hueB = BOARD_HUE[Math.max(0, Math.min(3, b.L - 1))];
+      var txtB = BOSS_TEXT[b.L] || {};
+      return {
+        open: (function (bb, sb) {
+          return function () {
+            if (!sb) { L.say('還沒走到那一層。牠現在只是一個影子。'); return; }
+            L.setState({ specFrom: L.state.screen, screen: 'S06', specId: bb.name });
+          };
+        })(b, seenB),
+        name: seenB ? b.name : '？？？',
+        trait: downB ? (txtB.trait || '') : seenB ? '牠擋在這一層的盡頭。擊退之後才看得清楚。' : '',
+        task: 'L' + b.L + '　' + (layB.name || '') + '　·　守關',
+        how: (downB ? '已擊退' : seenB ? '擋在前方' : '還沒走到那一層') + '　·　+100 分',
+        art: 'display:block;width:44px;height:44px;flex:none;image-rendering:pixelated;' +
+          'background:url("' + bossSvg(b, false, true) + '") center/contain no-repeat' +
+          (downB ? '' : ';opacity:' + (seenB ? '.4' : '.16') + ';filter:grayscale(1)'),
+        boxStyle: 'display:flex;gap:13px;padding:12px 14px;text-align:left;width:100%;cursor:' +
+          (seenB ? 'pointer' : 'default') + ';border-left:6px solid ' +
+          (downB ? hueB : 'rgba(255,255,255,.08)') + ';background:' +
+          (downB ? 'rgba(' + hexRgb(hueB) + ',.1)' : 'rgba(0,0,0,.3)') +
+          ';border-top:1px solid #2E2822;border-right:1px solid #2E2822;border-bottom:1px solid #2E2822',
+        nameStyle: "font:700 22px/1.3 'C11';color:" + (downB ? '#F2E6C8' : '#6E665A'),
+        taskStyle: "font:400 11px/1.5 'C11';color:" + (downB ? hueB : '#5F574C') + ';margin-top:3px',
+        traitStyle: "font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty",
+        howStyle: "font:400 11px/1.5 'C11';color:" + (downB ? hueB : '#6E665A') + ';margin-top:5px'
+      };
+    });
+
+    v.bestRows = bossRows.concat(codex.slice().reverse().map(function (c) {
       var r = c.live || { id: c.id, layer: c.layer, title: c.title, status: 'passed',
                           rounds: 0, won: false, vow: '', find: c.find, find2: c.find2 };
       var m = mobOf(mobIdOfTask(r.id), r.layer);
@@ -4047,6 +4151,7 @@
       var seen = true;
       var how = [];
       if (down) {
+        how.push('+' + (r.won ? 30 : 10) + ' 分');
         how.push(r.rounds <= 1 ? '一次就過' : '去了 ' + r.rounds + ' 輪');
         if (r.won) how.push('★ ' + vowName(r.vow));
         var fd = findOf(r.find);
@@ -4079,7 +4184,7 @@
         traitStyle: "font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty",
         howStyle: "font:400 11px/1.5 'C11';color:" + (down ? hue : '#6E665A') + ';margin-top:5px'
       };
-    });
+    }));
   }
 
   function decorateFinds(L, v) {
@@ -5666,7 +5771,7 @@
     var seenN = items.filter(function (x) { return x.got; }).length;
     var beatN = openAll ? items.length
       : items.filter(function (x) { return beaten.indexOf(BOSSES[items.indexOf(x)].L) >= 0; }).length;
-    v.collSections = v.collSections.concat([{
+    if (false) v.collSections = v.collSections.concat([{
       title: '守關生物',
       note: openAll
         ? '前四層各一隻，是那一層難處的化身。老師端不上鎖，全部可讀。'
