@@ -665,15 +665,9 @@
           clip: 'polygon(0 0,100% 0,100% 20%,0 20%,0 40%,100% 40%,100% 60%,0 60%,0 80%,72% 80%,72% 100%,0 100%)' }
       ].forEach(function (it) {
         if (v.navItems.some(function (n) { return n.code === it.code; })) return;
-        /* 新手期間側欄只長出現在用得到的：打贏第一項才多出圖鑑，
-           看過圖鑑才多出排行榜與紀錄。一次給五格，有三格是空的。 */
-        var fr0 = firstRun(L);
-        if (fr0) {
-          var sn = firstSeen();
-          if (it.code === 'S-08' && !(fr0.key === 'coll' || sn.coll)) return;
-          if (it.code === 'S-10' && !(fr0.key === 'haul' || sn.haul)) return;
-          if (it.code === 'S-11') return;
-        }
+        /* 側欄五格永遠都在。本來新手期間會把圖鑑與排行榜藏起來，
+           但那讓任何人第一次打開都以為那兩頁壞掉了——空的圖鑑寫一句
+           「還沒收到東西」就夠，不需要整格消失。引導留在首頁那一句。 */
         var here = onS03 && tabNow === it.tab;
         v.navItems.push({
           code: it.code, label: it.label, short: it.short,
