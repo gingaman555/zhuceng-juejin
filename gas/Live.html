@@ -291,6 +291,84 @@
       next.finds = b.finds || {};
       next.digPages = b.digPages || [];
       next.digTotal = b.digTotal || 24;
+      /* 老師在我們沒看的時候動過了——把變化演出來 */
+      (function () {
+        if (u.role !== 'student') return;
+        /* S0.signedIn 在剛載入的時候是 false —— 那正是「學生打開」那一刻，
+           所以不能拿它擋整段。前後比對本來就只在開著的時候才有意義。 */
+        var hit = S0.signedIn ? detectMoments(L, S0.tasks || [], next.tasks || []) : null;
+
+        /* 重新打開的時候 detectMoments 是空的比空的，什麼都不會跳。
+           但「學生打開才拿到獎勵」是這個循環的一步 —— 所以另外記一份
+           看過沒，沒看過的過關就補跳。記在瀏覽器裡：純演出，掉了也
+           不會少任何東西。 */
+        if (!hit) {
+          var seen = {};
+          try { seen = JSON.parse(localStorage.getItem('jlz.seenwin') || '{}'); } catch (e) {}
+          var fresh = (next.tasks || []).filter(function (x) {
+            return x.status === 'passed' && !seen[x.id];
+          })[0];
+          if (fresh) {
+            try {
+              (next.tasks || []).forEach(function (x) { if (x.status === 'passed') seen[x.id] = 1; });
+              localStorage.setItem('jlz.seenwin', JSON.stringify(seen));
+            } catch (e) {}
+            hit = { kind: 'mined', task: fresh, n: 1 };
+          }
+        }
+        if (!hit) return;
+        var t = hit.task;
+        if (hit.kind === 'needfix') {
+          next.moment = {
+            kind: 'needfix', accent: '#D9603F',
+            kicker: 'SENT BACK',
+            title: '他把「' + t.title + '」退回來了',
+            lede: '不是懲罰。他寫了為什麼——照那一段改，重交次數不限。',
+            sprite: null,
+            rows: [
+              { k: '這一項', v: t.title },
+              { k: '交過幾次', v: ((t.rounds || []).length + 1) + ' 次', hi: true },
+              { k: '重交次數', v: '不限' }
+            ],
+            quoteLabel: '他寫的', quote: t.fb || '',
+            lines: ['前面幾次跟他每一次的理由都留著。改完再交，他會看到你動了哪裡。'],
+            btn: '知道了', go: function () {}
+          };
+        } else {
+          /* 打贏了。依照做到什麼程度給獎勵——只做基本掉一件，
+             有多做（宣告而且做到）多掉一件。 */
+          var mv = mobOfTask(t);
+          var rc = (next.record || []).filter(function (r) { return r.id === t.id; })[0] || {};
+          var f1 = findOf(rc.find), f2 = findOf(rc.find2);
+          var hueV = BOARD_HUE[Math.max(0, Math.min(4, (t.layer || 1) - 1))];
+
+          var rowsV = [];
+          if (mv) rowsV.push({ k: '打贏了', v: mv.name });
+          rowsV.push({ k: '做到什麼程度', v: f2 ? '有多做' : '做到基本', hi: !!f2 });
+          if (t.mineral) rowsV.push({ k: '採到', v: t.mineral });
+          if (f1) rowsV.push({ k: '牠留下', v: f1.name + '　' + findTier(f1.n) });
+          if (f2) rowsV.push({ k: '還多留了', v: f2.name + '　' + findTier(f2.n), hi: true });
+
+          next.moment = {
+            kind: 'mined', art: 'gem', accent: hueV,
+            kicker: f2 ? 'CLEARED · WENT FURTHER' : 'CLEARED',
+            title: mv ? ('打倒了「' + mv.name + '」') : '過了',
+            lede: f2
+              ? '他判過「' + t.title + '」了，而且你先講的那一樣真的做到了。'
+              : '他判過「' + t.title + '」了。',
+            sprite: mv
+              ? 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
+                'background:url("' + mobSvg(mv.id, t.layer || 1) + '") center/contain no-repeat'
+              : null,
+            rows: rowsV,
+            quoteLabel: '他寫的合格考量', quote: t.fb || '',
+            lines: f2
+              ? ['多做的那一次會多留一件——不是更值錢，是多一次抽的機會。']
+              : ['下一項開工前先宣告要拿哪一樣。做到的話，牠會多留一件。'],
+            btn: '收好', go: function () {}
+          };
+        }
+      })();
       var mt = b.myTeam;
       if (mt) {
         next.currentLayer = mt.layer; next.passed = mt.passed || [];
@@ -359,56 +437,6 @@
                  effort: q.effort || '', effortNote: q.effortNote || '', blocker: q.blocker || '' };
       });
       next.finOpened = !!(b.myTeam && b.myTeam.finaleOpened);
-      /* 老師在我們沒看的時候動過了——把變化演出來 */
-      (function () {
-        if (u.role !== 'student' || !S0.signedIn) return;
-        var hit = detectMoments(L, S0.tasks || [], next.tasks || []);
-        if (!hit) return;
-        var t = hit.task;
-        if (hit.kind === 'needfix') {
-          next.moment = {
-            kind: 'needfix', accent: '#D9603F',
-            kicker: 'SENT BACK',
-            title: '他把「' + t.title + '」退回來了',
-            lede: '不是懲罰。他寫了為什麼——照那一段改，重交次數不限。',
-            sprite: null,
-            rows: [
-              { k: '這一項', v: t.title },
-              { k: '交過幾次', v: ((t.rounds || []).length + 1) + ' 次', hi: true },
-              { k: '重交次數', v: '不限' }
-            ],
-            quoteLabel: '他寫的', quote: t.fb || '',
-            lines: ['前面幾次跟他每一次的理由都留著。改完再交，他會看到你動了哪裡。'],
-            btn: '知道了', go: function () {}
-          };
-        } else {
-          var after2 = (next.tasks || []).filter(function (x) { return x.layer === (next.currentLayer || 1); });
-          var got2 = after2.filter(function (x) { return x.status === 'passed'; }).length;
-          var veinN2 = (L.MINS || []).filter(function (x) { return x.L === (next.currentLayer || 1); }).length;
-          var minDef = (L.MINS || []).filter(function (x) { return x.name === t.mineral; })[0] || {};
-          var full = veinN2 > 0 && got2 >= veinN2;
-          next.moment = {
-            kind: full ? 'full' : 'mined', accent: '#E9B341',
-            kicker: full ? 'LAYER COMPLETE' : 'MINERAL SECURED',
-            title: full ? '這一層採齊了' : '採到「' + (t.mineral || '一塊礦石') + '」',
-            lede: full
-              ? (L.LAYERS[(next.currentLayer || 1) - 1] || {}).name + ' 的 ' + veinN2 + ' 塊都在你們手上了。'
-              : '他確認「' + t.title + '」通過了。',
-            sprite: full ? null : (t.mineral ? mineralSprite(L, t.mineral, t.layer) : null),
-            badge: full ? '' : (t.mineral || ''),
-            rows: [
-              { k: '這一層', v: got2 + ' / ' + veinN2 + ' 塊', hi: true },
-              { k: '還差', v: Math.max(0, veinN2 - got2) + ' 塊' },
-              { k: '圖鑑', v: (next.tasks || []).filter(function (x) { return x.status === 'passed'; }).length + ' / ' + MINS_TOTAL }
-            ],
-            quoteLabel: '他寫的合格考量', quote: t.fb || '',
-            lines: full
-              ? ['可以送關卡了。送審會問三題：你走過的路、你們的變化、接下來要做什麼。']
-              : [minDef.rec || ''].filter(Boolean),
-            btn: '知道了', go: function () {}
-          };
-        }
-      })();
       next.myPhrases = b.myPhrases || [];
       next.myWriting = b.myWriting || [];
       next.reviewedOthers = [];
@@ -2891,6 +2919,9 @@
     var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
     if (!task) return;
 
+    /* 第一次點開這一項：跳出擋在前面的那一隻 */
+    if (task.status === 'todo') encounter(L, task);
+
     var locked = task.status === 'submitted' || task.status === 'passed';
     var cur = task.vow || '';
     v.hasVow = true;
@@ -3936,6 +3967,83 @@
     });
   }
 
+  /* ---- 遭遇：第一次點開那一項的時候跳出來 ----
+     一項只跳一次，記在瀏覽器裡。不記伺服器是因為這純粹是演出，
+     沒有它學生也不會少任何東西。 */
+  var MET_KEY = 'jlz.met';
+  function metSet() {
+    try { return JSON.parse(localStorage.getItem(MET_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function markMet(id) {
+    try { var m = metSet(); m[id] = 1; localStorage.setItem(MET_KEY, JSON.stringify(m)); } catch (e) {}
+  }
+
+  function encounter(L, task) {
+    if (!task || !task.id) return;
+    if (metSet()[task.id]) return;
+    var m = mobOfTask(task);
+    if (!m) return;
+    markMet(task.id);
+
+    var hue = BOARD_HUE[Math.max(0, Math.min(4, (task.layer || 1) - 1))];
+    var dw = L.dueWeek(task);
+    showMoment(L, {
+      kind: 'submit', accent: hue,
+      kicker: 'IT BLOCKS THE WAY',
+      title: m.name,
+      lede: '「' + (task.title || '這一項') + '」前面站著牠。',
+      sprite: 'display:block;width:120px;height:120px;margin:0 auto;image-rendering:pixelated;' +
+        'background:url("' + mobSvg(m.id, task.layer || 1) + '") center/contain no-repeat',
+      rows: [
+        { k: '他要你做到', v: (task.checks || []).length + ' 條' },
+        { k: '期限', v: dw ? ('第 ' + dw + ' 週') : '不設限', hi: true }
+      ],
+      quoteLabel: '牠長這樣',
+      quote: m.trait,
+      lines: [
+        '打贏牠＝這一項被他判過。牠會留下一件東西。',
+        '開工前先宣告要拿哪一樣——有做到的話，牠會多留一件。'
+      ],
+      btn: '知道了', go: function () {}
+    });
+  }
+
+  /* ---- 打贏：老師判過之後，學生下一次打開時演出來 ---- */
+  function victory(L, task) {
+    if (!task) return;
+    var m = mobOfTask(task);
+    var rec = (L.state.record || []).filter(function (r) { return r.id === task.id; })[0] || {};
+    var f1 = findOf(rec.find), f2 = findOf(rec.find2);
+    var hue = BOARD_HUE[Math.max(0, Math.min(4, (task.layer || 1) - 1))];
+
+    var rows = [];
+    if (m) rows.push({ k: '打贏了', v: m.name });
+    rows.push({ k: '做到什麼程度', v: f2 ? '有多做' : '做到基本', hi: !!f2 });
+    if (f1) rows.push({ k: '牠留下', v: f1.name + '（' + findTier(f1.n) + '）' });
+    if (f2) rows.push({ k: '還多留了', v: f2.name + '（' + findTier(f2.n) + '）', hi: true });
+    if (rec.won) rows.push({ k: '宣告', v: '★ ' + vowName(rec.vow) });
+
+    showMoment(L, {
+      kind: 'mined', art: 'gem', accent: hue,
+      kicker: f2 ? 'CLEARED · WENT FURTHER' : 'CLEARED',
+      title: task.title || '過了',
+      lede: f2
+        ? '他判過了，而且你先講的那一樣真的做到了。'
+        : '他判過了。',
+      sprite: m
+        ? 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
+          'background:url("' + mobSvg(m.id, task.layer || 1) + '") center/contain no-repeat;opacity:.55'
+        : null,
+      rows: rows,
+      quoteLabel: rec.say ? '他寫的' : '',
+      quote: rec.say || '',
+      lines: f2
+        ? ['多做的那一次會多留一件——不是更值錢，是多一次抽的機會。']
+        : ['下一項開工前先宣告要拿哪一樣。做到的話，牠會多留一件。'],
+      btn: '收好', go: function () {}
+    });
+  }
+
   function decorateBestiary(L, v) {
     var S = L.state;
     v.hasBest = false; v.bestRows = []; v.bestCount = ''; v.bestNote = '';
@@ -4044,11 +4152,11 @@
 
     /* 分頁：地圖剖面／收藏總覽／試挖。學生才有第三個。 */
     var tab = S.mapTab || 'map';
-    v.showDigTab = true;
+    v.showDigTab = false;   /* 試挖整個拿掉了 */
     v.mapTabDig = function () { L.setState({ mapTab: 'dig', screen: 'S03' }); };
     v.mapTabDigStyle = L.pill(tab === 'dig');
     if (S.screen === 'S03') {
-      v.scDig = tab === 'dig';
+      v.scDig = false;   /* 試挖拿掉了 */
       if (tab === 'dig') { v.scMap = false; v.scColl = false; }
     } else {
       v.scDig = false;

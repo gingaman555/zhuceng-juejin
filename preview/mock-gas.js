@@ -181,7 +181,7 @@
         rounds: nRounds,
         sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
         say: last ? String(last.reason || '') : '',
-        mineral: d.mineral || '', find: Number(st.find) || 0 };
+        mineral: d.mineral || '', find: Number(st.find) || 0, find2: Number(st.find2) || 0 };
     });
   }
 
@@ -242,12 +242,16 @@
     for (i = 21; i <= 24; i++) FIND_WEIGHT.push(i);
   })();
   function rollFind() { return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)]; }
+  /* 有多做：兩次取好的。給的是更多次機會，不是更值錢的東西。 */
+  function rollFindGood() { var a = rollFind(), b = rollFind(); return b > a ? b : a; }
   function findsOf(teamId) {
     var out = {};
     DB.TeamTasks.forEach(function (r) {
       if (r.teamId !== teamId) return;
-      var n = Number(r.find);
-      if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+      [r.find, r.find2].forEach(function (x) {
+        var n = Number(x);
+        if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+      });
     });
     return out;
   }
@@ -259,12 +263,22 @@
   }
   function digPages(teamId) {
     var out = [];
-    DB.Digs.forEach(function (d) {
-      if (d.teamId !== teamId) return;
-      var n = Number(d.page);
+    DB.TeamTasks.forEach(function (r) {
+      if (r.teamId !== teamId) return;
+      var n = Number(r.page);
       if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
     });
     return out.sort(function (a, b) { return a - b; });
+  }
+  function rollPage(teamId) {
+    var todayKey = ymd(today());
+    var gotToday = DB.TeamTasks.some(function (r) {
+      return r.teamId === teamId && Number(r.page) > 0 && r.pageAt && ymd(r.pageAt) === todayKey;
+    });
+    if (gotToday) return 0;
+    var have = digPages(teamId), left = [];
+    for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
+    return left.length ? left[Math.floor(Math.random() * left.length)] : 0;
   }
   function digsOf(teamId) {
     return DB.Digs.filter(function (d) { return d.teamId === teamId; }).map(function (d) {
@@ -1156,11 +1170,17 @@
         m.fbType = pass ? 'pass' : 'more';
         if (pass) m.passedWeek = w;
         /* 過關掉一件坑屑。已經掉過的不重掉（重審不會多給）。 */
-        if (pass && !Number(m.find)) { find = rollFind(); m.find = find; }
-        else if (pass) find = Number(m.find);
+        var defNow = tasksOfClass(tm.classId, teamId).filter(function (d) { return d.id === taskId; })[0];
+        var extra = !!(pass && m.vow && defNow && vowWon(teamId, taskId, defNow, kl, String(m.vow)));
+        if (pass && !Number(m.find)) {
+          find = extra ? rollFindGood() : rollFind();
+          m.find = find;
+          if (extra) m.find2 = rollFindGood();
+        } else if (pass) find = Number(m.find);
+        if (pass && !Number(m.page)) { var pg = rollPage(teamId); if (pg) { m.page = pg; m.pageAt = NOW(); } }
       }
       persist();
-      return ok({ find: find });
+      return ok({ find: find, find2: (m && Number(m.find2)) || 0, page: (m && Number(m.page)) || 0 });
     },
     apiReviewGate: function (t, teamId, pass, toolLevel, reason) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');

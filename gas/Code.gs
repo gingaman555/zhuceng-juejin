@@ -35,7 +35,7 @@ var SHEET_DEFS = {
   Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'passed', 'toolLevels',
                 'gateText', 'gateSubmitted', 'gateVerdict', 'specNames', 'createdAt', 'gateTs'],
   Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'teams', 'checks', 'createdAt'],
-  TeamTasks:   ['teamId', 'taskId', 'status', 'vow', 'find', 'text', 'files', 'fb', 'fbType', 'passedWeek',
+  TeamTasks:   ['teamId', 'taskId', 'status', 'vow', 'find', 'find2', 'page', 'pageAt', 'text', 'files', 'fb', 'fbType', 'passedWeek',
                 'effort', 'effortNote', 'blocker', 'checked', 'updatedAt'],
   Submissions: ['subId', 'taskId', 'teamId', 'week', 'dueWeek', 'overdue', 'len', 'files', 'attempt', 'text',
                 'effort', 'effortNote', 'blocker', 'fileList', 'ts'],
@@ -1927,7 +1927,8 @@ function recordOf_(teamId, classId) {
       sentBack: myRevs.filter(function (r) { return String(r.result) === 'needfix'; }).length,
       say: last ? String(last.reason || '') : '',
       mineral: d.mineral || '',
-      find: Number(st.find) || 0
+      find: Number(st.find) || 0,
+      find2: Number(st.find2) || 0
     };
   });
 }
@@ -2148,14 +2149,29 @@ function ymd_(d) {
 }
 
 /** 這一組已經挖到哪幾片 */
+/** 這一組挖到哪幾片日誌。過關時給，一天最多一片。 */
 function digPages_(teamId) {
   var out = [];
-  readTable_('Digs').forEach(function (d) {
-    if (String(d.teamId) !== String(teamId)) return;
-    var n = Number(d.page);
+  readTable_('TeamTasks').forEach(function (r) {
+    if (String(r.teamId) !== String(teamId)) return;
+    var n = Number(r.page);
     if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
   });
   return out.sort(function (a, b) { return a - b; });
+}
+
+/** 過關時抽一片還沒拿過的。今天已經拿過就不給——一天一片，
+    不然一次判五項就掉五片，那本日誌兩天就翻完了。 */
+function rollPage_(teamId) {
+  var today = ymd_(new Date());
+  var gotToday = readTable_('TeamTasks').some(function (r) {
+    return String(r.teamId) === String(teamId) && Number(r.page) > 0 &&
+           r.pageAt && ymd_(new Date(r.pageAt)) === today;
+  });
+  if (gotToday) return 0;
+  var have = digPages_(teamId), left = [];
+  for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
+  return left.length ? left[Math.floor(Math.random() * left.length)] : 0;
 }
 
 function digsOf_(teamId) {
@@ -2187,14 +2203,24 @@ function rollFind_() {
   return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)];
 }
 
+/** 有多做的時候用這一支：稀有的機率高一倍。
+    注意它給的是「更多次機會」，不是「更值錢的東西」——
+    每一件坑屑的價值完全一樣，那一條不能破。 */
+function rollFindGood_() {
+  var a = rollFind_(), b = rollFind_();
+  return b > a ? b : a;   /* 編號越大越稀有，取兩次裡好的那一次 */
+}
+
 /** 這一組撿到的坑屑：編號 -> 幾件 */
 /** 撿到的坑屑：編號 -> 幾件。過關時掉，一項一件。 */
 function findsOf_(teamId) {
   var out = {};
   readTable_('TeamTasks').forEach(function (r) {
     if (String(r.teamId) !== String(teamId)) return;
-    var n = Number(r.find);
-    if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+    [r.find, r.find2].forEach(function (x) {
+      var n = Number(x);
+      if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+    });
   });
   return out;
 }
@@ -2405,16 +2431,28 @@ function apiReviewItem(token, teamId, taskId, result, reason) {
     var prev = readTable_('TeamTasks').filter(function (r) {
       return String(r.teamId) === String(teamId) && String(r.taskId) === String(taskId);
     })[0] || null;
-    var find = (pass && !(prev && Number(prev.find))) ? rollFind_() : (prev ? prev.find : '');
+    /* 只做基本 vs 有多做：有宣告而且做到，就多掉一件，而且兩件都
+       用「兩次取好的」去抽。多做給的是更多次機會，不是更高的分。 */
+    var defNow = null;
+    tasksOfClass_(t.classId, teamId).forEach(function (d) { if (String(d.id) === String(taskId)) defNow = d; });
+    var vowNow = prev ? String(prev.vow || '') : '';
+    var extra = !!(pass && vowNow && defNow && vowWon_(teamId, taskId, defNow, kl, vowNow));
+
+    var find = '', find2 = '';
+    if (pass && !(prev && Number(prev.find))) {
+      find = extra ? rollFindGood_() : rollFind_();
+      if (extra) find2 = rollFindGood_();
+    } else if (prev) { find = prev.find; find2 = prev.find2 || ''; }
+    var page = (pass && !(prev && Number(prev.page))) ? rollPage_(teamId) : (prev ? prev.page : '');
 
     upsert_('TeamTasks', ['teamId', 'taskId'], {
       teamId: teamId, taskId: taskId,
       status: pass ? 'passed' : 'needs_more',
       fb: txt || (pass ? '（未附理由）' : ''), fbType: pass ? 'pass' : 'more',
-      find: find || '',
+      find: find || '', find2: find2 || '', page: page || '', pageAt: page ? new Date() : (prev ? prev.pageAt : ''),
       passedWeek: pass ? courseWeek : '', updatedAt: new Date()
     });
-    return ok_({ find: pass ? find : 0 });
+    return ok_({ find: pass ? find : 0, find2: pass ? find2 : 0, page: pass ? page : 0, extra: extra });
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 

@@ -1016,7 +1016,7 @@ window.JLZ_SPRITES = {
                 <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                     <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
+                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                     <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                       <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                     </sc-if>
@@ -1300,7 +1300,7 @@ window.JLZ_SPRITES = {
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
-                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
+                  
                   <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>
                   <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
                 </div>
@@ -1346,7 +1346,7 @@ window.JLZ_SPRITES = {
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
-                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
+                  
                   <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>
                   <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
                 </div>
@@ -1392,147 +1392,13 @@ window.JLZ_SPRITES = {
               </div>
             </div>
           </sc-if>
-          <sc-if value="{{ scDig }}" hint-placeholder-val="{{ false }}">
-            <div data-screen-label="S-09 試挖" style="padding:0 0 32px">
-              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
-                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
-                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
-                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
-                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>
-                  <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
-                </div>
-                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-09 · PROBE</div>
-                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">試挖</h1>
-                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">想到一個方向就開一條岔路去試。不用等老師，也不影響過關。試出來不成立也留著——那是你試過的證據。</p>
-              </div>
-              <div style="margin:20px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #3A3026">
-                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341;margin-bottom:11px">開一條</div>
-                <input value="{{ digDraftText }}" onChange="{{ setDigText }}" placeholder="例：訪談對象改成大一新生" style="width:100%;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.6 'C11';outline:none">
-                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:11px">
-                  <span style="font:400 11px/1 'C11';color:#8A8073">估幾天</span>
-                  <input value="{{ digDraftDays }}" onChange="{{ setDigDays }}" placeholder="3" style="width:74px;padding:9px 11px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1 'C11';outline:none">
-                  <span style="font:400 11px/1 'C11';color:#8A8073;margin-left:6px">你覺得</span>
-                  <sc-for list="{{ digBetPicks }}" as="bp" hint-placeholder-count="3">
-                    <button onClick="{{ bp.pick }}" style="{{ bp.style }}">{{ bp.label }}</button>
-                  </sc-for>
-                </div>
-                <button onClick="{{ openDig }}" style="margin-top:14px;font:500 22px/1 'C11';letter-spacing:.16em;color:#0B0A09;background:#E9B341;border:none;padding:13px 22px;cursor:pointer;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)">挖下去</button>
-              </div>
-              <div style="padding:20px var(--pad) 0">
-                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:5px">還開著的</div>
-                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:11px">{{ digOpenNote }}</div>
-                <div style="display:flex;flex-direction:column;gap:9px">
-                  <sc-for list="{{ digOpen }}" as="dg" hint-placeholder-count="2">
-                    <div style="{{ dg.boxStyle }}">
-                      <div style="{{ dg.textStyle }}">{{ dg.text }}</div>
-                      <div style="{{ dg.metaStyle }}">{{ dg.meta }}</div>
-                      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:10px">
-                        <sc-for list="{{ dg.picks }}" as="pk" hint-placeholder-count="3">
-                          <button onClick="{{ pk.pick }}" style="{{ pk.style }}">{{ pk.label }}</button>
-                        </sc-for>
-                      </div>
-                    </div>
-                  </sc-for>
-                </div>
-              </div>
-              <sc-if value="{{ digCalibShow }}" hint-placeholder-val="{{ true }}">
-                <div style="margin:22px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #3A3026">
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341;margin-bottom:4px">你的準度</div>
-                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:15px;max-width:460px;text-wrap:pretty">試挖不給分。它只給你這兩個數字——押得準不準、估得準不準。</div>
-                  <div style="display:flex;flex-wrap:wrap;gap:26px">
-                    <sc-for list="{{ digGauges }}" as="gg" hint-placeholder-count="2">
-                      <div style="flex:1 1 230px;min-width:0">
-                        <div style="{{ gg.headStyle }}">{{ gg.head }}</div>
-                        <div style="{{ gg.barStyle }}"><div style="{{ gg.fillStyle }}"></div></div>
-                        <div style="{{ gg.subStyle }}">{{ gg.sub }}</div>
-                      </div>
-                    </sc-for>
-                  </div>
-                </div>
-              </sc-if>
-              <div style="padding:22px var(--pad) 0">
-                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:5px">挖過的</div>
-                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:11px">{{ digDoneNote }}</div>
-                <div style="display:flex;flex-direction:column;gap:7px">
-                  <sc-for list="{{ digDone }}" as="dd" hint-placeholder-count="3">
-                    <div style="{{ dd.boxStyle }}">
-                      <div style="display:flex;align-items:flex-start;gap:10px">
-                        <span style="{{ dd.tagStyle }}">{{ dd.tag }}</span>
-                        <span style="{{ dd.textStyle }}">{{ dd.text }}</span>
-                      </div>
-                      <div style="{{ dd.metaStyle }}">{{ dd.meta }}</div>
-                    </div>
-                  </sc-for>
-                </div>
-              </div>
-              <sc-if value="{{ hasBest }}" hint-placeholder-val="{{ true }}">
-                <div style="padding:26px var(--pad) 0">
-                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">圖鑑</span>
-                    <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ bestCount }}</span>
-                  </div>
-                  <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ bestNote }}</div>
-                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:7px">
-                    <sc-for list="{{ bestRows }}" as="bs" hint-placeholder-count="6">
-                      <button onClick="{{ bs.open }}" style="{{ bs.boxStyle }}">
-                        <span style="{{ bs.art }}"></span>
-                        <span style="min-width:0;flex:1">
-                          <span style="{{ bs.nameStyle }}">{{ bs.name }}</span>
-                          <span style="{{ bs.taskStyle }}">{{ bs.task }}</span>
-                          <span style="{{ bs.traitStyle }}">{{ bs.trait }}</span>
-                          <span style="{{ bs.howStyle }}">{{ bs.how }}</span>
-                        </span>
-                      </button>
-                    </sc-for>
-                  </div>
-                </div>
-              </sc-if>
-              <sc-if value="{{ hasFinds }}" hint-placeholder-val="{{ true }}">
-                <div style="padding:26px var(--pad) 0">
-                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">坑屑</span>
-                    <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ findCount }}</span>
-                  </div>
-                  <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ findNote }}</div>
-                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:6px">
-                    <sc-for list="{{ findRows }}" as="fd" hint-placeholder-count="24">
-                      <button onClick="{{ fd.open }}" style="{{ fd.boxStyle }}">
-                        <div style="display:flex;align-items:baseline;gap:8px">
-                          <span style="{{ fd.nameStyle }}">{{ fd.name }}</span>
-                          <span style="{{ fd.tallyStyle }}">{{ fd.tally }}</span>
-                          <span style="flex:1"></span>
-                          <span style="{{ fd.tierStyle }}">{{ fd.tier }}</span>
-                        </div>
-                        <div style="{{ fd.lookStyle }}">{{ fd.look }}</div>
-                      </button>
-                    </sc-for>
-                  </div>
-                </div>
-              </sc-if>
-              <div style="padding:26px var(--pad) 0">
-                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
-                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">斗篷人的日誌</span>
-                  <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ digLogCount }}</span>
-                </div>
-                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px">{{ digLogLeft }}</div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:7px">
-                  <sc-for list="{{ digPages }}" as="pg" hint-placeholder-count="24">
-                    <div style="{{ pg.style }}">
-                      <span style="{{ pg.numStyle }}">{{ pg.n }}</span>
-                      <span style="{{ pg.textStyle }}">{{ pg.text }}</span>
-                    </div>
-                  </sc-for>
-                </div>
-              </div>
-            </div>
-          </sc-if>
+          
           <sc-if value="{{ scColl }}" hint-placeholder-val="{{ false }}">
             <div data-screen-label="S-03 收藏總覽" style="padding:0 0 32px">
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                   <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                     <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                   </sc-if>
@@ -1561,7 +1427,67 @@ window.JLZ_SPRITES = {
                   </div>
                 </sc-for>
               </div>
+            <sc-if value="{{ hasBest }}" hint-placeholder-val="{{ true }}">
+                <div style="padding:26px var(--pad) 0">
+                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
+                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">圖鑑</span>
+                    <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ bestCount }}</span>
+                  </div>
+                  <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ bestNote }}</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:7px">
+                    <sc-for list="{{ bestRows }}" as="bs" hint-placeholder-count="6">
+                      <button onClick="{{ bs.open }}" style="{{ bs.boxStyle }}">
+                        <span style="{{ bs.art }}"></span>
+                        <span style="min-width:0;flex:1">
+                          <span style="{{ bs.nameStyle }}">{{ bs.name }}</span>
+                          <span style="{{ bs.taskStyle }}">{{ bs.task }}</span>
+                          <span style="{{ bs.traitStyle }}">{{ bs.trait }}</span>
+                          <span style="{{ bs.howStyle }}">{{ bs.how }}</span>
+                        </span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+<sc-if value="{{ hasFinds }}" hint-placeholder-val="{{ true }}">
+                <div style="padding:26px var(--pad) 0">
+                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
+                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">坑屑</span>
+                    <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ findCount }}</span>
+                  </div>
+                  <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ findNote }}</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:6px">
+                    <sc-for list="{{ findRows }}" as="fd" hint-placeholder-count="24">
+                      <button onClick="{{ fd.open }}" style="{{ fd.boxStyle }}">
+                        <div style="display:flex;align-items:baseline;gap:8px">
+                          <span style="{{ fd.nameStyle }}">{{ fd.name }}</span>
+                          <span style="{{ fd.tallyStyle }}">{{ fd.tally }}</span>
+                          <span style="flex:1"></span>
+                          <span style="{{ fd.tierStyle }}">{{ fd.tier }}</span>
+                        </div>
+                        <div style="{{ fd.lookStyle }}">{{ fd.look }}</div>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+<div style="padding:26px var(--pad) 0">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">
+                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">斗篷人的日誌</span>
+                  <span style="font:700 22px/1 'C11';color:#E8E2D6">{{ digLogCount }}</span>
+                </div>
+                <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px">{{ digLogLeft }}</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:7px">
+                  <sc-for list="{{ digPages }}" as="pg" hint-placeholder-count="24">
+                    <div style="{{ pg.style }}">
+                      <span style="{{ pg.numStyle }}">{{ pg.n }}</span>
+                      <span style="{{ pg.textStyle }}">{{ pg.text }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
             </div>
+</div>
           </sc-if>
 
           <sc-if value="{{ scS06 }}" hint-placeholder-val="{{ false }}">
@@ -3162,7 +3088,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 0">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                   <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-04 · CLASS ROSTER</div>
@@ -5243,7 +5169,7 @@ class Component extends DCLogic {
         rounds: nRounds,
         sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
         say: last ? String(last.reason || '') : '',
-        mineral: d.mineral || '', find: Number(st.find) || 0 };
+        mineral: d.mineral || '', find: Number(st.find) || 0, find2: Number(st.find2) || 0 };
     });
   }
 
@@ -5304,12 +5230,16 @@ class Component extends DCLogic {
     for (i = 21; i <= 24; i++) FIND_WEIGHT.push(i);
   })();
   function rollFind() { return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)]; }
+  /* 有多做：兩次取好的。給的是更多次機會，不是更值錢的東西。 */
+  function rollFindGood() { var a = rollFind(), b = rollFind(); return b > a ? b : a; }
   function findsOf(teamId) {
     var out = {};
     DB.TeamTasks.forEach(function (r) {
       if (r.teamId !== teamId) return;
-      var n = Number(r.find);
-      if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+      [r.find, r.find2].forEach(function (x) {
+        var n = Number(x);
+        if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+      });
     });
     return out;
   }
@@ -5321,12 +5251,22 @@ class Component extends DCLogic {
   }
   function digPages(teamId) {
     var out = [];
-    DB.Digs.forEach(function (d) {
-      if (d.teamId !== teamId) return;
-      var n = Number(d.page);
+    DB.TeamTasks.forEach(function (r) {
+      if (r.teamId !== teamId) return;
+      var n = Number(r.page);
       if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
     });
     return out.sort(function (a, b) { return a - b; });
+  }
+  function rollPage(teamId) {
+    var todayKey = ymd(today());
+    var gotToday = DB.TeamTasks.some(function (r) {
+      return r.teamId === teamId && Number(r.page) > 0 && r.pageAt && ymd(r.pageAt) === todayKey;
+    });
+    if (gotToday) return 0;
+    var have = digPages(teamId), left = [];
+    for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
+    return left.length ? left[Math.floor(Math.random() * left.length)] : 0;
   }
   function digsOf(teamId) {
     return DB.Digs.filter(function (d) { return d.teamId === teamId; }).map(function (d) {
@@ -6218,11 +6158,17 @@ class Component extends DCLogic {
         m.fbType = pass ? 'pass' : 'more';
         if (pass) m.passedWeek = w;
         /* 過關掉一件坑屑。已經掉過的不重掉（重審不會多給）。 */
-        if (pass && !Number(m.find)) { find = rollFind(); m.find = find; }
-        else if (pass) find = Number(m.find);
+        var defNow = tasksOfClass(tm.classId, teamId).filter(function (d) { return d.id === taskId; })[0];
+        var extra = !!(pass && m.vow && defNow && vowWon(teamId, taskId, defNow, kl, String(m.vow)));
+        if (pass && !Number(m.find)) {
+          find = extra ? rollFindGood() : rollFind();
+          m.find = find;
+          if (extra) m.find2 = rollFindGood();
+        } else if (pass) find = Number(m.find);
+        if (pass && !Number(m.page)) { var pg = rollPage(teamId); if (pg) { m.page = pg; m.pageAt = NOW(); } }
       }
       persist();
-      return ok({ find: find });
+      return ok({ find: find, find2: (m && Number(m.find2)) || 0, page: (m && Number(m.page)) || 0 });
     },
     apiReviewGate: function (t, teamId, pass, toolLevel, reason) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
@@ -6705,6 +6651,84 @@ class Component extends DCLogic {
       next.finds = b.finds || {};
       next.digPages = b.digPages || [];
       next.digTotal = b.digTotal || 24;
+      /* 老師在我們沒看的時候動過了——把變化演出來 */
+      (function () {
+        if (u.role !== 'student') return;
+        /* S0.signedIn 在剛載入的時候是 false —— 那正是「學生打開」那一刻，
+           所以不能拿它擋整段。前後比對本來就只在開著的時候才有意義。 */
+        var hit = S0.signedIn ? detectMoments(L, S0.tasks || [], next.tasks || []) : null;
+
+        /* 重新打開的時候 detectMoments 是空的比空的，什麼都不會跳。
+           但「學生打開才拿到獎勵」是這個循環的一步 —— 所以另外記一份
+           看過沒，沒看過的過關就補跳。記在瀏覽器裡：純演出，掉了也
+           不會少任何東西。 */
+        if (!hit) {
+          var seen = {};
+          try { seen = JSON.parse(localStorage.getItem('jlz.seenwin') || '{}'); } catch (e) {}
+          var fresh = (next.tasks || []).filter(function (x) {
+            return x.status === 'passed' && !seen[x.id];
+          })[0];
+          if (fresh) {
+            try {
+              (next.tasks || []).forEach(function (x) { if (x.status === 'passed') seen[x.id] = 1; });
+              localStorage.setItem('jlz.seenwin', JSON.stringify(seen));
+            } catch (e) {}
+            hit = { kind: 'mined', task: fresh, n: 1 };
+          }
+        }
+        if (!hit) return;
+        var t = hit.task;
+        if (hit.kind === 'needfix') {
+          next.moment = {
+            kind: 'needfix', accent: '#D9603F',
+            kicker: 'SENT BACK',
+            title: '他把「' + t.title + '」退回來了',
+            lede: '不是懲罰。他寫了為什麼——照那一段改，重交次數不限。',
+            sprite: null,
+            rows: [
+              { k: '這一項', v: t.title },
+              { k: '交過幾次', v: ((t.rounds || []).length + 1) + ' 次', hi: true },
+              { k: '重交次數', v: '不限' }
+            ],
+            quoteLabel: '他寫的', quote: t.fb || '',
+            lines: ['前面幾次跟他每一次的理由都留著。改完再交，他會看到你動了哪裡。'],
+            btn: '知道了', go: function () {}
+          };
+        } else {
+          /* 打贏了。依照做到什麼程度給獎勵——只做基本掉一件，
+             有多做（宣告而且做到）多掉一件。 */
+          var mv = mobOfTask(t);
+          var rc = (next.record || []).filter(function (r) { return r.id === t.id; })[0] || {};
+          var f1 = findOf(rc.find), f2 = findOf(rc.find2);
+          var hueV = BOARD_HUE[Math.max(0, Math.min(4, (t.layer || 1) - 1))];
+
+          var rowsV = [];
+          if (mv) rowsV.push({ k: '打贏了', v: mv.name });
+          rowsV.push({ k: '做到什麼程度', v: f2 ? '有多做' : '做到基本', hi: !!f2 });
+          if (t.mineral) rowsV.push({ k: '採到', v: t.mineral });
+          if (f1) rowsV.push({ k: '牠留下', v: f1.name + '　' + findTier(f1.n) });
+          if (f2) rowsV.push({ k: '還多留了', v: f2.name + '　' + findTier(f2.n), hi: true });
+
+          next.moment = {
+            kind: 'mined', art: 'gem', accent: hueV,
+            kicker: f2 ? 'CLEARED · WENT FURTHER' : 'CLEARED',
+            title: mv ? ('打倒了「' + mv.name + '」') : '過了',
+            lede: f2
+              ? '他判過「' + t.title + '」了，而且你先講的那一樣真的做到了。'
+              : '他判過「' + t.title + '」了。',
+            sprite: mv
+              ? 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
+                'background:url("' + mobSvg(mv.id, t.layer || 1) + '") center/contain no-repeat'
+              : null,
+            rows: rowsV,
+            quoteLabel: '他寫的合格考量', quote: t.fb || '',
+            lines: f2
+              ? ['多做的那一次會多留一件——不是更值錢，是多一次抽的機會。']
+              : ['下一項開工前先宣告要拿哪一樣。做到的話，牠會多留一件。'],
+            btn: '收好', go: function () {}
+          };
+        }
+      })();
       var mt = b.myTeam;
       if (mt) {
         next.currentLayer = mt.layer; next.passed = mt.passed || [];
@@ -6773,56 +6797,6 @@ class Component extends DCLogic {
                  effort: q.effort || '', effortNote: q.effortNote || '', blocker: q.blocker || '' };
       });
       next.finOpened = !!(b.myTeam && b.myTeam.finaleOpened);
-      /* 老師在我們沒看的時候動過了——把變化演出來 */
-      (function () {
-        if (u.role !== 'student' || !S0.signedIn) return;
-        var hit = detectMoments(L, S0.tasks || [], next.tasks || []);
-        if (!hit) return;
-        var t = hit.task;
-        if (hit.kind === 'needfix') {
-          next.moment = {
-            kind: 'needfix', accent: '#D9603F',
-            kicker: 'SENT BACK',
-            title: '他把「' + t.title + '」退回來了',
-            lede: '不是懲罰。他寫了為什麼——照那一段改，重交次數不限。',
-            sprite: null,
-            rows: [
-              { k: '這一項', v: t.title },
-              { k: '交過幾次', v: ((t.rounds || []).length + 1) + ' 次', hi: true },
-              { k: '重交次數', v: '不限' }
-            ],
-            quoteLabel: '他寫的', quote: t.fb || '',
-            lines: ['前面幾次跟他每一次的理由都留著。改完再交，他會看到你動了哪裡。'],
-            btn: '知道了', go: function () {}
-          };
-        } else {
-          var after2 = (next.tasks || []).filter(function (x) { return x.layer === (next.currentLayer || 1); });
-          var got2 = after2.filter(function (x) { return x.status === 'passed'; }).length;
-          var veinN2 = (L.MINS || []).filter(function (x) { return x.L === (next.currentLayer || 1); }).length;
-          var minDef = (L.MINS || []).filter(function (x) { return x.name === t.mineral; })[0] || {};
-          var full = veinN2 > 0 && got2 >= veinN2;
-          next.moment = {
-            kind: full ? 'full' : 'mined', accent: '#E9B341',
-            kicker: full ? 'LAYER COMPLETE' : 'MINERAL SECURED',
-            title: full ? '這一層採齊了' : '採到「' + (t.mineral || '一塊礦石') + '」',
-            lede: full
-              ? (L.LAYERS[(next.currentLayer || 1) - 1] || {}).name + ' 的 ' + veinN2 + ' 塊都在你們手上了。'
-              : '他確認「' + t.title + '」通過了。',
-            sprite: full ? null : (t.mineral ? mineralSprite(L, t.mineral, t.layer) : null),
-            badge: full ? '' : (t.mineral || ''),
-            rows: [
-              { k: '這一層', v: got2 + ' / ' + veinN2 + ' 塊', hi: true },
-              { k: '還差', v: Math.max(0, veinN2 - got2) + ' 塊' },
-              { k: '圖鑑', v: (next.tasks || []).filter(function (x) { return x.status === 'passed'; }).length + ' / ' + MINS_TOTAL }
-            ],
-            quoteLabel: '他寫的合格考量', quote: t.fb || '',
-            lines: full
-              ? ['可以送關卡了。送審會問三題：你走過的路、你們的變化、接下來要做什麼。']
-              : [minDef.rec || ''].filter(Boolean),
-            btn: '知道了', go: function () {}
-          };
-        }
-      })();
       next.myPhrases = b.myPhrases || [];
       next.myWriting = b.myWriting || [];
       next.reviewedOthers = [];
@@ -9305,6 +9279,9 @@ class Component extends DCLogic {
     var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
     if (!task) return;
 
+    /* 第一次點開這一項：跳出擋在前面的那一隻 */
+    if (task.status === 'todo') encounter(L, task);
+
     var locked = task.status === 'submitted' || task.status === 'passed';
     var cur = task.vow || '';
     v.hasVow = true;
@@ -10350,6 +10327,83 @@ class Component extends DCLogic {
     });
   }
 
+  /* ---- 遭遇：第一次點開那一項的時候跳出來 ----
+     一項只跳一次，記在瀏覽器裡。不記伺服器是因為這純粹是演出，
+     沒有它學生也不會少任何東西。 */
+  var MET_KEY = 'jlz.met';
+  function metSet() {
+    try { return JSON.parse(localStorage.getItem(MET_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function markMet(id) {
+    try { var m = metSet(); m[id] = 1; localStorage.setItem(MET_KEY, JSON.stringify(m)); } catch (e) {}
+  }
+
+  function encounter(L, task) {
+    if (!task || !task.id) return;
+    if (metSet()[task.id]) return;
+    var m = mobOfTask(task);
+    if (!m) return;
+    markMet(task.id);
+
+    var hue = BOARD_HUE[Math.max(0, Math.min(4, (task.layer || 1) - 1))];
+    var dw = L.dueWeek(task);
+    showMoment(L, {
+      kind: 'submit', accent: hue,
+      kicker: 'IT BLOCKS THE WAY',
+      title: m.name,
+      lede: '「' + (task.title || '這一項') + '」前面站著牠。',
+      sprite: 'display:block;width:120px;height:120px;margin:0 auto;image-rendering:pixelated;' +
+        'background:url("' + mobSvg(m.id, task.layer || 1) + '") center/contain no-repeat',
+      rows: [
+        { k: '他要你做到', v: (task.checks || []).length + ' 條' },
+        { k: '期限', v: dw ? ('第 ' + dw + ' 週') : '不設限', hi: true }
+      ],
+      quoteLabel: '牠長這樣',
+      quote: m.trait,
+      lines: [
+        '打贏牠＝這一項被他判過。牠會留下一件東西。',
+        '開工前先宣告要拿哪一樣——有做到的話，牠會多留一件。'
+      ],
+      btn: '知道了', go: function () {}
+    });
+  }
+
+  /* ---- 打贏：老師判過之後，學生下一次打開時演出來 ---- */
+  function victory(L, task) {
+    if (!task) return;
+    var m = mobOfTask(task);
+    var rec = (L.state.record || []).filter(function (r) { return r.id === task.id; })[0] || {};
+    var f1 = findOf(rec.find), f2 = findOf(rec.find2);
+    var hue = BOARD_HUE[Math.max(0, Math.min(4, (task.layer || 1) - 1))];
+
+    var rows = [];
+    if (m) rows.push({ k: '打贏了', v: m.name });
+    rows.push({ k: '做到什麼程度', v: f2 ? '有多做' : '做到基本', hi: !!f2 });
+    if (f1) rows.push({ k: '牠留下', v: f1.name + '（' + findTier(f1.n) + '）' });
+    if (f2) rows.push({ k: '還多留了', v: f2.name + '（' + findTier(f2.n) + '）', hi: true });
+    if (rec.won) rows.push({ k: '宣告', v: '★ ' + vowName(rec.vow) });
+
+    showMoment(L, {
+      kind: 'mined', art: 'gem', accent: hue,
+      kicker: f2 ? 'CLEARED · WENT FURTHER' : 'CLEARED',
+      title: task.title || '過了',
+      lede: f2
+        ? '他判過了，而且你先講的那一樣真的做到了。'
+        : '他判過了。',
+      sprite: m
+        ? 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
+          'background:url("' + mobSvg(m.id, task.layer || 1) + '") center/contain no-repeat;opacity:.55'
+        : null,
+      rows: rows,
+      quoteLabel: rec.say ? '他寫的' : '',
+      quote: rec.say || '',
+      lines: f2
+        ? ['多做的那一次會多留一件——不是更值錢，是多一次抽的機會。']
+        : ['下一項開工前先宣告要拿哪一樣。做到的話，牠會多留一件。'],
+      btn: '收好', go: function () {}
+    });
+  }
+
   function decorateBestiary(L, v) {
     var S = L.state;
     v.hasBest = false; v.bestRows = []; v.bestCount = ''; v.bestNote = '';
@@ -10458,11 +10512,11 @@ class Component extends DCLogic {
 
     /* 分頁：地圖剖面／收藏總覽／試挖。學生才有第三個。 */
     var tab = S.mapTab || 'map';
-    v.showDigTab = true;
+    v.showDigTab = false;   /* 試挖整個拿掉了 */
     v.mapTabDig = function () { L.setState({ mapTab: 'dig', screen: 'S03' }); };
     v.mapTabDigStyle = L.pill(tab === 'dig');
     if (S.screen === 'S03') {
-      v.scDig = tab === 'dig';
+      v.scDig = false;   /* 試挖拿掉了 */
       if (tab === 'dig') { v.scMap = false; v.scColl = false; }
     } else {
       v.scDig = false;

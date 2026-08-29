@@ -3474,5 +3474,65 @@ must(
   }
 })();
 
+
+/* 69. 試挖整頁拿掉。收集的三塊（圖鑑／坑屑／日誌）搬到收藏總覽—— */
+/*     它們現在全部從過關來，本來就該待在收集那一頁。 */
+(function () {
+  var a = t.indexOf('<sc-if value="{{ scDig }}"');
+  if (a < 0) { console.error('MISS scDig'); process.exit(1); }
+  /* 找到這個 sc-if 的配對收尾（裡面有巢狀） */
+  var depth = 1, i = t.indexOf('>', a) + 1;
+  while (depth > 0 && i < t.length) {
+    var nx = t.indexOf('<sc-if', i), cl = t.indexOf('</sc-if>', i);
+    if (cl < 0) { console.error('MISS 試挖頁收尾'); process.exit(1); }
+    if (nx >= 0 && nx < cl) { depth++; i = nx + 6; }
+    else { depth--; i = cl + 8; }
+  }
+  var page = t.slice(a, i);
+
+  /* 把要留的三塊挑出來，其他丟掉 */
+  var keep = [];
+  ['{{ hasBest }}', '{{ hasFinds }}'].forEach(function (flag) {
+    var s0 = page.indexOf('<sc-if value="' + flag + '"');
+    if (s0 < 0) return;
+    var d = 1, j = page.indexOf('>', s0) + 1;
+    while (d > 0 && j < page.length) {
+      var n2 = page.indexOf('<sc-if', j), c2 = page.indexOf('</sc-if>', j);
+      if (c2 < 0) break;
+      if (n2 >= 0 && n2 < c2) { d++; j = n2 + 6; } else { d--; j = c2 + 8; }
+    }
+    keep.push(page.slice(s0, j));
+  });
+  /* 日誌那一塊沒有 sc-if 包，用標題抓 */
+  var lg = page.indexOf('斗篷人的日誌');
+  if (lg >= 0) {
+    var lo = page.lastIndexOf('<div style="padding:26px var(--pad) 0">', lg);
+    var lc = page.indexOf('</div>', page.indexOf('</sc-for>', lg));
+    lc = page.indexOf('</div>', lc + 6);
+    lc = page.indexOf('</div>', lc + 6);
+    if (lo >= 0 && lc >= 0) keep.push(page.slice(lo, lc + 6));
+  }
+  if (keep.length !== 3) { console.error('MISS 要留的三塊，只找到 ' + keep.length); process.exit(1); }
+
+  t = t.slice(0, a) + t.slice(i);
+
+  /* 塞進收藏總覽的結尾 */
+  var col = t.indexOf('<sc-if value="{{ scColl }}"');
+  if (col < 0) { console.error('MISS scColl'); process.exit(1); }
+  var d2 = 1, k2 = t.indexOf('>', col) + 1;
+  while (d2 > 0 && k2 < t.length) {
+    var n3 = t.indexOf('<sc-if', k2), c3 = t.indexOf('</sc-if>', k2);
+    if (c3 < 0) { console.error('MISS 收藏總覽收尾'); process.exit(1); }
+    if (n3 >= 0 && n3 < c3) { d2++; k2 = n3 + 6; } else { d2--; k2 = c3 + 8; }
+  }
+  var lastDiv = t.lastIndexOf('</div>', k2 - 8);
+  if (lastDiv < col) { console.error('MISS 插入點跑到頁外'); process.exit(1); }
+  t = t.slice(0, lastDiv) + keep.join('\n') + '\n' + t.slice(lastDiv);
+  console.log('69. 試挖整頁拿掉，三塊搬到收藏總覽');
+})();
+
+/* 70. 分頁列與側欄不再有試挖 */
+t = t.split('<button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>').join('');
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
