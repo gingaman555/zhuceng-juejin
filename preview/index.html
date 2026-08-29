@@ -558,11 +558,11 @@ window.JLZ_SPRITES = {
               <sc-if value="{{ hasHomeHaul }}" hint-placeholder-val="{{ true }}">
                 <div style="margin:20px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #3A3026">
                   <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">名冊</span>
+                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">排行榜</span>
                     <span style="font:700 22px/1 'C11';color:#E9B341">{{ homeRank }}</span>
                     <span style="font:400 11px/1 'C11';color:#8A8073">{{ homeRankNote }}</span>
                     <span style="flex:1"></span>
-                    <button onClick="{{ goHaul }}" style="font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;background:none;border:1px solid #3A3026;padding:7px 11px;cursor:pointer;white-space:nowrap">看名冊</button>
+                    <button onClick="{{ goHaul }}" style="font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;background:none;border:1px solid #3A3026;padding:7px 11px;cursor:pointer;white-space:nowrap">看排行榜</button>
                   </div>
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin:12px 0 9px;text-wrap:pretty">{{ homeClaimNote }}</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px">
@@ -1022,7 +1022,7 @@ window.JLZ_SPRITES = {
                 <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                     <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
+                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                     <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                       <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                     </sc-if>
@@ -1301,7 +1301,7 @@ window.JLZ_SPRITES = {
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
                   <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
-                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
+                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>
                   <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-11 · RECORD</div>
@@ -1341,17 +1341,17 @@ window.JLZ_SPRITES = {
             </div>
           </sc-if>
           <sc-if value="{{ scHaul }}" hint-placeholder-val="{{ false }}">
-            <div data-screen-label="S-10 採量" style="padding:0 0 32px">
+            <div data-screen-label="S-10 排行榜" style="padding:0 0 32px">
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
                   <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
-                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
+                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>
                   <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
                 </div>
-                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-10 · HAUL</div>
-                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">採量</h1>
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-10 · LEADERBOARD</div>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">排行榜</h1>
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ haulMine }}</p>
               </div>
               <div style="padding:18px var(--pad) 0">
@@ -1399,7 +1399,7 @@ window.JLZ_SPRITES = {
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
                   <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
-                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
+                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>
                   <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-09 · PROBE</div>
@@ -1488,7 +1488,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                   <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                     <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                   </sc-if>
@@ -3252,7 +3252,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 0">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                   <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-04 · CLASS ROSTER</div>
@@ -6977,6 +6977,24 @@ class Component extends DCLogic {
   /* 側欄的額外入口：學生的期末回顧、老師的 T-09。演練模式也要有。 */
   function addNavExtras(L, v, sc) {
     var S = L.state;
+    /* 排行榜自己一格。原本要點「地圖 → 採量」兩層才到得了，
+       而它是最需要被看到的東西之一。 */
+    if (S.role === 'student' && v.navItems &&
+        !v.navItems.some(function (n) { return n.code === '排行'; })) {
+      var onBoard = sc === 'S03' && (S.mapTab === 'haul');
+      v.navItems.push({
+        code: '排行', label: '排行榜', short: '排行',
+        go: function () { L.setState({ screen: 'S03', mapTab: 'haul' }); },
+        iconStyle: 'display:block;width:14px;height:14px;flex:none;margin-right:8px;background:' +
+          (onBoard ? '#E9B341' : '#5F574C') +
+          ';clip-path:polygon(0 62%,26% 62%,26% 100%,0 100%,0 62%,37% 30%,63% 30%,63% 100%,37% 100%,37% 30%,74% 0,100% 0,100% 100%,74% 100%)',
+        tabIconStyle: 'display:block;width:16px;height:16px;background:' + (onBoard ? '#E9B341' : '#6E665A') +
+          ';clip-path:polygon(0 62%,26% 62%,26% 100%,0 100%,0 62%,37% 30%,63% 30%,63% 100%,37% 100%,37% 30%,74% 0,100% 0,100% 100%,74% 100%)',
+        style: L.navBtn(onBoard), tabStyle: L.tabBtn(onBoard),
+        badge: '', dotStyle: 'display:none', tabDotStyle: 'display:none'
+      });
+    }
+
 
     /* 甘特圖整頁拿掉：側欄那一格濾掉，畫面本身也關起來。
        原型的側欄清單改不了，所以在這裡處理。
@@ -9792,8 +9810,11 @@ class Component extends DCLogic {
         rank: String(i + 1),
         name: r.name + (r.me ? '　（你們）' : ''),
         total: String(r.total),
-        detail: '勾 ' + r.ticks + '　通過 ' + (r.pages + r.vows) + '　破法 ' + r.vows +
-          (r.firsts ? '　初採 ' + r.firsts : ''),
+        /* 明細照分數的來源排，順序跟計分表一致，看得出這 33 分是怎麼來的 */
+        detail: '勾 ' + r.ticks + ' 條 = ' + r.ticks + ' 分　·　' +
+          '通過 ' + r.pages + ' 項 = ' + (r.pages * 10) + ' 分　·　' +
+          '宣告做到 ' + r.vows + ' 項 = ' + (r.vows * 30) + ' 分' +
+          (r.firsts ? '　·　初採 ' + r.firsts + ' 塊' : ''),
         rowStyle: 'padding:13px 15px;background:' + (r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
           ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
         rankStyle: "flex:none;width:26px;font:700 22px/1 'C11';color:" + (r.me ? '#E9B341' : '#5F574C'),
@@ -11089,7 +11110,7 @@ class Component extends DCLogic {
         ? "你們已經打過去了。"
         : ready
           ? "礦石採齊了。去送關卡，他准了就鑄得成" + ((L.LAYERS[HL - 1] || {}).tool || "道具") + "。"
-          : "還差 " + (hst.missingN + hst.unopenedN) + " 塊礦石。採齊才鑄得出剋牠的道具。";
+          : "還有 " + (hst.missingN + hst.unopenedN) + " 塊沒採到。採不採齊都送得出關卡——過不過是他決定。";
     })();
 
     /* 「這一層怎麼走」收進一顆按鈕 */
@@ -11213,7 +11234,7 @@ class Component extends DCLogic {
 
     /* 原型的環節說明還在講必要／延伸 */
     v.editStageNote = '學生端看到的名稱是「' + (lay.name || '') + '」。' +
-      '你在這一層開的每一項他們都要採到，全部採齊才進得了下一層。' +
+      '你開的每一項都是他們的一塊礦，但採不採齊不影響過關——你覺得可以往下了就放行。' +
       (lay.course ? '　對應的課程階段是「' + lay.course + '」。' : '');
     v.openWhat = leftVein.length
       ? '這一層的礦脈有 ' + vein + ' 塊，你開了 ' + after + ' 塊。關卡不看採齊沒——你覺得他們可以往下了就放行。'
@@ -12144,7 +12165,7 @@ class Component extends DCLogic {
     v.finStats = [
       { label: '採到的礦石', value: passedRows.length + ' 塊', color: '#E9B341', note: '一塊指回一件你做過的工作' },
       { label: '鑄成的道具', value: (S.passed || []).length + ' 支', color: '#E9B341', note: '一層一支，各自擊退了一隻擋路的' },
-      { label: '走過的層', value: (S.passed || []).length + ' 層', color: '#C3BAAA', note: '每一層都是採齊才走的' },
+      { label: '走過的層', value: (S.passed || []).length + ' 層', color: '#C3BAAA', note: '每一層都是他點頭才走的' },
       { label: '被退回', value: d.totalRejected + ' 次', color: d.totalRejected ? '#D9603F' : '#8A8073', note: '退回不扣分，它是你改過幾次的紀錄' }
     ];
 

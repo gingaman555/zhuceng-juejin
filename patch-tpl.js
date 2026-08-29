@@ -3042,7 +3042,7 @@ t = t.split('<button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">�
            '<button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>' +
            '</sc-if>' +
            '<sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}">' +
-           '<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>' +
+           '<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>' +
            '</sc-if>' +
            '<sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}">' +
            '<button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>' +
@@ -3059,7 +3059,7 @@ must(
 '                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>',
 '                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>',
 '                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>',
-'                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>',
+'                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>',
 '                  <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>',
 '                </div>',
 '                <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.26em;color:#5F574C">S-11 · RECORD</div>',
@@ -3100,17 +3100,17 @@ must(
 '            </div>',
 '          </sc-if>',
 '          <sc-if value="{{ scHaul }}" hint-placeholder-val="{{ false }}">',
-'            <div data-screen-label="S-10 採量" style="padding:0 0 32px">',
+'            <div data-screen-label="S-10 排行榜" style="padding:0 0 32px">',
 '              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">',
 '                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">',
 '                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>',
 '                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>',
 '                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>',
-'                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>',
+'                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>',
 '                  <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>',
 '                </div>',
-'                <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.26em;color:#5F574C">S-10 · HAUL</div>',
-'                <h1 style="font:700 33px/1.4 ' + Q + 'C11' + Q + ';margin:10px 0 5px;letter-spacing:.04em">採量</h1>',
+'                <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.26em;color:#5F574C">S-10 · LEADERBOARD</div>',
+'                <h1 style="font:700 33px/1.4 ' + Q + 'C11' + Q + ';margin:10px 0 5px;letter-spacing:.04em">排行榜</h1>',
 '                <p style="font:400 22px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ haulMine }}</p>',
 '              </div>',
 '              <div style="padding:18px var(--pad) 0">',
@@ -3158,7 +3158,7 @@ must(
 '                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>',
 '                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>',
 '                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>',
-'                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>',
+'                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>',
 '                  <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>',
 '                </div>',
 '                <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.26em;color:#5F574C">S-09 · PROBE</div>',
@@ -3306,11 +3306,11 @@ must(
 '              <sc-if value="{{ hasHomeHaul }}" hint-placeholder-val="{{ true }}">',
 '                <div style="margin:20px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #3A3026">',
 '                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">',
-'                    <span style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#5F574C">名冊</span>',
+'                    <span style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#5F574C">排行榜</span>',
 '                    <span style="font:700 22px/1 ' + Q + 'C11' + Q + ';color:#E9B341">{{ homeRank }}</span>',
 '                    <span style="font:400 11px/1 ' + Q + 'C11' + Q + ';color:#8A8073">{{ homeRankNote }}</span>',
 '                    <span style="flex:1"></span>',
-'                    <button onClick="{{ goHaul }}" style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.1em;color:#8A8073;background:none;border:1px solid #3A3026;padding:7px 11px;cursor:pointer;white-space:nowrap">看名冊</button>',
+'                    <button onClick="{{ goHaul }}" style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.1em;color:#8A8073;background:none;border:1px solid #3A3026;padding:7px 11px;cursor:pointer;white-space:nowrap">看排行榜</button>',
 '                  </div>',
 '                  <div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin:12px 0 9px;text-wrap:pretty">{{ homeClaimNote }}</div>',
 '                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px">',
