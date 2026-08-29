@@ -340,26 +340,43 @@
             btn: '知道了', go: function () {}
           };
         } else {
-          /* 打贏了。依照做到什麼程度給獎勵——只做基本掉一件，
-             有多做（宣告而且做到）多掉一件。 */
+          /* 打贏了。掉幾件＝層數 ＋（老師給的 1–5 − 1），所以越深、老師
+             覺得越有多做，掉得越多。跟 victory() 演的是同一套。 */
           var mv = mobOfTask(t);
           var rc = (next.record || []).filter(function (r) { return r.id === t.id; })[0] || {};
-          var f1 = findOf(rc.find), f2 = findOf(rc.find2);
+          var arrV = (rc.finds && rc.finds.length ? rc.finds : [rc.find, rc.find2])
+            .map(Number).filter(function (n) { return n >= 1; });
+          var gaveV = Math.max(1, Math.min(5, Number(rc.gave) || 1));
           var hueV = BOARD_HUE[Math.max(0, Math.min(4, (t.layer || 1) - 1))];
 
+          /* 同一件掉兩次就疊起來，不要列兩行 */
+          var tallyV = {}, orderV = [];
+          arrV.forEach(function (n) {
+            if (!tallyV[n]) { tallyV[n] = 0; orderV.push(n); }
+            tallyV[n]++;
+          });
+
+          var f2 = gaveV > 1;
           var rowsV = [];
           if (mv) rowsV.push({ k: '打贏了', v: mv.name });
-          rowsV.push({ k: '做到什麼程度', v: f2 ? '有多做' : '做到基本', hi: !!f2 });
           if (t.mineral) rowsV.push({ k: '採到', v: t.mineral });
-          if (f1) rowsV.push({ k: '牠留下', v: f1.name + '　' + findTier(f1.n) });
-          if (f2) rowsV.push({ k: '還多留了', v: f2.name + '　' + findTier(f2.n), hi: true });
+          rowsV.push({ k: '牠留下', v: arrV.length + ' 件', hi: arrV.length > 1 });
+          rowsV.push({ k: '怎麼算的', v: '第 ' + (t.layer || 1) + ' 層 ＋ 他給的 ' + gaveV + ' − 1' });
+          orderV.forEach(function (n) {
+            var fd = findOf(n);
+            if (!fd) return;
+            rowsV.push({
+              k: '　', v: fd.name + '　' + findTier(n) + (tallyV[n] > 1 ? '　×' + tallyV[n] : ''),
+              hi: findTier(n) === '罕見'
+            });
+          });
 
           next.moment = {
             kind: 'mined', art: 'gem', accent: hueV,
             kicker: f2 ? 'CLEARED · WENT FURTHER' : 'CLEARED',
             title: mv ? ('打倒了「' + mv.name + '」') : '過了',
             lede: f2
-              ? '他判過「' + t.title + '」了，而且你先講的那一樣真的做到了。'
+              ? '他判過「' + t.title + '」了，而且他覺得你們不只是把作業交出來。'
               : '他判過「' + t.title + '」了。',
             sprite: mv
               ? 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
@@ -367,9 +384,12 @@
               : null,
             rows: rowsV,
             quoteLabel: '他寫的合格考量', quote: t.fb || '',
-            lines: f2
-              ? ['多做的那一次會多留一件——不是更值錢，是多一次抽的機會。']
-              : ['下一項開工前先宣告要拿哪一樣。做到的話，牠會多留一件。'],
+            lines: [
+              '越往下掉越多：第一層掉一件，第四層就是四件起跳。' +
+              (gaveV > 1 ? '　他這次給了 ' + gaveV + '，所以又多了 ' + (gaveV - 1) + ' 件。'
+                         : '　他這次給了 1——多做一點的話，這裡會再多幾件。'),
+              '每一件都是 30 分，一樣重，撿到哪一件不影響名次。'
+            ],
             btn: '收好', go: function () {}
           };
         }
@@ -673,7 +693,7 @@
       drops.push({
         name: n ? f.name : '？？？',
         got: !!n,
-        sub: '+10 分　L' + findLayer(f.n) + ' 起　' + (n ? (n > 1 ? '×' + n : '撿到了') : '還沒撿到'),
+        sub: '+30 分　L' + findLayer(f.n) + ' 起　' + (n ? (n > 1 ? '×' + n : '撿到了') : '還沒撿到'),
         open: (function (ff, nn) { return function () { openFind(L, ff, nn); }; })(f, n),
         style: 'padding:12px 8px;text-align:center;font:inherit;cursor:' + (n ? 'pointer' : 'default') +
           ';background:' + (n ? 'rgba(255,255,255,.022)' : 'rgba(0,0,0,.26)') +
@@ -777,7 +797,7 @@
       title: '物品',
       note: '礦石、道具、戰利品、掉落物，全部在這裡。點進去才會說那一件是怎麼拿到的。' +
         '　守關那兩件（道具、戰利品）各 500 分——老師放行一層就是 1000 分，' +
-        '所以榜上拉得開的是走到第幾層，不是撿了幾件。掉落物每一件都是 10 分，' +
+        '所以榜上拉得開的是走到第幾層，不是撿了幾件。掉落物每一件都是 30 分，' +
         '掉到哪一件都一樣，運氣不會影響名次。',
       have: gotN + ' / ' + drops.length + ' 種',
       items: drops
@@ -3336,12 +3356,15 @@
 
      這不是門檻：追不上牠照樣過得了關（過關只看老師）。它只是把一個
      要不到的數字，換成一個有臉的目標。 */
+  /* 分數階級的門檻。一學期跑下來大約 10500（老師一律給 1）到
+     12900（一律給 5），所以四個階級照那個尺度擺——最後一階要真的
+     走完整學期才碰得到。 */
   var RANKS = [
-    { at: 0,   name: '剛下來的' },
-    { at: 50,  name: '霧面者' },
-    { at: 150, name: '千晶母' },
-    { at: 300, name: '擬聲者' },
-    { at: 500, name: '漲潮者' }
+    { at: 0,     name: '剛下來的' },
+    { at: 1500,  name: '霧面者' },
+    { at: 3500,  name: '千晶母' },
+    { at: 6500,  name: '擬聲者' },
+    { at: 10000, name: '漲潮者' }
   ];
   function rankOf(total) {
     var i = 0;
@@ -3461,7 +3484,11 @@
       ? '所有人都在同一個深度。'
       : '同一排就是分數差不多的。點任何一組看他們的紀錄。';
 
-    v.haulMapBands = order.map(function (key) {
+    /* 桶跟桶之間的空隙照分差撐開——本來每一排等距，所以差 3000 分
+       跟差 100 分看起來一樣近，完全沒有落差感。 */
+    v.haulMapBands = order.map(function (key, oi) {
+      var prevKey = oi > 0 ? order[oi - 1] : null;
+      var drop = prevKey === null ? 0 : Math.round((prevKey - key) / 100 * 170);
       var list = byBand[key].slice().sort(function (a, b) { return b.total - a.total; });
       var shown = list.slice(0, 4), rest = list.length - shown.length;
 
@@ -3503,7 +3530,8 @@
       return {
         depth: key + '%',
         pins: pins,
-        rowStyle: 'display:flex;align-items:center;gap:11px;padding:3px 0',
+        rowStyle: 'display:flex;align-items:center;gap:11px;padding:3px 0' +
+          (drop > 6 ? ';margin-top:' + Math.min(120, drop) + 'px' : ''),
         depthStyle: "flex:none;width:38px;font:400 11px/1 'C11';font-variant-numeric:tabular-nums;color:" +
           (mine ? '#E9B341' : '#4A443C'),
         pinsStyle: 'display:flex;flex-wrap:wrap;gap:5px;flex:1 1 auto;min-width:0'
@@ -3581,32 +3609,72 @@
           : '四隻都追過了。') +
         '　追不追得上不影響過關——過關只看他。';
     }
-    v.haulNote = '勾一條 10 分　·　撿到一件掉落物 10 分　·　通過一項 100 分　·　通過而且做到宣告的破法 300 分（取代 100）　·　老師放行一層 1000 分（道具 500 ＋ 戰利品 500）。' +
+    v.haulNote = '勾一條 10 分　·　撿到一件掉落物 30 分　·　通過一項 100 分　·　通過而且做到宣告的破法 300 分（取代 100）　·　老師放行一層 1000 分（道具 500 ＋ 戰利品 500）。' +
       '走到第幾層先把大家分成幾段（一層 1000 分），同一段裡面的差距才是宣告成功了幾次。';
 
     haulMap(L, v, rows);   /* 同一份資料的另一種讀法：誰在你前面 */
+
+    /* 跟上次打開的時候比，名次上升還是下降。記在瀏覽器——純演出。 */
+    var RKEY = 'jlz.rank.' + ((S.user && S.user.userId) || 'me');
+    var lastRank = {};
+    try { lastRank = JSON.parse(localStorage.getItem(RKEY) || '{}'); } catch (e) {}
+    var nowRank = {};
+    rows.forEach(function (r, i) { nowRank[r.teamId] = i + 1; });
+    try { localStorage.setItem(RKEY, JSON.stringify(nowRank)); } catch (e) {}
+
     v.haulRows = rows.map(function (r, i) {
       var basePct = Math.round(r.base / top * 100);
       var bonusPct = Math.round(r.bonus / top * 100);
+
+      /* 第一名跟其他人不能長一樣；前三名各有各的邊。 */
+      var tier = i === 0 ? 0 : i < 3 ? 1 : 2;
+      var TCOL = ['#E9B341', '#C3BAAA', '#5F574C'];
+      var tc = TCOL[tier];
+
+      /* 離前一名還差多少——榜從清單變成追逐 */
+      var ahead = i > 0 ? rows[i - 1] : null;
+      var gap = ahead ? ahead.total - r.total : 0;
+      var chase = !ahead
+        ? '在最前面'
+        : gap === 0
+          ? '跟前一名同分'
+          : '離前一名還差 ' + gap + ' 分';
+
+      /* 跟上次打開比，名次動了沒 */
+      var was = lastRank[r.teamId];
+      var moved = (was && was !== i + 1) ? (was - (i + 1)) : 0;
+      var moveTxt = moved > 0 ? '↑' + moved : moved < 0 ? '↓' + (-moved) : '';
+
       return {
         rank: String(i + 1),
         name: r.name + (r.me ? '　（你們）' : ''),
         total: String(r.total),
+        chase: chase + (moveTxt ? '　' + moveTxt : ''),
+        chaseStyle: "font:400 11px/1.5 'C11';margin-top:5px;color:" +
+          (moved > 0 ? '#E9B341' : moved < 0 ? '#D9603F' : r.me ? '#8A8073' : '#5F574C'),
         /* 明細照分數的來源排，順序跟計分表一致，看得出這 33 分是怎麼來的 */
         detail: '勾 ' + r.ticks + ' 條 = ' + (r.ticks * 10) + ' 分　·　' +
           '通過 ' + r.pages + ' 項 = ' + (r.pages * 100) + ' 分　·　' +
           '宣告做到 ' + r.vows + ' 項 = ' + (r.vows * 300) + ' 分' +
-          (r.finds ? '　·　掉落物 ' + r.finds + ' 件 = ' + (r.finds * 10) + ' 分' : '') +
+          (r.finds ? '　·　掉落物 ' + r.finds + ' 件 = ' + (r.finds * 30) + ' 分' : '') +
           (r.layers ? '　·　走完 ' + r.layers + ' 層 = ' + (r.layers * 1000) + ' 分' : '') +
           (r.firsts ? '　·　初採 ' + r.firsts + ' 塊' : ''),
         go: (function (tid, nm) {
           return function () { peekTeam(L, tid, nm); };
         })(r.teamId, r.name),
         rowStyle: 'display:block;width:100%;text-align:left;font:inherit;cursor:pointer;' +
-          'padding:13px 15px;background:' + (r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
-          ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
-        rankStyle: "flex:none;width:26px;font:700 22px/1 'C11';color:" + (r.me ? '#E9B341' : '#5F574C'),
-        nameStyle: "flex:1 1 auto;min-width:0;font:500 22px/1.3 'C11';color:" + (r.me ? '#E8E2D6' : '#C3BAAA'),
+          'padding:' + (tier === 0 ? '17px 15px' : '13px 15px') + ';background:' +
+          (tier === 0 ? 'linear-gradient(100deg,rgba(233,179,65,.16),rgba(233,179,65,.04) 60%)'
+            : r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
+          ';border-left:' + (tier === 0 ? '4px' : r.me ? '3px' : '1px') + ' solid ' +
+          (tier === 0 ? '#E9B341' : r.me ? '#5A4A2C' : '#2E2822') +
+          ';border-top:1px solid ' + (tier === 0 ? '#5A4A2C' : r.me ? '#5A4A2C' : '#2E2822') +
+          ';border-right:1px solid ' + (tier === 0 ? '#5A4A2C' : r.me ? '#5A4A2C' : '#2E2822') +
+          ';border-bottom:1px solid ' + (tier === 0 ? '#5A4A2C' : r.me ? '#5A4A2C' : '#2E2822'),
+        rankStyle: 'flex:none;width:' + (tier === 0 ? '34px' : '26px') +
+          ";font:700 " + (tier === 0 ? '33px' : '22px') + "/1 'C11';color:" + tc,
+        nameStyle: 'flex:1 1 auto;min-width:0;font:' + (tier === 0 ? '700' : '500') +
+          " 22px/1.3 'C11';color:" + (tier === 0 ? '#F2E6C8' : r.me ? '#E8E2D6' : '#C3BAAA'),
         totalStyle: "flex:none;font:700 22px/1 'C11';font-variant-numeric:tabular-nums;color:" +
           (r.me ? '#E9B341' : '#8A8073'),
         barStyle: 'display:flex;margin-top:9px;height:6px;background:rgba(0,0,0,.4);border:1px solid #2E2822',
@@ -4183,7 +4251,7 @@
       ],
       quoteLabel: '它長這樣',
       quote: f.look,
-      lines: ['每一件都是 10 分，一樣重——稀有只是比較少見。',
+      lines: ['每一件都是 30 分，一樣重——稀有只是比較少見。',
               '一項任務掉幾件＝那一層的層數 ＋（老師給的 1–5 − 1）。越往下掉越多。'],
       btn: '收好', go: function () {}
     });

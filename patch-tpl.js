@@ -3659,5 +3659,14 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('77. 排行榜的坑道圖');
 })();
 
+
+/* 78. 排行榜每一列多一行追逐：離前一名還差多少、名次動了沒 */
+(function () {
+  var a = '<div style="{{ hl.detailStyle }}">{{ hl.detail }}</div>';
+  if (t.split(a).length - 1 !== 1) { console.error('78. detail 那一行找不到'); process.exit(1); }
+  t = t.replace(a, '<div style="{{ hl.chaseStyle }}">{{ hl.chase }}</div>' + a);
+  console.log('78. 排行榜多一行追逐');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
