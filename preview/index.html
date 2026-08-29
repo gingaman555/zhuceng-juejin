@@ -855,6 +855,10 @@ window.JLZ_SPRITES = {
                   </div>
                 </sc-if>
                 <div>
+                  <div style="margin-bottom:18px;padding:13px 15px;background:rgba(0,0,0,.26);border-left:2px solid #5A4A2C">
+                    <div style="font:500 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">作業交到老師本來要你交的地方。</div>
+                    <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:7px;text-wrap:pretty">這裡不收檔案，也不會看你交了什麼。交完再回來勾——他去他收作業的地方看完，再回來按過或不過。</div>
+                  </div>
                   <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">
                     <div style="{{ checkBoxStyle }}">
                       <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px">
@@ -887,38 +891,6 @@ window.JLZ_SPRITES = {
                       </div>
                     </div>
                   </sc-if>
-                  <div style="font:500 22px/1 'C11';margin-bottom:4px">交在哪裡　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
-                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">作業照老師原本要求的方式交。這裡放個連結或截圖，讓他知道去哪裡看——不放也可以。</div>
-                  <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px">
-                    <sc-for list="{{ evidence }}" as="e" hint-placeholder-count="2">
-                      <span style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:#14110E;border:1px solid #2E2822">
-                        <span style="{{ e.iconStyle }}"></span>
-                        <span style="flex:1;min-width:0">
-                          <span style="display:block;font:400 22px/1.4 'C11';color:#C3BAAA;word-break:break-all">{{ e.name }}</span>
-                          <span style="display:block;font:400 11px/1 'C11';color:#5F574C;margin-top:4px">{{ e.meta }}</span>
-                        </span>
-                        <sc-if value="{{ e.canOpen }}" hint-placeholder-val="{{ true }}">
-                          <button onClick="{{ e.open }}" style="flex:none;background:none;border:1px solid #2E2822;color:#8A8073;cursor:pointer;font:400 11px/1 'C11';padding:7px 10px;white-space:nowrap">檢視</button>
-                        </sc-if>
-                        <button onClick="{{ e.remove }}" style="flex:none;background:none;border:none;color:#6E665A;cursor:pointer;font:400 22px/1 'C11';padding:0 4px">×</button>
-                      </span>
-                    </sc-for>
-                  </div>
-                  <sc-if value="{{ uploading }}" hint-placeholder-val="{{ false }}">
-                    <div style="margin-bottom:10px;padding:10px 12px;background:rgba(233,179,65,.06);border:1px solid #3A3026;font:400 11px/1.7 'C11';color:#E9B341">{{ uploadNote }}</div>
-                  </sc-if>
-                  <div style="display:flex;flex-wrap:wrap;gap:7px">
-                    <sc-for list="{{ evidenceAdders }}" as="a" hint-placeholder-count="4">
-                      <button onClick="{{ a.add }}" style="padding:9px 13px;background:none;border:1px dashed #3A3026;color:#8A8073;font:400 22px/1 'C11';cursor:pointer">＋ {{ a.label }}</button>
-                    </sc-for>
-                  </div>
-                  <sc-if value="{{ linkOpen }}" hint-placeholder-val="{{ false }}">
-                    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:9px">
-                      <input value="{{ linkDraft }}" onChange="{{ setLinkDraft }}" placeholder="貼上網址，例：figma.com/file/…" style="flex:1;min-width:180px;padding:11px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.4 'C11';outline:none">
-                      <button onClick="{{ addLink }}" style="padding:11px 15px;background:none;border:1px solid #5A4A2C;color:#E9B341;font:400 22px/1 'C11';cursor:pointer;white-space:nowrap">加入連結</button>
-                    </div>
-                  </sc-if>
-                  <div style="margin-top:9px;font:400 22px/1.6 'C11';color:#5F574C;text-wrap:pretty">{{ uploadHint }}</div>
                 </div>
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">你做了什麼　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
@@ -9167,7 +9139,7 @@ class Component extends DCLogic {
       ? '這一項已經通過了。'
       : full
         ? '都勾完了。下面回答一題，就可以請他去看。'
-        : '作業照老師原本要求的方式交。交完回來勾——勾完才請得動他。';
+        : '做完一條勾一條。勾完才請得動他。';
 
     v.checkItems = list.map(function (txt, i) {
       var hit = !!on[i];

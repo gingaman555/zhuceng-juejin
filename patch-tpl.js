@@ -3179,5 +3179,30 @@ must(
 '          </sc-if>',
 '          <sc-if value="{{ scColl }}" hint-placeholder-val="{{ false }}">'].join('\n'));
 
+
+/* 58. 交在哪裡：整塊上傳區拿掉，改成在清單前面講一句。
+      老師端沒有任何畫面顯示這些檔案，收了也沒有人看。 */
+(function () {
+  var head = '<div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:4px">交在哪裡';
+  var tail = '>{{ uploadHint }}</div>';
+  var a = t.indexOf(head);
+  var b = t.indexOf(tail, a);
+  if (a < 0 || b < 0) { console.error('MISS 交在哪裡區塊 a=' + a + ' b=' + b); process.exit(1); }
+  /* 連同前面那一層縮排一起吃掉，不然會留一行空白 */
+  var nl = t.lastIndexOf('\n', a);
+  t = t.slice(0, nl) + t.slice(b + tail.length);
+})();
+
+/* 59. 在清單前面說清楚作業交去哪 */
+must(
+'                <div>\n                  <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">',
+[
+'                <div>',
+'                  <div style="margin-bottom:18px;padding:13px 15px;background:rgba(0,0,0,.26);border-left:2px solid #5A4A2C">',
+'                    <div style="font:500 22px/1.5 ' + Q + 'C11' + Q + ';color:#C3BAAA;text-wrap:pretty">作業交到老師本來要你交的地方。</div>',
+'                    <div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#6E665A;margin-top:7px;text-wrap:pretty">這裡不收檔案，也不會看你交了什麼。交完再回來勾——他去他收作業的地方看完，再回來按過或不過。</div>',
+'                  </div>',
+'                  <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">'].join('\n'));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
