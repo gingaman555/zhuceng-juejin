@@ -1374,7 +1374,7 @@
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ bestNote }}</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:7px">
                     <sc-for list="{{ bestRows }}" as="bs" hint-placeholder-count="6">
-                      <div style="{{ bs.boxStyle }}">
+                      <button onClick="{{ bs.open }}" style="{{ bs.boxStyle }}">
                         <span style="{{ bs.art }}"></span>
                         <span style="min-width:0;flex:1">
                           <span style="{{ bs.nameStyle }}">{{ bs.name }}</span>
@@ -1382,7 +1382,7 @@
                           <span style="{{ bs.traitStyle }}">{{ bs.trait }}</span>
                           <span style="{{ bs.howStyle }}">{{ bs.how }}</span>
                         </span>
-                      </div>
+                      </button>
                     </sc-for>
                   </div>
                 </div>
@@ -1396,7 +1396,7 @@
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ findNote }}</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:6px">
                     <sc-for list="{{ findRows }}" as="fd" hint-placeholder-count="24">
-                      <div style="{{ fd.boxStyle }}">
+                      <button onClick="{{ fd.open }}" style="{{ fd.boxStyle }}">
                         <div style="display:flex;align-items:baseline;gap:8px">
                           <span style="{{ fd.nameStyle }}">{{ fd.name }}</span>
                           <span style="{{ fd.tallyStyle }}">{{ fd.tally }}</span>
@@ -1404,7 +1404,7 @@
                           <span style="{{ fd.tierStyle }}">{{ fd.tier }}</span>
                         </div>
                         <div style="{{ fd.lookStyle }}">{{ fd.look }}</div>
-                      </div>
+                      </button>
                     </sc-for>
                   </div>
                 </div>

@@ -1142,6 +1142,13 @@
         result: pass ? 'pass' : 'needfix', reason: txt, len: txt.length, hasReason: !!txt.trim(),
         week: w, latency: 12, ts: NOW() });
       var m = ttmap(teamId)[taskId];
+      /* 真後端用 upsert_，學生沒送過也會建立那一列。假後端原本什麼都
+         不做，兩邊行為不一致 —— 而在新設計裡老師本來就可以直接判過。 */
+      if (!m) {
+        m = { teamId: teamId, taskId: taskId, status: 'todo', text: '', files: [],
+              fb: '', fbType: '', passedWeek: null, checked: [], vow: '' };
+        DB.TeamTasks.push(m);
+      }
       var find = 0;
       if (m) {
         m.status = pass ? 'passed' : 'needs_more';

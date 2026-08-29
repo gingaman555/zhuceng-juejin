@@ -1475,7 +1475,7 @@ window.JLZ_SPRITES = {
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ bestNote }}</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:7px">
                     <sc-for list="{{ bestRows }}" as="bs" hint-placeholder-count="6">
-                      <div style="{{ bs.boxStyle }}">
+                      <button onClick="{{ bs.open }}" style="{{ bs.boxStyle }}">
                         <span style="{{ bs.art }}"></span>
                         <span style="min-width:0;flex:1">
                           <span style="{{ bs.nameStyle }}">{{ bs.name }}</span>
@@ -1483,7 +1483,7 @@ window.JLZ_SPRITES = {
                           <span style="{{ bs.traitStyle }}">{{ bs.trait }}</span>
                           <span style="{{ bs.howStyle }}">{{ bs.how }}</span>
                         </span>
-                      </div>
+                      </button>
                     </sc-for>
                   </div>
                 </div>
@@ -1497,7 +1497,7 @@ window.JLZ_SPRITES = {
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ findNote }}</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:6px">
                     <sc-for list="{{ findRows }}" as="fd" hint-placeholder-count="24">
-                      <div style="{{ fd.boxStyle }}">
+                      <button onClick="{{ fd.open }}" style="{{ fd.boxStyle }}">
                         <div style="display:flex;align-items:baseline;gap:8px">
                           <span style="{{ fd.nameStyle }}">{{ fd.name }}</span>
                           <span style="{{ fd.tallyStyle }}">{{ fd.tally }}</span>
@@ -1505,7 +1505,7 @@ window.JLZ_SPRITES = {
                           <span style="{{ fd.tierStyle }}">{{ fd.tier }}</span>
                         </div>
                         <div style="{{ fd.lookStyle }}">{{ fd.look }}</div>
-                      </div>
+                      </button>
                     </sc-for>
                   </div>
                 </div>
@@ -6204,6 +6204,13 @@ class Component extends DCLogic {
         result: pass ? 'pass' : 'needfix', reason: txt, len: txt.length, hasReason: !!txt.trim(),
         week: w, latency: 12, ts: NOW() });
       var m = ttmap(teamId)[taskId];
+      /* 真後端用 upsert_，學生沒送過也會建立那一列。假後端原本什麼都
+         不做，兩邊行為不一致 —— 而在新設計裡老師本來就可以直接判過。 */
+      if (!m) {
+        m = { teamId: teamId, taskId: taskId, status: 'todo', text: '', files: [],
+              fb: '', fbType: '', passedWeek: null, checked: [], vow: '' };
+        DB.TeamTasks.push(m);
+      }
       var find = 0;
       if (m) {
         m.status = pass ? 'passed' : 'needs_more';
@@ -9315,7 +9322,9 @@ class Component extends DCLogic {
 
     if (task.status === 'passed') {
       /* 結算過了 */
-      v.vowBox = 'margin-bottom:18px;padding:15px 17px;background:rgba(233,179,65,.07);border:1px solid #5A4A2C';
+      v.vowBox = 'margin-bottom:18px;padding:16px 18px;border-left:3px solid #E9B341;' +
+        'background:rgba(233,179,65,.09);border-top:1px solid #5A4A2C;' +
+        'border-right:1px solid #5A4A2C;border-bottom:1px solid #5A4A2C';
       if (!cur) {
         v.vowTitle = '這一項沒有宣告';
         v.vowNote = '過了，但沒拿到證據——證據只掉給有先講的人。';
@@ -9329,9 +9338,11 @@ class Component extends DCLogic {
       return;
     }
 
-    v.vowBox = 'margin-bottom:18px;padding:15px 17px;background:' +
-      (cur ? 'rgba(233,179,65,.06)' : 'rgba(0,0,0,.3)') +
-      ';border:1px solid ' + (cur ? '#5A4A2C' : '#3A3026');
+    /* 宣告是主線上最重的一個動作，版面要跟著重 */
+    v.vowBox = 'margin-bottom:18px;padding:16px 18px;border-left:3px solid ' +
+      (cur ? '#E9B341' : '#5A4A2C') + ';background:' +
+      (cur ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.32)') +
+      ';border-top:1px solid #3A3026;border-right:1px solid #3A3026;border-bottom:1px solid #3A3026';
     v.vowTitle = cur ? '這次要拿：' + vowName(cur) : '這次要拿哪一樣？';
     v.vowMobNote = '擋在這一項前面的是「' + v.vowMob + '」。';
     v.vowNote = locked
@@ -9399,8 +9410,9 @@ class Component extends DCLogic {
       return;
     }
 
-    v.gambleBoxStyle = 'margin:0 0 18px;padding:16px 18px;background:rgba(0,0,0,.32);' +
-      'border:1px solid #3A3026';
+    v.gambleBoxStyle = 'margin:0 0 18px;padding:17px 19px;border-left:3px solid #D9603F;' +
+      'background:rgba(217,96,63,.06);border-top:1px solid #3A3026;' +
+      'border-right:1px solid #3A3026;border-bottom:1px solid #3A3026';
     v.gambleTitle = '送出之前';
     v.gambleBody = '都勾完了。有沒有哪一項，你其實不太確定？現在打開它、補完、再勾回來——這一頁會留下一顆星。';
     v.gambleCost = '打開之後至少要隔 6 小時才能勾回來，所以今天就送不出去了。不想賭就直接送，沒有任何損失。';
@@ -10065,8 +10077,8 @@ class Component extends DCLogic {
       return {
         title: r.title, meta: bits.join('　·　'),
         stat: st.t, vowTxt: vowTxt, say: r.say || '',
-        boxStyle: 'padding:13px 15px;background:rgba(0,0,0,.28);border:1px solid ' +
-          (r.status === 'passed' ? '#3A3026' : '#2E2822'),
+        boxStyle: 'padding:11px 13px;background:rgba(0,0,0,.24);border:1px solid ' +
+          (r.status === 'passed' ? '#2E2822' : '#241F1A'),
         titleStyle: "font:500 22px/1.4 'C11';color:#E8E2D6",
         statStyle: "flex:none;font:400 11px/1 'C11';letter-spacing:.1em;padding:4px 8px;" +
           'border:1px solid ' + st.hue + ';color:' + st.hue,
@@ -10136,9 +10148,9 @@ class Component extends DCLogic {
      名字用現有四隻的構詞法：材質 ＋ 動作 ＋ 後綴。
      霧面者 ＝ 霧＋面＋者　　擬聲者 ＝ 聲＋擬＋者
      千晶母、漲潮者也是同一套，只是順序不同——所以兩種順序都用。 */
-  var MOB_MAT  = ['霧', '晶', '聲', '潮', '灰', '銹', '苔', '脈'];
-  var MOB_ACT  = ['面', '擬', '漲', '蝕', '織', '眠'];
-  var MOB_SUF  = ['者', '母', '群'];
+  var MOB_MAT  = ['霧', '晶', '聲', '潮', '灰', '銹', '苔', '脈', '燼', '稜', '淵', '髓'];
+  var MOB_ACT  = ['面', '擬', '漲', '蝕', '織', '眠', '潛', '裂', '銜'];
+  var MOB_SUF  = ['者', '母', '群', '獸'];
 
   /* 一句話的特性。前半跟材質走，後半跟動作走——組起來會通順，
      而且不會宣稱任何跟學生的作業有關的事。 */
@@ -10146,12 +10158,16 @@ class Component extends DCLogic {
     '霧': '身體的邊界看不清楚',  '晶': '整隻是透明的，看得到裡面',
     '聲': '沒有實體，只有一團會震的空氣', '潮': '表面一直在滲水',
     '灰': '碰過的地方都會留下一層灰', '銹': '關節處全是紅褐色的鏽',
-    '苔': '背上長滿了不該長在地底的苔', '脈': '身上有一條會發光的紋路'
+    '苔': '背上長滿了不該長在地底的苔', '脈': '身上有一條會發光的紋路',
+    '燼': '一碰就散成灰，但形狀會再長回來', '稜': '全身都是直角，沒有一處是圓的',
+    '淵': '身上有一塊看不到底的黑',       '髓': '硬的在外面，軟的在裡面'
   };
   var MOB_HABIT = {
     '面': '你看牠的時候牠不動',       '擬': '牠會學你剛才的動作',
     '漲': '越靠近牠就變得越大',       '蝕': '牠待過的岩壁會變薄',
-    '織': '牠一直在補自己身上的洞',   '眠': '大部分時間牠是睡的'
+    '織': '牠一直在補自己身上的洞',   '眠': '大部分時間牠是睡的',
+    '潛': '牠有一半埋在岩壁裡',       '裂': '牠身上一直有新的裂縫在開',
+    '銜': '牠嘴裡永遠咬著一樣東西'
   };
 
   /* 四種身體。手畫的，程序生成只負責挑跟改顏色——
@@ -10196,9 +10212,9 @@ class Component extends DCLogic {
     var n = Math.abs(Number(id) || 0);
     if (!n) return null;
     var mat = MOB_MAT[n % MOB_MAT.length];
-    var act = MOB_ACT[Math.floor(n / 8) % MOB_ACT.length];
-    var suf = MOB_SUF[Math.floor(n / 48) % MOB_SUF.length];
-    var flip = Math.floor(n / 144) % 2;
+    var act = MOB_ACT[Math.floor(n / 12) % MOB_ACT.length];
+    var suf = MOB_SUF[Math.floor(n / 108) % MOB_SUF.length];
+    var flip = Math.floor(n / 432) % 2;
     return {
       id: n,
       name: flip ? (act + mat + suf) : (mat + act + suf),
@@ -10217,7 +10233,8 @@ class Component extends DCLogic {
       h ^= s.charCodeAt(i);
       h = (h * 16777619) >>> 0;
     }
-    return (h % 288) + 1;   /* 288 = 8 材質 × 6 動作 × 3 後綴 × 2 順序 */
+    return (h % 864) + 1;   /* 864 = 12 材質 × 9 動作 × 4 後綴 × 2 順序。
+                               一學期二十項，撞名機率約兩成——288 的時候是一半。 */
   }
 
   function mobOfTask(t) {
@@ -10272,6 +10289,67 @@ class Component extends DCLogic {
 
      「怎麼贏的」記三件：一次過、去了幾輪、有沒有宣告成功。
      同一隻被兩組打贏，兩張頁面會長得不一樣。 */
+  /* ---- 點開一隻生物 ---- */
+  function openMob(L, r) {
+    var m = mobOf(mobIdOfTask(r.id));
+    if (!m) return;
+    var down = r.status === 'passed';
+    var seen = r.status !== 'todo';
+    if (!seen) { L.say('還沒交手。老師開了這一項、你動手之後才看得到牠。'); return; }
+
+    var hue = BOARD_HUE[Math.max(0, Math.min(4, (r.layer || 1) - 1))];
+    var rows = [
+      { k: '擋在哪一項', v: r.title },
+      { k: '在第幾層', v: 'L' + r.layer }
+    ];
+    if (down) {
+      rows.push({ k: '怎麼贏的', v: r.rounds <= 1 ? '一次就過' : '去了 ' + r.rounds + ' 輪', hi: r.rounds <= 1 });
+      if (r.won) rows.push({ k: '宣告', v: '★ ' + vowName(r.vow), hi: true });
+      var fd = findOf(r.find);
+      if (fd) rows.push({ k: '牠留下', v: fd.name });
+    } else {
+      rows.push({ k: '狀態', v: r.status === 'submitted' ? '等他判' : '還沒打贏' });
+    }
+
+    showMoment(L, {
+      kind: down ? 'mined' : 'submit', accent: hue,
+      kicker: down ? 'DEFEATED' : 'ENCOUNTERED',
+      title: m.name,
+      lede: down ? '你打贏過牠。' : '你正在跟牠交手。',
+      sprite: 'display:block;width:120px;height:120px;margin:0 auto;image-rendering:pixelated;' +
+        'background:url("' + mobSvg(m.id, r.layer) + '") center/contain no-repeat' +
+        (down ? '' : ';opacity:.5;filter:grayscale(1)'),
+      rows: rows,
+      quoteLabel: '牠長這樣',
+      quote: down ? m.trait : '打贏了才看得清楚牠。',
+      lines: down
+        ? ['同一隻被兩組打贏，兩張頁面會長得不一樣——差別在你是怎麼贏的。']
+        : ['牠會一直擋在這一項前面，直到老師點頭。'],
+      btn: '收好', go: function () {}
+    });
+  }
+
+  /* ---- 點開一件坑屑 ---- */
+  function openFind(L, f, n) {
+    if (!n) { L.say('還沒撿到這一件。通過任務的時候會隨機掉一件。'); return; }
+    var tier = findTier(f.n);
+    showMoment(L, {
+      kind: 'mined', art: 'gem',
+      accent: tier === '罕見' ? '#E9B341' : '#8A8073',
+      kicker: 'A FIND',
+      title: f.name,
+      lede: '通過任務的時候在碎石裡撿到的。',
+      rows: [
+        { k: '稀有度', v: tier, hi: tier === '罕見' },
+        { k: '你有幾件', v: n + ' 件' }
+      ],
+      quoteLabel: '它長這樣',
+      quote: f.look,
+      lines: ['每一件都一樣重。稀有只是比較少見，不影響任何分數。'],
+      btn: '收好', go: function () {}
+    });
+  }
+
   function decorateBestiary(L, v) {
     var S = L.state;
     v.hasBest = false; v.bestRows = []; v.bestCount = ''; v.bestNote = '';
@@ -10290,6 +10368,7 @@ class Component extends DCLogic {
     v.bestRows = rec.slice().reverse().map(function (r) {
       var m = mobOf(mobIdOfTask(r.id));
       var down = r.status === 'passed';
+      var hue = BOARD_HUE[Math.max(0, Math.min(4, (r.layer || 1) - 1))];
       var seen = r.status !== 'todo';
       var how = [];
       if (down) {
@@ -10302,6 +10381,7 @@ class Component extends DCLogic {
       else how.push('還沒交手');
 
       return {
+        open: function () { openMob(L, r); },
         name: seen ? m.name : '？？？',
         trait: down ? m.trait : seen ? '交手中。打贏了才看得清楚牠。' : '',
         task: 'L' + r.layer + '　' + r.title,
@@ -10312,13 +10392,17 @@ class Component extends DCLogic {
           : 'display:block;width:44px;height:44px;flex:none;image-rendering:pixelated;opacity:' +
             (seen ? '.4' : '.16') + ';filter:grayscale(1);' +
             'background:url("' + mobSvg(m.id, r.layer) + '") center/contain no-repeat',
-        boxStyle: 'display:flex;gap:13px;padding:12px 14px;background:' +
-          (down ? 'rgba(233,179,65,.06)' : 'rgba(0,0,0,.28)') +
-          ';border:1px ' + (down ? 'solid #3A3026' : 'dashed #26211C'),
+        /* 邊框用那一層的顏色 —— 五色本來就在地圖上，帶到卡片上，
+           圖鑑就會自己分層，不用再多一套標示。 */
+        boxStyle: 'display:flex;gap:13px;padding:12px 14px;text-align:left;width:100%;cursor:' +
+          (seen ? 'pointer' : 'default') + ';border-left:3px solid ' +
+          (down ? hue : 'rgba(255,255,255,.06)') + ';background:' +
+          (down ? 'rgba(' + hexRgb(hue) + ',.07)' : 'rgba(0,0,0,.28)') +
+          ';border-top:1px solid #221E19;border-right:1px solid #221E19;border-bottom:1px solid #221E19',
         nameStyle: "font:500 22px/1.3 'C11';color:" + (down ? '#E8E2D6' : '#6E665A'),
         taskStyle: "font:400 11px/1.5 'C11';color:#5F574C;margin-top:3px",
         traitStyle: "font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty",
-        howStyle: "font:400 11px/1.5 'C11';color:" + (down ? '#E9B341' : '#6E665A') + ';margin-top:5px'
+        howStyle: "font:400 11px/1.5 'C11';color:" + (down ? hue : '#6E665A') + ';margin-top:5px'
       };
     });
   }
@@ -10340,19 +10424,25 @@ class Component extends DCLogic {
     v.findRows = FINDS.map(function (f) {
       var n = got[f.n] || 0;
       var tier = findTier(f.n);
+      /* 坑屑刻意零分，所以刻意不給它琥珀色 —— 灰是誠實的。
+         三階只差在亮度與有沒有微光，不差在色相。 */
+      var line = !n ? '#221E19' : tier === '罕見' ? '#E9B341' : tier === '少見' ? '#6E665A' : '#3A342C';
       return {
+        open: function () { openFind(L, f, n); },
         name: n ? f.name : '？？？',
         look: n ? f.look : '',
         tally: n > 1 ? '×' + n : '',
         tier: n ? tier : '',
-        boxStyle: 'padding:11px 13px;background:' +
-          (n ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.28)') +
-          ';border:1px ' + (n ? 'solid #3A3026' : 'dashed #26211C'),
-        nameStyle: "font:500 22px/1.3 'C11';color:" + (n ? '#E8E2D6' : '#4A443C'),
-        tallyStyle: "flex:none;font:400 11px/1 'C11';color:#E9B341",
+        boxStyle: 'padding:9px 11px;text-align:left;width:100%;cursor:' + (n ? 'pointer' : 'default') + ';background:' +
+          (n ? (tier === '罕見' ? 'rgba(233,179,65,.07)' : 'rgba(255,255,255,.022)') : 'rgba(0,0,0,.26)') +
+          ';border:1px ' + (n ? 'solid ' : 'dashed ') + line +
+          (n && tier === '罕見' ? ';box-shadow:0 0 12px rgba(233,179,65,.14)' : ''),
+        nameStyle: "font:500 22px/1.3 'C11';color:" +
+          (!n ? '#3A342C' : tier === '罕見' ? '#E9B341' : tier === '少見' ? '#E8E2D6' : '#A89E90'),
+        tallyStyle: "flex:none;font:400 11px/1 'C11';color:#6E665A",
         tierStyle: "flex:none;font:400 11px/1 'C11';color:" +
-          (tier === '罕見' ? '#E9B341' : tier === '少見' ? '#8A8073' : '#5F574C'),
-        lookStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:5px;text-wrap:pretty"
+          (tier === '罕見' ? '#E9B341' : tier === '少見' ? '#8A8073' : '#4A443C'),
+        lookStyle: "font:400 11px/1.6 'C11';color:#5F574C;margin-top:4px;text-wrap:pretty"
       };
     });
   }
