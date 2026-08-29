@@ -2042,6 +2042,27 @@ function codexOfUser_(userId) {
   return out;
 }
 
+/**
+ * 排行榜點進某一組看他們的紀錄。同一班才看得到。
+ * 榜上只有一個數字，看不出它怎麼長出來的——這支就是給它一個裡面。
+ */
+function apiTeamRecord(token, teamId) {
+  try {
+    var u = auth_(token);
+    var t = readTable_('Teams').filter(function (x) {
+      return String(x.teamId) === String(teamId);
+    })[0];
+    if (!t) return err_('找不到這一組。');
+    if (String(t.classId) !== String(u.classId)) return err_('不同班，看不到。');
+    return ok_({
+      teamId: String(teamId),
+      name: t.name || String(teamId),
+      me: String(teamId) === String(u.teamId || ''),
+      record: recordOf_(teamId, u.classId)
+    });
+  } catch (e) { return err_(e); }
+}
+
 function apiRoster(token) {
   try {
     var u = auth_(token);

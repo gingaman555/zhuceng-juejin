@@ -3556,5 +3556,23 @@ t = t.split('<button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試�
 /* 72. 地圖分頁裡的排行榜拿掉——側欄已經有一格，不要重複 */
 t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>').join('');
 
+
+/* 73. 排行榜的列改成按鈕——榜上只有一個數字，要點得進去看那個數字 */
+/*     是怎麼長出來的。紀錄那一頁只寫自己的，別組的從這裡看。 */
+(function () {
+  var a = '<div style="{{ hl.rowStyle }}">';
+  var b = '<button onClick="{{ hl.go }}" style="{{ hl.rowStyle }}">';
+  if (t.split(a).length - 1 !== 1) { console.error('73. 排行榜的列找不到'); process.exit(1); }
+  t = t.replace(a, b);
+  /* 收掉對應的 </div>：它是 detailStyle 那一行之後的第一個 */
+  var m = '<div style="{{ hl.detailStyle }}">{{ hl.detail }}</div>';
+  var i = t.indexOf(m);
+  if (i < 0) { console.error('73. detail 那一行找不到'); process.exit(1); }
+  var j = t.indexOf('</div>', i + m.length);
+  if (j < 0) { console.error('73. 收尾的 </div> 找不到'); process.exit(1); }
+  t = t.slice(0, j) + '</button>' + t.slice(j + 6);
+  console.log('73. 排行榜的列可以點了');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

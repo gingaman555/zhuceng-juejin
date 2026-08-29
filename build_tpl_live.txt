@@ -1264,7 +1264,7 @@
                 </sc-if>
                 <div style="display:flex;flex-direction:column;gap:8px">
                   <sc-for list="{{ haulRows }}" as="hl" hint-placeholder-count="4">
-                    <div style="{{ hl.rowStyle }}">
+                    <button onClick="{{ hl.go }}" style="{{ hl.rowStyle }}">
                       <div style="display:flex;align-items:baseline;gap:11px">
                         <span style="{{ hl.rankStyle }}">{{ hl.rank }}</span>
                         <span style="{{ hl.nameStyle }}">{{ hl.name }}</span>
@@ -1275,7 +1275,7 @@
                         <div style="{{ hl.bonusStyle }}"></div>
                       </div>
                       <div style="{{ hl.detailStyle }}">{{ hl.detail }}</div>
-                    </div>
+                    </button>
                   </sc-for>
                 </div>
               </div>

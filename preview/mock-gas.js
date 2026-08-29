@@ -1116,6 +1116,20 @@
       persist();
       return ok({ checked: next, total: def.checks.length, star: starOf(u.teamId, taskId) });
     },
+    /* 排行榜點進某一組看他們的紀錄。同一班才看得到。 */
+    apiTeamRecord: function (t, teamId) {
+      var u = auth(t);
+      var tm = DB.Teams.filter(function (x) { return String(x.teamId) === String(teamId); })[0];
+      if (!tm) return err('找不到這一組。');
+      if (String(tm.classId) !== String(u.classId)) return err('不同班，看不到。');
+      return ok({
+        teamId: String(teamId),
+        name: tm.name || String(teamId),
+        me: String(teamId) === String(u.teamId || ''),
+        record: recordOf(teamId, u.classId)
+      });
+    },
+
     apiRoster: function (t) {
       var u = auth(t);
       var firsts = firstsOf(u.classId);

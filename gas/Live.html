@@ -752,6 +752,18 @@
     addBossCodex(L, v);   /* 學生與老師的收藏總覽都要有守關生物 */
     ghostCodex(L, v);      /* 還沒拿到的畫成造型黑影 */
     decorateRelated(L, v);
+
+    /* 巢狀分頁整排收掉——側欄那五格（首頁·任務·圖鑑·排行榜·紀錄）已經涵蓋，
+       留著只是同一組頁面有兩個入口。放在最後一行，因為前面好幾支各自會
+       把自己那一顆打開。 */
+    if (S.role === 'student') {
+      v.showRecTab = false; v.showHaulTab = false; v.showDigTab = false;
+      v.mapTabMapStyle = 'display:none';
+      v.mapTabCollStyle = 'display:none';
+      v.mapTabRecStyle = 'display:none';
+      v.mapTabHaulStyle = 'display:none';
+      v.mapTabDigStyle = 'display:none';
+    }
     return v;
   }
 
@@ -3302,6 +3314,84 @@
     return { name: RANKS[i].name, next: RANKS[i + 1] || null };
   }
 
+  /* ============================================================
+     排行榜點進某一組。
+
+     紀錄那一頁只寫自己的。別組的從榜上點進來——榜上只有一個數字，
+     看不出那個數字是怎麼長出來的：他們每一項過了沒、宣告了什麼、
+     老師寫了什麼。老師寫的合格考量本來就是這套系統的教材，別組的
+     那一份同樣有用。
+     ============================================================ */
+  function peekTeam(L, teamId, name) {
+    if (L.state.peekLoading) return;
+    L.setState({ peekLoading: true });
+    call('apiTeamRecord', LIVE.token, teamId)
+      .then(function (r) {
+        L.setState({ peekLoading: false,
+          peekTeam: (r && r.ok) ? { id: teamId, name: r.name || name, me: !!r.me, record: r.record || [] } : null });
+        if (!r || !r.ok) L.say((r && r.error) || '看不到這一組。');
+      })
+      .catch(function () { L.setState({ peekLoading: false, peekTeam: null }); L.say('連不上。'); });
+  }
+
+  function haulPeek(L, v) {
+    var pk = L.state.peekTeam;
+    var PST = {
+      todo: { t: '還沒送', hue: '#6E665A' },
+      submitted: { t: '等他看', hue: '#C3BAAA' },
+      needs_more: { t: '要再改', hue: '#D9603F' },
+      passed: { t: '過了', hue: '#E9B341' }
+    };
+    var vowName = {};
+    (VOW_DEF || []).forEach(function (d) { vowName[d.k] = d.name; });
+
+    v.hasHaul = true;
+    v.haulMine = pk.name + (pk.me ? '　（你們）' : '') + ' 的紀錄';
+    v.haulNote = '他們每一項的狀況。老師寫的那一段就是他判斷的理由——' +
+      '別組的那一份一樣讀得到，那是這套系統裡最有用的東西。';
+
+    var back = {
+      rank: '←', name: '回排行榜', total: '',
+      detail: '看別組的紀錄不會影響你們的分數。',
+      go: function () { L.setState({ peekTeam: null }); },
+      rowStyle: 'display:block;width:100%;text-align:left;font:inherit;cursor:pointer;' +
+        'padding:13px 15px;background:rgba(233,179,65,.07);border:1px solid #5A4A2C',
+      rankStyle: "flex:none;width:26px;font:700 22px/1 'C11';color:#E9B341",
+      nameStyle: "flex:1 1 auto;min-width:0;font:500 22px/1.3 'C11';color:#E8E2D6",
+      totalStyle: 'display:none',
+      barStyle: 'display:none', baseStyle: '', bonusStyle: '',
+      detailStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px"
+    };
+
+    var rows = (pk.record || []).slice().reverse().map(function (r) {
+      var st = PST[r.status] || PST.todo;
+      var done = r.status === 'passed';
+      var bits = [];
+      if (r.vow) bits.push('宣告 ' + (vowName[r.vow] || r.vow) + (r.settled ? (r.won ? '　做到了' : '　沒做到') : '　還沒送'));
+      if (r.rounds > 1) bits.push('送了 ' + r.rounds + ' 次');
+      if (r.say) bits.push('他寫：' + r.say);
+      return {
+        rank: 'L' + (r.layer || 1),
+        name: r.title || '（未命名）',
+        total: st.t,
+        detail: bits.length ? bits.join('　·　') : '還沒有動作。',
+        go: function () {},
+        rowStyle: 'display:block;width:100%;text-align:left;font:inherit;cursor:default;' +
+          'padding:13px 15px;background:rgba(0,0,0,.28);border:1px solid #2E2822',
+        rankStyle: "flex:none;width:26px;font:700 11px/1 'C11';color:#5F574C",
+        nameStyle: "flex:1 1 auto;min-width:0;font:500 22px/1.3 'C11';color:#C3BAAA",
+        totalStyle: "flex:none;font:400 11px/1 'C11';color:" + st.hue,
+        barStyle: 'display:flex;margin-top:9px;height:4px;background:rgba(0,0,0,.4);border:1px solid #2E2822',
+        baseStyle: 'height:100%;width:' + (done ? 100 : r.rounds ? 40 : 0) + '%;background:' + (done ? '#E9B341' : '#5A5044'),
+        bonusStyle: 'height:100%;width:0',
+        detailStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px"
+      };
+    });
+
+    v.haulRows = [back].concat(rows);
+    if (!rows.length) v.haulNote = '這一組還沒有任何紀錄。';
+  }
+
   function decorateHaul(L, v) {
     var S = L.state;
     v.hasHaul = false; v.haulRows = []; v.scHaul = false;
@@ -3317,6 +3407,10 @@
       v.scHaul = true; v.scMap = false; v.scColl = false; v.scDig = false;
     }
     if (!v.scHaul) return;
+
+    /* 正在看某一組的紀錄 */
+    if (S.peekTeam) { haulPeek(L, v); return; }
+    if (S.peekLoading) { v.haulNote = '讀一下……'; return; }
 
     if (!S.haulData && !S.haulLoading) { loadHaul(L); return; }
     var rows = S.haulData || [];
@@ -3383,7 +3477,11 @@
           '通過 ' + r.pages + ' 項 = ' + (r.pages * 10) + ' 分　·　' +
           '宣告做到 ' + r.vows + ' 項 = ' + (r.vows * 30) + ' 分' +
           (r.firsts ? '　·　初採 ' + r.firsts + ' 塊' : ''),
-        rowStyle: 'padding:13px 15px;background:' + (r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
+        go: (function (tid, nm) {
+          return function () { peekTeam(L, tid, nm); };
+        })(r.teamId, r.name),
+        rowStyle: 'display:block;width:100%;text-align:left;font:inherit;cursor:pointer;' +
+          'padding:13px 15px;background:' + (r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
           ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
         rankStyle: "flex:none;width:26px;font:700 22px/1 'C11';color:" + (r.me ? '#E9B341' : '#5F574C'),
         nameStyle: "flex:1 1 auto;min-width:0;font:500 22px/1.3 'C11';color:" + (r.me ? '#E8E2D6' : '#C3BAAA'),
