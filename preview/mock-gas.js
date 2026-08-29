@@ -959,10 +959,17 @@
       auth(t);
       (items || []).forEach(function (it) {
         var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer, null, API.cleanTeams(classId, it.teams)) || [])[0] || '';
-        DB.Tasks.push({ taskId: 'tk' + uid(), classId: classId, layer: layer, type: it.type,
+        var row = { taskId: it.id || ('tk' + uid()), classId: classId, layer: layer, type: it.type,
           title: it.title, cond: it.cond, note: it.note, spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc,
           teams: JSON.stringify(API.cleanTeams(classId, it.teams)),
-          checks: JSON.stringify(checkList(it.checks)) });
+          checks: JSON.stringify(checkList(it.checks)) };
+        /* 帶了 id 就是改寫既有那一項，不然重發整層會長出一模一樣的第二份 */
+        var at = -1;
+        for (var i = 0; i < DB.Tasks.length; i++) {
+          if (String(DB.Tasks[i].taskId) === String(row.taskId)) { at = i; break; }
+        }
+        if (at >= 0) DB.Tasks[at] = Object.assign({}, DB.Tasks[at], row);
+        else DB.Tasks.push(row);
       });
       persist();
       return ok();
