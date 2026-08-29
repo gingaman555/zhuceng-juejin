@@ -1161,7 +1161,7 @@
                 <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">礦物 · 一項任務一種礦</div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:7px">
                   <sc-for list="{{ sel.minerals }}" as="mi" hint-placeholder-count="6">
-                    <button onClick="{{ mi.open }}" style="{{ mi.style }}"><span style="{{ mi.glyphStyle }}"></span><span style="font:500 11px/1.4 'C11';margin-top:8px;display:block">{{ mi.name }}</span></button>
+                    <button onClick="{{ mi.open }}" style="{{ mi.style }}"><span style="{{ mi.glyphStyle }}"></span><span style="font:500 11px/1.4 'C11';margin-top:8px;display:block">{{ mi.name }}</span><span style="{{ mi.statStyle }}">{{ mi.stat }}</span></button>
                   </sc-for>
                 </div>
               </div>
@@ -1187,20 +1187,8 @@
                 </div>
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ recNote }}</p>
               </div>
-              <div style="padding:18px var(--pad) 0;display:flex;flex-direction:column;gap:13px">
-                <sc-for list="{{ gridRows }}" as="gr" hint-placeholder-count="4">
-                  <div>
-                    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
-                      <span style="{{ gr.mobStyle }}">{{ gr.mob }}</span>
-                      <span style="{{ gr.tallyStyle }}">{{ gr.tally }}</span>
-                    </div>
-                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px">
-                      <sc-for list="{{ gr.cells }}" as="gc" hint-placeholder-count="5">
-                        <div style="{{ gc.style }}"><span style="{{ gc.textStyle }}">{{ gc.name }}</span></div>
-                      </sc-for>
-                    </div>
-                  </div>
-                </sc-for>
+              <div style="padding:16px var(--pad) 0">
+                <div style="font:400 11px/1.8 'C11';color:#8A8073;letter-spacing:.04em">{{ gridLine }}</div>
               </div>
               <div style="padding:26px var(--pad) 0">
                 <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:12px">走過的每一項</div>

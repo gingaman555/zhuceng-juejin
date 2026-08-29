@@ -3070,22 +3070,9 @@ must(
 '                <p style="font:400 22px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ recNote }}</p>',
 '              </div>',
 
-'              <div style="padding:18px var(--pad) 0;display:flex;flex-direction:column;gap:13px">',
-'                <sc-for list="{{ gridRows }}" as="gr" hint-placeholder-count="4">',
-'                  <div>',
-'                    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">',
-'                      <span style="{{ gr.mobStyle }}">{{ gr.mob }}</span>',
-'                      <span style="{{ gr.tallyStyle }}">{{ gr.tally }}</span>',
-'                    </div>',
-'                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px">',
-'                      <sc-for list="{{ gr.cells }}" as="gc" hint-placeholder-count="5">',
-'                        <div style="{{ gc.style }}"><span style="{{ gc.textStyle }}">{{ gc.name }}</span></div>',
-'                      </sc-for>',
-'                    </div>',
-'                  </div>',
-'                </sc-for>',
+'              <div style="padding:16px var(--pad) 0">',
+'                <div style="font:400 11px/1.8 ' + Q + 'C11' + Q + ';color:#8A8073;letter-spacing:.04em">{{ gridLine }}</div>',
 '              </div>',
-
 '              <div style="padding:26px var(--pad) 0">',
 '                <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#5F574C;margin-bottom:12px">走過的每一項</div>',
 '                <div style="display:flex;flex-direction:column;gap:8px">',
@@ -3295,6 +3282,13 @@ must(
 '                    </div>',
 '                  </sc-if>',
 '                  <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">'].join('\n'));
+
+
+/* 60. 地圖礦石格：直接顯示老師給不給過 */
+must(
+'<span style="font:500 11px/1.4 ' + Q + 'C11' + Q + ';margin-top:8px;display:block">{{ mi.name }}</span></button>',
+'<span style="font:500 11px/1.4 ' + Q + 'C11' + Q + ';margin-top:8px;display:block">{{ mi.name }}</span>' +
+'<span style="{{ mi.statStyle }}">{{ mi.stat }}</span></button>');
 
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
