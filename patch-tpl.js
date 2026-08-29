@@ -3715,5 +3715,56 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('80b. 送關卡那一頁拿掉');
 })();
 
+
+/* 81. 排行榜的初採與坑道圖拿掉 */
+(function () {
+  /* 初採：整個 hasClaims 區塊 */
+  var a = t.indexOf('<sc-if value="{{ hasClaims }}"');
+  if (a < 0) { console.error('81. hasClaims 找不到'); process.exit(1); }
+  var depth = 0, j = a;
+  while (j < t.length) {
+    var nx = t.indexOf('<sc-if', j + 1), nc = t.indexOf('</sc-if>', j + 1);
+    if (nc < 0) { console.error('81. 初採收尾找不到'); process.exit(1); }
+    if (nx >= 0 && nx < nc) { depth++; j = nx; continue; }
+    if (depth === 0) { t = t.slice(0, a) + t.slice(nc + 8); break; }
+    depth--; j = nc;
+  }
+  console.log('81a. 初採拿掉');
+
+  /* 坑道圖：整個 hasHaulMap 區塊 */
+  var b = t.indexOf('<sc-if value="{{ hasHaulMap }}"');
+  if (b < 0) { console.error('81. hasHaulMap 找不到'); process.exit(1); }
+  var d2 = 0, k = b;
+  while (k < t.length) {
+    var n2 = t.indexOf('<sc-if', k + 1), c2 = t.indexOf('</sc-if>', k + 1);
+    if (c2 < 0) { console.error('81. 坑道圖收尾找不到'); process.exit(1); }
+    if (n2 >= 0 && n2 < c2) { d2++; k = n2; continue; }
+    if (d2 === 0) { t = t.slice(0, b) + t.slice(c2 + 8); break; }
+    d2--; k = c2;
+  }
+  console.log('81b. 坑道圖拿掉');
+})();
+
+
+/* 82. 圖鑑上面加一排層：你在哪一層、那一層長什麼樣、那一層有什麼。 */
+(function () {
+  var a = '<div style="{{ collTabRowStyle }}">';
+  if (t.split(a).length - 1 !== 1) { console.error('82. 分頁列找不到'); process.exit(1); }
+  var map = '<div style="{{ collMapBoxStyle }}">' +
+    '<div style="{{ collMapRowStyle }}">' +
+      '<sc-for list="{{ collLayers }}" as="cl" hint-placeholder-count="5">' +
+        '<button onClick="{{ cl.pick }}" style="{{ cl.style }}">' +
+          '<span style="{{ cl.codeStyle }}">{{ cl.code }}</span>' +
+          '<span style="{{ cl.nameStyle }}">{{ cl.name }}</span>' +
+          '<span style="{{ cl.hereStyle }}">{{ cl.here }}</span>' +
+        '</button>' +
+      '</sc-for>' +
+    '</div>' +
+    '<div style="{{ collMapNoteStyle }}">{{ collMapNote }}</div>' +
+  '</div>';
+  t = t.replace(a, map + a);
+  console.log('82. 圖鑑上面加一排層');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

@@ -1266,24 +1266,8 @@ window.JLZ_SPRITES = {
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ haulMine }}</p>
               </div>
               <div style="padding:18px var(--pad) 0">
-                <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:14px;max-width:560px;text-wrap:pretty">{{ haulNote }}</div><sc-if value="{{ hasHaulMap }}" hint-placeholder-val="{{ true }}"><div style="{{ haulMapBox }}"><div style="{{ haulMapHeadStyle }}"><span>{{ haulMapTop }}</span><span>{{ haulMapBottom }}</span></div><div style="{{ haulMapTrack }}"><sc-for list="{{ haulMapBands }}" as="bd" hint-placeholder-count="3"><div style="{{ bd.rowStyle }}"><span style="{{ bd.depthStyle }}">{{ bd.depth }}</span><div style="{{ bd.pinsStyle }}"><sc-for list="{{ bd.pins }}" as="pn" hint-placeholder-count="2"><button onClick="{{ pn.go }}" style="{{ pn.style }}"><span style="{{ pn.dotStyle }}"></span><span style="{{ pn.nameStyle }}">{{ pn.name }}</span><span style="{{ pn.scoreStyle }}">{{ pn.score }}</span></button></sc-for></div></div></sc-for></div><div style="{{ haulMapNoteStyle }}">{{ haulMapNote }}</div></div></sc-if>
-                <sc-if value="{{ hasClaims }}" hint-placeholder-val="{{ true }}">
-                  <div style="margin-bottom:22px;padding:16px 18px;background:#14110E;border:1px solid #3A3026">
-                    <div style="font:500 22px/1.3 'C11';color:#E9B341;margin-bottom:5px">{{ claimHead }}</div>
-                    <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:13px;max-width:520px;text-wrap:pretty">{{ claimNote }}</div>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px">
-                      <sc-for list="{{ claimRows }}" as="cl" hint-placeholder-count="6">
-                        <div style="{{ cl.boxStyle }}">
-                          <div style="display:flex;align-items:baseline;gap:9px">
-                            <span style="{{ cl.nameStyle }}">{{ cl.name }}</span>
-                            <span style="{{ cl.byStyle }}">{{ cl.by }}</span>
-                          </div>
-                          <div style="{{ cl.metaStyle }}">{{ cl.meta }}</div>
-                        </div>
-                      </sc-for>
-                    </div>
-                  </div>
-                </sc-if>
+                <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:14px;max-width:560px;text-wrap:pretty">{{ haulNote }}</div>
+                
                 <div style="display:flex;flex-direction:column;gap:8px">
                   <sc-for list="{{ haulRows }}" as="hl" hint-placeholder-count="4">
                     <button onClick="{{ hl.go }}" style="{{ hl.rowStyle }}">
@@ -1319,7 +1303,7 @@ window.JLZ_SPRITES = {
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">一次攤開所有收集要素。已取得的點得進去看介紹；還沒拿到的只留下位置與微光。</p>
               </div>
               <div style="padding:18px var(--pad);display:flex;flex-direction:column;gap:22px">
-                <div style="{{ collTabRowStyle }}"><sc-for list="{{ collTabs }}" as="ct" hint-placeholder-count="2"><button onClick="{{ ct.pick }}" style="{{ ct.style }}"><span style="{{ ct.labelStyle }}">{{ ct.label }}</span><span style="{{ ct.countStyle }}">{{ ct.count }}</span></button></sc-for></div><sc-for list="{{ collSections }}" as="s" hint-placeholder-count="3">
+                <div style="{{ collMapBoxStyle }}"><div style="{{ collMapRowStyle }}"><sc-for list="{{ collLayers }}" as="cl" hint-placeholder-count="5"><button onClick="{{ cl.pick }}" style="{{ cl.style }}"><span style="{{ cl.codeStyle }}">{{ cl.code }}</span><span style="{{ cl.nameStyle }}">{{ cl.name }}</span><span style="{{ cl.hereStyle }}">{{ cl.here }}</span></button></sc-for></div><div style="{{ collMapNoteStyle }}">{{ collMapNote }}</div></div><div style="{{ collTabRowStyle }}"><sc-for list="{{ collTabs }}" as="ct" hint-placeholder-count="2"><button onClick="{{ ct.pick }}" style="{{ ct.style }}"><span style="{{ ct.labelStyle }}">{{ ct.label }}</span><span style="{{ ct.countStyle }}">{{ ct.count }}</span></button></sc-for></div><sc-for list="{{ collSections }}" as="s" hint-placeholder-count="3">
                   <div>
                     <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-bottom:5px">
                       <span style="font:700 22px/1.4 'C11';color:#E8E2D6">{{ s.title }}</span>
@@ -7069,9 +7053,13 @@ class Component extends DCLogic {
     ['礦物', '道具', '戰利品'].forEach(function (t) {
       secs.forEach(function (g) {
         if (g.title !== t) return;
-        (g.items || []).forEach(function (it) {
+        (g.items || []).forEach(function (it, ii) {
           var pt = PTS[t];
           it.sub = (pt ? '+' + pt + ' 分　' : '') + (it.sub || '');
+          /* 每一件標上層數，地圖才篩得動 */
+          it.L = t === '礦物' ? (((L.MINS || [])[ii] || {}).L || 1)
+               : t === '道具' ? (ii + 1)
+               : Math.floor(ii / 3) + 1;   /* 戰利品一區三件 */
           drops.push(it);
         });
       });
@@ -7094,7 +7082,8 @@ class Component extends DCLogic {
           ';color:' + (n ? '#E8E2D6' : '#8C8172'),
         glyphStyle: 'display:block;width:22px;height:22px;margin:6px auto;background:' +
           (n ? hue : '#3A3026') + ';clip-path:polygon(20% 0,80% 0,100% 45%,50% 100%,0 45%)' +
-          (n ? '' : ';opacity:.5')
+          (n ? '' : ';opacity:.5'),
+        L: findLayer(f.n)
       });
     });
 
@@ -7127,6 +7116,7 @@ class Component extends DCLogic {
         name: seenM ? b.name : '？？？',
         got: downM,
         sub: '+1000 分　守關　' + (downM ? '已擊退' : seenM ? '擋在前方' : 'L' + b.L),
+        L: b.L,
         open: (function (bb, sm) {
           return function () {
             if (!sm) { L.say('還沒走到那一層。牠現在只是一個影子。'); return; }
@@ -7159,6 +7149,7 @@ class Component extends DCLogic {
             name: gotM ? mm.name : '？？？',
             got: gotM,
             sub: (layM.code || ('L' + Ly)) + '　' + (gotM ? '打贏過' : '還沒遇過'),
+            L: Ly,
             open: (function (rr, nm, ly) {
               return function () {
                 if (rr) { openMob(L, rr); return; }
@@ -7177,6 +7168,53 @@ class Component extends DCLogic {
       }
     }
     var mobGot = mobs.filter(function (x) { return x.got; }).length;
+
+    /* ---- 地圖：你在哪一層、那一層長什麼樣、那一層有什麼 ----
+       本來的地圖是進度板（採到幾塊、還差幾塊、能不能過關），那些事
+       都不成立了。現在它只是圖鑑的導覽。 */
+    var hereL = S.currentLayer || 1;
+    var pickL = Number(S.collLayer) || 0;   /* 0 ＝ 全部 */
+    var passedL = S.passed || [];
+    v.collMapBoxStyle = 'margin-bottom:18px;padding:15px 16px;background:' +
+      'linear-gradient(180deg,rgba(233,179,65,.05),rgba(0,0,0,.3) 55%,rgba(217,96,63,.05))' +
+      ';border:1px solid #2E2822';
+    v.collMapRowStyle = 'display:flex;gap:6px;flex-wrap:wrap';
+    v.collMapNoteStyle = "font:400 11px/1.7 'C11';color:#8A8073;margin-top:12px;text-wrap:pretty";
+
+    v.collLayers = [0, 1, 2, 3, 4].map(function (n) {
+      var lay = n ? ((L.LAYERS || [])[n - 1] || {}) : {};
+      var on = pickL === n;
+      var here = n && n === hereL;
+      var done = n && passedL.indexOf(n) >= 0;
+      var hue = n ? BOARD_HUE[n - 1] : '#8A8073';
+      return {
+        code: n ? ('L' + n) : '全部',
+        name: n ? (lay.name || '') : '四個領域',
+        here: here ? '你在這' : done ? '走過了' : '',
+        pick: (function (k) { return function () { L.setState({ collLayer: k }); }; })(n),
+        style: 'display:flex;flex-direction:column;gap:3px;align-items:flex-start;' +
+          'padding:9px 13px;cursor:pointer;font:inherit;flex:1 1 108px;' +
+          'background:' + (on ? 'rgba(' + hexRgb(hue) + ',.16)' : 'rgba(0,0,0,.3)') +
+          ';border:1px solid ' + (on ? hue : here ? '#5A4A2C' : '#2E2822'),
+        codeStyle: "font:400 11px/1 'C11';letter-spacing:.14em;color:" + (on ? hue : '#5F574C'),
+        nameStyle: "font:500 22px/1.2 'C11';white-space:nowrap;color:" + (on ? '#F2E6C8' : '#9A9184'),
+        hereStyle: here || done
+          ? "font:400 11px/1 'C11';color:" + (here ? '#E9B341' : '#6E665A')
+          : 'display:none'
+      };
+    });
+
+    var pl = pickL ? ((L.LAYERS || [])[pickL - 1] || {}) : null;
+    v.collMapNote = pl
+      ? (pl.scene || '') + '　' + (pl.hard || '')
+      : '四個領域由上往下。點一層，下面就只留那一層的生物與物品。';
+
+    /* 篩掉不是這一層的 */
+    if (pickL) {
+      mobs = mobs.filter(function (x) { return x.L === pickL; });
+      drops = drops.filter(function (x) { return x.L === pickL; });
+      mobGot = mobs.filter(function (x) { return x.got; }).length;
+    }
 
     var gotN = drops.filter(function (x) { return x.got; }).length;
     v.collSections = [{
@@ -10031,7 +10069,6 @@ class Component extends DCLogic {
       '走到第幾層先把大家分成幾段（一層 1000 分），同一段裡面的差距才是宣告成功了幾次。';
 
     markFirst('haul');     /* 新手引導：排行榜看過了（這裡已經確定在榜上） */
-    haulMap(L, v, rows);   /* 同一份資料的另一種讀法：誰在你前面 */
 
     /* 跟上次打開的時候比，名次上升還是下降。記在瀏覽器——純演出。 */
     var RKEY = 'jlz.rank.' + ((S.user && S.user.userId) || 'me');
@@ -10076,8 +10113,7 @@ class Component extends DCLogic {
           '通過 ' + r.pages + ' 項 = ' + (r.pages * 100) + ' 分　·　' +
           '宣告做到 ' + r.vows + ' 項 = ' + (r.vows * 300) + ' 分' +
           (r.finds ? '　·　掉落物 ' + r.finds + ' 件 = ' + (r.finds * 30) + ' 分' : '') +
-          (r.layers ? '　·　走完 ' + r.layers + ' 層 = ' + (r.layers * 1000) + ' 分' : '') +
-          (r.firsts ? '　·　初採 ' + r.firsts + ' 塊' : ''),
+          (r.layers ? '　·　走完 ' + r.layers + ' 層 = ' + (r.layers * 1000) + ' 分' : ''),
         go: (function (tid, nm) {
           return function () { peekTeam(L, tid, nm); };
         })(r.teamId, r.name),
@@ -10264,6 +10300,8 @@ class Component extends DCLogic {
     LIVE.layersRetold = true;
     (L.LAYERS || []).forEach(function (l) {
       l.course = String(l.course || '').replace(/^[^·]*·\s*/, '');
+      /* 原型的場景描述還在講「五層」——只剩四個領域了 */
+      l.scene = String(l.scene || '').split('五層裡最亮的一張').join('四個領域裡最亮的').split('五層').join('四個領域');
     });
   }
 
