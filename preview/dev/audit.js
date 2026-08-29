@@ -86,7 +86,9 @@ window.__AUDIT = function () {
     });
     return chain.then(function () { return api('apiSubmitGate', STK, ['a', 'b', 'c']); });
   }).then(function (r) {
-    T('全部交出但還沒被確認 → 關卡擋下', !r.ok, r);
+    /* 關卡不再看收集：一塊礦都還沒被確認也送得出去，
+       過不過完全是老師的判斷。這一條原本是相反的，隨規則改掉。 */
+    T('還沒被確認也送得出關卡（收集不再是門檻）', r.ok, r);
     return api('apiBootstrap', TK);
   }).then(function (b) {
     var list = b.teamTasks[TEAM_A.id] || [];

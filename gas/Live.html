@@ -182,7 +182,7 @@
           t: '學生看到的是：路上有東西擋著',
           b: '在他們那一側，每一層的深處都站著一隻東西，長得就是那一層最難的那件事——第一層那隻沒有臉，因為他們還說不出自己要挖什麼。' +
              String.fromCharCode(10) + String.fromCharCode(10) +
-             '要過去只有一條路：把那一層的礦石採齊，然後來跟你申請。你點頭，礦石才鑄得成那一層的道具，那隻東西才會讓開。' +
+             '要過去只有一條路：跟你申請。你覺得他們這一層做到可以往下了，就點頭——礦石才鑄得成那一層的道具，那隻東西才會讓開。' +
              String.fromCharCode(10) + String.fromCharCode(10) +
              '你這一側沒有任何額外的動作——你做的還是同一件事：讀他們交的，寫下你的判斷。那段字在他們那邊就是牠說的話。'
         }]).concat(pages.slice(at));
@@ -202,10 +202,10 @@
           { art: 'trade', k: '第一層 · 微光荒原', t: '斗篷人手上有能打倒牠的東西',
             b: '他不會把武器直接給你。他要的是礦石——這一層的每一塊，一塊都不能少。' +
                String.fromCharCode(10) + String.fromCharCode(10) +
-               '採齊之後去找他，跟他說你走過哪裡、你們變成什麼樣子、接下來要做什麼。他點頭，礦石才會在他手裡鑄成這一層的道具。' +
+               '覺得這一層告一段落了就去找他，跟他說你走過哪裡、你們變成什麼樣子、接下來要做什麼。他點頭，礦石才會在他手裡鑄成這一層的道具。' +
                String.fromCharCode(10) + String.fromCharCode(10) +
                '拿著它回去，那隻東西就會讓開。',
-            q: '所以順序是：採齊 → 跟他提出申請 → 他准了 → 換到武器 → 過去。' }
+            q: '所以順序是：跟他提出申請 → 他覺得可以往下了 → 換到武器 → 過去。' }
         ]);
       }
       if (n === 2) return ORIG.storyPages.call(this);   /* 第二層原型自己有 */
@@ -219,7 +219,7 @@
           cards: [
             { a: l.hard, b: prev ? prev.tool : '—', c: prev ? prev.toolAbility : '—' },
             { a: '不確定做到什麼程度算完成', b: '每一項的通過條件', c: '對照他寫的條件，不是對照別組' },
-            { a: '不知道什麼時候可以送關卡', b: '這一層的礦石', c: '這一層全部採齊就送得出去' }
+            { a: '不知道什麼時候可以送關卡', b: '這一層的清單', c: '老師開了清單就送得出去，過不過他決定' }
           ] }
       ];
     };
@@ -1193,7 +1193,7 @@
               kind: 'gate', art: 'gate', accent: '#C3BAAA',
               kicker: 'GATE SUBMITTED',
               title: (lay.name || '這一層') + ' · 關卡送出去了',
-              lede: '這一層的礦石你們採齊了，三格也寫完了。',
+              lede: '三格寫完了，送出去了。',
               sprite: sp.tool || null,
               rows: [
                 { k: '這一層', v: lay.name || '', hi: true },
@@ -1525,15 +1525,10 @@
     items.forEach(function (t) { if (t.mineral) st.byMineral[t.mineral] = t; });
     /* 採齊＝礦脈開完、而且每一塊都通過 */
     st.complete = st.veinN > 0 && st.unopenedN === 0 && st.missingN === 0;
+    /* 關卡只看老師。收集不再是門檻——礦石從「條件」變回「紀錄」。 */
     st.blockReason = !st.openedN
       ? '這一層還沒有清單，老師還沒把任務開出來。'
-      : st.unopenedN
-        ? '這一層的礦脈有 ' + st.veinN + ' 塊，老師只開了 ' + st.openedN +
-          ' 塊。整條礦脈開完、你們也採齊，才拿得到道具、通過這一層——去問他剩下的 ' + st.unopenedN + ' 塊什麼時候給。'
-        : st.missingN
-          ? '這一層還差 ' + st.missingN + ' 塊礦石：' +
-            st.missing.map(function (t) { return t.title; }).join('、') + '。全部採齊才送得出關卡。'
-          : '';
+      : '';
     return st;
   }
 
@@ -2297,8 +2292,8 @@
     v.sel.toolDesc = done
       ? (lay.toolFunc || '')
       : (bz
-          ? '這一層的礦石採齊、老師准了，才鑄得出來——用它擊退' + bz.name + '。'
-          : '這一層的礦石採齊、老師准了，才鑄得出來。');
+          ? '老師准你們往下了，才鑄得出來——用它擊退' + bz.name + '。'
+          : '老師准你們往下了，才鑄得出來。');
     v.sel.toolCardStyle = 'padding:13px;background:' +
       (done ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.25)') +
       ';border:1px ' + (done ? 'solid #3A3026' : 'dashed #2E2822');
@@ -4321,7 +4316,7 @@
     v.reqLeft = Math.max(0, allN - allGot);
     v.layerLeftNote = !all.length ? '這一層還沒有清單'
       : unopenedN ? '其中 ' + unopenedN + ' 塊老師還沒開'
-      : allGot === allN ? '這一層採齊了' : '全部採齊才送得出關卡';
+      : allGot === allN ? '這一層採齊了' : '採不採齊都送得出關卡——過不過是他決定';
     v.collectBars = [
       { label: '這一層的礦石', count: allGot + ' / ' + allN + ' 塊', color: allN && allGot === allN ? '#E9B341' : '#C3BAAA',
         pips: pips(allGot, allN, '#E9B341'),

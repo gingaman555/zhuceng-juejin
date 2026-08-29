@@ -874,11 +874,9 @@
     apiSubmitGate: function (t, cells) {
       if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
       var u = auth(t), tm = teamById(u.teamId);
-      var miss = API._missReq(u.teamId) || [];
-      var vn = API._vein(tm.classId, tm.layer, tm.teamId);
-      if (vn.left.length === vn.total) return err("這一層還沒有任務，老師還沒把清單開出來。");
-      if (vn.left.length) return err("這一層的礦脈有 " + vn.total + " 塊，老師只開了 " + (vn.total - vn.left.length) + " 塊。要全部開出來、也全部採齊，才拿得到這一層的道具——去跟他說還缺 " + vn.left.length + " 塊。");
-      if (miss.length) return err("這一層還差 " + miss.length + " 塊礦石：" + miss.map(function (d) { return d.title; }).join("、") + "。這一層要全部採齊才送得出關卡。");
+      /* 關卡不再看收集：過不過是老師的判斷。 */
+      var vn0 = API._vein(tm.classId, tm.layer, tm.teamId);
+      if (vn0.left.length === vn0.total) return err("這一層還沒有任務，老師還沒把清單開出來。");
       tm.gateText = cells; tm.gateSubmitted = true; tm.gateVerdict = ''; tm.gateTs = NOW();
       persist();
       return ok();
@@ -1146,11 +1144,7 @@
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       var tm = teamById(teamId), kl = classById(tm.classId), w = courseWeekOf(kl);
-      if (pass) {
-        var vt = API._vein(tm.classId, tm.layer, tm.teamId);
-        if (vt.left.length) return err("這一層的礦脈有 " + vt.total + " 塊，你只開了 " + (vt.total - vt.left.length) + " 塊。先在 T-05 把剩下的 " + vt.left.length + " 塊開出來（" + vt.left.join("、") + "），或把這一次關卡退回。");
-        var mr = API._missReq(teamId) || []; if (mr.length) return err("這一組這一層還差 " + mr.length + " 塊礦石。");
-      }
+      /* 不再檢查收集——做到什麼程度算「可以往下」是老師自己看。 */
       DB.Passes.push({ passId: 'p' + uid(), teamId: teamId, layer: tm.layer, week: w,
         toolLevel: toolLevel, cells: tm.gateText.slice(), verdict: pass ? 'pass' : 'needfix', reason: reason || '' });
       if (!pass) { tm.gateSubmitted = false; tm.gateVerdict = 'needfix'; persist(); return ok({ passed: false }); }

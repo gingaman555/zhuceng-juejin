@@ -1664,25 +1664,8 @@ function apiSubmitGate(token, cells) {
     var u = auth_(token);
     if (u.role !== 'student' || !u.teamId) return err_('只有學生可以送關卡。');
 
-    /* 核心規則：這一層的礦石全部採齊才送得出關卡 */
-    var miss = missingRequired_(u.teamId);
-    if (miss === null) return err_('找不到這一組。');
-    var t0 = teamById_(u.teamId);
-    var lay0 = Number(t0.layer) || 1;
-    var vein0 = MINERALS_BY_LAYER[lay0] || [];
-    var unopened = unopenedMinerals_(t0.classId, lay0, u.teamId);
-    if (unopened.length === vein0.length) {
-      return err_('這一層還沒有任務，老師還沒把清單開出來。');
-    }
-    if (unopened.length) {
-      return err_('這一層的礦脈有 ' + vein0.length + ' 塊，老師只開了 ' + (vein0.length - unopened.length) +
-        ' 塊。要全部開出來、也全部採齊，才拿得到這一層的道具——去跟他說還缺 ' + unopened.length + ' 塊。');
-    }
-    if (miss.length) {
-      return err_('這一層還差 ' + miss.length + ' 塊礦石：' +
-        miss.map(function (d) { return d.title; }).join('、') + '。這一層要全部採齊才送得出關卡。');
-    }
-
+    /* 關卡不再看收集。過不過是老師的判斷——他覺得這一組有沒有
+       前進一個階段。礦石照樣採、照樣進收藏，只是不再是門檻。 */
     upsert_('Teams', ['teamId'], {
       teamId: u.teamId, gateText: JSON.stringify(cells || ['', '', '']),
       gateSubmitted: 'Y', gateVerdict: '', gateTs: new Date()
@@ -2419,21 +2402,8 @@ function apiReviewGate(token, teamId, pass, toolLevel, reason) {
     var layer = Number(t.layer) || 1;
     var cells = jparse_(t.gateText, ['', '', '']);
 
-    /* 通過關卡＝發道具換層，這一層沒全收集就不能過（退回不受限制） */
-    if (pass) {
-      var veinT = MINERALS_BY_LAYER[layer] || [];
-      var unopenT = unopenedMinerals_(t.classId, layer, t.teamId);
-      if (unopenT.length) {
-        return err_('這一層的礦脈有 ' + veinT.length + ' 塊，你只開了 ' + (veinT.length - unopenT.length) +
-          ' 塊。先在 T-05 把剩下的 ' + unopenT.length + ' 塊開出來（' + unopenT.join('、') + '），或把這一次關卡退回。');
-      }
-      var miss = missingRequired_(teamId) || [];
-      if (miss.length) {
-        return err_('這一組這一層還差 ' + miss.length + ' 塊礦石：' +
-          miss.map(function (d) { return d.title; }).join('、') +
-          '。先在逐項確認裡把它們處理完，或把這一次關卡退回。');
-      }
-    }
+    /* 通過關卡＝發道具換層。不再檢查收集——這一層做到什麼程度
+       算「可以往下」，是老師自己看，不是系統算。 */
 
     appendRow_('Passes', {
       passId: 'p' + Utilities.getUuid().slice(0, 8), teamId: teamId, layer: layer, week: courseWeek,
