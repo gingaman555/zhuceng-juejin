@@ -832,7 +832,7 @@
           <sc-if value="{{ scMap }}" hint-placeholder-val="{{ false }}">
             <div data-screen-label="S-03 迷霧地圖與圖鑑" style="padding:0 0 32px;background:linear-gradient(180deg,#181410 0%,#0D0B08 26%,#060505 62%,#020202 100%)">
               <sc-if value="{{ vBoard }}" hint-placeholder-val="{{ true }}">
-              <div style="padding:22px var(--pad) 16px">
+              <div style="padding:22px var(--pad) 0"><div style="{{ collTabRowStyle }}"><sc-for list="{{ collTabs }}" as="ct" hint-placeholder-count="3"><button onClick="{{ ct.pick }}" style="{{ ct.style }}"><span style="{{ ct.labelStyle }}">{{ ct.label }}</span><span style="{{ ct.countStyle }}">{{ ct.count }}</span></button></sc-for></div></div><div style="padding:22px var(--pad) 16px">
                 <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                     <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
@@ -2921,14 +2921,14 @@
           <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:16px;max-width:600px;width:100%;animation:momentIn .42s cubic-bezier(.2,.9,.3,1) both">
             <div style="position:relative;display:flex;align-items:center;justify-content:center;width:104px;height:104px">
               <span style="{{ momentRay }}"></span>
-              <span style="{{ momentArt }}"></span>
+              <span data-roll="art" style="{{ momentArt }}"></span>
             </div>
             <sc-if value="{{ hasMomentBadge }}" hint-placeholder-val="{{ false }}">
               <span style="{{ momentBadgeStyle }}">{{ momentBadge }}</span>
             </sc-if>
             <div>
-              <div style="font:400 11px/1 'C11';letter-spacing:.34em;color:{{ momentAccent }}">{{ momentKicker }}</div>
-              <h1 style="font:700 44px/1.25 'C11';letter-spacing:.1em;text-indent:.1em;color:#F2E6C8;margin:14px 0 0;text-shadow:0 0 30px rgba(233,179,65,.28);text-wrap:balance">{{ momentTitle }}</h1>
+              <div style="font:400 11px/1 'C11';letter-spacing:.34em;color:{{ momentAccent }}"><span data-roll="kicker">{{ momentKicker }}</span></div>
+              <h1 style="font:700 44px/1.25 'C11';letter-spacing:.1em;text-indent:.1em;color:#F2E6C8;margin:14px 0 0;text-shadow:0 0 30px rgba(233,179,65,.28);text-wrap:balance"><span data-roll="title">{{ momentTitle }}</span></h1>
               <p style="font:400 22px/1.8 'C11';color:#C3BAAA;margin:12px 0 0;text-wrap:pretty">{{ momentLede }}</p>
             </div>
             <sc-if value="{{ hasMomentRows }}" hint-placeholder-val="{{ true }}">

@@ -3766,5 +3766,41 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('82. 圖鑑上面加一排層');
 })();
 
+
+/* 83. 地圖畫面也放那一排分頁鈕——不然切到地圖就回不來 */
+(function () {
+  var a = '<sc-if value="{{ scMap }}" hint-placeholder-val="{{ false }}">' +
+          String.fromCharCode(10);
+  var i = t.indexOf(a);
+  if (i < 0) { console.error('83. scMap 找不到'); process.exit(1); }
+  var j = t.indexOf('<div style="padding:22px var(--pad) 16px">', i);
+  if (j < 0) { console.error('83. 地圖內容的起點找不到'); process.exit(1); }
+  var row = '<div style="padding:22px var(--pad) 0"><div style="{{ collTabRowStyle }}">' +
+    '<sc-for list="{{ collTabs }}" as="ct" hint-placeholder-count="3">' +
+      '<button onClick="{{ ct.pick }}" style="{{ ct.style }}">' +
+        '<span style="{{ ct.labelStyle }}">{{ ct.label }}</span>' +
+        '<span style="{{ ct.countStyle }}">{{ ct.count }}</span>' +
+      '</button>' +
+    '</sc-for>' +
+  '</div></div>';
+  t = t.slice(0, j) + row + t.slice(j);
+  console.log('83. 地圖畫面也放那一排分頁鈕');
+})();
+
+
+/* 84. 抽選動畫要抓得到圖與標題，各給一個 data 記號 */
+(function () {
+  var a = '<span style="{{ momentArt }}"></span>';
+  if (t.split(a).length - 1 !== 1) { console.error('84. momentArt 找不到'); process.exit(1); }
+  t = t.replace(a, '<span data-roll="art" style="{{ momentArt }}"></span>');
+  var b = '{{ momentKicker }}</div>';
+  if (t.split(b).length - 1 !== 1) { console.error('84. momentKicker 找不到'); process.exit(1); }
+  t = t.replace(b, '<span data-roll="kicker">{{ momentKicker }}</span></div>');
+  var c = '{{ momentTitle }}</h1>';
+  if (t.split(c).length - 1 !== 1) { console.error('84. momentTitle 找不到'); process.exit(1); }
+  t = t.replace(c, '<span data-roll="title">{{ momentTitle }}</span></h1>');
+  console.log('84. 抽選動畫的記號加好了');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

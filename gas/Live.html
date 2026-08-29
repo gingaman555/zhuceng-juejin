@@ -378,7 +378,7 @@
           });
 
           next.moment = {
-            kind: 'mined', art: 'gem', accent: hueV,
+            kind: 'mined', art: 'gem', accent: hueV, roll: true,
             kicker: f2 ? 'CLEARED · WENT FURTHER' : 'CLEARED',
             title: mv ? ('打倒了「' + mv.name + '」') : '過了',
             lede: f2
@@ -386,7 +386,7 @@
               : '他判過「' + t.title + '」了。',
             sprite: mv
               ? 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
-                'background:url("' + mobSvg(mv.id, t.layer || 1) + '") center/contain no-repeat'
+                        'background:url("' + mobSvg(mv.id, t.layer || 1) + '") center/contain no-repeat'
               : null,
             rows: rowsV,
             quoteLabel: '他寫的合格考量', quote: t.fb || '',
@@ -953,7 +953,7 @@
       title: '生物',
       note: '一項任務擋著一隻，每一層的盡頭另外站著一隻大的（框比較粗那四個）。' +
         '　一區十隻，每一隻自己的樣子與特性。' +
-        '　打贏 +10 分，宣告也做到 +30；守關的 +100。',
+        '　打贏 +100 分；守關的 +1000。',
       have: mobGot + ' / ' + mobs.length + ' 種',
       items: mobs
     }, {
@@ -971,22 +971,36 @@
 
     /* 生物與物品用按鈕換頁——兩份加起來兩百多格，疊在同一頁要一直捲，
        而且捲到一半會忘記自己在看哪一份。 */
-    var ctab = S.collTab === 'item' ? 'item' : 'mob';
+    /* 三個分頁：地圖 · 生物 · 物品。地圖用的是之前畫的那一張（S-03 的
+       mapTab='map'），只是入口接回同一排按鈕。 */
+    var onMap = (S.mapTab || 'map') === 'map';
+    var ctab = onMap ? 'map' : (S.collTab === 'item' ? 'item' : 'mob');
     v.collTabRowStyle = 'display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap';
-    v.collTabs = v.collSections.map(function (g, gi) {
+    v.collTabs = [{
+      label: '地圖',
+      count: (L.LAYERS || []).length + ' 個領域',
+      pick: function () { L.setState({ screen: 'S03', mapTab: 'map' }); },
+      style: 'display:flex;align-items:baseline;gap:9px;padding:11px 17px;cursor:pointer;font:inherit;' +
+        'background:' + (ctab === 'map' ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.28)') +
+        ';border:1px solid ' + (ctab === 'map' ? '#E9B341' : '#2E2822'),
+      labelStyle: "font:700 22px/1 'C11';color:" + (ctab === 'map' ? '#F2E6C8' : '#8A8073'),
+      countStyle: "font:400 11px/1 'C11';color:" + (ctab === 'map' ? '#E9B341' : '#5F574C')
+    }].concat(v.collSections.map(function (g, gi) {
       var isMob = gi === 0;
       var on = (isMob ? 'mob' : 'item') === ctab;
       return {
         label: g.title,
         count: g.have,
-        pick: (function (k) { return function () { L.setState({ collTab: k }); }; })(isMob ? 'mob' : 'item'),
+        pick: (function (k) {
+          return function () { L.setState({ screen: 'S03', mapTab: 'coll', collTab: k }); };
+        })(isMob ? 'mob' : 'item'),
         style: 'display:flex;align-items:baseline;gap:9px;padding:11px 17px;cursor:pointer;font:inherit;' +
           'background:' + (on ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.28)') +
           ';border:1px solid ' + (on ? '#E9B341' : '#2E2822'),
         labelStyle: "font:700 22px/1 'C11';color:" + (on ? '#F2E6C8' : '#8A8073'),
         countStyle: "font:400 11px/1 'C11';color:" + (on ? '#E9B341' : '#5F574C')
       };
-    });
+    }));
     v.collSections = v.collSections.filter(function (g, gi) {
       return (gi === 0 ? 'mob' : 'item') === ctab;
     });
@@ -1721,7 +1735,13 @@
     decorateLayerPanel(L, v);
     decorateHomeBand(L, v);   /* 首頁的「你在這裡」吃的是同一份 */
     decorateChecklist(L, v);  /* 老師開了清單就逐條勾 */
-    decorateVow(L, v);        /* 這一項要拿哪一樣破法 */
+    /* 宣告破法拿掉了，但模板還留著那一區的欄位——給空值，
+       不要留 undefined（sc-for 吃到 undefined 會卡住整個渲染）。 */
+    v.hasVow = false; v.vowPicks = []; v.vowBox = 'display:none';
+    v.vowTitle = ''; v.vowNote = ''; v.vowMob = ''; v.vowMobNote = '';
+    v.vowMobTrait = ''; v.vowMobArt = 'display:none';
+
+    decorateEncounter(L);     /* 第一次點開：擋在前面的那一隻 */
     decorateGamble(L, v);     /* 勾完之後，送出前的那一下 */
     decorateFinds(L, v);      /* 掉落物：隨機、零分、純收集 */
     decorateBestiary(L, v);   /* 圖鑑：打贏過誰、怎麼贏的 */
@@ -3797,8 +3817,8 @@
           : '四隻都追過了。') +
         '　追不追得上不影響過關——過關只看他。';
     }
-    v.haulNote = '勾一條 10 分　·　撿到一件掉落物 30 分　·　通過一項 100 分　·　通過而且做到宣告的破法 300 分（取代 100）　·　老師放行一層 1000 分（道具 500 ＋ 戰利品 500）。' +
-      '走到第幾層先把大家分成幾段（一層 1000 分），同一段裡面的差距才是宣告成功了幾次。';
+    v.haulNote = '勾一條 10 分　·　撿到一件掉落物 30 分　·　通過一項 100 分　·　老師放行一層 1000 分（道具 500 ＋ 戰利品 500）。' +
+      '走到第幾層先把大家分成幾段（一層 1000 分），同一段裡面的差距來自通過幾項、以及老師覺得你們多做了多少。';
 
     markFirst('haul');     /* 新手引導：排行榜看過了（這裡已經確定在榜上） */
 
@@ -3842,8 +3862,7 @@
           (moved > 0 ? '#E9B341' : moved < 0 ? '#D9603F' : r.me ? '#8A8073' : '#5F574C'),
         /* 明細照分數的來源排，順序跟計分表一致，看得出這 33 分是怎麼來的 */
         detail: '勾 ' + r.ticks + ' 條 = ' + (r.ticks * 10) + ' 分　·　' +
-          '通過 ' + r.pages + ' 項 = ' + (r.pages * 100) + ' 分　·　' +
-          '宣告做到 ' + r.vows + ' 項 = ' + (r.vows * 300) + ' 分' +
+          '通過 ' + r.pages + ' 項 = ' + (r.pages * 100) + ' 分' +
           (r.finds ? '　·　掉落物 ' + r.finds + ' 件 = ' + (r.finds * 30) + ' 分' : '') +
           (r.layers ? '　·　走完 ' + r.layers + ' 層 = ' + (r.layers * 1000) + ' 分' : ''),
         go: (function (tid, nm) {
@@ -4531,27 +4550,33 @@
     if (!m) return;
     markMet(task.id);
 
-    var hue = BOARD_HUE[Math.max(0, Math.min(4, (task.layer || 1) - 1))];
+    var hue = BOARD_HUE[Math.max(0, Math.min(3, (task.layer || 1) - 1))];
     var dw = L.dueWeek(task);
-    showMoment(L, {
-      kind: 'submit', accent: hue,
-      kicker: 'IT BLOCKS THE WAY',
+    var Lyr = task.layer || 1;
+    var isNew = isNewMob(L, Lyr, m.id);
+
+    /* 從同一區的十隻裡閃過去，停在擋你的那一隻 */
+    var frames = (PACK_MOB[Lyr - 1] || []).slice(0, 12).map(function (c, i) {
+      var mm = mobOf(i + 1, Lyr);
+      return { art: mobSvg(mm.id, Lyr), name: mm.name };
+    });
+
+    momentWithRoll(L, {
+      kind: 'submit', accent: hue, roll: true,
+      kicker: isNew ? 'NEW · IT BLOCKS THE WAY' : 'IT BLOCKS THE WAY',
       title: m.name,
       lede: '「' + (task.title || '這一項') + '」前面站著牠。',
       sprite: 'display:block;width:120px;height:120px;margin:0 auto;image-rendering:pixelated;' +
-        'background:url("' + mobSvg(m.id, task.layer || 1) + '") center/contain no-repeat',
+        'background:url("' + mobSvg(m.id, Lyr) + '") center/contain no-repeat',
       rows: [
         { k: '他要你做到', v: (task.checks || []).length + ' 條' },
         { k: '期限', v: dw ? ('第 ' + dw + ' 週') : '不設限', hi: true }
-      ],
+      ].concat(isNew ? [{ k: '圖鑑', v: '★ 新收藏——你以前沒遇過牠', hi: true }] : []),
       quoteLabel: '牠長這樣',
       quote: m.trait,
-      lines: [
-        '打贏牠＝這一項被他判過。牠會留下一件東西。',
-        '開工前先宣告要拿哪一樣——有做到的話，牠會多留一件。'
-      ],
+      lines: ['打贏牠＝這一項被他判過。牠會留下東西——越深的層掉越多。'],
       btn: '知道了', go: function () {}
-    });
+    }, frames, { art: mobSvg(m.id, Lyr), name: m.name });
   }
 
   /* ---- 打贏：老師判過之後，學生下一次打開時演出來 ---- */
@@ -4588,8 +4613,14 @@
     if (rec.won) rows.push({ k: '宣告', v: '★ ' + vowName(rec.vow) });
     var f2 = gave > 1;
 
+    /* 從那一層抽得到的池子裡閃過去，停在真的掉到的第一件 */
+    var poolF = FINDS.filter(function (f) { return f.L <= (task.layer || 1); });
+    var firstF = findOf(arr[0]) || poolF[0];
+    var newN = arr.filter(function (n) { return isNewFind(L, n); }).length;
+    if (newN) rows.splice(2, 0, { k: '圖鑑', v: '★ 新收藏 ' + newN + ' 件', hi: true });
+
     showMoment(L, {
-      kind: 'mined', art: 'gem', accent: hue,
+      kind: 'mined', art: 'gem', accent: hue, roll: true,
       kicker: f2 ? 'CLEARED · WENT FURTHER' : 'CLEARED',
       title: task.title || '過了',
       lede: f2
@@ -4597,7 +4628,7 @@
         : '他判過了。',
       sprite: m
         ? 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
-          'background:url("' + mobSvg(m.id, task.layer || 1) + '") center/contain no-repeat;opacity:.55'
+            'background:url("' + mobSvg(m.id, task.layer || 1) + '") center/contain no-repeat;opacity:.55'
         : null,
       rows: rows,
       quoteLabel: rec.say ? '他寫的' : '',
@@ -4634,7 +4665,7 @@
     v.hasBest = true;
     v.bestCount = (won + BOSSES.length) + ' 種';
     v.bestNote = codex.length
-      ? '一項任務擋著一隻，打贏 +100 分（宣告也做到就是 +300）。' +
+      ? '一項任務擋著一隻，打贏 +100 分。' +
         '每一層的盡頭另外站著一隻大的（框比較粗那幾隻），擊退牠 +1000 分。' +
         '　圖鑑是你的，換組換專案都跟著你走。'
       : '每一項任務都有一隻擋在前面，每一層的盡頭還有一隻大的。老師開了任務就會出現。';
@@ -4684,7 +4715,7 @@
       var seen = true;
       var how = [];
       if (down) {
-        how.push('+' + (r.won ? 300 : 100) + ' 分');
+        how.push('+100 分');
         how.push(r.rounds <= 1 ? '一次就過' : '去了 ' + r.rounds + ' 輪');
         if (r.won) how.push('★ ' + vowName(r.vow));
         var fd = findOf(r.find);
@@ -5335,6 +5366,71 @@
     };
   }
 
+  /* ============================================================
+     抽選動畫。
+
+     每次都播，所以必須短：900ms，前面 780ms 快速閃過同一區的其他東西
+     （每 60ms 換一個），最後停在真的抽到的那一個。只換圖與名字，版面
+     不動，所以不會跳。減少動態偏好的人直接看結果。
+
+     圖鑑沒有過的多一行「新收藏」——東西每次都掉，新的才稀奇。
+     ============================================================ */
+  var ROLL_MS = 60, ROLL_N = 13;
+
+  function reduceMotion() {
+    try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+    catch (e) { return false; }
+  }
+
+  /* 這個人以前有沒有收過。生物看 codex，掉落物看 finds。 */
+  function isNewMob(L, layer, mobId) {
+    var seen = (L.state.codex || []).some(function (c) {
+      return (c.layer || 1) === layer && mobIdOfTask(c.id) === mobId;
+    });
+    return !seen;
+  }
+  function isNewFind(L, n) {
+    var f = L.state.finds || {};
+    return !(Number(f[n]) > 0);
+  }
+
+  /* 在已經畫出來的 moment 上換圖與名字。
+     不走 setState——原型的 moment 只吃第一次，之後的更新會被忽略。 */
+  function rollOnDom(frames, finalFrame) {
+    if (reduceMotion() || !frames || frames.length < 2) return;
+    var i = 0;
+    (function step() {
+      var art = document.querySelector('[data-roll="art"]');
+      var ttl = document.querySelector('[data-roll="title"]');
+      if (!art || !ttl) return;   /* 卡片已經關掉了 */
+      if (i >= frames.length) {
+        art.style.backgroundImage = 'url("' + finalFrame.art + '")';
+        art.style.opacity = '1';
+        ttl.textContent = finalFrame.name;
+        return;
+      }
+      art.style.backgroundImage = 'url("' + frames[i].art + '")';
+      art.style.opacity = '.55';
+      ttl.textContent = frames[i].name;
+      i++;
+      setTimeout(step, ROLL_MS);
+    })();
+  }
+
+  /* 開一張卡，然後在上面跑抽選。frames 是閃過去的，finalFrame 是停住的。 */
+  function momentWithRoll(L, moment, frames, finalFrame) {
+    showMoment(L, moment);
+    setTimeout(function () { rollOnDom(frames, finalFrame); }, 30);
+  }
+  /* 第一次點開一項任務：跳出擋在前面的那一隻。
+     本來掛在 decorateVow 裡，宣告破法拿掉之後那支不再被呼叫。 */
+  function decorateEncounter(L) {
+    var S = L.state;
+    if (S.role !== 'student' || S.screen !== 'S05') return;
+    var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
+    if (task && task.status === 'todo') encounter(L, task);
+  }
+
   function showMoment(L, m) {
     if (!m) return;
     L.setState({ moment: m });
@@ -5379,7 +5475,8 @@
     var pic = m.sprite || momentIcon(m, accent);
     v.momentArt = pic
       ? 'display:block;width:104px;height:104px;background:url("' + pic + '") center/contain no-repeat;' +
-        'image-rendering:pixelated;filter:drop-shadow(0 0 26px ' + art.glow + ');animation:' + art.anim
+        'image-rendering:pixelated;filter:drop-shadow(0 0 26px ' + art.glow + ');animation:' +
+        (m.roll ? 'jlz-roll .9s cubic-bezier(.2,.9,.2,1) both' : art.anim)
       : 'display:block;width:104px;height:104px;background:radial-gradient(circle at 50% 38%,' + accent + ',rgba(0,0,0,.2) 72%);' +
         'clip-path:polygon(50% 0,100% 32%,84% 100%,16% 100%,0 32%);animation:' + art.anim;
     v.momentRay = (m.kind === 'mined' || m.kind === 'full' || m.kind === 'open')
