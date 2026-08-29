@@ -1256,7 +1256,7 @@ function sweepOverdue_() {
       var levels = jparse_(t.toolLevels, {});
       levels[layer] = '已交出';
       upsert_('Teams', ['teamId'], {
-        teamId: t.teamId, layer: Math.min(5, layer + 1), enteredWeek: courseWeek,
+        teamId: t.teamId, layer: Math.min(4, layer + 1), enteredWeek: courseWeek,
         passed: JSON.stringify(passedArr), toolLevels: JSON.stringify(levels),
         gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: 'pass'
       });
@@ -1296,7 +1296,9 @@ function apiBootstrap(token) {
       out.myTeamId = u.teamId || '';
       out.record = recordOf_(u.teamId, u.classId);
       out.digs = digsOf_(u.teamId);
-      out.finds = findsOf_(u.teamId);
+      /* 收藏是個人的：跨班、跨組、跨專案累積 */
+      out.finds = findsOfUser_(u.userId);
+      out.codex = codexOfUser_(u.userId);
       out.findsTotal = FINDS_N;
       out.digPages = digPages_(u.teamId);
       out.digTotal = DIG_PAGES;
@@ -1594,7 +1596,7 @@ function apiFinaleQueue(token) {
     var w = courseWeekOf_(classById_(u.classId));
     var list = teams.map(function (t) {
       var f = fin[String(t.teamId)] || {};
-      var done5 = jparse_(t.passed, []).indexOf(5) >= 0;
+      var done5 = jparse_(t.passed, []).indexOf(4) >= 0;
       return {
         teamId: t.teamId, name: t.name, layer: Number(t.layer) || 1,
         weeks: Math.max(1, w - (Number(t.enteredWeek) || 1) + 1),
@@ -1623,7 +1625,7 @@ function apiOpenFinale(token, teamId, words) {
     var t = teamById_(teamId);
     if (!t) return err_('找不到這一組。');
     if (String(t.classId) !== String(u.classId)) return err_('沒有權限。');
-    if (jparse_(t.passed, []).indexOf(5) < 0) return err_('這一組還沒走完第五層，結局開不了。');
+    if (jparse_(t.passed, []).indexOf(4) < 0) return err_('這一組還沒走完第四區，結局開不了。');
     if (!String(words || '').trim()) return err_('先寫下你要說的話。這是他們在結局最上面讀到的第一句。');
     var f = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(teamId); })[0] || {};
     upsert_('Finales', ['teamId'], {
@@ -1931,6 +1933,62 @@ function recordOf_(teamId, classId) {
       find2: Number(st.find2) || 0
     };
   });
+}
+
+/* ---- 收藏屬於個人 ----
+   一個學生換班、換組、換專案，圖鑑跟坑屑都還是他的。
+   Roster.claimedBy 記著誰認領了哪一組的哪一個身分，用它把使用者
+   待過的每一組串起來。 */
+function teamsOfUser_(userId) {
+  var out = [];
+  readTable_('Roster').forEach(function (r) {
+    if (String(r.claimedBy || '') !== String(userId)) return;
+    if (out.indexOf(String(r.teamId)) < 0) out.push(String(r.teamId));
+  });
+  return out;
+}
+
+/** 這個人撿到的坑屑，跨專案累積 */
+function findsOfUser_(userId) {
+  var mine = teamsOfUser_(userId), out = {};
+  if (!mine.length) return out;
+  readTable_('TeamTasks').forEach(function (r) {
+    if (mine.indexOf(String(r.teamId)) < 0) return;
+    [r.find, r.find2].forEach(function (x) {
+      var n = Number(x);
+      if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+    });
+  });
+  return out;
+}
+
+/**
+ * 這個人打倒過的生物，跨專案累積。
+ * 生物由任務決定（前端用 taskId 算），所以這裡只送出「哪一項、在哪一區、
+ * 怎麼贏的」，讓前端自己算是哪一隻。
+ */
+function codexOfUser_(userId) {
+  var mine = teamsOfUser_(userId);
+  if (!mine.length) return [];
+  var defs = {};
+  readTable_('Tasks').forEach(function (d) { defs[String(d.taskId)] = d; });
+
+  var out = [];
+  readTable_('TeamTasks').forEach(function (r) {
+    if (mine.indexOf(String(r.teamId)) < 0) return;
+    if (String(r.status) !== 'passed') return;
+    var d = defs[String(r.taskId)];
+    if (!d) return;
+    out.push({
+      id: String(r.taskId),
+      layer: Math.max(1, Math.min(4, Number(d.layer) || 1)),
+      title: d.title || '',
+      classId: String(d.classId || ''),
+      find: Number(r.find) || 0,
+      find2: Number(r.find2) || 0
+    });
+  });
+  return out;
 }
 
 function apiRoster(token) {
@@ -2244,7 +2302,7 @@ function apiOpenDig(token, layer, text, estDays, bet) {
     var id = 'dg' + Utilities.getUuid().slice(0, 8);
     appendRow_('Digs', {
       digId: id, teamId: u.teamId, classId: u.classId,
-      layer: Math.max(1, Math.min(5, Number(layer) || 1)),
+      layer: Math.max(1, Math.min(4, Number(layer) || 1)),
       text: txt, estDays: days, bet: b, result: '', page: '',
       openedAt: new Date(), closedAt: ''
     });
@@ -2487,29 +2545,13 @@ function apiReviewGate(token, teamId, pass, toolLevel, reason) {
     var levels = jparse_(t.toolLevels, {});
     levels[layer] = '已交出';   /* 只當作「這一層的道具已交給他們」的標記 */
 
-    var nextLayer = Math.min(5, layer + 1);
+    var nextLayer = Math.min(4, layer + 1);
     upsert_('Teams', ['teamId'], {
       teamId: teamId, layer: nextLayer, enteredWeek: courseWeek,
       passed: JSON.stringify(passedArr), toolLevels: JSON.stringify(levels),
       gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: 'pass'
     });
 
-    /* 第五層他不給清單：進到 L5 時自動放一項「由你決定要交什麼」 */
-    if (nextLayer === 5) {
-      var hasL5 = readTable_('Tasks').some(function (x) {
-        return String(x.classId) === String(t.classId) && Number(x.layer) === 5;
-      });
-      if (!hasL5) {
-        appendRow_('Tasks', {
-          taskId: 'own5-' + t.classId, classId: t.classId, layer: 5, type: 'required',
-          title: '由你決定要交什麼',
-          cond: '這一層他沒有給清單。你自己寫下要交的東西，以及做到什麼程度算完成。',
-          note: '寫完之後這一項就是你的驗收標準，老師只確認你有沒有做到自己說的。',
-          due: '不設限', mineral: '完成之光', mDesc: '你自己命名的那一件。',
-          published: 'Y', createdAt: new Date()
-        });
-      }
-    }
     return ok_({ passed: true, layer: nextLayer, toolLevel: levels[layer] });
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }

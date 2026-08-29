@@ -3534,5 +3534,27 @@ must(
 /* 70. 分頁列與側欄不再有試挖 */
 t = t.split('<button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>').join('');
 
+
+/* 71. 寶物整套拿掉。四區之後沒有第五層，空冠沒有地方鑲；而且它從頭 */
+/*     到尾只是「過關就給」，不需要任何決定，收集價值最低的一種。 */
+(function () {
+  /* 層詳情那張寶物卡 */
+  var a = t.indexOf('>寶物</div>');
+  if (a >= 0) {
+    var open = t.lastIndexOf('<span style="{{ sel.treCardStyle }}"', a);
+    if (open < 0) open = t.lastIndexOf('<div', a);
+    var close = t.indexOf('</span>', t.indexOf('{{ sel.treFrom }}', a));
+    if (open >= 0 && close >= 0) {
+      close = t.indexOf('</span>', close + 7);
+      t = t.slice(0, open) + t.slice(close + 7);
+      console.log('71a. 層詳情的寶物卡拿掉');
+    }
+  }
+  /* 收藏總覽的寶物那一區由 Live 濾掉，這裡只處理模板寫死的 */
+})();
+
+/* 72. 地圖分頁裡的排行榜拿掉——側欄已經有一格，不要重複 */
+t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>').join('');
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

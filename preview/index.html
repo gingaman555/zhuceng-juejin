@@ -1016,7 +1016,7 @@ window.JLZ_SPRITES = {
                 <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                     <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
+                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                     <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                       <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                     </sc-if>
@@ -1265,17 +1265,7 @@ window.JLZ_SPRITES = {
                   </button>
                   <button onClick="{{ sel.openTre }}" style="{{ sel.treCardStyle }}">
                     <span style="{{ sel.treIconStyle }}"></span>
-                    <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">寶物</div>
-                    <div style="font:700 22px/1.4 'C11';margin-top:7px;color:{{ sel.treNameColor }}">{{ sel.treName }}</div>
-                    <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-top:4px;text-wrap:pretty">{{ sel.treDesc }}</div>
-                    <div style="font:400 11px/1.6 'C11';color:#5F574C;margin-top:7px">{{ sel.treFrom }}</div>
-                  </button>
-                </div>
-                <sc-if value="{{ sel.hasBoss }}" hint-placeholder-val="{{ true }}">
-                  <span onClick="{{ sel.openBoss }}" style="{{ sel.bossCardStyle }}">
-                    <span style="{{ sel.bossArtStyle }}"></span>
-                    <span style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">
-                      <span style="font:400 11px/1 'C11';letter-spacing:.16em;color:{{ sel.bossKickerColor }}">{{ sel.bossKicker }}</span>
+                    
                       <span style="font:700 22px/1.3 'C11';color:{{ sel.bossNameColor }}">{{ sel.bossName }}</span>
                       <span style="font:400 11px/1.7 'C11';color:#8A8073;text-wrap:pretty">{{ sel.bossNote }}</span>
                     </span>
@@ -1301,7 +1291,7 @@ window.JLZ_SPRITES = {
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
                   
-                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>
+                  
                   <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-11 · RECORD</div>
@@ -1347,7 +1337,7 @@ window.JLZ_SPRITES = {
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
                   
-                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button>
+                  
                   <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-10 · LEADERBOARD</div>
@@ -1398,7 +1388,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                   <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                     <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                   </sc-if>
@@ -3088,7 +3078,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 0">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">排行榜</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                   <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-04 · CLASS ROSTER</div>
@@ -5232,10 +5222,37 @@ class Component extends DCLogic {
   function rollFind() { return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)]; }
   /* 有多做：兩次取好的。給的是更多次機會，不是更值錢的東西。 */
   function rollFindGood() { var a = rollFind(), b = rollFind(); return b > a ? b : a; }
-  function findsOf(teamId) {
+  /* 收藏是個人的：跨班、跨組、跨專案累積。Roster.claimedBy 把使用者
+     連到他待過的每一組。 */
+  function teamsOfUser(userId) {
+    var out = [];
+    DB.Roster.forEach(function (r) {
+      if (String(r.claimedBy||'') !== String(userId)) return;
+      if (out.indexOf(String(r.teamId)) < 0) out.push(String(r.teamId));
+    });
+    return out;
+  }
+  function codexOfUser(userId) {
+    var mine = teamsOfUser(userId);
+    if (!mine.length) return [];
+    var defs = {};
+    DB.Tasks.forEach(function (d) { defs[String(d.taskId)] = d; });
+    var out = [];
+    DB.TeamTasks.forEach(function (r) {
+      if (mine.indexOf(String(r.teamId)) < 0 || r.status !== 'passed') return;
+      var d = defs[String(r.taskId)];
+      if (!d) return;
+      out.push({ id: String(r.taskId), layer: Math.max(1, Math.min(4, Number(d.layer)||1)),
+                 title: d.title || '', classId: String(d.classId||''),
+                 find: Number(r.find)||0, find2: Number(r.find2)||0 });
+    });
+    return out;
+  }
+  function findsOf(userId) {
+    var mine = teamsOfUser(userId);
     var out = {};
     DB.TeamTasks.forEach(function (r) {
-      if (r.teamId !== teamId) return;
+      if (mine.indexOf(String(r.teamId)) < 0) return;
       [r.find, r.find2].forEach(function (x) {
         var n = Number(x);
         if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
@@ -5641,7 +5658,8 @@ class Component extends DCLogic {
         });
         out.record = recordOf(u.teamId, u.classId);
         out.digs = digsOf(u.teamId);
-        out.finds = findsOf(u.teamId);
+        out.finds = findsOf(u.userId);
+        out.codex = codexOfUser(u.userId);
         out.findsTotal = FINDS_N;
         out.digPages = digPages(u.teamId);
         out.digTotal = DIG_PAGES;
@@ -5816,7 +5834,7 @@ class Component extends DCLogic {
       if (u.role !== "teacher") return err("只有老師能放行。");
       var tm = teamById(teamId);
       if (!tm) return err("找不到這一組。");
-      if ((tm.passed||[]).indexOf(5) < 0) return err("這一組還沒走完第五層，結局開不了。");
+      if ((tm.passed||[]).indexOf(4) < 0) return err("這一組還沒走完第四區，結局開不了。");
       if (!String(words||"").trim()) return err("先寫下你要說的話。這是他們在結局最上面讀到的第一句。");
       DB.Finales = DB.Finales || [];
       var f = DB.Finales.filter(function (x) { return x.teamId === teamId; })[0];
@@ -5836,7 +5854,7 @@ class Component extends DCLogic {
         var f = DB.Finales.filter(function (x) { return x.teamId === tm.teamId; })[0] || {};
         return { teamId: tm.teamId, name: tm.name, layer: tm.layer,
                  weeks: Math.max(1, w - (tm.enteredWeek||1) + 1),
-                 done5: (tm.passed||[]).indexOf(5) >= 0,
+                 done5: (tm.passed||[]).indexOf(4) >= 0,
                  applied: !!f.submitted, opened: !!f.opened, openWords: f.openWords||"",
                  submittedAt: f.ts ? String(f.ts) : "" };
       });
@@ -6072,7 +6090,7 @@ class Component extends DCLogic {
       if (open.length >= 6) return err('同時最多開六條。先收掉幾條再開。');
       var id = 'dg' + uid();
       DB.Digs.push({ digId: id, teamId: u.teamId, classId: u.classId,
-        layer: Math.max(1, Math.min(5, Number(layer) || 1)),
+        layer: Math.max(1, Math.min(4, Number(layer) || 1)),
         text: txt, estDays: days, bet: b, result: '', page: '',
         openedAt: NOW(), closedAt: '' });
       persist();
@@ -6180,16 +6198,9 @@ class Component extends DCLogic {
       if (!pass) { tm.gateSubmitted = false; tm.gateVerdict = 'needfix'; persist(); return ok({ passed: false }); }
       if (tm.passed.indexOf(tm.layer) < 0) tm.passed.push(tm.layer);
       tm.toolLevels[tm.layer] = '已交出';
-      tm.layer = Math.min(5, tm.layer + 1);
+      tm.layer = Math.min(4, tm.layer + 1);
       tm.enteredWeek = w;
       tm.gateText = ['', '', '']; tm.gateSubmitted = false; tm.gateVerdict = 'pass';
-      if (tm.layer === 5 && !DB.Tasks.some(function (x) { return x.classId === tm.classId && x.layer === 5; })) {
-        DB.Tasks.push({ taskId: 'own5-' + tm.classId, classId: tm.classId, layer: 5, type: 'required',
-          title: '由你決定要交什麼',
-          cond: '這一層他沒有給清單。你自己寫下要交的東西，以及做到什麼程度算完成。',
-          note: '寫完之後這一項就是你的驗收標準，老師只確認你有沒有做到自己說的。',
-          due: '不設限', mineral: '完成之光', mDesc: '你自己命名的那一件。' });
-      }
       persist();
       return ok({ passed: true, layer: tm.layer });
     },
@@ -6646,6 +6657,7 @@ class Component extends DCLogic {
       next.plan = b.plan || {};
       next.passedWeek = b.passedWeek || {};
       next.record = b.record || [];
+      next.codex = b.codex || [];
       next.layerSaid = b.layerSaid || {};
       next.digs = b.digs || [];
       next.finds = b.finds || {};
@@ -6767,7 +6779,7 @@ class Component extends DCLogic {
         var log = [];
         passList(t.passed).slice().sort(function (x, y) { return x - y; }).forEach(function (n) {
           var w = passWeek[t.id + ':' + n];
-          log.push([w ? 'W' + w : '—', '通過' + LAYERNAME(n) + '，進入' + LAYERNAME(Math.min(5, n + 1))]);
+          log.push([w ? 'W' + w : '—', '通過' + LAYERNAME(n) + '，進入' + LAYERNAME(Math.min(4, n + 1))]);
         });
         if (!log.length) log.push(['W' + (t.enteredWeek || 1), '進入' + LAYERNAME(t.layer || 1) + '，還沒通過關卡']);
         else log.push(['W' + (t.enteredWeek || 1), '目前在' + LAYERNAME(t.layer || 1) + '，停留 ' + (t.weeks || 1) + ' 週']);
@@ -6921,8 +6933,8 @@ class Component extends DCLogic {
     }
     /* 走完第五層之後，側欄多一項期末回顧 */
     if (S.role === 'student' && v.navItems) {
-      var fin5 = (S.passed || []).indexOf(5) >= 0 && !!S.finOpened;
-      var waitOpen = (S.passed || []).indexOf(5) >= 0 && !S.finOpened;
+      var fin5 = (S.passed || []).indexOf(4) >= 0 && !!S.finOpened;
+      var waitOpen = (S.passed || []).indexOf(4) >= 0 && !S.finOpened;
       if (!v.navItems.some(function (n) { return n.code === '結局'; })) {
         v.navItems.push({
           code: fin5 ? '結局' : '？？', label: fin5 ? '期末回顧' : '？？？', short: fin5 ? '回顧' : '？？',
@@ -7060,7 +7072,10 @@ class Component extends DCLogic {
 
     addNavExtras(L, v, sc);
 
-    retellTreasures(L);
+    /* 四個領域。原型寫死五層，在這裡截斷——第五層（星核聖殿）連同
+       它的「不給清單」設計一起拿掉，走完第四區就是結局。 */
+    if ((L.LAYERS || []).length > 4) L.LAYERS = L.LAYERS.slice(0, 4);
+    if ((L.MINS || []).length) L.MINS = L.MINS.filter(function (m) { return m.L <= 4; });
     retellLayers(L);
     momentVals(L, v);
     decorateAuth(L, v);
@@ -10125,7 +10140,15 @@ class Component extends DCLogic {
      名字用現有四隻的構詞法：材質 ＋ 動作 ＋ 後綴。
      霧面者 ＝ 霧＋面＋者　　擬聲者 ＝ 聲＋擬＋者
      千晶母、漲潮者也是同一套，只是順序不同——所以兩種順序都用。 */
-  var MOB_MAT  = ['霧', '晶', '聲', '潮', '灰', '銹', '苔', '脈', '燼', '稜', '淵', '髓'];
+  /* 材質按領域分——在水晶迴廊遇到晶類的、在熔火深淵遇到燼類的，
+     那才叫生態。地圖也才有工作可做：它在說「這一區住著什麼」。
+     動作與後綴共用，所以四區的命名還是同一套口音。 */
+  var MOB_MAT_BY_LAYER = [
+    ['霧', '砂', '苔', '灰'],   /* 微光荒原 */
+    ['晶', '稜', '光', '脈'],   /* 水晶迴廊 */
+    ['聲', '影', '空', '迴'],   /* 迴聲迷宮 */
+    ['燼', '熔', '銹', '焰']    /* 熔火深淵 */
+  ];
   var MOB_ACT  = ['面', '擬', '漲', '蝕', '織', '眠', '潛', '裂', '銜'];
   var MOB_SUF  = ['者', '母', '群', '獸'];
 
@@ -10137,7 +10160,10 @@ class Component extends DCLogic {
     '灰': '碰過的地方都會留下一層灰', '銹': '關節處全是紅褐色的鏽',
     '苔': '背上長滿了不該長在地底的苔', '脈': '身上有一條會發光的紋路',
     '燼': '一碰就散成灰，但形狀會再長回來', '稜': '全身都是直角，沒有一處是圓的',
-    '淵': '身上有一塊看不到底的黑',       '髓': '硬的在外面，軟的在裡面'
+    '砂': '一直在掉粉，掉完又補回來',     '光': '會把照到牠的光折成七道',
+    '影': '牠的影子比牠本體大兩倍',       '空': '摸得到，但中間是空的',
+    '迴': '牠的動作會慢半拍重複一次',     '熔': '身上有一道還沒冷掉的紅',
+    '焰': '邊緣一直在燒，但不會燒完'
   };
   var MOB_HABIT = {
     '面': '你看牠的時候牠不動',       '擬': '牠會學你剛才的動作',
@@ -10185,13 +10211,15 @@ class Component extends DCLogic {
   ];
 
   /* 編號 -> 那一隻的全部資料。純函式，同一個編號永遠長一樣。 */
-  function mobOf(id) {
+  function mobOf(id, layer) {
     var n = Math.abs(Number(id) || 0);
     if (!n) return null;
-    var mat = MOB_MAT[n % MOB_MAT.length];
-    var act = MOB_ACT[Math.floor(n / 12) % MOB_ACT.length];
-    var suf = MOB_SUF[Math.floor(n / 108) % MOB_SUF.length];
-    var flip = Math.floor(n / 432) % 2;
+    var L4 = Math.max(1, Math.min(4, Number(layer) || 1));
+    var MATS = MOB_MAT_BY_LAYER[L4 - 1];
+    var mat = MATS[n % MATS.length];
+    var act = MOB_ACT[Math.floor(n / 4) % MOB_ACT.length];
+    var suf = MOB_SUF[Math.floor(n / 36) % MOB_SUF.length];
+    var flip = Math.floor(n / 144) % 2;
     return {
       id: n,
       name: flip ? (act + mat + suf) : (mat + act + suf),
@@ -10210,13 +10238,13 @@ class Component extends DCLogic {
       h ^= s.charCodeAt(i);
       h = (h * 16777619) >>> 0;
     }
-    return (h % 864) + 1;   /* 864 = 12 材質 × 9 動作 × 4 後綴 × 2 順序。
-                               一學期二十項，撞名機率約兩成——288 的時候是一半。 */
+    return (h % 288) + 1;   /* 一區 288 = 4 材質 × 9 動作 × 4 後綴 × 2 順序。
+                               四區合起來 1152 種。 */
   }
 
   function mobOfTask(t) {
     if (!t || !t.id) return null;
-    var m = mobOf(mobIdOfTask(t.id));
+    var m = mobOf(mobIdOfTask(t.id), t.layer);
     if (m) m.layer = Number(t.layer) || 1;
     return m;
   }
@@ -10224,7 +10252,7 @@ class Component extends DCLogic {
   /* 樣子。跟層主用同一套像素做法，所以擺在一起不會突兀。 */
   var MOB_ART = {};
   function mobSvg(id, layer) {
-    var m = mobOf(id);
+    var m = mobOf(id, layer);
     if (!m) return '';
     var key = m.id + '-' + layer;
     if (MOB_ART[key]) return MOB_ART[key];
@@ -10268,7 +10296,7 @@ class Component extends DCLogic {
      同一隻被兩組打贏，兩張頁面會長得不一樣。 */
   /* ---- 點開一隻生物 ---- */
   function openMob(L, r) {
-    var m = mobOf(mobIdOfTask(r.id));
+    var m = mobOf(mobIdOfTask(r.id), r.layer);
     if (!m) return;
     var down = r.status === 'passed';
     var seen = r.status !== 'todo';
@@ -10409,21 +10437,34 @@ class Component extends DCLogic {
     v.hasBest = false; v.bestRows = []; v.bestCount = ''; v.bestNote = '';
     if (S.role !== 'student' || !S.signedIn) return;
 
+    /* 圖鑑是個人的，跨專案累積 —— 這次專案沒收到的，下次還收得到。
+       所以它讀 codex（使用者待過的每一組合起來），不是這一次的 record。
+       這一次還在進行中的那幾隻，從 record 補上去。 */
     var rec = S.record || [];
-    var met = rec.filter(function (r) { return r.status !== 'todo'; });
-    var won = rec.filter(function (r) { return r.status === 'passed'; });
-    v.hasBest = true;
-    v.bestCount = won.length + ' / ' + rec.length;
-    v.bestNote = rec.length
-      ? '一項任務擋著一隻。打贏了牠會留下一件東西——那件是隨機的，' +
-        '但每一件都一樣重。'
-      : '老師還沒開任務。';
+    var codex = (S.codex || []).slice();
+    var inCodex = {};
+    codex.forEach(function (c) { inCodex[c.id] = 1; });
+    rec.forEach(function (r) {
+      if (inCodex[r.id]) return;
+      if (r.status === 'todo') return;   /* 還沒交手的不進圖鑑 */
+      codex.push({ id: r.id, layer: r.layer, title: r.title, find: 0, find2: 0, live: r });
+    });
 
-    v.bestRows = rec.slice().reverse().map(function (r) {
-      var m = mobOf(mobIdOfTask(r.id));
-      var down = r.status === 'passed';
-      var hue = BOARD_HUE[Math.max(0, Math.min(4, (r.layer || 1) - 1))];
-      var seen = r.status !== 'todo';
+    var won = codex.filter(function (c) { return !c.live; }).length;
+    v.hasBest = true;
+    v.bestCount = won + ' 隻';
+    v.bestNote = codex.length
+      ? '一項任務擋著一隻。打贏了牠會留下一件東西——那件是隨機的，但每一件都一樣重。' +
+        '　圖鑑是你的，換組換專案都跟著你走。'
+      : '還沒遇過任何一隻。老師開了任務就會出現。';
+
+    v.bestRows = codex.slice().reverse().map(function (c) {
+      var r = c.live || { id: c.id, layer: c.layer, title: c.title, status: 'passed',
+                          rounds: 0, won: false, vow: '', find: c.find, find2: c.find2 };
+      var m = mobOf(mobIdOfTask(r.id), r.layer);
+      var down = !c.live;
+      var hue = BOARD_HUE[Math.max(0, Math.min(3, (r.layer || 1) - 1))];
+      var seen = true;
       var how = [];
       if (down) {
         how.push(r.rounds <= 1 ? '一次就過' : '去了 ' + r.rounds + ' 輪');
@@ -12429,6 +12470,9 @@ class Component extends DCLogic {
         : '這一層採齊了，可以送交關卡審核。';
     })();
     (v.taskGroups || []).forEach(function (g) { g.desc = fixCal(g.desc); });
+    /* 寶物整套拿掉：它只是「過關就給」，不需要任何決定，而且四區之後
+       沒有第五層，空冠沒有地方鑲。 */
+    if (v.collSections) v.collSections = v.collSections.filter(function (g) { return g.title !== '寶物'; });
     (v.collSections || []).forEach(function (g) { g.note = fixCal(g.note); });
     starCollection(L, v);   /* 回掘過的那一塊：金框加星 */
 

@@ -244,10 +244,37 @@
   function rollFind() { return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)]; }
   /* 有多做：兩次取好的。給的是更多次機會，不是更值錢的東西。 */
   function rollFindGood() { var a = rollFind(), b = rollFind(); return b > a ? b : a; }
-  function findsOf(teamId) {
+  /* 收藏是個人的：跨班、跨組、跨專案累積。Roster.claimedBy 把使用者
+     連到他待過的每一組。 */
+  function teamsOfUser(userId) {
+    var out = [];
+    DB.Roster.forEach(function (r) {
+      if (String(r.claimedBy||'') !== String(userId)) return;
+      if (out.indexOf(String(r.teamId)) < 0) out.push(String(r.teamId));
+    });
+    return out;
+  }
+  function codexOfUser(userId) {
+    var mine = teamsOfUser(userId);
+    if (!mine.length) return [];
+    var defs = {};
+    DB.Tasks.forEach(function (d) { defs[String(d.taskId)] = d; });
+    var out = [];
+    DB.TeamTasks.forEach(function (r) {
+      if (mine.indexOf(String(r.teamId)) < 0 || r.status !== 'passed') return;
+      var d = defs[String(r.taskId)];
+      if (!d) return;
+      out.push({ id: String(r.taskId), layer: Math.max(1, Math.min(4, Number(d.layer)||1)),
+                 title: d.title || '', classId: String(d.classId||''),
+                 find: Number(r.find)||0, find2: Number(r.find2)||0 });
+    });
+    return out;
+  }
+  function findsOf(userId) {
+    var mine = teamsOfUser(userId);
     var out = {};
     DB.TeamTasks.forEach(function (r) {
-      if (r.teamId !== teamId) return;
+      if (mine.indexOf(String(r.teamId)) < 0) return;
       [r.find, r.find2].forEach(function (x) {
         var n = Number(x);
         if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
@@ -653,7 +680,8 @@
         });
         out.record = recordOf(u.teamId, u.classId);
         out.digs = digsOf(u.teamId);
-        out.finds = findsOf(u.teamId);
+        out.finds = findsOf(u.userId);
+        out.codex = codexOfUser(u.userId);
         out.findsTotal = FINDS_N;
         out.digPages = digPages(u.teamId);
         out.digTotal = DIG_PAGES;
@@ -828,7 +856,7 @@
       if (u.role !== "teacher") return err("只有老師能放行。");
       var tm = teamById(teamId);
       if (!tm) return err("找不到這一組。");
-      if ((tm.passed||[]).indexOf(5) < 0) return err("這一組還沒走完第五層，結局開不了。");
+      if ((tm.passed||[]).indexOf(4) < 0) return err("這一組還沒走完第四區，結局開不了。");
       if (!String(words||"").trim()) return err("先寫下你要說的話。這是他們在結局最上面讀到的第一句。");
       DB.Finales = DB.Finales || [];
       var f = DB.Finales.filter(function (x) { return x.teamId === teamId; })[0];
@@ -848,7 +876,7 @@
         var f = DB.Finales.filter(function (x) { return x.teamId === tm.teamId; })[0] || {};
         return { teamId: tm.teamId, name: tm.name, layer: tm.layer,
                  weeks: Math.max(1, w - (tm.enteredWeek||1) + 1),
-                 done5: (tm.passed||[]).indexOf(5) >= 0,
+                 done5: (tm.passed||[]).indexOf(4) >= 0,
                  applied: !!f.submitted, opened: !!f.opened, openWords: f.openWords||"",
                  submittedAt: f.ts ? String(f.ts) : "" };
       });
@@ -1084,7 +1112,7 @@
       if (open.length >= 6) return err('同時最多開六條。先收掉幾條再開。');
       var id = 'dg' + uid();
       DB.Digs.push({ digId: id, teamId: u.teamId, classId: u.classId,
-        layer: Math.max(1, Math.min(5, Number(layer) || 1)),
+        layer: Math.max(1, Math.min(4, Number(layer) || 1)),
         text: txt, estDays: days, bet: b, result: '', page: '',
         openedAt: NOW(), closedAt: '' });
       persist();
@@ -1192,16 +1220,9 @@
       if (!pass) { tm.gateSubmitted = false; tm.gateVerdict = 'needfix'; persist(); return ok({ passed: false }); }
       if (tm.passed.indexOf(tm.layer) < 0) tm.passed.push(tm.layer);
       tm.toolLevels[tm.layer] = '已交出';
-      tm.layer = Math.min(5, tm.layer + 1);
+      tm.layer = Math.min(4, tm.layer + 1);
       tm.enteredWeek = w;
       tm.gateText = ['', '', '']; tm.gateSubmitted = false; tm.gateVerdict = 'pass';
-      if (tm.layer === 5 && !DB.Tasks.some(function (x) { return x.classId === tm.classId && x.layer === 5; })) {
-        DB.Tasks.push({ taskId: 'own5-' + tm.classId, classId: tm.classId, layer: 5, type: 'required',
-          title: '由你決定要交什麼',
-          cond: '這一層他沒有給清單。你自己寫下要交的東西，以及做到什麼程度算完成。',
-          note: '寫完之後這一項就是你的驗收標準，老師只確認你有沒有做到自己說的。',
-          due: '不設限', mineral: '完成之光', mDesc: '你自己命名的那一件。' });
-      }
       persist();
       return ok({ passed: true, layer: tm.layer });
     },
