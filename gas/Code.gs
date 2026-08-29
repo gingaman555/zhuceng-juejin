@@ -2439,22 +2439,26 @@ function apiReviewItem(token, teamId, taskId, result, reason, gave) {
    這一整段本來只存在於 preview/mock-gas.js —— 真後端引用了 FINDS_N、
    rollFind_、rollFindGood_ 卻沒有定義，所以正式環境一過任務就會
    ReferenceError。補上。 */
-var FINDS_N = 24;
+var FINDS_N = 108;
 
-/** 第幾層撿得到這一件。常見 12（一層 3）、少見 8（一層 2）、罕見 4（一層 1）。 */
+/* 掉落物 108 種，順序是「領域 → 稀有度」，所以一區 27 件、界線在 27/54/81。
+   稀有度在每一區內的位置：常見 15、少見 9、罕見 3。
+   前端 gas/Live.html 與 preview/mock-gas.js 用同一份規則。 */
 function findLayer_(n) {
   n = Number(n);
-  if (n <= 12) return Math.ceil(n / 3);
-  if (n <= 20) return Math.ceil((n - 12) / 2);
-  return n - 20;
+  return n <= 27 ? 1 : n <= 54 ? 2 : n <= 81 ? 3 : 4;
 }
+
+/** 那一件在它那一區裡的第幾個（1..27），用來判稀有度 */
+function findSlot_(n) { return ((Number(n) - 1) % 27) + 1; }
 
 /** 走到第 L 層時抽得到的池子：第 1..L 層都算。常見 : 少見 : 罕見 = 5 : 3 : 1。 */
 function findPool_(maxLayer) {
   var out = [], mx = Math.max(1, Math.min(4, Number(maxLayer) || 1));
   for (var n = 1; n <= FINDS_N; n++) {
     if (findLayer_(n) > mx) continue;
-    var w = n <= 12 ? 5 : n <= 20 ? 3 : 1;
+    var slot = findSlot_(n);
+    var w = slot <= 15 ? 5 : slot <= 24 ? 3 : 1;
     for (var i = 0; i < w; i++) out.push(n);
   }
   return out;

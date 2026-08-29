@@ -791,7 +791,7 @@
           /* 每一件標上層數，地圖才篩得動 */
           it.L = t === '礦物' ? (((L.MINS || [])[ii] || {}).L || 1)
                : t === '道具' ? (ii + 1)
-               : Math.floor(ii / 3) + 1;   /* 戰利品一區三件 */
+               : Math.floor(ii / 6) + 1;   /* 戰利品一區六件 */
           drops.push(it);
         });
       });
@@ -812,15 +812,14 @@
           ';background:' + (n ? 'rgba(255,255,255,.022)' : 'rgba(0,0,0,.26)') +
           ';border:1px ' + (n ? 'solid #3A3026' : 'dashed #2C251D') +
           ';color:' + (n ? '#E8E2D6' : '#8C8172'),
-        glyphStyle: 'display:block;width:22px;height:22px;margin:6px auto;background:' +
-          (n ? hue : '#3A3026') + ';clip-path:polygon(20% 0,80% 0,100% 45%,50% 100%,0 45%)' +
-          (n ? '' : ';opacity:.5'),
+        glyphStyle: 'display:block;width:30px;height:30px;margin:4px auto;image-rendering:pixelated;' +
+          'background:url("' + packSvg(f.px, findLayer(f.n), !n) + '") center/contain no-repeat',
         L: findLayer(f.n)
       });
     });
 
     /* ---- 生物也攤成一份，處理方式跟物品一樣 ----
-       一區 36 種（材質 × 動作）。後綴與正反排列不影響長相與特性，
+       一區十隻，來自內容包，每一隻自己的像素圖與特性句。
        列出來只是灌水，所以不算成不同的格子。 */
     var metKey = {};   /* '層:材質:動作' → 那一次的紀錄 */
     var recAll = (S.record || []).slice();
@@ -832,8 +831,8 @@
     });
     recAll.forEach(function (r) {
       if (r.status === 'todo') return;
-      var nn = mobIdOfTask(r.id);
-      var k = (r.layer || 1) + ':' + (nn % 4) + ':' + (Math.floor(nn / 4) % 9);
+      /* 一區十隻，id 就是第幾隻 */
+      var k = (r.layer || 1) + ':' + mobIdOfTask(r.id);
       if (!metKey[k]) metKey[k] = r;
     });
 
@@ -865,16 +864,17 @@
       });
     });
 
-    /* 一區 36 種 */
+    /* 一區十隻，來自內容包 */
     for (var Ly = 1; Ly <= 4; Ly++) {
       var layM = (L.LAYERS || [])[Ly - 1] || {};
       var hueL = BOARD_HUE[Ly - 1];
-      for (var ai = 0; ai < MOB_ACT.length; ai++) {
-        for (var mi = 0; mi < 4; mi++) {
-          var nRep = (ai * 4 + mi) || 288;   /* 代表：後綴取「者」、不翻轉 */
+      var listL = PACK_MOB[Ly - 1] || [];
+      for (var ai = 0; ai < listL.length; ai++) {
+        {
+          var nRep = ai + 1;
           var mm = mobOf(nRep, Ly);
           if (!mm) continue;
-          var k2 = Ly + ':' + mi + ':' + ai;
+          var k2 = Ly + ':' + nRep;
           var rec2 = metKey[k2];
           var gotM = !!rec2;
           mobs.push({
@@ -952,7 +952,7 @@
     v.collSections = [{
       title: '生物',
       note: '一項任務擋著一隻，每一層的盡頭另外站著一隻大的（框比較粗那四個）。' +
-        '　一區 36 種——後綴（者／母／群／獸）跟正反排列不影響長相與特性，所以不另外算一格。' +
+        '　一區十隻，每一隻自己的樣子與特性。' +
         '　打贏 +10 分，宣告也做到 +30；守關的 +100。',
       have: mobGot + ' / ' + mobs.length + ' 種',
       items: mobs
@@ -4179,7 +4179,63 @@
   /* 掉落物照領域分：陣列順序就是層數（常見一層 3、少見一層 2、罕見一層 1），
      兩邊後端都用同一個公式算，所以順序不能亂動。
      走到第 L 層時，第 1..L 層的都抽得到。 */
-  var FINDS = [
+  /* ============================================================
+     收集內容包：40 隻生物、108 種掉落物、24 件戰利品。
+     資料在 gas/Pack.html（window.JLZ_PACK），這裡只負責查表與畫圖。
+
+     本來生物是程序生成的，一區 288 個組合但只有 4 種身體反覆用——
+     第三隻就看得出重複。現在一區十隻，每一隻自己的圖。
+     ============================================================ */
+  var PACK = (window.JLZ_PACK || { creatures: [], debris: [], trophies: [] });
+  var REGION_L = { '微光荒原': 1, '水晶迴廊': 2, '迴聲迷宮': 3, '熔火深淵': 4 };
+
+  /* 依領域分組，索引就是那一區的第幾個 */
+  var PACK_MOB = [[], [], [], []];
+  var PACK_DEB = [[], [], [], []];
+  var PACK_TRO = [[], [], [], []];
+  (function () {
+    PACK.creatures.forEach(function (c) { var L4 = REGION_L[c.r]; if (L4) PACK_MOB[L4 - 1].push(c); });
+    PACK.debris.forEach(function (d) { var L4 = REGION_L[d.r]; if (L4) PACK_DEB[L4 - 1].push(d); });
+    PACK.trophies.forEach(function (t) { var L4 = REGION_L[t.r]; if (L4) PACK_TRO[L4 - 1].push(t); });
+  })();
+
+  /* 像素字元：. 透明 · # 身體 · + 陰影 · * 反光 */
+  var PACK_ART = {};
+  function packSvg(px, layer, dim) {
+    if (!px || !px.length) return '';
+    var key = px[0] + '|' + px.length + '|' + layer + '|' + (dim ? 1 : 0);
+    if (PACK_ART[key]) return PACK_ART[key];
+    var pal = MOB_PAL[Math.max(0, Math.min(3, (Number(layer) || 1) - 1))];
+    var body = pal['#'], shade = pal.o, shine = pal['*'];
+    var W = px[0].length;
+    var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + px.length +
+      '" shape-rendering="crispEdges">'];
+    px.forEach(function (row, y) {
+      for (var x = 0; x < row.length; x++) {
+        var ch = row[x];
+        if (ch === '.') continue;
+        var fill = ch === '*' ? shine : ch === '+' ? shade : body;
+        out.push('<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + fill + '"' +
+          (dim ? ' opacity=".3"' : '') + '/>');
+      }
+    });
+    out.push('</svg>');
+    PACK_ART[key] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join(''));
+    return PACK_ART[key];
+  }
+
+  /* 掉落物 108 種，來自內容包。順序：領域 → 稀有度，所以 id 一路 1..108
+     就是「第幾區的第幾件」，兩邊後端用同一個規則算層數與稀有度。 */
+  var FINDS = PACK_DEB.reduce(function (acc, list, li) {
+    ['常見', '少見', '罕見'].forEach(function (q) {
+      PACK.debris.forEach(function (d) {
+        if (REGION_L[d.r] !== li + 1 || d.q !== q) return;
+        acc.push({ n: acc.length + 1, name: d.n, look: d.l, tier: q, L: li + 1, px: d.px });
+      });
+    });
+    return acc;
+  }, []);
+  var FINDS_OLD = [
     /* 常見 12 —— 一層三件 */
     { n: 1,  name: '灰砂團',   look: '抓在手上會慢慢散開。' },
     { n: 2,  name: '沉泥塊',   look: '捏得碎。捏碎之後聞得到水的味道。' },
@@ -4208,14 +4264,9 @@
     { n: 23, name: '斷鏈',     look: '一截鏈子，兩頭都是斷的。做工很細。' },
     { n: 24, name: '無名鑰',   look: '一把鑰匙。不知道開什麼。' }
   ];
-  function findTier(n) { return n <= 12 ? '常見' : n <= 20 ? '少見' : '罕見'; }
+  function findTier(n) { var f = FINDS[n - 1]; return f ? f.tier : '常見'; }
   /* 跟兩邊後端同一個公式：常見一層 3、少見一層 2、罕見一層 1 */
-  function findLayer(n) {
-    n = Number(n);
-    if (n <= 12) return Math.ceil(n / 3);
-    if (n <= 20) return Math.ceil((n - 12) / 2);
-    return n - 20;
-  }
+  function findLayer(n) { var f = FINDS[Number(n) - 1]; return f ? f.L : 1; }
   function findOf(n) {
     for (var i = 0; i < FINDS.length; i++) if (FINDS[i].n === Number(n)) return FINDS[i];
     return null;
@@ -4300,7 +4351,17 @@
   ];
 
   /* 編號 -> 那一隻的全部資料。純函式，同一個編號永遠長一樣。 */
+  /* 查表：一區十隻，id 就是 1..10 */
   function mobOf(id, layer) {
+    var L4 = Math.max(1, Math.min(4, Number(layer) || 1));
+    var list = PACK_MOB[L4 - 1] || [];
+    var n = Math.abs(Number(id) || 0);
+    if (!n || !list.length) return null;
+    var c = list[(n - 1) % list.length];
+    return { id: n, name: c.n, trait: c.t, mat: c.m, act: c.a, suf: c.s, px: c.px, layer: L4 };
+  }
+
+  function mobOfOld(id, layer) {
     var n = Math.abs(Number(id) || 0);
     if (!n) return null;
     var L4 = Math.max(1, Math.min(4, Number(layer) || 1));
@@ -4327,8 +4388,7 @@
       h ^= s.charCodeAt(i);
       h = (h * 16777619) >>> 0;
     }
-    return (h % 288) + 1;   /* 一區 288 = 4 材質 × 9 動作 × 4 後綴 × 2 順序。
-                               四區合起來 1152 種。 */
+    return (h % 10) + 1;   /* 一區十隻。四區合起來 40 隻，每一隻有自己的圖。 */
   }
 
   function mobOfTask(t) {
@@ -4342,6 +4402,13 @@
   var MOB_ART = {};
   function mobSvg(id, layer) {
     var m = mobOf(id, layer);
+    if (!m) return '';
+    if (m.px) return packSvg(m.px, layer);
+    return mobSvgOld(id, layer);
+  }
+
+  function mobSvgOld(id, layer) {
+    var m = mobOfOld(id, layer);
     if (!m) return '';
     var key = m.id + '-' + layer;
     if (MOB_ART[key]) return MOB_ART[key];
@@ -4899,7 +4966,11 @@
   /* ---------- 守關生物：每一層難處的化身。四隻，第五層沒有 ---------- */
   /* 戰利品。一區一組，走完那一區一次拿一件還沒有的——所以下一個
      專案再走一次，關底還是有東西。第一件是原型本來就有的那件。 */
-  var BOSS_DROP = [
+  /* 戰利品 24 件，一區 6，來自內容包 */
+  var BOSS_DROP = PACK_TRO.map(function (list) {
+    return list.map(function (t) { return { name: t.n, look: t.l, log: t.w, px: t.px }; });
+  });
+  var BOSS_DROP_OLD = [
     [ { name: '銹金羅經盤', look: '背面有一個被磨平的印記，像是刻意抹去的。',
         log: '羅經盤沒有指針——方向不是別人給的。' },
       { name: '空白圖籤', look: '一張已經釘好的標籤，繩結打得很牢。上面沒有寫字。',
@@ -6200,10 +6271,8 @@
               (got ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.22)') +
               ';border:1px ' + (got ? 'solid #3A3026' : 'dashed #2C251D') +
               ';color:' + (got ? '#E8E2D6' : '#8C8172'),
-            glyphStyle: 'display:block;width:26px;height:26px;margin:4px auto;background:' +
-              (got ? hue : '#3A3026') +
-              ';clip-path:polygon(50% 0,100% 30%,100% 70%,50% 100%,0 70%,0 30%)' +
-              (got ? '' : ';opacity:.5')
+            glyphStyle: 'display:block;width:30px;height:30px;margin:4px auto;image-rendering:pixelated;' +
+              'background:url("' + packSvg(d.px, li + 1, !got) + '") center/contain no-repeat'
           });
         });
       });

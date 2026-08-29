@@ -246,22 +246,24 @@
     return out;
   }
 
-  var FINDS_N = 24;
+  var FINDS_N = 108;
 
   /* 第幾層撿得到這一件。常見 12（一層 3）、少見 8（一層 2）、罕見 4（一層 1）。
      跟 gas/Code.gs 的 findLayer_ 與前端的 findLayer 是同一個公式。 */
+  /* 掉落物 108 種，順序「領域 → 稀有度」，一區 27 件，界線 27/54/81。
+     跟 gas/Code.gs 與前端用同一份規則。 */
   function findLayer(n) {
     n = Number(n);
-    if (n <= 12) return Math.ceil(n / 3);
-    if (n <= 20) return Math.ceil((n - 12) / 2);
-    return n - 20;
+    return n <= 27 ? 1 : n <= 54 ? 2 : n <= 81 ? 3 : 4;
   }
+  function findSlot(n) { return ((Number(n) - 1) % 27) + 1; }
   /* 走到第 L 層時抽得到的池子：第 1..L 層都算。常見 : 少見 : 罕見 = 5 : 3 : 1。 */
   function findPool(maxLayer) {
     var out = [], mx = Math.max(1, Math.min(4, Number(maxLayer) || 1));
     for (var n = 1; n <= FINDS_N; n++) {
       if (findLayer(n) > mx) continue;
-      var w = n <= 12 ? 5 : n <= 20 ? 3 : 1;
+      var slot = findSlot(n);
+      var w = slot <= 15 ? 5 : slot <= 24 ? 3 : 1;
       for (var i = 0; i < w; i++) out.push(n);
     }
     return out;
