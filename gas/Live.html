@@ -685,8 +685,95 @@
       });
     });
 
+    /* ---- 生物也攤成一份，處理方式跟掉落物一樣 ----
+       一區 36 種（材質 × 動作）。後綴與正反排列不影響長相與特性，
+       列出來只是灌水，所以不算成不同的格子。 */
+    var metKey = {};   /* '層:材質:動作' → 那一次的紀錄 */
+    var recAll = (S.record || []).slice();
+    (S.codex || []).forEach(function (c) {
+      if (recAll.some(function (r) { return r.id === c.id; })) return;
+      recAll.push({ id: c.id, layer: c.layer, title: c.title, status: 'passed',
+                    rounds: 0, won: false, vow: '', find: c.find, find2: c.find2,
+                    mineral: c.mineral || '' });
+    });
+    recAll.forEach(function (r) {
+      if (r.status === 'todo') return;
+      var nn = mobIdOfTask(r.id);
+      var k = (r.layer || 1) + ':' + (nn % 4) + ':' + (Math.floor(nn / 4) % 9);
+      if (!metKey[k]) metKey[k] = r;
+    });
+
+    var mobs = [];
+    /* 守關的四隻排最前面 */
+    var beatenM = S.passed || [], hereM = S.currentLayer || 1;
+    BOSSES.forEach(function (b) {
+      var downM = beatenM.indexOf(b.L) >= 0;
+      var seenM = downM || hereM >= b.L;
+      var hueM = BOARD_HUE[Math.max(0, Math.min(3, b.L - 1))];
+      mobs.push({
+        name: seenM ? b.name : '？？？',
+        got: downM,
+        sub: '+100 分　守關　' + (downM ? '已擊退' : seenM ? '擋在前方' : 'L' + b.L),
+        open: (function (bb, sm) {
+          return function () {
+            if (!sm) { L.say('還沒走到那一層。牠現在只是一個影子。'); return; }
+            L.setState({ specFrom: L.state.screen, screen: 'S06', specId: bb.name });
+          };
+        })(b, seenM),
+        style: 'padding:12px 8px;text-align:center;font:inherit;cursor:' + (seenM ? 'pointer' : 'default') +
+          ';background:' + (downM ? 'rgba(233,179,65,.09)' : 'rgba(0,0,0,.3)') +
+          ';border:2px solid ' + (downM ? hueM : '#2C251D') +
+          ';color:' + (downM ? '#F2E6C8' : '#8C8172'),
+        glyphStyle: 'display:block;width:40px;height:40px;margin:2px auto;image-rendering:pixelated;' +
+          'background:url("' + bossSvg(b, false, true) + '") center/contain no-repeat' +
+          (downM ? '' : ';opacity:' + (seenM ? '.4' : '.16') + ';filter:grayscale(1)')
+      });
+    });
+
+    /* 一區 36 種 */
+    for (var Ly = 1; Ly <= 4; Ly++) {
+      var layM = (L.LAYERS || [])[Ly - 1] || {};
+      var hueL = BOARD_HUE[Ly - 1];
+      for (var ai = 0; ai < MOB_ACT.length; ai++) {
+        for (var mi = 0; mi < 4; mi++) {
+          var nRep = (ai * 4 + mi) || 288;   /* 代表：後綴取「者」、不翻轉 */
+          var mm = mobOf(nRep, Ly);
+          if (!mm) continue;
+          var k2 = Ly + ':' + mi + ':' + ai;
+          var rec2 = metKey[k2];
+          var gotM = !!rec2;
+          mobs.push({
+            name: gotM ? mm.name : '？？？',
+            got: gotM,
+            sub: (layM.code || ('L' + Ly)) + '　' + (gotM ? '打贏過' : '還沒遇過'),
+            open: (function (rr, nm, ly) {
+              return function () {
+                if (rr) { openMob(L, rr); return; }
+                L.say('還沒遇過。' + nm + ' 會擋在' + ly + '的某一項任務前面。');
+              };
+            })(rec2, layM.name || ('第 ' + Ly + ' 層'), layM.name || ('第 ' + Ly + ' 層')),
+            style: 'padding:12px 8px;text-align:center;font:inherit;cursor:pointer;background:' +
+              (gotM ? 'rgba(' + hexRgb(hueL) + ',.07)' : 'rgba(0,0,0,.26)') +
+              ';border:1px ' + (gotM ? 'solid ' + hueL : 'dashed #2C251D') +
+              ';color:' + (gotM ? '#E8E2D6' : '#8C8172'),
+            glyphStyle: 'display:block;width:34px;height:34px;margin:4px auto;image-rendering:pixelated;' +
+              'background:url("' + mobSvg(mm.id, Ly) + '") center/contain no-repeat' +
+              (gotM ? '' : ';opacity:.16;filter:grayscale(1)')
+          });
+        }
+      }
+    }
+    var mobGot = mobs.filter(function (x) { return x.got; }).length;
+
     var gotN = drops.filter(function (x) { return x.got; }).length;
     v.collSections = [{
+      title: '生物',
+      note: '一項任務擋著一隻，每一層的盡頭另外站著一隻大的（框比較粗那四個）。' +
+        '　一區 36 種——後綴（者／母／群／獸）跟正反排列不影響長相與特性，所以不另外算一格。' +
+        '　打贏 +10 分，宣告也做到 +30；守關的 +100。',
+      have: mobGot + ' / ' + mobs.length + ' 種',
+      items: mobs
+    }, {
       title: '掉落物',
       note: '礦石、道具、守關掉落、坑屑，全部在這裡。點進去才會說那一件是怎麼拿到的。' +
         '　守關那兩件（道具、守關掉落）各 50 分——老師放行一層就是 100 分，' +
@@ -696,7 +783,8 @@
       items: drops
     }];
 
-    v.hasFinds = false;   /* 坑屑已經併進上面那一份 */
+    v.hasFinds = false;   /* 坑屑已經併進掉落物那一份 */
+    v.hasBest = false;    /* 生物改成上面那一份網格 */
   }
 
   function decorate(L, v) {
