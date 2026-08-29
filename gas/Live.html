@@ -1282,6 +1282,7 @@
     decorateGamble(L, v);     /* 勾完之後，送出前的那一下 */
     decorateDig(L, v);        /* 試挖與斗篷人的日誌 */
     decorateFinds(L, v);      /* 坑屑：隨機、零分、純收集 */
+    decorateBestiary(L, v);   /* 圖鑑：打贏過誰、怎麼贏的 */
     decorateHaul(L, v);       /* 採量：全班的分數 */
     decorateRecord(L, v);     /* 任務紀錄與宣告命中率 */
     decorateHomeHaul(L, v);   /* 首頁的名冊摘要 */
@@ -2883,6 +2884,7 @@
   function decorateVow(L, v) {
     var S = L.state;
     v.hasVow = false; v.vowPicks = []; v.vowBox = 'display:none';
+    v.vowMobTrait = ''; v.vowMobArt = 'display:none';
     v.vowTitle = ''; v.vowNote = ''; v.vowMob = ''; v.vowMobNote = '';
     if (S.role !== 'student' || S.screen !== 'S05') return;
 
@@ -2894,8 +2896,15 @@
     v.hasVow = true;
 
     /* 擋路的是哪一隻。生物先用那一層現成的守關，脾氣之後再做。 */
-    var bz = bossOf(task.layer || S.currentLayer || 1);
-    v.vowMob = bz ? bz.name : '這一層最深處';
+    /* 擋在這一項前面的是這一項自己的生物，不是層主。
+       層主現在是分數的刻度，不是關卡。 */
+    var mb = mobOfTask(task);
+    v.vowMob = mb ? mb.name : '這一項';
+    v.vowMobTrait = mb ? mb.trait : '';
+    v.vowMobArt = mb
+      ? 'display:block;width:52px;height:52px;flex:none;image-rendering:pixelated;' +
+        'background:url("' + mobSvg(mb.id, task.layer || 1) + '") center/contain no-repeat'
+      : 'display:none';
 
     if (task.status === 'passed') {
       /* 結算過了 */
@@ -3709,6 +3718,202 @@
   function findOf(n) {
     for (var i = 0; i < FINDS.length; i++) if (FINDS[i].n === Number(n)) return FINDS[i];
     return null;
+  }
+
+  /* ============================================================
+     任務生物：一項任務一隻，編號決定一切。
+
+     同一項任務的生物對全班是同一隻——這樣才有「誰先打贏」可比，
+     也才有共同的話題。編號存在任務上（Tasks.mob），不是每組各抽。
+
+     名字用現有四隻的構詞法：材質 ＋ 動作 ＋ 後綴。
+     霧面者 ＝ 霧＋面＋者　　擬聲者 ＝ 聲＋擬＋者
+     千晶母、漲潮者也是同一套，只是順序不同——所以兩種順序都用。 */
+  var MOB_MAT  = ['霧', '晶', '聲', '潮', '灰', '銹', '苔', '脈'];
+  var MOB_ACT  = ['面', '擬', '漲', '蝕', '織', '眠'];
+  var MOB_SUF  = ['者', '母', '群'];
+
+  /* 一句話的特性。前半跟材質走，後半跟動作走——組起來會通順，
+     而且不會宣稱任何跟學生的作業有關的事。 */
+  var MOB_BODY = {
+    '霧': '身體的邊界看不清楚',  '晶': '整隻是透明的，看得到裡面',
+    '聲': '沒有實體，只有一團會震的空氣', '潮': '表面一直在滲水',
+    '灰': '碰過的地方都會留下一層灰', '銹': '關節處全是紅褐色的鏽',
+    '苔': '背上長滿了不該長在地底的苔', '脈': '身上有一條會發光的紋路'
+  };
+  var MOB_HABIT = {
+    '面': '你看牠的時候牠不動',       '擬': '牠會學你剛才的動作',
+    '漲': '越靠近牠就變得越大',       '蝕': '牠待過的岩壁會變薄',
+    '織': '牠一直在補自己身上的洞',   '眠': '大部分時間牠是睡的'
+  };
+
+  /* 四種身體。手畫的，程序生成只負責挑跟改顏色——
+     全程序畫出來的東西不會有生物感。 */
+  var MOB_BODIES = [
+    ['....########....', '..############..', '.####........###',
+     '###..........###', '##............##', '##............##',
+     '###..........###', '.##############.', '..############..',
+     '...##########...', '..###..####..###', '.##....####....##',
+     '##.....####.....#', '#......####......', '.......##.......',
+     '......####......'],
+    ['......####......', '....########....', '..############..',
+     '.##############.', '###..........###', '##............##',
+     '##............##', '##............##', '###..........###',
+     '.##############.', '..##########....', '..##..####..##..',
+     '.##....##....##.', '##.....##.....##', '#......##......#',
+     '.......##.......'],
+    ['..##........##..', '.####......####.', '..############..',
+     '.##############.', '##............##', '#..............#',
+     '##............##', '###..........###', '.##############.',
+     '..############..', '...##########...', '..##..#..#..##..',
+     '.##...#....#...##', '##....#....#....#', '#.....#....#....',
+     '......######....'],
+    ['....##....##....', '...####..####...', '..############..',
+     '.####......####.', '###..........###', '##............##',
+     '##............##', '##............##', '##............##',
+     '###..........###', '.##############.', '..##########....',
+     '..#..######..#..', '.##...####...##.', '##....####....##',
+     '......####......']
+  ];
+
+  var MOB_PAL = [
+    { '#': '#C9A227', o: '#7A6318', '*': '#F2E6C8' },   /* L1 荒原 */
+    { '#': '#5FA8C7', o: '#2E5F73', '*': '#D8F2FA' },   /* L2 水晶 */
+    { '#': '#8C7BC7', o: '#4A3F73', '*': '#E4DCFA' },   /* L3 迴聲 */
+    { '#': '#D9603F', o: '#7A2F1C', '*': '#FAD9CC' },   /* L4 熔火 */
+    { '#': '#E9B341', o: '#8A6420', '*': '#FFF0C8' }    /* L5 星核 */
+  ];
+
+  /* 編號 -> 那一隻的全部資料。純函式，同一個編號永遠長一樣。 */
+  function mobOf(id) {
+    var n = Math.abs(Number(id) || 0);
+    if (!n) return null;
+    var mat = MOB_MAT[n % MOB_MAT.length];
+    var act = MOB_ACT[Math.floor(n / 8) % MOB_ACT.length];
+    var suf = MOB_SUF[Math.floor(n / 48) % MOB_SUF.length];
+    var flip = Math.floor(n / 144) % 2;
+    return {
+      id: n,
+      name: flip ? (act + mat + suf) : (mat + act + suf),
+      body: n % MOB_BODIES.length,
+      eyes: 1 + (Math.floor(n / 4) % 3),
+      trait: (MOB_BODY[mat] || '') + '，' + (MOB_HABIT[act] || '') + '。'
+    };
+  }
+
+  /* 哪一項任務對到哪一隻：taskId 的雜湊。
+     不存資料庫——同一個 taskId 永遠算出同一隻，老師端跟學生端也一定
+     一致。省掉一個欄位、一次遷移、以及兩邊不同步的可能。 */
+  function mobIdOfTask(taskId) {
+    var s = String(taskId || ''), h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return (h % 288) + 1;   /* 288 = 8 材質 × 6 動作 × 3 後綴 × 2 順序 */
+  }
+
+  function mobOfTask(t) {
+    if (!t || !t.id) return null;
+    var m = mobOf(mobIdOfTask(t.id));
+    if (m) m.layer = Number(t.layer) || 1;
+    return m;
+  }
+
+  /* 樣子。跟層主用同一套像素做法，所以擺在一起不會突兀。 */
+  var MOB_ART = {};
+  function mobSvg(id, layer) {
+    var m = mobOf(id);
+    if (!m) return '';
+    var key = m.id + '-' + layer;
+    if (MOB_ART[key]) return MOB_ART[key];
+
+    var rows = MOB_BODIES[m.body].slice();
+    var pal = MOB_PAL[Math.max(0, Math.min(4, (Number(layer) || 1) - 1))];
+    var W = 16;
+
+    /* 眼睛：對稱擺在第 4–5 列 */
+    var eyeRow = 4;
+    var spots = m.eyes === 1 ? [8] : m.eyes === 2 ? [5, 10] : [4, 8, 11];
+    rows = rows.map(function (r, y) {
+      if (y !== eyeRow) return r;
+      var a = r.split('');
+      spots.forEach(function (x) { if (a[x] === '.' || a[x] === '#') a[x] = '*'; });
+      return a.join('');
+    });
+
+    var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + rows.length +
+      '" shape-rendering="crispEdges">'];
+    rows.forEach(function (r, y) {
+      for (var x = 0; x < r.length && x < W; x++) {
+        var c = r[x];
+        if (c === '.') continue;
+        var fill = c === '*' ? pal['*'] : (y > rows.length - 5 ? pal.o : pal['#']);
+        out.push('<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + fill + '"/>');
+      }
+    });
+    out.push('</svg>');
+    MOB_ART[key] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join(''));
+    return MOB_ART[key];
+  }
+
+  /* ============================================================
+     圖鑑：打贏過哪幾隻，以及是怎麼打贏的。
+
+     這是收集的核心。礦石說的是「你做到了什麼」，坑屑什麼都不說，
+     圖鑑說的是「你遇過誰、怎麼贏的」——三種各管一件事。
+
+     「怎麼贏的」記三件：一次過、去了幾輪、有沒有宣告成功。
+     同一隻被兩組打贏，兩張頁面會長得不一樣。 */
+  function decorateBestiary(L, v) {
+    var S = L.state;
+    v.hasBest = false; v.bestRows = []; v.bestCount = ''; v.bestNote = '';
+    if (S.role !== 'student' || !S.signedIn) return;
+
+    var rec = S.record || [];
+    var met = rec.filter(function (r) { return r.status !== 'todo'; });
+    var won = rec.filter(function (r) { return r.status === 'passed'; });
+    v.hasBest = true;
+    v.bestCount = won.length + ' / ' + rec.length;
+    v.bestNote = rec.length
+      ? '一項任務擋著一隻。打贏了牠會留下一件東西——那件是隨機的，' +
+        '但每一件都一樣重。'
+      : '老師還沒開任務。';
+
+    v.bestRows = rec.slice().reverse().map(function (r) {
+      var m = mobOf(mobIdOfTask(r.id));
+      var down = r.status === 'passed';
+      var seen = r.status !== 'todo';
+      var how = [];
+      if (down) {
+        how.push(r.rounds <= 1 ? '一次就過' : '去了 ' + r.rounds + ' 輪');
+        if (r.won) how.push('★ ' + vowName(r.vow));
+        var fd = findOf(r.find);
+        if (fd) how.push('留下 ' + fd.name);
+      } else if (r.status === 'submitted') how.push('等他判');
+      else if (r.status === 'needs_more') how.push('還沒打贏，他要你再改');
+      else how.push('還沒交手');
+
+      return {
+        name: seen ? m.name : '？？？',
+        trait: down ? m.trait : seen ? '交手中。打贏了才看得清楚牠。' : '',
+        task: 'L' + r.layer + '　' + r.title,
+        how: how.join('　·　'),
+        art: down
+          ? 'display:block;width:44px;height:44px;flex:none;image-rendering:pixelated;' +
+            'background:url("' + mobSvg(m.id, r.layer) + '") center/contain no-repeat'
+          : 'display:block;width:44px;height:44px;flex:none;image-rendering:pixelated;opacity:' +
+            (seen ? '.4' : '.16') + ';filter:grayscale(1);' +
+            'background:url("' + mobSvg(m.id, r.layer) + '") center/contain no-repeat',
+        boxStyle: 'display:flex;gap:13px;padding:12px 14px;background:' +
+          (down ? 'rgba(233,179,65,.06)' : 'rgba(0,0,0,.28)') +
+          ';border:1px ' + (down ? 'solid #3A3026' : 'dashed #26211C'),
+        nameStyle: "font:500 22px/1.3 'C11';color:" + (down ? '#E8E2D6' : '#6E665A'),
+        taskStyle: "font:400 11px/1.5 'C11';color:#5F574C;margin-top:3px",
+        traitStyle: "font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty",
+        howStyle: "font:400 11px/1.5 'C11';color:" + (down ? '#E9B341' : '#6E665A') + ';margin-top:5px'
+      };
+    });
   }
 
   function decorateFinds(L, v) {
