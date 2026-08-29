@@ -454,6 +454,29 @@
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-top:9px;text-wrap:pretty">{{ homeBandNote }}</div>
                 </div>
               </sc-if>
+              <sc-if value="{{ hasHomeHaul }}" hint-placeholder-val="{{ true }}">
+                <div style="margin:20px var(--pad) 0;padding:17px 19px;background:#14110E;border:1px solid #3A3026">
+                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
+                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">名冊</span>
+                    <span style="font:700 22px/1 'C11';color:#E9B341">{{ homeRank }}</span>
+                    <span style="font:400 11px/1 'C11';color:#8A8073">{{ homeRankNote }}</span>
+                    <span style="flex:1"></span>
+                    <button onClick="{{ goHaul }}" style="font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;background:none;border:1px solid #3A3026;padding:7px 11px;cursor:pointer;white-space:nowrap">看名冊</button>
+                  </div>
+                  <div style="font:400 11px/1.7 'C11';color:#8A8073;margin:12px 0 9px;text-wrap:pretty">{{ homeClaimNote }}</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px">
+                    <sc-for list="{{ homeClaims }}" as="hc" hint-placeholder-count="3">
+                      <div style="{{ hc.boxStyle }}">
+                        <div style="display:flex;align-items:baseline;gap:9px">
+                          <span style="{{ hc.nameStyle }}">{{ hc.name }}</span>
+                          <span style="{{ hc.byStyle }}">{{ hc.by }}</span>
+                        </div>
+                        <div style="{{ hc.metaStyle }}">{{ hc.meta }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
               <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),#14110E;border:1px solid #3A3026">
                 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
                   <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">這一層的進度</span>
@@ -478,7 +501,7 @@
                   <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#E9B341"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#E9B341"></div>
                   <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">這一層採到幾塊</div>
                   <div style="font:700 33px/1 'C11';margin-top:10px">{{ reqDone }}<span style="font:400 22px/1 'C11';color:#5F574C"> / {{ reqTotal }}</span></div>
-                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">全部採齊才送得出關卡</div>
+                  <div style="font:400 11px/1.5 'C11';color:#8A8073;margin-top:7px">採不採齊都送得出關卡</div>
                 </div>
                 <div style="padding:15px;background:#14110E;border:1px solid #26211C;position:relative">
                   <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>

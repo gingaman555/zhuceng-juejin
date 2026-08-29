@@ -1262,7 +1262,8 @@
     decorateGamble(L, v);     /* 勾完之後，送出前的那一下 */
     decorateDig(L, v);        /* 試挖與斗篷人的日誌 */
     decorateHaul(L, v);       /* 採量：全班的分數 */
-    decorateRecord(L, v);     /* 格子牆與任務紀錄 */
+    decorateRecord(L, v);     /* 任務紀錄與宣告命中率 */
+    decorateHomeHaul(L, v);   /* 首頁的名冊摘要 */
     markVerdicts(L, v);       /* 地圖每一格直接顯示老師給不給過 */
 
 
@@ -3415,6 +3416,54 @@
     if (v.sel) paint(v.sel.minerals, selN, true);
   }
 
+  /* ============================================================
+     首頁的名冊摘要。
+
+     完整的在 S-10，但那要點三層才到得了。真正會讓人回來的是
+     「還沒有人採到的那幾塊」——那一段必須在首頁，不然它變了
+     也沒有人知道。 */
+  function decorateHomeHaul(L, v) {
+    var S = L.state;
+    v.hasHomeHaul = false; v.homeClaims = [];
+    v.homeRank = ''; v.homeRankNote = ''; v.homeClaimNote = '';
+    v.goHaul = function () { L.setState({ screen: 'S03', mapTab: 'haul' }); };
+    if (S.role !== 'student' || !S.signedIn || S.screen !== 'S01') return;
+
+    /* 首頁也要載——原本只有進到 S-10 才載，那就太晚了 */
+    if (!S.haulData && !S.haulLoading) { loadHaul(L); return; }
+    var rows = S.haulData || [];
+    if (!rows.length) return;
+
+    var mine = rows.filter(function (r) { return r.me; })[0];
+    if (!mine) return;
+    v.hasHomeHaul = true;
+
+    var rk = rankOf(mine.total);
+    v.homeRank = rk.name;
+    v.homeRankNote = mine.total + ' 分　·　第 ' + (rows.indexOf(mine) + 1) + ' 名 / ' + rows.length + ' 組' +
+      (rk.next ? '　·　再 ' + (rk.next.at - mine.total) + ' 分變「' + rk.next.name + '」' : '');
+
+    /* 只列還沒被拿走的，最多三塊。已經有人拿走的擺首頁只剩打擊。 */
+    var open = (S.haulClaims || []).filter(function (c) { return !c.by; });
+    var racingN = open.filter(function (c) { return c.racing; }).length;
+    v.homeClaimNote = open.length
+      ? '還有 ' + open.length + ' 塊沒有人採到' +
+        (racingN ? '，其中 ' + racingN + ' 塊有人在爭奪' : '') + '。'
+      : '每一塊都有人採到了。';
+    v.homeClaims = open.slice(0, 3).map(function (c) {
+      return {
+        name: c.mineral,
+        by: c.racing ? '有 ' + c.racing + ' 組正在爭奪' : '還沒有人',
+        meta: 'L' + c.layer + '　' + c.title,
+        boxStyle: 'padding:10px 12px;background:rgba(0,0,0,.32);border:1px ' +
+          (c.racing ? 'solid #4A4238' : 'dashed #4A3F30'),
+        nameStyle: "font:500 22px/1.3 'C11';color:#C3BAAA",
+        byStyle: "flex:none;font:400 11px/1 'C11';color:" + (c.racing ? '#C3BAAA' : '#D9603F'),
+        metaStyle: "font:400 11px/1.5 'C11';color:#5F574C;margin-top:4px"
+      };
+    });
+  }
+
   function decorateRecord(L, v) {
     var S = L.state;
     v.hasRecord = false; v.recRows = []; v.scRec = false;
@@ -4330,9 +4379,9 @@
         pips: pips(allGot, allN, '#E9B341'),
         note: !all.length ? '這一層還沒有清單。'
           : unopenedN ? '老師開了 ' + all.length + ' 塊，你們採到 ' + allGot + ' 塊。還有 ' + unopenedN +
-            ' 塊他沒開——整條礦脈開完、也採齊，才拿得到道具、通過這一層。'
+            ' 塊他還沒開。採不採齊都送得出關卡——過不過是他決定。'
           : allGot === allN ? '這一層採齊了。可以送關卡審核。'
-          : '還差 ' + (allN - allGot) + ' 塊。這一層要全部採齊才送得出關卡。' }
+          : '還差 ' + (allN - allGot) + ' 塊。採不採齊都送得出關卡——這裡只是紀錄。' }
     ];
 
     var nextReq = all.filter(function (t) { return t.status !== 'passed'; })[0];
@@ -4385,15 +4434,15 @@
     v.hasVeinNote = vein > 0;
     v.veinNote = veinLeft
       ? '這一層的礦脈有 ' + vein + ' 塊，老師開了 ' + LS.openedN + ' 塊，還有 ' + veinLeft + ' 塊沒開。' +
-        '整條礦脈開完、也採完，你們才拿得到這一層的道具、通過這一層——去問他剩下的什麼時候給。'
+        '採不採齊都送得出關卡——覺得這一層告一段落了就去找他，過不過他決定。'
       : '這一層的礦脈 ' + vein + ' 塊都開出來了。全部採齊就過得了這一層。';
     v.gateNeedColor = LS.complete ? '#E9B341' : '#8A8073';
     v.gateNeedNote = !all.length
       ? '這一層還沒有清單。'
       : veinLeft
-        ? '這一層的礦脈還有 ' + veinLeft + ' 塊沒開出來，現在送不出關卡。老師補齊之後才拿得到道具。'
+        ? '這一層的礦脈還有 ' + veinLeft + ' 塊他還沒開。想送關卡隨時送得出去，過不過他決定。'
       : missing.length
-        ? '這一層的礦石要全部採齊才送得出關卡。還沒採到的是：' +
+        ? '這一層還沒採到的是：' +
           missing.map(function (t) { return t.title; }).join('、') + '。'
         : done
           ? '這一層已經通過了。'
@@ -4460,7 +4509,7 @@
         : tag('還沒有清單', '#5F574C')),
       Object.assign({
         n: '3', title: '這一層採齊 → 送關卡',
-        desc: '這一層的礦脈要開完，也要採完。少一塊就送不出去——挖完才拿得到道具、通過這一層。',
+        desc: '礦石是你做過什麼的紀錄，不是過關的門票。覺得這一層告一段落了就去找他，過不過他決定。',
         box: box(step2On), num: num(step2On), color: step2On ? '#E9B341' : '#8A8073'
       }, done ? tag('已通過', '#E9B341')
         : S.gateSubmitted ? tag('已送出，等審核', '#C3BAAA')
@@ -4644,7 +4693,7 @@
     } else if (!missing.length && veinLeftR) {
       v.nextAction = '等老師把這一層剩下的 ' + veinLeftR + ' 塊開出來。';
       v.nextActionWhy = '這一層的礦脈有 ' + RS.veinN + ' 塊，他開了 ' + RS.openedN +
-        ' 塊，你們都採到了。整條礦脈開完、也採齊，才拿得到道具、通過這一層——去問他剩下的什麼時候給。';
+        ' 塊，你們都採到了。採不採齊都送得出關卡——過不過是他決定。';
       v.nextActionBtn = '看地圖';
       v.goNextAction = function () { L.go('S03'); };
     } else if (waiting) {
@@ -4656,7 +4705,7 @@
       var anyLeft = missing.filter(function (t) { return t.status === 'todo'; })[0];
       if (anyLeft) {
         v.nextAction = '還差「' + anyLeft.title + '」這一塊。';
-        v.nextActionWhy = '這一層要全部採齊才送得出關卡。';
+        v.nextActionWhy = '礦石是紀錄不是門票。覺得這一層告一段落了就去找他。';
         v.nextActionBtn = '去交這一項';
         v.goNextAction = openTask(L, anyLeft);
       } else {
@@ -4693,7 +4742,7 @@
       '你在這一層開的每一項他們都要採到，全部採齊才進得了下一層。' +
       (lay.course ? '　對應的課程階段是「' + lay.course + '」。' : '');
     v.openWhat = leftVein.length
-      ? '這一層的礦脈有 ' + vein + ' 塊，你開了 ' + after + ' 塊。礦脈開完、學生也採完，他們才拿得到道具、通過這一層。'
+      ? '這一層的礦脈有 ' + vein + ' 塊，你開了 ' + after + ' 塊。關卡不看採齊沒——你覺得他們可以往下了就放行。'
       : '這一層的 ' + vein + ' 塊都開好了。剩下就看他們採不採得齊。';
     var num = function () {
       return "font:600 11px/1 'C11';flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:#5A4A2C;color:#0B0A09";
@@ -4775,7 +4824,7 @@
     v.layerWarn = leftVein.length
       ? '這一層的礦脈還有 ' + leftVein.length + ' 塊沒開：' +
         leftVein.map(function (m) { return m.task + '（' + m.name + '）'; }).join('、') +
-        '。礦脈要開完，學生才拿得到道具、通過這一層——現在他們送不出關卡。'
+        '。開多開少不影響關卡——你覺得他們可以往下了就放行。'
       : '';
     v.hasLayerWarn = !!v.layerWarn;
 
@@ -4816,7 +4865,7 @@
     v.veinCount = '（' + after + ' / ' + vein + ' 已開）';
     v.veinPickNote = leftVein.length
       ? '這一層的礦脈是固定的 ' + vein + ' 塊，每一塊本來就對應一項工作。標「已配給」的是開過的，剩下 ' +
-        leftVein.length + ' 塊還沒開——礦脈開完，學生才拿得到道具、通過這一層。'
+        leftVein.length + ' 塊還沒開。關卡不看這個——你覺得他們可以往下了就放行。'
       : '這一層的 ' + vein + ' 塊都開完了。要改哪一項的內容，回 T-02 逐項編輯。';
 
     /* 加進草稿時把「發給誰」一起記下來，之後每一項可以不一樣 */
