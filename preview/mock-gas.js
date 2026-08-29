@@ -241,6 +241,24 @@
     return out;
   }
 
+  var FINDS_N = 24, FIND_WEIGHT = [];
+  (function () {
+    var i, k;
+    for (i = 1; i <= 12; i++) for (k = 0; k < 6; k++) FIND_WEIGHT.push(i);
+    for (i = 13; i <= 20; i++) for (k = 0; k < 3; k++) FIND_WEIGHT.push(i);
+    for (i = 21; i <= 24; i++) FIND_WEIGHT.push(i);
+  })();
+  function rollFind() { return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)]; }
+  function findsOf(teamId) {
+    var out = {};
+    DB.Digs.forEach(function (d) {
+      if (d.teamId !== teamId) return;
+      var n = Number(d.find);
+      if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+    });
+    return out;
+  }
+
   var DIG_PAGES = 24;
   function ymd(d) {
     var x = new Date(d);
@@ -628,6 +646,8 @@
         });
         out.record = recordOf(u.teamId, u.classId);
         out.digs = digsOf(u.teamId);
+        out.finds = findsOf(u.teamId);
+        out.findsTotal = FINDS_N;
         out.digPages = digPages(u.teamId);
         out.digTotal = DIG_PAGES;
         var me = teamById(u.teamId);
@@ -1081,9 +1101,11 @@
         for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
         if (left.length) page = left[Math.floor(Math.random() * left.length)];
       }
-      row.result = res; row.page = page || ''; row.closedAt = NOW();
+      var find = rollFind();
+      row.result = res; row.page = page || ''; row.find = find; row.closedAt = NOW();
       persist();
-      return ok({ result: res, page: page, pages: digPages(u.teamId), total: DIG_PAGES });
+      return ok({ result: res, page: page, pages: digPages(u.teamId), total: DIG_PAGES,
+                  find: find, finds: findsOf(u.teamId) });
     },
     apiDeleteTask: function (t, taskId) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');

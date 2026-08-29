@@ -50,7 +50,7 @@ var SHEET_DEFS = {
   Codes:       ['revId', 'coder', 'code', 'ts'],
   Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'by', 'ts'],
   Digs:        ['digId', 'teamId', 'classId', 'layer', 'text', 'estDays', 'bet',
-                'result', 'page', 'openedAt', 'closedAt'],
+                'result', 'page', 'find', 'openedAt', 'closedAt'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
   MinNames:    ['teamId', 'mineral', 'label', 'note']
 };
@@ -1295,6 +1295,8 @@ function apiBootstrap(token) {
       out.myTeamId = u.teamId || '';
       out.record = recordOf_(u.teamId, u.classId);
       out.digs = digsOf_(u.teamId);
+      out.finds = findsOf_(u.teamId);
+      out.findsTotal = FINDS_N;
       out.digPages = digPages_(u.teamId);
       out.digTotal = DIG_PAGES;
       if (me) {
@@ -2179,6 +2181,33 @@ function digsOf_(teamId) {
 }
 
 /** 開一條。方向要寫、估幾天要給、押不押隨意。 */
+/* ---- 坑屑 ----
+   24 種，12 常見／8 少見／4 罕見。全部零分，稀有度只影響機率。
+   罕見那四件都是人造物 —— 跟寶物同一條線，指向斗篷人。 */
+var FINDS_N = 24;
+var FIND_WEIGHT = [];   /* 展開成加權池，抽的時候直接取一個 */
+(function () {
+  var i;
+  for (i = 1; i <= 12; i++) { var k; for (k = 0; k < 6; k++) FIND_WEIGHT.push(i); }   /* 常見 */
+  for (i = 13; i <= 20; i++) { var k2; for (k2 = 0; k2 < 3; k2++) FIND_WEIGHT.push(i); } /* 少見 */
+  for (i = 21; i <= 24; i++) FIND_WEIGHT.push(i);                                     /* 罕見 */
+})();
+
+function rollFind_() {
+  return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)];
+}
+
+/** 這一組撿到的坑屑：編號 -> 幾件 */
+function findsOf_(teamId) {
+  var out = {};
+  readTable_('Digs').forEach(function (d) {
+    if (String(d.teamId) !== String(teamId)) return;
+    var n = Number(d.find);
+    if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+  });
+  return out;
+}
+
 function apiOpenDig(token, layer, text, estDays, bet) {
   try {
     var u = auth_(token);
@@ -2238,12 +2267,16 @@ function apiCloseDig(token, digId, result) {
       if (left.length) page = left[Math.floor(Math.random() * left.length)];
     }
 
+    /* 坑屑每次都掉，不像日誌一天一片 —— 它是「動手當下的不確定」，
+       所以必須每一次都有。零分，純收集。 */
+    var find = rollFind_();
     upsert_('Digs', ['digId'], {
       digId: row.digId, teamId: row.teamId, classId: row.classId, layer: row.layer,
       text: row.text, estDays: row.estDays, bet: row.bet,
-      result: res, page: page || '', openedAt: row.openedAt, closedAt: new Date()
+      result: res, page: page || '', find: find, openedAt: row.openedAt, closedAt: new Date()
     });
-    return ok_({ result: res, page: page, pages: digPages_(u.teamId), total: DIG_PAGES });
+    return ok_({ result: res, page: page, pages: digPages_(u.teamId), total: DIG_PAGES,
+                 find: find, finds: findsOf_(u.teamId) });
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 
