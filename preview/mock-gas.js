@@ -246,6 +246,52 @@
   function rollFindGood() { var a = rollFind(), b = rollFind(); return b > a ? b : a; }
   /* 收藏是個人的：跨班、跨組、跨專案累積。Roster.claimedBy 把使用者
      連到他待過的每一組。 */
+  function usersOfTeam(teamId) {
+    var out = [];
+    DB.Roster.forEach(function (r) {
+      if (String(r.teamId) !== String(teamId)) return;
+      var c = String(r.claimedBy || '');
+      if (c && out.indexOf(c) < 0) out.push(c);
+    });
+    return out;
+  }
+
+  /* 這個人撿到的日誌，跨專案累積 */
+  function digPagesOfUser(userId) {
+    var mine = teamsOfUser(userId), out = [];
+    if (!mine.length) return out;
+    var take = function (v) {
+      var n = Number(v);
+      if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
+    };
+    DB.TeamTasks.forEach(function (r) { if (mine.indexOf(String(r.teamId)) >= 0) take(r.page); });
+    (DB.Digs || []).forEach(function (d) { if (mine.indexOf(String(d.teamId)) >= 0) take(d.page); });
+    return out.sort(function (a, b) { return a - b; });
+  }
+
+  /* 抽新的一片時要排除的：這一組的，加上組員各自帶過來的 */
+  function digPagesSeenBy(teamId) {
+    var out = digPages(teamId).slice();
+    usersOfTeam(teamId).forEach(function (uid) {
+      digPagesOfUser(uid).forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
+    });
+    return out.sort(function (a, b) { return a - b; });
+  }
+
+  /* 這個人每一區走完過幾次，跨專案累加 */
+  function clearsOfUser(userId) {
+    var mine = teamsOfUser(userId), out = [0, 0, 0, 0];
+    if (!mine.length) return out;
+    DB.Teams.forEach(function (t) {
+      if (mine.indexOf(String(t.teamId)) < 0) return;
+      (Array.isArray(t.passed) ? t.passed : []).forEach(function (x) {
+        var n = Number(x);
+        if (n >= 1 && n <= 4) out[n - 1]++;
+      });
+    });
+    return out;
+  }
+
   function teamsOfUser(userId) {
     var out = [];
     DB.Roster.forEach(function (r) {
@@ -303,7 +349,7 @@
       return r.teamId === teamId && Number(r.page) > 0 && r.pageAt && ymd(r.pageAt) === todayKey;
     });
     if (gotToday) return 0;
-    var have = digPages(teamId), left = [];
+    var have = digPagesSeenBy(teamId), left = [];
     for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
     return left.length ? left[Math.floor(Math.random() * left.length)] : 0;
   }
@@ -683,7 +729,8 @@
         out.finds = findsOf(u.userId);
         out.codex = codexOfUser(u.userId);
         out.findsTotal = FINDS_N;
-        out.digPages = digPages(u.teamId);
+        out.digPages = digPagesOfUser(u.userId);
+        out.clears = clearsOfUser(u.userId);
         out.digTotal = DIG_PAGES;
         var me = teamById(u.teamId);
         if (me) {
@@ -1132,13 +1179,13 @@
       });
       var page = 0;
       if (!gotToday) {
-        var have = digPages(u.teamId), left = [];
+        var have = digPagesSeenBy(u.teamId), left = [];
         for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
         if (left.length) page = left[Math.floor(Math.random() * left.length)];
       }
       row.result = res; row.page = page || ''; row.closedAt = NOW();
       persist();
-      return ok({ result: res, page: page, pages: digPages(u.teamId), total: DIG_PAGES });
+      return ok({ result: res, page: page, pages: digPagesOfUser(u.userId), total: DIG_PAGES });
     },
     apiDeleteTask: function (t, taskId) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');

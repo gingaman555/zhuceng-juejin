@@ -301,6 +301,7 @@
       next.finds = b.finds || {};
       next.digPages = b.digPages || [];
       next.digTotal = b.digTotal || 24;
+      next.clears = b.clears || [];   /* 每一區走完過幾次，跨專案累加 */
       /* 老師在我們沒看的時候動過了——把變化演出來 */
       (function () {
         if (u.role !== 'student') return;
@@ -4507,6 +4508,49 @@
   }
 
   /* ---------- 守關生物：每一層難處的化身。四隻，第五層沒有 ---------- */
+  /* 守關掉落。一區一組，走完那一區一次拿一件還沒有的——所以下一個
+     專案再走一次，關底還是有東西。第一件是原型本來就有的那件。 */
+  var BOSS_DROP = [
+    [ { name: '銹金羅經盤', look: '背面有一個被磨平的印記，像是刻意抹去的。',
+        log: '羅經盤沒有指針——方向不是別人給的。' },
+      { name: '空白圖籤', look: '一張已經釘好的標籤，繩結打得很牢。上面沒有寫字。',
+        log: '籤上沒有字——名字得你自己取。' },
+      { name: '無刻度尺', look: '一把尺，邊緣平直得不像手工，但一道刻度也沒有。',
+        log: '尺沒有刻度——起點在哪是你定的。' } ],
+    [ { name: '七稜燈', look: '內部沒有燭芯，也沒有任何光源。玻璃是無色的——但拿到水晶旁邊，它會自己折出七道光。',
+        log: '燈自己不會亮——它只是把旁邊的光折出來。' },
+      { name: '滿格量杯', look: '杯壁只刻了一條線，而且刻在很靠近底部的地方。',
+        log: '杯子只有一條線——夠了是很低的位置。' },
+      { name: '斷柄鑿', look: '鑿頭還很利。木柄從中間斷了，斷面是舊的。',
+        log: '鑿子會先壞掉——工具比你早知道什麼時候該停。' } ],
+    [ { name: '啞鈴', look: '倒過來看，裡面是空的，沒有鈴舌。搖它沒有聲音。但你搖它的時候，迴聲會停下來一瞬間。',
+        log: '鈴不出聲——安靜的時候才聽得見自己在講什麼。' },
+      { name: '反字印章', look: '印面刻的字是正的。蓋出來才發現整句是反的。',
+        log: '印章刻正了才會蓋反——看起來對的，常常是還沒蓋過的。' },
+      { name: '雙頭箭', look: '一根鐵箭，兩端都是箭頭，中間找不到接縫。',
+        log: '兩頭都是箭頭——牆上那些記號是我刻的，別全信。' } ],
+    [ { name: '冷玉印', look: '在岩漿旁邊也不會熱。底面刻著一個字，筆畫像篆書但不是——刻痕很深，是常用的印。',
+        log: '印不會熱——有些事再急也不能改。' },
+      { name: '停擺沙漏', look: '上半仍是滿的，沙不會落。玻璃沒有破。',
+        log: '沙漏不流——它不是壞了，是我一直沒有把它倒過來。' },
+      { name: '半熔鑰匙', look: '一把鑰匙，齒的部分已經化掉一半。',
+        log: '鑰匙的齒會先化掉——來得及的時候它還是完整的。' } ]
+  ];
+
+  /* 點開一件守關掉落 */
+  function openDrop(L, d, li, got) {
+    var lay = (L.LAYERS || [])[li] || {};
+    showMoment(L, {
+      kind: 'drop', accent: BOARD_HUE[Math.max(0, Math.min(3, li))],
+      kicker: (lay.name || '') + ' · 守關掉落',
+      title: got ? d.name : '？？？',
+      lede: got ? d.look : '走完這一區才拿得到。層底那一隻退開之後，牠站的地方留著它。',
+      quoteLabel: got ? '斗篷人的日誌' : '',
+      quote: got ? d.log : '',
+      btn: '關上'
+    });
+  }
+
   var BOSSES = [
     {
       L: 1, id: 'boss-L1-mianzhe', name: '霧面者',
@@ -5715,6 +5759,48 @@
   /* 收藏總覽多一組：守關生物。學生擊退才解鎖，老師端全開 */
   function addBossCodex(L, v) {
     var S = L.state;
+    /* 守關掉落：一層一件，只有走完那一層才拿得到——四件裡沒有一件
+       是別的地方生得出來的，所以它是收集的骨架。跟道具的差別在於
+       道具講「你學到什麼」，它講「他留下什麼」。 */
+    (v.collSections || []).forEach(function (g) {
+      if (g.title !== '寶物') return;
+      g.title = '守關掉落';
+      g.note = '擊退層底那一隻之後，牠站的地方留下的——斗篷人回程留在那裡的東西。' +
+        '一區不只一件：那一區每走完一次拿一件還沒有的，所以下一個專案再下來，關底還是有東西。';
+
+      var clears = S.clears || [];
+      var openAllD = S.role === 'teacher';
+      var rowsD = [];
+      BOSS_DROP.forEach(function (set, li) {
+        var lay = (L.LAYERS || [])[li] || {};
+        var hue = BOARD_HUE[Math.max(0, Math.min(3, li))];
+        /* 這一區走完過幾次 = 手上有前幾件。老師端全開。 */
+        var n = openAllD ? set.length : Math.max(0, Number(clears[li]) || 0);
+        set.forEach(function (d, di) {
+          var got = di < n;
+          rowsD.push({
+            name: got ? d.name : '？？？',
+            got: got,
+            sub: (lay.code || ('L' + (li + 1))) + ' · ' +
+                 (got ? '已取得' : di === 0 ? '走完這一區' : '再走一次這一區'),
+            open: (function (dd, lli, gg) {
+              return function () { openDrop(L, dd, lli, gg); };
+            })(d, li, got),
+            style: 'padding:12px 8px;text-align:center;font:inherit;cursor:pointer;background:' +
+              (got ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.22)') +
+              ';border:1px ' + (got ? 'solid #3A3026' : 'dashed #2C251D') +
+              ';color:' + (got ? '#E8E2D6' : '#8C8172'),
+            glyphStyle: 'display:block;width:26px;height:26px;margin:4px auto;background:' +
+              (got ? hue : '#3A3026') +
+              ';clip-path:polygon(50% 0,100% 30%,100% 70%,50% 100%,0 70%,0 30%)' +
+              (got ? '' : ';opacity:.5')
+          });
+        });
+      });
+      g.items = rowsD;
+      var gotN = rowsD.filter(function (x) { return x.got; }).length;
+      g.have = openAllD ? '共 ' + rowsD.length + ' 件' : gotN + ' / ' + rowsD.length + ' 件';
+    });
   /* 收藏總覽再加一組：擋在每一層路上的東西。三段式——
        沒遇到 → 灰影，點不了
        遇過了 → 顯現出來，點得進去，但只讀得到名字與介紹
@@ -6070,15 +6156,7 @@
         : '這一層的任務都過了，可以送交關卡審核。';
     })();
     (v.taskGroups || []).forEach(function (g) { g.desc = fixCal(g.desc); });
-    /* 守關掉落：一層一件，只有走完那一層才拿得到——四件裡沒有一件
-       是別的地方生得出來的，所以它是收集的骨架。跟道具的差別在於
-       道具講「你學到什麼」，它講「他留下什麼」。 */
-    (v.collSections || []).forEach(function (g) {
-      if (g.title !== '寶物') return;
-      g.title = '守關掉落';
-      g.note = '一層一件，四件。擊退層底那一隻之後，牠站的地方留下的——' +
-        '斗篷人回程留在那裡的東西，只有走到那一層的盡頭才拿得到。';
-    });
+
     (v.collSections || []).forEach(function (g) { g.note = fixCal(g.note); });
     starCollection(L, v);   /* 回掘過的那一塊：金框加星 */
 

@@ -1300,7 +1300,8 @@ function apiBootstrap(token) {
       out.finds = findsOfUser_(u.userId);
       out.codex = codexOfUser_(u.userId);
       out.findsTotal = FINDS_N;
-      out.digPages = digPages_(u.teamId);
+      out.digPages = digPagesOfUser_(u.userId);
+      out.clears = clearsOfUser_(u.userId);
       out.digTotal = DIG_PAGES;
       if (me) {
         var mp = teamPub_(me, courseWeek);
@@ -1939,6 +1940,56 @@ function recordOf_(teamId, classId) {
    一個學生換班、換組、換專案，圖鑑跟坑屑都還是他的。
    Roster.claimedBy 記著誰認領了哪一組的哪一個身分，用它把使用者
    待過的每一組串起來。 */
+/** 這一組現在有哪些人 */
+function usersOfTeam_(teamId) {
+  var out = [];
+  readTable_('Roster').forEach(function (r) {
+    if (String(r.teamId) !== String(teamId)) return;
+    var c = String(r.claimedBy || '');
+    if (c && out.indexOf(c) < 0) out.push(c);
+  });
+  return out;
+}
+
+/** 這個人撿到的日誌，跨專案累積。TeamTasks 與 Digs 兩個來源都算。 */
+function digPagesOfUser_(userId) {
+  var mine = teamsOfUser_(userId), out = [];
+  if (!mine.length) return out;
+  var take = function (v) {
+    var n = Number(v);
+    if (n >= 1 && n <= DIG_PAGES && out.indexOf(n) < 0) out.push(n);
+  };
+  readTable_('TeamTasks').forEach(function (r) { if (mine.indexOf(String(r.teamId)) >= 0) take(r.page); });
+  readTable_('Digs').forEach(function (d) { if (mine.indexOf(String(d.teamId)) >= 0) take(d.page); });
+  return out.sort(function (a, b) { return a - b; });
+}
+
+/** 抽新的一片時要排除的：這一組自己的，加上組員各自帶過來的。 */
+function digPagesSeenBy_(teamId) {
+  var out = digPages_(teamId).slice();
+  usersOfTeam_(teamId).forEach(function (uid) {
+    digPagesOfUser_(uid).forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
+  });
+  return out.sort(function (a, b) { return a - b; });
+}
+
+/**
+ * 這個人每一區走完過幾次，跨專案累加。
+ * 守關的那四隻不換——換的是牠站的地方留下的東西，這個數字決定給第幾件。
+ */
+function clearsOfUser_(userId) {
+  var mine = teamsOfUser_(userId), out = [0, 0, 0, 0];
+  if (!mine.length) return out;
+  readTable_('Teams').forEach(function (t) {
+    if (mine.indexOf(String(t.teamId)) < 0) return;
+    jparse_(t.passed, []).forEach(function (x) {
+      var n = Number(x);
+      if (n >= 1 && n <= 4) out[n - 1]++;
+    });
+  });
+  return out;
+}
+
 function teamsOfUser_(userId) {
   var out = [];
   readTable_('Roster').forEach(function (r) {
@@ -2227,7 +2278,7 @@ function rollPage_(teamId) {
            r.pageAt && ymd_(new Date(r.pageAt)) === today;
   });
   if (gotToday) return 0;
-  var have = digPages_(teamId), left = [];
+  var have = digPagesSeenBy_(teamId), left = [];
   for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
   return left.length ? left[Math.floor(Math.random() * left.length)] : 0;
 }
@@ -2337,7 +2388,7 @@ function apiCloseDig(token, digId, result) {
 
     var page = 0;
     if (!gotToday) {
-      var have = digPages_(u.teamId), left = [];
+      var have = digPagesSeenBy_(u.teamId), left = [];
       for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
       if (left.length) page = left[Math.floor(Math.random() * left.length)];
     }
@@ -2347,7 +2398,7 @@ function apiCloseDig(token, digId, result) {
       text: row.text, estDays: row.estDays, bet: row.bet,
       result: res, page: page || '', openedAt: row.openedAt, closedAt: new Date()
     });
-    return ok_({ result: res, page: page, pages: digPages_(u.teamId), total: DIG_PAGES });
+    return ok_({ result: res, page: page, pages: digPagesOfUser_(u.userId), total: DIG_PAGES });
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 
