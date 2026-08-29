@@ -7,7 +7,9 @@ const path = require('path');
 const vm = require('vm');
 const shim = require('./shim');
 
-const SRC = fs.readFileSync(path.join(__dirname, 'Code.gs'), 'utf8');
+/* 直接讀原始碼，不讀 functions/Code.gs —— 那是 build 產物，本機忘了
+   cp 就會測到舊檔。CI 的 cp 留著，因為部署只帶得走 functions/ 底下的。 */
+const SRC = fs.readFileSync(path.join(__dirname, '..', 'gas', 'Code.gs'), 'utf8');
 const HEADS = (function () {
   const m = SRC.match(/var SHEET_DEFS = \{[\s\S]*?\n\};/);
   const box = vm.createContext({});
@@ -183,7 +185,7 @@ T('提交有進 Submissions', DB.Submissions.length === 1, DB.Submissions.length
 
 /* 16. 全收集：只採到 1/6 不准送關卡 */
 const gate1 = run('apiSubmitGate', [stk, ['走過的路', '變化', '接下來']]);
-T('沒採齊就送關卡 → 被擋（全收集第一道）', gate1 && gate1.ok === false, gate1);
+T('沒採齊也送得出關卡（收集不再是門檻）', gate1 && gate1.ok === true, gate1);
 
 /* 17. 老師確認通過 */
 const rev = run('apiReviewItem', [tk, claim.teamId, taskId, 'pass', '有講出為什麼是這一件，通過。']);
@@ -192,7 +194,7 @@ T('合格考量有存下來', DB.Reviews.length === 1 && DB.Reviews[0].reason.le
 
 /* 18. 採到 1 塊但礦脈只開了 1/6，仍不准過關 */
 const gate2 = run('apiSubmitGate', [stk, ['走過的路', '變化', '接下來']]);
-T('礦脈沒開完仍被擋（全收集第二道）', gate2 && gate2.ok === false, gate2);
+T('礦脈沒開完也送得出關卡（過不過是老師決定）', gate2 && gate2.ok === true, gate2);
 
 /* 19. 學生不能假扮老師 */
 const fake = run('apiReviewItem', [stk, claim.teamId, taskId, 'pass', '我自己通過']);
