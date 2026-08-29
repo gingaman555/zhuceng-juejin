@@ -5328,7 +5328,7 @@ class Component extends DCLogic {
     2: ['聽紋晶', '篩光石', '徑錄礦', '顯影砂'],
     3: ['初型岩', '因由石', '反響礦', '二階水晶'],
     4: ['再凝岩', '前後水晶', '磨心礦', '厚能量石'],
-    5: ['完成之光']
+    4: ['冷玉印']
   };
 
   var API = {
@@ -8727,11 +8727,6 @@ class Component extends DCLogic {
       ';border:1px ' + (done ? 'solid #3A3026' : 'dashed #2E2822');
 
     /* 這一層層底站著誰。點下去就是那隻生物的完整介紹。 */
-    /* 寶物卡下面那句：它是誰留下的 */
-    v.sel.treFrom = bz
-      ? '擊退' + bz.name + '之後，牠站的地方留下的。'
-      : '走到最深處才拿得到。';
-
     /* 這一層對這一組是什麼，用老師放行時說的那句話。
        每個老師對每一組的規劃都不同，班級層級的標籤不可能對。 */
     var said = layerLabel(L, n);
@@ -9057,63 +9052,6 @@ class Component extends DCLogic {
         at++; put();
         root.style.setProperty('--jlz-scene-o', '1');
       }, 460);
-    });
-  }
-
-  /* ============================================================
-     寶物：改成擊退層底那一隻之後，牠站的地方留下的東西。
-
-     四件本來就剛好是各自那隻的反面——霧面者沒有臉、羅經盤沒有
-     指針；千晶母說「永遠還有」、七稜燈自己不發光；擬聲者靠迴聲
-     活著、啞鈴不出聲；漲潮者是熱、冷玉印不會熱。原本缺的只是
-     沒有一句話把這件事說出來，而且來源被寫成斗篷人給的。
-
-     這樣三件東西才串得起來：
-       礦石 →（斗篷人）→ 道具 → 打贏生物 → 生物留下的寶物
-     而第五層那頂空冠的四個槽，正好收四隻生物留下的那四件。
-
-     原型檔案不動，開機的時候就地改寫 LAYERS 的文字。 */
-  var TREASURE_TEXT = {
-    1: {
-      desc: '霧散開之後，牠站的地方只剩這個。盤面的刻度都在，指針的位置是空的——跟牠一樣，沒有臉。',
-      look: '直徑約一個手掌的薄金盤，鏽蝕嚴重，表面斑駁的墨綠與赭褐。邊緣一圈精細刻度，但符號不屬於任何已知系統。厚度極薄，比看起來輕。撿起來的時候還帶著霧的濕氣。',
-      line: '「牠沒有臉。這個也沒有指針。」',
-      notice: '它明顯不是從土裡長出來的——加工過、對稱、有人手的痕跡。一隻沒有人到過的地底生物，身上為什麼會有一件人造的東西？'
-    },
-    2: {
-      desc: '外圍的碎晶停止增生之後，中央那一顆熄了，位置上留下這個。內部沒有燭芯，也沒有任何光源——但拿到水晶旁邊，它會自己折出七道光。',
-      look: '約掌心高的小提燈，黃銅骨架包著七片切面玻璃。提環磨得發亮，顯示被拿了很多年。',
-      line: '「亮不是它給的。」',
-      notice: '第二件人造物。牠說「這裡永遠還有」，留下來的卻是一件自己不發光的東西。'
-    },
-    3: {
-      desc: '殘影收攏成一個之後，牠原地留下這個。倒過來是空的，沒有鈴舌，搖它不出聲——但你搖的時候，迴聲會停一瞬間。',
-      look: '拇指大的青銅小鈴，表面有極細的雲雷紋。鈴口有一圈被長期摩擦的亮邊。',
-      line: '「安靜一下比較好想事情。」',
-      notice: '一個靠迴聲活著的東西，留下一件不出聲的物品。第三件了，而且三件都不屬於這裡。'
-    },
-    4: {
-      desc: '岩漿退下去、牠整個站起來之後，原地剩下這一枚。在岩漿旁邊也不會熱。底面刻著一個字，筆畫像篆書但不是——刻痕很深，是常用的印。',
-      look: '方形玉印，邊長約三指寬，玉色是帶灰的青，內有一縷絮狀白紋。頂端是簡單的方鈕，沒有雕飾。',
-      line: '「總有一天你會認得。」',
-      notice: '一枚被反覆使用的印，代表有人拿它蓋過很多次。四件湊齊了——是誰把它們一件一件放在那四隻身上的？'
-    },
-    5: {
-      desc: '冠身正面有四個大小不一的空鑲嵌槽——一個圓形、一個方形、兩個不規則。槽底有舊的鑲嵌痕與微量氧化。你身上剛好有四件。',
-      look: '細窄的金屬環冠，直徑約一個頭圍，樣式極簡。整體很輕。',
-      line: '「本來就是空的。」',
-      notice: '四隻生物身上各留下一件。全部帶到這裡，這頂冠才有東西可以鑲——那四件本來就是從這裡拆下去的。'
-    }
-  };
-
-  function retellTreasures(L) {
-    if (LIVE.treasuresRetold) return;
-    LIVE.treasuresRetold = true;
-    (L.LAYERS || []).forEach(function (l) {
-      var t = TREASURE_TEXT[l.n];
-      if (!t) return;
-      l.treDesc = t.desc; l.treLook = t.look;
-      l.treLine = t.line; l.treNotice = t.notice;
     });
   }
 
@@ -10206,8 +10144,7 @@ class Component extends DCLogic {
     { '#': '#C9A227', o: '#7A6318', '*': '#F2E6C8' },   /* L1 荒原 */
     { '#': '#5FA8C7', o: '#2E5F73', '*': '#D8F2FA' },   /* L2 水晶 */
     { '#': '#8C7BC7', o: '#4A3F73', '*': '#E4DCFA' },   /* L3 迴聲 */
-    { '#': '#D9603F', o: '#7A2F1C', '*': '#FAD9CC' },   /* L4 熔火 */
-    { '#': '#E9B341', o: '#8A6420', '*': '#FFF0C8' }    /* L5 星核 */
+    { '#': '#D9603F', o: '#7A2F1C', '*': '#FAD9CC' }    /* L4 熔火 */
   ];
 
   /* 編號 -> 那一隻的全部資料。純函式，同一個編號永遠長一樣。 */
@@ -10855,7 +10792,6 @@ class Component extends DCLogic {
     2: ['聽紋晶', '篩光石', '徑錄礦', '顯影砂'],
     3: ['初型岩', '因由石', '反響礦', '二階水晶'],
     4: ['再凝岩', '前後水晶', '磨心礦', '厚能量石'],
-    5: ['完成之光']
   };
   var MINS_TOTAL = 17;
 
@@ -12652,27 +12588,28 @@ class Component extends DCLogic {
 
     var d = S.finData || { rows: [], cross: { total: 0, agree: 0, optimistic: 0, conservative: 0 }, totalRejected: 0, totalSubs: 0 };
 
-    /* --- 大秘寶：空冠（復原） --- */
-    var sp5 = layerSprites(L, 5);
+    /* --- 走完四區之後那一格：四件道具 ---
+       空冠沒了（寶物整套拿掉、也沒有第五層），改成擺一路帶下來的四件
+       道具。它們每一件都對應一個專案管理的能力，不像寶物只是過關就給。 */
     var crownUrl = (window.JLZ_SPRITES || {})['tre-crown-restored'];
     v.crownIcon = crownUrl
       ? 'display:block;width:76px;height:76px;flex:none;background:url(' + crownUrl + ') center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 0 20px rgba(233,179,65,.45))'
       : 'display:block;width:76px;height:76px;flex:none;background:radial-gradient(circle at 50% 38%,#E9B341,#6B4C15);clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%)';
-    v.crownName = extra.name || '空冠（復原）';
-    v.crownLook = extra.look || '';
-    v.crownTrait = extra.trait || '';
-    v.crownLine = extra.line || '';
-    v.crownNotice = extra.notice || '';
+    v.crownName = '一路帶下來的四件';
+    v.crownLook = '四個領域各一件。每一件都是某一次卡住之後才拿到的。';
+    v.crownTrait = '它們不會變得更華麗，只是完整了。';
+    v.crownLine = (extra.line || '');
+    v.crownNotice = (extra.notice || '');
     v.crownSlots = [1, 2, 3, 4].map(function (n) {
       var lay = L.LAYERS[n - 1] || {};
       var got = (S.passed || []).indexOf(n) >= 0;
       var sp = layerSprites(L, n);
       return {
-        name: got ? lay.treasure : '？？？',
+        name: got ? lay.tool : '？？？',
         color: got ? '#E9B341' : '#5F574C',
         box: 'display:block;width:82px;padding:11px 5px;text-align:center;background:' +
           (got ? 'rgba(233,179,65,.08)' : 'rgba(0,0,0,.3)') + ';border:1px ' + (got ? 'solid #5A4A2C' : 'dashed #2C251D'),
-        icon: got && sp.treasure
+        icon: got && sp.tool
           ? 'display:block;width:30px;height:30px;margin:0 auto;background:url(' + sp.treasure + ') center/contain no-repeat;image-rendering:pixelated'
           : 'display:block;width:26px;height:26px;margin:2px auto;background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.3),transparent 70%)'
       };
@@ -12766,27 +12703,33 @@ class Component extends DCLogic {
     var fin = (d.finale || {});
     var submitted = !!fin.submitted;
 
-    /* --- 故事結局：斗篷人把話說完 --- */
+    /* --- 故事結局：斗篷人把話說完 ---
+       說多少看你撿到幾片日誌。二十四片是他一路上掉的，撿得越齊，
+       這裡看到的越完整——那也是日誌唯一的出口。 */
     (function () {
-      var L5 = L.LAYERS[4] || {};
       var ex = (L.EXTRA || [])[0] || {};
-      var names = ((S.finData || {}).specNames) || S.specNames || {};
-      var lightName = (S.finLight || names['完成之光'] || '').trim();
+      var pages = (S.digPages || []).length;
+      var tot = S.digTotal || 24;
+      var deep = pages >= tot * 0.75, some = pages >= tot * 0.25;
       v.endingPages = [
-        { k: '結局 · 一', t: '牆是空的',
-          b: L5.scene + '\n\n' +
-             '你們一路把四件寶物帶到這裡：' + (L.LAYERS.slice(0, 4).map(function (x) { return x.treasure; }).join('、')) + '。' +
-             '最後這一件是空冠——' + (L5.treLine || '「本來就是空的。」') + '　' + (L5.treNotice || '') },
-        { k: '結局 · 二', t: ex.name || '空冠（復原）',
-          b: (ex.look || '') + '\n\n' + (ex.trait || '') },
+        { k: '結局 · 一', t: '走到底了',
+          b: '四個領域都走完了，而且他點了頭。\n\n' +
+             '你們一路帶下來的四件道具：' +
+             (L.LAYERS || []).slice(0, 4).map(function (x) { return x.tool; }).join('、') +
+             '。每一件都是某一次卡住之後才拿到的。' },
+        { k: '結局 · 二', t: '他是誰',
+          b: deep
+            ? (ex.notice || '')
+            : some
+              ? '你撿到的日誌拼得出一半：有人比你們早來，一路留下記號。剩下的那幾片還在土裡。'
+              : '你幾乎沒撿到他的日誌，所以他是誰仍然沒有答案。那些紙還在下面。' },
         { k: '結局 · 三', t: '他最後說的話',
-          b: (ex.line || '') + '\n\n' + (ex.notice || '') },
-        { k: '結局 · 四', t: lightName ? '你們把它叫做「' + lightName + '」' : '這一塊沒有人替它命名過',
-          b: lightName
-            ? '第五層那一塊礦石沒有人命名過，是你們替它取的名字。牆上要刻什麼，也是你們決定的——' +
-              '這一層他沒有給清單，因為到這裡沒有答案可給。'
-            : '第五層那一塊礦石沒有人替它命名過。這一層他沒有給清單，因為到這裡沒有答案可給——' +
-              '牆上要刻什麼，你們自己決定。' }
+          b: deep ? (ex.line || '') : '（他沒有說完。缺的那幾片日誌裡。）' },
+        { k: '結局 · 四', t: '你們撿到的',
+          b: '斗篷人的日誌　' + pages + ' / ' + tot + ' 片\n\n' +
+             (pages >= tot
+               ? '全部撿齊了。整本拼起來，他從頭到尾說了什麼你們都知道。'
+               : '還有 ' + (tot - pages) + ' 片在土裡。下一個專案繼續挖，圖鑑跟日誌都跟著你走。') }
       ].map(function (pg, i) {
         return Object.assign(pg, {
           kStyle: "font:400 11px/1 'C11';letter-spacing:.24em;color:#8A8073",

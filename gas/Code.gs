@@ -1709,7 +1709,7 @@ function apiLogRead(token, targetTeamId) {
   } catch (e) { return err_(e); }
 }
 
-/** 第五層「完成之光」由學生自行命名。 */
+/** 保留給礦石自行命名（目前沒有需要命名的礦石）。 */
 function apiSaveSpecName(token, key, name) {
   try {
     var u = auth_(token);
@@ -2433,7 +2433,7 @@ var MINERALS_BY_LAYER = {
   2: ['聽紋晶', '篩光石', '徑錄礦', '顯影砂'],
   3: ['初型岩', '因由石', '反響礦', '二階水晶'],
   4: ['再凝岩', '前後水晶', '磨心礦', '厚能量石'],
-  5: ['完成之光']
+  4: ['冷玉印']
 };
 
 function apiPublishList(token, classId, layer, items) {
