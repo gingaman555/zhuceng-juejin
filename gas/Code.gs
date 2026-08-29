@@ -35,7 +35,7 @@ var SHEET_DEFS = {
   Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'passed', 'toolLevels',
                 'gateText', 'gateSubmitted', 'gateVerdict', 'specNames', 'createdAt', 'gateTs'],
   Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'teams', 'checks', 'createdAt'],
-  TeamTasks:   ['teamId', 'taskId', 'status', 'text', 'files', 'fb', 'fbType', 'passedWeek',
+  TeamTasks:   ['teamId', 'taskId', 'status', 'vow', 'text', 'files', 'fb', 'fbType', 'passedWeek',
                 'effort', 'effortNote', 'blocker', 'checked', 'updatedAt'],
   Submissions: ['subId', 'taskId', 'teamId', 'week', 'dueWeek', 'overdue', 'len', 'files', 'attempt', 'text',
                 'effort', 'effortNote', 'blocker', 'fileList', 'ts'],
@@ -48,7 +48,7 @@ var SHEET_DEFS = {
   Passes:      ['passId', 'teamId', 'layer', 'week', 'toolLevel', 'gateCell1', 'gateCell2', 'gateCell3', 'verdict', 'reason', 'ts'],
   Reads:       ['readId', 'readerTeam', 'targetTeam', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected', 'ts'],
   Codes:       ['revId', 'coder', 'code', 'ts'],
-  Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'ts'],
+  Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'by', 'ts'],
   Digs:        ['digId', 'teamId', 'classId', 'layer', 'text', 'estDays', 'bet',
                 'result', 'page', 'openedAt', 'closedAt'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
@@ -1129,7 +1129,7 @@ function teamTaskMap_(teamId) {
   return m;
 }
 
-function mergeTasks_(defs, tmap, courseWeek, dueWeekFn, teamId) {
+function mergeTasks_(defs, tmap, courseWeek, dueWeekFn, teamId, klass) {
   return defs.map(function (d) {
     var s = tmap[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', passedWeek: null,
                             effort: '', effortNote: '', blocker: '', checked: [] };
@@ -1139,14 +1139,21 @@ function mergeTasks_(defs, tmap, courseWeek, dueWeekFn, teamId) {
       effort: s.effort, effortNote: s.effortNote, blocker: s.blocker,
       checked: s.checked || [],
       star: teamId ? starOf_(teamId, d.id) : false,
+      vow: s.vow || '',
+      /* 過了才結算。還沒過的時候顯示「還沒結算」，不要先給答案—— */
+      /* 先給答案的話學生會照著答案倒推，那就不是宣告了。 */
+      vowWon: (teamId && s.vow && String(s.status) === 'passed')
+        ? vowWon_(teamId, d.id, d, klass, s.vow) : false,
       over: dw !== null && dw < courseWeek && s.status !== 'passed'
     });
   });
 }
 
 function dueWeekOf_(due) {
-  var s = String(due || '');
-  if (s === '不設限') return null;
+  if (typeof due === 'number') return due > 0 ? Math.max(1, Math.min(156, Math.floor(due))) : null;
+  var s = String(due || '').trim();
+  if (s === '' || s === '不設限') return null;
+  if (/^\d+$/.test(s)) { var n = +s; return n > 0 ? Math.max(1, Math.min(156, n)) : null; }
   var m = /第\s*(\d+)\s*週/.exec(s);
   if (m) return Math.max(1, Math.min(156, +m[1]));
   return null;
@@ -1286,6 +1293,8 @@ function apiBootstrap(token) {
     if (u.role === 'student') {
       var me = teamById_(u.teamId);
       out.myTeamId = u.teamId || '';
+      out.grid = gridOf_(u.teamId, u.classId);
+      out.record = recordOf_(u.teamId, u.classId);
       out.digs = digsOf_(u.teamId);
       out.digPages = digPages_(u.teamId);
       out.digTotal = DIG_PAGES;
@@ -1294,7 +1303,7 @@ function apiBootstrap(token) {
         var fMine = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(me.teamId); })[0];
         mp.finaleOpened = !!(fMine && String(fMine.opened) === 'Y');
         out.myTeam = mp;
-        out.tasks = mergeTasks_(tasksOfClass_(classId, me.teamId), teamTaskMap_(me.teamId), courseWeek, null, me.teamId);
+        out.tasks = mergeTasks_(tasksOfClass_(classId, me.teamId), teamTaskMap_(me.teamId), courseWeek, null, me.teamId, kl);
         out.plan = {};
         readTable_('Plans').forEach(function (p) {
           if (String(p.teamId) !== String(me.teamId)) return;
@@ -1319,7 +1328,7 @@ function apiBootstrap(token) {
     if (u.role === 'teacher') {
       out.teamTasks = {};
       allTeams.forEach(function (t) {
-        out.teamTasks[t.id] = mergeTasks_(tasksOfClass_(classId, t.id), teamTaskMap_(t.id), courseWeek, null, t.id);
+        out.teamTasks[t.id] = mergeTasks_(tasksOfClass_(classId, t.id), teamTaskMap_(t.id), courseWeek, null, t.id, kl);
       });
       out.queue = [];
       allTeams.forEach(function (t) {
@@ -1868,6 +1877,56 @@ function scoreOf_(teamId) {
 }
 
 /** 全班名冊。以隊伍為單位，不做個人排名。 */
+/**
+ * 這一組收到的格子：'層-破法' 的集合。
+ * 同一層同一種只算一格——所以要跨層去湊，不能在同一層刷同一樣。
+ */
+function gridOf_(teamId, classId) {
+  var kl = classById_(classId);
+  var defs = tasksOfClass_(classId, teamId);
+  var byId = {};
+  defs.forEach(function (d) { byId[String(d.id)] = d; });
+
+  var out = {};
+  readTable_('TeamTasks').forEach(function (r) {
+    if (String(r.teamId) !== String(teamId)) return;
+    if (String(r.status) !== 'passed') return;
+    var vow = String(r.vow || '');
+    if (!vow) return;
+    var def = byId[String(r.taskId)];
+    if (!def) return;
+    if (!vowWon_(teamId, r.taskId, def, kl, vow)) return;
+    out[(Number(def.layer) || 1) + '-' + vow] = true;
+  });
+  return Object.keys(out);
+}
+
+/** 這一組每一項任務的紀錄：宣告了什麼、拿到沒、老師說了什麼。 */
+function recordOf_(teamId, classId) {
+  var kl = classById_(classId);
+  var defs = tasksOfClass_(classId, teamId);
+  var tmap = teamTaskMap_(teamId);
+  var revs = readTable_('Reviews').filter(function (r) { return String(r.teamId) === String(teamId); });
+  var subs = readTable_('Submissions').filter(function (s) { return String(s.teamId) === String(teamId); });
+
+  return defs.map(function (d) {
+    var st = tmap[d.id] || {};
+    var myRevs = revs.filter(function (r) { return String(r.taskId) === String(d.id); });
+    var last = myRevs[myRevs.length - 1] || null;
+    var vow = String(st.vow || '');
+    return {
+      id: d.id, layer: Number(d.layer) || 1, title: d.title,
+      status: st.status || 'todo',
+      vow: vow,
+      won: (vow && String(st.status) === 'passed') ? vowWon_(teamId, d.id, d, kl, vow) : false,
+      rounds: subs.filter(function (s) { return String(s.taskId) === String(d.id); }).length,
+      sentBack: myRevs.filter(function (r) { return String(r.result) === 'needfix'; }).length,
+      say: last ? String(last.reason || '') : '',
+      mineral: d.mineral || ''
+    };
+  });
+}
+
 function apiRoster(token) {
   try {
     var u = auth_(token);
@@ -1875,13 +1934,145 @@ function apiRoster(token) {
       .filter(function (t) { return String(t.classId) === String(u.classId); })
       .map(function (t) {
         var s = scoreOf_(t.teamId);
-        return { teamId: t.teamId, name: t.name || t.teamId,
+        var g = gridOf_(t.teamId, u.classId);
+        return { teamId: t.teamId, name: t.name || t.teamId, cells: g.length, grid: g,
                  me: String(t.teamId) === String(u.teamId || ''),
                  ticks: s.ticks, pages: s.pages, stars: s.stars,
                  base: s.base, bonus: s.bonus, total: s.total };
       });
-    out.sort(function (a, b) { return b.total - a.total; });
+    /* 先比格子，格子一樣才比分數 */
+    out.sort(function (a, b) { return (b.cells - a.cells) || (b.total - a.total); });
     return ok_({ roster: out });
+  } catch (e) { return err_(e); }
+}
+
+/* ================= 破法 =================
+   一項任務可以宣告一樣破法。過關的時候結算：做到了就掉那一樣。
+
+   五樣的共同點：全部是學生自己能決定的。刻意不放「一次過」跟
+   「被退幾次」——那兩件事是老師在決定的，拿來當收集目標就變成
+   在收集老師的心情。
+
+   也刻意不隨機。隨機的是遇到誰、掉什麼殘留，不是這一格。 */
+
+var VOWS = ['early', 'keep', 'back', 'all', 'probe'];
+
+/**
+ * 一項任務的時間窗：發布 → 期限。回傳 {a, b} 兩個毫秒數。
+ * 期限訂不出來就回 null——那兩樣跟時間有關的破法就拿不到。
+ */
+function taskSpan_(def, klass) {
+  var dw = dueWeekOf_(def && def.due);
+  if (dw === null) return null;
+  var start = toDate_(klass ? klass.courseStart : cfg_('courseStart', '2026-09-14'));
+  var s0 = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+  var b = s0 + dw * 7 * 86400000;                    /* 期限那一週的週末 */
+  var a = def && def.createdAt ? new Date(def.createdAt).getTime() : 0;
+  if (!a || a >= b) a = b - 14 * 86400000;           /* 沒有發布時間就假定兩週的窗 */
+  return { a: a, b: b };
+}
+
+/** 某個時間點走到這個窗的幾成（0..1）。窗外就夾到 0 或 1。 */
+function spanAt_(span, d) {
+  if (!span || span.b <= span.a) return 1;
+  var t = new Date(d).getTime();
+  return Math.max(0, Math.min(1, (t - span.a) / (span.b - span.a)));
+}
+
+/** 這一組在這一項的勾選事件，照時間排好 */
+function tickEvents_(teamId, taskId) {
+  return checksOf_(teamId, taskId).filter(function (c) { return String(c.act) === 'on'; });
+}
+
+/**
+ * 宣告的那一樣做到了沒。
+ * def 是任務定義，klass 是班級（要算週次）。
+ */
+function vowWon_(teamId, taskId, def, klass, vow) {
+  if (VOWS.indexOf(String(vow)) < 0) return false;
+
+  if (vow === 'back') return starOf_(teamId, taskId);
+
+  var ticks = tickEvents_(teamId, taskId);
+  if (!ticks.length) return false;
+
+  if (vow === 'early') {
+    /* 第一條勾的時候，這一項的時間窗還沒走到一半。 */
+    var sp = taskSpan_(def, klass);
+    if (!sp) return false;
+    return spanAt_(sp, ticks[0].ts) < 0.5;
+  }
+
+  if (vow === 'keep') {
+    /* 第一次送出的時候，窗還沒走到 90%——沒有壓在最後才交。 */
+    var sp2 = taskSpan_(def, klass);
+    if (!sp2) return false;
+    var first = null;
+    readTable_('Submissions').forEach(function (s) {
+      if (String(s.teamId) !== String(teamId) || String(s.taskId) !== String(taskId)) return;
+      if (!first || (Number(s.attempt) || 0) < (Number(first.attempt) || 0)) first = s;
+    });
+    if (!first) return false;
+    return spanAt_(sp2, first.ts) < 0.9;
+  }
+
+  if (vow === 'all') {
+    /* 每個認領過身分的組員都要勾過至少一條 */
+    var members = readTable_('Roster').filter(function (r) {
+      return String(r.teamId) === String(teamId) && String(r.claimedBy || '');
+    });
+    if (members.length < 2) return false;   /* 一個人的隊伍沒有這一項 */
+    var who = {};
+    ticks.forEach(function (c) { if (c.by) who[String(c.by)] = true; });
+    for (var i = 0; i < members.length; i++) {
+      if (!who[String(members[i].claimedBy)]) return false;
+    }
+    return true;
+  }
+
+  if (vow === 'probe') {
+    /* 開在第一條勾之後、收在送出之前的試挖，至少一條 */
+    var t0 = new Date(ticks[0].ts).getTime();
+    var sent = 0;
+    readTable_('Submissions').forEach(function (s) {
+      if (String(s.teamId) !== String(teamId) || String(s.taskId) !== String(taskId)) return;
+      var ts = new Date(s.ts).getTime();
+      if (!sent || ts < sent) sent = ts;
+    });
+    if (!sent) return false;
+    var hit = false;
+    readTable_('Digs').forEach(function (d) {
+      if (String(d.teamId) !== String(teamId) || !String(d.result || '')) return;
+      var o = new Date(d.openedAt).getTime(), c = new Date(d.closedAt).getTime();
+      if (o >= t0 && c <= sent) hit = true;
+    });
+    return hit;
+  }
+
+  return false;
+}
+
+/** 宣告。送出之後就不能改了——不然那不是宣告，是事後填答。 */
+function apiSetVow(token, taskId, vow) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以宣告。');
+    var k = String(vow || '');
+    if (VOWS.indexOf(k) < 0 && k !== '') return err_('沒有這一種破法。');
+
+    var row = readTable_('TeamTasks').filter(function (r) {
+      return String(r.teamId) === String(u.teamId) && String(r.taskId) === String(taskId);
+    })[0] || null;
+    var st = row ? String(row.status) : 'todo';
+    if (st === 'submitted') return err_('已經送出去了，宣告不能改。');
+    if (st === 'passed') return err_('這一項已經過了。');
+
+    upsert_('TeamTasks', ['teamId', 'taskId'], {
+      teamId: u.teamId, taskId: taskId,
+      status: st, checked: row ? row.checked : '[]',
+      vow: k, updatedAt: new Date()
+    });
+    return ok_({ vow: k });
   } catch (e) { return err_(e); }
 }
 
@@ -1918,7 +2109,7 @@ function apiSetCheck(token, taskId, idx, on) {
     appendRow_('Checks', {
       ckId: 'ck' + Utilities.getUuid().slice(0, 8),
       teamId: u.teamId, taskId: taskId, idx: n,
-      act: on ? 'on' : 'off', ts: new Date()
+      act: on ? 'on' : 'off', by: u.userId || u.account || '', ts: new Date()
     });
 
     return ok_({ checked: next, total: list.length, star: starOf_(u.teamId, taskId) });

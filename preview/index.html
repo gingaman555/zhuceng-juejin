@@ -859,6 +859,24 @@ window.JLZ_SPRITES = {
                     <div style="font:500 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">作業交到老師本來要你交的地方。</div>
                     <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:7px;text-wrap:pretty">這裡不收檔案，也不會看你交了什麼。交完再回來勾——他去他收作業的地方看完，再回來按過或不過。</div>
                   </div>
+                  <sc-if value="{{ hasVow }}" hint-placeholder-val="{{ true }}">
+                    <div style="{{ vowBox }}">
+                      <div style="font:400 11px/1.6 'C11';color:#8A8073;margin-bottom:6px">{{ vowMobNote }}</div>
+                      <div style="font:500 22px/1.4 'C11';color:#E9B341;margin-bottom:6px">{{ vowTitle }}</div>
+                      <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ vowNote }}</div>
+                      <div style="display:flex;flex-direction:column;gap:6px">
+                        <sc-for list="{{ vowPicks }}" as="vw" hint-placeholder-count="5">
+                          <button onClick="{{ vw.pick }}" style="{{ vw.style }}">
+                            <span style="{{ vw.markStyle }}">{{ vw.mark }}</span>
+                            <span style="flex:1;min-width:0">
+                              <span style="{{ vw.nameStyle }}">{{ vw.name }}</span>
+                              <span style="{{ vw.howStyle }}">{{ vw.how }}</span>
+                            </span>
+                          </button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
                   <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">
                     <div style="{{ checkBoxStyle }}">
                       <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px">
@@ -981,7 +999,7 @@ window.JLZ_SPRITES = {
                 <sc-if value="{{ showMapTabs }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                     <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if>
+                    <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                     <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                       <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                     </sc-if>
@@ -1253,6 +1271,56 @@ window.JLZ_SPRITES = {
             </div>
           </sc-if>
 
+          <sc-if value="{{ scRec }}" hint-placeholder-val="{{ false }}">
+            <div data-screen-label="S-11 任務紀錄" style="padding:0 0 32px">
+              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+                  <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
+                  <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
+                  <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
+                  <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
+                </div>
+                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-11 · RECORD</div>
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin:10px 0 5px">
+                  <h1 style="font:700 33px/1.4 'C11';margin:0;letter-spacing:.04em">破法</h1>
+                  <span style="font:700 22px/1 'C11';color:#E9B341">{{ recCount }}</span>
+                </div>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ recNote }}</p>
+              </div>
+              <div style="padding:18px var(--pad) 0;display:flex;flex-direction:column;gap:13px">
+                <sc-for list="{{ gridRows }}" as="gr" hint-placeholder-count="4">
+                  <div>
+                    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+                      <span style="{{ gr.mobStyle }}">{{ gr.mob }}</span>
+                      <span style="{{ gr.tallyStyle }}">{{ gr.tally }}</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px">
+                      <sc-for list="{{ gr.cells }}" as="gc" hint-placeholder-count="5">
+                        <div style="{{ gc.style }}"><span style="{{ gc.textStyle }}">{{ gc.name }}</span></div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:26px var(--pad) 0">
+                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:12px">走過的每一項</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ recRows }}" as="rc" hint-placeholder-count="4">
+                    <div style="{{ rc.boxStyle }}">
+                      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px">
+                        <span style="{{ rc.titleStyle }}">{{ rc.title }}</span>
+                        <span style="{{ rc.statStyle }}">{{ rc.stat }}</span>
+                      </div>
+                      <div style="{{ rc.metaStyle }}">{{ rc.meta }}</div>
+                      <div style="{{ rc.vowStyle }}">{{ rc.vowTxt }}</div>
+                      <div style="{{ rc.sayStyle }}">{{ rc.say }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
           <sc-if value="{{ scHaul }}" hint-placeholder-val="{{ false }}">
             <div data-screen-label="S-10 採量" style="padding:0 0 32px">
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
@@ -1261,6 +1329,7 @@ window.JLZ_SPRITES = {
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
                   <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
                   <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
+                  <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-10 · HAUL</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">採量</h1>
@@ -1295,6 +1364,7 @@ window.JLZ_SPRITES = {
                   <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button>
                   <button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button>
                   <button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button>
+                  <button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-09 · PROBE</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">試挖</h1>
@@ -1382,7 +1452,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                   <sc-if value="{{ showRosterTab }}" hint-placeholder-val="{{ false }}">
                     <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                   </sc-if>
@@ -3146,7 +3216,7 @@ window.JLZ_SPRITES = {
               <div style="padding:22px var(--pad) 0">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
                   <button onClick="{{ mapTabMap }}" style="{{ mapTabMapStyle }}">地圖剖面</button>
-                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if>
+                  <button onClick="{{ mapTabColl }}" style="{{ mapTabCollStyle }}">收藏總覽</button><sc-if value="{{ showDigTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試挖</button></sc-if><sc-if value="{{ showHaulTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">採量</button></sc-if><sc-if value="{{ showRecTab }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mapTabRec }}" style="{{ mapTabRecStyle }}">紀錄</button></sc-if>
                   <button onClick="{{ mapTabRoster }}" style="{{ mapTabRosterStyle }}">班級名單</button>
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-04 · CLASS ROSTER</div>
@@ -5072,10 +5142,13 @@ class Component extends DCLogic {
     return Math.max(1, Math.floor(days / 7) + 1);
   }
   function dueWeekOf(due) {
-    var s = String(due || '');
-    if (s === '不設限') return null;
+    if (typeof due === 'number') return due > 0 ? Math.max(1, Math.min(156, Math.floor(due))) : null;
+    var s = String(due || '').trim();
+    if (s === '' || s === '不設限') return null;
+    if (/^\d+$/.test(s)) { var n = +s; return n > 0 ? Math.max(1, Math.min(156, n)) : null; }
     var m = /第\s*(\d+)\s*週/.exec(s);
-    return m ? Math.max(1, Math.min(156, +m[1])) : null;
+    if (m) return Math.max(1, Math.min(156, +m[1]));
+    return null;
   }
   function findUser(a) {
     a = String(a || '').trim().toLowerCase();
@@ -5136,13 +5209,15 @@ class Component extends DCLogic {
     DB.TeamTasks.forEach(function (r) { if (r.teamId === teamId) m[r.taskId] = r; });
     return m;
   }
-  function mergeTasks(defs, m, w, teamId) {
+  function mergeTasks(defs, m, w, teamId, kl) {
     return defs.map(function (d) {
       var s = m[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', effort: '', effortNote: '', blocker: '', checked: [] };
       var dw = dueWeekOf(d.due);
       return Object.assign({}, d, { status: s.status, text: s.text, files: s.files || [], effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'',
         fb: s.fb || '', fbType: s.fbType || '', checked: checkList2(s.checked),
         star: teamId ? starOf(teamId, d.id) : false,
+        vow: s.vow || '',
+        vowWon: (teamId && s.vow && s.status === 'passed') ? vowWon(teamId, d.id, d, kl, s.vow) : false,
         over: dw !== null && dw < w && s.status !== 'passed' });
     });
   }
@@ -5152,6 +5227,98 @@ class Component extends DCLogic {
     var a = raw;
     if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
     return Array.isArray(a) ? a.map(Number) : [];
+  }
+
+  var VOWS = ['early', 'keep', 'back', 'all', 'probe'];
+  function taskSpan(def, kl) {
+    var dw = dueWeekOf(def && def.due);
+    if (dw === null) return null;
+    var start = new Date(kl ? kl.courseStart : '2026-09-14');
+    var s0 = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+    var b = s0 + dw * 7 * 86400000;
+    var a = def && def.createdAt ? new Date(def.createdAt).getTime() : 0;
+    if (!a || a >= b) a = b - 14 * 86400000;
+    return { a: a, b: b };
+  }
+  function spanAt(span, d) {
+    if (!span || span.b <= span.a) return 1;
+    return Math.max(0, Math.min(1, (new Date(d).getTime() - span.a) / (span.b - span.a)));
+  }
+  function tickEvents(teamId, taskId) {
+    return DB.Checks
+      .filter(function (c) { return c.teamId === teamId && c.taskId === taskId && c.act === 'on'; })
+      .sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
+  }
+  function vowWon(teamId, taskId, def, kl, vow) {
+    if (VOWS.indexOf(String(vow)) < 0) return false;
+    if (vow === 'back') return starOf(teamId, taskId);
+    var ticks = tickEvents(teamId, taskId);
+    if (!ticks.length) return false;
+
+    if (vow === 'early') {
+      var sp = taskSpan(def, kl);
+      if (!sp) return false;
+      return spanAt(sp, ticks[0].ts) < 0.5;
+    }
+    if (vow === 'keep') {
+      var sp2 = taskSpan(def, kl);
+      if (!sp2) return false;
+      var subs = DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === taskId; })
+        .sort(function (a, b) { return (Number(a.attempt) || 0) - (Number(b.attempt) || 0); });
+      if (!subs.length) return false;
+      return spanAt(sp2, subs[0].ts) < 0.9;
+    }
+    if (vow === 'all') {
+      var members = DB.Roster.filter(function (r) { return r.teamId === teamId && r.claimedBy; });
+      if (members.length < 2) return false;
+      var who = {};
+      ticks.forEach(function (c) { if (c.by) who[String(c.by)] = true; });
+      return members.every(function (m) { return who[String(m.claimedBy)]; });
+    }
+    if (vow === 'probe') {
+      var t0 = new Date(ticks[0].ts).getTime();
+      var subs2 = DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === taskId; });
+      if (!subs2.length) return false;
+      var sent = Math.min.apply(null, subs2.map(function (x) { return new Date(x.ts).getTime(); }));
+      return DB.Digs.some(function (d) {
+        if (d.teamId !== teamId || !d.result) return false;
+        return new Date(d.openedAt).getTime() >= t0 && new Date(d.closedAt).getTime() <= sent;
+      });
+    }
+    return false;
+  }
+
+  function gridOf(teamId, classId) {
+    var kl = classById(classId);
+    var byId = {};
+    tasksOfClass(classId, teamId).forEach(function (d) { byId[String(d.id)] = d; });
+    var out = {};
+    DB.TeamTasks.forEach(function (r) {
+      if (r.teamId !== teamId || r.status !== 'passed') return;
+      var vow = String(r.vow || '');
+      if (!vow) return;
+      var def = byId[String(r.taskId)];
+      if (!def || !vowWon(teamId, r.taskId, def, kl, vow)) return;
+      out[(Number(def.layer) || 1) + '-' + vow] = true;
+    });
+    return Object.keys(out);
+  }
+  function recordOf(teamId, classId) {
+    var kl = classById(classId);
+    var m = ttmap(teamId);
+    return tasksOfClass(classId, teamId).map(function (d) {
+      var st = m[d.id] || {};
+      var myRevs = DB.Reviews.filter(function (r) { return r.teamId === teamId && r.taskId === d.id; });
+      var last = myRevs[myRevs.length - 1] || null;
+      var vow = String(st.vow || '');
+      return { id: d.id, layer: Number(d.layer) || 1, title: d.title,
+        status: st.status || 'todo', vow: vow,
+        won: (vow && st.status === 'passed') ? vowWon(teamId, d.id, d, kl, vow) : false,
+        rounds: DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === d.id; }).length,
+        sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
+        say: last ? String(last.reason || '') : '',
+        mineral: d.mineral || '' };
+    });
   }
 
   var STAR_GAP_MS = 6 * 60 * 60 * 1000;
@@ -5564,6 +5731,8 @@ class Component extends DCLogic {
       }
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
+        out.grid = gridOf(u.teamId, u.classId);
+        out.record = recordOf(u.teamId, u.classId);
         out.digs = digsOf(u.teamId);
         out.digPages = digPages(u.teamId);
         out.digTotal = DIG_PAGES;
@@ -5572,7 +5741,7 @@ class Component extends DCLogic {
           out.myTeam = teamPub(me, w);
           var fM = (DB.Finales||[]).filter(function (x) { return x.teamId === me.teamId; })[0];
           out.myTeam.finaleOpened = !!(fM && fM.opened);
-          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w, me.teamId);
+          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w, me.teamId, kl);
           out.plan = {};
           DB.Plans.forEach(function (p) { if (p.teamId !== me.teamId) return; var b = p.toWeek||p.week||1, a = p.fromWeek||b; out.plan[p.taskId] = { a: Math.min(a,b), b: b }; });
           out.passedWeek = {};
@@ -5597,7 +5766,7 @@ class Component extends DCLogic {
           return { layer: n, count: b?b.n:0, avg: b?Math.round(b.len/b.n):0 }; });
         out.teamTasks = {}; out.queue = []; out.gates = [];
         allTeams.forEach(function (tm) {
-          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w, tm.id);
+          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w, tm.id, kl);
           out.teamTasks[tm.id] = list;
           list.forEach(function (task) {
             if (task.status === 'submitted') out.queue.push({
@@ -5916,6 +6085,20 @@ class Component extends DCLogic {
       return ok({ taskId: id });
     },
     /* 學生勾／取消勾清單上的一條 */
+    apiSetVow: function (t, taskId, vow) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以宣告。');
+      var k = String(vow || '');
+      if (VOWS.indexOf(k) < 0 && k !== '') return err('沒有這一種破法。');
+      var row = ttmap(u.teamId)[taskId];
+      if (row && row.status === 'submitted') return err('已經送出去了，宣告不能改。');
+      if (row && row.status === 'passed') return err('這一項已經過了。');
+      if (row) row.vow = k;
+      else DB.TeamTasks.push({ teamId: u.teamId, taskId: taskId, status: 'todo',
+        text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: [], vow: k });
+      persist();
+      return ok({ vow: k });
+    },
     apiSetCheck: function (t, taskId, idx, on) {
       var u = auth(t);
       if (u.role !== 'student' || !u.teamId) return err('只有學生可以勾。');
@@ -5935,7 +6118,7 @@ class Component extends DCLogic {
       else DB.TeamTasks.push({ teamId: u.teamId, taskId: taskId, status: 'todo',
         text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: next });
       DB.Checks.push({ ckId: 'ck' + uid(), teamId: u.teamId, taskId: taskId,
-        idx: n, act: on ? 'on' : 'off', ts: NOW() });
+        idx: n, act: on ? 'on' : 'off', by: u.userId || u.account || '', ts: NOW() });
       persist();
       return ok({ checked: next, total: def.checks.length, star: starOf(u.teamId, taskId) });
     },
@@ -5944,12 +6127,14 @@ class Component extends DCLogic {
       var out = DB.Teams.filter(function (x) { return x.classId === u.classId; })
         .map(function (x) {
           var sc = scoreOf(x.teamId);
-          return { teamId: x.teamId, name: x.name || x.teamId,
+          var g = gridOf(x.teamId, u.classId);
+          return { teamId: x.teamId, name: x.name || x.teamId, cells: g.length, grid: g,
                    me: x.teamId === (u.teamId || ''),
                    ticks: sc.ticks, pages: sc.pages, stars: sc.stars,
                    base: sc.base, bonus: sc.bonus, total: sc.total };
         });
-      out.sort(function (a, b) { return b.total - a.total; });
+      /* 先比格子，格子一樣才比分數 */
+      out.sort(function (a, b) { return (b.cells - a.cells) || (b.total - a.total); });
       return ok({ roster: out });
     },
     apiOpenDig: function (t, layer, text, estDays, bet) {
@@ -6301,6 +6486,14 @@ class Component extends DCLogic {
       return (this.state.tasks || []).filter(function (t) { return t.layer === lay; });
     };
 
+    /* 甘特圖整頁拿掉：有人（或稽核）直接 go('GANTT') 就轉去任務清單。
+       這件事一定要攔在 go 這一層——攔在算畫面的地方會變成
+       setState → 重算 → setState 的無窮迴圈。 */
+    ORIG.go = P.go;
+    P.go = function (screen) {
+      return ORIG.go.call(this, screen === 'GANTT' ? 'S02' : screen);
+    };
+
     /* 期限週次不再夾在 6；學期長度由班級設定 */
     ORIG.dueWeek = P.dueWeek;
     P.dueWeek = function (t) {
@@ -6309,7 +6502,7 @@ class Component extends DCLogic {
       if (typeof raw === 'number') return raw > 0 ? Math.max(1, Math.min(156, raw)) : 0;
       var s = String(raw || '');
       if (s === '不設限') return 0;
-      if (/^d+$/.test(s.trim())) { var nn = +s.trim(); return nn > 0 ? Math.max(1, Math.min(156, nn)) : 0; }
+      if (/^\d+$/.test(s.trim())) { var nn = +s.trim(); return nn > 0 ? Math.max(1, Math.min(156, nn)) : 0; }
       var m = /第\s*(\d+)\s*週/.exec(s);
       if (m) return Math.max(1, Math.min(156, +m[1]));
       var d = /(\d+)\/(\d+)/.exec(s);
@@ -6516,6 +6709,8 @@ class Component extends DCLogic {
       next.tasks = b.tasks || [];
       next.plan = b.plan || {};
       next.passedWeek = b.passedWeek || {};
+      next.grid = b.grid || [];
+      next.record = b.record || [];
       next.digs = b.digs || [];
       next.digPages = b.digPages || [];
       next.digTotal = b.digTotal || 24;
@@ -6732,6 +6927,15 @@ class Component extends DCLogic {
   /* 側欄的額外入口：學生的期末回顧、老師的 T-09。演練模式也要有。 */
   function addNavExtras(L, v, sc) {
     var S = L.state;
+
+    /* 甘特圖整頁拿掉：側欄那一格濾掉，畫面本身也關起來。
+       原型的側欄清單改不了，所以在這裡處理。
+       「我打算第幾週交」留在任務頁上——那是一項一次的宣告，
+       不是一張整學期的圖。 */
+    v.scGantt = false;
+    if (v.navItems) {
+      v.navItems = v.navItems.filter(function (n) { return n.code !== '甘特'; });
+    }
     /* 走完第五層之後，側欄多一項期末回顧 */
     if (S.role === 'student' && v.navItems) {
       var fin5 = (S.passed || []).indexOf(5) >= 0 && !!S.finOpened;
@@ -7233,7 +7437,7 @@ class Component extends DCLogic {
           '　期末回顧會把這個對照攤開來給你看。'
         : '先說你打算哪一週交，才交得出去。估錯不會怎麼樣——重點是有估過，期末才對得出你估得準不準。';
 
-      v.goGantt = function () { L.go('GANTT'); };
+      v.goGantt = function () { L.say('這一項要哪一週交，直接在上面點就好。'); };
 
       var picks = [];
       for (var w = now2; w <= Math.min(N2, now2 + 5); w++) picks.push(w);
@@ -7253,7 +7457,7 @@ class Component extends DCLogic {
             np[tid] = { a: w, b: w };
             L.setState({ plan: np });
             call('apiSavePlan', LIVE.token, tid, w, w).catch(function () {});
-            L.say('排在第 ' + w + ' 週。之後在甘特圖還可以改。');
+            L.say('排在第 ' + w + ' 週。送出之前都還可以改。');
           }
         };
       });
@@ -7478,9 +7682,11 @@ class Component extends DCLogic {
     decorateLayerPanel(L, v);
     decorateHomeBand(L, v);   /* 首頁的「你在這裡」吃的是同一份 */
     decorateChecklist(L, v);  /* 老師開了清單就逐條勾 */
+    decorateVow(L, v);        /* 這一項要拿哪一樣破法 */
     decorateGamble(L, v);     /* 勾完之後，送出前的那一下 */
     decorateDig(L, v);        /* 試挖與斗篷人的日誌 */
     decorateHaul(L, v);       /* 採量：全班的分數 */
+    decorateRecord(L, v);     /* 格子牆與任務紀錄 */
 
 
 
@@ -9049,6 +9255,100 @@ class Component extends DCLogic {
 
      這是整個系統裡唯一一個真的賭局，也是唯一一個老師給不了的
      東西——★ 只能自己在他開口之前先發現才拿得到。 */
+  /* ============================================================
+     破法：這一項你要拿哪一樣。
+
+     五樣全部是學生自己能決定的。刻意不放「一次過」跟「被退幾次」
+     ——那兩件事是老師在決定的，拿來當收集目標就變成在收集老師的
+     心情。
+
+     一項只能宣告一樣，而且送出之後鎖住。不鎖的話它就不是宣告，
+     是事後挑一個已經達成的來填，那就沒有「我這次要拿那個」了。 */
+  var VOW_DEF = [
+    { k: 'early', name: '早工的證據',   how: '第一條要勾在這一項時間過一半之前' },
+    { k: 'keep',  name: '不壓線的證據', how: '在最後一成的時間之前就送出去' },
+    { k: 'back',  name: '回掘的證據',   how: '送出前自己打開一項、補完再勾回去' },
+    { k: 'all',   name: '全員的證據',   how: '每個組員都要勾過至少一條' },
+    { k: 'probe', name: '試過的證據',   how: '這段期間開一條試挖，而且在送出前收掉' }
+  ];
+  function vowName(k) {
+    for (var i = 0; i < VOW_DEF.length; i++) if (VOW_DEF[i].k === k) return VOW_DEF[i].name;
+    return '';
+  }
+
+  function decorateVow(L, v) {
+    var S = L.state;
+    v.hasVow = false; v.vowPicks = []; v.vowBox = 'display:none';
+    v.vowTitle = ''; v.vowNote = ''; v.vowMob = ''; v.vowMobNote = '';
+    if (S.role !== 'student' || S.screen !== 'S05') return;
+
+    var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
+    if (!task) return;
+
+    var locked = task.status === 'submitted' || task.status === 'passed';
+    var cur = task.vow || '';
+    v.hasVow = true;
+
+    /* 擋路的是哪一隻。生物先用那一層現成的守關，脾氣之後再做。 */
+    var bz = bossOf(task.layer || S.currentLayer || 1);
+    v.vowMob = bz ? bz.name : '這一層最深處';
+
+    if (task.status === 'passed') {
+      /* 結算過了 */
+      v.vowBox = 'margin-bottom:18px;padding:15px 17px;background:rgba(233,179,65,.07);border:1px solid #5A4A2C';
+      if (!cur) {
+        v.vowTitle = '這一項沒有宣告';
+        v.vowNote = '過了，但沒拿到證據——證據只掉給有先講的人。';
+      } else if (task.vowWon) {
+        v.vowTitle = '★　拿到了：' + vowName(cur);
+        v.vowNote = '你先講了要拿這一樣，然後做到了。' + v.vowMob + '身上留下的。';
+      } else {
+        v.vowTitle = '沒拿到：' + vowName(cur);
+        v.vowNote = '這次沒做到，不扣任何東西。下一項可以再宣告同一樣。';
+      }
+      return;
+    }
+
+    v.vowBox = 'margin-bottom:18px;padding:15px 17px;background:' +
+      (cur ? 'rgba(233,179,65,.06)' : 'rgba(0,0,0,.3)') +
+      ';border:1px solid ' + (cur ? '#5A4A2C' : '#3A3026');
+    v.vowTitle = cur ? '這次要拿：' + vowName(cur) : '這次要拿哪一樣？';
+    v.vowMobNote = '擋在這一項前面的是「' + v.vowMob + '」。';
+    v.vowNote = locked
+      ? '已經送出去了，宣告鎖住。等他判。'
+      : (cur
+          ? '做到就掉這一樣。做不到不扣東西，下一項再宣告一次就好。'
+          : '先講你這次要拿哪一樣，做到才掉。不講也可以過關，只是不會掉東西。');
+
+    v.vowPicks = VOW_DEF.map(function (d) {
+      var on = cur === d.k;
+      return {
+        name: d.name, how: d.how,
+        mark: on ? '●' : '○',
+        pick: function () {
+          if (locked) { L.say('已經送出去了，宣告不能改。'); return; }
+          var next = on ? '' : d.k;
+          task.vow = next;
+          L.setState({ checkNudge: (L.state.checkNudge || 0) + 1 });
+          call('apiSetVow', LIVE.token, task.id, next)
+            .then(function (r) {
+              if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。');
+              else if (next) L.say('說定了：' + d.name + '。' + d.how + '。');
+              return refresh();
+            })
+            .catch(function () { L.say('沒有存到伺服器。'); });
+        },
+        style: 'display:flex;align-items:flex-start;gap:10px;padding:10px 12px;text-align:left;width:100%;' +
+          'background:' + (on ? 'rgba(233,179,65,.1)' : 'rgba(0,0,0,.32)') + ';' +
+          'border:1px solid ' + (on ? '#E9B341' : '#2E2822') + ';' +
+          (locked ? 'cursor:default;opacity:.7' : 'cursor:pointer'),
+        markStyle: "flex:none;font:400 11px/1.5 'C11';color:" + (on ? '#E9B341' : '#5F574C'),
+        nameStyle: "display:block;font:500 22px/1.4 'C11';color:" + (on ? '#E8E2D6' : '#C3BAAA'),
+        howStyle: "display:block;font:400 11px/1.6 'C11';color:#6E665A;margin-top:4px;text-wrap:pretty"
+      };
+    });
+  }
+
   function decorateGamble(L, v) {
     var S = L.state;
     v.gambleShow = false; v.gambleItems = [];
@@ -9381,12 +9681,12 @@ class Component extends DCLogic {
     /* 只描述，不評價——這一句照文件「走過的路」那條硬規則。 */
     if (mine) {
       var place = rows.indexOf(mine) + 1;
-      v.haulMine = '你們第 ' + place + ' 名，' + mine.total + ' 分。' +
-        (mine.stars ? '其中 ' + mine.stars + ' 顆星是自己發現的。'
-                    : '還沒有星。星只能在他開口之前自己找出來。');
+      v.haulMine = '你們第 ' + place + ' 名，收了 ' + (mine.cells || 0) + ' 格。' +
+        ((mine.cells || 0) >= 20 ? '二十格收齊了。'
+          : '還差 ' + (20 - (mine.cells || 0)) + ' 格。每一項任務宣告一樣，做到才掉。');
     }
-    v.haulNote = '勾一條 1 分　·　通過一項 10 分　·　回掘過的那一項 30 分。跑幾輪之後基本盤都差不多——' +
-      '名次上的差距全部來自星。';
+    v.haulNote = '比的是收了幾格，不是做了幾項——做得多不會自動贏。' +
+      '同一層同一種只算一格，所以要跨層去湊。格子一樣多，才比下面那條分數。';
 
     v.haulRows = rows.map(function (r, i) {
       var basePct = Math.round(r.base / top * 100);
@@ -9394,7 +9694,7 @@ class Component extends DCLogic {
       return {
         rank: String(i + 1),
         name: r.name + (r.me ? '　（你們）' : ''),
-        total: String(r.total),
+        total: (r.cells || 0) + ' 格',
         detail: '勾 ' + r.ticks + '　通過 ' + (r.pages + r.stars) + '　★ ' + r.stars,
         rowStyle: 'padding:13px 15px;background:' + (r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
           ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
@@ -9406,6 +9706,117 @@ class Component extends DCLogic {
         baseStyle: 'height:100%;width:' + basePct + '%;background:#5A5044',
         bonusStyle: 'height:100%;width:' + bonusPct + '%;background:#E9B341',
         detailStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px"
+      };
+    });
+  }
+
+  /* ============================================================
+     格子牆與任務紀錄。
+
+     格子 = 4 隻生物 × 5 種破法 = 20 格。同一層同一種只算一格，
+     所以要跨層去湊——不能在同一層一直刷同一樣。
+
+     排行榜比的是「收了幾格」，不是「做了幾項」。做得多不會自動
+     贏，這對後段班友善，也才是收集式的競爭。 */
+  var GRID_LAYERS = [1, 2, 3, 4];
+
+  function gridCells(L) {
+    var have = {};
+    (L.state.grid || []).forEach(function (k) { have[k] = true; });
+    var out = [];
+    GRID_LAYERS.forEach(function (n) {
+      var bz = bossOf(n), lay = (L.LAYERS || [])[n - 1] || {};
+      var reached = (L.state.currentLayer || 1) >= n;
+      VOW_DEF.forEach(function (d) {
+        var got = !!have[n + '-' + d.k];
+        out.push({
+          layer: n, vow: d.k, got: got, reached: reached,
+          mob: reached ? (bz ? bz.name : lay.name || ('L' + n)) : '？？？',
+          name: d.name
+        });
+      });
+    });
+    return out;
+  }
+
+  function decorateRecord(L, v) {
+    var S = L.state;
+    v.hasRecord = false; v.recRows = []; v.scRec = false;
+    v.showRecTab = false; v.recNote = ''; v.recCount = '';
+    v.gridRows = [];
+    if (S.role !== 'student' || !S.signedIn) return;
+
+    v.showRecTab = true;
+    var tab = S.mapTab || 'map';
+    v.mapTabRec = function () { L.setState({ mapTab: 'rec', screen: 'S03' }); };
+    v.mapTabRecStyle = L.pill(tab === 'rec');
+    if (S.screen === 'S03' && tab === 'rec') {
+      v.scRec = true; v.scMap = false; v.scColl = false; v.scDig = false; v.scHaul = false;
+    }
+    if (!v.scRec) return;
+    v.hasRecord = true;
+
+    /* ---- 格子牆：一列一隻生物 ---- */
+    var cells = gridCells(L);
+    var got = cells.filter(function (c) { return c.got; }).length;
+    v.recCount = got + ' / ' + cells.length;
+    v.recNote = got >= cells.length
+      ? '全部收齊了。'
+      : '一項任務宣告一樣，做到才掉。同一層同一種只算一格——要跨層去湊。';
+
+    v.gridRows = GRID_LAYERS.map(function (n) {
+      var mine = cells.filter(function (c) { return c.layer === n; });
+      return {
+        mob: mine[0].mob,
+        tally: mine.filter(function (c) { return c.got; }).length + ' / ' + mine.length,
+        mobStyle: "font:500 22px/1.3 'C11';color:" + (mine[0].reached ? '#E8E2D6' : '#5A5044'),
+        tallyStyle: "font:400 11px/1 'C11';color:#6E665A",
+        cells: mine.map(function (c) {
+          return {
+            name: c.name.replace('的證據', ''),
+            style: 'padding:9px 7px;text-align:center;background:' +
+              (c.got ? 'rgba(233,179,65,.12)' : 'rgba(0,0,0,.3)') +
+              ';border:1px ' + (c.got ? 'solid #E9B341' : c.reached ? 'dashed #332C24' : 'dashed #241F1A'),
+            textStyle: "display:block;font:400 11px/1.4 'C11';color:" +
+              (c.got ? '#E9B341' : c.reached ? '#6E665A' : '#3A332B')
+          };
+        })
+      };
+    });
+
+    /* ---- 一項一列的紀錄 ---- */
+    var STAT = {
+      todo: { t: '還沒送', hue: '#6E665A' },
+      submitted: { t: '等他看', hue: '#C3BAAA' },
+      needs_more: { t: '要再改', hue: '#D9603F' },
+      passed: { t: '過了', hue: '#E9B341' }
+    };
+    v.recRows = (S.record || []).slice().reverse().map(function (r) {
+      var st = STAT[r.status] || STAT.todo;
+      var vowTxt = !r.vow
+        ? '沒有宣告'
+        : (r.status === 'passed'
+            ? (r.won ? '★ ' + vowName(r.vow) : '沒拿到 ' + vowName(r.vow))
+            : '宣告了 ' + vowName(r.vow));
+      var bits = ['L' + r.layer];
+      if (r.rounds) bits.push('送了 ' + r.rounds + ' 次');
+      if (r.sentBack) bits.push('被退 ' + r.sentBack + ' 次');
+      if (r.mineral && r.status === 'passed') bits.push(r.mineral);
+      return {
+        title: r.title, meta: bits.join('　·　'),
+        stat: st.t, vowTxt: vowTxt, say: r.say || '',
+        boxStyle: 'padding:13px 15px;background:rgba(0,0,0,.28);border:1px solid ' +
+          (r.status === 'passed' ? '#3A3026' : '#2E2822'),
+        titleStyle: "font:500 22px/1.4 'C11';color:#E8E2D6",
+        statStyle: "flex:none;font:400 11px/1 'C11';letter-spacing:.1em;padding:4px 8px;" +
+          'border:1px solid ' + st.hue + ';color:' + st.hue,
+        metaStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px",
+        vowStyle: "font:400 11px/1.6 'C11';margin-top:5px;color:" +
+          (r.won ? '#E9B341' : r.vow ? '#8A8073' : '#5A5044'),
+        sayStyle: r.say
+          ? "font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:9px;padding-top:8px;" +
+            'border-top:1px solid #26211C;text-wrap:pretty'
+          : 'display:none'
       };
     });
   }
@@ -10364,7 +10775,7 @@ class Component extends DCLogic {
     v.ruleSteps = [
       Object.assign({
         n: '1', title: '排時程 → 說你打算哪一週交',
-        desc: '在甘特圖上點一格就是一項的交件週。老師只訂期限，順序你們自己排。',
+        desc: '每一項點進去先說你打算哪一週交。老師只訂期限，順序你們自己排。',
         box: box(step0On), num: num(step0On), color: step0On ? '#E9B341' : '#8A8073'
       }, !all.length ? tag('還沒有清單', '#5F574C')
         : unplanned.length ? tag('還有 ' + unplanned.length + ' 項沒排', '#D9603F')
@@ -10527,9 +10938,9 @@ class Component extends DCLogic {
       v.goNextAction = function () {};
     } else if (noneePlanned) {
       v.nextAction = '先排這一層的時程（' + all.length + ' 項）。';
-      v.nextActionWhy = '在甘特圖上點一格＝那一週交完。先講你打算怎麼排，交的時候系統才對得出你估得準不準——期末回顧整張表就是從這裡來的。';
-      v.nextActionBtn = '去排甘特圖';
-      v.goNextAction = function () { L.go('GANTT'); };
+      v.nextActionWhy = '每一項點進去，先說你打算哪一週交。有估過，交的時候系統才對得出你估得準不準。';
+      v.nextActionBtn = '去看任務清單';
+      v.goNextAction = function () { L.go('S02'); };
     } else if (needFix) {
       v.nextAction = '重交「' + needFix.title + '」';
       v.nextActionWhy = '他退回來了，理由在那一項裡。先讀完再重寫——重交次數不限。';

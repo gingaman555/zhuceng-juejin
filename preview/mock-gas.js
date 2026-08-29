@@ -26,10 +26,13 @@
     return Math.max(1, Math.floor(days / 7) + 1);
   }
   function dueWeekOf(due) {
-    var s = String(due || '');
-    if (s === '不設限') return null;
+    if (typeof due === 'number') return due > 0 ? Math.max(1, Math.min(156, Math.floor(due))) : null;
+    var s = String(due || '').trim();
+    if (s === '' || s === '不設限') return null;
+    if (/^\d+$/.test(s)) { var n = +s; return n > 0 ? Math.max(1, Math.min(156, n)) : null; }
     var m = /第\s*(\d+)\s*週/.exec(s);
-    return m ? Math.max(1, Math.min(156, +m[1])) : null;
+    if (m) return Math.max(1, Math.min(156, +m[1]));
+    return null;
   }
   function findUser(a) {
     a = String(a || '').trim().toLowerCase();
@@ -90,13 +93,15 @@
     DB.TeamTasks.forEach(function (r) { if (r.teamId === teamId) m[r.taskId] = r; });
     return m;
   }
-  function mergeTasks(defs, m, w, teamId) {
+  function mergeTasks(defs, m, w, teamId, kl) {
     return defs.map(function (d) {
       var s = m[d.id] || { status: 'todo', text: '', files: [], fb: '', fbType: '', effort: '', effortNote: '', blocker: '', checked: [] };
       var dw = dueWeekOf(d.due);
       return Object.assign({}, d, { status: s.status, text: s.text, files: s.files || [], effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'',
         fb: s.fb || '', fbType: s.fbType || '', checked: checkList2(s.checked),
         star: teamId ? starOf(teamId, d.id) : false,
+        vow: s.vow || '',
+        vowWon: (teamId && s.vow && s.status === 'passed') ? vowWon(teamId, d.id, d, kl, s.vow) : false,
         over: dw !== null && dw < w && s.status !== 'passed' });
     });
   }
@@ -106,6 +111,98 @@
     var a = raw;
     if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { a = []; } }
     return Array.isArray(a) ? a.map(Number) : [];
+  }
+
+  var VOWS = ['early', 'keep', 'back', 'all', 'probe'];
+  function taskSpan(def, kl) {
+    var dw = dueWeekOf(def && def.due);
+    if (dw === null) return null;
+    var start = new Date(kl ? kl.courseStart : '2026-09-14');
+    var s0 = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+    var b = s0 + dw * 7 * 86400000;
+    var a = def && def.createdAt ? new Date(def.createdAt).getTime() : 0;
+    if (!a || a >= b) a = b - 14 * 86400000;
+    return { a: a, b: b };
+  }
+  function spanAt(span, d) {
+    if (!span || span.b <= span.a) return 1;
+    return Math.max(0, Math.min(1, (new Date(d).getTime() - span.a) / (span.b - span.a)));
+  }
+  function tickEvents(teamId, taskId) {
+    return DB.Checks
+      .filter(function (c) { return c.teamId === teamId && c.taskId === taskId && c.act === 'on'; })
+      .sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
+  }
+  function vowWon(teamId, taskId, def, kl, vow) {
+    if (VOWS.indexOf(String(vow)) < 0) return false;
+    if (vow === 'back') return starOf(teamId, taskId);
+    var ticks = tickEvents(teamId, taskId);
+    if (!ticks.length) return false;
+
+    if (vow === 'early') {
+      var sp = taskSpan(def, kl);
+      if (!sp) return false;
+      return spanAt(sp, ticks[0].ts) < 0.5;
+    }
+    if (vow === 'keep') {
+      var sp2 = taskSpan(def, kl);
+      if (!sp2) return false;
+      var subs = DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === taskId; })
+        .sort(function (a, b) { return (Number(a.attempt) || 0) - (Number(b.attempt) || 0); });
+      if (!subs.length) return false;
+      return spanAt(sp2, subs[0].ts) < 0.9;
+    }
+    if (vow === 'all') {
+      var members = DB.Roster.filter(function (r) { return r.teamId === teamId && r.claimedBy; });
+      if (members.length < 2) return false;
+      var who = {};
+      ticks.forEach(function (c) { if (c.by) who[String(c.by)] = true; });
+      return members.every(function (m) { return who[String(m.claimedBy)]; });
+    }
+    if (vow === 'probe') {
+      var t0 = new Date(ticks[0].ts).getTime();
+      var subs2 = DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === taskId; });
+      if (!subs2.length) return false;
+      var sent = Math.min.apply(null, subs2.map(function (x) { return new Date(x.ts).getTime(); }));
+      return DB.Digs.some(function (d) {
+        if (d.teamId !== teamId || !d.result) return false;
+        return new Date(d.openedAt).getTime() >= t0 && new Date(d.closedAt).getTime() <= sent;
+      });
+    }
+    return false;
+  }
+
+  function gridOf(teamId, classId) {
+    var kl = classById(classId);
+    var byId = {};
+    tasksOfClass(classId, teamId).forEach(function (d) { byId[String(d.id)] = d; });
+    var out = {};
+    DB.TeamTasks.forEach(function (r) {
+      if (r.teamId !== teamId || r.status !== 'passed') return;
+      var vow = String(r.vow || '');
+      if (!vow) return;
+      var def = byId[String(r.taskId)];
+      if (!def || !vowWon(teamId, r.taskId, def, kl, vow)) return;
+      out[(Number(def.layer) || 1) + '-' + vow] = true;
+    });
+    return Object.keys(out);
+  }
+  function recordOf(teamId, classId) {
+    var kl = classById(classId);
+    var m = ttmap(teamId);
+    return tasksOfClass(classId, teamId).map(function (d) {
+      var st = m[d.id] || {};
+      var myRevs = DB.Reviews.filter(function (r) { return r.teamId === teamId && r.taskId === d.id; });
+      var last = myRevs[myRevs.length - 1] || null;
+      var vow = String(st.vow || '');
+      return { id: d.id, layer: Number(d.layer) || 1, title: d.title,
+        status: st.status || 'todo', vow: vow,
+        won: (vow && st.status === 'passed') ? vowWon(teamId, d.id, d, kl, vow) : false,
+        rounds: DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === d.id; }).length,
+        sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
+        say: last ? String(last.reason || '') : '',
+        mineral: d.mineral || '' };
+    });
   }
 
   var STAR_GAP_MS = 6 * 60 * 60 * 1000;
@@ -518,6 +615,8 @@
       }
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
+        out.grid = gridOf(u.teamId, u.classId);
+        out.record = recordOf(u.teamId, u.classId);
         out.digs = digsOf(u.teamId);
         out.digPages = digPages(u.teamId);
         out.digTotal = DIG_PAGES;
@@ -526,7 +625,7 @@
           out.myTeam = teamPub(me, w);
           var fM = (DB.Finales||[]).filter(function (x) { return x.teamId === me.teamId; })[0];
           out.myTeam.finaleOpened = !!(fM && fM.opened);
-          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w, me.teamId);
+          out.tasks = mergeTasks(tasksOfClass(classId, me.teamId), ttmap(me.teamId), w, me.teamId, kl);
           out.plan = {};
           DB.Plans.forEach(function (p) { if (p.teamId !== me.teamId) return; var b = p.toWeek||p.week||1, a = p.fromWeek||b; out.plan[p.taskId] = { a: Math.min(a,b), b: b }; });
           out.passedWeek = {};
@@ -551,7 +650,7 @@
           return { layer: n, count: b?b.n:0, avg: b?Math.round(b.len/b.n):0 }; });
         out.teamTasks = {}; out.queue = []; out.gates = [];
         allTeams.forEach(function (tm) {
-          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w, tm.id);
+          var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w, tm.id, kl);
           out.teamTasks[tm.id] = list;
           list.forEach(function (task) {
             if (task.status === 'submitted') out.queue.push({
@@ -870,6 +969,20 @@
       return ok({ taskId: id });
     },
     /* 學生勾／取消勾清單上的一條 */
+    apiSetVow: function (t, taskId, vow) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以宣告。');
+      var k = String(vow || '');
+      if (VOWS.indexOf(k) < 0 && k !== '') return err('沒有這一種破法。');
+      var row = ttmap(u.teamId)[taskId];
+      if (row && row.status === 'submitted') return err('已經送出去了，宣告不能改。');
+      if (row && row.status === 'passed') return err('這一項已經過了。');
+      if (row) row.vow = k;
+      else DB.TeamTasks.push({ teamId: u.teamId, taskId: taskId, status: 'todo',
+        text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: [], vow: k });
+      persist();
+      return ok({ vow: k });
+    },
     apiSetCheck: function (t, taskId, idx, on) {
       var u = auth(t);
       if (u.role !== 'student' || !u.teamId) return err('只有學生可以勾。');
@@ -889,7 +1002,7 @@
       else DB.TeamTasks.push({ teamId: u.teamId, taskId: taskId, status: 'todo',
         text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: next });
       DB.Checks.push({ ckId: 'ck' + uid(), teamId: u.teamId, taskId: taskId,
-        idx: n, act: on ? 'on' : 'off', ts: NOW() });
+        idx: n, act: on ? 'on' : 'off', by: u.userId || u.account || '', ts: NOW() });
       persist();
       return ok({ checked: next, total: def.checks.length, star: starOf(u.teamId, taskId) });
     },
@@ -898,12 +1011,14 @@
       var out = DB.Teams.filter(function (x) { return x.classId === u.classId; })
         .map(function (x) {
           var sc = scoreOf(x.teamId);
-          return { teamId: x.teamId, name: x.name || x.teamId,
+          var g = gridOf(x.teamId, u.classId);
+          return { teamId: x.teamId, name: x.name || x.teamId, cells: g.length, grid: g,
                    me: x.teamId === (u.teamId || ''),
                    ticks: sc.ticks, pages: sc.pages, stars: sc.stars,
                    base: sc.base, bonus: sc.bonus, total: sc.total };
         });
-      out.sort(function (a, b) { return b.total - a.total; });
+      /* 先比格子，格子一樣才比分數 */
+      out.sort(function (a, b) { return (b.cells - a.cells) || (b.total - a.total); });
       return ok({ roster: out });
     },
     apiOpenDig: function (t, layer, text, estDays, bet) {

@@ -62,6 +62,14 @@
       return (this.state.tasks || []).filter(function (t) { return t.layer === lay; });
     };
 
+    /* 甘特圖整頁拿掉：有人（或稽核）直接 go('GANTT') 就轉去任務清單。
+       這件事一定要攔在 go 這一層——攔在算畫面的地方會變成
+       setState → 重算 → setState 的無窮迴圈。 */
+    ORIG.go = P.go;
+    P.go = function (screen) {
+      return ORIG.go.call(this, screen === 'GANTT' ? 'S02' : screen);
+    };
+
     /* 期限週次不再夾在 6；學期長度由班級設定 */
     ORIG.dueWeek = P.dueWeek;
     P.dueWeek = function (t) {
@@ -70,7 +78,7 @@
       if (typeof raw === 'number') return raw > 0 ? Math.max(1, Math.min(156, raw)) : 0;
       var s = String(raw || '');
       if (s === '不設限') return 0;
-      if (/^d+$/.test(s.trim())) { var nn = +s.trim(); return nn > 0 ? Math.max(1, Math.min(156, nn)) : 0; }
+      if (/^\d+$/.test(s.trim())) { var nn = +s.trim(); return nn > 0 ? Math.max(1, Math.min(156, nn)) : 0; }
       var m = /第\s*(\d+)\s*週/.exec(s);
       if (m) return Math.max(1, Math.min(156, +m[1]));
       var d = /(\d+)\/(\d+)/.exec(s);
@@ -277,6 +285,8 @@
       next.tasks = b.tasks || [];
       next.plan = b.plan || {};
       next.passedWeek = b.passedWeek || {};
+      next.grid = b.grid || [];
+      next.record = b.record || [];
       next.digs = b.digs || [];
       next.digPages = b.digPages || [];
       next.digTotal = b.digTotal || 24;
@@ -493,6 +503,15 @@
   /* 側欄的額外入口：學生的期末回顧、老師的 T-09。演練模式也要有。 */
   function addNavExtras(L, v, sc) {
     var S = L.state;
+
+    /* 甘特圖整頁拿掉：側欄那一格濾掉，畫面本身也關起來。
+       原型的側欄清單改不了，所以在這裡處理。
+       「我打算第幾週交」留在任務頁上——那是一項一次的宣告，
+       不是一張整學期的圖。 */
+    v.scGantt = false;
+    if (v.navItems) {
+      v.navItems = v.navItems.filter(function (n) { return n.code !== '甘特'; });
+    }
     /* 走完第五層之後，側欄多一項期末回顧 */
     if (S.role === 'student' && v.navItems) {
       var fin5 = (S.passed || []).indexOf(5) >= 0 && !!S.finOpened;
@@ -994,7 +1013,7 @@
           '　期末回顧會把這個對照攤開來給你看。'
         : '先說你打算哪一週交，才交得出去。估錯不會怎麼樣——重點是有估過，期末才對得出你估得準不準。';
 
-      v.goGantt = function () { L.go('GANTT'); };
+      v.goGantt = function () { L.say('這一項要哪一週交，直接在上面點就好。'); };
 
       var picks = [];
       for (var w = now2; w <= Math.min(N2, now2 + 5); w++) picks.push(w);
@@ -1014,7 +1033,7 @@
             np[tid] = { a: w, b: w };
             L.setState({ plan: np });
             call('apiSavePlan', LIVE.token, tid, w, w).catch(function () {});
-            L.say('排在第 ' + w + ' 週。之後在甘特圖還可以改。');
+            L.say('排在第 ' + w + ' 週。送出之前都還可以改。');
           }
         };
       });
@@ -1239,9 +1258,11 @@
     decorateLayerPanel(L, v);
     decorateHomeBand(L, v);   /* 首頁的「你在這裡」吃的是同一份 */
     decorateChecklist(L, v);  /* 老師開了清單就逐條勾 */
+    decorateVow(L, v);        /* 這一項要拿哪一樣破法 */
     decorateGamble(L, v);     /* 勾完之後，送出前的那一下 */
     decorateDig(L, v);        /* 試挖與斗篷人的日誌 */
     decorateHaul(L, v);       /* 採量：全班的分數 */
+    decorateRecord(L, v);     /* 格子牆與任務紀錄 */
 
 
 
@@ -2810,6 +2831,100 @@
 
      這是整個系統裡唯一一個真的賭局，也是唯一一個老師給不了的
      東西——★ 只能自己在他開口之前先發現才拿得到。 */
+  /* ============================================================
+     破法：這一項你要拿哪一樣。
+
+     五樣全部是學生自己能決定的。刻意不放「一次過」跟「被退幾次」
+     ——那兩件事是老師在決定的，拿來當收集目標就變成在收集老師的
+     心情。
+
+     一項只能宣告一樣，而且送出之後鎖住。不鎖的話它就不是宣告，
+     是事後挑一個已經達成的來填，那就沒有「我這次要拿那個」了。 */
+  var VOW_DEF = [
+    { k: 'early', name: '早工的證據',   how: '第一條要勾在這一項時間過一半之前' },
+    { k: 'keep',  name: '不壓線的證據', how: '在最後一成的時間之前就送出去' },
+    { k: 'back',  name: '回掘的證據',   how: '送出前自己打開一項、補完再勾回去' },
+    { k: 'all',   name: '全員的證據',   how: '每個組員都要勾過至少一條' },
+    { k: 'probe', name: '試過的證據',   how: '這段期間開一條試挖，而且在送出前收掉' }
+  ];
+  function vowName(k) {
+    for (var i = 0; i < VOW_DEF.length; i++) if (VOW_DEF[i].k === k) return VOW_DEF[i].name;
+    return '';
+  }
+
+  function decorateVow(L, v) {
+    var S = L.state;
+    v.hasVow = false; v.vowPicks = []; v.vowBox = 'display:none';
+    v.vowTitle = ''; v.vowNote = ''; v.vowMob = ''; v.vowMobNote = '';
+    if (S.role !== 'student' || S.screen !== 'S05') return;
+
+    var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
+    if (!task) return;
+
+    var locked = task.status === 'submitted' || task.status === 'passed';
+    var cur = task.vow || '';
+    v.hasVow = true;
+
+    /* 擋路的是哪一隻。生物先用那一層現成的守關，脾氣之後再做。 */
+    var bz = bossOf(task.layer || S.currentLayer || 1);
+    v.vowMob = bz ? bz.name : '這一層最深處';
+
+    if (task.status === 'passed') {
+      /* 結算過了 */
+      v.vowBox = 'margin-bottom:18px;padding:15px 17px;background:rgba(233,179,65,.07);border:1px solid #5A4A2C';
+      if (!cur) {
+        v.vowTitle = '這一項沒有宣告';
+        v.vowNote = '過了，但沒拿到證據——證據只掉給有先講的人。';
+      } else if (task.vowWon) {
+        v.vowTitle = '★　拿到了：' + vowName(cur);
+        v.vowNote = '你先講了要拿這一樣，然後做到了。' + v.vowMob + '身上留下的。';
+      } else {
+        v.vowTitle = '沒拿到：' + vowName(cur);
+        v.vowNote = '這次沒做到，不扣任何東西。下一項可以再宣告同一樣。';
+      }
+      return;
+    }
+
+    v.vowBox = 'margin-bottom:18px;padding:15px 17px;background:' +
+      (cur ? 'rgba(233,179,65,.06)' : 'rgba(0,0,0,.3)') +
+      ';border:1px solid ' + (cur ? '#5A4A2C' : '#3A3026');
+    v.vowTitle = cur ? '這次要拿：' + vowName(cur) : '這次要拿哪一樣？';
+    v.vowMobNote = '擋在這一項前面的是「' + v.vowMob + '」。';
+    v.vowNote = locked
+      ? '已經送出去了，宣告鎖住。等他判。'
+      : (cur
+          ? '做到就掉這一樣。做不到不扣東西，下一項再宣告一次就好。'
+          : '先講你這次要拿哪一樣，做到才掉。不講也可以過關，只是不會掉東西。');
+
+    v.vowPicks = VOW_DEF.map(function (d) {
+      var on = cur === d.k;
+      return {
+        name: d.name, how: d.how,
+        mark: on ? '●' : '○',
+        pick: function () {
+          if (locked) { L.say('已經送出去了，宣告不能改。'); return; }
+          var next = on ? '' : d.k;
+          task.vow = next;
+          L.setState({ checkNudge: (L.state.checkNudge || 0) + 1 });
+          call('apiSetVow', LIVE.token, task.id, next)
+            .then(function (r) {
+              if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。');
+              else if (next) L.say('說定了：' + d.name + '。' + d.how + '。');
+              return refresh();
+            })
+            .catch(function () { L.say('沒有存到伺服器。'); });
+        },
+        style: 'display:flex;align-items:flex-start;gap:10px;padding:10px 12px;text-align:left;width:100%;' +
+          'background:' + (on ? 'rgba(233,179,65,.1)' : 'rgba(0,0,0,.32)') + ';' +
+          'border:1px solid ' + (on ? '#E9B341' : '#2E2822') + ';' +
+          (locked ? 'cursor:default;opacity:.7' : 'cursor:pointer'),
+        markStyle: "flex:none;font:400 11px/1.5 'C11';color:" + (on ? '#E9B341' : '#5F574C'),
+        nameStyle: "display:block;font:500 22px/1.4 'C11';color:" + (on ? '#E8E2D6' : '#C3BAAA'),
+        howStyle: "display:block;font:400 11px/1.6 'C11';color:#6E665A;margin-top:4px;text-wrap:pretty"
+      };
+    });
+  }
+
   function decorateGamble(L, v) {
     var S = L.state;
     v.gambleShow = false; v.gambleItems = [];
@@ -3142,12 +3257,12 @@
     /* 只描述，不評價——這一句照文件「走過的路」那條硬規則。 */
     if (mine) {
       var place = rows.indexOf(mine) + 1;
-      v.haulMine = '你們第 ' + place + ' 名，' + mine.total + ' 分。' +
-        (mine.stars ? '其中 ' + mine.stars + ' 顆星是自己發現的。'
-                    : '還沒有星。星只能在他開口之前自己找出來。');
+      v.haulMine = '你們第 ' + place + ' 名，收了 ' + (mine.cells || 0) + ' 格。' +
+        ((mine.cells || 0) >= 20 ? '二十格收齊了。'
+          : '還差 ' + (20 - (mine.cells || 0)) + ' 格。每一項任務宣告一樣，做到才掉。');
     }
-    v.haulNote = '勾一條 1 分　·　通過一項 10 分　·　回掘過的那一項 30 分。跑幾輪之後基本盤都差不多——' +
-      '名次上的差距全部來自星。';
+    v.haulNote = '比的是收了幾格，不是做了幾項——做得多不會自動贏。' +
+      '同一層同一種只算一格，所以要跨層去湊。格子一樣多，才比下面那條分數。';
 
     v.haulRows = rows.map(function (r, i) {
       var basePct = Math.round(r.base / top * 100);
@@ -3155,7 +3270,7 @@
       return {
         rank: String(i + 1),
         name: r.name + (r.me ? '　（你們）' : ''),
-        total: String(r.total),
+        total: (r.cells || 0) + ' 格',
         detail: '勾 ' + r.ticks + '　通過 ' + (r.pages + r.stars) + '　★ ' + r.stars,
         rowStyle: 'padding:13px 15px;background:' + (r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
           ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
@@ -3167,6 +3282,117 @@
         baseStyle: 'height:100%;width:' + basePct + '%;background:#5A5044',
         bonusStyle: 'height:100%;width:' + bonusPct + '%;background:#E9B341',
         detailStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px"
+      };
+    });
+  }
+
+  /* ============================================================
+     格子牆與任務紀錄。
+
+     格子 = 4 隻生物 × 5 種破法 = 20 格。同一層同一種只算一格，
+     所以要跨層去湊——不能在同一層一直刷同一樣。
+
+     排行榜比的是「收了幾格」，不是「做了幾項」。做得多不會自動
+     贏，這對後段班友善，也才是收集式的競爭。 */
+  var GRID_LAYERS = [1, 2, 3, 4];
+
+  function gridCells(L) {
+    var have = {};
+    (L.state.grid || []).forEach(function (k) { have[k] = true; });
+    var out = [];
+    GRID_LAYERS.forEach(function (n) {
+      var bz = bossOf(n), lay = (L.LAYERS || [])[n - 1] || {};
+      var reached = (L.state.currentLayer || 1) >= n;
+      VOW_DEF.forEach(function (d) {
+        var got = !!have[n + '-' + d.k];
+        out.push({
+          layer: n, vow: d.k, got: got, reached: reached,
+          mob: reached ? (bz ? bz.name : lay.name || ('L' + n)) : '？？？',
+          name: d.name
+        });
+      });
+    });
+    return out;
+  }
+
+  function decorateRecord(L, v) {
+    var S = L.state;
+    v.hasRecord = false; v.recRows = []; v.scRec = false;
+    v.showRecTab = false; v.recNote = ''; v.recCount = '';
+    v.gridRows = [];
+    if (S.role !== 'student' || !S.signedIn) return;
+
+    v.showRecTab = true;
+    var tab = S.mapTab || 'map';
+    v.mapTabRec = function () { L.setState({ mapTab: 'rec', screen: 'S03' }); };
+    v.mapTabRecStyle = L.pill(tab === 'rec');
+    if (S.screen === 'S03' && tab === 'rec') {
+      v.scRec = true; v.scMap = false; v.scColl = false; v.scDig = false; v.scHaul = false;
+    }
+    if (!v.scRec) return;
+    v.hasRecord = true;
+
+    /* ---- 格子牆：一列一隻生物 ---- */
+    var cells = gridCells(L);
+    var got = cells.filter(function (c) { return c.got; }).length;
+    v.recCount = got + ' / ' + cells.length;
+    v.recNote = got >= cells.length
+      ? '全部收齊了。'
+      : '一項任務宣告一樣，做到才掉。同一層同一種只算一格——要跨層去湊。';
+
+    v.gridRows = GRID_LAYERS.map(function (n) {
+      var mine = cells.filter(function (c) { return c.layer === n; });
+      return {
+        mob: mine[0].mob,
+        tally: mine.filter(function (c) { return c.got; }).length + ' / ' + mine.length,
+        mobStyle: "font:500 22px/1.3 'C11';color:" + (mine[0].reached ? '#E8E2D6' : '#5A5044'),
+        tallyStyle: "font:400 11px/1 'C11';color:#6E665A",
+        cells: mine.map(function (c) {
+          return {
+            name: c.name.replace('的證據', ''),
+            style: 'padding:9px 7px;text-align:center;background:' +
+              (c.got ? 'rgba(233,179,65,.12)' : 'rgba(0,0,0,.3)') +
+              ';border:1px ' + (c.got ? 'solid #E9B341' : c.reached ? 'dashed #332C24' : 'dashed #241F1A'),
+            textStyle: "display:block;font:400 11px/1.4 'C11';color:" +
+              (c.got ? '#E9B341' : c.reached ? '#6E665A' : '#3A332B')
+          };
+        })
+      };
+    });
+
+    /* ---- 一項一列的紀錄 ---- */
+    var STAT = {
+      todo: { t: '還沒送', hue: '#6E665A' },
+      submitted: { t: '等他看', hue: '#C3BAAA' },
+      needs_more: { t: '要再改', hue: '#D9603F' },
+      passed: { t: '過了', hue: '#E9B341' }
+    };
+    v.recRows = (S.record || []).slice().reverse().map(function (r) {
+      var st = STAT[r.status] || STAT.todo;
+      var vowTxt = !r.vow
+        ? '沒有宣告'
+        : (r.status === 'passed'
+            ? (r.won ? '★ ' + vowName(r.vow) : '沒拿到 ' + vowName(r.vow))
+            : '宣告了 ' + vowName(r.vow));
+      var bits = ['L' + r.layer];
+      if (r.rounds) bits.push('送了 ' + r.rounds + ' 次');
+      if (r.sentBack) bits.push('被退 ' + r.sentBack + ' 次');
+      if (r.mineral && r.status === 'passed') bits.push(r.mineral);
+      return {
+        title: r.title, meta: bits.join('　·　'),
+        stat: st.t, vowTxt: vowTxt, say: r.say || '',
+        boxStyle: 'padding:13px 15px;background:rgba(0,0,0,.28);border:1px solid ' +
+          (r.status === 'passed' ? '#3A3026' : '#2E2822'),
+        titleStyle: "font:500 22px/1.4 'C11';color:#E8E2D6",
+        statStyle: "flex:none;font:400 11px/1 'C11';letter-spacing:.1em;padding:4px 8px;" +
+          'border:1px solid ' + st.hue + ';color:' + st.hue,
+        metaStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px",
+        vowStyle: "font:400 11px/1.6 'C11';margin-top:5px;color:" +
+          (r.won ? '#E9B341' : r.vow ? '#8A8073' : '#5A5044'),
+        sayStyle: r.say
+          ? "font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:9px;padding-top:8px;" +
+            'border-top:1px solid #26211C;text-wrap:pretty'
+          : 'display:none'
       };
     });
   }
@@ -4125,7 +4351,7 @@
     v.ruleSteps = [
       Object.assign({
         n: '1', title: '排時程 → 說你打算哪一週交',
-        desc: '在甘特圖上點一格就是一項的交件週。老師只訂期限，順序你們自己排。',
+        desc: '每一項點進去先說你打算哪一週交。老師只訂期限，順序你們自己排。',
         box: box(step0On), num: num(step0On), color: step0On ? '#E9B341' : '#8A8073'
       }, !all.length ? tag('還沒有清單', '#5F574C')
         : unplanned.length ? tag('還有 ' + unplanned.length + ' 項沒排', '#D9603F')
@@ -4288,9 +4514,9 @@
       v.goNextAction = function () {};
     } else if (noneePlanned) {
       v.nextAction = '先排這一層的時程（' + all.length + ' 項）。';
-      v.nextActionWhy = '在甘特圖上點一格＝那一週交完。先講你打算怎麼排，交的時候系統才對得出你估得準不準——期末回顧整張表就是從這裡來的。';
-      v.nextActionBtn = '去排甘特圖';
-      v.goNextAction = function () { L.go('GANTT'); };
+      v.nextActionWhy = '每一項點進去，先說你打算哪一週交。有估過，交的時候系統才對得出你估得準不準。';
+      v.nextActionBtn = '去看任務清單';
+      v.goNextAction = function () { L.go('S02'); };
     } else if (needFix) {
       v.nextAction = '重交「' + needFix.title + '」';
       v.nextActionWhy = '他退回來了，理由在那一項裡。先讀完再重寫——重交次數不限。';
