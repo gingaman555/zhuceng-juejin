@@ -3254,7 +3254,7 @@ must(
 '              <sc-if value="{{ hasFinds }}" hint-placeholder-val="{{ true }}">',
 '                <div style="padding:26px var(--pad) 0">',
 '                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">',
-'                    <span style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#E9B341">掉落物</span>',
+'                    <span style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#E9B341">戰利品</span>',
 '                    <span style="font:700 22px/1 ' + Q + 'C11' + Q + ';color:#E8E2D6">{{ findCount }}</span>',
 '                  </div>',
 '                  <div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ findNote }}</div>',
@@ -3475,7 +3475,7 @@ must(
 })();
 
 
-/* 69. 試挖整頁拿掉。收集的三塊（圖鑑／掉落物／日誌）搬到收藏總覽—— */
+/* 69. 試挖整頁拿掉。收集的三塊（圖鑑／戰利品／日誌）搬到收藏總覽—— */
 /*     它們現在全部從過關來，本來就該待在收集那一頁。 */
 (function () {
   var a = t.indexOf('<sc-if value="{{ scDig }}"');
