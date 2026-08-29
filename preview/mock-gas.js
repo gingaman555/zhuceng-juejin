@@ -100,7 +100,7 @@
       return Object.assign({}, d, { status: s.status, text: s.text, files: s.files || [], effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'',
         fb: s.fb || '', fbType: s.fbType || '', checked: checkList2(s.checked),
         star: teamId ? starOf(teamId, d.id) : false,
-        vow: s.vow || '',
+        vow: s.vow || '', find: Number(s.find) || 0,
         vowWon: (teamId && s.vow && s.status === 'passed') ? vowWon(teamId, d.id, d, kl, s.vow) : false,
         over: dw !== null && dw < w && s.status !== 'passed' });
     });
@@ -113,7 +113,7 @@
     return Array.isArray(a) ? a.map(Number) : [];
   }
 
-  var VOWS = ['early', 'keep', 'back', 'all', 'probe'];
+  var VOWS = ['early', 'back', 'all', 'peer'];
   function taskSpan(def, kl) {
     var dw = dueWeekOf(def && def.due);
     if (dw === null) return null;
@@ -144,13 +144,16 @@
       if (!sp) return false;
       return spanAt(sp, ticks[0].ts) < 0.5;
     }
-    if (vow === 'keep') {
-      var sp2 = taskSpan(def, kl);
-      if (!sp2) return false;
-      var subs = DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === taskId; })
-        .sort(function (a, b) { return (Number(a.attempt) || 0) - (Number(b.attempt) || 0); });
-      if (!subs.length) return false;
-      return spanAt(sp2, subs[0].ts) < 0.9;
+    if (vow === 'peer') {
+      var t0p = new Date(ticks[0].ts).getTime();
+      var subsP = DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === taskId; });
+      if (!subsP.length) return false;
+      var sentP = Math.min.apply(null, subsP.map(function (x) { return new Date(x.ts).getTime(); }));
+      return DB.Reads.some(function (r) {
+        if (r.readerTeam !== teamId) return false;
+        var ts = new Date(r.ts).getTime();
+        return ts >= t0p && ts <= sentP;
+      });
     }
     if (vow === 'all') {
       var members = DB.Roster.filter(function (r) { return r.teamId === teamId && r.claimedBy; });
@@ -158,16 +161,6 @@
       var who = {};
       ticks.forEach(function (c) { if (c.by) who[String(c.by)] = true; });
       return members.every(function (m) { return who[String(m.claimedBy)]; });
-    }
-    if (vow === 'probe') {
-      var t0 = new Date(ticks[0].ts).getTime();
-      var subs2 = DB.Submissions.filter(function (x) { return x.teamId === teamId && x.taskId === taskId; });
-      if (!subs2.length) return false;
-      var sent = Math.min.apply(null, subs2.map(function (x) { return new Date(x.ts).getTime(); }));
-      return DB.Digs.some(function (d) {
-        if (d.teamId !== teamId || !d.result) return false;
-        return new Date(d.openedAt).getTime() >= t0 && new Date(d.closedAt).getTime() <= sent;
-      });
     }
     return false;
   }
@@ -188,7 +181,7 @@
         rounds: nRounds,
         sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
         say: last ? String(last.reason || '') : '',
-        mineral: d.mineral || '' };
+        mineral: d.mineral || '', find: Number(st.find) || 0 };
     });
   }
 
@@ -251,9 +244,9 @@
   function rollFind() { return FIND_WEIGHT[Math.floor(Math.random() * FIND_WEIGHT.length)]; }
   function findsOf(teamId) {
     var out = {};
-    DB.Digs.forEach(function (d) {
-      if (d.teamId !== teamId) return;
-      var n = Number(d.find);
+    DB.TeamTasks.forEach(function (r) {
+      if (r.teamId !== teamId) return;
+      var n = Number(r.find);
       if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
     });
     return out;
@@ -1101,11 +1094,9 @@
         for (var n = 1; n <= DIG_PAGES; n++) if (have.indexOf(n) < 0) left.push(n);
         if (left.length) page = left[Math.floor(Math.random() * left.length)];
       }
-      var find = rollFind();
-      row.result = res; row.page = page || ''; row.find = find; row.closedAt = NOW();
+      row.result = res; row.page = page || ''; row.closedAt = NOW();
       persist();
-      return ok({ result: res, page: page, pages: digPages(u.teamId), total: DIG_PAGES,
-                  find: find, finds: findsOf(u.teamId) });
+      return ok({ result: res, page: page, pages: digPages(u.teamId), total: DIG_PAGES });
     },
     apiDeleteTask: function (t, taskId) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
@@ -1151,14 +1142,18 @@
         result: pass ? 'pass' : 'needfix', reason: txt, len: txt.length, hasReason: !!txt.trim(),
         week: w, latency: 12, ts: NOW() });
       var m = ttmap(teamId)[taskId];
+      var find = 0;
       if (m) {
         m.status = pass ? 'passed' : 'needs_more';
         m.fb = txt || (pass ? '（未附理由）' : '');
         m.fbType = pass ? 'pass' : 'more';
         if (pass) m.passedWeek = w;
+        /* 過關掉一件坑屑。已經掉過的不重掉（重審不會多給）。 */
+        if (pass && !Number(m.find)) { find = rollFind(); m.find = find; }
+        else if (pass) find = Number(m.find);
       }
       persist();
-      return ok();
+      return ok({ find: find });
     },
     apiReviewGate: function (t, teamId, pass, toolLevel, reason) {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');

@@ -35,7 +35,7 @@ var SHEET_DEFS = {
   Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'passed', 'toolLevels',
                 'gateText', 'gateSubmitted', 'gateVerdict', 'specNames', 'createdAt', 'gateTs'],
   Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'teams', 'checks', 'createdAt'],
-  TeamTasks:   ['teamId', 'taskId', 'status', 'vow', 'text', 'files', 'fb', 'fbType', 'passedWeek',
+  TeamTasks:   ['teamId', 'taskId', 'status', 'vow', 'find', 'text', 'files', 'fb', 'fbType', 'passedWeek',
                 'effort', 'effortNote', 'blocker', 'checked', 'updatedAt'],
   Submissions: ['subId', 'taskId', 'teamId', 'week', 'dueWeek', 'overdue', 'len', 'files', 'attempt', 'text',
                 'effort', 'effortNote', 'blocker', 'fileList', 'ts'],
@@ -1140,6 +1140,7 @@ function mergeTasks_(defs, tmap, courseWeek, dueWeekFn, teamId, klass) {
       checked: s.checked || [],
       star: teamId ? starOf_(teamId, d.id) : false,
       vow: s.vow || '',
+      find: Number(s.find) || 0,
       /* 過了才結算。還沒過的時候顯示「還沒結算」，不要先給答案—— */
       /* 先給答案的話學生會照著答案倒推，那就不是宣告了。 */
       vowWon: (teamId && s.vow && String(s.status) === 'passed')
@@ -1925,7 +1926,8 @@ function recordOf_(teamId, classId) {
       rounds: subs.filter(function (s) { return String(s.taskId) === String(d.id); }).length,
       sentBack: myRevs.filter(function (r) { return String(r.result) === 'needfix'; }).length,
       say: last ? String(last.reason || '') : '',
-      mineral: d.mineral || ''
+      mineral: d.mineral || '',
+      find: Number(st.find) || 0
     };
   });
 }
@@ -1981,7 +1983,7 @@ function apiRoster(token) {
 
    也刻意不隨機。隨機的是遇到誰、掉什麼殘留，不是這一格。 */
 
-var VOWS = ['early', 'keep', 'back', 'all', 'probe'];
+var VOWS = ['early', 'back', 'all', 'peer'];
 
 /**
  * 一項任務的時間窗：發布 → 期限。回傳 {a, b} 兩個毫秒數。
@@ -2029,17 +2031,24 @@ function vowWon_(teamId, taskId, def, klass, vow) {
     return spanAt_(sp, ticks[0].ts) < 0.5;
   }
 
-  if (vow === 'keep') {
-    /* 第一次送出的時候，窗還沒走到 90%——沒有壓在最後才交。 */
-    var sp2 = taskSpan_(def, klass);
-    if (!sp2) return false;
-    var first = null;
+  if (vow === 'peer') {
+    /* 這一項期間點開過別組的紀錄。整套系統裡唯一的關聯感機制，
+       而文件第 10 章自己說關聯感在 SDT 裡效果最大。 */
+    var t0p = new Date(ticks[0].ts).getTime();
+    var sentP = 0;
     readTable_('Submissions').forEach(function (s) {
       if (String(s.teamId) !== String(teamId) || String(s.taskId) !== String(taskId)) return;
-      if (!first || (Number(s.attempt) || 0) < (Number(first.attempt) || 0)) first = s;
+      var ts = new Date(s.ts).getTime();
+      if (!sentP || ts < sentP) sentP = ts;
     });
-    if (!first) return false;
-    return spanAt_(sp2, first.ts) < 0.9;
+    if (!sentP) return false;
+    var seen = false;
+    readTable_('Reads').forEach(function (r) {
+      if (String(r.readerTeam) !== String(teamId)) return;
+      var ts = new Date(r.ts).getTime();
+      if (ts >= t0p && ts <= sentP) seen = true;
+    });
+    return seen;
   }
 
   if (vow === 'all') {
@@ -2054,25 +2063,6 @@ function vowWon_(teamId, taskId, def, klass, vow) {
       if (!who[String(members[i].claimedBy)]) return false;
     }
     return true;
-  }
-
-  if (vow === 'probe') {
-    /* 開在第一條勾之後、收在送出之前的試挖，至少一條 */
-    var t0 = new Date(ticks[0].ts).getTime();
-    var sent = 0;
-    readTable_('Submissions').forEach(function (s) {
-      if (String(s.teamId) !== String(teamId) || String(s.taskId) !== String(taskId)) return;
-      var ts = new Date(s.ts).getTime();
-      if (!sent || ts < sent) sent = ts;
-    });
-    if (!sent) return false;
-    var hit = false;
-    readTable_('Digs').forEach(function (d) {
-      if (String(d.teamId) !== String(teamId) || !String(d.result || '')) return;
-      var o = new Date(d.openedAt).getTime(), c = new Date(d.closedAt).getTime();
-      if (o >= t0 && c <= sent) hit = true;
-    });
-    return hit;
   }
 
   return false;
@@ -2198,11 +2188,12 @@ function rollFind_() {
 }
 
 /** 這一組撿到的坑屑：編號 -> 幾件 */
+/** 撿到的坑屑：編號 -> 幾件。過關時掉，一項一件。 */
 function findsOf_(teamId) {
   var out = {};
-  readTable_('Digs').forEach(function (d) {
-    if (String(d.teamId) !== String(teamId)) return;
-    var n = Number(d.find);
+  readTable_('TeamTasks').forEach(function (r) {
+    if (String(r.teamId) !== String(teamId)) return;
+    var n = Number(r.find);
     if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
   });
   return out;
@@ -2267,16 +2258,12 @@ function apiCloseDig(token, digId, result) {
       if (left.length) page = left[Math.floor(Math.random() * left.length)];
     }
 
-    /* 坑屑每次都掉，不像日誌一天一片 —— 它是「動手當下的不確定」，
-       所以必須每一次都有。零分，純收集。 */
-    var find = rollFind_();
     upsert_('Digs', ['digId'], {
       digId: row.digId, teamId: row.teamId, classId: row.classId, layer: row.layer,
       text: row.text, estDays: row.estDays, bet: row.bet,
-      result: res, page: page || '', find: find, openedAt: row.openedAt, closedAt: new Date()
+      result: res, page: page || '', openedAt: row.openedAt, closedAt: new Date()
     });
-    return ok_({ result: res, page: page, pages: digPages_(u.teamId), total: DIG_PAGES,
-                 find: find, finds: findsOf_(u.teamId) });
+    return ok_({ result: res, page: page, pages: digPages_(u.teamId), total: DIG_PAGES });
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 
@@ -2413,13 +2400,21 @@ function apiReviewItem(token, teamId, taskId, result, reason) {
       result: pass ? 'pass' : 'needfix', reason: txt, len: txt.length,
       hasReason: txt.trim() ? 'Y' : 'N', week: courseWeek, latency: latency, ts: new Date()
     });
+    /* 過關就掉一件坑屑。隨機、零分、純收集 —— 獎勵發生在「給獎勵」
+       那一步，不掛在支線上。已經掉過的不重掉（重審不會多給）。 */
+    var prev = readTable_('TeamTasks').filter(function (r) {
+      return String(r.teamId) === String(teamId) && String(r.taskId) === String(taskId);
+    })[0] || null;
+    var find = (pass && !(prev && Number(prev.find))) ? rollFind_() : (prev ? prev.find : '');
+
     upsert_('TeamTasks', ['teamId', 'taskId'], {
       teamId: teamId, taskId: taskId,
       status: pass ? 'passed' : 'needs_more',
       fb: txt || (pass ? '（未附理由）' : ''), fbType: pass ? 'pass' : 'more',
+      find: find || '',
       passedWeek: pass ? courseWeek : '', updatedAt: new Date()
     });
-    return ok_();
+    return ok_({ find: pass ? find : 0 });
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 

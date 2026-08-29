@@ -2864,12 +2864,16 @@
 
      一項只能宣告一樣，而且送出之後鎖住。不鎖的話它就不是宣告，
      是事後挑一個已經達成的來填，那就沒有「我這次要拿那個」了。 */
+  /* 四種。原本五種，砍掉兩項：
+       「試過」—— 開一條垃圾試挖立刻收掉就成立，十秒鐘穩拿 20 分，
+                  是嚴格最優解，會讓五選一在第二週塌成一顆按鈕。
+       「不壓線」—— 跟「早工」測同一件事，兩項一起中一起不中。
+     補上「看過別組」：這是整套系統裡唯一的關聯感機制。 */
   var VOW_DEF = [
     { k: 'early', name: '早工的證據',   how: '第一條要勾在這一項時間過一半之前' },
-    { k: 'keep',  name: '不壓線的證據', how: '在最後一成的時間之前就送出去' },
     { k: 'back',  name: '回掘的證據',   how: '送出前自己打開一項、補完再勾回去' },
     { k: 'all',   name: '全員的證據',   how: '每個組員都要勾過至少一條' },
-    { k: 'probe', name: '試過的證據',   how: '這段期間開一條試挖，而且在送出前收掉' }
+    { k: 'peer',  name: '看過別組的證據', how: '送出之前，去看過至少一組別人的紀錄' }
   ];
   function vowName(k) {
     for (var i = 0; i < VOW_DEF.length; i++) if (VOW_DEF[i].k === k) return VOW_DEF[i].name;
@@ -3640,6 +3644,8 @@
       if (r.rounds) bits.push('送了 ' + r.rounds + ' 次');
       if (r.sentBack) bits.push('被退 ' + r.sentBack + ' 次');
       if (r.mineral && r.status === 'passed') bits.push(r.mineral);
+      var fdR = findOf(r.find);
+      if (fdR) bits.push('撿到 ' + fdR.name);
       return {
         title: r.title, meta: bits.join('　·　'),
         stat: st.t, vowTxt: vowTxt, say: r.say || '',
@@ -3715,7 +3721,7 @@
     var total = FINDS.reduce(function (a, f) { return a + (got[f.n] || 0); }, 0);
     v.hasFinds = true;
     v.findCount = kinds + ' / ' + FINDS.length + ' 種';
-    v.findNote = '收一條試挖就撿到一件。' +
+    v.findNote = '每通過一項任務就撿到一件。' +
       (total ? '一共撿了 ' + total + ' 件。' : '') +
       '每一件都一樣重——稀有只是比較少見，不影響任何分數。';
 
@@ -3882,8 +3888,7 @@
             lede: '這一條' + res.label + '。清土的時候翻出一頁被撕下來的東西。',
             rows: [
               { k: '第幾片', v: r.page + ' / ' + (r.total || 24), hi: true },
-              { k: '你已經有', v: (r.pages || []).length + ' 片' },
-              { k: '順手撿到', v: (findOf(r.find) || {}).name || '' }
+              { k: '你已經有', v: (r.pages || []).length + ' 片' }
             ],
             quoteLabel: '上面寫著',
             quote: DIG_LOG[r.page - 1] || '',
@@ -3893,25 +3898,7 @@
             btn: '收好', go: function () {}
           });
         } else {
-          var fd = findOf(r.find);
-          if (fd) {
-            showMoment(L, {
-              kind: 'mined', art: 'gem', accent: '#E9B341',
-              kicker: 'A FIND',
-              title: '順手撿到「' + fd.name + '」',
-              lede: '這一條' + res.label + '。清土的時候撿到一件東西。',
-              rows: [
-                { k: '稀有度', v: findTier(fd.n), hi: findTier(fd.n) === '罕見' },
-                { k: '收集', v: Object.keys(r.finds || {}).length + ' / 24 種' }
-              ],
-              quoteLabel: '它長這樣',
-              quote: fd.look,
-              lines: ['每一件都一樣重。稀有只是比較少見，不影響任何分數。'],
-              btn: '收好', go: function () {}
-            });
-          } else {
-            L.say('這一條記成「' + res.label + '」了。');
-          }
+          L.say('這一條記成「' + res.label + '」了。');
         }
         return refresh();
       })
