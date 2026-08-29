@@ -3328,5 +3328,34 @@ must(
 '              </sc-if>',
 '              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),#14110E;border:1px solid #3A3026">'].join('\n'));
 
+
+
+
+/* 63. 時間軸：唯一共同的尺。專案不同、階段不同、老師對每一組的
+       規劃也不同，但所有人的學期一樣長。只描述不評價。 */
+must(
+'                <p style="font:400 22px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin:0;text-wrap:pretty">{{ mapLede }}</p>',
+[
+'                <p style="font:400 22px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin:0;text-wrap:pretty">{{ mapLede }}</p>',
+'                <sc-if value="{{ hasTerm }}" hint-placeholder-val="{{ true }}">',
+'                  <div style="margin:14px 0 0;padding:12px 14px;background:rgba(0,0,0,.28);border-left:2px solid #5A5044">',
+'                    <div style="font:400 22px/1.6 ' + Q + 'C11' + Q + ';color:#C3BAAA;text-wrap:pretty">{{ termLine }}</div>',
+'                    <div style="{{ termBarStyle }}"><div style="{{ termFillStyle }}"></div></div>',
+'                  </div>',
+'                </sc-if>'].join(String.fromCharCode(10)));
+
+
+/* 64. 首頁也放一條時間軸 */
+must(
+'                  <div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin:12px 0 9px;text-wrap:pretty">{{ homeClaimNote }}</div>',
+[
+'                  <sc-if value="{{ hasTerm }}" hint-placeholder-val="{{ true }}">',
+'                    <div style="margin:11px 0 0;padding-top:11px;border-top:1px solid #26211C">',
+'                      <div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#C3BAAA;text-wrap:pretty">{{ termLine }}</div>',
+'                      <div style="{{ termBarStyle }}"><div style="{{ termFillStyle }}"></div></div>',
+'                    </div>',
+'                  </sc-if>',
+'                  <div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin:12px 0 9px;text-wrap:pretty">{{ homeClaimNote }}</div>'].join(String.fromCharCode(10)));
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

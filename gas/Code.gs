@@ -1301,6 +1301,17 @@ function apiBootstrap(token) {
         var mp = teamPub_(me, courseWeek);
         var fMine = readTable_('Finales').filter(function (x) { return String(x.teamId) === String(me.teamId); })[0];
         mp.finaleOpened = !!(fMine && String(fMine.opened) === 'Y');
+
+        /* 每一層的標籤＝老師放行這一組進來的時候寫的那句話。
+           每個老師對每一組的規劃都不同，所以班級層級的標籤不可能
+           是對的——只有他當時對這一組說的那句話是對的。 */
+        out.layerSaid = {};
+        readTable_('Passes').forEach(function (p) {
+          if (String(p.teamId) !== String(me.teamId)) return;
+          if (String(p.verdict) !== 'pass') return;
+          var into = (Number(p.layer) || 1) + 1;   /* 過了第 N 層 = 進到第 N+1 層 */
+          if (String(p.reason || '')) out.layerSaid[into] = String(p.reason);
+        });
         out.myTeam = mp;
         out.tasks = mergeTasks_(tasksOfClass_(classId, me.teamId), teamTaskMap_(me.teamId), courseWeek, null, me.teamId, kl);
         out.plan = {};

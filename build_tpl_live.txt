@@ -463,6 +463,12 @@
                     <span style="flex:1"></span>
                     <button onClick="{{ goHaul }}" style="font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;background:none;border:1px solid #3A3026;padding:7px 11px;cursor:pointer;white-space:nowrap">看排行榜</button>
                   </div>
+                  <sc-if value="{{ hasTerm }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin:11px 0 0;padding-top:11px;border-top:1px solid #26211C">
+                      <div style="font:400 11px/1.7 'C11';color:#C3BAAA;text-wrap:pretty">{{ termLine }}</div>
+                      <div style="{{ termBarStyle }}"><div style="{{ termFillStyle }}"></div></div>
+                    </div>
+                  </sc-if>
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin:12px 0 9px;text-wrap:pretty">{{ homeClaimNote }}</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px">
                     <sc-for list="{{ homeClaims }}" as="hc" hint-placeholder-count="3">
@@ -930,6 +936,12 @@
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">{{ mapKicker }}</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">{{ mapTitle }}</h1>
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">{{ mapLede }}</p>
+                <sc-if value="{{ hasTerm }}" hint-placeholder-val="{{ true }}">
+                  <div style="margin:14px 0 0;padding:12px 14px;background:rgba(0,0,0,.28);border-left:2px solid #5A5044">
+                    <div style="font:400 22px/1.6 'C11';color:#C3BAAA;text-wrap:pretty">{{ termLine }}</div>
+                    <div style="{{ termBarStyle }}"><div style="{{ termFillStyle }}"></div></div>
+                  </div>
+                </sc-if>
                 <sc-if value="{{ showSteps }}" hint-placeholder-val="{{ true }}">
                 <div style="margin-top:16px;padding:13px 16px;background:rgba(0,0,0,.3);border-left:2px solid #5A4A2C">
                   <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px">

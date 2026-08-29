@@ -564,6 +564,12 @@ window.JLZ_SPRITES = {
                     <span style="flex:1"></span>
                     <button onClick="{{ goHaul }}" style="font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;background:none;border:1px solid #3A3026;padding:7px 11px;cursor:pointer;white-space:nowrap">看排行榜</button>
                   </div>
+                  <sc-if value="{{ hasTerm }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin:11px 0 0;padding-top:11px;border-top:1px solid #26211C">
+                      <div style="font:400 11px/1.7 'C11';color:#C3BAAA;text-wrap:pretty">{{ termLine }}</div>
+                      <div style="{{ termBarStyle }}"><div style="{{ termFillStyle }}"></div></div>
+                    </div>
+                  </sc-if>
                   <div style="font:400 11px/1.7 'C11';color:#8A8073;margin:12px 0 9px;text-wrap:pretty">{{ homeClaimNote }}</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px">
                     <sc-for list="{{ homeClaims }}" as="hc" hint-placeholder-count="3">
@@ -1031,6 +1037,12 @@ window.JLZ_SPRITES = {
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">{{ mapKicker }}</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">{{ mapTitle }}</h1>
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">{{ mapLede }}</p>
+                <sc-if value="{{ hasTerm }}" hint-placeholder-val="{{ true }}">
+                  <div style="margin:14px 0 0;padding:12px 14px;background:rgba(0,0,0,.28);border-left:2px solid #5A5044">
+                    <div style="font:400 22px/1.6 'C11';color:#C3BAAA;text-wrap:pretty">{{ termLine }}</div>
+                    <div style="{{ termBarStyle }}"><div style="{{ termFillStyle }}"></div></div>
+                  </div>
+                </sc-if>
                 <sc-if value="{{ showSteps }}" hint-placeholder-val="{{ true }}">
                 <div style="margin-top:16px;padding:13px 16px;background:rgba(0,0,0,.3);border-left:2px solid #5A4A2C">
                   <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px">
@@ -5772,6 +5784,12 @@ class Component extends DCLogic {
       }
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
+        out.layerSaid = {};
+        DB.Passes.forEach(function (p) {
+          if (p.teamId !== u.teamId || p.verdict !== 'pass') return;
+          var into = (Number(p.layer) || 1) + 1;
+          if (p.reason) out.layerSaid[into] = String(p.reason);
+        });
         out.record = recordOf(u.teamId, u.classId);
         out.digs = digsOf(u.teamId);
         out.digPages = digPages(u.teamId);
@@ -6759,8 +6777,8 @@ class Component extends DCLogic {
       next.tasks = b.tasks || [];
       next.plan = b.plan || {};
       next.passedWeek = b.passedWeek || {};
-      next.grid = b.grid || [];
       next.record = b.record || [];
+      next.layerSaid = b.layerSaid || {};
       next.digs = b.digs || [];
       next.digPages = b.digPages || [];
       next.digTotal = b.digTotal || 24;
@@ -7146,6 +7164,7 @@ class Component extends DCLogic {
     addNavExtras(L, v, sc);
 
     retellTreasures(L);
+    retellLayers(L);
     momentVals(L, v);
     decorateAuth(L, v);
     decorateBoot(L, v);
@@ -7756,6 +7775,7 @@ class Component extends DCLogic {
     decorateHaul(L, v);       /* 採量：全班的分數 */
     decorateRecord(L, v);     /* 任務紀錄與宣告命中率 */
     decorateHomeHaul(L, v);   /* 首頁的名冊摘要 */
+    decorateTerm(L, v);       /* 時間軸：唯一共同的尺 */
     markVerdicts(L, v);       /* 地圖每一格直接顯示老師給不給過 */
 
 
@@ -8796,6 +8816,11 @@ class Component extends DCLogic {
     v.sel.treFrom = bz
       ? '擊退' + bz.name + '之後，牠站的地方留下的。'
       : '走到最深處才拿得到。';
+
+    /* 這一層對這一組是什麼，用老師放行時說的那句話。
+       每個老師對每一組的規劃都不同，班級層級的標籤不可能對。 */
+    var said = layerLabel(L, n);
+    if (said) v.sel.course = said;
 
     v.sel.hasBoss = !!bz;
     if (bz) {
@@ -9923,6 +9948,59 @@ class Component extends DCLogic {
      完整的在 S-10，但那要點三層才到得了。真正會讓人回來的是
      「還沒有人採到的那幾塊」——那一段必須在首頁，不然它變了
      也沒有人知道。 */
+  /* ============================================================
+     時間軸：唯一共同的尺。
+
+     專案不同、階段不同、進度不同、老師對每一組的規劃也不同——
+     但所有人的學期一樣長，而且同一天結束。
+
+     只描述不評價。把「你在第幾層」跟「學期走了幾成」擺在一起就
+     夠了，加一句「你落後了」就毀了（文件第 01 條：沒有負分）。
+     那個落差是學生自己看到的，不是系統罵他的——而那正好是學生
+     症候群這一課。 */
+  function termAt(L) {
+    var S = L.state;
+    var kl = L.KLASSES[S.klass] || {};
+    var n = Math.max(6, Math.min(156, Number(kl.semesterWeeks) || Number(S.semesterWeeks) || 18));
+    var w = Math.max(1, Number(S.courseWeek) || 1);
+    return { week: w, total: n, pct: Math.max(0, Math.min(100, Math.round(w / n * 100))) };
+  }
+
+  function decorateTerm(L, v) {
+    var S = L.state;
+    v.hasTerm = false;
+    v.termLine = ''; v.termPct = ''; v.termBarStyle = 'display:none'; v.termFillStyle = '';
+    if (S.role !== 'student' || !S.signedIn) return;
+
+    var t = termAt(L);
+    var lay = (L.LAYERS || [])[(S.currentLayer || 1) - 1] || {};
+    v.hasTerm = true;
+    v.termPct = t.pct + '%';
+    v.termLine = '你在' + (lay.name || ('第 ' + (S.currentLayer || 1) + ' 層')) +
+      '。學期走了 ' + t.pct + '％（第 ' + t.week + ' / ' + t.total + ' 週）。';
+    v.termBarStyle = 'margin-top:9px;height:5px;background:rgba(0,0,0,.4);border:1px solid #2E2822';
+    v.termFillStyle = 'height:100%;width:' + t.pct + '%;background:#5A5044';
+  }
+
+  /* 層的課程標籤：
+       老師放行這一組時說過話 → 用他的話
+       沒說過                 → 用預設的階段名，而且不要有週次
+     週次寫死一定是錯的，因為每個老師的節奏都不一樣。 */
+  function retellLayers(L) {
+    if (LIVE.layersRetold) return;
+    LIVE.layersRetold = true;
+    (L.LAYERS || []).forEach(function (l) {
+      l.course = String(l.course || '').replace(/^[^·]*·\s*/, '');
+    });
+  }
+
+  function layerLabel(L, n) {
+    var said = (L.state.layerSaid || {})[n];
+    if (said) return said;
+    var l = (L.LAYERS || [])[n - 1] || {};
+    return l.course || '';
+  }
+
   function decorateHomeHaul(L, v) {
     var S = L.state;
     v.hasHomeHaul = false; v.homeClaims = [];
@@ -11249,7 +11327,7 @@ class Component extends DCLogic {
     /* 原型的環節說明還在講必要／延伸 */
     v.editStageNote = '學生端看到的名稱是「' + (lay.name || '') + '」。' +
       '你開的每一項都是他們的一塊礦，但採不採齊不影響過關——你覺得可以往下了就放行。' +
-      (lay.course ? '　對應的課程階段是「' + lay.course + '」。' : '');
+      (layerLabel(L, layer) ? '　這一段是「' + layerLabel(L, layer) + '」。' : '');
     v.openWhat = leftVein.length
       ? '這一層的礦脈有 ' + vein + ' 塊，你開了 ' + after + ' 塊。關卡不看採齊沒——你覺得他們可以往下了就放行。'
       : '這一層的 ' + vein + ' 塊都開好了。剩下就看他們採不採得齊。';

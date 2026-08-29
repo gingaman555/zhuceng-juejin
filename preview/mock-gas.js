@@ -620,6 +620,12 @@
       }
       if (u.role === 'student') {
         out.myTeamId = u.teamId || '';
+        out.layerSaid = {};
+        DB.Passes.forEach(function (p) {
+          if (p.teamId !== u.teamId || p.verdict !== 'pass') return;
+          var into = (Number(p.layer) || 1) + 1;
+          if (p.reason) out.layerSaid[into] = String(p.reason);
+        });
         out.record = recordOf(u.teamId, u.classId);
         out.digs = digsOf(u.teamId);
         out.digPages = digPages(u.teamId);
