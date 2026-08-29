@@ -323,6 +323,7 @@
         }
         if (!hit) return;
         var t = hit.task;
+        if (hit.kind !== 'needfix') markFirst('win');   /* 新手引導：第一次打贏演完就算看過 */
         if (hit.kind === 'needfix') {
           next.moment = {
             kind: 'needfix', accent: '#D9603F',
@@ -555,6 +556,89 @@
 
 
   /* 側欄的額外入口：學生的期末回顧、老師的 T-09。演練模式也要有。 */
+  /* ============================================================
+     新手第一次進來走的路。
+
+     六步，全部從既有資料推得出來——只有「看過圖鑑沒／看過排行榜沒」
+     記在瀏覽器（純演出，掉了最多是多帶一次）。
+
+       1 等清單      老師還沒開任務
+       2 點開第一項  有任務了，但還沒動過
+       3 勾與宣告    點開過了，還沒勾滿
+       4 送出        勾滿了，還沒送
+       5 等他判      送出了
+       6 打開看結果  他判過了，還沒看
+       ─ 打贏過至少一項，而且圖鑑與排行榜都看過 → 新手期結束
+     ============================================================ */
+  var FIRST_KEY = 'jlz.first';
+  function firstSeen() {
+    try { return JSON.parse(localStorage.getItem(FIRST_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function markFirst(k) {
+    try {
+      var o = firstSeen(); o[k] = 1;
+      localStorage.setItem(FIRST_KEY, JSON.stringify(o));
+    } catch (e) {}
+  }
+
+  /* null＝已經不是新手了 */
+  function firstRun(L) {
+    var S = L.state;
+    if (S.role !== 'student') return null;
+    var rec = S.record || [];
+    var won = rec.filter(function (r) { return r.status === 'passed'; }).length +
+              (S.codex || []).length;
+    var seen = firstSeen();
+
+    /* 打贏過而且兩個新頁面都看過 → 畢業 */
+    if (won > 0 && seen.coll && seen.haul) return null;
+
+    var all = S.tasks || [];
+    if (!all.length) return { n: 1, key: 'wait' };
+
+    var passed = all.filter(function (t) { return t.status === 'passed'; })[0];
+    if (passed && !seen.win) return { n: 6, key: 'win', task: passed };
+    if (won > 0 && !seen.coll) return { n: 6, key: 'coll' };
+    if (won > 0 && !seen.haul) return { n: 6, key: 'haul' };
+
+    var sent = all.filter(function (t) { return t.status === 'submitted'; })[0];
+    if (sent) return { n: 5, key: 'sent', task: sent };
+
+    var open = all.filter(function (t) { return t.status !== 'passed'; })[0];
+    if (!open) return null;
+    var ticked = (open.checked || []).length;
+    var need = (open.items || open.conds || []).length;
+    if (!ticked) return { n: 2, key: 'open', task: open };
+    if (!need || ticked < need) return { n: 3, key: 'tick', task: open };
+    return { n: 4, key: 'send', task: open };
+  }
+
+  /* 新手期間，首頁的下一步只講一句話 */
+  var FIRST_TXT = {
+    wait: ['先等他把第一項任務拿出來。',
+           '這一段沒有事情做，是正常的——這套系統從老師開任務開始，不是從你開始。' +
+           '　在那之前可以先看一次地圖，四個領域由上往下，你在最上面那一層。'],
+    open: ['點開第一項任務。',
+           '每一項任務前面都擋著一隻東西。點開才看得到是哪一隻——同一項任務全班遇到的是同一隻。'],
+    tick: ['去做，做完回來把清單一條一條勾掉。',
+           '作業還是交在老師原本要求的地方，系統不收檔案也看不到內容。' +
+           '　這裡的清單只是「我做到哪了」的紀錄，勾一條 10 分。'],
+    send: ['清單勾滿了，送出去。',
+           '送出之前會問你這一項實際花的力氣跟原本估的差多少——那一格必填，' +
+           '因為它是之後唯一能看出「你們對自己準不準」的東西。'],
+    sent: ['送出去了，等他看。',
+           '他什麼時候看不一定，可能今天也可能下週。這段時間你可以繼續打磨那一項——' +
+           '他覺得你們不只是交作業，掉的東西會變多。'],
+    win: ['他判過了。打開來看看牠留下什麼。',
+          '打贏一隻生物會掉東西：件數看那一層的深度，加上他覺得你們有沒有多做。'],
+    coll: ['去圖鑑看一眼。',
+           '你剛剛打贏的那一隻跟撿到的東西都進去了。沒遇過的也留著位置——' +
+           '而且圖鑑是你的，換組、換班、換專案都跟著你走。'],
+    haul: ['最後看一次排行榜。',
+           '全班在同一張榜上。點任何一組進得去，看得到他們每一項過了沒、' +
+           '老師寫了什麼——那是這裡最有用的東西。看完就沒有新東西要教了。']
+  };
+
   function addNavExtras(L, v, sc) {
     var S = L.state;
     /* 側欄五格。原型的清單改不了，在這裡重排。
@@ -576,6 +660,15 @@
           clip: 'polygon(0 0,100% 0,100% 20%,0 20%,0 40%,100% 40%,100% 60%,0 60%,0 80%,72% 80%,72% 100%,0 100%)' }
       ].forEach(function (it) {
         if (v.navItems.some(function (n) { return n.code === it.code; })) return;
+        /* 新手期間側欄只長出現在用得到的：打贏第一項才多出圖鑑，
+           看過圖鑑才多出排行榜與紀錄。一次給五格，有三格是空的。 */
+        var fr0 = firstRun(L);
+        if (fr0) {
+          var sn = firstSeen();
+          if (it.code === 'S-08' && !(fr0.key === 'coll' || sn.coll)) return;
+          if (it.code === 'S-10' && !(fr0.key === 'haul' || sn.haul)) return;
+          if (it.code === 'S-11') return;
+        }
         var here = onS03 && tabNow === it.tab;
         v.navItems.push({
           code: it.code, label: it.label, short: it.short,
@@ -805,6 +898,31 @@
 
     v.hasFinds = false;   /* 掉落物已經併進物品那一份 */
     v.hasBest = false;    /* 生物改成上面那一份網格 */
+
+    /* 生物與物品用按鈕換頁——兩份加起來兩百多格，疊在同一頁要一直捲，
+       而且捲到一半會忘記自己在看哪一份。 */
+    var ctab = S.collTab === 'item' ? 'item' : 'mob';
+    v.collTabRowStyle = 'display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap';
+    v.collTabs = v.collSections.map(function (g, gi) {
+      var isMob = gi === 0;
+      var on = (isMob ? 'mob' : 'item') === ctab;
+      return {
+        label: g.title,
+        count: g.have,
+        pick: (function (k) { return function () { L.setState({ collTab: k }); }; })(isMob ? 'mob' : 'item'),
+        style: 'display:flex;align-items:baseline;gap:9px;padding:11px 17px;cursor:pointer;font:inherit;' +
+          'background:' + (on ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.28)') +
+          ';border:1px solid ' + (on ? '#E9B341' : '#2E2822'),
+        labelStyle: "font:700 22px/1 'C11';color:" + (on ? '#F2E6C8' : '#8A8073'),
+        countStyle: "font:400 11px/1 'C11';color:" + (on ? '#E9B341' : '#5F574C')
+      };
+    });
+    v.collSections = v.collSections.filter(function (g, gi) {
+      return (gi === 0 ? 'mob' : 'item') === ctab;
+    });
+
+    /* 真的在看圖鑑那一頁才算看過——這支每次 render 都會跑 */
+    if (S.screen === 'S03' && (S.mapTab || 'map') === 'coll') markFirst('coll');
   }
 
   function decorate(L, v) {
@@ -3612,6 +3730,7 @@
     v.haulNote = '勾一條 10 分　·　撿到一件掉落物 30 分　·　通過一項 100 分　·　通過而且做到宣告的破法 300 分（取代 100）　·　老師放行一層 1000 分（道具 500 ＋ 戰利品 500）。' +
       '走到第幾層先把大家分成幾段（一層 1000 分），同一段裡面的差距才是宣告成功了幾次。';
 
+    markFirst('haul');     /* 新手引導：排行榜看過了（這裡已經確定在榜上） */
     haulMap(L, v, rows);   /* 同一份資料的另一種讀法：誰在你前面 */
 
     /* 跟上次打開的時候比，名次上升還是下降。記在瀏覽器——純演出。 */
@@ -5570,6 +5689,27 @@
         v.nextActionBtn = '看地圖';
         v.goNextAction = function () { L.go('S03'); };
       }
+    }
+
+    /* 新手第一次進來走另一條：一次只講一句，而且標第幾步。
+       要蓋在上面那一整串之後——不然會被蓋掉。 */
+    var FR = firstRun(L);
+    if (FR && FIRST_TXT[FR.key]) {
+      v.hasNextAction = true;
+      v.nextAction = FIRST_TXT[FR.key][0];
+      v.nextActionWhy = '第 ' + FR.n + ' 步 / 共 6 步　·　' + FIRST_TXT[FR.key][1];
+      v.nextActionColor = '#E9B341';
+      var FRGO = {
+        wait: ['看整張地圖', function () { L.go('S03'); }],
+        open: ['去任務清單', function () { L.go('S02'); }],
+        tick: ['去任務清單', function () { L.go('S02'); }],
+        send: ['去送出', function () { L.go('S02'); }],
+        sent: ['看任務清單', function () { L.go('S02'); }],
+        win: ['去打開', function () { L.go('S02'); }],
+        coll: ['去圖鑑', function () { L.setState({ screen: 'S03', mapTab: 'coll' }); }],
+        haul: ['去排行榜', function () { L.setState({ screen: 'S03', mapTab: 'haul' }); }]
+      }[FR.key];
+      if (FRGO) { v.nextActionBtn = FRGO[0]; v.goNextAction = FRGO[1]; }
     }
   }
 

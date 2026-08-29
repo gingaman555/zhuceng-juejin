@@ -3668,5 +3668,22 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('78. 排行榜多一行追逐');
 })();
 
+
+/* 79. 圖鑑分成生物／物品兩頁：兩百多格疊在同一頁要一直捲。 */
+(function () {
+  var a = '<sc-for list="{{ collSections }}" as="s" hint-placeholder-count="3">';
+  if (t.split(a).length - 1 !== 1) { console.error('79. collSections 找不到'); process.exit(1); }
+  var tabs = '<div style="{{ collTabRowStyle }}">' +
+    '<sc-for list="{{ collTabs }}" as="ct" hint-placeholder-count="2">' +
+      '<button onClick="{{ ct.pick }}" style="{{ ct.style }}">' +
+        '<span style="{{ ct.labelStyle }}">{{ ct.label }}</span>' +
+        '<span style="{{ ct.countStyle }}">{{ ct.count }}</span>' +
+      '</button>' +
+    '</sc-for>' +
+  '</div>';
+  t = t.replace(a, tabs + a);
+  console.log('79. 圖鑑分成生物／物品兩頁');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

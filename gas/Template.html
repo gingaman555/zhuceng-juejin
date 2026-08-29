@@ -1297,7 +1297,7 @@
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">一次攤開所有收集要素。已取得的點得進去看介紹；還沒拿到的只留下位置與微光。</p>
               </div>
               <div style="padding:18px var(--pad);display:flex;flex-direction:column;gap:22px">
-                <sc-for list="{{ collSections }}" as="s" hint-placeholder-count="3">
+                <div style="{{ collTabRowStyle }}"><sc-for list="{{ collTabs }}" as="ct" hint-placeholder-count="2"><button onClick="{{ ct.pick }}" style="{{ ct.style }}"><span style="{{ ct.labelStyle }}">{{ ct.label }}</span><span style="{{ ct.countStyle }}">{{ ct.count }}</span></button></sc-for></div><sc-for list="{{ collSections }}" as="s" hint-placeholder-count="3">
                   <div>
                     <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-bottom:5px">
                       <span style="font:700 22px/1.4 'C11';color:#E8E2D6">{{ s.title }}</span>
