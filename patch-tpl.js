@@ -3370,5 +3370,59 @@ must(
   console.log('65. 首頁第三張卡拿掉');
 })();
 
+
+/* 66. 甘特圖整頁拿掉。側欄早就濾掉了，但畫面還留在模板裡。 */
+(function () {
+  var open = t.indexOf('<sc-if value="{{ scGantt }}"');
+  if (open < 0) { console.error('MISS scGantt'); process.exit(1); }
+  var end = t.indexOf('</sc-if>', t.indexOf('data-screen-label="甘特圖"'));
+  /* 往後找到那一段真正的收尾：甘特頁裡自己還有巢狀的 sc-if */
+  var depth = 1, i = t.indexOf('>', open) + 1;
+  while (depth > 0 && i < t.length) {
+    var nx = t.indexOf('<sc-if', i), cl = t.indexOf('</sc-if>', i);
+    if (cl < 0) { console.error('MISS 甘特頁收尾'); process.exit(1); }
+    if (nx >= 0 && nx < cl) { depth++; i = nx + 6; }
+    else { depth--; i = cl + 8; }
+  }
+  t = t.slice(0, open) + t.slice(i);
+  console.log('66. 甘特圖整頁拿掉');
+})();
+
+/* 67. 關卡送審頁的礦石依據區塊拿掉。關卡已經不看採齊沒了， */
+/*     那一整塊在展示一個不存在的門檻——比死碼更糟，它是錯的資訊。 */
+(function () {
+  var mark = '送關卡的依據 · 這一層的礦石';
+  var a = t.indexOf(mark);
+  if (a < 0) { console.log('67. 找不到礦石依據區塊，跳過'); return; }
+  var open = t.lastIndexOf('<div', t.lastIndexOf('<span', a));
+  var close = t.indexOf('</div>', t.indexOf('</sc-for>', a));
+  close = t.indexOf('</div>', close + 6);
+  if (open < 0 || close < 0) { console.error('MISS 礦石依據邊界'); process.exit(1); }
+  t = t.slice(0, open) + t.slice(close + 6);
+  console.log('67. 關卡頁的礦石依據拿掉');
+})();
+
+
+/* 68. 甘特的最後兩處：任務頁那顆「去甘特圖排整層」按鈕整顆拿掉， */
+/*     研究者端建班說明裡的甘特描述改掉。 */
+(function () {
+  var a = t.indexOf('<button onClick="{{ goGantt }}"');
+  if (a >= 0) {
+    var b = t.indexOf('</button>', a);
+    t = t.slice(0, a) + t.slice(b + 9);
+    console.log('68a. 去甘特圖那顆按鈕拿掉');
+  }
+  var old = '總週數決定甘特圖有幾欄、期限可以訂到第幾週。';
+  if (t.indexOf(old) >= 0) {
+    t = t.split(old).join('總週數決定期限可以訂到第幾週。');
+    console.log('68b. 建班說明的甘特描述改掉');
+  }
+  var old2 = '跨年度的專案照樣可以開——甘特圖會自動縮格寬，學生端也有寬／中／窄與「跳到本週」。';
+  if (t.indexOf(old2) >= 0) {
+    t = t.split(old2).join('跨年度的專案照樣可以開。');
+    console.log('68c. 建班說明的甘特描述二改掉');
+  }
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

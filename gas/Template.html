@@ -657,20 +657,7 @@
                     </div>
                   </div>
                   <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">
-                    <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:12px">
-                      <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">送關卡的依據 · 這一層的礦石</span>
-                      <span style="font:500 22px/1 'C11';color:{{ gateNeedColor }}">{{ gateNeed }}</span>
-                    </div>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px">
-                      <sc-for list="{{ gateMinerals }}" as="gm" hint-placeholder-count="3">
-                        <span style="{{ gm.box }}">
-                          <span style="{{ gm.icon }}"></span>
-                          <span style="display:block;font:500 11px/1.4 'C11';margin-top:7px;color:{{ gm.nameColor }};white-space:nowrap">{{ gm.name }}</span>
-                          <span style="display:block;font:400 11px/1.4 'C11';margin-top:4px;color:{{ gm.stateColor }};white-space:nowrap">{{ gm.state }}</span>
-                        </span>
-                      </sc-for>
-                    </div>
-                    <div style="font:400 22px/1.6 'C11';color:{{ gateNeedColor }};margin-top:13px;text-wrap:pretty">{{ gateNeedNote }}</div>
+                    
                     <sc-if value="{{ hasVeinNote }}" hint-placeholder-val="{{ true }}">
                       <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:11px;padding-top:11px;border-top:1px solid #26211C;text-wrap:pretty">{{ veinNote }}</div>
                     </sc-if>
@@ -698,7 +685,7 @@
                     <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:{{ planAccent }}">你排的時間</span>
                     <span style="font:700 22px/1 'C11';color:{{ planAccent }}">{{ planLabel }}</span>
                     <span style="flex:1"></span>
-                    <button onClick="{{ goGantt }}" style="font:500 11px/1 'C11';letter-spacing:.1em;padding:7px 11px;cursor:pointer;background:none;border:1px solid #3A3026;color:#8A8073;white-space:nowrap">去甘特圖排整層</button>
+                    
                   </div>
                   <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ planNote }}</div>
                   <sc-if value="{{ needPlan }}" hint-placeholder-val="{{ false }}">
@@ -1693,7 +1680,7 @@
                       <button onClick="{{ adm.toggleNewSandbox }}" style="{{ adm.newSandboxStyle }}">{{ adm.newSandboxLabel }}</button>
                       <button onClick="{{ adm.createClass }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 16px;background:#1E2024;border:1px solid #2A2E33;color:#DFE6EB;cursor:pointer;border-radius:6px">開一個班</button>
                     </div>
-                    <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:8px">總週數決定甘特圖有幾欄、期限可以訂到第幾週。一學期 18、一學年 36、整整一年 52、兩年 104，<b>最多 156 週（三年）</b>。跨年度的專案照樣可以開——甘特圖會自動縮格寬，學生端也有寬／中／窄與「跳到本週」。開完之後在下面每一班那一列還可以改。</div>
+                    <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:8px">總週數決定期限可以訂到第幾週。一學期 18、一學年 36、整整一年 52、兩年 104，<b>最多 156 週（三年）</b>。跨年度的專案照樣可以開。開完之後在下面每一班那一列還可以改。</div>
                     <div style="display:flex;flex-direction:column;gap:7px;margin-top:10px">
                       <sc-for list="{{ adm.classWeeks }}" as="cw" hint-placeholder-count="1">
                         <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:11px 13px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
@@ -2151,141 +2138,7 @@
             </div>
           </sc-if>
 
-          <sc-if value="{{ scGantt }}" hint-placeholder-val="{{ false }}">
-            <div data-screen-label="甘特圖" style="padding:0 0 32px">
-              <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
-                <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">GANTT</div>
-                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">甘特圖</h1>
-                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">點一格，就是決定你哪一週交那一項。老師只訂期限，不排你的順序。</p>
-              </div>
-              <div style="margin:14px var(--pad) 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-                <button onClick="{{ openGanttHow }}" style="{{ ganttHowBtnStyle }}">{{ ganttHowBtnLabel }}</button>
-              </div>
-              <sc-if value="{{ ganttNever }}" hint-placeholder-val="{{ false }}">
-                <div style="margin:16px var(--pad) 0;padding:15px 17px;background:linear-gradient(140deg,rgba(233,179,65,.09),transparent 65%),#14110E;border:1px solid #3A3026">
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">第一次用這一頁</div>
-                  <div style="font:700 22px/1.5 'C11';color:#E8E2D6;margin-top:9px">這一頁只有一個動作：點一格</div>
-                  <div style="display:flex;flex-direction:column;gap:9px;margin-top:13px">
-                    <div style="display:flex;align-items:center;gap:11px">
-                      <span style="width:28px;height:20px;flex:none;background:rgba(233,179,65,.16);border:1px solid #5A4A2C"></span>
-                      <span style="font:400 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">你排的那一週</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:11px">
-                      <span style="width:28px;height:20px;flex:none;background:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 3px,transparent 3px 7px);border:1px solid #3A3026;border-right:2px solid #8A8073"></span>
-                      <span style="font:400 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">老師訂的期限。右邊斜紋是逾期區，排進去也可以，只是會被標示</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:11px">
-                      <span style="width:28px;height:20px;flex:none;background:#E9B341;color:#0B0A09;display:flex;align-items:center;justify-content:center;font:500 11px/1 'C11'">✓</span>
-                      <span style="font:400 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">老師確認通過的那一週。你排的還留著，兩者差多少就看得出來</span>
-                    </div>
-                  </div>
-                </div>
-              </sc-if>
-              <div style="padding:16px var(--pad)">
-                <div style="{{ ganttHowToStyle }}">{{ ganttHowTo }}</div>
-                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:11px">
-                  <span style="font:400 11px/1.6 'C11';color:#8A8073">{{ ganttSpanNote }}</span>
-                  <span style="flex:1"></span>
-                  <button onClick="{{ jumpNow }}" style="font:500 11px/1 'C11';letter-spacing:.1em;padding:7px 12px;cursor:pointer;background:rgba(233,179,65,.1);border:1px solid #5A4A2C;color:#E9B341;white-space:nowrap">跳到本週</button>
-                  <span style="font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C">格寬</span>
-                  <sc-for list="{{ ganttZoomPicks }}" as="gz" hint-placeholder-count="3">
-                    <button onClick="{{ gz.pick }}" style="{{ gz.style }}">{{ gz.label }}</button>
-                  </sc-for>
-                </div>
-                <div data-gantt-scroll="1" style="overflow-x:auto;padding-bottom:6px">
-                <div style="min-width:{{ ganttMinWidth }}">
-                <div style="display:flex;gap:0;padding-left:{{ ganttHeadPad }};border-bottom:1px solid #221E19;margin-bottom:9px">
-                  <sc-for list="{{ ganttWeeks }}" as="w" hint-placeholder-count="6">
-                    <span style="{{ w.style }}">{{ w.label }}<span style="{{ w.dateStyle }}">{{ w.date }}</span></span>
-                  </sc-for>
-                </div>
-                <div style="display:flex;align-items:stretch;min-height:34px;margin-bottom:7px;padding-bottom:8px;border-bottom:1px solid #1C1915;flex-wrap:wrap">
-                  <div style="width:var(--gcol);flex:none;padding-right:12px">
-                    <span style="display:block;font:500 22px/1.3 'C11';color:#DCD4C6">老師訂的期限</span>
-                    <span style="display:block;font:400 11px/1.5 'C11';color:#6E665A;margin-top:5px">這一欄不能動</span>
-                  </div>
-                  <span style="flex:1;min-width:180px;display:flex;align-self:stretch;min-height:var(--cell)">
-                    <sc-for list="{{ dueTrack }}" as="d" hint-placeholder-count="6">
-                      <span style="{{ d.style }}">{{ d.label }}</span>
-                    </sc-for>
-                  </span>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:5px">
-                  <sc-for list="{{ ganttRows }}" as="r" hint-placeholder-count="6">
-                    <div style="display:flex;align-items:stretch;gap:0;min-height:40px;flex-wrap:wrap">
-                      <button onClick="{{ r.open }}" style="width:var(--gcol);flex:none;text-align:left;background:none;border:none;padding:0 12px 0 0;cursor:pointer;color:#C3BAAA;font:inherit">
-                        <span style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-                          <span style="{{ r.tagStyle }}">{{ r.tag }}</span>
-                          <span style="font:500 22px/1.3 'C11';color:#E8E2D6">{{ r.name }}</span>
-                        </span>
-                        <span style="{{ r.metaStyle }}">{{ r.meta }}</span>
-                      </button>
-                      <span style="flex:1;min-width:180px;display:flex;align-self:stretch;min-height:var(--cell)">
-                        <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
-                          <button onClick="{{ c.set }}" style="{{ c.style }}">{{ c.mark }}</button>
-                        </sc-for>
-                      </span>
-                    </div>
-                  </sc-for>
-                  <div style="display:flex;align-items:stretch;gap:0;min-height:40px;padding-top:6px;border-top:1px solid #1C1915;flex-wrap:wrap">
-                    <div style="width:var(--gcol);flex:none;padding-right:12px">
-                      <span style="display:block;font:500 22px/1.3 'C11';color:#DCD4C6">關卡送審</span>
-                      <span style="display:block;font:400 11px/1 'C11';color:#8A8073;margin-top:6px">{{ ganttGate.meta }}</span>
-                    </div>
-                    <span style="flex:1;min-width:180px;display:flex;align-self:stretch;min-height:var(--cell)">
-                      <sc-for list="{{ ganttGate.cells }}" as="c" hint-placeholder-count="6">
-                        <button onClick="{{ c.set }}" style="{{ c.style }}">{{ c.mark }}</button>
-                      </sc-for>
-                    </span>
-                  </div>
-                </div>
-                </div>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:14px">
-                  <sc-for list="{{ ganttLegend }}" as="lg" hint-placeholder-count="5">
-                    <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 11px;background:rgba(0,0,0,.26);border:1px solid #26211C">
-                      <span style="{{ lg.swatch }}">{{ lg.mark }}</span>
-                      <span style="font:400 22px/1 'C11';color:#9A9184;white-space:nowrap">{{ lg.label }}</span>
-                    </span>
-                  </sc-for>
-                </div>
-                <div style="margin-top:14px;padding:15px 17px;background:#14110E;border:1px solid #26211C">
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">這一頁跟老師怎麼接</div>
-                  <div style="display:flex;flex-direction:column;gap:9px;margin-top:12px">
-                    <sc-for list="{{ ganttFlow }}" as="g" hint-placeholder-count="3">
-                      <div style="display:flex;gap:10px;align-items:flex-start">
-                        <span style="{{ g.dotStyle }}"></span>
-                        <span style="{{ g.style }}">{{ g.text }}</span>
-                      </div>
-                    </sc-for>
-                  </div>
-                </div>
-
-                <div style="margin-top:14px;padding:15px 17px;background:linear-gradient(140deg,rgba(233,179,65,.06),transparent 65%),#14110E;border:1px solid #26211C">
-                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">你排的 對 實際發生的</span>
-                    <span style="font:400 11px/1 'C11';color:#6E665A">{{ diffSummary }}</span>
-                  </div>
-                  <sc-if value="{{ hasDiff }}" hint-placeholder-val="{{ false }}">
-                    <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
-                      <sc-for list="{{ diffRows }}" as="d" hint-placeholder-count="3">
-                        <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;padding:9px 11px;background:rgba(0,0,0,.26);border-left:2px solid {{ d.edge }}">
-                          <span style="font:500 22px/1.4 'C11';color:#E8E2D6;flex:1;min-width:120px">{{ d.name }}</span>
-                          <span style="font:400 11px/1 'C11';color:#8A8073;white-space:nowrap">你排 {{ d.plan }}</span>
-                          <span style="font:400 11px/1 'C11';color:#6E665A">→</span>
-                          <span style="font:400 11px/1 'C11';color:#DCD4C6;white-space:nowrap">實際 {{ d.real }}</span>
-                          <span style="{{ d.gapStyle }}">{{ d.gap }}</span>
-                        </div>
-                      </sc-for>
-                    </div>
-                  </sc-if>
-                  <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:12px;text-wrap:pretty">{{ diffNote }}</div>
-                </div>
-
-                
-</div>
-            </div>
-          </sc-if>
+          
 
           <sc-if value="{{ scT01 }}" hint-placeholder-val="{{ false }}">
             <div data-screen-label="T-01 老師首頁" style="padding:0 0 32px">
