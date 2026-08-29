@@ -223,17 +223,35 @@
     }
     return false;
   }
-  function scoreOf(teamId) {
-    var ticks = 0, pages = 0, stars = 0;
+  function scoreOf(teamId, classId) {
+    var kl = classById(classId);
+    var byId = {};
+    if (classId) tasksOfClass(classId, teamId).forEach(function (d) { byId[String(d.id)] = d; });
+    var ticks = 0, pages = 0, vows = 0;
     DB.TeamTasks.forEach(function (r) {
       if (r.teamId !== teamId) return;
       ticks += checkList2(r.checked).length;
-      if (r.status === 'passed') { if (starOf(teamId, r.taskId)) stars++; else pages++; }
+      if (r.status !== 'passed') return;
+      var def = byId[String(r.taskId)];
+      var won = !!(def && r.vow && vowWon(teamId, r.taskId, def, kl, String(r.vow)));
+      if (won) vows++; else pages++;
     });
-    return { ticks: ticks, pages: pages, stars: stars,
-             base: ticks + pages * 10 + stars * 10,
-             bonus: stars * 20,
-             total: ticks + pages * 10 + stars * 30 };
+    return { ticks: ticks, pages: pages, vows: vows,
+             base: ticks + (pages + vows) * 10,
+             bonus: vows * 20,
+             total: ticks + pages * 10 + vows * 30 };
+  }
+  function firstsOf(classId) {
+    var teams = {};
+    DB.Teams.forEach(function (t) { if (t.classId === classId) teams[String(t.teamId)] = t.name || t.teamId; });
+    var out = {};
+    DB.Reviews.filter(function (r) { return r.result === 'pass' && teams[String(r.teamId)]; })
+      .sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); })
+      .forEach(function (r) {
+        var k = String(r.taskId);
+        if (!out[k]) out[k] = { teamId: String(r.teamId), name: teams[String(r.teamId)], ts: String(r.ts) };
+      });
+    return out;
   }
 
   var DIG_PAGES = 24;
@@ -1008,18 +1026,28 @@
     },
     apiRoster: function (t) {
       var u = auth(t);
+      var firsts = firstsOf(u.classId);
+      var mine = {};
+      Object.keys(firsts).forEach(function (k) {
+        mine[firsts[k].teamId] = (mine[firsts[k].teamId] || 0) + 1;
+      });
       var out = DB.Teams.filter(function (x) { return x.classId === u.classId; })
         .map(function (x) {
-          var sc = scoreOf(x.teamId);
-          var g = gridOf(x.teamId, u.classId);
-          return { teamId: x.teamId, name: x.name || x.teamId, cells: g.length, grid: g,
+          var sc = scoreOf(x.teamId, u.classId);
+          return { teamId: x.teamId, name: x.name || x.teamId,
                    me: x.teamId === (u.teamId || ''),
-                   ticks: sc.ticks, pages: sc.pages, stars: sc.stars,
-                   base: sc.base, bonus: sc.bonus, total: sc.total };
+                   ticks: sc.ticks, pages: sc.pages, vows: sc.vows,
+                   base: sc.base, bonus: sc.bonus, total: sc.total,
+                   firsts: mine[String(x.teamId)] || 0 };
         });
-      /* 先比格子，格子一樣才比分數 */
-      out.sort(function (a, b) { return (b.cells - a.cells) || (b.total - a.total); });
-      return ok({ roster: out });
+      out.sort(function (a, b) { return b.total - a.total; });
+      var claims = tasksOfClass(u.classId, '').map(function (d) {
+        var f = firsts[String(d.id)];
+        return { taskId: d.id, layer: Number(d.layer) || 1,
+                 mineral: d.mineral || d.title, title: d.title,
+                 by: f ? f.name : '', mine: !!(f && String(f.teamId) === String(u.teamId || '')) };
+      });
+      return ok({ roster: out, claims: claims });
     },
     apiOpenDig: function (t, layer, text, estDays, bet) {
       var u = auth(t);

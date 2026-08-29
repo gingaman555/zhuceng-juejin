@@ -1849,31 +1849,58 @@ function starOf_(teamId, taskId) {
   return false;
 }
 
-/* ---- 最小計分 ----
-   只有三條，全部能心算，而且全部從既有事件重算，不落地：
-     勾一項條目      1 分
-     一項任務通過   10 分
-     回掘過的那一項  30 分（取代 10，不是加上去）
+/* ---- 分數 ----
+   照《冒險之書》第 05 章：
+     勾一條條目                 1
+     一項任務通過              10
+     通過而且達成宣告的破法    30（取代 10，不是加上去）
 
-   刻意不把試挖算進去。試挖給分就會有人為了分數去刷，
-   而它的價值在於誠實記錄自己押錯了。 */
-function scoreOf_(teamId) {
-  var ticks = 0, pages = 0, stars = 0;
+   基本盤（勾＋通過）跑幾輪之後大家都差不多——那是老師排的課決定
+   的。差距全部來自破法，而破法是學生自己宣告、自己做到的。
 
+   試挖刻意不算分：給分就會有人為了分數去刷，而它的價值在於誠實
+   記錄自己押錯了。 */
+function scoreOf_(teamId, classId) {
+  var kl = classById_(classId);
+  var byId = {};
+  if (classId) tasksOfClass_(classId, teamId).forEach(function (d) { byId[String(d.id)] = d; });
+
+  var ticks = 0, pages = 0, vows = 0;
   readTable_('TeamTasks').forEach(function (r) {
     if (String(r.teamId) !== String(teamId)) return;
     ticks += (jparse_(r.checked, []) || []).length;
-    if (String(r.status) === 'passed') {
-      if (starOf_(teamId, r.taskId)) stars++; else pages++;
-    }
+    if (String(r.status) !== 'passed') return;
+    var def = byId[String(r.taskId)];
+    var won = !!(def && r.vow && vowWon_(teamId, r.taskId, def, kl, String(r.vow)));
+    if (won) vows++; else pages++;
   });
 
   return {
-    ticks: ticks, pages: pages, stars: stars,
-    base: ticks + pages * 10 + stars * 10,
-    bonus: stars * 20,
-    total: ticks + pages * 10 + stars * 30
+    ticks: ticks, pages: pages, vows: vows,
+    base: ticks + (pages + vows) * 10,
+    bonus: vows * 20,
+    total: ticks + pages * 10 + vows * 30
   };
+}
+
+/**
+ * 初採：每一塊礦第一個採到的是誰。
+ * 以裁決時間為準——跟文件第 09 章「初討伐以裁決時間戳為準」一致。
+ */
+function firstsOf_(classId) {
+  var teams = {};
+  readTable_('Teams').forEach(function (t) {
+    if (String(t.classId) === String(classId)) teams[String(t.teamId)] = t.name || t.teamId;
+  });
+  var out = {};
+  readTable_('Reviews')
+    .filter(function (r) { return String(r.result) === 'pass' && teams[String(r.teamId)]; })
+    .sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); })
+    .forEach(function (r) {
+      var k = String(r.taskId);
+      if (!out[k]) out[k] = { teamId: String(r.teamId), name: teams[String(r.teamId)], ts: String(r.ts) };
+    });
+  return out;
 }
 
 /** 全班名冊。以隊伍為單位，不做個人排名。 */
@@ -1930,19 +1957,33 @@ function recordOf_(teamId, classId) {
 function apiRoster(token) {
   try {
     var u = auth_(token);
+    /* 榜就是分數。格子是個人的，不放進來比。 */
+    var firsts = firstsOf_(u.classId);
+    var mine = {};
+    Object.keys(firsts).forEach(function (k) {
+      mine[firsts[k].teamId] = (mine[firsts[k].teamId] || 0) + 1;
+    });
+
     var out = readTable_('Teams')
       .filter(function (t) { return String(t.classId) === String(u.classId); })
       .map(function (t) {
-        var s = scoreOf_(t.teamId);
-        var g = gridOf_(t.teamId, u.classId);
-        return { teamId: t.teamId, name: t.name || t.teamId, cells: g.length, grid: g,
+        var s = scoreOf_(t.teamId, u.classId);
+        return { teamId: t.teamId, name: t.name || t.teamId,
                  me: String(t.teamId) === String(u.teamId || ''),
-                 ticks: s.ticks, pages: s.pages, stars: s.stars,
-                 base: s.base, bonus: s.bonus, total: s.total };
+                 ticks: s.ticks, pages: s.pages, vows: s.vows,
+                 base: s.base, bonus: s.bonus, total: s.total,
+                 firsts: mine[String(t.teamId)] || 0 };
       });
-    /* 先比格子，格子一樣才比分數 */
-    out.sort(function (a, b) { return (b.cells - a.cells) || (b.total - a.total); });
-    return ok_({ roster: out });
+    out.sort(function (a, b) { return b.total - a.total; });
+
+    /* 初採清單：哪一塊礦被誰先採走，哪幾塊還沒有人碰 */
+    var claims = tasksOfClass_(u.classId, '').map(function (d) {
+      var f = firsts[String(d.id)];
+      return { taskId: d.id, layer: Number(d.layer) || 1,
+               mineral: d.mineral || d.title, title: d.title,
+               by: f ? f.name : '', mine: !!(f && String(f.teamId) === String(u.teamId || '')) };
+    });
+    return ok_({ roster: out, claims: claims });
   } catch (e) { return err_(e); }
 }
 

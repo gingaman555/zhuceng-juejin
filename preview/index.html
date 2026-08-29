@@ -1337,6 +1337,23 @@ window.JLZ_SPRITES = {
               </div>
               <div style="padding:18px var(--pad) 0">
                 <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:14px;max-width:560px;text-wrap:pretty">{{ haulNote }}</div>
+                <sc-if value="{{ hasClaims }}" hint-placeholder-val="{{ true }}">
+                  <div style="margin-bottom:22px;padding:16px 18px;background:#14110E;border:1px solid #3A3026">
+                    <div style="font:500 22px/1.3 'C11';color:#E9B341;margin-bottom:5px">{{ claimHead }}</div>
+                    <div style="font:400 11px/1.7 'C11';color:#8A8073;margin-bottom:13px;max-width:520px;text-wrap:pretty">{{ claimNote }}</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px">
+                      <sc-for list="{{ claimRows }}" as="cl" hint-placeholder-count="6">
+                        <div style="{{ cl.boxStyle }}">
+                          <div style="display:flex;align-items:baseline;gap:9px">
+                            <span style="{{ cl.nameStyle }}">{{ cl.name }}</span>
+                            <span style="{{ cl.byStyle }}">{{ cl.by }}</span>
+                          </div>
+                          <div style="{{ cl.metaStyle }}">{{ cl.meta }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
                 <div style="display:flex;flex-direction:column;gap:8px">
                   <sc-for list="{{ haulRows }}" as="hl" hint-placeholder-count="4">
                     <div style="{{ hl.rowStyle }}">
@@ -5339,17 +5356,35 @@ class Component extends DCLogic {
     }
     return false;
   }
-  function scoreOf(teamId) {
-    var ticks = 0, pages = 0, stars = 0;
+  function scoreOf(teamId, classId) {
+    var kl = classById(classId);
+    var byId = {};
+    if (classId) tasksOfClass(classId, teamId).forEach(function (d) { byId[String(d.id)] = d; });
+    var ticks = 0, pages = 0, vows = 0;
     DB.TeamTasks.forEach(function (r) {
       if (r.teamId !== teamId) return;
       ticks += checkList2(r.checked).length;
-      if (r.status === 'passed') { if (starOf(teamId, r.taskId)) stars++; else pages++; }
+      if (r.status !== 'passed') return;
+      var def = byId[String(r.taskId)];
+      var won = !!(def && r.vow && vowWon(teamId, r.taskId, def, kl, String(r.vow)));
+      if (won) vows++; else pages++;
     });
-    return { ticks: ticks, pages: pages, stars: stars,
-             base: ticks + pages * 10 + stars * 10,
-             bonus: stars * 20,
-             total: ticks + pages * 10 + stars * 30 };
+    return { ticks: ticks, pages: pages, vows: vows,
+             base: ticks + (pages + vows) * 10,
+             bonus: vows * 20,
+             total: ticks + pages * 10 + vows * 30 };
+  }
+  function firstsOf(classId) {
+    var teams = {};
+    DB.Teams.forEach(function (t) { if (t.classId === classId) teams[String(t.teamId)] = t.name || t.teamId; });
+    var out = {};
+    DB.Reviews.filter(function (r) { return r.result === 'pass' && teams[String(r.teamId)]; })
+      .sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); })
+      .forEach(function (r) {
+        var k = String(r.taskId);
+        if (!out[k]) out[k] = { teamId: String(r.teamId), name: teams[String(r.teamId)], ts: String(r.ts) };
+      });
+    return out;
   }
 
   var DIG_PAGES = 24;
@@ -6124,18 +6159,28 @@ class Component extends DCLogic {
     },
     apiRoster: function (t) {
       var u = auth(t);
+      var firsts = firstsOf(u.classId);
+      var mine = {};
+      Object.keys(firsts).forEach(function (k) {
+        mine[firsts[k].teamId] = (mine[firsts[k].teamId] || 0) + 1;
+      });
       var out = DB.Teams.filter(function (x) { return x.classId === u.classId; })
         .map(function (x) {
-          var sc = scoreOf(x.teamId);
-          var g = gridOf(x.teamId, u.classId);
-          return { teamId: x.teamId, name: x.name || x.teamId, cells: g.length, grid: g,
+          var sc = scoreOf(x.teamId, u.classId);
+          return { teamId: x.teamId, name: x.name || x.teamId,
                    me: x.teamId === (u.teamId || ''),
-                   ticks: sc.ticks, pages: sc.pages, stars: sc.stars,
-                   base: sc.base, bonus: sc.bonus, total: sc.total };
+                   ticks: sc.ticks, pages: sc.pages, vows: sc.vows,
+                   base: sc.base, bonus: sc.bonus, total: sc.total,
+                   firsts: mine[String(x.teamId)] || 0 };
         });
-      /* 先比格子，格子一樣才比分數 */
-      out.sort(function (a, b) { return (b.cells - a.cells) || (b.total - a.total); });
-      return ok({ roster: out });
+      out.sort(function (a, b) { return b.total - a.total; });
+      var claims = tasksOfClass(u.classId, '').map(function (d) {
+        var f = firsts[String(d.id)];
+        return { taskId: d.id, layer: Number(d.layer) || 1,
+                 mineral: d.mineral || d.title, title: d.title,
+                 by: f ? f.name : '', mine: !!(f && String(f.teamId) === String(u.teamId || '')) };
+      });
+      return ok({ roster: out, claims: claims });
     },
     apiOpenDig: function (t, layer, text, estDays, bet) {
       var u = auth(t);
@@ -9612,7 +9657,11 @@ class Component extends DCLogic {
     if (L.state.haulLoading) return;
     L.setState({ haulLoading: true });
     call('apiRoster', LIVE.token)
-      .then(function (r) { L.setState({ haulLoading: false, haulData: (r && r.ok) ? r.roster : null }); })
+      .then(function (r) {
+        L.setState({ haulLoading: false,
+          haulData: (r && r.ok) ? r.roster : null,
+          haulClaims: (r && r.ok) ? (r.claims || []) : [] });
+      })
       .catch(function () { L.setState({ haulLoading: false, haulData: null }); });
   }
 
@@ -9655,6 +9704,7 @@ class Component extends DCLogic {
   function decorateHaul(L, v) {
     var S = L.state;
     v.hasHaul = false; v.haulRows = []; v.scHaul = false;
+    v.hasClaims = false; v.claimRows = []; v.claimHead = ''; v.claimNote = '';
     v.showHaulTab = false; v.haulNote = ''; v.haulMine = '';
     if (S.role !== 'student' || !S.signedIn) return;
 
@@ -9675,18 +9725,44 @@ class Component extends DCLogic {
     }
 
     v.hasHaul = true;
+
+    /* 初採：哪一塊礦被誰先採走。沒有人碰過的那幾塊是唯一會在你不在的
+       時候變的東西——所以它排在最前面，而且要講清楚還剩幾塊。 */
+    var claims = S.haulClaims || [];
+    var open = claims.filter(function (c) { return !c.by; });
+    var myFirst = claims.filter(function (c) { return c.mine; });
+    v.hasClaims = claims.length > 0;
+    v.claimHead = '初採　' + myFirst.length + ' / ' + claims.length;
+    v.claimNote = open.length
+      ? '還有 ' + open.length + ' 塊沒有人採到。第一個採到的隊伍會永久記在那一塊上。'
+      : '每一塊都有人採到了。';
+    v.claimRows = claims.map(function (c) {
+      return {
+        name: c.mineral,
+        by: c.by ? (c.mine ? '你們' : c.by) : '還沒有人',
+        meta: 'L' + c.layer + '　' + c.title,
+        boxStyle: 'padding:11px 13px;background:' +
+          (c.mine ? 'rgba(233,179,65,.1)' : c.by ? 'rgba(0,0,0,.26)' : 'rgba(0,0,0,.4)') +
+          ';border:1px ' + (c.mine ? 'solid #E9B341' : c.by ? 'solid #2E2822' : 'dashed #4A3F30'),
+        nameStyle: "font:500 22px/1.3 'C11';color:" + (c.mine ? '#E8E2D6' : c.by ? '#9A9184' : '#C3BAAA'),
+        byStyle: "flex:none;font:400 11px/1 'C11';color:" +
+          (c.mine ? '#E9B341' : c.by ? '#6E665A' : '#D9603F'),
+        metaStyle: "font:400 11px/1.6 'C11';color:#5F574C;margin-top:4px"
+      };
+    });
     var top = Math.max.apply(null, rows.map(function (r) { return r.total; }).concat([1]));
     var mine = rows.filter(function (r) { return r.me; })[0];
 
     /* 只描述，不評價——這一句照文件「走過的路」那條硬規則。 */
     if (mine) {
       var place = rows.indexOf(mine) + 1;
-      v.haulMine = '你們第 ' + place + ' 名，收了 ' + (mine.cells || 0) + ' 格。' +
-        ((mine.cells || 0) >= 20 ? '二十格收齊了。'
-          : '還差 ' + (20 - (mine.cells || 0)) + ' 格。每一項任務宣告一樣，做到才掉。');
+      v.haulMine = '你們第 ' + place + ' 名，' + mine.total + ' 分。' +
+        (mine.vows
+          ? '其中 ' + mine.vows + ' 項是宣告之後真的做到的，那些一項多 20 分。'
+          : '還沒有宣告成功過。宣告做到的那一項算 30 分，不是 10。');
     }
-    v.haulNote = '比的是收了幾格，不是做了幾項——做得多不會自動贏。' +
-      '同一層同一種只算一格，所以要跨層去湊。格子一樣多，才比下面那條分數。';
+    v.haulNote = '勾一條 1 分　·　通過一項 10 分　·　通過而且做到宣告的破法 30 分（取代 10）。' +
+      '跑幾輪之後基本盤都差不多——名次的差距全部來自宣告成功了幾次。';
 
     v.haulRows = rows.map(function (r, i) {
       var basePct = Math.round(r.base / top * 100);
@@ -9694,8 +9770,9 @@ class Component extends DCLogic {
       return {
         rank: String(i + 1),
         name: r.name + (r.me ? '　（你們）' : ''),
-        total: (r.cells || 0) + ' 格',
-        detail: '勾 ' + r.ticks + '　通過 ' + (r.pages + r.stars) + '　★ ' + r.stars,
+        total: String(r.total),
+        detail: '勾 ' + r.ticks + '　通過 ' + (r.pages + r.vows) + '　破法 ' + r.vows +
+          (r.firsts ? '　初採 ' + r.firsts : ''),
         rowStyle: 'padding:13px 15px;background:' + (r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
           ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
         rankStyle: "flex:none;width:26px;font:700 22px/1 'C11';color:" + (r.me ? '#E9B341' : '#5F574C'),
@@ -9718,20 +9795,24 @@ class Component extends DCLogic {
 
      排行榜比的是「收了幾格」，不是「做了幾項」。做得多不會自動
      贏，這對後段班友善，也才是收集式的競爭。 */
-  var GRID_LAYERS = [1, 2, 3, 4];
+  /* 格子綁在「層」上，不綁生物。
+     生物之後會變成一項任務一隻——綁生物的話，內容一換格子就對不
+     起來，而且第五層根本沒有守關生物。層是結構性的：每一班、每一
+     個老師、每一個專案都會走過五個階段。 */
+  var GRID_LAYERS = [1, 2, 3, 4, 5];
 
   function gridCells(L) {
     var have = {};
     (L.state.grid || []).forEach(function (k) { have[k] = true; });
     var out = [];
     GRID_LAYERS.forEach(function (n) {
-      var bz = bossOf(n), lay = (L.LAYERS || [])[n - 1] || {};
+      var lay = (L.LAYERS || [])[n - 1] || {};
       var reached = (L.state.currentLayer || 1) >= n;
       VOW_DEF.forEach(function (d) {
         var got = !!have[n + '-' + d.k];
         out.push({
           layer: n, vow: d.k, got: got, reached: reached,
-          mob: reached ? (bz ? bz.name : lay.name || ('L' + n)) : '？？？',
+          mob: reached ? ('L' + n + '　' + (lay.name || '')) : ('L' + n + '　？？？'),
           name: d.name
         });
       });
@@ -9764,6 +9845,9 @@ class Component extends DCLogic {
       ? '全部收齊了。'
       : '一項任務宣告一樣，做到才掉。同一層同一種只算一格——要跨層去湊。';
 
+    v.recNote = got >= cells.length
+      ? '二十五格全收齊了。'
+      : '一項任務宣告一樣，做到才掉。同一層同一種只算一格——要跨層去湊。這一頁只有你自己，沒有別人。';
     v.gridRows = GRID_LAYERS.map(function (n) {
       var mine = cells.filter(function (c) { return c.layer === n; });
       return {

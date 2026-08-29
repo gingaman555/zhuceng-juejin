@@ -3188,7 +3188,11 @@
     if (L.state.haulLoading) return;
     L.setState({ haulLoading: true });
     call('apiRoster', LIVE.token)
-      .then(function (r) { L.setState({ haulLoading: false, haulData: (r && r.ok) ? r.roster : null }); })
+      .then(function (r) {
+        L.setState({ haulLoading: false,
+          haulData: (r && r.ok) ? r.roster : null,
+          haulClaims: (r && r.ok) ? (r.claims || []) : [] });
+      })
       .catch(function () { L.setState({ haulLoading: false, haulData: null }); });
   }
 
@@ -3231,6 +3235,7 @@
   function decorateHaul(L, v) {
     var S = L.state;
     v.hasHaul = false; v.haulRows = []; v.scHaul = false;
+    v.hasClaims = false; v.claimRows = []; v.claimHead = ''; v.claimNote = '';
     v.showHaulTab = false; v.haulNote = ''; v.haulMine = '';
     if (S.role !== 'student' || !S.signedIn) return;
 
@@ -3251,18 +3256,44 @@
     }
 
     v.hasHaul = true;
+
+    /* 初採：哪一塊礦被誰先採走。沒有人碰過的那幾塊是唯一會在你不在的
+       時候變的東西——所以它排在最前面，而且要講清楚還剩幾塊。 */
+    var claims = S.haulClaims || [];
+    var open = claims.filter(function (c) { return !c.by; });
+    var myFirst = claims.filter(function (c) { return c.mine; });
+    v.hasClaims = claims.length > 0;
+    v.claimHead = '初採　' + myFirst.length + ' / ' + claims.length;
+    v.claimNote = open.length
+      ? '還有 ' + open.length + ' 塊沒有人採到。第一個採到的隊伍會永久記在那一塊上。'
+      : '每一塊都有人採到了。';
+    v.claimRows = claims.map(function (c) {
+      return {
+        name: c.mineral,
+        by: c.by ? (c.mine ? '你們' : c.by) : '還沒有人',
+        meta: 'L' + c.layer + '　' + c.title,
+        boxStyle: 'padding:11px 13px;background:' +
+          (c.mine ? 'rgba(233,179,65,.1)' : c.by ? 'rgba(0,0,0,.26)' : 'rgba(0,0,0,.4)') +
+          ';border:1px ' + (c.mine ? 'solid #E9B341' : c.by ? 'solid #2E2822' : 'dashed #4A3F30'),
+        nameStyle: "font:500 22px/1.3 'C11';color:" + (c.mine ? '#E8E2D6' : c.by ? '#9A9184' : '#C3BAAA'),
+        byStyle: "flex:none;font:400 11px/1 'C11';color:" +
+          (c.mine ? '#E9B341' : c.by ? '#6E665A' : '#D9603F'),
+        metaStyle: "font:400 11px/1.6 'C11';color:#5F574C;margin-top:4px"
+      };
+    });
     var top = Math.max.apply(null, rows.map(function (r) { return r.total; }).concat([1]));
     var mine = rows.filter(function (r) { return r.me; })[0];
 
     /* 只描述，不評價——這一句照文件「走過的路」那條硬規則。 */
     if (mine) {
       var place = rows.indexOf(mine) + 1;
-      v.haulMine = '你們第 ' + place + ' 名，收了 ' + (mine.cells || 0) + ' 格。' +
-        ((mine.cells || 0) >= 20 ? '二十格收齊了。'
-          : '還差 ' + (20 - (mine.cells || 0)) + ' 格。每一項任務宣告一樣，做到才掉。');
+      v.haulMine = '你們第 ' + place + ' 名，' + mine.total + ' 分。' +
+        (mine.vows
+          ? '其中 ' + mine.vows + ' 項是宣告之後真的做到的，那些一項多 20 分。'
+          : '還沒有宣告成功過。宣告做到的那一項算 30 分，不是 10。');
     }
-    v.haulNote = '比的是收了幾格，不是做了幾項——做得多不會自動贏。' +
-      '同一層同一種只算一格，所以要跨層去湊。格子一樣多，才比下面那條分數。';
+    v.haulNote = '勾一條 1 分　·　通過一項 10 分　·　通過而且做到宣告的破法 30 分（取代 10）。' +
+      '跑幾輪之後基本盤都差不多——名次的差距全部來自宣告成功了幾次。';
 
     v.haulRows = rows.map(function (r, i) {
       var basePct = Math.round(r.base / top * 100);
@@ -3270,8 +3301,9 @@
       return {
         rank: String(i + 1),
         name: r.name + (r.me ? '　（你們）' : ''),
-        total: (r.cells || 0) + ' 格',
-        detail: '勾 ' + r.ticks + '　通過 ' + (r.pages + r.stars) + '　★ ' + r.stars,
+        total: String(r.total),
+        detail: '勾 ' + r.ticks + '　通過 ' + (r.pages + r.vows) + '　破法 ' + r.vows +
+          (r.firsts ? '　初採 ' + r.firsts : ''),
         rowStyle: 'padding:13px 15px;background:' + (r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
           ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
         rankStyle: "flex:none;width:26px;font:700 22px/1 'C11';color:" + (r.me ? '#E9B341' : '#5F574C'),
@@ -3294,20 +3326,24 @@
 
      排行榜比的是「收了幾格」，不是「做了幾項」。做得多不會自動
      贏，這對後段班友善，也才是收集式的競爭。 */
-  var GRID_LAYERS = [1, 2, 3, 4];
+  /* 格子綁在「層」上，不綁生物。
+     生物之後會變成一項任務一隻——綁生物的話，內容一換格子就對不
+     起來，而且第五層根本沒有守關生物。層是結構性的：每一班、每一
+     個老師、每一個專案都會走過五個階段。 */
+  var GRID_LAYERS = [1, 2, 3, 4, 5];
 
   function gridCells(L) {
     var have = {};
     (L.state.grid || []).forEach(function (k) { have[k] = true; });
     var out = [];
     GRID_LAYERS.forEach(function (n) {
-      var bz = bossOf(n), lay = (L.LAYERS || [])[n - 1] || {};
+      var lay = (L.LAYERS || [])[n - 1] || {};
       var reached = (L.state.currentLayer || 1) >= n;
       VOW_DEF.forEach(function (d) {
         var got = !!have[n + '-' + d.k];
         out.push({
           layer: n, vow: d.k, got: got, reached: reached,
-          mob: reached ? (bz ? bz.name : lay.name || ('L' + n)) : '？？？',
+          mob: reached ? ('L' + n + '　' + (lay.name || '')) : ('L' + n + '　？？？'),
           name: d.name
         });
       });
@@ -3340,6 +3376,9 @@
       ? '全部收齊了。'
       : '一項任務宣告一樣，做到才掉。同一層同一種只算一格——要跨層去湊。';
 
+    v.recNote = got >= cells.length
+      ? '二十五格全收齊了。'
+      : '一項任務宣告一樣，做到才掉。同一層同一種只算一格——要跨層去湊。這一頁只有你自己，沒有別人。';
     v.gridRows = GRID_LAYERS.map(function (n) {
       var mine = cells.filter(function (c) { return c.layer === n; });
       return {
