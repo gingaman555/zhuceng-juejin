@@ -212,7 +212,7 @@
     DB.TeamTasks.forEach(function (r) {
       if (r.teamId !== teamId) return;
       ticks += checkList2(r.checked).length;
-      /* 坑屑：每一件都一樣重，掉到哪一件不影響名次，只有件數影響 */
+      /* 掉落物：每一件都一樣重，掉到哪一件不影響名次，只有件數影響 */
       if (Number(r.find) > 0) finds++;
       if (Number(r.find2) > 0) finds++;
       if (r.status !== 'passed') return;
@@ -220,7 +220,7 @@
       var won = !!(def && r.vow && vowWon(teamId, r.taskId, def, kl, String(r.vow)));
       if (won) vows++; else pages++;
     });
-    /* 老師放行一層 → 道具一件 ＋ 守關掉落一件，各 50。
+    /* 老師放行一層 → 道具一件 ＋ 戰利品一件，各 50。
        那是一整個階段的門檻，在榜上就是一個台階。 */
     var tm = DB.Teams.filter(function (x) { return String(x.teamId) === String(teamId); })[0];
     var layers = tm ? (tm.passed || []).filter(function (n) {
@@ -1188,7 +1188,7 @@
         m.fb = txt || (pass ? '（未附理由）' : '');
         m.fbType = pass ? 'pass' : 'more';
         if (pass) m.passedWeek = w;
-        /* 過關掉一件坑屑。已經掉過的不重掉（重審不會多給）。 */
+        /* 過關掉一件掉落物。已經掉過的不重掉（重審不會多給）。 */
         var defNow = tasksOfClass(tm.classId, teamId).filter(function (d) { return d.id === taskId; })[0];
         /* 掉幾件＝層數 ＋（老師給的 1–5 − 1）。已經掉過的不重掉。 */
         var prevFinds = Array.isArray(m.finds) ? m.finds : [];

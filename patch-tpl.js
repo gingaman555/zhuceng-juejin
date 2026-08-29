@@ -3254,7 +3254,7 @@ must(
 '              <sc-if value="{{ hasFinds }}" hint-placeholder-val="{{ true }}">',
 '                <div style="padding:26px var(--pad) 0">',
 '                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:5px">',
-'                    <span style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#E9B341">坑屑</span>',
+'                    <span style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#E9B341">掉落物</span>',
 '                    <span style="font:700 22px/1 ' + Q + 'C11' + Q + ';color:#E8E2D6">{{ findCount }}</span>',
 '                  </div>',
 '                  <div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin-bottom:12px;max-width:520px;text-wrap:pretty">{{ findNote }}</div>',
@@ -3475,7 +3475,7 @@ must(
 })();
 
 
-/* 69. 試挖整頁拿掉。收集的三塊（圖鑑／坑屑／日誌）搬到收藏總覽—— */
+/* 69. 試挖整頁拿掉。收集的三塊（圖鑑／掉落物／日誌）搬到收藏總覽—— */
 /*     它們現在全部從過關來，本來就該待在收集那一頁。 */
 (function () {
   var a = t.indexOf('<sc-if value="{{ scDig }}"');
@@ -3594,12 +3594,12 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
 })();
 
 
-/* 75. 過關獎勵卡的「寶物」標籤改成「守關掉落」 */
+/* 75. 過關獎勵卡的「寶物」標籤改成「戰利品」 */
 (function () {
   var a = '>寶物</div>';
   if (t.split(a).length - 1 !== 1) { console.error('75. 寶物標籤找不到'); process.exit(1); }
-  t = t.replace(a, '>守關掉落</div>');
-  console.log('75. 獎勵卡標籤改成守關掉落');
+  t = t.replace(a, '>戰利品</div>');
+  console.log('75. 獎勵卡標籤改成戰利品');
 })();
 
 
@@ -3613,7 +3613,10 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
     '<div style="font:400 11px/1.7 &#39;C11&#39;;color:#6E665A;margin-bottom:7px;text-wrap:pretty">{{ gaveNote }}</div>' +
     '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
       '<sc-for list="{{ gavePicks }}" as="gv" hint-placeholder-count="5">' +
-        '<button onClick="{{ gv.pick }}" style="{{ gv.style }}">{{ gv.label }}</button>' +
+        '<button onClick="{{ gv.pick }}" style="{{ gv.style }}">' +
+          '<span style="{{ gv.numStyle }}">{{ gv.label }}</span>' +
+          '<span style="{{ gv.anchorStyle }}">{{ gv.anchor }}</span>' +
+        '</button>' +
       '</sc-for>' +
     '</div>' +
     '<div style="font:400 11px/1.7 &#39;C11&#39;;color:#8A8073;margin-top:7px">{{ gaveWhat }}</div>' +
