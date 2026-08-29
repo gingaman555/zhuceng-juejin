@@ -3685,5 +3685,35 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('79. 圖鑑分成生物／物品兩頁');
 })();
 
+
+/* 80. 採集進度與送關卡拿掉——兩個都是「採齊才過關」那個年代的東西。 */
+(function () {
+  /* 採集進度：從 hasTasks 那個 sc-if 開頭切到它自己的 </sc-if> */
+  var m = '這一層的採集進度';
+  var i = t.indexOf(m);
+  if (i < 0) { console.error('80. 採集進度找不到'); process.exit(1); }
+  var open = t.lastIndexOf('<sc-if value="{{ hasTasks }}"', i);
+  if (open < 0) { console.error('80. 採集進度的外層找不到'); process.exit(1); }
+  var close = t.indexOf('</sc-if>', i);
+  if (close < 0) { console.error('80. 採集進度的收尾找不到'); process.exit(1); }
+  t = t.slice(0, open) + t.slice(close + 8);
+  console.log('80a. 採集進度拿掉');
+
+  /* 送關卡：整個 scSUB 畫面 */
+  var a2 = t.indexOf('<sc-if value="{{ scSUB }}"');
+  if (a2 < 0) { console.error('80. scSUB 找不到'); process.exit(1); }
+  /* 往後找到配對的 </sc-if>：中間還有巢狀的，要數 */
+  var depth = 0, j = a2;
+  while (j < t.length) {
+    var nx = t.indexOf('<sc-if', j + 1);
+    var nc = t.indexOf('</sc-if>', j + 1);
+    if (nc < 0) { console.error('80. scSUB 收尾找不到'); process.exit(1); }
+    if (nx >= 0 && nx < nc) { depth++; j = nx; continue; }
+    if (depth === 0) { t = t.slice(0, a2) + t.slice(nc + 8); break; }
+    depth--; j = nc;
+  }
+  console.log('80b. 送關卡那一頁拿掉');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

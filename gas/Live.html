@@ -67,7 +67,12 @@
        setState → 重算 → setState 的無窮迴圈。 */
     ORIG.go = P.go;
     P.go = function (screen) {
-      return ORIG.go.call(this, screen === 'GANTT' ? 'S02' : screen);
+      /* 拿掉的畫面統一在這裡轉走——在 render 裡 setState 會無限迴圈。
+           甘特　　整頁拿掉
+           SUB 　　送關卡拿掉，放行由老師決定
+           S-04　　其他隊伍拿掉，排行榜講的是同一件事而且更清楚 */
+      var GONE = { GANTT: 'S02', SUB: 'S02', S04: 'S03' };
+      return ORIG.go.call(this, GONE[screen] || screen);
     };
 
     /* 期限週次不再夾在 6；學期長度由班級設定 */
@@ -692,6 +697,17 @@
        「我打算第幾週交」留在任務頁上——那是一項一次的宣告，
        不是一張整學期的圖。 */
     v.scGantt = false;
+    /* 送關卡整套拿掉：放行的判斷完全在老師那邊，不需要學生先送一張表。
+       跟甘特一樣只關旗標——在 render 裡 setState 會無限迴圈。 */
+    v.scSUB = false;
+
+    /* S-04「其他隊伍」關掉：側欄早就拿掉了，但畫面還在，舊連結進得去。
+       它講的事排行榜已經在講，而且講得更清楚（有分數、有坑道圖、點得進去）。 */
+    v.scS04 = false;
+
+    /* T-08「學生端的世界」是老師端的畫面，但學生也進得去——他會看到
+       「你定的每一項，學生那邊看到的是⋯⋯」，對他沒有意義而且是別人的視角。 */
+    if (S.role === 'student') v.scT08 = false;
     if (v.navItems) {
       v.navItems = v.navItems.filter(function (n) { return n.code !== '甘特'; });
     }
@@ -7649,7 +7665,8 @@
     v.gatePickers = gates.map(function (x) {
       var on = g && x.teamId === g.teamId;
       return {
-        name: x.teamName, sub: LAYERNAME(x.layer) + ' · 停留 ' + x.weeks + ' 週',
+        name: x.teamName,
+        sub: LAYERNAME(x.layer) + ' · 停留 ' + x.weeks + ' 週' + (x.applied ? ' · 他們說夠了' : ''),
         pick: function () { L.setState({ gateTeamId: x.teamId, gateLevelPick: null, gateReason: '' }); },
         style: 'text-align:left;padding:10px 14px;font:inherit;cursor:pointer;background:' +
           (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' + (on ? '#E9B341' : '#2E2822') +

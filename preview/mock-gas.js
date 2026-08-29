@@ -740,8 +740,10 @@
               title: task.title, layer: task.layer, type: task.type, text: task.text, spec: task.spec || '', effort: task.effort, effortNote: task.effortNote, blocker: task.blocker,
               files: task.files, over: task.over, due: task.due, weeks: tm.weeks, cond: task.cond, mineral: task.mineral });
           });
-          if (tm.gateSubmitted && !tm.gateVerdict) out.gates.push({
-            teamId: tm.id, teamName: tm.name, layer: tm.layer, cells: tm.gateText, weeks: tm.weeks });
+          /* 每一組都列出來，不管有沒有送過申請——放行完全由老師決定 */
+          if (Number(tm.layer) <= 4) out.gates.push({
+            teamId: tm.id, teamName: tm.name, layer: tm.layer, cells: tm.gateText,
+            weeks: tm.weeks, applied: !!tm.gateSubmitted });
         });
       }
       return ok(out);

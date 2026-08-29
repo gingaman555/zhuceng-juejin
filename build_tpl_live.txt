@@ -600,45 +600,7 @@
                 </sc-for>
               </div>
 
-              <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
-                <div style="margin:24px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.05),transparent 58%),#14110E;border:1px solid #3A3026">
-                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">這一層的採集進度</span>
-                    <span style="font:700 33px/1 'C11';color:#E9B341">{{ collectDone }}</span>
-                    <span style="font:400 22px/1 'C11';color:#8A8073">/ {{ collectTotal }} 塊</span>
-                  </div>
-                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
-                    <sc-for list="{{ collectCells }}" as="c" hint-placeholder-count="6">
-                      <span style="{{ c.box }}">
-                        <span style="{{ c.icon }}"></span>
-                        <span style="display:block;font:400 11px/1.3 'C11';margin-top:6px;color:{{ c.color }};white-space:nowrap">{{ c.name }}</span>
-                      </span>
-                    </sc-for>
-                  </div>
-                  <div style="display:flex;flex-direction:column;gap:9px;margin-top:15px">
-                    <sc-for list="{{ collectBars }}" as="b" hint-placeholder-count="2">
-                      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:11px">
-                        <span style="font:400 11px/1 'C11';letter-spacing:.1em;color:#5F574C;width:82px;flex:none">{{ b.label }}</span>
-                        <span style="flex:none;font:700 22px/1 'C11';color:{{ b.color }};width:56px">{{ b.count }}</span>
-                        <span style="display:flex;gap:3px;flex:none">
-                          <sc-for list="{{ b.pips }}" as="p" hint-placeholder-count="3">
-                            <span style="{{ p.style }}"></span>
-                          </sc-for>
-                        </span>
-                        <span style="flex:1;min-width:150px;font:400 22px/1.6 'C11';color:#8A8073;text-wrap:pretty">{{ b.note }}</span>
-                      </div>
-                    </sc-for>
-                  </div>
-                  <div style="margin-top:15px;padding-top:13px;border-top:1px solid #26211C">
-                    <div style="font:400 22px/1.6 'C11';color:{{ collectNextColor }};text-wrap:pretty">{{ collectNext }}</div>
-                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:11px">
-                      <sc-for list="{{ collectChain }}" as="ch" hint-placeholder-count="5">
-                        <span style="{{ ch.style }}">{{ ch.text }}</span>
-                      </sc-for>
-                    </div>
-                  </div>
-                </div>
-              </sc-if>
+              
 
               <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
 
@@ -865,48 +827,7 @@
             </div>
           </sc-if>
 
-          <sc-if value="{{ scSUB }}" hint-placeholder-val="{{ false }}">
-            <div data-screen-label="關卡送審三格" style="padding:0 0 32px">
-              <div style="padding:20px var(--pad);border-bottom:1px solid #221E19;display:flex;align-items:center;gap:13px">
-                <button onClick="{{ goTasks }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #26211C;padding:8px 12px;cursor:pointer">←</button>
-                <div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">GATE · 送審三格</div>
-                  <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ layerName }} · 關卡送審</h1>
-                </div>
-              </div>
-              <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:19px;{{ formW }}">
-                <sc-if value="{{ subBlocked }}" hint-placeholder-val="{{ false }}">
-                  <div style="padding:15px 17px;background:rgba(217,96,63,.1);border-left:2px solid #D9603F">
-                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#D9603F">現在還送不出去</div>
-                    <div style="font:400 22px/1.6 'C11';color:#FFB9A2;margin-top:8px;text-wrap:pretty">{{ subBlockedWhy }}</div>
-                  </div>
-                </sc-if>
-                <div style="display:flex;flex-wrap:wrap;gap:22px;padding:14px 16px;background:#14110E;border:1px solid #26211C">
-                  <div><div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">剩餘週數</div><div style="font:700 33px/1.2 'C11';color:#E9B341;margin-top:5px">{{ weeksLeft }}</div></div>
-                  <div><div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">這一層還差</div><div style="font:700 33px/1.2 'C11';margin-top:5px">{{ reqLeft }}</div></div>
-                  <div><div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">已經採到</div><div style="font:700 33px/1.2 'C11';margin-top:5px">{{ reqDone }}</div></div>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-                  <button onClick="{{ openGateWhy }}" style="{{ gateWhyBtnStyle }}">{{ gateWhyBtnLabel }}</button>
-                </div>
-                <div style="display:none">
-                </div>
-                <sc-for list="{{ gateFields }}" as="f" hint-placeholder-count="3">
-                  <div>
-                    <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:5px">
-                      <span style="font:600 11px/1 'C11';color:#0B0A09;background:#E9B341;padding:5px 8px">{{ f.n }}</span>
-                      <span style="font:700 22px/1.4 'C11'">{{ f.q }}</span>
-                    </div>
-                    <div style="font:400 22px/1.6 'C11';color:#6E665A;margin-bottom:9px;text-wrap:pretty">{{ f.hint }}</div>
-                    <textarea onChange="{{ f.set }}" value="{{ f.value }}" placeholder="{{ f.ph }}" style="width:100%;min-height:190px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
-                  </div>
-                </sc-for>
-                <div>
-                  <button onClick="{{ submitGate }}" style="{{ submitGateStyle }}">{{ submitGateLabel }}</button>
-                </div>
-              </div>
-            </div>
-          </sc-if>
+          
 
           <sc-if value="{{ scMap }}" hint-placeholder-val="{{ false }}">
             <div data-screen-label="S-03 迷霧地圖與圖鑑" style="padding:0 0 32px;background:linear-gradient(180deg,#181410 0%,#0D0B08 26%,#060505 62%,#020202 100%)">

@@ -1382,9 +1382,12 @@ function apiBootstrap(token) {
         var b = byLayer[n];
         return { layer: n, count: b ? b.n : 0, avg: b ? Math.round(b.len / b.n) : 0 };
       });
-      out.gates = allTeams.filter(function (t) { return t.gateSubmitted && !t.gateVerdict; })
+      /* 每一組都列出來，不管有沒有送過申請——學生那一側的「送關卡」
+         已經拿掉了，放行完全由老師決定。走完第四層的就不用再列。 */
+      out.gates = allTeams.filter(function (t) { return Number(t.layer) <= 4; })
         .map(function (t) {
-          return { teamId: t.id, teamName: t.name, layer: t.layer, cells: t.gateText, weeks: t.weeks };
+          return { teamId: t.id, teamName: t.name, layer: t.layer, cells: t.gateText,
+                   weeks: t.weeks, applied: !!t.gateSubmitted };
         });
     }
 
