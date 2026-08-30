@@ -5,7 +5,7 @@
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Checks: [], Journeys: [],
+             Files: [], Roster: [], MinNames: [], Checks: [], Journeys: [], Redigs: [],
              Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
@@ -232,6 +232,33 @@
   /* 回掘：打開一條、寫下要補什麼、補完再勾回來。
      證據是那一句話，不是時間差。 */
   function starOf(teamId, taskId) { return redigOf(teamId, taskId).length > 0; }
+
+  function wkOfTs(u, ts) {
+    var kl = classById(u.classId) || {};
+    var st = new Date(kl.courseStart || '2026-09-14');
+    var d0 = new Date(st.getFullYear(), st.getMonth(), st.getDate());
+    var days = Math.floor((new Date(ts) - d0) / 86400000);
+    return Math.max(1, Math.floor(days / 7) + 1);
+  }
+  /* 一週一次：清單上的回掘與送去給老師看的共用同一個額度 */
+  function redigWeekUsed(u) {
+    var now = wkOfTs(u, NOW()), n = 0;
+    DB.Checks.forEach(function (c) {
+      if (c.teamId !== u.teamId || c.act !== 'off') return;
+      if (!String(c.note || '').trim()) return;
+      if (wkOfTs(u, c.ts) === now) n++;
+    });
+    (DB.Redigs || []).forEach(function (x) {
+      if (x.teamId !== u.teamId || x.status === 'declined') return;
+      if (wkOfTs(u, x.ts) === now) n++;
+    });
+    return n;
+  }
+  function redigsOf(teamId) {
+    return (DB.Redigs || []).filter(function (x) { return x.teamId === teamId; })
+      .map(function (x) { return { redigId: x.redigId, taskId: x.taskId, note: x.note,
+                                   status: x.status, reason: x.reason || '' }; });
+  }
 
   function redigOf(teamId, taskId) {
     var ev = DB.Checks
@@ -755,6 +782,7 @@
           if (p.reason) out.layerSaid[into] = String(p.reason);
         });
         out.record = recordOf(u.teamId, u.classId);
+        out.redigs = redigsOf(u.teamId);   /* 送出去的回頭補強，含老師的答覆 */
         out.finds = findsOf(u.userId);
         out.codex = codexOfUser(u.userId);
         out.findsTotal = FINDS_N;
@@ -788,6 +816,16 @@
         out.myWriting = [1,2,3,4,5].map(function (n) { var b = byL[n];
           return { layer: n, count: b?b.n:0, avg: b?Math.round(b.len/b.n):0 }; });
         out.teamTasks = {}; out.queue = []; out.gates = [];
+        out.redigQueue = (DB.Redigs || [])
+          .filter(function (x) { return x.status === 'pending'; })
+          .map(function (x) {
+            var tm = DB.Teams.filter(function (y) { return y.teamId === x.teamId; })[0];
+            if (!tm || tm.classId !== u.classId) return null;
+            var d = DB.Tasks.filter(function (y) { return y.taskId === x.taskId; })[0];
+            return { redigId: x.redigId, teamId: x.teamId, teamName: tm.name, taskId: x.taskId,
+                     title: d ? d.title : '', layer: d ? Number(d.layer) : 1,
+                     cond: d ? String(d.cond || '') : '', note: x.note, ts: x.ts };
+          }).filter(Boolean);
         allTeams.forEach(function (tm) {
           var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w, tm.id, kl);
           out.teamTasks[tm.id] = list;
@@ -1115,6 +1153,53 @@
       persist();
       return ok({ vow: k });
     },
+    /* 對已經過了的任務回頭補強，送老師認定。一週一次。 */
+    apiSubmitRedig: function (t, taskId, note) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以送。');
+      var txt = String(note || '').trim();
+      if (txt.length < 4) return err('寫一句你回頭補了什麼——那一句就是老師看得到的東西。');
+      var row = ttmap(u.teamId)[taskId];
+      if (!row || row.status !== 'passed') return err('這一項還沒過，直接在任務裡補就好。');
+      DB.Redigs = DB.Redigs || [];
+      if (DB.Redigs.filter(function (x) {
+        return x.teamId === u.teamId && x.taskId === taskId && x.status === 'pending';
+      })[0]) return err('這一項已經送過一次回頭補強，還在等老師看。');
+      if (redigWeekUsed(u) >= 1) return err('這一週已經回頭補過一次了。下一週再來——一週一次，這件事才有份量。');
+      DB.Redigs.push({ redigId: 'rd' + uid(), teamId: u.teamId, taskId: taskId,
+        note: txt.slice(0, 400), status: 'pending', reason: '',
+        by: u.userId || u.account || '', ts: NOW(), decidedAt: '' });
+      persist();
+      return ok({ sent: true });
+    },
+
+    apiReviewRedig: function (t, redigId, accept, reason) {
+      var u = auth(t);
+      if (u.role !== 'teacher') return err('只有老師可以認定。');
+      DB.Redigs = DB.Redigs || [];
+      var rd = DB.Redigs.filter(function (x) { return x.redigId === redigId; })[0];
+      if (!rd) return err('找不到這一筆。');
+      if (rd.status !== 'pending') return err('這一筆已經看過了。');
+      var txt = String(reason || '').trim();
+      if (!accept && !txt) return err('不接受要寫一句為什麼——那一句是學生下一次的依據。');
+      var got = 0;
+      if (accept) {
+        var row = ttmap(rd.teamId)[rd.taskId];
+        var d = DB.Tasks.filter(function (x) { return x.taskId === rd.taskId; })[0];
+        var lay = d ? (Number(d.layer) || 1) : 1;
+        if (row) {
+          var cur = Array.isArray(row.finds) ? row.finds.slice() : [];
+          var add = rollFindsIn(lay, 1);
+          got = add[0] || 0;
+          row.finds = cur.concat(add);
+        }
+      }
+      rd.status = accept ? 'accepted' : 'declined';
+      rd.reason = txt; rd.decidedAt = NOW();
+      persist();
+      return ok({ accepted: !!accept, find: got });
+    },
+
     apiSetCheck: function (t, taskId, idx, on, note) {
       var u = auth(t);
       if (u.role !== 'student' || !u.teamId) return err('只有學生可以勾。');
@@ -1496,7 +1581,7 @@
     },
     apiExportToDrive: function (t, kinds, fullText) {
       auth(t);
-      return ok({ name: '（本機預覽）逐層掘進_事件記錄' + (fullText ? '_含原文' : '') + '.csv', url: '#', kinds: kinds });
+      return ok({ name: '（本機預覽）地心圖鑑_事件記錄' + (fullText ? '_含原文' : '') + '.csv', url: '#', kinds: kinds });
     }
   };
 

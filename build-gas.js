@@ -16,7 +16,7 @@ fs.writeFileSync('gas/Template.html', '<template id="jlz-tpl">\n' + tpl + '\n</t
 let idx = fs.readFileSync('gas/Index.html', 'utf8');
 idx = idx.replace(/<\?!=\s*include\('([^']+)'\);?\s*\?>/g, (m, n) => fs.readFileSync('gas/' + n + '.html', 'utf8'));
 const mock = '<script>\n' + fs.readFileSync('preview/mock-gas.js', 'utf8') + '\n</script>\n';
-const LIVEMARK = '<' + 'script>\n/* ============================================================\n   逐層掘進 · 實際使用版整合層';
+const LIVEMARK = '<' + 'script>\n/* ============================================================\n   地心圖鑑 · 實際使用版整合層';
 if (idx.indexOf(LIVEMARK) < 0) { console.error('MISS live marker'); process.exit(1); }
 idx = idx.replace(LIVEMARK, mock + LIVEMARK);
 idx = idx.replace('</body>', '<' + 'script src="/preview/dev/seed.js"></' + 'script>' + String.fromCharCode(10) + '</body>');

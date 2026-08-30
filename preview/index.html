@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>逐層掘進</title>
+<title>地心圖鑑</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;500;700&family=Noto+Serif+TC:wght@700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>
 @font-face{font-family:'C11';src:url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@v1.500/fonts/web/Cubic_11.woff2') format('woff2');font-weight:100 900;font-display:block}
 
@@ -209,7 +209,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
               <span style="{{ bootWalkerStyle }}"></span>
               <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>
               <span data-jlz-orb style="{{ bootOrbStyle }}"><span style="{{ bootNeedleStyle }}"></span></span>
-              <div style="font:700 44px/1.2 'C11';letter-spacing:.2em;text-indent:.2em;color:#F2E6C8;text-align:center;text-shadow:0 0 26px rgba(233,179,65,.35)">逐層掘進</div>
+              <div style="font:700 44px/1.2 'C11';letter-spacing:.2em;text-indent:.2em;color:#F2E6C8;text-align:center;text-shadow:0 0 26px rgba(233,179,65,.35)">地心圖鑑</div>
               <div style="width:56px;height:1px;background:var(--ac);margin:var(--pad) 0;opacity:.5"></div>
               <button onClick="{{ goLogin }}" style="margin-top:8px;font:500 22px/1 'C11';letter-spacing:.28em;text-indent:.28em;color:var(--bg);background:var(--ac);border:none;padding:15px 40px;cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">出　發</button>
             </div>
@@ -890,11 +890,11 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                     </div>
                   </sc-if>
                 </div>
-                <div>
+                <sc-if value="{{ hasSayBox }}" hint-placeholder-val="{{ true }}"><div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">你做了什麼　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
                   <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">{{ sayNote }}</div>
                   <textarea onChange="{{ setSubmitText }}" value="{{ submitText }}" placeholder="例：訪談三位大三生之後，把題目收斂成「畢製組隊後的分工失衡」，範圍縮到系上，排除跨校比較。" style="width:100%;min-height:220px;padding:13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
-                </div>
+                </div></sc-if>
                 <sc-if value="{{ hasReflect }}" hint-placeholder-val="{{ true }}">
                 <div style="padding:15px 16px;background:linear-gradient(140deg,rgba(233,179,65,.055),transparent 62%),var(--panel);border:1px solid var(--line2)">
                   <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px">
@@ -2539,7 +2539,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   </sc-if>
                 </div>
                 <div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">他們交了什麼</div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">{{ revTextLabel }}</div>
                   <div style="padding:16px 18px;background:var(--field);border:1px solid var(--line);font:400 22px/1.7 'C11';color:var(--tx2);text-wrap:pretty">{{ revText }}</div>
                   <sc-if value="{{ hasSelfCall }}" hint-placeholder-val="{{ true }}">
                     <div style="margin-top:11px;padding:14px 16px;background:linear-gradient(140deg,rgba(233,179,65,.05),transparent 62%),#12100D;border:1px solid var(--line2)">
@@ -2614,8 +2614,8 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 </div>
                 <div style="margin-bottom:13px"><div style="font:400 11px/1.7 &#39;C11&#39;;color:#6E665A;margin-bottom:7px;text-wrap:pretty">{{ gaveNote }}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ gavePicks }}" as="gv" hint-placeholder-count="5"><button onClick="{{ gv.pick }}" style="{{ gv.style }}"><span style="{{ gv.numStyle }}">{{ gv.label }}</span><span style="{{ gv.anchorStyle }}">{{ gv.anchor }}</span></button></sc-for></div><div style="font:400 11px/1.7 &#39;C11&#39;;color:var(--tx3);margin-top:7px">{{ gaveWhat }}</div></div>
                 <div style="display:flex;gap:9px;flex-wrap:wrap">
-                  <button onClick="{{ passItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:var(--bg);background:var(--ac);border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">通過</button>
-                  <button onClick="{{ rejectItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#D9603F;background:none;border:1px solid rgba(217,96,63,.45);padding:15px var(--pad);cursor:pointer">需補充</button>
+                  <button onClick="{{ passItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:var(--bg);background:var(--ac);border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">{{ passLabel }}</button>
+                  <button onClick="{{ rejectItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#D9603F;background:none;border:1px solid rgba(217,96,63,.45);padding:15px var(--pad);cursor:pointer">{{ rejectLabel }}</button>
                 </div>
               </div>
             </div>
@@ -3088,7 +3088,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
 
 <script>
 /* ============================================================
-   逐層掘進 · 最小渲染執行環境（GAS 版）
+   地心圖鑑 · 最小渲染執行環境（GAS 版）
    ------------------------------------------------------------
    只負責三件事：
      1. 解析原型的樣板語法（{{ }} / <sc-if> / <sc-for>）
@@ -4870,7 +4870,7 @@ class Component extends DCLogic {
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Checks: [], Journeys: [],
+             Files: [], Roster: [], MinNames: [], Checks: [], Journeys: [], Redigs: [],
              Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
@@ -5097,6 +5097,33 @@ class Component extends DCLogic {
   /* 回掘：打開一條、寫下要補什麼、補完再勾回來。
      證據是那一句話，不是時間差。 */
   function starOf(teamId, taskId) { return redigOf(teamId, taskId).length > 0; }
+
+  function wkOfTs(u, ts) {
+    var kl = classById(u.classId) || {};
+    var st = new Date(kl.courseStart || '2026-09-14');
+    var d0 = new Date(st.getFullYear(), st.getMonth(), st.getDate());
+    var days = Math.floor((new Date(ts) - d0) / 86400000);
+    return Math.max(1, Math.floor(days / 7) + 1);
+  }
+  /* 一週一次：清單上的回掘與送去給老師看的共用同一個額度 */
+  function redigWeekUsed(u) {
+    var now = wkOfTs(u, NOW()), n = 0;
+    DB.Checks.forEach(function (c) {
+      if (c.teamId !== u.teamId || c.act !== 'off') return;
+      if (!String(c.note || '').trim()) return;
+      if (wkOfTs(u, c.ts) === now) n++;
+    });
+    (DB.Redigs || []).forEach(function (x) {
+      if (x.teamId !== u.teamId || x.status === 'declined') return;
+      if (wkOfTs(u, x.ts) === now) n++;
+    });
+    return n;
+  }
+  function redigsOf(teamId) {
+    return (DB.Redigs || []).filter(function (x) { return x.teamId === teamId; })
+      .map(function (x) { return { redigId: x.redigId, taskId: x.taskId, note: x.note,
+                                   status: x.status, reason: x.reason || '' }; });
+  }
 
   function redigOf(teamId, taskId) {
     var ev = DB.Checks
@@ -5620,6 +5647,7 @@ class Component extends DCLogic {
           if (p.reason) out.layerSaid[into] = String(p.reason);
         });
         out.record = recordOf(u.teamId, u.classId);
+        out.redigs = redigsOf(u.teamId);   /* 送出去的回頭補強，含老師的答覆 */
         out.finds = findsOf(u.userId);
         out.codex = codexOfUser(u.userId);
         out.findsTotal = FINDS_N;
@@ -5653,6 +5681,16 @@ class Component extends DCLogic {
         out.myWriting = [1,2,3,4,5].map(function (n) { var b = byL[n];
           return { layer: n, count: b?b.n:0, avg: b?Math.round(b.len/b.n):0 }; });
         out.teamTasks = {}; out.queue = []; out.gates = [];
+        out.redigQueue = (DB.Redigs || [])
+          .filter(function (x) { return x.status === 'pending'; })
+          .map(function (x) {
+            var tm = DB.Teams.filter(function (y) { return y.teamId === x.teamId; })[0];
+            if (!tm || tm.classId !== u.classId) return null;
+            var d = DB.Tasks.filter(function (y) { return y.taskId === x.taskId; })[0];
+            return { redigId: x.redigId, teamId: x.teamId, teamName: tm.name, taskId: x.taskId,
+                     title: d ? d.title : '', layer: d ? Number(d.layer) : 1,
+                     cond: d ? String(d.cond || '') : '', note: x.note, ts: x.ts };
+          }).filter(Boolean);
         allTeams.forEach(function (tm) {
           var list = mergeTasks(tasksOfClass(classId, tm.id), ttmap(tm.id), w, tm.id, kl);
           out.teamTasks[tm.id] = list;
@@ -5980,6 +6018,53 @@ class Component extends DCLogic {
       persist();
       return ok({ vow: k });
     },
+    /* 對已經過了的任務回頭補強，送老師認定。一週一次。 */
+    apiSubmitRedig: function (t, taskId, note) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以送。');
+      var txt = String(note || '').trim();
+      if (txt.length < 4) return err('寫一句你回頭補了什麼——那一句就是老師看得到的東西。');
+      var row = ttmap(u.teamId)[taskId];
+      if (!row || row.status !== 'passed') return err('這一項還沒過，直接在任務裡補就好。');
+      DB.Redigs = DB.Redigs || [];
+      if (DB.Redigs.filter(function (x) {
+        return x.teamId === u.teamId && x.taskId === taskId && x.status === 'pending';
+      })[0]) return err('這一項已經送過一次回頭補強，還在等老師看。');
+      if (redigWeekUsed(u) >= 1) return err('這一週已經回頭補過一次了。下一週再來——一週一次，這件事才有份量。');
+      DB.Redigs.push({ redigId: 'rd' + uid(), teamId: u.teamId, taskId: taskId,
+        note: txt.slice(0, 400), status: 'pending', reason: '',
+        by: u.userId || u.account || '', ts: NOW(), decidedAt: '' });
+      persist();
+      return ok({ sent: true });
+    },
+
+    apiReviewRedig: function (t, redigId, accept, reason) {
+      var u = auth(t);
+      if (u.role !== 'teacher') return err('只有老師可以認定。');
+      DB.Redigs = DB.Redigs || [];
+      var rd = DB.Redigs.filter(function (x) { return x.redigId === redigId; })[0];
+      if (!rd) return err('找不到這一筆。');
+      if (rd.status !== 'pending') return err('這一筆已經看過了。');
+      var txt = String(reason || '').trim();
+      if (!accept && !txt) return err('不接受要寫一句為什麼——那一句是學生下一次的依據。');
+      var got = 0;
+      if (accept) {
+        var row = ttmap(rd.teamId)[rd.taskId];
+        var d = DB.Tasks.filter(function (x) { return x.taskId === rd.taskId; })[0];
+        var lay = d ? (Number(d.layer) || 1) : 1;
+        if (row) {
+          var cur = Array.isArray(row.finds) ? row.finds.slice() : [];
+          var add = rollFindsIn(lay, 1);
+          got = add[0] || 0;
+          row.finds = cur.concat(add);
+        }
+      }
+      rd.status = accept ? 'accepted' : 'declined';
+      rd.reason = txt; rd.decidedAt = NOW();
+      persist();
+      return ok({ accepted: !!accept, find: got });
+    },
+
     apiSetCheck: function (t, taskId, idx, on, note) {
       var u = auth(t);
       if (u.role !== 'student' || !u.teamId) return err('只有學生可以勾。');
@@ -6361,7 +6446,7 @@ class Component extends DCLogic {
     },
     apiExportToDrive: function (t, kinds, fullText) {
       auth(t);
-      return ok({ name: '（本機預覽）逐層掘進_事件記錄' + (fullText ? '_含原文' : '') + '.csv', url: '#', kinds: kinds });
+      return ok({ name: '（本機預覽）地心圖鑑_事件記錄' + (fullText ? '_含原文' : '') + '.csv', url: '#', kinds: kinds });
     }
   };
 
@@ -6394,7 +6479,7 @@ class Component extends DCLogic {
 </script>
 <script>
 /* ============================================================
-   逐層掘進 · 實際使用版整合層
+   地心圖鑑 · 實際使用版整合層
    ------------------------------------------------------------
    原型的畫面與行為（Template / Logic）維持原樣不動，這一層負責：
      · 真實註冊與登入（自建帳號密碼）
@@ -6591,6 +6676,9 @@ class Component extends DCLogic {
               .split('不影響過關，只影響工具校準到哪一階。').join('不影響過關，做了就多一塊礦石進學生的圖鑑。') /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
               /* 第五層拿掉了，剩四個領域 */
               .split('五層洞窟，一層一個週期').join('四個領域，一層一個階段')
+              /* 名字改了：講的不再是往下挖的動作，是收集本身 */
+              .split('名字就是這樣來的——逐層掘進。') /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
+              .join('而路上擋著的每一種東西，過了就收進圖鑑——名字就是這樣來的：地心圖鑑。')
               /* 採齊不再是門檻——過不過是你決定 */
               .split('你認定的最低完成標準。全數通過才能送關卡。') /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
               .join('你認定的最低完成標準。過幾項不決定他們能不能往下——那是你放行的時候才決定的。');
@@ -6687,6 +6775,7 @@ class Component extends DCLogic {
       next.plan = b.plan || {};
       next.passedWeek = b.passedWeek || {};
       next.record = b.record || [];
+      next.redigs = b.redigs || [];        /* 送出去的回頭補強，含老師的答覆 */
       next.codex = b.codex || [];
       next.layerSaid = b.layerSaid || {};
       next.digs = b.digs || [];
@@ -6791,14 +6880,28 @@ class Component extends DCLogic {
       next.tasks = (b.taskDefs || []).map(function (d) {
         return Object.assign({}, d, { status: 'todo', text: '', files: [], fb: '', fbType: '', over: false });
       });
+      next.redigQueue = b.redigQueue || [];   /* 回頭補強的待看件 */
       next.otherSubs = (b.queue || []).map(function (q) {
         return { id: q.id, klass: b.classId, team: q.teamName, teamId: q.teamId, taskId: q.taskId,
                  title: q.title, layer: q.layer, tag: 'L' + q.layer,
                  cond: q.cond, due: q.due, over: q.over, text: q.text, files: q.files || [],
                  mineral: q.mineral || '', spec: q.spec || '',
                  effort: q.effort || '', effortNote: q.effortNote || '', blocker: q.blocker || '',
-                 star: !!q.star };
+                 star: !!q.star, redig: q.redig || [] };
       });
+
+      /* 回頭補強也是要老師判的一件，所以走同一條路：進同一個佇列、
+         同一頁、同一個理由框。他不用學第二套流程，只是這一件他判的
+         不是交付本身，是「補的算不算數」。 */
+      next.otherSubs = next.otherSubs.concat((b.redigQueue || []).map(function (q) {
+        return { id: 'rd:' + q.redigId, redigId: q.redigId, isRedig: true,
+                 klass: b.classId, team: q.teamName, teamId: q.teamId, taskId: q.taskId,
+                 title: '回頭補強 · ' + q.title, baseTitle: q.title,
+                 layer: q.layer, tag: 'L' + q.layer,
+                 cond: q.cond || '', due: '不設限', over: false,
+                 text: q.note, files: [], mineral: '', spec: '',
+                 effort: '', effortNote: '', blocker: '', star: false, redig: [] };
+      }));
       next.finOpened = !!(b.myTeam && b.myTeam.finaleOpened);
       next.myPhrases = b.myPhrases || [];
       next.myWriting = b.myWriting || [];
@@ -9566,8 +9669,81 @@ class Component extends DCLogic {
     var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
     if (!task) return;
     var list = task.checks || [];
+
+    /* 已經過了的那一項：回頭補強。專案做到一半回頭補是必然會發生的事，
+       但那一項已經抽過了，不能回頭重擲——所以寫下補了什麼，送老師認定，
+       他接受就另外給一次。 */
+    if (task.status === 'passed') {
+      var mine = (S.redigs || []).filter(function (x) { return String(x.taskId) === String(task.id); });
+      var pend = mine.filter(function (x) { return x.status === 'pending'; })[0];
+      var done = mine.filter(function (x) { return x.status === 'accepted'; })[0];
+      var no = mine.filter(function (x) { return x.status === 'declined'; })[0];
+
+      v.gambleShow = true;
+      v.gambleStar = !!done;
+      v.gambleBoxStyle = 'margin:0 0 18px;padding:17px 19px;border-left:3px solid ' +
+        (done ? 'var(--ac)' : pend ? 'var(--tx3)' : 'var(--line2)') +
+        ';background:rgba(0,0,0,.26);border-top:1px solid var(--line);' +
+        'border-right:1px solid var(--line);border-bottom:1px solid var(--line)';
+      v.gambleItems = [];
+
+      if (pend) {
+        v.gambleTitle = '回頭補強 · 等老師看';
+        v.gambleBody = '你寫的是：「' + pend.note + '」';
+        v.gambleCost = '他接受的話，這一項會多抽一次。不接受他會寫一句為什麼。';
+        v.redigInputStyle = 'display:none'; v.redigHintStyle = 'display:none';
+        v.redigHint = ''; v.redigNote = ''; v.redigPlaceholder = '';
+        v.setRedigNote = function () {};
+        return;
+      }
+      if (done) {
+        v.gambleTitle = '★　這一項回頭補強過';
+        v.gambleBody = '你寫的是：「' + done.note + '」　老師接受了，多抽了一次。';
+        v.gambleCost = (done.reason ? '他寫的：' + done.reason : '');
+        v.redigInputStyle = 'display:none'; v.redigHintStyle = 'display:none';
+        v.redigHint = ''; v.redigNote = ''; v.redigPlaceholder = '';
+        v.setRedigNote = function () {};
+        return;
+      }
+
+      var note1 = String(S.redigNote || '');
+      v.gambleTitle = '這一項想回頭補強嗎';
+      v.gambleBody = '這一項已經過了，但專案走下去之後你可能發現它不夠——' +
+        '回頭補完，寫下你補了什麼，送去給老師看。他接受就多抽一次。';
+      v.gambleCost = (no ? '上一次他沒接受，他寫的是：「' + no.reason + '」　可以再送一次。' : '') +
+        '　一週一次。他會照這一項本來要交的東西，判你補的算不算數。';
+      v.redigNote = note1;
+      v.redigPlaceholder = '例：後來又訪了兩個人，把矛盾那一段重寫了。';
+      v.setRedigNote = function (e) { L.setState({ redigNote: e.target.value }); };
+      v.redigInputStyle = 'width:100%;padding:12px 13px;background:var(--field);' +
+        'border:1px solid var(--line2);color:var(--tx);' +
+        "font:400 22px/1.5 'C11';outline:none";
+      v.redigHint = note1.trim() ? '寫好了。按下面那顆送出去。' : '還沒寫。';
+      v.redigHintStyle = "font:400 11px/1.6 'C11';margin:7px 0 11px;color:" +
+        (note1.trim() ? 'var(--ac)' : 'var(--tx3)');
+      v.gambleItems = [{
+        label: '送去給老師看',
+        text: '',
+        textStyle: 'display:none',
+        pick: function () {
+          var nt = String(L.state.redigNote || '').trim();
+          if (nt.length < 4) { L.say('先寫一句你回頭補了什麼。'); return; }
+          call('apiSubmitRedig', LIVE.token, task.id, nt)
+            .then(function (r) {
+              if (!r || !r.ok) { L.say((r && r.error) || '沒有送出去。'); return; }
+              L.setState({ redigNote: '' });
+              L.say('送出去了。等老師看——他接受的話這一項會多抽一次。');
+              return refresh(true);
+            })
+            .catch(function () { L.say('沒有送出去。'); });
+        },
+        style: 'text-align:left;padding:11px 14px;background:rgba(233,179,65,.10);' +
+          "border:1px solid var(--ac-dim);color:var(--ac);font:500 22px/1.3 'C11';cursor:pointer"
+      }];
+      return;
+    }
+
     if (!list.length) return;
-    if (task.status === 'passed') return;
 
     var on = {};
     (task.checked || []).forEach(function (i) { on[Number(i)] = true; });
@@ -9687,6 +9863,9 @@ class Component extends DCLogic {
       ? '它是系統給的導覽——三條做過就勾，勾完按下面那顆就結束了。老師那邊看不到它。'
       : '這裡不收檔案，也不會看你交了什麼。交完再回來勾——他去他收作業的地方看完，再回來按過或不過。';
     v.checkHead = isTut0 ? '要做到這些' : '他要你做到這些';
+    /* 已經過了就不要再問「你做了什麼」——那一題是給還沒交的人回答的，
+       留在這裡會跟上面「回頭補強」那一框撞在一起，看起來像同一題問兩次。 */
+    v.hasSayBox = !locked;
     v.checkHint = locked
       ? '這一項已經通過了。'
       : isTut0
@@ -10827,14 +11006,29 @@ class Component extends DCLogic {
   }
 
   /* 哪幾項的「打贏」演過了。純演出，記在瀏覽器裡，掉了也不會少東西。 */
+  /* 這一項現在總共掉了幾件。回掘被接受會往上加。 */
+  function winCount(id) {
+    var st = (App && App.logic && App.logic.state) || {};
+    var rec = (st.record || []).filter(function (r) { return String(r.id) === String(id); })[0];
+    if (!rec) return 1;
+    var arr = (rec.finds && rec.finds.length ? rec.finds : [rec.find, rec.find2])
+      .map(Number).filter(function (n) { return n >= 1; });
+    return Math.max(1, arr.length);
+  }
+  /* 記的是「看到第幾件」，不是「看過沒」。回掘被老師接受之後那一項會
+     再多一件，件數一變就要再叫學生去看一次——不然多給的那一件他永遠
+     不會知道，整個回掘最重要的回報就等於沒發生。
+     舊資料存的是 1，跟「看過一件」剛好同義，不用轉。 */
   function seenWin(id) {
-    try { return !!(JSON.parse(localStorage.getItem('jlz.seenwin') || '{}'))[id]; }
-    catch (e) { return false; }
+    try {
+      var o = JSON.parse(localStorage.getItem('jlz.seenwin') || '{}');
+      return Number(o[id] || 0) >= winCount(id);
+    } catch (e) { return false; }
   }
   function markSeenWin(id) {
     try {
       var o = JSON.parse(localStorage.getItem('jlz.seenwin') || '{}');
-      o[id] = 1;
+      o[id] = winCount(id);
       localStorage.setItem('jlz.seenwin', JSON.stringify(o));
     } catch (e) {}
   }
@@ -10862,9 +11056,14 @@ class Component extends DCLogic {
     rows.push({ k: '這一次拿到', v: '＋' + gotScore + ' 分', hi: true });
     rows.push({ k: '抽了幾次', v: arr.length + ' 次', hi: arr.length > 1 });
     var baseN = Math.max(1, Math.min(4, task.layer || 1));
-    rows.push({ k: '怎麼算的', v: gave > 1
+    /* 回掘被接受的那幾次也要算進來——不然這一行會說「本來就是 1 次」
+       卻寫著抽了 2 次，學生看不出多的那一件是自己爭來的。 */
+    var expectN = Math.max(1, Math.min(8, baseN + gave - 1));
+    var redigN = Math.max(0, arr.length - expectN);
+    rows.push({ k: '怎麼算的', v: (gave > 1
       ? '這一層本來 ' + baseN + ' 次，他多給 ' + (gave - 1) + ' 次'
-      : '這一層本來就是 ' + baseN + ' 次' });
+      : '這一層本來就是 ' + baseN + ' 次') +
+      (redigN ? '，你回頭補強他又接受了 ' + redigN + ' 次' : ''), hi: redigN > 0 });
     /* 抽到什麼改由卡片上面那一排格子一次一次亮出來，這裡不再列一次 */
     var f2 = gave > 1;
 
@@ -12049,8 +12248,8 @@ class Component extends DCLogic {
     v.horizonHead = '這一趟走完是什麼樣子';
     /* 回掘過幾項。這個數字要出現在「終點長什麼樣子」裡面——
        不然學生做完那件事之後，系統從頭到尾沒有再提過它。 */
-    var starN = (S.tasks || []).filter(function (t) { return t.star; }).length +
-      (S.codex || []).filter(function (c) { return c.star; }).length;
+    var starN = (S.redigs || []).filter(function (x) { return x.status === 'accepted'; }).length;
+    var starWait = (S.redigs || []).filter(function (x) { return x.status === 'pending'; }).length;
 
     v.horizonRows = [
       { k: '四個領域', v: layerN + ' / 4 層',
@@ -12060,9 +12259,10 @@ class Component extends DCLogic {
           '　圖鑑最前面那一隻是你的，從第一天就在——不算在這 44 種裡。' },
       { k: '物品', v: itemN + ' / 152 種',
         note: '打贏一隻就抽，抽到的直接進圖鑑——換組、換班、換專案都跟著你走。' },
-      { k: '自己回頭補的', v: starN + ' 項',
-        note: '在老師開口之前自己發現有一條沒做紮實，補完再勾回來——那一項會留下一顆星。' +
-          '這是整趟裡唯一老師給不了的東西。' },
+      { k: '回頭補強', v: starN + ' 項' + (starWait ? '（' + starWait + ' 項等他看）' : ''),
+        note: '已經過了的任務，專案走下去之後你可能發現它不夠——回頭補完，' +
+          '寫下你補了什麼送去。他接受就多抽一次。一週一次，不做也不扣分，' +
+          '但做了的組會跟其他人拉開差距。' },
       { k: '最後', v: '命名封存',
         note: '四層走完，你會幫這一趟取一個名字留下來。下一個專案打開紀錄還看得到。' }
     ].map(function (r) {
@@ -14399,6 +14599,84 @@ class Component extends DCLogic {
         .then(function (r) { if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。'); return refresh(); })
         .catch(function () { L.say('沒有存到伺服器。'); });
     };
+
+    /* 這一件是回頭補強的話，整頁換成另一種判斷。
+       他判的不是交付本身，是學生寫的那一句「我回頭補了什麼」算不算數——
+       所以要看得到那一項本來的通過條件，才有東西可以對照。 */
+    v.passLabel = '通過';
+    v.rejectLabel = '需補充';
+    v.revTextLabel = '他們交了什麼';
+    if (cur && cur.isRedig) {
+      v.passLabel = '接受';
+      v.rejectLabel = '不接受';
+      v.revProgress = cur.team + ' · 回頭補強';
+      v.revLeftNote = '這一項他們已經過了。現在判的是後來補的那一段算不算數。';
+      v.revText = cur.text;
+      v.revTextLabel = '他們回頭補了什麼';
+      v.revDue = '回頭補強';
+      v.revDueStyle = "font:500 11px/1 'C11';letter-spacing:.12em;padding:6px 10px;" +
+        'background:rgba(233,179,65,.12);border:1px solid var(--ac-dim);color:var(--ac)';
+      v.hasSelfCall = false; v.selfEffortChip = 'display:none';
+      v.hasSelfNote = false; v.selfNote = '';
+      v.hasBlocker = false;
+      v.gavePicks = [];
+      v.gaveNote = '「' + (cur.baseTitle || cur.title) + '」他們已經通過了，後來回頭再補了一段，' +
+        '上面那框就是他們寫的。' +
+        (cur.cond ? '　這一項本來的通過條件是：' + cur.cond : '');
+      v.gaveWhat = '接受的話這一項多抽一次——多一件進他們的圖鑑，分數也跟著加。' +
+        '不接受要寫一句為什麼，他們讀得到，而且可以再送一次。' +
+        '　補的算不算數，照這一項本來要交的東西判就好。';
+
+      v.passItem = function () {
+        var reason = String(L.state.reason || '');
+        L.setState({ reviewedOthers: (L.state.reviewedOthers || []).concat([cur.id]) });
+        v.__afterReview();
+        showMoment(L, {
+          kind: 'stamp', accent: 'var(--ac)',
+          kicker: 'ACCEPTED',
+          title: '你接受了一次回頭補強',
+          lede: cur.team + ' 在「' + (cur.baseTitle || cur.title) + '」上補的那一段算數。',
+          sprite: null, badge: '',
+          rows: [
+            { k: '給誰', v: cur.team },
+            { k: '哪一項', v: cur.baseTitle || cur.title },
+            { k: '他們拿到', v: '多抽一次', hi: true }
+          ],
+          quoteLabel: '他們寫的', quote: cur.text,
+          lines: [reason.trim() ? '你回的：' + reason : '',
+                  '回頭補強一週一次。他們下一週還可以再挑一項。'].filter(Boolean),
+          btn: '知道了', go: function () {}
+        });
+        call('apiReviewRedig', LIVE.token, cur.redigId, true, reason)
+          .then(function (r) { if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。'); return refresh(true); })
+          .catch(function () { L.say('沒有存到伺服器。'); });
+      };
+
+      v.rejectItem = function () {
+        var reason = String(L.state.reason || '');
+        if (!reason.trim()) { L.say('不接受要寫一句為什麼——他們讀得到，而且可以再送一次。'); return; }
+        L.setState({ reviewedOthers: (L.state.reviewedOthers || []).concat([cur.id]) });
+        v.__afterReview();
+        showMoment(L, {
+          kind: 'reject', accent: '#D9603F',
+          kicker: 'NOT YET',
+          title: '這一次沒有算',
+          lede: cur.team + ' 在「' + (cur.baseTitle || cur.title) + '」上補的那一段，你覺得還不夠。',
+          sprite: null,
+          rows: [
+            { k: '給誰', v: cur.team },
+            { k: '你寫了', v: reason.trim().length + ' 字', hi: true },
+            { k: '還能再送', v: '可以' }
+          ],
+          quoteLabel: '他們會讀到這一段', quote: reason,
+          lines: ['他們讀完可以照著再補一次——那一項的名額沒有用掉。'],
+          btn: '知道了', go: function () {}
+        });
+        call('apiReviewRedig', LIVE.token, cur.redigId, false, reason)
+          .then(function (r) { if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。'); return refresh(true); })
+          .catch(function () { L.say('沒有存到伺服器。'); });
+      };
+    }
 
     /* 發派、存檔、刪除 */
     v.publishSet = function () {

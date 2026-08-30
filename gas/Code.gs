@@ -1,4 +1,4 @@
-/*  逐層掘進 ZHU CENG JUE JIN — Google Apps Script 後端（實際使用版）
+/*  地心圖鑑 DI XIN TU JIAN — Google Apps Script 後端（實際使用版）
  *  ---------------------------------------------------------------
  *  · 自建帳號密碼註冊／登入（Users + Sessions，密碼加鹽雜湊）
  *  · 真正多組同時運作：任務定義（Tasks）與各組狀態（TeamTasks）分離
@@ -7,7 +7,7 @@
  *  · 匯出後端強制匿名
  *  --------------------------------------------------------------- */
 
-var APP_TITLE   = '逐層掘進';
+var APP_TITLE   = '地心圖鑑';
 var SHEET_PROP  = 'JLZ_SPREADSHEET_ID';
 var FOLDER_PROP = 'JLZ_FOLDER_ID';
 var MAX_UPLOAD  = 10 * 1024 * 1024;   // 單檔上限 10 MB
@@ -51,6 +51,9 @@ var SHEET_DEFS = {
   /* note：打開一條的時候寫下「要補什麼」。那一句是回掘的證據——
      本來用時間差當證據，但時間只證明等過，證明不了做了什麼。 */
   Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'by', 'ts', 'note'],
+  /* 回頭補強：對已經過了的任務再做一次，寫下補了什麼，送老師認定。
+     接受的當下另外給一次抽——那一項原本的抽不能回頭重擲。 */
+  Redigs:      ['redigId', 'teamId', 'taskId', 'note', 'status', 'reason', 'by', 'ts', 'decidedAt'],
   /* 走完之後封存的一趟。一組一列，改名就覆蓋。 */
   Journeys:    ['journeyId', 'teamId', 'classId', 'name', 'sealedBy', 'sealedAt', 'stats'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
@@ -1288,6 +1291,7 @@ function apiBootstrap(token) {
     if (u.role === 'student') {
       var me = teamById_(u.teamId);
       out.myTeamId = u.teamId || '';
+      out.redigs = redigsOf_(u.teamId);   /* 送出去的回頭補強，含老師的答覆 */
       out.record = recordOf_(u.teamId, u.classId);
       /* 收藏是個人的：跨班、跨組、跨專案累積 */
       out.finds = findsOfUser_(u.userId);
@@ -1338,6 +1342,18 @@ function apiBootstrap(token) {
         out.teamTasks[t.id] = mergeTasks_(tasksOfClass_(classId, t.id), teamTaskMap_(t.id), courseWeek, null, t.id, kl);
       });
       out.queue = [];
+      /* 回頭補強的待看件。跟任務的待審件分開，因為它判的是另一件事。 */
+      out.redigQueue = readTable_('Redigs')
+        .filter(function (x) { return String(x.status) === 'pending'; })
+        .map(function (x) {
+          var tm = teamById_(x.teamId);
+          if (!tm || String(tm.classId) !== String(classId)) return null;
+          var d = readTable_('Tasks').filter(function (t) { return String(t.taskId) === String(x.taskId); })[0];
+          return { redigId: String(x.redigId), teamId: String(x.teamId), teamName: tm.name,
+                   taskId: String(x.taskId), title: d ? d.title : '', layer: d ? Number(d.layer) : 1,
+                   cond: d ? String(d.cond || '') : '',
+                   note: String(x.note || ''), ts: x.ts };
+        }).filter(Boolean);
       allTeams.forEach(function (t) {
         out.teamTasks[t.id].forEach(function (task) {
           if (task.status === 'submitted') {
@@ -2203,6 +2219,97 @@ function apiSetVow(token, taskId, vow) {
   } catch (e) { return err_(e); }
 }
 
+/**
+ * 對已經過了的任務回頭補強。學生寫下補了什麼，送去給老師認定。
+ * 一週一次（跟清單上的回掘共用同一個額度）。
+ */
+function apiSubmitRedig(token, taskId, note) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以送。');
+    var txt = String(note || '').trim();
+    if (txt.length < 4) return err_('寫一句你回頭補了什麼——那一句就是老師看得到的東西。');
+
+    var row = readTable_('TeamTasks').filter(function (r) {
+      return String(r.teamId) === String(u.teamId) && String(r.taskId) === String(taskId);
+    })[0] || null;
+    if (!row || String(row.status) !== 'passed') return err_('這一項還沒過，直接在任務裡補就好。');
+
+    var pend = readTable_('Redigs').filter(function (x) {
+      return String(x.teamId) === String(u.teamId) && String(x.taskId) === String(taskId) &&
+             String(x.status) === 'pending';
+    })[0];
+    if (pend) return err_('這一項已經送過一次回頭補強，還在等老師看。');
+
+    if (redigThisWeek_(u.teamId, u.classId) >= 1) {
+      return err_('這一週已經回頭補過一次了。下一週再來——一週一次，這件事才有份量。');
+    }
+
+    appendRow_('Redigs', {
+      redigId: 'rd' + Utilities.getUuid().slice(0, 8),
+      teamId: u.teamId, taskId: taskId, note: txt.slice(0, 400),
+      status: 'pending', reason: '', by: u.userId || u.account || '',
+      ts: new Date(), decidedAt: ''
+    });
+    return ok_({ sent: true });
+  } catch (e) { return err_(e); }
+}
+
+/**
+ * 老師認定一次回頭補強。接受就另外給一次抽——那一項原本的抽不能重擲，
+ * 所以是加在既有的那一串後面。
+ */
+function apiReviewRedig(token, redigId, accept, reason) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    var u = auth_(token);
+    if (u.role !== 'teacher') return err_('只有老師可以認定。');
+    var rd = readTable_('Redigs').filter(function (x) {
+      return String(x.redigId) === String(redigId);
+    })[0];
+    if (!rd) return err_('找不到這一筆。');
+    if (String(rd.status) !== 'pending') return err_('這一筆已經看過了。');
+    var txt = String(reason || '').trim();
+    if (!accept && !txt) return err_('不接受要寫一句為什麼——那一句是學生下一次的依據。');
+
+    var row = readTable_('TeamTasks').filter(function (r) {
+      return String(r.teamId) === String(rd.teamId) && String(r.taskId) === String(rd.taskId);
+    })[0] || null;
+
+    var got = 0;
+    if (accept && row) {
+      var defs = tasksOfClass_(u.classId, rd.teamId), def = null;
+      for (var i = 0; i < defs.length; i++) if (String(defs[i].id) === String(rd.taskId)) def = defs[i];
+      var lay = def ? (Number(def.layer) || 1) : 1;
+      var cur = jparse_(row.finds, []) || [];
+      var add = rollFindsIn_(lay, 1);
+      got = add[0] || 0;
+      var merged = cur.concat(add);
+      upsert_('TeamTasks', ['teamId', 'taskId'], {
+        teamId: rd.teamId, taskId: rd.taskId,
+        finds: JSON.stringify(merged), updatedAt: new Date()
+      });
+    }
+
+    upsert_('Redigs', ['redigId'], {
+      redigId: redigId, status: accept ? 'accepted' : 'declined',
+      reason: txt, decidedAt: new Date()
+    });
+    return ok_({ accepted: !!accept, find: got });
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+/** 這一組送出去、還沒被看的回頭補強。 */
+function redigsOf_(teamId) {
+  return readTable_('Redigs').filter(function (x) {
+    return String(x.teamId) === String(teamId);
+  }).map(function (x) {
+    return { redigId: String(x.redigId), taskId: String(x.taskId), note: String(x.note || ''),
+             status: String(x.status || ''), reason: String(x.reason || '') };
+  });
+}
+
 /** 這一組這一週回掘過幾次。一週一次——不然它會變成「多抽一次」的按鈕。 */
 function redigThisWeek_(teamId, classId) {
   var wk = courseWeekOf_(classById_(classId));
@@ -2215,6 +2322,13 @@ function redigThisWeek_(teamId, classId) {
     if (!String(c.note || '').trim()) return;
     var days = Math.floor((new Date(c.ts) - d0) / 86400000);
     if (Math.max(1, Math.floor(days / 7) + 1) === wk) n++;
+  });
+  /* 送去給老師看的那些也算同一個額度 */
+  readTable_('Redigs').forEach(function (x) {
+    if (String(x.teamId) !== String(teamId)) return;
+    if (String(x.status) === 'declined') return;
+    var d2 = Math.floor((new Date(x.ts) - d0) / 86400000);
+    if (Math.max(1, Math.floor(d2 / 7) + 1) === wk) n++;
   });
   return n;
 }
@@ -2942,7 +3056,7 @@ function apiExportToDrive(token, kinds, fullText) {
   try {
     var r = apiExportCsv(token, kinds, fullText);
     if (!r.ok) return r;
-    var name = '逐層掘進_事件記錄_' +
+    var name = '地心圖鑑_事件記錄_' +
       Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd_HHmmss') + '.csv';
     var file = DriveApp.createFile(name, '﻿' + r.csv, MimeType.CSV);
     return ok_({ name: name, url: file.getUrl() });

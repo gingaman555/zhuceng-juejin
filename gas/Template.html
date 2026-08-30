@@ -68,7 +68,7 @@
               <span style="{{ bootWalkerStyle }}"></span>
               <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none"></div>
               <span data-jlz-orb style="{{ bootOrbStyle }}"><span style="{{ bootNeedleStyle }}"></span></span>
-              <div style="font:700 44px/1.2 'C11';letter-spacing:.2em;text-indent:.2em;color:#F2E6C8;text-align:center;text-shadow:0 0 26px rgba(233,179,65,.35)">逐層掘進</div>
+              <div style="font:700 44px/1.2 'C11';letter-spacing:.2em;text-indent:.2em;color:#F2E6C8;text-align:center;text-shadow:0 0 26px rgba(233,179,65,.35)">地心圖鑑</div>
               <div style="width:56px;height:1px;background:var(--ac);margin:var(--pad) 0;opacity:.5"></div>
               <button onClick="{{ goLogin }}" style="margin-top:8px;font:500 22px/1 'C11';letter-spacing:.28em;text-indent:.28em;color:var(--bg);background:var(--ac);border:none;padding:15px 40px;cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">出　發</button>
             </div>
@@ -749,11 +749,11 @@
                     </div>
                   </sc-if>
                 </div>
-                <div>
+                <sc-if value="{{ hasSayBox }}" hint-placeholder-val="{{ true }}"><div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">你做了什麼　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
                   <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">{{ sayNote }}</div>
                   <textarea onChange="{{ setSubmitText }}" value="{{ submitText }}" placeholder="例：訪談三位大三生之後，把題目收斂成「畢製組隊後的分工失衡」，範圍縮到系上，排除跨校比較。" style="width:100%;min-height:220px;padding:13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
-                </div>
+                </div></sc-if>
                 <sc-if value="{{ hasReflect }}" hint-placeholder-val="{{ true }}">
                 <div style="padding:15px 16px;background:linear-gradient(140deg,rgba(233,179,65,.055),transparent 62%),var(--panel);border:1px solid var(--line2)">
                   <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px">
@@ -2398,7 +2398,7 @@
                   </sc-if>
                 </div>
                 <div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">他們交了什麼</div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">{{ revTextLabel }}</div>
                   <div style="padding:16px 18px;background:var(--field);border:1px solid var(--line);font:400 22px/1.7 'C11';color:var(--tx2);text-wrap:pretty">{{ revText }}</div>
                   <sc-if value="{{ hasSelfCall }}" hint-placeholder-val="{{ true }}">
                     <div style="margin-top:11px;padding:14px 16px;background:linear-gradient(140deg,rgba(233,179,65,.05),transparent 62%),#12100D;border:1px solid var(--line2)">
@@ -2473,8 +2473,8 @@
                 </div>
                 <div style="margin-bottom:13px"><div style="font:400 11px/1.7 &#39;C11&#39;;color:#6E665A;margin-bottom:7px;text-wrap:pretty">{{ gaveNote }}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ gavePicks }}" as="gv" hint-placeholder-count="5"><button onClick="{{ gv.pick }}" style="{{ gv.style }}"><span style="{{ gv.numStyle }}">{{ gv.label }}</span><span style="{{ gv.anchorStyle }}">{{ gv.anchor }}</span></button></sc-for></div><div style="font:400 11px/1.7 &#39;C11&#39;;color:var(--tx3);margin-top:7px">{{ gaveWhat }}</div></div>
                 <div style="display:flex;gap:9px;flex-wrap:wrap">
-                  <button onClick="{{ passItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:var(--bg);background:var(--ac);border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">通過</button>
-                  <button onClick="{{ rejectItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#D9603F;background:none;border:1px solid rgba(217,96,63,.45);padding:15px var(--pad);cursor:pointer">需補充</button>
+                  <button onClick="{{ passItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:var(--bg);background:var(--ac);border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">{{ passLabel }}</button>
+                  <button onClick="{{ rejectItem }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#D9603F;background:none;border:1px solid rgba(217,96,63,.45);padding:15px var(--pad);cursor:pointer">{{ rejectLabel }}</button>
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 {
   "name": "jlz-functions",
-  "description": "逐層掘進 後端：Code.gs 的商業邏輯原封不動跑在 Cloud Functions 上",
+  "description": "地心圖鑑 後端：Code.gs 的商業邏輯原封不動跑在 Cloud Functions 上",
   "main": "index.js",
   "engines": {
     "node": "22"

@@ -273,7 +273,7 @@ const demo = src.replace(SEED_TAG, tag([
 fs.writeFileSync(path.join(DEMO, 'index.html'), demo);
 
 fs.writeFileSync(path.join(OUT, '404.html'),
-  '<title>逐層掘進</title>\n<meta http-equiv="refresh" content="0; url=/">\n');
+  '<title>地心圖鑑</title>\n<meta http-equiv="refresh" content="0; url=/">\n');
 
 const kb = (p) => Math.round(fs.statSync(p).size / 1024) + ' KB';
 console.log('built:');

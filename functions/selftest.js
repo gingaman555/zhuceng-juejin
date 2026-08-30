@@ -86,7 +86,7 @@ const T = (label, cond, extra) => {
   else { fail++; console.log('  FAIL  ' + label + (extra ? '  → ' + JSON.stringify(extra) : '')); }
 };
 
-console.log('\n── 逐層掘進 · Firebase 後端自我測試 ──\n');
+console.log('\n── 地心圖鑑 · Firebase 後端自我測試 ──\n');
 
 const NAMES = Object.keys(vm.runInContext('this', (function () {
   const c = vm.createContext({ JSON, Math, Date, String, Number, Boolean, Array, Object, RegExp, Error,

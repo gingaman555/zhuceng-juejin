@@ -1,4 +1,4 @@
-/* 逐層掘進 · Cloud Functions 後端
+/* 地心圖鑑 · Cloud Functions 後端
    ------------------------------------------------------------------
    Code.gs 一行都沒改，整份原封不動載進來跑。換掉的只有它底下那四個
    資料原語（readRaw_ / writeTable_ / appendRow_ / upsert_）與幾個

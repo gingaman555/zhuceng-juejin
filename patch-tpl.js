@@ -4696,5 +4696,52 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("125. 回掘先寫要補什麼");
 })();
 
+
+/* 126. 改名：逐層掘進 → 地心圖鑑。
+       原本的名字講的是動作（一層一層往下挖），新的名字講的是收集——
+       學生看一眼就知道這裡要幹嘛：把底下的東西一個一個收進來。
+       只有登入頁那一處——上面那條抬頭前面幾支補丁已經換成課程名了。 */
+(function () {
+  var n = t.split('逐層掘進').length - 1;
+  if (n !== 1) { console.error('126. 名字應該有 1 處，找到 ' + n); process.exit(1); }
+  t = t.split('逐層掘進').join('地心圖鑑');
+  console.log('126. 改名：地心圖鑑');
+})();
+
+
+/* 127. 審核那兩顆按鈕的字改成活的。
+       同一頁現在會看兩種東西：一般的交付（通過／需補充），
+       跟回頭補強（接受／不接受）。判斷是同一件事，字要對得上。 */
+(function () {
+  [[">通過</button>", ">{{ passLabel }}</button>"],
+   [">需補充</button>", ">{{ rejectLabel }}</button>"]].forEach(function (pr) {
+    var n = t.split(pr[0]).length - 1;
+    if (n !== 1) { console.error('127. ' + pr[0] + ' 找到 ' + n + ' 處'); process.exit(1); }
+    t = t.replace(pr[0], pr[1]);
+  });
+  console.log('127. 審核那兩顆按鈕的字改成活的');
+})();
+
+
+/* 128. 通過之後就不要再問「你做了什麼」，跟回頭補強那一框撞在一起。
+       順便把老師那一頁「他們交了什麼」的標題改成活的——同一個框，
+       一般的交付跟回頭補強放的不是同一種東西。 */
+(function () {
+  var a = '你做了什麼　<span';
+  if (t.split(a).length - 1 !== 1) { console.error('128. 你做了什麼 那一塊找不到'); process.exit(1); }
+  var at = t.indexOf(a);
+  var start = t.lastIndexOf('<div>', at);
+  var tx = t.indexOf('</textarea>', at);
+  var end = t.indexOf('</div>', tx);
+  if (start < 0 || tx < 0 || end < 0) { console.error('128. 框不出那一塊'); process.exit(1); }
+  t = t.slice(0, start) + '<sc-if value="{{ hasSayBox }}" hint-placeholder-val="{{ true }}">' +
+      t.slice(start, end + 6) + '</sc-if>' + t.slice(end + 6);
+
+  var b = '>他們交了什麼</div>';
+  if (t.split(b).length - 1 !== 1) { console.error('128. 他們交了什麼 找不到'); process.exit(1); }
+  t = t.replace(b, '>{{ revTextLabel }}</div>');
+  console.log('128. 通過之後收起「你做了什麼」；老師那一框的標題改成活的');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
