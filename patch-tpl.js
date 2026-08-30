@@ -4239,5 +4239,67 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('107. 導覽列的無障礙名稱');
 })();
 
+
+/* 108. T-05 只留「寫一項任務」：內容、細節、期限。
+       本來還塞了兩塊一學期只設定一次的東西——「這一層的拆分」（改四塊
+       礦石的名字）跟「這一項是哪一塊礦石」的選格。兩塊都包進 sc-if，
+       Live 那邊預設關掉；礦石改成自動配給下一塊沒配的。 */
+(function () {
+  /* 從 <div 開頭往後數配對的 </div>，回傳整塊的結束位置 */
+  function blockEnd(src, from) {
+    var i = from, depth = 0;
+    while (i < src.length) {
+      var o = src.indexOf('<div', i), c = src.indexOf('</div>', i);
+      if (c < 0) return -1;
+      if (o >= 0 && o < c) { depth++; i = o + 4; continue; }
+      depth--; i = c + 6;
+      if (depth === 0) return i;
+    }
+    return -1;
+  }
+  ['這一層的拆分', '這一項是哪一塊礦石'].forEach(function (head) {
+    var h = t.indexOf(head);
+    if (h < 0) { console.error('108. 找不到「' + head + '」'); process.exit(1); }
+    /* 標題往前回推到它自己那一塊的 <div */
+    var start = t.lastIndexOf('<div style="padding:14px 16px;background:rgba(0,0,0,.24)', h);
+    if (start < 0) { console.error('108. 「' + head + '」的外框找不到'); process.exit(1); }
+    var end = blockEnd(t, start);
+    if (end < 0) { console.error('108. 「' + head + '」數不到結尾'); process.exit(1); }
+    t = t.slice(0, start) +
+        '<sc-if value="{{ hasVeinAdmin }}" hint-placeholder-val="{{ false }}">' +
+        t.slice(start, end) + '</sc-if>' + t.slice(end);
+  });
+  console.log('108. T-05 收掉一學期才設定一次的兩塊');
+})();
+
+
+
+/* 109. 期限本來有三種輸入：19 個週鈕、7 個日鈕、再一個日期選擇器。
+       日鈕跟日期選擇器講的是同一件事，收掉日鈕那一排。 */
+(function () {
+  var m1 = "那一週的哪一天</div>";
+  var m2 = "或直接挑一個日期</div>";
+  var i1 = t.indexOf(m1), i2 = t.indexOf(m2);
+  if (i1 < 0 || i2 < 0 || i2 < i1) { console.error("109. 找不到期限那兩段"); process.exit(1); }
+  var a = t.lastIndexOf("<div", i1);
+  var b = t.lastIndexOf("<div", i2);
+  var mid = t.slice(a, b);
+  if ((mid.split("<div").length) !== (mid.split("</div>").length)) {
+    console.error("109. 那一段的 div 不平衡"); process.exit(1);
+  }
+  t = t.slice(0, a) + "<sc-if value=\"{{ hasDowPick }}\" hint-placeholder-val=\"{{ false }}\">" +
+      mid + "</sc-if>" + t.slice(b);
+  console.log("109. 期限少一種輸入方式");
+})();
+
+/* 110. T-05 的期限說明還寫「仍計入等級」——等級是工具階級留下來的字，
+       那一套整個拿掉了。學生端那一句上一輪改過，這一句漏了。 */
+(function () {
+  var a = "仍可提交、仍可確認、仍計入等級。";
+  if (t.split(a).length - 1 !== 1) { console.error("110. 找不到"); process.exit(1); }
+  t = t.replace(a, "仍可提交、仍可確認，也照樣算分。");
+  console.log("110. 拿掉老師端的等級");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

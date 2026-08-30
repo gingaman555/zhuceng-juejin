@@ -92,7 +92,7 @@ const demo = src.replace(SEED_TAG, tag([
   '        cond: t0.cond, note: t0.note, spec: t0.spec,',
   '        /* 種子的期限是第 3 週，但試用班已經走到第 17 週——期限早就過了， */',
   '        /* 「早工」那一項破法就永遠拿不到。往後推兩週才試得出來。 */',
-  '        due: (tb.courseWeek || 1) + 2,',
+  '        due: Math.min(18, (tb.courseWeek || 1) + 2),   /* 學期只有 18 週，不要訂到 W19 */',
   '        mineral: t0.mineral, teams: t0.teams,',
   '        checks: [\'訪談三位使用者，留下逐字稿\',',
   '                 \'把講到的痛點整理成一頁\',',
