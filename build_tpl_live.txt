@@ -635,7 +635,7 @@
                 <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C">
                   <div style="font:400 22px/1.7 'C11';color:#9A9184;text-wrap:pretty"><span style="color:#5F574C">通過條件　</span>{{ openTaskCond }}</div>
                   <div style="font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty"><span style="color:#5F574C">要注意的　</span>{{ openTaskNote }}</div>
-                </div>
+                </div><sc-if value="{{ hasDrawHint }}" hint-placeholder-val="{{ true }}"><div style="{{ drawHintBox }}"><span style="{{ drawHintHeadStyle }}">{{ drawHintHead }}</span><span style="{{ drawHintBodyStyle }}">{{ drawHintBody }}</span></div></sc-if>
                 <sc-if value="{{ hasSpec }}" hint-placeholder-val="{{ false }}">
                   <div style="padding:14px 16px;background:rgba(195,186,170,.05);border:1px solid #3A3026;border-left:2px solid #8A8073">
                     <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#8A8073">他要求的規格</div>

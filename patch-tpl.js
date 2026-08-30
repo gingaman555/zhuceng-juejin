@@ -4146,5 +4146,24 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('101. 匯出說明的關卡送審');
 })();
 
+
+/* 102. 任務頁：動手前就寫清楚這一項會抽幾次、多做最多抽幾次。
+       抽的次數本來只有事後才知道，事後的誘因影響不了決定。 */
+(function () {
+  var a = '{{ openTaskNote }}</div>';
+  if (t.split(a).length - 1 !== 1) { console.error('102. 通過條件那一格找不到'); process.exit(1); }
+  var i = t.indexOf(a) + a.length;
+  var close = t.indexOf('</div>', i);
+  if (close < 0) { console.error('102. 那一格的收尾找不到'); process.exit(1); }
+  var blk = '<sc-if value="{{ hasDrawHint }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="{{ drawHintBox }}">' +
+      '<span style="{{ drawHintHeadStyle }}">{{ drawHintHead }}</span>' +
+      '<span style="{{ drawHintBodyStyle }}">{{ drawHintBody }}</span>' +
+    '</div>' +
+  '</sc-if>';
+  t = t.slice(0, close + 6) + blk + t.slice(close + 6);
+  console.log('102. 任務頁：動手前就寫清楚會抽幾次');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
