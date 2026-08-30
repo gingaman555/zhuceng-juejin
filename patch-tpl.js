@@ -4101,5 +4101,20 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('98. 礦石那一格從模板拿掉');
 })();
 
+
+/* 99. 任務清單最下面那顆「送交關卡審核」拿掉。
+      它是 SUB 的入口，那個畫面已經不在模板裡了——按下去會走到一個
+      關掉的畫面。放行完全在老師那邊，學生這裡沒有動作可以做。 */
+(function () {
+  var i = t.indexOf('{{ gateBtn }}');
+  if (i < 0) { console.error('99. 那顆按鈕找不到'); process.exit(1); }
+  var a = t.lastIndexOf('<div style="display:flex;justify-content:flex-end;margin-top:14px">', i);
+  if (a < 0) { console.error('99. 那顆按鈕的外框找不到'); process.exit(1); }
+  var b = t.indexOf('</div>', t.indexOf('</button>', i));
+  if (b < 0) { console.error('99. 收尾找不到'); process.exit(1); }
+  t = t.slice(0, a) + t.slice(b + 6);
+  console.log('99. 送交關卡審核那顆拿掉');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

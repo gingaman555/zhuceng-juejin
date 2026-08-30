@@ -755,9 +755,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                       <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:11px;padding-top:11px;border-top:1px solid #26211C;text-wrap:pretty">{{ veinNote }}</div>
                     </sc-if>
                   </div>
-                  <div style="display:flex;justify-content:flex-end;margin-top:14px">
-                    <button onClick="{{ goSubmitGate }}" style="{{ gateBtnStyle }}">{{ gateBtn }}</button>
-                  </div>
+                  
                 </div>
               </sc-if>
             </div>
@@ -7492,6 +7490,19 @@ class Component extends DCLogic {
 
     addNavExtras(L, v, sc);
     decorateWorldTabs(L, v, sc);
+
+    /* 「待審關卡」永遠是 0——沒有人送得出關卡了。換成他真的會想知道的：
+       這一班走到最深的是第幾層。 */
+    if (S.role === 'teacher' && v.teacherStats && v.teacherStats.length === 3) {
+      var deep = 0;
+      (L.teams ? L.teams() : []).forEach(function (t) {
+        deep = Math.max(deep, Number(t.layer) || 1);
+      });
+      v.teacherStats[2] = Object.assign({}, v.teacherStats[2], {
+        label: '走最深的一組', value: deep ? ('L' + deep) : '—',
+        hint: '放行是你決定的，這裡只是告訴你他們到哪了'
+      });
+    }
     decorateEditMob(L, v);
 
     /* 原型那一層還在講「環節」與「物證」——那兩個詞在學生端早就換成
@@ -9601,28 +9612,10 @@ class Component extends DCLogic {
     });
   }
 
-  /* 分數的刻度：用四隻生物，不用抽象的階級名。
-     牠們本來就有名字、有立繪、有身世——而「再 17 分就追得上霧面者」
-     比「再 17 分變掘進工」具體得多。
-
-     這不是門檻：追不上牠照樣過得了關（過關只看老師）。它只是把一個
-     要不到的數字，換成一個有臉的目標。 */
-  /* 分數階級的門檻。一學期跑下來大約 10500（老師一律給 1）到
-     12900（一律給 5），所以四個階級照那個尺度擺——最後一階要真的
-     走完整學期才碰得到。 */
-  var RANKS = [
-    { at: 0,     name: '剛下來的' },
-    { at: 1500,  name: '霧面者' },
-    { at: 3500,  name: '千晶母' },
-    { at: 6500,  name: '擬聲者' },
-    { at: 10000, name: '漲潮者' }
-  ];
-  function rankOf(total) {
-    var i = 0;
-    for (var k = 0; k < RANKS.length; k++) if (total >= RANKS[k].at) i = k;
-    return { name: RANKS[i].name, next: RANKS[i + 1] || null };
-  }
-
+  /* 分數階級那一套拿掉了。它用四隻守關生物當階級名（「再 1280 分就追得
+     上霧面者」），但那四隻在別的地方是「擋在層底、老師放行才退開」——
+     同一隻生物在排行榜是刻度、在地圖是關卡、在圖鑑是 +1000 分，三種意思
+     打架。而且段落本來就由「一層 1000 分」分好了，這一套是多的。 */
   /* ============================================================
      排行榜點進某一組。
 
@@ -9836,7 +9829,7 @@ class Component extends DCLogic {
       return {
         name: c.mineral,
         by: c.by ? (c.mine ? '你們' : c.by)
-          : (c.racing ? '有 ' + c.racing + ' 組正在爭奪' : '還沒有人'),
+          : (c.racing ? '有 ' + c.racing + ' 組也在做' : '還沒有人'),
         meta: 'L' + c.layer + '　' + c.title,
         boxStyle: 'padding:11px 13px;background:' +
           (c.mine ? 'rgba(233,179,65,.1)' : c.by ? 'rgba(0,0,0,.26)' : 'rgba(0,0,0,.4)') +
@@ -9853,12 +9846,12 @@ class Component extends DCLogic {
     /* 只描述，不評價——這一句照文件「走過的路」那條硬規則。 */
     if (mine) {
       var place = rows.indexOf(mine) + 1;
-      var rk = rankOf(mine.total);
+      var ahead = place > 1 ? rows[place - 2] : null;
       v.haulMine = mine.total + ' 分，第 ' + place + ' 名。' +
-        (rk.next
-          ? '再 ' + (rk.next.at - mine.total) + ' 分就追得上「' + rk.next.name + '」。'
-          : '四隻都追過了。') +
-        '　追不追得上不影響過關——過關只看他。';
+        (ahead
+          ? '離前一名「' + ahead.name + '」還差 ' + (ahead.total - mine.total) + ' 分。'
+          : '目前在最前面。') +
+        '　名次不影響過關——往不往下是他決定。';
     }
     v.haulNote = '勾一條 10 分　·　撿到一件掉落物 30 分　·　通過一項 100 分　·　老師放行一層 1000 分（道具 500 ＋ 戰利品 500）。' +
       '走到第幾層先把大家分成幾段（一層 1000 分），同一段裡面的差距來自通過幾項、以及老師覺得你們多做了多少。';
@@ -10122,22 +10115,23 @@ class Component extends DCLogic {
     if (!mine) return;
     v.hasHomeHaul = true;
 
-    var rk = rankOf(mine.total);
+    var placeH = rows.indexOf(mine) + 1;
+    var aheadH = placeH > 1 ? rows[placeH - 2] : null;
     v.homeRank = mine.total + ' 分';
-    v.homeRankNote = '第 ' + (rows.indexOf(mine) + 1) + ' 名 / ' + rows.length + ' 組' +
-      (rk.next ? '　·　再 ' + (rk.next.at - mine.total) + ' 分追上「' + rk.next.name + '」' : '　·　四隻都追過了');
+    v.homeRankNote = '第 ' + placeH + ' 名 / ' + rows.length + ' 組' +
+      (aheadH ? '　·　離前一名還差 ' + (aheadH.total - mine.total) + ' 分' : '　·　目前在最前面');
 
     /* 只列還沒被拿走的，最多三塊。已經有人拿走的擺首頁只剩打擊。 */
     var open = (S.haulClaims || []).filter(function (c) { return !c.by; });
     var racingN = open.filter(function (c) { return c.racing; }).length;
     v.homeClaimNote = open.length
       ? '還有 ' + open.length + ' 塊沒有人採到' +
-        (racingN ? '，其中 ' + racingN + ' 塊有人在爭奪' : '') + '。'
+        (racingN ? '，其中 ' + racingN + ' 塊別組也在做' : '') + '。'
       : '每一塊都有人採到了。';
     v.homeClaims = open.slice(0, 3).map(function (c) {
       return {
         name: c.mineral,
-        by: c.racing ? '有 ' + c.racing + ' 組正在爭奪' : '還沒有人',
+        by: c.racing ? '有 ' + c.racing + ' 組也在做' : '還沒有人',
         meta: 'L' + c.layer + '　' + c.title,
         boxStyle: 'padding:10px 12px;background:rgba(0,0,0,.32);border:1px ' +
           (c.racing ? 'solid #4A4238' : 'dashed #4A3F30'),
@@ -10484,13 +10478,22 @@ class Component extends DCLogic {
   /* 哪一項任務對到哪一隻：taskId 的雜湊。
      不存資料庫——同一個 taskId 永遠算出同一隻，老師端跟學生端也一定
      一致。省掉一個欄位、一次遷移、以及兩邊不同步的可能。 */
+  /* 同一項任務全班遇到的是同一隻，所以用任務 id 決定。
+     FNV-1a 的低位元不夠亂，直接 % 10 會塌成兩三格——實測同一層的
+     三項任務全部配到同一隻。所以最後加一段 avalanche 打散，再用乘法
+     折疊取值（% 10 只看得到低位元，折疊看得到整個 32 位元）。 */
   function mobIdOfTask(taskId) {
     var s = String(taskId || ''), h = 2166136261;
     for (var i = 0; i < s.length; i++) {
       h ^= s.charCodeAt(i);
-      h = (h * 16777619) >>> 0;
+      h = Math.imul(h, 16777619) >>> 0;
     }
-    return (h % 10) + 1;   /* 一區十隻。四區合起來 40 隻，每一隻有自己的圖。 */
+    h ^= h >>> 16;
+    h = Math.imul(h, 2246822507) >>> 0;
+    h ^= h >>> 13;
+    h = Math.imul(h, 3266489909) >>> 0;
+    h = (h ^ (h >>> 16)) >>> 0;
+    return Math.floor(h / 4294967296 * 10) + 1;   /* 一區十隻，四區合起來 40 隻 */
   }
 
   function mobOfTask(t) {
@@ -12082,7 +12085,7 @@ class Component extends DCLogic {
         ? "你們已經打過去了。"
         : ready
           ? "礦石採齊了。他准了就鑄得成" + ((L.LAYERS[HL - 1] || {}).tool || "道具") + "。"
-          : "牠是這一層的刻度。追不追得上不影響過關——過不過是他決定。";
+          : "牠擋在這一層的盡頭。他覺得你們可以往下的時候，牠才會退開。";
     })();
 
     /* 「這一層怎麼走」收進一顆按鈕 */
@@ -12972,7 +12975,7 @@ class Component extends DCLogic {
         : left ? '這一層還有沒過的' : '這一層採齊了';
       v.gateDesc = passedThis ? '這一層過了，下一層開了。'
         : !allItems.length ? '這一層還沒有清單。'
-        : left ? '這一層還有 ' + left + ' 項沒過。過不過得完都送得出關卡——他決定。'
+        : left ? '這一層還有 ' + left + ' 項沒過。過不過得完都不影響——往不往下是他決定。'
         : '這一層的任務都過了，可以送交關卡審核。';
     })();
     (v.taskGroups || []).forEach(function (g) { g.desc = fixCal(g.desc); });
