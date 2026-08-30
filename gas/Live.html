@@ -783,8 +783,7 @@
     var got = S.finds || {};
     FINDS.forEach(function (f) {
       var n = got[f.n] || 0;
-      var tier = findTier(f.n);
-      var hue = tier === '罕見' ? '#E9B341' : tier === '少見' ? '#8A8073' : '#5F574C';
+      var hue = '#5F574C';   /* 稀有度不再標出來，撿到沒撿到才是差別 */
       drops.push({
         name: n ? f.name : '？？？',
         got: !!n,
@@ -3697,7 +3696,9 @@
   var PACK_ART = {};
   function packSvg(px, layer, dim) {
     if (!px || !px.length) return '';
-    var key = px[0] + '|' + px.length + '|' + layer + '|' + (dim ? 1 : 0);
+    /* 鍵一定要吃整張圖。本來只取 px[0]（第一列）＋高度——像素圖的第一列
+       幾乎都是空的，所以 108 件掉落物只產生 11 種圖，其中 98 件共用同一張。 */
+    var key = px.join('') + '|' + layer + '|' + (dim ? 1 : 0);
     if (PACK_ART[key]) return PACK_ART[key];
     var pal = MOB_PAL[Math.max(0, Math.min(3, (Number(layer) || 1) - 1))];
     var body = pal['#'], shade = pal.o, shine = pal['*'];
@@ -3995,15 +3996,15 @@
   /* ---- 點開一件掉落物 ---- */
   function openFind(L, f, n) {
     if (!n) { L.say('還沒撿到這一件。通過任務的時候會隨機掉一件。'); return; }
-    var tier = findTier(f.n);
+
     showMoment(L, {
       kind: 'mined', art: 'gem',
-      accent: tier === '罕見' ? '#E9B341' : '#8A8073',
+      accent: '#8A8073',
       kicker: 'A FIND',
       title: f.name,
       lede: '第 ' + findLayer(f.n) + ' 層開始撿得到。通過任務的時候在碎石裡翻出來的。',
       rows: [
-        { k: '稀有度', v: tier, hi: tier === '罕見' },
+
         { k: '哪裡撿得到', v: '第 ' + findLayer(f.n) + ' 層以後' },
         { k: '你有幾件', v: n + ' 件' }
       ],
@@ -4113,16 +4114,17 @@
     var reelPicks = arr.map(function (n) {
       var f = findOf(n);
       if (!f) return null;
+      /* tier 留著給抽選用（最少見的那一階會多吊兩下），但不寫在畫面上。 */
       var tier = findTier(n);
       return {
-        art: packSvg(f.px, f.L), name: f.name, tier: tier,
-        hue: TIER_HUE[tier] || hue, isNew: isNewFind(L, n),
+        art: packSvg(f.px, f.L), name: f.name, tier: tier, label: '',
+        hue: isNewFind(L, n) ? '#E9B341' : hue, isNew: isNewFind(L, n),
         rare: tier === '罕見' || isNewFind(L, n)
       };
     }).filter(Boolean);
 
     var drawCells = reelPicks.map(function (pk) {
-      return { art: pk.art, name: pk.name, tier: pk.tier, hue: pk.hue };
+      return { art: pk.art, name: pk.name, hue: pk.hue };
     });
 
     momentWithRoll(L, {
@@ -4268,29 +4270,24 @@
     v.findCount = kinds + ' / ' + FINDS.length + ' 種';
     v.findNote = '每通過一項任務就撿到一件。' +
       (total ? '一共撿了 ' + total + ' 件。' : '') +
-      '每一件都一樣重——稀有只是比較少見，不影響任何分數。';
+      '每一件都一樣重，撿到哪一件不影響分數。';
 
     v.findRows = FINDS.map(function (f) {
       var n = got[f.n] || 0;
-      var tier = findTier(f.n);
-      /* 掉落物刻意零分，所以刻意不給它琥珀色 —— 灰是誠實的。
-         三階只差在亮度與有沒有微光，不差在色相。 */
-      var line = !n ? '#221E19' : tier === '罕見' ? '#E9B341' : tier === '少見' ? '#6E665A' : '#3A342C';
+      /* 稀有度不再標出來。差別只有一個：撿到了沒有。 */
+      var line = n ? '#3A342C' : '#221E19';
       return {
         open: function () { openFind(L, f, n); },
         name: n ? f.name : '？？？',
         look: n ? f.look : '',
         tally: n > 1 ? '×' + n : '',
-        tier: n ? tier : '',
+        tier: '',
         boxStyle: 'padding:9px 11px;text-align:left;width:100%;cursor:' + (n ? 'pointer' : 'default') + ';background:' +
-          (n ? (tier === '罕見' ? 'rgba(233,179,65,.07)' : 'rgba(255,255,255,.022)') : 'rgba(0,0,0,.26)') +
-          ';border:1px ' + (n ? 'solid ' : 'dashed ') + line +
-          (n && tier === '罕見' ? ';box-shadow:0 0 12px rgba(233,179,65,.14)' : ''),
-        nameStyle: "font:500 22px/1.3 'C11';color:" +
-          (!n ? '#3A342C' : tier === '罕見' ? '#E9B341' : tier === '少見' ? '#E8E2D6' : '#A89E90'),
+          (n ? 'rgba(255,255,255,.022)' : 'rgba(0,0,0,.26)') +
+          ';border:1px ' + (n ? 'solid ' : 'dashed ') + line,
+        nameStyle: "font:500 22px/1.3 'C11';color:" + (n ? '#E8E2D6' : '#3A342C'),
         tallyStyle: "flex:none;font:400 11px/1 'C11';color:#6E665A",
-        tierStyle: "flex:none;font:400 11px/1 'C11';color:" +
-          (tier === '罕見' ? '#E9B341' : tier === '少見' ? '#8A8073' : '#4A443C'),
+        tierStyle: 'display:none',
         lookStyle: "font:400 11px/1.6 'C11';color:#5F574C;margin-top:4px;text-wrap:pretty"
       };
     });
@@ -4367,7 +4364,7 @@
         cell(f.name, Number(gotFinds[f.n]) > 0, packSvg(f.px, n),
           (function (ff) {
             return function () { openFind(L, ff, Number(gotFinds[ff.n]) || 0); };
-          })(f), findTier(f.n));
+          })(f), '掉落物');
       });
 
       var gotN = cells.filter(function (c) { return c.name !== '？？？'; }).length;
@@ -5016,7 +5013,7 @@
         ttl.textContent = pick.name;
         ttl.style.color = pick.hue || '';
         if (kck) {
-          kck.textContent = pick.isNew ? '★ 新收藏' : (pick.tier || '');
+          kck.textContent = pick.isNew ? '★ 新收藏' : (pick.label || '');
           kck.style.color = pick.isNew ? '#FFD98A' : (pick.hue || '#8A8073');
           replay(kck, 'jlz-stamp .42s cubic-bezier(.2,1.4,.3,1) both');
         }
@@ -5153,7 +5150,7 @@
     v.momentDraws = dws.map(function (d, i) {
       return {
         idx: String(i),
-        name: d.name, tier: d.tier || '',
+        name: d.name,
         style: 'display:flex;flex-direction:column;align-items:center;gap:4px;width:74px;' +
           'padding:9px 4px;opacity:.14;transition:opacity .18s ease;' +
           'background:rgba(0,0,0,.34);border:1px solid ' + (d.hue || '#3A3026'),
@@ -5161,7 +5158,7 @@
           'background:url("' + d.art + '") center/contain no-repeat',
         nameStyle: "display:block;font:500 11px/1.3 'C11';text-align:center;color:#E8E2D6;" +
           'max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap',
-        tierStyle: "display:block;font:400 11px/1 'C11';color:" + (d.hue || '#5F574C')
+        tierStyle: 'display:none'
       };
     });
 
