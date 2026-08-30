@@ -639,7 +639,7 @@
                 <div>
                   <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-05 · SUBMIT ITEM</div>
                   <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ openTaskTitle }}</h1>
-                </div><sc-if value="{{ hasOpenMob }}" hint-placeholder-val="{{ true }}"><div style="{{ openMobWrap }}"><span style="{{ openMobArt }}"></span><span><span style="{{ openMobKickerStyle }}">{{ openMobKicker }}</span><span style="{{ openMobNameStyle }}">{{ openMobName }}</span></span></div></sc-if>
+                </div><sc-if value="{{ hasOpenMob }}" hint-placeholder-val="{{ true }}"><button onClick="{{ openMobGo }}" style="{{ openMobWrap }}"><span style="{{ openMobArt }}"></span><span><span style="{{ openMobKickerStyle }}">{{ openMobKicker }}</span><span style="{{ openMobNameStyle }}">{{ openMobName }}</span></span></button></sc-if>
               </div>
               <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:17px;{{ formW }}">
                 

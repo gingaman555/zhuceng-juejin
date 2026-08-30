@@ -3914,13 +3914,13 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   var h = '<h1 style="font:700 33px/1.4 ' + Q + 'C11' + Q + ';margin:7px 0 0">{{ openTaskTitle }}</h1>' + String.fromCharCode(10) + '                </div>';
   if (t.split(h).length - 1 !== 1) { console.error('90. 任務頁的標題找不到'); process.exit(1); }
   t = t.replace(h, h + '<sc-if value="{{ hasOpenMob }}" hint-placeholder-val="{{ true }}">' +
-    '<div style="{{ openMobWrap }}">' +
+    '<button onClick="{{ openMobGo }}" style="{{ openMobWrap }}">' +
       '<span style="{{ openMobArt }}"></span>' +
       '<span>' +
         '<span style="{{ openMobKickerStyle }}">{{ openMobKicker }}</span>' +
         '<span style="{{ openMobNameStyle }}">{{ openMobName }}</span>' +
       '</span>' +
-    '</div>' +
+    '</button>' +
   '</sc-if>');
 
   /* 三、清單上先講一句 */
