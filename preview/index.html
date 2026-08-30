@@ -529,7 +529,13 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
           </sc-if>
 
           <sc-if value="{{ scS01 }}" hint-placeholder-val="{{ false }}">
-            <div data-screen-label="S-01 學生首頁" style="padding:0 0 30px">
+            <div data-screen-label="S-01 學生首頁" style="padding:0 0 30px"><sc-if value="{{ hasHomeHaul }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
+                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">排行榜</span>
+                    <span style="font:700 22px/1 'C11';color:var(--ac)">{{ homeRank }}</span>
+                    <span style="font:400 11px/1 'C11';color:var(--tx3)">{{ homeRankNote }}</span>
+                    <span style="flex:1"></span>
+                    <button onClick="{{ goHaul }}" style="font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);background:none;border:1px solid var(--line2);padding:7px 11px;cursor:pointer;white-space:nowrap">看排行榜</button>
+                  </div></sc-if>
               <div style="position:relative;padding:28px var(--pad) 24px;background:linear-gradient(180deg,rgba(233,179,65,.1),transparent),var(--field);border-bottom:1px solid #221E19;overflow:hidden">
                 <div style="position:absolute;top:-40px;right:-30px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(233,179,65,.17),transparent 65%);animation:pulseGlow 6s ease-in-out infinite"></div>
                 <div style="position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px">
@@ -639,13 +645,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
 
               <sc-if value="{{ hasHomeHaul }}" hint-placeholder-val="{{ true }}">
                 <div style="margin:20px var(--pad) 0;padding:17px 19px;background:var(--panel);border:1px solid var(--line2)">
-                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">排行榜</span>
-                    <span style="font:700 22px/1 'C11';color:var(--ac)">{{ homeRank }}</span>
-                    <span style="font:400 11px/1 'C11';color:var(--tx3)">{{ homeRankNote }}</span>
-                    <span style="flex:1"></span>
-                    <button onClick="{{ goHaul }}" style="font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);background:none;border:1px solid var(--line2);padding:7px 11px;cursor:pointer;white-space:nowrap">看排行榜</button>
-                  </div>
+                  
                   <sc-if value="{{ hasHorizon }}" hint-placeholder-val="{{ true }}"><div style="{{ horizonWrap }}"><div style="{{ horizonHeadStyle }}">{{ horizonHead }}</div><div style="{{ horizonRowsStyle }}"><sc-for list="{{ horizonRows }}" as="hz" hint-placeholder-count="4"><div style="{{ hz.style }}"><span style="{{ hz.kStyle }}">{{ hz.k }}</span><span style="{{ hz.vStyle }}">{{ hz.v }}</span><span style="{{ hz.noteStyle }}">{{ hz.note }}</span></div></sc-for></div></div></sc-if><sc-if value="{{ hasTerm }}" hint-placeholder-val="{{ true }}">
                     <div style="margin:11px 0 0;padding-top:11px;border-top:1px solid #26211C">
                       <div style="font:400 11px/1.7 'C11';color:var(--tx2);text-wrap:pretty">{{ termLine }}</div>
@@ -5226,7 +5226,9 @@ class Component extends DCLogic {
       if (mine.indexOf(String(r.teamId)) < 0 || r.status !== 'passed') return;
       var d = defs[String(r.taskId)];
       if (!d) return;
-      out.push({ id: String(r.taskId), layer: Math.max(1, Math.min(4, Number(d.layer)||1)),
+      /* teamId：生物按（任務 × 組別）決定，歷史條目要記得當時是哪一組 */
+      out.push({ id: String(r.taskId), teamId: String(r.teamId),
+                 layer: Math.max(1, Math.min(4, Number(d.layer)||1)),
                  title: d.title || '', classId: String(d.classId||''),
                  find: Number(r.find)||0, find2: Number(r.find2)||0 });
     });
@@ -6701,6 +6703,8 @@ class Component extends DCLogic {
       })();
       var mt = b.myTeam;
       if (mt) {
+        /* 生物按（任務 × 組別）決定，所以要記得自己是哪一組 */
+        LIVE.myTeamId = String(mt.teamId || mt.id || '');
         next.currentLayer = mt.layer; next.passed = mt.passed || [];
         next.toolLevels = mt.toolLevels || {}; next.stayWeeks = mt.weeks;
         next.specNames = mt.specNames || {};
@@ -6931,7 +6935,7 @@ class Component extends DCLogic {
            '這一段沒有事情做，是正常的——這套系統從老師開任務開始，不是從你開始。' +
            '　在那之前可以先看一次地圖，四個領域由上往下，你在最上面那一層。'],
     open: ['點開第一項任務。',
-           '每一項任務前面都擋著一隻東西。點開才看得到是哪一隻——同一項任務全班遇到的是同一隻。'],
+           '每一項任務前面都擋著一隻東西。點開才看得到是哪一隻——每一組遇到的不是同一隻。'],
     tick: ['去做，做完回來把清單一條一條勾掉。',
            '作業還是交在老師原本要求的地方，系統不收檔案也看不到內容。' +
            '　這裡的清單只是「我做到哪了」的紀錄，勾一條 10 分。'],
@@ -7184,7 +7188,7 @@ class Component extends DCLogic {
     recAll.forEach(function (r) {
       if (r.status === 'todo') return;
       /* 一區十隻，id 就是第幾隻 */
-      var k = (r.layer || 1) + ':' + mobIdOfTask(r.id);
+      var k = (r.layer || 1) + ':' + mobIdOfTask(r.id, eyesOf(r));
       if (!metKey[k]) metKey[k] = r;
     });
 
@@ -8113,7 +8117,9 @@ class Component extends DCLogic {
        兩件事都不對了——校準整套拿掉，戰利品是那一隻退開之後留在原地的。 */
     v.rewardCopy = '老師放行了。這一層的礦石鑄成了它——擋在層底的那一隻退開了。' +
       String.fromCharCode(10) + String.fromCharCode(10) +
-      '牠站的地方還留著一件東西。那件只有走到這一層的盡頭才拿得到。';
+      '牠站的地方還留著一件東西。那件只有走到這一層的盡頭才拿得到。' +
+      String.fromCharCode(10) + String.fromCharCode(10) +
+      '這一層 ＋1000 分（道具 500 ＋ 戰利品 500）——榜上拉得開的就是這個。';
 
     /* 發道具動畫關閉後進新一層的故事頁 */
     v.closeReward = function () {
@@ -10545,12 +10551,19 @@ class Component extends DCLogic {
   /* 哪一項任務對到哪一隻：taskId 的雜湊。
      不存資料庫——同一個 taskId 永遠算出同一隻，老師端跟學生端也一定
      一致。省掉一個欄位、一次遷移、以及兩邊不同步的可能。 */
-  /* 同一項任務全班遇到的是同一隻，所以用任務 id 決定。
+  /* 同一項任務每一組遇到的是不同一隻，所以用（任務 id × 組別）決定。
      FNV-1a 的低位元不夠亂，直接 % 10 會塌成兩三格——實測同一層的
      三項任務全部配到同一隻。所以最後加一段 avalanche 打散，再用乘法
      折疊取值（% 10 只看得到低位元，折疊看得到整個 32 位元）。 */
-  function mobIdOfTask(taskId) {
-    var s = String(taskId || ''), h = 2166136261;
+  /* 哪一組的眼睛。學生一律是自己那一組；圖鑑的歷史條目自己帶著
+     當時的組別，所以換組之後以前收過的不會變成別隻。 */
+  function eyesOf(x) {
+    if (x && x.teamId) return String(x.teamId);
+    return String(LIVE.myTeamId || '');
+  }
+
+  function mobIdOfTask(taskId, teamId) {
+    var s = String(taskId || '') + '|' + String(teamId || ''), h = 2166136261;
     for (var i = 0; i < s.length; i++) {
       h ^= s.charCodeAt(i);
       h = Math.imul(h, 16777619) >>> 0;
@@ -10569,7 +10582,7 @@ class Component extends DCLogic {
 
   function mobOfTask(t) {
     if (!t || !t.id) return null;
-    var m = mobOf(mobIdOfTask(t.id), t.layer);
+    var m = mobOf(mobIdOfTask(t.id, eyesOf(t)), t.layer);
     if (m) m.layer = Number(t.layer) || 1;
     return m;
   }
@@ -10628,7 +10641,7 @@ class Component extends DCLogic {
      同一隻被兩組打贏，兩張頁面會長得不一樣。 */
   /* ---- 點開一隻生物 ---- */
   function openMob(L, r) {
-    var m = mobOf(mobIdOfTask(r.id), r.layer);
+    var m = mobOf(mobIdOfTask(r.id, eyesOf(r)), r.layer);
     if (!m) return;
     var down = r.status === 'passed';
     var seen = r.status !== 'todo';
@@ -10791,8 +10804,13 @@ class Component extends DCLogic {
 
     var order = arr.slice();
 
+    /* 這一次實際加了幾分：通過一項 100，掉落物一件 30。
+       本來只寫「每一次都是 30 分」，要學生自己乘。 */
+    var gotScore = 100 + arr.length * 30;
+
     var rows = [];
     if (m) rows.push({ k: '打贏了', v: m.name });
+    rows.push({ k: '這一次拿到', v: '＋' + gotScore + ' 分', hi: true });
     rows.push({ k: '抽了幾次', v: arr.length + ' 次', hi: arr.length > 1 });
     var baseN = Math.max(1, Math.min(4, task.layer || 1));
     rows.push({ k: '怎麼算的', v: gave > 1
@@ -10845,7 +10863,8 @@ class Component extends DCLogic {
         '越往下抽越多次：第一層抽一次，第四層就是四次起跳。' +
         (gave > 1 ? '　他這次給了 ' + gave + '，所以多抽了 ' + (gave - 1) + ' 次。'
                   : '　他這次給了 1——多做一點的話，這裡會多抽幾次。'),
-        '每一次都是 30 分，撿到哪一件不影響名次。'
+        '通過這一項 100 分，抽到的每一件 30 分——' + arr.length + ' 件就是 ' + (arr.length * 30) +
+        ' 分，合起來 ' + gotScore + ' 分。撿到哪一件不影響名次，抽幾次才影響。'
       ],
       btn: '收好', go: function () {}
     }, reelPool, reelPicks);
@@ -10917,7 +10936,7 @@ class Component extends DCLogic {
     v.bestRows = bossRows.concat(codex.slice().reverse().map(function (c) {
       var r = c.live || { id: c.id, layer: c.layer, title: c.title, status: 'passed',
                           rounds: 0, won: false, vow: '', find: c.find, find2: c.find2 };
-      var m = mobOf(mobIdOfTask(r.id), r.layer);
+      var m = mobOf(mobIdOfTask(r.id, eyesOf(c)), r.layer);
       var down = !c.live;
       var hue = BOARD_HUE[Math.max(0, Math.min(3, (r.layer || 1) - 1))];
       var seen = true;
@@ -11012,7 +11031,7 @@ class Component extends DCLogic {
     var recAll = (S.record || []).concat(S.codex || []);
     recAll.forEach(function (r) {
       if (r.status === 'todo') return;
-      metMob[(r.layer || 1) + ':' + mobIdOfTask(r.id)] = 1;
+      metMob[(r.layer || 1) + ':' + mobIdOfTask(r.id, eyesOf(r))] = 1;
     });
 
     /* 只算點進去的那一層——四層全算等於一次做 176 格，白費 */
@@ -11675,7 +11694,7 @@ class Component extends DCLogic {
   /* 這個人以前有沒有收過。生物看 codex，掉落物看 finds。 */
   function isNewMob(L, layer, mobId) {
     var seen = (L.state.codex || []).some(function (c) {
-      return (c.layer || 1) === layer && mobIdOfTask(c.id) === mobId;
+      return (c.layer || 1) === layer && mobIdOfTask(c.id, eyesOf(c)) === mobId;
     });
     return !seen;
   }
@@ -11965,11 +11984,11 @@ class Component extends DCLogic {
     var mobN = (function () {
       var seen = {};
       (S.codex || []).forEach(function (c) {
-        seen[(c.layer || 1) + ':' + mobIdOfTask(c.id)] = 1;
+        seen[(c.layer || 1) + ':' + mobIdOfTask(c.id, eyesOf(c))] = 1;
       });
       (S.record || []).forEach(function (r) {
         if (r.status !== 'passed') return;
-        seen[(r.layer || 1) + ':' + mobIdOfTask(r.id)] = 1;
+        seen[(r.layer || 1) + ':' + mobIdOfTask(r.id, eyesOf(r))] = 1;
       });
       return Object.keys(seen).length + (S.passed || []).length;
     })();
@@ -12258,7 +12277,7 @@ class Component extends DCLogic {
       Object.assign({
         n: '1', title: '點開一項 → 看擋著它的是哪一隻',
         desc: '每一項前面都站著這一層的一隻生物。點進去才看得到是誰——' +
-          '同一項任務，全班遇到的是同一隻——誰先打贏牠是看得出來的。',
+          '每一組遇到的不是同一隻——同一份作業，擋在你們面前的那一隻只有你們這一組會遇到。',
         box: box(step0On), num: num(step0On), color: step0On ? 'var(--ac)' : 'var(--tx3)'
       }, !all.length ? tag('還沒有清單', '#5F574C')
         : tag('清單上有 ' + all.length + ' 項', 'var(--tx2)')),
@@ -14580,7 +14599,10 @@ class Component extends DCLogic {
     var id = S.editId || '';   /* 原型用的是 editId */
     if (!id) return;
     var lyr = Number(S.editLayer) || 1;
-    var m = mobOf(mobIdOfTask(id), lyr);
+    /* 每一組遇到的不是同一隻，所以老師這裡不能只挑一隻代表。
+       挑第一組當範例，並且在文字上說清楚別組不一樣。 */
+    var t0 = (L.teams() || [])[0];
+    var m = mobOf(mobIdOfTask(id, t0 ? t0.id : ''), lyr);
     if (!m) return;
     var hue = BOARD_HUE[Math.max(0, Math.min(3, lyr - 1))];
     v.hasEditMob = true;
@@ -14588,7 +14610,9 @@ class Component extends DCLogic {
       'background:rgba(' + hexRgb(hue) + ',.06);border-left:2px solid ' + hue;
     v.editMobArt = 'display:block;width:46px;height:46px;flex:none;image-rendering:pixelated;' +
       'background:url("' + mobSvg(m.id, lyr) + '") center/contain no-repeat';
-    v.editMobKicker = '學生點開這一項會先看到';
+    v.editMobKicker = (L.teams() || []).length > 1
+      ? '「' + ((L.teams() || [])[0] || {}).name + '」點開這一項會看到（別組是別隻）'
+      : '學生點開這一項會先看到';
     v.editMobKickerStyle = "display:block;font:400 11px/1 'C11';letter-spacing:.16em;color:" + hue;
     v.editMobName = m.name;
     v.editMobNameStyle = "display:block;font:700 22px/1.3 'C11';color:var(--tx);margin-top:5px";
@@ -14739,7 +14763,8 @@ class Component extends DCLogic {
         lede: g.teamName + ' 通過了' + (Ldef.name || '這一層') + '。',
         sprite: spg.treasure || spg.tool || null,
         rows: [
-          { k: '道具', v: Ldef.tool || '', hi: true },
+          { k: '他們拿到', v: '＋1000 分', hi: true },
+          { k: '道具', v: Ldef.tool || '' },
           { k: '戰利品', v: Ldef.treasure || '' },
           { k: '他們去', v: (L.LAYERS[g.layer] || {}).name || '地心' }
         ],

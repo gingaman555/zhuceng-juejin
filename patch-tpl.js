@@ -4618,5 +4618,44 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("122. 任務列右邊加了生物那一格");
 })();
 
+
+
+/* 123. 排行榜提到首頁最前面。
+       它本來排在地圖後面、第二屏底下。排行榜是這套系統唯一的競爭面，
+       要它發揮作用就得先被看到。
+       只搬排行榜那一格——它原本跟「這一趟走完是什麼樣子」共用同一個
+       sc-if，所以搬出來之後要自己帶上條件，不然沒資料的時候會空著。 */
+(function () {
+  var KEY = "data-screen-label=\"S-01 學生首頁\"";
+  var k = t.indexOf(KEY);
+  if (k < 0) { console.error("123. 找不到首頁"); process.exit(1); }
+  var bodyStart = t.indexOf(">", k) + 1;
+
+  var mark = t.indexOf("{{ homeRank }}", bodyStart);
+  if (mark < 0) { console.error("123. 找不到排行榜"); process.exit(1); }
+  /* 外框同時包著「這一趟走完是什麼樣子」，所以只搬裡面那一列 */
+  var outer = t.lastIndexOf("<div style=\"margin:20px var(--pad) 0", mark);
+  if (outer < 0) { console.error("123. 找不到外框"); process.exit(1); }
+  var a = t.indexOf("<div", t.indexOf(">", outer) + 1);
+  if (a < 0 || a > mark) { console.error("123. 找不到排行榜那一列"); process.exit(1); }
+
+  var i = a, depth = 0;
+  while (i < t.length) {
+    var o = t.indexOf("<div", i), c = t.indexOf("</div>", i);
+    if (c < 0) { console.error("123. 數不到結尾"); process.exit(1); }
+    if (o >= 0 && o < c) { depth++; i = o + 4; continue; }
+    depth--; i = c + 6;
+    if (depth === 0) break;
+  }
+  var block = t.slice(a, i);
+  if (block.indexOf("{{ horizonHead }}") >= 0 || block.length > 1600) {
+    console.error("123. 抓到的範圍不對：" + block.length + " 字"); process.exit(1);
+  }
+  t = t.slice(0, a) + t.slice(i);
+  var wrapped = "<sc-if value=\"{{ hasHomeHaul }}\" hint-placeholder-val=\"{{ true }}\">" + block.split("margin:20px var(--pad) 0").join("margin:16px var(--pad) 0") + "</sc-if>";
+  t = t.slice(0, bodyStart) + wrapped + t.slice(bodyStart);
+  console.log("123. 排行榜提到首頁最前面（" + block.length + " 字）");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

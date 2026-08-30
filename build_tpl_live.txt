@@ -388,7 +388,13 @@
           </sc-if>
 
           <sc-if value="{{ scS01 }}" hint-placeholder-val="{{ false }}">
-            <div data-screen-label="S-01 學生首頁" style="padding:0 0 30px">
+            <div data-screen-label="S-01 學生首頁" style="padding:0 0 30px"><sc-if value="{{ hasHomeHaul }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
+                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">排行榜</span>
+                    <span style="font:700 22px/1 'C11';color:var(--ac)">{{ homeRank }}</span>
+                    <span style="font:400 11px/1 'C11';color:var(--tx3)">{{ homeRankNote }}</span>
+                    <span style="flex:1"></span>
+                    <button onClick="{{ goHaul }}" style="font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);background:none;border:1px solid var(--line2);padding:7px 11px;cursor:pointer;white-space:nowrap">看排行榜</button>
+                  </div></sc-if>
               <div style="position:relative;padding:28px var(--pad) 24px;background:linear-gradient(180deg,rgba(233,179,65,.1),transparent),var(--field);border-bottom:1px solid #221E19;overflow:hidden">
                 <div style="position:absolute;top:-40px;right:-30px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(233,179,65,.17),transparent 65%);animation:pulseGlow 6s ease-in-out infinite"></div>
                 <div style="position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px">
@@ -498,13 +504,7 @@
 
               <sc-if value="{{ hasHomeHaul }}" hint-placeholder-val="{{ true }}">
                 <div style="margin:20px var(--pad) 0;padding:17px 19px;background:var(--panel);border:1px solid var(--line2)">
-                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">排行榜</span>
-                    <span style="font:700 22px/1 'C11';color:var(--ac)">{{ homeRank }}</span>
-                    <span style="font:400 11px/1 'C11';color:var(--tx3)">{{ homeRankNote }}</span>
-                    <span style="flex:1"></span>
-                    <button onClick="{{ goHaul }}" style="font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);background:none;border:1px solid var(--line2);padding:7px 11px;cursor:pointer;white-space:nowrap">看排行榜</button>
-                  </div>
+                  
                   <sc-if value="{{ hasHorizon }}" hint-placeholder-val="{{ true }}"><div style="{{ horizonWrap }}"><div style="{{ horizonHeadStyle }}">{{ horizonHead }}</div><div style="{{ horizonRowsStyle }}"><sc-for list="{{ horizonRows }}" as="hz" hint-placeholder-count="4"><div style="{{ hz.style }}"><span style="{{ hz.kStyle }}">{{ hz.k }}</span><span style="{{ hz.vStyle }}">{{ hz.v }}</span><span style="{{ hz.noteStyle }}">{{ hz.note }}</span></div></sc-for></div></div></sc-if><sc-if value="{{ hasTerm }}" hint-placeholder-val="{{ true }}">
                     <div style="margin:11px 0 0;padding-top:11px;border-top:1px solid #26211C">
                       <div style="font:400 11px/1.7 'C11';color:var(--tx2);text-wrap:pretty">{{ termLine }}</div>
