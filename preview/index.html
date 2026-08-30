@@ -5656,7 +5656,9 @@ class Component extends DCLogic {
             if (task.status === 'submitted') out.queue.push({
               id: tm.id + '::' + task.id, teamId: tm.id, teamName: tm.name, taskId: task.id,
               title: task.title, layer: task.layer, type: task.type, text: task.text, spec: task.spec || '', effort: task.effort, effortNote: task.effortNote, blocker: task.blocker,
-              files: task.files, over: task.over, due: task.due, weeks: tm.weeks, cond: task.cond, mineral: task.mineral });
+              files: task.files, over: task.over, due: task.due, weeks: tm.weeks, cond: task.cond, mineral: task.mineral,
+              /* 回掘過的那一項——老師給不了這顆星，但要看得到 */
+              star: starOf(tm.id, task.id) });
           });
           /* 每一組都列出來，不管有沒有送過申請——放行完全由老師決定 */
           if (Number(tm.layer) <= 4) out.gates.push({
@@ -6770,7 +6772,8 @@ class Component extends DCLogic {
                  title: q.title, layer: q.layer, tag: 'L' + q.layer,
                  cond: q.cond, due: q.due, over: q.over, text: q.text, files: q.files || [],
                  mineral: q.mineral || '', spec: q.spec || '',
-                 effort: q.effort || '', effortNote: q.effortNote || '', blocker: q.blocker || '' };
+                 effort: q.effort || '', effortNote: q.effortNote || '', blocker: q.blocker || '',
+                 star: !!q.star };
       });
       next.finOpened = !!(b.myTeam && b.myTeam.finaleOpened);
       next.myPhrases = b.myPhrases || [];
@@ -9537,18 +9540,19 @@ class Component extends DCLogic {
     (task.checked || []).forEach(function (i) { on[Number(i)] = true; });
     if (list.filter(function (_x, i) { return on[i]; }).length < list.length) return;  /* 還沒勾完 */
 
-    /* 「送出之前，有沒有哪一項你其實不太確定？」那一整塊拿掉了。
-       ★ 的機制留在資料裡（已經拿到星的那幾項照樣標星），只是不再在
-       送出前攔一次問人要不要賭。 */
-    v.gambleShow = !!task.star;
+    /* 這一塊是回掘的入口。上一版整個關掉，結果星星變成永遠拿不到——
+       因為拿星的唯一路徑就是從這裡打開一條再補完。接回來，但不再用
+       「要不要賭」的說法：那把一個關於做紮實的動作講成了投機。 */
+    v.gambleShow = true;
     v.gambleStar = !!task.star;
 
     if (task.star) {
       /* 已經回掘過了。這一頁的星拿到了，不用再賭一次。 */
       v.gambleBoxStyle = 'margin:0 0 18px;padding:16px 18px;background:rgba(233,179,65,.07);' +
         'border:1px solid #7A6432';
-      v.gambleTitle = '★　這一頁有星了';
-      v.gambleBody = '你在他開口之前自己發現了一項，補完之後才勾回來。這顆星老師給不了，只有走過那條路才有。';
+      v.gambleTitle = '★　這一項有星了';
+      v.gambleBody = '你在老師開口之前自己發現有一條沒做紮實，打開、補完，再勾回來。' +
+        '這顆星老師給不了——他只能判你交出來的東西，判不了你有沒有自己回頭看過。';
       v.gambleCost = '送出去吧。';
       return;
     }
@@ -9556,13 +9560,16 @@ class Component extends DCLogic {
     v.gambleBoxStyle = 'margin:0 0 18px;padding:17px 19px;border-left:3px solid #D9603F;' +
       'background:rgba(217,96,63,.06);border-top:1px solid var(--line2);' +
       'border-right:1px solid var(--line2);border-bottom:1px solid var(--line2)';
-    v.gambleTitle = '送出之前';
-    v.gambleBody = '都勾完了。有沒有哪一項，你其實不太確定？現在打開它、補完、再勾回來——這一頁會留下一顆星。';
-    v.gambleCost = '打開之後至少要隔 6 小時才能勾回來，所以今天就送不出去了。不想賭就直接送，沒有任何損失。';
+    v.gambleTitle = '有哪一條想再做紮實一點嗎';
+    v.gambleBody = '「勾完了」跟「做紮實了」不是同一件事。哪一條你其實心裡有數還不夠，' +
+      '現在可以打開它、補完、再勾回來——這一項會留下一顆星。' +
+      '那顆星是你自己回頭發現的，老師給不了；他只判得了你交出來的東西。';
+    v.gambleCost = '打開之後至少要隔 6 小時才能勾回來——那是為了讓它真的是重做一遍，' +
+      '不是點兩下。所以今天就送不出去了。不打開直接送也完全沒有損失。';
 
     v.gambleItems = list.map(function (txt, i) {
       return {
-        label: '第 ' + (i + 1) + ' 條　我不確定',
+        label: '第 ' + (i + 1) + ' 條　想再做紮實一點',
         text: txt,
         pick: function () {
           /* 先在畫面上打開，再回寫——跟勾選同一套手感 */
@@ -9620,7 +9627,8 @@ class Component extends DCLogic {
     /* 導覽沒有自評那一塊了，說明就不能再說「下面那一題」 */
     v.sayNote = isTut0
       ? '不用寫。三條勾完按下面那顆就結束。'
-      : '一句話讓他對得上你交出去的東西。真正要寫的是下面那一題。';
+      : '這一項你多做了什麼，寫在這裡——多研究了、多畫了別的草圖、給了不同的做法，' +
+        '或是有額外的產出。老師驗收時的加分看的就是這一段，沒有多做就留白。';
     v.handInNote = isTut0
       ? '它是系統給的導覽——三條做過就勾，勾完按下面那顆就結束了。老師那邊看不到它。'
       : '這裡不收檔案，也不會看你交了什麼。交完再回來勾——他去他收作業的地方看完，再回來按過或不過。';
@@ -14131,6 +14139,12 @@ class Component extends DCLogic {
     /* T-06：先讓老師看到這一組對自己的判斷，再寫合格考量 */
     var EFF = { fast: ['比預估快', 'var(--ac)'], onpar: ['跟預估差不多', 'var(--tx2)'], slow: ['比預估慢', '#D9603F'] };
     var eff = cur && EFF[cur.effort];
+    /* 學生沒寫的時候本來會留一個空框，看起來像壞掉。空白本身也是資訊：
+       這一項他們沒有宣稱多做什麼——那正是給 1 分的情況。 */
+    if (!String(v.revText || '').trim()) {
+      v.revText = '（他們沒有寫多做了什麼。沒有宣稱，就照交付內容本身判。）';
+    }
+
     v.hasSelfCall = !!eff;
     v.selfEffortLabel = eff ? '他們說：' + eff[0] : '';
     v.selfEffortChip = eff
@@ -14266,7 +14280,11 @@ class Component extends DCLogic {
          老師才不用猜數字代表什麼，而且這五個值本身就是研究語料。 */
       var LAB = ['完全沒有', '有一點', '中等', '明顯多做', '遠超出要求'];
       v.gaveNote = '這一組在這一項裡，不只是把作業交出來——多研究了、多畫了' +
-        '別的草圖、給了不同的做法，或是有額外的產出。';
+        '別的草圖、給了不同的做法，或是有額外的產出。' +
+        (cur && cur.star
+          ? '　★ 這一項他們回掘過：在你開口之前自己發現有一條沒做紮實，' +
+            '打開補完才勾回來。那顆星你給不了，但它算不算「多做」由你決定。'
+          : '');
       var layerNow = cur ? (cur.layer || 1) : 1;
       /* 1 分＝沒有加成，所以加的是 g − 1。攤成公式沒有人看得懂。 */
       v.gaveWhat = '你選「' + LAB[g - 1] + '」　·　這一層本來抽 ' + layerNow + ' 次，' +

@@ -1342,6 +1342,9 @@ function apiBootstrap(token) {
               taskId: task.id, title: task.title, layer: task.layer, type: task.type,
               text: task.text, files: task.files, over: task.over, due: task.due, spec: task.spec || '',
               effort: task.effort, effortNote: task.effortNote, blocker: task.blocker,
+              /* 回掘過的那一項。老師給不了這顆星，但他要看得到——
+                 那是「有沒有不只是把作業交出來」最直接的證據。 */
+              star: starOf_(t.id, task.id),
               weeks: t.weeks, cond: task.cond, mineral: task.mineral
             });
           }

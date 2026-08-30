@@ -787,7 +787,9 @@
             if (task.status === 'submitted') out.queue.push({
               id: tm.id + '::' + task.id, teamId: tm.id, teamName: tm.name, taskId: task.id,
               title: task.title, layer: task.layer, type: task.type, text: task.text, spec: task.spec || '', effort: task.effort, effortNote: task.effortNote, blocker: task.blocker,
-              files: task.files, over: task.over, due: task.due, weeks: tm.weeks, cond: task.cond, mineral: task.mineral });
+              files: task.files, over: task.over, due: task.due, weeks: tm.weeks, cond: task.cond, mineral: task.mineral,
+              /* 回掘過的那一項——老師給不了這顆星，但要看得到 */
+              star: starOf(tm.id, task.id) });
           });
           /* 每一組都列出來，不管有沒有送過申請——放行完全由老師決定 */
           if (Number(tm.layer) <= 4) out.gates.push({
