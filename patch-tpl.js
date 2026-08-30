@@ -4528,5 +4528,67 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("118. 老師主控台重排：佇列搬到統計前面");
 })();
 
+
+/* 119. 四步移到「下一件要做的事」下面。
+       patch 113 把四步放進了進度那一行，結果它排在按鈕上面——
+       參考資料擋在行動前面。四步是「這裡怎麼運作」，那是讀過一次就好
+       的東西；要按的那一顆才該先看到。 */
+(function () {
+  var mark = "flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px";
+  var m = t.indexOf(mark);
+  if (m < 0) { console.error("119. 找不到四步那一塊"); process.exit(1); }
+  var start = t.lastIndexOf("<div", m);
+
+  function divEnd(src, from) {
+    var i = from, depth = 0;
+    while (i < src.length) {
+      var o = src.indexOf("<div", i), c = src.indexOf("</div>", i);
+      if (c < 0) return -1;
+      if (o >= 0 && o < c) { depth++; i = o + 4; continue; }
+      depth--; i = c + 6;
+      if (depth === 0) return i;
+    }
+    return -1;
+  }
+
+  var end = divEnd(t, start);
+  if (end < 0) { console.error("119. 四步那一塊數不到結尾"); process.exit(1); }
+  var block = t.slice(start, end);
+  t = t.slice(0, start) + t.slice(end);
+
+  /* 剪掉之後：接下來是外層 flex 行的 </div>，再來才是「下一件要做的事」那一塊 */
+  var afterRow = t.indexOf("</div>", start);
+  if (afterRow < 0) { console.error("119. 找不到外層那一行的結尾"); process.exit(1); }
+  var nextDiv = t.indexOf("<div", afterRow + 6);
+  var nextEnd = divEnd(t, nextDiv);
+  if (nextDiv < 0 || nextEnd < 0) { console.error("119. 找不到「下一件要做的事」那一塊"); process.exit(1); }
+  block = block.split("flex-basis:100%;").join("")
+               .split("margin-top:13px").join("margin-top:16px;padding-top:14px;border-top:1px solid #26211C");
+  t = t.slice(0, nextEnd) + block + t.slice(nextEnd);
+  console.log("119. 四步移到下一件要做的事下面");
+})();
+
+
+/* 120. 清單那一段的標題改成可換的。
+       原型寫死「他要你做到這些」——但新手導覽那一項沒有「他」，那是系統
+       自己給的，同一頁上面才剛寫著「不用等老師」。 */
+(function () {
+  var a = "<span style=\"font:500 22px/1 'C11';color:var(--tx)\">他要你做到這些</span>";
+  if (t.split(a).length - 1 !== 1) { console.error("120. 找不到清單標題"); process.exit(1); }
+  t = t.replace(a, "<span style=\"font:500 22px/1 'C11';color:var(--tx)\">{{ checkHead }}</span>");
+  console.log("120. 清單標題改成可換的");
+})();
+
+
+/* 121. 「你做了什麼」底下那一句改成可換的。
+       它寫著「真正要寫的是下面那一題」，但新手導覽那一項底下的自評已經
+       拿掉了——指向一個不存在的東西。 */
+(function () {
+  var a = "一句話讓他對得上你交出去的東西。真正要寫的是下面那一題。";
+  if (t.split(a).length - 1 !== 1) { console.error("121. 找不到那一句"); process.exit(1); }
+  t = t.replace(a, "{{ sayNote }}");
+  console.log("121. 你做了什麼底下那一句改成可換的");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

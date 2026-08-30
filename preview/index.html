@@ -561,7 +561,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層的進度</span>
                   <span style="font:700 33px/1 'C11';color:#F2EADA">{{ ruleProgress }}</span>
                   <span style="flex:1"></span>
-                  <div style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px"><sc-for list="{{ ruleRow }}" as="rs" hint-placeholder-count="4"><span style="{{ rs.style }}"><span style="{{ rs.nStyle }}">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>
+                  
                 </div>
                 <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">
                   <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">下一件要做的事</div>
@@ -572,7 +572,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                     </sc-if>
                   </div>
                   <div style="font:400 22px/1.6 'C11';color:var(--tx3);margin-top:9px;text-wrap:pretty">{{ nextActionWhy }}</div>
-                </div>
+                </div><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;padding-top:14px;border-top:1px solid #26211C"><sc-for list="{{ ruleRow }}" as="rs" hint-placeholder-count="4"><span style="{{ rs.style }}"><span style="{{ rs.nStyle }}">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>
               </div>
               <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">
                 <div style="padding:0 var(--pad) 16px;display:flex;flex-direction:column;gap:8px">
@@ -860,7 +860,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">
                     <div style="{{ checkBoxStyle }}">
                       <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px">
-                        <span style="font:500 22px/1 'C11';color:var(--tx)">他要你做到這些</span>
+                        <span style="font:500 22px/1 'C11';color:var(--tx)">{{ checkHead }}</span>
                         <span style="{{ checkCountStyle }}">{{ checkCount }}</span>
                       </div>
                       <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:11px">{{ checkHint }}</div>
@@ -892,7 +892,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 </div>
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">你做了什麼　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
-                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">一句話讓他對得上你交出去的東西。真正要寫的是下面那一題。</div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">{{ sayNote }}</div>
                   <textarea onChange="{{ setSubmitText }}" value="{{ submitText }}" placeholder="例：訪談三位大三生之後，把題目收斂成「畢製組隊後的分工失衡」，範圍縮到系上，排除跨校比較。" style="width:100%;min-height:220px;padding:13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
                 </div>
                 <sc-if value="{{ hasReflect }}" hint-placeholder-val="{{ true }}">
@@ -8023,8 +8023,11 @@ class Component extends DCLogic {
             ],
             quoteLabel: '介紹', quote: mineM.trait,
             lines: ['這兩樣不算在 44 種與 152 種裡面——那些是大家共同的世界，這兩樣是你的。',
-                    '接下來要等老師把這一層的清單開出來。那些任務的生物是全班一樣的，' +
-                    '打贏會抽好幾次，抽到的才會進那 152 種。'],
+                    ((L.state.tasks || []).filter(function (x) { return x.id !== 'tut'; }).length
+                      ? '接下來是老師開的那些任務。它們前面站的生物是全班一樣的，' +
+                        '打贏會抽好幾次，抽到的才會進那 152 種。'
+                      : '接下來要等老師把這一層的清單開出來。那些任務的生物是全班一樣的，' +
+                        '打贏會抽好幾次，抽到的才會進那 152 種。')],
             btn: '收好', go: function () {}
           }, [], [{ art: mineF.art, name: mineF.name, hue: mineF.hue, isNew: true }]);
         }
@@ -8042,7 +8045,15 @@ class Component extends DCLogic {
       }
       if (st.uploading) { L.say('還有檔案在上傳，等一下再送。'); return; }
       var reflect = { effort: st.draftEffort, effortNote: st.draftEffortNote || '', blocker: st.draftBlocker || '' };
-      origSubmit();
+      /* 原型的送出會檢查「你做了什麼」有沒有填，沒填就丟一句錯誤訊息。
+         那一欄現在是選填（作業交在老師原本收的地方），所以那句話是假的——
+         送出其實成功了，畫面上卻留著一行紅字。只擋這一句，其他照舊。 */
+      var origSay = L.say;
+      L.say = function (m) {
+        if (m === '先寫下做到什麼程度。') return;   /* 舊詞OK：比對原型寫死的字 */
+        return origSay.apply(L, arguments);
+      };
+      try { origSubmit(); } finally { L.say = origSay; }
       L.setState({ draftEffort: '', draftEffortNote: '', draftBlocker: '' });
       (function () {
         var task = (st.tasks || []).filter(function (x) { return x.id === taskId; })[0] || {};
@@ -8103,7 +8114,7 @@ class Component extends DCLogic {
 
     /* 過關那張卡：原型寫死的說法還在講工具校準，而且說寶物是他遞給你的。
        兩件事都不對了——校準整套拿掉，戰利品是那一隻退開之後留在原地的。 */
-    v.rewardCopy = '他准了。這一層的礦石鑄成了它——擋在層底的那一隻退開了。' +
+    v.rewardCopy = '老師放行了。這一層的礦石鑄成了它——擋在層底的那一隻退開了。' +
       String.fromCharCode(10) + String.fromCharCode(10) +
       '牠站的地方還留著一件東西。那件只有走到這一層的盡頭才拿得到。';
 
@@ -9558,9 +9569,14 @@ class Component extends DCLogic {
     var isTut0 = task.id === 'tut';
     /* 導覽那一項不用交東西給老師，照原文顯示會把人帶錯方向 */
     v.handInHead = isTut0 ? '這一項不用交任何東西。' : '作業交到老師本來要你交的地方。';
+    /* 導覽沒有自評那一塊了，說明就不能再說「下面那一題」 */
+    v.sayNote = isTut0
+      ? '不用寫。三條勾完按下面那顆就結束。'
+      : '一句話讓他對得上你交出去的東西。真正要寫的是下面那一題。';
     v.handInNote = isTut0
       ? '它是系統給的導覽——三條做過就勾，勾完按下面那顆就結束了。老師那邊看不到它。'
       : '這裡不收檔案，也不會看你交了什麼。交完再回來勾——他去他收作業的地方看完，再回來按過或不過。';
+    v.checkHead = isTut0 ? '要做到這些' : '他要你做到這些';
     v.checkHint = locked
       ? '這一項已經通過了。'
       : isTut0
@@ -12225,7 +12241,7 @@ class Component extends DCLogic {
         : tag('還差 ' + missing.length + ' 塊', '#D9603F')),
       Object.assign({
         n: '4', title: '老師審核 → 鑄成道具、擊退擋路的那一隻',
-        desc: '他准了，這一層的礦石就鑄成' + (lay.tool ? '「' + lay.tool + '」' : '道具') + '——擋在層底的那一隻退開，你們才下一層。' +
+        desc: '老師放行了，這一層的礦石就鑄成' + (lay.tool ? '「' + lay.tool + '」' : '道具') + '——擋在層底的那一隻退開，你們才下一層。' +
           '牠倒下的地方會留下一件東西，只有走到這裡才拿得到。',
         box: box(step3On), num: num(step3On), color: step3On ? 'var(--ac)' : 'var(--tx3)'
       }, done ? tag('已拿到', 'var(--ac)') : tag('未開始', '#5F574C'))
@@ -12807,7 +12823,7 @@ class Component extends DCLogic {
     ['不影響過關，只影響工具校準到哪一階。', '不影響過關，做了就多一塊礦石進圖鑑。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
     ['交出去了。他會驗，然後用它校準工具。', '交出去了。他會驗，通過就多一塊礦石。'],
     ['校準之後才知道它是什麼', '通過這一層才拿得到'],
-    ['校準完成。下一層需要它——沒有它，你看不見路。', '他准了。這一層的礦石鑄成了它——擋在路上的那一隻退開了。']
+    ['校準完成。下一層需要它——沒有它，你看不見路。', '老師放行了。這一層的礦石鑄成了它——擋在路上的那一隻退開了。']
   ];
   function fixCal(str) {
     if (typeof str !== 'string') return str;

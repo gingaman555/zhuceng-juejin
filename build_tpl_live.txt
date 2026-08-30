@@ -420,7 +420,7 @@
                   <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層的進度</span>
                   <span style="font:700 33px/1 'C11';color:#F2EADA">{{ ruleProgress }}</span>
                   <span style="flex:1"></span>
-                  <div style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px"><sc-for list="{{ ruleRow }}" as="rs" hint-placeholder-count="4"><span style="{{ rs.style }}"><span style="{{ rs.nStyle }}">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>
+                  
                 </div>
                 <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">
                   <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">下一件要做的事</div>
@@ -431,7 +431,7 @@
                     </sc-if>
                   </div>
                   <div style="font:400 22px/1.6 'C11';color:var(--tx3);margin-top:9px;text-wrap:pretty">{{ nextActionWhy }}</div>
-                </div>
+                </div><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;padding-top:14px;border-top:1px solid #26211C"><sc-for list="{{ ruleRow }}" as="rs" hint-placeholder-count="4"><span style="{{ rs.style }}"><span style="{{ rs.nStyle }}">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>
               </div>
               <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">
                 <div style="padding:0 var(--pad) 16px;display:flex;flex-direction:column;gap:8px">
@@ -719,7 +719,7 @@
                   <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ true }}">
                     <div style="{{ checkBoxStyle }}">
                       <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px">
-                        <span style="font:500 22px/1 'C11';color:var(--tx)">他要你做到這些</span>
+                        <span style="font:500 22px/1 'C11';color:var(--tx)">{{ checkHead }}</span>
                         <span style="{{ checkCountStyle }}">{{ checkCount }}</span>
                       </div>
                       <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:11px">{{ checkHint }}</div>
@@ -751,7 +751,7 @@
                 </div>
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">你做了什麼　<span style="font:400 11px/1 'C11';color:#6E665A">選填</span></div>
-                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">一句話讓他對得上你交出去的東西。真正要寫的是下面那一題。</div>
+                  <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">{{ sayNote }}</div>
                   <textarea onChange="{{ setSubmitText }}" value="{{ submitText }}" placeholder="例：訪談三位大三生之後，把題目收斂成「畢製組隊後的分工失衡」，範圍縮到系上，排除跨校比較。" style="width:100%;min-height:220px;padding:13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
                 </div>
                 <sc-if value="{{ hasReflect }}" hint-placeholder-val="{{ true }}">
