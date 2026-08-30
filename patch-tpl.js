@@ -1131,7 +1131,7 @@ must(FIN_ANCHOR, [
 '                  </div>',
 '',
 '                  <div style="padding:19px;background:#14110E;border:1px solid #26211C">',
-'                    <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">這一學期你採到的</div>',
+'                    <div style="font:400 11px/1 \'C11\';letter-spacing:.18em;color:#5F574C">這一趟的總結</div>',
 '                    <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:14px">',
 '                      <sc-for list="{{ finStats }}" as="fs" hint-placeholder-count="4">',
 '                        <div style="min-width:120px">',
@@ -3942,11 +3942,15 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
 })();
 
 
-/* 91. 期末回顧那塊「你排的 對 實際發生的」包上條件——有資料才顯示。
-      任務頁的「你排的時間」拿掉之後，沒有地方寫得進排程了。 */
+/* 91. 期末回顧那一格改成「四個領域 · 你在每一層做了幾項」。
+      排程從任務頁拿掉之後，原本的甘特對照沒有輸入了；格子的結構本身
+      （左邊一欄名字 ＋ 右邊一排格）拿來裝每一層的任務數剛好，所以只換
+      抬頭與條件名字，版面沿用。 */
 (function () {
   var at = t.indexOf('整學期 · 你排的 對 實際發生的');
   if (at < 0) { console.error('91. 那一塊的抬頭找不到'); process.exit(1); }
+  var OLDH = '整學期 · 你排的 對 實際發生的';
+  t = t.slice(0, at) + '四個領域 · 你在每一層做了幾項' + t.slice(at + OLDH.length);
   var open = t.lastIndexOf('<div style="padding:19px;background:#14110E;border:1px solid #26211C">', at);
   if (open < 0) { console.error('91. 那一塊的外框找不到'); process.exit(1); }
   var d = 1, k = t.indexOf('>', open) + 1;
@@ -3955,9 +3959,9 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
     if (cl < 0) { console.error('91. 那一塊的收尾找不到'); process.exit(1); }
     if (nx >= 0 && nx < cl) { d++; k = nx + 4; } else { d--; k = cl + 6; }
   }
-  t = t.slice(0, open) + '<sc-if value="{{ hasFinPlan }}" hint-placeholder-val="{{ true }}">' +
+  t = t.slice(0, open) + '<sc-if value="{{ hasFinLayers }}" hint-placeholder-val="{{ true }}">' +
     t.slice(open, k) + '</sc-if>' + t.slice(k);
-  console.log('91. 期末回顧的甘特對照包上條件');
+  console.log('91. 期末回顧那一格改成四個領域');
 })();
 
 

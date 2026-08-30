@@ -2790,7 +2790,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   </div>
 
                   <div style="padding:19px;background:#14110E;border:1px solid #26211C">
-                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">這一學期你採到的</div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">這一趟的總結</div>
                     <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:14px">
                       <sc-for list="{{ finStats }}" as="fs" hint-placeholder-count="4">
                         <div style="min-width:120px">
@@ -2802,8 +2802,8 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                     </div>
                   </div>
 
-                  <sc-if value="{{ hasFinPlan }}" hint-placeholder-val="{{ true }}"><div style="padding:19px;background:#14110E;border:1px solid #26211C">
-                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">整學期 · 你排的 對 實際發生的</div>
+                  <sc-if value="{{ hasFinLayers }}" hint-placeholder-val="{{ true }}"><div style="padding:19px;background:#14110E;border:1px solid #26211C">
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">四個領域 · 你在每一層做了幾項</div>
                     <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ finGanttNote }}</div>
                     <div style="overflow-x:auto;margin-top:14px;padding-bottom:6px">
                       <div style="min-width:{{ finGanttWidth }}">
@@ -6628,7 +6628,7 @@ class Component extends DCLogic {
           cards: [
             { a: l.hard, b: prev ? prev.tool : '—', c: prev ? prev.toolAbility : '—' },
             { a: '不確定做到什麼程度算完成', b: '每一項的通過條件', c: '對照他寫的條件，不是對照別組' },
-            { a: '不知道什麼時候可以送關卡', b: '這一層的清單', c: '老師開了清單就送得出去，過不過他決定' }
+            { a: '不知道什麼時候會換下一層', b: '這一層的清單', c: '清單上的做完，他覺得可以往下就放行' }
           ] }
       ];
     };
@@ -8340,12 +8340,12 @@ class Component extends DCLogic {
         (got ? 'rgba(233,179,65,.07)' : 'rgba(233,179,65,.035)') +
         ';border:1px ' + (got ? 'solid #3A3026' : 'dashed #2E2822'),
       rewardIcon: iconStyle,
-      rewardLabel: got ? '已採到的物證' : '這一項通過會採到',
+      rewardLabel: got ? '已經採到的礦石' : '這一項通過會採到',
       rewardName: task.mineral,
       rewardColor: got ? '#E9B341' : '#C3BAAA',
       rewardNote: got
         ? '已經在你的收藏裡。點地圖的收藏總覽可以看它是什麼。'
-        : (m ? '對應環節：' + m.task + '　·　通過之後才看得到它長什麼樣、有什麼特性。' : '這一項通過時留下的物證。')
+        : (m ? '這一塊是：' + m.task + '　·　通過之後才看得到它長什麼樣、有什麼特性。' : '這一項通過時留下的物證。')
     };
   }
 
@@ -8374,7 +8374,7 @@ class Component extends DCLogic {
       accent: '#E9B341', bg: 'rgba(233,179,65,.045)', border: '#5A4A2C' },
     { key: 'submitted', tag: '等他驗收', desc: '已經送出去了。他的佇列依各組停留週數排序，不是先交先看。',
       accent: '#C3BAAA', bg: 'rgba(195,186,170,.04)', border: '#3A3026' },
-    { key: 'passed', tag: '已完成', desc: '他確認過了，物證也採到了。合格考量留在每一項裡，那是下一次的標準。',
+    { key: 'passed', tag: '已完成', desc: '他確認過了，礦石也採到了。合格考量留在每一項裡，那是下一次的標準。',
       accent: '#8A8073', bg: 'rgba(0,0,0,.26)', border: '#26211C' }
   ];
 
@@ -12216,15 +12216,15 @@ class Component extends DCLogic {
     v.reqLeft = Math.max(0, allN - allGot);
     v.layerLeftNote = !all.length ? '這一層還沒有清單'
       : unopenedN ? '其中 ' + unopenedN + ' 塊老師還沒開'
-      : allGot === allN ? '這一層採齊了' : '採不採齊都送得出關卡——過不過是他決定';
+      : allGot === allN ? '這一層採齊了' : '採不採齊都不影響——往不往下是他決定';
     v.collectBars = [
       { label: '這一層的礦石', count: allGot + ' / ' + allN + ' 塊', color: allN && allGot === allN ? '#E9B341' : '#C3BAAA',
         pips: pips(allGot, allN, '#E9B341'),
         note: !all.length ? '這一層還沒有清單。'
           : unopenedN ? '老師開了 ' + all.length + ' 塊，你們採到 ' + allGot + ' 塊。還有 ' + unopenedN +
-            ' 塊他還沒開。採不採齊都送得出關卡——過不過是他決定。'
-          : allGot === allN ? '這一層的任務都過了。可以送關卡審核。'
-          : '還差 ' + (allN - allGot) + ' 塊。採不採齊都送得出關卡——這裡只是紀錄。' }
+            ' 塊他還沒開。採不採齊都不影響——往不往下是他決定。'
+          : allGot === allN ? '這一層的任務都過了。剩下的是他的判斷。'
+          : '還差 ' + (allN - allGot) + ' 塊。這裡只是紀錄，不是門檻。' }
     ];
 
     var nextReq = all.filter(function (t) { return t.status !== 'passed'; })[0];
@@ -12235,7 +12235,7 @@ class Component extends DCLogic {
       v.collectNext = '下一塊：' + (nextReq.mineral || '？？？') + '　—　通過「' + nextReq.title + '」就採得到。';
       v.collectNextColor = '#C3BAAA';
     } else if (all.length) {
-      v.collectNext = '這一層採齊了。送關卡審核，他會給你這一層的道具。';
+      v.collectNext = '這一層採齊了。他覺得可以往下的時候會放行，那時候才拿得到這一層的道具。';
       v.collectNextColor = '#E9B341';
     } else {
       v.collectNext = '這一層還沒有清單。';
@@ -12251,7 +12251,8 @@ class Component extends DCLogic {
       };
     };
     var arrow = { text: '→', style: "font:400 11px/1 'C11';color:#3A3026;flex:none" };
-    /* 送關卡的依據：這一層的每一塊。沒採到的整格黑掉，讓門檻看得見。 */
+    /* 這一層的每一塊。沒採到的整格黑掉——礦石早就從門檻變回紀錄了，
+       這裡只是讓自己看得到走到哪。 */
     var missing = all.filter(function (t) { return t.status !== 'passed'; });
     v.gateMinerals = all.map(function (t, i) {
       var g = t.status === 'passed';
@@ -12277,13 +12278,13 @@ class Component extends DCLogic {
     v.hasVeinNote = vein > 0;
     v.veinNote = veinLeft
       ? '這一層的礦脈有 ' + vein + ' 塊，老師開了 ' + LS.openedN + ' 塊，還有 ' + veinLeft + ' 塊沒開。' +
-        '採不採齊都送得出關卡——覺得這一層告一段落了就去找他，過不過他決定。'
-      : '這一層的礦脈 ' + vein + ' 塊都開出來了。採不採齊都送得出關卡——過不過是他決定。';
+        '採不採齊都不影響——覺得這一層告一段落了就去找他，過不過他決定。'
+      : '這一層的礦脈 ' + vein + ' 塊都開出來了。採不採齊都不影響——往不往下是他決定。';
     v.gateNeedColor = LS.complete ? '#E9B341' : '#8A8073';
     v.gateNeedNote = !all.length
       ? '這一層還沒有清單。'
       : veinLeft
-        ? '這一層的礦脈還有 ' + veinLeft + ' 塊他還沒開。想送關卡隨時送得出去，過不過他決定。'
+        ? '這一層的礦脈還有 ' + veinLeft + ' 塊他還沒開。採不採齊都不影響——往不往下是他決定。'
       : missing.length
         ? '這一層還沒採到的是：' +
           missing.map(function (t) { return t.title; }).join('、') + '。'
@@ -12291,13 +12292,13 @@ class Component extends DCLogic {
           ? '這一層已經通過了。'
           : S.gateSubmitted
             ? '已經送出去了，等老師審。'
-            : '這一層採齊了。可以送關卡審核，他會用這一層的三格問你怎麼判斷。';
+            : '這一層採齊了。他覺得可以往下的時候會放行。';
 
     /* 道具與寶物長什麼樣，統一在地圖的層級詳情與收藏總覽看，這裡只標進度 */
     v.collectChain = [
       step(v.collectDone > 0, '採礦石 ' + v.collectDone + '/' + v.collectTotal), arrow,
       step(LS.complete, '覺得這一層夠了'), arrow,
-      step(!!S.gateSubmitted || done, '送關卡審核'), arrow,
+      step(done, '他放行'), arrow,
       step(done, '道具 · 進下一層'), arrow,
       step(done, '戰利品 · 他點頭才有')
     ];
@@ -12463,7 +12464,7 @@ class Component extends DCLogic {
       v.homeBossNote = down
         ? "你們已經打過去了。"
         : ready
-          ? "礦石採齊了。去送關卡，他准了就鑄得成" + ((L.LAYERS[HL - 1] || {}).tool || "道具") + "。"
+          ? "礦石採齊了。他准了就鑄得成" + ((L.LAYERS[HL - 1] || {}).tool || "道具") + "。"
           : "牠是這一層的刻度。追不追得上不影響過關——過不過是他決定。";
     })();
 
@@ -12515,7 +12516,7 @@ class Component extends DCLogic {
       v.goNextAction = openTask(L, needFix);
     } else if (todo) {
       v.nextAction = '交「' + todo.title + '」' + (todo.due && todo.due !== '不設限' ? '（期限 ' + L.dueLabel(todo) + '）' : '');
-      v.nextActionWhy = '通過之後你會採到「' + (todo.mineral || '這一項的物證') + '」。這一層還差 ' + (RS.missingN + RS.unopenedN) + ' 塊才採得齊。';
+      v.nextActionWhy = '通過之後你會採到「' + (todo.mineral || '這一項的礦石') + '」。這一層還差 ' + (RS.missingN + RS.unopenedN) + ' 塊才採得齊。';
       v.nextActionBtn = '去交這一項';
       v.goNextAction = openTask(L, todo);
     } else if (done) {
@@ -12523,24 +12524,18 @@ class Component extends DCLogic {
       v.nextActionWhy = '道具與戰利品都到手了。下一層的清單由老師再開。';
       v.nextActionBtn = '看地圖';
       v.goNextAction = function () { L.go('S03'); };
-    } else if (S.gateSubmitted) {
-      v.nextAction = '關卡已經送出，等老師審。';
-      v.nextActionWhy = '這一層都採齊了。他審完就換層。';
-      v.nextActionBtn = '看清單';
-      v.goNextAction = function () { L.go('S02'); };
     } else if (allReq) {
-      v.nextAction = '這一層採齊了，去送關卡。';
-      v.nextActionWhy = '送審會問三題：你們走過的路、你們的變化、接下來要做什麼。';
-      v.nextActionBtn = '去送關卡';
-      v.goNextAction = function () {
-        var why = gateBlockReason(L);
-        if (why) { L.say(why); return; }
-        L.go('SUB');
-      };
+      /* 送關卡拿掉了：這一層做完之後學生沒有動作可以做，剩下的是他的判斷。
+         所以這裡不給按鈕，只說清楚在等什麼。 */
+      v.nextAction = '這一層的任務都過了。';
+      v.nextActionWhy = '剩下的是他的判斷——他覺得你們可以往下就放行，那時候才換層、' +
+        '才拿得到這一層的道具與守關戰利品。這中間可以繼續多做幾項，掉落物照掉。';
+      v.nextActionBtn = '看看還能收什麼';
+      v.goNextAction = function () { L.setState({ screen: 'S03', mapTab: 'coll' }); };
     } else if (!missing.length && veinLeftR) {
       v.nextAction = '等老師把這一層剩下的 ' + veinLeftR + ' 塊開出來。';
       v.nextActionWhy = '這一層的礦脈有 ' + RS.veinN + ' 塊，他開了 ' + RS.openedN +
-        ' 塊，你們都採到了。採不採齊都送得出關卡——過不過是他決定。';
+        ' 塊，你們都採到了。採不採齊都不影響——往不往下是他決定。';
       v.nextActionBtn = '看地圖';
       v.goNextAction = function () { L.go('S03'); };
     } else if (waiting) {
@@ -12617,7 +12612,7 @@ class Component extends DCLogic {
     };
     v.openChain = [
       { n: '1', t: '你確認通過 → 他們採到一塊礦石。', num: num() },
-      { n: '2', t: '他們覺得這一層夠了就送得出關卡——採不採齊都送得出。', num: num() },
+      { n: '2', t: '他們把清單上的做完——採不採齊都不影響，往不往下是你決定。', num: num() },
       { n: '3', t: '你在 T-07 通過 → 礦石鑄成「' + (lay.tool || '道具') + '」、擊退守關生物，他們才下一層。', num: num() }
     ];
 
@@ -13356,9 +13351,8 @@ class Component extends DCLogic {
       var left = allItems.filter(function (t) { return t.status !== 'passed'; }).length;
       var passedThis = (L.state.passed || []).indexOf(L.state.currentLayer) >= 0;
       v.gateTitle = passedThis ? '這一層已經通過'
-        : L.state.gateSubmitted ? '已送出，等他驗收'
         : !allItems.length ? '這一層還沒有清單'
-        : left ? '還不能送關卡' : '這一層採齊了';
+        : left ? '這一層還有沒過的' : '這一層採齊了';
       v.gateDesc = passedThis ? '這一層過了，下一層開了。'
         : L.state.gateSubmitted ? '已經送出去了，等老師審。他有時候不在，逾時未審會自動暫准。'
         : !allItems.length ? '這一層還沒有清單。'
@@ -13468,7 +13462,7 @@ class Component extends DCLogic {
       v.briefRows = [
         { what: lay.hard || '', tool: prev ? prev.tool + '：' + prev.toolAbility : '還沒有道具', toolColor: '#E9B341' },
         { what: '不確定做到什麼程度算完成', tool: '對照他寫的通過條件，不是對照別組', toolColor: '#8A8073' },
-        { what: '不知道什麼時候可以送關卡', tool: '你覺得這一層夠了就送得出去', toolColor: '#8A8073' }
+        { what: '不知道什麼時候會換下一層', tool: '他覺得你們可以往下就放行', toolColor: '#8A8073' }
       ];
     }
   }
@@ -13498,12 +13492,12 @@ class Component extends DCLogic {
 
   var FINAL_Q = [
     { q: '這一學期你最大的誤判是什麼',
-      hint: '不是問哪裡做不好，是問哪裡「你以為」跟「後來發現」差最多。上面的比對表就是證據。',
+      hint: '不是問哪裡做不好，是問哪裡「你以為」跟「後來發現」差最多。上面那四列就是證據。',
       ph: '例：一開始以為訪談排得完，其實約人本身就要兩週。第二層之後我們才把約訪當成一項獨立的工作。' },
     { q: '如果重來一次，你會在哪一層改變做法',
       hint: '指出一層，說出那一層你會改什麼。不用全部重講。',
       ph: '例：第三層。我們花太多時間做第二版原型，應該先讓人測第一版再改。' },
-    { q: '你現在會怎麼跟下一屆說「怎麼估時間」',
+    { q: '你現在會怎麼跟下一屆說「怎麼知道一項做完了沒」',
       hint: '把這一學期學到最實用的一件事，講成一句別人用得上的話。',
       ph: '例：把「等別人回覆」單獨算成一項工作，不要塞在原本那一項裡。' }
   ];
@@ -13556,8 +13550,10 @@ class Component extends DCLogic {
     v.crownName = '一路帶下來的四件';
     v.crownLook = '四個領域各一件。每一件都是某一次卡住之後才拿到的。';
     v.crownTrait = '它們不會變得更華麗，只是完整了。';
-    v.crownLine = (extra.line || '');
-    v.crownNotice = (extra.notice || '');
+    /* 這兩句拿掉：line 跟「結局 · 四」是同一段台詞，notice 在解釋一個
+       已經不存在的揭曉（斗篷人本來有身分要掀，那條線收掉了）。 */
+    v.crownLine = '';
+    v.crownNotice = '';
     v.crownSlots = [1, 2, 3, 4].map(function (n) {
       var lay = L.LAYERS[n - 1] || {};
       var got = (S.passed || []).indexOf(n) >= 0;
@@ -13573,7 +13569,8 @@ class Component extends DCLogic {
       };
     });
 
-    /* --- 這一學期你採到的 --- */
+    /* --- 這一趟的總結 ---（本來叫「這一學期你採到的」，但它現在報的
+       不只是礦石：任務、生物、掉落物、戰利品、層數、退回都在這裡） */
     var rows = d.rows || [];
     var passedRows = rows.filter(function (r) { return r.status === 'passed'; });
     var extPassed = passedRows.filter(function (r) { return r.type === 'extended'; }).length;
@@ -13703,25 +13700,12 @@ class Component extends DCLogic {
         return a + Math.min(Math.max(0, Number(n) || 0), 3);
       }, 0);
       v.endingPages = [
-        { k: '結局 · 一', t: '你完成了一個專案',
+        { k: '結局 · 一', t: '你們做完的那件事',
           b: '四個領域都走完了，而且他點了頭。' + String.fromCharCode(10) + String.fromCharCode(10) +
              '從第一項任務到現在，你們一直在做的那件事有一個名字：把一件還不存在的事定義出來、拆開、排順序、交出去、被退回來、改、再交。這一趟就是那件事。' },
-        { k: '結局 · 二', t: '你們做過的',
-          b: '通過的任務　' + passedE + ' 項' + String.fromCharCode(10) +
-             '送出的次數　' + subsE + ' 次' + (rejE ? '（其中 ' + rejE + ' 次被退回來重做）' : '') + String.fromCharCode(10) +
-             String.fromCharCode(10) +
-             (rejE
-               ? '被退回來的那 ' + rejE + ' 次，是你們拿到他那段字的方式。'
-               : '一次都沒有被退回來。') },
-        { k: '結局 · 三', t: '你們收到的',
-          b: '打倒的生物　' + mobsE + ' 隻' + String.fromCharCode(10) +
-             '撿到的掉落物　' + findsE + ' 種' + String.fromCharCode(10) +
-             '戰利品　' + dropsE + ' 件' + String.fromCharCode(10) +
-             '一路帶下來的道具　' +
-             (L.LAYERS || []).slice(0, 4).map(function (x) { return x.tool; }).join('、') +
-             String.fromCharCode(10) + String.fromCharCode(10) +
-             '這些跟著你走。下一個專案換了組、換了班，圖鑑還在你手上，沒收到的繼續收。' },
-        { k: '結局 · 四', t: '他最後說的',
+        /* 二、三本來在這裡報數字——底下那一格報得更完整、每個數字還有
+           一句解釋，所以那兩頁整個拿掉。故事回到故事。 */
+        { k: '結局 · 二', t: '他最後說的',
           b: (ex.line || '') }
       ].map(function (pg, i) {
         return Object.assign(pg, {
@@ -13729,7 +13713,7 @@ class Component extends DCLogic {
           tStyle: "font:700 22px/1.4 'C11';color:#F2E6C8;margin-top:9px",
           bStyle: "font:400 22px/1.9 'C11';color:#C3BAAA;margin-top:10px;white-space:pre-wrap;text-wrap:pretty",
           style: 'padding:16px 18px;background:rgba(0,0,0,.3);border-left:2px solid ' +
-            ['#5A4A2C', '#5A4A2C', '#E9B341', '#5A4A2C'][i]
+            ['#5A4A2C', '#E9B341'][i]
         });
       });
       v.hasEnding = true;
@@ -13747,7 +13731,7 @@ class Component extends DCLogic {
 
       v.finGateKicker = '你們已經做過一次了';
       v.finGateTitle = '一個專案，從頭帶到尾';
-      v.finGateLede = '這一整套挖到地心的過程，就是專案管理：把一件大事拆成做得完的項目、排出順序、估時間、交出去、被退回、修好再交。' +
+      v.finGateLede = '這一整套挖到地心的過程，就是專案管理：把一件大事拆成做得完的項目、排出順序、交出去、被退回、修好再交。' +
         '你們從第一層走到地心，這一輪已經完整跑過一次了——接下來的期末發表，你們做得來。';
 
       v.hasFinGateReason = !!String(fin.openWords || '').trim();
@@ -13757,11 +13741,8 @@ class Component extends DCLogic {
       var stepStyle = 'display:flex;gap:9px;align-items:flex-start;flex:1;min-width:200px;padding:11px 13px;' +
         "background:rgba(233,179,65,.09);border-left:2px solid #E9B341;font:400 22px/1.5 'C11';color:#E8E2D6";
       var markStyle = "font:700 22px/1.4 'C11';flex:none;width:18px;color:#E9B341";
-      v.finGateSteps = [
-        { mark: '✓', t: '把大事拆成做得完的項目', style: stepStyle, markStyle: markStyle },
-        { mark: '✓', t: '排出順序、估時間、交出去', style: stepStyle, markStyle: markStyle },
-        { mark: '✓', t: '被退回、修好、再交一次', style: stepStyle, markStyle: markStyle }
-      ];
+      /* 三條打勾跟上面那一段字講的是同一件事，一字不差地再講一次。拿掉。 */
+      v.finGateSteps = [];
     })();
 
     /* 幫這一趟命名，然後封存。
@@ -13800,7 +13781,7 @@ class Component extends DCLogic {
     v.finalTitle = submitted ? '你已經送出了' : '最後的檢討與思考';
     v.finalLede = submitted
       ? '老師看得到這一份。想改的話還是可以改，改完再送一次。'
-      : '這一份不評分，也不影響任何東西。上面那張比對表就是材料——把你這一學期學到的東西寫下來，老師看得到。';
+      : '這一份不評分，也不影響任何東西。上面那四列就是材料——把你這一學期學到的東西寫下來，老師看得到。';
 
     var setQ = function (k) { return function (e2) { var o = {}; o[k] = e2.target.value; L.setState(o); }; };
     v.finalFields = FINAL_Q.map(function (q, i) {
@@ -13818,7 +13799,7 @@ class Component extends DCLogic {
       if (S.finSaving) return;
       var st = L.state;
       var n = ['finQ1', 'finQ2', 'finQ3'].filter(function (k) { return String(st[k] || '').trim(); }).length;
-      if (n < 3) { L.say('三題都寫過一次再送。上面的比對表可以直接拿來當材料。'); return; }
+      if (n < 3) { L.say('三題都寫過一次再送。上面那四列可以直接拿來當材料。'); return; }
       L.setState({ finSaving: true });
       var payload = { q1: st.finQ1, q2: st.finQ2, q3: st.finQ3, lightName: st.finLight || '' };
       call('apiSaveFinale', LIVE.token, payload, true)
@@ -13940,9 +13921,9 @@ class Component extends DCLogic {
     v.tfinStatsNote = !d ? '正在讀他們整學期的紀錄…'
       : (withPlan.length
           ? '這些數字就是他們這一學期的專案管理紀錄。誤差有沒有隨著層數縮小，比誤差本身重要。'
-          : '他們沒有在甘特圖排過程，所以沒有可以比對的排程。');
+          : '排程從任務頁拿掉了，所以這一欄沒有可以比對的資料。');
 
-    var FQ = ['這一學期你最大的誤判是什麼', '如果重來一次，你會在哪一層改變做法', '你現在會怎麼跟下一屆說「怎麼估時間」'];
+    var FQ = ['這一學期你最大的誤判是什麼', '如果重來一次，你會在哪一層改變做法', '你現在會怎麼跟下一屆說「怎麼知道一項做完了沒」'];
     var loadingDetail = !d;
     v.hasTfinAnswers = !!sel.opened;
     v.tfinAnsLabel = sel.opened ? '他們自己回頭寫的三題' : '結局還沒開——放行之後他們才寫得了這三題';
@@ -14001,7 +13982,7 @@ class Component extends DCLogic {
     };
     v.tfinFootNote = sel.opened
       ? '已經放行了。這一段話他們在結局最上面讀得到——想改就改，改完再按一次。'
-      : '按下去之後，他們側欄那個 ？？？ 才會亮成結局：故事的結尾、整學期的比對表、最後三題。' +
+      : '按下去之後，他們側欄那個 ？？？ 才會亮成結局：故事的結尾、四個領域的統整、最後三題。' +
         '在那之前他們什麼都看不到——這是你在這套系統裡的最後一個動作。';
   }
 
@@ -14398,7 +14379,7 @@ class Component extends DCLogic {
         return { type: d.type, title: d.title, cond: d.cond || '（未填通過條件）', note: d.note || '（未填提醒）',
                  teams: d.teams || [],
                  spec: d.spec || '', due: d.due, mineral: d.mineral || free[i % Math.max(1, free.length)] || '',
-                 mDesc: '這一項工作留下的物證。' };
+                 mDesc: '這一項工作留下的礦石。' };
       });
       L.setState({ draftSet: [], screen: 'T02' });
       call('apiPublishList', LIVE.token, kid, layer, items)
@@ -14422,7 +14403,7 @@ class Component extends DCLogic {
               ],
               lines: left
                 ? ['礦脈還有 ' + left + ' 塊沒開——開完他們才走得掉這一層。']
-                : ['採不採齊都送得出關卡——他們覺得這一層告一段落了就會送上來。'],
+                : ['採不採齊都不影響——你覺得哪一組可以往下就放行。'],
               btn: '知道了', go: function () {}
             });
           })();
@@ -14679,7 +14660,7 @@ class Component extends DCLogic {
     v.teamFinale = tf ? [
       { q: '1. 這一學期你最大的誤判是什麼', a: tf.q1 || '（未填）' },
       { q: '2. 如果重來一次，你會在哪一層改變做法', a: tf.q2 || '（未填）' },
-      { q: '3. 你現在會怎麼跟下一屆說「怎麼估時間」', a: tf.q3 || '（未填）' }
+      { q: '3. 你現在會怎麼跟下一屆說「怎麼知道一項做完了沒」', a: tf.q3 || '（未填）' }
     ] : [];
 
     /* --- 中途接手：把起點直接放在第 N 層 ---
