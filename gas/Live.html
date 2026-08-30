@@ -1108,9 +1108,9 @@
          看不出這一份是哪一門。老師端本來就有，補上。 */
       var kn = (L.klass() || {}).name || '';
       v.idMeta = (kn ? kn + '　·　' : '') + LAYERNAME(S.currentLayer) +
-        ' · 停留 ' + (S.stayWeeks || 1) + ' 週　·　學期第 ' + (S.courseWeek || 1) + ' 週';
+        ' · 停留 ' + (S.stayWeeks || 1) + ' 週';
     } else if (S.role === 'teacher') {
-      v.idMeta = L.klass().name + ' · ' + L.teams().length + ' 組　·　學期第 ' + (S.courseWeek || 1) + ' 週';
+      v.idMeta = L.klass().name + ' · ' + L.teams().length + ' 組';
     }
 
     /* 左上角那顆身分牌：三個角色三個顏色，一眼分得出現在是誰在看。
@@ -3669,8 +3669,9 @@
     var lay = (L.LAYERS || [])[(S.currentLayer || 1) - 1] || {};
     v.hasTerm = true;
     v.termPct = t.pct + '%';
+    /* 週次拿掉，留下走了幾成——學生要知道的是還剩多少時間，不是今天第幾週 */
     v.termLine = '你在' + (lay.name || ('第 ' + (S.currentLayer || 1) + ' 層')) +
-      '。學期走了 ' + t.pct + '％（第 ' + t.week + ' / ' + t.total + ' 週）。';
+      '。學期走了 ' + t.pct + '％。';
     v.termBarStyle = 'margin-top:9px;height:5px;background:rgba(0,0,0,.4);border:1px solid var(--line)';
     v.termFillStyle = 'height:100%;width:' + t.pct + '%;background:#5A5044';
   }
