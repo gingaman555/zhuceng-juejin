@@ -49,8 +49,6 @@ var SHEET_DEFS = {
   Reads:       ['readId', 'readerTeam', 'targetTeam', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected', 'ts'],
   Codes:       ['revId', 'coder', 'code', 'ts'],
   Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'by', 'ts'],
-  Digs:        ['digId', 'teamId', 'classId', 'layer', 'text', 'estDays', 'bet',
-                'result', 'page', 'find', 'openedAt', 'closedAt'],
   /* 走完之後封存的一趟。一組一列，改名就覆蓋。 */
   Journeys:    ['journeyId', 'teamId', 'classId', 'name', 'sealedBy', 'sealedAt', 'stats'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
@@ -954,16 +952,6 @@ function apiSetSemesterWeeks(token, classId, weeks) {
   } catch (e) { return err_(e); }
 }
 
-/** 老師新增一個班級。 */
-function apiCreateClass(token, name, term, courseStart) {
-  try {
-    var u = auth_(token);
-    if (u.role !== 'teacher') return err_('只有老師可以開班。');
-    var id = createClass_(String(name || '').trim() || '未命名班級', term, courseStart, u.userId);
-    return ok_({ classId: id, classes: classesOf_(u) });
-  } catch (e) { return err_(e); }
-}
-
 /** 學生建立小隊。組員名單不開放自由輸入——建立者的名字（研究者定的）自動掛上。 */
 function apiCreateTeam(token, teamName) {
   var lock = LockService.getScriptLock();
@@ -1673,21 +1661,6 @@ function missingRequired_(teamId) {
     var s = tmap[d.id];
     return !s || s.status !== 'passed';
   });
-}
-
-function apiSubmitGate(token, cells) {
-  try {
-    var u = auth_(token);
-    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以送關卡。');
-
-    /* 關卡不再看收集。過不過是老師的判斷——他覺得這一組有沒有
-       前進一個階段。礦石照樣採、照樣進收藏，只是不再是門檻。 */
-    upsert_('Teams', ['teamId'], {
-      teamId: u.teamId, gateText: JSON.stringify(cells || ['', '', '']),
-      gateSubmitted: 'Y', gateVerdict: '', gateTs: new Date()
-    });
-    return ok_();
-  } catch (e) { return err_(e); }
 }
 
 function apiLogRead(token, targetTeamId) {
@@ -2690,14 +2663,6 @@ function apiSetWeek(token, classId, week) {
   } catch (e) { return err_(e); }
 }
 
-function apiSetCourseStart(token, classId, dateStr) {
-  try {
-    assertTeacher_(token);
-    upsert_('Classes', ['classId'], { classId: classId, courseStart: dateStr });
-    return ok_({ courseWeek: courseWeekOf_(classById_(classId)) });
-  } catch (e) { return err_(e); }
-}
-
 function apiSwitchClass(token, classId) {
   try {
     var u = assertTeacher_(token);
@@ -2916,115 +2881,6 @@ function apiSaveCode(token, revId, code) {
     if (u.role !== 'researcher') return err_('只有研究者可以編碼。');
     upsert_('Codes', ['revId', 'coder'], { revId: revId, coder: u.coder || 'C1', code: code, ts: new Date() });
     return ok_();
-  } catch (e) { return err_(e); }
-}
-
-/**
- * 匯出。後端強制匿名：隊名換成 G1…Gn，永遠不輸出姓名、帳號、組員名單、隊名原文、附件檔名。
- * fullText＝是否連自由文本原文（學生的交付內容、關卡三格、期末回顧）一起帶出來。
- * 這是研究者自己的選擇，畫面上會標示選了哪一種。
- */
-function apiExportCsv(token, kinds, fullText) {
-  try {
-    var slice = apiResearchSlice(token);
-    if (!slice.ok) return slice;
-    kinds = kinds || [];
-    var FT = !!fullText;
-
-    var alias = {}, seq = 0;
-    var anon = function (g) { if (!g) return ''; if (!alias[g]) alias[g] = 'G' + (++seq); return alias[g]; };
-    var body = function (s) { return FT ? String(s || '') : ''; };
-    var esc = function (v) {
-      var s = (v === undefined || v === null) ? '' : String(v);
-      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-    };
-    var block = function (title, head, rows) {
-      return '# ' + title + '\n' + head.join(',') + '\n' +
-        rows.map(function (r) { return head.map(function (k) { return esc(r[k]); }).join(','); }).join('\n') + '\n\n';
-    };
-
-    var out = '# 逐層掘進 · 事件記錄匯出\n';
-    out += '# 已強制匿名：隊名以 G1…Gn 取代。永遠移除：學生姓名、帳號、組員名單、隊名原文、附件檔名、教師身分（一律記為 T1）\n';
-    out += FT
-      ? '# 自由文本：本次含原文（學生的交付內容、關卡三格、期末回顧）。內文可能出現人名，請依知情同意書處理。\n'
-      : '# 自由文本：本次不含原文，只輸出字數與結構欄位。老師的合格考量一律輸出（那是研究對象本身）。\n';
-    out += '# 延遲揭露：僅含第 1–' + slice.unlockedThrough + ' 週\n\n';
-
-    if (kinds.indexOf('review') >= 0) {
-      out += block('審核事件 reviews', ['revId', 'group', 'layer', 'week', 'result', 'hasReason', 'reasonLen', 'reasonText', 'latencyHours'],
-        slice.revLog.map(function (r) {
-          return { revId: r.id, group: anon(r.group), layer: r.layer, week: r.week, result: r.result,
-                   hasReason: r.hasReason ? 1 : 0, reasonLen: r.len, reasonText: r.reason, latencyHours: r.latency };
-        }));
-    }
-    if (kinds.indexOf('submit') >= 0) {
-      out += block('提交事件 submissions',
-        ['taskId', 'group', 'week', 'dueWeek', 'overdue', 'textLen', 'files', 'attempt',
-         'selfEffort', 'selfEffortNote', 'hasBlocker', 'blockerText', 'submissionText'],
-        slice.subLog.map(function (x) {
-          return { taskId: x.taskId, group: anon(x.group), week: x.week, dueWeek: x.dueWeek,
-                   overdue: x.overdue ? 1 : 0, textLen: x.len, files: x.files, attempt: x.attempt,
-                   selfEffort: x.effort, selfEffortNote: x.effortNote,
-                   hasBlocker: x.hasBlocker ? 1 : 0, blockerText: x.blocker,
-                   submissionText: body(x.text) };
-        }));
-    }
-
-    /* 老師開的任務內容：他寫給全班的那些字 */
-    if (kinds.indexOf('tasks') >= 0) {
-      out += block('任務內容 tasks（老師寫的）',
-        ['taskId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral'],
-        readTable_('Tasks').map(function (t) {
-          return { taskId: t.taskId, layer: t.layer, type: t.type, title: t.title,
-                   cond: t.cond, note: t.note, spec: t.spec, due: t.due, mineral: t.mineral };
-        }));
-    }
-
-    /* 關卡三格：學生一層寫一次的反思，加上老師的審核理由 */
-    if (kinds.indexOf('gate') >= 0) {
-      var vis2 = function (w) { return Number(w) <= slice.unlockedThrough; };
-      var tn = {};
-      readTable_('Teams').forEach(function (t) { tn[t.teamId] = t.name; });
-      out += block('關卡送審與審核 gates',
-        ['group', 'layer', 'week', 'verdict', 'teacherReason',
-         'q1_做了什麼', 'q2_有什麼變化', 'q3_接下來要做什麼'],
-        readTable_('Passes').filter(function (p) { return vis2(p.week); }).map(function (p) {
-          return { group: anon(tn[p.teamId] || p.teamId), layer: p.layer, week: p.week,
-                   verdict: p.verdict, teacherReason: p.reason,
-                   'q1_做了什麼': body(p.gateCell1), 'q2_有什麼變化': body(p.gateCell2),
-                   'q3_接下來要做什麼': body(p.gateCell3) };
-        }));
-    }
-
-    /* 期末回顧：整學期的最後檢討 */
-    if (kinds.indexOf('finale') >= 0) {
-      var tn2 = {};
-      readTable_('Teams').forEach(function (t) { tn2[t.teamId] = t.name; });
-      out += block('期末回顧 finales',
-        ['group', 'opened_by_teacher', 'teacher_words', 'submitted', 'lightName',
-         'q1_最大的誤判', 'q2_會改變哪一層', 'q3_怎麼估時間'],
-        readTable_('Finales').map(function (f) {
-          return { group: anon(tn2[f.teamId] || f.teamId),
-                   opened_by_teacher: String(f.opened) === 'Y' ? 1 : 0, teacher_words: f.openWords || '',
-                   submitted: String(f.submitted) === 'Y' ? 1 : 0,
-                   lightName: body(f.lightName), 'q1_最大的誤判': body(f.q1),
-                   'q2_會改變哪一層': body(f.q2), 'q3_怎麼估時間': body(f.q3) };
-        }));
-    }
-    if (kinds.indexOf('read') >= 0) {
-      out += block('他組紀錄閱讀 reads', ['reader', 'target', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected'],
-        slice.readLog.map(function (r) {
-          return { reader: anon(r.reader), target: anon(r.target), layer: r.layer, week: r.week,
-                   readerLayer: r.readerLayer, readerStay: r.readerStay, recentlyRejected: r.recentlyRejected ? 1 : 0 };
-        }));
-    }
-    if (kinds.indexOf('stay') >= 0) {
-      out += block('停留狀態 stay', ['group', 'layer', 'stayWeeks', 'passedLayers'],
-        slice.teams.map(function (t) {
-          return { group: anon(t.name), layer: t.layer, stayWeeks: t.weeks, passedLayers: (t.passed || []).length };
-        }));
-    }
-    return ok_({ csv: out });
   } catch (e) { return err_(e); }
 }
 

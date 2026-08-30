@@ -5,7 +5,7 @@
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Digs: [], Checks: [], Journeys: [],
+             Files: [], Roster: [], MinNames: [], Checks: [], Journeys: [],
              Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
@@ -13,7 +13,6 @@
   } catch (e) {}
   function persist() { DB._rev = (DB._rev || 0) + 1; try { localStorage.setItem('jlz.mockdb', JSON.stringify(DB)); } catch (e) {} }
 
-  if (!DB.Digs) DB.Digs = [];   /* 舊的 localStorage 沒有這張表 */
   var uid = function () { return Math.random().toString(36).slice(2, 10); };
   var NOW = function () { return new Date().toISOString(); };
   window.MOCK_TODAY = window.MOCK_TODAY || null; /* 可在 console 設 '2026-10-20' 模擬日期 */
@@ -979,16 +978,6 @@
         if (d.layer !== tm.layer) return false;
         var s = m[d.id]; return !s || s.status !== "passed";
       });
-    },
-    apiSubmitGate: function (t, cells) {
-      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
-      var u = auth(t), tm = teamById(u.teamId);
-      /* 關卡不再看收集：過不過是老師的判斷。 */
-      var vn0 = API._vein(tm.classId, tm.layer, tm.teamId);
-      if (vn0.left.length === vn0.total) return err("這一層還沒有任務，老師還沒把清單開出來。");
-      tm.gateText = cells; tm.gateSubmitted = true; tm.gateVerdict = ''; tm.gateTs = NOW();
-      persist();
-      return ok();
     },
     apiLogRead: function (t, target) {
       if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');

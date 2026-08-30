@@ -184,18 +184,14 @@ const sub = run('apiSubmitItem', [stk, taskId, '訪談三位大三生後收斂�
 T('排程之後交得出去', sub && sub.ok === true, sub && sub.error);
 T('提交有進 Submissions', DB.Submissions.length === 2, DB.Submissions.length);   /* 上面那一次也算 */
 
-/* 16. 全收集：只採到 1/6 不准送關卡 */
-const gate1 = run('apiSubmitGate', [stk, ['走過的路', '變化', '接下來']]);
-T('沒採齊也送得出關卡（收集不再是門檻）', gate1 && gate1.ok === true, gate1);
+/* 16. 送關卡整套拿掉了——學生不送申請，往不往下是老師決定。 */
 
 /* 17. 老師確認通過 */
 const rev = run('apiReviewItem', [tk, claim.teamId, taskId, 'pass', '有講出為什麼是這一件，通過。']);
 T('老師逐項確認通過', rev && rev.ok === true, rev && rev.error);
 T('合格考量有存下來', DB.Reviews.length === 1 && DB.Reviews[0].reason.length > 0, DB.Reviews[0]);
 
-/* 18. 採到 1 塊但礦脈只開了 1/6，仍不准過關 */
-const gate2 = run('apiSubmitGate', [stk, ['走過的路', '變化', '接下來']]);
-T('礦脈沒開完也送得出關卡（過不過是老師決定）', gate2 && gate2.ok === true, gate2);
+/* 18. （原本在這裡測送關卡，那條路拿掉了） */
 
 /* 19. 學生不能假扮老師 */
 const fake = run('apiReviewItem', [stk, claim.teamId, taskId, 'pass', '我自己通過']);
@@ -215,7 +211,34 @@ T('Files 有紀錄', DB.Files.length === 1, DB.Files.length);
 const slice = run('apiResearchSlice', [rt]);
 T('研究者切片讀得到', slice && slice.ok === true, slice && slice.error);
 
-/* 23. 日期格式化（時區） */
+/* 23. 中途接手：課程走到一半才導入，前面幾層直接認列 */
+const jump = run('apiSetTeamLayer', [tk, claim.teamId, 3, '課程第八週才開始用']);
+T('老師把起點放在第四層', jump && jump.ok === true, jump && jump.error);
+T('前三層都認列了', String(jump.passed) === String([1, 2, 3]), jump.passed);
+T('認列會留下理由', DB.Passes.filter((x) => x.toolLevel === '中途接手').length === 3,
+  DB.Passes.filter((x) => x.toolLevel === '中途接手').length);
+const jumpNo = run('apiSetTeamLayer', [stk, claim.teamId, 4, '我自己來']);
+T('學生自己認列不了', jumpNo && jumpNo.ok === false, jumpNo);
+
+/* 24. 旅途封存：四層走完才封存得了，封存之後跨專案看得到 */
+const seal0 = run('apiSealJourney', [stk, '走到一半的那一趟']);
+T('沒走完四層封存不了', seal0 && seal0.ok === false, seal0);
+run('apiSetTeamLayer', [tk, claim.teamId, 4, '四層都認列']);
+const sealNo = run('apiSealJourney', [stk, '   ']);
+T('沒取名字封存不了', sealNo && sealNo.ok === false, sealNo);
+const seal = run('apiSealJourney', [stk, '把題目改了三次的那一學期']);
+T('封存得了', seal && seal.ok === true, seal && seal.error);
+const js = run('apiJourneys', [stk]);
+T('封存過的旅途列得出來', js && js.ok === true && js.journeys.length === 1, js);
+T('封存帶著統整一起留下來', js.journeys[0].stats && js.journeys[0].stats.layers.length === 4,
+  js.journeys[0].stats);
+T('改名字不會多長一趟', (function () {
+  run('apiSealJourney', [stk, '換一個名字']);
+  const again = run('apiJourneys', [stk]);
+  return again.journeys.length === 1 && again.journeys[0].name === '換一個名字';
+})(), DB.Journeys.length);
+
+/* 25. 日期格式化（時區） */
 const d = shim.Utilities.formatDate(new Date('2026-08-27T16:30:00Z'), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
 T('時區換算正確（UTC 16:30 → 台北 00:30 隔天）', d === '2026-08-28 00:30:00', d);
 

@@ -28,7 +28,6 @@ const PK = {
   Passes: ['passId'],
   Reads: ['readId'],
   Codes: ['revId', 'coder'],
-  Digs: ['digId'],
   Checks: ['ckId']
 };
 

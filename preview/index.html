@@ -4899,7 +4899,7 @@ class Component extends DCLogic {
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Digs: [], Checks: [], Journeys: [],
+             Files: [], Roster: [], MinNames: [], Checks: [], Journeys: [],
              Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
@@ -4907,7 +4907,6 @@ class Component extends DCLogic {
   } catch (e) {}
   function persist() { DB._rev = (DB._rev || 0) + 1; try { localStorage.setItem('jlz.mockdb', JSON.stringify(DB)); } catch (e) {} }
 
-  if (!DB.Digs) DB.Digs = [];   /* 舊的 localStorage 沒有這張表 */
   var uid = function () { return Math.random().toString(36).slice(2, 10); };
   var NOW = function () { return new Date().toISOString(); };
   window.MOCK_TODAY = window.MOCK_TODAY || null; /* 可在 console 設 '2026-10-20' 模擬日期 */
@@ -5873,16 +5872,6 @@ class Component extends DCLogic {
         if (d.layer !== tm.layer) return false;
         var s = m[d.id]; return !s || s.status !== "passed";
       });
-    },
-    apiSubmitGate: function (t, cells) {
-      if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
-      var u = auth(t), tm = teamById(u.teamId);
-      /* 關卡不再看收集：過不過是老師的判斷。 */
-      var vn0 = API._vein(tm.classId, tm.layer, tm.teamId);
-      if (vn0.left.length === vn0.total) return err("這一層還沒有任務，老師還沒把清單開出來。");
-      tm.gateText = cells; tm.gateSubmitted = true; tm.gateVerdict = ''; tm.gateTs = NOW();
-      persist();
-      return ok();
     },
     apiLogRead: function (t, target) {
       if (auth(t).role !== 'student') return err('這個動作只有學生可以做。');
@@ -8033,92 +8022,8 @@ class Component extends DCLogic {
       });
     };
 
-    /* --- 送審三格 --- */
-    v.gateWhy = '逐項確認看的是「這一項做完了沒有」；關卡看的是「這一層走完，你們變成什麼樣子」。' +
-      '他看得到你們交了什麼，看不到你們怎麼走過來的——這三題只有你們答得出來。';
-    v.gateWhyRows = [
-      { n: '1', t: '路線：他有清單，但不知道你們實際怎麼走、在哪繞路。' },
-      { n: '2', t: '你們自己：專題留下來的是能力，不是檔案。' },
-      { n: '3', t: '下一層的起點：寫下來，回頭才知道估得準不準。' }
-    ];
-    v.gateFields = GATE_Q.map(function (g, i) {
-      return {
-        n: String(i + 1), q: g.q, hint: g.hint, ph: g.ph,
-        value: (S.gateText || [])[i] || '',
-        set: function (e) {
-          var vals = (L.state.gateText || ['', '', '']).slice();
-          vals[i] = e.target.value;
-          L.setState({ gateText: vals });
-        }
-      };
-    });
-
-    /* 送審頁：擋住的時候要看得見原因，按鈕也要看起來按不下去 */
-    var subWhy = gateBlockReason(L);
-    v.subBlocked = !!subWhy;
-    v.subBlockedWhy = subWhy;
-    v.submitGateLabel = S.gateSending ? '送出中…' : subWhy ? '還不能送出' : '送出關卡審核';
-    v.submitGateStyle = "font:500 22px/1 'C11';letter-spacing:.16em;text-indent:.16em;padding:15px var(--pad);" +
-      'border:none;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px);' +
-      (subWhy
-        ? 'background:#3A3026;color:#8A8073;cursor:not-allowed'
-        : 'background:#E9B341;color:#0B0A09;cursor:' + (S.gateSending ? 'wait' : 'pointer'));
-
-    /* 原型的入口只看必要項、也沒看礦脈，這裡整顆按鈕改成跟後端同一套 */
-    var passedHere = (S.passed || []).indexOf(S.currentLayer || 1) >= 0;
-    v.gateBtn = (S.gateSubmitted || passedHere) ? '已送出' : subWhy ? '還不能送交關卡' : '送交關卡審核';
-    v.gateBtnStyle = (!subWhy && !S.gateSubmitted && !passedHere)
-      ? "font:500 22px/1 'C11';letter-spacing:.12em;color:#0B0A09;background:#E9B341;border:none;padding:14px 22px;cursor:pointer;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)"
-      : "font:500 22px/1 'C11';color:#4A443C;background:none;border:1px solid #2E2822;padding:14px 22px;cursor:not-allowed";
-
-    v.goSubmitGate = function () {
-      var why = gateBlockReason(L);
-      if (why) { L.say(why); return; }
-      if (L.state.gateSubmitted) { L.say('已經送出去了，等老師審。'); return; }
-      L.go('SUB');
-    };
-
-    v.submitGate = function () {
-      if (L.state.gateSending) return;
-      var cells = (L.state.gateText || []).slice();
-      /* 先擋在前面，理由跟後端一致 */
-      var blocked = gateBlockReason(L);
-      if (blocked) { L.say(blocked); return; }
-      if (!String(cells[0] || '').trim()) { L.say('第一題先寫——他要知道你們實際走過的路。'); return; }
-      if (!String(cells[1] || '').trim()) { L.say('第二題不能空著。這一層你們變成什麼樣子，只有你們答得出來。'); return; }
-      if (!String(cells[2] || '').trim()) { L.say('第三題寫一句就好。下次回頭要拿它對照。'); return; }
-      L.setState({ gateSending: true });
-      call('apiSubmitGate', LIVE.token, cells)
-        .then(function (r) {
-          L.setState({ gateSending: false });
-          if (!r || !r.ok) { L.say((r && r.error) || '沒有送到伺服器，請再送一次。'); return; }
-          L.setState({ gateSubmitted: true, screen: 'S02' });
-          (function () {
-            var lay = L.LAYERS[(L.state.currentLayer || 1) - 1] || {};
-            var sp = layerSprites(L, L.state.currentLayer || 1);
-            showMoment(L, {
-              kind: 'gate', art: 'gate', accent: '#C3BAAA',
-              kicker: 'GATE SUBMITTED',
-              title: (lay.name || '這一層') + ' · 關卡送出去了',
-              lede: '三格寫完了，送出去了。',
-              sprite: sp.tool || null,
-              rows: [
-                { k: '這一層', v: lay.name || '', hi: true },
-                { k: '採到', v: layerState(L).veinN + ' 塊' },
-                { k: '接下來', v: '等他審' }
-              ],
-              lines: [
-                '他准了，這一層的礦石就鑄成「' + (lay.tool || '道具') + '」——擋在層底的那一隻會退開。',
-                '牠倒下的地方會留下一件東西——那是這一層的戰利品，只有走到這裡才拿得到。'
-              ],
-              btn: '知道了', go: function () {}
-            });
-          })();
-          return refresh();
-        })
-        .catch(function () { L.setState({ gateSending: false }); L.say('沒有送到伺服器，請再送一次。'); });
-    };
-
+    /* 送審三格整條線拿掉：那一頁（SUB）不在模板裡了，放行完全在老師那邊。
+       模板上沒有這些欄位，所以這裡連算都不用算。 */
     decorateGantt(L, v);
 
     /* 看他組的通過紀錄時，三格的題目也要跟著換 */
@@ -12290,9 +12195,7 @@ class Component extends DCLogic {
           missing.map(function (t) { return t.title; }).join('、') + '。'
         : done
           ? '這一層已經通過了。'
-          : S.gateSubmitted
-            ? '已經送出去了，等老師審。'
-            : '這一層採齊了。他覺得可以往下的時候會放行。';
+          : '這一層採齊了。他覺得可以往下的時候會放行。';
 
     /* 道具與寶物長什麼樣，統一在地圖的層級詳情與收藏總覽看，這裡只標進度 */
     v.collectChain = [
@@ -12354,7 +12257,6 @@ class Component extends DCLogic {
         desc: '礦石是你做過什麼的紀錄，不是過關的門票。覺得這一層告一段落了就去找他，過不過他決定。',
         box: box(step2On), num: num(step2On), color: step2On ? '#E9B341' : '#8A8073'
       }, done ? tag('已通過', '#E9B341')
-        : S.gateSubmitted ? tag('已送出，等審核', '#C3BAAA')
         : allReq ? tag('可以送了', '#E9B341')
         : veinLeftR && !missing.length ? tag('老師還差 ' + veinLeftR + ' 塊沒開', '#D9603F')
         : tag('還差 ' + missing.length + ' 塊', '#D9603F')),
@@ -13354,7 +13256,6 @@ class Component extends DCLogic {
         : !allItems.length ? '這一層還沒有清單'
         : left ? '這一層還有沒過的' : '這一層採齊了';
       v.gateDesc = passedThis ? '這一層過了，下一層開了。'
-        : L.state.gateSubmitted ? '已經送出去了，等老師審。他有時候不在，逾時未審會自動暫准。'
         : !allItems.length ? '這一層還沒有清單。'
         : left ? '這一層還有 ' + left + ' 項沒過。過不過得完都送得出關卡——他決定。'
         : '這一層的任務都過了，可以送交關卡審核。';
@@ -14623,7 +14524,7 @@ class Component extends DCLogic {
       var on = g && x.teamId === g.teamId;
       return {
         name: x.teamName,
-        sub: LAYERNAME(x.layer) + ' · 停留 ' + x.weeks + ' 週' + (x.applied ? ' · 他們說夠了' : ''),
+        sub: LAYERNAME(x.layer) + ' · 停留 ' + x.weeks + ' 週',
         pick: function () { L.setState({ gateTeamId: x.teamId, gateLevelPick: null, gateReason: '' }); },
         style: 'text-align:left;padding:10px 14px;font:inherit;cursor:pointer;background:' +
           (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' + (on ? '#E9B341' : '#2E2822') +
@@ -14731,9 +14632,9 @@ class Component extends DCLogic {
         markStyle: "font:700 22px/1 'C11';width:18px;color:" + (t.status === 'passed' ? '#E9B341' : '#4A443C')
       };
     });
-    v.gateReview = GATE_Q.map(function (q, i) {
-      return { n: String(i + 1), q: q.q, a: (g.cells || [])[i] || '（未填）' };
-    });
+    /* 那三題是學生在 SUB 寫的，SUB 拿掉之後沒有人寫得進去——
+       畫面上會是三個「（未填）」。給空陣列，整塊就不畫了。 */
+    v.gateReview = [];
     var missReq = rq.filter(function (t) { return t.status !== 'passed'; });
     v.gateBlocked = missReq.length > 0;
     v.gateBlockedWhy = missReq.length
