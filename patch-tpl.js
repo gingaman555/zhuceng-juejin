@@ -4590,5 +4590,33 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("121. 你做了什麼底下那一句改成可換的");
 })();
 
+
+/* 122. 任務清單每一列右邊加一格生物。
+       還沒點過的那幾項顯示「？」——那是「這裡有一隻等你翻開」的訊號；
+       點過之後就換成那一隻本人。本來要點進任務才知道是誰，清單上
+       完全看不出哪幾項還沒翻過。 */
+(function () {
+  var open = "<button onClick=\"{{ t.open }}\" style=\"{{ t.rowStyle }}\">";
+  var i = t.indexOf(open);
+  if (i < 0) { console.error("122. 找不到任務列"); process.exit(1); }
+  if (t.indexOf(open, i + 1) >= 0) { console.error("122. 任務列不只一處"); process.exit(1); }
+
+  /* 找配對的 </button> */
+  var j = i + open.length, depth = 1;
+  while (j < t.length && depth > 0) {
+    var o = t.indexOf("<button", j), c = t.indexOf("</button>", j);
+    if (c < 0) { console.error("122. 數不到列的結尾"); process.exit(1); }
+    if (o >= 0 && o < c) { depth++; j = o + 7; continue; }
+    depth--; j = c + 9;
+  }
+  var inner = t.slice(i + open.length, j - 9);
+  var rebuilt = open +
+    "<div style=\"flex:1;min-width:0\">" + inner + "</div>" +
+    "<span style=\"{{ t.mobBox }}\"><span style=\"{{ t.mobArt }}\"></span><span style=\"{{ t.mobTag }}\">{{ t.mobLabel }}</span></span>" +
+    "</button>";
+  t = t.slice(0, i) + rebuilt + t.slice(j);
+  console.log("122. 任務列右邊加了生物那一格");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

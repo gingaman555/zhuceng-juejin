@@ -568,7 +568,7 @@
                     </div>
                     <div style="display:flex;flex-direction:column;gap:8px;padding:13px 14px 14px">
                       <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="3">
-                        <button onClick="{{ t.open }}" style="{{ t.rowStyle }}">
+                        <button onClick="{{ t.open }}" style="{{ t.rowStyle }}"><div style="flex:1;min-width:0">
                           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
                             <span style="{{ t.chipStyle }}">{{ t.statusLabel }}</span>
                             <span style="font:700 22px/1.4 'C11';color:var(--tx)">{{ t.title }}</span>
@@ -583,7 +583,7 @@
                               <div style="font:400 22px/1.7 'C11';color:var(--tx2);margin-top:6px;text-wrap:pretty">{{ t.feedback }}</div>
                             </div>
                           </sc-if>
-                        </button>
+                        </div><span style="{{ t.mobBox }}"><span style="{{ t.mobArt }}"></span><span style="{{ t.mobTag }}">{{ t.mobLabel }}</span></span></button>
                       </sc-for>
                     </div>
                   </div>

@@ -1976,6 +1976,34 @@
             t.type === 'required' ? 'var(--ac)' : '#9A9184',
             t.type === 'required' ? 'rgba(233,179,65,.3)' : 'var(--line2)');
         r.open = openTask(L, t);
+
+        /* 右邊那一格：還沒點過是一團看不清的東西加一個問號——那是
+           「這裡有一隻等你翻開」的訊號；點過之後換成那一隻本人。
+           本來要點進任務才知道擋路的是誰，清單上看不出哪幾項還沒翻過。 */
+        (function () {
+          var met = !!metSet()[t.id];
+          var isTut = t.id === 'tut';
+          var mine = isTut ? myMob() : null;
+          var mb = isTut ? null : mobOfTask(t);
+          var art = isTut ? (mine ? mine.art : null) : (mb ? mobSvg(mb.id, taskLayer(t)) : null);
+          var show = !!(met && art);
+
+          r.mobBox = 'flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;width:66px;align-self:flex-start;padding:9px 5px;background:' +
+            (show ? 'rgba(0,0,0,.26)' : 'rgba(233,179,65,.08)') +
+            ';border:1px ' + (show ? 'solid var(--line)' : 'dashed var(--ac-dim)');
+
+          r.mobArt = show
+            ? 'display:block;width:40px;height:40px;image-rendering:pixelated;background:url("' + art +
+              '") center/contain no-repeat'
+            : 'display:block;width:40px;height:40px;background:radial-gradient(circle at 50% 46%,rgba(233,179,65,.30),transparent 70%);animation:dormant 4.6s ease-in-out infinite';
+
+          r.mobLabel = show ? (isTut ? mine.name : mb.name) : '？';
+          r.mobTag = "font:400 11px/1.3 'C11';text-align:center;text-wrap:pretty;color:" +
+            (show ? 'var(--tx3)' : 'var(--ac)');
+
+          r.rowStyle = String(r.rowStyle || '') + ';display:flex;align-items:flex-start;gap:12px';
+        })();
+
         items.push(r);
       });
       if (!items.length) return null;
