@@ -934,7 +934,7 @@
     })();
 
     /* ---- 地圖：你在哪一層、那一層長什麼樣、那一層有什麼 ----
-       本來的地圖是進度板（採到幾塊、還差幾塊、能不能過關），那些事
+       本來的地圖是進度板（拿到幾塊、還差幾塊、能不能過關），那些事
        都不成立了。現在它只是圖鑑的導覽。 */
     var hereL = S.currentLayer || 1;
     var pickL = Number(S.collLayer) || 0;   /* 0 ＝ 全部 */
@@ -1169,6 +1169,10 @@
       notice: '他從第一頁就說了他是誰：帶你做完一個專案的人。這裡沒有要揭曉的東西。'
     }];
     if ((L.MINS || []).length) L.MINS = L.MINS.filter(function (m) { return m.L <= 4; });
+    /* 每一層自己的光。uiVars 本來就掛在最外層的 style 上，接在後面就好。
+       這裡是兩端共用的地方——放進 decorateStudent 的話老師端會沒有變數。 */
+    v.uiVars = String(v.uiVars || '') + themeVars(L);
+
     retellLayers(L);
     momentVals(L, v);
     decorateAuth(L, v);
@@ -1743,9 +1747,6 @@
       S.tasks = [tutTask(L)].concat(list);
     })();
 
-    /* 每一層自己的光。uiVars 已經掛在最外層的 style 上，接在後面就好。 */
-    v.uiVars = String(v.uiVars || '') + themeVars(L);
-
     decorateRules(L, v);
     decorateHorizon(L, v);   /* 首頁：這一趟走完是什麼樣子 */
 
@@ -1914,7 +1915,7 @@
       accent: 'var(--ac)', bg: 'rgba(233,179,65,.045)', border: 'var(--ac-dim)' },
     { key: 'submitted', tag: '等老師驗收', desc: '已經送出去了。老師看的順序是照各組停留週數排的，不是先交先看——待越久的排越前面。',
       accent: 'var(--tx2)', bg: 'rgba(195,186,170,.04)', border: 'var(--line2)' },
-    { key: 'passed', tag: '已完成', desc: '他確認過了，礦石也採到了。合格考量留在每一項裡，那是下一次的標準。',
+    { key: 'passed', tag: '已完成', desc: '他確認過了，礦石也拿到了。合格考量留在每一項裡，那是下一次的標準。',
       accent: 'var(--tx3)', bg: 'rgba(0,0,0,.26)', border: '#26211C' }
   ];
 
@@ -1941,7 +1942,7 @@
            清單這裡是學生最常回來的地方。 */
         var notSeen = t.status === 'passed' && !seenWin(t.id);
         r.statusLabel = notSeen ? '★ 牠留下的還沒看'
-          : t.status === 'passed' ? '已採到' : '待採';
+          : t.status === 'passed' ? '已拿到' : '還沒拿到';
         r.chipStyle = notSeen
           ? L.chip('rgba(233,179,65,.22)', 'var(--ac-hi)', 'var(--ac)')
           : L.chip(
@@ -2018,9 +2019,11 @@
      狀態色不在這裡：通過綠、退回紅、等待灰要一直認得出來，跟著層變的話
      「逾期」在第四層會跟強調色糊在一起。 */
   var THEMES = {
-    base: { bg: '#12100C', field: '#1A1712', panel: '#221D16', line: '#3A3228', line2: '#4E4335',
-            ac: '#FFC53D', acDim: '#6B5520', acHi: '#FFE7A8',
-            tx: '#F5F0E4', tx2: '#CFC5B2', tx3: '#968B7B' },
+    /* 老師端：冷色的底。學生在洞裡，老師不在——同一個金放在石板灰上，
+       一眼就分得出這是桌子的另一邊，而且不用動到任何狀態色。 */
+    base: { bg: '#0F1216', field: '#161B21', panel: '#1D242C', line: '#2F3A45', line2: '#3F4D5B',
+            ac: '#FFC53D', acDim: '#6B5A28', acHi: '#FFE7A8',
+            tx: '#EDF1F5', tx2: '#B9C4CE', tx3: '#7E8A96' },
     1: { bg: '#151007', field: '#1E1709', panel: '#281F0F', line: '#453718', line2: '#5C4A22',
          ac: '#FFC93D', acDim: '#775D22', acHi: '#FFE9A8',
          tx: '#F7F1DF', tx2: '#D6C9A8', tx3: '#9C8E72' },
@@ -2050,7 +2053,7 @@
 
 
   /* 老師端的地圖剖面：他看的是自己開的清單鋪滿了沒，以及全班走到哪。
-     跟學生端共用同一套視覺，但狀態來源不同——老師沒有「我採到幾塊」。 */
+     跟學生端共用同一套視覺，但狀態來源不同——老師沒有「我拿到幾塊」。 */
   /* 層底那一格：BOSS 與「關卡」本來就是同一件事——這一層的出口。
      行為完全一樣（判斷過不過得去），差別只在還沒打贏時畫的是那隻生物。
      學生端與老師端共用這一個定義，不要再分兩套。
@@ -2236,7 +2239,7 @@
     v.boardDone = totalOpen + " / " + totalVein + " 塊已開";
     v.boardLeft = (totalVein - totalOpen) + " 塊";
     v.boardStepNote = totalOpen >= totalVein
-      ? "四層的礦脈都開完了。剩下的是你的判斷——你覺得哪一組可以往下就放行。"
+      ? "四層的礦石都開完了。剩下的是你的判斷——你覺得哪一組可以往下就放行。"
       : "一格就是你開的一項。還有 " + (totalVein - totalOpen) + " 塊沒開——開多開少不影響他們過不過關。";
 
     (v.mapLayers || []).forEach(function (m, i) {
@@ -2299,7 +2302,7 @@
       m.runners = buildRunners(L, {
         cellN: cells.length, fog: false, mine: null, myIdx: 0, others: st.here,
         bossIdx: bossOf(n) && !st.cleared ? cells.length - 1 : null,
-        /* 老師看的是真的：這一組在這一層採到第幾塊，就站在第幾格 */
+        /* 老師看的是真的：這一組在這一層拿到第幾塊，就站在第幾格 */
         realIdx: function (t) {
           var g = Number((t.got || {})[n]) || 0;
           return Math.min(cells.length - 1, g);
@@ -2450,7 +2453,7 @@
     var rest = opt.others || [];
     var span = Math.max(1, cellN - 1);
     rest.forEach(function (t, i) {
-      /* 老師看得到各組真正採到第幾塊，就站在那一格；
+      /* 老師看得到各組真正拿到第幾塊，就站在那一格；
          學生端沒有那份資料（也不該有），平均散開，讀起來是「他們也在這一層」。 */
       if (opt.realIdx) { put(opt.realIdx(t), t, false); return; }
       put(Math.round((i + 1) * (span - 1) / (rest.length + 1)), t, false);
@@ -2549,7 +2552,7 @@
       kind: 'help', art: 'help', accent: 'var(--tx2)',
       kicker: 'WHO IS HERE',
       title: (lay.name || ('第' + n + '層')) + '上的人',
-      lede: lede + '站在哪一格不代表他們採到哪一塊——那是他們自己的進度。',
+      lede: lede + '站在哪一格不代表他們拿到哪一塊——那是他們自己的進度。',
       rows: teams.map(function (t) {
         return { k: t.name, v: '停留 ' + (t.weeks || 1) + ' 週', hi: !!t.me };
       }),
@@ -3556,11 +3559,11 @@
   /* ============================================================
      地圖上每一格直接顯示老師給不給過。
 
-     原型的 mineralCells 只有兩態（採到／沒採到），所以「送出去了
+     原型的 mineralCells 只有兩態（拿到／還沒拿到），所以「送出去了
      正在等」跟「他退回來要再改」在圖上長得一模一樣——那兩件事對
      學生來說差很多。四態分開，地圖才真的是進度圖。
 
-     沒採到的格子名字是「？？？」，所以不能用名字對——用層與索引
+     還沒拿到的格子名字是「？？？」，所以不能用名字對——用層與索引
      對，那跟 mineralCells 產生的順序一致。 */
   var VERDICT = {
     passed:     { t: '過了',   hue: 'var(--ac)', box: 'rgba(233,179,65,.08)',  line: 'var(--ac-dim)' },
@@ -3679,6 +3682,17 @@
       l.course = String(l.course || '').replace(/^[^·]*·\s*/, '');
       /* 原型的場景描述還在講「五層」——只剩四個領域了 */
       l.scene = String(l.scene || '').split('五層裡最亮的一張').join('四個領域裡最亮的').split('五層').join('四個領域');
+
+      /* 前兩層的標語還在講挖礦。現在這一層要做的事是「打贏擋在前面的」，
+         不是「挖」——同一句話裡兩套說法會讓人不知道到底在做什麼。 */
+      var HARD = {
+        1: '難的不是動不了手，是不知道第一件該做的是什麼。',
+        2: '難的是查不完，不知道什麼時候該停。'
+      };
+      if (HARD[l.n]) l.hard = HARD[l.n];
+      l.toolRec = String(l.toolRec || '')
+        .split('你在採不完的地方決定了').join('你在查不完的地方決定了')
+        .split('沒有人是採完才離開').join('沒有人是查完才離開');
     });
   }
 
@@ -3711,7 +3725,7 @@
     v.homeRankNote = '第 ' + placeH + ' 名 / ' + rows.length + ' 組' +
       (aheadH ? '　·　離前一名還差 ' + (aheadH.total - mine.total) + ' 分' : '　·　目前在最前面');
 
-    /* 本來這裡列的是「這一層還有幾塊沒有人採到、其中幾塊別組也在做」——
+    /* 本來這裡列的是「這一層還有幾塊沒有人拿到、其中幾塊別組也在做」——
        那是把礦石當成搶的。礦石不是搶的，同一項任務每一組都做得到，各採
        各的。改成講你自己還差哪幾塊，每一塊指回一項還沒過的任務。 */
     var leftMin = [].concat(L.req(), L.ext()).filter(function (t) {
@@ -3719,9 +3733,9 @@
     });
     var anyTask = [].concat(L.req(), L.ext()).length;
     v.homeClaimNote = leftMin.length
-      ? '這一層你還有 ' + leftMin.length + ' 塊沒採到——每一塊指回一項還沒過的任務。'
-      /* 一項都還沒開的時候不能說「都採到了」——那是假的 */
-      : anyTask ? '這一層開出來的礦石你都採到了。'
+      ? '這一層你還有 ' + leftMin.length + ' 塊還沒拿到——每一塊指回一項還沒過的任務。'
+      /* 一項都還沒開的時候不能說「都拿到了」——那是假的 */
+      : anyTask ? '這一層開出來的礦石你都拿到了。'
                 : '老師還沒開這一層的清單。';
     var STAT_TXT = { submitted: '等老師判', needs_more: '老師要你再改' };
     v.homeClaims = leftMin.slice(0, 3).map(function (t) {
@@ -4616,7 +4630,7 @@
     var cur = S.currentLayer || 1;
     var openAll = S.role === 'teacher' || !!S.allOpen;
 
-    /* 23 格＝23 塊礦石。走到第幾格＝總共採到幾塊。 */
+    /* 23 格＝23 塊礦石。走到第幾格＝總共拿到幾塊。 */
     var seen = 0, done = 0, myCell = 0;
     var perLayer = [1, 2, 3, 4, 5].map(function (n) { return layerState(L, n); });
     perLayer.forEach(function (st) { done += st.gotN; });
@@ -4631,7 +4645,7 @@
     }
     v.boardStepNote = LSc.cleared
       ? '他讓你們過了這一層。'
-      : '這一層採到 ' + LSc.gotN + ' / ' + LSc.veinN + ' 塊——那是你做過什麼的紀錄，' +
+      : '這一層拿到 ' + LSc.gotN + ' / ' + LSc.veinN + ' 塊——那是你做過什麼的紀錄，' +
         '不是往下的門票。覺得這一層告一段落了就去找他。';
 
     /* 把通道鋪到剖面的每一層上 */
@@ -4713,8 +4727,8 @@
           L.setState({ mapTeam: t.id, mapView: 'team', screen: 'S03' });
         };
       });
-      /* 走在這一層通道上的人。自己踩在採到第幾塊那一格上；
-         別組平均散開——他們採到哪一塊不是給你看的。 */
+      /* 走在這一層通道上的人。自己踩在拿到第幾塊那一格上；
+         別組平均散開——他們拿到哪一塊不是給你看的。 */
       m.runners = buildRunners(L, {
         cellN: cells.length,
         fog: fog,
@@ -5102,7 +5116,7 @@
              '...#..####..#...','....########....','..############..','.##############.',
              '..############..','....########....','...#..####..#...','..#...####...#..',
              '......####......','.......##.......','................','................'],
-    /* 採到一塊 → 一塊礦石（有真的礦石圖時用真的，這是後備） */
+    /* 拿到一塊 → 一塊礦石（有真的礦石圖時用真的，這是後備） */
     gem:    ['................','................','....########....','...##########...',
              '..############..','..############..','...##########...','....########....',
              '.....######.....','......####......','.......##.......','................',
@@ -5457,7 +5471,7 @@
     var allN = LS.veinN;
     var unopenedN = LS.unopenedN;
 
-    /* 採集進度的格子拿掉：首頁那一塊「這一層採到 N/M」從模板移掉了。
+    /* 採集進度的格子拿掉：首頁那一塊「這一層拿到 N/M」從模板移掉了。
        礦石從門檻變回紀錄之後，進度條在算一個不決定任何事的數字。 */
 
     v.reqDone = allGot; v.reqTotal = allN;
@@ -5465,11 +5479,11 @@
     v.reqLeft = Math.max(0, allN - allGot);
     v.layerLeftNote = !all.length ? '這一層還沒有清單'
       : unopenedN ? '其中 ' + unopenedN + ' 塊老師還沒開'
-      : allGot === allN ? '這一層採齊了' : '採不採齊都不影響——要不要往下一層是老師決定的';
+      : allGot === allN ? '這一層都拿到了' : '拿幾塊都不影響——要不要往下一層是老師決定的';
     /* 採集進度條拿掉：那一塊從模板移掉了，而且它算的是一個不決定任何事的數字。 */
 
     var arrow = { text: '→', style: "font:400 11px/1 'C11';color:var(--line2);flex:none" };
-    /* 這一層的每一塊。沒採到的整格黑掉——礦石早就從門檻變回紀錄了，
+    /* 這一層的每一塊。還沒拿到的整格黑掉——礦石早就從門檻變回紀錄了，
        這裡只是讓自己看得到走到哪。 */
     var missing = all.filter(function (t) { return t.status !== 'passed'; });
     /* 送審那一頁的礦石對照拿掉：SUB 不在模板裡了。 */
@@ -5789,11 +5803,11 @@
       }, !all.length ? tag('還沒有清單', '#5F574C')
         : tag('清單上有 ' + all.length + ' 項', 'var(--tx2)')),
       Object.assign({
-        n: '2', title: '交任務 → 採到礦石',
+        n: '2', title: '交任務 → 拿到礦石',
         desc: '每一項任務對應一塊礦石。老師確認通過，那一塊才進你的收藏。',
         box: box(step1On), num: num(step1On), color: step1On ? 'var(--ac)' : 'var(--tx3)'
       }, RS.veinN
-        ? tag('採到 ' + RS.gotN + '/' + RS.veinN + ' 塊', RS.complete ? 'var(--ac)' : 'var(--tx2)')
+        ? tag('拿到 ' + RS.gotN + '/' + RS.veinN + ' 塊', RS.complete ? 'var(--ac)' : 'var(--tx2)')
         : tag('還沒有清單', '#5F574C')),
       Object.assign({
         n: '3', title: '覺得這一層夠了 → 去找他',
@@ -5899,8 +5913,8 @@
         title: "這一層怎麼走",
         lede: (lay2.name || "這一層") + "：" + (lay2.hard || ""),
         rows: [
-          { k: "這一層的礦脈", v: hst.veinN + " 塊" },
-          { k: "你們採到", v: hst.gotN + " 塊", hi: true },
+          { k: "這一層的礦石", v: hst.veinN + " 塊" },
+          { k: "你們拿到", v: hst.gotN + " 塊", hi: true },
           { k: "還差", v: (hst.missingN + hst.unopenedN) + " 塊" }
         ],
         lines: (v.ruleSteps || []).map(function (r) { return r.n + "　" + r.title + "——" + r.desc; })
@@ -5955,7 +5969,7 @@
       v.goNextAction = openTask(L, needFix);
     } else if (todo) {
       v.nextAction = '交「' + todo.title + '」' + (todo.due && todo.due !== '不設限' ? '（期限 ' + L.dueLabel(todo) + '）' : '');
-      v.nextActionWhy = '通過之後你會採到「' + (todo.mineral || '這一項的礦石') + '」。採幾塊不影響過關——往不往下是老師決定的。';
+      v.nextActionWhy = '通過之後你會拿到「' + (todo.mineral || '這一項的礦石') + '」。採幾塊不影響過關——往不往下是老師決定的。';
       v.nextActionBtn = '去交這一項';
       v.goNextAction = openTask(L, todo);
     } else if (done) {
@@ -5973,8 +5987,8 @@
       v.goNextAction = function () { L.setState({ screen: 'S03', mapTab: 'coll' }); };
     } else if (!missing.length && veinLeftR) {
       v.nextAction = '等老師把這一層剩下的 ' + veinLeftR + ' 塊開出來。';
-      v.nextActionWhy = '這一層的礦脈有 ' + RS.veinN + ' 塊，他開了 ' + RS.openedN +
-        ' 塊，你們都採到了。採不採齊都不影響——要不要往下一層是老師決定的。';
+      v.nextActionWhy = '這一層的礦石有 ' + RS.veinN + ' 塊，他開了 ' + RS.openedN +
+        ' 塊，你們都拿到了。拿幾塊都不影響——要不要往下一層是老師決定的。';
       v.nextActionBtn = '看地圖';
       v.goNextAction = function () { L.go('S03'); };
     } else if (waiting) {
@@ -5991,7 +6005,7 @@
         v.goNextAction = openTask(L, anyLeft);
       } else {
         v.nextAction = '這一層的清單都處理完了。';
-        v.nextActionWhy = '等老師確認，或去地圖看看已經採到的東西。';
+        v.nextActionWhy = '等老師確認，或去地圖看看已經拿到的東西。';
         v.nextActionBtn = '看地圖';
         v.goNextAction = function () { L.go('S03'); };
       }
@@ -6048,13 +6062,13 @@
       (layerLabel(L, layer) ? '這一段是「' + layerLabel(L, layer) + '」。' : '');
     v.openWhat = leftVein.length
       ? (lay.name || ('第 ' + layer + ' 層')) + '　·　已經開了 ' + after + ' 項'
-      : '這一層的 ' + vein + ' 塊都開好了。採不採齊不影響——要不要讓他們往下一層，是你決定的。';
+      : '這一層的 ' + vein + ' 塊都開好了。拿幾塊都不影響——要不要讓他們往下一層，是你決定的。';
     var num = function () {
       return "font:600 11px/1 'C11';flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:var(--ac-dim);color:var(--bg)";
     };
     v.openChain = [
-      { n: '1', t: '你確認通過 → 他們採到一塊礦石。', num: num() },
-      { n: '2', t: '他們把清單上的做完——採不採齊都不影響，要不要讓他們往下一層，是你決定的。', num: num() },
+      { n: '1', t: '你確認通過 → 他們拿到一塊礦石。', num: num() },
+      { n: '2', t: '他們把清單上的做完——拿幾塊都不影響，要不要讓他們往下一層，是你決定的。', num: num() },
       { n: '3', t: '你在 T-07 通過 → 礦石鑄成「' + (lay.tool || '道具') + '」、擊退守關生物，他們才下一層。', num: num() }
     ];
 
@@ -6080,7 +6094,7 @@
         lede: '你在開的是「' + (lay.name || ('第 ' + layer + ' 層')) + '」的清單。',
         sprite: null,
         rows: [
-          { k: '這一層的礦脈', v: vein + ' 塊' },
+          { k: '這一層的礦石', v: vein + ' 塊' },
           { k: '你開了', v: after + ' 塊', hi: leftVein.length > 0 },
           { k: '還沒開', v: leftVein.length + ' 塊', hi: leftVein.length > 0 }
         ],
@@ -6123,7 +6137,7 @@
     v.hasDowPick = false;     /* 期限：日鈕那一排跟日期選擇器重複 */
     var __unusedStats = [
       { k: '這一層', val: lay.name || ('第 ' + layer + ' 層'), s: chip(''), ks: kst, vs: "font:700 22px/1.2 'C11';color:var(--tx)" },
-      { k: '這一層的礦脈', val: vein + ' 塊', s: chip(''), ks: kst, vs: vst('') },
+      { k: '這一層的礦石', val: vein + ' 塊', s: chip(''), ks: kst, vs: vst('') },
       { k: '你開了', val: after + ' 塊', s: chip(gateTone), ks: kst, vs: vst(gateTone) },
       { k: '還沒開', val: leftVein.length + ' 塊', s: chip(gateTone), ks: kst, vs: vst(gateTone) },
       { k: '其中草稿', val: drafts.length + ' 項', s: chip(drafts.length ? 'hi' : ''), ks: kst, vs: vst(drafts.length ? 'hi' : '') }
@@ -6166,7 +6180,7 @@
     })();
     v.veinCount = '（' + after + ' / ' + vein + ' 已開）';
     v.veinPickNote = leftVein.length
-      ? '這一層的礦脈是固定的 ' + vein + ' 塊，每一塊本來就對應一項工作。標「已配給」的是開過的，剩下 ' +
+      ? '這一層的礦石是固定的 ' + vein + ' 塊，每一塊本來就對應一項工作。標「已配給」的是開過的，剩下 ' +
         leftVein.length + ' 塊還沒開。關卡不看這個——你覺得他們可以往下了就放行。'
       : '這一層的 ' + vein + ' 塊都開完了。要改哪一項的內容，回 T-02 逐項編輯。';
 
@@ -6742,7 +6756,7 @@
         got: !!t && t.status === "passed",
         star: !!(t && t.star),
         sprite: mineralSprite(L, m.name, layer),
-        locked: "還沒採到。通過這一項才看得到它是什麼。"
+        locked: "還還沒拿到。通過這一項才看得到它是什麼。"
       }));
     });
 
@@ -6855,13 +6869,13 @@
         });
 
         v.hasSpecNeed = rows.length > 0;
-        v.specNeedLabel = isTool ? '鑄成它要湊齊這些礦石' : '這一層的礦石有這些。採不採齊都不影響——要不要往下一層是老師決定的';
+        v.specNeedLabel = isTool ? '鑄成它要湊齊這些礦石' : '這一層的礦石有這些。拿幾塊都不影響——要不要往下一層是老師決定的';
         v.specNeedCount = reqHere.length
           ? doneReq + ' / ' + reqHere.length + ' 塊'
-          : '這一層的礦脈共 ' + vein.length + ' 塊';
+          : '這一層的礦石共 ' + vein.length + ' 塊';
         v.specNeedColor = (reqHere.length && doneReq >= reqHere.length) ? 'var(--ac)' : 'var(--tx2)';
         v.specNeedNote = !reqHere.length
-          ? '老師還沒開這一層的清單。他開幾項，就是你要採幾塊；下面是這一層礦脈裡可能出現的。'
+          ? '老師還沒開這一層的清單。他開幾項，就是你要拿幾塊；下面是這一層可能出現的礦石。'
           : cleared
             ? '這一層你已經走完了，' + (isTool ? '道具' : '戰利品') + '已經在你手上。'
             : isTool
@@ -7007,7 +7021,7 @@
       };
     });
 
-    /* --- 這一趟的總結 ---（本來叫「這一學期你採到的」，但它現在報的
+    /* --- 這一趟的總結 ---（本來叫「這一學期你拿到的」，但它現在報的
        不只是礦石：任務、生物、掉落物、戰利品、層數、退回都在這裡） */
     var rows = d.rows || [];
     var passedRows = rows.filter(function (r) { return r.status === 'passed'; });
@@ -8721,7 +8735,7 @@
     /* R-01 的欄位說明還在講必要／延伸 */
     (rv.stats || []).forEach(function (r) {
       if (!r) return;
-      if (String(r.note || '') === '含必要項與延伸項') r.note = '五層礦脈全開就是 ' + MINS_TOTAL + ' 項';
+      if (String(r.note || '') === '含必要項與延伸項') r.note = '四個領域全部開完就是 ' + MINS_TOTAL + ' 項';
     });
     (rv.absent || []).forEach(function (r) {
       if (r && r.label === '延伸項') { r.label = '分段送審'; r.value = '0 次申請'; }
