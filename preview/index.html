@@ -14122,6 +14122,17 @@ class Component extends DCLogic {
       (function () {
         var mineral = cur.mineral || '';
         var sp = mineral ? mineralSprite(L, mineral, cur.layer) : null;
+
+        /* 這一項是不是這一組這一層的最後一項？
+           排除掉自己（origPass 有沒有先改本地狀態不一定），而且只有在
+           那一組還停在這一層的時候才問——已經放行過的不要再問一次。 */
+        var teamNow = (L.teams() || []).filter(function (t) { return t.id === cur.teamId; })[0];
+        var sameLayer = teamNow && Number(teamNow.layer) === Number(cur.layer);
+        var mates = ((L.state.teamTasks || {})[cur.teamId] || []).filter(function (t) {
+          return Number(t.layer) === Number(cur.layer) && String(t.id) !== String(cur.taskId);
+        });
+        var restLeft = mates.filter(function (t) { return t.status !== 'passed'; }).length;
+        var lastOne = !!sameLayer && restLeft === 0;
         var minDef = (L.MINS || []).filter(function (x) { return x.name === mineral; })[0] || {};
         showMoment(L, {
           kind: 'stamp', accent: 'var(--ac)',
@@ -14136,8 +14147,18 @@ class Component extends DCLogic {
             { k: '你給的', v: gave + ' / 5　→　抽 ' + Math.max(1, Math.min(8, (cur.layer || 1) + gave - 1)) + ' 次', hi: gave > 1 }
           ],
           quoteLabel: '學生會讀到這一段', quote: reason,
-          lines: [ minDef.rec ? '這一塊在他們那邊的意思是：' + minDef.rec : '' ].filter(Boolean),
-          btn: '知道了', go: function () {}
+          lines: [
+            minDef.rec ? '這一塊在他們那邊的意思是：' + minDef.rec : '',
+            lastOne
+              ? '這是「' + cur.team + '」這一層的最後一項——他們現在全部過了，' +
+                '卡在等你放行。過不過得完不是條件，可不可以往下是你決定的。'
+              : ''
+          ].filter(Boolean),
+          btn: lastOne ? '晚點再說' : '知道了', go: function () {},
+          altBtn: lastOne ? '現在就放行 →' : '',
+          altGo: lastOne ? function () {
+            L.setState({ screen: 'T07', gateTeamId: cur.teamId, gateReason: '' });
+          } : null
         });
       })();
       call('apiReviewItem', LIVE.token, cur.teamId, cur.taskId, 'pass', reason, gave)
