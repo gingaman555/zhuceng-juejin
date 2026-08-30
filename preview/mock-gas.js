@@ -1233,6 +1233,31 @@
       persist();
       return ok({ passed: true, layer: tm.layer });
     },
+    /* 中途接手：直接把一組的起點放在第 N 層。cleared = 已經算過了幾層（0～4）。 */
+    apiSetTeamLayer: function (t, teamId, cleared, reason) {
+      var u = auth(t);
+      if (u.role !== 'teacher') return err('這個動作只有老師可以做。');
+      var tm = teamById(teamId);
+      if (!tm) return err('找不到這一組。');
+      var n = Math.max(0, Math.min(4, Number(cleared) || 0));
+      var kl = classById(tm.classId), w = courseWeekOf(kl);
+      var why = String(reason || '').trim() || '課程中途接手，這幾層在系統外完成。';
+      var added = [];
+      for (var i = 1; i <= n; i++) {
+        if (tm.passed.indexOf(i) >= 0) continue;
+        tm.passed.push(i);
+        tm.toolLevels[i] = '已交出';
+        added.push(i);
+        DB.Passes.push({ passId: 'p' + uid(), teamId: teamId, layer: i, week: w,
+          toolLevel: '中途接手', cells: ['', '', ''], verdict: 'pass', reason: why });
+      }
+      tm.passed.sort(function (a, b) { return a - b; });
+      tm.layer = Math.min(4, n + 1);
+      tm.enteredWeek = w;
+      tm.gateText = ['', '', '']; tm.gateSubmitted = false; tm.gateVerdict = '';
+      persist();
+      return ok({ layer: tm.layer, passed: tm.passed.slice(), added: added });
+    },
     apiSetWeek: function (t, classId, week) {
       auth(t);
       var k = classById(classId);

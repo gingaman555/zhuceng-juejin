@@ -3538,18 +3538,16 @@ t = t.split('<button onClick="{{ mapTabDig }}" style="{{ mapTabDigStyle }}">試�
 /* 71. 寶物整套拿掉。四區之後沒有第五層，空冠沒有地方鑲；而且它從頭 */
 /*     到尾只是「過關就給」，不需要任何決定，收集價值最低的一種。 */
 (function () {
-  /* 層詳情那張寶物卡 */
+  /* 層詳情那張寶物卡：整顆 <button> 剪掉，收尾用它自己的 </button>。
+     找不到就失敗——備援猜位置會剪出半截標籤，整個版面會塌。 */
   var a = t.indexOf('>寶物</div>');
-  if (a >= 0) {
-    var open = t.lastIndexOf('<span style="{{ sel.treCardStyle }}"', a);
-    if (open < 0) open = t.lastIndexOf('<div', a);
-    var close = t.indexOf('</span>', t.indexOf('{{ sel.treFrom }}', a));
-    if (open >= 0 && close >= 0) {
-      close = t.indexOf('</span>', close + 7);
-      t = t.slice(0, open) + t.slice(close + 7);
-      console.log('71a. 層詳情的寶物卡拿掉');
-    }
-  }
+  if (a < 0) { console.error('71a. 寶物卡找不到'); process.exit(1); }
+  var open = t.lastIndexOf('<button onClick="{{ sel.openTre }}"', a);
+  if (open < 0) { console.error('71a. 寶物卡的 <button> 找不到'); process.exit(1); }
+  var close = t.indexOf('</button>', a);
+  if (close < 0) { console.error('71a. 寶物卡的 </button> 找不到'); process.exit(1); }
+  t = t.slice(0, open) + t.slice(close + 9);
+  console.log('71a. 層詳情的寶物卡拿掉');
   /* 收藏總覽的寶物那一區由 Live 濾掉，這裡只處理模板寫死的 */
 })();
 
@@ -3800,6 +3798,100 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   if (t.split(c).length - 1 !== 1) { console.error('84. momentTitle 找不到'); process.exit(1); }
   t = t.replace(c, '<span data-roll="title">{{ momentTitle }}</span></h1>');
   console.log('84. 抽選動畫的記號加好了');
+})();
+
+
+/* 86. 層級詳情接上那一層全部收得到的東西（本來只列礦物） */
+(function () {
+  var a = '<sc-for list="{{ sel.minerals }}" as="mi" hint-placeholder-count="6">';
+  if (t.split(a).length - 1 !== 1) { console.error('86. sel.minerals 找不到'); process.exit(1); }
+  var close = t.indexOf('</div>', t.indexOf('</sc-for>', t.indexOf(a)));
+  if (close < 0) { console.error('86. 礦物格的收尾找不到'); process.exit(1); }
+  var blk = '<sc-if value="{{ sel.hasLoot }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="{{ sel.lootHeadStyle }}">{{ sel.lootHead }}</div>' +
+    '<div style="{{ sel.lootWrapStyle }}">' +
+      '<sc-for list="{{ sel.loot }}" as="lt" hint-placeholder-count="10">' +
+        '<button onClick="{{ lt.open }}" style="{{ lt.style }}">' +
+          '<span style="{{ lt.artStyle }}"></span>' +
+          '<span style="{{ lt.nameStyle }}">{{ lt.name }}</span>' +
+          '<span style="{{ lt.kindStyle }}">{{ lt.kind }}</span>' +
+        '</button>' +
+      '</sc-for>' +
+    '</div>' +
+  '</sc-if>';
+  t = t.slice(0, close + 6) + blk + t.slice(close + 6);
+  console.log('86. 層級詳情接上收集物');
+})();
+
+
+/* 87. T-07 加中途接手：老師直接把一組的起點放在第 N 層 */
+(function () {
+  /* 要接在「還不能放他們過關」那一整塊的外面——接在裡面的話，只有
+     卡住的時候看得到，中途接手正好是還沒有任何進度的時候要用的。 */
+  var gb = t.indexOf('<sc-if value="{{ gateBlocked }}"');
+  if (gb < 0) { console.error('87. gateBlocked 找不到'); process.exit(1); }
+  var dep = 1, k = t.indexOf('>', gb) + 1;
+  while (dep > 0) {
+    var nx = t.indexOf('<sc-if', k), cl = t.indexOf('</sc-if>', k);
+    if (cl < 0) { console.error('87. gateBlocked 的收尾找不到'); process.exit(1); }
+    if (nx >= 0 && nx < cl) { dep++; k = nx + 6; } else { dep--; k = cl + 8; }
+  }
+  var host = k - 6;
+  var blk = '<sc-if value="{{ hasJump }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="margin:4px 0 0;padding:15px 17px;background:rgba(0,0,0,.24);border:1px solid #2E2822">' +
+      '<div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#E9B341">{{ jumpHead }}</div>' +
+      '<div style="font:400 22px/1.6 ' + Q + 'C11' + Q + ';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ jumpNote }}</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">' +
+        '<sc-for list="{{ jumpPicks }}" as="jp" hint-placeholder-count="5">' +
+          '<button onClick="{{ jp.pick }}" style="{{ jp.style }}">' +
+            '<span style="display:block">{{ jp.label }}</span>' +
+            '<span style="{{ jp.subStyle }}">{{ jp.sub }}</span>' +
+          '</button>' +
+        '</sc-for>' +
+      '</div>' +
+      '<sc-if value="{{ jumpArmed }}" hint-placeholder-val="{{ false }}">' +
+        '<div style="margin-top:13px;padding:12px 14px;background:rgba(233,179,65,.07);border:1px solid #3A3026">' +
+          '<div style="font:400 22px/1.6 ' + Q + 'C11' + Q + ';color:#FFD98A;text-wrap:pretty">{{ jumpConfirm }}</div>' +
+          '<div style="display:flex;gap:8px;margin-top:11px">' +
+            '<button onClick="{{ jumpDo }}" style="font:500 22px/1 ' + Q + 'C11' + Q + ';letter-spacing:.12em;padding:11px 18px;cursor:pointer;background:#E9B341;border:1px solid #E9B341;color:#0B0A09">確定</button>' +
+            '<button onClick="{{ jumpCancel }}" style="font:400 22px/1 ' + Q + 'C11' + Q + ';padding:11px 18px;cursor:pointer;background:none;border:1px solid #2E2822;color:#8A8073">算了</button>' +
+          '</div>' +
+        '</div>' +
+      '</sc-if>' +
+    '</div>' +
+  '</sc-if>';
+  t = t.slice(0, host + 6) + blk + t.slice(host + 6);
+  console.log('87. T-07 中途接手');
+})();
+
+
+/* 88. 收藏總覽結尾多了一個 </div>。
+      69 把試挖那三塊搬過來的時候是用 lastIndexOf 猜插入點，多帶了一個
+      收尾標籤進來。多出來的收尾會讓瀏覽器提早關掉外層，畫面就會從主欄
+      掉出去——老師端所有頁面被擠到頂欄旁邊那個災情就是這樣來的。 */
+(function () {
+  var a = "</sc-if>\n\n            </div>\n</div>\n          </sc-if>";
+  var b = "</sc-if>\n\n            </div>\n          </sc-if>";
+  if (t.split(a).length - 1 !== 1) { console.error('88. 收藏總覽的收尾找不到'); process.exit(1); }
+  t = t.replace(a, b);
+  console.log('88. 收藏總覽多出來的 </div> 拿掉');
+})();
+
+
+/* 89. T-08 上面那排切換：學生端的世界 ／ 系統說明 */
+(function () {
+  var a = '<div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.26em;color:#5F574C">T-08 · WORLD</div>';
+  if (t.split(a).length - 1 !== 1) { console.error('89. T-08 的抬頭找不到'); process.exit(1); }
+  var row = '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px">' +
+    '<sc-for list="{{ worldTabs }}" as="wt" hint-placeholder-count="2">' +
+      '<button onClick="{{ wt.go }}" style="{{ wt.style }}">' +
+        '<span style="display:block">{{ wt.label }}</span>' +
+        '<span style="{{ wt.subStyle }}">{{ wt.sub }}</span>' +
+      '</button>' +
+    '</sc-for>' +
+  '</div>';
+  t = t.replace(a, row + a);
+  console.log('89. T-08 上面那排切換');
 })();
 
 fs.writeFileSync('build_tpl_live.txt', t);

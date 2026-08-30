@@ -2518,6 +2518,51 @@ function apiReviewGate(token, teamId, pass, toolLevel, reason) {
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
 }
 
+/**
+ * 中途接手：直接把一組的起點放在第 N 層。cleared = 已經算過了幾層（0～4）。
+ *
+ * 課程走到一半才導入這套系統時，前面幾層是在系統外做完的。認列而不是
+ * 補跑——所以每一層都留一筆 Passes，理由寫明是中途接手，不假裝走過。
+ * cleared = 4 代表四層都完成，結局就開得了。
+ */
+function apiSetTeamLayer(token, teamId, cleared, reason) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    var u = assertTeacher_(token);
+    var t = teamById_(teamId);
+    if (!t) return err_('找不到這一組。');
+    if (String(t.classId) !== String(u.classId)) return err_('沒有權限。');
+    var n = Math.max(0, Math.min(4, Number(cleared) || 0));
+    var kl = classById_(t.classId), courseWeek = courseWeekOf_(kl);
+    var why = String(reason || '').trim() || '課程中途接手，這幾層在系統外完成。';
+
+    var passedArr = jparse_(t.passed, []);
+    var levels = jparse_(t.toolLevels, {});
+    var added = [];
+    for (var i = 1; i <= n; i++) {
+      if (passedArr.indexOf(i) >= 0) continue;   /* 已經真的走過的不重寫 */
+      passedArr.push(i);
+      levels[i] = '已交出';
+      added.push(i);
+      appendRow_('Passes', {
+        passId: 'p' + Utilities.getUuid().slice(0, 8), teamId: teamId, layer: i, week: courseWeek,
+        toolLevel: '中途接手', gateCell1: '', gateCell2: '', gateCell3: '',
+        verdict: 'pass', reason: why, ts: new Date()
+      });
+    }
+    passedArr.sort(function (a, b) { return a - b; });
+
+    upsert_('Teams', ['teamId'], {
+      teamId: teamId, layer: Math.min(4, n + 1), enteredWeek: courseWeek,
+      passed: JSON.stringify(passedArr), toolLevels: JSON.stringify(levels),
+      gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: ''
+    });
+
+    return ok_({ layer: Math.min(4, n + 1), passed: passedArr, added: added });
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
 /** 老師手動覆寫目前週次（＋1 週／指定週次／回到自動）。 */
 function apiSetWeek(token, classId, week) {
   try {

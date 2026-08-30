@@ -48,7 +48,24 @@ textarea,input{font-family:'C11'}
   84%  { transform: translateY(0)    scale(1.08); opacity: 1;   filter: brightness(1.8) }
   100% { transform: translateY(0)    scale(1);    opacity: 1;   filter: brightness(1) }
 }
+/* 轉蛋：滾動的殘影、落地那一下、新收藏的章。 */
+@keyframes jlz-spin {
+  0%   { transform: translateY(-15px) scale(.88); opacity: .12; filter: blur(1.6px) brightness(1.8) }
+  70%  { opacity: .62; filter: blur(.3px) brightness(1.15) }
+  100% { transform: translateY(0) scale(1); opacity: .74; filter: blur(0) brightness(1) }
+}
+@keyframes jlz-land {
+  0%   { transform: scale(1.62); opacity: .55; filter: brightness(2.6) contrast(1.4) }
+  36%  { transform: scale(.93);  opacity: 1;   filter: brightness(1.25) }
+  62%  { transform: scale(1.06); filter: brightness(1.05) }
+  100% { transform: scale(1);    filter: brightness(1) }
+}
+@keyframes jlz-stamp {
+  0%   { transform: scale(2.3) rotate(-10deg); opacity: 0 }
+  52%  { transform: scale(.9)  rotate(3deg);   opacity: 1 }
+  100% { transform: scale(1)   rotate(0);      opacity: 1 }
+}
 @media (prefers-reduced-motion: reduce) {
-  [style*="jlz-roll"] { animation: none !important }
+  [style*="jlz-roll"], [style*="jlz-spin"], [style*="jlz-land"], [style*="jlz-stamp"] { animation: none !important }
 }
 </style>

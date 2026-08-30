@@ -756,6 +756,56 @@
       /* 名單先撈起來，側欄的數字才會準 */
       if (!S.tfinData && !S.tfinLoading) loadTfin(L);
     }
+
+    /* --- 老師側欄分段 --- */
+    if (S.role === 'teacher' && S.signedIn && v.navItems) groupTeacherNav(L, v, sc);
+  }
+
+  /* 每天在用的排前面，偶爾才看的收到分隔線下面。
+     系統說明與學生端的世界併成一格——同一件事講兩次沒有必要。 */
+  function groupTeacherNav(L, v, sc) {
+    var by = {};
+    v.navItems.forEach(function (n) { by[n.code] = n; });
+
+    /* 併格：留學生端的世界那一格，改名，系統說明那一格丟掉 */
+    var world = by['T-08'] || by['T-00'];
+    if (world) {
+      world.code = 'T-00';
+      world.label = '這套系統';
+      world.short = '系統';
+      world.go = function () { L.setState({ screen: 'T08' }); };
+      var onW = sc === 'T08' || sc === 'STORY';
+      world.style = L.navBtn(onW);
+      world.tabStyle = L.tabBtn(onW);
+      by['T-00'] = world;   /* 併過來的那一格才是 T-00，原本那一格丟掉 */
+      delete by['T-08'];
+    }
+
+    var head = function (text) {
+      return {
+        code: '', label: text, short: '', badge: '',
+        go: function () {},
+        iconStyle: 'display:none',
+        tabIconStyle: 'display:none',
+        style: "font:400 11px/1 'C11';letter-spacing:.22em;color:#4A4238;background:none;" +
+          'border:none;padding:15px 8px 5px;text-align:left;width:100%;cursor:default;' +
+          'border-top:1px solid #1C1915;margin-top:7px',
+        tabStyle: 'display:none',
+        dotStyle: 'display:none', tabDotStyle: 'display:none'
+      };
+    };
+
+    var pick = function (codes) {
+      return codes.map(function (c) { return by[c]; }).filter(Boolean);
+    };
+    var daily = pick(['T-01', 'T-03', 'T-07', 'T-02']);
+    var rest = pick(['T-04', 'T-09', 'T-00']);
+    var known = {};
+    daily.concat(rest).forEach(function (n) { known[n.code] = 1; });
+    var other = v.navItems.filter(function (n) { return !known[n.code]; });
+
+    if (!daily.length) return;   /* 認不得的排法就不要亂動 */
+    v.navItems = daily.concat(rest.length ? [head('偶爾才看')].concat(rest) : []).concat(other);
   }
 
   /* 物品攤成一份清單。
@@ -1090,6 +1140,7 @@
     })();
 
     addNavExtras(L, v, sc);
+    decorateWorldTabs(L, v, sc);
 
     /* 四個領域。原型寫死五層，在這裡截斷——第五層（星核聖殿）連同
        它的「不給清單」設計一起拿掉，走完第四區就是結局。 */
@@ -1120,6 +1171,9 @@
        把自己那一顆打開。 */
     /* 原型的側欄標題還寫「課程五階段」——只剩四個領域了 */
     if (v.gaugeTitle === '課程五階段') v.gaugeTitle = '課程四階段';
+    /* 層卡展開後：介紹 ＋ 那一層收得到的東西。放在 decorate 本體，
+       不能放 decorateStudent——那支有 signedIn 守衛，展示版是 false。 */
+    layerLoot(L, v);
     flattenDrops(L, v);   /* 物品攤成一份，要在 ghostCodex 之後 */
     if (S.role === 'student') {
       v.showRecTab = false; v.showHaulTab = false; v.showDigTab = false;
@@ -1740,7 +1794,7 @@
     decorateFinds(L, v);      /* 掉落物：隨機、零分、純收集 */
     decorateBestiary(L, v);   /* 圖鑑：打贏過誰、怎麼贏的 */
     decorateHaul(L, v);       /* 採量：全班的分數 */
-    decorateRecord(L, v);     /* 任務紀錄與宣告命中率 */
+    decorateRecord(L, v);     /* 任務紀錄 */
     decorateHomeHaul(L, v);   /* 首頁的名冊摘要 */
     decorateTerm(L, v);       /* 時間軸：唯一共同的尺 */
     decorateSlimStats(L, v);  /* 首頁三張卡：礦石改成任務 */
@@ -4116,29 +4170,8 @@
     if (!v.scRec) return;
     v.hasRecord = true;
 
-    /* ---- 宣告命中率 ----
-       不扣一分，卻讓宣告從許願變成有紀錄的承諾。
-       樣本少於 3 筆不給比例——n=1 顯示 100% 比不顯示還糟。 */
-    var vr = vowRate(L);
-    v.recCount = vr.n ? (vr.hit + ' / ' + vr.n) : '—';
-    v.recNote = vr.n
-      ? '宣告過 ' + vr.n + ' 次，做到 ' + vr.hit + ' 次。送出的當下就算，不用等他判。'
-      : '每一項任務開工前先宣告要拿哪一樣，做到才算。做不到不扣任何東西。';
-    v.rateRows = VOW_DEF.map(function (d) {
-      var b = vr.by[d.k] || { n: 0, hit: 0 };
-      var enough = b.n >= 3;
-      var txt = !b.n ? '還沒宣告過'
-        : enough ? ('宣告 ' + b.n + ' 次，做到 ' + b.hit + ' 次')
-                 : ('宣告 ' + b.n + ' 次　（太少，先不算比例）');
-      return {
-        name: d.name, txt: txt,
-        barStyle: 'margin-top:7px;height:4px;background:rgba(0,0,0,.4);border:1px solid #2E2822',
-        fillStyle: 'height:100%;width:' + (enough ? Math.round(b.hit / b.n * 100) : 0) + '%;' +
-          'background:' + (enough ? '#E9B341' : '#2E2822'),
-        nameStyle: "font:500 22px/1.3 'C11';color:" + (b.n ? '#E8E2D6' : '#6E665A'),
-        txtStyle: "font:400 11px/1.6 'C11';color:" + (b.n ? '#8A8073' : '#5F574C')
-      };
-    });
+    /* 宣告破法拿掉了，紀錄就只是紀錄——本來這裡有一整塊命中率。 */
+    v.recCount = ''; v.recNote = ''; v.rateRows = [];
     /* ---- 一項一列的紀錄 ---- */
     var STAT = {
       todo: { t: '還沒送', hue: '#6E665A' },
@@ -4570,7 +4603,10 @@
       quote: m.trait,
       lines: ['打贏牠＝這一項被他判過。牠會留下東西——越深的層掉越多。'],
       btn: '知道了', go: function () {}
-    }, frames, { art: mobSvg(m.id, Lyr), name: m.name });
+    }, frames, [{
+      art: mobSvg(m.id, Lyr), name: m.name, tier: '守關前的一隻',
+      hue: hue, isNew: isNew, rare: isNew
+    }]);
   }
 
   /* ---- 打贏：老師判過之後，學生下一次打開時演出來 ---- */
@@ -4613,7 +4649,22 @@
     var newN = arr.filter(function (n) { return isNewFind(L, n); }).length;
     if (newN) rows.splice(2, 0, { k: '圖鑑', v: '★ 新收藏 ' + newN + ' 件', hi: true });
 
-    showMoment(L, {
+    /* 一件一件抽出來。表格照樣列，但先讓他看著它們一個一個掉下來。 */
+    var reelPool = poolF.map(function (f) {
+      return { art: packSvg(f.px, f.L), name: f.name };
+    });
+    var reelPicks = arr.map(function (n) {
+      var f = findOf(n);
+      if (!f) return null;
+      var tier = findTier(n);
+      return {
+        art: packSvg(f.px, f.L), name: f.name, tier: tier,
+        hue: TIER_HUE[tier] || hue, isNew: isNewFind(L, n),
+        rare: tier === '罕見' || isNewFind(L, n)
+      };
+    }).filter(Boolean);
+
+    momentWithRoll(L, {
       kind: 'mined', art: 'gem', accent: hue, roll: true,
       kicker: f2 ? 'CLEARED · WENT FURTHER' : 'CLEARED',
       title: task.title || '過了',
@@ -4634,7 +4685,7 @@
         '每一件都一樣重，撿到哪一件不影響分數。'
       ],
       btn: '收好', go: function () {}
-    });
+    }, reelPool, reelPicks);
   }
 
   function decorateBestiary(L, v) {
@@ -4782,6 +4833,90 @@
           (tier === '罕見' ? '#E9B341' : tier === '少見' ? '#8A8073' : '#4A443C'),
         lookStyle: "font:400 11px/1.6 'C11';color:#5F574C;margin-top:4px;text-wrap:pretty"
       };
+    });
+  }
+
+  /* ============================================================
+     地圖的層卡展開之後：介紹 ＋ 那一層全部收集得到的東西。
+
+     本來展開只有場景圖、各組的位置、步驟——看不到「這一層有什麼可以
+     收」，而那是圖鑑該回答的第一個問題。
+     ============================================================ */
+  function layerLoot(L, v) {
+    var S = L.state;
+    if (S.role !== 'student') return;
+    var selN = Number(S.expanded) || 0;   /* 地圖點進去的那一層 */
+    var gotFinds = S.finds || {};
+    var clears = S.clears || [];
+    var passedL = S.passed || [];
+
+    /* 打贏過哪幾隻 */
+    var metMob = {};
+    var recAll = (S.record || []).concat(S.codex || []);
+    recAll.forEach(function (r) {
+      if (r.status === 'todo') return;
+      metMob[(r.layer || 1) + ':' + mobIdOfTask(r.id)] = 1;
+    });
+
+    /* 只算點進去的那一層——四層全算等於一次做 176 格，白費 */
+    if (!selN || !v.sel) return;
+    [selN].forEach(function (n) {
+      var lay = (L.LAYERS || [])[n - 1] || {};
+      var hue = BOARD_HUE[Math.max(0, Math.min(3, n - 1))];
+      var cells = [];
+
+      var cell = function (name, got, art, open, kind) {
+        cells.push({
+          name: got ? name : '？？？',
+          kind: kind || '',
+          kindStyle: "display:block;font:400 11px/1.2 'C11';color:#5F574C;margin-top:2px",
+          open: open || function () {},
+          style: 'display:flex;flex-direction:column;align-items:center;gap:3px;width:56px;' +
+            'padding:6px 2px;cursor:pointer;' +
+            'background:' + (got ? 'rgba(' + hexRgb(hue) + ',.09)' : 'rgba(0,0,0,.3)') +
+            ';border:1px ' + (got ? 'solid ' + hue : 'dashed #2C251D'),
+          artStyle: 'display:block;width:26px;height:26px;image-rendering:pixelated;' +
+            'background:url("' + art + '") center/contain no-repeat' + (got ? '' : ';opacity:.2'),
+          nameStyle: "font:400 11px/1.2 'C11';text-align:center;white-space:nowrap;" +
+            'overflow:hidden;text-overflow:ellipsis;max-width:52px;color:' + (got ? '#E8E2D6' : '#5F574C')
+        });
+      };
+
+      /* 守關那一隻 */
+      var bz = bossOf(n);
+      if (bz) {
+        cell(bz.name, passedL.indexOf(n) >= 0, bossSvg(bz, false, true),
+          (function (bb) {
+            return function () { L.setState({ specFrom: 'S03', screen: 'S06', specId: bb.name }); };
+          })(bz), '守關');
+      }
+      /* 這一層的十隻 */
+      (PACK_MOB[n - 1] || []).forEach(function (c, k) {
+        var mm = mobOf(k + 1, n);
+        if (!mm) return;
+        cell(mm.name, !!metMob[n + ':' + (k + 1)], mobSvg(mm.id, n), null, '生物');
+      });
+      /* 道具與戰利品 */
+      var doneL = passedL.indexOf(n) >= 0;
+      (PACK_TRO[n - 1] || []).forEach(function (t, k) {
+        cell(t.n, k < Math.max(0, Number(clears[n - 1]) || 0), packSvg(t.px, n), null, '戰利品');
+      });
+      /* 這一層撿得到的掉落物 */
+      FINDS.forEach(function (f) {
+        if (f.L !== n) return;
+        cell(f.name, Number(gotFinds[f.n]) > 0, packSvg(f.px, n),
+          (function (ff) {
+            return function () { openFind(L, ff, Number(gotFinds[ff.n]) || 0); };
+          })(f), findTier(f.n));
+      });
+
+      var gotN = cells.filter(function (c) { return c.name !== '？？？'; }).length;
+      v.sel.hasLoot = true;
+      v.sel.lootHead = '這一層還收得到　' + gotN + ' / ' + cells.length + ' 種';
+      v.sel.lootHeadStyle = "font:400 11px/1 'C11';letter-spacing:.18em;color:" + hue +
+        ';margin:20px 0 9px';
+      v.sel.lootWrapStyle = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:7px';
+      v.sel.loot = cells;
     });
   }
 
@@ -5369,7 +5504,11 @@
 
      圖鑑沒有過的多一行「新收藏」——東西每次都掉，新的才稀奇。
      ============================================================ */
-  var ROLL_MS = 60, ROLL_N = 13;
+  /* 減速表：間隔越來越長，輪子看起來就是在慢下來。
+     第一件滾滿（≈790ms），第二件以後滾短的（≈390ms）。 */
+  var REEL = [26, 26, 28, 30, 34, 38, 44, 52, 62, 76, 94, 120, 158];
+  var REEL_Q = [24, 26, 30, 36, 44, 56, 74, 102];
+  var TEASE = [210, 260];   /* 稀有的最後再吊兩下 */
 
   function reduceMotion() {
     try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
@@ -5388,33 +5527,84 @@
     return !(Number(f[n]) > 0);
   }
 
-  /* 在已經畫出來的 moment 上換圖與名字。
+  var TIER_HUE = { 常見: '#9A9184', 少見: '#7CC98F', 罕見: '#C77BE0', 守關: '#E9B341', 戰利品: '#E9B341' };
+
+  function rollNode(k) { return document.querySelector('[data-roll="' + k + '"]'); }
+  function replay(el, css) {   /* 同一個動畫要再播一次，得先清掉 */
+    if (!el) return;
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = css;
+  }
+
+  /* 抽一件：在已經畫出來的卡上滾，然後撞一下停住。
      不走 setState——原型的 moment 只吃第一次，之後的更新會被忽略。 */
-  function rollOnDom(frames, finalFrame) {
-    if (reduceMotion() || !frames || frames.length < 2) return;
+  function reelOne(pool, pick, quick, done) {
+    var plan = (quick ? REEL_Q : REEL).slice();
+    if (pick.rare) plan = plan.concat(TEASE);
     var i = 0;
     (function step() {
-      var art = document.querySelector('[data-roll="art"]');
-      var ttl = document.querySelector('[data-roll="title"]');
-      if (!art || !ttl) return;   /* 卡片已經關掉了 */
-      if (i >= frames.length) {
-        art.style.backgroundImage = 'url("' + finalFrame.art + '")';
+      var art = rollNode('art'), ttl = rollNode('title'), kck = rollNode('kicker');
+      if (!art || !ttl) { if (done) done(); return; }   /* 卡片已經關掉了 */
+
+      if (i >= plan.length) {                            /* 落地 */
+        art.style.backgroundImage = 'url("' + pick.art + '")';
         art.style.opacity = '1';
-        ttl.textContent = finalFrame.name;
+        replay(art, 'jlz-land .46s cubic-bezier(.2,1.5,.35,1) both');
+        ttl.textContent = pick.name;
+        ttl.style.color = pick.hue || '';
+        if (kck) {
+          kck.textContent = pick.isNew ? '★ 新收藏' : (pick.tier || '');
+          kck.style.color = pick.isNew ? '#FFD98A' : (pick.hue || '#8A8073');
+          replay(kck, 'jlz-stamp .42s cubic-bezier(.2,1.4,.3,1) both');
+        }
+        if (done) setTimeout(done, pick.isNew ? 540 : 360);
         return;
       }
-      art.style.backgroundImage = 'url("' + frames[i].art + '")';
-      art.style.opacity = '.55';
-      ttl.textContent = frames[i].name;
+
+      var f = pool.length ? pool[(i * 7 + 3) % pool.length] : pick;
+      art.style.backgroundImage = 'url("' + f.art + '")';
+      replay(art, 'jlz-spin ' + plan[i] + 'ms linear both');
+      ttl.textContent = f.name;
+      ttl.style.color = '#5F574C';
       i++;
-      setTimeout(step, ROLL_MS);
+      setTimeout(step, plan[i - 1]);
     })();
   }
 
-  /* 開一張卡，然後在上面跑抽選。frames 是閃過去的，finalFrame 是停住的。 */
-  function momentWithRoll(L, moment, frames, finalFrame) {
+  /* 開一張卡，然後在上面一件一件抽。picks 是真的抽到的，pool 是閃過去的。 */
+  var reelSkip = false;
+  function momentWithRoll(L, moment, pool, picks) {
+    var list = [].concat(picks || []);
     showMoment(L, moment);
-    setTimeout(function () { rollOnDom(frames, finalFrame); }, 30);
+    if (reduceMotion() || !list.length) return;
+
+    /* 想直接看結果：點畫面任何地方就跳到最後一件 */
+    reelSkip = false;
+    var off = function () {
+      document.removeEventListener('pointerdown', hit, true);
+    };
+    var hit = function () { reelSkip = true; off(); };
+    document.addEventListener('pointerdown', hit, true);
+
+    setTimeout(function () {
+      var i = 0;
+      (function next() {
+        if (reelSkip) {
+          var last = list[list.length - 1];
+          var art = rollNode('art'), ttl = rollNode('title');
+          if (art && ttl) {
+            art.style.backgroundImage = 'url("' + last.art + '")';
+            art.style.opacity = '1'; art.style.animation = 'none';
+            ttl.textContent = last.name; ttl.style.color = last.hue || '';
+          }
+          return;
+        }
+        if (i >= list.length) { off(); return; }
+        var pk = list[i]; i++;
+        reelOne(pool, pk, i > 1, next);
+      })();
+    }, 40);
   }
   /* 第一次點開一項任務：跳出擋在前面的那一隻。
      本來掛在 decorateVow 裡，宣告破法拿掉之後那支不再被呼叫。 */
@@ -5470,7 +5660,7 @@
     v.momentArt = pic
       ? 'display:block;width:104px;height:104px;background:url("' + pic + '") center/contain no-repeat;' +
         'image-rendering:pixelated;filter:drop-shadow(0 0 26px ' + art.glow + ');animation:' +
-        (m.roll ? 'jlz-roll .9s cubic-bezier(.2,.9,.2,1) both' : art.anim)
+        (m.roll ? 'none' : art.anim)   /* 滾的時候由 JS 逐格驅動 */
       : 'display:block;width:104px;height:104px;background:radial-gradient(circle at 50% 38%,' + accent + ',rgba(0,0,0,.2) 72%);' +
         'clip-path:polygon(50% 0,100% 32%,84% 100%,16% 100%,0 32%);animation:' + art.anim;
     v.momentRay = (m.kind === 'mined' || m.kind === 'full' || m.kind === 'open')
@@ -7863,6 +8053,32 @@
   }
 
   /* T-07 關卡審核：對真實送審的隊伍逐一審 */
+  /* 這套系統：學生端的世界 ／ 系統說明，同一格裡用按鈕切。 */
+  function decorateWorldTabs(L, v, sc) {
+    if (L.state.role !== 'teacher') { v.worldTabs = []; return; }
+    var on = sc === 'T08';
+    var mk = function (label, sub, here, go) {
+      return {
+        label: label, sub: sub,
+        go: go,
+        style: 'padding:9px 15px;font:500 22px/1 \'C11\';cursor:pointer;text-align:left;background:' +
+          (here ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.28)') +
+          ';border:1px solid ' + (here ? '#E9B341' : '#2E2822') +
+          ';color:' + (here ? '#FFD98A' : '#8A8073'),
+        subStyle: "display:block;font:400 11px/1 'C11';margin-top:5px;color:" +
+          (here ? '#E9B341' : '#5F574C')
+      };
+    };
+    v.worldTabs = [
+      mk('學生端的世界', '你定的每一項在那邊長什麼樣', on,
+        function () { L.setState({ screen: 'T08' }); }),
+      mk('系統說明', '這個作品的故事與你的角色', !on,
+        function () {
+          L.setState({ screen: 'STORY', storyIdx: 0, storyLayer: 1, previewStory: 1, storyFrom: 'T08' });
+        })
+    ];
+  }
+
   function decorateGate(L, v) {
     var S = L.state;
     var gates = S.gates || [];
@@ -7891,6 +8107,9 @@
     if (!g) {
       v.gateChecklist = []; v.gateReview = [];
       v.gateBlocked = false; v.gateBlockedWhy = '';
+      v.hasJump = false; v.jumpPicks = []; v.jumpArmed = false;
+      v.jumpHead = ''; v.jumpNote = ''; v.jumpConfirm = '';
+      v.jumpDo = function () {}; v.jumpCancel = function () {};
       v.hasTeamFinale = false; v.teamFinale = []; v.teamFinaleNote = '';
       v.passGate = function () {}; v.rejectGate = function () {}; v.replanGate = function () {};
       return;
@@ -7916,6 +8135,64 @@
       { q: '2. 如果重來一次，你會在哪一層改變做法', a: tf.q2 || '（未填）' },
       { q: '3. 你現在會怎麼跟下一屆說「怎麼估時間」', a: tf.q3 || '（未填）' }
     ] : [];
+
+    /* --- 中途接手：把起點直接放在第 N 層 ---
+       課程走到一半才導入的時候，前面幾層是在系統外做完的。要他們回頭
+       補跑四層等於作假，所以這裡直接認列——但每一層都會留一筆理由寫
+       明是中途接手的紀錄，不假裝走過。 */
+    (function () {
+      var doneNow = (g.passed || []).length ? Math.max.apply(null, g.passed) : 0;
+      var OPTS = [
+        { n: 0, label: '從頭開始', sub: '第一層' },
+        { n: 1, label: '已過 1 層', sub: LAYERNAME(2) },
+        { n: 2, label: '已過 2 層', sub: LAYERNAME(3) },
+        { n: 3, label: '已過 3 層', sub: LAYERNAME(4) },
+        { n: 4, label: '整個做完', sub: '結局開得了' }
+      ];
+      var armed = S.jumpPick;
+      v.hasJump = true;
+      v.jumpHead = '中途接手 · 直接把起點放在這裡';
+      v.jumpNote = '課程走到一半才開始用這套系統的話，前面幾層在系統外做完的就在這裡認列——' +
+        '他們不用回頭補跑。每一層都會留一筆紀錄寫明是中途接手，不會被當成真的走過。' +
+        '　現在「' + g.teamName + '」算是過了 ' + doneNow + ' 層。';
+      v.jumpPicks = OPTS.map(function (o) {
+        var on = armed === o.n;
+        var now = doneNow === o.n;
+        return {
+          label: o.label,
+          sub: now ? '現在就是' : o.sub,
+          subStyle: "display:block;font:400 11px/1 'C11';margin-top:5px;color:" +
+            (on ? '#FFD98A' : now ? '#7CC98F' : '#5F574C'),
+          pick: (function (nn) {
+            return function () { L.setState({ jumpPick: nn }); };
+          })(o.n),
+          style: "padding:10px 13px;font:500 22px/1 'C11';cursor:pointer;text-align:center;background:" +
+            (on ? 'rgba(233,179,65,.16)' : 'rgba(0,0,0,.3)') +
+            ';border:1px solid ' + (on ? '#E9B341' : now ? '#3A5240' : '#2E2822') +
+            ';color:' + (on ? '#FFD98A' : '#C3BAAA')
+        };
+      });
+
+      v.jumpArmed = armed != null;
+      v.jumpConfirm = armed == null ? '' : (armed === 0
+        ? '「' + g.teamName + '」回到第一層從頭走。已經認列過的不會被刪掉。'
+        : '把「' + g.teamName + '」的前 ' + armed + ' 層直接認列，他們從' +
+          (armed >= 4 ? '結局' : LAYERNAME(armed + 1)) + '開始。');
+      v.jumpCancel = function () { L.setState({ jumpPick: null }); };
+      v.jumpDo = function () {
+        var n = L.state.jumpPick;
+        if (n == null) return;
+        L.setState({ jumpPick: null });
+        call('apiSetTeamLayer', LIVE.token, g.teamId, n, L.state.gateReason)
+          .then(function (r) {
+            if (!r || !r.ok) { L.say((r && r.error) || '沒有存到伺服器。'); return null; }
+            L.say(n === 0 ? '起點回到第一層。'
+              : '認列了 ' + n + ' 層。他們現在在' + (n >= 4 ? '結局前' : LAYERNAME(n + 1)) + '。');
+            return refresh();
+          })
+          .catch(function () { L.say('沒有存到伺服器。'); });
+      };
+    })();
 
     var list = (S.teamTasks || {})[g.teamId] || [];
     var layerItems = list.filter(function (t) { return t.layer === g.layer; });
