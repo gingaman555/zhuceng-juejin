@@ -4072,5 +4072,18 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('96. T-07 只剩一個動作');
 })();
 
+
+/* 97. 那塊「還不能放他們過關」整個從模板拿掉。
+      gateBlocked 現在永遠是 false（礦石不再是門檻），所以它永遠不會畫出來——
+      但字還留在檔案裡，下一個讀這份模板的人會以為那條規則還在。 */
+(function () {
+  var a = t.indexOf('<sc-if value="{{ gateBlocked }}"');
+  if (a < 0) { console.error('97. gateBlocked 那一塊找不到'); process.exit(1); }
+  var b = t.indexOf('</sc-if>', a);
+  if (b < 0) { console.error('97. 收尾找不到'); process.exit(1); }
+  t = t.slice(0, a) + t.slice(b + 8);
+  console.log('97. 那塊「還不能放他們過關」拿掉');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
