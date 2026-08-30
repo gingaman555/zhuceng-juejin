@@ -49,9 +49,6 @@ var SHEET_DEFS = {
   Reads:       ['readId', 'readerTeam', 'targetTeam', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected', 'ts'],
   Codes:       ['revId', 'coder', 'code', 'ts'],
   Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'by', 'ts'],
-  /* 不是撿來的東西。目前只有一種：下去之前斗篷人給的那一件。
-     一人一列，所以重複呼叫不會多給。 */
-  Grants:      ['grantId', 'userId', 'kind', 'n', 'why', 'ts'],
   /* 走完之後封存的一趟。一組一列，改名就覆蓋。 */
   Journeys:    ['journeyId', 'teamId', 'classId', 'name', 'sealedBy', 'sealedAt', 'stats'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
@@ -1289,7 +1286,6 @@ function apiBootstrap(token) {
       out.myTeamId = u.teamId || '';
       out.record = recordOf_(u.teamId, u.classId);
       /* 收藏是個人的：跨班、跨組、跨專案累積 */
-      out.starterFind = grantStarter_(u.userId);   /* 冪等：只有第一次會真的給 */
       out.finds = findsOfUser_(u.userId);
       out.codex = codexOfUser_(u.userId);
       out.findsTotal = FINDS_N;
@@ -1961,64 +1957,8 @@ function teamsOfUser_(userId) {
 }
 
 /** 這個人撿到的掉落物，跨專案累積 */
-/**
- * 下去之前先給一件：斗篷人塞給你的。
- *
- * 為什麼要給：學生要等老師開任務、自己做完、老師判過才拿得到第一件，
- * 那可能是第二三週。在那之前圖鑑是 196 個空格，系統對他而言全是承諾。
- * 已經有一點進度的收集，完成率明顯高於全空的。
- *
- * 給哪一件：用 userId 決定，所以同一個人每次算出來都一樣，而且不同人
- * 拿到的不同——第一週就有東西可以互相問「你拿到什麼」。
- * 只從第一層的常見裡挑：起步的東西不該是罕見的，那會讓後面的收集失重。
- */
-function grantStarter_(userId) {
-  if (!userId) return 0;
-  var had = readTable_('Grants').filter(function (g) {
-    return String(g.userId) === String(userId) && String(g.kind) === 'find';
-  })[0];
-  if (had) return Number(had.n) || 0;
-
-  /* 第一層的常見：id 1..15（順序是領域 → 稀有度，一層 27 件、常見 15 件） */
-  var pool = [];
-  for (var n = 1; n <= FINDS_N; n++) {
-    if (findLayer_(n) !== 1) continue;
-    if (findSlot_(n) > 15) continue;
-    pool.push(n);
-  }
-  if (!pool.length) return 0;
-
-  var h = 2166136261, str = String(userId);
-  for (var i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = (h * 16777619) >>> 0;
-  }
-  h ^= h >>> 16; h = (h * 2246822507) >>> 0;
-  h ^= h >>> 13; h = (h * 3266489909) >>> 0;
-  h = (h ^ (h >>> 16)) >>> 0;
-  var pick = pool[Math.floor(h / 4294967296 * pool.length)];
-
-  appendRow_('Grants', {
-    grantId: 'g' + Utilities.getUuid().slice(0, 8),
-    userId: userId, kind: 'find', n: pick, why: '起步', ts: new Date()
-  });
-  return pick;
-}
-
-/** 這個人被給過的東西。目前只有起步那一件。 */
-function grantsOfUser_(userId) {
-  var out = {};
-  readTable_('Grants').forEach(function (g) {
-    if (String(g.userId) !== String(userId)) return;
-    if (String(g.kind) !== 'find') return;
-    var n = Number(g.n);
-    if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
-  });
-  return out;
-}
-
 function findsOfUser_(userId) {
-  var mine = teamsOfUser_(userId), out = grantsOfUser_(userId);   /* 給過的也算 */
+  var mine = teamsOfUser_(userId), out = {};
   if (!mine.length) return out;
   readTable_('TeamTasks').forEach(function (r) {
     if (mine.indexOf(String(r.teamId)) < 0) return;

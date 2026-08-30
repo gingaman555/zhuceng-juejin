@@ -690,8 +690,8 @@
                 </sc-if>
                 <div>
                   <div style="margin-bottom:18px;padding:13px 15px;background:rgba(0,0,0,.26);border-left:2px solid #5A4A2C">
-                    <div style="font:500 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">作業交到老師本來要你交的地方。</div>
-                    <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:7px;text-wrap:pretty">這裡不收檔案，也不會看你交了什麼。交完再回來勾——他去他收作業的地方看完，再回來按過或不過。</div>
+                    <div style="font:500 22px/1.5 'C11';color:#C3BAAA;text-wrap:pretty">{{ handInHead }}</div>
+                    <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:7px;text-wrap:pretty">{{ handInNote }}</div>
                   </div>
                   <sc-if value="{{ hasVow }}" hint-placeholder-val="{{ true }}">
                     <div style="{{ vowBox }}">

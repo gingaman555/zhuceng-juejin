@@ -300,7 +300,6 @@
       next.layerSaid = b.layerSaid || {};
       next.digs = b.digs || [];
       next.finds = b.finds || {};
-      next.starterFind = Number(b.starterFind) || 0;
       next.clears = b.clears || [];   /* 每一區走完過幾次，跨專案累加 */
       /* 老師在我們沒看的時候動過了——把變化演出來 */
       (function () {
@@ -883,6 +882,51 @@
     }
     var mobGot = mobs.filter(function (x) { return x.got; }).length;
 
+    /* 你的那一隻排最前面。計數在這之前就算完了——那 44 種是大家共同的
+       世界，這一隻是你的，混進去數會讓「還差幾種」失去意義。 */
+    (function () {
+      var mine = myMob();
+      if (!mine) return;
+      var okTut = tutDone();
+      mobs.unshift({
+        name: okTut ? mine.name : '？？？',
+        got: okTut,
+        sub: okTut ? '你的　·　不算在 44 種裡' : '你的　·　走一遍新手導覽就見得到',
+        L: 0,                       /* 0 ＝ 不屬於任何一層，篩層時永遠留著 */
+        open: function () {
+          if (!okTut) { L.say('先走一遍新手導覽，牠才會現身。首頁那一格點得進去。'); return; }
+          openMyMob(L);
+        },
+        style: 'padding:12px 8px;text-align:center;font:inherit;cursor:pointer;' +
+          'background:rgba(' + hexRgb(mine.hue) + ',' + (okTut ? '.12' : '.04') + ');border:2px solid ' +
+          (okTut ? mine.hue : '#2C251D') + ';color:' + (okTut ? '#F2E6C8' : '#8C8172'),
+        glyphStyle: 'display:block;width:40px;height:40px;margin:2px auto;image-rendering:pixelated;' +
+          'background:url("' + mine.art + '") center/contain no-repeat' +
+          (okTut ? '' : ';opacity:.16;filter:grayscale(1)')
+      });
+
+      /* 你的那一件排在物品最前面，同一個規則 */
+      var mineF0 = myFind();
+      if (mineF0) {
+        drops.unshift({
+          name: okTut ? mineF0.name : '？？？',
+          got: okTut,
+          sub: okTut ? '你的　·　不算在 152 種裡' : '你的　·　走一遍新手導覽就拿得到',
+          L: 0,
+          open: function () {
+            if (!okTut) { L.say('先走一遍新手導覽。首頁那一格點得進去。'); return; }
+            openMyFind(L);
+          },
+          style: 'padding:12px 8px;text-align:center;font:inherit;cursor:pointer;' +
+            'background:rgba(' + hexRgb(mineF0.hue) + ',' + (okTut ? '.12' : '.04') + ');border:2px solid ' +
+            (okTut ? mineF0.hue : '#2C251D') + ';color:' + (okTut ? '#F2E6C8' : '#8C8172'),
+          glyphStyle: 'display:block;width:40px;height:40px;margin:2px auto;image-rendering:pixelated;' +
+            'background:url("' + mineF0.art + '") center/contain no-repeat' +
+            (okTut ? '' : ';opacity:.16;filter:grayscale(1)')
+        });
+      }
+    })();
+
     /* ---- 地圖：你在哪一層、那一層長什麼樣、那一層有什麼 ----
        本來的地圖是進度板（採到幾塊、還差幾塊、能不能過關），那些事
        都不成立了。現在它只是圖鑑的導覽。 */
@@ -925,18 +969,19 @@
 
     /* 篩掉不是這一層的 */
     if (pickL) {
-      mobs = mobs.filter(function (x) { return x.L === pickL; });
-      drops = drops.filter(function (x) { return x.L === pickL; });
-      mobGot = mobs.filter(function (x) { return x.got; }).length;
+      mobs = mobs.filter(function (x) { return x.L === pickL || x.L === 0; });
+      drops = drops.filter(function (x) { return x.L === pickL || x.L === 0; });
+      mobGot = mobs.filter(function (x) { return x.got && x.L !== 0; }).length;
     }
 
-    var gotN = drops.filter(function (x) { return x.got; }).length;
+    /* 你的那一隻與你的那一件不算進共同的世界（L 是 0） */
+    var gotN = drops.filter(function (x) { return x.got && x.L !== 0; }).length;
     v.collSections = [{
       title: '生物',
       note: '一項任務擋著一隻，每一層的盡頭另外站著一隻大的（框比較粗那四個）。' +
         '　一區十隻，每一隻自己的樣子與特性。' +
         '　打贏 +100 分；守關的 +1000。',
-      have: mobGot + ' / ' + mobs.length + ' 種',
+      have: mobGot + ' / ' + mobs.filter(function (x) { return x.L !== 0; }).length + ' 種',
       items: mobs
     }, {
       title: '物品',
@@ -944,7 +989,7 @@
         '　守關那兩件（道具、戰利品）各 500 分——老師放行一層就是 1000 分，' +
         '所以榜上拉得開的是走到第幾層，不是撿了幾件。掉落物每一件都是 30 分，' +
         '掉到哪一件都一樣，運氣不會影響名次。',
-      have: gotN + ' / ' + drops.length + ' 種',
+      have: gotN + ' / ' + drops.filter(function (x) { return x.L !== 0; }).length + ' 種',
       items: drops
     }];
 
@@ -1484,7 +1529,11 @@
 
       var tid = S.openTaskId;
       var task = (S.tasks || []).filter(function (x) { return x.id === tid; })[0] || null;
-      var mb = task ? mobOfTask(task) : null;
+      var isTut = !!task && task.id === 'tut';
+      var mine0 = isTut ? myMob() : null;
+      var mb = isTut
+        ? (mine0 ? { id: 0, name: mine0.name, trait: mine0.trait, px: null } : null)
+        : (task ? mobOfTask(task) : null);
       var lyr = task ? (task.layer || 1) : 1;
       v.hasOpenMob = !!mb;
       v.openMobGo = function () {};
@@ -1495,11 +1544,11 @@
 
       var won = task.status === 'passed';
       var waiting = task.status === 'submitted';
-      var neu = isNewMob(L, lyr, mb.id);
+      var neu = isTut ? !tutDone(L) : isNewMob(L, lyr, mb.id);
       var unseen = won && !seenWin(task.id);
 
       v.openMobArt = 'display:block;width:54px;height:54px;flex:none;image-rendering:pixelated;' +
-        'background:url("' + mobSvg(mb.id, lyr) + '") center/contain no-repeat' +
+        'background:url("' + (isTut && mine0 ? mine0.art : mobSvg(mb.id, lyr)) + '") center/contain no-repeat' +
         (won ? '' : '');
       v.openMobName = mb.name;
       v.openMobKicker = won ? (unseen ? '已打敗 · 牠留下的還沒看' : '已打敗')
@@ -1514,6 +1563,7 @@
 
       /* 誘因要在動手之前看得到。抽幾次＝層數 ＋（他給的 1–5 − 1），上限 8——
          學生本來就可以自己多做，但他在決定的當下看不到多做會換到什麼。 */
+      if (isTut) { v.hasDrawHint = false; return; }
       var base = Math.max(1, Math.min(8, lyr));
       var most = Math.max(1, Math.min(8, lyr + 4));
       v.hasDrawHint = !won;
@@ -1540,6 +1590,39 @@
     v.submitTask = function () {
       var st = L.state;
       var taskId = st.openTaskId, text = st.draftText, files = (st.draftFiles || []).slice();
+
+      /* 新手導覽自己收尾：它不用等老師，也不進任何後端資料。 */
+      if (taskId === 'tut') {
+        if (v.hasChecks && !v.checkAllDone) {
+          L.say('三條都勾完再送——那三條就是這一頁在教的事。'); return;
+        }
+        markTutDone();
+        (st.tasks || []).forEach(function (t) { if (t.id === 'tut') t.status = 'passed'; });
+        var mineM = myMob(), mineF = myFind();
+        L.setState({ draftText: '', draftFiles: [] });
+        if (mineM && mineF) {
+          momentWithRoll(L, {
+            kind: 'mined', art: 'gem', accent: mineM.hue, roll: true,
+            kicker: 'YOURS',
+            title: '打倒了「' + mineM.name + '」',
+            lede: '你走完了。這兩樣只有你有——名字與顏色都是從你的帳號算出來的。',
+            sprite: 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
+              'background:url("' + mineM.art + '") center/contain no-repeat;opacity:.55',
+            draws: [{ art: mineF.art, name: mineF.name, hue: mineF.hue }],
+            rows: [
+              { k: '你的那一隻', v: mineM.name, hi: true },
+              { k: '牠留下', v: mineF.name, hi: true },
+              { k: '分數', v: '沒有分數' }
+            ],
+            quoteLabel: '介紹', quote: mineM.trait,
+            lines: ['這兩樣不算在 44 種與 152 種裡面——那些是大家共同的世界，這兩樣是你的。',
+                    '接下來要等老師把這一層的清單開出來。那些任務的生物是全班一樣的，' +
+                    '打贏會抽好幾次，抽到的才會進那 152 種。'],
+            btn: '收好', go: function () {}
+          }, [], [{ art: mineF.art, name: mineF.name, hue: mineF.hue, isNew: true }]);
+        }
+        return;
+      }
       /* 排程門檻拿掉了——「你排的時間」不在這一頁了，就不能拿它擋交件。 */
       /* 作業交在老師原本收的地方，所以文字與檔案都是選填。
          真正必填的是「做了如何」——勾完成之前一定要回答。 */
@@ -1631,6 +1714,16 @@
     };
 
     decorateSections(L, v);   /* 這一步會重排 taskGroups，open 在裡面就綁好了 */
+    /* 新手導覽掛進任務清單。layer 0——myTasks() 以 layer === currentLayer 過濾，
+       所以它不會進到任何進度、分數、期末統整，只有任務頁用 id 找得到。 */
+    (function () {
+      if (S.role !== 'student') return;
+      var list = S.tasks || [];
+      if (list.some(function (t) { return t.id === 'tut'; })) return;
+      if (!myMob()) return;   /* 還沒登入完 */
+      S.tasks = [tutTask(L)].concat(list);
+    })();
+
     decorateRules(L, v);
     decorateHorizon(L, v);   /* 首頁：這一趟走完是什麼樣子 */
     decorateFinale(L, v);
@@ -2965,6 +3058,10 @@
     if (S.role !== 'student' || S.screen !== 'S05') return;
     var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
     if (!task) return;
+    if (task.id === 'tut') {
+      v.handInHead = '這一項不用交任何東西。';
+      v.handInNote = '它是系統給的導覽——三條做過就勾，勾完按下面那顆就結束了。老師那邊看不到它。';
+    }
     var list = task.checks || [];
     if (!list.length) return;
 
@@ -2982,8 +3079,17 @@
       ';border:1px solid ' + (full ? '#5A4A2C' : '#2E2822');
     v.checkCount = got + ' / ' + list.length;
     v.checkCountStyle = "font:700 22px/1 'C11';color:" + (full ? '#E9B341' : '#C3BAAA');
+    var isTut0 = task.id === 'tut';
+    /* 導覽那一項不用交東西給老師，照原文顯示會把人帶錯方向 */
+    v.handInHead = isTut0 ? '這一項不用交任何東西。' : '作業交到老師本來要你交的地方。';
+    v.handInNote = isTut0
+      ? '它是系統給的導覽——三條做過就勾，勾完按下面那顆就結束了。老師那邊看不到它。'
+      : '這裡不收檔案，也不會看你交了什麼。交完再回來勾——他去他收作業的地方看完，再回來按過或不過。';
     v.checkHint = locked
       ? '這一項已經通過了。'
+      : isTut0
+        ? (full ? '三條都做過了。按下面那顆，牠們就是你的。'
+                : '三條都是這個系統裡真的做得到的事。做一遍，勾一條。')
       : full
         ? '都勾完了。下面回答一題，就可以請他去看。'
         : '做完一條勾一條。勾完才請得動他。';
@@ -3000,6 +3106,8 @@
           if (!hit) next = next.concat([i]);
           task.checked = next;
           L.setState({ checkNudge: (L.state.checkNudge || 0) + 1 });
+          /* 新手導覽不在任何資料表裡，記在瀏覽器就好 */
+          if (task.id === 'tut') { tutCheck(i, !hit); return; }
           call('apiSetCheck', LIVE.token, task.id, i, !hit)
             .then(function (r) {
               if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。');
@@ -3716,13 +3824,13 @@
 
   /* 像素字元：. 透明 · # 身體 · + 陰影 · * 反光 */
   var PACK_ART = {};
-  function packSvg(px, layer, dim) {
+  function packSvg(px, layer, dim, pal0) {
     if (!px || !px.length) return '';
     /* 鍵一定要吃整張圖。本來只取 px[0]（第一列）＋高度——像素圖的第一列
        幾乎都是空的，所以 108 件掉落物只產生 11 種圖，其中 98 件共用同一張。 */
-    var key = px.join('') + '|' + layer + '|' + (dim ? 1 : 0);
+    var key = px.join('') + '|' + (pal0 ? pal0['#'] : layer) + '|' + (dim ? 1 : 0);
     if (PACK_ART[key]) return PACK_ART[key];
-    var pal = MOB_PAL[Math.max(0, Math.min(3, (Number(layer) || 1) - 1))];
+    var pal = pal0 || MOB_PAL[Math.max(0, Math.min(3, (Number(layer) || 1) - 1))];
     var body = pal['#'], shade = pal.o, shine = pal['*'];
     var W = px[0].length;
     var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + px.length +
@@ -4017,7 +4125,6 @@
 
   /* ---- 點開一件掉落物 ---- */
   function openFind(L, f, n) {
-    var isStarter = Number((L.state || {}).starterFind) === Number(f.n);
     if (!n) { L.say('還沒撿到這一件。通過一項任務會抽好幾次，抽到什麼是隨機的。'); return; }
 
     showMoment(L, {
@@ -4025,13 +4132,9 @@
       accent: '#8A8073',
       kicker: 'A FIND',
       title: f.name,
-      /* 起步那一件不是撿到的——是下去之前就在身上的。不講清楚的話
-         學生第一天打開會以為自己漏掉了什麼。 */
-      lede: isStarter
-        ? '你下去之前，他塞了這一件在你身上。'
-        : '第 ' + findLayer(f.n) + ' 層開始撿得到。通過任務的時候在碎石裡翻出來的。',
+      lede: '第 ' + findLayer(f.n) + ' 層開始撿得到。通過任務的時候在碎石裡翻出來的。',
       rows: [
-        { k: '哪裡來的', v: isStarter ? '下去之前他給的' : '第 ' + findLayer(f.n) + ' 層以後', hi: isStarter },
+        { k: '哪裡撿得到', v: '第 ' + findLayer(f.n) + ' 層以後' },
         { k: '你有幾件', v: n + ' 件' }
       ],
       quoteLabel: '介紹',
@@ -5302,7 +5405,8 @@
       { k: '四個領域', v: layerN + ' / 4 層',
         note: '一層一層往下。每一層過不過，是他決定的。' },
       { k: '生物', v: mobN + ' / 44 種',
-        note: '每一項任務前面站一隻，每一層的盡頭再站一隻大的。' },
+        note: '每一項任務前面站一隻，每一層的盡頭再站一隻大的。' +
+          '　圖鑑最前面那一隻是你的，從第一天就在——不算在這 44 種裡。' },
       { k: '物品', v: itemN + ' / 152 種',
         note: '打贏一隻就抽，抽到的直接進圖鑑——換組、換班、換專案都跟著你走。' },
       { k: '最後', v: '命名封存',
@@ -5320,6 +5424,226 @@
     v.horizonWrap = 'margin:11px 0 0;padding:13px 15px;background:#14110E;border:1px solid #26211C';
     v.horizonHeadStyle = "font:400 11px/1 'C11';letter-spacing:.18em;color:#8A8073;margin-bottom:10px";
     v.horizonRowsStyle = 'display:flex;flex-direction:column;gap:5px';
+  }
+
+  /* ===== 你的那一隻 =====
+     圖鑑裡 44 隻是世界的，每個人看到的都一樣。這一隻是你的——名字與
+     顏色都從帳號算出來。名字用內容包自己的構詞法，而且跳過世界已經在
+     用的那 40 個，所以牠不會跟任何一隻撞名。 */
+  function hsl2hex(h, sPct, lPct) {
+    var ss = sPct / 100, ll = lPct / 100;
+    var c = (1 - Math.abs(2 * ll - 1)) * ss;
+    var x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    var m = ll - c / 2;
+    var r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; }
+    else if (h < 120) { r = x; g = c; }
+    else if (h < 180) { g = c; b = x; }
+    else if (h < 240) { g = x; b = c; }
+    else if (h < 300) { r = x; b = c; }
+    else { r = c; b = x; }
+    var hx = function (v) {
+      var n = Math.round((v + m) * 255);
+      n = Math.max(0, Math.min(255, n));
+      return (n < 16 ? '0' : '') + n.toString(16);
+    };
+    return '#' + hx(r) + hx(g) + hx(b);
+  }
+
+  var MY_MOB = null;
+  function myMob() {
+    if (MY_MOB) return MY_MOB;
+    var uid = String((LIVE.user || {}).userId || (LIVE.user || {}).account || '');
+    if (!uid) return null;
+    var pack = (window.JLZ_PACK || {}).creatures || [];
+    if (!pack.length) return null;
+
+    var M = [], A = [], Sx = [], used = {};
+    pack.forEach(function (c) {
+      if (M.indexOf(c.m) < 0) M.push(c.m);
+      if (A.indexOf(c.a) < 0) A.push(c.a);
+      if (Sx.indexOf(c.s) < 0) Sx.push(c.s);
+      used[c.n] = 1;
+    });
+
+    /* 同一個帳號每次算出來都一樣 */
+    var h = 2166136261;
+    for (var i = 0; i < uid.length; i++) {
+      h ^= uid.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    h ^= h >>> 16; h = Math.imul(h, 2246822507) >>> 0;
+    h ^= h >>> 13; h = Math.imul(h, 3266489909) >>> 0;
+    h = (h ^ (h >>> 16)) >>> 0;
+
+    /* 撞到世界已經在用的名字就往後挪一格，挪到沒撞為止 */
+    var total = M.length * A.length * Sx.length;
+    var idx = h % total, name = '';
+    for (var t = 0; t < total; t++) {
+      var k = (idx + t) % total;
+      var nm = M[k % M.length] +
+        A[Math.floor(k / M.length) % A.length] +
+        Sx[Math.floor(k / (M.length * A.length)) % Sx.length];
+      if (!used[nm]) { name = nm; break; }
+    }
+    if (!name) return null;
+
+    var body = pack[(h >>> 7) % pack.length];
+    var hue = ((h >>> 13) % 24) * 15;
+    var pal = {
+      '#': hsl2hex(hue, 52, 56),
+      o: hsl2hex(hue, 46, 30),
+      '*': hsl2hex(hue, 38, 90)
+    };
+    MY_MOB = {
+      name: name, px: body.px, pal: pal, hue: pal['#'],
+      art: packSvg(body.px, 1, false, pal),
+      trait: '牠不在任何一層裡，也不擋任何一項任務。牠跟著這個帳號——' +
+        '換組、換班、換專案，牠都在。'
+    };
+    return MY_MOB;
+  }
+
+  /* 你的那一件。名字用材質 ＋ 物，跳過內容包已經在用的 108 個。
+     身體借內容包裡真的像素圖，只換配色——跟世界同一套筆觸。 */
+  var MY_FIND = null;
+  var ITEM_N = ['砂', '石', '片', '塊', '粒', '束', '殼', '珠', '痂', '屑', '芯', '紋'];
+  function myFind() {
+    if (MY_FIND) return MY_FIND;
+    var uid = String((LIVE.user || {}).userId || (LIVE.user || {}).account || '');
+    if (!uid) return null;
+    var pack = (window.JLZ_PACK || {}) || {};
+    var deb = pack.debris || [], cre = pack.creatures || [];
+    if (!deb.length || !cre.length) return null;
+
+    var M = [], used = {};
+    cre.forEach(function (c) { if (M.indexOf(c.m) < 0) M.push(c.m); });
+    deb.forEach(function (d) { used[d.n] = 1; });
+
+    var h = 2166136261;
+    for (var i = 0; i < uid.length; i++) {
+      h ^= uid.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    /* 跟生物用不同的攪法，不然名字會跟牠連動 */
+    h = Math.imul(h ^ 0x5bf03635, 2654435761) >>> 0;
+    h ^= h >>> 15; h = Math.imul(h, 2246822507) >>> 0;
+    h = (h ^ (h >>> 13)) >>> 0;
+
+    var total = M.length * ITEM_N.length, name = '';
+    for (var t = 0; t < total; t++) {
+      var k = ((h % total) + t) % total;
+      var nm = M[k % M.length] + ITEM_N[Math.floor(k / M.length) % ITEM_N.length];
+      if (!used[nm]) { name = nm; break; }
+    }
+    if (!name) return null;
+
+    var body = deb[(h >>> 9) % deb.length];
+    var hue = ((h >>> 17) % 24) * 15 + 7;   /* 跟生物錯開 7 度，兩個不會同色 */
+    var pal = {
+      '#': hsl2hex(hue % 360, 48, 58),
+      o: hsl2hex(hue % 360, 42, 32),
+      '*': hsl2hex(hue % 360, 34, 90)
+    };
+    MY_FIND = {
+      name: name, hue: pal['#'],
+      art: packSvg(body.px, 1, false, pal),
+      look: '不知道是哪一層來的。它跟著這個帳號，不跟著專案。'
+    };
+    return MY_FIND;
+  }
+
+  function openMyFind(L) {
+    var f = myFind();
+    if (!f) return;
+    showMoment(L, {
+      kind: 'mined', art: 'gem', accent: f.hue,
+      kicker: 'YOURS',
+      title: f.name,
+      lede: '這一件只有你有。',
+      sprite: 'display:block;width:110px;height:110px;margin:0 auto;image-rendering:pixelated;' +
+        'background:url("' + f.art + '") center/contain no-repeat',
+      rows: [
+        { k: '哪裡來的', v: '你的帳號', hi: true },
+        { k: '分數', v: '沒有分數' }
+      ],
+      quoteLabel: '介紹',
+      quote: f.look,
+      lines: ['它不算在 152 種裡面——那 152 種是大家共同的世界，這一件是你的。'],
+      btn: '收好', go: function () {}
+    });
+  }
+
+  /* ---- 新手導覽那一項 ---- */
+  var TUT_KEY = 'jlz.tut';
+  /* 導覽那一項每一次同步都會被重建（bootstrap 會換掉整個 tasks），
+     所以勾到哪裡也要記在同一個地方，不然勾了就沒了。 */
+  function tutState() {
+    try {
+      var raw = localStorage.getItem(TUT_KEY);
+      if (!raw) return { done: false, checked: [] };
+      if (raw === '1') return { done: true, checked: [0, 1, 2] };
+      var o = JSON.parse(raw);
+      return { done: !!o.done, checked: (o.checked || []).map(Number) };
+    } catch (e) { return { done: false, checked: [] }; }
+  }
+  function saveTut(o) {
+    try { localStorage.setItem(TUT_KEY, JSON.stringify(o)); } catch (e) {}
+  }
+  function tutDone() { return tutState().done; }
+  function markTutDone() {
+    var o = tutState();
+    o.done = true;
+    saveTut(o);
+  }
+  function tutCheck(i, on) {
+    var o = tutState();
+    var next = o.checked.filter(function (x) { return x !== Number(i); });
+    if (on) next.push(Number(i));
+    o.checked = next;
+    saveTut(o);
+  }
+  function tutTask(L) {
+    var mine = myMob();
+    return {
+      id: 'tut', klass: 'wed', layer: 0, type: 'required',
+      title: '先走一遍',
+      cond: '照著做一次，你就知道這裡怎麼運作。這一項不用等老師——你自己勾完就算過。',
+      note: '這一項不算分、不算進任何一層，也不會出現在老師那邊。',
+      spec: '', due: '不設限', mineral: '',
+      status: tutState().done ? 'passed' : 'todo',
+      text: '', files: [], fb: '', fbType: '', over: false, rounds: [],
+      checks: [
+        '看一眼上面那一隻——每一項任務前面都站著一隻，牠是你的',
+        '打開「圖鑑」，看看四個領域各有什麼還沒收到',
+        '打開「排行榜」，看一眼你們現在在哪'
+      ],
+      checked: tutState().checked
+    };
+  }
+
+  function openMyMob(L) {
+    var m = myMob();
+    if (!m) return;
+    showMoment(L, {
+      kind: 'open', accent: m.hue,
+      kicker: 'YOURS',
+      title: m.name,
+      lede: '這一隻只有你有。',
+      sprite: 'display:block;width:120px;height:120px;margin:0 auto;image-rendering:pixelated;' +
+        'background:url("' + m.art + '") center/contain no-repeat',
+      rows: [
+        { k: '哪裡來的', v: '你的帳號', hi: true },
+        { k: '在哪一層', v: '不在任何一層' },
+        { k: '分數', v: '沒有分數' }
+      ],
+      quoteLabel: '介紹',
+      quote: m.trait,
+      lines: ['名字是用這個世界的構詞法算出來的：材質 ＋ 動作 ＋ 後綴。' +
+              '世界裡那 44 隻都沒有這個名字，顏色也是你的。',
+              '牠不算在 44 種裡面——那 44 種是大家共同的世界，這一隻是你的。'],
+      btn: '知道了', go: function () {}
+    });
   }
 
   /* ---------- S-01：三步規則＋下一件要做的事 ---------- */
@@ -5493,6 +5817,17 @@
     /* 老師判過、但學生還沒去看牠留下什麼——這件事要排在所有建議前面。
        抽選的卡不再自己跳出來（會蓋在別的畫面上），所以「有東西還沒看」
        這個訊號一定要出現在主流程裡，不然學生走完一輪都不知道有東西可以開。 */
+    /* 新手導覽沒走過的話排在所有建議前面——那是唯一不用等任何人的一項。 */
+    var tut = (S.tasks || []).filter(function (t) { return t.id === 'tut'; })[0];
+    if (tut && tut.status !== 'passed') {
+      v.nextAction = '先走一遍（兩分鐘）。';
+      v.nextActionWhy = '這一項是系統給的，不用等老師。走完你會拿到兩樣只有你有的東西——' +
+        '一隻擋在它前面的生物，跟牠留下的一件。名字與顏色都是從你的帳號算出來的。';
+      v.nextActionBtn = '去走一遍';
+      v.goNextAction = openTask(L, tut);
+      return;
+    }
+
     var unseenWin = all.filter(function (t) {
       return t.status === 'passed' && !seenWin(t.id);
     })[0];

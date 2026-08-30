@@ -4193,5 +4193,18 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('103. 首頁：這一趟走完是什麼樣子');
 })();
 
+
+/* 104. 「作業交到老師本來要你交的地方」那一塊改成可換——新手導覽那一項
+       不用交任何東西給老師，照原文顯示會把人帶錯方向。 */
+(function () {
+  var a = '<div style="font:500 22px/1.5 ' + Q + 'C11' + Q + ';color:#C3BAAA;text-wrap:pretty">作業交到老師本來要你交的地方。</div>';
+  if (t.split(a).length - 1 !== 1) { console.error('104. 那一句找不到'); process.exit(1); }
+  t = t.replace(a, '<div style="font:500 22px/1.5 ' + Q + 'C11' + Q + ';color:#C3BAAA;text-wrap:pretty">{{ handInHead }}</div>');
+  var b = '<div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#6E665A;margin-top:7px;text-wrap:pretty">這裡不收檔案，也不會看你交了什麼。交完再回來勾——他去他收作業的地方看完，再回來按過或不過。</div>';
+  if (t.split(b).length - 1 !== 1) { console.error('104. 那一段說明找不到'); process.exit(1); }
+  t = t.replace(b, '<div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#6E665A;margin-top:7px;text-wrap:pretty">{{ handInNote }}</div>');
+  console.log('104. 交在哪裡那一塊改成可換');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
