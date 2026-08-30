@@ -738,7 +738,7 @@
                       <div style="font:500 22px/1 'C11';color:var(--ac);margin-bottom:7px">{{ gambleTitle }}</div>
                       <div style="font:400 22px/1.65 'C11';color:var(--tx2);margin-bottom:9px;max-width:520px;text-wrap:pretty">{{ gambleBody }}</div>
                       <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-bottom:13px;max-width:520px;text-wrap:pretty">{{ gambleCost }}</div>
-                      <div style="display:flex;flex-direction:column;gap:7px">
+                      <input value="{{ redigNote }}" onChange="{{ setRedigNote }}" placeholder="{{ redigPlaceholder }}" style="{{ redigInputStyle }}"><div style="{{ redigHintStyle }}">{{ redigHint }}</div><div style="display:flex;flex-direction:column;gap:7px">
                         <sc-for list="{{ gambleItems }}" as="gb" hint-placeholder-count="3">
                           <button onClick="{{ gb.pick }}" style="{{ gb.style }}">
                             {{ gb.label }}

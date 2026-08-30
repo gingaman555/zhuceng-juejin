@@ -3190,8 +3190,9 @@
       v.gambleBoxStyle = 'margin:0 0 18px;padding:16px 18px;background:rgba(233,179,65,.07);' +
         'border:1px solid #7A6432';
       v.gambleTitle = '★　這一項有星了';
-      v.gambleBody = '你在老師開口之前自己發現有一條沒做紮實，打開、補完，再勾回來。' +
-        '這顆星老師給不了——他只能判你交出來的東西，判不了你有沒有自己回頭看過。';
+      v.gambleBody = '你在老師開口之前自己發現有一條沒做紮實，寫下要補什麼、補完，再勾回來。' +
+        '這一項會多抽一次。這顆星老師給不了——他只能判你交出來的東西，' +
+        '判不了你有沒有自己回頭看過。';
       v.gambleCost = '送出去吧。';
       return;
     }
@@ -3201,11 +3202,24 @@
       'border-right:1px solid var(--line2);border-bottom:1px solid var(--line2)';
     v.gambleTitle = '有哪一條想再做紮實一點嗎';
     v.gambleBody = '「勾完了」跟「做紮實了」不是同一件事。哪一條你其實心裡有數還不夠，' +
-      '現在可以打開它、補完、再勾回來——這一項會留下一顆星。' +
-      '那顆星是你自己回頭發現的，老師給不了；他只判得了你交出來的東西。';
-    v.gambleCost = '要隔一段時間才算數：那一條至少勾著 6 小時之後，你才回頭把它打開——' +
-      '那是你自己過一陣子想通的，不是勾完馬上點兩下。' +
-      '打開之後隨時可以補完再勾回來，不影響送出。';
+      '寫下你要補什麼、打開它、補完再勾回來——這一項會留下一顆星，' +
+      '而且老師判過的時候會多抽一次。那一次是你自己掙的，不是他給的。' +
+      '　一週一次。';
+    v.gambleCost = '先寫一句你要補什麼，再選要打開哪一條。那一句會跟著送給老師——' +
+      '他驗收的時候看得到你自己說要補的是什麼，也對得上你交出來的東西。' +
+      '補完再勾回來就成立，不影響送出。';
+
+    var note0 = String(L.state.redigNote || '');
+    v.redigNote = note0;
+    v.redigPlaceholder = '例：只訪到兩個人，要再補一個不同角色的。';
+    v.setRedigNote = function (e) { L.setState({ redigNote: e.target.value }); };
+    v.redigInputStyle = 'width:100%;padding:12px 13px;background:var(--field);border:1px solid var(--line2);' +
+      "color:var(--tx);font:400 22px/1.5 'C11';outline:none";
+    v.redigHint = note0.trim()
+      ? '寫好了。下面挑一條打開——那一句就掛在那一條上。'
+      : '還沒寫。沒有寫就打開的話，只是把勾拿掉而已，不會留下星。';
+    v.redigHintStyle = "font:400 11px/1.6 'C11';margin:7px 0 11px;color:" +
+      (note0.trim() ? 'var(--ac)' : 'var(--tx3)');
 
     v.gambleItems = list.map(function (txt, i) {
       return {
@@ -3215,10 +3229,16 @@
           /* 先在畫面上打開，再回寫——跟勾選同一套手感 */
           task.checked = (task.checked || []).filter(function (x) { return Number(x) !== i; });
           L.setState({ checkNudge: (L.state.checkNudge || 0) + 1 });
-          call('apiSetCheck', LIVE.token, task.id, i, false)
+          var nt = String(L.state.redigNote || '').trim();
+          if (!nt) {
+            L.say('先寫一句你要補什麼——那一句就是這件事的證據，也是老師看得到的東西。');
+            return;
+          }
+          call('apiSetCheck', LIVE.token, task.id, i, false, nt)
             .then(function (r) {
               if (!r || !r.ok) { L.say((r && r.error) || '沒有存到伺服器。'); return refresh(); }
-              L.say('第 ' + (i + 1) + ' 條打開了。補完之後再勾回來——至少要隔 6 小時，那顆星才算數。');
+              L.setState({ redigNote: '' });
+              L.say('第 ' + (i + 1) + ' 條打開了：' + nt + '　補完再勾回來就成立。');
               return refresh();
             })
             .catch(function () { L.say('沒有存到伺服器。'); });
@@ -7928,7 +7948,11 @@
       var LAB = ['完全沒有', '有一點', '中等', '明顯多做', '遠超出要求'];
       v.gaveNote = '這一組在這一項裡，不只是把作業交出來——多研究了、多畫了' +
         '別的草圖、給了不同的做法，或是有額外的產出。' +
-        (cur && cur.star
+        ((cur && cur.redig && cur.redig.length)
+          ? '　★ 這一項他們回掘過，自己寫的是：' +
+            cur.redig.map(function (x) { return '「' + x.note + '」'; }).join('、') +
+            '　（那讓他們多抽一次，不影響你這一格）'
+          : cur && cur.star
           ? '　★ 這一項他們回掘過：在你開口之前自己發現有一條沒做紮實，' +
             '打開補完才勾回來。那顆星你給不了，但它算不算「多做」由你決定。'
           : '');

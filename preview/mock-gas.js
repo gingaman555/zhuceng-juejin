@@ -140,6 +140,8 @@
       return Object.assign({}, d, { status: s.status, text: s.text, files: s.files || [], effort: s.effort||'', effortNote: s.effortNote||'', blocker: s.blocker||'',
         fb: s.fb || '', fbType: s.fbType || '', checked: checkList2(s.checked),
         star: teamId ? starOf(teamId, d.id) : false,
+        /* 回掘過哪幾條、各寫了什麼 */
+        redig: teamId ? redigOf(teamId, d.id) : [],
         vow: s.vow || '', find: Number(s.find) || 0,
         vowWon: (teamId && s.vow && s.status === 'passed') ? vowWon(teamId, d.id, d, kl, s.vow) : false,
         over: dw !== null && dw < w && s.status !== 'passed' });
@@ -226,24 +228,29 @@
     });
   }
 
-  var STAR_GAP_MS = 6 * 60 * 60 * 1000;
-  function starOf(teamId, taskId) {
+  /* 時間門檻拿掉了：證據改成打開時寫下的那一句話 */
+  /* 回掘：打開一條、寫下要補什麼、補完再勾回來。
+     證據是那一句話，不是時間差。 */
+  function starOf(teamId, taskId) { return redigOf(teamId, taskId).length > 0; }
+
+  function redigOf(teamId, taskId) {
     var ev = DB.Checks
       .filter(function (c) { return c.teamId === teamId && c.taskId === taskId; })
       .sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
-    var lastOn = {}, opened = {};
-    for (var i = 0; i < ev.length; i++) {
-      var k = String(ev[i].idx), t = new Date(ev[i].ts).getTime();
-      if (ev[i].act === 'on') {
-        if (opened[k]) return true;
-        lastOn[k] = t;
+    var pending = {}, done = {};
+    ev.forEach(function (e) {
+      var k = String(e.idx);
+      if (e.act === "on") {
+        if (pending[k]) { done[k] = pending[k]; delete pending[k]; }
       } else {
-        if (lastOn[k] && (t - lastOn[k]) >= STAR_GAP_MS) opened[k] = true;
-        delete lastOn[k];
+        var nt = String(e.note || "").trim();
+        if (nt) pending[k] = nt; else delete pending[k];
       }
-    }
-    return false;
+    });
+    return Object.keys(done).map(function (k) { return { idx: Number(k), note: done[k] }; })
+      .sort(function (a, b) { return a.idx - b.idx; });
   }
+
   function scoreOf(teamId, classId) {
     var kl = classById(classId);
     var byId = {};
@@ -790,7 +797,8 @@
               title: task.title, layer: task.layer, type: task.type, text: task.text, spec: task.spec || '', effort: task.effort, effortNote: task.effortNote, blocker: task.blocker,
               files: task.files, over: task.over, due: task.due, weeks: tm.weeks, cond: task.cond, mineral: task.mineral,
               /* 回掘過的那一項——老師給不了這顆星，但要看得到 */
-              star: starOf(tm.id, task.id) });
+              star: starOf(tm.id, task.id),
+              redig: redigOf(tm.id, task.id) });
           });
           /* 每一組都列出來，不管有沒有送過申請——放行完全由老師決定 */
           if (Number(tm.layer) <= 4) out.gates.push({
@@ -1107,7 +1115,7 @@
       persist();
       return ok({ vow: k });
     },
-    apiSetCheck: function (t, taskId, idx, on) {
+    apiSetCheck: function (t, taskId, idx, on, note) {
       var u = auth(t);
       if (u.role !== 'student' || !u.teamId) return err('只有學生可以勾。');
       var def = tasksOfClass(u.classId, u.teamId).filter(function (d) { return d.id === taskId; })[0];
@@ -1116,6 +1124,21 @@
       if (!(n >= 0 && n < def.checks.length)) return err('沒有這一條。');
       var row = ttmap(u.teamId)[taskId];
       if (row && row.status === 'passed') return err('這一項已經通過了，不用再改。');
+      if (!on && String(note || '').trim()) {
+        var kl = classById(u.classId) || {};
+        var st = new Date(kl.courseStart || '2026-09-14');
+        var d0 = new Date(st.getFullYear(), st.getMonth(), st.getDate());
+        var wkOf = function (ts) {
+          var days = Math.floor((new Date(ts) - d0) / 86400000);
+          return Math.max(1, Math.floor(days / 7) + 1);
+        };
+        var now = wkOf(NOW());
+        var used = DB.Checks.filter(function (c) {
+          return c.teamId === u.teamId && c.act === 'off' &&
+                 String(c.note || '').trim() && wkOf(c.ts) === now;
+        }).length;
+        if (used >= 1) return err('這一週已經回掘過一次了。下一週再來——一週一次，這件事才有份量。');
+      }
       var set = {};
       checkList2(row && row.checked).forEach(function (x) { set[x] = true; });
       if (on) set[n] = true; else delete set[n];
@@ -1126,7 +1149,9 @@
       else DB.TeamTasks.push({ teamId: u.teamId, taskId: taskId, status: 'todo',
         text: '', files: [], fb: '', fbType: '', passedWeek: null, checked: next });
       DB.Checks.push({ ckId: 'ck' + uid(), teamId: u.teamId, taskId: taskId,
-        idx: n, act: on ? 'on' : 'off', by: u.userId || u.account || '', ts: NOW() });
+        idx: n, act: on ? 'on' : 'off', by: u.userId || u.account || '', ts: NOW(),
+        /* 打開的時候才有：這一條要補什麼 */
+        note: on ? '' : String(note || '').slice(0, 200) });
       persist();
       return ok({ checked: next, total: def.checks.length, star: starOf(u.teamId, taskId) });
     },
@@ -1241,7 +1266,9 @@
         findsArr = prevFinds;
         if (pass && !prevFinds.length) {
           var layerNow = defNow ? (Number(defNow.layer) || 1) : 1;
-          findsArr = rollFindsIn(layerNow, findCount(layerNow, gaveN));
+          /* 回掘成立多抽一次：老師給的加成是他的，這一次是學生自己掙的。 */
+          var extra = starOf(teamId, taskId) ? 1 : 0;
+          findsArr = rollFindsIn(layerNow, Math.min(8, findCount(layerNow, gaveN) + extra));
         }
         if (pass) {
           m.finds = findsArr;

@@ -48,7 +48,9 @@ var SHEET_DEFS = {
   Passes:      ['passId', 'teamId', 'layer', 'week', 'toolLevel', 'gateCell1', 'gateCell2', 'gateCell3', 'verdict', 'reason', 'ts'],
   Reads:       ['readId', 'readerTeam', 'targetTeam', 'layer', 'week', 'readerLayer', 'readerStay', 'recentlyRejected', 'ts'],
   Codes:       ['revId', 'coder', 'code', 'ts'],
-  Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'by', 'ts'],
+  /* note：打開一條的時候寫下「要補什麼」。那一句是回掘的證據——
+     本來用時間差當證據，但時間只證明等過，證明不了做了什麼。 */
+  Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'by', 'ts', 'note'],
   /* 走完之後封存的一趟。一組一列，改名就覆蓋。 */
   Journeys:    ['journeyId', 'teamId', 'classId', 'name', 'sealedBy', 'sealedAt', 'stats'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
@@ -1129,6 +1131,8 @@ function mergeTasks_(defs, tmap, courseWeek, dueWeekFn, teamId, klass) {
       effort: s.effort, effortNote: s.effortNote, blocker: s.blocker,
       checked: s.checked || [],
       star: teamId ? starOf_(teamId, d.id) : false,
+      /* 回掘過哪幾條、各寫了什麼——學生看得到自己寫的，老師拿它當證據 */
+      redig: teamId ? redigOf_(teamId, d.id) : [],
       vow: s.vow || '',
       find: Number(s.find) || 0,
       /* 過了才結算。還沒過的時候顯示「還沒結算」，不要先給答案—— */
@@ -1345,6 +1349,7 @@ function apiBootstrap(token) {
               /* 回掘過的那一項。老師給不了這顆星，但他要看得到——
                  那是「有沒有不只是把作業交出來」最直接的證據。 */
               star: starOf_(t.id, task.id),
+              redig: redigOf_(t.id, task.id),
               weeks: t.weeks, cond: task.cond, mineral: task.mineral
             });
           }
@@ -1795,7 +1800,7 @@ function checkList_(raw) {
 
    一項任務的 ★ 只計一次。它是「那一頁」的屬性，不是「那一條」的。 */
 
-var STAR_GAP_MS = 6 * 60 * 60 * 1000;
+/* STAR_GAP_MS 拿掉了：回掘的證據改成打開時寫下的那一句話，不再看時間差。 */
 
 function checksOf_(teamId, taskId) {
   return readTable_('Checks')
@@ -1806,22 +1811,29 @@ function checksOf_(teamId, taskId) {
 }
 
 /** 這一組在這一項任務上，有沒有回掘過。 */
+/* 回掘：打開一條、寫下要補什麼、補完再勾回來。
+   證據是那一句話，不是時間差——時間只證明等過，而且點兩下就刷得到。 */
 function starOf_(teamId, taskId) {
+  return redigOf_(teamId, taskId).length > 0;
+}
+
+/** 這一項回掘過哪幾條，各自寫了什麼。打開時有寫、而且後來勾回來了才算。 */
+function redigOf_(teamId, taskId) {
   var ev = checksOf_(teamId, taskId);
-  var lastOn = {};   /* idx -> 上一次勾起來的時間 */
-  var opened = {};   /* idx -> 有效地打開過（距上次勾 >= 6h） */
+  var pending = {};   /* idx -> 打開時寫的那一句 */
+  var done = {};
   for (var i = 0; i < ev.length; i++) {
-    var k = String(ev[i].idx), t = new Date(ev[i].ts).getTime();
+    var k = String(ev[i].idx);
     if (String(ev[i].act) === 'on') {
-      /* 打開過又勾回來 —— 成立 */
-      if (opened[k]) return true;
-      lastOn[k] = t;
+      if (pending[k]) { done[k] = pending[k]; delete pending[k]; }
     } else {
-      if (lastOn[k] && (t - lastOn[k]) >= STAR_GAP_MS) opened[k] = true;
-      delete lastOn[k];
+      var nt = String(ev[i].note || '').trim();
+      if (nt) pending[k] = nt; else delete pending[k];
     }
   }
-  return false;
+  return Object.keys(done).map(function (k) {
+    return { idx: Number(k), note: done[k] };
+  }).sort(function (a, b) { return a.idx - b.idx; });
 }
 
 /* ---- 分數 ----
@@ -2191,7 +2203,23 @@ function apiSetVow(token, taskId, vow) {
   } catch (e) { return err_(e); }
 }
 
-function apiSetCheck(token, taskId, idx, on) {
+/** 這一組這一週回掘過幾次。一週一次——不然它會變成「多抽一次」的按鈕。 */
+function redigThisWeek_(teamId, classId) {
+  var wk = courseWeekOf_(classById_(classId));
+  var start = toDate_((classById_(classId) || {}).courseStart || cfg_('courseStart', '2026-09-14'));
+  var d0 = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  var n = 0;
+  readTable_('Checks').forEach(function (c) {
+    if (String(c.teamId) !== String(teamId)) return;
+    if (String(c.act) !== 'off') return;
+    if (!String(c.note || '').trim()) return;
+    var days = Math.floor((new Date(c.ts) - d0) / 86400000);
+    if (Math.max(1, Math.floor(days / 7) + 1) === wk) n++;
+  });
+  return n;
+}
+
+function apiSetCheck(token, taskId, idx, on, note) {
   try {
     var u = auth_(token);
     if (u.role !== 'student' || !u.teamId) return err_('只有學生可以勾。');
@@ -2206,6 +2234,11 @@ function apiSetCheck(token, taskId, idx, on) {
       return String(r.teamId) === String(u.teamId) && String(r.taskId) === String(taskId);
     })[0] || null;
     if (row && String(row.status) === 'passed') return err_('這一項已經通過了，不用再改。');
+
+    /* 回掘一週一次。寫了字才算回掘，單純把勾拿掉不受限。 */
+    if (!on && String(note || '').trim() && redigThisWeek_(u.teamId, u.classId) >= 1) {
+      return err_('這一週已經回掘過一次了。下一週再來——一週一次，這件事才有份量。');
+    }
 
     var cur = jparse_(row && row.checked, []) || [];
     var set = {};
@@ -2224,7 +2257,9 @@ function apiSetCheck(token, taskId, idx, on) {
     appendRow_('Checks', {
       ckId: 'ck' + Utilities.getUuid().slice(0, 8),
       teamId: u.teamId, taskId: taskId, idx: n,
-      act: on ? 'on' : 'off', by: u.userId || u.account || '', ts: new Date()
+      act: on ? 'on' : 'off', by: u.userId || u.account || '', ts: new Date(),
+      /* 打開的時候才有：這一條要補什麼 */
+      note: on ? '' : String(note || '').slice(0, 200)
     });
 
     return ok_({ checked: next, total: list.length, star: starOf_(u.teamId, taskId) });
@@ -2394,7 +2429,9 @@ function apiReviewItem(token, teamId, taskId, result, reason, gave) {
     var findsArr = prevFinds;
     if (pass && !prevFinds.length) {
       var layerNow = defNow ? (Number(defNow.layer) || 1) : 1;
-      findsArr = rollFindsIn_(layerNow, findCount_(layerNow, gaveN));
+      /* 回掘成立多抽一次：老師給的加成是他的，這一次是學生自己掙的。 */
+      var extra = starOf_(teamId, taskId) ? 1 : 0;
+      findsArr = rollFindsIn_(layerNow, Math.min(8, findCount_(layerNow, gaveN) + extra));
     }
     var find = findsArr[0] || '', find2 = findsArr[1] || '';
 

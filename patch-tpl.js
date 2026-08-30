@@ -4684,5 +4684,17 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("124. 拿掉 T-05 的「這一項在哪一層」");
 })();
 
+
+/* 125. 回掘要先寫下「要補什麼」。
+       本來的證據是時間差（勾著滿 6 小時才打得開得算數）——但時間只證明
+       等過，證明不了做了什麼，而且點兩下就刷得到，學生也不知道自己在幹嘛。
+       改成寫一句：那一句綁在特定一條上，老師對得到作業，學生自己也清楚。 */
+(function () {
+  var a = "<div style=\"display:flex;flex-direction:column;gap:7px\">\n                        <sc-for list=\"{{ gambleItems }}\" as=\"gb\"";
+  if (t.split(a).length - 1 !== 1) { console.error("125. 找不到回掘那一排"); process.exit(1); }
+  t = t.replace(a, "<input value=\"{{ redigNote }}\" onChange=\"{{ setRedigNote }}\" placeholder=\"{{ redigPlaceholder }}\" style=\"{{ redigInputStyle }}\"><div style=\"{{ redigHintStyle }}\">{{ redigHint }}</div>" + a);
+  console.log("125. 回掘先寫要補什麼");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
