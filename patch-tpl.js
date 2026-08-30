@@ -635,6 +635,7 @@ S05FB,
 /* 13b. S-05：這一組現在的狀態（送出前的自我判斷，老師會先看到這一段） */
 const S05TEXT = '                  <textarea onChange="{{ setSubmitText }}" value="{{ submitText }}" placeholder="例：訪談三位大三生之後，把題目收斂成「畢製組隊後的分工失衡」，範圍縮到系上，排除跨校比較。" style="width:100%;min-height:108px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 \'C11\';resize:vertical;outline:none"></textarea>\n                </div>';
 must(S05TEXT, S05TEXT + '\n' + [
+'                <sc-if value="{{ hasReflect }}" hint-placeholder-val="{{ true }}">',
 '                <div style="padding:15px 16px;background:linear-gradient(140deg,rgba(233,179,65,.055),transparent 62%),#14110E;border:1px solid #3A3026">',
 '                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px">',
 '                    <span style="font:500 22px/1 \'C11\';color:#E8E2D6">這一組現在的狀態</span>',
@@ -657,7 +658,8 @@ must(S05TEXT, S05TEXT + '\n' + [
 '                    <div style="font:400 11px/1 \'C11\';letter-spacing:.16em;color:#5F574C;margin-bottom:8px">現在卡在哪（沒有就留空）</div>',
 '                    <textarea onChange="{{ setBlocker }}" value="{{ blocker }}" placeholder="例：兩個人對範圍的理解還不一樣，下一項開始前要先講清楚。" style="width:100%;min-height:62px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 \'C11\';resize:vertical;outline:none"></textarea>',
 '                  </div>',
-'                </div>'
+'                </div>',
+'                </sc-if>'
 ].join('\n'));
 
 /* 14. S-05 證據區：真實上傳（檔名、大小、檢視、移除、連結、上傳中） */
@@ -4204,6 +4206,37 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   if (t.split(b).length - 1 !== 1) { console.error('104. 那一段說明找不到'); process.exit(1); }
   t = t.replace(b, '<div style="font:400 11px/1.7 ' + Q + 'C11' + Q + ';color:#6E665A;margin-top:7px;text-wrap:pretty">{{ handInNote }}</div>');
   console.log('104. 交在哪裡那一塊改成可換');
+})();
+
+
+/* 105. T-03 空狀態寫的是「切到學生端提交任務，這裡就會出現」——那是原型
+       自己試用時的話。真的老師沒有一個學生端可以切過去。 */
+(function () {
+  var a = '切到學生端提交任務，這裡就會出現';
+  if (t.split(a).length - 1 !== 1) { console.error('105. 找不到'); process.exit(1); }
+  t = t.replace(a, '學生把一項勾完成，就會排到這裡');
+  console.log('105. T-03 空狀態');
+})();
+
+/* 106. 固定表頭本來是 .94——捲動的時候底下的字會從表頭透出來。 */
+(function () {
+  var a = 'background:rgba(11,10,9,.94);border-bottom:1px solid #221E19';
+  if (t.split(a).length - 1 !== 1) { console.error('106. 找不到'); process.exit(1); }
+  t = t.replace(a, 'background:#0B0A09;border-bottom:1px solid #221E19');
+  console.log('106. 表頭不透明');
+})();
+
+
+/* 107. 導覽列的按鈕在無障礙樹上沒有名字——字都在巢狀的 span 裡，
+       讀螢幕的人只會聽到一連串「按鈕」。兩端各一份，所以是兩處。 */
+(function () {
+  [['{{ it.style }}', 1], ['{{ it.tabStyle }}', 1]].forEach(function (pair) {
+    var a = '<button onClick="{{ it.go }}" style="' + pair[0] + '">';
+    var n = t.split(a).length - 1;
+    if (n !== pair[1]) { console.error('107. ' + pair[0] + ' 預期 ' + pair[1] + ' 處，找到 ' + n); process.exit(1); }
+    t = t.split(a).join('<button onClick="{{ it.go }}" aria-label="{{ it.label }}" style="' + pair[0] + '">');
+  });
+  console.log('107. 導覽列的無障礙名稱');
 })();
 
 fs.writeFileSync('build_tpl_live.txt', t);
