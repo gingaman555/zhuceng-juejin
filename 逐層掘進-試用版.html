@@ -5177,9 +5177,14 @@ class Component extends DCLogic {
     }
     return out;
   }
-  function rollFindIn(maxLayer) {
-    var pool = findPool(maxLayer);
-    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : 0;
+  /* 抽 n 次。刻意取後放回——重複是這套收集的一部分：不重複的話幾輪就收滿了，
+     收集撐不了一整個學期。疊加的是機會，不是數量。 */
+  function rollFindsIn(maxLayer, n) {
+    var pool = findPool(maxLayer), out = [];
+    for (var i = 0; i < n && pool.length; i++) {
+      out.push(pool[Math.floor(Math.random() * pool.length)]);
+    }
+    return out;
   }
   /* 掉幾件：層數 ＋（老師給的 1–5 − 1）。最少 1、最多 8。 */
   function findCount(layer, gave) {
@@ -6100,9 +6105,7 @@ class Component extends DCLogic {
         findsArr = prevFinds;
         if (pass && !prevFinds.length) {
           var layerNow = defNow ? (Number(defNow.layer) || 1) : 1;
-          var cnt = findCount(layerNow, gaveN);
-          findsArr = [];
-          for (var fi = 0; fi < cnt; fi++) findsArr.push(rollFindIn(layerNow));
+          findsArr = rollFindsIn(layerNow, findCount(layerNow, gaveN));
         }
         if (pass) {
           m.finds = findsArr;
@@ -6703,26 +6706,26 @@ class Component extends DCLogic {
           var gaveV = Math.max(1, Math.min(5, Number(rc.gave) || 1));
           var hueV = BOARD_HUE[Math.max(0, Math.min(4, (t.layer || 1) - 1))];
 
-          /* 同一件掉兩次就疊起來，不要列兩行 */
-          var tallyV = {}, orderV = [];
-          arrV.forEach(function (n) {
-            if (!tallyV[n]) { tallyV[n] = 0; orderV.push(n); }
-            tallyV[n]++;
-          });
+          /* 每一次抽都是自己一列；重複要看起來像「又抽到一次」，不是「×2」 */
+          var orderV = arrV.slice();
+          var seenV = {};
 
           var f2 = gaveV > 1;
           var rowsV = [];
           if (mv) rowsV.push({ k: '打贏了', v: mv.name });
           if (t.mineral) rowsV.push({ k: '採到', v: t.mineral });
-          rowsV.push({ k: '牠留下', v: arrV.length + ' 件', hi: arrV.length > 1 });
-          rowsV.push({ k: '怎麼算的', v: '第 ' + (t.layer || 1) + ' 層 ＋ 他給的 ' + gaveV + ' − 1' });
-          orderV.forEach(function (n) {
+          rowsV.push({ k: '抽了幾次', v: arrV.length + ' 次', hi: arrV.length > 1 });
+          rowsV.push({ k: '怎麼算的', v: '第 ' + (t.layer || 1) + ' 層 ＋ 他給的 ' + gaveV +
+            ' − 1 ＝ ' + arrV.length + ' 次' });
+          orderV.forEach(function (n, oi) {
             var fd = findOf(n);
             if (!fd) return;
             rowsV.push({
-              k: '　', v: fd.name + '　' + findTier(n) + (tallyV[n] > 1 ? '　×' + tallyV[n] : ''),
+              k: '第 ' + (oi + 1) + ' 次',
+              v: fd.name + '　' + findTier(n) + (seenV[n] ? '　又是這一件' : ''),
               hi: findTier(n) === '罕見'
             });
+            seenV[n] = 1;
           });
 
           next.moment = {
@@ -6739,10 +6742,11 @@ class Component extends DCLogic {
             rows: rowsV,
             quoteLabel: '他寫的合格考量', quote: t.fb || '',
             lines: [
-              '越往下掉越多：第一層掉一件，第四層就是四件起跳。' +
-              (gaveV > 1 ? '　他這次給了 ' + gaveV + '，所以又多了 ' + (gaveV - 1) + ' 件。'
-                         : '　他這次給了 1——多做一點的話，這裡會再多幾件。'),
-              '每一件都是 30 分，一樣重，撿到哪一件不影響名次。'
+              '越往下抽越多次：第一層抽一次，第四層就是四次起跳。' +
+              (gaveV > 1 ? '　他這次給了 ' + gaveV + '，所以多抽了 ' + (gaveV - 1) + ' 次。'
+                         : '　他這次給了 1——多做一點的話，這裡會多抽幾次。'),
+              '抽到重複的很正常——一層有 27 種，要收滿得靠好幾次任務。' +
+              '每一次都是 30 分，重複也算；但圖鑑只算種類，所以重複不會灌水收集進度。'
             ],
             btn: '收好', go: function () {}
           };
@@ -8204,12 +8208,18 @@ class Component extends DCLogic {
       ordered.forEach(function (t, i) {
         if (bucket(t) !== sec.key || !rows[i]) return;
         var r = rows[i];
-        /* 狀態已經是區塊了，每一列的徽章改標礦石 */
-        r.statusLabel = t.status === 'passed' ? '已採到' : '待採';
-        r.chipStyle = L.chip(
-          t.type === 'required' ? 'rgba(233,179,65,.16)' : 'transparent',
-          t.type === 'required' ? '#E9B341' : '#9A9184',
-          t.type === 'required' ? 'rgba(233,179,65,.3)' : '#3A3026');
+        /* 狀態已經是區塊了，每一列的徽章改標礦石。
+           判過但還沒去看牠留下什麼的，徽章換成提醒——那張卡不再自己跳，
+           清單這裡是學生最常回來的地方。 */
+        var notSeen = t.status === 'passed' && !seenWin(t.id);
+        r.statusLabel = notSeen ? '★ 牠留下的還沒看'
+          : t.status === 'passed' ? '已採到' : '待採';
+        r.chipStyle = notSeen
+          ? L.chip('rgba(233,179,65,.22)', '#FFD98A', '#E9B341')
+          : L.chip(
+            t.type === 'required' ? 'rgba(233,179,65,.16)' : 'transparent',
+            t.type === 'required' ? '#E9B341' : '#9A9184',
+            t.type === 'required' ? 'rgba(233,179,65,.3)' : '#3A3026');
         r.open = openTask(L, t);
         items.push(r);
       });
@@ -10416,7 +10426,7 @@ class Component extends DCLogic {
       quoteLabel: '它長這樣',
       quote: f.look,
       lines: ['每一件都是 30 分，一樣重——稀有只是比較少見。',
-              '一項任務掉幾件＝那一層的層數 ＋（老師給的 1–5 − 1）。越往下掉越多。'],
+              '一項任務抽幾次＝那一層的層數 ＋（老師給的 1–5 − 1）。越往下抽越多次。'],
       btn: '收好', go: function () {}
     });
   }
@@ -10496,24 +10506,25 @@ class Component extends DCLogic {
     var gave = Math.max(1, Math.min(5, Number(rec.gave) || 1));
     var hue = BOARD_HUE[Math.max(0, Math.min(4, (task.layer || 1) - 1))];
 
-    /* 同一件掉兩次就疊起來，不要列兩行 */
-    var tally = {}, order = [];
-    arr.forEach(function (n) {
-      if (!tally[n]) { tally[n] = 0; order.push(n); }
-      tally[n]++;
-    });
+    /* 每一次抽都是自己一列。抽到重複是設計的一部分——那要看起來像
+       「第 3 次又抽到同一件」，不是「這一件 ×2」。 */
+    var order = arr.slice();
+    var seenBefore = {};
 
     var rows = [];
     if (m) rows.push({ k: '打贏了', v: m.name });
-    rows.push({ k: '牠留下', v: arr.length + ' 件', hi: arr.length > 1 });
-    rows.push({ k: '怎麼算的', v: '第 ' + (task.layer || 1) + ' 層 ＋ 他給的 ' + gave + ' − 1' });
-    order.forEach(function (n) {
+    rows.push({ k: '抽了幾次', v: arr.length + ' 次', hi: arr.length > 1 });
+    rows.push({ k: '怎麼算的', v: '第 ' + (task.layer || 1) + ' 層 ＋ 他給的 ' + gave +
+      ' − 1 ＝ ' + arr.length + ' 次' });
+    order.forEach(function (n, oi) {
       var f = findOf(n);
       if (!f) return;
       rows.push({
-        k: '　', v: f.name + '（' + findTier(n) + '）' + (tally[n] > 1 ? '　×' + tally[n] : ''),
+        k: '第 ' + (oi + 1) + ' 次',
+        v: f.name + '（' + findTier(n) + '）' + (seenBefore[n] ? '　又是這一件' : ''),
         hi: findTier(n) === '罕見'
       });
+      seenBefore[n] = 1;
     });
     var f2 = gave > 1;
 
@@ -10553,10 +10564,11 @@ class Component extends DCLogic {
       quoteLabel: rec.say ? '他寫的' : '',
       quote: rec.say || '',
       lines: [
-        '越往下掉越多：第一層掉一件，第四層就是四件起跳。' +
-        (gave > 1 ? '　他這次給了 ' + gave + '，所以又多了 ' + (gave - 1) + ' 件。'
-                  : '　他這次給了 1——多做一點的話，這裡會再多幾件。'),
-        '每一件都一樣重，撿到哪一件不影響分數。'
+        '越往下抽越多次：第一層抽一次，第四層就是四次起跳。' +
+        (gave > 1 ? '　他這次給了 ' + gave + '，所以多抽了 ' + (gave - 1) + ' 次。'
+                  : '　他這次給了 1——多做一點的話，這裡會多抽幾次。'),
+        '抽到重複的很正常——一層有 27 種，要收滿得靠好幾次任務。' +
+        '每一次都是 30 分，重複也算；但圖鑑只算種類，所以重複不會灌水收集進度。'
       ],
       btn: '收好', go: function () {}
     }, reelPool, reelPicks);
@@ -11794,7 +11806,20 @@ class Component extends DCLogic {
     var waiting = all.filter(function (t) { return t.status === 'submitted'; }).length;
 
     v.hasNextAction = true;
-    if (!all.length) {
+
+    /* 老師判過、但學生還沒去看牠留下什麼——這件事要排在所有建議前面。
+       抽選的卡不再自己跳出來（會蓋在別的畫面上），所以「有東西還沒看」
+       這個訊號一定要出現在主流程裡，不然學生走完一輪都不知道有東西可以開。 */
+    var unseenWin = all.filter(function (t) {
+      return t.status === 'passed' && !seenWin(t.id);
+    })[0];
+    if (unseenWin) {
+      v.nextAction = '他判過「' + unseenWin.title + '」了。去看牠留下什麼。';
+      v.nextActionWhy = '打贏一隻會抽好幾次——次數看那一層的深度，加上他覺得你們有沒有多做。' +
+        '抽到的東西直接進圖鑑，換組換班都跟著你走。';
+      v.nextActionBtn = '去看';
+      v.goNextAction = openTask(L, unseenWin);
+    } else if (!all.length) {
       v.nextAction = '等老師把這一層的清單拿出來。';
       v.nextActionWhy = '清單一發下來，這裡會直接告訴你先做哪一項。';
       v.hasNextAction = false;

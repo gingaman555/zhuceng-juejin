@@ -2386,9 +2386,7 @@ function apiReviewItem(token, teamId, taskId, result, reason, gave) {
     var findsArr = prevFinds;
     if (pass && !prevFinds.length) {
       var layerNow = defNow ? (Number(defNow.layer) || 1) : 1;
-      var cnt = findCount_(layerNow, gaveN);
-      findsArr = [];
-      for (var fi = 0; fi < cnt; fi++) findsArr.push(rollFindIn_(layerNow));
+      findsArr = rollFindsIn_(layerNow, findCount_(layerNow, gaveN));
     }
     var find = findsArr[0] || '', find2 = findsArr[1] || '';
 
@@ -2437,12 +2435,23 @@ function findPool_(maxLayer) {
   return out;
 }
 
-function rollFindIn_(maxLayer) {
-  var pool = findPool_(maxLayer);
-  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : 0;
+/**
+ * 抽 n 次。刻意取後放回——抽到重複是這套收集的一部分：一層 27 種、一次抽
+ * 1–8 次，不重複的話幾輪就收滿了，收集就沒有長尾可以撐一整個學期。
+ *
+ * 老師的李克特疊加的是「抽幾次」。重複要在畫面上講成「第 3 次又抽到同一件」，
+ * 不是「這一件 ×2」——疊加的是機會，不是數量。
+ * 分數每一次都算（一件 30 分），但圖鑑只算種類，所以重複不會灌水收集進度。
+ */
+function rollFindsIn_(maxLayer, n) {
+  var pool = findPool_(maxLayer), out = [];
+  for (var i = 0; i < n && pool.length; i++) {
+    out.push(pool[Math.floor(Math.random() * pool.length)]);
+  }
+  return out;
 }
 
-/** 掉幾件：層數 ＋（老師給的 1–5 − 1）。最少 1、最多 8。 */
+/** 抽幾次：層數 ＋（老師給的 1–5 − 1）。最少 1、最多 8。 */
 function findCount_(layer, gave) {
   var L = Math.max(1, Math.min(4, Number(layer) || 1));
   var g = Math.max(1, Math.min(5, Number(gave) || 1));

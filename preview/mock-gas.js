@@ -308,9 +308,14 @@
     }
     return out;
   }
-  function rollFindIn(maxLayer) {
-    var pool = findPool(maxLayer);
-    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : 0;
+  /* 抽 n 次。刻意取後放回——重複是這套收集的一部分：不重複的話幾輪就收滿了，
+     收集撐不了一整個學期。疊加的是機會，不是數量。 */
+  function rollFindsIn(maxLayer, n) {
+    var pool = findPool(maxLayer), out = [];
+    for (var i = 0; i < n && pool.length; i++) {
+      out.push(pool[Math.floor(Math.random() * pool.length)]);
+    }
+    return out;
   }
   /* 掉幾件：層數 ＋（老師給的 1–5 − 1）。最少 1、最多 8。 */
   function findCount(layer, gave) {
@@ -1231,9 +1236,7 @@
         findsArr = prevFinds;
         if (pass && !prevFinds.length) {
           var layerNow = defNow ? (Number(defNow.layer) || 1) : 1;
-          var cnt = findCount(layerNow, gaveN);
-          findsArr = [];
-          for (var fi = 0; fi < cnt; fi++) findsArr.push(rollFindIn(layerNow));
+          findsArr = rollFindsIn(layerNow, findCount(layerNow, gaveN));
         }
         if (pass) {
           m.finds = findsArr;
