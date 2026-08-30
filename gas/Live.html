@@ -3126,7 +3126,10 @@
     (task.checked || []).forEach(function (i) { on[Number(i)] = true; });
     if (list.filter(function (_x, i) { return on[i]; }).length < list.length) return;  /* 還沒勾完 */
 
-    v.gambleShow = true;
+    /* 「送出之前，有沒有哪一項你其實不太確定？」那一整塊拿掉了。
+       ★ 的機制留在資料裡（已經拿到星的那幾項照樣標星），只是不再在
+       送出前攔一次問人要不要賭。 */
+    v.gambleShow = !!task.star;
     v.gambleStar = !!task.star;
 
     if (task.star) {
@@ -4109,11 +4112,14 @@
      '......####......']
   ];
 
+  /* 暗部（o）本來太暗，壓在近黑的底上等於消失。像素多的那幾隻看不出來，
+     但「群」字輩只有四五十個像素、其中三分之二是暗部，整隻就只剩幾點。
+     暗部提亮一階——色相不動，只是讓它讀得出是陰影而不是沒東西。 */
   var MOB_PAL = [
-    { '#': '#C9A227', o: '#7A6318', '*': '#F2E6C8' },   /* L1 荒原 */
-    { '#': '#5FA8C7', o: '#2E5F73', '*': '#D8F2FA' },   /* L2 水晶 */
-    { '#': '#8C7BC7', o: '#4A3F73', '*': '#E4DCFA' },   /* L3 迴聲 */
-    { '#': '#D9603F', o: '#7A2F1C', '*': '#FAD9CC' }    /* L4 熔火 */
+    { '#': '#C9A227', o: '#9A7E22', '*': '#F2E6C8' },   /* L1 荒原 */
+    { '#': '#5FA8C7', o: '#3E7E96', '*': '#D8F2FA' },   /* L2 水晶 */
+    { '#': '#8C7BC7', o: '#625397', '*': '#E4DCFA' },   /* L3 迴聲 */
+    { '#': '#D9603F', o: '#9E4026', '*': '#FAD9CC' }    /* L4 熔火 */
   ];
 
   /* 編號 -> 那一隻的全部資料。純函式，同一個編號永遠長一樣。 */
@@ -5432,7 +5438,14 @@
       'animation:momentBg .28s ease both';
     /* 圖：有 sprite 用 sprite，沒有就用跟內容對得上的像素圖示 */
     var pic = m.sprite || momentIcon(m, accent);
-    v.momentArt = pic
+    /* sprite 有兩種寫法：一段完整的 CSS，或一個網址。本來一律當成網址包進
+       url("...")，所以傳樣式的那幾處會變成 url("display:block;...")——無效，
+       卡片上的生物就是空的。開頭是不是 display: 就分得出來。 */
+    var picIsStyle = typeof pic === 'string' && pic.slice(0, 8) === 'display:';
+    v.momentArt = picIsStyle
+      ? pic + ';filter:drop-shadow(0 0 26px ' + art.glow + ');animation:' +
+        (m.roll ? 'none' : art.anim)
+      : pic
       ? 'display:block;width:104px;height:104px;background:url("' + pic + '") center/contain no-repeat;' +
         'image-rendering:pixelated;filter:drop-shadow(0 0 26px ' + art.glow + ');animation:' +
         (m.roll ? 'none' : art.anim)   /* 滾的時候由 JS 逐格驅動 */
