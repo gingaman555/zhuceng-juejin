@@ -559,7 +559,7 @@
                 </div>
               </sc-if>
 
-              <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:24px">
+              <sc-if value="{{ hasTaskListHint }}" hint-placeholder-val="{{ true }}"><div style="{{ taskListHintStyle }}">{{ taskListHint }}</div></sc-if><div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:24px">
                 <sc-for list="{{ taskGroups }}" as="g" hint-placeholder-count="2">
                   <div style="{{ g.boxStyle }}">
                     <div style="{{ g.headStyle }}">
@@ -639,28 +639,10 @@
                 <div>
                   <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-05 · SUBMIT ITEM</div>
                   <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ openTaskTitle }}</h1>
-                </div>
+                </div><sc-if value="{{ hasOpenMob }}" hint-placeholder-val="{{ true }}"><div style="{{ openMobWrap }}"><span style="{{ openMobArt }}"></span><span><span style="{{ openMobKickerStyle }}">{{ openMobKicker }}</span><span style="{{ openMobNameStyle }}">{{ openMobName }}</span></span></div></sc-if>
               </div>
               <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:17px;{{ formW }}">
-                <div style="{{ planBox }}">
-                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:{{ planAccent }}">你排的時間</span>
-                    <span style="font:700 22px/1 'C11';color:{{ planAccent }}">{{ planLabel }}</span>
-                    <span style="flex:1"></span>
-                    
-                  </div>
-                  <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ planNote }}</div>
-                  <sc-if value="{{ needPlan }}" hint-placeholder-val="{{ false }}">
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:11px">
-                      <sc-for list="{{ planPicks }}" as="pw" hint-placeholder-count="6">
-                        <button onClick="{{ pw.pick }}" style="{{ pw.style }}">
-                          <span style="display:block">{{ pw.label }}</span>
-                          <span style="{{ pw.subStyle }}">{{ pw.sub }}</span>
-                        </button>
-                      </sc-for>
-                    </div>
-                  </sc-if>
-                </div>
+                
                 <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C">
                   <div style="font:400 22px/1.7 'C11';color:#9A9184;text-wrap:pretty"><span style="color:#5F574C">通過條件　</span>{{ openTaskCond }}</div>
                   <div style="font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty"><span style="color:#5F574C">要注意的　</span>{{ openTaskNote }}</div>
@@ -2094,8 +2076,8 @@
             <div data-screen-label="T-02 給予任務頁" style="padding:0 0 32px">
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-02 · TASK SETS</div>
-                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">五個週期的任務清單</h1>
-                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">一個週期對應學生端的一層。你定義要交什麼，不定義怎麼做。</p>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">四個階段的任務清單</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">一個階段對應學生端的一層。你定義要交什麼，不定義怎麼做。</p>
               </div>
               <sc-if value="{{ klassFresh }}" hint-placeholder-val="{{ false }}">
                 <div style="margin:18px var(--pad) 0;padding:15px 17px;background:rgba(233,179,65,.06);border-left:2px solid #E9B341;font:400 22px/1.7 'C11';color:#E8E2D6;text-wrap:pretty">{{ klassFreshNote }}</div>
@@ -2680,7 +2662,7 @@
                     </div>
                   </div>
 
-                  <div style="padding:19px;background:#14110E;border:1px solid #26211C">
+                  <sc-if value="{{ hasFinPlan }}" hint-placeholder-val="{{ true }}"><div style="padding:19px;background:#14110E;border:1px solid #26211C">
                     <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">整學期 · 你排的 對 實際發生的</div>
                     <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ finGanttNote }}</div>
                     <div style="overflow-x:auto;margin-top:14px;padding-bottom:6px">
@@ -2714,7 +2696,7 @@
                       </sc-for>
                     </div>
                     <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:14px;padding:13px 15px;background:rgba(0,0,0,.28);border-left:2px solid #5A4A2C;text-wrap:pretty">{{ finGrowth }}</div>
-                  </div>
+                  </div></sc-if>
 
                   <div style="padding:19px;background:#14110E;border:1px solid #26211C">
                     <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">你對自己的判斷，準不準</div>

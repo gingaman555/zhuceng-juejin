@@ -3894,5 +3894,71 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('89. T-08 上面那排切換');
 })();
 
+
+/* 90. 任務頁：「你排的時間」整塊拿掉，標題旁邊換成擋路的那一隻；
+      清單上先講一句點進去會看到誰；T-02 的抬頭還在說五個週期 */
+(function () {
+  /* 一、排程那一塊 */
+  var a = '<div style="{{ planBox }}">';
+  var i = t.indexOf(a);
+  if (i < 0) { console.error('90. planBox 找不到'); process.exit(1); }
+  var d = 1, k = i + a.length;
+  while (d > 0) {
+    var nx = t.indexOf('<div', k), cl = t.indexOf('</div>', k);
+    if (cl < 0) { console.error('90. planBox 的收尾找不到'); process.exit(1); }
+    if (nx >= 0 && nx < cl) { d++; k = nx + 4; } else { d--; k = cl + 6; }
+  }
+  t = t.slice(0, i) + t.slice(k);
+
+  /* 二、標題旁邊那一隻 */
+  var h = '<h1 style="font:700 33px/1.4 ' + Q + 'C11' + Q + ';margin:7px 0 0">{{ openTaskTitle }}</h1>' + String.fromCharCode(10) + '                </div>';
+  if (t.split(h).length - 1 !== 1) { console.error('90. 任務頁的標題找不到'); process.exit(1); }
+  t = t.replace(h, h + '<sc-if value="{{ hasOpenMob }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="{{ openMobWrap }}">' +
+      '<span style="{{ openMobArt }}"></span>' +
+      '<span>' +
+        '<span style="{{ openMobKickerStyle }}">{{ openMobKicker }}</span>' +
+        '<span style="{{ openMobNameStyle }}">{{ openMobName }}</span>' +
+      '</span>' +
+    '</div>' +
+  '</sc-if>');
+
+  /* 三、清單上先講一句 */
+  var g = '<sc-for list="{{ taskGroups }}" as="g"';
+  var gi = t.indexOf(g);
+  if (gi < 0) { console.error('90. taskGroups 找不到'); process.exit(1); }
+  var wrap = t.lastIndexOf('<div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:24px">', gi);
+  if (wrap < 0) { console.error('90. 清單的外框找不到'); process.exit(1); }
+  t = t.slice(0, wrap) + '<sc-if value="{{ hasTaskListHint }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="{{ taskListHintStyle }}">{{ taskListHint }}</div></sc-if>' + t.slice(wrap);
+
+  /* 四、五個週期 */
+  var five = '>五個週期的任務清單</h1>';
+  if (t.split(five).length - 1 !== 1) { console.error('90. T-02 的抬頭找不到'); process.exit(1); }
+  t = t.replace(five, '>四個階段的任務清單</h1>');
+  t = t.split('一個週期對應學生端的一層').join('一個階段對應學生端的一層');
+
+  console.log('90. 任務頁：擋路的那一隻、排程拿掉、清單加提示');
+})();
+
+
+/* 91. 期末回顧那塊「你排的 對 實際發生的」包上條件——有資料才顯示。
+      任務頁的「你排的時間」拿掉之後，沒有地方寫得進排程了。 */
+(function () {
+  var at = t.indexOf('整學期 · 你排的 對 實際發生的');
+  if (at < 0) { console.error('91. 那一塊的抬頭找不到'); process.exit(1); }
+  var open = t.lastIndexOf('<div style="padding:19px;background:#14110E;border:1px solid #26211C">', at);
+  if (open < 0) { console.error('91. 那一塊的外框找不到'); process.exit(1); }
+  var d = 1, k = t.indexOf('>', open) + 1;
+  while (d > 0) {
+    var nx = t.indexOf('<div', k), cl = t.indexOf('</div>', k);
+    if (cl < 0) { console.error('91. 那一塊的收尾找不到'); process.exit(1); }
+    if (nx >= 0 && nx < cl) { d++; k = nx + 4; } else { d--; k = cl + 6; }
+  }
+  t = t.slice(0, open) + '<sc-if value="{{ hasFinPlan }}" hint-placeholder-val="{{ true }}">' +
+    t.slice(open, k) + '</sc-if>' + t.slice(k);
+  console.log('91. 期末回顧的甘特對照包上條件');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

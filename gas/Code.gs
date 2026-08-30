@@ -1417,11 +1417,8 @@ function apiSubmitItem(token, taskId, text, files, reflect) {
     for (var i = 0; i < defs.length; i++) if (String(defs[i].id) === String(taskId)) def = defs[i];
     if (!def) return err_('找不到這一項任務。');
 
-    /* 排程納入主流程：交之前一定要先說打算哪一週交，期末才對得出估得準不準 */
-    var planned = readTable_('Plans').some(function (x) {
-      return String(x.teamId) === String(u.teamId) && String(x.taskId) === String(taskId);
-    });
-    if (!planned) return err_('先在甘特圖或提交頁上說你打算哪一週交這一項。');
+    /* 排程門檻拿掉了：「你排的時間」不在任務頁上了，前端沒有地方排，
+       後端就不能拿它擋交件。Plans 這張表留著——資料模型不動。 */
 
     files = files || [];
     var dw = dueWeekOf_(def.due);

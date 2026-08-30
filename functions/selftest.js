@@ -173,15 +173,16 @@ T('學生 bootstrap', sb && sb.ok === true, sb && sb.error);
 T('學生看得到那一項', (sb.tasks || []).length === 1, (sb.tasks || []).length);
 const taskId = (sb.tasks || [])[0] && sb.tasks[0].id;
 
-/* 14. 沒排程不准交（主流程的硬規則） */
+/* 14. 排程門檻拿掉了：「你排的時間」不在任務頁上，沒有地方排，
+      後端就不能拿它擋交件。 */
 const noPlan = run('apiSubmitItem', [stk, taskId, '做完了', [], { effort: 'onpar', effortNote: '', blocker: '' }]);
-T('沒排甘特就交 → 被擋', noPlan && noPlan.ok === false, noPlan);
+T('沒排程也交得出去（排程門檻拿掉了）', noPlan && noPlan.ok === true, noPlan);
 
 /* 15. 排程後可以交 */
 run('apiSavePlan', [stk, taskId, 3, 3]);
 const sub = run('apiSubmitItem', [stk, taskId, '訪談三位大三生後收斂了題目', [], { effort: 'slow', effortNote: '約不到人', blocker: '' }]);
 T('排程之後交得出去', sub && sub.ok === true, sub && sub.error);
-T('提交有進 Submissions', DB.Submissions.length === 1, DB.Submissions.length);
+T('提交有進 Submissions', DB.Submissions.length === 2, DB.Submissions.length);   /* 上面那一次也算 */
 
 /* 16. 全收集：只採到 1/6 不准送關卡 */
 const gate1 = run('apiSubmitGate', [stk, ['走過的路', '變化', '接下來']]);

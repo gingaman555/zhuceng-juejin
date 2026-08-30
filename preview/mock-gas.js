@@ -756,8 +756,7 @@
       var u = auth(t);
       reflect = reflect || {};
       if (['fast', 'onpar', 'slow'].indexOf(reflect.effort) < 0) return err('先說一次實際花的力氣跟原本估的差多少。');
-      if (!DB.Plans.some(function (x) { return x.teamId === u.teamId && x.taskId === taskId; }))
-        return err("先在甘特圖或提交頁上說你打算哪一週交這一項。");
+      /* 排程門檻拿掉了：任務頁上沒有地方排，就不能拿它擋交件。 */
       var kl = classById(u.classId), w = courseWeekOf(kl);
       var attempt = DB.Submissions.filter(function (s) { return s.taskId === taskId && s.teamId === u.teamId; }).length + 1;
       var def = DB.Tasks.filter(function (x) { return x.taskId === taskId; })[0] || {};

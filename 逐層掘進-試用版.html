@@ -699,7 +699,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 </div>
               </sc-if>
 
-              <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:24px">
+              <sc-if value="{{ hasTaskListHint }}" hint-placeholder-val="{{ true }}"><div style="{{ taskListHintStyle }}">{{ taskListHint }}</div></sc-if><div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:24px">
                 <sc-for list="{{ taskGroups }}" as="g" hint-placeholder-count="2">
                   <div style="{{ g.boxStyle }}">
                     <div style="{{ g.headStyle }}">
@@ -779,28 +779,10 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 <div>
                   <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-05 · SUBMIT ITEM</div>
                   <h1 style="font:700 33px/1.4 'C11';margin:7px 0 0">{{ openTaskTitle }}</h1>
-                </div>
+                </div><sc-if value="{{ hasOpenMob }}" hint-placeholder-val="{{ true }}"><div style="{{ openMobWrap }}"><span style="{{ openMobArt }}"></span><span><span style="{{ openMobKickerStyle }}">{{ openMobKicker }}</span><span style="{{ openMobNameStyle }}">{{ openMobName }}</span></span></div></sc-if>
               </div>
               <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:17px;{{ formW }}">
-                <div style="{{ planBox }}">
-                  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
-                    <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:{{ planAccent }}">你排的時間</span>
-                    <span style="font:700 22px/1 'C11';color:{{ planAccent }}">{{ planLabel }}</span>
-                    <span style="flex:1"></span>
-                    
-                  </div>
-                  <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ planNote }}</div>
-                  <sc-if value="{{ needPlan }}" hint-placeholder-val="{{ false }}">
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:11px">
-                      <sc-for list="{{ planPicks }}" as="pw" hint-placeholder-count="6">
-                        <button onClick="{{ pw.pick }}" style="{{ pw.style }}">
-                          <span style="display:block">{{ pw.label }}</span>
-                          <span style="{{ pw.subStyle }}">{{ pw.sub }}</span>
-                        </button>
-                      </sc-for>
-                    </div>
-                  </sc-if>
-                </div>
+                
                 <div style="padding:14px 16px;background:#14110E;border:1px solid #26211C">
                   <div style="font:400 22px/1.7 'C11';color:#9A9184;text-wrap:pretty"><span style="color:#5F574C">通過條件　</span>{{ openTaskCond }}</div>
                   <div style="font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty"><span style="color:#5F574C">要注意的　</span>{{ openTaskNote }}</div>
@@ -2234,8 +2216,8 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
             <div data-screen-label="T-02 給予任務頁" style="padding:0 0 32px">
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-02 · TASK SETS</div>
-                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">五個週期的任務清單</h1>
-                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">一個週期對應學生端的一層。你定義要交什麼，不定義怎麼做。</p>
+                <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">四個階段的任務清單</h1>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">一個階段對應學生端的一層。你定義要交什麼，不定義怎麼做。</p>
               </div>
               <sc-if value="{{ klassFresh }}" hint-placeholder-val="{{ false }}">
                 <div style="margin:18px var(--pad) 0;padding:15px 17px;background:rgba(233,179,65,.06);border-left:2px solid #E9B341;font:400 22px/1.7 'C11';color:#E8E2D6;text-wrap:pretty">{{ klassFreshNote }}</div>
@@ -2820,7 +2802,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                     </div>
                   </div>
 
-                  <div style="padding:19px;background:#14110E;border:1px solid #26211C">
+                  <sc-if value="{{ hasFinPlan }}" hint-placeholder-val="{{ true }}"><div style="padding:19px;background:#14110E;border:1px solid #26211C">
                     <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">整學期 · 你排的 對 實際發生的</div>
                     <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ finGanttNote }}</div>
                     <div style="overflow-x:auto;margin-top:14px;padding-bottom:6px">
@@ -2854,7 +2836,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                       </sc-for>
                     </div>
                     <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:14px;padding:13px 15px;background:rgba(0,0,0,.28);border-left:2px solid #5A4A2C;text-wrap:pretty">{{ finGrowth }}</div>
-                  </div>
+                  </div></sc-if>
 
                   <div style="padding:19px;background:#14110E;border:1px solid #26211C">
                     <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">你對自己的判斷，準不準</div>
@@ -5668,8 +5650,7 @@ class Component extends DCLogic {
       var u = auth(t);
       reflect = reflect || {};
       if (['fast', 'onpar', 'slow'].indexOf(reflect.effort) < 0) return err('先說一次實際花的力氣跟原本估的差多少。');
-      if (!DB.Plans.some(function (x) { return x.teamId === u.teamId && x.taskId === taskId; }))
-        return err("先在甘特圖或提交頁上說你打算哪一週交這一項。");
+      /* 排程門檻拿掉了：任務頁上沒有地方排，就不能拿它擋交件。 */
       var kl = classById(u.classId), w = courseWeekOf(kl);
       var attempt = DB.Submissions.filter(function (s) { return s.taskId === taskId && s.teamId === u.teamId; }).length + 1;
       var def = DB.Tasks.filter(function (x) { return x.taskId === taskId; })[0] || {};
@@ -6742,6 +6723,8 @@ class Component extends DCLogic {
         next.currentLayer = mt.layer; next.passed = mt.passed || [];
         next.toolLevels = mt.toolLevels || {}; next.stayWeeks = mt.weeks;
         next.specNames = mt.specNames || {};
+        /* 老師放行結局之後，側欄那個 ？？？ 才會亮——學生這一路只有這裡讀得到 */
+        next.finOpened = !!mt.finaleOpened;
         /* 學生正在 SUB 打字時不要蓋掉三格草稿 */
         if (!(S0.screen === 'SUB' && !mt.gateSubmitted)) {
           next.gateText = mt.gateText || ['', '', ''];
@@ -7843,63 +7826,37 @@ class Component extends DCLogic {
       L.say('帶進來了。記得照他的理由改，不要原封不動再送一次。');
     };
 
-    /* --- 排程納入主流程：沒排過就先在這裡排 --- */
+    /* --- 擋在這一項前面的那一隻 ---
+       本來這裡是「你排的時間」：一塊紅的、要先點一個週次才交得出去。
+       它擋在讀任務之前，而且問的是還沒讀完就答不出來的事。
+       換成這一項的臉——點進來第一眼看到的是今天要打的是誰。 */
     (function () {
+      v.needPlan = false; v.planPicks = []; v.planLabel = ''; v.planNote = '';
+      v.planBox = 'display:none'; v.planAccent = '#8A8073';
+      v.goGantt = function () {};
+
       var tid = S.openTaskId;
       var task = (S.tasks || []).filter(function (x) { return x.id === tid; })[0] || null;
-      var pl = tid ? planOf(S, tid) : null;
-      var kl2 = L.KLASSES[S.klass] || {};
-      var N2 = Math.max(6, Math.min(156, Number(kl2.semesterWeeks) || 18));
-      var now2 = S.courseWeek || 1;
-      var due = task ? L.dueWeek(task) : 0;
-
-      v.needPlan = !!tid && !pl;
-      v.planAccent = pl ? '#E9B341' : '#D9603F';
-      v.planBox = 'padding:15px 17px;background:' +
-        (pl ? 'rgba(233,179,65,.06)' : 'rgba(217,96,63,.09)') +
-        ';border:1px solid ' + (pl ? '#3A3026' : '#5A2E22');
-      v.planLabel = pl
-        ? (pl.a === pl.b ? 'W' + pl.b : 'W' + pl.a + '–W' + pl.b)
-        : '還沒排';
-      v.planNote = pl
-        ? '你當初排在' + (pl.a === pl.b ? '第 ' + pl.b + ' 週' : '第 ' + pl.a + '–' + pl.b + ' 週') +
-          '，現在是第 ' + now2 + ' 週。' +
-          (pl.b < now2 ? '比你排的晚了 ' + (now2 - pl.b) + ' 週——交的時候在下面說一下為什麼。'
-            : pl.b > now2 ? '比你排的早。' : '就是這一週。') +
-          '　期末回顧會把這個對照攤開來給你看。'
-        : '先說你打算哪一週交，才交得出去。估錯不會怎麼樣——重點是有估過，期末才對得出你估得準不準。';
-
-      v.goGantt = function () { L.say('這一項要哪一週交，直接在上面點就好。'); };
-
-      var picks = [];
-      for (var w = now2; w <= Math.min(N2, now2 + 5); w++) picks.push(w);
-      if (due && picks.indexOf(due) < 0) picks.push(due);
-      picks.sort(function (a, b) { return a - b; });
-      v.planPicks = picks.map(function (w) {
-        var d = L.weekDate(w, 5);
-        return {
-          label: 'W' + w,
-          sub: w === now2 ? '這一週' : (d ? (d.getMonth() + 1) + '/' + d.getDate() : '') + (due === w ? ' · 期限' : ''),
-          subStyle: "display:block;font:400 11px/1 'C11';color:" + (due === w ? '#E9B341' : '#5F574C') + ';margin-top:5px',
-          style: "padding:10px 13px;font:500 22px/1 'C11';cursor:pointer;text-align:center;background:rgba(0,0,0,.3);" +
-            'border:1px solid ' + (due === w ? '#5A4A2C' : '#2E2822') + ';color:#C3BAAA',
-          pick: function () {
-            var st2 = L.state;
-            var np = {}; Object.keys(st2.plan || {}).forEach(function (k) { np[k] = st2.plan[k]; });
-            np[tid] = { a: w, b: w };
-            L.setState({ plan: np });
-            call('apiSavePlan', LIVE.token, tid, w, w).catch(function () {});
-            L.say('排在第 ' + w + ' 週。送出之前都還可以改。');
-          }
-        };
-      });
+      var mb = task ? mobOfTask(task) : null;
+      var lyr = task ? (task.layer || 1) : 1;
+      v.hasOpenMob = !!mb;
+      if (!mb) { v.openMobArt = ''; v.openMobName = ''; v.openMobKicker = ''; return; }
+      var neu = isNewMob(L, lyr, mb.id);
+      v.openMobArt = 'display:block;width:54px;height:54px;flex:none;image-rendering:pixelated;' +
+        'background:url("' + mobSvg(mb.id, lyr) + '") center/contain no-repeat';
+      v.openMobName = mb.name;
+      v.openMobKicker = neu ? '★ 沒收過' : '擋在前面';
+      v.openMobWrap = 'display:flex;align-items:center;gap:10px;margin-left:auto;padding:7px 11px;' +
+        'background:rgba(0,0,0,.3);border:1px solid ' + (neu ? '#5A4A2C' : '#26211C');
+      v.openMobKickerStyle = "display:block;font:400 11px/1 'C11';letter-spacing:.14em;color:" +
+        (neu ? '#E9B341' : '#5F574C');
+      v.openMobNameStyle = "display:block;font:700 22px/1.2 'C11';margin-top:5px;color:#E8E2D6";
     })();
-
     var origSubmit = v.submitTask;
     v.submitTask = function () {
       var st = L.state;
       var taskId = st.openTaskId, text = st.draftText, files = (st.draftFiles || []).slice();
-      if (!planOf(st, taskId)) { L.say('先在上面說你打算哪一週交。有估過，期末才對得出你估得準不準。'); return; }
+      /* 排程門檻拿掉了——「你排的時間」不在這一頁了，就不能拿它擋交件。 */
       /* 作業交在老師原本收的地方，所以文字與檔案都是選填。
          真正必填的是「做了如何」——勾完成之前一定要回答。 */
       if (v.hasChecks && !v.checkAllDone) {
@@ -12217,20 +12174,18 @@ class Component extends DCLogic {
       return { state: txt, stateStyle: "font:500 11px/1 'C11';letter-spacing:.08em;padding:7px 10px;white-space:nowrap;flex:none;background:rgba(0,0,0,.35);border:1px solid " + col + ';color:' + col };
     };
 
-    /* 這一層一項都還沒排 → 先排 */
-    var unplanned = all.filter(function (t) { return !planOf(S, t.id); });
-    var noneePlanned = all.length > 0 && unplanned.length === all.length;
+    /* 排程拿掉之後，第一步是「去看清單上每一項擋著誰」 */
 
     var step0On = all.length > 0 && !done;
     var step1On = !done, step2On = allReq && !done, step3On = done;
     v.ruleSteps = [
       Object.assign({
-        n: '1', title: '排時程 → 說你打算哪一週交',
-        desc: '每一項點進去先說你打算哪一週交。老師只訂期限，順序你們自己排。',
+        n: '1', title: '點開一項 → 看擋著它的是哪一隻',
+        desc: '每一項前面都站著這一層的一隻生物。點進去才看得到是誰——' +
+          '同一份清單，每個人碰到的順序不一樣。',
         box: box(step0On), num: num(step0On), color: step0On ? '#E9B341' : '#8A8073'
       }, !all.length ? tag('還沒有清單', '#5F574C')
-        : unplanned.length ? tag('還有 ' + unplanned.length + ' 項沒排', '#D9603F')
-        : tag('都排好了', '#E9B341')),
+        : tag('清單上有 ' + all.length + ' 項', '#C3BAAA')),
       Object.assign({
         n: '2', title: '交任務 → 採到礦石',
         desc: '每一項任務對應一塊礦石。老師確認通過，那一塊才進你的收藏。',
@@ -12239,7 +12194,7 @@ class Component extends DCLogic {
         ? tag('採到 ' + RS.gotN + '/' + RS.veinN + ' 塊', RS.complete ? '#E9B341' : '#C3BAAA')
         : tag('還沒有清單', '#5F574C')),
       Object.assign({
-        n: '3', title: '覺得這一層夠了 → 送關卡',
+        n: '3', title: '覺得這一層夠了 → 去找他',
         desc: '礦石是你做過什麼的紀錄，不是過關的門票。覺得這一層告一段落了就去找他，過不過他決定。',
         box: box(step2On), num: num(step2On), color: step2On ? '#E9B341' : '#8A8073'
       }, done ? tag('已通過', '#E9B341')
@@ -12254,6 +12209,14 @@ class Component extends DCLogic {
         box: box(step3On), num: num(step3On), color: step3On ? '#E9B341' : '#8A8073'
       }, done ? tag('已拿到', '#E9B341') : tag('未開始', '#5F574C'))
     ];
+
+    /* 抽選要有期待感，期待感要先講：點進去會看到誰。 */
+    v.taskListHint = all.length
+      ? '每一項前面都站著這一層的一隻生物——點進去才知道是哪一隻。打贏牠＝這一項被他判過，牠會留下東西。'
+      : '';
+    v.hasTaskListHint = !!v.taskListHint;
+    v.taskListHintStyle = "font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty;" +
+      'margin:0 var(--pad) 16px;padding:11px 14px;background:rgba(0,0,0,.24);border-left:2px solid #3A3026';
 
     /* 說明一律收進按鈕：S-02 常見狀況 */
     (function () {
@@ -12390,11 +12353,6 @@ class Component extends DCLogic {
       v.hasNextAction = false;
       v.nextActionBtn = '';
       v.goNextAction = function () {};
-    } else if (noneePlanned) {
-      v.nextAction = '先排這一層的時程（' + all.length + ' 項）。';
-      v.nextActionWhy = '每一項點進去，先說你打算哪一週交。有估過，交的時候系統才對得出你估得準不準。';
-      v.nextActionBtn = '去看任務清單';
-      v.goNextAction = function () { L.go('S02'); };
     } else if (needFix) {
       v.nextAction = '重交「' + needFix.title + '」';
       v.nextActionWhy = '他退回來了，理由在那一項裡。先讀完再重寫——重交次數不限。';
@@ -13530,7 +13488,11 @@ class Component extends DCLogic {
               ? '前兩層平均差 ' + e.toFixed(1) + ' 週，後面幾層平均差 ' + l.toFixed(1) + ' 週——你們後來估得比較準了，這就是這一學期最實際的成長。'
               : '前兩層平均差 ' + e.toFixed(1) + ' 週，後面幾層平均差 ' + l.toFixed(1) + ' 週。後面差距沒有變小，值得在下面的第一題想一下為什麼。')
           : '')
-      : '這一學期沒有排過程，所以沒有可以比對的資料。下一次記得在甘特圖先排一次——沒有排過，就沒有東西可以對照。';
+      : '';
+
+    /* 排程從任務頁拿掉之後就沒有地方寫了。沒有資料的時候整塊收起來——
+       留一張空格子只會叫人去一個已經不存在的頁面。 */
+    v.hasFinPlan = diffs.length > 0;
 
     /* --- 自評 vs 老師判斷 --- */
     var c = d.cross || { total: 0, agree: 0, optimistic: 0, conservative: 0 };
@@ -15356,6 +15318,7 @@ window.SEED = async function () {
    免登入、可切身分、可快轉、可重來。只有展示版有這一段。 */
 (function () {
   var DB_KEY = 'jlz.mockdb', TOK = 'jlz.token', ONCE = 'jlz.demo.autologin';
+  var FIN = 'jlz.demo.finale';
   var WHO = 'jlz.demo.who';
   var PEOPLE = [
     { id: 'stu01', label: '學生 · 甲', hue: '#E58BA8' },
@@ -15423,6 +15386,36 @@ window.SEED = async function () {
     try { var db = JSON.parse(raw); walk(db); set(DB_KEY, JSON.stringify(db)); } catch (e) {}
   }
 
+  /* ---- 直接跳到結局 ----
+     用老師身分把四層認列＋放行結局，再換回學生。走的是真的 API。 */
+  function jumpToEnd(btn) {
+    if (btn) { btn.textContent = '跳過去⋯'; btn.disabled = true; }
+    var teamId = null;
+    run('apiLogin', { account: 'stu01', password: 'pw1234' })
+      .then(function (r) { return run('apiBootstrap', r.token); })
+      .then(function (b) {
+        teamId = b && (b.myTeamId || b.teamId);
+        if (!teamId) throw new Error('no team');
+        return run('apiLogin', { account: 'tea01', password: 'pw1234' });
+      })
+      .then(function (r) {
+        var tk = r.token;
+        return run('apiSetTeamLayer', tk, teamId, 4, '試用：直接看最後狀態')
+          .then(function () {
+            return run('apiOpenFinale', tk, teamId,
+              '四層都走完了。回頭把這一學期寫下來——這一份不評分。');
+          });
+      })
+      .then(function () {
+        try { sessionStorage.setItem(FIN, '1'); } catch (e) {}
+        enter('stu01');
+      })
+      .catch(function () {
+        if (btn) { btn.textContent = '看結局'; btn.disabled = false; }
+        window.alert('跳不過去。先讓試用班有資料（按重來重新灌一次）再試。');
+      });
+  }
+
   function enter(account, then) {
     run('apiLogin', { account: account, password: 'pw1234' })
       .then(function (r) {
@@ -15475,6 +15468,11 @@ window.SEED = async function () {
     mk('快轉一天', '#8A8073', function () { shift(24); location.reload(); },
        '把所有紀錄往前挪一天。★ 回掘要隔 6 小時、日誌一天一片，靠這個才試得到。');
 
+    mk('看結局', '#C77BE0', function (e) {
+      if (!window.confirm('把這一組直接算成四層都走完、並放行結局？\n\n這是試用資料，按「重來」可以清掉。')) return;
+      jumpToEnd(e && e.currentTarget);
+    }, '四層直接認列＋放行結局。要看最後那一段互動用這個。');
+
     mk('重來', '#D9603F', function () {
       if (!window.confirm('把這份試用紀錄整個清掉，重新開始？')) return;
       del(DB_KEY); del(TOK); del(WHO);
@@ -15493,6 +15491,22 @@ window.SEED = async function () {
       return;
     }
     bar();
+    /* 剛剛按過看結局：等 app 起來，直接開結局那一頁 */
+    try {
+      if (sessionStorage.getItem(FIN)) {
+        sessionStorage.removeItem(FIN);
+        var n = 0;
+        var go = function () {
+          var A = window.App;
+          if (A && A.logic && A.logic.state && A.logic.state.signedIn) {
+            A.logic.setState({ screen: 'FINALE' });
+            return;
+          }
+          if (++n < 100) setTimeout(go, 120);
+        };
+        setTimeout(go, 400);
+      }
+    } catch (e) {}
     if (get(TOK)) return;                       /* 有身分了就讓 app 自己續登 */
     try { if (sessionStorage.getItem(ONCE)) return; } catch (e) {}
     var first = function () {
