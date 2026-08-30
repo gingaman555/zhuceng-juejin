@@ -2191,7 +2191,7 @@
                 <div>
                   <div style="font:500 22px/1 'C11';margin-bottom:4px">時間限制</div>
                   <div style="font:400 11px/1.6 'C11';color:#6E665A;margin-bottom:9px">逾期只標示，不阻擋。仍可提交、仍可確認，也照樣算分。</div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;margin-bottom:7px">哪一週</div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;margin-bottom:7px">幾天後交</div><div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:13px"><input type="number" min="1" max="180" value="{{ dueDaysValue }}" onChange="{{ setDueDays }}" style="width:96px;padding:11px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.4 'C11';outline:none"><span style="font:400 22px/1.4 'C11';color:#8A8073">天後</span><span style="flex:1;min-width:170px;font:400 11px/1.6 'C11';color:#5F574C;text-wrap:pretty">{{ dueDaysNote }}</span></div><div style="font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;margin-bottom:7px">或挑一個常用的</div>
                   <sc-if value="{{ hasDueWindow }}" hint-placeholder-val="{{ false }}">
                     <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-bottom:9px;text-wrap:pretty">{{ dueWindowNote }}</div>
                   </sc-if>

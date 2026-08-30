@@ -10,7 +10,17 @@ window.SEED = async function () {
   localStorage.removeItem('jlz.mockdb');
   var r = await api('apiRegister', { account: 'res01', password: 'pw1234', role: 'researcher', name: '研究者' });
   var rt = r.token;
-  await api('apiAdminCreateClass', rt, '設計專題', '114-1', '2026-05-04', 18);
+  /* 開學日相對今天算，讓試用班永遠停在第 3 週。
+     本來寫死 2026-05-04，時間一過就變成「學期已經走完 94%、而且有東西逾期」，
+     第一次打開的人看到的是一個來不及的學期。 */
+  var __start = (function () {
+    var d = new Date();
+    d.setDate(d.getDate() - 14);                 /* 往回兩週 → 現在是第 3 週 */
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   /* 對齊到那一週的週一 */
+    var p2 = function (n) { return (n < 10 ? String.fromCharCode(48) : String.fromCharCode()) + n; };
+    return d.getFullYear() + String.fromCharCode(45) + p2(d.getMonth() + 1) + String.fromCharCode(45) + p2(d.getDate());
+  })();
+  await api('apiAdminCreateClass', rt, '設計專題', '114-1', __start, 18);
   var ov = await api('apiAdminOverview', rt);
   var cid = ov.classes[0].id;
   await api('apiAdminCreateUser', rt, { account: 'tea01', password: 'pw1234', role: 'teacher', name: '陳老師', classId: cid });

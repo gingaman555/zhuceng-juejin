@@ -4301,5 +4301,17 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("110. 拿掉老師端的等級");
 })();
 
+
+/* 111. 期限直接寫「幾天後」。
+       本來要在 18 個週鈕裡找出「一週後」是第幾週——老師想的是天數，
+       不是週次。數字欄接的是同一條換算（天數 → 日期 → 週次＋星期幾），
+       所以學生看到的還是「W幾 · 月/日（週幾）」。 */
+(function () {
+  var a = "<div style=\"font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;margin-bottom:7px\">哪一週</div>";
+  if (t.split(a).length - 1 !== 1) { console.error("111. 找不到「哪一週」"); process.exit(1); }
+  t = t.replace(a, "<div style=\"font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;margin-bottom:7px\">幾天後交</div><div style=\"display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:13px\"><input type=\"number\" min=\"1\" max=\"180\" value=\"{{ dueDaysValue }}\" onChange=\"{{ setDueDays }}\" style=\"width:96px;padding:11px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.4 'C11';outline:none\"><span style=\"font:400 22px/1.4 'C11';color:#8A8073\">天後</span><span style=\"flex:1;min-width:170px;font:400 11px/1.6 'C11';color:#5F574C;text-wrap:pretty\">{{ dueDaysNote }}</span></div><div style=\"font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;margin-bottom:7px\">或挑一個常用的</div>");
+  console.log("111. 期限改成幾天後");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
