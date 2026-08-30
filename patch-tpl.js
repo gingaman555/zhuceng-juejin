@@ -3064,7 +3064,7 @@ must(
 '                </div>',
 '                <div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.26em;color:#5F574C">S-11 · RECORD</div>',
 '                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin:10px 0 5px">',
-'                  <h1 style="font:700 33px/1.4 ' + Q + 'C11' + Q + ';margin:0;letter-spacing:.04em">宣告</h1>',
+'                  <h1 style="font:700 33px/1.4 ' + Q + 'C11' + Q + ';margin:0;letter-spacing:.04em">紀錄</h1>',
 '                  <span style="font:700 22px/1 ' + Q + 'C11' + Q + ';color:#E9B341">{{ recCount }}</span>',
 '                </div>',
 '                <p style="font:400 22px/1.7 ' + Q + 'C11' + Q + ';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ recNote }}</p>',
@@ -3958,6 +3958,99 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   t = t.slice(0, open) + '<sc-if value="{{ hasFinPlan }}" hint-placeholder-val="{{ true }}">' +
     t.slice(open, k) + '</sc-if>' + t.slice(k);
   console.log('91. 期末回顧的甘特對照包上條件');
+})();
+
+
+/* 92. 期末回顧最後那一塊：本來是「第五層那一塊還沒有名字」，第五層早就
+      沒有了。改成幫這一趟命名，下面多一顆封存。 */
+(function () {
+  var a = '<div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.16em;color:#E9B341">第五層那一塊還沒有名字</div>';
+  if (t.split(a).length - 1 !== 1) { console.error('92. 命名那一塊找不到'); process.exit(1); }
+  t = t.replace(a, '<div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.16em;color:#E9B341">{{ sealKicker }}</div>');
+
+  var b = '<div style="font:400 22px/1.6 ' + Q + 'C11' + Q + ';color:#8A8073;margin-top:8px;text-wrap:pretty">前面四層你拿的都是別人命名好的東西。這一塊沒有人替它命名過——你採到了什麼、叫它什麼，由你決定。</div>';
+  if (t.split(b).length - 1 !== 1) { console.error('92. 命名那一段說明找不到'); process.exit(1); }
+  t = t.replace(b, '<div style="font:400 22px/1.6 ' + Q + 'C11' + Q + ';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ sealNote }}</div>');
+
+  var c = '<input value="{{ lightName }}" onChange="{{ setLightName }}" placeholder="替它取一個名字"';
+  if (t.split(c).length - 1 !== 1) { console.error('92. 命名的輸入框找不到'); process.exit(1); }
+  t = t.replace(c, '<input value="{{ lightName }}" onChange="{{ setLightName }}" placeholder="例如：把題目改了三次的那一學期"');
+
+  /* 輸入框後面接一顆封存 */
+  var d = t.indexOf('{{ setLightName }}');
+  var e = t.indexOf('</div>', d);
+  if (e < 0) { console.error('92. 輸入框的收尾找不到'); process.exit(1); }
+  t = t.slice(0, e) + '<button onClick="{{ doSeal }}" style="{{ sealBtnStyle }}">{{ sealBtnLabel }}</button>' + t.slice(e);
+  console.log('92. 期末回顧：幫這一趟命名，封存');
+})();
+
+/* 93. 紀錄那一頁最上面：封存過的每一趟。系統要被重複用，
+      這一頁是唯一跨專案的入口。 */
+(function () {
+  var a = '<div data-screen-label="S-11 任務紀錄" style="padding:0 0 32px">';
+  var i = t.indexOf(a);
+  if (i < 0) { console.error('93. S-11 找不到'); process.exit(1); }
+  /* 接在那一頁的抬頭區之後 */
+  var head = t.indexOf('</div>', t.indexOf('{{ recNote }}'));
+  if (head < 0 || head < i) { console.error('93. S-11 的抬頭區收尾找不到'); process.exit(1); }
+  var blk = '<sc-if value="{{ hasJourneys }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="padding:20px var(--pad) 0">' +
+      '<div style="font:400 11px/1 ' + Q + 'C11' + Q + ';letter-spacing:.18em;color:#E9B341">{{ journeyHead }}</div>' +
+      '<div style="font:400 22px/1.6 ' + Q + 'C11' + Q + ';color:#8A8073;margin-top:7px;text-wrap:pretty">{{ journeyNote }}</div>' +
+      '<div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">' +
+        '<sc-for list="{{ journeyRows }}" as="jr" hint-placeholder-count="2">' +
+          '<button onClick="{{ jr.open }}" style="{{ jr.style }}">' +
+            '<span style="{{ jr.nameStyle }}">{{ jr.name }}</span>' +
+            '<span style="{{ jr.metaStyle }}">{{ jr.meta }}</span>' +
+            '<span style="{{ jr.sumStyle }}">{{ jr.sum }}</span>' +
+          '</button>' +
+        '</sc-for>' +
+      '</div>' +
+    '</div>' +
+  '</sc-if>';
+  t = t.slice(0, head + 6) + blk + t.slice(head + 6);
+  console.log('93. 紀錄那一頁：封存過的旅途');
+})();
+
+
+/* 94. 老師端的舊詞掃一遍：規畫環節、物證、寶物、採齊、送審三格。
+      學生端都換過了，老師端沒跟上——兩邊講不同的話，對不起來。 */
+(function () {
+  var pairs = [
+    ['這一層的規畫環節 · 對應物證', '這一層的礦脈 · 每一項對應一塊礦石'],
+    ['這一項屬於哪個環節', '這一項在哪一層'],
+    ['你定的每一項，學生那邊看到的是一層洞窟、一件物證、一段故事。',
+     '你定的每一項，學生那邊看到的是一層洞窟、一隻擋在前面的生物、一塊礦石。'],
+    ['S-06 礦物與寶物介紹', 'S-06 礦物與戰利品介紹'],
+    ['通過 · 交出工具與寶物', '通過 · 交出道具與戰利品'],
+    ['學生把那一層的礦石全採齊、送出送審三格後，這裡才會有東西',
+     '關卡不用學生申請——上面列的是這一班每一組，你覺得哪一組可以往下就放行']
+  ];
+  pairs.forEach(function (pr) {
+    var n = t.split(pr[0]).length - 1;
+    if (!n) { console.error('94. 找不到：' + pr[0]); process.exit(1); }
+    t = t.split(pr[0]).join(pr[1]);
+  });
+  console.log('94. 老師端的舊詞掃一遍');
+})();
+
+/* 95. T-05 補上這一項發下去之後，學生會先遇到誰。
+      老師定的是任務，學生遇到的是生物——老師該看得到那一面。 */
+(function () {
+  var a = '<div style="font:500 22px/1 ' + Q + 'C11' + Q + ';margin-bottom:9px">項目名稱</div>';
+  if (t.split(a).length - 1 !== 1) { console.error('95. 項目名稱找不到'); process.exit(1); }
+  var blk = '<sc-if value="{{ hasEditMob }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="{{ editMobWrap }}">' +
+      '<span style="{{ editMobArt }}"></span>' +
+      '<span style="min-width:0">' +
+        '<span style="{{ editMobKickerStyle }}">{{ editMobKicker }}</span>' +
+        '<span style="{{ editMobNameStyle }}">{{ editMobName }}</span>' +
+        '<span style="{{ editMobNoteStyle }}">{{ editMobNote }}</span>' +
+      '</span>' +
+    '</div>' +
+  '</sc-if>';
+  t = t.replace(a, blk + a);
+  console.log('95. T-05 補上擋路的那一隻');
 })();
 
 fs.writeFileSync('build_tpl_live.txt', t);

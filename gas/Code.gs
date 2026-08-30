@@ -51,6 +51,8 @@ var SHEET_DEFS = {
   Checks:      ['ckId', 'teamId', 'taskId', 'idx', 'act', 'by', 'ts'],
   Digs:        ['digId', 'teamId', 'classId', 'layer', 'text', 'estDays', 'bet',
                 'result', 'page', 'find', 'openedAt', 'closedAt'],
+  /* 走完之後封存的一趟。一組一列，改名就覆蓋。 */
+  Journeys:    ['journeyId', 'teamId', 'classId', 'name', 'sealedBy', 'sealedAt', 'stats'],
   /* 老師照自己的規劃改這一層的拆分名稱。一班一份，礦石本身不動。 */
   MinNames:    ['teamId', 'mineral', 'label', 'note']
 };
@@ -1552,6 +1554,7 @@ function apiFinale(token, teamId) {
       passed: jparse_(t.passed, []), toolLevels: jparse_(t.toolLevels, {}),
       specNames: jparse_(t.specNames, {}),
       rows: rows, cross: cross,
+      stats: journeyStats_(tid, t.classId),   /* 期末回顧的統整與封存讀同一份 */
       totalRejected: revs.filter(function (r) { return r.result === 'needfix'; }).length,
       totalSubs: subs.length,
       finale: f ? { q1: f.q1 || '', q2: f.q2 || '', q3: f.q3 || '',
@@ -2558,6 +2561,123 @@ function apiSetTeamLayer(token, teamId, cleared, reason) {
 
     return ok_({ layer: Math.min(4, n + 1), passed: passedArr, added: added });
   } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+/**
+ * 一趟的統整。封存與回看都用這一支算，兩邊才不會對不起來。
+ */
+function journeyStats_(teamId, classId) {
+  var defs = {}, byLayer = [[], [], [], []];
+  tasksOfClass_(classId, teamId).forEach(function (d) { defs[String(d.id)] = d; });
+
+  var pass = [0, 0, 0, 0], open = [0, 0, 0, 0], ext = [0, 0, 0, 0];
+  var rej = [0, 0, 0, 0], drop = [0, 0, 0, 0];
+  var kinds = {};
+  readTable_('TeamTasks').forEach(function (r) {
+    if (String(r.teamId) !== String(teamId)) return;
+    var d = defs[String(r.taskId)];
+    if (!d) return;
+    var i = Math.max(0, Math.min(3, (Number(d.layer) || 1) - 1));
+    open[i]++;
+    if (String(r.status) === 'passed') {
+      pass[i]++;
+      if (String(d.type) === 'extended') ext[i]++;
+    }
+    var arr = (jparse_(r.finds, []) || []);
+    if (!arr.length) arr = [r.find, r.find2];
+    arr.forEach(function (x) {
+      var n = Number(x);
+      if (!(n >= 1 && n <= FINDS_N)) return;
+      drop[i]++;
+      kinds[n] = 1;
+    });
+  });
+
+  readTable_('Reviews').forEach(function (r) {
+    if (String(r.teamId) !== String(teamId)) return;
+    if (String(r.result) !== 'needfix') return;
+    var i = Math.max(0, Math.min(3, (Number(r.layer) || 1) - 1));
+    rej[i]++;
+  });
+
+  var t = teamById_(teamId) || {};
+  var passedArr = jparse_(t.passed, []);
+  var layers = [];
+  for (var i = 0; i < 4; i++) {
+    layers.push({
+      n: i + 1, open: open[i], pass: pass[i], ext: ext[i],
+      rej: rej[i], drop: drop[i], cleared: passedArr.indexOf(i + 1) >= 0
+    });
+  }
+  var sum = function (a) { return a.reduce(function (x, y) { return x + y; }, 0); };
+  var kl = classById_(classId) || {};
+  return {
+    layers: layers,
+    mobs: sum(pass),                 /* 打贏一項＝打贏擋在它前面的那一隻 */
+    opened: sum(open),
+    extended: sum(ext),
+    rejected: sum(rej),
+    drops: sum(drop),
+    dropKinds: Object.keys(kinds).length,
+    trophies: passedArr.length,      /* 一層一件守關戰利品 */
+    score: scoreOf_(teamId, classId).total,
+    className: kl.name || '', term: kl.term || ''
+  };
+}
+
+/**
+ * 封存這一趟：給它一個名字，連統整一起留下來。
+ * 一組一列——同一組再按就是改名，不會長出第二趟。
+ */
+function apiSealJourney(token, name) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(20000); } catch (e) { return err_('系統忙碌，請再試一次。'); }
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student') return err_('只有學生封存得了自己的旅途。');
+    if (!u.teamId) return err_('你還沒有小隊。');
+    var t = teamById_(u.teamId);
+    if (!t) return err_('找不到這一組。');
+    if (jparse_(t.passed, []).indexOf(4) < 0) return err_('四層都走完才封存得了。');
+    var nm = String(name || '').trim().slice(0, 40);
+    if (!nm) return err_('先給這一趟一個名字。');
+
+    var old = readTable_('Journeys').filter(function (x) {
+      return String(x.teamId) === String(u.teamId);
+    })[0] || {};
+    upsert_('Journeys', ['teamId'], {
+      journeyId: old.journeyId || ('j' + Utilities.getUuid().slice(0, 8)),
+      teamId: u.teamId, classId: t.classId, name: nm,
+      sealedBy: u.name || u.account || '', sealedAt: old.sealedAt || new Date(),
+      stats: JSON.stringify(journeyStats_(u.teamId, t.classId))
+    });
+    return ok_({ sealed: true, name: nm });
+  } catch (e) { return err_(e); } finally { lock.releaseLock(); }
+}
+
+/**
+ * 這個人封存過的每一趟，新的在前面。換班換組都接得上——
+ * teamsOfUser_ 是用 Roster 認人的。
+ */
+function apiJourneys(token) {
+  try {
+    var u = auth_(token);
+    var mine = teamsOfUser_(u.userId);
+    if (u.teamId && mine.indexOf(String(u.teamId)) < 0) mine.push(String(u.teamId));
+    var out = readTable_('Journeys').filter(function (x) {
+      return mine.indexOf(String(x.teamId)) >= 0;
+    }).map(function (x) {
+      var t = teamById_(x.teamId) || {};
+      return {
+        journeyId: x.journeyId, teamId: x.teamId, name: x.name,
+        teamName: t.name || '', sealedBy: x.sealedBy,
+        sealedAt: x.sealedAt ? new Date(x.sealedAt).toISOString() : '',
+        now: String(x.teamId) === String(u.teamId),
+        stats: jparse_(x.stats, {})
+      };
+    }).sort(function (a, b) { return (b.sealedAt || '') < (a.sealedAt || '') ? -1 : 1; });
+    return ok_({ journeys: out });
+  } catch (e) { return err_(e); }
 }
 
 /** 老師手動覆寫目前週次（＋1 週／指定週次／回到自動）。 */

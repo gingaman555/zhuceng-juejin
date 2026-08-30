@@ -5,7 +5,8 @@
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Digs: [], Checks: [], Config: { unlockEvery: 1 } };
+             Files: [], Roster: [], MinNames: [], Digs: [], Checks: [], Journeys: [],
+             Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
     if (saved) DB = JSON.parse(saved);
@@ -62,6 +63,46 @@
                sandbox: String(k.sandbox) === 'Y' };
     });
   }
+  /* 一趟的統整。跟 gas 端的 journeyStats_ 同一套算法。 */
+  function journeyStats(teamId, classId) {
+    var defs = {};
+    tasksOfClass(classId, teamId).forEach(function (d) { defs[d.id] = d; });
+    var pass = [0,0,0,0], open = [0,0,0,0], ext = [0,0,0,0], rej = [0,0,0,0], drop = [0,0,0,0];
+    var kinds = {};
+    DB.TeamTasks.forEach(function (r) {
+      if (r.teamId !== teamId) return;
+      var d = defs[r.taskId];
+      if (!d) return;
+      var i = Math.max(0, Math.min(3, (Number(d.layer) || 1) - 1));
+      open[i]++;
+      if (r.status === 'passed') { pass[i]++; if (d.type === 'extended') ext[i]++; }
+      var arr = (r.finds || []);
+      if (!arr.length) arr = [r.find, r.find2];
+      arr.forEach(function (x) {
+        var n = Number(x);
+        if (!(n >= 1 && n <= FINDS_N)) return;
+        drop[i]++; kinds[n] = 1;
+      });
+    });
+    (DB.Reviews || []).forEach(function (r) {
+      if (r.teamId !== teamId || r.result !== 'needfix') return;
+      var i = Math.max(0, Math.min(3, (Number(r.layer) || 1) - 1));
+      rej[i]++;
+    });
+    var tm = teamById(teamId) || {}, passedArr = tm.passed || [];
+    var layers = [];
+    for (var i = 0; i < 4; i++) {
+      layers.push({ n: i + 1, open: open[i], pass: pass[i], ext: ext[i],
+                    rej: rej[i], drop: drop[i], cleared: passedArr.indexOf(i + 1) >= 0 });
+    }
+    var sum = function (a) { return a.reduce(function (x, y) { return x + y; }, 0); };
+    var kl = classById(classId) || {};
+    return { layers: layers, mobs: sum(pass), opened: sum(open), extended: sum(ext),
+             rejected: sum(rej), drops: sum(drop), dropKinds: Object.keys(kinds).length,
+             trophies: passedArr.length, score: scoreOf(teamId, classId).total,
+             className: kl.name || '', term: kl.term || '' };
+  }
+
   function teamPub(t, w) {
     return { id: t.teamId, classId: t.classId, name: t.name, members: t.members || [],
              layer: t.layer, enteredWeek: t.enteredWeek,
@@ -855,6 +896,7 @@
       var f = DB.Finales.filter(function (x) { return x.teamId === tid; })[0] || null;
       return ok({ team: tm.name, layer: tm.layer, passed: tm.passed || [], toolLevels: tm.toolLevels || {},
                   specNames: tm.specNames || {}, rows: rows, cross: cross,
+                  stats: journeyStats(tid, tm.classId),   /* 統整與封存讀同一份 */
                   totalRejected: revs.filter(function (r) { return r.result === "needfix"; }).length,
                   totalSubs: subs.length, finale: f });
     },
@@ -1257,6 +1299,45 @@
       persist();
       return ok({ layer: tm.layer, passed: tm.passed.slice(), added: added });
     },
+    /* 一趟的統整。封存與回看都用這一支算。 */
+    apiSealJourney: function (t, name) {
+      var u = auth(t);
+      if (u.role !== 'student') return err('只有學生封存得了自己的旅途。');
+      var tm = teamById(u.teamId);
+      if (!tm) return err('找不到這一組。');
+      if ((tm.passed || []).indexOf(4) < 0) return err('四層都走完才封存得了。');
+      var nm = String(name || '').trim().slice(0, 40);
+      if (!nm) return err('先給這一趟一個名字。');
+      DB.Journeys = DB.Journeys || [];
+      var row = DB.Journeys.filter(function (x) { return x.teamId === u.teamId; })[0];
+      if (!row) {
+        row = { journeyId: 'j' + uid(), teamId: u.teamId, classId: tm.classId,
+                sealedAt: new Date().toISOString() };
+        DB.Journeys.push(row);
+      }
+      row.name = nm;
+      row.sealedBy = u.name || u.account || '';
+      row.stats = journeyStats(u.teamId, tm.classId);
+      persist();
+      return ok({ sealed: true, name: nm });
+    },
+
+    /* 這個人封存過的每一趟，新的在前面。換班換組都接得上。 */
+    apiJourneys: function (t) {
+      var u = auth(t);
+      var mine = teamsOfUser(u.userId);
+      if (u.teamId && mine.indexOf(u.teamId) < 0) mine.push(u.teamId);
+      var out = (DB.Journeys || []).filter(function (x) { return mine.indexOf(x.teamId) >= 0; })
+        .map(function (x) {
+          var tm = teamById(x.teamId) || {};
+          return { journeyId: x.journeyId, teamId: x.teamId, name: x.name,
+                   teamName: tm.name || '', sealedBy: x.sealedBy, sealedAt: x.sealedAt || '',
+                   now: x.teamId === u.teamId, stats: x.stats || {} };
+        })
+        .sort(function (a, b) { return (b.sealedAt || '') < (a.sealedAt || '') ? -1 : 1; });
+      return ok({ journeys: out });
+    },
+
     apiSetWeek: function (t, classId, week) {
       auth(t);
       var k = classById(classId);

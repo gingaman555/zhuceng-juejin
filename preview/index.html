@@ -1242,11 +1242,11 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">S-11 · RECORD</div>
                 <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin:10px 0 5px">
-                  <h1 style="font:700 33px/1.4 'C11';margin:0;letter-spacing:.04em">宣告</h1>
+                  <h1 style="font:700 33px/1.4 'C11';margin:0;letter-spacing:.04em">紀錄</h1>
                   <span style="font:700 22px/1 'C11';color:#E9B341">{{ recCount }}</span>
                 </div>
                 <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;max-width:520px;text-wrap:pretty">{{ recNote }}</p>
-              </div>
+              </div><sc-if value="{{ hasJourneys }}" hint-placeholder-val="{{ true }}"><div style="padding:20px var(--pad) 0"><div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">{{ journeyHead }}</div><div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:7px;text-wrap:pretty">{{ journeyNote }}</div><div style="display:flex;flex-direction:column;gap:7px;margin-top:12px"><sc-for list="{{ journeyRows }}" as="jr" hint-placeholder-count="2"><button onClick="{{ jr.open }}" style="{{ jr.style }}"><span style="{{ jr.nameStyle }}">{{ jr.name }}</span><span style="{{ jr.metaStyle }}">{{ jr.meta }}</span><span style="{{ jr.sumStyle }}">{{ jr.sum }}</span></button></sc-for></div></div></sc-if>
               <div style="padding:18px var(--pad) 0">
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px">
                   <sc-for list="{{ rateRows }}" as="rt" hint-placeholder-count="5">
@@ -1396,7 +1396,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
           </sc-if>
 
           <sc-if value="{{ scS06 }}" hint-placeholder-val="{{ false }}">
-            <div data-screen-label="S-06 礦物與寶物介紹" style="padding:0 0 32px">
+            <div data-screen-label="S-06 礦物與戰利品介紹" style="padding:0 0 32px">
               <div style="padding:20px var(--pad);border-bottom:1px solid #221E19;display:flex;align-items:center;gap:13px">
                 <button onClick="{{ specBack }}" style="font:400 22px/1 'C11';color:#8A8073;background:none;border:1px solid #26211C;padding:8px 12px;cursor:pointer">←</button>
                 <div>
@@ -1500,7 +1500,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px"><sc-for list="{{ worldTabs }}" as="wt" hint-placeholder-count="2"><button onClick="{{ wt.go }}" style="{{ wt.style }}"><span style="display:block">{{ wt.label }}</span><span style="{{ wt.subStyle }}">{{ wt.sub }}</span></button></sc-for></div><div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">T-08 · WORLD</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">學生端的世界</h1>
-                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">你定的每一項，學生那邊看到的是一層洞窟、一件物證、一段故事。這一頁把對應關係攤出來。</p>
+                <p style="font:400 22px/1.7 'C11';color:#8A8073;margin:0;text-wrap:pretty">你定的每一項，學生那邊看到的是一層洞窟、一隻擋在前面的生物、一塊礦石。這一頁把對應關係攤出來。</p>
                 <button onClick="{{ openClassMap }}" style="margin-top:14px;margin-right:8px;font:500 22px/1 'C11';color:#E9B341;background:none;border:1px solid #5A4A2C;padding:12px 18px;cursor:pointer">看整張地圖剖面（不上鎖）</button>
                 <button onClick="{{ readOpening }}" style="margin-top:14px;font:500 22px/1 'C11';color:#0B0A09;background:#E9B341;border:none;padding:12px 20px;cursor:pointer;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)">用學生視角讀開頭故事</button>
               </div>
@@ -1538,7 +1538,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                         </button>
                       </div>
                       <div style="margin-top:13px;padding-top:12px;border-top:1px solid #221E19">
-                        <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">這一層的規畫環節 · 對應物證</div>
+                        <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">這一層的礦脈 · 每一項對應一塊礦石</div>
                         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:6px">
                           <sc-for list="{{ w.segs }}" as="g" hint-placeholder-count="6">
                             <button onClick="{{ g.open }}" style="{{ g.style }}">
@@ -2300,12 +2300,12 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
               <div style="{{ t05Grid }}">
                 <div style="display:flex;flex-direction:column;gap:17px;min-width:0">
                 <div style="padding:13px 16px;background:rgba(233,179,65,.06);border-left:2px solid #5A4A2C">
-                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">這一項屬於哪個環節</span>
+                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:#E9B341">這一項在哪一層</span>
                   <span style="font:700 22px/1.5 'C11';color:#E8E2D6;margin-left:10px">{{ editCourse }}</span>
                   <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty">{{ editStageNote }}</div>
                 </div>
                 <div>
-                  <div style="font:500 22px/1 'C11';margin-bottom:9px">項目名稱</div>
+                  <sc-if value="{{ hasEditMob }}" hint-placeholder-val="{{ true }}"><div style="{{ editMobWrap }}"><span style="{{ editMobArt }}"></span><span style="min-width:0"><span style="{{ editMobKickerStyle }}">{{ editMobKicker }}</span><span style="{{ editMobNameStyle }}">{{ editMobName }}</span><span style="{{ editMobNoteStyle }}">{{ editMobNote }}</span></span></div></sc-if><div style="font:500 22px/1 'C11';margin-bottom:9px">項目名稱</div>
                   <input value="{{ nfTitle }}" onChange="{{ setNfTitle }}" placeholder="例：使用者調查" style="width:100%;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.6 'C11';outline:none">
                 </div>
                 <div>
@@ -2661,7 +2661,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 </div>
               </sc-if>
               <sc-if value="{{ noGate }}" hint-placeholder-val="{{ true }}">
-                <div style="margin:22px var(--pad);padding:36px 22px;border:1px dashed #2E2822;text-align:center;font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty">沒有待審的關卡。<br><span style="font:400 11px/1 'C11';color:#5F574C">學生把那一層的礦石全採齊、送出送審三格後，這裡才會有東西</span></div>
+                <div style="margin:22px var(--pad);padding:36px 22px;border:1px dashed #2E2822;text-align:center;font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty">沒有待審的關卡。<br><span style="font:400 11px/1 'C11';color:#5F574C">關卡不用學生申請——上面列的是這一班每一組，你覺得哪一組可以往下就放行</span></div>
               </sc-if>
               <sc-if value="{{ hasGate }}" hint-placeholder-val="{{ false }}">
                 <div style="padding:20px var(--pad);display:flex;flex-direction:column;gap:18px;{{ formW }}">
@@ -2708,7 +2708,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                     <textarea onChange="{{ setGateReason }}" value="{{ gateReason }}" placeholder="這一格會對通過的其他隊伍公開。他們讀的不是結論，是你怎麼判斷。" style="width:100%;min-height:180px;padding:13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
                   </div>
                   <div style="display:flex;gap:9px;flex-wrap:wrap">
-                    <button onClick="{{ passGate }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#0B0A09;background:#E9B341;border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">通過 · 交出工具與寶物</button>
+                    <button onClick="{{ passGate }}" style="font:500 22px/1 'C11';letter-spacing:.1em;color:#0B0A09;background:#E9B341;border:none;padding:15px var(--pad);cursor:pointer;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)">通過 · 交出道具與戰利品</button>
                     <button onClick="{{ rejectGate }}" style="font:500 22px/1 'C11';color:#D9603F;background:none;border:1px solid rgba(217,96,63,.45);padding:15px 22px;cursor:pointer">需補充</button>
                     <button onClick="{{ replanGate }}" style="font:500 22px/1 'C11';color:#8A8073;background:none;border:1px solid #2E2822;padding:15px 22px;cursor:pointer">需重新規劃</button>
                   </div>
@@ -2858,10 +2858,10 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                     <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ finalLede }}</div>
                     <sc-if value="{{ needLightName }}" hint-placeholder-val="{{ false }}">
                       <div style="margin-top:16px;padding:14px 16px;background:rgba(0,0,0,.3);border:1px dashed #5A4A2C">
-                        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#E9B341">第五層那一塊還沒有名字</div>
-                        <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">前面四層你拿的都是別人命名好的東西。這一塊沒有人替它命名過——你採到了什麼、叫它什麼，由你決定。</div>
-                        <input value="{{ lightName }}" onChange="{{ setLightName }}" placeholder="替它取一個名字" style="width:100%;margin-top:11px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.5 'C11';outline:none">
-                      </div>
+                        <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#E9B341">{{ sealKicker }}</div>
+                        <div style="font:400 22px/1.6 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty">{{ sealNote }}</div>
+                        <input value="{{ lightName }}" onChange="{{ setLightName }}" placeholder="例如：把題目改了三次的那一學期" style="width:100%;margin-top:11px;padding:12px 13px;background:#0E0C0A;border:1px solid #2E2822;color:#E8E2D6;font:400 22px/1.5 'C11';outline:none">
+                      <button onClick="{{ doSeal }}" style="{{ sealBtnStyle }}">{{ sealBtnLabel }}</button></div>
                     </sc-if>
                     <div style="display:flex;flex-direction:column;gap:18px;margin-top:18px">
                       <sc-for list="{{ finalFields }}" as="ff" hint-placeholder-count="3">
@@ -4899,7 +4899,8 @@ class Component extends DCLogic {
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Digs: [], Checks: [], Config: { unlockEvery: 1 } };
+             Files: [], Roster: [], MinNames: [], Digs: [], Checks: [], Journeys: [],
+             Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
     if (saved) DB = JSON.parse(saved);
@@ -4956,6 +4957,46 @@ class Component extends DCLogic {
                sandbox: String(k.sandbox) === 'Y' };
     });
   }
+  /* 一趟的統整。跟 gas 端的 journeyStats_ 同一套算法。 */
+  function journeyStats(teamId, classId) {
+    var defs = {};
+    tasksOfClass(classId, teamId).forEach(function (d) { defs[d.id] = d; });
+    var pass = [0,0,0,0], open = [0,0,0,0], ext = [0,0,0,0], rej = [0,0,0,0], drop = [0,0,0,0];
+    var kinds = {};
+    DB.TeamTasks.forEach(function (r) {
+      if (r.teamId !== teamId) return;
+      var d = defs[r.taskId];
+      if (!d) return;
+      var i = Math.max(0, Math.min(3, (Number(d.layer) || 1) - 1));
+      open[i]++;
+      if (r.status === 'passed') { pass[i]++; if (d.type === 'extended') ext[i]++; }
+      var arr = (r.finds || []);
+      if (!arr.length) arr = [r.find, r.find2];
+      arr.forEach(function (x) {
+        var n = Number(x);
+        if (!(n >= 1 && n <= FINDS_N)) return;
+        drop[i]++; kinds[n] = 1;
+      });
+    });
+    (DB.Reviews || []).forEach(function (r) {
+      if (r.teamId !== teamId || r.result !== 'needfix') return;
+      var i = Math.max(0, Math.min(3, (Number(r.layer) || 1) - 1));
+      rej[i]++;
+    });
+    var tm = teamById(teamId) || {}, passedArr = tm.passed || [];
+    var layers = [];
+    for (var i = 0; i < 4; i++) {
+      layers.push({ n: i + 1, open: open[i], pass: pass[i], ext: ext[i],
+                    rej: rej[i], drop: drop[i], cleared: passedArr.indexOf(i + 1) >= 0 });
+    }
+    var sum = function (a) { return a.reduce(function (x, y) { return x + y; }, 0); };
+    var kl = classById(classId) || {};
+    return { layers: layers, mobs: sum(pass), opened: sum(open), extended: sum(ext),
+             rejected: sum(rej), drops: sum(drop), dropKinds: Object.keys(kinds).length,
+             trophies: passedArr.length, score: scoreOf(teamId, classId).total,
+             className: kl.name || '', term: kl.term || '' };
+  }
+
   function teamPub(t, w) {
     return { id: t.teamId, classId: t.classId, name: t.name, members: t.members || [],
              layer: t.layer, enteredWeek: t.enteredWeek,
@@ -5749,6 +5790,7 @@ class Component extends DCLogic {
       var f = DB.Finales.filter(function (x) { return x.teamId === tid; })[0] || null;
       return ok({ team: tm.name, layer: tm.layer, passed: tm.passed || [], toolLevels: tm.toolLevels || {},
                   specNames: tm.specNames || {}, rows: rows, cross: cross,
+                  stats: journeyStats(tid, tm.classId),   /* 統整與封存讀同一份 */
                   totalRejected: revs.filter(function (r) { return r.result === "needfix"; }).length,
                   totalSubs: subs.length, finale: f });
     },
@@ -6151,6 +6193,45 @@ class Component extends DCLogic {
       persist();
       return ok({ layer: tm.layer, passed: tm.passed.slice(), added: added });
     },
+    /* 一趟的統整。封存與回看都用這一支算。 */
+    apiSealJourney: function (t, name) {
+      var u = auth(t);
+      if (u.role !== 'student') return err('只有學生封存得了自己的旅途。');
+      var tm = teamById(u.teamId);
+      if (!tm) return err('找不到這一組。');
+      if ((tm.passed || []).indexOf(4) < 0) return err('四層都走完才封存得了。');
+      var nm = String(name || '').trim().slice(0, 40);
+      if (!nm) return err('先給這一趟一個名字。');
+      DB.Journeys = DB.Journeys || [];
+      var row = DB.Journeys.filter(function (x) { return x.teamId === u.teamId; })[0];
+      if (!row) {
+        row = { journeyId: 'j' + uid(), teamId: u.teamId, classId: tm.classId,
+                sealedAt: new Date().toISOString() };
+        DB.Journeys.push(row);
+      }
+      row.name = nm;
+      row.sealedBy = u.name || u.account || '';
+      row.stats = journeyStats(u.teamId, tm.classId);
+      persist();
+      return ok({ sealed: true, name: nm });
+    },
+
+    /* 這個人封存過的每一趟，新的在前面。換班換組都接得上。 */
+    apiJourneys: function (t) {
+      var u = auth(t);
+      var mine = teamsOfUser(u.userId);
+      if (u.teamId && mine.indexOf(u.teamId) < 0) mine.push(u.teamId);
+      var out = (DB.Journeys || []).filter(function (x) { return mine.indexOf(x.teamId) >= 0; })
+        .map(function (x) {
+          var tm = teamById(x.teamId) || {};
+          return { journeyId: x.journeyId, teamId: x.teamId, name: x.name,
+                   teamName: tm.name || '', sealedBy: x.sealedBy, sealedAt: x.sealedAt || '',
+                   now: x.teamId === u.teamId, stats: x.stats || {} };
+        })
+        .sort(function (a, b) { return (b.sealedAt || '') < (a.sealedAt || '') ? -1 : 1; });
+      return ok({ journeys: out });
+    },
+
     apiSetWeek: function (t, classId, week) {
       auth(t);
       var k = classById(classId);
@@ -7461,6 +7542,19 @@ class Component extends DCLogic {
 
     addNavExtras(L, v, sc);
     decorateWorldTabs(L, v, sc);
+    decorateEditMob(L, v);
+
+    /* 原型那一層還在講「環節」與「物證」——那兩個詞在學生端早就換成
+       礦脈與礦石了。Logic 不能改，所以在這裡把字面換掉。 */
+    (v.layerSets || []).forEach(function (g) {
+      (g.items || []).forEach(function (i2) {
+        if (typeof i2.min !== 'string') return;
+        i2.min = i2.min.split('環節 · ').join('礦石 · ').split('（物證 ').join('（');
+      });
+    });
+    (v.minOptions || []).forEach(function (m2) {
+      if (typeof m2.sub === 'string') m2.sub = m2.sub.split('學生端物證 · ').join('學生端礦石 · ');
+    });
 
     /* 四個領域。原型寫死五層，在這裡截斷——第五層（星核聖殿）連同
        它的「不給清單」設計一起拿掉，走完第四區就是結局。 */
@@ -10447,15 +10541,80 @@ class Component extends DCLogic {
     });
   }
 
+  /* 點開封存過的一趟：整份統整攤在卡片上。 */
+  function openJourney(L, j) {
+    var st = j.stats || {};
+    var LAY = L.LAYERS || [];
+    var rows = (st.layers || []).map(function (x, i) {
+      return {
+        k: (LAY[i] || {}).name || ('第 ' + x.n + ' 層'),
+        v: x.open ? (x.pass + ' / ' + x.open + ' 項　·　' + x.drop + ' 件') : '沒有走到',
+        hi: !!x.cleared
+      };
+    });
+    rows.push({ k: '打贏的生物', v: (st.mobs || 0) + ' 隻', hi: true });
+    rows.push({ k: '撿到的掉落物', v: (st.drops || 0) + ' 件（' + (st.dropKinds || 0) + ' 種）', hi: true });
+    rows.push({ k: '守關戰利品', v: (st.trophies || 0) + ' 件' });
+    rows.push({ k: '被退回', v: (st.rejected || 0) + ' 次' });
+    rows.push({ k: '分數', v: String(st.score || 0) });
+    showMoment(L, {
+      kind: 'open', accent: '#E9B341',
+      kicker: 'SEALED',
+      title: j.name || '（未命名）',
+      lede: (st.className ? st.className + '　' : '') + (j.teamName || '') +
+        (j.sealedAt ? '　·　' + String(j.sealedAt).slice(0, 10) + ' 封存' : ''),
+      sprite: null,
+      rows: rows,
+      quoteLabel: j.sealedBy ? '命名的人' : '',
+      quote: j.sealedBy || '',
+      lines: ['封存起來的是那一趟實際發生的事——開了幾項、過了幾項、撿到什麼。',
+              '換了班、換了組，這一份都還在。'],
+      btn: '收起來', go: function () {}
+    });
+  }
+
   function decorateRecord(L, v) {
     var S = L.state;
     v.hasRecord = false; v.recRows = []; v.scRec = false;
     v.showRecTab = false; v.recNote = ''; v.recCount = '';
     v.rateRows = [];
+    v.hasJourneys = false; v.journeyRows = []; v.journeyHead = ''; v.journeyNote = '';
     if (S.role !== 'student' || !S.signedIn) return;
 
     v.showRecTab = true;
     var tab = S.mapTab || 'map';
+
+    /* --- 過去的旅途 ---
+       系統是要被重複用的：這一屆走完封存起來，下一個專案打開這一頁，
+       上一趟整份統整都還在。 */
+    (function () {
+      if (!S.journeys && !S.jrnLoading && tab === 'rec') setTimeout(function () { loadJourneys(L); }, 0);
+      var js = S.journeys || [];
+      v.hasJourneys = js.length > 0;
+      v.journeyHead = '封存過的旅途　' + js.length + ' 趟';
+      v.journeyNote = '走完四層、命名之後留下來的。換班換組都還在——這一頁是跨專案的。';
+      v.journeyRows = js.map(function (j) {
+        var st = j.stats || {};
+        var when = String(j.sealedAt || '').slice(0, 10);
+        return {
+          name: j.name || '（未命名）',
+          meta: (st.className ? st.className + '　·　' : '') + (j.teamName || '') +
+            (when ? '　·　' + when + ' 封存' : '') + (j.now ? '　·　這一趟' : ''),
+          sum: '通過 ' + (st.mobs || 0) + ' 項　·　打贏 ' + (st.mobs || 0) + ' 隻　·　撿到 ' +
+            (st.drops || 0) + ' 件　·　戰利品 ' + (st.trophies || 0) + ' 件',
+          style: 'display:block;width:100%;text-align:left;padding:14px 16px;cursor:pointer;' +
+            'background:' + (j.now ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
+            ';border:1px solid ' + (j.now ? '#5A4A2C' : '#26211C'),
+          nameStyle: "display:block;font:700 22px/1.3 'C11';color:" + (j.now ? '#FFD98A' : '#E8E2D6'),
+          metaStyle: "display:block;font:400 11px/1.6 'C11';color:#5F574C;margin-top:5px",
+          sumStyle: "display:block;font:400 22px/1.6 'C11';color:#8A8073;margin-top:7px",
+          open: (function (jj) {
+            return function () { openJourney(L, jj); };
+          })(j)
+        };
+      });
+    })();
+
     v.mapTabRec = function () { L.setState({ mapTab: 'rec', screen: 'S03' }); };
     v.mapTabRecStyle = L.pill(tab === 'rec');
     if (S.screen === 'S03' && tab === 'rec') {
@@ -10475,11 +10634,7 @@ class Component extends DCLogic {
     };
     v.recRows = (S.record || []).slice().reverse().map(function (r) {
       var st = STAT[r.status] || STAT.todo;
-      var vowTxt = !r.vow
-        ? '沒有宣告'
-        : (r.settled
-            ? (r.won ? '★ ' + vowName(r.vow) : '沒拿到 ' + vowName(r.vow))
-            : '宣告了 ' + vowName(r.vow) + '，還沒送');
+      var vowTxt = '';   /* 宣告破法拿掉了——紀錄就是紀錄，沒有要報成敗 */
       var bits = ['L' + r.layer];
       if (r.rounds) bits.push('送了 ' + r.rounds + ' 次');
       if (r.sentBack) bits.push('被退 ' + r.sentBack + ' 次');
@@ -13422,78 +13577,101 @@ class Component extends DCLogic {
     var rows = d.rows || [];
     var passedRows = rows.filter(function (r) { return r.status === 'passed'; });
     var extPassed = passedRows.filter(function (r) { return r.type === 'extended'; }).length;
+    /* 伺服器算好的統整。現在看的跟封存起來的是同一份。 */
+    var JS = d.stats || { layers: [], mobs: 0, opened: 0, extended: 0, rejected: 0,
+                          drops: 0, dropKinds: 0, trophies: 0, score: 0 };
     v.finStats = [
-      { label: '採到的礦石', value: passedRows.length + ' 塊', color: '#E9B341', note: '一塊指回一件你做過的工作' },
-      { label: '鑄成的道具', value: (S.passed || []).length + ' 支', color: '#E9B341', note: '一層一支，各自擊退了一隻擋路的' },
-      { label: '走過的層', value: (S.passed || []).length + ' 層', color: '#C3BAAA', note: '每一層都是他點頭才走的' },
-      { label: '被退回', value: d.totalRejected + ' 次', color: d.totalRejected ? '#D9603F' : '#8A8073', note: '退回不扣分，它是你改過幾次的紀錄' }
+      { label: '通過的任務', value: JS.mobs + ' 項', color: '#E9B341',
+        note: '開了 ' + JS.opened + ' 項' + (JS.extended ? '，其中 ' + JS.extended + ' 項是你們自己多做的' : '') },
+      { label: '打贏的生物', value: JS.mobs + ' 隻', color: '#E9B341',
+        note: '一項任務前面站一隻，過了就是打贏了' },
+      { label: '撿到的掉落物', value: JS.drops + ' 件', color: '#C77BE0',
+        note: JS.dropKinds + ' 種不重複　·　牠們倒下的地方留下的' },
+      { label: '守關戰利品', value: JS.trophies + ' 件', color: '#E9B341',
+        note: '一層一件，只有走完那一層才拿得到' },
+      { label: '走過的層', value: (S.passed || []).length + ' 層', color: '#C3BAAA',
+        note: '每一層都是他點頭才走的' },
+      { label: '被退回', value: JS.rejected + ' 次',
+        color: JS.rejected ? '#D9603F' : '#8A8073', note: '退回不扣分，它是你改過的次數' }
     ];
 
-    /* --- 整學期甘特：你排的 vs 實際 --- */
-    var kl = L.KLASSES[S.klass] || {};
-    var N = Math.max(6, Math.min(156, Number(kl.semesterWeeks) || 18));
-    var CW = N <= 24 ? 26 : N <= 60 ? 16 : 10;
-    var weeks = [];
-    for (var i = 1; i <= N; i++) weeks.push(i);
-    v.finGanttWidth = (190 + N * CW) + 'px';
-    v.finGanttNote = '每一列是一項任務。空心格是你當初排的那一週，實心格是老師實際確認通過的那一週。兩個差多遠，就是你那時候估得多準。';
-    v.finWeeks = weeks.map(function (n) {
-      var every = N <= 24 ? 2 : N <= 60 ? 4 : 8;
-      return { label: (n === 1 || n % every === 0) ? 'W' + n : '',
-        style: 'flex:1;min-width:' + CW + "px;font:400 11px/1 'C11';text-align:center;padding-bottom:5px;color:#8A8073" };
+    /* --- 四個領域 · 你在每一層做了幾項 ---
+       本來這裡是「你排的 對 實際發生的」甘特對照。任務頁的排程拿掉之後它
+       沒有輸入了，換成這一學期更直接的一件事：每一層開了幾項、過了幾項、
+       打了幾隻、撿到幾件。一格＝一項；四列擺在一起，看得出來自己在哪一層
+       最投入——那通常不是最難的一層。 */
+    var LAY = L.LAYERS || [];
+    var lys = (JS.layers && JS.layers.length) ? JS.layers : [1, 2, 3, 4].map(function (n) {
+      return { n: n, open: 0, pass: 0, ext: 0, rej: 0, drop: 0, cleared: false };
     });
+    var maxN = Math.max(1, lys.reduce(function (m, x) { return Math.max(m, x.open); }, 0));
+    var CELL = maxN <= 12 ? 26 : maxN <= 24 ? 16 : 10;
+    var every = maxN <= 12 ? 2 : maxN <= 24 ? 5 : 10;
+    v.finGanttWidth = (190 + maxN * CELL) + 'px';
+    v.finGanttNote = '一格是一項任務。實心是老師確認通過的，虛線是開了但還沒過的。' +
+      '過一項就是打贏擋在它前面的那一隻，牠留下的東西也算在那一層。';
 
-    var diffs = [];
-    v.finRows = rows.filter(function (r) { return r.planTo || r.realWeek; }).map(function (r) {
-      var plan = r.planTo || 0, real = r.realWeek || 0;
-      var dd = (plan && real) ? real - plan : null;
-      if (dd !== null) diffs.push({ t: r.title, d: dd, layer: r.layer });
+    /* 上面那一排本來是週次，改成刻度：數到第幾項 */
+    v.finWeeks = [];
+    for (var wk = 1; wk <= maxN; wk++) {
+      v.finWeeks.push({
+        label: (wk === 1 || wk % every === 0) ? String(wk) : '',
+        style: 'flex:1;min-width:' + CELL + "px;font:400 11px/1 'C11';text-align:center;" +
+          'padding-bottom:5px;color:#5F574C'
+      });
+    }
+
+    v.finRows = lys.map(function (x, i) {
+      var hue = BOARD_HUE[Math.max(0, Math.min(3, i))];
+      var base = 'flex:1;min-width:' + CELL + "px;align-self:stretch;display:flex;" +
+        "align-items:center;justify-content:center;font:500 11px/1 'C11';margin-right:2px;";
+      var cells = [];
+      for (var k = 0; k < maxN; k++) {
+        if (k < x.pass) {
+          cells.push({ mark: '', style: base + 'background:' + hue + ';border:1px solid ' + hue });
+        } else if (k < x.open) {
+          cells.push({ mark: '', style: base + 'background:rgba(' + hexRgb(hue) + ',.12);' +
+            'border:1px dashed ' + hue });
+        } else {
+          cells.push({ mark: '', style: base + 'background:transparent;border:1px solid #1A1613' });
+        }
+      }
       return {
-        title: r.title,
-        nameColor: r.status === 'passed' ? '#E8E2D6' : '#8A8073',
-        meta: 'L' + r.layer + (plan ? ' · 你排 W' + plan : '') + (real ? ' · 實際 W' + real : ' · 未通過') +
-          (r.rejected ? ' · 退回 ' + r.rejected + ' 次' : ''),
-        cells: weeks.map(function (n) {
-          var isPlan = plan === n, isReal = real === n;
-          var between = plan && real && n > Math.min(plan, real) && n < Math.max(plan, real);
-          var late = dd !== null && dd > 0;
-          var col = dd === null ? '#8A8073' : dd > 0 ? '#D9603F' : dd < 0 ? '#E9B341' : '#C3BAAA';
-          var base = 'flex:1;min-width:' + CW + "px;align-self:stretch;display:flex;align-items:center;justify-content:center;font:500 11px/1 'C11';margin:2px 0;";
-          if (isReal) return { mark: '●', style: base + 'background:' + col + ';color:#0B0A09;border:1px solid ' + col };
-          if (isPlan) return { mark: '○', style: base + 'background:transparent;color:' + col + ';border:1px dashed ' + col };
-          if (between) return { mark: '', style: base + 'background:' + (late ? 'rgba(217,96,63,.14)' : 'rgba(233,179,65,.12)') + ';color:transparent;border:0' };
-          return { mark: '', style: base + 'background:transparent;color:transparent;border:1px solid #1A1613' };
-        })
+        title: (LAY[i] || {}).name || ('第 ' + x.n + ' 層'),
+        nameColor: x.open ? '#E8E2D6' : '#5F574C',
+        meta: x.open
+          ? ('通過 ' + x.pass + ' / ' + x.open + ' 項　·　打贏 ' + x.pass + ' 隻　·　撿到 ' + x.drop + ' 件' +
+             (x.ext ? '　·　多做 ' + x.ext + ' 項' : '') + (x.rej ? '　·　退回 ' + x.rej + ' 次' : ''))
+          : '這一層沒有做到任何一項',
+        cells: cells
       };
     });
+
     v.finLegend = [
-      { mark: '○', label: '你當初排的那一週', swatch: "display:flex;align-items:center;justify-content:center;width:26px;height:22px;font:500 11px/1 'C11';color:#C3BAAA;border:1px dashed #C3BAAA" },
-      { mark: '●', label: '老師實際確認通過', swatch: "display:flex;align-items:center;justify-content:center;width:26px;height:22px;font:500 11px/1 'C11';color:#0B0A09;background:#C3BAAA;border:1px solid #C3BAAA" },
-      { mark: '', label: '橘＝比你排的慢，琥珀＝比你排的快', swatch: 'display:flex;width:26px;height:22px;background:linear-gradient(90deg,rgba(233,179,65,.5),rgba(217,96,63,.5))' }
+      { mark: '', label: '通過的',
+        swatch: 'display:block;width:26px;height:22px;background:#E9B341;border:1px solid #E9B341' },
+      { mark: '', label: '開了還沒過',
+        swatch: 'display:block;width:26px;height:22px;background:rgba(233,179,65,.12);border:1px dashed #E9B341' },
+      { mark: '', label: '那一層沒有那麼多項',
+        swatch: 'display:block;width:26px;height:22px;background:transparent;border:1px solid #2C251D' }
     ];
 
-    var onTime = diffs.filter(function (x) { return x.d === 0; }).length;
-    var faster = diffs.filter(function (x) { return x.d < 0; }).length;
-    var slower = diffs.filter(function (x) { return x.d > 0; }).length;
-    var worst = diffs.slice().sort(function (a, b) { return b.d - a.d; })[0];
-    var early = diffs.filter(function (x) { return x.layer <= 2; });
-    var late = diffs.filter(function (x) { return x.layer >= 4; });
-    var avg = function (arr) { return arr.length ? (arr.reduce(function (s, x) { return s + Math.abs(x.d); }, 0) / arr.length) : null; };
-    var e = avg(early), l = avg(late);
-    v.finGrowth = diffs.length
-      ? '可比對的有 ' + diffs.length + ' 項：照計畫 ' + onTime + '、比你排的快 ' + faster + '、比你排的慢 ' + slower + '。' +
-        (worst && worst.d > 0 ? '差最多的是「' + worst.t + '」，慢了 ' + worst.d + ' 週。' : '') +
-        (e !== null && l !== null
-          ? (l < e
-              ? '前兩層平均差 ' + e.toFixed(1) + ' 週，後面幾層平均差 ' + l.toFixed(1) + ' 週——你們後來估得比較準了，這就是這一學期最實際的成長。'
-              : '前兩層平均差 ' + e.toFixed(1) + ' 週，後面幾層平均差 ' + l.toFixed(1) + ' 週。後面差距沒有變小，值得在下面的第一題想一下為什麼。')
-          : '')
-      : '';
+    var did = lys.filter(function (x) { return x.open > 0; });
+    var most = did.slice().sort(function (a, b) { return b.pass - a.pass; })[0];
+    var least = did.slice().sort(function (a, b) { return a.pass - b.pass; })[0];
+    var nameOf = function (x) { return (LAY[x.n - 1] || {}).name || ('第 ' + x.n + ' 層'); };
+    v.finGrowth = !JS.opened
+      ? ''
+      : '四層加起來，你開了 ' + JS.opened + ' 項、通過 ' + JS.mobs + ' 項，' +
+        '打贏 ' + JS.mobs + ' 隻，撿到 ' + JS.drops + ' 件（' + JS.dropKinds + ' 種）。' +
+        (most ? '做最多的是「' + nameOf(most) + '」' + most.pass + ' 項' : '') +
+        (least && most && least.n !== most.n ? '，最少的是「' + nameOf(least) + '」' + least.pass + ' 項。' : '。') +
+        (JS.extended
+          ? '其中 ' + JS.extended + ' 項是清單以外你們自己多做的——那幾項不影響過關。'
+          : '這一趟沒有清單以外的項目。有多做的話，這裡會單獨標出來。') +
+        '　哪一層做得多不代表哪一層難，它代表那一段你們願意花時間。';
 
-    /* 排程從任務頁拿掉之後就沒有地方寫了。沒有資料的時候整塊收起來——
-       留一張空格子只會叫人去一個已經不存在的頁面。 */
-    v.hasFinPlan = diffs.length > 0;
-
+    v.hasFinLayers = JS.opened > 0;
     /* --- 自評 vs 老師判斷 --- */
     var c = d.cross || { total: 0, agree: 0, optimistic: 0, conservative: 0 };
     var pc = function (n) { return c.total ? Math.round(n / c.total * 100) + '%' : '—'; };
@@ -13531,8 +13709,7 @@ class Component extends DCLogic {
         { k: '結局 · 二', t: '你們做過的',
           b: '通過的任務　' + passedE + ' 項' + String.fromCharCode(10) +
              '送出的次數　' + subsE + ' 次' + (rejE ? '（其中 ' + rejE + ' 次被退回來重做）' : '') + String.fromCharCode(10) +
-             '宣告做到　' + (vr.n ? vr.hit + ' / ' + vr.n + ' 次' : '沒有宣告過') +
-             String.fromCharCode(10) + String.fromCharCode(10) +
+             String.fromCharCode(10) +
              (rejE
                ? '被退回來的那 ' + rejE + ' 次，是你們拿到他那段字的方式。'
                : '一次都沒有被退回來。') },
@@ -13587,10 +13764,39 @@ class Component extends DCLogic {
       ];
     })();
 
-    var m5 = (L.MINS || []).filter(function (m) { return m.L === 5; })[0];
-    v.needLightName = !!m5 && !String(S.finLight || '').trim() && !submitted;
+    /* 幫這一趟命名，然後封存。
+       本來這一塊是「第五層那一塊還沒有名字」——第五層早就沒有了，那個框
+       從此永遠不會出現。名字沿用同一個欄位（Finales.lightName），封存另外
+       寫一列 Journeys，下一個專案打開紀錄就看得到這一趟。 */
+    v.needLightName = (S.passed || []).indexOf(4) >= 0;
     v.lightName = S.finLight || '';
     v.setLightName = function (e2) { L.setState({ finLight: e2.target.value }); };
+    var sealed = (S.journeys || []).filter(function (j) { return j.now; })[0] || null;
+    v.sealKicker = sealed ? '這一趟已經封存了' : '幫這一趟取一個名字';
+    v.sealNote = sealed
+      ? '封存的名字是「' + sealed.name + '」。改了名字再按一次就會更新——' +
+        '統整也會跟著重算。下一個專案打開「紀錄」，這一趟會在最上面。'
+      : '四層走完了，這一趟要有一個名字。取好按下去封存——' +
+        '之後換了班、換了組，打開「紀錄」都還看得到這一趟的完整統整。';
+    v.sealBtnLabel = S.sealSaving ? '封存中…' : sealed ? '改名字，重新封存' : '封存這一趟';
+    v.sealBtnStyle = "font:500 22px/1 'C11';letter-spacing:.14em;margin-top:12px;" +
+      'padding:13px 22px;border:none;color:#0B0A09;background:' +
+      (String(S.finLight || '').trim() && !S.sealSaving ? '#E9B341' : '#8A7333') +
+      ';cursor:' + (S.sealSaving ? 'wait' : 'pointer');
+    v.doSeal = function () {
+      var nm = String(L.state.finLight || '').trim();
+      if (!nm) { L.say('先給這一趟一個名字。想不到的話，寫你們最記得的那一件事。'); return; }
+      if (L.state.sealSaving) return;
+      L.setState({ sealSaving: true });
+      call('apiSealJourney', LIVE.token, nm)
+        .then(function (r) {
+          L.setState({ sealSaving: false });
+          if (!r || !r.ok) { L.say((r && r.error) || '沒有存到伺服器。'); return null; }
+          L.say('封存了：「' + nm + '」。在「紀錄」那一頁看得到。');
+          return loadJourneys(L, true);
+        })
+        .catch(function () { L.setState({ sealSaving: false }); L.say('沒有存到伺服器。'); });
+    };
     v.finalTitle = submitted ? '你已經送出了' : '最後的檢討與思考';
     v.finalLede = submitted
       ? '老師看得到這一份。想改的話還是可以改，改完再送一次。'
@@ -13627,6 +13833,19 @@ class Component extends DCLogic {
 
 
   /* ---------- T-09 期末回顧：讀學生走完整輪之後回頭寫的東西 ---------- */
+
+  /* 封存過的每一趟。換班換組都接得上——後端是用 Roster 認人的。 */
+  function loadJourneys(L, force) {
+    var S = L.state;
+    if (S.jrnLoading) return null;
+    if (S.journeys && !force) return null;
+    L.setState({ jrnLoading: true });
+    return call('apiJourneys', LIVE.token)
+      .then(function (r) {
+        L.setState({ jrnLoading: false, journeys: (r && r.ok) ? (r.journeys || []) : [] });
+      })
+      .catch(function () { L.setState({ jrnLoading: false, journeys: [] }); });
+  }
 
   function loadTfin(L) {
     if (L.state.tfinLoading) return;
@@ -14376,6 +14595,34 @@ class Component extends DCLogic {
           L.setState({ screen: 'STORY', storyIdx: 0, storyLayer: 1, previewStory: 1, storyFrom: 'T08' });
         })
     ];
+  }
+
+  /* T-05：這一項發下去之後，學生點開會先看到擋在它前面的那一隻。
+     老師定的是任務，學生遇到的是生物——這一面老師本來完全看不到。
+     生物是照任務 id 決定的，所以新開的一項還沒有 id 就先不顯示。 */
+  function decorateEditMob(L, v) {
+    var S = L.state;
+    v.hasEditMob = false;
+    v.editMobArt = ''; v.editMobName = ''; v.editMobNote = '';
+    v.editMobKicker = ''; v.editMobWrap = 'display:none';
+    if (S.role !== 'teacher' || S.screen !== 'T05') return;
+    var id = S.editId || '';   /* 原型用的是 editId */
+    if (!id) return;
+    var lyr = Number(S.editLayer) || 1;
+    var m = mobOf(mobIdOfTask(id), lyr);
+    if (!m) return;
+    var hue = BOARD_HUE[Math.max(0, Math.min(3, lyr - 1))];
+    v.hasEditMob = true;
+    v.editMobWrap = 'display:flex;align-items:center;gap:12px;padding:12px 14px;' +
+      'background:rgba(' + hexRgb(hue) + ',.06);border-left:2px solid ' + hue;
+    v.editMobArt = 'display:block;width:46px;height:46px;flex:none;image-rendering:pixelated;' +
+      'background:url("' + mobSvg(m.id, lyr) + '") center/contain no-repeat';
+    v.editMobKicker = '學生點開這一項會先看到';
+    v.editMobKickerStyle = "display:block;font:400 11px/1 'C11';letter-spacing:.16em;color:" + hue;
+    v.editMobName = m.name;
+    v.editMobNameStyle = "display:block;font:700 22px/1.3 'C11';color:#E8E2D6;margin-top:5px";
+    v.editMobNote = m.trait || '';
+    v.editMobNoteStyle = "display:block;font:400 11px/1.6 'C11';color:#8A8073;margin-top:4px;text-wrap:pretty";
   }
 
   function decorateGate(L, v) {
