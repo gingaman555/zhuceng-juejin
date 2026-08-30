@@ -1636,7 +1636,6 @@
 
     /* 送審三格整條線拿掉：那一頁（SUB）不在模板裡了，放行完全在老師那邊。
        模板上沒有這些欄位，所以這裡連算都不用算。 */
-    decorateGantt(L, v);
 
     /* 看他組的通過紀錄時，三格的題目也要跟著換 */
     if (v.selTeam && v.selTeam.cells && v.selTeam.cells.length) {
@@ -1975,232 +1974,8 @@
   /* 送不送得出關卡：唯一入口 */
   function gateBlockReason(L) { return layerState(L).blockReason; }
 
-  /* ---------- 甘特圖：欄位依實際學期長度，排程可以拉區間 ---------- */
-
-  function planOf(S, taskId) {
-    var p = (S.plan || {})[taskId];
-    if (p == null) return null;
-    if (typeof p === 'number') return { a: p, b: p };
-    return { a: Number(p.a) || Number(p.b) || 1, b: Number(p.b) || Number(p.a) || 1 };
-  }
-
-  function decorateGantt(L, v) {
-    var S = L.state;
-    var kl = L.KLASSES[S.klass] || {};
-    var N = Math.max(6, Math.min(156, Number(kl.semesterWeeks) || 18));
-    var now = S.courseWeek || 1;
-    var tasks = L.myTasks();
-    var AC = '#E9B341';
-
-    /* 一學期到三年都要能看：格子寬度隨週數自動縮，也可以手動切 */
-    var ZOOMS = { wide: 44, mid: 26, narrow: 15 };
-    var autoZoom = N <= 24 ? 'wide' : N <= 60 ? 'mid' : 'narrow';
-    var zoom = S.ganttZoom || autoZoom;
-    if (!ZOOMS[zoom]) zoom = autoZoom;
-    var CELL = ZOOMS[zoom];
-    v.ganttMinWidth = Math.max(600, 176 + N * CELL) + 'px';
-    v.ganttZoomPicks = [
-      { k: 'wide', label: '寬' }, { k: 'mid', label: '中' }, { k: 'narrow', label: '窄' }
-    ].map(function (z) {
-      var on = zoom === z.k;
-      return {
-        label: z.label,
-        pick: function () { L.setState({ ganttZoom: z.k }); },
-        style: "padding:7px 12px;font:500 11px/1 'C11';letter-spacing:.1em;cursor:pointer;background:" +
-          (on ? 'rgba(233,179,65,.16)' : 'rgba(0,0,0,.28)') + ';border:1px solid ' + (on ? '#E9B341' : '#2E2822') +
-          ';color:' + (on ? '#E9B341' : '#8A8073')
-      };
-    });
-    v.ganttSpanNote = N + ' 週' + (N > 52 ? '（約 ' + (Math.round(N / 52 * 10) / 10) + ' 年）'
-      : N > 26 ? '（約一學年）' : '（約一學期）') + '　·　現在第 ' + now + ' 週';
-    v.jumpNow = function () {
-      var box = document.querySelector('[data-gantt-scroll]');
-      if (!box) return;
-      box.scrollLeft = Math.max(0, 176 + (now - 3) * CELL);
-    };
-
-    var anchorNow = S.rangeAnchor;
-    v.ganttHowTo = anchorNow
-      ? '已經選了起點 W' + anchorNow.week + '。再點同一列的另一格設終點，中間會連成一條；點回同一格就只排那一週。'
-      : '點一格＝那一週交完；同一列再點第二格，兩格之間連成一條。老師只訂期限，這一頁他看不到。';
-    v.ganttHowToStyle = "font:400 22px/1.6 'C11';margin-bottom:12px;text-wrap:pretty;padding:11px 13px;border-left:2px solid " +
-      (anchorNow ? AC : '#3A3026') + ';background:' + (anchorNow ? 'rgba(233,179,65,.08)' : 'rgba(0,0,0,.24)') +
-      ';color:' + (anchorNow ? '#E9B341' : '#8A8073');
-
-    var weeks = [];
-    for (var i = 1; i <= N; i++) weeks.push(i);
-
-    var dueCount = {};
-    tasks.forEach(function (t) { var w = L.dueWeek(t); if (w) dueCount[w] = (dueCount[w] || 0) + 1; });
-
-    /* 欄位底色：現在這一週最亮，每四週一個淺色帶，方便數格子 */
-    var colBg = function (n) {
-      if (n === now) return 'rgba(233,179,65,.10)';
-      return (Math.ceil(n / 4) % 2 === 0) ? 'rgba(255,255,255,.022)' : 'transparent';
-    };
-    var colEdge = function (n) {
-      return (n % 4 === 0 && n !== N) ? ';border-right:1px solid #2A241E' : '';
-    };
-
-    v.ganttWeeks = weeks.map(function (n) {
-      var isNow = n === now, hasDue = !!dueCount[n];
-      return {
-        label: 'W' + n + (hasDue ? ' ▼' : ''),
-        date: isNow ? '這一週' : L.weekRange(n),
-        style: 'flex:1;min-width:' + CELL + "px;font:500 11px/1 'C11';text-align:center;padding:7px 0 6px;background:" +
-          colBg(n) + ';color:' + (isNow ? AC : hasDue ? '#DCD4C6' : '#8A8073') + colEdge(n),
-        dateStyle: "display:block;font:400 11px/1 'C11';margin-top:5px;color:" +
-          (isNow ? '#E9B341' : hasDue ? '#9A9184' : '#5F574C')
-      };
-    });
-
-    v.dueTrack = weeks.map(function (n) {
-      var c = dueCount[n];
-      return {
-        label: c ? c + ' 項' : '',
-        style: 'flex:1;min-width:' + CELL + 'px;align-self:stretch;margin:0;min-height:34px;display:flex;align-items:center;justify-content:center;' +
-          "font:500 11px/1 'C11';" +
-          (c
-            ? 'background:rgba(195,186,170,.16);color:#E8E2D6;border:1px solid #6E665A'
-            : 'background:' + colBg(n) + ';color:transparent;border:1px solid transparent' + colEdge(n))
-      };
-    });
-
-    var anchor = S.rangeAnchor || null;
-    var setRange = function (t, n) {
-      return function () {
-        if (t.status === 'passed') return;
-        var a = L.state.rangeAnchor;
-        var from, to, nextAnchor;
-        if (a && a.taskId === t.id) { from = Math.min(a.week, n); to = Math.max(a.week, n); nextAnchor = null; }
-        else { from = n; to = n; nextAnchor = { taskId: t.id, week: n }; }
-        var plan = Object.assign({}, L.state.plan);
-        plan[t.id] = { a: from, b: to };
-        L.setState({ plan: plan, rangeAnchor: nextAnchor });
-        L.say(from === to ? ('排在 W' + from + '。再點一格可以拉成一段。') : ('排 W' + from + ' 到 W' + to + '。'));
-        call('apiSavePlan', LIVE.token, t.id, from, to).catch(function () {});
-      };
-    };
-
-    v.ganttRows = tasks.map(function (t) {
-      var dw = L.dueWeek(t), p = planOf(S, t.id), got = t.status === 'passed';
-      var gotWeek = (S.passedWeek || {})[t.id] || 0;
-      var late = p && dw && p.b > dw;
-      var meta = got ? 'W' + (gotWeek || now) + ' 通過'
-        : t.status === 'submitted' ? '等老師確認'
-          : t.status === 'needs_more' ? '退回，要補'
-            : !p ? (dw ? '期限 ' + L.dueLabel(t) + ' · 還沒排' : '不設限 · 還沒排')
-              : (dw ? '期限 ' + L.dueLabel(t) + ' · ' : '不設限 · ') +
-                (p.a === p.b ? '你排 W' + p.b : '你排 W' + p.a + '–W' + p.b) + (late ? '，排在期限之後' : '');
-      return {
-        name: t.title, tag: t.status === 'passed' ? '已採' : '待採',
-        tagStyle: L.chip(t.type === 'required' ? 'rgba(233,179,65,.14)' : 'transparent',
-                         t.type === 'required' ? AC : '#9A9184',
-                         t.type === 'required' ? 'rgba(233,179,65,.28)' : '#2E2822'),
-        meta: meta,
-        metaStyle: "font:400 11px/1.5 'C11';color:" + (got ? AC : (t.over || late) ? '#D9603F' : p ? '#8A8073' : '#6E665A'),
-        open: function () {
-          L.setState({ screen: 'S05', openTaskId: t.id, draftText: t.text || '', draftFiles: (t.files || []).slice(),
-                       draftEffort: t.effort || '', draftEffortNote: t.effortNote || '', draftBlocker: t.blocker || '' });
-        },
-        cells: weeks.map(function (n) {
-          var inRange = p && n >= p.a && n <= p.b;
-          var isA = p && n === p.a, isB = p && n === p.b;
-          var single = p && p.a === p.b;
-          var done = got && n === (gotWeek || now);
-          var wait = !got && t.status === 'submitted' && n === now;
-          var past = dw && n > dw;
-          var isDue = dw && n === dw;
-          var anch = anchor && anchor.taskId === t.id && anchor.week === n;
-          var hatch = past ? 'repeating-linear-gradient(135deg,rgba(217,96,63,.10) 0 3px,transparent 3px 8px),' : '';
-          var base = 'flex:1;min-width:' + CELL + 'px;align-self:stretch;min-height:38px;cursor:' + (got ? 'default' : 'pointer') +
-            ";display:flex;align-items:center;justify-content:center;font:500 11px/1 'C11';padding:0;margin:0;";
-          var body, mark = '';
-
-          if (done) {
-            mark = '✓';
-            body = 'background:' + AC + ';color:#0B0A09;border:2px solid ' + AC;
-          } else if (wait) {
-            mark = '…';
-            body = 'background:' + hatch + 'rgba(233,179,65,.18);color:' + AC + ';border:2px dashed ' + AC;
-          } else if (inRange) {
-            /* 一整段畫成一條實心帶：只有頭尾封口，中間不切線 */
-            var fill = past ? 'rgba(217,96,63,.26)' : 'rgba(233,179,65,.30)';
-            var line = past ? '#D9603F' : AC;
-            if (single) mark = '交';
-            else if (isA) mark = '起';
-            else if (isB) mark = '交';
-            body = 'background:' + hatch + fill + ';color:' + (past ? '#F0C6B8' : '#0B0A09') +
-              ';border-top:2px solid ' + line + ';border-bottom:2px solid ' + line +
-              ';border-left:' + (isA ? '2px solid ' + line : '0') +
-              ';border-right:' + (isB ? '2px solid ' + line : '0');
-            if (isB && !single) body += ';font-weight:700';
-          } else if (anch) {
-            mark = '起';
-            body = 'background:rgba(233,179,65,.22);color:' + AC + ';border:2px dashed ' + AC;
-          } else {
-            body = 'background:' + hatch + colBg(n) + ';color:#4A443C;border:1px solid ' +
-              (isDue ? 'rgba(195,186,170,.34)' : '#1F1B17') + colEdge(n);
-          }
-          /* 老師的期限：整格右邊一條粗線，逾期側轉紅 */
-          if (isDue) body += ';box-shadow:inset -3px 0 0 0 ' + (t.over && !got ? '#D9603F' : '#8A8073');
-          return { set: setRange(t, n), mark: mark, style: base + body };
-        })
-      };
-    });
-
-    var gp = planOf(S, 'gate'), sent = S.gateSubmitted, gdone = (S.passed || []).indexOf(S.currentLayer) >= 0;
-    v.ganttGate = {
-      meta: gdone ? '已通過' : sent ? '已送審，等老師審核' : gp ? '你排 W' + gp.b + ' 送審' : '還沒排送審週次',
-      cells: weeks.map(function (n) {
-        var on = gp && n >= gp.a && n <= gp.b;
-        var mark = (gdone || sent) && n === now ? (gdone ? '✓' : '…') : '';
-        return {
-          set: function () {
-            if (sent || gdone) return;
-            var plan = Object.assign({}, L.state.plan);
-            plan.gate = { a: n, b: n };
-            L.setState({ plan: plan });
-            call('apiSavePlan', LIVE.token, 'gate', n, n).catch(function () {});
-          },
-          mark: mark || (on ? '審' : ''),
-          style: 'flex:1;min-width:' + CELL + 'px;align-self:stretch;min-height:38px;cursor:' + (sent || gdone ? 'default' : 'pointer') +
-            ";display:flex;align-items:center;justify-content:center;font:500 11px/1 'C11';" +
-            ((gdone || sent) && n === now
-              ? 'background:' + (gdone ? AC : 'rgba(233,179,65,.18)') + ';color:' + (gdone ? '#0B0A09' : AC) + ';border:2px ' + (gdone ? 'solid' : 'dashed') + ' ' + AC
-              : on ? 'background:rgba(195,186,170,.2);color:#0B0A09;border:2px solid #8A8073'
-                   : 'background:' + colBg(n) + ';color:#4A443C;border:1px solid #1F1B17' + colEdge(n))
-        };
-      })
-    };
-
-    v.ganttFresh = Object.keys(S.plan || {}).filter(function (k) { return k !== 'gate'; }).length === 0;
-
-    /* 圖例：直接畫出格子本人，不用文字描述 */
-    var sw = function (extra, mark, color) {
-      return { mark: mark || '', swatch: 'display:flex;align-items:center;justify-content:center;width:30px;height:24px;flex:none;' +
-        "font:500 11px/1 'C11';color:" + (color || 'transparent') + ';' + extra };
-    };
-    v.ganttLegend = [
-      Object.assign(sw('background:rgba(233,179,65,.30);border-top:2px solid ' + AC + ';border-bottom:2px solid ' + AC +
-        ';border-left:2px solid ' + AC, '起', '#0B0A09'), { label: '你排的區間 · 起點' }),
-      Object.assign(sw('background:rgba(233,179,65,.30);border-top:2px solid ' + AC + ';border-bottom:2px solid ' + AC +
-        ';border-right:2px solid ' + AC, '交', '#0B0A09'), { label: '你打算交出去的那一週' }),
-      Object.assign(sw('background:transparent;border:1px solid #1F1B17;box-shadow:inset -3px 0 0 0 #8A8073'), { label: '老師訂的期限' }),
-      Object.assign(sw('background:repeating-linear-gradient(135deg,rgba(217,96,63,.10) 0 3px,transparent 3px 8px);border:1px solid #1F1B17'), { label: '期限之後（逾期區）' }),
-      Object.assign(sw('background:' + AC + ';border:2px solid ' + AC, '✓', '#0B0A09'), { label: '老師確認通過的那一週' }),
-      Object.assign(sw('background:rgba(233,179,65,.18);border:2px dashed ' + AC, '…', AC), { label: '送出了，等他確認' })
-    ];
-
-    /* 比對區：排的是區間時，「你排的」顯示整段 */
-    (v.diffRows || []).forEach(function (row, i) {
-      var t = tasks.filter(function (x) { return x.status === 'passed' && (S.passedWeek || {})[x.id]; })[i];
-      if (!t) return;
-      var p = planOf(S, t.id);
-      if (p && p.a !== p.b) row.plan = 'W' + p.a + '–W' + p.b;
-    });
-  }
-
+  /* 甘特圖整支拿掉：畫面早就不在模板裡了，但它每一次 render 都還在算
+     18 欄 × 每一項任務的格子。排程從任務頁拿掉之後更沒有輸入。 */
 
   /* ---------- 地表到地心的 45 格：畫成一條看得見的路，不是一個數字 ---------- */
 
@@ -8247,18 +8022,12 @@
     /* 那三題是學生在 SUB 寫的，SUB 拿掉之後沒有人寫得進去——
        畫面上會是三個「（未填）」。給空陣列，整塊就不畫了。 */
     v.gateReview = [];
-    var missReq = rq.filter(function (t) { return t.status !== 'passed'; });
-    v.gateBlocked = missReq.length > 0;
-    v.gateBlockedWhy = missReq.length
-      ? '這一層還差 ' + missReq.length + ' 塊礦石：' + missReq.map(function (t) { return t.title; }).join('、') +
-        '。先回逐項確認處理完，或把這一次關卡退回。'
-      : '';
+    /* 礦石從門檻變回紀錄之後，沒有任何條件擋得住放行——上面那張對照表
+       是給他看的資訊，不是他要滿足的條件。 */
+    v.gateBlocked = false;
+    v.gateBlockedWhy = '';
 
     v.passGate = function () {
-      if (missReq.length) {
-        L.say('這一層還差 ' + missReq.length + ' 塊礦石沒採到，不能放他們過關。先處理完或退回這一次關卡。');
-        return;
-      }
       var Ldef = L.LAYERS[g.layer - 1] || {};
       var spg = layerSprites(L, g.layer);
       showMoment(L, {
@@ -8280,22 +8049,11 @@
         .then(function (r) { if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。'); return refresh(); })
         .catch(function () { L.say('沒有存到伺服器。'); });
     };
-    v.rejectGate = function () {
-      if (!String(L.state.gateReason || '').trim()) { L.say('需補充一定要附理由。'); return; }
-      var reason = L.state.gateReason;
-      L.setState({ screen: 'T01', gateReason: '' });
-      L.say('退回。學生端可以補完再送。');
-      call('apiReviewGate', LIVE.token, g.teamId, false, '', reason)
-        .then(function () { return refresh(); }).catch(function () {});
-    };
-    v.replanGate = function () {
-      if (!String(L.state.gateReason || '').trim()) { L.say('需重新規劃一定要附理由。'); return; }
-      var reason = L.state.gateReason;
-      L.setState({ screen: 'T01', gateReason: '' });
-      L.say('判為需重新規劃。這一次不解鎖給其他隊伍。');
-      call('apiReviewGate', LIVE.token, g.teamId, false, '', '（需重新規劃）' + reason)
-        .then(function () { return refresh(); }).catch(function () {});
-    };
+    /* 需補充／需重新規劃兩顆拿掉：它們寫的 verdict=needfix 那一列，
+       學生端從來不讀（layerSaid 只收 verdict==='pass'），而且學生本來
+       就沒有送出任何申請，沒有東西可以退回。 */
+    v.rejectGate = function () {};
+    v.replanGate = function () {};
   }
 
 

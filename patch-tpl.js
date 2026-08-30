@@ -4057,5 +4057,20 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('95. T-05 補上擋路的那一隻');
 })();
 
+
+/* 96. T-07 只剩一個動作：放行。
+      「需補充」「需重新規劃」寫下去沒有人讀得到，學生也沒有送出任何
+      申請可以被退回——按下去唯一會發生的事是把老師踢回 T-01。 */
+(function () {
+  var i = t.indexOf('{{ rejectGate }}');
+  if (i < 0) { console.error('96. 需補充那一顆找不到'); process.exit(1); }
+  var a = t.lastIndexOf('<button', i);
+  var j = t.indexOf('{{ replanGate }}');
+  var b = t.indexOf('</button>', j);
+  if (a < 0 || j < 0 || b < 0) { console.error('96. 兩顆按鈕的範圍抓不到'); process.exit(1); }
+  t = t.slice(0, a) + t.slice(b + 9);
+  console.log('96. T-07 只剩一個動作');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
