@@ -7472,7 +7472,11 @@ class Component extends DCLogic {
     if (S.role === 'student') {
       v.weeksHere = S.stayWeeks || 1;
       v.navSub = LAYERNAME(S.currentLayer) + ' · 停留 ' + (S.stayWeeks || 1) + ' 週';
-      v.idMeta = LAYERNAME(S.currentLayer) + ' · 停留 ' + (S.stayWeeks || 1) + ' 週　·　學期第 ' + (S.courseWeek || 1) + ' 週';
+      /* 學生端本來只寫層名與週數，沒有課程名——同時修兩門課的人
+         看不出這一份是哪一門。老師端本來就有，補上。 */
+      var kn = (L.klass() || {}).name || '';
+      v.idMeta = (kn ? kn + '　·　' : '') + LAYERNAME(S.currentLayer) +
+        ' · 停留 ' + (S.stayWeeks || 1) + ' 週　·　學期第 ' + (S.courseWeek || 1) + ' 週';
     } else if (S.role === 'teacher') {
       v.idMeta = L.klass().name + ' · ' + L.teams().length + ' 組　·　學期第 ' + (S.courseWeek || 1) + ' 週';
     }
@@ -13119,7 +13123,7 @@ class Component extends DCLogic {
         got: !!t && t.status === "passed",
         star: !!(t && t.star),
         sprite: mineralSprite(L, m.name, layer),
-        locked: "還還沒拿到。通過這一項才看得到它是什麼。"
+        locked: "還沒拿到。通過這一項才看得到它是什麼。"
       }));
     });
 
@@ -13133,8 +13137,25 @@ class Component extends DCLogic {
     if (self !== "treasure" && lay.treasure) {
       out.push(tile({ name: lay.treasure, kind: bossOf(layer) ? "戰利品 · 牠站的地方" : "戰利品",
         got: cleared, sprite: sp.treasure,
-        locked: "通過這一層，而且他覺得你們做得夠了才會出現。" }));
+        locked: "通過這一層，而且老師覺得你們做得夠了才會出現。" }));
     }
+
+    /* 這一層的掉落物。
+       本來整批漏掉了——這一段說是「同一層的其他東西」，卻只算了六件
+       固定的。掉落物一層二十幾種，全列出來會變成一整片問號，所以只
+       列已經拿到的，剩下幾種寫在下面那句說明裡。 */
+    var deb = FINDS.filter(function (f) { return f.L === layer; });
+    var mineF = L.state.finds || {};
+    var debGot = deb.filter(function (f) { return Number(mineF[f.n]) > 0; });
+    var debLeft = deb.length - debGot.length;
+    debGot.forEach(function (f) {
+      if (f.name === S.specId) return;
+      out.push(tile({
+        name: f.name, kind: '掉落物 · 打贏一隻就抽',
+        got: true, sprite: packSvg(f.px, f.L),
+        locked: ''
+      }));
+    });
 
     /* 這一層的守關生物 */
     if (bz && self !== "boss") {
@@ -13146,16 +13167,20 @@ class Component extends DCLogic {
     v.specRelated = out;
     v.hasSpecRelated = out.length > 0;
     v.specRelatedLabel = "同一層的其他東西";
+    var debNote = deb.length
+      ? '　這一層另外有 ' + deb.length + ' 種掉落物，打贏這一層任何一隻都有機會抽到' +
+        (debLeft > 0 ? '——你還差 ' + debLeft + ' 種。' : '，你已經全部拿到了。')
+      : '';
     v.specRelatedNote = self === "boss"
-      ? "牠守的是" + (lay.name || "這一層") + "。下面是這一層的礦石，以及他准了才拿得到的道具與戰利品。"
+      ? "牠守的是" + (lay.name || "這一層") + "。下面是這一層的礦石，以及老師放行才拿得到的道具與戰利品。" + debNote
       : self === "tool"
         ? "鑄成它的是下面這些礦石" + (bz ? "，它剋的是" + bz.name : "") + "。"
         : self === "treasure"
           ? (bz
               ? "這一件是" + bz.name + "倒下的地方留下的。下面是打得贏牠的那些東西——礦石鑄成道具，道具剋牠。"
               : "同一層的東西。這一件不在任何一隻身上，它在最深處等著。")
-          : "同一層的其他礦石，以及他准了才鑄得出來的道具、才拿得到的戰利品"
-            + (bz ? "，還有擋在層底的" + bz.name : "") + "。";
+          : "同一層的其他礦石，以及老師放行才鑄得出來的道具、才拿得到的戰利品"
+            + (bz ? "，還有擋在層底的" + bz.name : "") + "。" + debNote;
   }
 
   function decorateRelated_END() {}
