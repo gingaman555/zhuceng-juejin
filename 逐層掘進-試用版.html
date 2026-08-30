@@ -9311,119 +9311,10 @@ class Component extends DCLogic {
 
      這是整個系統裡唯一一個真的賭局，也是唯一一個老師給不了的
      東西——★ 只能自己在他開口之前先發現才拿得到。 */
-  /* ============================================================
-     破法：這一項你要拿哪一樣。
-
-     五樣全部是學生自己能決定的。刻意不放「一次過」跟「被退幾次」
-     ——那兩件事是老師在決定的，拿來當收集目標就變成在收集老師的
-     心情。
-
-     一項只能宣告一樣，而且送出之後鎖住。不鎖的話它就不是宣告，
-     是事後挑一個已經達成的來填，那就沒有「我這次要拿那個」了。 */
-  /* 四種。原本五種，砍掉兩項：
-       「試過」—— 開一條垃圾試挖立刻收掉就成立，十秒鐘穩拿 20 分，
-                  是嚴格最優解，會讓五選一在第二週塌成一顆按鈕。
-       「不壓線」—— 跟「早工」測同一件事，兩項一起中一起不中。
-     補上「看過別組」：這是整套系統裡唯一的關聯感機制。 */
-  var VOW_DEF = [
-    { k: 'early', name: '早工的證據',   how: '第一條要勾在這一項時間過一半之前' },
-    { k: 'back',  name: '回掘的證據',   how: '送出前自己打開一項、補完再勾回去' },
-    { k: 'all',   name: '全員的證據',   how: '每個組員都要勾過至少一條' },
-    { k: 'peer',  name: '看過別組的證據', how: '送出之前，去看過至少一組別人的紀錄' }
-  ];
-  function vowName(k) {
-    for (var i = 0; i < VOW_DEF.length; i++) if (VOW_DEF[i].k === k) return VOW_DEF[i].name;
-    return '';
-  }
-
-  function decorateVow(L, v) {
-    var S = L.state;
-    v.hasVow = false; v.vowPicks = []; v.vowBox = 'display:none';
-    v.vowMobTrait = ''; v.vowMobArt = 'display:none';
-    v.vowTitle = ''; v.vowNote = ''; v.vowMob = ''; v.vowMobNote = '';
-    if (S.role !== 'student' || S.screen !== 'S05') return;
-
-    var task = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
-    if (!task) return;
-
-    /* 第一次點開這一項：跳出擋在前面的那一隻 */
-    if (task.status === 'todo') encounter(L, task);
-
-    var locked = task.status === 'submitted' || task.status === 'passed';
-    var cur = task.vow || '';
-    v.hasVow = true;
-
-    /* 擋路的是哪一隻。生物先用那一層現成的守關，脾氣之後再做。 */
-    /* 擋在這一項前面的是這一項自己的生物，不是層主。
-       層主現在是分數的刻度，不是關卡。 */
-    var mb = mobOfTask(task);
-    v.vowMob = mb ? mb.name : '這一項';
-    v.vowMobTrait = mb ? mb.trait : '';
-    v.vowMobArt = mb
-      ? 'display:block;width:52px;height:52px;flex:none;image-rendering:pixelated;' +
-        'background:url("' + mobSvg(mb.id, task.layer || 1) + '") center/contain no-repeat'
-      : 'display:none';
-
-    if (task.status === 'passed') {
-      /* 結算過了 */
-      v.vowBox = 'margin-bottom:18px;padding:16px 18px;border-left:3px solid #E9B341;' +
-        'background:rgba(233,179,65,.09);border-top:1px solid #5A4A2C;' +
-        'border-right:1px solid #5A4A2C;border-bottom:1px solid #5A4A2C';
-      if (!cur) {
-        v.vowTitle = '這一項沒有宣告';
-        v.vowNote = '過了，但沒拿到證據——證據只掉給有先講的人。';
-      } else if (task.vowWon) {
-        v.vowTitle = '★　拿到了：' + vowName(cur);
-        v.vowNote = '你先講了要拿這一樣，然後做到了。' + v.vowMob + '身上留下的。';
-      } else {
-        v.vowTitle = '沒拿到：' + vowName(cur);
-        v.vowNote = '這次沒做到，不扣任何東西。下一項可以再宣告同一樣。';
-      }
-      return;
-    }
-
-    /* 宣告是主線上最重的一個動作，版面要跟著重 */
-    v.vowBox = 'margin-bottom:18px;padding:16px 18px;border-left:3px solid ' +
-      (cur ? '#E9B341' : '#5A4A2C') + ';background:' +
-      (cur ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.32)') +
-      ';border-top:1px solid #3A3026;border-right:1px solid #3A3026;border-bottom:1px solid #3A3026';
-    v.vowTitle = cur ? '這次要拿：' + vowName(cur) : '這次要拿哪一樣？';
-    v.vowMobNote = '擋在這一項前面的是「' + v.vowMob + '」。';
-    v.vowNote = locked
-      ? '已經送出去了，宣告鎖住。等他判。'
-      : (cur
-          ? '做到就掉這一樣。做不到不扣東西，下一項再宣告一次就好。'
-          : '先講你這次要拿哪一樣，做到才掉。不講也可以過關，只是不會掉東西。');
-
-    v.vowPicks = VOW_DEF.map(function (d) {
-      var on = cur === d.k;
-      return {
-        name: d.name, how: d.how,
-        mark: on ? '●' : '○',
-        pick: function () {
-          if (locked) { L.say('已經送出去了，宣告不能改。'); return; }
-          var next = on ? '' : d.k;
-          task.vow = next;
-          L.setState({ checkNudge: (L.state.checkNudge || 0) + 1 });
-          call('apiSetVow', LIVE.token, task.id, next)
-            .then(function (r) {
-              if (!r || !r.ok) L.say((r && r.error) || '沒有存到伺服器。');
-              else if (next) L.say('說定了：' + d.name + '。' + d.how + '。');
-              return refresh();
-            })
-            .catch(function () { L.say('沒有存到伺服器。'); });
-        },
-        style: 'display:flex;align-items:flex-start;gap:10px;padding:10px 12px;text-align:left;width:100%;' +
-          'background:' + (on ? 'rgba(233,179,65,.1)' : 'rgba(0,0,0,.32)') + ';' +
-          'border:1px solid ' + (on ? '#E9B341' : '#2E2822') + ';' +
-          (locked ? 'cursor:default;opacity:.7' : 'cursor:pointer'),
-        markStyle: "flex:none;font:400 11px/1.5 'C11';color:" + (on ? '#E9B341' : '#5F574C'),
-        nameStyle: "display:block;font:500 22px/1.4 'C11';color:" + (on ? '#E8E2D6' : '#C3BAAA'),
-        howStyle: "display:block;font:400 11px/1.6 'C11';color:#6E665A;margin-top:4px;text-wrap:pretty"
-      };
-    });
-  }
-
+  /* 破法（宣告）那一整套拿掉了：四種破法的定義、命中率、鎖住的宣告。
+     現在一項任務給的是打贏擋在前面的那一隻，沒有要你先押哪一樣。
+     底下的回掘星留著——它跟宣告無關，是「送出前自己發現、補完再勾
+     回來」，老師給不了的那一顆。 */
   function decorateGamble(L, v) {
     var S = L.state;
     v.gambleShow = false; v.gambleItems = [];
@@ -9645,9 +9536,6 @@ class Component extends DCLogic {
       needs_more: { t: '要再改', hue: '#D9603F' },
       passed: { t: '過了', hue: '#E9B341' }
     };
-    var vowName = {};
-    (VOW_DEF || []).forEach(function (d) { vowName[d.k] = d.name; });
-
     v.hasHaul = true;
     v.haulMine = pk.name + (pk.me ? '　（你們）' : '') + ' 的紀錄';
     v.haulNote = '他們每一項的狀況。老師寫的那一段就是他判斷的理由——' +
@@ -9670,7 +9558,6 @@ class Component extends DCLogic {
       var st = PST[r.status] || PST.todo;
       var done = r.status === 'passed';
       var bits = [];
-      if (r.vow) bits.push('宣告 ' + (vowName[r.vow] || r.vow) + (r.settled ? (r.won ? '　做到了' : '　沒做到') : '　還沒送'));
       if (r.rounds > 1) bits.push('送了 ' + r.rounds + ' 次');
       if (r.say) bits.push('他寫：' + r.say);
       return {
@@ -9813,34 +9700,9 @@ class Component extends DCLogic {
 
     v.hasHaul = true;
 
-    /* 初採：哪一塊礦被誰先採走。沒有人碰過的那幾塊是唯一會在你不在的
-       時候變的東西——所以它排在最前面，而且要講清楚還剩幾塊。 */
-    var claims = S.haulClaims || [];
-    var open = claims.filter(function (c) { return !c.by; });
-    var myFirst = claims.filter(function (c) { return c.mine; });
-    v.hasClaims = claims.length > 0;
-    v.claimHead = '初採　' + myFirst.length + ' / ' + claims.length;
-    var racingN = claims.filter(function (c) { return !c.by && c.racing; }).length;
-    v.claimNote = open.length
-      ? '還有 ' + open.length + ' 塊沒有人採到' +
-        (racingN ? '，其中 ' + racingN + ' 塊已經有人送出去在等判' : '') +
-        '。第一個採到的隊伍會永久記在那一塊上。'
-      : '每一塊都有人採到了。';
-    v.claimRows = claims.map(function (c) {
-      return {
-        name: c.mineral,
-        by: c.by ? (c.mine ? '你們' : c.by)
-          : (c.racing ? '有 ' + c.racing + ' 組也在做' : '還沒有人'),
-        meta: 'L' + c.layer + '　' + c.title,
-        boxStyle: 'padding:11px 13px;background:' +
-          (c.mine ? 'rgba(233,179,65,.1)' : c.by ? 'rgba(0,0,0,.26)' : 'rgba(0,0,0,.4)') +
-          ';border:1px ' + (c.mine ? 'solid #E9B341' : c.by ? 'solid #2E2822' : 'dashed #4A3F30'),
-        nameStyle: "font:500 22px/1.3 'C11';color:" + (c.mine ? '#E8E2D6' : c.by ? '#9A9184' : '#C3BAAA'),
-        byStyle: "flex:none;font:400 11px/1 'C11';color:" +
-          (c.mine ? '#E9B341' : c.by ? '#6E665A' : c.racing ? '#C3BAAA' : '#D9603F'),
-        metaStyle: "font:400 11px/1.6 'C11';color:#5F574C;margin-top:4px"
-      };
-    });
+    /* 初採那一塊拿掉了：排行榜上那一格上一輪就移掉，這裡只剩計算。
+       而且它本來就是把礦石當成搶的——礦石不是搶的。 */
+    v.hasClaims = false; v.claimRows = []; v.claimHead = ''; v.claimNote = '';
     var top = Math.max.apply(null, rows.map(function (r) { return r.total; }).concat([1]));
     var mine = rows.filter(function (r) { return r.me; })[0];
 
@@ -9947,22 +9809,6 @@ class Component extends DCLogic {
      「你還沒碰過這一個」的訊號，但不用另外養一套系統。
 
      而且命中率在送出當下就算得出來，不用等老師。 */
-  function vowRate(L) {
-    var rows = (L.state.record || []).filter(function (r) { return r.vow && r.settled; });
-    var by = {};
-    VOW_DEF.forEach(function (d) { by[d.k] = { n: 0, hit: 0 }; });
-    rows.forEach(function (r) {
-      if (!by[r.vow]) return;
-      by[r.vow].n++;
-      if (r.won) by[r.vow].hit++;
-    });
-    return {
-      n: rows.length,
-      hit: rows.filter(function (r) { return r.won; }).length,
-      by: by
-    };
-  }
-
   /* ============================================================
      地圖上每一格直接顯示老師給不給過。
 
@@ -10122,22 +9968,27 @@ class Component extends DCLogic {
     v.homeRankNote = '第 ' + placeH + ' 名 / ' + rows.length + ' 組' +
       (aheadH ? '　·　離前一名還差 ' + (aheadH.total - mine.total) + ' 分' : '　·　目前在最前面');
 
-    /* 只列還沒被拿走的，最多三塊。已經有人拿走的擺首頁只剩打擊。 */
-    var open = (S.haulClaims || []).filter(function (c) { return !c.by; });
-    var racingN = open.filter(function (c) { return c.racing; }).length;
-    v.homeClaimNote = open.length
-      ? '還有 ' + open.length + ' 塊沒有人採到' +
-        (racingN ? '，其中 ' + racingN + ' 塊別組也在做' : '') + '。'
-      : '每一塊都有人採到了。';
-    v.homeClaims = open.slice(0, 3).map(function (c) {
+    /* 本來這裡列的是「這一層還有幾塊沒有人採到、其中幾塊別組也在做」——
+       那是把礦石當成搶的。礦石不是搶的，同一項任務每一組都做得到，各採
+       各的。改成講你自己還差哪幾塊，每一塊指回一項還沒過的任務。 */
+    var leftMin = [].concat(L.req(), L.ext()).filter(function (t) {
+      return t.status !== 'passed' && t.mineral;
+    });
+    v.homeClaimNote = leftMin.length
+      ? '這一層你還有 ' + leftMin.length + ' 塊沒採到——每一塊指回一項還沒過的任務。'
+      : '這一層開出來的礦石你都採到了。';
+    var STAT_TXT = { submitted: '等他判', needs_more: '他要你再改' };
+    v.homeClaims = leftMin.slice(0, 3).map(function (t) {
+      var waiting = t.status === 'submitted';
+      var back = t.status === 'needs_more';
       return {
-        name: c.mineral,
-        by: c.racing ? '有 ' + c.racing + ' 組也在做' : '還沒有人',
-        meta: 'L' + c.layer + '　' + c.title,
+        name: t.mineral,
+        by: STAT_TXT[t.status] || '還沒交',
+        meta: 'L' + t.layer + '　' + t.title,
         boxStyle: 'padding:10px 12px;background:rgba(0,0,0,.32);border:1px ' +
-          (c.racing ? 'solid #4A4238' : 'dashed #4A3F30'),
+          (back ? 'solid #5A2E22' : waiting ? 'solid #4A4238' : 'dashed #4A3F30'),
         nameStyle: "font:500 22px/1.3 'C11';color:#C3BAAA",
-        byStyle: "flex:none;font:400 11px/1 'C11';color:" + (c.racing ? '#C3BAAA' : '#D9603F'),
+        byStyle: "flex:none;font:400 11px/1 'C11';color:" + (back ? '#D9603F' : waiting ? '#C3BAAA' : '#8A8073'),
         metaStyle: "font:400 11px/1.5 'C11';color:#5F574C;margin-top:4px"
       };
     });
@@ -10571,7 +10422,6 @@ class Component extends DCLogic {
     ];
     if (down) {
       rows.push({ k: '怎麼贏的', v: r.rounds <= 1 ? '一次就過' : '去了 ' + r.rounds + ' 輪', hi: r.rounds <= 1 });
-      if (r.won) rows.push({ k: '宣告', v: '★ ' + vowName(r.vow), hi: true });
       var fd = findOf(r.find);
       if (fd) rows.push({ k: '牠留下', v: fd.name });
     } else {
@@ -10713,7 +10563,6 @@ class Component extends DCLogic {
         hi: findTier(n) === '罕見'
       });
     });
-    if (rec.won) rows.push({ k: '宣告', v: '★ ' + vowName(rec.vow) });
     var f2 = gave > 1;
 
     /* 從那一層抽得到的池子裡閃過去，停在真的掉到的第一件 */
@@ -10835,7 +10684,6 @@ class Component extends DCLogic {
       if (down) {
         how.push('+100 分');
         how.push(r.rounds <= 1 ? '一次就過' : '去了 ' + r.rounds + ' 輪');
-        if (r.won) how.push('★ ' + vowName(r.vow));
         var fd = findOf(r.find);
         if (fd) how.push('留下 ' + fd.name);
       } else if (r.status === 'submitted') how.push('等他判');
@@ -11680,7 +11528,7 @@ class Component extends DCLogic {
     }, 40);
   }
   /* 第一次點開一項任務：跳出擋在前面的那一隻。
-     本來掛在 decorateVow 裡，宣告破法拿掉之後那支不再被呼叫。 */
+     本來掛在宣告那一支裡，那一整套拿掉之後就自己接出來。 */
   function decorateEncounter(L) {
     var S = L.state;
     if (S.role !== 'student' || S.screen !== 'S05') return;
@@ -12563,7 +12411,7 @@ class Component extends DCLogic {
 
   /* 工具校準整套移除後，原型自己還寫死了幾句——一併換掉，不然學生會看到不存在的機制 */
   var CAL_FIX = [
-      ['可以送交關卡審核了。', '這一層的任務都過了，可以送交關卡審核。'],
+      ['可以送交關卡審核了。', '這一層的任務都過了。往不往下是他決定。'],
       ['工具校準完成，下一層開了。', '這一層過了，下一層開了。'],
       ['他有時候不在。逾時未審會自動暫准，但那一次不計入工具階級。', '他有時候不在。逾時未審會自動暫准。'],
       ['可選的深入方向。不影響過關，只影響工具校準到哪一階。', '可選的深入方向。不影響過關，做了就多一塊礦石進圖鑑。'],
@@ -12973,11 +12821,11 @@ class Component extends DCLogic {
       var passedThis = (L.state.passed || []).indexOf(L.state.currentLayer) >= 0;
       v.gateTitle = passedThis ? '這一層已經通過'
         : !allItems.length ? '這一層還沒有清單'
-        : left ? '這一層還有沒過的' : '這一層採齊了';
+        : left ? '這一層還有沒過的' : '這一層的任務都過了';
       v.gateDesc = passedThis ? '這一層過了，下一層開了。'
         : !allItems.length ? '這一層還沒有清單。'
         : left ? '這一層還有 ' + left + ' 項沒過。過不過得完都不影響——往不往下是他決定。'
-        : '這一層的任務都過了，可以送交關卡審核。';
+        : '這一層的任務都過了。剩下的是他的判斷——他覺得可以往下就放行。';
     })();
     (v.taskGroups || []).forEach(function (g) { g.desc = fixCal(g.desc); });
 
@@ -13313,7 +13161,6 @@ class Component extends DCLogic {
       var rowsE = d.rows || [];
       var passedE = rowsE.filter(function (r) { return r.status === 'passed'; }).length;
       var subsE = d.totalSubs || 0, rejE = d.totalRejected || 0;
-      var vr = vowRate(L);
       var mobsE = (S.codex || []).length;
       var findsE = Object.keys(S.finds || {}).length;
       var dropsE = (S.clears || []).reduce(function (a, n) {
