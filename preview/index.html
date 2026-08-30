@@ -2280,11 +2280,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
               </div>
               <div style="{{ t05Grid }}">
                 <div style="display:flex;flex-direction:column;gap:17px;min-width:0">
-                <div style="padding:13px 16px;background:rgba(233,179,65,.06);border-left:2px solid var(--ac-dim)">
-                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一項在哪一層</span>
-                  <span style="font:700 22px/1.5 'C11';color:var(--tx);margin-left:10px">{{ editCourse }}</span>
-                  <div style="font:400 22px/1.6 'C11';color:var(--tx3);margin-top:5px;text-wrap:pretty">{{ editStageNote }}</div>
-                </div>
+                
                 <div>
                   <sc-if value="{{ hasEditMob }}" hint-placeholder-val="{{ true }}"><div style="{{ editMobWrap }}"><span style="{{ editMobArt }}"></span><span style="min-width:0"><span style="{{ editMobKickerStyle }}">{{ editMobKicker }}</span><span style="{{ editMobNameStyle }}">{{ editMobName }}</span><span style="{{ editMobNoteStyle }}">{{ editMobNote }}</span></span></div></sc-if><div style="font:500 22px/1 'C11';margin-bottom:9px">項目名稱</div>
                   <input value="{{ nfTitle }}" onChange="{{ setNfTitle }}" placeholder="例：使用者調查" style="width:100%;padding:12px 13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.6 'C11';outline:none">
@@ -5228,6 +5224,7 @@ class Component extends DCLogic {
       if (!d) return;
       /* teamId：生物按（任務 × 組別）決定，歷史條目要記得當時是哪一組 */
       out.push({ id: String(r.taskId), teamId: String(r.teamId),
+                 star: starOf(String(r.teamId), String(r.taskId)),
                  layer: Math.max(1, Math.min(4, Number(d.layer)||1)),
                  title: d.title || '', classId: String(d.classId||''),
                  find: Number(r.find)||0, find2: Number(r.find2)||0 });
@@ -6782,6 +6779,12 @@ class Component extends DCLogic {
       next.currentLayer = 1;
       next.passed = []; next.gateSubmitted = false;
     }
+
+    /* 排行榜那一份快照丟掉，下次打開榜就重抓。
+       這裡只有在伺服器真的變過的時候才會跑到。 */
+    next.haulData = null;
+    next.haulClaims = [];
+    next.haulLoading = false;
 
     L.setState(next);
   }
@@ -8356,7 +8359,10 @@ class Component extends DCLogic {
            判過但還沒去看牠留下什麼的，徽章換成提醒——那張卡不再自己跳，
            清單這裡是學生最常回來的地方。 */
         var notSeen = t.status === 'passed' && !seenWin(t.id);
+        /* 回掘過的那一項要在清單上看得出來——那是自己做的事，
+           不標出來就等於沒發生過。 */
         r.statusLabel = notSeen ? '★ 牠留下的還沒看'
+          : t.star ? '★ 自己回頭補過'
           : t.status === 'passed' ? '已拿到' : '還沒拿到';
         r.chipStyle = notSeen
           ? L.chip('rgba(233,179,65,.22)', 'var(--ac-hi)', 'var(--ac)')
@@ -9564,8 +9570,9 @@ class Component extends DCLogic {
     v.gambleBody = '「勾完了」跟「做紮實了」不是同一件事。哪一條你其實心裡有數還不夠，' +
       '現在可以打開它、補完、再勾回來——這一項會留下一顆星。' +
       '那顆星是你自己回頭發現的，老師給不了；他只判得了你交出來的東西。';
-    v.gambleCost = '打開之後至少要隔 6 小時才能勾回來——那是為了讓它真的是重做一遍，' +
-      '不是點兩下。所以今天就送不出去了。不打開直接送也完全沒有損失。';
+    v.gambleCost = '要隔一段時間才算數：那一條至少勾著 6 小時之後，你才回頭把它打開——' +
+      '那是你自己過一陣子想通的，不是勾完馬上點兩下。' +
+      '打開之後隨時可以補完再勾回來，不影響送出。';
 
     v.gambleItems = list.map(function (txt, i) {
       return {
@@ -11993,6 +12000,11 @@ class Component extends DCLogic {
 
     v.hasHorizon = true;
     v.horizonHead = '這一趟走完是什麼樣子';
+    /* 回掘過幾項。這個數字要出現在「終點長什麼樣子」裡面——
+       不然學生做完那件事之後，系統從頭到尾沒有再提過它。 */
+    var starN = (S.tasks || []).filter(function (t) { return t.star; }).length +
+      (S.codex || []).filter(function (c) { return c.star; }).length;
+
     v.horizonRows = [
       { k: '四個領域', v: layerN + ' / 4 層',
         note: '一層一層往下。每一層要不要放你們過，是老師決定的。' },
@@ -12001,6 +12013,9 @@ class Component extends DCLogic {
           '　圖鑑最前面那一隻是你的，從第一天就在——不算在這 44 種裡。' },
       { k: '物品', v: itemN + ' / 152 種',
         note: '打贏一隻就抽，抽到的直接進圖鑑——換組、換班、換專案都跟著你走。' },
+      { k: '自己回頭補的', v: starN + ' 項',
+        note: '在老師開口之前自己發現有一條沒做紮實，補完再勾回來——那一項會留下一顆星。' +
+          '這是整趟裡唯一老師給不了的東西。' },
       { k: '最後', v: '命名封存',
         note: '四層走完，你會幫這一趟取一個名字留下來。下一個專案打開紀錄還看得到。' }
     ].map(function (r) {
@@ -12523,9 +12538,8 @@ class Component extends DCLogic {
     var used = after;
 
     /* 原型的環節說明還在講必要／延伸 */
-    /* 這一句把正上方那一行標籤又講了一次——「這一項在哪一層　專案定義」
-       就在它上面，層名也已經在頁首。拿掉。 */
-    v.editStageNote = '';
+    /* 「這一項在哪一層」那一整塊已經從模板拿掉了（patch 124），
+       它底下那一句也跟著沒有地方畫。 */
     v.openWhat = leftVein.length
       ? (lay.name || ('第 ' + layer + ' 層')) + '　·　已經開了 ' + after + ' 項'
       : '這一層的 ' + vein + ' 塊都開好了。拿幾塊都不影響——要不要讓他們往下一層，是你決定的。';

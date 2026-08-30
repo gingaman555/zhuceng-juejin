@@ -1997,6 +1997,8 @@ function codexOfUser_(userId) {
       /* 哪一組收的。生物按（任務 × 組別）決定，所以歷史條目要記得當時
          是哪一組——不然換組之後以前收過的會全部變成別隻。 */
       teamId: String(r.teamId),
+      /* 回掘過的那一項。走過的層也要算得進「自己回頭補過幾項」 */
+      star: starOf_(String(r.teamId), String(r.taskId)),
       layer: Math.max(1, Math.min(4, Number(d.layer) || 1)),
       title: d.title || '',
       classId: String(d.classId || ''),

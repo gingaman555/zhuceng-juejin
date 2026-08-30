@@ -4657,5 +4657,32 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("123. 排行榜提到首頁最前面（" + block.length + " 字）");
 })();
 
+
+/* 124. T-05 的「這一項在哪一層　專案定義」整塊拿掉。
+       那個階段名是系統預設的四階段拆分，已經不再是這套系統的一部分——
+       老師寫的是自己的任務，而且不同組可以拿到不同作業。頁首本來就寫著
+       「微光荒原 · 新增一項」，哪一層那件事那裡已經講完了。 */
+(function () {
+  var mark = t.indexOf("這一項在哪一層");
+  if (mark < 0) { console.error("124. 找不到那一行"); process.exit(1); }
+  var a = t.lastIndexOf("<div", mark);
+  if (a < 0) { console.error("124. 找不到外框"); process.exit(1); }
+
+  var i = a, depth = 0;
+  while (i < t.length) {
+    var o = t.indexOf("<div", i), c = t.indexOf("</div>", i);
+    if (c < 0) { console.error("124. 數不到結尾"); process.exit(1); }
+    if (o >= 0 && o < c) { depth++; i = o + 4; continue; }
+    depth--; i = c + 6;
+    if (depth === 0) break;
+  }
+  var block = t.slice(a, i);
+  if (block.length > 900 || block.indexOf("{{ editCourse }}") < 0) {
+    console.error("124. 抓到的範圍不對：" + block.length + " 字"); process.exit(1);
+  }
+  t = t.slice(0, a) + t.slice(i);
+  console.log("124. 拿掉 T-05 的「這一項在哪一層」");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

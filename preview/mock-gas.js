@@ -359,6 +359,7 @@
       if (!d) return;
       /* teamId：生物按（任務 × 組別）決定，歷史條目要記得當時是哪一組 */
       out.push({ id: String(r.taskId), teamId: String(r.teamId),
+                 star: starOf(String(r.teamId), String(r.taskId)),
                  layer: Math.max(1, Math.min(4, Number(d.layer)||1)),
                  title: d.title || '', classId: String(d.classId||''),
                  find: Number(r.find)||0, find2: Number(r.find2)||0 });

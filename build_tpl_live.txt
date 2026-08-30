@@ -2139,11 +2139,7 @@
               </div>
               <div style="{{ t05Grid }}">
                 <div style="display:flex;flex-direction:column;gap:17px;min-width:0">
-                <div style="padding:13px 16px;background:rgba(233,179,65,.06);border-left:2px solid var(--ac-dim)">
-                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一項在哪一層</span>
-                  <span style="font:700 22px/1.5 'C11';color:var(--tx);margin-left:10px">{{ editCourse }}</span>
-                  <div style="font:400 22px/1.6 'C11';color:var(--tx3);margin-top:5px;text-wrap:pretty">{{ editStageNote }}</div>
-                </div>
+                
                 <div>
                   <sc-if value="{{ hasEditMob }}" hint-placeholder-val="{{ true }}"><div style="{{ editMobWrap }}"><span style="{{ editMobArt }}"></span><span style="min-width:0"><span style="{{ editMobKickerStyle }}">{{ editMobKicker }}</span><span style="{{ editMobNameStyle }}">{{ editMobName }}</span><span style="{{ editMobNoteStyle }}">{{ editMobNote }}</span></span></div></sc-if><div style="font:500 22px/1 'C11';margin-bottom:9px">項目名稱</div>
                   <input value="{{ nfTitle }}" onChange="{{ setNfTitle }}" placeholder="例：使用者調查" style="width:100%;padding:12px 13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.6 'C11';outline:none">
