@@ -742,7 +742,9 @@
     var pick = function (codes) {
       return codes.map(function (c) { return by[c]; }).filter(Boolean);
     };
-    var daily = pick(['T-01', 'T-03', 'T-07', 'T-02']);
+    /* 任務清單排第二：沒有開任務就沒有東西可以驗收，它在流程上比
+       逐項確認與關卡審核都早。 */
+    var daily = pick(['T-01', 'T-02', 'T-03', 'T-07']);
     var rest = pick(['T-04', 'T-09', 'T-00']);
     var known = {};
     daily.concat(rest).forEach(function (n) { known[n.code] = 1; });

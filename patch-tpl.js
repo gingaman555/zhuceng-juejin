@@ -4364,5 +4364,42 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("114. S-02 的說明鈕拿掉");
 })();
 
+
+
+/* 115. 畫面上不要出現 S-01 / T-02 這種代號。
+       那是設計稿的頁面編號，對老師與學生沒有意義——他們認的是
+       「任務清單」「待你驗收」。研究者端保留：那是後台，代號在那裡
+       是拿來對照資料的。 */
+(function () {
+  /* 一、頁首的「T-01 · CONSOLE」只留英文那一半 */
+  var CODES = ["S-02","S-03","S-05","S-06","S-10","S-11","T-01","T-02","T-03","T-04","T-05","T-06","T-07","T-08","T-09"];
+  var n1 = 0;
+  CODES.forEach(function (c) {
+    var a = ">" + c + " · ";
+    while (t.indexOf(a) >= 0) { t = t.replace(a, ">"); n1++; }
+  });
+  if (n1 < 14) { console.error("115. 頁首代號只換到 " + n1 + " 個"); process.exit(1); }
+
+  /* 二、側欄那一格代號整個拿掉 */
+  var a2 = "<span style=\"font:500 11px/1 'C11';letter-spacing:.08em;opacity:.5;width:34px;flex:none;text-align:left;white-space:nowrap\">{{ it.code }}</span>";
+  if (t.split(a2).length - 1 !== 1) { console.error("115. 側欄代號那一格找不到"); process.exit(1); }
+  t = t.replace(a2, "");
+
+  /* 三、首頁那兩張卡上面的 S-00 / S-02。兩張卡的顏色不一樣（其中一張
+     已經被色盤層換成變數），所以直接找代號本身，再往前吃掉它的 div。 */
+  var n3 = 0;
+  ["S-00", "S-02"].forEach(function (c) {
+    var mark = ">" + c + "</div>";
+    var i = t.indexOf(mark);
+    if (i < 0) { console.error("115. 首頁找不到 " + c); process.exit(1); }
+    var start = t.lastIndexOf("<div", i);
+    if (start < 0) { console.error("115. " + c + " 的外框找不到"); process.exit(1); }
+    t = t.slice(0, start) + t.slice(i + mark.length);
+    n3++;
+  });
+
+  console.log("115. 拿掉畫面上的頁面代號：頁首 " + n1 + " · 側欄 1 · 首頁 " + n3);
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
