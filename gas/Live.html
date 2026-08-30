@@ -246,7 +246,7 @@
   }
 
   /* 外殼：學生／老師是像素風滿版，研究者是儀器風滿版 */
-  var SHELL_LIVE = "height:100vh;height:100dvh;overflow:hidden;background:#0B0A09;font-family:'C11';color:#E8E2D6;padding:0;";
+  var SHELL_LIVE = "height:100vh;height:100dvh;overflow:hidden;background:var(--bg);font-family:'C11';color:var(--tx);padding:0;";
   var SHELL_RES  = "height:100vh;height:100dvh;overflow:hidden;background:#0A0E12;font-family:'Noto Sans TC',sans-serif;color:#DFE6EB;padding:0;";
 
   /* ================= 狀態同步 ================= */
@@ -617,9 +617,9 @@
           code: it.code, label: it.label, short: it.short,
           go: function () { L.setState({ screen: 'S03', mapTab: it.tab }); },
           iconStyle: 'display:block;width:14px;height:14px;flex:none;margin-right:8px;background:' +
-            (here ? '#E9B341' : '#5F574C') + ';clip-path:' + it.clip,
+            (here ? 'var(--ac)' : '#5F574C') + ';clip-path:' + it.clip,
           tabIconStyle: 'display:block;width:16px;height:16px;background:' +
-            (here ? '#E9B341' : '#6E665A') + ';clip-path:' + it.clip,
+            (here ? 'var(--ac)' : '#6E665A') + ';clip-path:' + it.clip,
           style: L.navBtn(here), tabStyle: L.tabBtn(here),
           badge: '', dotStyle: 'display:none', tabDotStyle: 'display:none'
         });
@@ -664,14 +664,14 @@
             L.setState({ screen: 'FINALE' });
           },
           iconStyle: 'display:block;width:14px;height:14px;flex:none;margin-right:8px;background:' +
-            (sc === 'FINALE' ? '#E9B341' : fin5 ? '#8A8073' : '#3A3026') +
+            (sc === 'FINALE' ? 'var(--ac)' : fin5 ? 'var(--tx3)' : 'var(--line2)') +
             ';clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%)',
-          tabIconStyle: 'display:block;width:16px;height:16px;background:' + (sc === 'FINALE' ? '#E9B341' : '#6E665A') +
+          tabIconStyle: 'display:block;width:16px;height:16px;background:' + (sc === 'FINALE' ? 'var(--ac)' : '#6E665A') +
             ';clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%)',
           style: L.navBtn(sc === 'FINALE') + (fin5 ? '' : ';opacity:.5;cursor:not-allowed'),
           tabStyle: L.tabBtn(sc === 'FINALE'),
           badge: fin5 ? '新' : '', dotStyle: fin5 && sc !== 'FINALE'
-            ? "font:600 11px/1 'C11';background:#E9B341;color:#0B0A09;padding:3px 5px" : 'display:none',
+            ? "font:600 11px/1 'C11';background:var(--ac);color:var(--bg);padding:3px 5px" : 'display:none',
           tabDotStyle: 'display:none'
         });
       }
@@ -687,14 +687,14 @@
         code: 'T-09', label: '期末回顧', short: '回顧',
         go: function () { L.setState({ screen: 'TFIN' }); },
         iconStyle: 'display:block;width:14px;height:14px;flex:none;margin-right:8px;background:' +
-          (sc === 'TFIN' ? '#E9B341' : '#5F574C') + ';clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%)',
-        tabIconStyle: 'display:block;width:16px;height:16px;background:' + (sc === 'TFIN' ? '#E9B341' : '#6E665A') +
+          (sc === 'TFIN' ? 'var(--ac)' : '#5F574C') + ';clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%)',
+        tabIconStyle: 'display:block;width:16px;height:16px;background:' + (sc === 'TFIN' ? 'var(--ac)' : '#6E665A') +
           ';clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%)',
         style: L.navBtn(sc === 'TFIN'),
         tabStyle: L.tabBtn(sc === 'TFIN'),
         badge: waiting ? String(waiting) : '',
         dotStyle: waiting && sc !== 'TFIN'
-          ? "font:600 11px/1 'C11';background:#E9B341;color:#0B0A09;padding:3px 5px" : 'display:none',
+          ? "font:600 11px/1 'C11';background:var(--ac);color:var(--bg);padding:3px 5px" : 'display:none',
         tabDotStyle: 'display:none'
       });
       /* 名單先撈起來，側欄的數字才會準 */
@@ -797,8 +797,8 @@
         open: (function (ff, nn) { return function () { openFind(L, ff, nn); }; })(f, n),
         style: 'padding:12px 8px;text-align:center;font:inherit;cursor:' + (n ? 'pointer' : 'default') +
           ';background:' + (n ? 'rgba(255,255,255,.022)' : 'rgba(0,0,0,.26)') +
-          ';border:1px ' + (n ? 'solid #3A3026' : 'dashed #2C251D') +
-          ';color:' + (n ? '#E8E2D6' : '#8C8172'),
+          ';border:1px ' + (n ? 'solid var(--line2)' : 'dashed #2C251D') +
+          ';color:' + (n ? 'var(--tx)' : '#8C8172'),
         glyphStyle: 'display:block;width:30px;height:30px;margin:4px auto;image-rendering:pixelated;' +
           'background:url("' + packSvg(f.px, findLayer(f.n), !n) + '") center/contain no-repeat',
         L: findLayer(f.n)
@@ -878,7 +878,7 @@
             style: 'padding:12px 8px;text-align:center;font:inherit;cursor:pointer;background:' +
               (gotM ? 'rgba(' + hexRgb(hueL) + ',.07)' : 'rgba(0,0,0,.26)') +
               ';border:1px ' + (gotM ? 'solid ' + hueL : 'dashed #2C251D') +
-              ';color:' + (gotM ? '#E8E2D6' : '#8C8172'),
+              ';color:' + (gotM ? 'var(--tx)' : '#8C8172'),
             glyphStyle: 'display:block;width:34px;height:34px;margin:4px auto;image-rendering:pixelated;' +
               'background:url("' + mobSvg(mm.id, Ly) + '") center/contain no-repeat' +
               (gotM ? '' : ';opacity:.16;filter:grayscale(1)')
@@ -941,16 +941,16 @@
     var passedL = S.passed || [];
     v.collMapBoxStyle = 'margin-bottom:18px;padding:15px 16px;background:' +
       'linear-gradient(180deg,rgba(233,179,65,.05),rgba(0,0,0,.3) 55%,rgba(217,96,63,.05))' +
-      ';border:1px solid #2E2822';
+      ';border:1px solid var(--line)';
     v.collMapRowStyle = 'display:flex;gap:6px;flex-wrap:wrap';
-    v.collMapNoteStyle = "font:400 11px/1.7 'C11';color:#8A8073;margin-top:12px;text-wrap:pretty";
+    v.collMapNoteStyle = "font:400 11px/1.7 'C11';color:var(--tx3);margin-top:12px;text-wrap:pretty";
 
     v.collLayers = [0, 1, 2, 3, 4].map(function (n) {
       var lay = n ? ((L.LAYERS || [])[n - 1] || {}) : {};
       var on = pickL === n;
       var here = n && n === hereL;
       var done = n && passedL.indexOf(n) >= 0;
-      var hue = n ? BOARD_HUE[n - 1] : '#8A8073';
+      var hue = n ? BOARD_HUE[n - 1] : '#968B7B';   /* hexRgb 只吃實色 */
       return {
         code: n ? ('L' + n) : '全部',
         name: n ? (lay.name || '') : '四個領域',
@@ -959,11 +959,11 @@
         style: 'display:flex;flex-direction:column;gap:3px;align-items:flex-start;' +
           'padding:9px 13px;cursor:pointer;font:inherit;flex:1 1 108px;' +
           'background:' + (on ? 'rgba(' + hexRgb(hue) + ',.16)' : 'rgba(0,0,0,.3)') +
-          ';border:1px solid ' + (on ? hue : here ? '#5A4A2C' : '#2E2822'),
+          ';border:1px solid ' + (on ? hue : here ? 'var(--ac-dim)' : 'var(--line)'),
         codeStyle: "font:400 11px/1 'C11';letter-spacing:.14em;color:" + (on ? hue : '#5F574C'),
         nameStyle: "font:500 22px/1.2 'C11';white-space:nowrap;color:" + (on ? '#F2E6C8' : '#9A9184'),
         hereStyle: here || done
-          ? "font:400 11px/1 'C11';color:" + (here ? '#E9B341' : '#6E665A')
+          ? "font:400 11px/1 'C11';color:" + (here ? 'var(--ac)' : '#6E665A')
           : 'display:none'
       };
     });
@@ -1015,9 +1015,9 @@
       pick: function () { L.setState({ screen: 'S03', mapTab: 'map' }); },
       style: 'display:flex;align-items:baseline;gap:9px;padding:11px 17px;cursor:pointer;font:inherit;' +
         'background:' + (ctab === 'map' ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.28)') +
-        ';border:1px solid ' + (ctab === 'map' ? '#E9B341' : '#2E2822'),
-      labelStyle: "font:700 22px/1 'C11';color:" + (ctab === 'map' ? '#F2E6C8' : '#8A8073'),
-      countStyle: "font:400 11px/1 'C11';color:" + (ctab === 'map' ? '#E9B341' : '#5F574C')
+        ';border:1px solid ' + (ctab === 'map' ? 'var(--ac)' : 'var(--line)'),
+      labelStyle: "font:700 22px/1 'C11';color:" + (ctab === 'map' ? '#F2E6C8' : 'var(--tx3)'),
+      countStyle: "font:400 11px/1 'C11';color:" + (ctab === 'map' ? 'var(--ac)' : '#5F574C')
     }].concat(v.collSections.map(function (g, gi) {
       var isMob = gi === 0;
       var on = (isMob ? 'mob' : 'item') === ctab;
@@ -1029,9 +1029,9 @@
         })(isMob ? 'mob' : 'item'),
         style: 'display:flex;align-items:baseline;gap:9px;padding:11px 17px;cursor:pointer;font:inherit;' +
           'background:' + (on ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.28)') +
-          ';border:1px solid ' + (on ? '#E9B341' : '#2E2822'),
-        labelStyle: "font:700 22px/1 'C11';color:" + (on ? '#F2E6C8' : '#8A8073'),
-        countStyle: "font:400 11px/1 'C11';color:" + (on ? '#E9B341' : '#5F574C')
+          ';border:1px solid ' + (on ? 'var(--ac)' : 'var(--line)'),
+        labelStyle: "font:700 22px/1 'C11';color:" + (on ? '#F2E6C8' : 'var(--tx3)'),
+        countStyle: "font:400 11px/1 'C11';color:" + (on ? 'var(--ac)' : '#5F574C')
       };
     }));
     v.collSections = v.collSections.filter(function (g, gi) {
@@ -1217,10 +1217,10 @@
     v.firstMark = S.remember ? '✓' : '';
     v.toggleFirst = function () { L.setState({ remember: !L.state.remember }); };
     v.firstBoxStyle = "font:700 22px/1 'C11';width:26px;height:26px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid " +
-      (S.remember ? '#E9B341' : '#2E2822') + ';background:' + (S.remember ? 'rgba(233,179,65,.14)' : 'transparent') + ';color:#E9B341';
+      (S.remember ? 'var(--ac)' : 'var(--line)') + ';background:' + (S.remember ? 'rgba(233,179,65,.14)' : 'transparent') + ';color:var(--ac)';
     v.authSubmitLabel = busy ? '登入中…' : '登入';
-    v.authSubmitStyle = "width:100%;margin-top:18px;font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:#0B0A09;background:" +
-      (busy ? '#8A7333' : '#E9B341') + ';border:none;padding:15px;cursor:' + (busy ? 'wait' : 'pointer') +
+    v.authSubmitStyle = "width:100%;margin-top:18px;font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:var(--bg);background:" +
+      (busy ? '#8A7333' : 'var(--ac)') + ';border:none;padding:15px;cursor:' + (busy ? 'wait' : 'pointer') +
       ';clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)';
     /* 研究者與學生可以自行註冊；老師的帳號由研究者發 */
     v.showRegisterLink = role === 'researcher' || role === 'student';
@@ -1277,8 +1277,8 @@
           mkField('joinCode', '班級邀請碼', '例：J8OBN4', 'text', '跟老師或研究者要。輸錯就進不到你們班。')
         ];
     v.regSubmitLabel = busy ? '送出中…' : '建立帳號';
-    v.regSubmitStyle = "width:100%;margin-top:20px;font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:#0B0A09;background:" +
-      (busy ? '#8A7333' : '#E9B341') + ';border:none;padding:15px;cursor:' + (busy ? 'wait' : 'pointer') +
+    v.regSubmitStyle = "width:100%;margin-top:20px;font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:var(--bg);background:" +
+      (busy ? '#8A7333' : 'var(--ac)') + ';border:none;padding:15px;cursor:' + (busy ? 'wait' : 'pointer') +
       ';clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)';
 
     v.doRegister = function () {
@@ -1322,7 +1322,7 @@
             style: 'padding:11px 15px;font:500 22px/1 \'C11\';white-space:nowrap;cursor:' +
               (m.claimed ? 'not-allowed' : 'pointer') + ';background:' +
               (m.claimed ? 'transparent' : 'rgba(233,179,65,.07)') + ';border:1px ' +
-              (m.claimed ? 'dashed #2A241E' : 'solid #5A4A2C') + ';color:' + (m.claimed ? '#4A443C' : '#E9B341'),
+              (m.claimed ? 'dashed #2A241E' : 'solid var(--ac-dim)') + ';color:' + (m.claimed ? '#4A443C' : 'var(--ac)'),
             pick: function () {
               if (m.claimed) { L.say('「' + m.name + '」已經有人認領了。如果那是你，找研究者放掉再選一次。'); return; }
               if (L.state.busy) return;
@@ -1452,7 +1452,7 @@
   }
 
   function fileIcon(kind, size) {
-    var col = kind === 'image' ? '#8FE4F0' : kind === 'video' ? '#F2A03C' : kind === 'link' ? '#E9B341' : '#C3BAAA';
+    var col = kind === 'image' ? '#8FE4F0' : kind === 'video' ? '#F2A03C' : kind === 'link' ? 'var(--ac)' : 'var(--tx2)';
     var clip = kind === 'image' ? 'polygon(0 0,100% 0,100% 100%,0 100%)'
              : kind === 'video' ? 'polygon(0 0,100% 50%,0 100%)'
              : kind === 'link' ? 'polygon(20% 0,100% 0,100% 80%,80% 100%,0 100%,0 20%)'
@@ -1467,8 +1467,8 @@
 
     /* --- 這一組現在的狀態：送出前的自我判斷，老師會先看到 --- */
     var EFFORT = [
-      ['fast',  '比預估快',   '#E9B341'],
-      ['onpar', '跟預估差不多', '#C3BAAA'],
+      ['fast',  '比預估快',   'var(--ac)'],
+      ['onpar', '跟預估差不多', 'var(--tx2)'],
       ['slow',  '比預估慢',   '#D9603F']
     ];
     v.effortPicks = EFFORT.map(function (o) {
@@ -1478,11 +1478,11 @@
         pick: function () { L.setState({ draftEffort: o[0] }); },
         style: "font:500 22px/1 'C11';padding:11px 15px;white-space:nowrap;cursor:pointer;background:" +
           (on ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.26)') + ';border:1px solid ' +
-          (on ? o[2] : '#2E2822') + ';color:' + (on ? o[2] : '#8A8073')
+          (on ? o[2] : 'var(--line)') + ';color:' + (on ? o[2] : 'var(--tx3)')
       };
     });
     v.reflectReqStyle = "font:600 11px/1 'C11';letter-spacing:.14em;padding:5px 9px;background:" +
-      (S.draftEffort ? 'rgba(195,186,170,.12);color:#8A8073' : '#D9603F;color:#0B0A09');
+      (S.draftEffort ? 'rgba(195,186,170,.12);color:var(--tx3)' : '#D9603F;color:var(--bg)');
     /* 只有比預估慢的才要交代原因——快跟差不多不用寫 */
     v.needEffortNote = S.draftEffort === 'slow';
     v.effortNoteLabel = '為什麼比預估慢（必填，一句話就好）';
@@ -1537,7 +1537,7 @@
        多一個記號——點下去才跳內容，不會自己蓋在別的畫面上。 */
     (function () {
       v.needPlan = false; v.planPicks = []; v.planLabel = ''; v.planNote = '';
-      v.planBox = 'display:none'; v.planAccent = '#8A8073';
+      v.planBox = 'display:none'; v.planAccent = 'var(--tx3)';
       v.goGantt = function () {};
 
       var tid = S.openTaskId;
@@ -1566,13 +1566,13 @@
       v.openMobName = mb.name;
       v.openMobKicker = won ? (unseen ? '已打敗 · 牠留下的還沒看' : '已打敗')
         : waiting ? '等老師判' : (neu ? '★ 沒收過' : '擋在前面');
-      var hue = won ? (unseen ? '#E9B341' : '#7CC98F') : neu ? '#E9B341' : '#26211C';
+      var hue = won ? (unseen ? 'var(--ac)' : '#7CC98F') : neu ? 'var(--ac)' : '#26211C';
       v.openMobWrap = 'display:flex;align-items:center;gap:10px;margin-left:auto;padding:7px 11px;' +
         'text-align:left;font:inherit;cursor:' + (won ? 'pointer' : 'default') + ';' +
         'background:rgba(0,0,0,.3);border:1px solid ' + hue;
       v.openMobKickerStyle = "display:block;font:400 11px/1 'C11';letter-spacing:.14em;color:" +
-        (won ? (unseen ? '#E9B341' : '#7CC98F') : neu ? '#E9B341' : '#5F574C');
-      v.openMobNameStyle = "display:block;font:700 22px/1.2 'C11';margin-top:5px;color:#E8E2D6";
+        (won ? (unseen ? 'var(--ac)' : '#7CC98F') : neu ? 'var(--ac)' : '#5F574C');
+      v.openMobNameStyle = "display:block;font:700 22px/1.2 'C11';margin-top:5px;color:var(--tx)";
 
       /* 誘因要在動手之前看得到。抽幾次＝層數 ＋（他給的 1–5 − 1），上限 8——
          學生本來就可以自己多做，但他在決定的當下看不到多做會換到什麼。 */
@@ -1587,9 +1587,9 @@
           '那一分他看的是「你們有沒有不只是把作業交出來」：多研究了、多畫了別的草圖、' +
           '給了不同的做法，或是有額外的產出。要多做什麼是你們自己決定的。';
       v.drawHintBox = 'padding:12px 15px;background:rgba(233,179,65,.05);' +
-        'border-left:2px solid #5A4A2C';
-      v.drawHintHeadStyle = "display:block;font:500 22px/1.3 'C11';color:#E9B341";
-      v.drawHintBodyStyle = "display:block;font:400 11px/1.7 'C11';color:#8A8073;" +
+        'border-left:2px solid var(--ac-dim)';
+      v.drawHintHeadStyle = "display:block;font:500 22px/1.3 'C11';color:var(--ac)";
+      v.drawHintBodyStyle = "display:block;font:400 11px/1.7 'C11';color:var(--tx3);" +
         'margin-top:6px;text-wrap:pretty';
 
       /* 已經打贏的：點下去才演。沒打贏的點了不做事。 */
@@ -1663,7 +1663,7 @@
         var again = (task.rounds || []).length > 0 || task.status === 'needs_more';
         var EFFL = { fast: '比預估快', onpar: '跟預估差不多', slow: '比預估慢' };
         showMoment(L, {
-          kind: 'submit', accent: '#C3BAAA',
+          kind: 'submit', accent: 'var(--tx2)',
           kicker: again ? 'RECHECKED' : 'MARKED DONE',
           title: again ? '改好了，等他再看一次' : '你勾了做完',
           lede: '「' + (task.title || '這一項') + '」等他去看。作業本身在他收的地方。',
@@ -1742,6 +1742,9 @@
       if (!myMob()) return;   /* 還沒登入完 */
       S.tasks = [tutTask(L)].concat(list);
     })();
+
+    /* 每一層自己的光。uiVars 已經掛在最外層的 style 上，接在後面就好。 */
+    v.uiVars = String(v.uiVars || '') + themeVars(L);
 
     decorateRules(L, v);
     decorateHorizon(L, v);   /* 首頁：這一趟走完是什麼樣子 */
@@ -1840,8 +1843,8 @@
   ];
 
   var EFFORT_META = {
-    fast:  ['他們說：比預估快', '#E9B341'],
-    onpar: ['他們說：跟預估差不多', '#C3BAAA'],
+    fast:  ['他們說：比預估快', 'var(--ac)'],
+    onpar: ['他們說：跟預估差不多', 'var(--tx2)'],
     slow:  ['他們說：比預估慢', '#D9603F']
   };
 
@@ -1849,7 +1852,7 @@
     return (rounds || []).map(function (h) {
       var ok = h.result === 'pass' || h.result === 'auto';   /* 逾時自動暫准也算放行 */
       var fix = h.result === 'needfix';
-      var col = ok ? '#E9B341' : fix ? '#D9603F' : '#8A8073';
+      var col = ok ? 'var(--ac)' : fix ? '#D9603F' : 'var(--tx3)';
       var eff = EFFORT_META[h.effort];
       return {
         label: '第 ' + h.n + ' 次交',
@@ -1908,11 +1911,11 @@
     { key: 'needs_more', tag: '要補的', desc: '老師退回來了。看他寫的理由改完再交一次——重交次數不限。',
       accent: '#D9603F', bg: 'rgba(217,96,63,.06)', border: 'rgba(217,96,63,.34)' },
     { key: 'todo', tag: '還沒交', desc: '這一區是你現在該動手的。作業照老師原本的方式交，交完點進去把清單勾完、回答一題。',
-      accent: '#E9B341', bg: 'rgba(233,179,65,.045)', border: '#5A4A2C' },
+      accent: 'var(--ac)', bg: 'rgba(233,179,65,.045)', border: 'var(--ac-dim)' },
     { key: 'submitted', tag: '等老師驗收', desc: '已經送出去了。老師看的順序是照各組停留週數排的，不是先交先看——待越久的排越前面。',
-      accent: '#C3BAAA', bg: 'rgba(195,186,170,.04)', border: '#3A3026' },
+      accent: 'var(--tx2)', bg: 'rgba(195,186,170,.04)', border: 'var(--line2)' },
     { key: 'passed', tag: '已完成', desc: '他確認過了，礦石也採到了。合格考量留在每一項裡，那是下一次的標準。',
-      accent: '#8A8073', bg: 'rgba(0,0,0,.26)', border: '#26211C' }
+      accent: 'var(--tx3)', bg: 'rgba(0,0,0,.26)', border: '#26211C' }
   ];
 
   function decorateSections(L, v) {
@@ -1940,11 +1943,11 @@
         r.statusLabel = notSeen ? '★ 牠留下的還沒看'
           : t.status === 'passed' ? '已採到' : '待採';
         r.chipStyle = notSeen
-          ? L.chip('rgba(233,179,65,.22)', '#FFD98A', '#E9B341')
+          ? L.chip('rgba(233,179,65,.22)', 'var(--ac-hi)', 'var(--ac)')
           : L.chip(
             t.type === 'required' ? 'rgba(233,179,65,.16)' : 'transparent',
-            t.type === 'required' ? '#E9B341' : '#9A9184',
-            t.type === 'required' ? 'rgba(233,179,65,.3)' : '#3A3026');
+            t.type === 'required' ? 'var(--ac)' : '#9A9184',
+            t.type === 'required' ? 'rgba(233,179,65,.3)' : 'var(--line2)');
         r.open = openTask(L, t);
         items.push(r);
       });
@@ -2006,7 +2009,45 @@
 
   /* ---------- 地表到地心的 45 格：畫成一條看得見的路，不是一個數字 ---------- */
 
-  var BOARD_HUE = ['#C9A227', '#5FA8C7', '#8C7BC7', '#D9603F', '#E9B341'];
+  var BOARD_HUE = ['#FFC93D', '#4FCDF2', '#AE8CFF', '#FF8A4D', '#FFC53D'];
+
+  /* ===== 每一層自己的光 =====
+     四層本來長得一模一樣：同一種近黑的底、同一個金。走到第四層跟第一層
+     沒有差別，「越挖越深」只剩下數字。現在整組底色與強調色跟著層數換，
+     而且整體提亮——底從近黑抬到看得出色相。
+     狀態色不在這裡：通過綠、退回紅、等待灰要一直認得出來，跟著層變的話
+     「逾期」在第四層會跟強調色糊在一起。 */
+  var THEMES = {
+    base: { bg: '#12100C', field: '#1A1712', panel: '#221D16', line: '#3A3228', line2: '#4E4335',
+            ac: '#FFC53D', acDim: '#6B5520', acHi: '#FFE7A8',
+            tx: '#F5F0E4', tx2: '#CFC5B2', tx3: '#968B7B' },
+    1: { bg: '#151007', field: '#1E1709', panel: '#281F0F', line: '#453718', line2: '#5C4A22',
+         ac: '#FFC93D', acDim: '#775D22', acHi: '#FFE9A8',
+         tx: '#F7F1DF', tx2: '#D6C9A8', tx3: '#9C8E72' },
+    2: { bg: '#08161F', field: '#0D2030', panel: '#12293C', line: '#1D4257', line2: '#2A5B76',
+         ac: '#4FCDF2', acDim: '#1F5E78', acHi: '#BCEEFF',
+         tx: '#E6F4FA', tx2: '#AFCEDD', tx3: '#7691A1' },
+    3: { bg: '#130E20', field: '#1A1430', panel: '#231B3F', line: '#372B5C', line2: '#4B3C7A',
+         ac: '#AE8CFF', acDim: '#4E3C88', acHi: '#DCCEFF',
+         tx: '#EFEAFB', tx2: '#C0B4DE', tx3: '#8C81A8' },
+    4: { bg: '#1C0C07', field: '#27120B', panel: '#331A10', line: '#54291A', line2: '#703826',
+         ac: '#FF8A4D', acDim: '#8A3F22', acHi: '#FFC9A8',
+         tx: '#FBEDE5', tx2: '#DDBCA9', tx3: '#A6867A' }
+  };
+
+  function themeVars(L) {
+    var S = L.state;
+    var th = THEMES.base;
+    if (S.role === 'student' && S.signedIn) {
+      var n = Number(S.currentLayer) || 1;
+      th = THEMES[Math.max(1, Math.min(4, n))] || THEMES.base;
+    }
+    return ';--bg:' + th.bg + ';--field:' + th.field + ';--panel:' + th.panel +
+           ';--line:' + th.line + ';--line2:' + th.line2 +
+           ';--ac:' + th.ac + ';--ac-dim:' + th.acDim + ';--ac-hi:' + th.acHi +
+           ';--tx:' + th.tx + ';--tx2:' + th.tx2 + ';--tx3:' + th.tx3 + ';';
+  }
+
 
   /* 老師端的地圖剖面：他看的是自己開的清單鋪滿了沒，以及全班走到哪。
      跟學生端共用同一套視覺，但狀態來源不同——老師沒有「我採到幾塊」。 */
@@ -2049,15 +2090,15 @@
       open: open,
       dotStyle: 'display:flex;align-items:center;justify-content:center;width:100%;height:20px;' +
         "font:700 11px/1 'C11';transform:scale(.85);" +
-        'color:' + (st.cleared || st.complete ? '#0B0A09' : fog ? '#3A3026' : hue) + ';' +
-        'border:1px solid ' + (st.cleared || st.complete ? '#FFD98A' : fog ? '#2A251F' : hue) + ';' +
-        'background:' + (st.cleared ? 'rgba(' + hexRgb(hue) + ',.9)' : st.complete ? '#E9B341'
+        'color:' + (st.cleared || st.complete ? 'var(--bg)' : fog ? 'var(--line2)' : hue) + ';' +
+        'border:1px solid ' + (st.cleared || st.complete ? 'var(--ac-hi)' : fog ? '#2A251F' : hue) + ';' +
+        'background:' + (st.cleared ? 'rgba(' + hexRgb(hue) + ',.9)' : st.complete ? 'var(--ac)'
           : fog ? 'rgba(0,0,0,.55)' : 'rgba(' + hexRgb(hue) + ',.2)') + ';' +
         (st.complete && !st.cleared ? 'box-shadow:0 0 12px rgba(233,179,65,.8);' : '') +
         'clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);',
       nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
         'white-space:nowrap;color:' +
-        (st.cleared || st.complete ? '#FFD98A' : fog ? '#332C25' : showBoss ? '#9A9184' : '#8A8073'),
+        (st.cleared || st.complete ? 'var(--ac-hi)' : fog ? '#332C25' : showBoss ? '#9A9184' : 'var(--tx3)'),
       style: 'flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;' +
         'cursor:pointer;pointer-events:auto'
     };
@@ -2219,11 +2260,11 @@
           },
           dotStyle: "display:flex;align-items:center;justify-content:center;width:100%;height:20px;" +
             "font:600 11px/1 'C11';transform:scale(.85);" +
-            "color:" + (open ? "#0B0A09" : "#8A8073") + ";" +
-            "border:1px solid " + (open ? hue : "#3A3026") + ";" +
+            "color:" + (open ? "var(--bg)" : "var(--tx3)") + ";" +
+            "border:1px solid " + (open ? hue : "var(--line2)") + ";" +
             "background:" + (open ? "rgba(" + hexRgb(hue) + ",.85)" : "rgba(0,0,0,.4)") + ";",
           nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;" +
-            "transform:scale(.72);white-space:nowrap;color:" + (open ? "#FFD98A" : "#6E665A"),
+            "transform:scale(.72);white-space:nowrap;color:" + (open ? "var(--ac-hi)" : "#6E665A"),
           style: "flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;" +
             "cursor:pointer;pointer-events:auto"
         };
@@ -2248,7 +2289,7 @@
         st.openedN + "/" + st.vein.length;
       m.stepsTagStyle = "position:absolute;left:var(--mcol);top:9px;z-index:2;" +
         "font:400 11px/1 'C11';letter-spacing:.1em;color:" +
-        (st.openedN >= st.vein.length ? "#FFD98A" : "#8A8073") +
+        (st.openedN >= st.vein.length ? "var(--ac-hi)" : "var(--tx3)") +
         ";pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top";
 
       /* 哪幾組在這一層 */
@@ -2278,7 +2319,7 @@
       m.othersStyle = "position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;" +
         "gap:5px;justify-content:flex-end;max-width:58%;overflow:hidden";
       m.othersNote = st.here.length + " 組在這一層";
-      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;align-self:center;transform:scale(.86)";
+      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86)";
     });
   }
 
@@ -2288,13 +2329,13 @@
      background-image 裡也跑得動。自己那一隻會跑，別組的站著。
      ============================================================ */
   var RUNNER_HUE = {
-    H: '#E9B341',   /* 安全帽 */
+    H: 'var(--ac)',   /* 安全帽 */
     L: '#FFF0B8',   /* 頭燈 */
-    N: '#3A3026',   /* 帽簷、領口 */
+    N: 'var(--line2)',   /* 帽簷、領口 */
     S: '#D8B48C',   /* 臉 */
     D: '#2A241C',   /* 眼睛 */
     '#': '#6B5A3E', /* 工作服 */
-    B: '#2E2822'    /* 靴子 */
+    B: 'var(--line)'    /* 靴子 */
   };
 
   /* 身體：y0–y10。面朝右。 */
@@ -2433,7 +2474,7 @@
           tag: p.me ? String.fromCharCode(20320) : '',
           tagStyle: p.me
             ? "font:500 11px/1 'C11';padding:3px 5px;white-space:nowrap;background:rgba(6,5,10,.85);" +
-              'border:1px solid #E9B341;color:#E9B341;transform:scale(.9)'
+              'border:1px solid var(--ac);color:var(--ac);transform:scale(.9)'
             : 'display:none',
           figStyle: 'display:block;width:' + size + 'px;height:' + size + 'px;' +
             'background:url("' + runnerSvg(walking, idx + i) + '") center bottom/contain no-repeat;' +
@@ -2453,7 +2494,7 @@
         out.push({
           tag: '+' + over.length,
           tagStyle: "font:600 11px/1 'C11';padding:4px 6px;white-space:nowrap;" +
-            'background:rgba(6,5,10,.9);border:1px solid #5A5044;color:#C3BAAA;transform:scale(.9)',
+            'background:rgba(6,5,10,.9);border:1px solid #5A5044;color:var(--tx2);transform:scale(.9)',
           figStyle: 'display:block;width:22px;height:22px;' +
             'background:url("' + runnerSvg(false) + '") center bottom/contain no-repeat;' +
             'image-rendering:pixelated;filter:grayscale(1) brightness(.55);opacity:.75',
@@ -2476,14 +2517,14 @@
     var chip = function (border) {
       return 'display:inline-flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;' +
         "font:400 11px/1 'C11';white-space:nowrap;background:rgba(6,5,4,.72);" +
-        'border:1px solid ' + border + ';color:#C3BAAA';
+        'border:1px solid ' + border + ';color:var(--tx2)';
     };
     var out = list.slice(0, 2).map(function (t) {
       return {
         name: t.name,
         meta: '停留 ' + (t.weeks || 1) + ' 週',
         open: openOne(t),
-        style: chip((t.passed || []).length ? '#5A4A2C' : '#3A3026')
+        style: chip((t.passed || []).length ? 'var(--ac-dim)' : 'var(--line2)')
       };
     });
     if (list.length > 2) {
@@ -2505,7 +2546,7 @@
       ? '這一格站了 ' + teams.length + ' 組。'
       : '這一層同時有 ' + teams.length + ' 組。';
     showMoment(L, {
-      kind: 'help', art: 'help', accent: '#C3BAAA',
+      kind: 'help', art: 'help', accent: 'var(--tx2)',
       kicker: 'WHO IS HERE',
       title: (lay.name || ('第' + n + '層')) + '上的人',
       lede: lede + '站在哪一格不代表他們採到哪一塊——那是他們自己的進度。',
@@ -2530,7 +2571,7 @@
        擊退與否是學生自己的事，老師沒有在打。 */
     var beaten = S.role !== 'teacher' && (S.passed || []).indexOf(n) >= 0;
     v.sel.toolName = done ? (lay.tool || '？？？') : '？？？';
-    v.sel.toolNameColor = done ? '#E9B341' : '#5A5044';
+    v.sel.toolNameColor = done ? 'var(--ac)' : '#5A5044';
     v.sel.toolDesc = done
       ? (lay.toolFunc || '')
       : (bz
@@ -2538,7 +2579,7 @@
           : '老師准你們往下了，才鑄得出來。');
     v.sel.toolCardStyle = 'padding:13px;background:' +
       (done ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.25)') +
-      ';border:1px ' + (done ? 'solid #3A3026' : 'dashed #2E2822');
+      ';border:1px ' + (done ? 'solid var(--line2)' : 'dashed var(--line)');
 
     /* 這一層層底站著誰。點下去就是那隻生物的完整介紹。 */
     /* 這一層對這一組是什麼，用老師放行時說的那句話。
@@ -2552,21 +2593,21 @@
       v.sel.bossCardStyle = 'display:flex;align-items:center;gap:14px;width:100%;text-align:left;' +
         'padding:13px 15px;margin-bottom:13px;cursor:pointer;background:' +
         (beaten ? 'rgba(0,0,0,.25)' : 'rgba(233,179,65,.06)') +
-        ';border:1px solid ' + (beaten ? '#2E2822' : '#3A3026');
+        ';border:1px solid ' + (beaten ? 'var(--line)' : 'var(--line2)');
       v.sel.bossArtStyle = 'flex:none;display:block;width:62px;height:62px;image-rendering:pixelated;' +
         'background:url("' + bossSvg(bz, false) + '") center/contain no-repeat;' +
         (beaten
           ? 'opacity:.42;filter:grayscale(1);'
           : 'animation:bossFloat 2.8s ease-in-out infinite,bossBreathe 4.4s ease-in-out infinite;');
       v.sel.bossKicker = beaten ? '已擊退' : '守關生物';
-      v.sel.bossKickerColor = beaten ? '#5F574C' : '#8A8073';
+      v.sel.bossKickerColor = beaten ? '#5F574C' : 'var(--tx3)';
       v.sel.bossName = bz.name;
       v.sel.bossNameColor = beaten ? '#5F574C' : bz.hue['#'];
       v.sel.bossNote = beaten
         ? (bt2.beat || '這一層已經過了。')
         : (bt2.trait || '擋在層底。');
-      v.sel.bossMoreStyle = "flex:none;font:400 22px/1 'C11';color:#E9B341;" +
-        "border:1px solid #5A4A2C;padding:9px 13px;background:rgba(233,179,65,.07)";
+      v.sel.bossMoreStyle = "flex:none;font:400 22px/1 'C11';color:var(--ac);" +
+        "border:1px solid var(--ac-dim);padding:9px 13px;background:rgba(233,179,65,.07)";
       v.sel.openBoss = function () {
         L.setState({ specFrom: S.screen, screen: 'S06', specId: bz.name });
       };
@@ -2590,7 +2631,7 @@
         w.treKickerColor = '#5F574C';
         w.treCardStyle = 'flex:1;min-width:210px;display:flex;gap:11px;padding:12px 14px;' +
           'text-align:left;font:inherit;color:inherit;cursor:pointer;' +
-          'background:rgba(0,0,0,.28);border:none;border-left:2px solid #3A3026';
+          'background:rgba(0,0,0,.28);border:none;border-left:2px solid var(--line2)';
         return;
       }
       var bt = BOSS_TEXT[n] || {};
@@ -2670,25 +2711,25 @@
     var t = d.total, la = d.landed || { n: 0, again: 0, waiting: 0 };
 
     v.hasMirror = true;
-    v.mirrorBox = 'margin:0 var(--pad) 16px;padding:16px 18px;background:#14110E;border:1px solid #26211C';
+    v.mirrorBox = 'margin:0 var(--pad) 16px;padding:16px 18px;background:var(--panel);border:1px solid #26211C';
     v.mirrorKick = 'YOUR WORDS';
     v.mirrorKickStyle = "font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C";
 
     v.mirrorHead = t.needfix
       ? '你退回 ' + t.needfix + ' 件，其中 ' + la.n + ' 件下一次就過了。'
       : '你寫了 ' + t.n + ' 件合格考量，還沒退回過任何一件。';
-    v.mirrorHeadStyle = "font:700 22px/1.5 'C11';color:#E8E2D6;margin-top:9px;text-wrap:pretty";
+    v.mirrorHeadStyle = "font:700 22px/1.5 'C11';color:var(--tx);margin-top:9px;text-wrap:pretty";
 
     /* 退回的那些後來怎麼了：一格一件，最重要的一條 */
     var fate = markBar([
-      { n: la.n,       fill: '#E9B341', stroke: '#E9B341' },
+      { n: la.n,       fill: 'var(--ac)', stroke: 'var(--ac)' },
       { n: la.again,   fill: 'rgba(217,96,63,.18)', stroke: '#D9603F' },
       { n: la.waiting, fill: 'rgba(0,0,0,.4)', stroke: '#4A443C' }
     ], 40);
     v.mirrorFateStyle = fate.n ? markStyle(fate) + ';margin-top:11px' : 'display:none';
 
     v.mirrorLede = '你寫了 ' + t.n + ' 件、共 ' + t.words + ' 字。學生拿這些字當下一次的標準。';
-    v.mirrorLedeStyle = "font:400 11px/1.7 'C11';color:#8A8073;margin-top:6px;text-wrap:pretty";
+    v.mirrorLedeStyle = "font:400 11px/1.7 'C11';color:var(--tx3);margin-top:6px;text-wrap:pretty";
 
     v.mirrorRowsStyle = 'display:flex;flex-direction:column;gap:7px;margin-top:14px';
 
@@ -2696,7 +2737,7 @@
     v.mirrorRows = (d.layers || []).filter(function (x) { return x.n > 0; }).map(function (x) {
       var hue = BOARD_HUE[x.layer - 1];
       var bar = markBar([
-        { n: x.landed,  fill: '#E9B341', stroke: '#E9B341' },                    /* 接住了 */
+        { n: x.landed,  fill: 'var(--ac)', stroke: 'var(--ac)' },                    /* 接住了 */
         { n: x.n - x.needfix, fill: 'rgba(' + hexRgb(hue) + ',.5)', stroke: hue },/* 你放行的 */
         { n: x.again,   fill: 'rgba(217,96,63,.18)', stroke: '#D9603F' },        /* 又被退 */
         { n: x.waiting, fill: 'rgba(0,0,0,.4)', stroke: '#4A443C' }              /* 還在路上 */
@@ -2727,9 +2768,9 @@
       var q = String(c0.reason || '').replace(/\s+/g, ' ');
       if (q.length > 22) q = q.slice(0, 21) + '…';
       v.mirrorCaseBox = 'margin-top:12px;padding:9px 12px;background:rgba(233,179,65,.05);' +
-        'border-left:2px solid #5A4A2C';
+        'border-left:2px solid var(--ac-dim)';
       v.mirrorCaseQ = '「' + q + '」　→　' + c0.before + ' 字變 ' + c0.after + ' 字，過了';
-      v.mirrorCaseQStyle = "font:400 11px/1.6 'C11';color:#C3BAAA;text-wrap:pretty";
+      v.mirrorCaseQStyle = "font:400 11px/1.6 'C11';color:var(--tx2);text-wrap:pretty";
       v.mirrorCaseA = ''; v.mirrorCaseAStyle = 'display:none';
     } else {
       v.mirrorCaseBox = 'display:none'; v.mirrorCaseQ = ''; v.mirrorCaseQStyle = 'display:none';
@@ -2741,7 +2782,7 @@
     if (t.passedN) foot.push('每一項平均來回 ' + t.avgRounds + ' 次');
     if (la.again) foot.push(la.again + ' 件退了又退——那幾件值得回頭看你寫了什麼');
     v.mirrorFoot = foot.join('　·　') + (foot.length ? '。' : '');
-    v.mirrorFootStyle = "font:400 11px/1.7 'C11';color:#8A8073;margin-top:8px;text-wrap:pretty";
+    v.mirrorFootStyle = "font:400 11px/1.7 'C11';color:var(--tx3);margin-top:8px;text-wrap:pretty";
   }
 
   /* ============================================================
@@ -2782,9 +2823,9 @@
       rows.push(line);
     }
     var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">'];
-    pxRows(rows, 0, { '#': '#E9B341', o: '#12161F' }, out);
+    pxRows(rows, 0, { '#': 'var(--ac)', o: '#12161F' }, out);
     /* 四個方位的刻度，正下方那一個亮——沒人拉的時候它就指在那裡 */
-    [[11, 3, '#5A5044'], [20, 11, '#5A5044'], [3, 11, '#5A5044'], [11, 19, '#E9B341']]
+    [[11, 3, '#5A5044'], [20, 11, '#5A5044'], [3, 11, '#5A5044'], [11, 19, 'var(--ac)']]
       .forEach(function (t) {
         out.push('<rect x="' + t[0] + '" y="' + t[1] + '" width="2" height="2" fill="' + t[2] + '"/>');
       });
@@ -2897,7 +2938,7 @@
       'z-index:-1;pointer-events:none;image-rendering:pixelated;' +
       'opacity:var(--jlz-scene-o,1);transition:opacity .46s ease;background:' +
       'radial-gradient(154% 118% at 50% 42%,rgba(11,10,9,.24) 0,rgba(11,10,9,.54) 36%,' +
-      'rgba(11,10,9,.80) 64%,rgba(11,10,9,.95) 86%,#0B0A09 100%),' +
+      'rgba(11,10,9,.80) 64%,rgba(11,10,9,.95) 86%,var(--bg) 100%),' +
       'linear-gradient(180deg,rgba(11,10,9,.52) 0,rgba(11,10,9,.72) 56%,rgba(11,10,9,.92) 100%),' +
       'var(--jlz-scene) center bottom/cover no-repeat';
 
@@ -2994,7 +3035,7 @@
       ? '這一項會有 ' + n + ' 條給學生勾。'
       : '沒有清單也可以——那學生就是整項一起勾完成。';
     v.nfChecksHintStyle = "font:400 11px/1.6 'C11';color:" +
-      (n ? '#E9B341' : '#5F574C') + ';margin-top:7px';
+      (n ? 'var(--ac)' : '#5F574C') + ';margin-top:7px';
   }
 
   /* 學生那邊：逐條勾 */
@@ -3046,8 +3087,8 @@
     }
 
     v.gambleBoxStyle = 'margin:0 0 18px;padding:17px 19px;border-left:3px solid #D9603F;' +
-      'background:rgba(217,96,63,.06);border-top:1px solid #3A3026;' +
-      'border-right:1px solid #3A3026;border-bottom:1px solid #3A3026';
+      'background:rgba(217,96,63,.06);border-top:1px solid var(--line2);' +
+      'border-right:1px solid var(--line2);border-bottom:1px solid var(--line2)';
     v.gambleTitle = '送出之前';
     v.gambleBody = '都勾完了。有沒有哪一項，你其實不太確定？現在打開它、補完、再勾回來——這一頁會留下一顆星。';
     v.gambleCost = '打開之後至少要隔 6 小時才能勾回來，所以今天就送不出去了。不想賭就直接送，沒有任何損失。';
@@ -3069,7 +3110,7 @@
             .catch(function () { L.say('沒有存到伺服器。'); });
         },
         style: 'text-align:left;padding:9px 12px;background:rgba(0,0,0,.4);border:1px solid #4A3F30;' +
-          "color:#C3BAAA;font:400 11px/1.5 'C11';cursor:pointer",
+          "color:var(--tx2);font:400 11px/1.5 'C11';cursor:pointer",
         textStyle: "display:block;font:400 11px/1.5 'C11';color:#6E665A;margin-top:4px;text-wrap:pretty"
       };
     });
@@ -3103,9 +3144,9 @@
     v.checkLeft = list.length - got;
     v.checkBoxStyle = 'padding:15px 16px;margin-bottom:18px;background:' +
       (full ? 'rgba(233,179,65,.06)' : 'rgba(0,0,0,.26)') +
-      ';border:1px solid ' + (full ? '#5A4A2C' : '#2E2822');
+      ';border:1px solid ' + (full ? 'var(--ac-dim)' : 'var(--line)');
     v.checkCount = got + ' / ' + list.length;
-    v.checkCountStyle = "font:700 22px/1 'C11';color:" + (full ? '#E9B341' : '#C3BAAA');
+    v.checkCountStyle = "font:700 22px/1 'C11';color:" + (full ? 'var(--ac)' : 'var(--tx2)');
     var isTut0 = task.id === 'tut';
     /* 導覽那一項不用交東西給老師，照原文顯示會把人帶錯方向 */
     v.handInHead = isTut0 ? '這一項不用交任何東西。' : '作業交到老師本來要你交的地方。';
@@ -3144,16 +3185,16 @@
         },
         style: 'display:flex;align-items:flex-start;gap:11px;padding:10px 12px;text-align:left;' +
           'background:' + (hit ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.3)') + ';' +
-          'border:1px solid ' + (hit ? '#5A4A2C' : '#2E2822') + ';' +
+          'border:1px solid ' + (hit ? 'var(--ac-dim)' : 'var(--line)') + ';' +
           (locked ? 'cursor:default;opacity:.72' : 'cursor:pointer'),
         boxStyle: 'flex:none;display:flex;align-items:center;justify-content:center;' +
           'width:20px;height:20px;margin-top:2px;' +
           "font:700 11px/1 'C11';" +
-          'color:' + (hit ? '#0B0A09' : '#3A3026') + ';' +
-          'background:' + (hit ? '#E9B341' : 'rgba(0,0,0,.4)') + ';' +
-          'border:1px solid ' + (hit ? '#E9B341' : '#4A443C'),
+          'color:' + (hit ? 'var(--bg)' : 'var(--line2)') + ';' +
+          'background:' + (hit ? 'var(--ac)' : 'rgba(0,0,0,.4)') + ';' +
+          'border:1px solid ' + (hit ? 'var(--ac)' : '#4A443C'),
         textStyle: "flex:1;min-width:0;font:400 22px/1.6 'C11';text-wrap:pretty;color:" +
-          (hit ? '#E8E2D6' : '#B6AC9C')
+          (hit ? 'var(--tx)' : '#B6AC9C')
       };
     });
   }
@@ -3210,7 +3251,7 @@
         it.sub = '★　' + it.sub;
         it.style = it.style
           .replace('background:rgba(233,179,65,.05)', 'background:rgba(233,179,65,.12)')
-          .replace('border:1px solid #3A3026', 'border:1px solid #E9B341');
+          .replace('border:1px solid var(--line2)', 'border:1px solid var(--ac)');
       });
       /* 標題那一行順便說清楚金框是什麼，不然沒有人知道 */
       g.note = g.note + (starred
@@ -3247,9 +3288,9 @@
     var pk = L.state.peekTeam;
     var PST = {
       todo: { t: '還沒送', hue: '#6E665A' },
-      submitted: { t: '等他看', hue: '#C3BAAA' },
+      submitted: { t: '等他看', hue: 'var(--tx2)' },
       needs_more: { t: '要再改', hue: '#D9603F' },
-      passed: { t: '過了', hue: '#E9B341' }
+      passed: { t: '過了', hue: 'var(--ac)' }
     };
     v.hasHaul = true;
     v.haulMine = pk.name + (pk.me ? '　（你們）' : '') + ' 的紀錄';
@@ -3261,9 +3302,9 @@
       detail: '看別組的紀錄不會影響你們的分數。',
       go: function () { L.setState({ peekTeam: null }); },
       rowStyle: 'display:block;width:100%;text-align:left;font:inherit;cursor:pointer;' +
-        'padding:13px 15px;background:rgba(233,179,65,.07);border:1px solid #5A4A2C',
-      rankStyle: "flex:none;width:26px;font:700 22px/1 'C11';color:#E9B341",
-      nameStyle: "flex:1 1 auto;min-width:0;font:500 22px/1.3 'C11';color:#E8E2D6",
+        'padding:13px 15px;background:rgba(233,179,65,.07);border:1px solid var(--ac-dim)',
+      rankStyle: "flex:none;width:26px;font:700 22px/1 'C11';color:var(--ac)",
+      nameStyle: "flex:1 1 auto;min-width:0;font:500 22px/1.3 'C11';color:var(--tx)",
       totalStyle: 'display:none',
       barStyle: 'display:none', baseStyle: '', bonusStyle: '',
       detailStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px"
@@ -3282,12 +3323,12 @@
         detail: bits.length ? bits.join('　·　') : '還沒有動作。',
         go: function () {},
         rowStyle: 'display:block;width:100%;text-align:left;font:inherit;cursor:default;' +
-          'padding:13px 15px;background:rgba(0,0,0,.28);border:1px solid #2E2822',
+          'padding:13px 15px;background:rgba(0,0,0,.28);border:1px solid var(--line)',
         rankStyle: "flex:none;width:26px;font:700 11px/1 'C11';color:#5F574C",
-        nameStyle: "flex:1 1 auto;min-width:0;font:500 22px/1.3 'C11';color:#C3BAAA",
+        nameStyle: "flex:1 1 auto;min-width:0;font:500 22px/1.3 'C11';color:var(--tx2)",
         totalStyle: "flex:none;font:400 11px/1 'C11';color:" + st.hue,
-        barStyle: 'display:flex;margin-top:9px;height:4px;background:rgba(0,0,0,.4);border:1px solid #2E2822',
-        baseStyle: 'height:100%;width:' + (done ? 100 : r.rounds ? 40 : 0) + '%;background:' + (done ? '#E9B341' : '#5A5044'),
+        barStyle: 'display:flex;margin-top:9px;height:4px;background:rgba(0,0,0,.4);border:1px solid var(--line)',
+        baseStyle: 'height:100%;width:' + (done ? 100 : r.rounds ? 40 : 0) + '%;background:' + (done ? 'var(--ac)' : '#5A5044'),
         bonusStyle: 'height:100%;width:0',
         detailStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px"
       };
@@ -3328,7 +3369,7 @@
       var shown = list.slice(0, 4), rest = list.length - shown.length;
 
       var pins = shown.map(function (r) {
-        var hue = r.me ? '#E9B341' : '#8A8073';
+        var hue = r.me ? 'var(--ac)' : 'var(--tx3)';
         return {
           name: r.name.split('　')[0],
           score: String(r.total),
@@ -3337,10 +3378,10 @@
           })(r.teamId, r.name),
           style: 'display:flex;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;font:inherit;' +
             'background:' + (r.me ? 'rgba(233,179,65,.12)' : 'rgba(0,0,0,.34)') +
-            ';border:1px solid ' + (r.me ? '#5A4A2C' : '#2E2822'),
+            ';border:1px solid ' + (r.me ? 'var(--ac-dim)' : 'var(--line)'),
           dotStyle: 'display:block;width:9px;height:9px;flex:none;background:' + hue +
             ';clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)',
-          nameStyle: "font:500 11px/1.3 'C11';color:" + (r.me ? '#F2E6C8' : '#C3BAAA') +
+          nameStyle: "font:500 11px/1.3 'C11';color:" + (r.me ? '#F2E6C8' : 'var(--tx2)') +
             ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:108px',
           scoreStyle: "flex:none;font:700 11px/1 'C11';font-variant-numeric:tabular-nums;color:" + hue
         };
@@ -3354,7 +3395,7 @@
           go: function () { L.say('這個深度還有 ' + rest + ' 組：' +
             list.slice(4).map(function (x) { return x.name.split('　')[0]; }).join('、')); },
           style: 'display:flex;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;font:inherit;' +
-            'background:rgba(0,0,0,.34);border:1px dashed #3A3026',
+            'background:rgba(0,0,0,.34);border:1px dashed var(--line2)',
           dotStyle: 'display:none',
           nameStyle: "font:400 11px/1.3 'C11';color:#6E665A;white-space:nowrap",
           scoreStyle: 'display:none'
@@ -3368,7 +3409,7 @@
         rowStyle: 'display:flex;align-items:center;gap:11px;padding:3px 0' +
           (drop > 6 ? ';margin-top:' + Math.min(120, drop) + 'px' : ''),
         depthStyle: "flex:none;width:38px;font:400 11px/1 'C11';font-variant-numeric:tabular-nums;color:" +
-          (mine ? '#E9B341' : '#4A443C'),
+          (mine ? 'var(--ac)' : '#4A443C'),
         pinsStyle: 'display:flex;flex-wrap:wrap;gap:5px;flex:1 1 auto;min-width:0'
       };
     });
@@ -3438,7 +3479,7 @@
 
       /* 第一名跟其他人不能長一樣；前三名各有各的邊。 */
       var tier = i === 0 ? 0 : i < 3 ? 1 : 2;
-      var TCOL = ['#E9B341', '#C3BAAA', '#5F574C'];
+      var TCOL = ['var(--ac)', 'var(--tx2)', '#5F574C'];
       var tc = TCOL[tier];
 
       /* 離前一名還差多少——榜從清單變成追逐 */
@@ -3461,7 +3502,7 @@
         total: String(r.total),
         chase: chase + (moveTxt ? '　' + moveTxt : ''),
         chaseStyle: "font:400 11px/1.5 'C11';margin-top:5px;color:" +
-          (moved > 0 ? '#E9B341' : moved < 0 ? '#D9603F' : r.me ? '#8A8073' : '#5F574C'),
+          (moved > 0 ? 'var(--ac)' : moved < 0 ? '#D9603F' : r.me ? 'var(--tx3)' : '#5F574C'),
         /* 明細照分數的來源排，順序跟計分表一致，看得出這 33 分是怎麼來的 */
         detail: '勾 ' + r.ticks + ' 條 = ' + (r.ticks * 10) + ' 分　·　' +
           '通過 ' + r.pages + ' 項 = ' + (r.pages * 100) + ' 分' +
@@ -3475,19 +3516,19 @@
           (tier === 0 ? 'linear-gradient(100deg,rgba(233,179,65,.16),rgba(233,179,65,.04) 60%)'
             : r.me ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
           ';border-left:' + (tier === 0 ? '4px' : r.me ? '3px' : '1px') + ' solid ' +
-          (tier === 0 ? '#E9B341' : r.me ? '#5A4A2C' : '#2E2822') +
-          ';border-top:1px solid ' + (tier === 0 ? '#5A4A2C' : r.me ? '#5A4A2C' : '#2E2822') +
-          ';border-right:1px solid ' + (tier === 0 ? '#5A4A2C' : r.me ? '#5A4A2C' : '#2E2822') +
-          ';border-bottom:1px solid ' + (tier === 0 ? '#5A4A2C' : r.me ? '#5A4A2C' : '#2E2822'),
+          (tier === 0 ? 'var(--ac)' : r.me ? 'var(--ac-dim)' : 'var(--line)') +
+          ';border-top:1px solid ' + (tier === 0 ? 'var(--ac-dim)' : r.me ? 'var(--ac-dim)' : 'var(--line)') +
+          ';border-right:1px solid ' + (tier === 0 ? 'var(--ac-dim)' : r.me ? 'var(--ac-dim)' : 'var(--line)') +
+          ';border-bottom:1px solid ' + (tier === 0 ? 'var(--ac-dim)' : r.me ? 'var(--ac-dim)' : 'var(--line)'),
         rankStyle: 'flex:none;width:' + (tier === 0 ? '34px' : '26px') +
           ";font:700 " + (tier === 0 ? '33px' : '22px') + "/1 'C11';color:" + tc,
         nameStyle: 'flex:1 1 auto;min-width:0;font:' + (tier === 0 ? '700' : '500') +
-          " 22px/1.3 'C11';color:" + (tier === 0 ? '#F2E6C8' : r.me ? '#E8E2D6' : '#C3BAAA'),
+          " 22px/1.3 'C11';color:" + (tier === 0 ? '#F2E6C8' : r.me ? 'var(--tx)' : 'var(--tx2)'),
         totalStyle: "flex:none;font:700 22px/1 'C11';font-variant-numeric:tabular-nums;color:" +
-          (r.me ? '#E9B341' : '#8A8073'),
-        barStyle: 'display:flex;margin-top:9px;height:6px;background:rgba(0,0,0,.4);border:1px solid #2E2822',
+          (r.me ? 'var(--ac)' : 'var(--tx3)'),
+        barStyle: 'display:flex;margin-top:9px;height:6px;background:rgba(0,0,0,.4);border:1px solid var(--line)',
         baseStyle: 'height:100%;width:' + basePct + '%;background:#5A5044',
-        bonusStyle: 'height:100%;width:' + bonusPct + '%;background:#E9B341',
+        bonusStyle: 'height:100%;width:' + bonusPct + '%;background:var(--ac)',
         detailStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px"
       };
     });
@@ -3522,8 +3563,8 @@
      沒採到的格子名字是「？？？」，所以不能用名字對——用層與索引
      對，那跟 mineralCells 產生的順序一致。 */
   var VERDICT = {
-    passed:     { t: '過了',   hue: '#E9B341', box: 'rgba(233,179,65,.08)',  line: '#5A4A2C' },
-    submitted:  { t: '等他看', hue: '#C3BAAA', box: 'rgba(195,186,170,.06)', line: '#4A4238' },
+    passed:     { t: '過了',   hue: 'var(--ac)', box: 'rgba(233,179,65,.08)',  line: 'var(--ac-dim)' },
+    submitted:  { t: '等他看', hue: 'var(--tx2)', box: 'rgba(195,186,170,.06)', line: '#4A4238' },
     needs_more: { t: '要再改', hue: '#D9603F', box: 'rgba(217,96,63,.09)',   line: '#5A2E22' },
     todo:       { t: '還沒送', hue: '#5F574C', box: 'rgba(0,0,0,.3)',        line: '#2C251D' }
   };
@@ -3549,7 +3590,7 @@
           'cursor:' + (done ? 'pointer' : 'default') + ';' +
           'background:' + (t ? st.box : 'rgba(0,0,0,.22)') + ';' +
           'border:1px ' + (done ? 'solid ' : 'dashed ') + (t ? st.line : '#241F1A') + ';' +
-          'color:' + (done ? '#E8E2D6' : '#8C8172');
+          'color:' + (done ? 'var(--tx)' : '#8C8172');
       });
     };
 
@@ -3623,7 +3664,7 @@
     v.termPct = t.pct + '%';
     v.termLine = '你在' + (lay.name || ('第 ' + (S.currentLayer || 1) + ' 層')) +
       '。學期走了 ' + t.pct + '％（第 ' + t.week + ' / ' + t.total + ' 週）。';
-    v.termBarStyle = 'margin-top:9px;height:5px;background:rgba(0,0,0,.4);border:1px solid #2E2822';
+    v.termBarStyle = 'margin-top:9px;height:5px;background:rgba(0,0,0,.4);border:1px solid var(--line)';
     v.termFillStyle = 'height:100%;width:' + t.pct + '%;background:#5A5044';
   }
 
@@ -3692,8 +3733,8 @@
         meta: 'L' + t.layer + '　' + t.title,
         boxStyle: 'padding:10px 12px;background:rgba(0,0,0,.32);border:1px ' +
           (back ? 'solid #5A2E22' : waiting ? 'solid #4A4238' : 'dashed #4A3F30'),
-        nameStyle: "font:500 22px/1.3 'C11';color:#C3BAAA",
-        byStyle: "flex:none;font:400 11px/1 'C11';color:" + (back ? '#D9603F' : waiting ? '#C3BAAA' : '#8A8073'),
+        nameStyle: "font:500 22px/1.3 'C11';color:var(--tx2)",
+        byStyle: "flex:none;font:400 11px/1 'C11';color:" + (back ? '#D9603F' : waiting ? 'var(--tx2)' : 'var(--tx3)'),
         metaStyle: "font:400 11px/1.5 'C11';color:#5F574C;margin-top:4px"
       };
     });
@@ -3716,7 +3757,7 @@
     rows.push({ k: '被退回', v: (st.rejected || 0) + ' 次' });
     rows.push({ k: '分數', v: String(st.score || 0) });
     showMoment(L, {
-      kind: 'open', accent: '#E9B341',
+      kind: 'open', accent: 'var(--ac)',
       kicker: 'SEALED',
       title: j.name || '（未命名）',
       lede: (st.className ? st.className + '　' : '') + (j.teamName || '') +
@@ -3762,10 +3803,10 @@
             (st.drops || 0) + ' 件　·　戰利品 ' + (st.trophies || 0) + ' 件',
           style: 'display:block;width:100%;text-align:left;padding:14px 16px;cursor:pointer;' +
             'background:' + (j.now ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.28)') +
-            ';border:1px solid ' + (j.now ? '#5A4A2C' : '#26211C'),
-          nameStyle: "display:block;font:700 22px/1.3 'C11';color:" + (j.now ? '#FFD98A' : '#E8E2D6'),
+            ';border:1px solid ' + (j.now ? 'var(--ac-dim)' : '#26211C'),
+          nameStyle: "display:block;font:700 22px/1.3 'C11';color:" + (j.now ? 'var(--ac-hi)' : 'var(--tx)'),
           metaStyle: "display:block;font:400 11px/1.6 'C11';color:#5F574C;margin-top:5px",
-          sumStyle: "display:block;font:400 22px/1.6 'C11';color:#8A8073;margin-top:7px",
+          sumStyle: "display:block;font:400 22px/1.6 'C11';color:var(--tx3);margin-top:7px",
           open: (function (jj) {
             return function () { openJourney(L, jj); };
           })(j)
@@ -3786,9 +3827,9 @@
     /* ---- 一項一列的紀錄 ---- */
     var STAT = {
       todo: { t: '還沒送', hue: '#6E665A' },
-      submitted: { t: '等他看', hue: '#C3BAAA' },
+      submitted: { t: '等他看', hue: 'var(--tx2)' },
       needs_more: { t: '要再改', hue: '#D9603F' },
-      passed: { t: '過了', hue: '#E9B341' }
+      passed: { t: '過了', hue: 'var(--ac)' }
     };
     v.recRows = (S.record || []).slice().reverse().map(function (r) {
       var st = STAT[r.status] || STAT.todo;
@@ -3803,15 +3844,15 @@
         title: r.title, meta: bits.join('　·　'),
         stat: st.t, vowTxt: vowTxt, say: r.say || '',
         boxStyle: 'padding:11px 13px;background:rgba(0,0,0,.24);border:1px solid ' +
-          (r.status === 'passed' ? '#2E2822' : '#241F1A'),
-        titleStyle: "font:500 22px/1.4 'C11';color:#E8E2D6",
+          (r.status === 'passed' ? 'var(--line)' : '#241F1A'),
+        titleStyle: "font:500 22px/1.4 'C11';color:var(--tx)",
         statStyle: "flex:none;font:400 11px/1 'C11';letter-spacing:.1em;padding:4px 8px;" +
           'border:1px solid ' + st.hue + ';color:' + st.hue,
         metaStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px",
         vowStyle: "font:400 11px/1.6 'C11';margin-top:5px;color:" +
-          (r.won ? '#E9B341' : r.vow ? '#8A8073' : '#5A5044'),
+          (r.won ? 'var(--ac)' : r.vow ? 'var(--tx3)' : '#5A5044'),
         sayStyle: r.say
-          ? "font:400 22px/1.6 'C11';color:#C3BAAA;margin-top:9px;padding-top:8px;" +
+          ? "font:400 22px/1.6 'C11';color:var(--tx2);margin-top:9px;padding-top:8px;" +
             'border-top:1px solid #26211C;text-wrap:pretty'
           : 'display:none'
       };
@@ -4163,7 +4204,7 @@
 
     showMoment(L, {
       kind: 'mined', art: 'gem',
-      accent: '#8A8073',
+      accent: 'var(--tx3)',
       kicker: 'A FIND',
       title: f.name,
       lede: '第 ' + findLayer(f.n) + ' 層開始撿得到。通過任務的時候在碎石裡翻出來的。',
@@ -4310,7 +4351,7 @@
       var tier = findTier(n);
       return {
         art: packSvg(f.px, f.L), name: f.name, tier: tier, label: '',
-        hue: isNewFind(L, n) ? '#E9B341' : hue, isNew: isNewFind(L, n),
+        hue: isNewFind(L, n) ? 'var(--ac)' : hue, isNew: isNewFind(L, n),
         rare: tier === '罕見' || isNewFind(L, n)
       };
     }).filter(Boolean);
@@ -4398,10 +4439,10 @@
           (seenB ? 'pointer' : 'default') + ';border-left:6px solid ' +
           (downB ? hueB : 'rgba(255,255,255,.08)') + ';background:' +
           (downB ? 'rgba(' + hexRgb(hueB) + ',.1)' : 'rgba(0,0,0,.3)') +
-          ';border-top:1px solid #2E2822;border-right:1px solid #2E2822;border-bottom:1px solid #2E2822',
+          ';border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)',
         nameStyle: "font:700 22px/1.3 'C11';color:" + (downB ? '#F2E6C8' : '#6E665A'),
         taskStyle: "font:400 11px/1.5 'C11';color:" + (downB ? hueB : '#5F574C') + ';margin-top:3px',
-        traitStyle: "font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty",
+        traitStyle: "font:400 11px/1.6 'C11';color:var(--tx3);margin-top:5px;text-wrap:pretty",
         howStyle: "font:400 11px/1.5 'C11';color:" + (downB ? hueB : '#6E665A') + ';margin-top:5px'
       };
     });
@@ -4442,9 +4483,9 @@
           (down ? hue : 'rgba(255,255,255,.06)') + ';background:' +
           (down ? 'rgba(' + hexRgb(hue) + ',.07)' : 'rgba(0,0,0,.28)') +
           ';border-top:1px solid #221E19;border-right:1px solid #221E19;border-bottom:1px solid #221E19',
-        nameStyle: "font:500 22px/1.3 'C11';color:" + (down ? '#E8E2D6' : '#6E665A'),
+        nameStyle: "font:500 22px/1.3 'C11';color:" + (down ? 'var(--tx)' : '#6E665A'),
         taskStyle: "font:400 11px/1.5 'C11';color:#5F574C;margin-top:3px",
-        traitStyle: "font:400 11px/1.6 'C11';color:#8A8073;margin-top:5px;text-wrap:pretty",
+        traitStyle: "font:400 11px/1.6 'C11';color:var(--tx3);margin-top:5px;text-wrap:pretty",
         howStyle: "font:400 11px/1.5 'C11';color:" + (down ? hue : '#6E665A') + ';margin-top:5px'
       };
     }));
@@ -4477,7 +4518,7 @@
         boxStyle: 'padding:9px 11px;text-align:left;width:100%;cursor:' + (n ? 'pointer' : 'default') + ';background:' +
           (n ? 'rgba(255,255,255,.022)' : 'rgba(0,0,0,.26)') +
           ';border:1px ' + (n ? 'solid ' : 'dashed ') + line,
-        nameStyle: "font:500 22px/1.3 'C11';color:" + (n ? '#E8E2D6' : '#3A342C'),
+        nameStyle: "font:500 22px/1.3 'C11';color:" + (n ? 'var(--tx)' : '#3A342C'),
         tallyStyle: "flex:none;font:400 11px/1 'C11';color:#6E665A",
         tierStyle: 'display:none',
         lookStyle: "font:400 11px/1.6 'C11';color:#5F574C;margin-top:4px;text-wrap:pretty"
@@ -4527,7 +4568,7 @@
           artStyle: 'display:block;width:26px;height:26px;image-rendering:pixelated;' +
             'background:url("' + art + '") center/contain no-repeat' + (got ? '' : ';opacity:.2'),
           nameStyle: "font:400 11px/1.2 'C11';text-align:center;white-space:nowrap;" +
-            'overflow:hidden;text-overflow:ellipsis;max-width:52px;color:' + (got ? '#E8E2D6' : '#5F574C')
+            'overflow:hidden;text-overflow:ellipsis;max-width:52px;color:' + (got ? 'var(--tx)' : '#5F574C')
         });
       };
 
@@ -4626,14 +4667,14 @@
           },
           dotStyle: 'display:flex;align-items:center;justify-content:center;width:100%;height:20px;' +
             "font:600 11px/1 'C11';transform:scale(.85);" +
-            'color:' + (me ? '#0B0A09' : got ? '#0B0A09' : back ? '#FFB9A2' : fog ? '#3A3026' : '#8A8073') + ';' +
-            'border:1px solid ' + (me ? '#FFD98A' : got ? hue : back ? '#D9603F' : wait ? '#8A8073' : fog ? '#2A251F' : opened ? '#5A5044' : '#3A3026') + ';' +
-            'background:' + (me ? '#E9B341' : got ? 'rgba(' + hexRgb(hue) + ',.85)'
+            'color:' + (me ? 'var(--bg)' : got ? 'var(--bg)' : back ? '#FFB9A2' : fog ? 'var(--line2)' : 'var(--tx3)') + ';' +
+            'border:1px solid ' + (me ? 'var(--ac-hi)' : got ? hue : back ? '#D9603F' : wait ? 'var(--tx3)' : fog ? '#2A251F' : opened ? '#5A5044' : 'var(--line2)') + ';' +
+            'background:' + (me ? 'var(--ac)' : got ? 'rgba(' + hexRgb(hue) + ',.85)'
               : back ? 'rgba(217,96,63,.22)' : wait ? 'rgba(255,255,255,.09)'
               : fog ? 'rgba(0,0,0,.55)' : opened ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.4)') + ';' +
             (me ? 'box-shadow:0 0 12px rgba(233,179,65,.8);' : ''),
           nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
-            'white-space:nowrap;color:' + (got ? '#FFD98A' : me ? '#FFD98A' : fog ? '#332C25' : '#8A8073'),
+            'white-space:nowrap;color:' + (got ? 'var(--ac-hi)' : me ? 'var(--ac-hi)' : fog ? '#332C25' : 'var(--tx3)'),
           style: 'flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;cursor:' +
             (fog ? 'default' : 'pointer') + ';pointer-events:auto'
         };
@@ -4657,7 +4698,7 @@
         : n === cur ? '他還沒讓你們過'
         : '';
       m.stepsTagStyle = 'position:absolute;left:var(--mcol);top:9px;z-index:2;' +
-        "font:400 11px/1 'C11';letter-spacing:.1em;color:" + (n === cur ? '#FFD98A' : fog ? '#4A443C' : '#8A8073') +
+        "font:400 11px/1 'C11';letter-spacing:.1em;color:" + (n === cur ? 'var(--ac-hi)' : fog ? '#4A443C' : 'var(--tx3)') +
         ';pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top';
 
       /* 同一條通道上還有誰 —— 別組就在你旁邊 */
@@ -4699,13 +4740,13 @@
       m.hasOthers = here.length > 0;   /* 別組不上迷霧：你本來就看得到別人的營火 */
       m.othersStyle = 'position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;gap:5px;justify-content:flex-end;max-width:58%;overflow:hidden';
       m.othersNote = here.length + ' 組也在這一層';
-      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:#8A8073;align-self:center;transform:scale(.86)";
+      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86)";
     });
   }
 
   function hexRgb(h) {
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || '');
-    return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)].join(',') : '233,179,65';
+    return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)].join(',') : '255,201,61';
   }
 
 
@@ -5121,15 +5162,15 @@
   /* 說明不攤在畫面上，收成一顆按鈕，按了用同一套跳頁開出來。
      介面清爽，但要看的時候一定找得到。 */
   function helpButton(L, opts) {
-    var tone = opts.tone || "#E9B341";
+    var tone = opts.tone || "var(--ac)";
     return {
       label: opts.label || "？　這是什麼",
       style: "flex:none;font:400 22px/1 'C11';color:" + tone +
-        ";background:rgba(233,179,65,.07);border:1px solid #5A4A2C;padding:11px 16px;" +
+        ";background:rgba(233,179,65,.07);border:1px solid var(--ac-dim);padding:11px 16px;" +
         "cursor:pointer;white-space:nowrap",
       open: function () {
         showMoment(L, {
-          kind: "help", art: "help", accent: "#C3BAAA",
+          kind: "help", art: "help", accent: "var(--tx2)",
           kicker: opts.kicker || "HOW IT WORKS",
           title: opts.title || "",
           lede: opts.lede || "",
@@ -5176,7 +5217,7 @@
     return !(Number(f[n]) > 0);
   }
 
-  var TIER_HUE = { 常見: '#9A9184', 少見: '#7CC98F', 罕見: '#C77BE0', 守關: '#E9B341', 戰利品: '#E9B341' };
+  var TIER_HUE = { 常見: '#9A9184', 少見: '#7CC98F', 罕見: '#C77BE0', 守關: '#FFC93D', 戰利品: '#FFC93D' };
 
   function rollNode(k) { return document.querySelector('[data-roll="' + k + '"]'); }
   function replay(el, css) {   /* 同一個動畫要再播一次，得先清掉 */
@@ -5206,7 +5247,7 @@
         ttl.style.color = pick.hue || '';
         if (kck) {
           kck.textContent = pick.isNew ? '★ 新收藏' : (pick.label || '');
-          kck.style.color = pick.isNew ? '#FFD98A' : (pick.hue || '#8A8073');
+          kck.style.color = pick.isNew ? 'var(--ac-hi)' : (pick.hue || 'var(--tx3)');
           replay(kck, 'jlz-stamp .42s cubic-bezier(.2,1.4,.3,1) both');
         }
         /* 這一次抽的結果，在下面那一排點亮對應的一格 */
@@ -5310,7 +5351,7 @@
       return;
     }
     var art = MOMENT_ART[m.art || m.kind] || MOMENT_ART.submit;
-    var accent = m.accent || '#E9B341';
+    var accent = m.accent || 'var(--ac)';
     v.momentKicker = m.kicker || '';
     v.momentTitle = m.title || '';
     v.momentLede = m.lede || '';
@@ -5345,10 +5386,10 @@
         name: d.name,
         style: 'display:flex;flex-direction:column;align-items:center;gap:4px;width:74px;' +
           'padding:9px 4px;opacity:.14;transition:opacity .18s ease;' +
-          'background:rgba(0,0,0,.34);border:1px solid ' + (d.hue || '#3A3026'),
+          'background:rgba(0,0,0,.34);border:1px solid ' + (d.hue || 'var(--line2)'),
         artStyle: 'display:block;width:30px;height:30px;image-rendering:pixelated;' +
           'background:url("' + d.art + '") center/contain no-repeat',
-        nameStyle: "display:block;font:500 11px/1.3 'C11';text-align:center;color:#E8E2D6;" +
+        nameStyle: "display:block;font:500 11px/1.3 'C11';text-align:center;color:var(--tx);" +
           'max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap',
         tierStyle: 'display:none'
       };
@@ -5357,21 +5398,21 @@
     v.momentBadge = m.badge || '';
     v.hasMomentBadge = !!m.badge;
     v.momentBadgeStyle = "font:700 22px/1 'C11';letter-spacing:.12em;padding:8px 13px;background:" + accent +
-      ';color:#0B0A09;animation:stampIn .4s cubic-bezier(.2,1.3,.3,1) both .18s';
+      ';color:var(--bg);animation:stampIn .4s cubic-bezier(.2,1.3,.3,1) both .18s';
 
     v.momentRows = (m.rows || []).map(function (r, i) {
       return {
         k: r.k, v: r.v,
         style: 'display:flex;flex-direction:column;gap:4px;padding:9px 14px;background:rgba(0,0,0,.34);' +
-          'border-left:2px solid ' + (r.hi ? accent : '#3A3026') + ';animation:lineUp .4s ease both ' + (0.2 + i * 0.07) + 's',
-        kStyle: "font:400 11px/1 'C11';letter-spacing:.14em;color:#8A8073",
-        vStyle: "font:700 22px/1.2 'C11';color:" + (r.hi ? accent : '#E8E2D6')
+          'border-left:2px solid ' + (r.hi ? accent : 'var(--line2)') + ';animation:lineUp .4s ease both ' + (0.2 + i * 0.07) + 's',
+        kStyle: "font:400 11px/1 'C11';letter-spacing:.14em;color:var(--tx3)",
+        vStyle: "font:700 22px/1.2 'C11';color:" + (r.hi ? accent : 'var(--tx)')
       };
     });
     v.hasMomentRows = v.momentRows.length > 0;
 
     v.momentLines = (m.lines || []).map(function (ln, i) {
-      return { t: ln, style: "font:400 22px/1.7 'C11';color:#C3BAAA;text-wrap:pretty;" +
+      return { t: ln, style: "font:400 22px/1.7 'C11';color:var(--tx2);text-wrap:pretty;" +
         'animation:lineUp .4s ease both ' + (0.28 + i * 0.08) + 's' };
     });
     v.hasMomentLines = v.momentLines.length > 0;
@@ -5383,12 +5424,12 @@
       'background:rgba(0,0,0,.4);border-left:2px solid ' + accent + ';animation:lineUp .45s ease both .34s';
 
     v.momentBtn = m.btn || '知道了';
-    v.momentBtnStyle = "font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:#0B0A09;background:" + accent +
+    v.momentBtnStyle = "font:500 22px/1 'C11';letter-spacing:.2em;text-indent:.2em;color:var(--bg);background:" + accent +
       ';border:none;padding:15px 34px;cursor:pointer;animation:lineUp .4s ease both .42s;' +
       'clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)';
     v.hasMomentAlt = !!(m.altBtn);
     v.momentAlt = m.altBtn || '';
-    v.momentAltStyle = "font:500 22px/1 'C11';color:#8A8073;background:none;border:1px solid #3A3026;" +
+    v.momentAltStyle = "font:500 22px/1 'C11';color:var(--tx3);background:none;border:1px solid var(--line2);" +
       'padding:15px 24px;cursor:pointer;animation:lineUp .4s ease both .46s';
     v.doMomentAlt = function () {
       var go = m.altGo;
@@ -5427,7 +5468,7 @@
       : allGot === allN ? '這一層採齊了' : '採不採齊都不影響——要不要往下一層是老師決定的';
     /* 採集進度條拿掉：那一塊從模板移掉了，而且它算的是一個不決定任何事的數字。 */
 
-    var arrow = { text: '→', style: "font:400 11px/1 'C11';color:#3A3026;flex:none" };
+    var arrow = { text: '→', style: "font:400 11px/1 'C11';color:var(--line2);flex:none" };
     /* 這一層的每一塊。沒採到的整格黑掉——礦石早就從門檻變回紀錄了，
        這裡只是讓自己看得到走到哪。 */
     var missing = all.filter(function (t) { return t.status !== 'passed'; });
@@ -5478,14 +5519,14 @@
       return {
         k: r.k, v: r.v, note: r.note,
         style: 'display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;padding:9px 12px;' +
-          'background:rgba(0,0,0,.26);border-left:2px solid #3A3026',
+          'background:rgba(0,0,0,.26);border-left:2px solid var(--line2)',
         kStyle: "font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;min-width:56px",
-        vStyle: "font:700 22px/1 'C11';color:#C3BAAA;min-width:78px",
+        vStyle: "font:700 22px/1 'C11';color:var(--tx2);min-width:78px",
         noteStyle: "flex:1;min-width:190px;font:400 11px/1.7 'C11';color:#6E665A;text-wrap:pretty"
       };
     });
-    v.horizonWrap = 'margin:11px 0 0;padding:13px 15px;background:#14110E;border:1px solid #26211C';
-    v.horizonHeadStyle = "font:400 11px/1 'C11';letter-spacing:.18em;color:#8A8073;margin-bottom:10px";
+    v.horizonWrap = 'margin:11px 0 0;padding:13px 15px;background:var(--panel);border:1px solid #26211C';
+    v.horizonHeadStyle = "font:400 11px/1 'C11';letter-spacing:.18em;color:var(--tx3);margin-bottom:10px";
     v.horizonRowsStyle = 'display:flex;flex-direction:column;gap:5px';
   }
 
@@ -5724,12 +5765,12 @@
 
     var num = function (on) {
       return "font:700 22px/1 'C11';flex:none;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:" +
-        (on ? '#E9B341' : 'rgba(0,0,0,.3)') + ';color:' + (on ? '#0B0A09' : '#6E665A') +
-        ';border:1px solid ' + (on ? '#E9B341' : '#3A3026');
+        (on ? 'var(--ac)' : 'rgba(0,0,0,.3)') + ';color:' + (on ? 'var(--bg)' : '#6E665A') +
+        ';border:1px solid ' + (on ? 'var(--ac)' : 'var(--line2)');
     };
     var box = function (on) {
       return 'display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:12px 13px;background:' +
-        (on ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.22)') + ';border:1px solid ' + (on ? '#3A3026' : '#26211C');
+        (on ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.22)') + ';border:1px solid ' + (on ? 'var(--line2)' : '#26211C');
     };
     var tag = function (txt, col) {
       return { state: txt, stateStyle: "font:500 11px/1 'C11';letter-spacing:.08em;padding:7px 10px;white-space:nowrap;flex:none;background:rgba(0,0,0,.35);border:1px solid " + col + ';color:' + col };
@@ -5744,30 +5785,30 @@
         n: '1', title: '點開一項 → 看擋著它的是哪一隻',
         desc: '每一項前面都站著這一層的一隻生物。點進去才看得到是誰——' +
           '同一項任務，全班遇到的是同一隻——誰先打贏牠是看得出來的。',
-        box: box(step0On), num: num(step0On), color: step0On ? '#E9B341' : '#8A8073'
+        box: box(step0On), num: num(step0On), color: step0On ? 'var(--ac)' : 'var(--tx3)'
       }, !all.length ? tag('還沒有清單', '#5F574C')
-        : tag('清單上有 ' + all.length + ' 項', '#C3BAAA')),
+        : tag('清單上有 ' + all.length + ' 項', 'var(--tx2)')),
       Object.assign({
         n: '2', title: '交任務 → 採到礦石',
         desc: '每一項任務對應一塊礦石。老師確認通過，那一塊才進你的收藏。',
-        box: box(step1On), num: num(step1On), color: step1On ? '#E9B341' : '#8A8073'
+        box: box(step1On), num: num(step1On), color: step1On ? 'var(--ac)' : 'var(--tx3)'
       }, RS.veinN
-        ? tag('採到 ' + RS.gotN + '/' + RS.veinN + ' 塊', RS.complete ? '#E9B341' : '#C3BAAA')
+        ? tag('採到 ' + RS.gotN + '/' + RS.veinN + ' 塊', RS.complete ? 'var(--ac)' : 'var(--tx2)')
         : tag('還沒有清單', '#5F574C')),
       Object.assign({
         n: '3', title: '覺得這一層夠了 → 去找他',
         desc: '礦石是你做過什麼的紀錄，不是過關的門票。覺得這一層告一段落了就去找他，過不過他決定。',
-        box: box(step2On), num: num(step2On), color: step2On ? '#E9B341' : '#8A8073'
-      }, done ? tag('已通過', '#E9B341')
-        : allReq ? tag('可以送了', '#E9B341')
+        box: box(step2On), num: num(step2On), color: step2On ? 'var(--ac)' : 'var(--tx3)'
+      }, done ? tag('已通過', 'var(--ac)')
+        : allReq ? tag('可以送了', 'var(--ac)')
         : veinLeftR && !missing.length ? tag('老師還差 ' + veinLeftR + ' 塊沒開', '#D9603F')
         : tag('還差 ' + missing.length + ' 塊', '#D9603F')),
       Object.assign({
         n: '4', title: '老師審核 → 鑄成道具、擊退擋路的那一隻',
         desc: '他准了，這一層的礦石就鑄成' + (lay.tool ? '「' + lay.tool + '」' : '道具') + '——擋在層底的那一隻退開，你們才下一層。' +
           '牠倒下的地方會留下一件東西，只有走到這裡才拿得到。',
-        box: box(step3On), num: num(step3On), color: step3On ? '#E9B341' : '#8A8073'
-      }, done ? tag('已拿到', '#E9B341') : tag('未開始', '#5F574C'))
+        box: box(step3On), num: num(step3On), color: step3On ? 'var(--ac)' : 'var(--tx3)'
+      }, done ? tag('已拿到', 'var(--ac)') : tag('未開始', '#5F574C'))
     ];
 
     /* 抽選要有期待感，期待感要先講：點進去會看到誰。 */
@@ -5775,8 +5816,8 @@
       ? '每一項前面都站著這一層的一隻生物——點進去才知道是哪一隻。打贏牠＝這一項被他判過，牠會留下東西。'
       : '';
     v.hasTaskListHint = !!v.taskListHint;
-    v.taskListHintStyle = "font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty;" +
-      'margin:0 var(--pad) 16px;padding:11px 14px;background:rgba(0,0,0,.24);border-left:2px solid #3A3026';
+    v.taskListHintStyle = "font:400 22px/1.7 'C11';color:var(--tx3);text-wrap:pretty;" +
+      'margin:0 var(--pad) 16px;padding:11px 14px;background:rgba(0,0,0,.24);border-left:2px solid var(--line2)';
 
     /* 說明一律收進按鈕：S-02 常見狀況 */
     (function () {
@@ -5807,16 +5848,16 @@
         v.homeBossBox = "display:none"; v.homeBossArt = ""; v.homeBossName = "";
         v.homeBossKicker = ""; v.homeBossNote = "";
         v.homeBossMore = "display:none"; v.openHomeBoss = function () {};
-        v.homeBossKickerColor = "#8A8073"; v.homeBossNameColor = "#E8E2D6";
+        v.homeBossKickerColor = "var(--tx3)"; v.homeBossNameColor = "var(--tx)";
         return;
       }
       var ready = hst.complete && !down;
       var bt = BOSS_TEXT[HL] || {};
       v.homeBossBox = "flex:none;display:flex;align-items:center;gap:14px;max-width:340px;" +
         "padding:12px 16px;background:rgba(6,5,4,.55);cursor:pointer;text-align:left;border:1px solid " +
-        (down ? "#2E2822" : ready ? "#5A4A2C" : "#3A3026");
+        (down ? "var(--line)" : ready ? "var(--ac-dim)" : "var(--line2)");
       v.homeBossMore = "flex:none;font:400 22px/1 " + String.fromCharCode(39) + "C11" +
-        String.fromCharCode(39) + ";color:#E9B341;border:1px solid #5A4A2C;padding:8px 11px;" +
+        String.fromCharCode(39) + ";color:var(--ac);border:1px solid var(--ac-dim);padding:8px 11px;" +
         "background:rgba(233,179,65,.07)";
       /* 點開牠的那一頁。要不要揭曉什麼由 S-06 自己判斷——
          沒打贏之前，剋牠的道具、牠說的話、倒下的那一刻都不給。 */
@@ -5831,7 +5872,7 @@
             ? "animation:bossFloat 2.8s ease-in-out infinite,bossGlow 3.4s ease-in-out infinite;"
             : "filter:brightness(.62);animation:bossBreathe 4.4s ease-in-out infinite;");
       v.homeBossKicker = down ? "已擊退" : ready ? "牠醒著，擋在層底" : "守關生物";
-      v.homeBossKickerColor = down ? "#5F574C" : ready ? "#E9B341" : "#8A8073";
+      v.homeBossKickerColor = down ? "#5F574C" : ready ? "var(--ac)" : "var(--tx3)";
       v.homeBossName = hz.name;
       v.homeBossNameColor = down ? "#5F574C" : hz.hue["#"];
       v.homeBossNote = down
@@ -5963,7 +6004,7 @@
       v.hasNextAction = true;
       v.nextAction = FIRST_TXT[FR.key][0];
       v.nextActionWhy = '第 ' + FR.n + ' 步 / 共 8 步　·　' + FIRST_TXT[FR.key][1];
-      v.nextActionColor = '#E9B341';
+      v.nextActionColor = 'var(--ac)';
       var FRGO = {
         wait: ['看整張地圖', function () { L.go('S03'); }],
         open: ['去任務清單', function () { L.go('S02'); }],
@@ -6009,7 +6050,7 @@
       ? (lay.name || ('第 ' + layer + ' 層')) + '　·　已經開了 ' + after + ' 項'
       : '這一層的 ' + vein + ' 塊都開好了。採不採齊不影響——要不要讓他們往下一層，是你決定的。';
     var num = function () {
-      return "font:600 11px/1 'C11';flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:#5A4A2C;color:#0B0A09";
+      return "font:600 11px/1 'C11';flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:var(--ac-dim);color:var(--bg)";
     };
     v.openChain = [
       { n: '1', t: '你確認通過 → 他們採到一塊礦石。', num: num() },
@@ -6029,11 +6070,11 @@
     v.t05Head = (lay.name || ('第 ' + layer + ' 層')) + ' · ' +
       (reqN ? '已經開了 ' + reqN + ' 項' : '還沒開過任何一項');
     v.howToBtnLabel = '？　怎麼用這一頁';
-    v.howToBtnStyle = "flex:none;font:400 22px/1 'C11';color:#E9B341;background:rgba(233,179,65,.07);" +
-      'border:1px solid #5A4A2C;padding:12px 17px;cursor:pointer;white-space:nowrap';
+    v.howToBtnStyle = "flex:none;font:400 22px/1 'C11';color:var(--ac);background:rgba(233,179,65,.07);" +
+      'border:1px solid var(--ac-dim);padding:12px 17px;cursor:pointer;white-space:nowrap';
     v.openHowTo = function () {
       showMoment(L, {
-        kind: 'help', art: 'help', accent: '#C3BAAA',
+        kind: 'help', art: 'help', accent: 'var(--tx2)',
         kicker: 'HOW TO USE',
         title: '怎麼用這一頁',
         lede: '你在開的是「' + (lay.name || ('第 ' + layer + ' 層')) + '」的清單。',
@@ -6054,11 +6095,11 @@
       '建議這一層快開始時再開：你已經看過上一層他們卡在哪。（四層已開完 ' + readyLayers + ' 層）';
 
     v.draftCount = drafts.length ? drafts.length + ' 項' : '還沒有項目';
-    v.draftCountColor = drafts.length ? '#E9B341' : '#8A8073';
+    v.draftCountColor = drafts.length ? 'var(--ac)' : 'var(--tx3)';
     v.draftEmpty = drafts.length === 0;
     v.draftBoxStyle = drafts.length
-      ? 'linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),#14110E;border:1px solid #5A4A2C'
-      : 'rgba(0,0,0,.22);border:1px dashed #3A3026';
+      ? 'linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),var(--panel);border:1px solid var(--ac-dim)'
+      : 'rgba(0,0,0,.22);border:1px dashed var(--line2)';
     v.addTaskLabel = drafts.length ? '＋ 加入清單（再寫下一項）' : '＋ 加入清單';
     v.publishNote = drafts.length
       ? '這 ' + drafts.length + ' 項會一起出現在學生的任務清單上。'
@@ -6066,11 +6107,11 @@
 
     var chip = function (tone) {
       return "display:flex;flex-direction:column;gap:3px;padding:9px 13px;background:rgba(0,0,0,.3);border-left:2px solid " +
-        (tone === 'warn' ? '#D9603F' : tone === 'hi' ? '#E9B341' : '#3A3026');
+        (tone === 'warn' ? '#D9603F' : tone === 'hi' ? 'var(--ac)' : 'var(--line2)');
     };
-    var kst = "font:400 11px/1 'C11';letter-spacing:.14em;color:#8A8073";
+    var kst = "font:400 11px/1 'C11';letter-spacing:.14em;color:var(--tx3)";
     var vst = function (tone) {
-      return "font:700 22px/1.2 'C11';color:" + (tone === 'warn' ? '#FF9878' : tone === 'hi' ? '#E9B341' : '#E8E2D6');
+      return "font:700 22px/1.2 'C11';color:" + (tone === 'warn' ? '#FF9878' : tone === 'hi' ? 'var(--ac)' : 'var(--tx)');
     };
     var warn = leftVein.length > 0;
     var gateTone = warn ? 'warn' : 'hi';
@@ -6081,7 +6122,7 @@
     v.hasVeinAdmin = false;   /* 拆分改名 ＋ 礦石選格，模板那兩塊整個收起來 */
     v.hasDowPick = false;     /* 期限：日鈕那一排跟日期選擇器重複 */
     var __unusedStats = [
-      { k: '這一層', val: lay.name || ('第 ' + layer + ' 層'), s: chip(''), ks: kst, vs: "font:700 22px/1.2 'C11';color:#E8E2D6" },
+      { k: '這一層', val: lay.name || ('第 ' + layer + ' 層'), s: chip(''), ks: kst, vs: "font:700 22px/1.2 'C11';color:var(--tx)" },
       { k: '這一層的礦脈', val: vein + ' 塊', s: chip(''), ks: kst, vs: vst('') },
       { k: '你開了', val: after + ' 塊', s: chip(gateTone), ks: kst, vs: vst(gateTone) },
       { k: '還沒開', val: leftVein.length + ' 塊', s: chip(gateTone), ks: kst, vs: vst(gateTone) },
@@ -6116,8 +6157,8 @@
           label: 'W' + w, count: c + ' 項　→ ' + (c * teamsN) + ' 件',
           style: 'display:flex;align-items:baseline;gap:9px;padding:6px 10px;background:' +
             (hot ? 'rgba(217,96,63,.12)' : 'rgba(0,0,0,.26)') +
-            ';border-left:2px solid ' + (hot ? '#D9603F' : '#3A3026'),
-          labelStyle: "font:600 11px/1 'C11';letter-spacing:.1em;color:" + (hot ? '#FF9878' : '#8A8073'),
+            ';border-left:2px solid ' + (hot ? '#D9603F' : 'var(--line2)'),
+          labelStyle: "font:600 11px/1 'C11';letter-spacing:.1em;color:" + (hot ? '#FF9878' : 'var(--tx3)'),
           countStyle: "font:400 11px/1 'C11';color:" + (hot ? '#FFB9A2' : '#6E665A')
         };
       });
@@ -6160,7 +6201,7 @@
       var chip = function (on) {
         return "font:500 22px/1 'C11';padding:9px 13px;white-space:nowrap;cursor:pointer;background:" +
           (on ? "rgba(233,179,65,.14)" : "rgba(0,0,0,.26)") + ";border:1px solid " +
-          (on ? "#E9B341" : "#2E2822") + ";color:" + (on ? "#E9B341" : "#8A8073");
+          (on ? "var(--ac)" : "var(--line)") + ";color:" + (on ? "var(--ac)" : "var(--tx3)");
       };
       v.taskTargetAll = {
         label: "全班",
@@ -6203,7 +6244,7 @@
           pick: function () { L.setState({ minTeam: t.id, minRename: "" }); },
           style: "font:500 22px/1 'C11';padding:9px 13px;white-space:nowrap;cursor:pointer;background:" +
             (on ? "rgba(233,179,65,.14)" : "rgba(0,0,0,.26)") + ";border:1px solid " +
-            (on ? "#E9B341" : "#2E2822") + ";color:" + (on ? "#E9B341" : "#8A8073")
+            (on ? "var(--ac)" : "var(--line)") + ";color:" + (on ? "var(--ac)" : "var(--tx3)")
         };
       });
       v.hasMinTeams = v.minTeamPicks.length > 0;
@@ -6240,12 +6281,12 @@
           isChanged: changed,
           tag: changed ? '已改名' : '',
           tagStyle: "font:400 11px/1 'C11';letter-spacing:.12em;padding:4px 7px;flex:none;" +
-            "background:rgba(233,179,65,.14);border:1px solid #5A4A2C;color:#E9B341",
+            "background:rgba(233,179,65,.14);border:1px solid var(--ac-dim);color:var(--ac)",
           open: open,
           toggleLabel: open ? '收起來' : '改名稱',
           toggleStyle: "font:400 11px/1 'C11';padding:7px 11px;cursor:pointer;white-space:nowrap;" +
             "background:" + (open ? 'rgba(233,179,65,.12)' : 'none') +
-            ";border:1px solid " + (open ? '#5A4A2C' : '#2E2822') + ";color:" + (open ? '#E9B341' : '#8A8073'),
+            ";border:1px solid " + (open ? 'var(--ac-dim)' : 'var(--line)') + ";color:" + (open ? 'var(--ac)' : 'var(--tx3)'),
           toggle: function () { L.setState({ minRename: open ? '' : m.name }); },
           labelValue: val(m.name, 'label', o.label || ''),
           setLabel: setV(m.name, 'label'),
@@ -6254,7 +6295,7 @@
           setNote: setV(m.name, 'note'),
           notePh: m.__rec0 || '',
           rowStyle: "display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:9px 11px;" +
-            "background:rgba(0,0,0,.26);border-left:2px solid " + (changed ? '#5A4A2C' : '#2E2822'),
+            "background:rgba(0,0,0,.26);border-left:2px solid " + (changed ? 'var(--ac-dim)' : 'var(--line)'),
           save: function () {
             var lb = val(m.name, 'label', o.label || '');
             var nt = val(m.name, 'note', o.note || '');
@@ -6333,8 +6374,8 @@
       copy: function (e) { if (e && e.stopPropagation) e.stopPropagation(); copyText(L, text); },
       copyLabel: hit ? '已複製 ✓' : '複製',
       copyStyle: "font:500 11px/1 'C11';letter-spacing:.12em;padding:7px 11px;cursor:pointer;white-space:nowrap;background:" +
-        (hit ? 'rgba(233,179,65,.2)' : 'rgba(233,179,65,.1)') + ';border:1px solid ' + (hit ? '#E9B341' : '#5A4A2C') +
-        ';color:' + (hit ? '#FFD98A' : '#E9B341')
+        (hit ? 'rgba(233,179,65,.2)' : 'rgba(233,179,65,.1)') + ';border:1px solid ' + (hit ? 'var(--ac)' : 'var(--ac-dim)') +
+        ';color:' + (hit ? 'var(--ac-hi)' : 'var(--ac)')
     };
   }
 
@@ -6393,8 +6434,8 @@
             })(d, li, got),
             style: 'padding:12px 8px;text-align:center;font:inherit;cursor:pointer;background:' +
               (got ? 'rgba(233,179,65,.05)' : 'rgba(0,0,0,.22)') +
-              ';border:1px ' + (got ? 'solid #3A3026' : 'dashed #2C251D') +
-              ';color:' + (got ? '#E8E2D6' : '#8C8172'),
+              ';border:1px ' + (got ? 'solid var(--line2)' : 'dashed #2C251D') +
+              ';color:' + (got ? 'var(--tx)' : '#8C8172'),
             glyphStyle: 'display:block;width:30px;height:30px;margin:4px auto;image-rendering:pixelated;' +
               'background:url("' + packSvg(d.px, li + 1, !got) + '") center/contain no-repeat'
           });
@@ -6439,8 +6480,8 @@
           ';background:' + (down ? 'rgba(233,179,65,.05)'
             : seen ? 'rgba(233,179,65,.03)'
             : 'rgba(0,0,0,.22)') +
-          ';border:1px ' + (down ? 'solid #3A3026' : seen ? 'solid #2C251D' : 'dashed #2C251D') +
-          ';color:' + (seen ? '#E8E2D6' : '#8C8172'),
+          ';border:1px ' + (down ? 'solid var(--line2)' : seen ? 'solid #2C251D' : 'dashed #2C251D') +
+          ';color:' + (seen ? 'var(--tx)' : '#8C8172'),
         glyphStyle: seen
           ? 'display:block;width:44px;height:44px;margin:0 auto;image-rendering:pixelated;' +
             'background:url("' + bossSvg(b, false, true) + '") center/contain no-repeat' +
@@ -6552,8 +6593,8 @@
       v.hasBossLocked = seen && !down;
       v.bossLockedNote = '擊退牠之後，這裡會多出三件事：用什麼打倒牠的、牠說了什麼、' +
         '以及牠倒下的那一刻你看到什麼。';
-      v.bossLockedStyle = 'padding:13px 16px;background:rgba(0,0,0,.3);border-left:2px solid #3A3026;' +
-        "font:400 22px/1.7 'C11';color:#8A8073;text-wrap:pretty";
+      v.bossLockedStyle = 'padding:13px 16px;background:rgba(0,0,0,.3);border-left:2px solid var(--line2);' +
+        "font:400 22px/1.7 'C11';color:var(--tx3);text-wrap:pretty";
 
       v.specGlyphStyle = seen
         ? 'display:block;width:150px;height:150px;flex:none;image-rendering:pixelated;' +
@@ -6681,8 +6722,8 @@
                 "animation:dormant 4.6s ease-in-out infinite"),
         style: "padding:11px 8px;text-align:center;font:inherit;cursor:" + (got ? "pointer" : "default") +
           ";background:" + (star ? "rgba(233,179,65,.12)" : got ? "rgba(233,179,65,.05)" : "rgba(0,0,0,.22)") +
-          ";border:1px " + (star ? "solid #E9B341" : got ? "solid #3A3026" : "dashed #2C251D") +
-          ";color:" + (got ? "#E8E2D6" : "#8C8172"),
+          ";border:1px " + (star ? "solid var(--ac)" : got ? "solid var(--line2)" : "dashed #2C251D") +
+          ";color:" + (got ? "var(--tx)" : "#8C8172"),
         open: got
           ? function () { L.setState({ specFrom: S.specFrom || "S03", screen: "S06", specId: o.name }); }
           : function () { L.say(o.locked || "還沒拿到。走到那一層才看得到它是什麼。"); }
@@ -6818,7 +6859,7 @@
         v.specNeedCount = reqHere.length
           ? doneReq + ' / ' + reqHere.length + ' 塊'
           : '這一層的礦脈共 ' + vein.length + ' 塊';
-        v.specNeedColor = (reqHere.length && doneReq >= reqHere.length) ? '#E9B341' : '#C3BAAA';
+        v.specNeedColor = (reqHere.length && doneReq >= reqHere.length) ? 'var(--ac)' : 'var(--tx2)';
         v.specNeedNote = !reqHere.length
           ? '老師還沒開這一層的清單。他開幾項，就是你要採幾塊；下面是這一層礦脈裡可能出現的。'
           : cleared
@@ -6836,17 +6877,17 @@
           return {
             name: show ? (r.mineral || '？？？') : '？？？',
             sub: show ? (r.title || '') : '還沒開工',
-            color: got ? '#E9B341' : show ? '#C3BAAA' : '#6E665A',
+            color: got ? 'var(--ac)' : show ? 'var(--tx2)' : '#6E665A',
             mark: got ? '✓' : r.status === 'submitted' ? '…' : r.status === 'needs_more' ? '!' : '·',
             markStyle: "font:700 22px/1 'C11';flex:none;width:16px;text-align:center;color:" +
-              (got ? '#E9B341' : r.status === 'needs_more' ? '#D9603F' : '#4A443C'),
+              (got ? 'var(--ac)' : r.status === 'needs_more' ? '#D9603F' : '#4A443C'),
             icon: (show && url)
               ? 'display:block;width:26px;height:26px;flex:none;background:url(' + url + ') center/contain no-repeat;image-rendering:pixelated;' +
                 (got ? '' : 'opacity:.5;filter:saturate(.4)')
               : 'display:block;width:26px;height:26px;flex:none;background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.22),transparent 70%)',
             style: 'display:flex;align-items:center;gap:9px;padding:9px 11px;background:' +
               (got ? 'rgba(233,179,65,.08)' : 'rgba(0,0,0,.26)') +
-              ';border-left:2px solid ' + (got ? '#E9B341' : r.type === 'extended' ? '#2E2822' : '#3A3026')
+              ';border-left:2px solid ' + (got ? 'var(--ac)' : r.type === 'extended' ? 'var(--line)' : 'var(--line2)')
           };
         });
       }
@@ -6857,9 +6898,9 @@
       var lay = L.LAYERS[S.currentLayer - 1] || {};
       var prev = L.LAYERS[S.currentLayer - 2] || null;
       v.briefRows = [
-        { what: lay.hard || '', tool: prev ? prev.tool + '：' + prev.toolAbility : '還沒有道具', toolColor: '#E9B341' },
-        { what: '不確定做到什麼程度算完成', tool: '對照他寫的通過條件，不是對照別組', toolColor: '#8A8073' },
-        { what: '不知道什麼時候會換下一層', tool: '他覺得你們可以往下就放行', toolColor: '#8A8073' }
+        { what: lay.hard || '', tool: prev ? prev.tool + '：' + prev.toolAbility : '還沒有道具', toolColor: 'var(--ac)' },
+        { what: '不確定做到什麼程度算完成', tool: '對照他寫的通過條件，不是對照別組', toolColor: 'var(--tx3)' },
+        { what: '不知道什麼時候會換下一層', tool: '他覺得你們可以往下就放行', toolColor: 'var(--tx3)' }
       ];
     }
   }
@@ -6943,7 +6984,7 @@
     var crownUrl = (window.JLZ_SPRITES || {})['tre-crown-restored'];
     v.crownIcon = crownUrl
       ? 'display:block;width:76px;height:76px;flex:none;background:url(' + crownUrl + ') center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 0 20px rgba(233,179,65,.45))'
-      : 'display:block;width:76px;height:76px;flex:none;background:radial-gradient(circle at 50% 38%,#E9B341,#6B4C15);clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%)';
+      : 'display:block;width:76px;height:76px;flex:none;background:radial-gradient(circle at 50% 38%,var(--ac),#6B4C15);clip-path:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%)';
     v.crownName = '一路帶下來的四件';
     v.crownLook = '四個領域各一件。每一件都是某一次卡住之後才拿到的。';
     v.crownTrait = '它們不會變得更華麗，只是完整了。';
@@ -6957,9 +6998,9 @@
       var sp = layerSprites(L, n);
       return {
         name: got ? lay.tool : '？？？',
-        color: got ? '#E9B341' : '#5F574C',
+        color: got ? 'var(--ac)' : '#5F574C',
         box: 'display:block;width:82px;padding:11px 5px;text-align:center;background:' +
-          (got ? 'rgba(233,179,65,.08)' : 'rgba(0,0,0,.3)') + ';border:1px ' + (got ? 'solid #5A4A2C' : 'dashed #2C251D'),
+          (got ? 'rgba(233,179,65,.08)' : 'rgba(0,0,0,.3)') + ';border:1px ' + (got ? 'solid var(--ac-dim)' : 'dashed #2C251D'),
         icon: got && sp.tool
           ? 'display:block;width:30px;height:30px;margin:0 auto;background:url(' + sp.tool + ') center/contain no-repeat;image-rendering:pixelated'
           : 'display:block;width:26px;height:26px;margin:2px auto;background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.3),transparent 70%)'
@@ -6975,18 +7016,18 @@
     var JS = d.stats || { layers: [], mobs: 0, opened: 0, extended: 0, rejected: 0,
                           drops: 0, dropKinds: 0, trophies: 0, score: 0 };
     v.finStats = [
-      { label: '通過的任務', value: JS.mobs + ' 項', color: '#E9B341',
+      { label: '通過的任務', value: JS.mobs + ' 項', color: 'var(--ac)',
         note: '開了 ' + JS.opened + ' 項' + (JS.extended ? '，其中 ' + JS.extended + ' 項是你們自己多做的' : '') },
-      { label: '打贏的生物', value: JS.mobs + ' 隻', color: '#E9B341',
+      { label: '打贏的生物', value: JS.mobs + ' 隻', color: 'var(--ac)',
         note: '一項任務前面站一隻，過了就是打贏了' },
       { label: '撿到的掉落物', value: JS.drops + ' 件', color: '#C77BE0',
         note: JS.dropKinds + ' 種不重複　·　牠們倒下的地方留下的' },
-      { label: '守關戰利品', value: JS.trophies + ' 件', color: '#E9B341',
+      { label: '守關戰利品', value: JS.trophies + ' 件', color: 'var(--ac)',
         note: '一層一件，只有走完那一層才拿得到' },
-      { label: '走過的層', value: (S.passed || []).length + ' 層', color: '#C3BAAA',
+      { label: '走過的層', value: (S.passed || []).length + ' 層', color: 'var(--tx2)',
         note: '每一層都是他點頭才走的' },
       { label: '被退回', value: JS.rejected + ' 次',
-        color: JS.rejected ? '#D9603F' : '#8A8073', note: '退回不扣分，它是你改過的次數' }
+        color: JS.rejected ? '#D9603F' : 'var(--tx3)', note: '退回不扣分，它是你改過的次數' }
     ];
 
     /* --- 四個領域 · 你在每一層做了幾項 ---
@@ -7032,7 +7073,7 @@
       }
       return {
         title: (LAY[i] || {}).name || ('第 ' + x.n + ' 層'),
-        nameColor: x.open ? '#E8E2D6' : '#5F574C',
+        nameColor: x.open ? 'var(--tx)' : '#5F574C',
         meta: x.open
           ? ('通過 ' + x.pass + ' / ' + x.open + ' 項　·　打贏 ' + x.pass + ' 隻　·　撿到 ' + x.drop + ' 件' +
              (x.ext ? '　·　多做 ' + x.ext + ' 項' : '') + (x.rej ? '　·　退回 ' + x.rej + ' 次' : ''))
@@ -7043,9 +7084,9 @@
 
     v.finLegend = [
       { mark: '', label: '通過的',
-        swatch: 'display:block;width:26px;height:22px;background:#E9B341;border:1px solid #E9B341' },
+        swatch: 'display:block;width:26px;height:22px;background:var(--ac);border:1px solid var(--ac)' },
       { mark: '', label: '開了還沒過',
-        swatch: 'display:block;width:26px;height:22px;background:rgba(233,179,65,.12);border:1px dashed #E9B341' },
+        swatch: 'display:block;width:26px;height:22px;background:rgba(233,179,65,.12);border:1px dashed var(--ac)' },
       { mark: '', label: '那一層沒有那麼多項',
         swatch: 'display:block;width:26px;height:22px;background:transparent;border:1px solid #2C251D' }
     ];
@@ -7070,7 +7111,7 @@
     var c = d.cross || { total: 0, agree: 0, optimistic: 0, conservative: 0 };
     var pc = function (n) { return c.total ? Math.round(n / c.total * 100) + '%' : '—'; };
     v.finCross = [
-      { label: '兩邊一致', value: c.agree + '（' + pc(c.agree) + '）', color: '#E9B341',
+      { label: '兩邊一致', value: c.agree + '（' + pc(c.agree) + '）', color: 'var(--ac)',
         note: '你們覺得順利，老師也通過；或你們覺得卡住，老師也退回。' },
       { label: '你們太樂觀', value: c.optimistic + '（' + pc(c.optimistic) + '）', color: '#D9603F',
         note: '你們覺得沒問題，老師退回了。這一格越少，代表你們越知道「做完」長什麼樣。' },
@@ -7105,11 +7146,11 @@
           b: (ex.line || '') }
       ].map(function (pg, i) {
         return Object.assign(pg, {
-          kStyle: "font:400 11px/1 'C11';letter-spacing:.24em;color:#8A8073",
+          kStyle: "font:400 11px/1 'C11';letter-spacing:.24em;color:var(--tx3)",
           tStyle: "font:700 22px/1.4 'C11';color:#F2E6C8;margin-top:9px",
-          bStyle: "font:400 22px/1.9 'C11';color:#C3BAAA;margin-top:10px;white-space:pre-wrap;text-wrap:pretty",
+          bStyle: "font:400 22px/1.9 'C11';color:var(--tx2);margin-top:10px;white-space:pre-wrap;text-wrap:pretty",
           style: 'padding:16px 18px;background:rgba(0,0,0,.3);border-left:2px solid ' +
-            ['#5A4A2C', '#E9B341'][i]
+            ['var(--ac-dim)', 'var(--ac)'][i]
         });
       });
       v.hasEnding = true;
@@ -7117,7 +7158,7 @@
 
     /* --- 走完之後：直接說明他們學到了什麼、現在可以做什麼 --- */
     (function () {
-      v.finGateAccent = '#E9B341';
+      v.finGateAccent = 'var(--ac)';
       v.finGateBox = 'padding:20px;background:linear-gradient(150deg,rgba(233,179,65,.14),transparent 60%),#16120C;border:1px solid #6B5626';
       var crown = (window.JLZ_SPRITES || {})['tre-crown-restored'];
       v.finGateIcon = crown
@@ -7135,8 +7176,8 @@
       v.finGateReason = fin.openWords || '';
 
       var stepStyle = 'display:flex;gap:9px;align-items:flex-start;flex:1;min-width:200px;padding:11px 13px;' +
-        "background:rgba(233,179,65,.09);border-left:2px solid #E9B341;font:400 22px/1.5 'C11';color:#E8E2D6";
-      var markStyle = "font:700 22px/1.4 'C11';flex:none;width:18px;color:#E9B341";
+        "background:rgba(233,179,65,.09);border-left:2px solid var(--ac);font:400 22px/1.5 'C11';color:var(--tx)";
+      var markStyle = "font:700 22px/1.4 'C11';flex:none;width:18px;color:var(--ac)";
       /* 三條打勾跟上面那一段字講的是同一件事，一字不差地再講一次。拿掉。 */
       v.finGateSteps = [];
     })();
@@ -7157,8 +7198,8 @@
         '之後換了班、換了組，打開「紀錄」都還看得到這一趟的完整統整。';
     v.sealBtnLabel = S.sealSaving ? '封存中…' : sealed ? '改名字，重新封存' : '封存這一趟';
     v.sealBtnStyle = "font:500 22px/1 'C11';letter-spacing:.14em;margin-top:12px;" +
-      'padding:13px 22px;border:none;color:#0B0A09;background:' +
-      (String(S.finLight || '').trim() && !S.sealSaving ? '#E9B341' : '#8A7333') +
+      'padding:13px 22px;border:none;color:var(--bg);background:' +
+      (String(S.finLight || '').trim() && !S.sealSaving ? 'var(--ac)' : '#8A7333') +
       ';cursor:' + (S.sealSaving ? 'wait' : 'pointer');
     v.doSeal = function () {
       var nm = String(L.state.finLight || '').trim();
@@ -7187,8 +7228,8 @@
     var filled = ['finQ1', 'finQ2', 'finQ3'].filter(function (k) { return String(S[k] || '').trim(); }).length;
     v.finalBtnLabel = S.finSaving ? '送出中…'
       : submitted ? '改好了，再送一次' : '送出（' + filled + '/3）';
-    v.finalBtnStyle = "font:500 22px/1 'C11';letter-spacing:.16em;text-indent:.16em;color:#0B0A09;background:" +
-      (filled === 3 && !S.finSaving ? '#E9B341' : '#8A7333') + ';border:none;padding:15px 26px;cursor:' +
+    v.finalBtnStyle = "font:500 22px/1 'C11';letter-spacing:.16em;text-indent:.16em;color:var(--bg);background:" +
+      (filled === 3 && !S.finSaving ? 'var(--ac)' : '#8A7333') + ';border:none;padding:15px 26px;cursor:' +
       (S.finSaving ? 'wait' : 'pointer') + ';clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)';
     v.finalSaveNote = '三題都寫了才送得出去。送出之後還可以再改。';
     v.submitFinal = function () {
@@ -7259,8 +7300,8 @@
         sub: x.opened ? (x.applied ? '已放行 · 他們寫完了' : '已放行 · 等他們寫') : '四區走完 · 等你放行',
         pick: function () { L.setState({ tfinTeamId: x.teamId, finTeamId: null, finTeamData: null }); },
         style: 'text-align:left;padding:11px 14px;font:inherit;cursor:pointer;background:' +
-          (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' + (on ? '#E9B341' : '#2E2822') +
-          ';color:' + (on ? '#FFD98A' : '#C3BAAA')
+          (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' + (on ? 'var(--ac)' : 'var(--line)') +
+          ';color:' + (on ? 'var(--ac-hi)' : 'var(--tx2)')
       };
     });
 
@@ -7291,7 +7332,7 @@
     v.tfinTeam = sel.name;
     v.tfinStatus = sel.opened ? (sel.applied ? '已放行 · 他們寫完了' : '已放行 · 等他們寫') : '等你放行';
     v.tfinStatusStyle = "font:500 11px/1 'C11';letter-spacing:.14em;padding:7px 11px;border:1px solid " +
-      (sel.opened ? '#E9B341;color:#E9B341;background:rgba(233,179,65,.12)'
+      (sel.opened ? 'var(--ac);color:var(--ac);background:rgba(233,179,65,.12)'
                   : '#D9603F;color:#FF9878;background:rgba(217,96,63,.1)');
 
     var rows = d ? (d.rows || []) : [];
@@ -7303,10 +7344,10 @@
       : null;
     var chip = function (tone) {
       return 'display:flex;flex-direction:column;gap:3px;padding:9px 13px;background:rgba(0,0,0,.3);border-left:2px solid ' +
-        (tone === 'hi' ? '#E9B341' : '#3A3026');
+        (tone === 'hi' ? 'var(--ac)' : 'var(--line2)');
     };
-    var kst = "font:400 11px/1 'C11';letter-spacing:.14em;color:#8A8073";
-    var vst = "font:700 22px/1.2 'C11';color:#E8E2D6";
+    var kst = "font:400 11px/1 'C11';letter-spacing:.14em;color:var(--tx3)";
+    var vst = "font:700 22px/1.2 'C11';color:var(--tx)";
     v.tfinStats = [
       { k: '通過的項目', val: passedRows.length + ' 項', s: chip('hi'), ks: kst, vs: vst },
       { k: '總提交次數', val: (d ? d.totalSubs : 0) + ' 次', s: chip(''), ks: kst, vs: vst },
@@ -7323,7 +7364,7 @@
     var loadingDetail = !d;
     v.hasTfinAnswers = !!sel.opened;
     v.tfinAnsLabel = sel.opened ? '他們自己回頭寫的三題' : '結局還沒開——放行之後他們才寫得了這三題';
-    v.tfinAnsColor = sel.opened ? '#E9B341' : '#5F574C';
+    v.tfinAnsColor = sel.opened ? 'var(--ac)' : '#5F574C';
     v.tfinAnswers = FQ.map(function (q, i) {
       return { n: String(i + 1), q: q,
                a: loadingDetail ? '讀取中…'
@@ -7342,7 +7383,7 @@
     v.tfinReplyPh = '例：你們寫的「約訪本身就是一項工作」這件事，我教了十年才有人講出來。' +
       '接下來那一頁是你們自己的——好好看完。';
     v.tfinReplyLabel = sel.opened ? '改一下這段話' : '准許進入結局';
-    v.tfinReplyStyle = "font:500 22px/1 'C11';letter-spacing:.12em;color:#0B0A09;background:#E9B341;border:none;" +
+    v.tfinReplyStyle = "font:500 22px/1 'C11';letter-spacing:.12em;color:var(--bg);background:var(--ac);border:none;" +
       'padding:15px 22px;cursor:pointer;text-align:center;' +
       'clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)';
     v.sendTfinReply = function () {
@@ -7355,7 +7396,7 @@
             if (sel.opened) { L.say('改好了。'); return; }
             var crown = (window.JLZ_SPRITES || {})['tre-crown-restored'];
             showMoment(L, {
-              kind: 'open', accent: '#E9B341',
+              kind: 'open', accent: 'var(--ac)',
               kicker: 'FINALE UNLOCKED',
               title: '你開了他們的結局',
               lede: sel.name + ' 側欄那個 ？？？ 現在亮了。',
@@ -7456,11 +7497,11 @@
       var on = i === S.klass;
       return {
         name: (k.sandbox ? '▨ ' : '') + k.name,
-        nameColor: on ? '#FFD98A' : '#E8E2D6',
+        nameColor: on ? 'var(--ac-hi)' : 'var(--tx)',
         badge: on ? '目前這一班' : '切過去',
         badgeStyle: "font:500 11px/1 'C11';letter-spacing:.1em;padding:6px 9px;white-space:nowrap;background:" +
-          (on ? 'rgba(233,179,65,.16)' : 'rgba(0,0,0,.3)') + ';border:1px solid ' + (on ? '#5A4A2C' : '#2E2822') +
-          ';color:' + (on ? '#E9B341' : '#8A8073'),
+          (on ? 'rgba(233,179,65,.16)' : 'rgba(0,0,0,.3)') + ';border:1px solid ' + (on ? 'var(--ac-dim)' : 'var(--line)') +
+          ';color:' + (on ? 'var(--ac)' : 'var(--tx3)'),
         meta: (k.term ? k.term + '　·　' : '') + (k.teams || []).length + ' 組　·　學期第 ' + (k.courseWeek || 1) + ' 週' +
           '　·　開課 ' + (k.courseStart || '—'),
         code: k.joinCode || '—',
@@ -7474,8 +7515,8 @@
           }).catch(function () {});
         },
         style: 'text-align:left;padding:16px 18px;font:inherit;cursor:pointer;background:' +
-          (on ? 'linear-gradient(140deg,rgba(233,179,65,.08),transparent 62%),#14110E' : '#14110E') +
-          ';border:1px solid ' + (on ? '#5A4A2C' : '#26211C') + ';color:#E8E2D6'
+          (on ? 'linear-gradient(140deg,rgba(233,179,65,.08),transparent 62%),var(--panel)' : 'var(--panel)') +
+          ';border:1px solid ' + (on ? 'var(--ac-dim)' : '#26211C') + ';color:var(--tx)'
       };
     });
     v.klassTerm = (L.KLASSES[S.klass] || {}).term || '';
@@ -7542,8 +7583,8 @@
         pick: function () { L.setState({ queueTeam: g.teamId, reviewId: null }); },
         style: 'text-align:left;padding:11px 14px;font:inherit;cursor:pointer;background:' +
           (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' +
-          (on ? '#E9B341' : flag ? 'rgba(217,96,63,.35)' : '#2E2822') +
-          ';color:' + (on ? '#FFD98A' : '#C3BAAA')
+          (on ? 'var(--ac)' : flag ? 'rgba(217,96,63,.35)' : 'var(--line)') +
+          ';color:' + (on ? 'var(--ac-hi)' : 'var(--tx2)')
       };
     });
     v.hasPickedGroup = !!picked;
@@ -7596,7 +7637,7 @@
     };
 
     /* T-06：先讓老師看到這一組對自己的判斷，再寫合格考量 */
-    var EFF = { fast: ['比預估快', '#E9B341'], onpar: ['跟預估差不多', '#C3BAAA'], slow: ['比預估慢', '#D9603F'] };
+    var EFF = { fast: ['比預估快', 'var(--ac)'], onpar: ['跟預估差不多', 'var(--tx2)'], slow: ['比預估慢', '#D9603F'] };
     var eff = cur && EFF[cur.effort];
     v.hasSelfCall = !!eff;
     v.selfEffortLabel = eff ? '他們說：' + eff[0] : '';
@@ -7639,7 +7680,7 @@
         meta: f.kind === 'link' ? '連結' : fmtSize(f.size),
         iconStyle: fileIcon(f.kind, 14),
         open: function () { openFile(L, f); },
-        style: "display:inline-flex;align-items:center;gap:8px;padding:8px 11px;background:#14110E;border:1px solid #2E2822;color:#C3BAAA;cursor:pointer;font:400 11px/1 'C11'"
+        style: "display:inline-flex;align-items:center;gap:8px;padding:8px 11px;background:var(--panel);border:1px solid var(--line);color:var(--tx2);cursor:pointer;font:400 11px/1 'C11'"
       };
     });
 
@@ -7652,7 +7693,7 @@
           L.setState({ reason: now2 ? now2 + ph.text : ph.text + '，' });
         },
         style: "text-align:left;padding:8px 11px;font:400 11px/1.5 'C11';cursor:pointer;" +
-          'background:rgba(0,0,0,.3);border:1px solid #2E2822;color:#C3BAAA'
+          'background:rgba(0,0,0,.3);border:1px solid var(--line);color:var(--tx2)'
       };
     });
     v.hasMyPhrases = v.myPhrases.length > 0;
@@ -7684,7 +7725,7 @@
         var sp = mineral ? mineralSprite(L, mineral, cur.layer) : null;
         var minDef = (L.MINS || []).filter(function (x) { return x.name === mineral; })[0] || {};
         showMoment(L, {
-          kind: 'stamp', accent: '#E9B341',
+          kind: 'stamp', accent: 'var(--ac)',
           kicker: 'CONFIRMED',
           title: '你判過了一項',
           lede: cur.team + ' 的「' + cur.title + '」通過了。',
@@ -7726,9 +7767,9 @@
           pick: (function (k) { return function () { L.setState({ gave: k }); }; })(n),
           style: 'display:flex;flex-direction:column;align-items:center;gap:5px;' +
             'min-width:74px;padding:9px 6px;cursor:pointer;font:inherit;' +
-            'background:' + (on ? '#E9B341' : '#14110E') +
-            ';border:1px solid ' + (on ? '#E9B341' : '#2E2822'),
-          numStyle: "font:700 22px/1 'C11';color:" + (on ? '#0B0A09' : '#8A8073'),
+            'background:' + (on ? 'var(--ac)' : 'var(--panel)') +
+            ';border:1px solid ' + (on ? 'var(--ac)' : 'var(--line)'),
+          numStyle: "font:700 22px/1 'C11';color:" + (on ? 'var(--bg)' : 'var(--tx3)'),
           anchorStyle: "font:400 11px/1.2 'C11';white-space:nowrap;color:" +
             (on ? 'rgba(11,10,9,.72)' : '#5F574C')
         };
@@ -7788,7 +7829,7 @@
             var sp = layerSprites(L, __pubLayer);
             var left = Math.max(0, TS2.veinN - TS2.openedN);
             showMoment(L, {
-              kind: 'publish', accent: '#E9B341',
+              kind: 'publish', accent: 'var(--ac)',
               kicker: 'LIST PUBLISHED',
               title: (lay.name || '這一層') + ' · 清單發出去了',
               lede: '這 ' + __pubN + ' 項現在出現在全班的任務清單上。',
@@ -7850,7 +7891,7 @@
           if (cur.indexOf(p[1]) >= 0) return;
           L.setState({ nf: Object.assign({}, L.state.nf, { spec: cur ? cur + '\n' + p[1] : p[1] }) });
         },
-        style: "font:400 22px/1 'C11';padding:9px 12px;cursor:pointer;white-space:nowrap;background:rgba(0,0,0,.26);border:1px dashed #3A3026;color:#8A8073"
+        style: "font:400 22px/1 'C11';padding:9px 12px;cursor:pointer;white-space:nowrap;background:rgba(0,0,0,.26);border:1px dashed var(--line2);color:var(--tx3)"
       };
     });
     v.revHasSpec = !!(cur && String(cur.spec || '').trim());
@@ -8004,10 +8045,10 @@
         go: go,
         style: 'padding:9px 15px;font:500 22px/1 \'C11\';cursor:pointer;text-align:left;background:' +
           (here ? 'rgba(233,179,65,.14)' : 'rgba(0,0,0,.28)') +
-          ';border:1px solid ' + (here ? '#E9B341' : '#2E2822') +
-          ';color:' + (here ? '#FFD98A' : '#8A8073'),
+          ';border:1px solid ' + (here ? 'var(--ac)' : 'var(--line)') +
+          ';color:' + (here ? 'var(--ac-hi)' : 'var(--tx3)'),
         subStyle: "display:block;font:400 11px/1 'C11';margin-top:5px;color:" +
-          (here ? '#E9B341' : '#5F574C')
+          (here ? 'var(--ac)' : '#5F574C')
       };
     };
     v.worldTabs = [
@@ -8043,9 +8084,9 @@
     v.editMobKicker = '學生點開這一項會先看到';
     v.editMobKickerStyle = "display:block;font:400 11px/1 'C11';letter-spacing:.16em;color:" + hue;
     v.editMobName = m.name;
-    v.editMobNameStyle = "display:block;font:700 22px/1.3 'C11';color:#E8E2D6;margin-top:5px";
+    v.editMobNameStyle = "display:block;font:700 22px/1.3 'C11';color:var(--tx);margin-top:5px";
     v.editMobNote = m.trait || '';
-    v.editMobNoteStyle = "display:block;font:400 11px/1.6 'C11';color:#8A8073;margin-top:4px;text-wrap:pretty";
+    v.editMobNoteStyle = "display:block;font:400 11px/1.6 'C11';color:var(--tx3);margin-top:4px;text-wrap:pretty";
   }
 
   function decorateGate(L, v) {
@@ -8068,8 +8109,8 @@
         sub: LAYERNAME(x.layer) + ' · 停留 ' + x.weeks + ' 週',
         pick: function () { L.setState({ gateTeamId: x.teamId, gateLevelPick: null, gateReason: '' }); },
         style: 'text-align:left;padding:10px 14px;font:inherit;cursor:pointer;background:' +
-          (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' + (on ? '#E9B341' : '#2E2822') +
-          ';color:' + (on ? '#FFD98A' : '#C3BAAA')
+          (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' + (on ? 'var(--ac)' : 'var(--line)') +
+          ';color:' + (on ? 'var(--ac-hi)' : 'var(--tx2)')
       };
     });
 
@@ -8131,14 +8172,14 @@
           label: o.label,
           sub: now ? '現在就是' : o.sub,
           subStyle: "display:block;font:400 11px/1 'C11';margin-top:5px;color:" +
-            (on ? '#FFD98A' : now ? '#7CC98F' : '#5F574C'),
+            (on ? 'var(--ac-hi)' : now ? '#7CC98F' : '#5F574C'),
           pick: (function (nn) {
             return function () { L.setState({ jumpPick: nn }); };
           })(o.n),
           style: "padding:10px 13px;font:500 22px/1 'C11';cursor:pointer;text-align:center;background:" +
             (on ? 'rgba(233,179,65,.16)' : 'rgba(0,0,0,.3)') +
-            ';border:1px solid ' + (on ? '#E9B341' : now ? '#3A5240' : '#2E2822') +
-            ';color:' + (on ? '#FFD98A' : '#C3BAAA')
+            ';border:1px solid ' + (on ? 'var(--ac)' : now ? '#3A5240' : 'var(--line)') +
+            ';color:' + (on ? 'var(--ac-hi)' : 'var(--tx2)')
         };
       });
 
@@ -8170,7 +8211,7 @@
       return {
         title: t.title, state: t.status === 'passed' ? '已確認' : '未通過',
         mark: t.status === 'passed' ? '✓' : '·',
-        markStyle: "font:700 22px/1 'C11';width:18px;color:" + (t.status === 'passed' ? '#E9B341' : '#4A443C')
+        markStyle: "font:700 22px/1 'C11';width:18px;color:" + (t.status === 'passed' ? 'var(--ac)' : '#4A443C')
       };
     });
     /* 那三題是學生在 SUB 寫的，SUB 拿掉之後沒有人寫得進去——
@@ -8185,7 +8226,7 @@
       var Ldef = L.LAYERS[g.layer - 1] || {};
       var spg = layerSprites(L, g.layer);
       showMoment(L, {
-        kind: 'open', accent: '#E9B341',
+        kind: 'open', accent: 'var(--ac)',
         kicker: 'LAYER CLEARED',
         title: '你放行了這一層',
         lede: g.teamName + ' 通過了' + (Ldef.name || '這一層') + '。',

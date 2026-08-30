@@ -4313,5 +4313,32 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("111. 期限改成幾天後");
 })();
 
+
+/* 112. 色盤層：介面用的十一個色碼換成 CSS 變數。
+       變數的值由 Live 接在既有的 uiVars 後面，所以每一層可以有自己的光。
+       像素圖的配色不在這裡——它們畫進 SVG，var() 在那裡沒有用。 */
+(function () {
+  var MAP = {
+    "#0B0A09": "--bg",
+    "#0E0C0A": "--field",
+    "#14110E": "--panel",
+    "#2E2822": "--line",
+    "#3A3026": "--line2",
+    "#E9B341": "--ac",
+    "#5A4A2C": "--ac-dim",
+    "#FFD98A": "--ac-hi",
+    "#E8E2D6": "--tx",
+    "#C3BAAA": "--tx2",
+    "#8A8073": "--tx3"
+  };
+  var n = 0;
+  Object.keys(MAP).forEach(function (hex) {
+    var re = new RegExp(hex, "gi");
+    t = t.replace(re, function () { n++; return "var(" + MAP[hex] + ")"; });
+  });
+  if (n < 500) { console.error("112. 只換到 " + n + " 個，太少了"); process.exit(1); }
+  console.log("112. 色盤層：換掉 " + n + " 個色碼");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
