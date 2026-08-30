@@ -16,3 +16,7 @@ jobs:
       - run: cp gas/Code.gs functions/Code.gs
       - run: cd functions && npm ci
       - run: node functions/selftest.js
+      - name: 舊機制殘留檢查
+        run: |
+          node patch-tpl.js
+          node check-stale.js

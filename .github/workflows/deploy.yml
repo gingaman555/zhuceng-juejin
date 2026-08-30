@@ -43,6 +43,9 @@ jobs:
           node build-gas.js
           node build-web.js
 
+      - name: 舊機制殘留檢查（有殘留就不部署）
+        run: node check-stale.js
+
       - name: 檢查沒有把假後端帶上線
         run: |
           if grep -q "本機預覽用的假後端" public/index.html; then

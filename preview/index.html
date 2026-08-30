@@ -6557,14 +6557,14 @@ class Component extends DCLogic {
         return pages.map(function (pg) {
           if (pg.b) {
             pg.b = pg.b
-              .split('不影響過關，只影響工具校準到哪一階。').join('不影響過關，做了就多一塊礦石進學生的圖鑑。')
+              .split('不影響過關，只影響工具校準到哪一階。').join('不影響過關，做了就多一塊礦石進學生的圖鑑。') /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
               /* 第五層拿掉了，剩四個領域 */
               .split('五層洞窟，一層一個週期').join('四個領域，一層一個階段')
               /* 採齊不再是門檻——過不過是你決定 */
-              .split('你認定的最低完成標準。全數通過才能送關卡。')
+              .split('你認定的最低完成標準。全數通過才能送關卡。') /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
               .join('你認定的最低完成標準。過幾項不決定他們能不能往下——那是你放行的時候才決定的。');
           }
-          if (String(pg.k || '') === '系統說明 · 五個週期') pg.k = '系統說明 · 四個階段';
+          if (String(pg.k || '') === '系統說明 · 五個週期') pg.k = '系統說明 · 四個階段'; /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
           return pg;
         });
       }
@@ -7002,7 +7002,7 @@ class Component extends DCLogic {
        收集是主角，所以圖鑑跟紀錄各自一格，不要藏在地圖底下。 */
     if (S.role === 'student' && v.navItems) {
       v.navItems = v.navItems.filter(function (n) {
-        return n.code !== '甘特' && n.code !== 'S-03' && n.code !== 'S-04';
+        return n.code !== '甘特' && n.code !== 'S-03' && n.code !== 'S-04'; /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
       });
       var tabNow = S.mapTab || 'map';
       var onS03 = sc === 'S03';
@@ -7053,7 +7053,7 @@ class Component extends DCLogic {
        「你定的每一項，學生那邊看到的是⋯⋯」，對他沒有意義而且是別人的視角。 */
     if (S.role === 'student') v.scT08 = false;
     if (v.navItems) {
-      v.navItems = v.navItems.filter(function (n) { return n.code !== '甘特'; });
+      v.navItems = v.navItems.filter(function (n) { return n.code !== '甘特'; }); /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
     }
     /* 四個領域都走完之後，側欄多一項期末回顧 */
     if (S.role === 'student' && v.navItems) {
@@ -7511,11 +7511,11 @@ class Component extends DCLogic {
     (v.layerSets || []).forEach(function (g) {
       (g.items || []).forEach(function (i2) {
         if (typeof i2.min !== 'string') return;
-        i2.min = i2.min.split('環節 · ').join('礦石 · ').split('（物證 ').join('（');
+        i2.min = i2.min.split('環節 · ').join('礦石 · ').split('（物證 ').join('（'); /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
       });
     });
     (v.minOptions || []).forEach(function (m2) {
-      if (typeof m2.sub === 'string') m2.sub = m2.sub.split('學生端物證 · ').join('學生端礦石 · ');
+      if (typeof m2.sub === 'string') m2.sub = m2.sub.split('學生端物證 · ').join('學生端礦石 · '); /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
     });
 
     /* 四個領域。原型寫死五層，在這裡截斷——第五層（星核聖殿）連同
@@ -7975,45 +7975,10 @@ class Component extends DCLogic {
         .catch(function () { L.say('沒有存到伺服器，請再交一次。'); });
     };
 
-    /* --- 證據：真的上傳到雲端硬碟 --- */
-    var draft = S.draftFiles || [];
-    v.evidence = draft.map(function (f, i) {
-      return {
-        name: f.name || String(f),
-        meta: f.kind === 'link' ? '連結' : (KIND_META[f.kind] || {}).label + ' · ' + fmtSize(f.size),
-        iconStyle: fileIcon(f.kind, 16),
-        canOpen: true,
-        open: function () { openFile(L, f); },
-        remove: function () {
-          L.setState({ draftFiles: (L.state.draftFiles || []).filter(function (_, j) { return j !== i; }) });
-          if (f.id) call('apiDeleteFile', LIVE.token, f.id).catch(function () {});
-        }
-      };
-    });
-    v.evidenceAdders = ['image', 'doc', 'video', 'link'].map(function (k) {
-      return {
-        label: KIND_META[k].label,
-        add: function () {
-          if (k === 'link') { L.setState({ linkOpen: !L.state.linkOpen }); return; }
-          pickFile(k, function (file) { uploadFile(L, file); });
-        }
-      };
-    });
-    v.uploading = !!S.uploading;
-    v.uploadNote = '上傳中：' + (S.uploadName || '') + '　·　檔案越大越久，先別離開這一頁。';
-    v.uploadHint = '不用把作業本體傳上來——那個照老師原本的方式交。這裡只是給他一個找得到的入口。單檔 10 MB，更大的用「連結」。';
-    v.linkOpen = !!S.linkOpen;
-    v.linkDraft = S.linkDraft || '';
-    v.setLinkDraft = function (e) { L.setState({ linkDraft: e.target.value }); };
-    v.addLink = function () {
-      var raw = String(L.state.linkDraft || '').trim();
-      if (!raw) { L.say('先貼上網址。'); return; }
-      var url = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
-      L.setState({
-        draftFiles: (L.state.draftFiles || []).concat([{ kind: 'link', name: raw, url: url, size: 0 }]),
-        linkDraft: '', linkOpen: false
-      });
-    };
+    /* 證據清單也拿掉：跟上傳區同一塊，模板上沒有它的位置。 */
+
+    /* 上傳區整塊拿掉：「交在哪裡」那一段從模板移掉之後只剩計算。
+       作業本來就交在老師原本收的地方，這裡不收檔案。 */
 
     /* 送審三格整條線拿掉：那一頁（SUB）不在模板裡了，放行完全在老師那邊。
        模板上沒有這些欄位，所以這裡連算都不用算。 */
@@ -9604,20 +9569,8 @@ class Component extends DCLogic {
     order.sort(function (a, b) { return b - a; });   /* 深的在下面 */
 
     v.hasHaulMap = true;
-    v.haulMapTop = '地表';
-    v.haulMapBottom = '挖得最深　' + top + ' 分';
-    v.haulMapBox = 'margin-bottom:22px;padding:16px 18px;background:' +
-      'linear-gradient(180deg,rgba(233,179,65,.05),rgba(0,0,0,.32) 45%,rgba(217,96,63,.06))' +
-      ';border:1px solid #2E2822';
-    v.haulMapTrack = 'display:flex;flex-direction:column;gap:5px;border-left:2px solid #3A3026;padding-left:12px';
-    v.haulMapHeadStyle = "display:flex;justify-content:space-between;font:400 11px/1 'C11';color:#5F574C;margin-bottom:10px";
-    v.haulMapNoteStyle = "font:400 11px/1.7 'C11';color:#6E665A;margin-top:11px;text-wrap:pretty";
-    v.haulMapNote = order.length === 1
-      ? '所有人都在同一個深度。'
-      : '同一排就是分數差不多的。點任何一組看他們的紀錄。';
+    /* 坑道圖那一塊拿掉：排行榜上那張深度圖從模板移掉之後只剩計算。 */
 
-    /* 桶跟桶之間的空隙照分差撐開——本來每一排等距，所以差 3000 分
-       跟差 100 分看起來一樣近，完全沒有落差感。 */
     v.haulMapBands = order.map(function (key, oi) {
       var prevKey = oi > 0 ? order[oi - 1] : null;
       var drop = prevKey === null ? 0 : Math.round((prevKey - key) / 100 * 170);
@@ -11645,132 +11598,33 @@ class Component extends DCLogic {
     var rq = L.req(), ex = L.ext(), all = [].concat(rq, ex);
     var done = (S.passed || []).indexOf(S.currentLayer) >= 0;
 
-    var reqGot = rq.filter(function (t) { return t.status === 'passed'; }).length;
-    var extGot = ex.filter(function (t) { return t.status === 'passed'; }).length;
-
-    v.collectDone = reqGot + extGot;
-    v.collectTotal = all.length;
-
-    v.collectCells = all.map(function (t, i) {
-      var got = t.status === 'passed';
-      var wait = t.status === 'submitted';
-      var working = wait || t.status === 'needs_more' || !!String(t.text || '').trim();
-      var icon = mineralSprite(L, t.mineral, t.layer);
-      return {
-        name: got ? (t.mineral || t.title) : working ? (t.mineral || '進行中') : '？？？',
-        color: got ? '#E9B341' : working ? '#C3BAAA' : '#5F574C',
-        box: 'display:block;width:64px;padding:9px 4px;text-align:center;background:' +
-          (got ? 'rgba(233,179,65,.07)' : 'rgba(0,0,0,.24)') + ';border:1px ' +
-          (got ? 'solid #5A4A2C' : wait ? 'dashed #5F574C' : 'dashed #2C251D'),
-        icon: icon
-          ? 'display:block;width:28px;height:28px;margin:0 auto;background:url(' + icon + ') center/contain no-repeat;image-rendering:pixelated;' +
-            (got ? '' : 'opacity:.28;filter:saturate(.25) brightness(.8);animation:dormant 5.2s ease-in-out infinite ' + ((i % 5) * 0.42) + 's')
-          : 'display:block;width:24px;height:24px;margin:2px auto;background:radial-gradient(circle at 50% 50%,rgba(233,179,65,.42),rgba(233,179,65,.06) 62%,transparent 74%);animation:dormant 4.6s ease-in-out infinite ' + ((i % 5) * 0.42) + 's'
-      };
-    });
-
-    var pips = function (n, total, col) {
-      var out = [];
-      for (var i = 0; i < total; i++) {
-        out.push({ style: 'display:block;width:13px;height:6px;background:' +
-          (i < n ? col : 'transparent') + ';border:1px solid ' + (i < n ? col : '#2E2822') });
-      }
-      return out;
-    };
+    /* 分母永遠是整條礦脈：老師還沒開的那幾塊也算在裡面，不然學生會以為
+       自己採齊了。 */
     var LS = layerState(L);
     var allGot = LS.gotN;
-    var allN = LS.veinN;                 /* 分母永遠是整條礦脈 */
+    var allN = LS.veinN;
     var unopenedN = LS.unopenedN;
-    /* 上面三張卡：採到幾塊／還差幾塊／已採礦物 */
+
+    /* 採集進度的格子拿掉：首頁那一塊「這一層採到 N/M」從模板移掉了。
+       礦石從門檻變回紀錄之後，進度條在算一個不決定任何事的數字。 */
+
     v.reqDone = allGot; v.reqTotal = allN;
     v.extDone = Math.max(0, allN - allGot);
     v.reqLeft = Math.max(0, allN - allGot);
     v.layerLeftNote = !all.length ? '這一層還沒有清單'
       : unopenedN ? '其中 ' + unopenedN + ' 塊老師還沒開'
       : allGot === allN ? '這一層採齊了' : '採不採齊都不影響——往不往下是他決定';
-    v.collectBars = [
-      { label: '這一層的礦石', count: allGot + ' / ' + allN + ' 塊', color: allN && allGot === allN ? '#E9B341' : '#C3BAAA',
-        pips: pips(allGot, allN, '#E9B341'),
-        note: !all.length ? '這一層還沒有清單。'
-          : unopenedN ? '老師開了 ' + all.length + ' 塊，你們採到 ' + allGot + ' 塊。還有 ' + unopenedN +
-            ' 塊他還沒開。採不採齊都不影響——往不往下是他決定。'
-          : allGot === allN ? '這一層的任務都過了。剩下的是他的判斷。'
-          : '還差 ' + (allN - allGot) + ' 塊。這裡只是紀錄，不是門檻。' }
-    ];
+    /* 採集進度條拿掉：那一塊從模板移掉了，而且它算的是一個不決定任何事的數字。 */
 
-    var nextReq = all.filter(function (t) { return t.status !== 'passed'; })[0];
-    if (done) {
-      v.collectNext = '這一層的任務都過了。道具與戰利品都在手上，往下一層繼續。';
-      v.collectNextColor = '#E9B341';
-    } else if (nextReq) {
-      v.collectNext = '下一塊：' + (nextReq.mineral || '？？？') + '　—　通過「' + nextReq.title + '」就採得到。';
-      v.collectNextColor = '#C3BAAA';
-    } else if (all.length) {
-      v.collectNext = '這一層採齊了。他覺得可以往下的時候會放行，那時候才拿得到這一層的道具。';
-      v.collectNextColor = '#E9B341';
-    } else {
-      v.collectNext = '這一層還沒有清單。';
-      v.collectNextColor = '#8A8073';
-    }
-
-    var step = function (on, text) {
-      return {
-        text: text,
-        style: "font:400 11px/1.4 'C11';padding:8px 11px;white-space:nowrap;background:" +
-          (on ? 'rgba(233,179,65,.12)' : 'rgba(0,0,0,.24)') + ';border:1px solid ' +
-          (on ? '#5A4A2C' : '#26211C') + ';color:' + (on ? '#E9B341' : '#6E665A')
-      };
-    };
     var arrow = { text: '→', style: "font:400 11px/1 'C11';color:#3A3026;flex:none" };
     /* 這一層的每一塊。沒採到的整格黑掉——礦石早就從門檻變回紀錄了，
        這裡只是讓自己看得到走到哪。 */
     var missing = all.filter(function (t) { return t.status !== 'passed'; });
-    v.gateMinerals = all.map(function (t, i) {
-      var g = t.status === 'passed';
-      var w = t.status === 'submitted';
-      var icon = mineralSprite(L, t.mineral, t.layer);
-      return {
-        name: g ? (t.mineral || t.title) : '？？？',
-        nameColor: g ? '#E9B341' : '#5F574C',
-        state: g ? '已採到' : w ? '待驗收' : '未採到',
-        stateColor: g ? '#8A8073' : w ? '#C3BAAA' : '#5F574C',
-        box: 'display:block;width:76px;padding:11px 5px;text-align:center;background:' +
-          (g ? 'rgba(233,179,65,.08)' : '#050404') +
-          ';border:1px ' + (g ? 'solid #5A4A2C' : w ? 'dashed #5F574C' : 'solid #1A1613'),
-        icon: icon
-          ? 'display:block;width:30px;height:30px;margin:0 auto;background:url(' + icon + ') center/contain no-repeat;image-rendering:pixelated;' +
-            (g ? '' : 'filter:brightness(0) saturate(0);opacity:' + (w ? '.5' : '.28'))
-          : 'display:block;width:26px;height:26px;margin:2px auto;background:' +
-            (g ? 'linear-gradient(140deg,#E9B341,#6B4C15)' : '#141110')
-      };
-    });
-    var vein = LS.veinN, veinLeft = LS.unopenedN;
-    v.gateNeed = LS.complete ? '集滿了' : '還差 ' + (LS.missingN + LS.unopenedN) + ' 塊';
-    v.hasVeinNote = vein > 0;
-    v.veinNote = veinLeft
-      ? '這一層的礦脈有 ' + vein + ' 塊，老師開了 ' + LS.openedN + ' 塊，還有 ' + veinLeft + ' 塊沒開。' +
-        '採不採齊都不影響——覺得這一層告一段落了就去找他，過不過他決定。'
-      : '這一層的礦脈 ' + vein + ' 塊都開出來了。採不採齊都不影響——往不往下是他決定。';
-    v.gateNeedColor = LS.complete ? '#E9B341' : '#8A8073';
-    v.gateNeedNote = !all.length
-      ? '這一層還沒有清單。'
-      : veinLeft
-        ? '這一層的礦脈還有 ' + veinLeft + ' 塊他還沒開。採不採齊都不影響——往不往下是他決定。'
-      : missing.length
-        ? '這一層還沒採到的是：' +
-          missing.map(function (t) { return t.title; }).join('、') + '。'
-        : done
-          ? '這一層已經通過了。'
-          : '這一層採齊了。他覺得可以往下的時候會放行。';
+    /* 送審那一頁的礦石對照拿掉：SUB 不在模板裡了。 */
 
-    /* 道具與寶物長什麼樣，統一在地圖的層級詳情與收藏總覽看，這裡只標進度 */
-    v.collectChain = [
-      step(v.collectDone > 0, '採礦石 ' + v.collectDone + '/' + v.collectTotal), arrow,
-      step(LS.complete, '覺得這一層夠了'), arrow,
-      step(done, '他放行'), arrow,
-      step(done, '道具 · 進下一層'), arrow,
-      step(done, '戰利品 · 他點頭才有')
-    ];
+    /* 採集那條鏈拿掉：它畫的是「採礦石 → 覺得夠了 → 他放行 → 道具 → 戰利品」，
+       但模板上沒有它的位置，而且中間那一步已經不是學生的動作了。 */
+
   }
 
   /* ---------- S-01：三步規則＋下一件要做的事 ---------- */
@@ -11857,39 +11711,8 @@ class Component extends DCLogic {
       v.openBrief = hb.open;
     })();
 
-    /* 說明一律收進按鈕：SUB 為什麼問這三題 */
-    (function () {
-      var hb = helpButton(L, {
-        label: "？　為什麼問這三題",
-        kicker: "WHY THESE THREE",
-        title: "為什麼問這三題",
-        lede: v.gateWhy || "",
-        lines: (v.gateWhyRows || []).map(function (w) { return w.n + "　" + w.t; })
-      });
-      v.gateWhyBtnLabel = hb.label;
-      v.gateWhyBtnStyle = hb.style;
-      v.openGateWhy = hb.open;
-    })();
-
-    /* 說明一律收進按鈕：甘特圖怎麼用 */
-    (function () {
-      v.ganttNever = false;   /* 原本那一塊改成按鈕開，不再自己攤開 */
-      var hb = helpButton(L, {
-        label: "？　這一頁怎麼用",
-        kicker: "HOW TO SCHEDULE",
-        title: "這一頁只有一個動作：點一格",
-        lede: "點一格，就是決定你哪一週交那一項。老師只訂期限，不排你的順序。",
-        lines: [
-          "亮起來的那一格＝你排的那一週。",
-          "斜紋區＝老師訂的期限之後。排進去也可以，只是會被標示逾期。",
-          "拖過去可以排一段區間，代表這一項要跨好幾週。",
-          String(v.ganttHowTo || "")
-        ].filter(Boolean)
-      });
-      v.ganttHowBtnLabel = hb.label;
-      v.ganttHowBtnStyle = hb.style;
-      v.openGanttHow = hb.open;
-    })();
+    /* 這兩顆說明按鈕拿掉：一顆說明 SUB 的三題（那一頁不在模板裡了），
+       一顆說明甘特圖怎麼用（那一頁整支拿掉了）。 */
 
     /* 首頁標頭：這一層擋路的是誰，一眼看到 */
     (function () {
@@ -12410,15 +12233,15 @@ class Component extends DCLogic {
 
   /* 工具校準整套移除後，原型自己還寫死了幾句——一併換掉，不然學生會看到不存在的機制 */
   var CAL_FIX = [
-      ['可以送交關卡審核了。', '這一層的任務都過了。往不往下是他決定。'],
-      ['工具校準完成，下一層開了。', '這一層過了，下一層開了。'],
+      ['可以送交關卡審核了。', '這一層的任務都過了。往不往下是他決定。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
+      ['工具校準完成，下一層開了。', '這一層過了，下一層開了。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
       ['他有時候不在。逾時未審會自動暫准，但那一次不計入工具階級。', '他有時候不在。逾時未審會自動暫准。'],
-      ['可選的深入方向。不影響過關，只影響工具校準到哪一階。', '可選的深入方向。不影響過關，做了就多一塊礦石進圖鑑。'],
-      ['過關才給，一層一件。道具決定工具校準到哪一階。', '一層一件，用這一層的礦石鑄成——擊退擋在層底的那一隻，才走得到下一層。'],
+      ['可選的深入方向。不影響過關，只影響工具校準到哪一階。', '可選的深入方向。不影響過關，做了就多一塊礦石進圖鑑。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
+      ['過關才給，一層一件。道具決定工具校準到哪一階。', '一層一件，用這一層的礦石鑄成——擊退擋在層底的那一隻，才走得到下一層。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
       ['過關就給，不看做得多好。老師端不上鎖。', '一層一件——擊退那一層的守關生物之後，牠站的地方留下的。老師端不上鎖。'],
       ['過關就給，不看做得多好。', '一層一件——擊退那一層的守關生物之後，牠站的地方留下的。'],
       ['過關才給，一層一件。老師端不上鎖，全部可讀。', '一層一件，用那一層的礦石鑄成，剋的就是那一層的守關生物。老師端不上鎖，全部可讀。'],
-    ['不影響過關，只影響工具校準到哪一階。', '不影響過關，做了就多一塊礦石進圖鑑。'],
+    ['不影響過關，只影響工具校準到哪一階。', '不影響過關，做了就多一塊礦石進圖鑑。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
     ['交出去了。他會驗，然後用它校準工具。', '交出去了。他會驗，通過就多一塊礦石。'],
     ['校準之後才知道它是什麼', '通過這一層才拿得到'],
     ['校準完成。下一層需要它——沒有它，你看不見路。', '他准了。這一層的礦石鑄成了它——擋在路上的那一隻退開了。']
@@ -12438,7 +12261,7 @@ class Component extends DCLogic {
        是別的地方生得出來的，所以它是收集的骨架。跟道具的差別在於
        道具講「你學到什麼」，它講「他留下什麼」。 */
     (v.collSections || []).forEach(function (g) {
-      if (g.title !== '寶物') return;
+      if (g.title !== '寶物') return; /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
       g.title = '戰利品';
       g.note = '擊退層底那一隻之後，牠站的地方留下的——斗篷人回程留在那裡的東西。' +
         '一區不只一件：那一區每走完一次拿一件還沒有的，所以下一個專案再下來，關底還是有東西。';
@@ -12656,7 +12479,7 @@ class Component extends DCLogic {
     var realName = function (title, i) {
       var lay = L.LAYERS || [];
       if (title.indexOf('道具') >= 0) return (lay[i] || {}).tool || null;
-      if (title.indexOf('寶物') >= 0) return (lay[i] || {}).treasure || null;
+      if (title.indexOf('寶物') >= 0) return (lay[i] || {}).treasure || null; /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
       if (title.indexOf('礦') >= 0) return ((L.MINS || [])[i] || {}).name || null;
       return null;
     };
@@ -13884,7 +13707,7 @@ class Component extends DCLogic {
       var t = (st.tasks || []).filter(function (x) { return x.id === st.editId; })[0] || {};
       var task = { id: st.editId, layer: st.editLayer, type: st.nf.type, title: st.nf.title,
                    cond: st.nf.cond, note: st.nf.note, spec: st.nf.spec || '', due: st.nf.due, mineral: st.nf.mineral || t.mineral || '',
-                   mDesc: t.mDesc || '這一項工作留下的物證。',
+                   mDesc: t.mDesc || '這一項工作留下的礦石。',
                    checks: checkLines((st.nf || {}).checks) };
       L.setState({ editId: null, nf: { title: '', type: 'required', cond: '', note: '', due: st.nf.due, mineral: '' }, screen: 'T02' });
       call('apiSaveTask', LIVE.token, L.klass().id, task)
@@ -14248,14 +14071,14 @@ class Component extends DCLogic {
       what: '提交時強制填「實際花的力氣跟原本估的差多少」＋原因＋卡在哪，老師端逐項確認時先看到這一段',
       why: '專案管理最重要的是理解自身能力；老師的判斷要能跟學生的自我判斷對照', where: 'S-05 / T-06', open: '' },
     { n: 16, phase: '全端 · 規則', from: '功能稽核',
-      what: '工具校準（四階）整套移除：學生端區塊、老師端階級選擇器、發道具動畫的階級字樣、匯出欄位',
+      what: '工具校準（四階）整套移除：學生端區塊、老師端階級選擇器、發道具動畫的階級字樣、匯出欄位', /* 舊詞OK：R-09 是修訂紀錄，本來就在講拿掉了什麼 */
       why: '它不影響過關、不是分數、不解鎖任何東西——是一個看起來有意義但什麼都不做的機制', where: 'S-02 / T-07 / R-08', open: '' },
     { n: 17, phase: '全端 · 核心規則', from: '設計原則',
       what: '全收集改成兩道：礦脈要開完（老師開滿那一層的礦石數），礦石要採完（每一塊都通過）。必要／延伸的分別取消',
       why: '延伸項是讓人跳過的機制，跟「逐步收集向前」的主旨相衝；只要有可選項，圖鑑就永遠是缺的', where: '全端', open: '' },
     { n: 18, phase: '學生端 · 排程', from: '流程檢查',
       what: '排程納入主流程：每一項要先說「打算哪一週交」才交得出去，提交頁上方直接給週次快選',
-      why: '期末回顧的「你排的 對 實際發生的」是這套系統要學生看見的東西；沒排過就是一張空表', where: 'S-05 / S-01 / 甘特', open: '' },
+      why: '期末回顧的「你排的 對 實際發生的」是這套系統要學生看見的東西；沒排過就是一張空表', where: 'S-05 / S-01 / 甘特', open: '' }, /* 舊詞OK：R-09 是修訂紀錄，本來就在講拿掉了什麼 */
     { n: 19, phase: '學生端 · 地圖', from: '使用者觀察',
       what: '深度從 45 格改成 23 格＝23 塊礦石，並直接鋪在剖面的每一層上；點格子跳到那一項，別組的位置也標在同一條通道上',
       why: '45 格不對應任何一件事，只是進度條的另一種畫法；地圖跟收集本來就是同一件事，不該是兩張圖', where: 'S-03', open: '' },
@@ -14266,8 +14089,8 @@ class Component extends DCLogic {
       what: '期末回顧補上結局四頁（你完成了一個專案、做過的、收到的、他最後說的），放在整學期比對之前',
       why: '走完四個領域卻沒有結局，故事等於沒有收；最後一次交付不該只是一張數字表。結局不揭曉任何東西——斗篷人開頭就說明白他是誰了，這裡只把實際做過的事攤開', where: '期末回顧', open: '' },
     { n: 22, phase: '全端 · 課程長度', from: '教師訪談',
-      what: '課程長度上限從 52 週放寬到 156 週，期限快選在長課程只列現在前後十週（甘特圖後來整頁拿掉）',
-      why: '有專案會跑一年以上，52 欄的甘特圖與 52 顆期限按鈕在那個尺度下不能用', where: '甘特 / T-05 / R-ADM', open: '' }
+      what: '課程長度上限從 52 週放寬到 156 週，期限快選在長課程只列現在前後十週（甘特圖後來整頁拿掉）', /* 舊詞OK：R-09 是修訂紀錄，本來就在講拿掉了什麼 */
+      why: '有專案會跑一年以上，52 欄的甘特圖與 52 顆期限按鈕在那個尺度下不能用', where: '甘特 / T-05 / R-ADM', open: '' } /* 舊詞OK：R-09 是修訂紀錄，本來就在講拿掉了什麼 */
   ];
 
   /* ---------- 研究者 ---------- */
@@ -14549,7 +14372,7 @@ class Component extends DCLogic {
           name: k.name,
           value: (S.admForm && S.admForm[key] !== undefined) ? S.admForm[key] : String(k.semesterWeeks || 18),
           set: setF(key),
-          note: '甘特圖 ' + (k.semesterWeeks || 18) + ' 欄 · 現在第 ' + k.courseWeek + ' 週',
+          note: '學期 ' + (k.semesterWeeks || 18) + ' 週 · 現在第 ' + k.courseWeek + ' 週',
           save: function () {
             var n = Number((L.state.admForm || {})[key]);
             call('apiSetSemesterWeeks', LIVE.token, k.id, n)
