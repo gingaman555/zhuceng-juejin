@@ -1605,7 +1605,7 @@
                     <p style="font-family:'Noto Sans TC',sans-serif;font-size:13.5px;line-height:1.9;color:#8393A0;margin:0 0 16px">必須捲到底才能繼續。</p>
                     <div onScroll="{{ resVals.onConsentScroll }}" style="height:230px;overflow-y:auto;padding:16px 18px;background:#121A21;border:1px solid #1D2831;border-radius:9px;font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:2;color:#B7C3CC">
                       <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin-bottom:8px">蒐集哪些資料</div>
-                      任務發派、任務提交、逐項確認（含審核理由全文）、關卡送審與審核、他組紀錄閱讀事件、停留狀態。全部以組為單位，不記個人。
+                      任務發派、任務提交、逐項確認（含審核理由全文）、關卡放行與理由、他組紀錄閱讀事件、停留狀態。全部以組為單位，不記個人。
                       <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin:16px 0 8px">保存期限</div>
                       論文口試後兩年，屆期刪除原始事件記錄，僅保留去識別化後的統計結果。
                       <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin:16px 0 8px">匿名方式</div>

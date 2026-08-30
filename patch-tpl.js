@@ -4136,5 +4136,15 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('100. 抽到的東西一次一次亮');
 })();
 
+
+/* 101. 研究者端匯出說明還在說「關卡送審」——學生不送申請了，
+       Passes 那張表現在記的是老師的放行與理由。 */
+(function () {
+  var a = '關卡送審與審核';
+  if (t.split(a).length - 1 !== 1) { console.error('101. 那一句找不到'); process.exit(1); }
+  t = t.replace(a, '關卡放行與理由');
+  console.log('101. 匯出說明的關卡送審');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
