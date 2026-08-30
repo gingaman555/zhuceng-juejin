@@ -577,16 +577,7 @@
                           </div>
                           <div style="font:400 22px/1.7 'C11';color:#9A9184;margin-top:9px;text-wrap:pretty"><span style="color:#5F574C">通過條件　</span>{{ t.cond }}</div>
                           <div style="font:400 22px/1.7 'C11';color:#8A8073;margin-top:2px;text-wrap:pretty"><span style="color:#5F574C">要注意的　</span>{{ t.note }}</div>
-                          <sc-if value="{{ t.hasReward }}" hint-placeholder-val="{{ true }}">
-                            <div style="{{ t.rewardBox }}">
-                              <span style="{{ t.rewardIcon }}"></span>
-                              <span style="flex:1;min-width:0">
-                                <span style="display:block;font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">{{ t.rewardLabel }}</span>
-                                <span style="display:block;font:500 22px/1.4 'C11';margin-top:5px;color:{{ t.rewardColor }}">{{ t.rewardName }}</span>
-                                <span style="display:block;font:400 22px/1.6 'C11';color:#6E665A;margin-top:6px;text-wrap:pretty">{{ t.rewardNote }}</span>
-                              </span>
-                            </div>
-                          </sc-if>
+                          
                           <sc-if value="{{ t.hasFeedback }}" hint-placeholder-val="{{ false }}">
                             <div style="margin-top:11px;padding:10px 12px;background:rgba(0,0,0,.3);border-left:2px solid {{ t.fbColor }}">
                               <div style="font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C">{{ t.fbLabel }}</div>
@@ -653,16 +644,7 @@
                     <div style="font:400 22px/1.7 'C11';color:#C3BAAA;margin-top:8px;text-wrap:pretty">{{ openTaskSpec }}</div>
                   </div>
                 </sc-if>
-                <sc-if value="{{ openReward.hasReward }}" hint-placeholder-val="{{ true }}">
-                  <div style="{{ openReward.rewardBox }}">
-                    <span style="{{ openReward.rewardIcon }}"></span>
-                    <span style="flex:1;min-width:0">
-                      <span style="display:block;font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">{{ openReward.rewardLabel }}</span>
-                      <span style="display:block;font:500 22px/1.4 'C11';margin-top:5px;color:{{ openReward.rewardColor }}">{{ openReward.rewardName }}</span>
-                      <span style="display:block;font:400 22px/1.6 'C11';color:#6E665A;margin-top:4px;text-wrap:pretty">{{ openReward.rewardNote }}</span>
-                    </span>
-                  </div>
-                </sc-if>
+                
                 <sc-if value="{{ isRetry }}" hint-placeholder-val="{{ false }}">
                   <div style="padding:16px 18px;background:linear-gradient(140deg,rgba(217,96,63,.12),transparent 62%),#17110F;border:1px solid rgba(217,96,63,.42)">
                     <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">

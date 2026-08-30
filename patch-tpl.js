@@ -4085,5 +4085,21 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('97. 那塊「還不能放他們過關」拿掉');
 })();
 
+
+/* 98. 礦石那一格從模板拿掉（S-02 每一列、S-05 那一項各一塊）。
+      礦石當獎勵是上一代的說法：現在一項任務給的是打贏擋在前面的那一隻，
+      加上牠掉的東西。礦石留在地圖點進去那一層的詳情裡。 */
+(function () {
+  ['{{ t.hasReward }}', '{{ openReward.hasReward }}'].forEach(function (key) {
+    var i = t.indexOf(key);
+    if (i < 0) { console.error('98. 找不到 ' + key); process.exit(1); }
+    var a = t.lastIndexOf('<sc-if', i);
+    var b = t.indexOf('</sc-if>', i);
+    if (a < 0 || b < 0) { console.error('98. ' + key + ' 的範圍抓不到'); process.exit(1); }
+    t = t.slice(0, a) + t.slice(b + 8);
+  });
+  console.log('98. 礦石那一格從模板拿掉');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

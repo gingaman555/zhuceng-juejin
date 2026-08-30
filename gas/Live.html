@@ -1681,7 +1681,6 @@
       L.setState({ reward: null, screen: 'STORY', storyIdx: 0, storyLayer: lay, storyFrom: 'S01', expanded: lay });
     };
 
-    decorateRewards(L, v);
     decorateSections(L, v);   /* 這一步會重排 taskGroups，open 在裡面就綁好了 */
     decorateRules(L, v);
     decorateFinale(L, v);
@@ -1833,67 +1832,7 @@
     });
   }
 
-  /* 礦石那一格拿掉了。它是「礦石當獎勵」那個年代的說法——現在一項任務
-     給的是打贏擋在前面的那一隻，加上牠掉的東西；礦石只是那一項做過的
-     紀錄，留在地圖點進去那一層的詳情裡。 */
-  function rewardOf(L, task) {
-    if (true) {
-      return { hasReward: false, rewardBox: 'display:none', rewardIcon: '', rewardLabel: '',
-               rewardName: '', rewardNote: '', rewardColor: '#8A8073' };
-    }
-    if (!task || !task.mineral) {
-      return { hasReward: false, rewardBox: 'display:none', rewardIcon: '', rewardLabel: '',
-               rewardName: '', rewardNote: '', rewardColor: '#8A8073' };
-    }
-    var got = task.status === 'passed';
-    /* 只有「已經破完」或「正在進行」的項目才揭露會採到什麼；還沒開始的維持 ？？？ */
-    var working = task.status === 'submitted' || task.status === 'needs_more' ||
-                  !!String(task.text || '').trim() || !!(task.files && task.files.length);
-    var open = got || working;
-    if (!open) {
-      return { hasReward: false, rewardBox: 'display:none', rewardIcon: '', rewardLabel: '',
-               rewardName: '', rewardNote: '', rewardColor: '#8A8073' };
-    }
-
-    var m = mineralOf(L, task.mineral);
-    var icon = mineralSprite(L, task.mineral, (m && m.L) || task.layer);
-    var iconStyle = icon
-      ? 'display:block;width:32px;height:32px;flex:none;background:url(' + icon + ') center/contain no-repeat;image-rendering:pixelated;' +
-        (got ? '' : 'opacity:.6;filter:saturate(.45) brightness(.88)')
-      : 'display:block;width:32px;height:32px;flex:none;background:radial-gradient(circle at 50% 45%,rgba(233,179,65,.42),rgba(233,179,65,.06) 62%,transparent 74%);animation:dormant 5s ease-in-out infinite';
-
-    return {
-      hasReward: true,
-      rewardBox: 'display:flex;align-items:center;gap:11px;margin-top:11px;padding:10px 12px;background:' +
-        (got ? 'rgba(233,179,65,.07)' : 'rgba(233,179,65,.035)') +
-        ';border:1px ' + (got ? 'solid #3A3026' : 'dashed #2E2822'),
-      rewardIcon: iconStyle,
-      rewardLabel: got ? '已經採到的礦石' : '這一項通過會採到',
-      rewardName: task.mineral,
-      rewardColor: got ? '#E9B341' : '#C3BAAA',
-      rewardNote: got
-        ? '已經在你的收藏裡。點地圖的收藏總覽可以看它是什麼。'
-        : (m ? '這一塊是：' + m.task + '　·　通過之後才看得到它長什麼樣、有什麼特性。' : '這一項通過時留下的物證。')
-    };
-  }
-
-  function decorateRewards(L, v) {
-    var S = L.state;
-
-    /* S-02 每一項 */
-    var flat = [];
-    (v.taskGroups || []).forEach(function (g) { (g.items || []).forEach(function (it) { flat.push(it); }); });
-    var ordered = [].concat(L.req(), L.ext());
-    flat.forEach(function (row, i) { Object.assign(row, rewardOf(L, ordered[i])); });
-
-    /* S-05 提交頁 */
-    var open = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0];
-    v.openReward = rewardOf(L, open);
-    v.hasSpec = !!(open && String(open.spec || '').trim());
-    v.openTaskSpec = (open && open.spec) || '';
-  }
-
-  /* ---------- 任務清單改成依狀態分區，一區一個框 ---------- */
+    /* ---------- 任務清單改成依狀態分區，一區一個框 ---------- */
 
   var SECTIONS = [
     { key: 'needs_more', tag: '要補的', desc: '他退回來了。看他的理由改完再交一次——重交次數不限。',
