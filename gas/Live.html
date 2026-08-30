@@ -300,6 +300,7 @@
       next.layerSaid = b.layerSaid || {};
       next.digs = b.digs || [];
       next.finds = b.finds || {};
+      next.starterFind = Number(b.starterFind) || 0;
       next.clears = b.clears || [];   /* 每一區走完過幾次，跨專案累加 */
       /* 老師在我們沒看的時候動過了——把變化演出來 */
       (function () {
@@ -1631,6 +1632,7 @@
 
     decorateSections(L, v);   /* 這一步會重排 taskGroups，open 在裡面就綁好了 */
     decorateRules(L, v);
+    decorateHorizon(L, v);   /* 首頁：這一趟走完是什麼樣子 */
     decorateFinale(L, v);
     decorateProtoLeftovers(L, v);
     decorateCollect(L, v);
@@ -4015,6 +4017,7 @@
 
   /* ---- 點開一件掉落物 ---- */
   function openFind(L, f, n) {
+    var isStarter = Number((L.state || {}).starterFind) === Number(f.n);
     if (!n) { L.say('還沒撿到這一件。通過一項任務會抽好幾次，抽到什麼是隨機的。'); return; }
 
     showMoment(L, {
@@ -4022,10 +4025,13 @@
       accent: '#8A8073',
       kicker: 'A FIND',
       title: f.name,
-      lede: '第 ' + findLayer(f.n) + ' 層開始撿得到。通過任務的時候在碎石裡翻出來的。',
+      /* 起步那一件不是撿到的——是下去之前就在身上的。不講清楚的話
+         學生第一天打開會以為自己漏掉了什麼。 */
+      lede: isStarter
+        ? '你下去之前，他塞了這一件在你身上。'
+        : '第 ' + findLayer(f.n) + ' 層開始撿得到。通過任務的時候在碎石裡翻出來的。',
       rows: [
-
-        { k: '哪裡撿得到', v: '第 ' + findLayer(f.n) + ' 層以後' },
+        { k: '哪裡來的', v: isStarter ? '下去之前他給的' : '第 ' + findLayer(f.n) + ' 層以後', hi: isStarter },
         { k: '你有幾件', v: n + ' 件' }
       ],
       quoteLabel: '介紹',
@@ -5264,6 +5270,56 @@
     /* 採集那條鏈拿掉：它畫的是「採礦石 → 覺得夠了 → 他放行 → 道具 → 戰利品」，
        但模板上沒有它的位置，而且中間那一步已經不是學生的動作了。 */
 
+  }
+
+  /* 這一趟走完是什麼樣子。
+     第一週學生手上是空的，系統對他而言全部是承諾——所以要先把終點說出來，
+     而且用真的數字。數字會跟著收集動，所以它從「這是承諾」慢慢變成
+     「我走到哪了」。 */
+  function decorateHorizon(L, v) {
+    var S = L.state;
+    v.hasHorizon = false;
+    if (S.role !== 'student' || !S.signedIn) return;
+
+    var mobN = (function () {
+      var seen = {};
+      (S.codex || []).forEach(function (c) {
+        seen[(c.layer || 1) + ':' + mobIdOfTask(c.id)] = 1;
+      });
+      (S.record || []).forEach(function (r) {
+        if (r.status !== 'passed') return;
+        seen[(r.layer || 1) + ':' + mobIdOfTask(r.id)] = 1;
+      });
+      return Object.keys(seen).length + (S.passed || []).length;
+    })();
+    var itemN = Object.keys(S.finds || {}).length +
+      (S.clears || []).reduce(function (a, n) { return a + (Number(n) > 0 ? 1 : 0); }, 0);
+    var layerN = (S.passed || []).length;
+
+    v.hasHorizon = true;
+    v.horizonHead = '這一趟走完是什麼樣子';
+    v.horizonRows = [
+      { k: '四個領域', v: layerN + ' / 4 層',
+        note: '一層一層往下。每一層過不過，是他決定的。' },
+      { k: '生物', v: mobN + ' / 44 種',
+        note: '每一項任務前面站一隻，每一層的盡頭再站一隻大的。' },
+      { k: '物品', v: itemN + ' / 152 種',
+        note: '打贏一隻就抽，抽到的直接進圖鑑——換組、換班、換專案都跟著你走。' },
+      { k: '最後', v: '命名封存',
+        note: '四層走完，你會幫這一趟取一個名字留下來。下一個專案打開紀錄還看得到。' }
+    ].map(function (r) {
+      return {
+        k: r.k, v: r.v, note: r.note,
+        style: 'display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;padding:9px 12px;' +
+          'background:rgba(0,0,0,.26);border-left:2px solid #3A3026',
+        kStyle: "font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;min-width:56px",
+        vStyle: "font:700 22px/1 'C11';color:#C3BAAA;min-width:78px",
+        noteStyle: "flex:1;min-width:190px;font:400 11px/1.7 'C11';color:#6E665A;text-wrap:pretty"
+      };
+    });
+    v.horizonWrap = 'margin:11px 0 0;padding:13px 15px;background:#14110E;border:1px solid #26211C';
+    v.horizonHeadStyle = "font:400 11px/1 'C11';letter-spacing:.18em;color:#8A8073;margin-bottom:10px";
+    v.horizonRowsStyle = 'display:flex;flex-direction:column;gap:5px';
   }
 
   /* ---------- S-01：三步規則＋下一件要做的事 ---------- */

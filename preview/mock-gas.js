@@ -5,7 +5,7 @@
 
   var DB = { Users: [], Sessions: [], Classes: [], Teams: [], Tasks: [], TeamTasks: [],
              Submissions: [], Reviews: [], Plans: [], Passes: [], Reads: [], Codes: [],
-             Files: [], Roster: [], MinNames: [], Checks: [], Journeys: [],
+             Files: [], Roster: [], MinNames: [], Checks: [], Journeys: [], Grants: [],
              Config: { unlockEvery: 1 } };
   try {
     var saved = localStorage.getItem('jlz.mockdb');
@@ -363,9 +363,44 @@
     });
     return out;
   }
+  /* 下去之前先給一件：斗篷人塞給你的。用 userId 決定，冪等。
+     只從第一層的常見裡挑——起步的東西不該是罕見的。 */
+  function grantStarter(userId) {
+    if (!userId) return 0;
+    DB.Grants = DB.Grants || [];
+    var had = DB.Grants.filter(function (g) { return g.userId === userId && g.kind === 'find'; })[0];
+    if (had) return Number(had.n) || 0;
+    var pool = [];
+    for (var n = 1; n <= FINDS_N; n++) {
+      if (findLayer(n) !== 1) continue;
+      if (findSlot(n) > 15) continue;
+      pool.push(n);
+    }
+    if (!pool.length) return 0;
+    var h = 2166136261, str = String(userId);
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    h ^= h >>> 16; h = Math.imul(h, 2246822507) >>> 0;
+    h ^= h >>> 13; h = Math.imul(h, 3266489909) >>> 0;
+    h = (h ^ (h >>> 16)) >>> 0;
+    var pick = pool[Math.floor(h / 4294967296 * pool.length)];
+    DB.Grants.push({ grantId: 'g' + uid(), userId: userId, kind: 'find', n: pick, why: '起步',
+                     ts: new Date().toISOString() });
+    persist();
+    return pick;
+  }
+  function grantsOf(userId) {
+    var out = {};
+    (DB.Grants || []).forEach(function (g) {
+      if (g.userId !== userId || g.kind !== 'find') return;
+      var n = Number(g.n);
+      if (n >= 1 && n <= FINDS_N) out[n] = (out[n] || 0) + 1;
+    });
+    return out;
+  }
+
   function findsOf(userId) {
     var mine = teamsOfUser(userId);
-    var out = {};
+    var out = grantsOf(userId);   /* 給過的也算 */
     DB.TeamTasks.forEach(function (r) {
       if (mine.indexOf(String(r.teamId)) < 0) return;
       var arr = Array.isArray(r.finds) && r.finds.length ? r.finds : [r.find, r.find2];
@@ -745,6 +780,7 @@
           if (p.reason) out.layerSaid[into] = String(p.reason);
         });
         out.record = recordOf(u.teamId, u.classId);
+        out.starterFind = grantStarter(u.userId);   /* 冪等 */
         out.finds = findsOf(u.userId);
         out.codex = codexOfUser(u.userId);
         out.findsTotal = FINDS_N;

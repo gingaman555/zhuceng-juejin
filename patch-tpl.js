@@ -4165,5 +4165,33 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('102. 任務頁：動手前就寫清楚會抽幾次');
 })();
 
+
+/* 103. 首頁：這一趟走完是什麼樣子。
+       第一週學生手上是空的，先把終點說出來——四層、44 隻、152 件、
+       最後幫這一趟命名封存。數字會跟著收集動。 */
+(function () {
+  /* hasTerm 有兩處（首頁與地圖），要的是首頁那一個——它在 nextAction 前面 */
+  var na = t.indexOf('{{ nextAction }}');
+  if (na < 0) { console.error('103. nextAction 找不到'); process.exit(1); }
+  var a = t.lastIndexOf('<sc-if value="{{ hasTerm }}"', na);
+  if (a < 0) { console.error('103. 首頁那個 hasTerm 找不到'); process.exit(1); }
+  var blk = '<sc-if value="{{ hasHorizon }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="{{ horizonWrap }}">' +
+      '<div style="{{ horizonHeadStyle }}">{{ horizonHead }}</div>' +
+      '<div style="{{ horizonRowsStyle }}">' +
+        '<sc-for list="{{ horizonRows }}" as="hz" hint-placeholder-count="4">' +
+          '<div style="{{ hz.style }}">' +
+            '<span style="{{ hz.kStyle }}">{{ hz.k }}</span>' +
+            '<span style="{{ hz.vStyle }}">{{ hz.v }}</span>' +
+            '<span style="{{ hz.noteStyle }}">{{ hz.note }}</span>' +
+          '</div>' +
+        '</sc-for>' +
+      '</div>' +
+    '</div>' +
+  '</sc-if>';
+  t = t.slice(0, a) + blk + t.slice(a);
+  console.log('103. 首頁：這一趟走完是什麼樣子');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
