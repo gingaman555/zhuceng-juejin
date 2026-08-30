@@ -535,7 +535,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 <div style="position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px">
                   <div style="flex:1;min-width:200px">
                     <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:var(--tx3)">DEPTH {{ depthCode }} · 目前所在</div>
-                    <div style="font:900 33px/1.2 'C11';letter-spacing:.08em;margin-top:9px;color:#F2EADA">{{ layerName }}</div>
+                    <div style="font:900 44px/1.15 'C11';letter-spacing:.06em;margin-top:11px;color:#F2EADA">{{ layerName }}</div>
                     <div style="font:400 22px/1.7 'C11';color:var(--tx3);margin-top:6px;text-wrap:pretty">{{ layerHard }}</div>
                   </div>
                   <sc-if value="{{ hasHomeBoss }}" hint-placeholder-val="{{ true }}">
@@ -554,6 +554,47 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                     <div style="font:700 33px/1 'C11';color:var(--ac);margin-top:6px">{{ weeksHere }}</div>
                   </div>
                 </div>
+              </div>
+
+              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),var(--panel);border:1px solid var(--line2)">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層的進度</span>
+                  <span style="font:700 33px/1 'C11';color:#F2EADA">{{ ruleProgress }}</span>
+                  <span style="flex:1"></span>
+                  <div style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px"><sc-for list="{{ ruleRow }}" as="rs" hint-placeholder-count="4"><span style="{{ rs.style }}"><span style="{{ rs.nStyle }}">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>
+                </div>
+                <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">下一件要做的事</div>
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:13px;margin-top:11px">
+                    <span style="flex:1;min-width:200px;font:700 33px/1.35 'C11';color:var(--tx);text-wrap:pretty">{{ nextAction }}</span>
+                    <sc-if value="{{ hasNextAction }}" hint-placeholder-val="{{ true }}">
+                      <button onClick="{{ goNextAction }}" style="font:500 22px/1 'C11';letter-spacing:.14em;color:var(--bg);background:var(--ac);border:none;padding:13px 20px;cursor:pointer;white-space:nowrap;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)">{{ nextActionBtn }}</button>
+                    </sc-if>
+                  </div>
+                  <div style="font:400 22px/1.6 'C11';color:var(--tx3);margin-top:9px;text-wrap:pretty">{{ nextActionWhy }}</div>
+                </div>
+              </div>
+              <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:0 var(--pad) 16px;display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="1">
+                    <button onClick="{{ a.go }}" style="{{ a.style }}"><span style="font:500 22px/1.5 'C11';text-align:left">{{ a.text }}</span><span style="font:400 11px/1 'C11';opacity:.7;flex:none">前往 →</span></button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
+                <div style="padding:15px;background:var(--panel);border:1px solid #26211C;position:relative">
+                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:var(--ac)"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:var(--ac)"></div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadA }}</div>
+                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ reqDone }}<span style="font:400 22px/1 'C11';color:#5F574C"> / {{ reqTotal }}</span></div>
+                  <div style="font:400 11px/1.5 'C11';color:var(--tx3);margin-top:7px">{{ statNoteA }}</div>
+                </div>
+                <div style="padding:15px;background:var(--panel);border:1px solid #26211C;position:relative">
+                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadB }}</div>
+                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ extDone }}</div>
+                  <div style="font:400 11px/1.5 'C11';color:var(--tx3);margin-top:7px">{{ statNoteB }}</div>
+                </div>
+                
               </div>
 
               <sc-if value="{{ hasHomeBand }}" hint-placeholder-val="{{ true }}">
@@ -595,6 +636,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   <div style="font:400 11px/1.7 'C11';color:var(--tx3);margin-top:9px;text-wrap:pretty">{{ homeBandNote }}</div>
                 </div>
               </sc-if>
+
               <sc-if value="{{ hasHomeHaul }}" hint-placeholder-val="{{ true }}">
                 <div style="margin:20px var(--pad) 0;padding:17px 19px;background:var(--panel);border:1px solid var(--line2)">
                   <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
@@ -624,48 +666,6 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   </div>
                 </div>
               </sc-if>
-              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),var(--panel);border:1px solid var(--line2)">
-                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層的進度</span>
-                  <span style="font:700 22px/1 'C11';color:#F2EADA">{{ ruleProgress }}</span>
-                  <span style="flex:1"></span>
-                  <div style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px"><sc-for list="{{ ruleRow }}" as="rs" hint-placeholder-count="4"><span style="{{ rs.style }}"><span style="{{ rs.nStyle }}">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>
-                </div>
-                <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">下一件要做的事</div>
-                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:13px;margin-top:11px">
-                    <span style="flex:1;min-width:200px;font:700 22px/1.5 'C11';color:var(--tx);text-wrap:pretty">{{ nextAction }}</span>
-                    <sc-if value="{{ hasNextAction }}" hint-placeholder-val="{{ true }}">
-                      <button onClick="{{ goNextAction }}" style="font:500 22px/1 'C11';letter-spacing:.14em;color:var(--bg);background:var(--ac);border:none;padding:13px 20px;cursor:pointer;white-space:nowrap;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)">{{ nextActionBtn }}</button>
-                    </sc-if>
-                  </div>
-                  <div style="font:400 22px/1.6 'C11';color:var(--tx3);margin-top:9px;text-wrap:pretty">{{ nextActionWhy }}</div>
-                </div>
-              </div>
-
-              <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
-                <div style="padding:15px;background:var(--panel);border:1px solid #26211C;position:relative">
-                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:var(--ac)"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:var(--ac)"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadA }}</div>
-                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ reqDone }}<span style="font:400 22px/1 'C11';color:#5F574C"> / {{ reqTotal }}</span></div>
-                  <div style="font:400 11px/1.5 'C11';color:var(--tx3);margin-top:7px">{{ statNoteA }}</div>
-                </div>
-                <div style="padding:15px;background:var(--panel);border:1px solid #26211C;position:relative">
-                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadB }}</div>
-                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ extDone }}</div>
-                  <div style="font:400 11px/1.5 'C11';color:var(--tx3);margin-top:7px">{{ statNoteB }}</div>
-                </div>
-                
-              </div>
-
-              <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">
-                <div style="padding:0 var(--pad) 16px;display:flex;flex-direction:column;gap:8px">
-                  <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="1">
-                    <button onClick="{{ a.go }}" style="{{ a.style }}"><span style="font:500 22px/1.5 'C11';text-align:left">{{ a.text }}</span><span style="font:400 11px/1 'C11';opacity:.7;flex:none">前往 →</span></button>
-                  </sc-for>
-                </div>
-              </sc-if>
 
               <div style="padding:0 var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
                 <button onClick="{{ goTasks }}" style="text-align:left;padding:19px;background:linear-gradient(140deg,rgba(233,179,65,.12),transparent 60%),var(--panel);border:1px solid var(--line2);cursor:pointer;color:var(--tx)">
@@ -678,8 +678,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   <div style="font:700 22px/1.4 'C11';margin-top:9px">重看開頭故事</div>
                   <div style="font:400 22px/1.7 'C11';color:var(--tx3);margin-top:5px;text-wrap:pretty">跳過不會少一份資訊，摘要固定在任務頁頂端。</div>
                 </button>
-              </div>
-            </div>
+              </div></div>
           </sc-if>
 
           <sc-if value="{{ scS02 }}" hint-placeholder-val="{{ false }}">
@@ -2119,6 +2118,34 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 <h1 style="font:900 33px/1.2 'C11';margin:14px 0 0;letter-spacing:.07em;color:#F2EADA">待你驗收</h1>
                 <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:8px 0 0;text-wrap:pretty">依停留週數排序。排最前面的不是進度最快的，是待最久的。</p>
               </div>
+              <div style="padding:0 var(--pad) 8px;display:flex;align-items:baseline;gap:10px">
+                <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">待確認佇列</span>
+                <span style="flex:1;height:1px;background:#221E19"></span>
+              </div>
+              <sc-if value="{{ queueEmptyHome }}" hint-placeholder-val="{{ false }}">
+                <div style="margin:0 var(--pad) 14px;padding:17px 19px;background:rgba(0,0,0,.26);border:1px dashed var(--line)">
+                  <div style="font:500 22px/1.5 'C11';color:var(--tx2)">還沒有人送出東西。</div>
+                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:8px;text-wrap:pretty">學期剛開始。學生交出第一項之後，這裡會依停留週數排序，最久的排最前面。下面仍列出全班，可以先確認每一組都進來了。</div>
+                </div>
+              </sc-if>
+              <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
+                  <button onClick="{{ q.open }}" style="{{ q.style }}">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
+                      <span style="{{ q.weekStyle }}">停留 {{ q.weeks }} 週</span>
+                      <span style="font:700 22px/1.4 'C11'">{{ q.team }}</span>
+                      <span style="font:400 11px/1 'C11';color:#5F574C">{{ q.layer }}</span>
+                      <sc-if value="{{ q.flag }}" hint-placeholder-val="{{ false }}">
+                        <span style="font:500 11px/1 'C11';color:#D9603F;border:1px solid rgba(217,96,63,.4);padding:5px 7px;white-space:nowrap;flex:none">建議聯繫</span>
+                      </sc-if>
+                    </div>
+                    <div style="font:400 22px/1.7 'C11';color:#9A9184;margin-top:8px;text-align:left;text-wrap:pretty">{{ q.detail }}</div>
+                    <div style="display:flex;gap:14px;margin-top:9px;font:400 11px/1 'C11';color:#5F574C">
+                      <span>待確認 {{ q.pending }}</span><span>逾期 {{ q.overdue }}</span>
+                    </div>
+                  </button>
+                </sc-for>
+              </div>
               <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px">
                 <sc-for list="{{ teacherStats }}" as="s" hint-placeholder-count="3">
                   <div style="{{ s.style }}">
@@ -2163,36 +2190,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                     </button>
                   </sc-for>
                 </div>
-              </sc-if>
-              <div style="padding:0 var(--pad) 8px;display:flex;align-items:baseline;gap:10px">
-                <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">待確認佇列</span>
-                <span style="flex:1;height:1px;background:#221E19"></span>
-              </div>
-              <sc-if value="{{ queueEmptyHome }}" hint-placeholder-val="{{ false }}">
-                <div style="margin:0 var(--pad) 14px;padding:17px 19px;background:rgba(0,0,0,.26);border:1px dashed var(--line)">
-                  <div style="font:500 22px/1.5 'C11';color:var(--tx2)">還沒有人送出東西。</div>
-                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:8px;text-wrap:pretty">學期剛開始。學生交出第一項之後，這裡會依停留週數排序，最久的排最前面。下面仍列出全班，可以先確認每一組都進來了。</div>
-                </div>
-              </sc-if>
-              <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:8px">
-                <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
-                  <button onClick="{{ q.open }}" style="{{ q.style }}">
-                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
-                      <span style="{{ q.weekStyle }}">停留 {{ q.weeks }} 週</span>
-                      <span style="font:700 22px/1.4 'C11'">{{ q.team }}</span>
-                      <span style="font:400 11px/1 'C11';color:#5F574C">{{ q.layer }}</span>
-                      <sc-if value="{{ q.flag }}" hint-placeholder-val="{{ false }}">
-                        <span style="font:500 11px/1 'C11';color:#D9603F;border:1px solid rgba(217,96,63,.4);padding:5px 7px;white-space:nowrap;flex:none">建議聯繫</span>
-                      </sc-if>
-                    </div>
-                    <div style="font:400 22px/1.7 'C11';color:#9A9184;margin-top:8px;text-align:left;text-wrap:pretty">{{ q.detail }}</div>
-                    <div style="display:flex;gap:14px;margin-top:9px;font:400 11px/1 'C11';color:#5F574C">
-                      <span>待確認 {{ q.pending }}</span><span>逾期 {{ q.overdue }}</span>
-                    </div>
-                  </button>
-                </sc-for>
-              </div>
-            </div>
+              </sc-if></div>
           </sc-if>
 
           <sc-if value="{{ scT02 }}" hint-placeholder-val="{{ false }}">
@@ -7547,6 +7545,17 @@ class Component extends DCLogic {
        這裡是兩端共用的地方——放進 decorateStudent 的話老師端會沒有變數。 */
     v.uiVars = String(v.uiVars || '') + themeVars(L);
 
+    /* 頁面代號（T-04 · CLASS MAP 這種）有幾個是 Logic 算出來的，不在模板裡，
+       所以模板那一支 patch 抓不到。Logic 不能改，在這裡切掉前面那一半。
+       要放在兩端共用的地方——T-04 是老師端的頁。 */
+    ['mapKicker'].forEach(function (k) {
+      var val = v[k];
+      if (typeof val !== 'string') return;
+      var m = val.indexOf(' · ');
+      if (m !== 4 || val.charAt(1) !== '-') return;   /* 只吃「X-00 · 」開頭 */
+      v[k] = val.slice(m + 3);
+    });
+
     retellLayers(L);
     momentVals(L, v);
     decorateAuth(L, v);
@@ -8124,6 +8133,7 @@ class Component extends DCLogic {
     decorateRules(L, v);
     decorateHorizon(L, v);   /* 首頁：這一趟走完是什麼樣子 */
 
+
     /* 原型的逾期提示寫「仍計入等級」——等級是工具階級留下來的字，
        那一套整個拿掉了，學生看到只會問「等級是什麼」。 */
     (v.alerts || []).forEach(function (a) {
@@ -8422,7 +8432,10 @@ class Component extends DCLogic {
     return ';--bg:' + th.bg + ';--field:' + th.field + ';--panel:' + th.panel +
            ';--line:' + th.line + ';--line2:' + th.line2 +
            ';--ac:' + th.ac + ';--ac-dim:' + th.acDim + ';--ac-hi:' + th.acHi +
-           ';--tx:' + th.tx + ';--tx2:' + th.tx2 + ';--tx3:' + th.tx3 + ';';
+           ';--tx:' + th.tx + ';--tx2:' + th.tx2 + ';--tx3:' + th.tx3 +
+           /* 字級。Cubic 11 是 11px 網格的點陣字，非整數倍會糊掉，
+              所以這五階全部是 11 的倍數。新寫的東西用這些變數。 */
+           ';--t1:11px;--t2:22px;--t3:33px;--t4:44px;--t5:66px;';
   }
 
 
@@ -8473,7 +8486,7 @@ class Component extends DCLogic {
           : fog ? 'rgba(0,0,0,.55)' : 'rgba(' + hexRgb(hue) + ',.2)') + ';' +
         (st.complete && !st.cleared ? 'box-shadow:0 0 12px rgba(233,179,65,.8);' : '') +
         'clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);',
-      nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
+      nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);" +
         'white-space:nowrap;color:' +
         (st.cleared || st.complete ? 'var(--ac-hi)' : fog ? '#332C25' : showBoss ? '#9A9184' : 'var(--tx3)'),
       style: 'flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;' +
@@ -8587,7 +8600,7 @@ class Component extends DCLogic {
         : 'border-radius:50%;');
     m.skyTagStyle = 'position:absolute;left:var(--mcol);top:26px;z-index:2;' +
       "font:400 11px/1 'C11';letter-spacing:.16em;color:rgba(233,179,65,.7);" +
-      'pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top';
+      'pointer-events:none;text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);white-space:nowrap;transform:scale(.86);transform-origin:left top';
   }
 
   function decorateBoardTeacher(L, v) {
@@ -8662,12 +8675,30 @@ class Component extends DCLogic {
 
       m.steps = cells;
       m.stepsStyle = stripStyle(mob, st.here.length > 0);
+
+      /* 這一層的狀態：老師看的是全班，不是自己。原型算的是檢視者的進度，
+         老師沒有進度，所以四層都會被判成「已通過」。 */
+      (function () {
+        var all = L.teams() || [];
+        var hereN = st.here.length;
+        var pastN = all.filter(function (t) { return (Number(t.layer) || 1) > n; }).length;
+        var txt, col;
+        /* 旁邊的隊伍籤已經寫了「N 組在這一層」，這一格就別再講一次——
+           改成講通過：這一層有沒有人走掉了。 */
+        if (all.length && pastN >= all.length) { txt = '都過去了'; col = 'var(--tx3)'; }
+        else if (pastN) { txt = pastN + ' 組過去了'; col = 'var(--tx2)'; }
+        else if (hereN) { txt = '還沒有人過去'; col = 'var(--ac)'; }
+        else { txt = '還沒有人到'; col = 'var(--tx3)'; }
+        m.state = txt;
+        m.stateStyle = "font:400 11px/1 'C11';letter-spacing:.1em;margin-top:7px;color:" + col +
+          ";text-shadow:0 1px 4px rgba(0,0,0,.9)";
+      })();
       m.stepsTag = "第 " + (base + 1) + "–" + (base + st.vein.length) + " 塊　·　你開了 " +
         st.openedN + "/" + st.vein.length;
       m.stepsTagStyle = "position:absolute;left:var(--mcol);top:9px;z-index:2;" +
         "font:400 11px/1 'C11';letter-spacing:.1em;color:" +
         (st.openedN >= st.vein.length ? "var(--ac-hi)" : "var(--tx3)") +
-        ";pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top";
+        ";pointer-events:none;text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);white-space:nowrap;transform:scale(.86);transform-origin:left top";
 
       /* 哪幾組在這一層 */
       m.others = othersChips(L, n, st.here, function (t) {
@@ -8696,7 +8727,7 @@ class Component extends DCLogic {
       m.othersStyle = "position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;" +
         "gap:5px;justify-content:flex-end;max-width:58%;overflow:hidden";
       m.othersNote = st.here.length + " 組在這一層";
-      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86)";
+      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86);text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);";
     });
   }
 
@@ -11062,7 +11093,7 @@ class Component extends DCLogic {
               : back ? 'rgba(217,96,63,.22)' : wait ? 'rgba(255,255,255,.09)'
               : fog ? 'rgba(0,0,0,.55)' : opened ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.4)') + ';' +
             (me ? 'box-shadow:0 0 12px rgba(233,179,65,.8);' : ''),
-          nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
+          nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);" +
             'white-space:nowrap;color:' + (got ? 'var(--ac-hi)' : me ? 'var(--ac-hi)' : fog ? '#332C25' : 'var(--tx3)'),
           style: 'flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;cursor:' +
             (fog ? 'default' : 'pointer') + ';pointer-events:auto'
@@ -11129,7 +11160,7 @@ class Component extends DCLogic {
       m.hasOthers = here.length > 0;   /* 別組不上迷霧：你本來就看得到別人的營火 */
       m.othersStyle = 'position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;gap:5px;justify-content:flex-end;max-width:58%;overflow:hidden';
       m.othersNote = here.length + ' 組也在這一層';
-      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86)";
+      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86);text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);";
     });
   }
 

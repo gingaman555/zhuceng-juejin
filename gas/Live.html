@@ -1179,6 +1179,17 @@
        這裡是兩端共用的地方——放進 decorateStudent 的話老師端會沒有變數。 */
     v.uiVars = String(v.uiVars || '') + themeVars(L);
 
+    /* 頁面代號（T-04 · CLASS MAP 這種）有幾個是 Logic 算出來的，不在模板裡，
+       所以模板那一支 patch 抓不到。Logic 不能改，在這裡切掉前面那一半。
+       要放在兩端共用的地方——T-04 是老師端的頁。 */
+    ['mapKicker'].forEach(function (k) {
+      var val = v[k];
+      if (typeof val !== 'string') return;
+      var m = val.indexOf(' · ');
+      if (m !== 4 || val.charAt(1) !== '-') return;   /* 只吃「X-00 · 」開頭 */
+      v[k] = val.slice(m + 3);
+    });
+
     retellLayers(L);
     momentVals(L, v);
     decorateAuth(L, v);
@@ -1756,6 +1767,7 @@
     decorateRules(L, v);
     decorateHorizon(L, v);   /* 首頁：這一趟走完是什麼樣子 */
 
+
     /* 原型的逾期提示寫「仍計入等級」——等級是工具階級留下來的字，
        那一套整個拿掉了，學生看到只會問「等級是什麼」。 */
     (v.alerts || []).forEach(function (a) {
@@ -2054,7 +2066,10 @@
     return ';--bg:' + th.bg + ';--field:' + th.field + ';--panel:' + th.panel +
            ';--line:' + th.line + ';--line2:' + th.line2 +
            ';--ac:' + th.ac + ';--ac-dim:' + th.acDim + ';--ac-hi:' + th.acHi +
-           ';--tx:' + th.tx + ';--tx2:' + th.tx2 + ';--tx3:' + th.tx3 + ';';
+           ';--tx:' + th.tx + ';--tx2:' + th.tx2 + ';--tx3:' + th.tx3 +
+           /* 字級。Cubic 11 是 11px 網格的點陣字，非整數倍會糊掉，
+              所以這五階全部是 11 的倍數。新寫的東西用這些變數。 */
+           ';--t1:11px;--t2:22px;--t3:33px;--t4:44px;--t5:66px;';
   }
 
 
@@ -2105,7 +2120,7 @@
           : fog ? 'rgba(0,0,0,.55)' : 'rgba(' + hexRgb(hue) + ',.2)') + ';' +
         (st.complete && !st.cleared ? 'box-shadow:0 0 12px rgba(233,179,65,.8);' : '') +
         'clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);',
-      nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
+      nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);" +
         'white-space:nowrap;color:' +
         (st.cleared || st.complete ? 'var(--ac-hi)' : fog ? '#332C25' : showBoss ? '#9A9184' : 'var(--tx3)'),
       style: 'flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;' +
@@ -2219,7 +2234,7 @@
         : 'border-radius:50%;');
     m.skyTagStyle = 'position:absolute;left:var(--mcol);top:26px;z-index:2;' +
       "font:400 11px/1 'C11';letter-spacing:.16em;color:rgba(233,179,65,.7);" +
-      'pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top';
+      'pointer-events:none;text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);white-space:nowrap;transform:scale(.86);transform-origin:left top';
   }
 
   function decorateBoardTeacher(L, v) {
@@ -2294,12 +2309,30 @@
 
       m.steps = cells;
       m.stepsStyle = stripStyle(mob, st.here.length > 0);
+
+      /* 這一層的狀態：老師看的是全班，不是自己。原型算的是檢視者的進度，
+         老師沒有進度，所以四層都會被判成「已通過」。 */
+      (function () {
+        var all = L.teams() || [];
+        var hereN = st.here.length;
+        var pastN = all.filter(function (t) { return (Number(t.layer) || 1) > n; }).length;
+        var txt, col;
+        /* 旁邊的隊伍籤已經寫了「N 組在這一層」，這一格就別再講一次——
+           改成講通過：這一層有沒有人走掉了。 */
+        if (all.length && pastN >= all.length) { txt = '都過去了'; col = 'var(--tx3)'; }
+        else if (pastN) { txt = pastN + ' 組過去了'; col = 'var(--tx2)'; }
+        else if (hereN) { txt = '還沒有人過去'; col = 'var(--ac)'; }
+        else { txt = '還沒有人到'; col = 'var(--tx3)'; }
+        m.state = txt;
+        m.stateStyle = "font:400 11px/1 'C11';letter-spacing:.1em;margin-top:7px;color:" + col +
+          ";text-shadow:0 1px 4px rgba(0,0,0,.9)";
+      })();
       m.stepsTag = "第 " + (base + 1) + "–" + (base + st.vein.length) + " 塊　·　你開了 " +
         st.openedN + "/" + st.vein.length;
       m.stepsTagStyle = "position:absolute;left:var(--mcol);top:9px;z-index:2;" +
         "font:400 11px/1 'C11';letter-spacing:.1em;color:" +
         (st.openedN >= st.vein.length ? "var(--ac-hi)" : "var(--tx3)") +
-        ";pointer-events:none;white-space:nowrap;transform:scale(.86);transform-origin:left top";
+        ";pointer-events:none;text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);white-space:nowrap;transform:scale(.86);transform-origin:left top";
 
       /* 哪幾組在這一層 */
       m.others = othersChips(L, n, st.here, function (t) {
@@ -2328,7 +2361,7 @@
       m.othersStyle = "position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;" +
         "gap:5px;justify-content:flex-end;max-width:58%;overflow:hidden";
       m.othersNote = st.here.length + " 組在這一層";
-      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86)";
+      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86);text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);";
     });
   }
 
@@ -4694,7 +4727,7 @@
               : back ? 'rgba(217,96,63,.22)' : wait ? 'rgba(255,255,255,.09)'
               : fog ? 'rgba(0,0,0,.55)' : opened ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.4)') + ';' +
             (me ? 'box-shadow:0 0 12px rgba(233,179,65,.8);' : ''),
-          nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);" +
+          nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;transform:scale(.72);text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);" +
             'white-space:nowrap;color:' + (got ? 'var(--ac-hi)' : me ? 'var(--ac-hi)' : fog ? '#332C25' : 'var(--tx3)'),
           style: 'flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;cursor:' +
             (fog ? 'default' : 'pointer') + ';pointer-events:auto'
@@ -4761,7 +4794,7 @@
       m.hasOthers = here.length > 0;   /* 別組不上迷霧：你本來就看得到別人的營火 */
       m.othersStyle = 'position:absolute;right:13px;top:8px;z-index:3;display:flex;flex-wrap:nowrap;gap:5px;justify-content:flex-end;max-width:58%;overflow:hidden';
       m.othersNote = here.length + ' 組也在這一層';
-      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86)";
+      m.othersNoteStyle = "font:400 11px/1 'C11';letter-spacing:.1em;color:var(--tx3);align-self:center;transform:scale(.86);text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);";
     });
   }
 

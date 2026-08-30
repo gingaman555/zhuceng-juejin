@@ -4401,5 +4401,132 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("115. 拿掉畫面上的頁面代號：頁首 " + n1 + " · 側欄 1 · 首頁 " + n3);
 })();
 
+
+/* 116. 首頁重排：把「下一件要做的事」搬到第一屏。
+       原本的順序是 標題／地圖／排行榜＋這一趟／進度＋下一件要做的事／
+       統計／警示／兩張卡。實測首頁捲動高 2106px、視窗 682px，而唯一
+       該按的按鈕在 y=1461——使用者要捲過兩個整螢幕才看得到它。
+       新順序：標題＋守關 → 進度＋四步＋下一件要做的事 → 警示 → 統計
+       → 地圖 → 排行榜＋這一趟 → 兩張卡。 */
+(function () {
+  var KEY = "data-screen-label=\"S-01 學生首頁\"";
+  var k = t.indexOf(KEY);
+  if (k < 0) { console.error("116. 找不到首頁"); process.exit(1); }
+  var bodyStart = t.indexOf(">", k) + 1;
+
+  function pairEnd(src, from, openTag, closeTag) {
+    var i = from, depth = 0;
+    while (i < src.length) {
+      var o = src.indexOf(openTag, i), c = src.indexOf(closeTag, i);
+      if (c < 0) return -1;
+      if (o >= 0 && o < c) { depth++; i = o + openTag.length; continue; }
+      depth--; i = c + closeTag.length;
+      if (depth === 0) return i;
+    }
+    return -1;
+  }
+
+  var blocks = [], gaps = [], pos = bodyStart, guard = 0;
+  while (guard++ < 40) {
+    var ws = pos;
+    var WS = String.fromCharCode(32, 9, 13, 10);   /* 不用正則：反斜線在產生器裡會被吃掉 */
+    while (pos < t.length && WS.indexOf(t.charAt(pos)) >= 0) pos++;
+    if (t.substr(pos, 6) === "</div>") break;
+    var end;
+    if (t.substr(pos, 6) === "<sc-if") end = pairEnd(t, pos, "<sc-if", "</sc-if>");
+    else if (t.substr(pos, 4) === "<div") end = pairEnd(t, pos, "<div", "</div>");
+    else break;
+    if (end < 0) break;
+    gaps.push(t.slice(ws, pos));
+    blocks.push(t.slice(pos, end));
+    pos = end;
+  }
+  if (blocks.length !== 7) {
+    console.error("116. 首頁區塊數不是 7，是 " + blocks.length + "——結構變了，先確認再改順序");
+    process.exit(1);
+  }
+  var ORDER = [0, 3, 5, 4, 1, 2, 6];
+  var tail = t.slice(pos);
+  var out = "";
+  ORDER.forEach(function (n, idx) { out += gaps[idx] + blocks[n]; });
+  t = t.slice(0, bodyStart) + out + tail;
+  console.log("116. 首頁重排：下一件要做的事搬到第一屏");
+})();
+
+
+/* 117. 字級階層。
+       Cubic 11 是 11px 網格的點陣字，非 11 的倍數會糊掉——所以整套只有
+       11 與 22 兩階不是偷懶，是字型的限制。但 33／44／66 一樣是整數倍，
+       原本幾乎沒有用到（全站只有四個元素在 33px），所以每一頁都是一整面
+       等重的字。這裡先把第一屏的三個關鍵字撐開，建立階層。
+
+         11　標籤 · meta · 狀態
+         22　內文 · 清單 · 按鈕
+         33　區塊標題 · 關鍵數字
+         44　頁面主標
+         66　時刻卡的主字
+
+       Live 那邊把這五階寫成 --t1..--t5，之後新寫的東西直接用變數。 */
+(function () {
+  var PAIRS = [["font:700 22px/1.5 'C11';color:var(--tx);text-wrap:pretty\">{{ nextAction }}","font:700 33px/1.35 'C11';color:var(--tx);text-wrap:pretty\">{{ nextAction }}","下一件要做的事：22 → 33"],["font:900 33px/1.2 'C11';letter-spacing:.08em;margin-top:9px;color:#F2EADA\">{{ layerName }}","font:900 44px/1.15 'C11';letter-spacing:.06em;margin-top:11px;color:#F2EADA\">{{ layerName }}","層名：33 → 44"],["font:700 22px/1 'C11';color:#F2EADA\">{{ ruleProgress }}","font:700 33px/1 'C11';color:#F2EADA\">{{ ruleProgress }}","這一層的進度：22 → 33"]];
+  PAIRS.forEach(function (pr) {
+    if (t.split(pr[0]).length - 1 !== 1) {
+      console.error("117. 找不到：" + pr[2]); process.exit(1);
+    }
+    t = t.replace(pr[0], pr[1]);
+  });
+  console.log("117. 字級階層：第一屏三處撐開");
+})();
+
+
+/* 118. 老師主控台重排：工作排在統計前面。
+       本來是 標題／三張統計卡／YOUR WORDS／班級／待確認佇列。那三張卡
+       多半是 0（待確認 0、停留≥3週 0），真正要動手的佇列排在第五。
+       新順序：標題 → 待確認佇列 → 統計卡 → YOUR WORDS → 班級。 */
+(function () {
+  var KEY = "data-screen-label=\"T-01 老師首頁\"";
+  var k = t.indexOf(KEY);
+  if (k < 0) { console.error("118. 找不到老師首頁"); process.exit(1); }
+  var bodyStart = t.indexOf(">", k) + 1;
+  var WS = String.fromCharCode(32, 9, 13, 10);
+
+  function pairEnd(src, from, openTag, closeTag) {
+    var i = from, depth = 0;
+    while (i < src.length) {
+      var o = src.indexOf(openTag, i), c = src.indexOf(closeTag, i);
+      if (c < 0) return -1;
+      if (o >= 0 && o < c) { depth++; i = o + openTag.length; continue; }
+      depth--; i = c + closeTag.length;
+      if (depth === 0) return i;
+    }
+    return -1;
+  }
+
+  var blocks = [], gaps = [], pos = bodyStart, guard = 0;
+  while (guard++ < 40) {
+    var ws = pos;
+    while (pos < t.length && WS.indexOf(t.charAt(pos)) >= 0) pos++;
+    if (t.substr(pos, 6) === "</div>") break;
+    var end;
+    if (t.substr(pos, 6) === "<sc-if") end = pairEnd(t, pos, "<sc-if", "</sc-if>");
+    else if (t.substr(pos, 4) === "<div") end = pairEnd(t, pos, "<div", "</div>");
+    else break;
+    if (end < 0) break;
+    gaps.push(t.slice(ws, pos));
+    blocks.push(t.slice(pos, end));
+    pos = end;
+  }
+  if (blocks.length !== 7) {
+    console.error("118. 老師首頁區塊數不是 7，是 " + blocks.length);
+    process.exit(1);
+  }
+  var ORDER = [0, 4, 5, 6, 1, 2, 3];
+  var tail = t.slice(pos);
+  var out = "";
+  ORDER.forEach(function (n, idx) { out += gaps[idx] + blocks[n]; });
+  t = t.slice(0, bodyStart) + out + tail;
+  console.log("118. 老師主控台重排：佇列搬到統計前面");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

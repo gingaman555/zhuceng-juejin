@@ -394,7 +394,7 @@
                 <div style="position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px">
                   <div style="flex:1;min-width:200px">
                     <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:var(--tx3)">DEPTH {{ depthCode }} · 目前所在</div>
-                    <div style="font:900 33px/1.2 'C11';letter-spacing:.08em;margin-top:9px;color:#F2EADA">{{ layerName }}</div>
+                    <div style="font:900 44px/1.15 'C11';letter-spacing:.06em;margin-top:11px;color:#F2EADA">{{ layerName }}</div>
                     <div style="font:400 22px/1.7 'C11';color:var(--tx3);margin-top:6px;text-wrap:pretty">{{ layerHard }}</div>
                   </div>
                   <sc-if value="{{ hasHomeBoss }}" hint-placeholder-val="{{ true }}">
@@ -413,6 +413,47 @@
                     <div style="font:700 33px/1 'C11';color:var(--ac);margin-top:6px">{{ weeksHere }}</div>
                   </div>
                 </div>
+              </div>
+
+              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),var(--panel);border:1px solid var(--line2)">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層的進度</span>
+                  <span style="font:700 33px/1 'C11';color:#F2EADA">{{ ruleProgress }}</span>
+                  <span style="flex:1"></span>
+                  <div style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px"><sc-for list="{{ ruleRow }}" as="rs" hint-placeholder-count="4"><span style="{{ rs.style }}"><span style="{{ rs.nStyle }}">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>
+                </div>
+                <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">下一件要做的事</div>
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:13px;margin-top:11px">
+                    <span style="flex:1;min-width:200px;font:700 33px/1.35 'C11';color:var(--tx);text-wrap:pretty">{{ nextAction }}</span>
+                    <sc-if value="{{ hasNextAction }}" hint-placeholder-val="{{ true }}">
+                      <button onClick="{{ goNextAction }}" style="font:500 22px/1 'C11';letter-spacing:.14em;color:var(--bg);background:var(--ac);border:none;padding:13px 20px;cursor:pointer;white-space:nowrap;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)">{{ nextActionBtn }}</button>
+                    </sc-if>
+                  </div>
+                  <div style="font:400 22px/1.6 'C11';color:var(--tx3);margin-top:9px;text-wrap:pretty">{{ nextActionWhy }}</div>
+                </div>
+              </div>
+              <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:0 var(--pad) 16px;display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="1">
+                    <button onClick="{{ a.go }}" style="{{ a.style }}"><span style="font:500 22px/1.5 'C11';text-align:left">{{ a.text }}</span><span style="font:400 11px/1 'C11';opacity:.7;flex:none">前往 →</span></button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
+                <div style="padding:15px;background:var(--panel);border:1px solid #26211C;position:relative">
+                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:var(--ac)"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:var(--ac)"></div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadA }}</div>
+                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ reqDone }}<span style="font:400 22px/1 'C11';color:#5F574C"> / {{ reqTotal }}</span></div>
+                  <div style="font:400 11px/1.5 'C11';color:var(--tx3);margin-top:7px">{{ statNoteA }}</div>
+                </div>
+                <div style="padding:15px;background:var(--panel);border:1px solid #26211C;position:relative">
+                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadB }}</div>
+                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ extDone }}</div>
+                  <div style="font:400 11px/1.5 'C11';color:var(--tx3);margin-top:7px">{{ statNoteB }}</div>
+                </div>
+                
               </div>
 
               <sc-if value="{{ hasHomeBand }}" hint-placeholder-val="{{ true }}">
@@ -454,6 +495,7 @@
                   <div style="font:400 11px/1.7 'C11';color:var(--tx3);margin-top:9px;text-wrap:pretty">{{ homeBandNote }}</div>
                 </div>
               </sc-if>
+
               <sc-if value="{{ hasHomeHaul }}" hint-placeholder-val="{{ true }}">
                 <div style="margin:20px var(--pad) 0;padding:17px 19px;background:var(--panel);border:1px solid var(--line2)">
                   <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:11px">
@@ -483,48 +525,6 @@
                   </div>
                 </div>
               </sc-if>
-              <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),var(--panel);border:1px solid var(--line2)">
-                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層的進度</span>
-                  <span style="font:700 22px/1 'C11';color:#F2EADA">{{ ruleProgress }}</span>
-                  <span style="flex:1"></span>
-                  <div style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px"><sc-for list="{{ ruleRow }}" as="rs" hint-placeholder-count="4"><span style="{{ rs.style }}"><span style="{{ rs.nStyle }}">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>
-                </div>
-                <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">下一件要做的事</div>
-                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:13px;margin-top:11px">
-                    <span style="flex:1;min-width:200px;font:700 22px/1.5 'C11';color:var(--tx);text-wrap:pretty">{{ nextAction }}</span>
-                    <sc-if value="{{ hasNextAction }}" hint-placeholder-val="{{ true }}">
-                      <button onClick="{{ goNextAction }}" style="font:500 22px/1 'C11';letter-spacing:.14em;color:var(--bg);background:var(--ac);border:none;padding:13px 20px;cursor:pointer;white-space:nowrap;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)">{{ nextActionBtn }}</button>
-                    </sc-if>
-                  </div>
-                  <div style="font:400 22px/1.6 'C11';color:var(--tx3);margin-top:9px;text-wrap:pretty">{{ nextActionWhy }}</div>
-                </div>
-              </div>
-
-              <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
-                <div style="padding:15px;background:var(--panel);border:1px solid #26211C;position:relative">
-                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:var(--ac)"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:var(--ac)"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadA }}</div>
-                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ reqDone }}<span style="font:400 22px/1 'C11';color:#5F574C"> / {{ reqTotal }}</span></div>
-                  <div style="font:400 11px/1.5 'C11';color:var(--tx3);margin-top:7px">{{ statNoteA }}</div>
-                </div>
-                <div style="padding:15px;background:var(--panel);border:1px solid #26211C;position:relative">
-                  <div style="position:absolute;top:0;left:0;width:10px;height:1px;background:#5F574C"></div><div style="position:absolute;top:0;left:0;width:1px;height:10px;background:#5F574C"></div>
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">{{ statHeadB }}</div>
-                  <div style="font:700 33px/1 'C11';margin-top:10px">{{ extDone }}</div>
-                  <div style="font:400 11px/1.5 'C11';color:var(--tx3);margin-top:7px">{{ statNoteB }}</div>
-                </div>
-                
-              </div>
-
-              <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">
-                <div style="padding:0 var(--pad) 16px;display:flex;flex-direction:column;gap:8px">
-                  <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="1">
-                    <button onClick="{{ a.go }}" style="{{ a.style }}"><span style="font:500 22px/1.5 'C11';text-align:left">{{ a.text }}</span><span style="font:400 11px/1 'C11';opacity:.7;flex:none">前往 →</span></button>
-                  </sc-for>
-                </div>
-              </sc-if>
 
               <div style="padding:0 var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--card),1fr));gap:11px">
                 <button onClick="{{ goTasks }}" style="text-align:left;padding:19px;background:linear-gradient(140deg,rgba(233,179,65,.12),transparent 60%),var(--panel);border:1px solid var(--line2);cursor:pointer;color:var(--tx)">
@@ -537,8 +537,7 @@
                   <div style="font:700 22px/1.4 'C11';margin-top:9px">重看開頭故事</div>
                   <div style="font:400 22px/1.7 'C11';color:var(--tx3);margin-top:5px;text-wrap:pretty">跳過不會少一份資訊，摘要固定在任務頁頂端。</div>
                 </button>
-              </div>
-            </div>
+              </div></div>
           </sc-if>
 
           <sc-if value="{{ scS02 }}" hint-placeholder-val="{{ false }}">
@@ -1978,6 +1977,34 @@
                 <h1 style="font:900 33px/1.2 'C11';margin:14px 0 0;letter-spacing:.07em;color:#F2EADA">待你驗收</h1>
                 <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:8px 0 0;text-wrap:pretty">依停留週數排序。排最前面的不是進度最快的，是待最久的。</p>
               </div>
+              <div style="padding:0 var(--pad) 8px;display:flex;align-items:baseline;gap:10px">
+                <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">待確認佇列</span>
+                <span style="flex:1;height:1px;background:#221E19"></span>
+              </div>
+              <sc-if value="{{ queueEmptyHome }}" hint-placeholder-val="{{ false }}">
+                <div style="margin:0 var(--pad) 14px;padding:17px 19px;background:rgba(0,0,0,.26);border:1px dashed var(--line)">
+                  <div style="font:500 22px/1.5 'C11';color:var(--tx2)">還沒有人送出東西。</div>
+                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:8px;text-wrap:pretty">學期剛開始。學生交出第一項之後，這裡會依停留週數排序，最久的排最前面。下面仍列出全班，可以先確認每一組都進來了。</div>
+                </div>
+              </sc-if>
+              <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
+                  <button onClick="{{ q.open }}" style="{{ q.style }}">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
+                      <span style="{{ q.weekStyle }}">停留 {{ q.weeks }} 週</span>
+                      <span style="font:700 22px/1.4 'C11'">{{ q.team }}</span>
+                      <span style="font:400 11px/1 'C11';color:#5F574C">{{ q.layer }}</span>
+                      <sc-if value="{{ q.flag }}" hint-placeholder-val="{{ false }}">
+                        <span style="font:500 11px/1 'C11';color:#D9603F;border:1px solid rgba(217,96,63,.4);padding:5px 7px;white-space:nowrap;flex:none">建議聯繫</span>
+                      </sc-if>
+                    </div>
+                    <div style="font:400 22px/1.7 'C11';color:#9A9184;margin-top:8px;text-align:left;text-wrap:pretty">{{ q.detail }}</div>
+                    <div style="display:flex;gap:14px;margin-top:9px;font:400 11px/1 'C11';color:#5F574C">
+                      <span>待確認 {{ q.pending }}</span><span>逾期 {{ q.overdue }}</span>
+                    </div>
+                  </button>
+                </sc-for>
+              </div>
               <div style="padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px">
                 <sc-for list="{{ teacherStats }}" as="s" hint-placeholder-count="3">
                   <div style="{{ s.style }}">
@@ -2022,36 +2049,7 @@
                     </button>
                   </sc-for>
                 </div>
-              </sc-if>
-              <div style="padding:0 var(--pad) 8px;display:flex;align-items:baseline;gap:10px">
-                <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">待確認佇列</span>
-                <span style="flex:1;height:1px;background:#221E19"></span>
-              </div>
-              <sc-if value="{{ queueEmptyHome }}" hint-placeholder-val="{{ false }}">
-                <div style="margin:0 var(--pad) 14px;padding:17px 19px;background:rgba(0,0,0,.26);border:1px dashed var(--line)">
-                  <div style="font:500 22px/1.5 'C11';color:var(--tx2)">還沒有人送出東西。</div>
-                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:8px;text-wrap:pretty">學期剛開始。學生交出第一項之後，這裡會依停留週數排序，最久的排最前面。下面仍列出全班，可以先確認每一組都進來了。</div>
-                </div>
-              </sc-if>
-              <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:8px">
-                <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
-                  <button onClick="{{ q.open }}" style="{{ q.style }}">
-                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
-                      <span style="{{ q.weekStyle }}">停留 {{ q.weeks }} 週</span>
-                      <span style="font:700 22px/1.4 'C11'">{{ q.team }}</span>
-                      <span style="font:400 11px/1 'C11';color:#5F574C">{{ q.layer }}</span>
-                      <sc-if value="{{ q.flag }}" hint-placeholder-val="{{ false }}">
-                        <span style="font:500 11px/1 'C11';color:#D9603F;border:1px solid rgba(217,96,63,.4);padding:5px 7px;white-space:nowrap;flex:none">建議聯繫</span>
-                      </sc-if>
-                    </div>
-                    <div style="font:400 22px/1.7 'C11';color:#9A9184;margin-top:8px;text-align:left;text-wrap:pretty">{{ q.detail }}</div>
-                    <div style="display:flex;gap:14px;margin-top:9px;font:400 11px/1 'C11';color:#5F574C">
-                      <span>待確認 {{ q.pending }}</span><span>逾期 {{ q.overdue }}</span>
-                    </div>
-                  </button>
-                </sc-for>
-              </div>
-            </div>
+              </sc-if></div>
           </sc-if>
 
           <sc-if value="{{ scT02 }}" hint-placeholder-val="{{ false }}">
