@@ -2890,7 +2890,7 @@
               <h1 style="font:700 44px/1.25 'C11';letter-spacing:.1em;text-indent:.1em;color:#F2E6C8;margin:14px 0 0;text-shadow:0 0 30px rgba(233,179,65,.28);text-wrap:balance"><span data-roll="title">{{ momentTitle }}</span></h1>
               <p style="font:400 22px/1.8 'C11';color:#C3BAAA;margin:12px 0 0;text-wrap:pretty">{{ momentLede }}</p>
             </div>
-            <sc-if value="{{ hasMomentRows }}" hint-placeholder-val="{{ true }}">
+            <sc-if value="{{ hasMomentDraws }}" hint-placeholder-val="{{ true }}"><div style="{{ momentDrawWrap }}"><sc-for list="{{ momentDraws }}" as="md" hint-placeholder-count="4"><span data-draw="{{ md.idx }}" style="{{ md.style }}"><span style="{{ md.artStyle }}"></span><span style="{{ md.nameStyle }}">{{ md.name }}</span><span style="{{ md.tierStyle }}">{{ md.tier }}</span></span></sc-for></div></sc-if><sc-if value="{{ hasMomentRows }}" hint-placeholder-val="{{ true }}">
               <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
                 <sc-for list="{{ momentRows }}" as="mr" hint-placeholder-count="3">
                   <div style="{{ mr.style }}">

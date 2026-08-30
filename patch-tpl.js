@@ -4116,5 +4116,25 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('99. 送交關卡審核那顆拿掉');
 })();
 
+
+/* 100. 抽選卡片上多一排格子：一格是一次抽，輪盤停下來才亮。 */
+(function () {
+  var a = '<sc-if value="{{ hasMomentRows }}" hint-placeholder-val="{{ true }}">';
+  if (t.split(a).length - 1 !== 1) { console.error('100. momentRows 那一塊找不到'); process.exit(1); }
+  var blk = '<sc-if value="{{ hasMomentDraws }}" hint-placeholder-val="{{ true }}">' +
+    '<div style="{{ momentDrawWrap }}">' +
+      '<sc-for list="{{ momentDraws }}" as="md" hint-placeholder-count="4">' +
+        '<span data-draw="{{ md.idx }}" style="{{ md.style }}">' +
+          '<span style="{{ md.artStyle }}"></span>' +
+          '<span style="{{ md.nameStyle }}">{{ md.name }}</span>' +
+          '<span style="{{ md.tierStyle }}">{{ md.tier }}</span>' +
+        '</span>' +
+      '</sc-for>' +
+    '</div>' +
+  '</sc-if>';
+  t = t.replace(a, blk + a);
+  console.log('100. 抽到的東西一次一次亮');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
