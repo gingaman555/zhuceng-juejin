@@ -4340,5 +4340,29 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log("112. 色盤層：換掉 " + n + " 個色碼");
 })();
 
+
+/* 113. 首頁的「？ 這一層怎麼走」拿掉，四步直接攤在進度那張卡上。
+       要看說明才知道怎麼走，就表示畫面沒講清楚。 */
+(function () {
+  var a = "<button onClick=\"{{ openLayerHow }}\" style=\"{{ layerHowStyle }}\">{{ layerHowLabel }}</button>";
+  if (t.split(a).length - 1 !== 1) { console.error("113. 找不到那顆說明鈕"); process.exit(1); }
+  t = t.replace(a, "<div style=\"flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px\"><sc-for list=\"{{ ruleRow }}\" as=\"rs\" hint-placeholder-count=\"4\"><span style=\"{{ rs.style }}\"><span style=\"{{ rs.nStyle }}\">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>");
+  console.log("113. 首頁的四步攤開來");
+})();
+
+
+/* 114. S-02 的「？ 這一階段容易卡在哪」也拿掉——那兩句學生真的會問的
+       話直接寫在清單上面的說明框裡。原型寫死的「怎麼挖」也一起改：
+       現在做的事不是挖。 */
+(function () {
+  var btn = "<button onClick=\"{{ openBrief }}\" style=\"{{ briefBtnStyle }}\">{{ briefBtnLabel }}</button>";
+  if (t.split(btn).length - 1 !== 1) { console.error("114. 找不到那顆說明鈕"); process.exit(1); }
+  t = t.replace(btn, "");
+  var dig = "他說了要交什麼。怎麼挖，你說了算。";
+  if (t.split(dig).length - 1 !== 1) { console.error("114. 找不到「怎麼挖」"); process.exit(1); }
+  t = t.replace(dig, "老師說了要交什麼。怎麼做，你說了算。");
+  console.log("114. S-02 的說明鈕拿掉");
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

@@ -5810,8 +5810,8 @@
         ? tag('拿到 ' + RS.gotN + '/' + RS.veinN + ' 塊', RS.complete ? 'var(--ac)' : 'var(--tx2)')
         : tag('還沒有清單', '#5F574C')),
       Object.assign({
-        n: '3', title: '覺得這一層夠了 → 去找他',
-        desc: '礦石是你做過什麼的紀錄，不是過關的門票。覺得這一層告一段落了就去找他，過不過他決定。',
+        n: '3', title: '覺得這一層夠了 → 去找老師',
+        desc: '礦石是你做過什麼的紀錄，不是過關的門票。覺得這一層告一段落了就去找老師，過不過他決定。',
         box: box(step2On), num: num(step2On), color: step2On ? 'var(--ac)' : 'var(--tx3)'
       }, done ? tag('已通過', 'var(--ac)')
         : allReq ? tag('可以送了', 'var(--ac)')
@@ -5826,27 +5826,18 @@
     ];
 
     /* 抽選要有期待感，期待感要先講：點進去會看到誰。 */
+    /* 本來這兩句躲在「？ 這一階段容易卡在哪」後面。要點開才知道規則，
+       就表示畫面沒講完——直接寫在清單上面。 */
     v.taskListHint = all.length
-      ? '每一項前面都站著這一層的一隻生物——點進去才知道是哪一隻。打贏牠＝這一項被他判過，牠會留下東西。'
+      ? '每一項前面都站著這一層的一隻生物——點進去才知道是哪一隻。打贏牠，就是老師判過這一項，牠會留下東西。' +
+        '　不確定做到什麼程度算完成，就對照老師寫的通過條件，不是對照別組。' +
+        '　什麼時候換下一層，是老師覺得你們可以往下的時候。'
       : '';
     v.hasTaskListHint = !!v.taskListHint;
     v.taskListHintStyle = "font:400 22px/1.7 'C11';color:var(--tx3);text-wrap:pretty;" +
       'margin:0 var(--pad) 16px;padding:11px 14px;background:rgba(0,0,0,.24);border-left:2px solid var(--line2)';
 
-    /* 說明一律收進按鈕：S-02 常見狀況 */
-    (function () {
-      var rows = v.briefRows || [];
-      var hb = helpButton(L, {
-        label: "？　這一階段容易卡在哪",
-        kicker: "COMMON TRAPS",
-        title: "這一階段容易卡在哪",
-        lede: (L.LAYERS[(S.currentLayer || 1) - 1] || {}).hard || "",
-        lines: rows.map(function (r) { return r.what + "　→　" + r.tool; })
-      });
-      v.briefBtnLabel = hb.label;
-      v.briefBtnStyle = hb.style;
-      v.openBrief = hb.open;
-    })();
+    /* 「？ 這一階段容易卡在哪」整顆拿掉——那兩句已經寫在清單上方了。 */
 
     /* 這兩顆說明按鈕拿掉：一顆說明 SUB 的三題（那一頁不在模板裡了），
        一顆說明甘特圖怎麼用（那一頁整支拿掉了）。 */
@@ -5907,23 +5898,23 @@
       var myLay = (S.tasks || []).filter(function (t) { return taskLayer(t) === (S.currentLayer || 1); });
       v.ruleProgress = myLay.filter(function (t) { return t.status === "passed"; }).length +
         " / " + myLay.length + " 項";
-      var hb = helpButton(L, {
-        label: "？　這一層怎麼走",
-        kicker: "HOW THIS LAYER WORKS",
-        title: "這一層怎麼走",
-        lede: (lay2.name || "這一層") + "：" + (lay2.hard || ""),
-        rows: [
-          { k: "這一層的礦石", v: hst.veinN + " 塊" },
-          { k: "你們拿到", v: hst.gotN + " 塊", hi: true },
-          { k: "還差", v: (hst.missingN + hst.unopenedN) + " 塊" }
-        ],
-        lines: (v.ruleSteps || []).map(function (r) { return r.n + "　" + r.title + "——" + r.desc; })
-          .concat(hz ? ["層底站著" + hz.name + "。他准了，才鑄得成" +
-            (lay2.tool || "道具") + "，牠才會讓開。"] : [])
+      /* 四步攤在進度那張卡上（模板 patch 113）。每一步後面掛它現在的狀態，
+       所以它不只是說明，是「你走到哪了」。 */
+      v.ruleRow = (v.ruleSteps || []).map(function (r, i) {
+        var on = String(r.color || '').indexOf('--ac') >= 0;
+        return {
+          n: r.n, t: r.title,
+          style: 'display:inline-flex;align-items:center;gap:7px;padding:7px 10px;' +
+            "font:400 11px/1.5 'C11';text-wrap:pretty;background:" +
+            (on ? 'rgba(233,179,65,.09)' : 'rgba(0,0,0,.26)') +
+            ';border:1px solid ' + (on ? 'var(--ac-dim)' : 'var(--line)') +
+            ';color:' + (on ? 'var(--tx2)' : 'var(--tx3)'),
+          nStyle: "font:700 11px/1 'C11';padding:3px 5px;flex:none;background:" +
+            (on ? 'var(--ac)' : 'var(--line2)') + ';color:var(--bg)'
+        };
       });
-      v.layerHowLabel = hb.label;
-      v.layerHowStyle = hb.style;
-      v.openLayerHow = hb.open;
+
+      /* 「？ 這一層怎麼走」整顆拿掉——四步已經排在進度那張卡上了。 */
     })();
 
     /* 下一件要做的事：只講一件 */
@@ -6058,8 +6049,9 @@
     var used = after;
 
     /* 原型的環節說明還在講必要／延伸 */
-    v.editStageNote = '學生端看到的名稱是「' + (lay.name || '') + '」。' +
-      (layerLabel(L, layer) ? '這一段是「' + layerLabel(L, layer) + '」。' : '');
+    /* 這一句把正上方那一行標籤又講了一次——「這一項在哪一層　專案定義」
+       就在它上面，層名也已經在頁首。拿掉。 */
+    v.editStageNote = '';
     v.openWhat = leftVein.length
       ? (lay.name || ('第 ' + layer + ' 層')) + '　·　已經開了 ' + after + ' 項'
       : '這一層的 ' + vein + ' 塊都開好了。拿幾塊都不影響——要不要讓他們往下一層，是你決定的。';
@@ -6083,9 +6075,8 @@
     /* 這一頁只寫一項任務，標題就不要報礦石的帳 */
     v.t05Head = (lay.name || ('第 ' + layer + ' 層')) + ' · ' +
       (reqN ? '已經開了 ' + reqN + ' 項' : '還沒開過任何一項');
-    v.howToBtnLabel = '？　怎麼用這一頁';
-    v.howToBtnStyle = "flex:none;font:400 22px/1 'C11';color:var(--ac);background:rgba(233,179,65,.07);" +
-      'border:1px solid var(--ac-dim);padding:12px 17px;cursor:pointer;white-space:nowrap';
+    v.howToBtnLabel = '';   /* 說明鈕拿掉：要看說明才會用，就表示這一頁沒寫好 */
+    v.howToBtnStyle = 'display:none';
     v.openHowTo = function () {
       showMoment(L, {
         kind: 'help', art: 'help', accent: 'var(--tx2)',
@@ -6115,9 +6106,13 @@
       ? 'linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),var(--panel);border:1px solid var(--ac-dim)'
       : 'rgba(0,0,0,.22);border:1px dashed var(--line2)';
     v.addTaskLabel = drafts.length ? '＋ 加入清單（再寫下一項）' : '＋ 加入清單';
+    /* 礦石不用挑了——發派的時候自動配下一塊沒配的。這是這一頁唯一
+       在畫面上看不出來的事，所以要寫在按下去的地方。 */
     v.publishNote = drafts.length
-      ? '這 ' + drafts.length + ' 項會一起出現在學生的任務清單上。'
-      : '上面寫完一項，按「加入清單」把它加進來。開幾項都不影響過關。';
+      ? '這 ' + drafts.length + ' 項會一起出現在學生的任務清單上。' +
+        '每一項會自動配到這一層還沒用掉的一塊礦石，你不用挑。'
+      : '上面寫完一項，按「加入清單」把它加進來。開幾項都不影響過關——' +
+        '每一項發出去的時候會自動配到一塊礦石。';
 
     var chip = function (tone) {
       return "display:flex;flex-direction:column;gap:3px;padding:9px 13px;background:rgba(0,0,0,.3);border-left:2px solid " +
@@ -6911,11 +6906,7 @@
     if (S.currentLayer >= 2) {
       var lay = L.LAYERS[S.currentLayer - 1] || {};
       var prev = L.LAYERS[S.currentLayer - 2] || null;
-      v.briefRows = [
-        { what: lay.hard || '', tool: prev ? prev.tool + '：' + prev.toolAbility : '還沒有道具', toolColor: 'var(--ac)' },
-        { what: '不確定做到什麼程度算完成', tool: '對照他寫的通過條件，不是對照別組', toolColor: 'var(--tx3)' },
-        { what: '不知道什麼時候會換下一層', tool: '他覺得你們可以往下就放行', toolColor: 'var(--tx3)' }
-      ];
+      /* v.briefRows 拿掉了：那兩句改成直接寫在 S-02 清單上方。 */
     }
   }
 

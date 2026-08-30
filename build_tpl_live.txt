@@ -488,7 +488,7 @@
                   <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層的進度</span>
                   <span style="font:700 22px/1 'C11';color:#F2EADA">{{ ruleProgress }}</span>
                   <span style="flex:1"></span>
-                  <button onClick="{{ openLayerHow }}" style="{{ layerHowStyle }}">{{ layerHowLabel }}</button>
+                  <div style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px"><sc-for list="{{ ruleRow }}" as="rs" hint-placeholder-count="4"><span style="{{ rs.style }}"><span style="{{ rs.nStyle }}">{{ rs.n }}</span>{{ rs.t }}</span></sc-for></div>
                 </div>
                 <div style="margin-top:16px;padding-top:14px;border-top:1px solid #26211C">
                   <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">下一件要做的事</div>
@@ -530,7 +530,7 @@
                 <button onClick="{{ goTasks }}" style="text-align:left;padding:19px;background:linear-gradient(140deg,rgba(233,179,65,.12),transparent 60%),var(--panel);border:1px solid var(--line2);cursor:pointer;color:var(--tx)">
                   <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">S-02</div>
                   <div style="font:700 22px/1.4 'C11';margin-top:9px">這一層的任務清單</div>
-                  <div style="font:400 22px/1.7 'C11';color:var(--tx3);margin-top:5px;text-wrap:pretty">他說了要交什麼。怎麼挖，你說了算。</div>
+                  <div style="font:400 22px/1.7 'C11';color:var(--tx3);margin-top:5px;text-wrap:pretty">老師說了要交什麼。怎麼做，你說了算。</div>
                 </button>
                 <button onClick="{{ replayStory }}" style="text-align:left;padding:19px;background:var(--panel);border:1px solid #26211C;cursor:pointer;color:var(--tx)">
                   <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">S-00</div>
@@ -549,7 +549,7 @@
               </div>
 
               <div style="margin:14px var(--pad) 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-                <button onClick="{{ openBrief }}" style="{{ briefBtnStyle }}">{{ briefBtnLabel }}</button>
+                
               </div>
 
               <sc-if value="{{ noTasksYet }}" hint-placeholder-val="{{ false }}">
