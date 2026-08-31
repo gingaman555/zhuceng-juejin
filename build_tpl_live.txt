@@ -783,7 +783,7 @@
                 </div>
                 </sc-if>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:4px">
-                  <button onClick="{{ submitTask }}" style="{{ submitBtnStyle }}">{{ submitBtnLabel }}</button>
+                  <sc-if value="{{ hasSubmitBtn }}" hint-placeholder-val="{{ true }}"><button onClick="{{ submitTask }}" style="{{ submitBtnStyle }}">{{ submitBtnLabel }}</button></sc-if>
                   <button onClick="{{ goTasks }}" style="font:400 22px/1 'C11';color:var(--tx3);background:none;border:1px solid var(--line);padding:14px 20px;cursor:pointer">先回清單</button>
                 </div>
               </div>

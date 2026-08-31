@@ -4743,5 +4743,16 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('128. 通過之後收起「你做了什麼」；老師那一框的標題改成活的');
 })();
 
+
+/* 129. 過了的那一項不要再擺一顆送出鍵。
+       它長得跟「我做完了，請他確認」是同一顆，擺在已經完成的任務底下
+       只會讓人以為還要再交一次。結算走上面那一格生物就好。 */
+(function () {
+  var a = "<button onClick=\"{{ submitTask }}\" style=\"{{ submitBtnStyle }}\">{{ submitBtnLabel }}</button>";
+  if (t.split(a).length - 1 !== 1) { console.error('129. 送出鍵找不到'); process.exit(1); }
+  t = t.replace(a, "<sc-if value=\"{{ hasSubmitBtn }}\" hint-placeholder-val=\"{{ true }}\">" + a + "</sc-if>");
+  console.log('129. 過了的那一項不再擺送出鍵');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
