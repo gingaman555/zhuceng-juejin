@@ -4754,5 +4754,25 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('129. 過了的那一項不再擺送出鍵');
 })();
 
+
+/* 130. 做完的離開任務清單，去紀錄。
+       清單是「現在該動手的東西」，做完的留在那裡只會越積越長。
+       所以紀錄那一頁的每一列要點得進去——回頭補強跟看結算都在那裡。
+       清單空了要有一句話說東西去哪了，不然看起來像壞掉。 */
+(function () {
+  var a = "<div style=\"{{ rc.boxStyle }}\">";
+  if (t.split(a).length - 1 !== 1) { console.error('130. 紀錄那一列找不到'); process.exit(1); }
+  t = t.replace(a, "<button onClick=\"{{ rc.open }}\" style=\"{{ rc.boxStyle }}\">");
+  var b = "{{ rc.say }}</div>\n                    </div>";
+  if (t.split(b).length - 1 !== 1) { console.error('130. 紀錄那一列收不了尾'); process.exit(1); }
+  t = t.replace(b, "{{ rc.say }}</div>\n                    </button>");
+
+  var c = "</sc-for>\n              </div>\n\n              \n\n              ";
+  if (t.split(c).length - 1 !== 1) { console.error('130. 清單結尾找不到'); process.exit(1); }
+  var blk = "<sc-if value=\"{{ hasListEmpty }}\" hint-placeholder-val=\"{{ true }}\"><div style=\"{{ listEmptyBox }}\"><div style=\"{{ listEmptyHeadStyle }}\">{{ listEmptyHead }}</div><div style=\"{{ listEmptyNoteStyle }}\">{{ listEmptyNote }}</div><button onClick=\"{{ goRecord }}\" style=\"{{ listEmptyBtnStyle }}\">{{ listEmptyBtn }}</button></div></sc-if>";
+  t = t.replace(c, "</sc-for>" + blk + "\n              </div>\n\n              \n\n              ");
+  console.log('130. 做完的離開清單，紀錄那一列點得進去');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

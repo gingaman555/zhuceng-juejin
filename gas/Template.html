@@ -587,7 +587,7 @@
                       </sc-for>
                     </div>
                   </div>
-                </sc-for>
+                </sc-for><sc-if value="{{ hasListEmpty }}" hint-placeholder-val="{{ true }}"><div style="{{ listEmptyBox }}"><div style="{{ listEmptyHeadStyle }}">{{ listEmptyHead }}</div><div style="{{ listEmptyNoteStyle }}">{{ listEmptyNote }}</div><button onClick="{{ goRecord }}" style="{{ listEmptyBtnStyle }}">{{ listEmptyBtn }}</button></div></sc-if>
               </div>
 
               
@@ -1103,7 +1103,7 @@
                 <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:12px">走過的每一項</div>
                 <div style="display:flex;flex-direction:column;gap:8px">
                   <sc-for list="{{ recRows }}" as="rc" hint-placeholder-count="4">
-                    <div style="{{ rc.boxStyle }}">
+                    <button onClick="{{ rc.open }}" style="{{ rc.boxStyle }}">
                       <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px">
                         <span style="{{ rc.titleStyle }}">{{ rc.title }}</span>
                         <span style="{{ rc.statStyle }}">{{ rc.stat }}</span>
@@ -1111,7 +1111,7 @@
                       <div style="{{ rc.metaStyle }}">{{ rc.meta }}</div>
                       <div style="{{ rc.vowStyle }}">{{ rc.vowTxt }}</div>
                       <div style="{{ rc.sayStyle }}">{{ rc.say }}</div>
-                    </div>
+                    </button>
                   </sc-for>
                 </div>
               </div>
