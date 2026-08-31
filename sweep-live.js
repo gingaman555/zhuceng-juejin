@@ -47,7 +47,12 @@ const DEAD = [
   ['空冠', '第五層沒了'],
   ['1–5', '評分改成 0–5'],
   ['1-5', '同上'],
-  ['/ 5　→', '（檢查用：確認還是 0–5）'],
+  /* 把努力講成沒差的說法。想講的是「數量不是門檻」，
+     但學生讀到的是「你做多少都無所謂」。 */
+  ['做幾項不', '把努力講成沒差'],
+  ['過幾項不', '同上'],
+  ['開幾項都不影響', '同上'],
+  ['拿幾塊都不影響', '同上'],
 ];
 
 const MARK = '舊詞OK';
@@ -82,6 +87,11 @@ function strip(src) {
   return out;
 }
 
+/* 標了舊詞OK 的行整行跳過。曾經試著只放行「比對用的舊字」那一半，
+   但語法有太多種（.split()、陣列對照、=== 比較、SPRITE[鍵]），每加一種
+   就多一個漏洞。真正的風險是「新字那一半自己過期了」——那個用眼睛抓，
+   所以下面會把所有標過的行列出來，定期看一遍。 */
+
 const liveRaw = fs.readFileSync(R + 'gas/Live.html', 'utf8');
 const tplRaw = fs.readFileSync(R + 'build_tpl_live.txt', 'utf8');
 const live = strip(liveRaw).split('\n');
@@ -113,6 +123,14 @@ DEAD.forEach(function (pair) {
   if (hits.length > 10) console.log('  …還有 ' + (hits.length - 10) + ' 處');
   console.log('');
 });
+
+if (process.argv.indexOf('--marked') >= 0) {
+  console.log('\n標了「舊詞OK」的行（比對用的舊字必須留著，但要定期確認新字那一半沒過期）：\n');
+  liveOrig.forEach(function (ln, i) {
+    if (ln.indexOf(MARK) < 0) return;
+    console.log('  Live:' + (i + 1) + '  ' + ln.trim().slice(0, 120));
+  });
+}
 
 console.log(bad ? '\n── ' + bad + ' 處要處理 ──' : '\n── 乾淨 ──');
 process.exit(bad ? 1 : 0);
