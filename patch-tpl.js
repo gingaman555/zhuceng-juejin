@@ -4933,5 +4933,20 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('139. 地圖那一句改成講深度');
 })();
 
+
+/* 140. 拿掉「這一層通過了 N / M 項」那一行。
+       這一層沒有「做完」這個狀態——老師隨時可以再開一項，2 / 2 下一秒
+       就變 2 / 3。一個隨時會退回去的分母不該長成進度。 */
+(function () {
+  var a = "<span style=\"font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)\">這一層通過了</span>";
+  var i = t.indexOf(a);
+  if (i < 0) { console.error('140. 找不到那一行'); process.exit(1); }
+  var b = "<span style=\"font:700 33px/1 'C11';color:#F2EADA\">{{ ruleProgress }}</span>";
+  var j = t.indexOf(b, i);
+  if (j < 0) { console.error('140. 找不到那個數字'); process.exit(1); }
+  t = t.slice(0, i) + t.slice(j + b.length);
+  console.log('140. 拿掉「這一層通過了」那一行');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

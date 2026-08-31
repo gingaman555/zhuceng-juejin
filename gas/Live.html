@@ -6169,10 +6169,8 @@
       var hst = layerState(L, HL);
       var lay2 = L.LAYERS[HL - 1] || {};
       var hz = bossOf(HL);
-      /* 進度講任務，不講礦石——礦石已經不是門檻了 */
-      var myLay = (S.tasks || []).filter(function (t) { return taskLayer(t) === (S.currentLayer || 1); });
-      v.ruleProgress = myLay.filter(function (t) { return t.status === "passed"; }).length +
-        " / " + myLay.length + " 項";
+      /* 「這一層通過了 N / M 項」那一行拿掉了（補丁 140）：這一層沒有「做完」
+         這個狀態，老師隨時可以再開一項，2 / 2 下一秒就變 2 / 3。 */
       /* 四步攤在進度那張卡上（模板 patch 113）。每一步後面掛它現在的狀態，
        所以它不只是說明，是「你走到哪了」。 */
       v.ruleRow = (v.ruleSteps || []).map(function (r, i) {
@@ -6278,13 +6276,14 @@
       v.nextActionBtn = '看地圖';
       v.goNextAction = function () { L.go('S03'); };
     } else if (allReq) {
-      /* 送關卡拿掉了：這一層做完之後學生沒有動作可以做，剩下的是他的判斷。
-         所以這裡不給按鈕，只說清楚在等什麼。 */
-      v.nextAction = '這一層的任務都過了。';
-      v.nextActionWhy = '剩下的是他的判斷——他覺得你們可以往下就放行，那時候才換層、' +
-        '才拿得到這一層的道具與守關戰利品。這中間可以繼續多做幾項，掉落物照掉。';
-      v.nextActionBtn = '看看還能收什麼';
-      v.goNextAction = function () { L.setState({ screen: 'S03', mapTab: 'coll' }); };
+      /* 本來寫「這一層的任務都過了」＋一顆「看看還能收什麼」。那在宣布一件
+         沒有發生的事：這一層沒有「做完」這個狀態，老師隨時可以再開一項。
+         學生讀起來像事情結束了，其實他只是在等。改成只講事實，不給按鈕。 */
+      v.nextAction = '交出去的他都判過了。';
+      v.nextActionWhy = '他隨時可能再開新的一項。要不要放你們往下，也是他決定的。';
+      v.hasNextAction = false;
+      v.nextActionBtn = '';
+      v.goNextAction = function () {};
     } else if (waiting) {
       v.nextAction = '有 ' + waiting + ' 項在他手上，等確認。';
       v.nextActionWhy = '老師看的順序是照各組停留天數排的，不是先交先看——待越久的排越前面。';
@@ -6298,8 +6297,8 @@
         v.nextActionBtn = '去交這一項';
         v.goNextAction = openTask(L, anyLeft);
       } else {
-        v.nextAction = '這一層的清單都處理完了。';
-        v.nextActionWhy = '等老師確認，或去地圖看看已經拿到的東西。';
+        v.nextAction = '目前沒有等你做的。';
+        v.nextActionWhy = '他隨時可能再開新的一項。';
         v.nextActionBtn = '看地圖';
         v.goNextAction = function () { L.go('S03'); };
       }
@@ -6654,7 +6653,7 @@
 
   /* 工具校準整套移除後，原型自己還寫死了幾句——一併換掉，不然學生會看到不存在的機制 */
   var CAL_FIX = [
-      ['可以送交關卡審核了。', '這一層的任務都過了。要不要往下一層是老師決定的。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
+      ['可以送交關卡審核了。', '交出去的他都判過了。要不要放你們往下是他決定的。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
       ['工具校準完成，下一層開了。', '這一層過了，下一層開了。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
       ['他有時候不在。逾時未審會自動暫准，但那一次不計入工具階級。', '他有時候不在。逾時未審會自動暫准。'],
       ['可選的深入方向。不影響過關，只影響工具校準到哪一階。', '可選的深入方向。做了的話，他們打贏那一隻的時候會多抽幾次。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
@@ -7085,7 +7084,7 @@
       var passedThis = (L.state.passed || []).indexOf(L.state.currentLayer) >= 0;
       v.gateTitle = passedThis ? '這一層已經通過'
         : !allItems.length ? '這一層還沒有清單'
-        : left ? '這一層還在進行' : '這一層的任務都過了';
+        : left ? '這一層還在進行' : '交出去的他都判過了';
       /* 本來寫「過幾項不決定什麼」。那句想講的是「數量不是門檻」，
          可是字面讀起來像「你做什麼都不算數」——把學生做過的事講成沒有意義。
          改成講事實：開了幾項、過了幾項，然後說清楚門檻在誰手上。 */
@@ -7093,7 +7092,7 @@
         : !allItems.length ? '這一層還沒有清單。'
         : left ? '老師開了 ' + allItems.length + ' 項，你們過了 ' + (allItems.length - left) + ' 項。' +
                  '要做幾項是你們決定的——覺得這一層告一段落了就去找他，他決定放不放你們往下。'
-        : '這一層的任務都過了。剩下的是他的判斷——他覺得可以往下就放行。';
+        : '他隨時可能再開新的一項。要不要放你們往下，也是他決定的。';
     })();
     (v.taskGroups || []).forEach(function (g) { g.desc = fixCal(g.desc); });
 

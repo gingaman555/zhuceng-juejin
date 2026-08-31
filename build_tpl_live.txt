@@ -423,8 +423,7 @@
 
               <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),var(--panel);border:1px solid var(--line2)">
                 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層通過了</span>
-                  <span style="font:700 33px/1 'C11';color:#F2EADA">{{ ruleProgress }}</span>
+                  
                   <span style="flex:1"></span>
                   
                 </div>
