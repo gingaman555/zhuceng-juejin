@@ -556,7 +556,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                     </span>
                   </sc-if>
                   <div style="text-align:right">
-                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">停留週數</div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">停留天數</div>
                     <div style="font:700 33px/1 'C11';color:var(--ac);margin-top:6px">{{ weeksHere }}</div>
                   </div>
                 </div>
@@ -2106,7 +2106,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 </div>
                 <!-- 班級切換改成獨立畫面 KLASS -->
                 <h1 style="font:900 33px/1.2 'C11';margin:14px 0 0;letter-spacing:.07em;color:#F2EADA">待你驗收</h1>
-                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:8px 0 0;text-wrap:pretty">依停留週數排序。排最前面的不是進度最快的，是待最久的。</p>
+                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:8px 0 0;text-wrap:pretty">依停留天數排序。排最前面的不是進度最快的，是待最久的。</p>
               </div>
               <div style="padding:0 var(--pad) 8px;display:flex;align-items:baseline;gap:10px">
                 <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">待確認佇列</span>
@@ -2115,7 +2115,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
               <sc-if value="{{ queueEmptyHome }}" hint-placeholder-val="{{ false }}">
                 <div style="margin:0 var(--pad) 14px;padding:17px 19px;background:rgba(0,0,0,.26);border:1px dashed var(--line)">
                   <div style="font:500 22px/1.5 'C11';color:var(--tx2)">還沒有人送出東西。</div>
-                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:8px;text-wrap:pretty">學期剛開始。學生交出第一項之後，這裡會依停留週數排序，最久的排最前面。下面仍列出全班，可以先確認每一組都進來了。</div>
+                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:8px;text-wrap:pretty">還沒有人交東西。學生交出第一項之後，這裡會依停留天數排序，最久的排最前面。下面仍列出全班，可以先確認每一組都進來了。</div>
                 </div>
               </sc-if>
               <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:8px">
@@ -2960,7 +2960,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">CLASS ROSTER</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">班級名單</h1>
-                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:0 0 4px;text-wrap:pretty">依停留週數排序。排最前面的不是進度最快的，是待最久的。</p>
+                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:0 0 4px;text-wrap:pretty">依停留天數排序。排最前面的不是進度最快的，是待最久的。</p>
               </div>
               <div style="padding:16px var(--pad) 0;display:flex;gap:0;flex-wrap:wrap;font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;border-bottom:1px solid #221E19;padding-bottom:9px">
                 <span style="flex:2.6;min-width:110px">組別</span><span style="flex:0 0 var(--tcol);min-width:64px">地層</span><span style="flex:0 0 52px;text-align:right">停留</span><span style="flex:0 0 60px;text-align:right">待確認</span><span style="flex:0 0 48px;text-align:right">逾期</span>
@@ -4961,6 +4961,7 @@ class Component extends DCLogic {
     return { id: t.teamId, classId: t.classId, name: t.name, members: t.members || [],
              layer: t.layer, enteredWeek: t.enteredWeek,
              weeks: Math.max(1, w - t.enteredWeek + 1),
+             days: stayDaysOf(t),
              passed: t.passed || [], toolLevels: t.toolLevels || {},
              gateText: t.gateText || ['', '', ''], gateSubmitted: !!t.gateSubmitted,
              gateVerdict: t.gateVerdict || '', specNames: t.specNames || {} };
@@ -5095,17 +5096,31 @@ class Component extends DCLogic {
     var days = Math.floor((new Date(ts) - d0) / 86400000);
     return Math.max(1, Math.floor(days / 7) + 1);
   }
-  /* 一週一次：清單上的回掘與送去給老師看的共用同一個額度 */
+  /* 7 天一次：清單上的回掘與送去給老師看的共用同一個額度。
+     往回數 7 天，不是「學期第幾週」——跟行事曆無關，隨時開始用都一樣。 */
+  /* 這一組在這一層待了幾天。舊資料只有週次，就從開課日回推那一週的開頭。 */
+  function stayDaysOf(t) {
+    var at = t && t.enteredAt ? new Date(t.enteredAt) : null;
+    if (!at || isNaN(at.getTime())) {
+      var st = new Date((classById(t.classId) || {}).courseStart || '2026-09-14');
+      at = new Date(st.getTime() + ((Number(t && t.enteredWeek) || 1) - 1) * 7 * 86400000);
+    }
+    var now = new Date(NOW());
+    var d0 = new Date(at.getFullYear(), at.getMonth(), at.getDate());
+    var n0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.max(0, Math.round((n0 - d0) / 86400000));
+  }
+
   function redigWeekUsed(u) {
-    var now = wkOfTs(u, NOW()), n = 0;
+    var cut = new Date(NOW()).getTime() - 7 * 86400000, n = 0;
     DB.Checks.forEach(function (c) {
       if (c.teamId !== u.teamId || c.act !== 'off') return;
       if (!String(c.note || '').trim()) return;
-      if (wkOfTs(u, c.ts) === now) n++;
+      if (new Date(c.ts).getTime() >= cut) n++;
     });
     (DB.Redigs || []).forEach(function (x) {
       if (x.teamId !== u.teamId || x.status === 'declined') return;
-      if (wkOfTs(u, x.ts) === now) n++;
+      if (new Date(x.ts).getTime() >= cut) n++;
     });
     return n;
   }
@@ -5362,7 +5377,7 @@ class Component extends DCLogic {
         var tm = teamByName[full];
         if (!tm) {
           tm = { teamId: 'tm' + uid(), classId: classId, name: full, members: members.slice(), layer: 1,
-                 enteredWeek: courseWeekOf(classById(classId)), passed: [], toolLevels: {},
+                 enteredWeek: courseWeekOf(classById(classId)), enteredAt: NOW(), passed: [], toolLevels: {},
                  gateText: ['', '', ''], gateSubmitted: false, gateVerdict: '', specNames: {} };
           DB.Teams.push(tm); teamByName[full] = tm;
         } else {
@@ -5576,7 +5591,7 @@ class Component extends DCLogic {
       var id = 'tm' + uid();
       DB.Teams.push({ teamId: id, classId: u.classId, name: '第' + numCn(n + 1) + '組 · ' + name,
         members: [u.name], layer: 1,
-        enteredWeek: courseWeekOf(classById(u.classId)), passed: [], toolLevels: {},
+        enteredWeek: courseWeekOf(classById(u.classId)), enteredAt: NOW(), passed: [], toolLevels: {},
         gateText: ['', '', ''], gateSubmitted: false, gateVerdict: '', specNames: {} });
       u.teamId = id;
       persist();
@@ -5848,6 +5863,7 @@ class Component extends DCLogic {
         var f = DB.Finales.filter(function (x) { return x.teamId === tm.teamId; })[0] || {};
         return { teamId: tm.teamId, name: tm.name, layer: tm.layer,
                  weeks: Math.max(1, w - (tm.enteredWeek||1) + 1),
+                 days: stayDaysOf(tm),
                  done5: (tm.passed||[]).indexOf(4) >= 0,
                  applied: !!f.submitted, opened: !!f.opened, openWords: f.openWords||"",
                  submittedAt: f.ts ? String(f.ts) : "" };
@@ -5983,7 +5999,7 @@ class Component extends DCLogic {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       var id = task.id || ('tk' + uid());
-      if (!String(task.mineral || '').trim()) task.mineral = (API.freeMin(classId, task.layer, id, API.cleanTeams(classId, task.teams)) || [])[0] || '';
+      task.mineral = '';   /* 礦石拿掉了：一層開幾項由老師決定，沒有上限。 */
       var ex = DB.Tasks.filter(function (x) { return x.taskId === id; })[0];
       var row = { taskId: id, classId: classId, layer: task.layer, type: task.type, title: task.title,
                   cond: task.cond, note: task.note, spec: task.spec || '', due: task.due, mineral: task.mineral, mDesc: task.mDesc,
@@ -6008,7 +6024,7 @@ class Component extends DCLogic {
       persist();
       return ok({ vow: k });
     },
-    /* 對已經過了的任務回頭補強，送老師認定。一週一次。 */
+    /* 對已經過了的任務回頭補強，送老師認定。7 天一次。 */
     apiSubmitRedig: function (t, taskId, note) {
       var u = auth(t);
       if (u.role !== 'student' || !u.teamId) return err('只有學生可以送。');
@@ -6020,7 +6036,7 @@ class Component extends DCLogic {
       if (DB.Redigs.filter(function (x) {
         return x.teamId === u.teamId && x.taskId === taskId && x.status === 'pending';
       })[0]) return err('這一項已經送過一次回頭補強，還在等老師看。');
-      if (redigWeekUsed(u) >= 1) return err('這一週已經回頭補過一次了。下一週再來——一週一次，這件事才有份量。');
+      if (redigWeekUsed(u) >= 1) return err('最近 7 天已經回頭補過一次了。過幾天再來——7 天一次，這件事才有份量。');
       DB.Redigs.push({ redigId: 'rd' + uid(), teamId: u.teamId, taskId: taskId,
         note: txt.slice(0, 400), status: 'pending', reason: '',
         by: u.userId || u.account || '', ts: NOW(), decidedAt: '' });
@@ -6077,7 +6093,7 @@ class Component extends DCLogic {
           return c.teamId === u.teamId && c.act === 'off' &&
                  String(c.note || '').trim() && wkOf(c.ts) === now;
         }).length;
-        if (used >= 1) return err('這一週已經回掘過一次了。下一週再來——一週一次，這件事才有份量。');
+        if (used >= 1) return err('最近 7 天已經回掘過一次了。過幾天再來——7 天一次，這件事才有份量。');
       }
       var set = {};
       checkList2(row && row.checked).forEach(function (x) { set[x] = true; });
@@ -6153,7 +6169,7 @@ class Component extends DCLogic {
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       (items || []).forEach(function (it) {
-        var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer, null, API.cleanTeams(classId, it.teams)) || [])[0] || '';
+        var min = '';   /* 礦石拿掉了 */
         var row = { taskId: it.id || ('tk' + uid()), classId: classId, layer: layer, type: it.type,
           title: it.title, cond: it.cond, note: it.note, spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc,
           teams: JSON.stringify(API.cleanTeams(classId, it.teams)),
@@ -6233,7 +6249,7 @@ class Component extends DCLogic {
       if (tm.passed.indexOf(tm.layer) < 0) tm.passed.push(tm.layer);
       tm.toolLevels[tm.layer] = '已交出';
       tm.layer = Math.min(4, tm.layer + 1);
-      tm.enteredWeek = w;
+      tm.enteredWeek = w; tm.enteredAt = NOW();
       tm.gateText = ['', '', '']; tm.gateSubmitted = false; tm.gateVerdict = 'pass';
       persist();
       return ok({ passed: true, layer: tm.layer });
@@ -6258,7 +6274,7 @@ class Component extends DCLogic {
       }
       tm.passed.sort(function (a, b) { return a - b; });
       tm.layer = Math.min(4, n + 1);
-      tm.enteredWeek = w;
+      tm.enteredWeek = w; tm.enteredAt = NOW();
       tm.gateText = ['', '', '']; tm.gateSubmitted = false; tm.gateVerdict = '';
       persist();
       return ok({ layer: tm.layer, passed: tm.passed.slice(), added: added });
@@ -7443,7 +7459,7 @@ class Component extends DCLogic {
         drops.unshift({
           name: okTut ? mineF0.name : '？？？',
           got: okTut,
-          sub: okTut ? '你的　·　不算在 152 種裡' : '你的　·　走一遍新手導覽就拿得到',
+          sub: okTut ? '你的　·　不算在 136 種裡' : '你的　·　走一遍新手導覽就拿得到',
           L: 0,
           open: function () {
             if (!okTut) { L.say('先走一遍新手導覽。首頁那一格點得進去。'); return; }
@@ -7517,8 +7533,7 @@ class Component extends DCLogic {
       items: mobs
     }, {
       title: '物品',
-      note: '礦石、道具、戰利品、掉落物，全部在這裡。每一格都標著它值幾分，點進去才會說那一件是怎麼拿到的。' +
-        '　礦石 100 分——一塊礦石就是通過一項。' +
+      note: '道具、戰利品、掉落物，全部在這裡。每一格都標著它值幾分，點進去才會說那一件是怎麼拿到的。' +
         '　守關那兩件（道具、戰利品）各 500 分——老師放行一層就是 1000 分，' +
         '所以榜上拉得開的是走到第幾層，不是撿了幾件。掉落物每一件都是 30 分，' +
         '掉到哪一件都一樣，運氣不會影響名次。',
@@ -7625,17 +7640,23 @@ class Component extends DCLogic {
                    resConsent: false, acct: '', pw: '' });
     };
 
-    /* --- 停留週數與學期週次分開顯示 ---
-       state.weeksHere 在實際使用版是「學期第幾週」（甘特與研究者端要用），
-       畫面上的「停留 N 週」一律取 state.stayWeeks。 */
+    /* --- 停留天數 ---
+       本來畫面上寫「停留 N 週」，那是拿開課日推出來的日曆週——它預設
+       一週是一格。這個作品要隨時可以開始，所以改成天：從那一組進到
+       這一層的那一刻起算。後端多回一個 days，沒有的話退回週×7。 */
+    var stayD = function () {
+      var mt = S.myTeam || {};
+      if (mt.days != null) return Number(mt.days);
+      return Math.max(0, ((Number(S.stayWeeks) || 1) - 1) * 7);
+    };
     if (S.role === 'student') {
-      v.weeksHere = S.stayWeeks || 1;
-      v.navSub = LAYERNAME(S.currentLayer) + ' · 停留 ' + (S.stayWeeks || 1) + ' 週';
+      v.weeksHere = stayD();   /* 那一格的標題已經是「停留天數」 */
+      v.navSub = LAYERNAME(S.currentLayer) + ' · 停留 ' + stayD() + ' 天';
       /* 學生端本來只寫層名與週數，沒有課程名——同時修兩門課的人
          看不出這一份是哪一門。老師端本來就有，補上。 */
       var kn = (L.klass() || {}).name || '';
       v.idMeta = (kn ? kn + '　·　' : '') + LAYERNAME(S.currentLayer) +
-        ' · 停留 ' + (S.stayWeeks || 1) + ' 週';
+        ' · 停留 ' + stayD() + ' 天';
     } else if (S.role === 'teacher') {
       v.idMeta = L.klass().name + ' · ' + L.teams().length + ' 組';
     }
@@ -7676,13 +7697,9 @@ class Component extends DCLogic {
     }
     decorateEditMob(L, v);
 
-    /* 原型那一層還在講「環節」與「物證」——那兩個詞在學生端早就換成
-       礦脈與礦石了。Logic 不能改，所以在這裡把字面換掉。 */
+    /* 任務清單每一列本來還掛一行礦石。礦石拿掉了，那一行整個空掉。 */
     (v.layerSets || []).forEach(function (g) {
-      (g.items || []).forEach(function (i2) {
-        if (typeof i2.min !== 'string') return;
-        i2.min = i2.min.split('環節 · ').join('礦石 · ').split('（物證 ').join('（'); /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
-      });
+      (g.items || []).forEach(function (i2) { i2.min = ''; });
     });
     (v.minOptions || []).forEach(function (m2) {
       if (typeof m2.sub === 'string') m2.sub = m2.sub.split('學生端物證 · ').join('學生端礦石 · '); /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
@@ -7699,7 +7716,12 @@ class Component extends DCLogic {
       line: '「做完了。」　「下一個專案，還是一樣從不知道要挖哪裡開始。」',
       notice: '他從第一頁就說了他是誰：帶你做完一個專案的人。這裡沒有要揭曉的東西。'
     }];
-    if ((L.MINS || []).length) L.MINS = L.MINS.filter(function (m) { return m.L <= 4; });
+    /* 礦石整個拿掉。它是一份寫死的清單（一層四塊），發派任務時會自動配，
+       所以一層實質只開得了四項——那跟「老師依進度決定要開什麼」牴觸。
+       收集本來就有兩樣是無上限而且會累積的：擋在每一項前面的生物，跟牠
+       留下的掉落物。那兩樣才是這個作品要的。清空之後所有數量、格子、
+       選單、分區都會自己消失。 */
+    L.MINS = [];
     /* 每一層自己的光。uiVars 本來就掛在最外層的 style 上，接在後面就好。
        這裡是兩端共用的地方——放進 decorateStudent 的話老師端會沒有變數。 */
     v.uiVars = String(v.uiVars || '') + themeVars(L);
@@ -8186,12 +8208,12 @@ class Component extends DCLogic {
               { k: '分數', v: '沒有分數' }
             ],
             quoteLabel: '介紹', quote: mineM.trait,
-            lines: ['這兩樣不算在 44 種與 152 種裡面——那些是大家共同的世界，這兩樣是你的。',
+            lines: ['這兩樣不算在 44 種與 136 種裡面——那些是大家共同的世界，這兩樣是你的。',
                     ((L.state.tasks || []).filter(function (x) { return x.id !== 'tut'; }).length
                       ? '接下來是老師開的那些任務。它們前面站的生物是全班一樣的，' +
-                        '打贏會抽好幾次，抽到的才會進那 152 種。'
+                        '打贏會抽好幾次，抽到的才會進那 136 種。'
                       : '接下來要等老師把這一層的清單開出來。那些任務的生物是全班一樣的，' +
-                        '打贏會抽好幾次，抽到的才會進那 152 種。')],
+                        '打贏會抽好幾次，抽到的才會進那 136 種。')],
             btn: '收好', go: function () {}
           }, [], [{ art: mineF.art, name: mineF.name, hue: mineF.hue, isNew: true }]);
         }
@@ -8238,7 +8260,7 @@ class Component extends DCLogic {
           quote: String(text || '').slice(0, 160) + (String(text || '').length > 160 ? '…' : ''),
           lines: [ again
             ? '他會看到你前幾次交了什麼、他自己退回的理由，還有你這一次改了哪裡。'
-            : '老師看的順序是照各組停留週數排的，不是先交先看——待越久的排越前面。' ],
+            : '老師看的順序是照各組停留天數排的，不是先交先看——待越久的排越前面。' ],
           btn: '知道了', go: function () {}
         });
       })();
@@ -8278,7 +8300,7 @@ class Component extends DCLogic {
 
     /* 過關那張卡：原型寫死的說法還在講工具校準，而且說寶物是他遞給你的。
        兩件事都不對了——校準整套拿掉，戰利品是那一隻退開之後留在原地的。 */
-    v.rewardCopy = '老師放行了。這一層的礦石鑄成了它——擋在層底的那一隻退開了。' +
+    v.rewardCopy = '老師放行了。這一層的道具到手——擋在層底的那一隻退開了。' +
       String.fromCharCode(10) + String.fromCharCode(10) +
       '牠站的地方還留著一件東西。那件只有走到這一層的盡頭才拿得到。' +
       String.fromCharCode(10) + String.fromCharCode(10) +
@@ -8480,7 +8502,7 @@ class Component extends DCLogic {
       accent: '#D9603F', bg: 'rgba(217,96,63,.06)', border: 'rgba(217,96,63,.34)' },
     { key: 'todo', tag: '還沒交', desc: '這一區是你現在該動手的。作業照老師原本的方式交，交完點進去把清單勾完、回答一題。',
       accent: 'var(--ac)', bg: 'rgba(233,179,65,.045)', border: 'var(--ac-dim)' },
-    { key: 'submitted', tag: '等老師驗收', desc: '已經送出去了。老師看的順序是照各組停留週數排的，不是先交先看——待越久的排越前面。',
+    { key: 'submitted', tag: '等老師驗收', desc: '已經送出去了。老師看的順序是照各組停留天數排的，不是先交先看——待越久的排越前面。',
       accent: 'var(--tx2)', bg: 'rgba(195,186,170,.04)', border: 'var(--line2)' },
     /* 「已完成」那一區拿掉了。清單是「現在該動手的東西」——做完的留在
        這裡只會越積越長，而且它們已經沒有動作可做。它們去紀錄，
@@ -8597,24 +8619,22 @@ class Component extends DCLogic {
   function layerState(L, layer) {
     var S = L.state;
     layer = layer || S.currentLayer || 1;
-    var vein = (L.MINS || []).filter(function (m) { return m.L === layer; });
     var items = (S.tasks || []).filter(function (t) { return t.layer === layer; });
-    var taken = {};
-    items.forEach(function (t) { if (t.mineral) taken[t.mineral] = 1; });
-    var unopened = vein.filter(function (m) { return !taken[m.name]; });
     var got = items.filter(function (t) { return t.status === 'passed'; });
     var missing = items.filter(function (t) { return t.status !== 'passed'; });
     var cleared = (S.passed || []).indexOf(layer) >= 0;
+    /* vein／unopened 一律是空的：這一層有幾項是老師開了幾項，不是
+       一條寫死的礦脈有幾塊。留著這幾個欄位是為了不讓還沒改到的
+       呼叫端爆掉，它們永遠是 0。 */
     var st = {
-      layer: layer, vein: vein, veinN: vein.length,
+      layer: layer, vein: [], veinN: 0,
       items: items, openedN: items.length,
-      unopened: unopened, unopenedN: unopened.length,
+      unopened: [], unopenedN: 0,
       gotN: got.length, missing: missing, missingN: missing.length,
       cleared: cleared, byMineral: {}
     };
-    items.forEach(function (t) { if (t.mineral) st.byMineral[t.mineral] = t; });
-    /* 採齊＝礦脈開完、而且每一塊都通過 */
-    st.complete = st.veinN > 0 && st.unopenedN === 0 && st.missingN === 0;
+    /* 這一層開的都過了。開幾項是老師決定的，所以分母就是他開的那幾項。 */
+    st.complete = st.openedN > 0 && st.missingN === 0;
     /* 關卡只看老師。收集不再是門檻——礦石從「條件」變回「紀錄」。 */
     st.blockReason = !st.openedN
       ? '這一層還沒有清單，老師還沒把任務開出來。'
@@ -8797,7 +8817,7 @@ class Component extends DCLogic {
       /* 微光荒原的「微光」在夜裡才看得出來 */
       wash: 'linear-gradient(180deg,rgba(18,26,48,.52),rgba(10,14,28,.50) 50%,rgba(4,5,10,.60))',
       orb: '#DDE6F5', orbGlow: 'rgba(221,230,245,.4)', orbTop: 22, orbRight: 20,
-      note: '只剩礦石在發光'
+      note: '只剩地上的碎光'
     };
   }
 
@@ -8845,45 +8865,37 @@ class Component extends DCLogic {
     var teams = L.teams() || [];
 
     var perLayer = [1, 2, 3, 4, 5].map(function (n) {
-      var vein = (L.MINS || []).filter(function (m) { return m.L === n; });
       var items = (S.tasks || []).filter(function (t) { return t.layer === n; });
-      var taken = {};
-      items.forEach(function (t) { if (t.mineral) taken[t.mineral] = t; });
       var cleared = teams.length > 0 && teams.every(function (t) {
         return (t.passed || []).indexOf(n) >= 0;
       });
       var here = teams.filter(function (t) { return (t.layer || 1) === n; });
-      return { n: n, vein: vein, byMineral: taken, openedN: Object.keys(taken).length,
+      /* 一格一項任務——老師開幾項，這一層就有多長。 */
+      return { n: n, vein: [], items: items, byMineral: {}, openedN: items.length,
                cleared: cleared, here: here };
     });
 
-    var totalVein = perLayer.reduce(function (a, x) { return a + x.vein.length; }, 0) || MINS_TOTAL;
     var totalOpen = perLayer.reduce(function (a, x) { return a + x.openedN; }, 0);
-    v.boardDone = totalOpen + " / " + totalVein + " 塊已開";
-    v.boardLeft = (totalVein - totalOpen) + " 塊";
-    v.boardStepNote = totalOpen >= totalVein
-      ? "四層的礦石都開完了。剩下的是你的判斷——你覺得哪一組可以往下就放行。"
-      : "一格就是你開的一項。還有 " + (totalVein - totalOpen) + " 塊沒開——開多開少不影響他們過不過關。";
+    v.boardDone = totalOpen ? totalOpen + " 項已開" : "還沒開任何一項";
+    v.boardLeft = "";
+    v.boardStepNote = totalOpen
+      ? "一格就是你開的一項。開多開少不影響他們過不過關——要不要放他們往下是你決定的。"
+      : "還沒開任何一項。你在任務清單開什麼，這條路就長成什麼樣子。";
 
     (v.mapLayers || []).forEach(function (m, i) {
       var n = i + 1;
       var st = perLayer[n - 1];
       var hue = BOARD_HUE[n - 1];
-      var base = perLayer.slice(0, n - 1).reduce(function (a, x) { return a + x.vein.length; }, 0);
+      var base = perLayer.slice(0, n - 1).reduce(function (a, x) { return a + x.openedN; }, 0);
 
-      var cells = st.vein.map(function (min, k) {
-        var task = st.byMineral[min.name] || null;
-        var open = !!task;
+      var cells = st.items.map(function (task, k) {
+        var open = true;
         return {
           idx: String(base + k + 1),
-          name: open ? (task.title || min.task) : min.task,
-          sub: min.name,
-          mark: open ? "✓" : "·",
-          open: function () {
-            if (open) { L.setState({ screen: "T02", editLayer: n }); return; }
-            L.setState({ screen: "T05", editLayer: n });
-            L.say("「" + min.task + "」（" + min.name + "）還沒開。");
-          },
+          name: task.title || "一項",
+          sub: "",
+          mark: "✓",
+          open: function () { L.setState({ screen: "T02", editLayer: n }); },
           dotStyle: "display:flex;align-items:center;justify-content:center;width:100%;height:20px;" +
             "font:600 11px/1 'C11';transform:scale(.85);" +
             "color:" + (open ? "var(--bg)" : "var(--tx3)") + ";" +
@@ -8898,7 +8910,7 @@ class Component extends DCLogic {
 
       /* 層底那一格：跟學生端共用 endCell。老師沒有迷霧，
          而且他不是要過關的人——點下去是看那隻生物的介紹。 */
-      cells.push(endCell(L, n, { cleared: st.cleared, complete: st.openedN >= st.vein.length && st.vein.length > 0 }, {
+      cells.push(endCell(L, n, { cleared: st.cleared, complete: st.openedN > 0 }, {
         fog: false,
         dim: '.7',
         blocked: function () { return ''; },
@@ -9166,7 +9178,7 @@ class Component extends DCLogic {
     var out = list.slice(0, 2).map(function (t) {
       return {
         name: t.name,
-        meta: '停留 ' + (t.weeks || 1) + ' 週',
+        meta: '停留 ' + (t.days != null ? t.days : ((t.weeks || 1) - 1) * 7) + ' 天',
         open: openOne(t),
         style: chip((t.passed || []).length ? 'var(--ac-dim)' : 'var(--line2)')
       };
@@ -9195,7 +9207,7 @@ class Component extends DCLogic {
       title: (lay.name || ('第' + n + '層')) + '上的人',
       lede: lede + '站在哪一格不代表他們拿到哪一塊——那是他們自己的進度。',
       rows: teams.map(function (t) {
-        return { k: t.name, v: '停留 ' + (t.weeks || 1) + ' 週', hi: !!t.me };
+        return { k: t.name, v: '停留 ' + (t.days != null ? t.days : ((t.weeks || 1) - 1) * 7) + ' 天', hi: !!t.me };
       }),
       btn: '知道了', go: function () {}
     });
@@ -9752,7 +9764,7 @@ class Component extends DCLogic {
       v.gambleBody = '這一項已經過了，但專案走下去之後你可能發現它不夠——' +
         '回頭補完，寫下你補了什麼，送去給老師看。他接受就多抽一次。';
       v.gambleCost = (no ? '上一次他沒接受，他寫的是：「' + no.reason + '」　可以再送一次。' : '') +
-        '　一週一次。他會照這一項本來要交的東西，判你補的算不算數。';
+        '　7 天一次。他會照這一項本來要交的東西，判你補的算不算數。';
       v.redigNote = note1;
       v.redigPlaceholder = '例：後來又訪了兩個人，把矛盾那一段重寫了。';
       v.setRedigNote = function (e) { L.setState({ redigNote: e.target.value }); };
@@ -10369,26 +10381,23 @@ class Component extends DCLogic {
     v.homeRankNote = '第 ' + placeH + ' 名 / ' + rows.length + ' 組' +
       (aheadH ? '　·　離前一名還差 ' + (aheadH.total - mine.total) + ' 分' : '　·　目前在最前面');
 
-    /* 本來這裡列的是「這一層還有幾塊沒有人拿到、其中幾塊別組也在做」——
-       那是把礦石當成搶的。礦石不是搶的，同一項任務每一組都做得到，各採
-       各的。改成講你自己還差哪幾塊，每一塊指回一項還沒過的任務。 */
+    /* 這一格本來列的是還沒拿到的礦石，礦石拿掉之後改成列還沒過的任務。 */
     var leftMin = [].concat(L.req(), L.ext()).filter(function (t) {
-      return t.status !== 'passed' && t.mineral;
+      return t.status !== 'passed';
     });
     var anyTask = [].concat(L.req(), L.ext()).length;
     v.homeClaimNote = leftMin.length
-      ? '這一層你還有 ' + leftMin.length + ' 塊還沒拿到——每一塊指回一項還沒過的任務。'
-      /* 一項都還沒開的時候不能說「都拿到了」——那是假的 */
-      : anyTask ? '這一層開出來的礦石你都拿到了。'
+      ? '這一層還有 ' + leftMin.length + ' 項沒過。'
+      : anyTask ? '這一層開出來的都過了。'
                 : '老師還沒開這一層的清單。';
     var STAT_TXT = { submitted: '等老師判', needs_more: '老師要你再改' };
     v.homeClaims = leftMin.slice(0, 3).map(function (t) {
       var waiting = t.status === 'submitted';
       var back = t.status === 'needs_more';
       return {
-        name: t.mineral,
+        name: t.title,
         by: STAT_TXT[t.status] || '還沒交',
-        meta: 'L' + t.layer + '　' + t.title,
+        meta: 'L' + t.layer,
         boxStyle: 'padding:10px 12px;background:rgba(0,0,0,.32);border:1px ' +
           (back ? 'solid #5A2E22' : waiting ? 'solid #4A4238' : 'dashed #4A3F30'),
         nameStyle: "font:500 22px/1.3 'C11';color:var(--tx2)",
@@ -10552,6 +10561,8 @@ class Component extends DCLogic {
      本來生物是程序生成的，一區 288 個組合但只有 4 種身體反覆用——
      第三隻就看得出重複。現在一區十隻，每一隻自己的圖。
      ============================================================ */
+  /* 物品一共 136 種＝108 掉落物 ＋ 24 戰利品 ＋ 4 道具。
+     本來寫 152——那多出來的 16 是礦石，礦石拿掉之後就不算了。 */
   var PACK = (window.JLZ_PACK || { creatures: [], debris: [], trophies: [] });
   var REGION_L = { '微光荒原': 1, '水晶迴廊': 2, '迴聲迷宮': 3, '熔火深淵': 4 };
 
@@ -11297,14 +11308,14 @@ class Component extends DCLogic {
     var cur = S.currentLayer || 1;
     var openAll = S.role === 'teacher' || !!S.allOpen;
 
-    /* 23 格＝23 塊礦石。走到第幾格＝總共拿到幾塊。 */
+    /* 一格一項任務。老師開幾項，這條路就有多長——不是一開始就畫好的。 */
     var seen = 0, done = 0, myCell = 0;
     var perLayer = [1, 2, 3, 4, 5].map(function (n) { return layerState(L, n); });
     perLayer.forEach(function (st) { done += st.gotN; });
-    var TOTAL = perLayer.reduce(function (a, st) { return a + st.veinN; }, 0) || MINS_TOTAL;
+    var TOTAL = perLayer.reduce(function (a, st) { return a + st.openedN; }, 0);
 
-    v.boardDone = done + ' / ' + TOTAL + ' 塊';
-    v.boardLeft = (TOTAL - done) + ' 塊';
+    v.boardDone = TOTAL ? done + ' / ' + TOTAL + ' 項' : '還沒有任務';
+    v.boardLeft = TOTAL ? (TOTAL - done) + ' 項' : '';
     var LSc = perLayer[cur - 1];
     /* 原型那句還在講「一格一步」，但階段已經拿掉了 */
     if (v.mapLede && v.mapLede.indexOf('一格一步') >= 0) {
@@ -11312,8 +11323,10 @@ class Component extends DCLogic {
     }
     v.boardStepNote = LSc.cleared
       ? '他讓你們過了這一層。'
-      : '這一層拿到 ' + LSc.gotN + ' / ' + LSc.veinN + ' 塊——那是你做過什麼的紀錄，' +
-        '不是往下的門票。覺得這一層告一段落了就去找他。';
+      : LSc.openedN
+        ? '這一層通過 ' + LSc.gotN + ' / ' + LSc.openedN + ' 項——做幾項不是往下的門票。' +
+          '覺得這一層告一段落了就去找他。'
+        : '老師還沒開這一層的任務。';
 
     /* 把通道鋪到剖面的每一層上 */
     (v.mapLayers || []).forEach(function (m, i) {
@@ -11321,29 +11334,28 @@ class Component extends DCLogic {
       var st = perLayer[n - 1];
       var hue = BOARD_HUE[n - 1];
       var fog = !openAll && n > cur;
-      var base = perLayer.slice(0, n - 1).reduce(function (a, x) { return a + x.veinN; }, 0);
+      var base = perLayer.slice(0, n - 1).reduce(function (a, x) { return a + x.openedN; }, 0);
       var nextHere = null;
 
-      var cells = st.vein.map(function (min, k) {
-        var task = st.byMineral[min.name] || null;
-        var got = !!task && task.status === 'passed';
-        var wait = !!task && task.status === 'submitted';
-        var back = !!task && task.status === 'needs_more';
-        var opened = !!task;
-        if (!got && !nextHere && n === cur && opened) nextHere = min.name;
-        var me = (n === cur) && (nextHere === min.name);
-        var label = (got || openAll) ? min.name
-          : opened ? (task.title || min.task)
-          : fog ? '？？？' : min.task;
-        var url = (got || openAll || (!fog && opened)) ? mineralSprite(L, min.name, n) : null;
+      var cells = st.items.map(function (task, k) {
+        var got = task.status === 'passed';
+        var wait = task.status === 'submitted';
+        var back = task.status === 'needs_more';
+        var opened = true;
+        if (!got && !nextHere && n === cur) nextHere = task.id;
+        var me = (n === cur) && (nextHere === task.id);
+        var label = fog ? '？？？' : (task.title || '一項');
+        /* 圖示用擋在這一項前面的那一隻——但只有點過的才露臉，
+           沒點過的維持問號，不然清單那邊的期待感就先被地圖破了。 */
+        var mbC = (!fog && metSet()[task.id]) ? mobOfTask(task) : null;
+        var url = mbC ? mobSvg(mbC.id, n) : null;
         return {
           idx: String(base + k + 1),
           name: label,
-          sub: fog ? '' : (min.task || ''),
-          mark: got ? '✓' : wait ? '…' : back ? '!' : me ? '◉' : opened ? '' : '·',
+          sub: '',
+          mark: got ? '✓' : wait ? '…' : back ? '!' : me ? '◉' : '',
           open: function () {
             if (fog) { L.say('還沒到那一層。'); return; }
-            if (!task) { L.say('老師還沒把「' + min.task + '」開出來。'); return; }
             L.setState({ screen: 'S05', openTaskId: task.id, draftText: task.text || '', draftFiles: (task.files || []).slice() });
           },
           dotStyle: 'display:flex;align-items:center;justify-content:center;width:100%;height:20px;' +
@@ -12138,12 +12150,10 @@ class Component extends DCLogic {
     var rq = L.req(), ex = L.ext(), all = [].concat(rq, ex);
     var done = (S.passed || []).indexOf(S.currentLayer) >= 0;
 
-    /* 分母永遠是整條礦脈：老師還沒開的那幾塊也算在裡面，不然學生會以為
-       自己採齊了。 */
+    /* 分母是老師開了幾項。沒有一條寫死的礦脈了。 */
     var LS = layerState(L);
     var allGot = LS.gotN;
-    var allN = LS.veinN;
-    var unopenedN = LS.unopenedN;
+    var allN = LS.openedN;
 
     /* 採集進度的格子拿掉：首頁那一塊「這一層拿到 N/M」從模板移掉了。
        礦石從門檻變回紀錄之後，進度條在算一個不決定任何事的數字。 */
@@ -12152,8 +12162,7 @@ class Component extends DCLogic {
     v.extDone = Math.max(0, allN - allGot);
     v.reqLeft = Math.max(0, allN - allGot);
     v.layerLeftNote = !all.length ? '這一層還沒有清單'
-      : unopenedN ? '其中 ' + unopenedN + ' 塊老師還沒開'
-      : allGot === allN ? '這一層都拿到了' : '拿幾塊都不影響——要不要往下一層是老師決定的';
+      : allGot === allN ? '這一層開的都過了' : '做幾項不影響——要不要往下一層是老師決定的';
     /* 採集進度條拿掉：那一塊從模板移掉了，而且它算的是一個不決定任何事的數字。 */
 
     var arrow = { text: '→', style: "font:400 11px/1 'C11';color:var(--line2);flex:none" };
@@ -12204,11 +12213,11 @@ class Component extends DCLogic {
       { k: '生物', v: mobN + ' / 44 種',
         note: '每一項任務前面站一隻，每一層的盡頭再站一隻大的。' +
           '　圖鑑最前面那一隻是你的，從第一天就在——不算在這 44 種裡。' },
-      { k: '物品', v: itemN + ' / 152 種',
+      { k: '物品', v: itemN + ' / 136 種',
         note: '打贏一隻就抽，抽到的直接進圖鑑——換組、換班、換專案都跟著你走。' },
       { k: '回頭補強', v: starN + ' 項' + (starWait ? '（' + starWait + ' 項等他看）' : ''),
         note: '已經過了的任務，專案走下去之後你可能發現它不夠——回頭補完，' +
-          '寫下你補了什麼送去。他接受就多抽一次。一週一次，不做也不扣分，' +
+          '寫下你補了什麼送去。他接受就多抽一次。7 天一次，不做也不扣分，' +
           '但做了的組會跟其他人拉開差距。' },
       { k: '最後', v: '命名封存',
         note: '四層走完，你會幫這一趟取一個名字留下來。下一個專案打開紀錄還看得到。' }
@@ -12370,7 +12379,7 @@ class Component extends DCLogic {
       ],
       quoteLabel: '介紹',
       quote: f.look,
-      lines: ['它不算在 152 種裡面——那 152 種是大家共同的世界，這一件是你的。'],
+      lines: ['它不算在 136 種裡面——那 136 種是大家共同的世界，這一件是你的。'],
       btn: '收好', go: function () {}
     });
   }
@@ -12486,23 +12495,23 @@ class Component extends DCLogic {
       }, !all.length ? tag('還沒有清單', '#5F574C')
         : tag('清單上有 ' + all.length + ' 項', 'var(--tx2)')),
       Object.assign({
-        n: '2', title: '交任務 → 拿到礦石',
-        desc: '每一項任務對應一塊礦石。老師確認通過，那一塊才進你的收藏。',
+        n: '2', title: '交任務 → 打贏擋在前面的那一隻',
+        desc: '作業交到老師原本收的地方，回來把清單勾完送出。他確認通過，牠就讓開，' +
+          '並在原地留下幾件東西——那幾件直接進你的圖鑑。',
         box: box(step1On), num: num(step1On), color: step1On ? 'var(--ac)' : 'var(--tx3)'
-      }, RS.veinN
-        ? tag('拿到 ' + RS.gotN + '/' + RS.veinN + ' 塊', RS.complete ? 'var(--ac)' : 'var(--tx2)')
+      }, RS.openedN
+        ? tag('通過 ' + RS.gotN + '/' + RS.openedN + ' 項', RS.complete ? 'var(--ac)' : 'var(--tx2)')
         : tag('還沒有清單', '#5F574C')),
       Object.assign({
         n: '3', title: '覺得這一層夠了 → 去找老師',
-        desc: '礦石是你做過什麼的紀錄，不是過關的門票。覺得這一層告一段落了就去找老師，過不過他決定。',
+        desc: '做幾項不是門檻。覺得這一層告一段落了就去找老師，過不過他決定。',
         box: box(step2On), num: num(step2On), color: step2On ? 'var(--ac)' : 'var(--tx3)'
       }, done ? tag('已通過', 'var(--ac)')
         : allReq ? tag('可以送了', 'var(--ac)')
-        : veinLeftR && !missing.length ? tag('老師還差 ' + veinLeftR + ' 塊沒開', '#D9603F')
-        : tag('還差 ' + missing.length + ' 塊', '#D9603F')),
+        : tag('還有 ' + missing.length + ' 項沒過', '#D9603F')),
       Object.assign({
-        n: '4', title: '老師審核 → 鑄成道具、擊退擋路的那一隻',
-        desc: '老師放行了，這一層的礦石就鑄成' + (lay.tool ? '「' + lay.tool + '」' : '道具') + '——擋在層底的那一隻退開，你們才下一層。' +
+        n: '4', title: '老師放行 → 擊退層底那一隻',
+        desc: '老師放行了，' + (lay.tool ? '這一層的「' + lay.tool + '」就到手' : '這一層的道具就到手') + '——擋在層底的那一隻退開，你們才下一層。' +
           '牠倒下的地方會留下一件東西，只有走到這裡才拿得到。',
         box: box(step3On), num: num(step3On), color: step3On ? 'var(--ac)' : 'var(--tx3)'
       }, done ? tag('已拿到', 'var(--ac)') : tag('未開始', '#5F574C'))
@@ -12659,22 +12668,16 @@ class Component extends DCLogic {
         '才拿得到這一層的道具與守關戰利品。這中間可以繼續多做幾項，掉落物照掉。';
       v.nextActionBtn = '看看還能收什麼';
       v.goNextAction = function () { L.setState({ screen: 'S03', mapTab: 'coll' }); };
-    } else if (!missing.length && veinLeftR) {
-      v.nextAction = '等老師把這一層剩下的 ' + veinLeftR + ' 塊開出來。';
-      v.nextActionWhy = '這一層的礦石有 ' + RS.veinN + ' 塊，他開了 ' + RS.openedN +
-        ' 塊，你們都拿到了。拿幾塊都不影響——要不要往下一層是老師決定的。';
-      v.nextActionBtn = '看地圖';
-      v.goNextAction = function () { L.go('S03'); };
     } else if (waiting) {
       v.nextAction = '有 ' + waiting + ' 項在他手上，等確認。';
-      v.nextActionWhy = '老師看的順序是照各組停留週數排的，不是先交先看——待越久的排越前面。';
+      v.nextActionWhy = '老師看的順序是照各組停留天數排的，不是先交先看——待越久的排越前面。';
       v.nextActionBtn = '看清單';
       v.goNextAction = function () { L.go('S02'); };
     } else {
       var anyLeft = missing.filter(function (t) { return t.status === 'todo'; })[0];
       if (anyLeft) {
-        v.nextAction = '還差「' + anyLeft.title + '」這一塊。';
-        v.nextActionWhy = '礦石是紀錄不是門票。覺得這一層告一段落了就去找他。';
+        v.nextAction = '還沒交「' + anyLeft.title + '」。';
+        v.nextActionWhy = '做幾項不是門檻。覺得這一層告一段落了就去找他。';
         v.nextActionBtn = '去交這一項';
         v.goNextAction = openTask(L, anyLeft);
       } else {
@@ -12755,8 +12758,8 @@ class Component extends DCLogic {
     v.publishNote = drafts.length
       ? '這 ' + drafts.length + ' 項會一起出現在學生的任務清單上。' +
         '每一項會自動配到這一層還沒用掉的一塊礦石，你不用挑。'
-      : '上面寫完一項，按「加入清單」把它加進來。開幾項都不影響過關——' +
-        '每一項發出去的時候會自動配到一塊礦石。';
+      : '上面寫完一項，按「加入清單」把它加進來。這一層要開幾項由你決定，沒有上限——' +
+        '每一項在學生那邊都會長出一隻擋在前面的生物，通過了牠才讓開。';
 
     var chip = function (tone) {
       return "display:flex;flex-direction:column;gap:3px;padding:9px 13px;background:rgba(0,0,0,.3);border-left:2px solid " +
@@ -14103,8 +14106,12 @@ class Component extends DCLogic {
       if (!byTeam[o.teamId]) { byTeam[o.teamId] = []; order.push(o.teamId); }
       byTeam[o.teamId].push(o);
     });
-    var weekOf = {}, layerOf = {};
-    (L.teams() || []).forEach(function (t) { weekOf[t.id] = t.weeks || 1; layerOf[t.id] = t.layer || 1; });
+    var weekOf = {}, dayOf = {}, layerOf = {};
+    (L.teams() || []).forEach(function (t) {
+      weekOf[t.id] = t.weeks || 1;
+      dayOf[t.id] = t.days != null ? t.days : ((t.weeks || 1) - 1) * 7;
+      layerOf[t.id] = t.layer || 1;
+    });
 
     /* 作業交在老師原本收的地方，這裡只收「我做完了」的勾。
        一組要把那一層全部勾完，才算真的等他去看。 */
@@ -14127,7 +14134,7 @@ class Component extends DCLogic {
     });
     return order.map(function (id) {
       var items = byTeam[id], tk = tick(id);
-      return { teamId: id, teamName: items[0].team, weeks: weekOf[id] || 1, items: items,
+      return { teamId: id, teamName: items[0].team, weeks: weekOf[id] || 1, days: dayOf[id] || 0, items: items,
                ready: tk.ready, tickDone: tk.done, tickTotal: tk.total };
     });
   }
@@ -14240,7 +14247,7 @@ class Component extends DCLogic {
       return {
         name: g.teamName,
         sub: (g.ready ? '全部勾完了 · ' : '還在勾 ' + g.tickDone + '/' + g.tickTotal + ' · ') +
-          g.items.length + ' 件待看 · 停留 ' + g.weeks + ' 週',
+          g.items.length + ' 件待看 · 停留 ' + g.days + ' 天',
         pick: function () { L.setState({ queueTeam: g.teamId, reviewId: null }); },
         style: 'text-align:left;padding:11px 14px;font:inherit;cursor:pointer;background:' +
           (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' +
@@ -14250,7 +14257,7 @@ class Component extends DCLogic {
     });
     v.hasPickedGroup = !!picked;
     v.pickedTeam = picked ? picked.teamName : '';
-    v.pickedMeta = picked ? (picked.items.length + ' 件待審 · 停留 ' + picked.weeks + ' 週') : '';
+    v.pickedMeta = picked ? (picked.items.length + ' 件待審 · 停留 ' + picked.days + ' 天') : '';
     var pat = picked ? groupPattern(picked.items) : [];
     v.hasPattern = pat.length > 0;
     v.patternNote = pat.length
@@ -14541,7 +14548,7 @@ class Component extends DCLogic {
           ],
           quoteLabel: '他們寫的', quote: cur.text,
           lines: [reason.trim() ? '你回的：' + reason : '',
-                  '回頭補強一週一次。他們下一週還可以再挑一項。'].filter(Boolean),
+                  '回頭補強 7 天一次。過幾天他們還可以再挑一項。'].filter(Boolean),
           btn: '知道了', go: function () {}
         });
         call('apiReviewRedig', LIVE.token, cur.redigId, true, reason)
@@ -14581,14 +14588,12 @@ class Component extends DCLogic {
       if (!(st.draftSet || []).length) return;
       var __pubN = st.draftSet.length, __pubLayer = st.editLayer;
       var layer = st.editLayer, kid = L.klass().id;
-      var free = L.MINS.filter(function (m) {
-        return m.L === layer && !st.tasks.some(function (t) { return t.mineral === m.name; });
-      }).map(function (m) { return m.name; });
-      var items = st.draftSet.map(function (d, i) {
+      /* 不再配礦石。本來每一項會自動配一塊寫死清單上的礦石，一層只有四塊，
+         所以一層實質只開得了四項——那跟「老師依進度決定要開什麼」是牴觸的。 */
+      var items = st.draftSet.map(function (d) {
         return { type: d.type, title: d.title, cond: d.cond || '（未填通過條件）', note: d.note || '（未填提醒）',
                  teams: d.teams || [],
-                 spec: d.spec || '', due: d.due, mineral: d.mineral || free[i % Math.max(1, free.length)] || '',
-                 mDesc: '這一項工作留下的礦石。' };
+                 spec: d.spec || '', due: d.due, mineral: '', mDesc: '' };
       });
       L.setState({ draftSet: [], screen: 'T02' });
       call('apiPublishList', LIVE.token, kid, layer, items)
@@ -14849,7 +14854,7 @@ class Component extends DCLogic {
       var on = g && x.teamId === g.teamId;
       return {
         name: x.teamName,
-        sub: LAYERNAME(x.layer) + ' · 停留 ' + x.weeks + ' 週',
+        sub: LAYERNAME(x.layer) + ' · 停留 ' + (x.days != null ? x.days : ((x.weeks || 1) - 1) * 7) + ' 天',
         pick: function () { L.setState({ gateTeamId: x.teamId, gateLevelPick: null, gateReason: '' }); },
         style: 'text-align:left;padding:10px 14px;font:inherit;cursor:pointer;background:' +
           (on ? 'rgba(233,179,65,.14)' : 'transparent') + ';border:1px solid ' + (on ? 'var(--ac)' : 'var(--line)') +
@@ -15395,7 +15400,7 @@ class Component extends DCLogic {
     R06: { chain: [['學生端', 'S-05 提交一項'], ['老師端', 'T-05 訂的期限']],
            note: '每一筆提交的週次，對照老師在 T-05 訂的期限，算出提前／準時／逾期。不做組別排行。' },
     R07: { chain: [['系統', '各組進層週次'], ['老師端', 'T-01 佇列排序']],
-           note: '停留週數＝目前週次減掉那一組進到這一層的週次。老師的 T-01 佇列就是照這個排序，所以停留越久越前面。' },
+           note: '停留天數＝那一組進到這一層之後過了幾天。老師的 T-01 佇列就是照這個排序，所以停留越久越前面。' },
     R08: { chain: [['學生端', 'S-05／S-04'], ['老師端', 'T-06／T-07']],
            note: '匯出的四類事件就是上面各頁的原始資料。後端強制匿名：隊名換成 G1…Gn，不輸出姓名、帳號、隊名原文。' },
     R09: { chain: [['研究者', '設計修訂記錄']],

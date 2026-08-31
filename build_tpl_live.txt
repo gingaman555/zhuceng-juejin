@@ -415,7 +415,7 @@
                     </span>
                   </sc-if>
                   <div style="text-align:right">
-                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">停留週數</div>
+                    <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C">停留天數</div>
                     <div style="font:700 33px/1 'C11';color:var(--ac);margin-top:6px">{{ weeksHere }}</div>
                   </div>
                 </div>
@@ -1965,7 +1965,7 @@
                 </div>
                 <!-- 班級切換改成獨立畫面 KLASS -->
                 <h1 style="font:900 33px/1.2 'C11';margin:14px 0 0;letter-spacing:.07em;color:#F2EADA">待你驗收</h1>
-                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:8px 0 0;text-wrap:pretty">依停留週數排序。排最前面的不是進度最快的，是待最久的。</p>
+                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:8px 0 0;text-wrap:pretty">依停留天數排序。排最前面的不是進度最快的，是待最久的。</p>
               </div>
               <div style="padding:0 var(--pad) 8px;display:flex;align-items:baseline;gap:10px">
                 <span style="font:400 11px/1 'C11';letter-spacing:.2em;color:#5F574C">待確認佇列</span>
@@ -1974,7 +1974,7 @@
               <sc-if value="{{ queueEmptyHome }}" hint-placeholder-val="{{ false }}">
                 <div style="margin:0 var(--pad) 14px;padding:17px 19px;background:rgba(0,0,0,.26);border:1px dashed var(--line)">
                   <div style="font:500 22px/1.5 'C11';color:var(--tx2)">還沒有人送出東西。</div>
-                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:8px;text-wrap:pretty">學期剛開始。學生交出第一項之後，這裡會依停留週數排序，最久的排最前面。下面仍列出全班，可以先確認每一組都進來了。</div>
+                  <div style="font:400 11px/1.7 'C11';color:#6E665A;margin-top:8px;text-wrap:pretty">還沒有人交東西。學生交出第一項之後，這裡會依停留天數排序，最久的排最前面。下面仍列出全班，可以先確認每一組都進來了。</div>
                 </div>
               </sc-if>
               <div style="padding:0 var(--pad);display:flex;flex-direction:column;gap:8px">
@@ -2819,7 +2819,7 @@
                 </div>
                 <div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">CLASS ROSTER</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">班級名單</h1>
-                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:0 0 4px;text-wrap:pretty">依停留週數排序。排最前面的不是進度最快的，是待最久的。</p>
+                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:0 0 4px;text-wrap:pretty">依停留天數排序。排最前面的不是進度最快的，是待最久的。</p>
               </div>
               <div style="padding:16px var(--pad) 0;display:flex;gap:0;flex-wrap:wrap;font:400 11px/1 'C11';letter-spacing:.14em;color:#5F574C;border-bottom:1px solid #221E19;padding-bottom:9px">
                 <span style="flex:2.6;min-width:110px">組別</span><span style="flex:0 0 var(--tcol);min-width:64px">地層</span><span style="flex:0 0 52px;text-align:right">停留</span><span style="flex:0 0 60px;text-align:right">待確認</span><span style="flex:0 0 48px;text-align:right">逾期</span>

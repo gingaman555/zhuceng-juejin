@@ -165,7 +165,9 @@ const pub = run('apiPublishList', [tk, cid, 1, [{
   cond: '一句話講得完', note: '', due: 3, dueDow: 5, spec: 'PDF 一份'
 }]]);
 T('發派清單', pub && pub.ok === true, pub && pub.error);
-T('沒選礦石時後端自動配一塊', DB.Tasks.length === 1 && !!DB.Tasks[0].mineral, DB.Tasks[0] && DB.Tasks[0].mineral);
+/* 礦石拿掉了：它是一份寫死的清單（一層四塊），自動配的結果是一層只開得了
+   四項。現在一層開幾項由老師決定，沒有上限，所以任務不再帶礦石。 */
+T('發派之後不再配礦石', DB.Tasks.length === 1 && !DB.Tasks[0].mineral, DB.Tasks[0] && DB.Tasks[0].mineral);
 
 /* 13. 學生 bootstrap 看得到任務 */
 const sb = run('apiBootstrap', [stk]);

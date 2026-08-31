@@ -32,7 +32,7 @@ var SHEET_DEFS = {
   Users:       ['userId', 'account', 'salt', 'hash', 'role', 'name', 'classId', 'teamId', 'coder', 'createdAt', 'lastLogin'],
   Sessions:    ['token', 'userId', 'createdAt', 'expiresAt'],
   Classes:     ['classId', 'name', 'term', 'started', 'courseStart', 'weekOverride', 'semesterWeeks', 'joinCode', 'teacherId', 'sandbox'],
-  Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'passed', 'toolLevels',
+  Teams:       ['teamId', 'classId', 'name', 'members', 'layer', 'enteredWeek', 'enteredAt', 'passed', 'toolLevels',
                 'gateText', 'gateSubmitted', 'gateVerdict', 'specNames', 'createdAt', 'gateTs'],
   Tasks:       ['taskId', 'classId', 'layer', 'type', 'title', 'cond', 'note', 'spec', 'due', 'mineral', 'mDesc', 'published', 'teams', 'checks', 'createdAt'],
   TeamTasks:   ['teamId', 'taskId', 'status', 'vow', 'find', 'find2', 'finds', 'gave', 'page', 'pageAt', 'text', 'files', 'fb', 'fbType', 'passedWeek',
@@ -751,7 +751,7 @@ function apiAdminSaveRoster(token, classId, text) {
         var id = 't' + Utilities.getUuid().slice(0, 6);
         appendRow_('Teams', {
           teamId: id, classId: classId, name: full, members: JSON.stringify(members),
-          layer: 1, enteredWeek: courseWeek, passed: '[]', toolLevels: '{}',
+          layer: 1, enteredWeek: courseWeek, enteredAt: new Date(), passed: '[]', toolLevels: '{}',
           gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: '', specNames: '{}', createdAt: new Date()
         });
         t = teamById_(id);
@@ -973,7 +973,7 @@ function apiCreateTeam(token, teamName) {
     appendRow_('Teams', {
       teamId: id, classId: u.classId, name: '第' + numCn_(teams.length + 1) + '組 · ' + name,
       members: JSON.stringify([u.name]),
-      layer: 1, enteredWeek: courseWeekOf_(classById_(u.classId)), passed: '[]', toolLevels: '{}',
+      layer: 1, enteredWeek: courseWeekOf_(classById_(u.classId)), enteredAt: new Date(), passed: '[]', toolLevels: '{}',
       gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: '', specNames: '{}', createdAt: new Date()
     });
     upsert_('Users', ['userId'], { userId: u.userId, teamId: id });
@@ -1060,12 +1060,27 @@ function gotByLayer_(classId) {
   return out;
 }
 
+/* 這一組在這一層待了幾天。有 enteredAt 就用它；舊資料只有週次，
+   就從開課日回推那一週的開頭——不精確，但只差幾天，而且會越來越少。 */
+function stayDaysOf_(t, klass) {
+  var now = new Date();
+  var at = t && t.enteredAt ? toDate_(t.enteredAt) : null;
+  if (!at || isNaN(at.getTime())) {
+    var st = toDate_((klass || {}).courseStart || cfg_('courseStart', '2026-09-14'));
+    at = new Date(st.getTime() + ((Number(t && t.enteredWeek) || 1) - 1) * 7 * 86400000);
+  }
+  var d0 = new Date(at.getFullYear(), at.getMonth(), at.getDate());
+  var n0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.max(0, Math.round((n0 - d0) / 86400000));
+}
+
 function teamPub_(t, courseWeek) {
   return {
     id: t.teamId, classId: t.classId, name: t.name, members: jparse_(t.members, []),
     layer: Number(t.layer) || 1,
     enteredWeek: Number(t.enteredWeek) || 1,
     weeks: Math.max(1, courseWeek - (Number(t.enteredWeek) || 1) + 1),
+    days: stayDaysOf_(t, classById_(t.classId)),
     passed: jparse_(t.passed, []),
     toolLevels: jparse_(t.toolLevels, {}),
     gateText: jparse_(t.gateText, ['', '', '']),
@@ -1253,7 +1268,7 @@ function sweepOverdue_() {
       var levels = jparse_(t.toolLevels, {});
       levels[layer] = '已交出';
       upsert_('Teams', ['teamId'], {
-        teamId: t.teamId, layer: Math.min(4, layer + 1), enteredWeek: courseWeek,
+        teamId: t.teamId, layer: Math.min(4, layer + 1), enteredWeek: courseWeek, enteredAt: new Date(),
         passed: JSON.stringify(passedArr), toolLevels: JSON.stringify(levels),
         gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: 'pass'
       });
@@ -1613,6 +1628,7 @@ function apiFinaleQueue(token) {
       return {
         teamId: t.teamId, name: t.name, layer: Number(t.layer) || 1,
         weeks: Math.max(1, w - (Number(t.enteredWeek) || 1) + 1),
+        days: stayDaysOf_(t, classById_(t.classId)),
         done5: done5,
         applied: String(f.submitted) === 'Y',
         opened: String(f.opened) === 'Y',
@@ -2221,7 +2237,7 @@ function apiSetVow(token, taskId, vow) {
 
 /**
  * 對已經過了的任務回頭補強。學生寫下補了什麼，送去給老師認定。
- * 一週一次（跟清單上的回掘共用同一個額度）。
+ * 7 天一次（跟清單上的回掘共用同一個額度）。
  */
 function apiSubmitRedig(token, taskId, note) {
   try {
@@ -2242,7 +2258,7 @@ function apiSubmitRedig(token, taskId, note) {
     if (pend) return err_('這一項已經送過一次回頭補強，還在等老師看。');
 
     if (redigThisWeek_(u.teamId, u.classId) >= 1) {
-      return err_('這一週已經回頭補過一次了。下一週再來——一週一次，這件事才有份量。');
+      return err_('最近 7 天已經回頭補過一次了。過幾天再來——7 天一次，這件事才有份量。');
     }
 
     appendRow_('Redigs', {
@@ -2310,25 +2326,25 @@ function redigsOf_(teamId) {
   });
 }
 
-/** 這一組這一週回掘過幾次。一週一次——不然它會變成「多抽一次」的按鈕。 */
+/** 這一組最近 7 天回掘過幾次——不然它會變成「多抽一次」的按鈕。 */
+/* 回頭補強的額度：往回數 7 天，不是「學期第幾週」。
+   本來的界線在開課日推出來的週界上——那讓「還能不能再送一次」
+   取決於今天禮拜幾，而且跟學期綁在一起。改成滾動的 7 天之後，
+   這件事跟行事曆無關，隨時開始用都一樣。 */
 function redigThisWeek_(teamId, classId) {
-  var wk = courseWeekOf_(classById_(classId));
-  var start = toDate_((classById_(classId) || {}).courseStart || cfg_('courseStart', '2026-09-14'));
-  var d0 = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  var cut = new Date().getTime() - 7 * 86400000;
   var n = 0;
   readTable_('Checks').forEach(function (c) {
     if (String(c.teamId) !== String(teamId)) return;
     if (String(c.act) !== 'off') return;
     if (!String(c.note || '').trim()) return;
-    var days = Math.floor((new Date(c.ts) - d0) / 86400000);
-    if (Math.max(1, Math.floor(days / 7) + 1) === wk) n++;
+    if (new Date(c.ts).getTime() >= cut) n++;
   });
   /* 送去給老師看的那些也算同一個額度 */
   readTable_('Redigs').forEach(function (x) {
     if (String(x.teamId) !== String(teamId)) return;
     if (String(x.status) === 'declined') return;
-    var d2 = Math.floor((new Date(x.ts) - d0) / 86400000);
-    if (Math.max(1, Math.floor(d2 / 7) + 1) === wk) n++;
+    if (new Date(x.ts).getTime() >= cut) n++;
   });
   return n;
 }
@@ -2349,9 +2365,9 @@ function apiSetCheck(token, taskId, idx, on, note) {
     })[0] || null;
     if (row && String(row.status) === 'passed') return err_('這一項已經通過了，不用再改。');
 
-    /* 回掘一週一次。寫了字才算回掘，單純把勾拿掉不受限。 */
+    /* 回掘 7 天一次。寫了字才算回掘，單純把勾拿掉不受限。 */
     if (!on && String(note || '').trim() && redigThisWeek_(u.teamId, u.classId) >= 1) {
-      return err_('這一週已經回掘過一次了。下一週再來——一週一次，這件事才有份量。');
+      return err_('最近 7 天已經回掘過一次了。過幾天再來——7 天一次，這件事才有份量。');
     }
 
     var cur = jparse_(row && row.checked, []) || [];
@@ -2481,12 +2497,8 @@ function apiPublishList(token, classId, layer, items) {
   try {
     assertTeacher_(token);
     (items || []).forEach(function (it) {
-      /* 沒指定環節就自動配一塊還沒被用掉的礦——任務不該沒有物證 */
-      var min = String(it.mineral || '').trim();
-      if (!min) {
-        var free = freeMinerals_(classId, layer, cleanTeams_(classId, it.teams));
-        min = free.length ? free[0] : '';
-      }
+      /* 礦石拿掉了：一層開幾項由老師決定，沒有上限。 */
+      var min = '';
       upsert_('Tasks', ['taskId'], {
         taskId: it.id || ('tk' + Utilities.getUuid().slice(0, 8)), classId: classId,
         layer: layer, type: it.type, title: it.title, cond: it.cond, note: it.note,
@@ -2650,7 +2662,7 @@ function apiReviewGate(token, teamId, pass, toolLevel, reason) {
 
     var nextLayer = Math.min(4, layer + 1);
     upsert_('Teams', ['teamId'], {
-      teamId: teamId, layer: nextLayer, enteredWeek: courseWeek,
+      teamId: teamId, layer: nextLayer, enteredWeek: courseWeek, enteredAt: new Date(),
       passed: JSON.stringify(passedArr), toolLevels: JSON.stringify(levels),
       gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: 'pass'
     });
@@ -2695,7 +2707,7 @@ function apiSetTeamLayer(token, teamId, cleared, reason) {
     passedArr.sort(function (a, b) { return a - b; });
 
     upsert_('Teams', ['teamId'], {
-      teamId: teamId, layer: Math.min(4, n + 1), enteredWeek: courseWeek,
+      teamId: teamId, layer: Math.min(4, n + 1), enteredWeek: courseWeek, enteredAt: new Date(),
       passed: JSON.stringify(passedArr), toolLevels: JSON.stringify(levels),
       gateText: '["","",""]', gateSubmitted: 'N', gateVerdict: ''
     });

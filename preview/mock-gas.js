@@ -106,6 +106,7 @@
     return { id: t.teamId, classId: t.classId, name: t.name, members: t.members || [],
              layer: t.layer, enteredWeek: t.enteredWeek,
              weeks: Math.max(1, w - t.enteredWeek + 1),
+             days: stayDaysOf(t),
              passed: t.passed || [], toolLevels: t.toolLevels || {},
              gateText: t.gateText || ['', '', ''], gateSubmitted: !!t.gateSubmitted,
              gateVerdict: t.gateVerdict || '', specNames: t.specNames || {} };
@@ -240,17 +241,31 @@
     var days = Math.floor((new Date(ts) - d0) / 86400000);
     return Math.max(1, Math.floor(days / 7) + 1);
   }
-  /* 一週一次：清單上的回掘與送去給老師看的共用同一個額度 */
+  /* 7 天一次：清單上的回掘與送去給老師看的共用同一個額度。
+     往回數 7 天，不是「學期第幾週」——跟行事曆無關，隨時開始用都一樣。 */
+  /* 這一組在這一層待了幾天。舊資料只有週次，就從開課日回推那一週的開頭。 */
+  function stayDaysOf(t) {
+    var at = t && t.enteredAt ? new Date(t.enteredAt) : null;
+    if (!at || isNaN(at.getTime())) {
+      var st = new Date((classById(t.classId) || {}).courseStart || '2026-09-14');
+      at = new Date(st.getTime() + ((Number(t && t.enteredWeek) || 1) - 1) * 7 * 86400000);
+    }
+    var now = new Date(NOW());
+    var d0 = new Date(at.getFullYear(), at.getMonth(), at.getDate());
+    var n0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.max(0, Math.round((n0 - d0) / 86400000));
+  }
+
   function redigWeekUsed(u) {
-    var now = wkOfTs(u, NOW()), n = 0;
+    var cut = new Date(NOW()).getTime() - 7 * 86400000, n = 0;
     DB.Checks.forEach(function (c) {
       if (c.teamId !== u.teamId || c.act !== 'off') return;
       if (!String(c.note || '').trim()) return;
-      if (wkOfTs(u, c.ts) === now) n++;
+      if (new Date(c.ts).getTime() >= cut) n++;
     });
     (DB.Redigs || []).forEach(function (x) {
       if (x.teamId !== u.teamId || x.status === 'declined') return;
-      if (wkOfTs(u, x.ts) === now) n++;
+      if (new Date(x.ts).getTime() >= cut) n++;
     });
     return n;
   }
@@ -507,7 +522,7 @@
         var tm = teamByName[full];
         if (!tm) {
           tm = { teamId: 'tm' + uid(), classId: classId, name: full, members: members.slice(), layer: 1,
-                 enteredWeek: courseWeekOf(classById(classId)), passed: [], toolLevels: {},
+                 enteredWeek: courseWeekOf(classById(classId)), enteredAt: NOW(), passed: [], toolLevels: {},
                  gateText: ['', '', ''], gateSubmitted: false, gateVerdict: '', specNames: {} };
           DB.Teams.push(tm); teamByName[full] = tm;
         } else {
@@ -721,7 +736,7 @@
       var id = 'tm' + uid();
       DB.Teams.push({ teamId: id, classId: u.classId, name: '第' + numCn(n + 1) + '組 · ' + name,
         members: [u.name], layer: 1,
-        enteredWeek: courseWeekOf(classById(u.classId)), passed: [], toolLevels: {},
+        enteredWeek: courseWeekOf(classById(u.classId)), enteredAt: NOW(), passed: [], toolLevels: {},
         gateText: ['', '', ''], gateSubmitted: false, gateVerdict: '', specNames: {} });
       u.teamId = id;
       persist();
@@ -993,6 +1008,7 @@
         var f = DB.Finales.filter(function (x) { return x.teamId === tm.teamId; })[0] || {};
         return { teamId: tm.teamId, name: tm.name, layer: tm.layer,
                  weeks: Math.max(1, w - (tm.enteredWeek||1) + 1),
+                 days: stayDaysOf(tm),
                  done5: (tm.passed||[]).indexOf(4) >= 0,
                  applied: !!f.submitted, opened: !!f.opened, openWords: f.openWords||"",
                  submittedAt: f.ts ? String(f.ts) : "" };
@@ -1128,7 +1144,7 @@
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       var id = task.id || ('tk' + uid());
-      if (!String(task.mineral || '').trim()) task.mineral = (API.freeMin(classId, task.layer, id, API.cleanTeams(classId, task.teams)) || [])[0] || '';
+      task.mineral = '';   /* 礦石拿掉了：一層開幾項由老師決定，沒有上限。 */
       var ex = DB.Tasks.filter(function (x) { return x.taskId === id; })[0];
       var row = { taskId: id, classId: classId, layer: task.layer, type: task.type, title: task.title,
                   cond: task.cond, note: task.note, spec: task.spec || '', due: task.due, mineral: task.mineral, mDesc: task.mDesc,
@@ -1153,7 +1169,7 @@
       persist();
       return ok({ vow: k });
     },
-    /* 對已經過了的任務回頭補強，送老師認定。一週一次。 */
+    /* 對已經過了的任務回頭補強，送老師認定。7 天一次。 */
     apiSubmitRedig: function (t, taskId, note) {
       var u = auth(t);
       if (u.role !== 'student' || !u.teamId) return err('只有學生可以送。');
@@ -1165,7 +1181,7 @@
       if (DB.Redigs.filter(function (x) {
         return x.teamId === u.teamId && x.taskId === taskId && x.status === 'pending';
       })[0]) return err('這一項已經送過一次回頭補強，還在等老師看。');
-      if (redigWeekUsed(u) >= 1) return err('這一週已經回頭補過一次了。下一週再來——一週一次，這件事才有份量。');
+      if (redigWeekUsed(u) >= 1) return err('最近 7 天已經回頭補過一次了。過幾天再來——7 天一次，這件事才有份量。');
       DB.Redigs.push({ redigId: 'rd' + uid(), teamId: u.teamId, taskId: taskId,
         note: txt.slice(0, 400), status: 'pending', reason: '',
         by: u.userId || u.account || '', ts: NOW(), decidedAt: '' });
@@ -1222,7 +1238,7 @@
           return c.teamId === u.teamId && c.act === 'off' &&
                  String(c.note || '').trim() && wkOf(c.ts) === now;
         }).length;
-        if (used >= 1) return err('這一週已經回掘過一次了。下一週再來——一週一次，這件事才有份量。');
+        if (used >= 1) return err('最近 7 天已經回掘過一次了。過幾天再來——7 天一次，這件事才有份量。');
       }
       var set = {};
       checkList2(row && row.checked).forEach(function (x) { set[x] = true; });
@@ -1298,7 +1314,7 @@
       if (auth(t).role !== 'teacher') return err('這個動作只有老師可以做。');
       auth(t);
       (items || []).forEach(function (it) {
-        var min = String(it.mineral || '').trim() || (API.freeMin(classId, layer, null, API.cleanTeams(classId, it.teams)) || [])[0] || '';
+        var min = '';   /* 礦石拿掉了 */
         var row = { taskId: it.id || ('tk' + uid()), classId: classId, layer: layer, type: it.type,
           title: it.title, cond: it.cond, note: it.note, spec: it.spec || '', due: it.due, mineral: min, mDesc: it.mDesc,
           teams: JSON.stringify(API.cleanTeams(classId, it.teams)),
@@ -1378,7 +1394,7 @@
       if (tm.passed.indexOf(tm.layer) < 0) tm.passed.push(tm.layer);
       tm.toolLevels[tm.layer] = '已交出';
       tm.layer = Math.min(4, tm.layer + 1);
-      tm.enteredWeek = w;
+      tm.enteredWeek = w; tm.enteredAt = NOW();
       tm.gateText = ['', '', '']; tm.gateSubmitted = false; tm.gateVerdict = 'pass';
       persist();
       return ok({ passed: true, layer: tm.layer });
@@ -1403,7 +1419,7 @@
       }
       tm.passed.sort(function (a, b) { return a - b; });
       tm.layer = Math.min(4, n + 1);
-      tm.enteredWeek = w;
+      tm.enteredWeek = w; tm.enteredAt = NOW();
       tm.gateText = ['', '', '']; tm.gateSubmitted = false; tm.gateVerdict = '';
       persist();
       return ok({ layer: tm.layer, passed: tm.passed.slice(), added: added });

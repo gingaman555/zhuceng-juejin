@@ -4809,5 +4809,19 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('131. 後台拿掉總週數');
 })();
 
+
+/* 132. 停留改成天，並拿掉「學期剛開始」。
+       日曆週預設了「一週是一格」，這個作品要隨時可以開始用。 */
+(function () {
+  [[">停留週數</div>", ">停留天數</div>"],
+   ["依停留週數排序", "依停留天數排序"],
+   ["學期剛開始。學生交出第一項之後", "還沒有人交東西。學生交出第一項之後"]].forEach(function (pr) {
+    var n = t.split(pr[0]).length - 1;
+    if (!n) { console.error('132. 找不到 ' + pr[0]); process.exit(1); }
+    t = t.split(pr[0]).join(pr[1]);
+  });
+  console.log('132. 停留改成天');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);
