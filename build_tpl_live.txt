@@ -778,7 +778,7 @@
                   </sc-if>
                   <div style="margin-top:14px">
                     <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C;margin-bottom:8px">現在卡在哪（沒有就留空）</div>
-                    <textarea onChange="{{ setBlocker }}" value="{{ blocker }}" placeholder="例：兩個人對範圍的理解還不一樣，下一項開始前要先講清楚。" style="width:100%;min-height:110px;padding:12px 13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                    <textarea onChange="{{ setBlocker }}" value="{{ blocker }}" placeholder="例：兩個人對範圍的理解還不一樣，下一項開始前要先講清楚。" style="width:100%;min-height:110px;padding:12px 13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea><div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:9px"><button onClick="{{ sendBlocker }}" style="{{ blockerBtnStyle }}">{{ blockerBtnLabel }}</button><span style="{{ blockerHintStyle }}">{{ blockerHint }}</span></div>
                   </div>
                 </div>
                 </sc-if>

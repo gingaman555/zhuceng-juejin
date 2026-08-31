@@ -1908,12 +1908,14 @@ function scoreOf_(teamId, classId) {
     return Number(n) >= 1 && Number(n) <= 4;
   }).length : 0;
 
-  /* 全部是十的倍數——比例跟原本一樣，只是不讓畫面上出現個位數。 */
+  /* 勾選不計分。它是學生自己的紀錄，不是成績——一旦計分，它就會被
+     當成分數來勾，那條清單就再也不誠實了。分數只來自老師判斷過的：
+     通過一項 100、掉落物一件 30、放行一層 1000。 */
   return {
     ticks: ticks, pages: pages, vows: vows, finds: finds, layers: layers,
-    base: ticks * 10 + pages * 100 + finds * 30,
+    base: pages * 100 + finds * 30,
     bonus: layers * 1000,
-    total: ticks * 10 + pages * 100 + finds * 30 + layers * 1000
+    total: pages * 100 + finds * 30 + layers * 1000
   };
 }
 
@@ -1964,6 +1966,10 @@ function recordOf_(teamId, classId) {
       rounds: subs.filter(function (s) { return String(s.taskId) === String(d.id); }).length,
       sentBack: myRevs.filter(function (r) { return String(r.result) === 'needfix'; }).length,
       say: last ? String(last.reason || '') : '',
+      /* 這一組自己寫的「多做了什麼」。紀錄那一頁要把它跟老師給的分數
+         並排——學生才看得出「寫得認真的那幾次拿比較多」。 */
+      mine: String(st.text || ''),
+      effort: String(st.effort || ''),
       mineral: d.mineral || '',
       find: Number(st.find) || 0,
       find2: Number(st.find2) || 0,
@@ -2347,6 +2353,28 @@ function redigThisWeek_(teamId, classId) {
     if (new Date(x.ts).getTime() >= cut) n++;
   });
   return n;
+}
+
+/**
+ * 還沒送出，先說卡在哪。
+ * 送出不是唯一的發聲管道——卡住的人本來就交不出東西，如果只有送出
+ * 才說得出話，那他在老師眼裡就等於沒來。空字串＝把手放下。
+ */
+function apiSetBlocker(token, taskId, text) {
+  try {
+    var u = auth_(token);
+    if (u.role !== 'student' || !u.teamId) return err_('只有學生可以說。');
+    var defs = tasksOfClass_(u.classId, u.teamId), def = null;
+    for (var i = 0; i < defs.length; i++) if (String(defs[i].id) === String(taskId)) def = defs[i];
+    if (!def) return err_('找不到這一項任務。');
+    var cur = teamTaskMap_(u.teamId)[taskId] || {};
+    if (String(cur.status) === 'passed') return err_('這一項已經過了。');
+    var txt = String(text || '').trim().slice(0, 300);
+    upsert_('TeamTasks', ['teamId', 'taskId'], {
+      teamId: u.teamId, taskId: taskId, blocker: txt, updatedAt: new Date()
+    });
+    return ok_({ blocker: txt });
+  } catch (e) { return err_(e.message); }
 }
 
 function apiSetCheck(token, taskId, idx, on, note) {

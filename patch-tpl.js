@@ -4856,5 +4856,24 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('134. T-08 那塊礦脈拿掉');
 })();
 
+
+/* 135. 卡住可以現在就說，不用等送出。
+       本來這一格只會跟著送出一起交——可是卡住的人本來就交不出東西，
+       所以真正需要它的人用不到它，在老師眼裡跟沒來的人一模一樣。 */
+(function () {
+  var a = "現在卡在哪（沒有就留空）";
+  if (t.split(a).length - 1 !== 1) { console.error('135. 找不到那一格'); process.exit(1); }
+  t = t.replace(a, "現在卡在哪（沒有就留空）");
+
+  var k = "<textarea onChange=\"{{ setBlocker }}\"";
+  var i = t.indexOf(k);
+  if (i < 0) { console.error('135. 找不到那一欄'); process.exit(1); }
+  var e = t.indexOf('</textarea>', i);
+  if (e < 0) { console.error('135. 那一欄沒有收尾'); process.exit(1); }
+  var blk = "<div style=\"display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:9px\"><button onClick=\"{{ sendBlocker }}\" style=\"{{ blockerBtnStyle }}\">{{ blockerBtnLabel }}</button><span style=\"{{ blockerHintStyle }}\">{{ blockerHint }}</span></div>";
+  t = t.slice(0, e + 11) + blk + t.slice(e + 11);
+  console.log('135. 卡住可以現在就說');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

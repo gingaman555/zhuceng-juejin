@@ -919,7 +919,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   </sc-if>
                   <div style="margin-top:14px">
                     <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C;margin-bottom:8px">現在卡在哪（沒有就留空）</div>
-                    <textarea onChange="{{ setBlocker }}" value="{{ blocker }}" placeholder="例：兩個人對範圍的理解還不一樣，下一項開始前要先講清楚。" style="width:100%;min-height:110px;padding:12px 13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea>
+                    <textarea onChange="{{ setBlocker }}" value="{{ blocker }}" placeholder="例：兩個人對範圍的理解還不一樣，下一項開始前要先講清楚。" style="width:100%;min-height:110px;padding:12px 13px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.7 'C11';resize:vertical;outline:none"></textarea><div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:9px"><button onClick="{{ sendBlocker }}" style="{{ blockerBtnStyle }}">{{ blockerBtnLabel }}</button><span style="{{ blockerHintStyle }}">{{ blockerHint }}</span></div>
                   </div>
                 </div>
                 </sc-if>
@@ -5069,6 +5069,8 @@ class Component extends DCLogic {
         rounds: nRounds,
         sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
         say: last ? String(last.reason || '') : '',
+        /* 自己寫的「多做了什麼」＋當時的自評，紀錄那一頁要並排 */
+        mine: String(st.text || ''), effort: String(st.effort || ''),
         mineral: d.mineral || '', find: Number(st.find) || 0, find2: Number(st.find2) || 0,
         finds: Array.isArray(st.finds) ? st.finds : [], gave: Number(st.gave) || 1 };
     });
@@ -5163,9 +5165,9 @@ class Component extends DCLogic {
     }).length : 0;
     /* 全部是十的倍數 —— 比例跟原本一樣，只是不讓畫面上出現個位數。 */
     return { ticks: ticks, pages: pages, vows: vows, finds: finds, layers: layers,
-             base: ticks * 10 + pages * 100 + finds * 30,
+             base: pages * 100 + finds * 30,   /* 勾選不計分 */
              bonus: layers * 1000,
-             total: ticks * 10 + pages * 100 + finds * 30 + layers * 1000 };
+             total: pages * 100 + finds * 30 + layers * 1000 };
   }
   function firstsOf(classId) {
     var teams = {};
@@ -5705,6 +5707,20 @@ class Component extends DCLogic {
         });
       }
       return ok(out);
+    },
+
+    /* 還沒送出，先說卡在哪。空字串＝把手放下。 */
+    apiSetBlocker: function (t, taskId, text) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以說。');
+      var def = tasksOfClass(u.classId, u.teamId).filter(function (d) { return d.id === taskId; })[0];
+      if (!def) return err('找不到這一項任務。');
+      var row = DB.TeamTasks.filter(function (x) { return x.teamId === u.teamId && x.taskId === taskId; })[0];
+      if (row && row.status === 'passed') return err('這一項已經過了。');
+      if (!row) { row = { teamId: u.teamId, taskId: taskId, status: 'todo', checked: [] }; DB.TeamTasks.push(row); }
+      row.blocker = String(text || '').trim().slice(0, 300);
+      persist();
+      return ok({ blocker: row.blocker });
     },
 
     apiSubmitItem: function (t, taskId, text, files, reflect) {
@@ -7088,7 +7104,7 @@ class Component extends DCLogic {
            '每一項任務前面都擋著一隻東西。點開才看得到是哪一隻——每一組遇到的不是同一隻。'],
     tick: ['去做，做完回來把清單一條一條勾掉。',
            '作業還是交在老師原本要求的地方，系統不收檔案也看不到內容。' +
-           '　這裡的清單只是「我做到哪了」的紀錄，勾一條 10 分。'],
+           '　這裡的清單只是「我做到哪了」的紀錄，不算分。'],
     send: ['清單勾滿了，送出去。',
            '送出之前會問你這一項實際花的力氣跟原本估的差多少——那一格必填，' +
            '因為它是之後唯一能看出「你們對自己準不準」的東西。'],
@@ -8048,6 +8064,39 @@ class Component extends DCLogic {
     v.setEffortNote = function (e) { L.setState({ draftEffortNote: e.target.value }); };
     v.blocker = S.draftBlocker || '';
     v.setBlocker = function (e) { L.setState({ draftBlocker: e.target.value }); };
+
+    /* 卡住現在就說得出口，不用等送得出去。
+       這一格本來只跟著送出一起交——可是卡住的人交不出東西，所以真正
+       需要它的人用不到它，在老師的佇列上跟完全沒來的人長得一樣。 */
+    (function () {
+      var t0 = (S.tasks || []).filter(function (x) { return x.id === S.openTaskId; })[0] || {};
+      var up = String(t0.blocker || '').trim();
+      var draft = String(S.draftBlocker || '').trim();
+      v.blockerBtnLabel = up && draft === up ? '把手放下' : '現在就跟他說';
+      v.blockerBtnStyle = (draft || up)
+        ? "font:500 11px/1 'C11';letter-spacing:.08em;padding:9px 13px;cursor:pointer;" +
+          'background:' + (up ? 'rgba(217,96,63,.12)' : 'rgba(233,179,65,.10)') +
+          ';border:1px solid ' + (up ? 'rgba(217,96,63,.45)' : 'var(--ac-dim)') +
+          ';color:' + (up ? '#D9603F' : 'var(--ac)')
+        : 'display:none';
+      v.blockerHint = up
+        ? '他看得到了——你的組在他的清單上會標成「卡住了」。'
+        : (draft ? '不用等送出。按下去他現在就看得到。' : '');
+      v.blockerHintStyle = "font:400 11px/1.6 'C11';flex:1;min-width:150px;text-wrap:pretty;color:" +
+        (up ? '#D9603F' : 'var(--tx3)');
+      v.sendBlocker = function () {
+        var now = String(L.state.draftBlocker || '').trim();
+        var down = up && now === up;
+        if (!down && now.length < 4) { L.say('先寫一句你卡在哪。'); return; }
+        call('apiSetBlocker', LIVE.token, t0.id, down ? '' : now)
+          .then(function (r) {
+            if (!r || !r.ok) { L.say((r && r.error) || '沒有存到伺服器。'); return; }
+            L.say(down ? '把手放下了。' : '跟他說了。你還是可以繼續做，也隨時可以把手放下。');
+            return refresh(true);
+          })
+          .catch(function () { L.say('沒有存到伺服器。'); });
+      };
+    })();
 
     /* --- 重交：讓他知道自己在重交，而且是重寫不是改字 --- */
     var openT = (S.tasks || []).filter(function (t) { return t.id === S.openTaskId; })[0] || {};
@@ -10130,7 +10179,8 @@ class Component extends DCLogic {
           : '目前在最前面。') +
         '　名次不影響過關——要不要往下一層是老師決定的。';
     }
-    v.haulNote = '勾一條 10 分　·　撿到一件掉落物 30 分　·　通過一項 100 分　·　老師放行一層 1000 分（道具 500 ＋ 戰利品 500）。' +
+    v.haulNote = '通過一項 100 分　·　撿到一件掉落物 30 分　·　老師放行一層 1000 分（道具 500 ＋ 戰利品 500）。' +
+      '勾選不算分——那是給你自己看的紀錄，不是成績。' +
       '走到第幾層先把大家分成幾段（一層 1000 分），同一段裡面的差距來自通過幾項、以及老師覺得你們多做了多少。';
 
     markFirst('haul');     /* 新手引導：排行榜看過了（這裡已經確定在榜上） */
@@ -10174,7 +10224,7 @@ class Component extends DCLogic {
         chaseStyle: "font:400 11px/1.5 'C11';margin-top:5px;color:" +
           (moved > 0 ? 'var(--ac)' : moved < 0 ? '#D9603F' : r.me ? 'var(--tx3)' : '#5F574C'),
         /* 明細照分數的來源排，順序跟計分表一致，看得出這 33 分是怎麼來的 */
-        detail: '勾 ' + r.ticks + ' 條 = ' + (r.ticks * 10) + ' 分　·　' +
+        detail: (r.ticks ? '勾了 ' + r.ticks + ' 條（不計分）　·　' : '') +
           '通過 ' + r.pages + ' 項 = ' + (r.pages * 100) + ' 分' +
           (r.finds ? '　·　掉落物 ' + r.finds + ' 件 = ' + (r.finds * 30) + ' 分' : '') +
           (r.layers ? '　·　走完 ' + r.layers + ' 層 = ' + (r.layers * 1000) + ' 分' : ''),
@@ -10512,10 +10562,23 @@ class Component extends DCLogic {
       if (rdgOkR) bits.push('★ 回頭補強過');
       else if (rdgWaitR) bits.push('回頭補強 · 等他看');
       var unseenR = r.status === 'passed' && !seenWin(r.id);
+      /* 你那一次寫了什麼、他給了幾分。並排是為了讓那條線自己講話：
+         寫得認真的那幾次拿 3–4，留白的那幾次拿 1。 */
+      var GV = ['', '完全沒有', '有一點', '中等', '明顯多做', '遠超出要求'];
+      var mineTxt = String(r.mine || '').trim();
+      var gaveN = Math.max(1, Math.min(5, Number(r.gave) || 1));
       var taskR = (S.tasks || []).filter(function (t) { return String(t.id) === String(r.id); })[0];
       return {
         title: r.title, meta: bits.join('　·　'),
-        stat: unseenR ? '★ 還沒看' : st.t, vowTxt: vowTxt, say: r.say || '',
+        stat: unseenR ? '★ 還沒看' : st.t,
+        vowTxt: r.status === 'passed'
+          ? (mineTxt
+              ? '你們寫的：「' + mineTxt.slice(0, 60) + (mineTxt.length > 60 ? '…' : '') +
+                '」　→　他給「' + GV[gaveN] + '」，抽了 ' + ((r.finds || []).length) + ' 次'
+              : '這一項你們沒有寫多做了什麼　→　他給「' + GV[gaveN] + '」，抽了 ' +
+                ((r.finds || []).length) + ' 次')
+          : vowTxt,
+        say: r.say || '',
         open: taskR ? openTask(L, taskR) : function () {
           L.say('這一項的資料還沒載進來，重新整理一次就看得到。');
         },
@@ -10527,8 +10590,13 @@ class Component extends DCLogic {
         statStyle: "flex:none;font:400 11px/1 'C11';letter-spacing:.1em;padding:4px 8px;" +
           'border:1px solid ' + (unseenR ? 'var(--ac)' : st.hue) + ';color:' + (unseenR ? 'var(--ac-hi)' : st.hue),
         metaStyle: "font:400 11px/1.6 'C11';color:#6E665A;margin-top:6px",
-        vowStyle: "font:400 11px/1.6 'C11';margin-top:5px;color:" +
-          (r.won ? 'var(--ac)' : r.vow ? 'var(--tx3)' : '#5A5044'),
+        vowStyle: r.status === 'passed'
+          ? "font:400 11px/1.7 'C11';margin-top:7px;padding:7px 9px;text-wrap:pretty;" +
+            'background:rgba(0,0,0,.26);border-left:2px solid ' +
+            (gaveN > 1 ? 'var(--ac-dim)' : 'var(--line2)') + ';color:' +
+            (gaveN > 1 ? 'var(--tx2)' : 'var(--tx3)')
+          : "font:400 11px/1.6 'C11';margin-top:5px;color:" +
+            (r.won ? 'var(--ac)' : r.vow ? 'var(--tx3)' : '#5A5044'),
         sayStyle: r.say
           ? "font:400 22px/1.6 'C11';color:var(--tx2);margin-top:9px;padding-top:8px;" +
             'border-top:1px solid #26211C;text-wrap:pretty'
@@ -12608,6 +12676,24 @@ class Component extends DCLogic {
 
     /* 下一件要做的事：只講一件 */
     var needFix = all.filter(function (t) { return t.status === 'needs_more'; })[0];
+    /* 值得回頭補強的那一項：老師只給 1（＝他覺得你們只是把作業交出來），
+       而且還沒送過、也還沒被接受過，而且最近 7 天的額度還在。
+       挑最舊的那一項——放最久的那一件最值得回頭看。 */
+    var redigPick = (function () {
+      var rd = S.redigs || [];
+      var usedRecently = rd.filter(function (x) {
+        if (x.status === 'declined') return false;
+        return (new Date().getTime() - new Date(x.ts || 0).getTime()) < 7 * 86400000;
+      }).length;
+      if (usedRecently) return null;
+      var done = {};
+      rd.forEach(function (x) { if (x.status !== 'declined') done[String(x.taskId)] = 1; });
+      return (S.record || []).filter(function (r) {
+        return r.status === 'passed' && Number(r.gave || 1) <= 1 && !done[String(r.id)];
+      }).map(function (r) {
+        return (S.tasks || []).filter(function (t) { return String(t.id) === String(r.id); })[0];
+      }).filter(Boolean)[0] || null;
+    })();
     var todo = missing.filter(function (t) { return t.status === 'todo' || t.status === 'needs_more'; })[0];
     var waiting = all.filter(function (t) { return t.status === 'submitted'; }).length;
 
@@ -12658,6 +12744,16 @@ class Component extends DCLogic {
         '做幾項不影響過關——往不往下是老師決定的。';
       v.nextActionBtn = '去交這一項';
       v.goNextAction = openTask(L, todo);
+    } else if (redigPick) {
+      /* 手上已經沒有非做不可的事了——這一段是整個循環最平的地方：
+         全部交完、在等老師，學生沒有任何動作可以做。這時候最值得做的
+         一件是回頭補強，而且系統指得出是哪一項：老師只給 1 的那一項。 */
+      v.nextAction = '回頭補強「' + redigPick.title + '」。';
+      v.nextActionWhy = '這一項你們當時拿的是「完全沒有」——他覺得你們只是把作業交出來。' +
+        '現在回頭補完、寫下你補了什麼，他接受的話這一項會多抽一次。' +
+        '不做也不扣分，7 天一次。要不要往下一層還是他決定的。';
+      v.nextActionBtn = '去補這一項';
+      v.goNextAction = openTask(L, redigPick);
     } else if (done) {
       v.nextAction = '這一層通過了，往下一層。';
       v.nextActionWhy = '道具與戰利品都到手了。下一層的清單由老師再開。';
@@ -14248,6 +14344,19 @@ class Component extends DCLogic {
             : '勾到 ' + g.tickDone + '/' + g.tickTotal + '，' + g.items.length + ' 件等你去看') +
           (groupPattern(g.items).length ? '（' + groupPattern(g.items).join('、') + '）' : '') +
           '。作業本身在你原本收的地方。';
+      /* 有人舉手了。卡住的組本來交不出東西，佇列上會跟沒來的人一樣——
+         這一行是他們唯一的聲音，所以排在最前面。 */
+      (function () {
+        var tid = g ? g.teamId : (L.teams() || []).filter(function (t) { return t.name === card.team; })[0];
+        tid = g ? g.teamId : (tid && tid.id);
+        var stuck = ((L.state.teamTasks || {})[tid] || []).filter(function (t) {
+          return t.status !== 'passed' && String(t.blocker || '').trim();
+        });
+        if (!stuck.length) return;
+        card.detail = '✋ 他們說卡住了：「' + String(stuck[0].blocker).slice(0, 40) +
+          (String(stuck[0].blocker).length > 40 ? '…' : '') + '」（' + stuck[0].title + '）　' +
+          card.detail;
+      })();
       card.open = function () {
         L.setState({ queueTeam: g ? g.teamId : null, screen: 'T03' });
       };

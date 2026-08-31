@@ -224,6 +224,8 @@
         rounds: nRounds,
         sentBack: myRevs.filter(function (r) { return r.result === 'needfix'; }).length,
         say: last ? String(last.reason || '') : '',
+        /* 自己寫的「多做了什麼」＋當時的自評，紀錄那一頁要並排 */
+        mine: String(st.text || ''), effort: String(st.effort || ''),
         mineral: d.mineral || '', find: Number(st.find) || 0, find2: Number(st.find2) || 0,
         finds: Array.isArray(st.finds) ? st.finds : [], gave: Number(st.gave) || 1 };
     });
@@ -318,9 +320,9 @@
     }).length : 0;
     /* 全部是十的倍數 —— 比例跟原本一樣，只是不讓畫面上出現個位數。 */
     return { ticks: ticks, pages: pages, vows: vows, finds: finds, layers: layers,
-             base: ticks * 10 + pages * 100 + finds * 30,
+             base: pages * 100 + finds * 30,   /* 勾選不計分 */
              bonus: layers * 1000,
-             total: ticks * 10 + pages * 100 + finds * 30 + layers * 1000 };
+             total: pages * 100 + finds * 30 + layers * 1000 };
   }
   function firstsOf(classId) {
     var teams = {};
@@ -860,6 +862,20 @@
         });
       }
       return ok(out);
+    },
+
+    /* 還沒送出，先說卡在哪。空字串＝把手放下。 */
+    apiSetBlocker: function (t, taskId, text) {
+      var u = auth(t);
+      if (u.role !== 'student' || !u.teamId) return err('只有學生可以說。');
+      var def = tasksOfClass(u.classId, u.teamId).filter(function (d) { return d.id === taskId; })[0];
+      if (!def) return err('找不到這一項任務。');
+      var row = DB.TeamTasks.filter(function (x) { return x.teamId === u.teamId && x.taskId === taskId; })[0];
+      if (row && row.status === 'passed') return err('這一項已經過了。');
+      if (!row) { row = { teamId: u.teamId, taskId: taskId, status: 'todo', checked: [] }; DB.TeamTasks.push(row); }
+      row.blocker = String(text || '').trim().slice(0, 300);
+      persist();
+      return ok({ blocker: row.blocker });
     },
 
     apiSubmitItem: function (t, taskId, text, files, reflect) {
