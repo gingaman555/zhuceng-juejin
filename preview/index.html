@@ -13941,7 +13941,8 @@ class Component extends DCLogic {
     v.scTFIN = S.screen === 'TFIN';
     if (S.role !== 'teacher') { v.scTFIN = false; }
 
-    v.tfinHow = '**這是你在系統裡的最後一個動作。** 四個領域都走完的小隊在這裡，但結局不會自動開——' +
+    /* 這一格是純文字，星號不會被當成粗體，只會照著印出來。 */
+    v.tfinHow = '這是你在系統裡的最後一個動作。四個領域都走完的小隊在這裡，但結局不會自動開——' +
       '你讀完他們整學期的紀錄、寫下要說的話，按下放行，他們側欄那個 ？？？ 才會亮成結局。'.replace(/\*\*/g, '');
 
     if (!S.tfinData && !S.tfinLoading && v.scTFIN) loadTfin(L);
