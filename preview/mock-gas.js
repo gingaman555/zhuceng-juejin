@@ -318,8 +318,14 @@
     var layers = tm ? (tm.passed || []).filter(function (n) {
       return Number(n) >= 1 && Number(n) <= 4;
     }).length : 0;
+    /* 來回幾次、被退幾次。不計分——它要回答的是「這一組有沒有在動」。 */
+    var rounds = DB.Submissions.filter(function (x) { return x.teamId === teamId; }).length;
+    var sentBack = DB.Reviews.filter(function (x) {
+      return x.teamId === teamId && x.result === 'needfix';
+    }).length;
     /* 全部是十的倍數 —— 比例跟原本一樣，只是不讓畫面上出現個位數。 */
     return { ticks: ticks, pages: pages, vows: vows, finds: finds, layers: layers,
+             rounds: rounds, sentBack: sentBack,
              base: pages * 100 + finds * 30,   /* 勾選不計分 */
              bonus: layers * 1000,
              total: pages * 100 + finds * 30 + layers * 1000 };
@@ -1301,6 +1307,7 @@
                    ticks: sc.ticks, pages: sc.pages, vows: sc.vows,
                    finds: sc.finds, layers: sc.layers,
                    base: sc.base, bonus: sc.bonus, total: sc.total,
+                   rounds: sc.rounds, sentBack: sc.sentBack,
                    firsts: mine[String(x.teamId)] || 0 };
         });
       out.sort(function (a, b) { return b.total - a.total; });

@@ -3677,7 +3677,7 @@
         '　名次不影響過關——要不要往下一層是老師決定的。';
     }
     v.haulNote = '通過一項 100 分　·　撿到一件掉落物 30 分　·　老師放行一層 1000 分（道具 500 ＋ 戰利品 500）。' +
-      '勾選不算分——那是給你自己看的紀錄，不是成績。' +
+      '「來回幾次」與「勾了幾條」都不算分——那是在說這一組有沒有在動，不是成績。' +
       '走到第幾層先把大家分成幾段（一層 1000 分），同一段裡面的差距來自通過幾項、以及老師覺得你們多做了多少。';
 
     markFirst('haul');     /* 新手引導：排行榜看過了（這裡已經確定在榜上） */
@@ -3721,7 +3721,11 @@
         chaseStyle: "font:400 11px/1.5 'C11';margin-top:5px;color:" +
           (moved > 0 ? 'var(--ac)' : moved < 0 ? '#D9603F' : r.me ? 'var(--tx3)' : '#5F574C'),
         /* 明細照分數的來源排，順序跟計分表一致，看得出這 33 分是怎麼來的 */
-        detail: (r.ticks ? '勾了 ' + r.ticks + ' 條（不計分）　·　' : '') +
+        /* 來回次數排在最前面而且不計分。兩次被退、真的在改的那一組，
+           跟完全沒來的那一組分數都是 0——那一行是它們唯一的差別。 */
+        detail: (r.rounds ? '來回 ' + r.rounds + ' 次' +
+                   (r.sentBack ? '（改過 ' + r.sentBack + ' 次）' : '') + '　·　' : '') +
+          (r.ticks ? '勾了 ' + r.ticks + ' 條　·　' : '') +
           '通過 ' + r.pages + ' 項 = ' + (r.pages * 100) + ' 分' +
           (r.finds ? '　·　掉落物 ' + r.finds + ' 件 = ' + (r.finds * 30) + ' 分' : '') +
           (r.layers ? '　·　走完 ' + r.layers + ' 層 = ' + (r.layers * 1000) + ' 分' : ''),
@@ -4881,23 +4885,27 @@
     var cur = S.currentLayer || 1;
     var openAll = S.role === 'teacher' || !!S.allOpen;
 
-    /* 一格一項任務。老師開幾項，這條路就有多長——不是一開始就畫好的。 */
+    /* 這張圖的軸是深度，不是任務數。任務沒有固定總量——老師隨時可以再開，
+       所以「還有 N 項」是一個會上下跳的數字，不是進度。 */
     var seen = 0, done = 0, myCell = 0;
     var perLayer = [1, 2, 3, 4, 5].map(function (n) { return layerState(L, n); });
-    perLayer.forEach(function (st) { done += st.gotN; });
-    var TOTAL = perLayer.reduce(function (a, st) { return a + st.openedN; }, 0);
+    var clearedN = (S.passed || []).filter(function (n) {
+      return Number(n) >= 1 && Number(n) <= 4;
+    }).length;
 
-    v.boardDone = TOTAL ? done + ' / ' + TOTAL + ' 項' : '還沒有任務';
-    v.boardLeft = TOTAL ? (TOTAL - done) + ' 項' : '';
+    v.boardDone = clearedN + ' / 4 層';
+    v.boardLeft = (4 - clearedN) + ' 層';
     var LSc = perLayer[cur - 1];
     /* 原型那句還在講「一格一步」，但階段已經拿掉了 */
     if (v.mapLede && v.mapLede.indexOf('一格一步') >= 0) {
-      v.mapLede = '剖面由上往下，一層一階。每一層過不過由老師決定；挖到的那一層才看得見裡面。';
+      v.mapLede = '剖面由上往下，四個領域一層比一層深。往下的唯一條件是老師放行——' +
+        '他放行了，下一層才會亮起來，你們才看得見裡面。';
     }
     v.boardStepNote = LSc.cleared
       ? '他讓你們過了這一層。'
       : LSc.openedN
-        ? '這一層通過 ' + LSc.gotN + ' / ' + LSc.openedN + ' 項。覺得這一層告一段落了就去找他。'
+        ? '這一層通過 ' + LSc.gotN + ' / ' + LSc.openedN + ' 項。覺得這一層告一段落了就去找他——' +
+          '他放行，下一層才開。'
         : '老師還沒開這一層的任務。';
 
     /* 把通道鋪到剖面的每一層上 */
@@ -4906,10 +4914,13 @@
       var st = perLayer[n - 1];
       var hue = BOARD_HUE[n - 1];
       var fog = !openAll && n > cur;
-      var base = perLayer.slice(0, n - 1).reduce(function (a, x) { return a + x.openedN; }, 0);
+      var base = 0;
       var nextHere = null;
 
-      var cells = st.items.map(function (task, k) {
+      /* 層裡面不再鋪一格一項任務。任務沒有順序，鋪成一排等於系統在替
+         學生排「先做哪一項」——老師端的格子已經因為同樣的理由拿掉了。
+         留下的是小人（我在哪一層）跟霧（下面還沒開）。 */
+      var cells = [].map(function (task, k) {
         var got = task.status === 'passed';
         var wait = task.status === 'submitted';
         var back = task.status === 'needs_more';

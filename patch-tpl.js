@@ -4922,5 +4922,16 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('138. 進度改成描述');
 })();
 
+
+/* 139. 地圖那一句還在講格子。
+       層裡面不再鋪一格一項任務（任務沒有順序），所以「小人往前一格」
+       沒有東西可以指。這張圖的軸是深度，那一句要講的是怎麼往下。 */
+(function () {
+  var a = "每通過一項任務，你的小人往前一格，迷霧也掃開一格。這一層已前進 {{ myStepInfo }}。";
+  if (t.split(a).length - 1 !== 1) { console.error('139. 找不到那一句'); process.exit(1); }
+  t = t.replace(a, "四個領域由上往下，一層比一層深。老師放行，下一層才會亮起來——在那之前，下面是什麼你們看不到。");
+  console.log('139. 地圖那一句改成講深度');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

@@ -1908,11 +1908,22 @@ function scoreOf_(teamId, classId) {
     return Number(n) >= 1 && Number(n) <= 4;
   }).length : 0;
 
+  /* 來回幾次、被退幾次。不計分——它要回答的是「這一組有沒有在動」，
+     那跟分數是兩回事。兩次被退、真的在改的那一組，跟完全沒來的那一組
+     現在榜上都是 0 分，看不出差別。 */
+  var rounds = readTable_('Submissions').filter(function (x) {
+    return String(x.teamId) === String(teamId);
+  }).length;
+  var sentBack = readTable_('Reviews').filter(function (x) {
+    return String(x.teamId) === String(teamId) && String(x.result) === 'needfix';
+  }).length;
+
   /* 勾選不計分。它是學生自己的紀錄，不是成績——一旦計分，它就會被
      當成分數來勾，那條清單就再也不誠實了。分數只來自老師判斷過的：
      通過一項 100、掉落物一件 30、放行一層 1000。 */
   return {
     ticks: ticks, pages: pages, vows: vows, finds: finds, layers: layers,
+    rounds: rounds, sentBack: sentBack,
     base: pages * 100 + finds * 30,
     bonus: layers * 1000,
     total: pages * 100 + finds * 30 + layers * 1000
@@ -2099,6 +2110,7 @@ function apiRoster(token) {
                  ticks: s.ticks, pages: s.pages, vows: s.vows,
                  finds: s.finds, layers: s.layers,
                  base: s.base, bonus: s.bonus, total: s.total,
+                 rounds: s.rounds, sentBack: s.sentBack,
                  firsts: mine[String(t.teamId)] || 0 };
       });
     out.sort(function (a, b) { return b.total - a.total; });
