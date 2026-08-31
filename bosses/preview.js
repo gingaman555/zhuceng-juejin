@@ -37,7 +37,7 @@ const card = b => {
   </div>
 </section>`;
 };
-const html = `<title>逐層掘進 · 守關生物</title>
+const html = `<title>地心圖鑑 · 守關生物</title>
 <style>
 :root{color-scheme:dark}
 body{margin:0;background:#0B0A09;color:#E8E2D6;font:400 15px/1.7 "Noto Sans TC",system-ui,sans-serif;padding:38px 26px 60px}

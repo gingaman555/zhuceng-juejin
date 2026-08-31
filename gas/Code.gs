@@ -2578,7 +2578,7 @@ function apiReviewItem(token, teamId, taskId, result, reason, gave) {
     var extra = !!(pass && vowNow && defNow && vowWon_(teamId, taskId, defNow, kl, vowNow));
 
     /* 掉幾件＝層數 ＋（老師給的 1–5 − 1）。已經掉過的不重掉。 */
-    var gaveN = Math.max(1, Math.min(5, Number(gave) || 1));
+    var gaveN = Math.max(0, Math.min(5, Number(gave) || 0));
     var prevFinds = prev ? (jparse_(prev.finds, []) || []) : [];
     var findsArr = prevFinds;
     if (pass && !prevFinds.length) {
@@ -2650,11 +2650,12 @@ function rollFindsIn_(maxLayer, n) {
   return out;
 }
 
-/** 抽幾次：層數 ＋（老師給的 1–5 − 1）。最少 1、最多 8。 */
+/** 抽幾次：層數 ＋ 老師給的 0–5。最少 1、最多 8。
+    0 ＝ 沒有額外，就是那一層的基本抽數。 */
 function findCount_(layer, gave) {
   var L = Math.max(1, Math.min(4, Number(layer) || 1));
-  var g = Math.max(1, Math.min(5, Number(gave) || 1));
-  return Math.max(1, Math.min(8, L + g - 1));
+  var g = Math.max(0, Math.min(5, Number(gave) || 0));
+  return Math.max(1, Math.min(8, L + g));
 }
 
 /** 關卡審核：通過就發道具、定工具階級、換層。 */

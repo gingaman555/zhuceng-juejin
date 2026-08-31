@@ -4875,5 +4875,52 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('135. 卡住可以現在就說');
 })();
 
+
+/* 136. 模板上剩下的礦石與週。
+       「礦物 · 一項任務一種礦」那一區跟著礦石一起拿掉（sel.minerals 永遠是空的，
+       但標題照畫）；S-06 的畫面標籤、老師選礦石那一格、送出後那一句的週次。 */
+(function () {
+  /* 圖鑑層面板裡的礦物區塊 */
+  var a = "<div style=\"font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px\">礦物 · 一項任務一種礦</div>";
+  var i = t.indexOf(a);
+  if (i < 0) { console.error('136. 礦物那一區找不到'); process.exit(1); }
+  var e = t.indexOf('</sc-for>', i);
+  if (e < 0) { console.error('136. 礦物那一區收不了尾'); process.exit(1); }
+  var e2 = t.indexOf('</div>', e);
+  if (e2 < 0) { console.error('136. 礦物那一區收不了尾 2'); process.exit(1); }
+  t = t.slice(0, i) + t.slice(e2 + 6);
+
+  [["S-06 礦物與戰利品介紹", "S-06 道具與戰利品介紹"],
+   ["這一項是哪一塊礦石　{{ veinCount }}", "{{ veinCount }}"],
+   ["他的佇列依各組停留週數排序", "他的佇列依各組停留天數排序"]].forEach(function (pr) {
+    var n = t.split(pr[0]).length - 1;
+    if (!n) { console.error('136. 找不到 ' + pr[0]); process.exit(1); }
+    t = t.split(pr[0]).join(pr[1]);
+  });
+  console.log('136. 模板剩下的礦石與週');
+})();
+
+
+/* 137. 礦石管理那一塊剩下的一句。整塊由 hasVeinAdmin 關著（永遠 false），
+       但字留在模板裡，掃描每次都會報。 */
+(function () {
+  var a = "你的說法（學生點開礦石會看到）";
+  if (t.split(a).length - 1 !== 1) { console.error('137. 找不到那一句'); process.exit(1); }
+  t = t.replace(a, "你的說法（學生看得到）");
+  console.log('137. 礦石管理那一塊的最後一句');
+})();
+
+
+/* 138. 「這一層的進度」改成「這一層通過了」。
+       「進度」預設有一個該走到的終點，可是老師沒有硬性規定要做完幾項——
+       開幾項是他決定的，做幾項不決定能不能往下。那個數字只是在描述
+       「判過幾項 / 開了幾項」，不是一條要填滿的條。 */
+(function () {
+  var a = ">這一層的進度<";
+  if (t.split(a).length - 1 !== 1) { console.error('138. 找不到那一格'); process.exit(1); }
+  t = t.replace(a, ">這一層通過了<");
+  console.log('138. 進度改成描述');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

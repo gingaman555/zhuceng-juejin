@@ -812,35 +812,28 @@
 
     /* 每一件值幾分，直接標在格子上——圖鑑的每一格都以分數為主，
        這樣同一頁上的東西才對得齊。
-         礦石 100：一塊礦石就是通過一項，通過一項是 100 分。
          道具與戰利品各 500：老師放行一層＝1000 分，那在榜上是一個
-         台階，不是一小步。 */
-    var PTS = { '礦物': 100, '道具': 500, '戰利品': 500 };
+         台階，不是一小步。
+       「礦物」那一區整個拿掉了——礦石沒了，那一區永遠是空的，
+       但標題還是會畫出來。 */
+    var PTS = { '道具': 500, '戰利品': 500 };
     var drops = [];
-    ['礦物', '道具', '戰利品'].forEach(function (t) {
+    ['道具', '戰利品'].forEach(function (t) {
       secs.forEach(function (g) {
         if (g.title !== t) return;
         (g.items || []).forEach(function (it, ii) {
           var pt = PTS[t];
-          if (t === '礦物') {
-            /* 副標掛老師實際開的那一項，不是預設的階段名 */
-            var mdef = (L.MINS || [])[ii] || {};
-            var tk = (L.state.tasks || []).filter(function (x) {
-              return x.mineral && x.mineral === mdef.name;
-            })[0];
-            it.sub = '+' + pt + ' 分　L' + (mdef.L || 1) +
-              (tk && tk.title ? ' · ' + tk.title : '');
-          } else {
-            it.sub = (pt ? '+' + pt + ' 分　' : '') + (it.sub || '');
-          }
+          it.sub = (pt ? '+' + pt + ' 分　' : '') + (it.sub || '');
           /* 每一件標上層數，地圖才篩得動 */
-          it.L = t === '礦物' ? (((L.MINS || [])[ii] || {}).L || 1)
-               : t === '道具' ? (ii + 1)
+          it.L = t === '道具' ? (ii + 1)
                : Math.floor(ii / 6) + 1;   /* 戰利品一區六件 */
           drops.push(it);
         });
       });
     });
+    /* 原型的收藏頁還有一個「礦物」區塊。礦石拿掉之後它是空的，
+       但標題照畫——整組移掉。 */
+    v.collSections = secs = secs.filter(function (g) { return g.title !== '礦物'; });   /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
 
     /* 掉落物本來是另一個區塊，形狀不一樣，轉成同一種格子接上來 */
     var got = S.finds || {};
@@ -2433,34 +2426,17 @@
     v.boardDone = totalOpen ? totalOpen + " 項已開" : "還沒開任何一項";
     v.boardLeft = "";
     v.boardStepNote = totalOpen
-      ? "一格就是你開的一項。開多開少不影響他們過不過關——要不要放他們往下是你決定的。"
-      : "還沒開任何一項。你在任務清單開什麼，這條路就長成什麼樣子。";
+      ? "這張圖回答的是「現在誰在哪一層」。哪一項誰過了在任務清單那一頁。"
+      : "還沒開任何一項。開了之後，這裡會顯示每一組走到哪一層。";
 
     (v.mapLayers || []).forEach(function (m, i) {
       var n = i + 1;
       var st = perLayer[n - 1];
       var hue = BOARD_HUE[n - 1];
-      var base = perLayer.slice(0, n - 1).reduce(function (a, x) { return a + x.openedN; }, 0);
-
-      var cells = st.items.map(function (task, k) {
-        var open = true;
-        return {
-          idx: String(base + k + 1),
-          name: task.title || "一項",
-          sub: "",
-          mark: "✓",
-          open: function () { L.setState({ screen: "T02", editLayer: n }); },
-          dotStyle: "display:flex;align-items:center;justify-content:center;width:100%;height:20px;" +
-            "font:600 11px/1 'C11';transform:scale(.85);" +
-            "color:" + (open ? "var(--bg)" : "var(--tx3)") + ";" +
-            "border:1px solid " + (open ? hue : "var(--line2)") + ";" +
-            "background:" + (open ? "rgba(" + hexRgb(hue) + ",.85)" : "rgba(0,0,0,.4)") + ";",
-          nameStyle: "display:block;font:400 11px/1.2 'C11';margin-top:3px;text-align:center;" +
-            "transform:scale(.72);white-space:nowrap;color:" + (open ? "var(--ac-hi)" : "#6E665A"),
-          style: "flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;" +
-            "cursor:pointer;pointer-events:auto"
-        };
-      });
+      /* 一層不再拆成格子。任務沒有順序——老師想開幾項就開幾項，學生想
+         先做哪一項就先做哪一項。畫成一排格子等於系統又在替他們排序。
+         哪一項誰過了在任務清單那一頁，地圖不用再畫第二次。 */
+      var cells = [];
 
       /* 層底那一格：跟學生端共用 endCell。老師沒有迷霧，
          而且他不是要過關的人——點下去是看那隻生物的介紹。 */
@@ -4073,9 +4049,9 @@
       var unseenR = r.status === 'passed' && !seenWin(r.id);
       /* 你那一次寫了什麼、他給了幾分。並排是為了讓那條線自己講話：
          寫得認真的那幾次拿 3–4，留白的那幾次拿 1。 */
-      var GV = ['', '完全沒有', '有一點', '中等', '明顯多做', '遠超出要求'];
+      var GV = ['完全沒有', '幾乎沒有', '有一點', '中等', '明顯多做', '遠超出要求'];
       var mineTxt = String(r.mine || '').trim();
-      var gaveN = Math.max(1, Math.min(5, Number(r.gave) || 1));
+      var gaveN = Math.max(0, Math.min(5, Number(r.gave) || 0));
       var taskR = (S.tasks || []).filter(function (t) { return String(t.id) === String(r.id); })[0];
       return {
         title: r.title, meta: bits.join('　·　'),
@@ -4102,8 +4078,8 @@
         vowStyle: r.status === 'passed'
           ? "font:400 11px/1.7 'C11';margin-top:7px;padding:7px 9px;text-wrap:pretty;" +
             'background:rgba(0,0,0,.26);border-left:2px solid ' +
-            (gaveN > 1 ? 'var(--ac-dim)' : 'var(--line2)') + ';color:' +
-            (gaveN > 1 ? 'var(--tx2)' : 'var(--tx3)')
+            (gaveN > 0 ? 'var(--ac-dim)' : 'var(--line2)') + ';color:' +
+            (gaveN > 0 ? 'var(--tx2)' : 'var(--tx3)')
           : "font:400 11px/1.6 'C11';margin-top:5px;color:" +
             (r.won ? 'var(--ac)' : r.vow ? 'var(--tx3)' : '#5A5044'),
         sayStyle: r.say
@@ -4574,7 +4550,7 @@
        的也掉越多——所以同一份作業，結果不會每次都一樣。 */
     var arr = (rec.finds && rec.finds.length ? rec.finds : [rec.find, rec.find2])
       .map(Number).filter(function (n) { return n >= 1; });
-    var gave = Math.max(1, Math.min(5, Number(rec.gave) || 1));
+    var gave = Math.max(0, Math.min(5, Number(rec.gave) || 0));
     var hue = BOARD_HUE[Math.max(0, Math.min(4, (task.layer || 1) - 1))];
 
     var order = arr.slice();
@@ -4590,10 +4566,10 @@
     var baseN = Math.max(1, Math.min(4, task.layer || 1));
     /* 回掘被接受的那幾次也要算進來——不然這一行會說「本來就是 1 次」
        卻寫著抽了 2 次，學生看不出多的那一件是自己爭來的。 */
-    var expectN = Math.max(1, Math.min(8, baseN + gave - 1));
+    var expectN = Math.max(1, Math.min(8, baseN + gave));
     var redigN = Math.max(0, arr.length - expectN);
-    rows.push({ k: '怎麼算的', v: (gave > 1
-      ? '這一層本來 ' + baseN + ' 次，他多給 ' + (gave - 1) + ' 次'
+    rows.push({ k: '怎麼算的', v: (gave
+      ? '這一層本來 ' + baseN + ' 次，他多給 ' + gave + ' 次'
       : '這一層本來就是 ' + baseN + ' 次') +
       (redigN ? '，你回頭補強他又接受了 ' + redigN + ' 次' : ''), hi: redigN > 0 });
     /* 抽到什麼改由卡片上面那一排格子一次一次亮出來，這裡不再列一次 */
@@ -5256,7 +5232,7 @@
          trait: '牠是「範圍未定義」的樣子。你說不出自己要挖什麼的時候，牠就是那個形狀：站在那裡，但你指不出牠在哪。',
          line: '你連我在哪都說不出來。',
          beat: '霧散開，你才發現牠一直站在同一個地方。',
-         weapon: '礦脈羅盤', why: '羅盤辨認方向真假——哪條路通、哪條不值得追。有了它，牠就不再是一團形狀不明的東西。' },
+         weapon: '礦脈羅盤', why: '羅盤辨認方向真假——哪條路通、哪條不值得追。有了它，牠就不再是一團形狀不明的東西。' },   /* 舊詞OK：礦脈羅盤是 L1 道具的專有名詞，不是機制 */
     2: { look: '中央一顆晶核，四周不斷長出新的晶簇。你採掉一叢，旁邊又亮起兩叢——看起來永遠採不完。',
          trait: '牠是「範圍蔓延」的樣子。挖越多長越多，沒有一個時刻會自己告訴你「夠了」。',
          line: '還有喔。這裡永遠還有。',
@@ -6198,7 +6174,7 @@
       var done = {};
       rd.forEach(function (x) { if (x.status !== 'declined') done[String(x.taskId)] = 1; });
       return (S.record || []).filter(function (r) {
-        return r.status === 'passed' && Number(r.gave || 1) <= 1 && !done[String(r.id)];
+        return r.status === 'passed' && Number(r.gave || 0) <= 0 && !done[String(r.id)];
       }).map(function (r) {
         return (S.tasks || []).filter(function (t) { return String(t.id) === String(r.id); })[0];
       }).filter(Boolean)[0] || null;
@@ -6365,7 +6341,7 @@
        在畫面上看不出來的事，所以要寫在按下去的地方。 */
     v.publishNote = drafts.length
       ? '這 ' + drafts.length + ' 項會一起出現在學生的任務清單上。' +
-        '每一項會自動配到這一層還沒用掉的一塊礦石，你不用挑。'
+        '這一層要開幾項由你決定，沒有上限。'
       : '上面寫完一項，按「加入清單」把它加進來。這一層要開幾項由你決定，沒有上限——' +
         '每一項在學生那邊都會長出一隻擋在前面的生物，通過了牠才讓開。';
 
@@ -6387,7 +6363,7 @@
     v.hasDowPick = false;     /* 期限：日鈕那一排跟日期選擇器重複 */
     var __unusedStats = [
       { k: '這一層', val: lay.name || ('第 ' + layer + ' 層'), s: chip(''), ks: kst, vs: "font:700 22px/1.2 'C11';color:var(--tx)" },
-      { k: '這一層的礦石', val: vein + ' 塊', s: chip(''), ks: kst, vs: vst('') },
+      { k: '這一層開了', val: reqN + ' 項', s: chip(''), ks: kst, vs: vst('') },
       { k: '你開了', val: after + ' 塊', s: chip(gateTone), ks: kst, vs: vst(gateTone) },
       { k: '還沒開', val: leftVein.length + ' 塊', s: chip(gateTone), ks: kst, vs: vst(gateTone) },
       { k: '其中草稿', val: drafts.length + ' 項', s: chip(drafts.length ? 'hi' : ''), ks: kst, vs: vst(drafts.length ? 'hi' : '') }
@@ -6430,7 +6406,7 @@
     })();
     v.veinCount = '（' + after + ' / ' + vein + ' 已開）';
     v.veinPickNote = leftVein.length
-      ? '這一層的礦石是固定的 ' + vein + ' 塊，每一塊本來就對應一項工作。標「已配給」的是開過的，剩下 ' +
+      ? '這一層開了 ' + reqN + ' 項。要開幾項沒有上限，剩下 ' +
         leftVein.length + ' 塊還沒開。關卡不看這個——你覺得他們可以往下了就放行。'
       : '這一層的 ' + vein + ' 塊都開完了。要改哪一項的內容，回任務清單逐項編輯。';
 
@@ -6532,7 +6508,7 @@
       };
 
       v.veinRenameNote = '系統的拆分只是預設。哪一組的專案跟它對不上，就照那一組的狀況改——' +
-        '學生那邊的地圖、圖鑑、任務清單都會跟著改。礦石本身（' + '定名石、裂晶那些' + '）不會變。';
+        '學生那邊的地圖、圖鑑、任務清單都會跟著改。';
 
       v.veinRenames = veinAll.map(function (m) {
         var o = names[m.name] || {};
@@ -6652,7 +6628,7 @@
       ['過關才給，一層一件。道具決定工具校準到哪一階。', '一層一件，用這一層的礦石鑄成——擊退擋在層底的那一隻，才走得到下一層。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
       ['過關就給，不看做得多好。老師端不上鎖。', '一層一件——擊退那一層的守關生物之後，牠站的地方留下的。老師端不上鎖。'],
       ['過關就給，不看做得多好。', '一層一件——擊退那一層的守關生物之後，牠站的地方留下的。'],
-      ['過關才給，一層一件。老師端不上鎖，全部可讀。', '一層一件，用那一層的礦石鑄成，剋的就是那一層的守關生物。老師端不上鎖，全部可讀。'],
+      ['過關才給，一層一件。老師端不上鎖，全部可讀。', '一層一件，老師放行才給，剋的就是那一層的守關生物。老師端不上鎖，全部可讀。'],
     ['不影響過關，只影響工具校準到哪一階。', '不影響過關，做了就多一塊礦石進圖鑑。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
     ['交出去了。他會驗，然後用它校準工具。', '交出去了。他會驗，通過就多一塊礦石。'],   /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
     ['校準之後才知道它是什麼', '通過這一層才拿得到'],   /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
@@ -6798,7 +6774,7 @@
         var tbt = BOSS_TEXT[tlay.n] || {};
         var tvN = ((L.MINS || []).filter(function (m) { return m.L === tlay.n; })).length;
         v.specFromLabel = '怎麼來的';
-        v.specFrom = tlay.name + ' 的 ' + tvN + ' 塊礦石鑄成';
+        v.specFrom = tlay.name + ' 走完才拿得到';
         if (tbz) {
           v.specLineLabel = '它剋的是誰';
           v.specLine = tbz.name + '。' + (tbt.why || '');
@@ -6812,7 +6788,7 @@
           v.specLine = '沒有。這一層沒有東西擋你——擋你的是你自己。';
           v.hasLine = true;
           v.specNoticeLabel = '鑄造的方式';
-          v.specNotice = '只有一塊礦石，而且名字是你自己取的。它不顯示任何讀數，你得自己聽它的音高。';
+          v.specNotice = '它不顯示任何讀數，你得自己聽它的音高。';
           v.hasNotice = true;
         }
       }
@@ -7002,7 +6978,7 @@
       if (m.name === S.specId) return;
       var t = tasks.filter(function (x) { return x.mineral === m.name; })[0];
       out.push(tile({
-        name: m.name, kind: "礦石 · " + m.task,
+        name: m.name, kind: m.task,
         got: !!t && t.status === "passed",
         star: !!(t && t.star),
         sprite: mineralSprite(L, m.name, layer),
@@ -7055,14 +7031,14 @@
         (debLeft > 0 ? '——你還差 ' + debLeft + ' 種。' : '，你已經全部拿到了。')
       : '';
     v.specRelatedNote = self === "boss"
-      ? "牠守的是" + (lay.name || "這一層") + "。下面是這一層的礦石，以及老師放行才拿得到的道具與戰利品。" + debNote
+      ? "牠守的是" + (lay.name || "這一層") + "。下面是老師放行才拿得到的道具與戰利品。" + debNote
       : self === "tool"
-        ? "鑄成它的是下面這些礦石" + (bz ? "，它剋的是" + bz.name : "") + "。"
+        ? "老師放行這一層才拿得到" + (bz ? "。它剋的是" + bz.name : "") + "。"
         : self === "treasure"
           ? (bz
-              ? "這一件是" + bz.name + "倒下的地方留下的。下面是打得贏牠的那些東西——礦石鑄成道具，道具剋牠。"
+              ? "這一件是" + bz.name + "倒下的地方留下的。下面是同一層的道具與戰利品。"
               : "同一層的東西。這一件不在任何一隻身上，它在最深處等著。")
-          : "同一層的其他礦石，以及老師放行才鑄得出來的道具、才拿得到的戰利品"
+          : "同一層的道具與戰利品，老師放行才拿得到"
             + (bz ? "，還有擋在層底的" + bz.name : "") + "。" + debNote;
   }
 
@@ -7131,13 +7107,13 @@
         });
 
         v.hasSpecNeed = rows.length > 0;
-        v.specNeedLabel = isTool ? '鑄成它要湊齊這些礦石' : '這一層的礦石有這些。拿幾塊都不影響——要不要往下一層是老師決定的';
+        v.specNeedLabel = isTool ? '這一層走完才拿得到' : '這一層還有這些';
         v.specNeedCount = reqHere.length
           ? doneReq + ' / ' + reqHere.length + ' 塊'
-          : '這一層的礦石共 ' + vein.length + ' 塊';
+          : '';
         v.specNeedColor = (reqHere.length && doneReq >= reqHere.length) ? 'var(--ac)' : 'var(--tx2)';
         v.specNeedNote = !reqHere.length
-          ? '老師還沒開這一層的清單。他開幾項，就是你要拿幾塊；下面是這一層可能出現的礦石。'
+          ? '老師還沒開這一層的清單。他開了之後會出現在任務清單裡。'
           : cleared
             ? '這一層你已經走完了，' + (isTool ? '道具' : '戰利品') + '已經在你手上。'
             : isTool
@@ -7957,7 +7933,7 @@
     v.hasSelfCall = !!eff;
     v.selfEffortLabel = eff ? '他們說：' + eff[0] : '';
     v.selfEffortChip = eff
-      ? "font:500 11px/1 'C11';letter-spacing:.1em;padding:6px 9px;background:rgba(0,0,0,.35);border:1px solid " + eff[1] + ';color:' + eff[1]
+      ? "font:500 22px/1.2 'C11';letter-spacing:.06em;padding:8px 12px;background:rgba(0,0,0,.35);border:1px solid " + eff[1] + ';color:' + eff[1]
       : 'display:none';
     v.hasSelfNote = !!(cur && String(cur.effortNote || '').trim());
     v.selfNote = (cur && cur.effortNote) || '';
@@ -8031,9 +8007,9 @@
     v.passItem = function () {
       if (!cur) return;
       var reason = L.state.reason;
-      var gave = Math.max(1, Math.min(5, Number(L.state.gave) || 1));
+      var gave = Math.max(0, Math.min(5, Number(L.state.gave) || 0));
       origPass();
-      L.setState({ gave: 1 });   /* 換下一項就歸位 */
+      L.setState({ gave: 0 });   /* 換下一項就歸位 */
       v.__afterReview();
       (function () {
         var mineral = cur.mineral || '';
@@ -8049,7 +8025,7 @@
         });
         var restLeft = mates.filter(function (t) { return t.status !== 'passed'; }).length;
         var lastOne = !!sameLayer && restLeft === 0;
-        var drawN = Math.max(1, Math.min(8, (cur.layer || 1) + gave - 1));
+        var drawN = Math.max(1, Math.min(8, (cur.layer || 1) + gave));
         showMoment(L, {
           kind: 'stamp', accent: 'var(--ac)',
           kicker: 'CONFIRMED',
@@ -8060,7 +8036,7 @@
             { k: '這一塊', v: mineral || '—', hi: true },
             { k: '給誰', v: cur.team },
             { k: '你寫了', v: String(reason || '').trim().length + ' 字' },
-            { k: '你給的', v: gave + ' / 5　→　抽 ' + Math.max(1, Math.min(8, (cur.layer || 1) + gave - 1)) + ' 次', hi: gave > 1 }
+            { k: '你給的', v: gave + ' 分（0–5）　→　抽 ' + drawN + ' 次', hi: gave > 0 }
           ],
           quoteLabel: '學生會讀到這一段', quote: reason,
           lines: [
@@ -8084,10 +8060,11 @@
     /* 這一項他們是不是不只交了作業。只影響掉幾件——不影響過不過，
        也不影響分數的主結構。不點就是 1。 */
     (function () {
-      var g = Math.max(1, Math.min(5, Number(S.gave) || 1));
-      /* 李克特五點。題目是一個陳述句，五個選項各有文字錨點——
-         老師才不用猜數字代表什麼，而且這五個值本身就是研究語料。 */
-      var LAB = ['完全沒有', '有一點', '中等', '明顯多做', '遠超出要求'];
+      var g = Math.max(0, Math.min(5, Number(S.gave) || 0));
+      /* 六級，0 起跳。0 ＝ 剛好到標準，沒有額外——本來最低是 1，而 1 還是
+         給基本抽數，所以老師說不出「這一項就是剛好而已」。每一格有文字
+         錨點，老師才不用猜數字代表什麼；這六個值本身就是研究語料。 */
+      var LAB = ['完全沒有', '幾乎沒有', '有一點', '中等', '明顯多做', '遠超出要求'];
       v.gaveNote = '這一組在這一項裡，不只是把作業交出來——多研究了、多畫了' +
         '別的草圖、給了不同的做法，或是有額外的產出。' +
         ((cur && cur.redig && cur.redig.length)
@@ -8096,15 +8073,15 @@
             '　（那讓他們多抽一次，不影響你這一格）'
           : '');
       var layerNow = cur ? (cur.layer || 1) : 1;
-      /* 1 分＝沒有加成，所以加的是 g − 1。攤成公式沒有人看得懂。 */
-      v.gaveWhat = '你選「' + LAB[g - 1] + '」　·　這一層本來抽 ' + layerNow + ' 次，' +
-        (g > 1 ? '你這一格讓他們多抽 ' + (g - 1) + ' 次，一共 ' : '你這一格沒有加成，就是 ') +
-        Math.max(1, Math.min(8, layerNow + g - 1)) + ' 次。不影響過不過。';
-      v.gavePicks = [1, 2, 3, 4, 5].map(function (n) {
+      /* 給幾分就多抽幾次。攤成公式沒有人看得懂，所以直接把結果講出來。 */
+      v.gaveWhat = '你選「' + LAB[g] + '」　·　這一層本來抽 ' + layerNow + ' 次，' +
+        (g ? '你這一格讓他們多抽 ' + g + ' 次，一共 ' : '你這一格沒有加成，就是 ') +
+        Math.max(1, Math.min(8, layerNow + g)) + ' 次。不影響過不過。';
+      v.gavePicks = [0, 1, 2, 3, 4, 5].map(function (n) {
         var on = n === g;
         return {
           label: String(n),
-          anchor: LAB[n - 1],
+          anchor: LAB[n],
           pick: (function (k) { return function () { L.setState({ gave: k }); }; })(n),
           style: 'display:flex;flex-direction:column;align-items:center;gap:5px;' +
             'min-width:74px;padding:9px 6px;cursor:pointer;font:inherit;' +
@@ -8271,7 +8248,7 @@
       var t = (st.tasks || []).filter(function (x) { return x.id === st.editId; })[0] || {};
       var task = { id: st.editId, layer: st.editLayer, type: st.nf.type, title: st.nf.title,
                    cond: st.nf.cond, note: st.nf.note, spec: st.nf.spec || '', due: st.nf.due, mineral: st.nf.mineral || t.mineral || '',
-                   mDesc: t.mDesc || '這一項工作留下的礦石。',
+                   mDesc: '',
                    checks: checkLines((st.nf || {}).checks) };
       L.setState({ editId: null, nf: { title: '', type: 'required', cond: '', note: '', due: st.nf.due, mineral: '' }, screen: 'T02' });
       call('apiSaveTask', LIVE.token, L.klass().id, task)
@@ -8627,7 +8604,7 @@
           { k: '他們去', v: (L.LAYERS[g.layer] || {}).name || '地心' }
         ],
         quoteLabel: '你的判斷理由', quote: L.state.gateReason || '',
-        lines: ['道具是他們用這一層的礦石鑄成的武器——擋在層底的那一隻退開了。牠站的地方留下的那一件，只有走完這一層才拿得到。'],
+        lines: ['道具是走完這一層才拿得到的——擋在層底的那一隻退開了。牠站的地方留下的那一件，只有走到這裡才拿得到。'],
         btn: '知道了', go: function () {}
       });
       call('apiReviewGate', LIVE.token, g.teamId, true, '', L.state.gateReason)
@@ -8658,13 +8635,13 @@
       what: '工具校準（四階）整套移除：學生端區塊、老師端階級選擇器、發道具動畫的階級字樣、匯出欄位', /* 舊詞OK：R-09 是修訂紀錄，本來就在講拿掉了什麼 */
       why: '它不影響過關、不是分數、不解鎖任何東西——是一個看起來有意義但什麼都不做的機制', where: 'S-02 / T-07 / R-08', open: '' },
     { n: 17, phase: '全端 · 核心規則', from: '設計原則',
-      what: '全收集改成兩道：礦脈要開完（老師開滿那一層的礦石數），礦石要採完（每一塊都通過）。必要／延伸的分別取消',
+      what: '全收集改成兩道：礦脈要開完（老師開滿那一層的礦石數），礦石要採完（每一塊都通過）。必要／延伸的分別取消',   /* 舊詞OK：這是設計變更紀錄，它本來就在講拿掉了什麼 */
       why: '延伸項是讓人跳過的機制，跟「逐步收集向前」的主旨相衝；只要有可選項，圖鑑就永遠是缺的', where: '全端', open: '' },
     { n: 18, phase: '學生端 · 排程', from: '流程檢查',
       what: '排程納入主流程：每一項要先說「打算哪一週交」才交得出去，提交頁上方直接給週次快選',
       why: '期末回顧的「你排的 對 實際發生的」是這套系統要學生看見的東西；沒排過就是一張空表', where: 'S-05 / S-01 / 甘特', open: '' }, /* 舊詞OK：R-09 是修訂紀錄，本來就在講拿掉了什麼 */
     { n: 19, phase: '學生端 · 地圖', from: '使用者觀察',
-      what: '深度從 45 格改成 23 格＝23 塊礦石，並直接鋪在剖面的每一層上；點格子跳到那一項，別組的位置也標在同一條通道上',
+      what: '深度從 45 格改成 23 格＝23 塊礦石，並直接鋪在剖面的每一層上；點格子跳到那一項，別組的位置也標在同一條通道上',   /* 舊詞OK：這是設計變更紀錄，它本來就在講拿掉了什麼 */
       why: '45 格不對應任何一件事，只是進度條的另一種畫法；地圖跟收集本來就是同一件事，不該是兩張圖', where: 'S-03', open: '' },
     { n: 20, phase: '全端 · 骨架', from: '功能稽核',
       what: '「能不能過這一層」的判斷收成單一函式 layerState()，前端五個畫面與後端共用同一套規則與同一句錯誤訊息',

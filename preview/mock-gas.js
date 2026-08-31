@@ -371,7 +371,7 @@
   /* 掉幾件：層數 ＋（老師給的 1–5 − 1）。最少 1、最多 8。 */
   function findCount(layer, gave) {
     var L = Math.max(1, Math.min(4, Number(layer) || 1));
-    var g = Math.max(1, Math.min(5, Number(gave) || 1));
+    var g = Math.max(0, Math.min(5, Number(gave) || 0));
     return Math.max(1, Math.min(8, L + g - 1));
   }
   /* 收藏是個人的：跨班、跨組、跨專案累積。Roster.claimedBy 把使用者
@@ -1370,7 +1370,7 @@
         DB.TeamTasks.push(m);
       }
       var find = 0, findsArr = [];
-      var gaveN = Math.max(1, Math.min(5, Number(gave) || 1));
+      var gaveN = Math.max(0, Math.min(5, Number(gave) || 0));
       if (m) {
         m.status = pass ? 'passed' : 'needs_more';
         m.fb = txt || (pass ? '（未附理由）' : '');

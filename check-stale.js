@@ -224,8 +224,17 @@ const OK_DEAD = new Set([
   console.log('      （確定要留的話，加進 check-stale.js 的 OK_DEAD 並寫清楚為什麼）');
 })();
 
+/* 四 · 窮盡掃描
+   前面三項比對的是固定清單；sweep-live.js 反過來把所有還會畫到畫面上的
+   舊概念列出來。放在最後跑，任何一處沒清乾淨就會擋下 build。 */
+console.log('');
+var sweep = require('child_process').spawnSync(process.execPath, [__dirname + '/sweep-live.js'], { encoding: 'utf8' });
+process.stdout.write(sweep.stdout || '');
+if (sweep.status !== 0) process.exit(1);
+
 /* ---------------------------------------------------------------- */
 console.log('');
 console.log('── ' + (bad ? bad + ' 項要處理' : '全部通過') + ' ──');
 console.log('');
 process.exit(bad ? 1 : 0);
+

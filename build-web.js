@@ -272,6 +272,11 @@ const demo = src.replace(SEED_TAG, tag([
 
 fs.writeFileSync(path.join(DEMO, 'index.html'), demo);
 
+/* 可以直接寄出去的單一檔案。本來是手動另存的，所以每次改完就過期——
+   之前它還停在「礦石」「學期走了 N％」那一版，打開的人看到的是舊系統。
+   接進 build 之後它永遠跟著最新的走。 */
+fs.writeFileSync(path.join(__dirname, '地心圖鑑-試用版.html'), demo);
+
 fs.writeFileSync(path.join(OUT, '404.html'),
   '<title>地心圖鑑</title>\n<meta http-equiv="refresh" content="0; url=/">\n');
 

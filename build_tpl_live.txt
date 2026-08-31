@@ -423,7 +423,7 @@
 
               <div style="margin:20px var(--pad) 0;padding:18px 19px;background:linear-gradient(150deg,rgba(233,179,65,.07),transparent 58%),var(--panel);border:1px solid var(--line2)">
                 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層的進度</span>
+                  <span style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一層通過了</span>
                   <span style="font:700 33px/1 'C11';color:#F2EADA">{{ ruleProgress }}</span>
                   <span style="flex:1"></span>
                   
@@ -597,7 +597,7 @@
               </sc-if>
 
               <sc-if value="{{ hasWaiting }}" hint-placeholder-val="{{ false }}">
-                <div style="margin:12px var(--pad) 0;padding:13px 16px;border-left:2px solid var(--line2);background:rgba(0,0,0,.24);font:400 11px/1.7 'C11';color:var(--tx3);text-wrap:pretty">已送出 {{ waitCount }} 項。他的佇列依各組停留週數排序，不是先交先看。等的時候可以繼續交其他項。</div>
+                <div style="margin:12px var(--pad) 0;padding:13px 16px;border-left:2px solid var(--line2);background:rgba(0,0,0,.24);font:400 11px/1.7 'C11';color:var(--tx3);text-wrap:pretty">已送出 {{ waitCount }} 項。他的佇列依各組停留天數排序，不是先交先看。等的時候可以繼續交其他項。</div>
               </sc-if>
 
               <sc-if value="{{ hasTasks }}" hint-placeholder-val="{{ true }}">
@@ -1059,12 +1059,7 @@
                     <span style="{{ sel.bossMoreStyle }}">？</span>
                   </span>
                 </sc-if>
-                <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">礦物 · 一項任務一種礦</div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:7px">
-                  <sc-for list="{{ sel.minerals }}" as="mi" hint-placeholder-count="6">
-                    <button onClick="{{ mi.open }}" style="{{ mi.style }}"><span style="{{ mi.glyphStyle }}"></span><span style="font:500 11px/1.4 'C11';margin-top:8px;display:block">{{ mi.name }}</span><span style="{{ mi.statStyle }}">{{ mi.stat }}</span></button>
-                  </sc-for>
-                </div><sc-if value="{{ sel.hasLoot }}" hint-placeholder-val="{{ true }}"><div style="{{ sel.lootHeadStyle }}">{{ sel.lootHead }}</div><div style="{{ sel.lootWrapStyle }}"><sc-for list="{{ sel.loot }}" as="lt" hint-placeholder-count="10"><button onClick="{{ lt.open }}" style="{{ lt.style }}"><span style="{{ lt.artStyle }}"></span><span style="{{ lt.nameStyle }}">{{ lt.name }}</span><span style="{{ lt.kindStyle }}">{{ lt.kind }}</span></button></sc-for></div></sc-if>
+                <sc-if value="{{ sel.hasLoot }}" hint-placeholder-val="{{ true }}"><div style="{{ sel.lootHeadStyle }}">{{ sel.lootHead }}</div><div style="{{ sel.lootWrapStyle }}"><sc-for list="{{ sel.loot }}" as="lt" hint-placeholder-count="10"><button onClick="{{ lt.open }}" style="{{ lt.style }}"><span style="{{ lt.artStyle }}"></span><span style="{{ lt.nameStyle }}">{{ lt.name }}</span><span style="{{ lt.kindStyle }}">{{ lt.kind }}</span></button></sc-for></div></sc-if>
               </div>
               </sc-if>
               <!-- 工具架已移除：道具一覽統一在「收藏總覽」看 -->
@@ -1237,7 +1232,7 @@
           </sc-if>
 
           <sc-if value="{{ scS06 }}" hint-placeholder-val="{{ false }}">
-            <div data-screen-label="S-06 礦物與戰利品介紹" style="padding:0 0 32px">
+            <div data-screen-label="S-06 道具與戰利品介紹" style="padding:0 0 32px">
               <div style="padding:20px var(--pad);border-bottom:1px solid #221E19;display:flex;align-items:center;gap:13px">
                 <button onClick="{{ specBack }}" style="font:400 22px/1 'C11';color:var(--tx3);background:none;border:1px solid #26211C;padding:8px 12px;cursor:pointer">←</button>
                 <div>
@@ -2224,7 +2219,7 @@
                           <div style="padding:12px 13px;background:rgba(0,0,0,.34);border-left:2px solid var(--ac-dim);margin-top:4px">
                             <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C">你要叫它什麼</div>
                             <input value="{{ vr.labelValue }}" onChange="{{ vr.setLabel }}" placeholder="{{ vr.labelPh }}" style="width:100%;margin-top:6px;padding:11px 12px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.4 'C11';outline:none">
-                            <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C;margin-top:11px">你的說法（學生點開礦石會看到）</div>
+                            <div style="font:400 11px/1 'C11';letter-spacing:.16em;color:#5F574C;margin-top:11px">你的說法（學生看得到）</div>
                             <textarea onChange="{{ vr.setNote }}" value="{{ vr.noteValue }}" placeholder="{{ vr.notePh }}" style="width:100%;margin-top:6px;min-height:110px;padding:11px 12px;background:var(--field);border:1px solid var(--line);color:var(--tx);font:400 22px/1.6 'C11';resize:vertical;outline:none"></textarea>
                             <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;align-items:center">
                               <button onClick="{{ vr.save }}" style="font:500 22px/1 'C11';color:var(--bg);background:var(--ac);border:none;padding:11px 17px;cursor:pointer">存起來</button>
@@ -2238,7 +2233,7 @@
                   </div>
                 </div></sc-if>
                 <sc-if value="{{ hasVeinAdmin }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 16px;background:rgba(0,0,0,.24);border:1px dashed var(--line);margin-top:14px">
-                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">這一項是哪一塊礦石　{{ veinCount }}</div>
+                  <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:var(--ac)">{{ veinCount }}</div>
                   <div style="font:400 22px/1.6 'C11';color:var(--tx3);margin-top:7px;text-wrap:pretty">{{ veinPickNote }}</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:11px">
                     <sc-for list="{{ minOptions }}" as="m" hint-placeholder-count="6">
