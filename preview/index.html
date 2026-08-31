@@ -12616,9 +12616,17 @@ class Component extends DCLogic {
     /* 老師判過、但學生還沒去看牠留下什麼——這件事要排在所有建議前面。
        抽選的卡不再自己跳出來（會蓋在別的畫面上），所以「有東西還沒看」
        這個訊號一定要出現在主流程裡，不然學生走完一輪都不知道有東西可以開。 */
-    /* 新手導覽沒走過的話排在所有建議前面——那是唯一不用等任何人的一項。 */
+    var unseenWin = all.filter(function (t) {
+      return t.status === 'passed' && !seenWin(t.id);
+    })[0];
+
+    /* 新手導覽排在建議前面——但只在老師還沒判過任何東西的時候。
+       導覽是給第一週手上空空的人用的；一旦有判過而且還沒去看的，
+       那個才是最該先發生的事（整個系統最大的一次回報就在那裡）。
+       本來導覽無條件排第一，結果交了三項、三項都過的人回到首頁
+       看到的還是「先走一遍（兩分鐘）」。 */
     var tut = (S.tasks || []).filter(function (t) { return t.id === 'tut'; })[0];
-    if (tut && tut.status !== 'passed') {
+    if (tut && tut.status !== 'passed' && !unseenWin) {
       v.nextAction = '先走一遍（兩分鐘）。';
       v.nextActionWhy = '這一項是系統給的，不用等老師。走完你會拿到兩樣只有你有的東西——' +
         '一隻擋在它前面的生物，跟牠留下的一件。名字與顏色都是從你的帳號算出來的。';
@@ -12627,9 +12635,6 @@ class Component extends DCLogic {
       return;
     }
 
-    var unseenWin = all.filter(function (t) {
-      return t.status === 'passed' && !seenWin(t.id);
-    })[0];
     if (unseenWin) {
       v.nextAction = '老師判過「' + unseenWin.title + '」了。去看牠留下什麼。';
       v.nextActionWhy = '打贏一隻會抽好幾次——次數看那一層的深度，加上他覺得你們有沒有多做。' +
@@ -12649,7 +12654,8 @@ class Component extends DCLogic {
       v.goNextAction = openTask(L, needFix);
     } else if (todo) {
       v.nextAction = '交「' + todo.title + '」' + (todo.due && todo.due !== '不設限' ? '（期限 ' + L.dueLabel(todo) + '）' : '');
-      v.nextActionWhy = '通過之後你會拿到「' + (todo.mineral || '這一項的礦石') + '」。採幾塊不影響過關——往不往下是老師決定的。';
+      v.nextActionWhy = '通過之後那一隻會讓開，並在原地留下幾件東西。' +
+        '做幾項不影響過關——往不往下是老師決定的。';
       v.nextActionBtn = '去交這一項';
       v.goNextAction = openTask(L, todo);
     } else if (done) {
