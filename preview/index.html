@@ -8045,7 +8045,7 @@ class Component extends DCLogic {
       '先讀他退回的理由，再重寫一遍。上一次交的內容留在下面的往返紀錄裡，需要的話可以帶進來改。';
     /* 作業不是交在這裡，這一顆是「我做完了，請他確認」 */
     v.submitBtnLabel = openT.status === 'passed'
-      ? '這一項已經過了'
+      ? (seenWin(openT.id) ? '再看一次這一項的結算' : '看牠留下什麼')
       : openT.id === 'tut'
       ? '走完了，結束導覽'
       : (v.isRetry || attempts)
@@ -8142,11 +8142,12 @@ class Component extends DCLogic {
       var st = L.state;
       var taskId = st.openTaskId, text = st.draftText, files = (st.draftFiles || []).slice();
 
-      /* 已經通過的那一項不再收東西——本來按鈕還寫著「第 2 次請他確認」，
-         看起來像被退回了。 */
+      /* 已經通過的那一項不再收東西。本來這裡跳一句「要再交的話等他退回來」，
+         可是那是在講一件學生沒有要做的事——判過之後這一頁就是結算頁，
+         這一顆帶他去看結算就好。 */
       var cur0 = (st.tasks || []).filter(function (t) { return t.id === taskId; })[0];
       if (cur0 && cur0.status === 'passed') {
-        L.say('這一項他已經判過了。要再交的話，等他把它退回來。'); return;
+        markSeenWin(cur0.id); victory(L, cur0); return;
       }
 
       /* 新手導覽自己收尾：它不用等老師，也不進任何後端資料。 */
