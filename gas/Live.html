@@ -96,6 +96,24 @@
       return 0;
     };
 
+    /* 期限不報週次了。老師是用「幾天後」訂的，學生要知道的也是「還剩幾天」——
+       W5 只是把學期第幾週換一個寫法，對學生沒有意義。 */
+    ORIG.dueLabel = P.dueLabel;
+    P.dueLabel = function (t) {
+      if (String((t || {}).due || '') === '不設限') return '不設限';
+      var n = this.dueWeek(t), dw = this.dueDow(t);
+      var d = this.weekDate(n, dw);
+      if (!d) return ORIG.dueLabel.call(this, t);
+      var base = this.fmtDate(d) + '（' + this.dowName(dw) + '）';
+      var now = new Date();
+      var t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      var d0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      var days = Math.round((d0 - t0) / 86400000);
+      if (days > 0) return base + ' · 還有 ' + days + ' 天';
+      if (days === 0) return base + ' · 就是今天';
+      return base + ' · 過了 ' + (-days) + ' 天';
+    };
+
     /* 排程可能是區間物件；比對用的是他們打算交出去的那一週 */
     ORIG.planWeek = P.planWeek;
     P.planWeek = function (t) {
@@ -196,7 +214,7 @@
             pg.b = pg.b
               .split('不影響過關，只影響工具校準到哪一階。').join('不影響過關，做了就多一塊礦石進學生的圖鑑。') /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
               /* 第五層拿掉了，剩四個領域 */
-              .split('五層洞窟，一層一個週期').join('四個領域，一層一個階段')
+              .split('五層洞窟，一層一個週期').join('四個領域，一層一個階段')   /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
               /* 名字改了：講的不再是往下挖的動作，是收集本身 */
               .split('名字就是這樣來的——逐層掘進。') /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
               .join('而路上擋著的每一種東西，過了就收進圖鑑——名字就是這樣來的：地心圖鑑。')
@@ -1932,7 +1950,13 @@
       return {
         label: '第 ' + h.n + ' 次交',
         color: col,
-        meta: 'W' + h.week + (ok ? ' · 通過' : fix ? ' · 被退回' : ' · 還沒審'),
+        /* 往返紀錄本來報 W3。學生看不到週次了，這裡也一樣——
+           要知道的是「哪一天交的」。 */
+        meta: (function () {
+          var d = L.weekDate(h.week, 5);
+          return (d ? L.fmtDate(d) : '第 ' + h.week + ' 週') +
+            (ok ? ' · 通過' : fix ? ' · 被退回' : ' · 還沒審');
+        })(),
         effortLabel: eff ? (mine ? eff[0].replace('他們說：', '你當時說：') : eff[0]) : '',
         effortChip: eff
           ? "font:500 11px/1 'C11';letter-spacing:.08em;padding:5px 8px;background:rgba(0,0,0,.35);border:1px solid " + eff[1] + ';color:' + eff[1]
@@ -3847,7 +3871,7 @@
     (L.LAYERS || []).forEach(function (l) {
       l.course = String(l.course || '').replace(/^[^·]*·\s*/, '');
       /* 原型的場景描述還在講「五層」——只剩四個領域了 */
-      l.scene = String(l.scene || '').split('五層裡最亮的一張').join('四個領域裡最亮的').split('五層').join('四個領域');
+      l.scene = String(l.scene || '').split('五層裡最亮的一張').join('四個領域裡最亮的').split('五層').join('四個領域');   /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
 
       /* 前兩層的標語還在講挖礦。現在這一層要做的事是「打贏擋在前面的」，
          不是「挖」——同一句話裡兩套說法會讓人不知道到底在做什麼。 */
@@ -6253,55 +6277,17 @@
     var after = TS.openedN + drafts.length;
     var used = after;
 
-    /* 原型的環節說明還在講必要／延伸 */
-    /* 「這一項在哪一層」那一整塊已經從模板拿掉了（patch 124），
-       它底下那一句也跟著沒有地方畫。 */
-    v.openWhat = leftVein.length
-      ? (lay.name || ('第 ' + layer + ' 層')) + '　·　已經開了 ' + after + ' 項'
-      : '這一層的 ' + vein + ' 塊都開好了。拿幾塊都不影響——要不要讓他們往下一層，是你決定的。';
-    var num = function () {
-      return "font:600 11px/1 'C11';flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:var(--ac-dim);color:var(--bg)";
-    };
-    v.openChain = [
-      { n: '1', t: '你確認通過 → 他們拿到一塊礦石。', num: num() },
-      { n: '2', t: '他們把清單上的做完——拿幾塊都不影響，要不要讓他們往下一層，是你決定的。', num: num() },
-      { n: '3', t: '你在 T-07 通過 → 礦石鑄成「' + (lay.tool || '道具') + '」、擊退守關生物，他們才下一層。', num: num() }
-    ];
-
-
-    var readyLayers = [1, 2, 3, 4, 5].filter(function (n) {
-      var vn = (L.MINS || []).filter(function (m) { return m.L === n; });
-      var got = {};
-      (S.tasks || []).forEach(function (t) { if (t.layer === n && t.mineral) got[t.mineral] = 1; });
-      return vn.length > 0 && vn.every(function (m) { return got[m.name]; });
-    }).length;
+    /* openWhat／openChain／howToOpen 三個值都拿掉了：
+       它們只有那個說明彈窗在讀，彈窗拿掉之後就畫不到任何地方。 */
     v.t05Kicker = '你現在在開的是什麼';
     /* 這一頁只寫一項任務，標題就不要報礦石的帳 */
     v.t05Head = (lay.name || ('第 ' + layer + ' 層')) + ' · ' +
       (reqN ? '已經開了 ' + reqN + ' 項' : '還沒開過任何一項');
     v.howToBtnLabel = '';   /* 說明鈕拿掉：要看說明才會用，就表示這一頁沒寫好 */
     v.howToBtnStyle = 'display:none';
-    v.openHowTo = function () {
-      showMoment(L, {
-        kind: 'help', art: 'help', accent: 'var(--tx2)',
-        kicker: 'HOW TO USE',
-        title: '怎麼用這一頁',
-        lede: '你在開的是「' + (lay.name || ('第 ' + layer + ' 層')) + '」的清單。',
-        sprite: null,
-        rows: [
-          { k: '這一層的礦石', v: vein + ' 塊' },
-          { k: '你開了', v: after + ' 塊', hi: leftVein.length > 0 },
-          { k: '還沒開', v: leftVein.length + ' 塊', hi: leftVein.length > 0 }
-        ],
-        lines: [v.howToOpen, v.openWhat].concat(
-          (v.openChain || []).map(function (o) { return o.n + '　' + o.t; })
-        ).concat(v.layerWarn ? [v.layerWarn] : []),
-        btn: '知道了', go: function () {}
-      });
-    };
-    v.howToOpen = '一次寫一項 → 按「加入清單」→ 欄位清空、接著寫下一項 → 這一層要交的都寫完，按「發派給全班」。' +
-      '每一塊礦石本來就對應一項工作（下面的清單會列給你看），你要寫的是這一班的通過條件。' +
-      '建議這一層快開始時再開：你已經看過上一層他們卡在哪。（四層已開完 ' + readyLayers + ' 層）';
+    /* 說明彈窗拿掉了。要看說明才會用，就表示這一頁沒寫好——
+       上面那顆鈕早就不畫了，這裡留一個空的，模板還綁著它。 */
+    v.openHowTo = function () {};
 
     v.draftCount = drafts.length ? drafts.length + ' 項' : '還沒有項目';
     v.draftCountColor = drafts.length ? 'var(--ac)' : 'var(--tx3)';
@@ -6381,7 +6367,7 @@
     v.veinPickNote = leftVein.length
       ? '這一層的礦石是固定的 ' + vein + ' 塊，每一塊本來就對應一項工作。標「已配給」的是開過的，剩下 ' +
         leftVein.length + ' 塊還沒開。關卡不看這個——你覺得他們可以往下了就放行。'
-      : '這一層的 ' + vein + ' 塊都開完了。要改哪一項的內容，回 T-02 逐項編輯。';
+      : '這一層的 ' + vein + ' 塊都開完了。要改哪一項的內容，回任務清單逐項編輯。';
 
     /* 加進草稿時把「發給誰」一起記下來，之後每一項可以不一樣 */
     (function () {
@@ -6603,9 +6589,9 @@
       ['過關就給，不看做得多好。', '一層一件——擊退那一層的守關生物之後，牠站的地方留下的。'],
       ['過關才給，一層一件。老師端不上鎖，全部可讀。', '一層一件，用那一層的礦石鑄成，剋的就是那一層的守關生物。老師端不上鎖，全部可讀。'],
     ['不影響過關，只影響工具校準到哪一階。', '不影響過關，做了就多一塊礦石進圖鑑。'], /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
-    ['交出去了。他會驗，然後用它校準工具。', '交出去了。他會驗，通過就多一塊礦石。'],
-    ['校準之後才知道它是什麼', '通過這一層才拿得到'],
-    ['校準完成。下一層需要它——沒有它，你看不見路。', '老師放行了。這一層的礦石鑄成了它——擋在路上的那一隻退開了。']
+    ['交出去了。他會驗，然後用它校準工具。', '交出去了。他會驗，通過就多一塊礦石。'],   /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
+    ['校準之後才知道它是什麼', '通過這一層才拿得到'],   /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
+    ['校準完成。下一層需要它——沒有它，你看不見路。', '老師放行了。這一層的礦石鑄成了它——擋在路上的那一隻退開了。']   /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
   ];
   function fixCal(str) {
     if (typeof str !== 'string') return str;
@@ -7028,7 +7014,7 @@
         : left ? '這一層還有沒過的' : '這一層的任務都過了';
       v.gateDesc = passedThis ? '這一層過了，下一層開了。'
         : !allItems.length ? '這一層還沒有清單。'
-        : left ? '這一層還有 ' + left + ' 項沒過。過不過得完都不影響——要不要往下一層是老師決定的。'
+        : left ? '這一層還有 ' + left + ' 項沒過。過幾項不決定什麼——要不要往下一層是老師決定的。'
         : '這一層的任務都過了。剩下的是他的判斷——他覺得可以往下就放行。';
     })();
     (v.taskGroups || []).forEach(function (g) { g.desc = fixCal(g.desc); });
@@ -7731,8 +7717,7 @@
         badgeStyle: "font:500 11px/1 'C11';letter-spacing:.1em;padding:6px 9px;white-space:nowrap;background:" +
           (on ? 'rgba(233,179,65,.16)' : 'rgba(0,0,0,.3)') + ';border:1px solid ' + (on ? 'var(--ac-dim)' : 'var(--line)') +
           ';color:' + (on ? 'var(--ac)' : 'var(--tx3)'),
-        meta: (k.term ? k.term + '　·　' : '') + (k.teams || []).length + ' 組　·　學期第 ' + (k.courseWeek || 1) + ' 週' +
-          '　·　開課 ' + (k.courseStart || '—'),
+        meta: (k.term ? k.term + '　·　' : '') + (k.teams || []).length + ' 組　·　開課 ' + (k.courseStart || '—'),
         code: k.joinCode || '—',
         copy: copyBtn(L, k.joinCode || '').copy,
         copyLabel: copyBtn(L, k.joinCode || '').copyLabel,
@@ -8339,7 +8324,7 @@
     var pad2 = function (n) { return (n < 10 ? '0' : '') + n; };
     var curDate = curW ? L.weekDate(curW, curD) : null;
     v.dueDateValue = curDate ? curDate.getFullYear() + '-' + pad2(curDate.getMonth() + 1) + '-' + pad2(curDate.getDate()) : '';
-    v.dueDateNote = '挑任何一天都可以。系統會自動換算成第幾週，學生看到的還是「W幾 · 月/日（週幾）」。';
+    v.dueDateNote = '挑任何一天都可以。學生看到的是日期跟「還有幾天」，不是週次。';
     v.setDueDate = function (e) {
       var m = /(\d{4})-(\d{2})-(\d{2})/.exec(e.target.value || '');
       if (!m) return;
