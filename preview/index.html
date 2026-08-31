@@ -1101,7 +1101,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   <div style="font:700 22px/1.4 'C11';color:var(--tx);margin-top:11px">{{ selTeam.name }}</div>
                   <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:9px">
                     <span style="font:400 11px/1.6 'C11';color:var(--tx3)">所在　{{ selTeam.layerName }}</span>
-                    <span style="font:400 11px/1.6 'C11';color:var(--tx3)">停留　{{ selTeam.weeks }} 週</span>
+                    <span style="font:400 11px/1.6 'C11';color:var(--tx3)">停留　{{ selTeam.days }} 天</span>
                     <span style="font:400 11px/1.6 'C11';color:var(--tx3)">通過關卡　{{ selTeam.passedCount }}</span>
                   </div>
                   <sc-if value="{{ selTeam.hasMark }}" hint-placeholder-val="{{ false }}">
@@ -1482,7 +1482,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
               <div style="padding:22px var(--pad) 16px;border-bottom:1px solid #221E19">
                 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px"><sc-for list="{{ worldTabs }}" as="wt" hint-placeholder-count="2"><button onClick="{{ wt.go }}" style="{{ wt.style }}"><span style="display:block">{{ wt.label }}</span><span style="{{ wt.subStyle }}">{{ wt.sub }}</span></button></sc-for></div><div style="font:400 11px/1 'C11';letter-spacing:.26em;color:#5F574C">WORLD</div>
                 <h1 style="font:700 33px/1.4 'C11';margin:10px 0 5px;letter-spacing:.04em">學生端的世界</h1>
-                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:0;text-wrap:pretty">你定的每一項，學生那邊看到的是一層洞窟、一隻擋在前面的生物、一塊礦石。這一頁把對應關係攤出來。</p>
+                <p style="font:400 22px/1.7 'C11';color:var(--tx3);margin:0;text-wrap:pretty">你定的每一項，學生那邊看到的是一層洞窟，還有一隻擋在每一項前面的生物。這一頁把對應關係攤出來。</p>
                 <button onClick="{{ openClassMap }}" style="margin-top:14px;margin-right:8px;font:500 22px/1 'C11';color:var(--ac);background:none;border:1px solid var(--ac-dim);padding:12px 18px;cursor:pointer">看整張地圖剖面（不上鎖）</button>
                 <button onClick="{{ readOpening }}" style="margin-top:14px;font:500 22px/1 'C11';color:var(--bg);background:var(--ac);border:none;padding:12px 20px;cursor:pointer;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)">用學生視角讀開頭故事</button>
               </div>
@@ -1519,17 +1519,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                           </div>
                         </button>
                       </div>
-                      <div style="margin-top:13px;padding-top:12px;border-top:1px solid #221E19">
-                        <div style="font:400 11px/1 'C11';letter-spacing:.18em;color:#5F574C;margin-bottom:9px">這一層的礦脈 · 每一項對應一塊礦石</div>
-                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:6px">
-                          <sc-for list="{{ w.segs }}" as="g" hint-placeholder-count="6">
-                            <button onClick="{{ g.open }}" style="{{ g.style }}">
-                              <span style="display:block;font:500 22px/1.3 'C11';color:#DCD4C6">{{ g.task }}</span>
-                              <span style="display:block;font:400 11px/1.4 'C11';color:#6E665A;margin-top:4px">{{ g.name }}</span>
-                            </button>
-                          </sc-for>
-                        </div>
-                      </div>
+                      
                     </div>
                   </div>
                 </sc-for>
@@ -1996,7 +1986,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                   <div data-screen-label="R-07 停留與介入" style="padding:var(--pad) 24px">
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:#5A6874">R-07 · STAY & INTERVENTION</div>
                     <h1 style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:700;margin:10px 0 6px">停留與介入</h1>
-                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 18px">本版沒有學生主動求助的功能，停留週數是唯一的卡關偵測管道。看分布的形狀：單峰代表節奏接近，雙峰代表多數順利、少數嚴重卡住。</p>
+                    <p style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin:0 0 18px">本版沒有學生主動求助的功能，停留天數是唯一的卡關偵測管道。看分布的形狀：單峰代表節奏接近，雙峰代表多數順利、少數嚴重卡住。</p>
                     <div style="display:flex;flex-direction:column;gap:7px">
                       <sc-for list="{{ resVals.stayRows }}" as="s" hint-placeholder-count="6">
                         <div style="display:flex;align-items:center;gap:14px;padding:11px 14px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
@@ -2122,7 +2112,7 @@ window.JLZ_PACK={"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":
                 <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
                   <button onClick="{{ q.open }}" style="{{ q.style }}">
                     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px">
-                      <span style="{{ q.weekStyle }}">停留 {{ q.weeks }} 週</span>
+                      <span style="{{ q.weekStyle }}">停留 {{ q.days }} 天</span>
                       <span style="font:700 22px/1.4 'C11'">{{ q.team }}</span>
                       <span style="font:400 11px/1 'C11';color:#5F574C">{{ q.layer }}</span>
                       <sc-if value="{{ q.flag }}" hint-placeholder-val="{{ false }}">
@@ -7702,7 +7692,7 @@ class Component extends DCLogic {
       (g.items || []).forEach(function (i2) { i2.min = ''; });
     });
     (v.minOptions || []).forEach(function (m2) {
-      if (typeof m2.sub === 'string') m2.sub = m2.sub.split('學生端物證 · ').join('學生端礦石 · '); /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
+      if (typeof m2.sub === 'string') m2.sub = m2.sub.split('學生端物證 · ').join('學生端 · '); /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
     });
 
     /* 四個領域。原型寫死五層，在這裡截斷——第五層（星核聖殿）連同
@@ -8278,6 +8268,12 @@ class Component extends DCLogic {
        模板上沒有這些欄位，所以這裡連算都不用算。 */
 
     /* 看他組的通過紀錄時，三格的題目也要跟著換 */
+    /* 點小人看到的那一組：原型只給週次，補上天數。 */
+    if (v.selTeam) {
+      var stD = (L.teams() || []).filter(function (t) { return t.name === v.selTeam.name; })[0];
+      v.selTeam.days = stD && stD.days != null ? stD.days
+        : Math.max(0, ((v.selTeam.weeks || 1) - 1) * 7);
+    }
     if (v.selTeam && v.selTeam.cells && v.selTeam.cells.length) {
       v.selTeam.cells = v.selTeam.cells.map(function (c, i) {
         return Object.assign({}, c, { q: (GATE_Q[i] || {}).q || c.q });
@@ -8941,11 +8937,12 @@ class Component extends DCLogic {
         m.stateStyle = "font:400 11px/1 'C11';letter-spacing:.1em;margin-top:7px;color:" + col +
           ";text-shadow:0 1px 4px rgba(0,0,0,.9)";
       })();
-      m.stepsTag = "第 " + (base + 1) + "–" + (base + st.vein.length) + " 塊　·　你開了 " +
-        st.openedN + "/" + st.vein.length;
+      /* 本來是「第 1–4 塊 · 你開了 1/4」，分母是那一層的礦石數。
+         礦石拿掉之後沒有分母了——這一層有幾項，就是你開了幾項。 */
+      m.stepsTag = st.openedN ? "你開了 " + st.openedN + " 項" : "還沒開";
       m.stepsTagStyle = "position:absolute;left:var(--mcol);top:9px;z-index:2;" +
         "font:400 11px/1 'C11';letter-spacing:.1em;color:" +
-        (st.openedN >= st.vein.length ? "var(--ac-hi)" : "var(--tx3)") +
+        (st.openedN ? "var(--ac-hi)" : "var(--tx3)") +
         ";pointer-events:none;text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);white-space:nowrap;transform:scale(.86);transform-origin:left top";
 
       /* 哪幾組在這一層 */
@@ -10927,7 +10924,7 @@ class Component extends DCLogic {
         'background:url("' + mobSvg(m.id, Lyr) + '") center/contain no-repeat',
       rows: [
         { k: '老師要你做到', v: (task.checks || []).length + ' 條' },
-        { k: '期限', v: dw ? ('第 ' + dw + ' 週') : '不設限', hi: true }
+        { k: '期限', v: task && task.due && task.due !== '不設限' ? L.dueLabel(task) : '不設限', hi: true }
       ].concat(isNew ? [{ k: '圖鑑', v: '★ 新收藏——你以前沒遇過牠', hi: true }] : []),
       quoteLabel: '介紹',
       quote: m.trait,
@@ -14206,6 +14203,18 @@ class Component extends DCLogic {
     var groups = reviewGroups(L);
     var allOpen = groups.reduce(function (a, g) { return a.concat(g.items); }, []);
 
+    /* 那三格統計是原型算的：第二格寫「停留 ≥ 3 週」——週拿掉了；
+       第三格「待審關卡 · 每學期 4-5 次」也還在講學期。 */
+    (v.teacherStats || []).forEach(function (st0) {
+      if (String(st0.label || '').indexOf('停留 ≥') === 0) {
+        st0.label = '停留 ≥ 21 天';
+        st0.value = (L.teams() || []).filter(function (t) {
+          return (t.days != null ? t.days : ((t.weeks || 1) - 1) * 7) >= 21;
+        }).length;
+      }
+      if (String(st0.hint || '').indexOf('每學期') === 0) st0.hint = '一層一次，你決定什麼時候';
+    });
+
     /* 全部勾完的有幾組——這是老師該被通知的那一件事 */
     (function () {
       var ready = groups.filter(function (g) { return g.ready; });
@@ -14215,11 +14224,19 @@ class Component extends DCLogic {
     })();
 
     /* T-01：每一組一張卡，點進去直接鎖定那一組 */
+    /* 佇列卡是原型算的，只帶週次。這裡補上天數——沒有就用週次乘 7。 */
+    var dayByTeam = {};
+    (L.teams() || []).forEach(function (t) {
+      dayByTeam[t.name] = t.days != null ? t.days : Math.max(0, ((t.weeks || 1) - 1) * 7);
+    });
     (v.queue || []).forEach(function (card) {
+      card.days = dayByTeam[card.team] != null ? dayByTeam[card.team] : Math.max(0, ((card.weeks || 1) - 1) * 7);
       var g = groups.filter(function (x) { return x.teamName === card.team; })[0] || null;
       card.pending = g ? g.items.length : 0;
       card.detail = !g
-        ? (card.weeks >= 3 ? '停留超過門檻，但這一週沒有新的動靜——該由你先開口。' : '這一週沒有新的動靜。')
+        ? ((card.days != null ? card.days : (card.weeks || 1) * 7) >= 21
+            ? '停留超過三週了，但最近沒有新的動靜——該由你先開口。'
+            : '最近沒有新的動靜。')
         : (g.ready
             ? '這一層全部勾完了，' + g.items.length + ' 件等你去看'
             : '勾到 ' + g.tickDone + '/' + g.tickTotal + '，' + g.items.length + ' 件等你去看') +

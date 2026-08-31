@@ -4823,5 +4823,38 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('132. 停留改成天');
 })();
 
+
+/* 133. 模板剩下的停留還在講週。 */
+(function () {
+  [[">停留 {{ q.weeks }} 週<", ">停留 {{ q.days }} 天<"],
+   ["停留　{{ selTeam.weeks }} 週", "停留　{{ selTeam.days }} 天"],
+   ["本版沒有學生主動求助的功能，停留週數", "本版沒有學生主動求助的功能，停留天數"]].forEach(function (pr) {
+    var n = t.split(pr[0]).length - 1;
+    if (!n) { console.error('133. 找不到 ' + pr[0]); process.exit(1); }
+    t = t.split(pr[0]).join(pr[1]);
+  });
+  console.log('133. 模板剩下的停留改成天');
+})();
+
+
+/* 134. T-08 那塊礦脈整個拿掉——礦石沒了，w.segs 永遠是空的。 */
+(function () {
+  var k = '這一層的礦脈 · 每一項對應一塊礦石';
+  var i = t.indexOf(k);
+  if (i < 0) { console.error('134. 找不到礦脈那一塊'); process.exit(1); }
+  var s0 = t.lastIndexOf('<div style="margin-top:13px;padding-top:12px', i);
+  var e0 = t.indexOf('</sc-for>', i);
+  if (s0 < 0 || e0 < 0) { console.error('134. 框不出礦脈那一塊'); process.exit(1); }
+  var e1 = t.indexOf('</div>', e0);
+  var e2 = t.indexOf('</div>', e1 + 6);
+  if (e2 < 0) { console.error('134. 礦脈那一塊收不了尾'); process.exit(1); }
+  t = t.slice(0, s0) + t.slice(e2 + 6);
+
+  var a = '一層洞窟、一隻擋在前面的生物、一塊礦石。這一頁把對應關係攤出來。';
+  if (t.split(a).length - 1 !== 1) { console.error('134. 找不到那一句'); process.exit(1); }
+  t = t.replace(a, '一層洞窟，還有一隻擋在每一項前面的生物。這一頁把對應關係攤出來。');
+  console.log('134. T-08 那塊礦脈拿掉');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

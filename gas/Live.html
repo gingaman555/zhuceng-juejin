@@ -1217,7 +1217,7 @@
       (g.items || []).forEach(function (i2) { i2.min = ''; });
     });
     (v.minOptions || []).forEach(function (m2) {
-      if (typeof m2.sub === 'string') m2.sub = m2.sub.split('學生端物證 · ').join('學生端礦石 · '); /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
+      if (typeof m2.sub === 'string') m2.sub = m2.sub.split('學生端物證 · ').join('學生端 · '); /* 舊詞OK：比對原型寫死的字，這一半必須是舊字 */
     });
 
     /* 四個領域。原型寫死五層，在這裡截斷——第五層（星核聖殿）連同
@@ -1793,6 +1793,12 @@
        模板上沒有這些欄位，所以這裡連算都不用算。 */
 
     /* 看他組的通過紀錄時，三格的題目也要跟著換 */
+    /* 點小人看到的那一組：原型只給週次，補上天數。 */
+    if (v.selTeam) {
+      var stD = (L.teams() || []).filter(function (t) { return t.name === v.selTeam.name; })[0];
+      v.selTeam.days = stD && stD.days != null ? stD.days
+        : Math.max(0, ((v.selTeam.weeks || 1) - 1) * 7);
+    }
     if (v.selTeam && v.selTeam.cells && v.selTeam.cells.length) {
       v.selTeam.cells = v.selTeam.cells.map(function (c, i) {
         return Object.assign({}, c, { q: (GATE_Q[i] || {}).q || c.q });
@@ -2456,11 +2462,12 @@
         m.stateStyle = "font:400 11px/1 'C11';letter-spacing:.1em;margin-top:7px;color:" + col +
           ";text-shadow:0 1px 4px rgba(0,0,0,.9)";
       })();
-      m.stepsTag = "第 " + (base + 1) + "–" + (base + st.vein.length) + " 塊　·　你開了 " +
-        st.openedN + "/" + st.vein.length;
+      /* 本來是「第 1–4 塊 · 你開了 1/4」，分母是那一層的礦石數。
+         礦石拿掉之後沒有分母了——這一層有幾項，就是你開了幾項。 */
+      m.stepsTag = st.openedN ? "你開了 " + st.openedN + " 項" : "還沒開";
       m.stepsTagStyle = "position:absolute;left:var(--mcol);top:9px;z-index:2;" +
         "font:400 11px/1 'C11';letter-spacing:.1em;color:" +
-        (st.openedN >= st.vein.length ? "var(--ac-hi)" : "var(--tx3)") +
+        (st.openedN ? "var(--ac-hi)" : "var(--tx3)") +
         ";pointer-events:none;text-shadow:0 1px 0 #000,0 0 4px rgba(0,0,0,.85);white-space:nowrap;transform:scale(.86);transform-origin:left top";
 
       /* 哪幾組在這一層 */
@@ -4442,7 +4449,7 @@
         'background:url("' + mobSvg(m.id, Lyr) + '") center/contain no-repeat',
       rows: [
         { k: '老師要你做到', v: (task.checks || []).length + ' 條' },
-        { k: '期限', v: dw ? ('第 ' + dw + ' 週') : '不設限', hi: true }
+        { k: '期限', v: task && task.due && task.due !== '不設限' ? L.dueLabel(task) : '不設限', hi: true }
       ].concat(isNew ? [{ k: '圖鑑', v: '★ 新收藏——你以前沒遇過牠', hi: true }] : []),
       quoteLabel: '介紹',
       quote: m.trait,
@@ -7721,6 +7728,18 @@
     var groups = reviewGroups(L);
     var allOpen = groups.reduce(function (a, g) { return a.concat(g.items); }, []);
 
+    /* 那三格統計是原型算的：第二格寫「停留 ≥ 3 週」——週拿掉了；
+       第三格「待審關卡 · 每學期 4-5 次」也還在講學期。 */
+    (v.teacherStats || []).forEach(function (st0) {
+      if (String(st0.label || '').indexOf('停留 ≥') === 0) {
+        st0.label = '停留 ≥ 21 天';
+        st0.value = (L.teams() || []).filter(function (t) {
+          return (t.days != null ? t.days : ((t.weeks || 1) - 1) * 7) >= 21;
+        }).length;
+      }
+      if (String(st0.hint || '').indexOf('每學期') === 0) st0.hint = '一層一次，你決定什麼時候';
+    });
+
     /* 全部勾完的有幾組——這是老師該被通知的那一件事 */
     (function () {
       var ready = groups.filter(function (g) { return g.ready; });
@@ -7730,11 +7749,19 @@
     })();
 
     /* T-01：每一組一張卡，點進去直接鎖定那一組 */
+    /* 佇列卡是原型算的，只帶週次。這裡補上天數——沒有就用週次乘 7。 */
+    var dayByTeam = {};
+    (L.teams() || []).forEach(function (t) {
+      dayByTeam[t.name] = t.days != null ? t.days : Math.max(0, ((t.weeks || 1) - 1) * 7);
+    });
     (v.queue || []).forEach(function (card) {
+      card.days = dayByTeam[card.team] != null ? dayByTeam[card.team] : Math.max(0, ((card.weeks || 1) - 1) * 7);
       var g = groups.filter(function (x) { return x.teamName === card.team; })[0] || null;
       card.pending = g ? g.items.length : 0;
       card.detail = !g
-        ? (card.weeks >= 3 ? '停留超過門檻，但這一週沒有新的動靜——該由你先開口。' : '這一週沒有新的動靜。')
+        ? ((card.days != null ? card.days : (card.weeks || 1) * 7) >= 21
+            ? '停留超過三週了，但最近沒有新的動靜——該由你先開口。'
+            : '最近沒有新的動靜。')
         : (g.ready
             ? '這一層全部勾完了，' + g.items.length + ' 件等你去看'
             : '勾到 ' + g.tickDone + '/' + g.tickTotal + '，' + g.items.length + ' 件等你去看') +
