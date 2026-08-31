@@ -4774,5 +4774,40 @@ t = t.split('<button onClick="{{ mapTabHaul }}" style="{{ mapTabHaulStyle }}">�
   console.log('130. 做完的離開清單，紀錄那一列點得進去');
 })();
 
+
+/* 131. 後台拿掉總週數。
+       這個作品沒有週數限定——期限是一項一項訂的（幾天後或直接挑日期），
+       所以「一學期 18 週」這個設定沒有東西在用它。 */
+(function () {
+  /* 建班那一列的輸入框 */
+  var a = '<input value="{{ adm.kweeks }}"';
+  var i = t.indexOf(a);
+  if (i < 0) { console.error('131. kweeks 輸入框找不到'); process.exit(1); }
+  var j = t.indexOf('>', t.indexOf('style="', i) + 8);
+  while (j > 0 && t.slice(i, j).split('"').length % 2 === 0) j = t.indexOf('>', j + 1);
+  t = t.slice(0, i) + t.slice(j + 1);
+
+  /* 那一段說明 */
+  var b = '總週數決定期限可以訂到第幾週';
+  var bi = t.indexOf(b);
+  if (bi < 0) { console.error('131. 總週數說明找不到'); process.exit(1); }
+  var bs = t.lastIndexOf('<div', bi);
+  var be = t.indexOf('</div>', bi);
+  if (bs < 0 || be < 0) { console.error('131. 框不出總週數說明'); process.exit(1); }
+  t = t.slice(0, bs) + t.slice(be + 6);
+
+  /* 每一班改總週數那一排 */
+  var c = '<sc-for list="{{ adm.classWeeks }}"';
+  var ci = t.indexOf(c);
+  if (ci < 0) { console.error('131. classWeeks 找不到'); process.exit(1); }
+  var cs = t.lastIndexOf('<div', ci);
+  var ce = t.indexOf('</sc-for>', ci);
+  if (cs < 0 || ce < 0) { console.error('131. 框不出 classWeeks'); process.exit(1); }
+  var ce2 = t.indexOf('</div>', ce);
+  if (ce2 < 0) { console.error('131. classWeeks 收不了尾'); process.exit(1); }
+  t = t.slice(0, cs) + t.slice(ce2 + 6);
+  console.log('131. 後台拿掉總週數');
+})();
+
 fs.writeFileSync('build_tpl_live.txt', t);
 console.log('patched ok, length =', t.length);

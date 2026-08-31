@@ -78,7 +78,11 @@ const BANNED = [
   ['打開一條', '同上'],
   ['做紮實', '同上'],
   ['送出前發現', '同上'],
-  ['自己回頭補的', '回掘改成老師認定，說法統一叫回頭補強']
+  ['自己回頭補的', '回掘改成老師認定，說法統一叫回頭補強'],
+  ['總週數', '這個作品沒有週數限定，期限是一項一項訂的'],
+  ['學期的第', '同上'],
+  ['學期走了', '同上——那要有一個總週數當分母'],
+  ['這一班的學期有', '同上']
 ];
 
 /* 註解拿掉，只留字串常數會出現的地方 */
@@ -200,9 +204,9 @@ const OK_DEAD = new Set([
   'vowMobTrait', 'vowMobArt', 'ruleSteps', 'uploading', 'specRec',
   'mapTabDigStyle', 'mapTabHaul', 'mapTabHaulStyle', 'hasHaulMap', 'haulMapBands',
   'recCount', 'recNote', 'rateRows', 'hasRecord', 'hasRec', 'hasHaul',
-  'hasTfinAnswers', 'tfinOpened', 'ganttNever', 'klassOptions', 'semesterWeeks',
-  'setSemesterWeeks', 'weeksLeft', 'termPct', 'nextActionColor', 'reqLeft',
-  'layerLeftNote', 'queueGroupCount', 'queueTotal', 'revLeftNote', 'tickWeek'
+  'hasTfinAnswers', 'tfinOpened', 'ganttNever', 'klassOptions',
+  'termPct', 'nextActionColor', 'reqLeft',
+  'layerLeftNote', 'queueGroupCount', 'queueTotal', 'revLeftNote'
 ]);
 
 (function () {

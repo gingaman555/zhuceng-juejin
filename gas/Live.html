@@ -3807,13 +3807,8 @@
      夠了，加一句「你落後了」就毀了（文件第 01 條：沒有負分）。
      那個落差是學生自己看到的，不是系統罵他的——而那正好是學生
      症候群這一課。 */
-  function termAt(L) {
-    var S = L.state;
-    var kl = L.KLASSES[S.klass] || {};
-    var n = Math.max(6, Math.min(156, Number(kl.semesterWeeks) || Number(S.semesterWeeks) || 18));
-    var w = Math.max(1, Number(S.courseWeek) || 1);
-    return { week: w, total: n, pct: Math.max(0, Math.min(100, Math.round(w / n * 100))) };
-  }
+  /* termAt 拿掉了：它用「總週數」當分母算學期走了幾成，
+     而這個作品沒有週數限定，那個分母不存在。 */
 
   /* ============================================================
      首頁的三張卡：從礦石改成任務。
@@ -3844,21 +3839,11 @@
     /* 第三張卡拿掉了——礦石不是進度，它在收藏跟紀錄裡就好 */
   }
 
+  /* 「學期走了 17％」那一條拿掉了。它要有一個總週數當分母，
+     而這個作品沒有週數限定——期限是一項一項訂的，不是照學期切的。 */
   function decorateTerm(L, v) {
-    var S = L.state;
     v.hasTerm = false;
     v.termLine = ''; v.termPct = ''; v.termBarStyle = 'display:none'; v.termFillStyle = '';
-    if (S.role !== 'student' || !S.signedIn) return;
-
-    var t = termAt(L);
-    var lay = (L.LAYERS || [])[(S.currentLayer || 1) - 1] || {};
-    v.hasTerm = true;
-    v.termPct = t.pct + '%';
-    /* 週次拿掉，留下走了幾成——學生要知道的是還剩多少時間，不是今天第幾週 */
-    v.termLine = '你在' + (lay.name || ('第 ' + (S.currentLayer || 1) + ' 層')) +
-      '。學期走了 ' + t.pct + '％。';
-    v.termBarStyle = 'margin-top:9px;height:5px;background:rgba(0,0,0,.4);border:1px solid var(--line)';
-    v.termFillStyle = 'height:100%;width:' + t.pct + '%;background:#5A5044';
   }
 
   /* 層的課程標籤：
@@ -7023,15 +7008,7 @@
 
 
     var S = L.state;
-    var kl = L.KLASSES[S.klass] || {};
-    var N = Math.max(6, Math.min(156, Number(kl.semesterWeeks) || 18));
-    var now = S.courseWeek || 1;
-    var rq = L.req();
-
-    /* SUB 的「剩餘週數」原型寫死成 2 */
-    var dues = rq.map(function (t) { return L.dueWeek(t); }).filter(Boolean);
-    var lastDue = dues.length ? Math.max.apply(null, dues) : 0;
-    v.weeksLeft = lastDue ? Math.max(0, lastDue - now) : Math.max(0, N - now);
+    /* 「剩餘週數」拿掉了：沒有總週數，也沒有地方畫它。 */
 
     /* S-06 的「取得時間」原型寫死成 2026 / 03 / 18 */
     if (S.screen === 'S06' && S.specId) {
@@ -8223,7 +8200,6 @@
 
     /* 期限：週次快選涵蓋整個學期，另外可以直接挑任一天 */
     var kl = L.KLASSES[S.klass] || {};
-    var N = Math.max(6, Math.min(156, Number(kl.semesterWeeks) || 18));
     var nfDue = String((S.nf || {}).due || '');
     var curW = (function () { var m = /第\s*(\d+)\s*週/.exec(nfDue); return m ? +m[1] : 0; })();
     var curD = (function () {
@@ -8234,22 +8210,10 @@
     var compose = function (w, d) {
       return '第 ' + w + ' 週 · ' + L.fmtDate(L.weekDate(w, d)) + '（週' + L.dowName(d) + '）';
     };
-    /* 一年以上的課不能列 52 顆按鈕：只列現在前後一段，其餘用下面的日期挑 */
-    var nowW = Math.max(1, Math.min(N, S.courseWeek || 1));
-    var WIN = 10;
-    var from = 1, to = N;
-    if (N > WIN * 2) {
-      var base = curW || nowW;
-      from = Math.max(1, base - 2);
-      to = Math.min(N, from + WIN - 1);
-      if (to - from + 1 < WIN) from = Math.max(1, to - WIN + 1);
-    }
-    var opts = [];
-    for (var wi = from; wi <= to; wi++) opts.push(wi);
-    v.dueWindowNote = (N > WIN * 2)
-      ? '這一班的學期有 ' + N + ' 週。填幾天後或直接挑日期都可以，系統會換算成週次。'
-      : '';
-    v.hasDueWindow = !!v.dueWindowNote;
+    /* 週次那一排按鈕跟「這一班的學期有 N 週」都拿掉了：
+       沒有週數限定，訂期限就是「幾天後」或直接挑日期。 */
+    v.dueWindowNote = '';
+    v.hasDueWindow = false;
     /* 老師想的是「一週後交」，不是「第 6 週」。常用的幾個做成鈕，
        其他的用上面那個數字欄，再不然用底下的日期。 */
     var today0 = (function () { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); })();
@@ -8311,16 +8275,11 @@
       pick: function () { L.setState({ nf: Object.assign({}, L.state.nf, { due: '不設限' }) }); },
       style: L.pill(nfDue === '不設限')
     }]);
-    v.dueHasWeek = curW > 0;
-    v.dowOptions = [1, 2, 3, 4, 5, 6, 7].map(function (d) {
-      var on = curW > 0 && curD === d;
-      return {
-        label: '週' + L.dowName(d), sub: curW ? L.fmtDate(L.weekDate(curW, d)) : '',
-        subStyle: "display:block;font:400 11px/1 'C11';margin-top:5px;color:" + (on ? 'rgba(11,10,9,.7)' : '#6E665A'),
-        pick: function () { if (curW) L.setState({ nf: Object.assign({}, L.state.nf, { due: compose(curW, d) }) }); },
-        style: L.pill(on)
-      };
-    });
+    /* dueHasWeek 這個名字騙人：它管的是「幾天後那一排底下的那一塊」，
+       日期挑選器也在裡面。所以要一直開著——真正的週幾那一排是
+       hasDowPick 在管，那一排早就關掉了。 */
+    v.dueHasWeek = true;
+    v.dowOptions = [];
     var pad2 = function (n) { return (n < 10 ? '0' : '') + n; };
     var curDate = curW ? L.weekDate(curW, curD) : null;
     v.dueDateValue = curDate ? curDate.getFullYear() + '-' + pad2(curDate.getMonth() + 1) + '-' + pad2(curDate.getDate()) : '';
@@ -8336,23 +8295,8 @@
       L.setState({ nf: Object.assign({}, L.state.nf, { due: compose(w, dow) }) });
     };
     v.duePreview = curW
-      ? L.fmtDate(L.weekDate(curW, curD)) + '（週' + L.dowName(curD) + '）· 第 ' + curW + ' 週'
+      ? L.fmtDate(L.weekDate(curW, curD)) + '（週' + L.dowName(curD) + '）'
       : '不設限';
-
-    /* 學期總週數（甘特圖的欄位數） */
-    v.semesterWeeks = N;
-    v.setSemesterWeeks = function (n) {
-      call('apiSetSemesterWeeks', LIVE.token, kl.id, n).then(function () { return refresh(); }).catch(function () {});
-    };
-
-    /* ＋1 週＝手動覆寫（預設依真實日期自動算） */
-    v.tickWeek = function () {
-      var k = L.KLASSES[L.state.klass];
-      if (!k) return;
-      call('apiSetWeek', LIVE.token, k.id, (L.state.courseWeek || 1) + 1).then(function (r) {
-        if (r && r.ok) { L.say('學期週次改為第 ' + r.courseWeek + ' 週（手動覆寫）。'); return refresh(); }
-      }).catch(function () {});
-    };
 
     decorateOpenWhat(L, v);
     decorateGate(L, v);
@@ -8824,8 +8768,6 @@
               wrap: 'flex:1;min-width:110px', input: sans },
             { label: '開課日', ph: '2026-09-14', value: val('start', k.courseStart), set: setF(ek('start')),
               wrap: 'flex:1;min-width:130px', input: mono },
-            { label: '總週數', ph: '18', value: val('weeks', k.semesterWeeks || 18), set: setF(ek('weeks')),
-              wrap: 'flex:0 0 100px', input: mono },
             { label: '邀請碼', ph: 'J8OBN4', value: val('code', k.joinCode), set: setF(ek('code')),
               wrap: 'flex:0 0 130px', input: mono }
           ],
@@ -8836,7 +8778,6 @@
               name: val('name', k.name),
               term: val('term', k.term),
               courseStart: val('start', k.courseStart),
-              semesterWeeks: val('weeks', k.semesterWeeks || 18),
               joinCode: val('code', k.joinCode)
             };
             call('apiAdminUpdateClass', LIVE.token, k.id, patch)
@@ -8888,28 +8829,13 @@
         n.newSandbox = !n.newSandbox;
         L.setState({ admForm: n });
       },
-      kname: f.kname || '', kterm: f.kterm || '', kstart: f.kstart || '', kweeks: f.kweeks || '',
-      setKname: setF('kname'), setKterm: setF('kterm'), setKstart: setF('kstart'), setKweeks: setF('kweeks'),
-      classWeeks: d.classes.map(function (k) {
-        var key = 'wk_' + k.id;
-        return {
-          name: k.name,
-          value: (S.admForm && S.admForm[key] !== undefined) ? S.admForm[key] : String(k.semesterWeeks || 18),
-          set: setF(key),
-          note: '學期 ' + (k.semesterWeeks || 18) + ' 週 · 現在第 ' + k.courseWeek + ' 週',
-          save: function () {
-            var n = Number((L.state.admForm || {})[key]);
-            call('apiSetSemesterWeeks', LIVE.token, k.id, n)
-              .then(function () { return call('apiAdminOverview', LIVE.token); })
-              .then(admApply('「' + k.name + '」的總週數改成 ' + Math.max(2, Math.min(52, Math.floor(n || 18))) + ' 週。'))
-              .catch(function (e) { L.setState({ admMsg: e.message, admMsgKind: 'err' }); });
-          }
-        };
-      }),
+      kname: f.kname || '', kterm: f.kterm || '', kstart: f.kstart || '',
+      setKname: setF('kname'), setKterm: setF('kterm'), setKstart: setF('kstart'),
+      /* 總週數那一整塊拿掉了：沒有週數限定，期限是一項一項訂的。 */
       createClass: function () {
         var n = L.state.admForm || {};
         if (!String(n.kname || '').trim()) { L.setState({ admMsg: '請填班級名稱。', admMsgKind: 'err' }); return; }
-        call('apiAdminCreateClass', LIVE.token, n.kname, n.kterm || '', n.kstart || '', n.kweeks || 18, !!n.newSandbox)
+        call('apiAdminCreateClass', LIVE.token, n.kname, n.kterm || '', n.kstart || '', 18, !!n.newSandbox)
           .then(admDone(L, '班級開好了。'))
           .then(function () {
             var m = Object.assign({}, L.state.admForm); m.kname = ''; m.kterm = ''; m.kstart = '';

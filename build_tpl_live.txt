@@ -1499,22 +1499,12 @@
                       <input value="{{ adm.kname }}" onChange="{{ adm.setKname }}" placeholder="班級名稱（例：設計專題 · 週三班）" style="flex:2;min-width:180px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none">
                       <input value="{{ adm.kterm }}" onChange="{{ adm.setKterm }}" placeholder="學期（例：2026 秋）" style="flex:1;min-width:110px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'Noto Sans TC',sans-serif;font-size:13px;outline:none">
                       <input value="{{ adm.kstart }}" onChange="{{ adm.setKstart }}" placeholder="開課日 2026-09-14" style="flex:1;min-width:130px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none">
-                      <input value="{{ adm.kweeks }}" onChange="{{ adm.setKweeks }}" placeholder="總週數 18" style="flex:0 0 110px;padding:10px 12px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none">
+                      
                       <button onClick="{{ adm.toggleNewSandbox }}" style="{{ adm.newSandboxStyle }}">{{ adm.newSandboxLabel }}</button>
                       <button onClick="{{ adm.createClass }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 16px;background:#1E2024;border:1px solid #2A2E33;color:#DFE6EB;cursor:pointer;border-radius:6px">開一個班</button>
                     </div>
-                    <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.9;color:#8393A0;margin-top:8px">總週數決定期限可以訂到第幾週。一學期 18、一學年 36、整整一年 52、兩年 104，<b>最多 156 週（三年）</b>。跨年度的專案照樣可以開。開完之後在下面每一班那一列還可以改。</div>
-                    <div style="display:flex;flex-direction:column;gap:7px;margin-top:10px">
-                      <sc-for list="{{ adm.classWeeks }}" as="cw" hint-placeholder-count="1">
-                        <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:11px 13px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
-                          <span style="font-family:'Noto Sans TC',sans-serif;font-size:13.5px;color:#DFE6EB;min-width:150px">{{ cw.name }}</span>
-                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5A6874">總週數</span>
-                          <input value="{{ cw.value }}" onChange="{{ cw.set }}" style="flex:0 0 80px;padding:8px 10px;background:#0C1116;border:1px solid #1D2831;border-radius:6px;color:#DFE6EB;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none">
-                          <button onClick="{{ cw.save }}" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:8px 13px;background:#1E2024;border:1px solid #2A2E33;color:#DFE6EB;cursor:pointer;border-radius:6px">存</button>
-                          <span style="flex:1;min-width:160px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5A6874">{{ cw.note }}</span>
-                        </div>
-                      </sc-for>
-                    </div>
+                    
+                    
 
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A6874;margin:24px 0 8px">揭露節奏</div>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;background:#121A21;border:1px solid #1D2831;border-radius:9px">
