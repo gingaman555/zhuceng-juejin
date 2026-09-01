@@ -326,7 +326,7 @@ function sceneMouth(t, next) {
   /* 岩心架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
   H.push('<button class="mrack" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
-    esc(ks.length ? '岩心架：' + ks.length + ' 根' : '岩心架（還是空的）') + '">');
+    esc(ks.length ? '封存的：' + ks.length + ' 根' : '還沒封存過') + '">');
   if (ks.length) {
     ks.slice(-3).forEach(function (k) {
       var kz = STRATA[0];

@@ -317,49 +317,24 @@ PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
   var H = [head('各組進度', '每一組走到哪', '')];
+
+  /* 剖面圖已經畫出每一組走到哪、正在走哪一趟、誰在等你看。
+     這一頁本來在底下又用文字卡把同樣的事一組一張再列一遍——
+     五組五張，整頁 3424px，是全系統最高的一頁。刪掉了。
+
+     要細節就點那一組（digTeamCard 會攤開他們封存過的每一根岩心）；
+     要去勾就在審核那一頁，那才是它該在的地方。 */
   H.push(xsScene(rows, null, u.classId));
   H.push(digTeamCard(u.classId));
   H.push(coreCard());
 
-  rows.forEach(function (r) {
-    var t = teamOf(r.teamId);
-    var sg = signOf(r.teamId);
-    var all = runsFor(r.teamId);
-    var cur = all.filter(function (x) { return x.run.state === 'running'; })[0];
-    var wait = all.filter(function (x) { return x.run.state === 'submitted'; })[0];
-    var camp = all.filter(function (x) { return x.run.state === 'judged'; })[0];
-    var offer = all.filter(function (x) { return x.run.state === 'approved'; })[0];
-
-    H.push('<div class="card tm">');
-    H.push('<div class="radar-head">');
-    H.push(pxTag(sg.px, sg.pal, 'sign-s'));
-    H.push('<b>' + esc(t.name) + '</b>');
-    H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
-    H.push('<span class="sp"></span>');
-    H.push('<span class="dim">' + esc(strataAt(r.depth, r.teamId).name) + '　·　深度 ' +
-      (r.depth * WORLD.depthPerMilestone) + ' m　·　走完 ' + r.depth + ' 趟</span>');
+  /* 只留一句：現在有幾組在等你。等你看的那幾件在審核那一頁。 */
+  var waiting = radar(u.classId).length;
+  if (waiting) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow lit">' + waiting + ' 件等你看</div>');
+    H.push(btn('去審核', 'go:radar', 'big'));
     H.push('</div>');
-
-    if (wait) {
-      H.push('<p class="lead">在等你看：' + esc(wait.ms.title) + '</p>');
-      H.push(btn('去勾', 'go:review:' + wait.run.runId, ''));
-    } else if (offer) {
-      H.push('<p class="dim">你勾過了，他們還沒挑裝備：' + esc(offer.ms.title) + '</p>');
-    } else if (camp) {
-      H.push('<p class="dim">交了，正在營火旁說卡在哪：' + esc(camp.ms.title) + '</p>');
-    } else if (cur) {
-      var run = cur.run;
-      H.push('<p class="lead">正在走：' + esc(cur.ms.title) + '</p>');
-      /* 量，不是好壞：這一趟有多大、走到哪、每天動的是哪一段。
-         準度與判定不放在這一頁——這裡是「誰在哪」，
-         「跑得如何」屬於審核，那時候他看的是一組人交的一件東西。 */
-      H.push('<div class="log-num">這一趟 <b>' + run.est + '</b> 天　·　' +
-        '來過 <b>' + run.pushes + '</b> 天</div>');
-      H.push(dayStrip(r.teamId, run.runId));
-    } else {
-      H.push('<p class="dim">手上沒有里程碑。派一個給他們就會開始。</p>');
-    }
-    H.push('</div>');
-  });
+  }
   return H.join('');
 };

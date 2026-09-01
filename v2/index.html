@@ -2270,6 +2270,26 @@ button.tk-k:hover span{color:var(--gold)}
 .rk-dots b.on{background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold2)}
 .rk-r.mine .rk-dots b.on{background:var(--gold2)}
 
+/* ── 老師：派過的每一個壓成一行 ──
+   本來一個一張卡，還帶著注意事項與每一組承諾幾天的標籤——
+   派了十個就是十張卡，而老師在這一頁要做的只有「再派一個」。 */
+.msr{
+  display:grid;grid-template-columns:1fr auto auto;gap:4px 11px;
+  align-items:baseline;padding:11px 0;
+  border-bottom:2px solid rgba(0,0,0,.16)
+}
+.msr:last-child{border-bottom:0}
+.msr > b{font-size:22px;font-weight:400;line-height:33px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msr-w{font-size:11px;color:var(--gold2);white-space:nowrap}
+.msr-n{font-size:11px;color:var(--dim);white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+/* 各組承諾了幾天。老師唯一看得到的「他們怎麼想這件事」。 */
+.msr-e{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:4px 14px}
+.msr-e i{font-size:11px;font-style:normal;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+.msr-e b{color:var(--ink);font-weight:400}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -6409,7 +6429,7 @@ var ACTS = {
     var t = myTeam();
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.flags || []);
     go('home');
-    say('承諾了。從今天開始，每天推一格。');
+    say('承諾了。做完再回來交。');
   },
 
   /* 「都差不多」也是一個答案，所以要記下來——
@@ -8030,7 +8050,7 @@ function sceneMouth(t, next) {
   /* 岩心架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
   H.push('<button class="mrack" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
-    esc(ks.length ? '岩心架：' + ks.length + ' 根' : '岩心架（還是空的）') + '">');
+    esc(ks.length ? '封存的：' + ks.length + ' 根' : '還沒封存過') + '">');
   if (ks.length) {
     ks.slice(-3).forEach(function (k) {
       var kz = STRATA[0];
@@ -8556,50 +8576,25 @@ PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
   var H = [head('各組進度', '每一組走到哪', '')];
+
+  /* 剖面圖已經畫出每一組走到哪、正在走哪一趟、誰在等你看。
+     這一頁本來在底下又用文字卡把同樣的事一組一張再列一遍——
+     五組五張，整頁 3424px，是全系統最高的一頁。刪掉了。
+
+     要細節就點那一組（digTeamCard 會攤開他們封存過的每一根岩心）；
+     要去勾就在審核那一頁，那才是它該在的地方。 */
   H.push(xsScene(rows, null, u.classId));
   H.push(digTeamCard(u.classId));
   H.push(coreCard());
 
-  rows.forEach(function (r) {
-    var t = teamOf(r.teamId);
-    var sg = signOf(r.teamId);
-    var all = runsFor(r.teamId);
-    var cur = all.filter(function (x) { return x.run.state === 'running'; })[0];
-    var wait = all.filter(function (x) { return x.run.state === 'submitted'; })[0];
-    var camp = all.filter(function (x) { return x.run.state === 'judged'; })[0];
-    var offer = all.filter(function (x) { return x.run.state === 'approved'; })[0];
-
-    H.push('<div class="card tm">');
-    H.push('<div class="radar-head">');
-    H.push(pxTag(sg.px, sg.pal, 'sign-s'));
-    H.push('<b>' + esc(t.name) + '</b>');
-    H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
-    H.push('<span class="sp"></span>');
-    H.push('<span class="dim">' + esc(strataAt(r.depth, r.teamId).name) + '　·　深度 ' +
-      (r.depth * WORLD.depthPerMilestone) + ' m　·　走完 ' + r.depth + ' 趟</span>');
+  /* 只留一句：現在有幾組在等你。等你看的那幾件在審核那一頁。 */
+  var waiting = radar(u.classId).length;
+  if (waiting) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow lit">' + waiting + ' 件等你看</div>');
+    H.push(btn('去審核', 'go:radar', 'big'));
     H.push('</div>');
-
-    if (wait) {
-      H.push('<p class="lead">在等你看：' + esc(wait.ms.title) + '</p>');
-      H.push(btn('去勾', 'go:review:' + wait.run.runId, ''));
-    } else if (offer) {
-      H.push('<p class="dim">你勾過了，他們還沒挑裝備：' + esc(offer.ms.title) + '</p>');
-    } else if (camp) {
-      H.push('<p class="dim">交了，正在營火旁說卡在哪：' + esc(camp.ms.title) + '</p>');
-    } else if (cur) {
-      var run = cur.run;
-      H.push('<p class="lead">正在走：' + esc(cur.ms.title) + '</p>');
-      /* 量，不是好壞：這一趟有多大、走到哪、每天動的是哪一段。
-         準度與判定不放在這一頁——這裡是「誰在哪」，
-         「跑得如何」屬於審核，那時候他看的是一組人交的一件東西。 */
-      H.push('<div class="log-num">這一趟 <b>' + run.est + '</b> 天　·　' +
-        '來過 <b>' + run.pushes + '</b> 天</div>');
-      H.push(dayStrip(r.teamId, run.runId));
-    } else {
-      H.push('<p class="dim">手上沒有里程碑。派一個給他們就會開始。</p>');
-    }
-    H.push('</div>');
-  });
+  }
   return H.join('');
 };
 
@@ -9969,7 +9964,7 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">說一句話　選填</div>');
-  H.push('<p class="dim">這句話會出現在他們挑裝備的那一頁。' +
+  H.push('<p class="dim">這句話會出現在他們封存那一趟的時候。' +
          '講你看到什麼就好，不用講他們該怎麼改。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪談這種事最容易低估，你們沒有。') + '">' + esc(draft('gr-word')) + '</textarea>');
@@ -10007,8 +10002,10 @@ PAGES.ms = function () {
   H.push('<div class="eyebrow" style="margin-top:14px">分段　選填　一行一段</div>');
   H.push('<textarea id="ms-steps" oninput="DRAFT[\'msSteps\']=this.value" rows="4" placeholder="' +
     esc('訪三個人\n整理逐字稿\n收斂成一句話') + '">' + esc(draft('msSteps', '')) + '</textarea>');
-  H.push('<p class="dim">分了段，學生每天可以點「今天動的是哪一段」，' +
-         '也可以一段一段勾掉。不分段一樣走得完。</p>');
+  /* 這一句本來寫「學生每天可以點今天動的是哪一段」——那個機制早就拿掉了。
+     現在分段真正會發生的是：交出去的時候被問哪幾段做完了、哪一段比想的久。 */
+  H.push('<p class="dim">分了段，他們交出去的時候會被問哪幾段做完了、' +
+         '哪一段比想的久。不分段一樣走得完。</p>');
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
@@ -10026,27 +10023,32 @@ PAGES.ms = function () {
     H.push('<div class="card dim">還沒派過。派出去之後，這裡會列出各組各自承諾了幾天。</div>');
   }
 
+  /* 派過的每一個壓成一行：標題、幾組承諾了、幾組走完了。
+     本來一個一張卡，還帶著注意事項與每一組承諾幾天的標籤——
+     派了十個就是十張卡，而老師在這一頁要做的只有「再派一個」。 */
+  H.push('<div class="card"><div class="rec-list">');
   list.forEach(function (m) {
     var got = where('Runs', function (r) { return r.msId === m.msId; });
     var done = got.filter(function (r) { return r.state === 'done'; }).length;
-    H.push('<div class="card">');
-    H.push('<div class="radar-head"><b>' + esc(m.title) + '</b><span class="sp"></span>' +
-      '<span class="dim">' + (m.teams.length ? m.teams.length + ' 組' : '全班') + '</span></div>');
-    if (m.note) H.push('<p class="dim">' + nl(m.note) + '</p>');
-    H.push('<div class="log-num">承諾了 <b>' + got.length + '</b> 組　·　走完 <b>' +
-           done + '</b> 組</div>');
-    /* 各組承諾了幾天——這是老師唯一看得到的「他們怎麼想這件事」 */
+    H.push('<div class="msr">');
+    H.push('<b>' + esc(m.title) + '</b>');
+    H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組' : '全班') +
+      '</span>');
+    H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
+    /* 各組承諾了幾天。這是老師唯一看得到的「他們怎麼想這件事」，
+       所以留著——但不用標籤的樣子，壓成一行小字。 */
     if (got.length) {
-      H.push('<div class="tags small"><span class="k">他們各自承諾</span>');
+      H.push('<div class="msr-e">');
       got.forEach(function (r) {
-        var t = teamOf(r.teamId);
-        H.push('<span class="tag static">' + esc(t ? t.name.slice(0, 4) : '') +
-               ' ' + r.est + ' 天' + (r.actual ? ' → ' + r.actual : '') + '</span>');
+        var tm = teamOf(r.teamId);
+        H.push('<i>' + esc(tm ? shortName(tm.name) : '') + ' <b>' + r.est + '</b>' +
+          (r.actual ? '→<b>' + r.actual + '</b>' : '') + '</i>');
       });
       H.push('</div>');
     }
     H.push('</div>');
   });
+  H.push('</div></div>');
   return H.join('');
 };
 
@@ -10353,11 +10355,13 @@ window.AUDIT = function () {
   var ms = where('Milestones', function (m) { return m.classId === cls; })[0];
   var P = [['home', {}], ['commit', { id: ms.msId }], ['battle', { id: (run || done).runId, at: 'end' }],
            ['stamp', { id: done.runId }], ['pick', { id: done.runId }],
-           ['dash', { id: done.runId }], ['pack', {}], ['codex', {}],
-           ['eco', {}], ['log', {}], ['exit', {}], ['sign', {}]];
+           ['pack', {}], ['codex', {}],
+           ['eco', {}], ['exit', {}], ['sign', {}]];
   var out = [];
   P.forEach(function (pp) {
     try {
+      /* 頁面不存在的話 render() 會退回首頁，那會變成假通過。 */
+      if (!PAGES[pp[0]]) { out.push(pp[0] + ' ✗ 這一頁不存在'); return; }
       S.page = pp[0]; S.p = pp[1]; S.flash = null; render();
       var de = document.documentElement;
       var w = document.querySelector('.wrap'), wr = w.getBoundingClientRect();

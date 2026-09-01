@@ -155,7 +155,7 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">說一句話　選填</div>');
-  H.push('<p class="dim">這句話會出現在他們挑裝備的那一頁。' +
+  H.push('<p class="dim">這句話會出現在他們封存那一趟的時候。' +
          '講你看到什麼就好，不用講他們該怎麼改。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪談這種事最容易低估，你們沒有。') + '">' + esc(draft('gr-word')) + '</textarea>');
@@ -193,8 +193,10 @@ PAGES.ms = function () {
   H.push('<div class="eyebrow" style="margin-top:14px">分段　選填　一行一段</div>');
   H.push('<textarea id="ms-steps" oninput="DRAFT[\'msSteps\']=this.value" rows="4" placeholder="' +
     esc('訪三個人\n整理逐字稿\n收斂成一句話') + '">' + esc(draft('msSteps', '')) + '</textarea>');
-  H.push('<p class="dim">分了段，學生每天可以點「今天動的是哪一段」，' +
-         '也可以一段一段勾掉。不分段一樣走得完。</p>');
+  /* 這一句本來寫「學生每天可以點今天動的是哪一段」——那個機制早就拿掉了。
+     現在分段真正會發生的是：交出去的時候被問哪幾段做完了、哪一段比想的久。 */
+  H.push('<p class="dim">分了段，他們交出去的時候會被問哪幾段做完了、' +
+         '哪一段比想的久。不分段一樣走得完。</p>');
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
@@ -212,27 +214,32 @@ PAGES.ms = function () {
     H.push('<div class="card dim">還沒派過。派出去之後，這裡會列出各組各自承諾了幾天。</div>');
   }
 
+  /* 派過的每一個壓成一行：標題、幾組承諾了、幾組走完了。
+     本來一個一張卡，還帶著注意事項與每一組承諾幾天的標籤——
+     派了十個就是十張卡，而老師在這一頁要做的只有「再派一個」。 */
+  H.push('<div class="card"><div class="rec-list">');
   list.forEach(function (m) {
     var got = where('Runs', function (r) { return r.msId === m.msId; });
     var done = got.filter(function (r) { return r.state === 'done'; }).length;
-    H.push('<div class="card">');
-    H.push('<div class="radar-head"><b>' + esc(m.title) + '</b><span class="sp"></span>' +
-      '<span class="dim">' + (m.teams.length ? m.teams.length + ' 組' : '全班') + '</span></div>');
-    if (m.note) H.push('<p class="dim">' + nl(m.note) + '</p>');
-    H.push('<div class="log-num">承諾了 <b>' + got.length + '</b> 組　·　走完 <b>' +
-           done + '</b> 組</div>');
-    /* 各組承諾了幾天——這是老師唯一看得到的「他們怎麼想這件事」 */
+    H.push('<div class="msr">');
+    H.push('<b>' + esc(m.title) + '</b>');
+    H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組' : '全班') +
+      '</span>');
+    H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
+    /* 各組承諾了幾天。這是老師唯一看得到的「他們怎麼想這件事」，
+       所以留著——但不用標籤的樣子，壓成一行小字。 */
     if (got.length) {
-      H.push('<div class="tags small"><span class="k">他們各自承諾</span>');
+      H.push('<div class="msr-e">');
       got.forEach(function (r) {
-        var t = teamOf(r.teamId);
-        H.push('<span class="tag static">' + esc(t ? t.name.slice(0, 4) : '') +
-               ' ' + r.est + ' 天' + (r.actual ? ' → ' + r.actual : '') + '</span>');
+        var tm = teamOf(r.teamId);
+        H.push('<i>' + esc(tm ? shortName(tm.name) : '') + ' <b>' + r.est + '</b>' +
+          (r.actual ? '→<b>' + r.actual + '</b>' : '') + '</i>');
       });
       H.push('</div>');
     }
     H.push('</div>');
   });
+  H.push('</div></div>');
   return H.join('');
 };
 

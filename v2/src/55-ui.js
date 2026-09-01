@@ -376,7 +376,7 @@ var ACTS = {
     var t = myTeam();
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.flags || []);
     go('home');
-    say('承諾了。從今天開始，每天推一格。');
+    say('承諾了。做完再回來交。');
   },
 
   /* 「都差不多」也是一個答案，所以要記下來——
