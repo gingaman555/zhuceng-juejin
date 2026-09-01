@@ -1006,3 +1006,59 @@ button.ac:active{transform:translateY(1px)}
 .scn-scroll{cursor:grab}
 .scn-scroll.dragging{cursor:grabbing;user-select:none}
 .scn-scroll.dragging .scn-in{pointer-events:none}
+
+/* 排行榜的單位。只說一次，每一列就只剩數字。 */
+.rk-u{margin:-6px 0 11px;font-size:11px;color:var(--dim)}
+
+/* ── 全班最近：一則一行 ──
+   本來一則兩行，十則就是二十行長得很像的字，整段讀起來是一面牆。
+   壓成一行之後掃過去就知道最近誰動了。 */
+.fd{
+  display:grid;grid-template-columns:22px auto auto 1fr auto;
+  align-items:center;gap:9px;padding:6px 0;
+  border-bottom:2px solid rgba(0,0,0,.14)
+}
+.fd:last-child{border-bottom:0}
+.fd-ic{display:flex;align-items:center;justify-content:center}
+.fd-ic .px{width:22px;height:auto;image-rendering:pixelated}
+.fd b{font-size:11px;font-weight:400;color:var(--ink);white-space:nowrap}
+.fd em{font-size:11px;font-style:normal;color:var(--gold2);white-space:nowrap}
+.fd-t{
+  font-size:11px;color:var(--dim);min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.fd i{font-size:11px;font-style:normal;color:var(--mute);white-space:nowrap}
+.fd.mine b{color:var(--gold)}
+
+/* ── 承諾與實際：一條，不是兩排 ──
+   本來上下兩排方格量的是同一件事（天數），讀的人得自己把兩排疊起來。
+   疊成一條之後，要看的只有一件事：實心那一段停在淺色那一塊裡面沒有。 */
+.eb-track{
+  position:relative;height:22px;background:var(--sunk);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.45)
+}
+/* 準的範圍。停在裡面就是準。 */
+.eb-band{position:absolute;top:0;bottom:0;background:rgba(233,179,65,.14);
+  box-shadow:inset 2px 0 0 var(--gold-d), inset -2px 0 0 var(--gold-d)}
+/* 實際走了幾天。 */
+.eb-go{position:absolute;left:0;top:0;bottom:0;background:var(--gold-d);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.14)}
+.ebar.over .eb-go{background:var(--over)}
+/* 你說的那一天。 */
+.eb-say{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1px;
+  background:var(--gold2)}
+
+.eb-n{display:flex;align-items:baseline;gap:14px;margin-top:6px}
+.eb-n b{font-size:22px;line-height:22px;font-weight:400;
+  font-variant-numeric:tabular-nums}
+.eb-say-n{font-size:11px;color:var(--dim)}
+.eb-say-n b{color:var(--gold2)}
+.eb-go-n{font-size:11px;color:var(--dim)}
+.eb-go-n b{color:var(--gold)}
+.ebar.over .eb-go-n b{color:var(--over)}
+.eb-u{font-size:11px;color:var(--dim);margin-left:-8px}
+
+/* 任務清單裡那一根點得開——那一根怎麼讀，全系統只有那一張卡說得出來。 */
+button.tk-k{border:none;background:none;font:inherit;cursor:pointer;padding:0;
+  text-align:left}
+button.tk-k:hover span{color:var(--gold)}

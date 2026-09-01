@@ -2171,6 +2171,62 @@ button.ac:active{transform:translateY(1px)}
 .scn-scroll.dragging{cursor:grabbing;user-select:none}
 .scn-scroll.dragging .scn-in{pointer-events:none}
 
+/* 排行榜的單位。只說一次，每一列就只剩數字。 */
+.rk-u{margin:-6px 0 11px;font-size:11px;color:var(--dim)}
+
+/* ── 全班最近：一則一行 ──
+   本來一則兩行，十則就是二十行長得很像的字，整段讀起來是一面牆。
+   壓成一行之後掃過去就知道最近誰動了。 */
+.fd{
+  display:grid;grid-template-columns:22px auto auto 1fr auto;
+  align-items:center;gap:9px;padding:6px 0;
+  border-bottom:2px solid rgba(0,0,0,.14)
+}
+.fd:last-child{border-bottom:0}
+.fd-ic{display:flex;align-items:center;justify-content:center}
+.fd-ic .px{width:22px;height:auto;image-rendering:pixelated}
+.fd b{font-size:11px;font-weight:400;color:var(--ink);white-space:nowrap}
+.fd em{font-size:11px;font-style:normal;color:var(--gold2);white-space:nowrap}
+.fd-t{
+  font-size:11px;color:var(--dim);min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.fd i{font-size:11px;font-style:normal;color:var(--mute);white-space:nowrap}
+.fd.mine b{color:var(--gold)}
+
+/* ── 承諾與實際：一條，不是兩排 ──
+   本來上下兩排方格量的是同一件事（天數），讀的人得自己把兩排疊起來。
+   疊成一條之後，要看的只有一件事：實心那一段停在淺色那一塊裡面沒有。 */
+.eb-track{
+  position:relative;height:22px;background:var(--sunk);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.45)
+}
+/* 準的範圍。停在裡面就是準。 */
+.eb-band{position:absolute;top:0;bottom:0;background:rgba(233,179,65,.14);
+  box-shadow:inset 2px 0 0 var(--gold-d), inset -2px 0 0 var(--gold-d)}
+/* 實際走了幾天。 */
+.eb-go{position:absolute;left:0;top:0;bottom:0;background:var(--gold-d);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.14)}
+.ebar.over .eb-go{background:var(--over)}
+/* 你說的那一天。 */
+.eb-say{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1px;
+  background:var(--gold2)}
+
+.eb-n{display:flex;align-items:baseline;gap:14px;margin-top:6px}
+.eb-n b{font-size:22px;line-height:22px;font-weight:400;
+  font-variant-numeric:tabular-nums}
+.eb-say-n{font-size:11px;color:var(--dim)}
+.eb-say-n b{color:var(--gold2)}
+.eb-go-n{font-size:11px;color:var(--dim)}
+.eb-go-n b{color:var(--gold)}
+.ebar.over .eb-go-n b{color:var(--over)}
+.eb-u{font-size:11px;color:var(--dim);margin-left:-8px}
+
+/* 任務清單裡那一根點得開——那一根怎麼讀，全系統只有那一張卡說得出來。 */
+button.tk-k{border:none;background:none;font:inherit;cursor:pointer;padding:0;
+  text-align:left}
+button.tk-k:hover span{color:var(--gold)}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -6450,28 +6506,31 @@ function estBar(est, actual, live) {
   var e = Math.max(1, Number(est) || 1);
   var a = Math.max(0, Number(actual) || 0);
   var b = RULES.band(e);
-  var lo = Math.max(1, e - b), hi = e + b;
-  var n = Math.min(30, Math.max(hi, a) + 1);
+  var lo = Math.max(0, e - b), hi = e + b;
+  /* 尺畫到哪：準的範圍跟實際走的，誰遠畫到誰，再留一點餘地。 */
+  var n = Math.max(hi, a) + Math.max(1, Math.round(e * 0.15));
 
-  var H = ['<div class="ebar">'];
+  function at(d) { return Math.max(0, Math.min(100, d / n * 100)) + '%'; }
 
-  /* 上面：你自己說的 */
-  H.push('<div class="eb-r"><b>承諾</b><div class="eb-c">');
-  for (var i = 1; i <= n; i++) {
-    H.push('<span class="eb' + (i >= lo && i <= hi ? ' band' : '') +
-      (i === e ? ' pin' : '') + '"></span>');
-  }
-  H.push('</div><i>' + e + '</i></div>');
+  var over = !live && a > hi;
+  var H = ['<div class="ebar' + (over ? ' over' : '') + '">'];
 
-  /* 下面：實際走的。超出上面那個框的格子換色——那就是判定，不用寫字。 */
-  H.push('<div class="eb-r"><b>' + (live ? '走到' : '實際') + '</b><div class="eb-c">');
-  for (var j = 1; j <= n; j++) {
-    var on = j <= a;
-    var out = on && !live && (j > hi);
-    H.push('<span class="eb' + (on ? ' on' : '') + (out ? ' out' : '') +
-      (j >= lo && j <= hi ? ' band' : '') + '"></span>');
-  }
-  H.push('</div><i>' + a + '</i></div>');
+  H.push('<div class="eb-track">');
+  /* 準的範圍。淺色的一塊，實際那一段停在裡面就是準。 */
+  H.push('<div class="eb-band" style="left:' + at(lo) +
+    ';width:' + (Math.min(100, hi / n * 100) - Math.max(0, lo / n * 100)) + '%"></div>');
+  /* 實際走了幾天。 */
+  H.push('<div class="eb-go" style="width:' + at(a) + '"></div>');
+  /* 你說的那一天。 */
+  H.push('<div class="eb-say" style="left:' + at(e) + '"></div>');
+  H.push('</div>');
+
+  /* 兩個數字。它們是同一條尺上的兩個位置，所以並排寫。 */
+  H.push('<div class="eb-n">');
+  H.push('<span class="eb-say-n">說 <b>' + e + '</b></span>');
+  H.push('<span class="eb-go-n">' + (live ? '走到' : '實際') + ' <b>' + a + '</b></span>');
+  H.push('<span class="eb-u">天</span>');
+  H.push('</div>');
 
   H.push('</div>');
   return H.join('');
@@ -8575,6 +8634,8 @@ PAGES.pack = function () {
     return H.join('');
   }
 
+  H.push(coreCard());
+
   H.push('<div class="card">');
   H.push('<div class="tk-list">');
   rows.forEach(function (x) { H.push(taskRow(x.ms, x.run, t)); });
@@ -8622,10 +8683,13 @@ function taskRow(m, r, t) {
   if (kp) {
     var z = STRATA[0];
     STRATA.forEach(function (x) { if (x.key === kp.zone) z = x; });
-    H.push('<div class="tk-k">');
+    /* 點得開：那一根怎麼讀（一天兩格、實心＝來過、空心＝說沒動、
+       破的＝沒有紀錄）在 coreCard 裡面。 */
+    H.push('<button class="tk-k" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'core:' + kp.keepId })) + '\'>');
     H.push(pxTag(kp.px || coreOf(kp.runId), z.pal, 'core'));
     H.push('<span>' + esc(kp.name || '（沒取名）') + '</span>');
-    H.push('</div>');
+    H.push('</button>');
   }
 
   H.push('</div>');
@@ -8806,37 +8870,36 @@ function feedOf(classId, limit) {
   return out.slice(0, limit || 20);
 }
 
+/* 一則一行：圖、誰、做了什麼、多久以前。
+
+   本來一則兩行（誰做了什麼＋細節），十則就是二十行長得很像的字，
+   整段讀起來是一面牆。壓成一行之後，掃過去就知道最近誰動了。 */
 function feedRow(f, meId) {
   var mine = f.team && f.team.teamId === meId;
   var H = ['<div class="fd' + (mine ? ' mine' : '') + '">'];
+  var who = f.team ? shortName(f.team.name) : '老師';
+  var act = '', det = '', ic = '';
 
   if (f.kind === 'seal') {
     var z = STRATA[0];
     STRATA.forEach(function (x) { if (x.key === f.keep.zone) z = x; });
-    H.push('<button class="fd-ic" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'core:' + f.keep.keepId })) + '\'>' +
-      pxTag(f.keep.px || coreOf(f.keep.runId), z.pal, 'core sm') + '</button>');
-    H.push('<div><b>' + esc(f.team.name) + '</b>封存了一根岩心');
-    H.push('<span>' + esc(f.keep.name || '（沒取名）') + '　·　' +
-      (f.keep.elapsed || 0) + ' 天　·　' + esc(z.name) + '</span>');
-    H.push('</div>');
-
+    ic = pxTag(f.keep.px || coreOf(f.keep.runId), z.pal, 'core sm');
+    act = '封存'; det = f.keep.name || '（沒取名）';
   } else if (f.kind === 'sent') {
-    H.push('<span class="fd-ic">' + pxTag(ICONS.log, ICON_PAL, 'nic') + '</span>');
-    H.push('<div><b>' + esc(f.team.name) + '</b>交出去了');
-    H.push('<span>' + esc(f.ms ? f.ms.title : '') + '</span></div>');
-
+    ic = pxTag(ICONS.log, ICON_PAL, 'nic');
+    act = '交出去'; det = f.ms ? f.ms.title : '';
   } else if (f.kind === 'left') {
-    H.push('<span class="fd-ic">' + pxTag(ICONS.home, ICON_ON, 'nic') + '</span>');
-    H.push('<div><b>' + esc(f.team.name) + '</b>走出去了');
-    H.push('<span>' + esc(f.team.project || '') + '</span></div>');
-
+    ic = pxTag(ICONS.home, ICON_ON, 'nic');
+    act = '走出去了'; det = f.team.project || '';
   } else {
-    H.push('<span class="fd-ic">' + pxTag(ICONS.ms, ICON_PAL, 'nic') + '</span>');
-    H.push('<div><b>老師</b>派了新的里程碑');
-    H.push('<span>' + esc(f.ms.title) + '</span></div>');
+    ic = pxTag(ICONS.ms, ICON_PAL, 'nic');
+    act = '派了新的'; det = f.ms.title;
   }
 
+  H.push('<span class="fd-ic">' + ic + '</span>');
+  H.push('<b>' + esc(who) + '</b>');
+  H.push('<em>' + esc(act) + '</em>');
+  H.push('<span class="fd-t">' + esc(det) + '</span>');
   H.push('<i>' + feedWhen(f.at) + '</i>');
   H.push('</div>');
   return H.join('');
@@ -9660,6 +9723,10 @@ function rankCard(classId, meId) {
 
   var H = ['<div class="card rank">'];
   H.push('<div class="eyebrow">估得準　·　最近 ' + RANK_N + ' 趟</div>');
+  /* 單位只在這裡說一次。
+     本來每一列寫的是偏差率（13%、100%），沒有人那樣想事情——
+     而且 100% 看起來像世界末日，其實只是「說 5 天走了 10 天」。 */
+  H.push('<p class="rk-u">每承諾 10 天，實際差幾天</p>');
 
   if (!has) {
     H.push('<p class="dim">還沒有人交過。</p>');
@@ -9676,11 +9743,12 @@ function rankCard(classId, meId) {
     if (r.dev === null) {
       H.push('<span class="rk-d">還沒交過</span>');
     } else {
-      /* 條長＝偏差率，越短越準。100% 以上就滿格——
-         再長下去只是把難看的那一條畫得更難看。 */
+      /* 條長＝偏差率，越短越準。滿格是「差了跟承諾一樣多」——
+         再長下去只是把難看的那一條畫得更難看。
+         寫出來的數字換算成「每 10 天差幾天」，那才讀得動。 */
       var w = Math.min(100, Math.round(r.dev * 100));
       H.push('<div class="rk-bar"><u style="width:' + w + '%"></u></div>');
-      H.push('<span class="rk-d">' + w + '%</span>');
+      H.push('<span class="rk-d">' + (Math.round(r.dev * 10 * 10) / 10) + ' 天</span>');
     }
     H.push('</div>');
   });

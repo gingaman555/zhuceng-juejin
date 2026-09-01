@@ -21,28 +21,31 @@ function estBar(est, actual, live) {
   var e = Math.max(1, Number(est) || 1);
   var a = Math.max(0, Number(actual) || 0);
   var b = RULES.band(e);
-  var lo = Math.max(1, e - b), hi = e + b;
-  var n = Math.min(30, Math.max(hi, a) + 1);
+  var lo = Math.max(0, e - b), hi = e + b;
+  /* 尺畫到哪：準的範圍跟實際走的，誰遠畫到誰，再留一點餘地。 */
+  var n = Math.max(hi, a) + Math.max(1, Math.round(e * 0.15));
 
-  var H = ['<div class="ebar">'];
+  function at(d) { return Math.max(0, Math.min(100, d / n * 100)) + '%'; }
 
-  /* 上面：你自己說的 */
-  H.push('<div class="eb-r"><b>承諾</b><div class="eb-c">');
-  for (var i = 1; i <= n; i++) {
-    H.push('<span class="eb' + (i >= lo && i <= hi ? ' band' : '') +
-      (i === e ? ' pin' : '') + '"></span>');
-  }
-  H.push('</div><i>' + e + '</i></div>');
+  var over = !live && a > hi;
+  var H = ['<div class="ebar' + (over ? ' over' : '') + '">'];
 
-  /* 下面：實際走的。超出上面那個框的格子換色——那就是判定，不用寫字。 */
-  H.push('<div class="eb-r"><b>' + (live ? '走到' : '實際') + '</b><div class="eb-c">');
-  for (var j = 1; j <= n; j++) {
-    var on = j <= a;
-    var out = on && !live && (j > hi);
-    H.push('<span class="eb' + (on ? ' on' : '') + (out ? ' out' : '') +
-      (j >= lo && j <= hi ? ' band' : '') + '"></span>');
-  }
-  H.push('</div><i>' + a + '</i></div>');
+  H.push('<div class="eb-track">');
+  /* 準的範圍。淺色的一塊，實際那一段停在裡面就是準。 */
+  H.push('<div class="eb-band" style="left:' + at(lo) +
+    ';width:' + (Math.min(100, hi / n * 100) - Math.max(0, lo / n * 100)) + '%"></div>');
+  /* 實際走了幾天。 */
+  H.push('<div class="eb-go" style="width:' + at(a) + '"></div>');
+  /* 你說的那一天。 */
+  H.push('<div class="eb-say" style="left:' + at(e) + '"></div>');
+  H.push('</div>');
+
+  /* 兩個數字。它們是同一條尺上的兩個位置，所以並排寫。 */
+  H.push('<div class="eb-n">');
+  H.push('<span class="eb-say-n">說 <b>' + e + '</b></span>');
+  H.push('<span class="eb-go-n">' + (live ? '走到' : '實際') + ' <b>' + a + '</b></span>');
+  H.push('<span class="eb-u">天</span>');
+  H.push('</div>');
 
   H.push('</div>');
   return H.join('');

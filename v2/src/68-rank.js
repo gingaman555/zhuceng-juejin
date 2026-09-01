@@ -78,6 +78,10 @@ function rankCard(classId, meId) {
 
   var H = ['<div class="card rank">'];
   H.push('<div class="eyebrow">估得準　·　最近 ' + RANK_N + ' 趟</div>');
+  /* 單位只在這裡說一次。
+     本來每一列寫的是偏差率（13%、100%），沒有人那樣想事情——
+     而且 100% 看起來像世界末日，其實只是「說 5 天走了 10 天」。 */
+  H.push('<p class="rk-u">每承諾 10 天，實際差幾天</p>');
 
   if (!has) {
     H.push('<p class="dim">還沒有人交過。</p>');
@@ -94,11 +98,12 @@ function rankCard(classId, meId) {
     if (r.dev === null) {
       H.push('<span class="rk-d">還沒交過</span>');
     } else {
-      /* 條長＝偏差率，越短越準。100% 以上就滿格——
-         再長下去只是把難看的那一條畫得更難看。 */
+      /* 條長＝偏差率，越短越準。滿格是「差了跟承諾一樣多」——
+         再長下去只是把難看的那一條畫得更難看。
+         寫出來的數字換算成「每 10 天差幾天」，那才讀得動。 */
       var w = Math.min(100, Math.round(r.dev * 100));
       H.push('<div class="rk-bar"><u style="width:' + w + '%"></u></div>');
-      H.push('<span class="rk-d">' + w + '%</span>');
+      H.push('<span class="rk-d">' + (Math.round(r.dev * 10 * 10) / 10) + ' 天</span>');
     }
     H.push('</div>');
   });

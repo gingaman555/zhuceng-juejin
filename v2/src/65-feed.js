@@ -54,37 +54,36 @@ function feedOf(classId, limit) {
   return out.slice(0, limit || 20);
 }
 
+/* 一則一行：圖、誰、做了什麼、多久以前。
+
+   本來一則兩行（誰做了什麼＋細節），十則就是二十行長得很像的字，
+   整段讀起來是一面牆。壓成一行之後，掃過去就知道最近誰動了。 */
 function feedRow(f, meId) {
   var mine = f.team && f.team.teamId === meId;
   var H = ['<div class="fd' + (mine ? ' mine' : '') + '">'];
+  var who = f.team ? shortName(f.team.name) : '老師';
+  var act = '', det = '', ic = '';
 
   if (f.kind === 'seal') {
     var z = STRATA[0];
     STRATA.forEach(function (x) { if (x.key === f.keep.zone) z = x; });
-    H.push('<button class="fd-ic" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'core:' + f.keep.keepId })) + '\'>' +
-      pxTag(f.keep.px || coreOf(f.keep.runId), z.pal, 'core sm') + '</button>');
-    H.push('<div><b>' + esc(f.team.name) + '</b>封存了一根岩心');
-    H.push('<span>' + esc(f.keep.name || '（沒取名）') + '　·　' +
-      (f.keep.elapsed || 0) + ' 天　·　' + esc(z.name) + '</span>');
-    H.push('</div>');
-
+    ic = pxTag(f.keep.px || coreOf(f.keep.runId), z.pal, 'core sm');
+    act = '封存'; det = f.keep.name || '（沒取名）';
   } else if (f.kind === 'sent') {
-    H.push('<span class="fd-ic">' + pxTag(ICONS.log, ICON_PAL, 'nic') + '</span>');
-    H.push('<div><b>' + esc(f.team.name) + '</b>交出去了');
-    H.push('<span>' + esc(f.ms ? f.ms.title : '') + '</span></div>');
-
+    ic = pxTag(ICONS.log, ICON_PAL, 'nic');
+    act = '交出去'; det = f.ms ? f.ms.title : '';
   } else if (f.kind === 'left') {
-    H.push('<span class="fd-ic">' + pxTag(ICONS.home, ICON_ON, 'nic') + '</span>');
-    H.push('<div><b>' + esc(f.team.name) + '</b>走出去了');
-    H.push('<span>' + esc(f.team.project || '') + '</span></div>');
-
+    ic = pxTag(ICONS.home, ICON_ON, 'nic');
+    act = '走出去了'; det = f.team.project || '';
   } else {
-    H.push('<span class="fd-ic">' + pxTag(ICONS.ms, ICON_PAL, 'nic') + '</span>');
-    H.push('<div><b>老師</b>派了新的里程碑');
-    H.push('<span>' + esc(f.ms.title) + '</span></div>');
+    ic = pxTag(ICONS.ms, ICON_PAL, 'nic');
+    act = '派了新的'; det = f.ms.title;
   }
 
+  H.push('<span class="fd-ic">' + ic + '</span>');
+  H.push('<b>' + esc(who) + '</b>');
+  H.push('<em>' + esc(act) + '</em>');
+  H.push('<span class="fd-t">' + esc(det) + '</span>');
   H.push('<i>' + feedWhen(f.at) + '</i>');
   H.push('</div>');
   return H.join('');

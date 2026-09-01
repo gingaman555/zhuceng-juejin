@@ -37,6 +37,8 @@ PAGES.pack = function () {
     return H.join('');
   }
 
+  H.push(coreCard());
+
   H.push('<div class="card">');
   H.push('<div class="tk-list">');
   rows.forEach(function (x) { H.push(taskRow(x.ms, x.run, t)); });
@@ -84,10 +86,13 @@ function taskRow(m, r, t) {
   if (kp) {
     var z = STRATA[0];
     STRATA.forEach(function (x) { if (x.key === kp.zone) z = x; });
-    H.push('<div class="tk-k">');
+    /* 點得開：那一根怎麼讀（一天兩格、實心＝來過、空心＝說沒動、
+       破的＝沒有紀錄）在 coreCard 裡面。 */
+    H.push('<button class="tk-k" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'core:' + kp.keepId })) + '\'>');
     H.push(pxTag(kp.px || coreOf(kp.runId), z.pal, 'core'));
     H.push('<span>' + esc(kp.name || '（沒取名）') + '</span>');
-    H.push('</div>');
+    H.push('</button>');
   }
 
   H.push('</div>');
