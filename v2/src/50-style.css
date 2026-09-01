@@ -339,9 +339,9 @@ a.plain:hover{color:var(--gold)}
    還不知道你是誰的時候，畫面上不該有側欄、頂條、深度、組名。
    只有一欄，置中，寬度剛好一句話讀得完。 */
 
-.gate{display:flex;justify-content:center;padding:44px 0 88px}
+.gate{display:flex;justify-content:center;padding:33px 0 88px}
 .gate-box{width:100%;max-width:539px}
-.gate-box .px.sign{width:88px;height:88px;margin-bottom:22px}
+.gate-box .px.sign{width:66px;height:66px;margin-bottom:14px}
 .gate-box h1{font-size:44px}
 .gate-box .lead{max-width:none}
 .gate-box .eyebrow{margin-top:11px}
