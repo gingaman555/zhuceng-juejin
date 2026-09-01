@@ -550,25 +550,36 @@ function actApprove(runId, word) {
   return r;
 }
 
-/* 學生從攤開的三張裡挑一張留下 */
-function actKeep(runId, key) {
+/* 封存一根岩心。
+
+   本來這裡是「三張裡挑一張」，那三張全是他兩秒前才看過的數字——
+   挑一張等於挑「等一下要再看到哪一個你已經知道的事」。
+   沒有新資訊、沒有意外，而且挑錯沒代價、挑對沒好處。
+
+   現在：那一趟的紀錄長成一根岩心（見 43-core.js），
+   形狀完全由那一趟決定。那是同一份資料的一個他沒見過的形狀，
+   所以真的有東西可看。名字選填——他不取，它一樣存得下來。
+
+   存的是當下算出來的像素圖與數字，不是 runId 的一個指標：
+   規則以後改了，他封存的那一根不會跟著變成別的樣子。 */
+function actSeal(runId, name) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'approved') return null;
-  var pick = null;
-  keepOffers(runId).forEach(function (o) { if (o.key === key) pick = o; });
-  if (!pick) return null;
-  r.keep = key;
+  var s = runShape(runId);
   r.state = 'done';
   r.doneAt = now();
-  /* 存字不存 key：規則以後改了，他當時留的那句話不會跟著變成別的意思。 */
+  r.coreName = String(name || '').trim().slice(0, 16);
   DB.Keeps.push({
     keepId: nid('K'), teamId: r.teamId, runId: runId,
-    key: key, line: pick.line, at: now(),
-    /* 當時在哪一層也記下來。架子上那一排的顏色就是他走過的地層。 */
-    zone: strataAt(depthOf(r.teamId), r.teamId).key
+    name: r.coreName, at: now(),
+    /* 當時在哪一層。架子上那一排的顏色就是他走過的地層。 */
+    zone: strataAt(depthOf(r.teamId), r.teamId).key,
+    px: coreOf(runId),
+    est: s.est, elapsed: s.elapsed, moved: s.moved,
+    rested: s.rested, blank: s.blank
   });
   save();
-  logEvent('keep', { teamId: r.teamId, runId: runId, keep: key });
+  logEvent('seal', { teamId: r.teamId, runId: runId, name: r.coreName });
   return r;
 }
 
@@ -674,14 +685,9 @@ function exitQueue(classId) {
   });
 }
 
-/* 攤開三張讓學生挑一張留下。
-
-   三張是這一趟真的發生的三件事，用他們自己的詞寫的，永遠是同樣
-   三個角度（不隨機——隨機會讓它跟剛剛那幾天斷開）。
-
-   每一張只陳述。沒有一張會說「所以下一次應該……」——
-   那一句一旦寫出來，這個系統就變回一個替他們想結論的東西。
-   哪一張是重點，是他自己挑的，這裡不預設。 */
+/* 這一趟的三個角度。本來是「攤開三張挑一張」，那個動作拿掉了
+   （見 actSeal）；這三句話留著，因為它們是承諾那一頁要給他看的
+   ——他自己上一趟的事實，在他要決定下一趟花幾天的那一刻。 */
 function keepOffers(runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return [];

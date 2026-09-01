@@ -157,3 +157,28 @@ button.ac:active{transform:translateY(1px)}
 .s-stop{color:var(--gold)}
 .s-quiet{color:var(--over)}
 .s-idle{color:var(--mute)}
+
+/* ---------- 岩心 ----------
+   一天兩列，由上往下。長度就是那一趟過了幾天，
+   所以三天是一小截、十五天是一長條——架子上一眼看得出哪一趟是硬仗。 */
+.px.core{width:55px;height:auto;max-height:231px;display:block}
+.px.core.big{width:66px;max-height:308px}
+.rack{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;margin-top:14px}
+.rk{width:110px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.rk .px.core{margin:0 auto}
+.rk b{font-size:11px;font-weight:400;color:var(--gold);line-height:1.5;
+  overflow:hidden;text-overflow:ellipsis;width:100%}
+.rk span{font-size:11px;color:var(--mute)}
+.rk em{font-style:normal;font-size:11px;color:var(--gold-d)}
+.rk.row-rk{flex-direction:row;width:auto;text-align:left;align-items:center;gap:14px}
+.rk.row-rk b{font-size:22px}
+
+.corekey{display:flex;flex-wrap:wrap;gap:14px;margin:11px 0}
+.corekey span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute)}
+.corekey b{width:18px;height:11px;display:block}
+.corekey .c1{background:var(--gold)}
+.corekey .c2{background:transparent;box-shadow:inset 0 0 0 2px var(--gold-d)}
+.corekey .c3{background:repeating-linear-gradient(90deg,var(--mute) 0 2px,transparent 2px 5px)}
+
+.coreview .cv-in{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.coreview .cv-in > div{flex:1;min-width:220px}

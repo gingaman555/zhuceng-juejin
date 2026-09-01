@@ -26,7 +26,7 @@ global.localStorage = {
 const SRC = path.join(__dirname, 'src');
 /* 一次 eval 全部——分開 eval 的話 var 會落在各自的作用域裡，彼此看不到 */
 eval(['10-pack.js', '11-world.js', '12-props.js', '13-strata.js', '14-fauna.js',
-      '15-auth.js', '20-rules.js', '30-art.js', '40-db.js', '45-seed.js']
+      '15-auth.js', '20-rules.js', '30-art.js', '40-db.js', '43-core.js', '45-seed.js']
   .map(function (f) { return fs.readFileSync(path.join(SRC, f), 'utf8'); })
   .join(String.fromCharCode(10)));
 
@@ -49,10 +49,10 @@ runsFor(TEAM).forEach(function (x) {
   if (x.run.state === 'running') {
     while (RULES.progress(x.run.pushes, x.run.est) < 1) { tick(); actPush(TEAM, x.run.runId, -1, 0); }
     actSubmit(TEAM, x.run.runId);
-    if (x.run.stamp === 'late') actReflect(TEAM, x.run.runId, ['guess']);
+    if (x.run.stamp === 'late') actReflect(TEAM, x.run.runId, [0]);
     else actSkipCamp(x.run.runId);
     actApprove(x.run.runId, '');
-    actKeep(x.run.runId, keepOffers(x.run.runId)[0].key);
+    actSeal(x.run.runId, '');
   }
 });
 
@@ -129,23 +129,14 @@ for (let n = 1; n <= ROUNDS; n++) {
   nt = nextThing(TEAM);
   if (nt.kind !== 'gear') fail(label + '：勾完可以，學生那邊應該是 gear，卻是 ' + nt.kind);
 
-  /* 11. 三選一 → 這一輪結束 */
-  const offer = keepOffers(r.runId);
-  if (offer.length !== 3) fail(label + '：攤開的不是三張，是 ' + offer.length + ' 張');
-  if (offer[0].key === offer[1].key || offer[1].key === offer[2].key || offer[0].key === offer[2].key)
-    fail(label + '：攤開的三張有重複');
-  const off2 = keepOffers(r.runId);
-  if (off2.map(function (g) { return g.key; }).join() !== offer.map(function (g) { return g.key; }).join())
-    fail(label + '：同一個 run 兩次攤開的三張不一樣——畫面在擲骰子');
-  if (actKeep(r.runId, 'nope')) fail(label + '：挑到了沒有攤開的那一張');
-  offer.forEach(function (o) {
-    if (!o.line || /應該|建議|難怪|試著/.test(o.line))
-      fail(label + '：攤開的那一張在替他下結論——' + o.line);
-  });
-  actKeep(r.runId, offer[n % 3].key);
-  if (r.state !== 'done') fail(label + '：挑完狀態應該是 done，卻是 ' + r.state);
-  if (r.keep !== offer[n % 3].key) fail(label + '：挑走的跟記下來的不是同一張');
-
+  /* 11. 封存那一趟 → 這一輪結束 */
+  const core = coreOf(r.runId);
+  if (!core || core.length < 6) fail(label + '：岩心沒長出來');
+  if (actSeal('nope', '')) fail(label + '：封存了一個不存在的 run');
+  actSeal(r.runId, n % 3 === 0 ? '' : '第 ' + n + ' 趟');
+  if (r.state !== 'done') fail(label + '：封存完狀態應該是 done，卻是 ' + r.state);
+  const kp = keepsOf(TEAM).filter(function (k) { return k.runId === r.runId; })[0];
+  if (!kp || !kp.px) fail(label + '：封存的那一根沒有存下形狀');
   /* 12. 回到乾淨狀態 */
   nt = nextThing(TEAM);
   if (nt.kind !== 'idle') fail(label + '：一輪跑完應該回到 idle，卻是 ' + nt.kind);
@@ -177,9 +168,9 @@ var rX = runOf(TEAM, mX.msId);
 var g2 = 0;
 while (RULES.progress(rX.pushes, rX.est) < 1 && g2++ < 30) { actPush(TEAM, rX.runId, -1, 0); tick(); }
 actSubmit(TEAM, rX.runId);
-if (rX.stamp === 'late') actReflect(TEAM, rX.runId, ['guess']); else actSkipCamp(rX.runId);
+if (rX.stamp === 'late') actReflect(TEAM, rX.runId, [0]); else actSkipCamp(rX.runId);
 actApprove(rX.runId, '');
-actKeep(rX.runId, keepOffers(rX.runId)[0].key);
+actSeal(rX.runId, '');
 
 console.log('\n跑完 ' + ROUNDS + ' 輪。');
 console.log('  印章分布　🎯 ' + stamps.exact + '　🚀 ' + stamps.early + '　❌ ' + stamps.late);

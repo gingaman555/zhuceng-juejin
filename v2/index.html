@@ -1275,6 +1275,31 @@ button.ac:active{transform:translateY(1px)}
 .s-quiet{color:var(--over)}
 .s-idle{color:var(--mute)}
 
+/* ---------- 岩心 ----------
+   一天兩列，由上往下。長度就是那一趟過了幾天，
+   所以三天是一小截、十五天是一長條——架子上一眼看得出哪一趟是硬仗。 */
+.px.core{width:55px;height:auto;max-height:231px;display:block}
+.px.core.big{width:66px;max-height:308px}
+.rack{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;margin-top:14px}
+.rk{width:110px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.rk .px.core{margin:0 auto}
+.rk b{font-size:11px;font-weight:400;color:var(--gold);line-height:1.5;
+  overflow:hidden;text-overflow:ellipsis;width:100%}
+.rk span{font-size:11px;color:var(--mute)}
+.rk em{font-style:normal;font-size:11px;color:var(--gold-d)}
+.rk.row-rk{flex-direction:row;width:auto;text-align:left;align-items:center;gap:14px}
+.rk.row-rk b{font-size:22px}
+
+.corekey{display:flex;flex-wrap:wrap;gap:14px;margin:11px 0}
+.corekey span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute)}
+.corekey b{width:18px;height:11px;display:block}
+.corekey .c1{background:var(--gold)}
+.corekey .c2{background:transparent;box-shadow:inset 0 0 0 2px var(--gold-d)}
+.corekey .c3{background:repeating-linear-gradient(90deg,var(--mute) 0 2px,transparent 2px 5px)}
+
+.coreview .cv-in{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.coreview .cv-in > div{flex:1;min-width:220px}
+
 /* 手機。
 
    之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
@@ -3241,25 +3266,36 @@ function actApprove(runId, word) {
   return r;
 }
 
-/* 學生從攤開的三張裡挑一張留下 */
-function actKeep(runId, key) {
+/* 封存一根岩心。
+
+   本來這裡是「三張裡挑一張」，那三張全是他兩秒前才看過的數字——
+   挑一張等於挑「等一下要再看到哪一個你已經知道的事」。
+   沒有新資訊、沒有意外，而且挑錯沒代價、挑對沒好處。
+
+   現在：那一趟的紀錄長成一根岩心（見 43-core.js），
+   形狀完全由那一趟決定。那是同一份資料的一個他沒見過的形狀，
+   所以真的有東西可看。名字選填——他不取，它一樣存得下來。
+
+   存的是當下算出來的像素圖與數字，不是 runId 的一個指標：
+   規則以後改了，他封存的那一根不會跟著變成別的樣子。 */
+function actSeal(runId, name) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'approved') return null;
-  var pick = null;
-  keepOffers(runId).forEach(function (o) { if (o.key === key) pick = o; });
-  if (!pick) return null;
-  r.keep = key;
+  var s = runShape(runId);
   r.state = 'done';
   r.doneAt = now();
-  /* 存字不存 key：規則以後改了，他當時留的那句話不會跟著變成別的意思。 */
+  r.coreName = String(name || '').trim().slice(0, 16);
   DB.Keeps.push({
     keepId: nid('K'), teamId: r.teamId, runId: runId,
-    key: key, line: pick.line, at: now(),
-    /* 當時在哪一層也記下來。架子上那一排的顏色就是他走過的地層。 */
-    zone: strataAt(depthOf(r.teamId), r.teamId).key
+    name: r.coreName, at: now(),
+    /* 當時在哪一層。架子上那一排的顏色就是他走過的地層。 */
+    zone: strataAt(depthOf(r.teamId), r.teamId).key,
+    px: coreOf(runId),
+    est: s.est, elapsed: s.elapsed, moved: s.moved,
+    rested: s.rested, blank: s.blank
   });
   save();
-  logEvent('keep', { teamId: r.teamId, runId: runId, keep: key });
+  logEvent('seal', { teamId: r.teamId, runId: runId, name: r.coreName });
   return r;
 }
 
@@ -3365,14 +3401,9 @@ function exitQueue(classId) {
   });
 }
 
-/* 攤開三張讓學生挑一張留下。
-
-   三張是這一趟真的發生的三件事，用他們自己的詞寫的，永遠是同樣
-   三個角度（不隨機——隨機會讓它跟剛剛那幾天斷開）。
-
-   每一張只陳述。沒有一張會說「所以下一次應該……」——
-   那一句一旦寫出來，這個系統就變回一個替他們想結論的東西。
-   哪一張是重點，是他自己挑的，這裡不預設。 */
+/* 這一趟的三個角度。本來是「攤開三張挑一張」，那個動作拿掉了
+   （見 actSeal）；這三句話留著，因為它們是承諾那一頁要給他看的
+   ——他自己上一趟的事實，在他要決定下一趟花幾天的那一刻。 */
 function keepOffers(runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return [];
@@ -3412,6 +3443,86 @@ function keepOffers(runId) {
   });
 
   return out;
+}
+
+
+/* ===== 43-core.js ===== */
+/* 岩心。
+
+   一趟走完會長出一根岩心——像地質學家從地底抽出來的那種柱狀樣本。
+   它不是我發的東西，是那一趟自己長出來的：形狀完全由那一趟的紀錄決定。
+
+   為什麼是這個形式，而不是一個徽章或一件裝備：
+
+   空的收集是一格一格長得一樣，靠重複填滿，價值只有「我有」。
+   有意義的收集要滿足幾件事，而這個系統裡剛好有一個東西全部滿足——
+   每一趟的日誌：
+
+     一 · 它指向一個具體、不會再發生的事件。這根岩心就是那一週。
+     二 · 它的樣子因人而異，而且那個不同是他自己造成的。
+     三 · 不可能再拿到同一根——不是機率低，是那一週只發生過一次。
+     四 · 它掛在該在的地方（自己的廊道、全班剖面圖），不是躺在道具欄。
+     五 · 二十根排在一起，會變成一根說不出來的東西：一個學期的形狀。
+
+   怎麼長：一天兩列，由上往下。
+
+     來過        實心，中間一道亮
+     說了沒動    空心，兩邊的壁還在
+     沒有紀錄    斷的，只剩碎屑
+
+   長度＝這一趟過了幾天。三天是一小截，十五天是一長條——
+   所以架子上一眼看得出哪一趟是硬仗。
+
+   刻意不編進去的東西：判定（🎯🚀❌）。
+   那是全班剖面圖上別人也看得到的地方，把「估不準」編進形狀等於讓它
+   變成一個公開的記號。判定只出現在他自己那幾頁上。 */
+
+var CORE_W = 14;
+
+/* 一根岩心的像素圖。純函式——同一趟每次算出來都一樣。 */
+function coreOf(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  var log = dayLog(runId);
+  if (!log.length) log = [null];
+  var days = Math.min(log.length, 26);
+
+  var px = [];
+  px.push('..++++++++++..');          /* 上蓋 */
+  px.push('.+##########+.');
+
+  for (var i = 0; i < days; i++) {
+    var d = log[i];
+    if (d && d.kind === 'move') {
+      px.push('.+#*######*#+.');
+      px.push('.+##########+.');
+    } else if (d && d.kind === 'rest') {
+      px.push('.+#+......+#+.');
+      px.push('.+#+......+#+.');
+    } else {
+      px.push('.+#..+..+..#+.');
+      px.push('.+..+..+..+..');
+    }
+  }
+
+  px.push('.+##########+.');
+  px.push('..++++++++++..');
+  return px;
+}
+
+/* 這一趟的岩心長什麼顏色：他當時在哪一層。 */
+function corePal(run) {
+  var z = null;
+  STRATA.forEach(function (x) { if (x.key === run.zone) z = x; });
+  return (z || strataAt(0, run.teamId)).pal;
+}
+
+/* 一根岩心的說明：長度、來過幾天、缺了幾天。
+   全部是數字，一句判斷都沒有。 */
+function coreFacts(runId) {
+  var s = runShape(runId);
+  if (!s) return null;
+  return s;
 }
 
 
@@ -3566,16 +3677,19 @@ function seed() {
   /* 刻意留白：三個里程碑都派了，一個都沒拉滑桿。
      系統要看得出這一組跟「在動但卡住」的不一樣。 */
 
-  /* 他們留下的那幾句。存的是當下那句字，不是規則的 key——
-     所以直接用 keepOffers 算一次，跟真的走完一趟得到的東西一模一樣。 */
-  [['G1', 'R1', 'est', 17], ['G1', 'R2', 'days', 10], ['G2', 'R4', 'over', 14],
-   ['G3', 'R6', 'days', 16], ['G4', 'R8', 'est', 18]].forEach(function (k, i) {
-    var o = keepOffers(k[1]).filter(function (x) { return x.key === k[2]; })[0];
-    if (!o) return;
+  /* 封存過的岩心。直接用 coreOf 算一次，跟真的走完一趟長出來的一模一樣。 */
+  [['G1', 'R1', '訪談那一週', 17], ['G1', 'R2', '收斂', 10], ['G2', 'R4', '拖到最後', 14],
+   ['G3', 'R6', '', 16], ['G4', 'R8', '逐字稿地獄', 18]].forEach(function (k, i) {
+    var sh = runShape(k[1]);
+    if (!sh) return;
     var r = find('Runs', function (x) { return x.runId === k[1]; });
-    if (r) r.keep = k[2];
+    if (r) r.coreName = k[2];
     DB.Keeps.push({ keepId: 'K0' + (i + 1), teamId: k[0], runId: k[1],
-      key: k[2], line: o.line, at: ago(k[3]) });
+      name: k[2], at: ago(k[3]),
+      zone: strataAt(depthOf(k[0]), k[0]).key,
+      px: coreOf(k[1]),
+      est: sh.est, elapsed: sh.elapsed, moved: sh.moved,
+      rested: sh.rested, blank: sh.blank });
   });
   DB.Config.seq = 100;
   save();
@@ -3802,7 +3916,7 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '廊道'], ['pack', '留下的'], ['codex', '圖鑑'],
+      ['home', '廊道'], ['pack', '岩心架'], ['codex', '圖鑑'],
       ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
@@ -3982,11 +4096,10 @@ var ACTS = {
   /* 老師勾可以了 → 去挑裝備 */
   gear: function (runId) { go('pick', { id: runId }); },
 
-  /* 三張裡挑一張留下。參數是「runId|角度」。 */
-  take: function (arg) {
-    var i = arg.indexOf('|');
-    var runId = arg.slice(0, i), key = arg.slice(i + 1);
-    if (!actKeep(runId, key)) return say('這一張不在攤開的三張裡。');
+  /* 封存這一趟。名字選填。 */
+  seal: function (runId) {
+    var name = (document.getElementById('cname') || {}).value || '';
+    if (!actSeal(runId, name)) return say('這一趟已經封存了。');
     go('dash', { id: runId });
     animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
   },
@@ -4432,13 +4545,20 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
-  /* ── 上一趟自己留下的那一句 ── */
+  /* ── 上一趟長成什麼樣子 ──
+     掛在他自己看得到的地方，不是躺在一個道具欄裡。 */
   var keep = lastKeep(t.teamId);
   if (keep) {
-    H.push('<div class="card carry quiet">');
-    H.push('<div class="eyebrow">上一趟你留下的</div>');
-    H.push('<p class="quote">' + esc(keep.line) + '</p>');
-    H.push(btn('看留下的', 'go:pack', 'ghost'));
+    var kz = STRATA[0];
+    STRATA.forEach(function (x) { if (x.key === keep.zone) kz = x; });
+    H.push('<div class="card quiet">');
+    H.push('<div class="eyebrow">上一趟</div>');
+    H.push('<div class="rk row-rk">');
+    H.push(pxTag(keep.px || coreOf(keep.runId), kz.pal, 'core'));
+    H.push('<div><b>' + esc(keep.name || '（沒取名）') + '</b>');
+    H.push('<span>' + (keep.elapsed || 0) + ' 天　·　來過 ' + (keep.moved || 0) + '</span></div>');
+    H.push('</div>');
+    H.push(btn('看岩心架', 'go:pack', 'ghost'));
     H.push('</div>');
   }
 
@@ -4574,7 +4694,7 @@ function actionCard(t, next, st) {
 
   } else if (next.kind === 'gear') {
     H.push('<div class="eyebrow">老師看完了</div>');
-    H.push('<h2>這一趟留下哪一件。</h2>');
+    H.push('<h2>這一趟長成什麼樣子。</h2>');
     if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
     H.push(btn('去看', 'gear:' + row.run.runId, 'big'));
 
@@ -4661,11 +4781,21 @@ PAGES.commit = function () {
 
   var H = [head('自我承諾', m.title, m.note)];
 
-  /* 上一趟自己留下的那一句。這是他寫給這一刻的自己看的。 */
-  var keep = lastKeep(t.teamId);
-  if (keep) {
-    H.push('<div class="card carry"><div class="eyebrow">上一趟你留下的</div>' +
-      '<p class="quote">' + esc(keep.line) + '</p></div>');
+  /* 你自己的估算歷史。
+
+     這是拉滑桿那一刻真正用得上的東西，而它本來不在這一頁上——
+     本來站在這個位置的是一句留下的話，它站不住。
+     上三趟說了幾天、實際走了幾天，疊在一起就看得出自己的偏差。 */
+  var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
+  if (past.length) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">你前 ' + past.length + ' 趟</div>');
+    past.reverse().forEach(function (x) {
+      H.push('<div class="outrun"><span>' + esc(x.ms.title) + '</span>');
+      H.push(estBar(x.run.est, x.run.actual, false));
+      H.push('</div>');
+    });
+    H.push('</div>');
   }
 
   H.push('<div class="card">');
@@ -4796,32 +4926,51 @@ PAGES.camp = function () {
   return H.join('');
 };
 
-/* ---------- 這一趟留下哪一件 ----------
-   三張是這一趟真的發生的三件事，用他們自己的詞。
-   每一張只陳述，沒有一張說「所以下一次應該……」。 */
+/* ---------- 封存 ----------
+
+   走完一趟，那一趟的紀錄長成一根岩心。形狀完全由那一趟決定：
+   一天兩列，來過是實心、說了沒動是空心、沒有紀錄是斷的，
+   長度就是這一趟過了幾天。
+
+   這一頁真正給他的東西是「他沒見過的那個形狀」——同一份數字，
+   換成一個看得到的樣子。取名選填，他不取一樣封存得下來。 */
 PAGES.pick = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var t = myTeam();
   var m = msOf(r.msId);
+  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var s = runShape(r.runId);
 
-  var H = [head('留一件', m.title, '')];
+  var H = [head('封存', m.title, '這一趟長成這個樣子。')];
 
   if (r.word) {
     H.push('<div class="card"><div class="eyebrow">老師說</div>' +
            '<p class="quote">' + nl(r.word) + '</p></div>');
   }
 
-  H.push('<div class="card"><div class="gear-pick">');
-  keepOffers(r.runId).forEach(function (o) {
-    var k = RULES.keepOf(o.key);
-    H.push('<button class="gcard" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'take:' + r.runId + '|' + o.key })) + '\'>' +
-      pxTag(GEAR_PX[k.tro].px, strataAt(depthOf(t.teamId), t.teamId).pal, 'kp-px') +
-      '<span class="ke">' + esc(k.eyebrow) + '</span>' +
-      '<i>' + esc(o.line) + '</i></button>');
-  });
-  H.push('</div></div>');
+  H.push('<div class="card fa ' + z.key + ' coreview">');
+  H.push('<div class="cv-in">');
+  H.push(pxTag(coreOf(r.runId), z.pal, 'core big'));
+  H.push('<div>');
+  H.push('<div class="eyebrow">' + esc(z.name) + '</div>');
+  H.push('<div class="corekey">');
+  H.push('<span><b class="c1"></b>來過 ' + s.moved + ' 天</span>');
+  if (s.rested) H.push('<span><b class="c2"></b>你說沒動 ' + s.rested + ' 天</span>');
+  if (s.blank) H.push('<span><b class="c3"></b>沒有紀錄 ' + s.blank + ' 天</span>');
+  H.push('</div>');
+  H.push('<div class="log-num">說 <b>' + s.est + '</b> 天　·　過了 <b>' +
+    s.elapsed + '</b> 天</div>');
+  H.push('</div></div></div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">給這一趟取個名字　選填</div>');
+  H.push('<div class="rn-row">');
+  H.push('<input id="cname" maxlength="16" placeholder="' +
+    esc('例：訪談那一週') + '">');
+  H.push('</div>');
+  H.push(btn('封存', 'seal:' + r.runId, 'big'));
+  H.push('</div>');
   return H.join('');
 };
 
@@ -4835,8 +4984,8 @@ PAGES.dash = function () {
   var H = ['<div class="dash">'];
   H.push(pxTag(HERO.dash, HERO.pal, 'ch big'));
   H.push('<h1>' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m</h1>');
-  if (keep) H.push('<p class="quote">' + esc(keep.line) + '</p>');
-  if (r.word) H.push('<p class="lead">' + nl(r.word) + '</p>');
+  if (keep && keep.name) H.push('<p class="lead">「' + esc(keep.name) + '」封存了。</p>');
+  if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
   H.push('</div>');
 
   /* 跨進新的一區。世界自己變了，不是給的獎勵。 */
@@ -4883,7 +5032,7 @@ PAGES.exit = function () {
   H.push('<div><b>' + e.runs.length + '</b><span>走完的里程碑</span></div>');
   H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
   H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
-  H.push('<div><b>' + e.keeps.length + '</b><span>留下的話</span></div>');
+  H.push('<div><b>' + e.keeps.length + '</b><span>封存的岩心</span></div>');
   H.push('</div>');
   if (e.acc.total) H.push(accBar(e.acc));
   H.push('</div>');
@@ -4912,13 +5061,20 @@ PAGES.exit = function () {
     H.push('</div>');
   }
 
-  /* 留下的那幾句 */
+  /* 帶出去的那一排岩心。二十根排在一起，就是一個學期的形狀。 */
   if (e.keeps.length) {
-    H.push('<div class="card"><div class="eyebrow">你留下的</div>');
+    H.push('<div class="card"><div class="eyebrow">你帶出去的</div>');
+    H.push('<div class="rack">');
     e.keeps.slice().reverse().forEach(function (k) {
-      H.push('<p class="quote">' + esc(k.line) + '</p>');
+      var kz = STRATA[0];
+      STRATA.forEach(function (x) { if (x.key === k.zone) kz = x; });
+      H.push('<div class="rk">');
+      H.push(pxTag(k.px || coreOf(k.runId), kz.pal, 'core'));
+      H.push('<b>' + esc(k.name || '') + '</b>');
+      H.push('<span>' + (k.elapsed || 0) + ' 天</span>');
+      H.push('</div>');
     });
-    H.push('</div>');
+    H.push('</div></div>');
   }
 
   if (!out) {
@@ -4968,7 +5124,7 @@ PAGES.log = function () {
       H.push('</div>');
     }
     var kp = keepsOf(t.teamId).filter(function (k) { return k.runId === r.runId; })[0];
-    if (kp) H.push('<p class="quote">' + esc(kp.line) + '</p>');
+    if (kp && kp.name) H.push('<p class="quote">' + esc(kp.name) + '</p>');
     if (r.word) H.push('<p class="quote tw">' + nl(r.word) + '</p>');
     H.push('</div>');
   });
@@ -5504,65 +5660,65 @@ PAGES.classeco = function () {
 
 
 /* ===== 63-pack.js ===== */
-/* 留下的。
+/* 岩心架。
 
-   先講這一頁是什麼，因為它前後改過兩次，方向差很多。
+   走完一趟會長出一根岩心（見 43-core.js）。這一頁是它們排在一起的地方。
 
-   最早：老師看完之後發一件裝備，裝備綁一句話。
-   第二版：老師只勾可以，學生從隨機三件裡挑一件。
-   現在：三張攤開的是「這一趟真的發生的三件事」，用他們自己的詞寫的，
-   學生挑一張留下。
+   這一頁前後改過三次，方向差很多：老師發裝備 → 隨機三件挑一件 →
+   三張事實挑一張 → 現在。前三次都失敗在同一件事上——那個「東西」是我
+   發的，跟他那一週沒有關係，所以挑不挑、留哪一件，對他都沒有差別。
 
-   為什麼一路改到這裡——前兩版那些句子都是我寫的。六句格言在我的清單裡
-   三選一，那不算自主；而且六句用完就重複，通用到誰都適用，
-   等於誰都不適用。
+   為什麼收集這件事現在站得住——它不是徽章，是樣本：
 
-   現在留下的那一句是他自己那一趟的事實，他自己挑的角度。
-   下一次拉滑桿決定要花幾天的時候，它會出現在那一頁——
-   那不是系統的建議，是他上一趟寫給這一刻的自己看的。
+     · 每一根指向一個具體、不會再發生的那一週
+     · 形狀由那一趟自己決定，沒有兩根一樣，而且那個不同是他造成的
+     · 不可能再拿到同一根
+     · 二十根排在一起會變成一根說不出來的東西：一個學期的形狀
 
-   這一頁沒有「六件收集了幾件」。寫了就變成一條要被填滿的進度條。 */
+   刻意沒有的東西：總數、進度、缺哪幾根。
+   一趟長一根，本來就不會有缺的——沒有東西需要被填滿，
+   所以也沒有人會為了填滿它多做一件事。
+
+   遊戲化在這裡的位置是「吸引他打開」，不是「換到好處」。
+   一根岩心不加速、不擋失準、不換任何東西。 */
 
 PAGES.pack = function () {
   var t = myTeam();
   var ks = keepsOf(t.teamId).slice().reverse();
 
-  var H = [head('留下的', ks.length + ' 句', '')];
+  var H = [head('岩心架', ks.length + ' 根', '')];
 
   if (!ks.length) {
     H.push('<div class="card dim">走完一趟、老師勾了可以之後，' +
-      '會攤開三張讓你挑一張留下。</div>');
+      '那一趟會長成一根岩心。形狀由那一趟自己決定。</div>');
     H.push(btn('回廊道', 'go:home', 'ghost'));
     return H.join('');
   }
 
-  /* 帶在身上的：最近留下的那一句。下一次承諾時會出現的就是它。 */
-  var top = ks[0];
-  var tk = RULES.keepOf(top.key);
-  H.push('<div class="card carry ' + strataAt(depthOf(t.teamId), t.teamId).key + '">');
-  H.push('<div class="eyebrow">帶在身上的</div>');
-  H.push('<div class="carry-in">');
-  H.push(pxTag(GEAR_PX[tk.tro].px, strataAt(depthOf(t.teamId), t.teamId).pal, 'kp-px'));
-  H.push('<div><i>' + esc(tk.eyebrow) + '</i><em>' + esc(top.line) + '</em></div>');
-  H.push('</div></div>');
+  /* 圖例。看得懂才讀得出自己的歷史。 */
+  H.push('<div class="card quiet">');
+  H.push('<div class="eyebrow">怎麼讀</div>');
+  H.push('<div class="corekey">');
+  H.push('<span><b class="c1"></b>那一天你來過</span>');
+  H.push('<span><b class="c2"></b>你說那天沒動</span>');
+  H.push('<span><b class="c3"></b>那一天沒有紀錄</span>');
+  H.push('</div>');
+  H.push('<p class="dim">長度就是那一趟過了幾天。顏色是你當時在哪一層。</p>');
+  H.push('</div>');
 
-  /* 全部。照時間倒著排，每一句掛著它是哪一趟、哪一個角度。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">走過的每一趟</div>');
-  H.push('<div class="keeps">');
+  H.push('<div class="rack">');
   ks.forEach(function (k) {
-    var kk = RULES.keepOf(k.key) || RULES.KEEPS[0];
+    var z = STRATA[0];
+    STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
     var r = find('Runs', function (x) { return x.runId === k.runId; });
     var m = r ? msOf(r.msId) : null;
-    H.push('<div class="kp">');
-    var kz = STRATA[0];
-    STRATA.forEach(function (z) { if (z.key === k.zone) kz = z; });
-    H.push(pxTag(GEAR_PX[kk.tro].px, kz.pal, 'kp-px sm'));
-    H.push('<div>');
-    H.push('<span class="ke">' + esc(kk.eyebrow) + '</span>');
-    H.push('<i>' + esc(k.line) + '</i>');
-    if (m) H.push('<span class="km">' + esc(m.title) + '</span>');
-    H.push('</div></div>');
+    H.push('<div class="rk">');
+    H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'core'));
+    H.push('<b>' + esc(k.name || (m ? m.title : '')) + '</b>');
+    H.push('<span>' + (k.elapsed || 0) + ' 天　·　來過 ' + (k.moved || 0) + '</span>');
+    H.push('<em>' + esc(z.name) + '</em>');
+    H.push('</div>');
   });
   H.push('</div></div>');
 
@@ -5616,24 +5772,24 @@ PAGES.codex = function () {
     H.push('</div></div>');
   });
 
-  /* ---- 物件 ----
-     三件是留下來的那句話的把手（見 63-pack.js），
-     其餘是地上撿得到的東西——每一層長的不一樣。 */
+  /* ---- 帶得走的 ----
+     只有一種，而且它不是我發的：那一趟自己長出來的岩心。 */
+  var mine = keepsOf(t.teamId);
   H.push('<div class="card">');
   H.push('<div class="eyebrow">帶得走的</div>');
   H.push('<div class="cx">');
-  RULES.KEEPS.forEach(function (k) {
-    var mine = keepsOf(t.teamId).filter(function (x) { return x.key === k.key; });
-    H.push('<div class="cxi' + (mine.length ? ' met' : '') + '">');
-    H.push(pxTag(GEAR_PX[k.tro].px, here.pal, 'cx-px'));
-    H.push('<div><b>' + esc(k.name) + '</b>');
-    H.push('<em>' + esc(k.eyebrow) + '。走完一趟、老師勾了可以之後，' +
-           '三張裡挑一張留下，這是其中一張的樣子。</em>');
-    if (mine.length) {
-      H.push('<span class="cx-met">' + esc(mine[mine.length - 1].line) + '</span>');
-    }
-    H.push('</div></div>');
-  });
+  H.push('<div class="cxi' + (mine.length ? ' met' : '') + '">');
+  H.push(pxTag(mine.length ? (mine[mine.length - 1].px || coreOf(mine[mine.length - 1].runId))
+    : coreOf('none') || ['..++++++++++..', '.+##########+.', '.+#*######*#+.',
+      '.+##########+.', '.+#+......+#+.', '.+#+......+#+.',
+      '.+#..+..+..#+.', '.+..+..+..+..', '.+##########+.', '..++++++++++..'],
+    here.pal, 'cx-px core'));
+  H.push('<div><b>岩心</b>');
+  H.push('<em>走完一趟、老師勾了可以之後，那一趟自己長成的一根樣本。' +
+         '一天兩列：來過是實心、你說沒動是空心、沒有紀錄是斷的。' +
+         '長度就是那一趟過了幾天，顏色是你當時在哪一層。</em>');
+  if (mine.length) H.push('<span class="cx-met">你已經封存了 ' + mine.length + ' 根</span>');
+  H.push('</div></div>');
   H.push('</div></div>');
 
   H.push('<div class="card">');

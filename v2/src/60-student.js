@@ -65,13 +65,20 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
-  /* ── 上一趟自己留下的那一句 ── */
+  /* ── 上一趟長成什麼樣子 ──
+     掛在他自己看得到的地方，不是躺在一個道具欄裡。 */
   var keep = lastKeep(t.teamId);
   if (keep) {
-    H.push('<div class="card carry quiet">');
-    H.push('<div class="eyebrow">上一趟你留下的</div>');
-    H.push('<p class="quote">' + esc(keep.line) + '</p>');
-    H.push(btn('看留下的', 'go:pack', 'ghost'));
+    var kz = STRATA[0];
+    STRATA.forEach(function (x) { if (x.key === keep.zone) kz = x; });
+    H.push('<div class="card quiet">');
+    H.push('<div class="eyebrow">上一趟</div>');
+    H.push('<div class="rk row-rk">');
+    H.push(pxTag(keep.px || coreOf(keep.runId), kz.pal, 'core'));
+    H.push('<div><b>' + esc(keep.name || '（沒取名）') + '</b>');
+    H.push('<span>' + (keep.elapsed || 0) + ' 天　·　來過 ' + (keep.moved || 0) + '</span></div>');
+    H.push('</div>');
+    H.push(btn('看岩心架', 'go:pack', 'ghost'));
     H.push('</div>');
   }
 
@@ -207,7 +214,7 @@ function actionCard(t, next, st) {
 
   } else if (next.kind === 'gear') {
     H.push('<div class="eyebrow">老師看完了</div>');
-    H.push('<h2>這一趟留下哪一件。</h2>');
+    H.push('<h2>這一趟長成什麼樣子。</h2>');
     if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
     H.push(btn('去看', 'gear:' + row.run.runId, 'big'));
 
@@ -294,11 +301,21 @@ PAGES.commit = function () {
 
   var H = [head('自我承諾', m.title, m.note)];
 
-  /* 上一趟自己留下的那一句。這是他寫給這一刻的自己看的。 */
-  var keep = lastKeep(t.teamId);
-  if (keep) {
-    H.push('<div class="card carry"><div class="eyebrow">上一趟你留下的</div>' +
-      '<p class="quote">' + esc(keep.line) + '</p></div>');
+  /* 你自己的估算歷史。
+
+     這是拉滑桿那一刻真正用得上的東西，而它本來不在這一頁上——
+     本來站在這個位置的是一句留下的話，它站不住。
+     上三趟說了幾天、實際走了幾天，疊在一起就看得出自己的偏差。 */
+  var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
+  if (past.length) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">你前 ' + past.length + ' 趟</div>');
+    past.reverse().forEach(function (x) {
+      H.push('<div class="outrun"><span>' + esc(x.ms.title) + '</span>');
+      H.push(estBar(x.run.est, x.run.actual, false));
+      H.push('</div>');
+    });
+    H.push('</div>');
   }
 
   H.push('<div class="card">');
@@ -429,32 +446,51 @@ PAGES.camp = function () {
   return H.join('');
 };
 
-/* ---------- 這一趟留下哪一件 ----------
-   三張是這一趟真的發生的三件事，用他們自己的詞。
-   每一張只陳述，沒有一張說「所以下一次應該……」。 */
+/* ---------- 封存 ----------
+
+   走完一趟，那一趟的紀錄長成一根岩心。形狀完全由那一趟決定：
+   一天兩列，來過是實心、說了沒動是空心、沒有紀錄是斷的，
+   長度就是這一趟過了幾天。
+
+   這一頁真正給他的東西是「他沒見過的那個形狀」——同一份數字，
+   換成一個看得到的樣子。取名選填，他不取一樣封存得下來。 */
 PAGES.pick = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var t = myTeam();
   var m = msOf(r.msId);
+  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var s = runShape(r.runId);
 
-  var H = [head('留一件', m.title, '')];
+  var H = [head('封存', m.title, '這一趟長成這個樣子。')];
 
   if (r.word) {
     H.push('<div class="card"><div class="eyebrow">老師說</div>' +
            '<p class="quote">' + nl(r.word) + '</p></div>');
   }
 
-  H.push('<div class="card"><div class="gear-pick">');
-  keepOffers(r.runId).forEach(function (o) {
-    var k = RULES.keepOf(o.key);
-    H.push('<button class="gcard" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'take:' + r.runId + '|' + o.key })) + '\'>' +
-      pxTag(GEAR_PX[k.tro].px, strataAt(depthOf(t.teamId), t.teamId).pal, 'kp-px') +
-      '<span class="ke">' + esc(k.eyebrow) + '</span>' +
-      '<i>' + esc(o.line) + '</i></button>');
-  });
-  H.push('</div></div>');
+  H.push('<div class="card fa ' + z.key + ' coreview">');
+  H.push('<div class="cv-in">');
+  H.push(pxTag(coreOf(r.runId), z.pal, 'core big'));
+  H.push('<div>');
+  H.push('<div class="eyebrow">' + esc(z.name) + '</div>');
+  H.push('<div class="corekey">');
+  H.push('<span><b class="c1"></b>來過 ' + s.moved + ' 天</span>');
+  if (s.rested) H.push('<span><b class="c2"></b>你說沒動 ' + s.rested + ' 天</span>');
+  if (s.blank) H.push('<span><b class="c3"></b>沒有紀錄 ' + s.blank + ' 天</span>');
+  H.push('</div>');
+  H.push('<div class="log-num">說 <b>' + s.est + '</b> 天　·　過了 <b>' +
+    s.elapsed + '</b> 天</div>');
+  H.push('</div></div></div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">給這一趟取個名字　選填</div>');
+  H.push('<div class="rn-row">');
+  H.push('<input id="cname" maxlength="16" placeholder="' +
+    esc('例：訪談那一週') + '">');
+  H.push('</div>');
+  H.push(btn('封存', 'seal:' + r.runId, 'big'));
+  H.push('</div>');
   return H.join('');
 };
 
@@ -468,8 +504,8 @@ PAGES.dash = function () {
   var H = ['<div class="dash">'];
   H.push(pxTag(HERO.dash, HERO.pal, 'ch big'));
   H.push('<h1>' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m</h1>');
-  if (keep) H.push('<p class="quote">' + esc(keep.line) + '</p>');
-  if (r.word) H.push('<p class="lead">' + nl(r.word) + '</p>');
+  if (keep && keep.name) H.push('<p class="lead">「' + esc(keep.name) + '」封存了。</p>');
+  if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
   H.push('</div>');
 
   /* 跨進新的一區。世界自己變了，不是給的獎勵。 */
@@ -516,7 +552,7 @@ PAGES.exit = function () {
   H.push('<div><b>' + e.runs.length + '</b><span>走完的里程碑</span></div>');
   H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
   H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
-  H.push('<div><b>' + e.keeps.length + '</b><span>留下的話</span></div>');
+  H.push('<div><b>' + e.keeps.length + '</b><span>封存的岩心</span></div>');
   H.push('</div>');
   if (e.acc.total) H.push(accBar(e.acc));
   H.push('</div>');
@@ -545,13 +581,20 @@ PAGES.exit = function () {
     H.push('</div>');
   }
 
-  /* 留下的那幾句 */
+  /* 帶出去的那一排岩心。二十根排在一起，就是一個學期的形狀。 */
   if (e.keeps.length) {
-    H.push('<div class="card"><div class="eyebrow">你留下的</div>');
+    H.push('<div class="card"><div class="eyebrow">你帶出去的</div>');
+    H.push('<div class="rack">');
     e.keeps.slice().reverse().forEach(function (k) {
-      H.push('<p class="quote">' + esc(k.line) + '</p>');
+      var kz = STRATA[0];
+      STRATA.forEach(function (x) { if (x.key === k.zone) kz = x; });
+      H.push('<div class="rk">');
+      H.push(pxTag(k.px || coreOf(k.runId), kz.pal, 'core'));
+      H.push('<b>' + esc(k.name || '') + '</b>');
+      H.push('<span>' + (k.elapsed || 0) + ' 天</span>');
+      H.push('</div>');
     });
-    H.push('</div>');
+    H.push('</div></div>');
   }
 
   if (!out) {
@@ -601,7 +644,7 @@ PAGES.log = function () {
       H.push('</div>');
     }
     var kp = keepsOf(t.teamId).filter(function (k) { return k.runId === r.runId; })[0];
-    if (kp) H.push('<p class="quote">' + esc(kp.line) + '</p>');
+    if (kp && kp.name) H.push('<p class="quote">' + esc(kp.name) + '</p>');
     if (r.word) H.push('<p class="quote tw">' + nl(r.word) + '</p>');
     H.push('</div>');
   });

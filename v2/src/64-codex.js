@@ -42,24 +42,24 @@ PAGES.codex = function () {
     H.push('</div></div>');
   });
 
-  /* ---- 物件 ----
-     三件是留下來的那句話的把手（見 63-pack.js），
-     其餘是地上撿得到的東西——每一層長的不一樣。 */
+  /* ---- 帶得走的 ----
+     只有一種，而且它不是我發的：那一趟自己長出來的岩心。 */
+  var mine = keepsOf(t.teamId);
   H.push('<div class="card">');
   H.push('<div class="eyebrow">帶得走的</div>');
   H.push('<div class="cx">');
-  RULES.KEEPS.forEach(function (k) {
-    var mine = keepsOf(t.teamId).filter(function (x) { return x.key === k.key; });
-    H.push('<div class="cxi' + (mine.length ? ' met' : '') + '">');
-    H.push(pxTag(GEAR_PX[k.tro].px, here.pal, 'cx-px'));
-    H.push('<div><b>' + esc(k.name) + '</b>');
-    H.push('<em>' + esc(k.eyebrow) + '。走完一趟、老師勾了可以之後，' +
-           '三張裡挑一張留下，這是其中一張的樣子。</em>');
-    if (mine.length) {
-      H.push('<span class="cx-met">' + esc(mine[mine.length - 1].line) + '</span>');
-    }
-    H.push('</div></div>');
-  });
+  H.push('<div class="cxi' + (mine.length ? ' met' : '') + '">');
+  H.push(pxTag(mine.length ? (mine[mine.length - 1].px || coreOf(mine[mine.length - 1].runId))
+    : coreOf('none') || ['..++++++++++..', '.+##########+.', '.+#*######*#+.',
+      '.+##########+.', '.+#+......+#+.', '.+#+......+#+.',
+      '.+#..+..+..#+.', '.+..+..+..+..', '.+##########+.', '..++++++++++..'],
+    here.pal, 'cx-px core'));
+  H.push('<div><b>岩心</b>');
+  H.push('<em>走完一趟、老師勾了可以之後，那一趟自己長成的一根樣本。' +
+         '一天兩列：來過是實心、你說沒動是空心、沒有紀錄是斷的。' +
+         '長度就是那一趟過了幾天，顏色是你當時在哪一層。</em>');
+  if (mine.length) H.push('<span class="cx-met">你已經封存了 ' + mine.length + ' 根</span>');
+  H.push('</div></div>');
   H.push('</div></div>');
 
   H.push('<div class="card">');

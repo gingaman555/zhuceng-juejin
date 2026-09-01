@@ -148,16 +148,19 @@ function seed() {
   /* 刻意留白：三個里程碑都派了，一個都沒拉滑桿。
      系統要看得出這一組跟「在動但卡住」的不一樣。 */
 
-  /* 他們留下的那幾句。存的是當下那句字，不是規則的 key——
-     所以直接用 keepOffers 算一次，跟真的走完一趟得到的東西一模一樣。 */
-  [['G1', 'R1', 'est', 17], ['G1', 'R2', 'days', 10], ['G2', 'R4', 'over', 14],
-   ['G3', 'R6', 'days', 16], ['G4', 'R8', 'est', 18]].forEach(function (k, i) {
-    var o = keepOffers(k[1]).filter(function (x) { return x.key === k[2]; })[0];
-    if (!o) return;
+  /* 封存過的岩心。直接用 coreOf 算一次，跟真的走完一趟長出來的一模一樣。 */
+  [['G1', 'R1', '訪談那一週', 17], ['G1', 'R2', '收斂', 10], ['G2', 'R4', '拖到最後', 14],
+   ['G3', 'R6', '', 16], ['G4', 'R8', '逐字稿地獄', 18]].forEach(function (k, i) {
+    var sh = runShape(k[1]);
+    if (!sh) return;
     var r = find('Runs', function (x) { return x.runId === k[1]; });
-    if (r) r.keep = k[2];
+    if (r) r.coreName = k[2];
     DB.Keeps.push({ keepId: 'K0' + (i + 1), teamId: k[0], runId: k[1],
-      key: k[2], line: o.line, at: ago(k[3]) });
+      name: k[2], at: ago(k[3]),
+      zone: strataAt(depthOf(k[0]), k[0]).key,
+      px: coreOf(k[1]),
+      est: sh.est, elapsed: sh.elapsed, moved: sh.moved,
+      rested: sh.rested, blank: sh.blank });
   });
   DB.Config.seq = 100;
   save();

@@ -1,62 +1,62 @@
-/* 留下的。
+/* 岩心架。
 
-   先講這一頁是什麼，因為它前後改過兩次，方向差很多。
+   走完一趟會長出一根岩心（見 43-core.js）。這一頁是它們排在一起的地方。
 
-   最早：老師看完之後發一件裝備，裝備綁一句話。
-   第二版：老師只勾可以，學生從隨機三件裡挑一件。
-   現在：三張攤開的是「這一趟真的發生的三件事」，用他們自己的詞寫的，
-   學生挑一張留下。
+   這一頁前後改過三次，方向差很多：老師發裝備 → 隨機三件挑一件 →
+   三張事實挑一張 → 現在。前三次都失敗在同一件事上——那個「東西」是我
+   發的，跟他那一週沒有關係，所以挑不挑、留哪一件，對他都沒有差別。
 
-   為什麼一路改到這裡——前兩版那些句子都是我寫的。六句格言在我的清單裡
-   三選一，那不算自主；而且六句用完就重複，通用到誰都適用，
-   等於誰都不適用。
+   為什麼收集這件事現在站得住——它不是徽章，是樣本：
 
-   現在留下的那一句是他自己那一趟的事實，他自己挑的角度。
-   下一次拉滑桿決定要花幾天的時候，它會出現在那一頁——
-   那不是系統的建議，是他上一趟寫給這一刻的自己看的。
+     · 每一根指向一個具體、不會再發生的那一週
+     · 形狀由那一趟自己決定，沒有兩根一樣，而且那個不同是他造成的
+     · 不可能再拿到同一根
+     · 二十根排在一起會變成一根說不出來的東西：一個學期的形狀
 
-   這一頁沒有「六件收集了幾件」。寫了就變成一條要被填滿的進度條。 */
+   刻意沒有的東西：總數、進度、缺哪幾根。
+   一趟長一根，本來就不會有缺的——沒有東西需要被填滿，
+   所以也沒有人會為了填滿它多做一件事。
+
+   遊戲化在這裡的位置是「吸引他打開」，不是「換到好處」。
+   一根岩心不加速、不擋失準、不換任何東西。 */
 
 PAGES.pack = function () {
   var t = myTeam();
   var ks = keepsOf(t.teamId).slice().reverse();
 
-  var H = [head('留下的', ks.length + ' 句', '')];
+  var H = [head('岩心架', ks.length + ' 根', '')];
 
   if (!ks.length) {
     H.push('<div class="card dim">走完一趟、老師勾了可以之後，' +
-      '會攤開三張讓你挑一張留下。</div>');
+      '那一趟會長成一根岩心。形狀由那一趟自己決定。</div>');
     H.push(btn('回廊道', 'go:home', 'ghost'));
     return H.join('');
   }
 
-  /* 帶在身上的：最近留下的那一句。下一次承諾時會出現的就是它。 */
-  var top = ks[0];
-  var tk = RULES.keepOf(top.key);
-  H.push('<div class="card carry ' + strataAt(depthOf(t.teamId), t.teamId).key + '">');
-  H.push('<div class="eyebrow">帶在身上的</div>');
-  H.push('<div class="carry-in">');
-  H.push(pxTag(GEAR_PX[tk.tro].px, strataAt(depthOf(t.teamId), t.teamId).pal, 'kp-px'));
-  H.push('<div><i>' + esc(tk.eyebrow) + '</i><em>' + esc(top.line) + '</em></div>');
-  H.push('</div></div>');
+  /* 圖例。看得懂才讀得出自己的歷史。 */
+  H.push('<div class="card quiet">');
+  H.push('<div class="eyebrow">怎麼讀</div>');
+  H.push('<div class="corekey">');
+  H.push('<span><b class="c1"></b>那一天你來過</span>');
+  H.push('<span><b class="c2"></b>你說那天沒動</span>');
+  H.push('<span><b class="c3"></b>那一天沒有紀錄</span>');
+  H.push('</div>');
+  H.push('<p class="dim">長度就是那一趟過了幾天。顏色是你當時在哪一層。</p>');
+  H.push('</div>');
 
-  /* 全部。照時間倒著排，每一句掛著它是哪一趟、哪一個角度。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">走過的每一趟</div>');
-  H.push('<div class="keeps">');
+  H.push('<div class="rack">');
   ks.forEach(function (k) {
-    var kk = RULES.keepOf(k.key) || RULES.KEEPS[0];
+    var z = STRATA[0];
+    STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
     var r = find('Runs', function (x) { return x.runId === k.runId; });
     var m = r ? msOf(r.msId) : null;
-    H.push('<div class="kp">');
-    var kz = STRATA[0];
-    STRATA.forEach(function (z) { if (z.key === k.zone) kz = z; });
-    H.push(pxTag(GEAR_PX[kk.tro].px, kz.pal, 'kp-px sm'));
-    H.push('<div>');
-    H.push('<span class="ke">' + esc(kk.eyebrow) + '</span>');
-    H.push('<i>' + esc(k.line) + '</i>');
-    if (m) H.push('<span class="km">' + esc(m.title) + '</span>');
-    H.push('</div></div>');
+    H.push('<div class="rk">');
+    H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'core'));
+    H.push('<b>' + esc(k.name || (m ? m.title : '')) + '</b>');
+    H.push('<span>' + (k.elapsed || 0) + ' 天　·　來過 ' + (k.moved || 0) + '</span>');
+    H.push('<em>' + esc(z.name) + '</em>');
+    H.push('</div>');
   });
   H.push('</div></div>');
 

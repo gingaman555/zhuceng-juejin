@@ -217,7 +217,7 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '廊道'], ['pack', '留下的'], ['codex', '圖鑑'],
+      ['home', '廊道'], ['pack', '岩心架'], ['codex', '圖鑑'],
       ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
@@ -397,11 +397,10 @@ var ACTS = {
   /* 老師勾可以了 → 去挑裝備 */
   gear: function (runId) { go('pick', { id: runId }); },
 
-  /* 三張裡挑一張留下。參數是「runId|角度」。 */
-  take: function (arg) {
-    var i = arg.indexOf('|');
-    var runId = arg.slice(0, i), key = arg.slice(i + 1);
-    if (!actKeep(runId, key)) return say('這一張不在攤開的三張裡。');
+  /* 封存這一趟。名字選填。 */
+  seal: function (runId) {
+    var name = (document.getElementById('cname') || {}).value || '';
+    if (!actSeal(runId, name)) return say('這一趟已經封存了。');
     go('dash', { id: runId });
     animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
   },
