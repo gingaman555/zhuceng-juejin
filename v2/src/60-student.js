@@ -26,19 +26,11 @@ PAGES.home = function () {
 
   var H = [];
 
-  /* 三步，不是四步：中間那一段不用他開。 */
-  H.push(stepBar([
-    ['開始前', '你說要花幾天'],
-    ['做完回來', '交出去，比對天數'],
-    ['封存', '那一趟長成一根岩心']
-  ], STEP_AT[next.kind] == null ? -1 : STEP_AT[next.kind]));
-
-  /* ── 廊道本身。招牌、深度、魔物全在裡面（見 61-scene.js） ── */
+  /* ── 廊道。這是這個系統的 feed：一眼看到的就是它。 ── */
   H.push(scene(t, next.row, st, next.kind));
 
-  /* ── 今天要做的那一件。放在廊道正下面，而且是整頁最大聲的一張——
-        本來它排在兩條尺跟分段清單後面，每一張卡看起來又都一樣重，
-        所以打開之後第一眼看不出該按哪裡。 ── */
+  /* ── 唯一可以按的那一個，直接長在廊道底下。
+        不解釋現在是什麼狀態——底下那排數字已經說了。 ── */
   H.push(actionCard(t, next, st));
 
   /* ── 這一趟的分段（老師有分才有） ── */
@@ -171,48 +163,47 @@ function lastKeep(teamId) {
 
 
 /* ---------- 唯一的那一顆動作 ---------- */
+/* ---------- 唯一可以按的那一個 ----------
+
+   一個標籤（現在是什麼）＋ 一顆鍵（要做什麼）。沒有解釋句。
+   狀態由廊道底下那排數字說，不由這裡用一句話說一次。 */
 function actionCard(t, next, st) {
   var H = ['<div class="act-card">'];
   var row = next.row;
 
   if (next.kind === 'left') {
-    H.push('<div class="eyebrow">你出去了</div>');
-    H.push('<h2>' + (t.exitWord ? '' : '地面。') + '</h2>');
+    H.push('<div class="eyebrow">地面</div>');
     if (t.exitWord) H.push('<p class="quote">' + nl(t.exitWord) + '</p>');
     H.push(btn('看你帶出來的', 'go:exit', 'big'));
 
   } else if (next.kind === 'waitexit') {
-    H.push('<div class="eyebrow">出口</div>');
-    H.push('<h2>在等老師確認。</h2>');
+    H.push('<div class="eyebrow">出口　·　等老師確認</div>');
     H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
 
   } else if (next.kind === 'commit') {
-    H.push('<div class="eyebrow">新的里程碑</div>');
-    H.push('<h2>' + esc(row.ms.title) + '</h2>');
-    if (row.ms.note) H.push('<p class="lead">' + nl(row.ms.note) + '</p>');
-    H.push(btn('決定天數', 'go:commit:' + row.ms.msId, 'big'));
+    H.push('<div class="eyebrow">新的　·　' + esc(row.ms.title) + '</div>');
+    H.push(btn('要花幾天', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'doing') {
     H.push(doingCard(t, row, st));
 
   } else if (next.kind === 'camp') {
-    H.push('<div class="eyebrow">營火</div>');
-    H.push('<h2>' + row.run.actual + ' 天，比你說的 ' + row.run.est + ' 天久。</h2>');
+    H.push('<div class="eyebrow">營火　·　' + row.run.actual + ' 天，你說 ' +
+      row.run.est + ' 天</div>');
     H.push(btn('去營火旁', 'go:camp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'gear') {
     H.push('<div class="eyebrow">老師看完了</div>');
-    H.push('<h2>這一趟長成什麼樣子。</h2>');
     if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
-    H.push(btn('去看', 'gear:' + row.run.runId, 'big'));
+    H.push(btn('封存這一趟', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {
     H.push('<div class="eyebrow">在老師那邊</div>');
-    H.push('<h2>他還沒看。</h2>');
+    H.push('<h2>等他看。</h2>');
 
   } else {
     H.push('<div class="eyebrow">廊道很安靜</div>');
-    H.push('<h2>目前沒有等你做的。</h2>');
+    H.push('<h2>等老師派下一個。</h2>');
   }
 
   H.push('</div>');
@@ -229,16 +220,10 @@ function actionCard(t, next, st) {
    他開不開這一頁都一樣。 */
 function doingCard(t, row, st) {
   var r = row.run;
-  var gone = daysBetween(r.committedAt, now()) + 1;
   var H = [];
-  H.push('<div class="eyebrow">正在做　·　' + esc(row.ms.title) + '</div>');
-  if (st && st.level) {
-    H.push('<h2>' + esc(RULES.stallSay(st.level, st.days)) + '</h2>');
-  } else {
-    H.push('<h2>你說 ' + r.est + ' 天。今天是第 ' + gone + ' 天。</h2>');
-  }
-  H.push(btn('做完了，交出去', 'go:submit:' + r.runId, 'big'));
-  H.push('<p class="dim">中間不用來。做完再回來就好。</p>');
+  H.push('<div class="eyebrow">' + esc(row.ms.title) +
+    (st && st.level ? '　·　' + esc(RULES.stallSay(st.level, st.days)) : '') + '</div>');
+  H.push(btn('做完了', 'go:submit:' + r.runId, 'big'));
   return H.join('');
 }
 

@@ -130,9 +130,11 @@ button.ac:active{transform:translateY(1px)}
 .card.quiet{background-color:#100D0A}
 .card.quiet .eyebrow{color:#4A4038}
 
-/* 今天要做的那一張：整頁最大聲 */
-.act-card{padding:33px 22px}
-.act-card h2{font-size:33px;line-height:1.4}
+/* 唯一可以按的那一個。它接在廊道底下，讀起來是同一塊東西的一部分，
+   不是一張獨立的卡——就像 Threads 的輸入框長在 feed 最上面。 */
+.act-card{padding:22px;margin-top:-11px}
+.act-card h2{font-size:22px;line-height:1.5;margin:0 0 11px}
+.act-card .eyebrow{margin-bottom:11px}
 @media (max-width:860px){ .act-card{padding:22px 14px} .act-card h2{font-size:22px} }
 
 /* ---------- 圖鑑 ----------
