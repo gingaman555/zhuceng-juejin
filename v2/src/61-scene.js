@@ -158,7 +158,7 @@ function scene(t, row, st, kind) {
   var walking = run && st.level < 2;
   var resting = !run && st.level < 2;
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
-  var hx = resting ? 66 : SCN.ENT + walked * SCN.TILE - 11;
+  var hx = resting ? 44 : SCN.ENT + walked * SCN.TILE - 11;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
     '" style="left:' + hx + 'px">');
@@ -178,6 +178,19 @@ function scene(t, row, st, kind) {
   /* 角色手上那一盞的光。一圈一圈地暗下去，不是模糊的漸層——
      模糊的話它會立刻看起來像貼在像素圖上面的現代特效。 */
   H.push('<div class="halo" style="left:' + (hx - 121) + 'px"></div>');
+
+  /* ── 你說的那一天 ──
+
+     這是原始設計裡就有的一條線（「道路前方出現一條虛線」），
+     一直沒做。它讓「我承諾了幾天」在畫面上有一個實體：
+     那條線就在前面，水從後面追上來。只有數字的話那件事沒有位置。
+
+     虛線不是終點線——別組沒有這條線，每一組的線在不同的地方，
+     因為那是各自說的。 */
+  if (run) {
+    H.push('<div class="vow" style="left:' + (SCN.ENT + est * SCN.TILE) +
+      'px"><span>你說的</span></div>');
+  }
 
   /* ── 霧 ──
      從站的地方往前蓋住。它蓋的是「還沒走的那幾天」，
@@ -287,6 +300,18 @@ function sceneMouth(t, next) {
     H.push(pxTag(CAMPFIRE.px, COLD_PAL, ''));
   }
   H.push('</button>');
+
+  /* 火星。點著的時候才有，六顆，各自的節奏用座標算。
+     它是這個畫面上唯一一直在動的小東西——沒有它，
+     「坐在火旁邊」看起來會像一張靜止的圖。 */
+  if (lit) {
+    for (var e = 0; e < 6; e++) {
+      var eh = hash('ember' + e);
+      H.push('<i class="ember" style="left:' + (16 + eh % 26) + 'px;' +
+        '--ed:' + (1400 + (eh >>> 6) % 900) + 'ms;' +
+        'animation-delay:' + ((eh >>> 13) % 1600) + 'ms"></i>');
+    }
+  }
 
   /* 岩心架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
   H.push('<button class="mrack" data-act="run" data-p=\'' +

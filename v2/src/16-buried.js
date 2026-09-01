@@ -56,39 +56,34 @@ function buriedDef(k) {
   return out;
 }
 
-/* 這一格裡有什麼。用班級與座標算，同一個班的同一格永遠一樣。 */
-function buriedAt(classId, x, y) {
-  var h = hash('buried|' + classId + '|' + x + ',' + y);
+/* 這一層的岩壁裡有什麼。用班級、組別與深度算，
+   同一組走到同一層永遠遇到同一樣東西。
+
+   為什麼要帶組別：每一組走的是自己那一條廊道，
+   同一層的岩壁不是同一面牆。 */
+function buriedAt(classId, teamId, depth) {
+  var h = hash('buried|' + classId + '|' + teamId + '|' + depth);
   if (h % 100 >= BURIED_ODDS) return null;
   return BURIED[(h >>> 9) % BURIED.length];
 }
 
-/* 岩層表面看不看得出來這一格有東西。
+/* 走到那一層的時候，把岩壁裡的東西記下來。
 
-   看得出來，「往哪裡打通」才會變成一個真的選擇——
-   而「先到處看看」也才有報酬。看得出「有東西」但看不出「是什麼」，
-   那一格才值得去。 */
-function buriedHint(classId, x, y) {
-  return !!buriedAt(classId, x, y);
-}
-
-/* 打通那一格的時候，把裡面的東西記下來。
-
-   early 是「你到得夠早」：上一趟的判定是準的。
+   early 是「你到得夠早」：那一趟的判定是準的。
    它只改變你遇到的是牠本人還是牠留下的痕跡——
-   那一格、那座建築、那根岩心、那一筆圖鑑，兩邊都拿到。 */
-function actUncover(teamId, x, y) {
+   那一層、那座建築、那根岩心、那一筆圖鑑，兩邊都拿到。 */
+function actUncover(teamId, depth) {
   var t = teamOf(teamId);
   if (!t) return null;
-  var b = buriedAt(t.classId, x, y);
+  var b = buriedAt(t.classId, teamId, depth);
   if (!b) return null;
-  var k = x + ',' + y;
+  var k = 'd' + depth;
   t.found = t.found || {};
   if (t.found[k]) return t.found[k];
 
   var last = null;
   runsFor(teamId).forEach(function (r) { if (r.run.stamp) last = r.run; });
-  var early = !last || last.stamp === 'ok';
+  var early = !last || last.stamp !== 'late';
 
   var rec = { k: b.k, early: early ? 1 : 0 };
 
@@ -106,15 +101,15 @@ function actUncover(teamId, x, y) {
 
   /* 蟄伏的東西：那一層住的那幾隻裡的一隻。進圖鑑，標「你遇過」。 */
   if (b.k === 'mob') {
-    var f = faunaOf(strataAt(y, t.classId).key);
+    var f = faunaOf(strataAt(depth, teamId).key);
     if (!f.length) f = allFauna();
-    if (f.length) rec.mob = f[hash('bmob|' + t.classId + '|' + k) % f.length].n;
+    if (f.length) rec.mob = f[hash('bmob|' + teamId + '|' + k) % f.length].n;
   }
 
   /* 上一輪的遺跡：這一層蓋得出來的東西裡的一種。 */
   if (b.k === 'relic') {
-    var bs = buildsIn(strataAt(y, t.classId).key);
-    if (bs.length) rec.build = bs[hash('brel|' + t.classId + '|' + k) % bs.length].key;
+    var bs = buildsIn(strataAt(depth, teamId).key);
+    if (bs.length) rec.build = bs[hash('brel|' + teamId + '|' + k) % bs.length].key;
   }
 
   t.found[k] = rec;
@@ -122,7 +117,7 @@ function actUncover(teamId, x, y) {
   return rec;
 }
 
-/* 這一組在地底下遇過的那幾隻。圖鑑那邊要用。 */
+/* 這一組在岩壁裡遇過的那幾隻。圖鑑那邊要用。 */
 function foundMobs(teamId) {
   var t = teamOf(teamId);
   var out = {};

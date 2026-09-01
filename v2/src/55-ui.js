@@ -229,7 +229,7 @@ function sideBar() {
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
       ['home', '廊道'], ['pack', '岩心架'], ['codex', '圖鑑'],
-      ['eco', '全班最近'], ['log', '紀錄']
+      ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
@@ -439,8 +439,7 @@ var ACTS = {
   gear: function (runId) { go('pick', { id: runId }); },
 
   /* 往哪裡挖 */
-  /* 點一塊地，它變成你的。PaGamO 最直覺的那一下——
-     地圖是動手的地方，不是一個看的頁面。 */
+  /* 格子地圖退休了（看不懂），這一支留著只是為了舊的存檔不會炸。 */
   dig: function (v) {
     var t = myTeam();
     var p = v.split(',');
@@ -459,12 +458,10 @@ var ACTS = {
   bld: function (v) {
     var t = myTeam();
     var p = v.split(',');
-    if (!actBuild(t.teamId, Number(p[1]), Number(p[2]), p[0], lastSealed(t.teamId))) {
-      return say('那一格蓋不了。');
+    if (!actBuild(t.teamId, Number(p[1]), p[0], lastSealed(t.teamId))) {
+      return say('那一層蓋不了。');
     }
-    DRAFT.build = null; DRAFT.uncover = null;
-    var left = claimsOf(t.teamId);
-    say(left ? '蓋好了。還有 ' + left + ' 格可以打通。' : '蓋好了。');
+    say('蓋好了。');
   },
 
   /* 點誰蓋的東西：看那是哪一趟。 */

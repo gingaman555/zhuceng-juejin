@@ -69,13 +69,16 @@ PAGES.home = function () {
      那個迴圈才會上癮。 */
   H.push(beatBar(next, t));
 
-  /* 地圖先。PaGamO 打開來就是地圖，你的地在上面——
-     不是先看一份自己的儀表板再進地圖。 */
-  H.push(digMap(t.classId, t.teamId));
+  /* ── 自己那條廊道 ──
 
-  /* ── 要做的那一件事。釘在畫面下面，地圖怎麼捲它都在。
-        地圖變成首頁之後它本來被推到整頁最底下，那樣就得先捲過整張圖
-        才按得到——看地圖跟動手不是先後關係。 ── */
+     打開來第一眼要是不用學就懂的東西。廊道不用學：一條走廊、
+     一個人走在上面、水從後面漫過來。地圖要讀得懂得先知道三條規則
+     （一格＝一趟、顏色＝哪一組、亮的可以點），而這個系統一學期
+     只在那張圖上動八次，它沒有機會被學會。所以圖回到全班那一頁。 ── */
+  H.push(scene(t, next.row, st, next.kind));
+  if (r) H.push(stepRow(r.runId));
+
+  /* ── 要做的那一件事，釘在畫面下面。 ── */
   H.push('<div class="dock">');
   H.push('<div class="tline">');
   H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
@@ -84,43 +87,25 @@ PAGES.home = function () {
   H.push('</div>');
   H.push(actionCard(t, next, st));
   H.push('</div>');
-  /* 打通完，接著挑要在那一格上蓋什麼。
-
-     三個選項由那一格所在的岩層決定，而路線是隨機給的——所以你的地
-     長什麼樣，記錄的是「你剛好在哪一層」，不是「你做得多好」。
-     兩組同樣五格可以完全不像，那張圖因此讀不出高下。
-
-     三個選項之間沒有任何強弱。只要有一個比較好，人就會為了那個蓋，
-     而不是為了專案做事。 */
-  H.push(uncoverCard(t));
-  H.push(buildPick(t));
-  H.push(buildCard(t));
-  /* 在地圖上點一組會設 DRAFT.dt，但顯示那一張卡的兩支本來只掛在
-     全班那一頁上——所以首頁的地圖點下去是沒有反應的。 */
-  H.push(digTeamCard(t.classId));
-  H.push(coreCard());
-
-  /* 自己那條廊道往下捲才看得到。它是細節，不是入口。 */
-  H.push('<div class="eyebrow feed-h">你們這一趟</div>');
-  H.push(scene(t, next.row, st, next.kind));
-  if (r) H.push(stepRow(r.runId));
   if (next.more) {
     H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
+  }
+
+  /* 手上有格子可以打通的時候，指去地圖那一頁——
+     動手的地方跟看的地方要是同一個。 */
+  /* 走完一趟就多一層，那一層還沒蓋東西的時候指過去。
+     往下一層不是一個動作——走完就下去了，要選的只有蓋什麼。 */
+  if (unbuiltDepth(t.teamId) >= 0) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow lit">新的一層</div>');
+    H.push(btn('去看看那一層', 'go:eco', 'big'));
+    H.push('</div>');
   }
 
 
   /* ── 副功能：小圖示 ── */
   H.push(deskRow(t, next));
 
-  /* ── 全班那片地 ──
-
-     使用者說「還是很無聊，而且不知道要幹嘛」。根因不是版面：
-     這個系統一個里程碑只有兩個接觸點，所以九成的日子它真的沒事給你做。
-     那是刻意的，但代價就是打開來空的。
-
-     沒事做的日子還值得看的東西只有一種——別人。文字列表他們不要，
-     那就放地圖：它是圖、它會因為別人動而改變、而且有可以打通的格子
-     的時候它自己會亮。PaGamO 的首頁就是地圖。 */
   return H.join('');
 };
 

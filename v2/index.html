@@ -1995,6 +1995,68 @@ button.ac:active{transform:translateY(1px)}
   .rep dt,.rep dd{animation:none} .eyebrow.lit{animation:none}
 }
 
+/* ── 營火旁 ──
+   火在左邊，人面對火。要讓「他在那裡休息」不用一句話解釋，
+   靠三件事：坐姿的輪廓、火光打在他左側、火星一直在飄。 */
+
+/* 火光打在人身上。硬邊的一道緣光，不是光暈——
+   一有模糊就會看起來像貼在像素圖上的現代特效。 */
+.scn-hero.resting .ch{
+  filter:drop-shadow(-2px 0 0 rgba(233,132,63,.75))
+         drop-shadow(-3px 0 0 rgba(233,132,63,.30))
+}
+
+/* 火星。這個畫面上唯一一直在動的小東西——
+   沒有它，「坐在火旁邊」看起來會像一張靜止的圖。 */
+.mouth .ember{
+  position:absolute;bottom:78px;width:2px;height:2px;
+  background:#FFD9A0;z-index:3;pointer-events:none;
+  animation:emb var(--ed,1800ms) steps(7,end) infinite
+}
+@keyframes emb{
+  0%{transform:translate(0,0);opacity:0}
+  10%{opacity:.95}
+  60%{opacity:.7}
+  100%{transform:translate(6px,-44px);opacity:0}
+}
+
+/* 人坐著的地方地上暖一塊。硬停，沒有漸層模糊。 */
+.mouth::after{
+  content:'';position:absolute;left:0;bottom:40px;width:132px;height:14px;
+  pointer-events:none;z-index:0;
+  background:linear-gradient(90deg,
+    rgba(233,132,63,.16) 0 44px,
+    rgba(233,132,63,.09) 44px 88px,
+    transparent 88px)
+}
+
+@media (prefers-reduced-motion: reduce){
+  .mouth .ember{animation:none;opacity:.6}
+}
+
+/* 剖面圖上，那一趟蓋的東西站在那一層裡。
+   深度是走出來的，蓋什麼是挑的——這是圖上唯一屬於「他們自己選的」東西。 */
+.xs-bld{
+  position:absolute;left:50%;bottom:3px;width:33px;height:33px;margin-left:-17px;
+  padding:0;border:none;background:none;cursor:pointer;z-index:3
+}
+.xs-bld .px{width:33px;height:33px;image-rendering:pixelated}
+.xs-bld:hover{filter:brightness(1.3)}
+
+/* ── 你說的那一天 ──
+   原始設計裡就有的一條虛線，一直沒做。它讓「我承諾了幾天」在畫面上
+   有一個實體：線在前面，水從後面追上來。
+   它不是終點線——每一組的線在不同的地方，因為那是各自說的。 */
+.vow{
+  position:absolute;top:0;bottom:0;width:3px;z-index:4;pointer-events:none;
+  background:repeating-linear-gradient(180deg,
+    var(--gold) 0 6px, transparent 6px 14px)
+}
+.vow span{
+  position:absolute;top:11px;left:6px;font-size:11px;color:var(--gold);
+  white-space:nowrap;background:rgba(0,0,0,.55);padding:2px 5px
+}
+
 /* 手機。
 
    之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
@@ -2269,16 +2331,21 @@ var HERO = {
           '....++####++....', '...+#*####*#+...', '...+#*####*#+...', '....+######+....',
           '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....',
           '....++#..#++....', '...++#+..+#++...', '................', '................'],
-  /* 坐著：兩趟之間，在營火旁邊。兩幀，差在呼吸——
-     頭低一格再回來。停下來不是停止，人還在那裡。 */
-  sitA: ['................', '................', '................', '......++++......',
-         '.....+#**#+.....', '.....+#**#+.....', '......+##+......', '.....++###+.....',
-         '....+#*####+....', '....+#*####+....', '....+#######+...', '....+########+..',
-         '...++###+++##+..', '...+#####..+#+..', '...+++++++++++..', '................'],
+  /* 坐著：兩趟之間，在營火旁邊。
+
+     側面朝左——火在左邊，人面對火。第一版是從站姿改的，坐起來
+     像一團東西，看不出是在休息。現在頭在右上、背拱著、腿往左折，
+     那個輪廓不用一句話解釋。
+
+     兩幀差在呼吸：頭低一格再回來。停下來不是停止，人還在那裡。 */
+  sitA: ['................', '................', '................', '.......++++.....',
+         '......+#**#+....', '......+#**#+....', '.......+##+.....', '.....++#####+...',
+         '....+#######+...', '...+#*######+...', '...+#*######+...', '..+####+###+....',
+         '.+###+..+#+.....', '.+##+...+#+.....', '.++++...+++.....', '................'],
   sitB: ['................', '................', '................', '................',
-         '......++++......', '.....+#**#+.....', '.....+#**#+.....', '......+##+......',
-         '....+#*####+....', '....+#*####+....', '....+#######+...', '....+########+..',
-         '...++###+++##+..', '...+#####..+#+..', '...+++++++++++..', '................'],
+         '.......++++.....', '......+#**#+....', '......+#**#+....', '.......+##+.....',
+         '....+#######+...', '...+#*######+...', '...+#*######+...', '..+####+###+....',
+         '.+###+..+#+.....', '.+##+...+#+.....', '.++++...+++.....', '................'],
   /* 睡著：長時間沒推進 */
   sleep: ['................', '..............z.', '............z...', '.........zZ.....',
           '................', '................', '....++++++++....', '...+#**####*#+..',
@@ -3312,34 +3379,39 @@ function buildDef(key) {
   return out;
 }
 
-/* 這一格蓋了什麼。回傳 { k, runId } 或 null。 */
-function buildAt(teamId, x, y) {
+/* 這一層蓋了什麼。回傳 { k, runId } 或 null。
+
+   本來是掛在格子的座標上。格子地圖退休之後改掛在深度上——
+   一趟走完深度加一，那一層就是那一趟的位置。 */
+function buildAt(teamId, depth) {
   var t = teamOf(teamId);
-  return (t && t.builds && t.builds[x + ',' + y]) || null;
+  return (t && t.builds && t.builds['d' + depth]) || null;
 }
 
-/* 蓋下去。一格只蓋一次——蓋錯了也留著，那也是那一趟的一部分。 */
-function actBuild(teamId, x, y, key, runId) {
+/* 蓋下去。一層只蓋一次——蓋錯了也留著，那也是那一趟的一部分。 */
+function actBuild(teamId, depth, key, runId) {
   var t = teamOf(teamId);
   if (!t) return false;
   if (!buildDef(key)) return false;
-  var k = x + ',' + y;
-  var has = false;
-  (t.cells || []).forEach(function (c) { if (c[0] === x && c[1] === y) has = true; });
-  if (!has) return false;
+  if (depth < 0 || depth >= depthOf(teamId)) return false;
   t.builds = t.builds || {};
-  if (t.builds[k]) return false;
-  t.builds[k] = { k: key, runId: runId || '' };
+  if (t.builds['d' + depth]) return false;
+  t.builds['d' + depth] = { k: key, runId: runId || '' };
   save();
   return true;
 }
 
-/* 還沒蓋東西的那幾格。封存完會被帶到這裡挑一格。 */
-function unbuiltCells(teamId) {
+/* 還沒蓋東西的那一層。沒有就回 -1。
+
+   通常只會有一層——走完一趟才多一層。回最淺的那一層，
+   萬一中間漏掉一層（改過資料、或是舊的存檔）也補得回來。 */
+function unbuiltDepth(teamId) {
   var t = teamOf(teamId);
-  if (!t) return [];
-  var b = t.builds || {};
-  return (t.cells || []).filter(function (c) { return !b[c[0] + ',' + c[1]]; });
+  if (!t) return -1;
+  var bs = t.builds || {};
+  var n = depthOf(teamId);
+  for (var d = 0; d < n; d++) if (!bs['d' + d]) return d;
+  return -1;
 }
 
 /* 最近封存的那一趟。蓋下去的東西要記得它是哪一趟的紀念碑——
@@ -3349,15 +3421,14 @@ function lastSealed(teamId) {
   return ks.length ? ks[ks.length - 1].runId : '';
 }
 
-/* 這一格上站的是哪一趟。點下去看得到的就是這個。 */
-function buildStory(teamId, x, y) {
-  var b = buildAt(teamId, x, y);
+/* 這一層上站的是哪一趟。點下去看得到的就是這個。 */
+function buildStory(teamId, depth) {
+  var b = buildAt(teamId, depth);
   if (!b) return null;
-  var d = buildDef(b.k);
   var k = null;
-  keepsOf(teamId).forEach(function (x2) { if (x2.runId === b.runId) k = x2; });
-  var r = b.runId ? find('Runs', function (x2) { return x2.runId === b.runId; }) : null;
-  return { def: d, keep: k, run: r };
+  keepsOf(teamId).forEach(function (x) { if (x.runId === b.runId) k = x; });
+  var r = b.runId ? find('Runs', function (x) { return x.runId === b.runId; }) : null;
+  return { def: buildDef(b.k), keep: k, run: r };
 }
 
 
@@ -3420,39 +3491,34 @@ function buriedDef(k) {
   return out;
 }
 
-/* 這一格裡有什麼。用班級與座標算，同一個班的同一格永遠一樣。 */
-function buriedAt(classId, x, y) {
-  var h = hash('buried|' + classId + '|' + x + ',' + y);
+/* 這一層的岩壁裡有什麼。用班級、組別與深度算，
+   同一組走到同一層永遠遇到同一樣東西。
+
+   為什麼要帶組別：每一組走的是自己那一條廊道，
+   同一層的岩壁不是同一面牆。 */
+function buriedAt(classId, teamId, depth) {
+  var h = hash('buried|' + classId + '|' + teamId + '|' + depth);
   if (h % 100 >= BURIED_ODDS) return null;
   return BURIED[(h >>> 9) % BURIED.length];
 }
 
-/* 岩層表面看不看得出來這一格有東西。
+/* 走到那一層的時候，把岩壁裡的東西記下來。
 
-   看得出來，「往哪裡打通」才會變成一個真的選擇——
-   而「先到處看看」也才有報酬。看得出「有東西」但看不出「是什麼」，
-   那一格才值得去。 */
-function buriedHint(classId, x, y) {
-  return !!buriedAt(classId, x, y);
-}
-
-/* 打通那一格的時候，把裡面的東西記下來。
-
-   early 是「你到得夠早」：上一趟的判定是準的。
+   early 是「你到得夠早」：那一趟的判定是準的。
    它只改變你遇到的是牠本人還是牠留下的痕跡——
-   那一格、那座建築、那根岩心、那一筆圖鑑，兩邊都拿到。 */
-function actUncover(teamId, x, y) {
+   那一層、那座建築、那根岩心、那一筆圖鑑，兩邊都拿到。 */
+function actUncover(teamId, depth) {
   var t = teamOf(teamId);
   if (!t) return null;
-  var b = buriedAt(t.classId, x, y);
+  var b = buriedAt(t.classId, teamId, depth);
   if (!b) return null;
-  var k = x + ',' + y;
+  var k = 'd' + depth;
   t.found = t.found || {};
   if (t.found[k]) return t.found[k];
 
   var last = null;
   runsFor(teamId).forEach(function (r) { if (r.run.stamp) last = r.run; });
-  var early = !last || last.stamp === 'ok';
+  var early = !last || last.stamp !== 'late';
 
   var rec = { k: b.k, early: early ? 1 : 0 };
 
@@ -3470,15 +3536,15 @@ function actUncover(teamId, x, y) {
 
   /* 蟄伏的東西：那一層住的那幾隻裡的一隻。進圖鑑，標「你遇過」。 */
   if (b.k === 'mob') {
-    var f = faunaOf(strataAt(y, t.classId).key);
+    var f = faunaOf(strataAt(depth, teamId).key);
     if (!f.length) f = allFauna();
-    if (f.length) rec.mob = f[hash('bmob|' + t.classId + '|' + k) % f.length].n;
+    if (f.length) rec.mob = f[hash('bmob|' + teamId + '|' + k) % f.length].n;
   }
 
   /* 上一輪的遺跡：這一層蓋得出來的東西裡的一種。 */
   if (b.k === 'relic') {
-    var bs = buildsIn(strataAt(y, t.classId).key);
-    if (bs.length) rec.build = bs[hash('brel|' + t.classId + '|' + k) % bs.length].key;
+    var bs = buildsIn(strataAt(depth, teamId).key);
+    if (bs.length) rec.build = bs[hash('brel|' + teamId + '|' + k) % bs.length].key;
   }
 
   t.found[k] = rec;
@@ -3486,7 +3552,7 @@ function actUncover(teamId, x, y) {
   return rec;
 }
 
-/* 這一組在地底下遇過的那幾隻。圖鑑那邊要用。 */
+/* 這一組在岩壁裡遇過的那幾隻。圖鑑那邊要用。 */
 function foundMobs(teamId) {
   var t = teamOf(teamId);
   var out = {};
@@ -5416,7 +5482,7 @@ function sideBar() {
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
       ['home', '廊道'], ['pack', '岩心架'], ['codex', '圖鑑'],
-      ['eco', '全班最近'], ['log', '紀錄']
+      ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
@@ -5626,8 +5692,7 @@ var ACTS = {
   gear: function (runId) { go('pick', { id: runId }); },
 
   /* 往哪裡挖 */
-  /* 點一塊地，它變成你的。PaGamO 最直覺的那一下——
-     地圖是動手的地方，不是一個看的頁面。 */
+  /* 格子地圖退休了（看不懂），這一支留著只是為了舊的存檔不會炸。 */
   dig: function (v) {
     var t = myTeam();
     var p = v.split(',');
@@ -5646,12 +5711,10 @@ var ACTS = {
   bld: function (v) {
     var t = myTeam();
     var p = v.split(',');
-    if (!actBuild(t.teamId, Number(p[1]), Number(p[2]), p[0], lastSealed(t.teamId))) {
-      return say('那一格蓋不了。');
+    if (!actBuild(t.teamId, Number(p[1]), p[0], lastSealed(t.teamId))) {
+      return say('那一層蓋不了。');
     }
-    DRAFT.build = null; DRAFT.uncover = null;
-    var left = claimsOf(t.teamId);
-    say(left ? '蓋好了。還有 ' + left + ' 格可以打通。' : '蓋好了。');
+    say('蓋好了。');
   },
 
   /* 點誰蓋的東西：看那是哪一趟。 */
@@ -6215,13 +6278,16 @@ PAGES.home = function () {
      那個迴圈才會上癮。 */
   H.push(beatBar(next, t));
 
-  /* 地圖先。PaGamO 打開來就是地圖，你的地在上面——
-     不是先看一份自己的儀表板再進地圖。 */
-  H.push(digMap(t.classId, t.teamId));
+  /* ── 自己那條廊道 ──
 
-  /* ── 要做的那一件事。釘在畫面下面，地圖怎麼捲它都在。
-        地圖變成首頁之後它本來被推到整頁最底下，那樣就得先捲過整張圖
-        才按得到——看地圖跟動手不是先後關係。 ── */
+     打開來第一眼要是不用學就懂的東西。廊道不用學：一條走廊、
+     一個人走在上面、水從後面漫過來。地圖要讀得懂得先知道三條規則
+     （一格＝一趟、顏色＝哪一組、亮的可以點），而這個系統一學期
+     只在那張圖上動八次，它沒有機會被學會。所以圖回到全班那一頁。 ── */
+  H.push(scene(t, next.row, st, next.kind));
+  if (r) H.push(stepRow(r.runId));
+
+  /* ── 要做的那一件事，釘在畫面下面。 ── */
   H.push('<div class="dock">');
   H.push('<div class="tline">');
   H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
@@ -6230,43 +6296,25 @@ PAGES.home = function () {
   H.push('</div>');
   H.push(actionCard(t, next, st));
   H.push('</div>');
-  /* 打通完，接著挑要在那一格上蓋什麼。
-
-     三個選項由那一格所在的岩層決定，而路線是隨機給的——所以你的地
-     長什麼樣，記錄的是「你剛好在哪一層」，不是「你做得多好」。
-     兩組同樣五格可以完全不像，那張圖因此讀不出高下。
-
-     三個選項之間沒有任何強弱。只要有一個比較好，人就會為了那個蓋，
-     而不是為了專案做事。 */
-  H.push(uncoverCard(t));
-  H.push(buildPick(t));
-  H.push(buildCard(t));
-  /* 在地圖上點一組會設 DRAFT.dt，但顯示那一張卡的兩支本來只掛在
-     全班那一頁上——所以首頁的地圖點下去是沒有反應的。 */
-  H.push(digTeamCard(t.classId));
-  H.push(coreCard());
-
-  /* 自己那條廊道往下捲才看得到。它是細節，不是入口。 */
-  H.push('<div class="eyebrow feed-h">你們這一趟</div>');
-  H.push(scene(t, next.row, st, next.kind));
-  if (r) H.push(stepRow(r.runId));
   if (next.more) {
     H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
+  }
+
+  /* 手上有格子可以打通的時候，指去地圖那一頁——
+     動手的地方跟看的地方要是同一個。 */
+  /* 走完一趟就多一層，那一層還沒蓋東西的時候指過去。
+     往下一層不是一個動作——走完就下去了，要選的只有蓋什麼。 */
+  if (unbuiltDepth(t.teamId) >= 0) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow lit">新的一層</div>');
+    H.push(btn('去看看那一層', 'go:eco', 'big'));
+    H.push('</div>');
   }
 
 
   /* ── 副功能：小圖示 ── */
   H.push(deskRow(t, next));
 
-  /* ── 全班那片地 ──
-
-     使用者說「還是很無聊，而且不知道要幹嘛」。根因不是版面：
-     這個系統一個里程碑只有兩個接觸點，所以九成的日子它真的沒事給你做。
-     那是刻意的，但代價就是打開來空的。
-
-     沒事做的日子還值得看的東西只有一種——別人。文字列表他們不要，
-     那就放地圖：它是圖、它會因為別人動而改變、而且有可以打通的格子
-     的時候它自己會亮。PaGamO 的首頁就是地圖。 */
   return H.join('');
 };
 
@@ -7095,7 +7143,7 @@ function scene(t, row, st, kind) {
   var walking = run && st.level < 2;
   var resting = !run && st.level < 2;
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
-  var hx = resting ? 66 : SCN.ENT + walked * SCN.TILE - 11;
+  var hx = resting ? 44 : SCN.ENT + walked * SCN.TILE - 11;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
     '" style="left:' + hx + 'px">');
@@ -7115,6 +7163,19 @@ function scene(t, row, st, kind) {
   /* 角色手上那一盞的光。一圈一圈地暗下去，不是模糊的漸層——
      模糊的話它會立刻看起來像貼在像素圖上面的現代特效。 */
   H.push('<div class="halo" style="left:' + (hx - 121) + 'px"></div>');
+
+  /* ── 你說的那一天 ──
+
+     這是原始設計裡就有的一條線（「道路前方出現一條虛線」），
+     一直沒做。它讓「我承諾了幾天」在畫面上有一個實體：
+     那條線就在前面，水從後面追上來。只有數字的話那件事沒有位置。
+
+     虛線不是終點線——別組沒有這條線，每一組的線在不同的地方，
+     因為那是各自說的。 */
+  if (run) {
+    H.push('<div class="vow" style="left:' + (SCN.ENT + est * SCN.TILE) +
+      'px"><span>你說的</span></div>');
+  }
 
   /* ── 霧 ──
      從站的地方往前蓋住。它蓋的是「還沒走的那幾天」，
@@ -7224,6 +7285,18 @@ function sceneMouth(t, next) {
     H.push(pxTag(CAMPFIRE.px, COLD_PAL, ''));
   }
   H.push('</button>');
+
+  /* 火星。點著的時候才有，六顆，各自的節奏用座標算。
+     它是這個畫面上唯一一直在動的小東西——沒有它，
+     「坐在火旁邊」看起來會像一張靜止的圖。 */
+  if (lit) {
+    for (var e = 0; e < 6; e++) {
+      var eh = hash('ember' + e);
+      H.push('<i class="ember" style="left:' + (16 + eh % 26) + 'px;' +
+        '--ed:' + (1400 + (eh >>> 6) % 900) + 'ms;' +
+        'animation-delay:' + ((eh >>> 13) % 1600) + 'ms"></i>');
+    }
+  }
 
   /* 岩心架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
   H.push('<button class="mrack" data-act="run" data-p=\'' +
@@ -7491,6 +7564,15 @@ function xsShaft(r, i, maxD, mine) {
     H.push('<div class="xs-seg ' + band.key + (dug ? ' dug' : '') + (here ? ' here' : '') +
       '" style="top:' + xsTop(d) + 'px">');
     if (here) H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
+    /* 那一趟蓋的東西站在那一層裡。這是這張圖上唯一屬於「那一組自己選的」
+       東西——深度是走出來的，蓋什麼是挑的。 */
+    var bl = dug && buildAt(r.teamId, d);
+    var bg = bl && buildDef(bl.k);
+    if (bg) {
+      H.push('<button class="xs-bld" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'seeb:' + r.teamId + ',' + d })) + '\' title="' +
+        esc(bg.name) + '">' + pxTag(bg.px, BUILD_PAL, '') + '</button>');
+    }
     H.push('</div>');
   }
 
@@ -7595,10 +7677,19 @@ function ecoRows(classId) {
 PAGES.eco = function () {
   var t = myTeam();
   var rows = ecoRows(t.classId);
-  /* 地圖只在首頁一個地方。同一張圖畫兩次，使用者得自己想
-     「這兩張是同一張嗎」——那是最貴的複雜度。
-     這一頁改成只做它獨有的事：別人最近做了什麼。 */
-  var H = [head('全班最近', '別人在幹嘛', '')];
+  /* 地圖回到這一頁。首頁要的是「不用學就懂」，那是廊道；
+     這張圖要學三條規則（一格＝一趟、顏色＝哪一組、亮的可以點），
+     所以它屬於一個你特地過來看的地方。
+
+     打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
+  var H = [head('全班地下城', '大家都在下面', '')];
+  H.push(xsScene(rows, t.teamId, t.classId));
+  H.push(uncoverCard(t));
+  H.push(buildPick(t));
+  H.push(buildCard(t));
+  H.push(digTeamCard(t.classId));
+  H.push(coreCard());
+
   var fd = feedOf(t.classId, 20);
   if (fd.length) {
     H.push('<div class="eyebrow feed-h">全班最近</div>');
@@ -7615,7 +7706,7 @@ PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
   var H = [head('各組進度', '每一組走到哪', '')];
-  H.push(digMap(u.classId, null));
+  H.push(xsScene(rows, null, u.classId));
   H.push(digTeamCard(u.classId));
   H.push(coreCard());
 
@@ -8269,17 +8360,17 @@ function digTeamCard(classId) {
 
    三個選項是那一層的全部，沒有強弱，只差在長相。 */
 function buildPick(t) {
-  var c = DRAFT.build;
-  if (!c) return '';
-  var z = strataAt(c[1], t.classId);
+  var d = unbuiltDepth(t.teamId);
+  if (d < 0) return '';
+  var z = strataAt(d, t.teamId);
   var set = buildsIn(z.key);
   if (!set.length) { DRAFT.build = null; return ''; }
   var H = ['<div class="card bpick">'];
-  H.push('<div class="eyebrow">在這一格上蓋什麼</div>');
+  H.push('<div class="eyebrow">在這一層蓋什麼</div>');
   H.push('<div class="bp-row">');
   set.forEach(function (b) {
     H.push('<button class="bp" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'bld:' + b.key + ',' + c[0] + ',' + c[1] })) + '\'>');
+      esc(JSON.stringify({ a: 'bld:' + b.key + ',' + d })) + '\'>');
     H.push(pxTag(b.px, BUILD_PAL, 'bp-px'));
     H.push('<b>' + esc(b.name) + '</b>');
     H.push('</button>');
@@ -8298,10 +8389,10 @@ function buildPick(t) {
 function buildCard(t) {
   if (!DRAFT.sb) return '';
   var p = DRAFT.sb;
-  var st = buildStory(p[0], Number(p[1]), Number(p[2]));
+  var st = buildStory(p[0], Number(p[1]));
   if (!st || !st.def) return '';
   var tm = teamOf(p[0]);
-  var z = strataAt(Number(p[2]), t.classId);
+  var z = strataAt(Number(p[1]), p[0]);
   var H = ['<div class="card bstory ' + z.key + '">'];
   H.push('<div class="bs-in">');
   H.push(pxTag(st.def.px, BUILD_PAL, 'bs-px'));

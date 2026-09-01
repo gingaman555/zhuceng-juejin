@@ -130,34 +130,39 @@ function buildDef(key) {
   return out;
 }
 
-/* 這一格蓋了什麼。回傳 { k, runId } 或 null。 */
-function buildAt(teamId, x, y) {
+/* 這一層蓋了什麼。回傳 { k, runId } 或 null。
+
+   本來是掛在格子的座標上。格子地圖退休之後改掛在深度上——
+   一趟走完深度加一，那一層就是那一趟的位置。 */
+function buildAt(teamId, depth) {
   var t = teamOf(teamId);
-  return (t && t.builds && t.builds[x + ',' + y]) || null;
+  return (t && t.builds && t.builds['d' + depth]) || null;
 }
 
-/* 蓋下去。一格只蓋一次——蓋錯了也留著，那也是那一趟的一部分。 */
-function actBuild(teamId, x, y, key, runId) {
+/* 蓋下去。一層只蓋一次——蓋錯了也留著，那也是那一趟的一部分。 */
+function actBuild(teamId, depth, key, runId) {
   var t = teamOf(teamId);
   if (!t) return false;
   if (!buildDef(key)) return false;
-  var k = x + ',' + y;
-  var has = false;
-  (t.cells || []).forEach(function (c) { if (c[0] === x && c[1] === y) has = true; });
-  if (!has) return false;
+  if (depth < 0 || depth >= depthOf(teamId)) return false;
   t.builds = t.builds || {};
-  if (t.builds[k]) return false;
-  t.builds[k] = { k: key, runId: runId || '' };
+  if (t.builds['d' + depth]) return false;
+  t.builds['d' + depth] = { k: key, runId: runId || '' };
   save();
   return true;
 }
 
-/* 還沒蓋東西的那幾格。封存完會被帶到這裡挑一格。 */
-function unbuiltCells(teamId) {
+/* 還沒蓋東西的那一層。沒有就回 -1。
+
+   通常只會有一層——走完一趟才多一層。回最淺的那一層，
+   萬一中間漏掉一層（改過資料、或是舊的存檔）也補得回來。 */
+function unbuiltDepth(teamId) {
   var t = teamOf(teamId);
-  if (!t) return [];
-  var b = t.builds || {};
-  return (t.cells || []).filter(function (c) { return !b[c[0] + ',' + c[1]]; });
+  if (!t) return -1;
+  var bs = t.builds || {};
+  var n = depthOf(teamId);
+  for (var d = 0; d < n; d++) if (!bs['d' + d]) return d;
+  return -1;
 }
 
 /* 最近封存的那一趟。蓋下去的東西要記得它是哪一趟的紀念碑——
@@ -167,13 +172,12 @@ function lastSealed(teamId) {
   return ks.length ? ks[ks.length - 1].runId : '';
 }
 
-/* 這一格上站的是哪一趟。點下去看得到的就是這個。 */
-function buildStory(teamId, x, y) {
-  var b = buildAt(teamId, x, y);
+/* 這一層上站的是哪一趟。點下去看得到的就是這個。 */
+function buildStory(teamId, depth) {
+  var b = buildAt(teamId, depth);
   if (!b) return null;
-  var d = buildDef(b.k);
   var k = null;
-  keepsOf(teamId).forEach(function (x2) { if (x2.runId === b.runId) k = x2; });
-  var r = b.runId ? find('Runs', function (x2) { return x2.runId === b.runId; }) : null;
-  return { def: d, keep: k, run: r };
+  keepsOf(teamId).forEach(function (x) { if (x.runId === b.runId) k = x; });
+  var r = b.runId ? find('Runs', function (x) { return x.runId === b.runId; }) : null;
+  return { def: buildDef(b.k), keep: k, run: r };
 }

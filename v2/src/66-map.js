@@ -292,17 +292,17 @@ function digTeamCard(classId) {
 
    三個選項是那一層的全部，沒有強弱，只差在長相。 */
 function buildPick(t) {
-  var c = DRAFT.build;
-  if (!c) return '';
-  var z = strataAt(c[1], t.classId);
+  var d = unbuiltDepth(t.teamId);
+  if (d < 0) return '';
+  var z = strataAt(d, t.teamId);
   var set = buildsIn(z.key);
   if (!set.length) { DRAFT.build = null; return ''; }
   var H = ['<div class="card bpick">'];
-  H.push('<div class="eyebrow">在這一格上蓋什麼</div>');
+  H.push('<div class="eyebrow">在這一層蓋什麼</div>');
   H.push('<div class="bp-row">');
   set.forEach(function (b) {
     H.push('<button class="bp" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'bld:' + b.key + ',' + c[0] + ',' + c[1] })) + '\'>');
+      esc(JSON.stringify({ a: 'bld:' + b.key + ',' + d })) + '\'>');
     H.push(pxTag(b.px, BUILD_PAL, 'bp-px'));
     H.push('<b>' + esc(b.name) + '</b>');
     H.push('</button>');
@@ -321,10 +321,10 @@ function buildPick(t) {
 function buildCard(t) {
   if (!DRAFT.sb) return '';
   var p = DRAFT.sb;
-  var st = buildStory(p[0], Number(p[1]), Number(p[2]));
+  var st = buildStory(p[0], Number(p[1]));
   if (!st || !st.def) return '';
   var tm = teamOf(p[0]);
-  var z = strataAt(Number(p[2]), t.classId);
+  var z = strataAt(Number(p[1]), p[0]);
   var H = ['<div class="card bstory ' + z.key + '">'];
   H.push('<div class="bs-in">');
   H.push(pxTag(st.def.px, BUILD_PAL, 'bs-px'));

@@ -140,6 +140,15 @@ function xsShaft(r, i, maxD, mine) {
     H.push('<div class="xs-seg ' + band.key + (dug ? ' dug' : '') + (here ? ' here' : '') +
       '" style="top:' + xsTop(d) + 'px">');
     if (here) H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
+    /* 那一趟蓋的東西站在那一層裡。這是這張圖上唯一屬於「那一組自己選的」
+       東西——深度是走出來的，蓋什麼是挑的。 */
+    var bl = dug && buildAt(r.teamId, d);
+    var bg = bl && buildDef(bl.k);
+    if (bg) {
+      H.push('<button class="xs-bld" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'seeb:' + r.teamId + ',' + d })) + '\' title="' +
+        esc(bg.name) + '">' + pxTag(bg.px, BUILD_PAL, '') + '</button>');
+    }
     H.push('</div>');
   }
 
@@ -244,10 +253,19 @@ function ecoRows(classId) {
 PAGES.eco = function () {
   var t = myTeam();
   var rows = ecoRows(t.classId);
-  /* 地圖只在首頁一個地方。同一張圖畫兩次，使用者得自己想
-     「這兩張是同一張嗎」——那是最貴的複雜度。
-     這一頁改成只做它獨有的事：別人最近做了什麼。 */
-  var H = [head('全班最近', '別人在幹嘛', '')];
+  /* 地圖回到這一頁。首頁要的是「不用學就懂」，那是廊道；
+     這張圖要學三條規則（一格＝一趟、顏色＝哪一組、亮的可以點），
+     所以它屬於一個你特地過來看的地方。
+
+     打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
+  var H = [head('全班地下城', '大家都在下面', '')];
+  H.push(xsScene(rows, t.teamId, t.classId));
+  H.push(uncoverCard(t));
+  H.push(buildPick(t));
+  H.push(buildCard(t));
+  H.push(digTeamCard(t.classId));
+  H.push(coreCard());
+
   var fd = feedOf(t.classId, 20);
   if (fd.length) {
     H.push('<div class="eyebrow feed-h">全班最近</div>');
@@ -264,7 +282,7 @@ PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
   var H = [head('各組進度', '每一組走到哪', '')];
-  H.push(digMap(u.classId, null));
+  H.push(xsScene(rows, null, u.classId));
   H.push(digTeamCard(u.classId));
   H.push(coreCard());
 
