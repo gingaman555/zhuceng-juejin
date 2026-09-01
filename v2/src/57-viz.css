@@ -1096,3 +1096,12 @@ button.tk-k:hover span{color:var(--gold)}
 /* 建築本身放大：那條廊道要讀起來像一條街，不是一排小圖示。 */
 .xs-bld{width:44px;height:44px;margin-left:-22px;bottom:2px}
 .xs-bld .px{width:44px;height:44px}
+
+/* 排行榜改成三顆點：實心是準的，空心是還沒。
+   畫成點不畫成長條——長條會讀成「量」，而這裡是次數。 */
+.rk-dots{flex:1;display:flex;gap:9px;align-items:center;min-width:44px}
+/* .rk-r b 那一條把整列的 b 都設成 flex:0 0 66px，所以點會被撐開。 */
+.rk-dots b{flex:0 0 14px;width:14px;height:14px;background:var(--sunk);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.5)}
+.rk-dots b.on{background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold2)}
+.rk-r.mine .rk-dots b.on{background:var(--gold2)}

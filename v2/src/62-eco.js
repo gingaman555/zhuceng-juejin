@@ -274,6 +274,9 @@ PAGES.eco = function () {
      打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
   var H = [head('全班地下城', '大家都在下面', '')];
   H.push(xsScene(rows, t.teamId, t.classId));
+  /* 點岩壁裡那一隻會設 DRAFT.fa，但顯示那一張卡的 faunaCard
+     沒有人呼叫——所以點下去一直是沒有反應的。 */
+  H.push(faunaCard());
   /* 排行榜。刻意加進來、準備好隨時拿掉的——見 68-rank.js。
      要拿掉就刪掉這一行跟那兩個檔案，沒有別的地方依賴它。 */
   H.push(rankCard(t.classId, t.teamId));

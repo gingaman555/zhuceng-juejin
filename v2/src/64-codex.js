@@ -21,6 +21,10 @@ PAGES.codex = function () {
   var here = strataAt(depthOf(t.teamId), t.teamId);
   var tab = DRAFT.cx || here.key;
   var met = metMobs(t.teamId);
+  /* 在地底下掀開遇到的那幾隻也算遇過。foundMobs 寫好了但一直沒接上，
+     所以掀開遇到的生物從來沒進過圖鑑。 */
+  var found = foundMobs(t.teamId);
+  Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
 
   var H = [head('圖鑑', '這座地下城裡有什麼', '')];
 

@@ -41,14 +41,15 @@ function rankDev(teamId) {
   }).sort(function (a, b) { return (a.submittedAt || 0) - (b.submittedAt || 0); });
   if (!rs.length) return null;
   var use = rs.slice(-RANK_N);
-  var sum = 0, days = 0;
+  var sum = 0, hit = 0;
   use.forEach(function (r) {
     sum += Math.abs(r.actual - r.est) / r.est;
-    days += Math.abs(r.actual - r.est);
+    if (r.stamp !== 'late') hit++;
   });
-  /* dev 是排序用的（比例，才不會被灌大的承諾騙過去）；
-     day 是寫出來給人看的（平均差幾天，整數，不用換算）。 */
-  return { dev: sum / use.length, day: Math.round(days / use.length), n: use.length };
+  /* hit 是寫出來給人看的：準了幾次。加法的講法——
+     「你拿到了什麼」，不是「你錯了多少」。
+     dev 只留著當平手時分先後，不寫出來。 */
+  return { hit: hit, dev: sum / use.length, n: use.length };
 }
 
 /* 一個班的榜。沒有資料的排在最後，選擇不上榜的整個不出現。 */
@@ -58,12 +59,15 @@ function rankRows(classId) {
     if (t.noRank) return;
     var d = rankDev(t.teamId);
     out.push({ teamId: t.teamId, name: t.name, dev: d ? d.dev : null,
-      day: d ? d.day : 0, n: d ? d.n : 0 });
+      hit: d ? d.hit : 0, n: d ? d.n : 0 });
   });
+  /* 先比準了幾次（多的在上面），平手才用偏差率分先後。
+     平手會很多，那是好事——它讓這張榜比較不像一條隊伍。 */
   out.sort(function (a, b) {
     if (a.dev === null && b.dev === null) return 0;
     if (a.dev === null) return 1;
     if (b.dev === null) return -1;
+    if (a.hit !== b.hit) return b.hit - a.hit;
     return a.dev - b.dev;
   });
   return out;
@@ -87,7 +91,7 @@ function rankCard(classId, meId) {
   /* 單位只在這裡說一次。
      本來每一列寫的是偏差率（13%、100%），沒有人那樣想事情——
      而且 100% 看起來像世界末日，其實只是「說 5 天走了 10 天」。 */
-  H.push('<p class="rk-u">最近三趟，平均差幾天</p>');
+  H.push('<p class="rk-u">最近三趟，準了幾次</p>');
 
   if (!has) {
     H.push('<p class="dim">還沒有人交過。</p>');
@@ -104,12 +108,14 @@ function rankCard(classId, meId) {
     if (r.dev === null) {
       H.push('<span class="rk-d">還沒交過</span>');
     } else {
-      /* 條長＝偏差率，越短越準。滿格是「差了跟承諾一樣多」——
-         再長下去只是把難看的那一條畫得更難看。
-         寫出來的數字換算成「每 10 天差幾天」，那才讀得動。 */
-      var w = Math.min(100, Math.round(r.dev * 100));
-      H.push('<div class="rk-bar"><u style="width:' + w + '%"></u></div>');
-      H.push('<span class="rk-d">' + r.day + ' 天</span>');
+      /* 三顆點：準了幾次。實心是準的，空心是還沒。
+         畫成點不畫成長條，因為長條會讀成「量」，而這裡是次數。 */
+      H.push('<div class="rk-dots">');
+      for (var k = 0; k < RANK_N; k++) {
+        H.push('<b class="' + (k < r.hit ? 'on' : '') + '"></b>');
+      }
+      H.push('</div>');
+      H.push('<span class="rk-d">' + (r.hit ? '準 ' + r.hit + ' 次' : '還沒準過') + '</span>');
     }
     H.push('</div>');
   });
