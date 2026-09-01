@@ -537,10 +537,14 @@ function actSubmit(teamId, runId, link) {
 
    自己當學生走一次才發現的。loop.js 抓不到，因為它直接呼叫 DB 的
    函式，不走介面——所以下面補了一條斷言。 */
-function actReflect(teamId, runId, overs) {
+function actReflect(teamId, runId, overs, hard, pace) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return null;
   r.overs = overs || [];
+  /* 他們自己寫的兩段。系統沒有給選項，也不解讀——
+     這是全系統唯一的自由書寫，而那正好是「不替他們定義」的極致。 */
+  r.hard = (hard || '').slice(0, 300);
+  r.pace = (pace || '').slice(0, 300);
   save();
   logEvent('reflect', { teamId: teamId, runId: runId,
     overs: (overs || []).map(function (i) { return stepName(runId, i); }).join('、') });

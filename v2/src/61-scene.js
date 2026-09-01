@@ -439,3 +439,35 @@ function scrollScene() {
     });
   }
 }
+
+/* ---------- 走出去的那一下 ----------
+
+   一學期的終點。交出去有一整場戰鬥，出去本來只是換一頁——
+   這一段補上那個份量。
+
+   一道從上面下來的光、兩邊是岩壁、人沿著光往上走出畫面。
+   沒有粒子、沒有光暈：跟全作一致，硬邊、零模糊、光從上面來。
+
+   動畫只加東西不當閘門——時鐘被凍住的時候人停在井底，還是看得見。 */
+function exitScene(t) {
+  var z = strataAt(Math.max(0, depthOf(t.teamId) - 1), t.teamId);
+  var H = ['<div class="xit ' + z.key + '">'];
+
+  /* 兩邊的岩壁。中間那一條是光。 */
+  H.push('<div class="xit-sky"></div>');
+  H.push('<div class="xit-rock l"></div>');
+  H.push('<div class="xit-rock r"></div>');
+  H.push('<div class="xit-beam"></div>');
+
+  /* 地表。走出去就是走到這一條上面。 */
+  H.push('<div class="xit-top"></div>');
+
+  /* 人。背影，沿著光往上走。 */
+  H.push('<div class="xit-hero">');
+  H.push(pxTag(HERO.back, HERO.pal, 'ch'));
+  H.push(heroPack(t.teamId));
+  H.push('</div>');
+
+  H.push('</div>');
+  return H.join('');
+}

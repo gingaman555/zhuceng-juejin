@@ -8,7 +8,11 @@
    沒有份量。搬進戰鬥之後它們變成兩下攻擊——
 
      第一問　這一趟做完了哪幾段？      （老師分的段，勾掉做完的）
-     第二問　哪一段比你想的久？        （在看到判定之前先想一次）
+     第二問　這一趟走得怎麼樣？        （哪一段比想的久、卡在哪裡、
+                                        進度如何——後兩題自己寫）
+
+   第二問是全系統唯一的自由書寫。它跟「零輸入框」不衝突：當初擋的是
+   「系統先替他們定義一份詞表」，自己寫的字剛好是那件事的相反。
 
    答完一問打牠一下。牠會退、會閃、會抖，但不會倒——
    倒下是最後那一句「你說 N 天，實際走了 M 天」才發生的事。
@@ -107,7 +111,7 @@ PAGES.battle = function () {
      兩問都接在字幕框底下，答完打牠一下。 */
   if (ph === 'q1' || ph === 'q2') {
     H.push('<div class="bt-q">');
-    H.push(ph === 'q1' ? btSteps(r.runId) : overRow(r));
+    H.push(ph === 'q1' ? btSteps(r.runId) : btAsk(r));
     H.push('<div class="bt-menu wide">');
     H.push(btChoice('bt' + ph + ':' + r.runId, '打過去', 'go'));
     H.push(btChoice('btback:' + r.runId, '還沒好', ''));
@@ -121,7 +125,7 @@ PAGES.battle = function () {
 function btLine(r, mob, ph) {
   if (ph === 'menu') return mob.n + ' 出現了！';
   if (ph === 'q1') return '這一趟做完了哪幾段？';
-  if (ph === 'q2') return '哪一段比你想的久？';
+  if (ph === 'q2') return '這一趟走得怎麼樣？';
   return '你上前。';
 }
 
@@ -146,6 +150,30 @@ function btSteps(runId) {
   return H.join('');
 }
 
+/* 第二問：這一趟走得怎麼樣。
+
+   哪一段比想的久（點的）＋ 兩題自己寫的。兩題都選填——
+   逼人打字會拿到為了交差而打的字，那一刻資料就開始說謊。
+
+   輸入框跟 DRAFT 綁著、而且不重畫：重畫會把 innerHTML 換掉，
+   打到一半的字會不見，游標也會跳掉。 */
+function btAsk(r) {
+  var H = [];
+  if (stepNames(r.runId).length) {
+    H.push('<div class="bt-qh">哪一段比你想的久</div>');
+    H.push(overRow(r));
+  }
+  H.push('<div class="bt-qh">做的時候卡在哪裡嗎</div>');
+  H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
+    'oninput="DRAFT.hard=this.value" placeholder="' +
+    esc('選填。沒有就空著。') + '">' + esc(draft('hard', '')) + '</textarea>');
+  H.push('<div class="bt-qh">你覺得現在的進度如何</div>');
+  H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
+    'oninput="DRAFT.pace=this.value" placeholder="' +
+    esc('選填。沒有就空著。') + '">' + esc(draft('pace', '')) + '</textarea>');
+  return H.join('');
+}
+
 /* 名牌。照舊版寶可夢：名字在上，底下一行小字。
    那條斜出去的尾線是那個畫面最好認的一筆，在 CSS 裡。 */
 function btPlate(name, side, note) {
@@ -160,10 +188,10 @@ function btVerdict(r) {
   var est = r.est || 1;
   var act = r.actual || est;
   if (act < est) {
-    return { key: 'early', line: '牠退開了。你還有 ' + (est - act) + ' 天沒用完。' };
+    return { key: 'early', line: '打敗了。你還有 ' + (est - act) + ' 天沒用完。' };
   }
-  if (act === est) return { key: 'exact', line: '剛好。牠退開了。' };
-  return { key: 'late', line: '時間用完了，你多花了 ' + (act - est) + ' 天。牠還是讓開了。' };
+  if (act === est) return { key: 'exact', line: '剛好打敗了。' };
+  return { key: 'late', line: '打敗了，不過多花了 ' + (act - est) + ' 天。' };
 }
 
 /* ---------- 演一次 ----------
@@ -228,7 +256,7 @@ function battleRun() {
   /* 二 · 牠被打敗。閃四下，然後往下滑出畫面——
      舊版寶可夢就是這樣做的：沒有爆炸，沒有粒子，就是滑下去。 */
   btAt(1900, function () {
-    say(mobOfRun(r).n + ' 讓開了。');
+    say(mobOfRun(r).n + ' 被打敗了！');
     box.classList.add('foe-out');
   });
 
@@ -255,9 +283,9 @@ ACTS.btq1 = function (id) {
 ACTS.btq2 = function (id) {
   var t = myTeam();
   battleStop();
-  actReflect(t.teamId, id, DRAFT.overs || []);
+  actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace);
   if (!actSubmit(t.teamId, id, '')) return say('這一趟已經交過了。');
-  DRAFT.overs = null; DRAFT.said = 0;
+  DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   S.p = { id: id, ph: 'play', hurt: 1 };
   render();
 };

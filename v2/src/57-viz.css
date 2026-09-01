@@ -936,3 +936,68 @@ button.ac:active{transform:translateY(1px)}
 }
 .rec-more .tags{margin-top:11px}
 @media (max-width: 599px){ .rec-more{padding-left:0} }
+
+/* ── 走出去的那一下 ──
+   一道從上面下來的光、兩邊是岩壁、人沿著光往上走出畫面。
+   沒有粒子、沒有光暈：硬邊、零模糊、光從上面來。 */
+.xit{
+  position:relative;height:264px;overflow:hidden;margin:0 0 22px;
+  background:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 3px rgba(0,0,0,.32);
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
+}
+.xit-rock{position:absolute;top:0;bottom:0;width:38%;background:rgba(0,0,0,.55);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.4)}
+.xit-rock.l{left:0}
+.xit-rock.r{right:0}
+/* 光。硬停的三段，不是漸層——一有模糊就變成現代特效。 */
+/* 地表上面是日光。走上去就是走進光裡——
+   底下越深越暗，那一條線是分界。 */
+.xit-sky{position:absolute;left:0;right:0;top:0;height:22px;
+  background:linear-gradient(180deg,#F7ECD2 0 14px,#D9C08A 14px 22px)}
+.xit-beam{
+  position:absolute;left:38%;right:38%;top:22px;bottom:0;
+  background:linear-gradient(180deg,
+    rgba(255,243,216,.52) 0 33px,
+    rgba(255,243,216,.30) 33px 88px,
+    rgba(255,243,216,.14) 88px 176px,
+    rgba(255,243,216,.05) 176px 100%)
+}
+/* 光打在兩邊岩壁上的那一道邊。硬邊，沒有模糊。 */
+.xit-beam::before,.xit-beam::after{
+  content:'';position:absolute;top:0;bottom:0;width:3px;
+  background:rgba(255,243,216,.30)
+}
+.xit-beam::before{left:-3px}
+.xit-beam::after{right:-3px}
+.xit-top{position:absolute;left:0;right:0;top:22px;height:3px;
+  background:#8A7346}
+.xit-hero{
+  position:absolute;left:50%;bottom:22px;width:66px;margin-left:-33px;
+  animation:xitup 2.4s steps(8,end) 1 forwards
+}
+.xit-hero .ch{width:66px;height:66px;image-rendering:pixelated}
+@keyframes xitup{
+  0%{transform:translateY(0);opacity:1}
+  70%{transform:translateY(-154px);opacity:1}
+  100%{transform:translateY(-198px);opacity:0}
+}
+@media (prefers-reduced-motion: reduce){ .xit-hero{animation:none} }
+
+/* 剖面圖：走出去的那一組，廊道整條亮著一道光通到地表。 */
+.xs-out{
+  position:absolute;left:0;right:0;top:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(255,243,216,.20) 0 66px,
+    rgba(255,243,216,.10) 66px 198px,
+    rgba(255,243,216,.04) 198px 396px,
+    transparent 396px)
+}
+.xs-shaft.left .xs-head b{color:var(--gold2)}
+/* 走出去的那個人站在地表上。靠右擺，不然會壓到組名。 */
+.xs-hero.out{z-index:4;left:auto;right:6px}
+
+/* 他們自己寫的那兩段：小標在上、原話在下。
+   系統不解讀、不歸類——原話放上去就好。 */
+.quote b{display:block;font-size:11px;font-weight:400;color:var(--gold2);
+  margin-bottom:3px}

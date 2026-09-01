@@ -147,6 +147,10 @@ PAGES.review = function () {
   H.push(accBar(acc));
   H.push(dayStrip(r.teamId, r.runId));
   H.push(overTags(r.teamId, r));
+  /* 他們自己寫的兩段。老師只有在這裡才知道他們卡在哪——
+     系統不解讀、不歸類，原話放上去就好。 */
+  if (r.hard) H.push('<p class="quote"><b>他們說卡在哪裡</b>' + nl(r.hard) + '</p>');
+  if (r.pace) H.push('<p class="quote"><b>他們覺得的進度</b>' + nl(r.pace) + '</p>');
   H.push('</div>');
 
   H.push('<div class="card">');

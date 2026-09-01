@@ -118,9 +118,18 @@ function xsPlace(out, slots, s, bd, lo, hi) {
 /* ---------- 一條廊道 ---------- */
 function xsShaft(r, i, maxD, mine) {
   var x = xsX(i);
+  var tm = teamOf(r.teamId);
+  var left = !!(tm && tm.leftAt);
   var H = [];
-  H.push('<div class="xs-shaft' + (mine ? ' mine' : '') + '" style="left:' + x +
-    'px;width:' + XS.W + 'px">');
+  H.push('<div class="xs-shaft' + (mine ? ' mine' : '') + (left ? ' left' : '') +
+    '" style="left:' + x + 'px;width:' + XS.W + 'px">');
+
+  /* 走出去的那一組，廊道整條亮著一道光通到地表。
+     別人看得到「他們走出去了」——這是這張圖上關聯性最強的一件事，
+     而且它不是名次：走不走得出去跟估得準不準無關。 */
+  if (left) {
+    H.push('<div class="xs-out" style="height:' + (xsTop(maxD) + 44) + 'px"></div>');
+  }
 
   /* 入口。招牌立在地表上，不是埋在土裡。 */
   var sg = SIGNS[r.sign] || SIGNS.wood;
@@ -168,10 +177,12 @@ function xsShaft(r, i, maxD, mine) {
   });
 
   /* 小人站在最深的那一格 */
+  /* 走出去的那一組，人站在地表上——他不在下面了。 */
   var at = r.depth + (r.at > 0 ? 1 : 0);
-  var pose = r.stall >= 2 ? HERO.sleep : HERO.idle;
-  H.push('<div class="xs-hero' + (r.stall >= 2 ? ' sleep' : '') + '" style="top:' +
-    (xsTop(Math.max(0, at - 1)) + 11) + 'px">');
+  var pose = left ? HERO.idle : (r.stall >= 2 ? HERO.sleep : HERO.idle);
+  var top = left ? (XS.SURF - 44) : (xsTop(Math.max(0, at - 1)) + 11);
+  H.push('<div class="xs-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
+    (left ? ' out' : '') + '" style="top:' + top + 'px">');
   H.push(pxTag(pose, HERO.pal, 'ch-s'));
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</div>');

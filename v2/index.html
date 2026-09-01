@@ -2101,6 +2101,71 @@ button.ac:active{transform:translateY(1px)}
 .rec-more .tags{margin-top:11px}
 @media (max-width: 599px){ .rec-more{padding-left:0} }
 
+/* ── 走出去的那一下 ──
+   一道從上面下來的光、兩邊是岩壁、人沿著光往上走出畫面。
+   沒有粒子、沒有光暈：硬邊、零模糊、光從上面來。 */
+.xit{
+  position:relative;height:264px;overflow:hidden;margin:0 0 22px;
+  background:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 3px rgba(0,0,0,.32);
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
+}
+.xit-rock{position:absolute;top:0;bottom:0;width:38%;background:rgba(0,0,0,.55);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.4)}
+.xit-rock.l{left:0}
+.xit-rock.r{right:0}
+/* 光。硬停的三段，不是漸層——一有模糊就變成現代特效。 */
+/* 地表上面是日光。走上去就是走進光裡——
+   底下越深越暗，那一條線是分界。 */
+.xit-sky{position:absolute;left:0;right:0;top:0;height:22px;
+  background:linear-gradient(180deg,#F7ECD2 0 14px,#D9C08A 14px 22px)}
+.xit-beam{
+  position:absolute;left:38%;right:38%;top:22px;bottom:0;
+  background:linear-gradient(180deg,
+    rgba(255,243,216,.52) 0 33px,
+    rgba(255,243,216,.30) 33px 88px,
+    rgba(255,243,216,.14) 88px 176px,
+    rgba(255,243,216,.05) 176px 100%)
+}
+/* 光打在兩邊岩壁上的那一道邊。硬邊，沒有模糊。 */
+.xit-beam::before,.xit-beam::after{
+  content:'';position:absolute;top:0;bottom:0;width:3px;
+  background:rgba(255,243,216,.30)
+}
+.xit-beam::before{left:-3px}
+.xit-beam::after{right:-3px}
+.xit-top{position:absolute;left:0;right:0;top:22px;height:3px;
+  background:#8A7346}
+.xit-hero{
+  position:absolute;left:50%;bottom:22px;width:66px;margin-left:-33px;
+  animation:xitup 2.4s steps(8,end) 1 forwards
+}
+.xit-hero .ch{width:66px;height:66px;image-rendering:pixelated}
+@keyframes xitup{
+  0%{transform:translateY(0);opacity:1}
+  70%{transform:translateY(-154px);opacity:1}
+  100%{transform:translateY(-198px);opacity:0}
+}
+@media (prefers-reduced-motion: reduce){ .xit-hero{animation:none} }
+
+/* 剖面圖：走出去的那一組，廊道整條亮著一道光通到地表。 */
+.xs-out{
+  position:absolute;left:0;right:0;top:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(255,243,216,.20) 0 66px,
+    rgba(255,243,216,.10) 66px 198px,
+    rgba(255,243,216,.04) 198px 396px,
+    transparent 396px)
+}
+.xs-shaft.left .xs-head b{color:var(--gold2)}
+/* 走出去的那個人站在地表上。靠右擺，不然會壓到組名。 */
+.xs-hero.out{z-index:4;left:auto;right:6px}
+
+/* 他們自己寫的那兩段：小標在上、原話在下。
+   系統不解讀、不歸類——原話放上去就好。 */
+.quote b{display:block;font-size:11px;font-weight:400;color:var(--gold2);
+  margin-bottom:3px}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -2412,6 +2477,43 @@ button.ac:active{transform:translateY(1px)}
 @media (prefers-reduced-motion: reduce){
   .bt.hurt,.bt.hurt .bt-side.foe .bt-ch,.bt.hurt::after{animation:none}
   .bt.flee .bt-side.me .bt-ch{animation:none;opacity:.2}
+}
+
+/* 第二問那三塊。小標在上、東西在下，跟字幕框同一種框。 */
+.bt-qh{font-size:11px;color:var(--gold2);margin:11px 0 6px}
+.bt-qh:first-child{margin-top:0}
+.bt-w{
+  width:100%;margin:0;padding:9px 11px;font:inherit;font-size:11px;line-height:22px;
+  color:var(--ink);background:var(--sunk);border:none;resize:vertical;
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.42)
+}
+.bt-w:focus{outline:none;box-shadow:inset 0 0 0 2px var(--gold-d)}
+.bt-w::placeholder{color:var(--dim)}
+
+/* ── 登場：牠先跳出來 ──
+   舊版寶可夢的野生遭遇：畫面切掉，牠從下面跳上來、彈一下才站定。
+   跳完才輪到你——所以選單是登場演完才出現的。 */
+.bt-side.foe .bt-ch{
+  animation:btjump .62s steps(6,end) 1, btbob 1.2s steps(2,end) .62s infinite
+}
+@keyframes btjump{
+  0%{transform:translate(44px,66px)}
+  55%{transform:translate(6px,-14px)}
+  75%{transform:translate(0,6px)}
+  90%{transform:translate(0,-4px)}
+  100%{transform:translate(0,0)}
+}
+/* 落地那一下的塵。硬邊的一條，沒有粒子。 */
+.bt-side.foe .bt-pad::after{
+  content:'';position:absolute;left:-11px;right:-11px;top:0;height:3px;
+  background:rgba(255,240,214,.5);
+  animation:btdust .5s steps(3,end) .55s 1 backwards
+}
+@keyframes btdust{0%{opacity:0;transform:scaleX(.3)}30%{opacity:.9;transform:scaleX(1)}
+  100%{opacity:0;transform:scaleX(1.3)}}
+@media (prefers-reduced-motion: reduce){
+  .bt-side.foe .bt-ch{animation:none}
+  .bt-side.foe .bt-pad::after{animation:none;opacity:0}
 }
 
 /* ---------- 排行榜 ----------
@@ -4928,10 +5030,14 @@ function actSubmit(teamId, runId, link) {
 
    自己當學生走一次才發現的。loop.js 抓不到，因為它直接呼叫 DB 的
    函式，不走介面——所以下面補了一條斷言。 */
-function actReflect(teamId, runId, overs) {
+function actReflect(teamId, runId, overs, hard, pace) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return null;
   r.overs = overs || [];
+  /* 他們自己寫的兩段。系統沒有給選項，也不解讀——
+     這是全系統唯一的自由書寫，而那正好是「不替他們定義」的極致。 */
+  r.hard = (hard || '').slice(0, 300);
+  r.pace = (pace || '').slice(0, 300);
   save();
   logEvent('reflect', { teamId: teamId, runId: runId,
     overs: (overs || []).map(function (i) { return stepName(runId, i); }).join('、') });
@@ -7090,6 +7196,8 @@ PAGES.stamp = function () {
     .filter(Boolean);
   H.push('<dt>上之前你說</dt><dd class="s">' +
     (ov.length ? esc(ov.join('、')) + ' 比想的久' : '都差不多') + '</dd>');
+  if (r.hard) H.push('<dt>卡在哪裡</dt><dd class="s">' + esc(r.hard) + '</dd>');
+  if (r.pace) H.push('<dt>你覺得的進度</dt><dd class="s">' + esc(r.pace) + '</dd>');
   H.push('</dl>');
   H.push(estBar(r.est, r.actual, false));
   H.push('</div>');
@@ -7256,6 +7364,14 @@ PAGES.exit = function () {
     out ? '' : '往下走不出去——六層會一直重來。出去的方式只有一個：' +
           '把手上這個專案做完，然後說一聲。')];
 
+  /* 離場的演出。角色沿著那道光往上走出畫面。
+
+     這是一學期的終點，比任何一次交出去都重——而交出去有一整場戰鬥，
+     出去本來只是換一頁。
+
+     動畫只加東西不當閘門：時鐘被凍住的時候人停在井底，還是看得見。 */
+  if (out) H.push(exitScene(t));
+
   if (out && t.exitWord) {
     H.push('<div class="card"><div class="eyebrow">老師說</div>' +
       '<p class="quote">' + nl(t.exitWord) + '</p></div>');
@@ -7269,6 +7385,9 @@ PAGES.exit = function () {
   H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
   H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
   H.push('<div><b>' + e.keeps.length + '</b><span>封存的岩心</span></div>');
+  /* 走了幾圈。exitRecord 一直算著它，但那一頁從來沒畫出來——
+     無盡輪迴的設定在終點最該被說一次。 */
+  if (e.cycles) H.push('<div><b>' + e.cycles + '</b><span>走過的輪迴</span></div>');
   H.push('</div>');
   if (e.acc.total) H.push(accBar(e.acc));
   H.push('</div>');
@@ -7412,6 +7531,8 @@ function logRow(m, r, t) {
       ov.forEach(function (l) { H.push('<span class="tag static hit">' + esc(l) + '</span>'); });
       H.push('</div>');
     }
+    if (r.hard) H.push('<p class="quote"><b>卡在哪裡</b>' + nl(r.hard) + '</p>');
+    if (r.pace) H.push('<p class="quote"><b>你覺得的進度</b>' + nl(r.pace) + '</p>');
     if (r.word) H.push('<p class="quote tw">' + nl(r.word) + '</p>');
     H.push('</div>');
   }
@@ -7905,6 +8026,38 @@ function scrollScene() {
   }
 }
 
+/* ---------- 走出去的那一下 ----------
+
+   一學期的終點。交出去有一整場戰鬥，出去本來只是換一頁——
+   這一段補上那個份量。
+
+   一道從上面下來的光、兩邊是岩壁、人沿著光往上走出畫面。
+   沒有粒子、沒有光暈：跟全作一致，硬邊、零模糊、光從上面來。
+
+   動畫只加東西不當閘門——時鐘被凍住的時候人停在井底，還是看得見。 */
+function exitScene(t) {
+  var z = strataAt(Math.max(0, depthOf(t.teamId) - 1), t.teamId);
+  var H = ['<div class="xit ' + z.key + '">'];
+
+  /* 兩邊的岩壁。中間那一條是光。 */
+  H.push('<div class="xit-sky"></div>');
+  H.push('<div class="xit-rock l"></div>');
+  H.push('<div class="xit-rock r"></div>');
+  H.push('<div class="xit-beam"></div>');
+
+  /* 地表。走出去就是走到這一條上面。 */
+  H.push('<div class="xit-top"></div>');
+
+  /* 人。背影，沿著光往上走。 */
+  H.push('<div class="xit-hero">');
+  H.push(pxTag(HERO.back, HERO.pal, 'ch'));
+  H.push(heroPack(t.teamId));
+  H.push('</div>');
+
+  H.push('</div>');
+  return H.join('');
+}
+
 
 /* ===== 62-eco.js ===== */
 /* 全班地下城：一張地質剖面。
@@ -8027,9 +8180,18 @@ function xsPlace(out, slots, s, bd, lo, hi) {
 /* ---------- 一條廊道 ---------- */
 function xsShaft(r, i, maxD, mine) {
   var x = xsX(i);
+  var tm = teamOf(r.teamId);
+  var left = !!(tm && tm.leftAt);
   var H = [];
-  H.push('<div class="xs-shaft' + (mine ? ' mine' : '') + '" style="left:' + x +
-    'px;width:' + XS.W + 'px">');
+  H.push('<div class="xs-shaft' + (mine ? ' mine' : '') + (left ? ' left' : '') +
+    '" style="left:' + x + 'px;width:' + XS.W + 'px">');
+
+  /* 走出去的那一組，廊道整條亮著一道光通到地表。
+     別人看得到「他們走出去了」——這是這張圖上關聯性最強的一件事，
+     而且它不是名次：走不走得出去跟估得準不準無關。 */
+  if (left) {
+    H.push('<div class="xs-out" style="height:' + (xsTop(maxD) + 44) + 'px"></div>');
+  }
 
   /* 入口。招牌立在地表上，不是埋在土裡。 */
   var sg = SIGNS[r.sign] || SIGNS.wood;
@@ -8077,10 +8239,12 @@ function xsShaft(r, i, maxD, mine) {
   });
 
   /* 小人站在最深的那一格 */
+  /* 走出去的那一組，人站在地表上——他不在下面了。 */
   var at = r.depth + (r.at > 0 ? 1 : 0);
-  var pose = r.stall >= 2 ? HERO.sleep : HERO.idle;
-  H.push('<div class="xs-hero' + (r.stall >= 2 ? ' sleep' : '') + '" style="top:' +
-    (xsTop(Math.max(0, at - 1)) + 11) + 'px">');
+  var pose = left ? HERO.idle : (r.stall >= 2 ? HERO.sleep : HERO.idle);
+  var top = left ? (XS.SURF - 44) : (xsTop(Math.max(0, at - 1)) + 11);
+  H.push('<div class="xs-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
+    (left ? ' out' : '') + '" style="top:' + top + 'px">');
   H.push(pxTag(pose, HERO.pal, 'ch-s'));
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</div>');
@@ -8996,7 +9160,11 @@ function uncoverCard(t) {
    沒有份量。搬進戰鬥之後它們變成兩下攻擊——
 
      第一問　這一趟做完了哪幾段？      （老師分的段，勾掉做完的）
-     第二問　哪一段比你想的久？        （在看到判定之前先想一次）
+     第二問　這一趟走得怎麼樣？        （哪一段比想的久、卡在哪裡、
+                                        進度如何——後兩題自己寫）
+
+   第二問是全系統唯一的自由書寫。它跟「零輸入框」不衝突：當初擋的是
+   「系統先替他們定義一份詞表」，自己寫的字剛好是那件事的相反。
 
    答完一問打牠一下。牠會退、會閃、會抖，但不會倒——
    倒下是最後那一句「你說 N 天，實際走了 M 天」才發生的事。
@@ -9095,7 +9263,7 @@ PAGES.battle = function () {
      兩問都接在字幕框底下，答完打牠一下。 */
   if (ph === 'q1' || ph === 'q2') {
     H.push('<div class="bt-q">');
-    H.push(ph === 'q1' ? btSteps(r.runId) : overRow(r));
+    H.push(ph === 'q1' ? btSteps(r.runId) : btAsk(r));
     H.push('<div class="bt-menu wide">');
     H.push(btChoice('bt' + ph + ':' + r.runId, '打過去', 'go'));
     H.push(btChoice('btback:' + r.runId, '還沒好', ''));
@@ -9109,7 +9277,7 @@ PAGES.battle = function () {
 function btLine(r, mob, ph) {
   if (ph === 'menu') return mob.n + ' 出現了！';
   if (ph === 'q1') return '這一趟做完了哪幾段？';
-  if (ph === 'q2') return '哪一段比你想的久？';
+  if (ph === 'q2') return '這一趟走得怎麼樣？';
   return '你上前。';
 }
 
@@ -9134,6 +9302,30 @@ function btSteps(runId) {
   return H.join('');
 }
 
+/* 第二問：這一趟走得怎麼樣。
+
+   哪一段比想的久（點的）＋ 兩題自己寫的。兩題都選填——
+   逼人打字會拿到為了交差而打的字，那一刻資料就開始說謊。
+
+   輸入框跟 DRAFT 綁著、而且不重畫：重畫會把 innerHTML 換掉，
+   打到一半的字會不見，游標也會跳掉。 */
+function btAsk(r) {
+  var H = [];
+  if (stepNames(r.runId).length) {
+    H.push('<div class="bt-qh">哪一段比你想的久</div>');
+    H.push(overRow(r));
+  }
+  H.push('<div class="bt-qh">做的時候卡在哪裡嗎</div>');
+  H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
+    'oninput="DRAFT.hard=this.value" placeholder="' +
+    esc('選填。沒有就空著。') + '">' + esc(draft('hard', '')) + '</textarea>');
+  H.push('<div class="bt-qh">你覺得現在的進度如何</div>');
+  H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
+    'oninput="DRAFT.pace=this.value" placeholder="' +
+    esc('選填。沒有就空著。') + '">' + esc(draft('pace', '')) + '</textarea>');
+  return H.join('');
+}
+
 /* 名牌。照舊版寶可夢：名字在上，底下一行小字。
    那條斜出去的尾線是那個畫面最好認的一筆，在 CSS 裡。 */
 function btPlate(name, side, note) {
@@ -9148,10 +9340,10 @@ function btVerdict(r) {
   var est = r.est || 1;
   var act = r.actual || est;
   if (act < est) {
-    return { key: 'early', line: '牠退開了。你還有 ' + (est - act) + ' 天沒用完。' };
+    return { key: 'early', line: '打敗了。你還有 ' + (est - act) + ' 天沒用完。' };
   }
-  if (act === est) return { key: 'exact', line: '剛好。牠退開了。' };
-  return { key: 'late', line: '時間用完了，你多花了 ' + (act - est) + ' 天。牠還是讓開了。' };
+  if (act === est) return { key: 'exact', line: '剛好打敗了。' };
+  return { key: 'late', line: '打敗了，不過多花了 ' + (act - est) + ' 天。' };
 }
 
 /* ---------- 演一次 ----------
@@ -9216,7 +9408,7 @@ function battleRun() {
   /* 二 · 牠被打敗。閃四下，然後往下滑出畫面——
      舊版寶可夢就是這樣做的：沒有爆炸，沒有粒子，就是滑下去。 */
   btAt(1900, function () {
-    say(mobOfRun(r).n + ' 讓開了。');
+    say(mobOfRun(r).n + ' 被打敗了！');
     box.classList.add('foe-out');
   });
 
@@ -9243,9 +9435,9 @@ ACTS.btq1 = function (id) {
 ACTS.btq2 = function (id) {
   var t = myTeam();
   battleStop();
-  actReflect(t.teamId, id, DRAFT.overs || []);
+  actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace);
   if (!actSubmit(t.teamId, id, '')) return say('這一趟已經交過了。');
-  DRAFT.overs = null; DRAFT.said = 0;
+  DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   S.p = { id: id, ph: 'play', hurt: 1 };
   render();
 };
@@ -9526,6 +9718,10 @@ PAGES.review = function () {
   H.push(accBar(acc));
   H.push(dayStrip(r.teamId, r.runId));
   H.push(overTags(r.teamId, r));
+  /* 他們自己寫的兩段。老師只有在這裡才知道他們卡在哪——
+     系統不解讀、不歸類，原話放上去就好。 */
+  if (r.hard) H.push('<p class="quote"><b>他們說卡在哪裡</b>' + nl(r.hard) + '</p>');
+  if (r.pace) H.push('<p class="quote"><b>他們覺得的進度</b>' + nl(r.pace) + '</p>');
   H.push('</div>');
 
   H.push('<div class="card">');

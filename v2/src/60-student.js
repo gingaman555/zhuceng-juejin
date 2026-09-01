@@ -404,6 +404,8 @@ PAGES.stamp = function () {
     .filter(Boolean);
   H.push('<dt>上之前你說</dt><dd class="s">' +
     (ov.length ? esc(ov.join('、')) + ' 比想的久' : '都差不多') + '</dd>');
+  if (r.hard) H.push('<dt>卡在哪裡</dt><dd class="s">' + esc(r.hard) + '</dd>');
+  if (r.pace) H.push('<dt>你覺得的進度</dt><dd class="s">' + esc(r.pace) + '</dd>');
   H.push('</dl>');
   H.push(estBar(r.est, r.actual, false));
   H.push('</div>');
@@ -570,6 +572,14 @@ PAGES.exit = function () {
     out ? '' : '往下走不出去——六層會一直重來。出去的方式只有一個：' +
           '把手上這個專案做完，然後說一聲。')];
 
+  /* 離場的演出。角色沿著那道光往上走出畫面。
+
+     這是一學期的終點，比任何一次交出去都重——而交出去有一整場戰鬥，
+     出去本來只是換一頁。
+
+     動畫只加東西不當閘門：時鐘被凍住的時候人停在井底，還是看得見。 */
+  if (out) H.push(exitScene(t));
+
   if (out && t.exitWord) {
     H.push('<div class="card"><div class="eyebrow">老師說</div>' +
       '<p class="quote">' + nl(t.exitWord) + '</p></div>');
@@ -583,6 +593,9 @@ PAGES.exit = function () {
   H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
   H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
   H.push('<div><b>' + e.keeps.length + '</b><span>封存的岩心</span></div>');
+  /* 走了幾圈。exitRecord 一直算著它，但那一頁從來沒畫出來——
+     無盡輪迴的設定在終點最該被說一次。 */
+  if (e.cycles) H.push('<div><b>' + e.cycles + '</b><span>走過的輪迴</span></div>');
   H.push('</div>');
   if (e.acc.total) H.push(accBar(e.acc));
   H.push('</div>');
@@ -726,6 +739,8 @@ function logRow(m, r, t) {
       ov.forEach(function (l) { H.push('<span class="tag static hit">' + esc(l) + '</span>'); });
       H.push('</div>');
     }
+    if (r.hard) H.push('<p class="quote"><b>卡在哪裡</b>' + nl(r.hard) + '</p>');
+    if (r.pace) H.push('<p class="quote"><b>你覺得的進度</b>' + nl(r.pace) + '</p>');
     if (r.word) H.push('<p class="quote tw">' + nl(r.word) + '</p>');
     H.push('</div>');
   }
