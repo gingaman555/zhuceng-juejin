@@ -60,7 +60,7 @@ PAGES.home = function () {
       H.push(aw.left > 0 ? '<b>' + aw.left + '</b><span>天到期</span>'
         : '<em>已經超過你說的天數</em>');
     }
-    if (aw.cells) H.push('<b>' + aw.cells + '</b><span>全班新打通</span>');
+    if (aw.cells) H.push('<b>' + aw.cells + '</b><span>全班新蓋的</span>');
     if (aw.okd) H.push('<em class="ok">老師勾了 ' + aw.okd + ' 件</em>');
     H.push('</div>');
   }
@@ -373,7 +373,7 @@ PAGES.commit = function () {
 
 /* ---------- 交出去 ---------- */
 /* 交出去那一頁退休了：兩問搬進戰鬥（見 67-battle.js），
-   那張選填的日子表搬到封存——它決定的是岩心長什麼樣子。 */
+   那張選填的日子表搬到封存——它決定的是石片長什麼樣子。 */
 
 /* ---------- 判定結果 ---------- */
 PAGES.stamp = function () {
@@ -464,7 +464,7 @@ PAGES.camp = function () {
 
 /* ---------- 封存 ----------
 
-   走完一趟，那一趟的紀錄長成一根岩心。形狀完全由那一趟決定：
+   走完一趟，那一趟的紀錄長成一根石片。形狀完全由那一趟決定：
    一天兩列，來過是實心、說了沒動是空心、沒有紀錄是斷的，
    長度就是這一趟過了幾天。
 
@@ -506,7 +506,7 @@ PAGES.pick = function () {
      補齊：一張那幾天的格子，點一下標起來。選填——不標一樣交得出去，
      而且它不進判定（判定只看承諾幾天與行事曆過了幾天）。
 
-     它唯一影響的是那一趟長成什麼樣子的岩心。 */
+     它唯一影響的是那一趟長成什麼樣子的石片。 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">這幾天你動過哪幾天　選填</div>');
   H.push(dayGrid(r.runId));
@@ -568,7 +568,7 @@ PAGES.exit = function () {
   H.push('<div><b>' + e.runs.length + '</b><span>走完的里程碑</span></div>');
   H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
   H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
-  H.push('<div><b>' + e.keeps.length + '</b><span>封存的岩心</span></div>');
+  H.push('<div><b>' + e.keeps.length + '</b><span>封存的石片</span></div>');
   /* 走了幾圈。exitRecord 一直算著它，但那一頁從來沒畫出來——
      無盡輪迴的設定在終點最該被說一次。 */
   if (e.cycles) H.push('<div><b>' + e.cycles + '</b><span>走過的輪迴</span></div>');
@@ -600,7 +600,7 @@ PAGES.exit = function () {
     H.push('</div>');
   }
 
-  /* 帶出去的那一排岩心。二十根排在一起，就是一個學期的形狀。 */
+  /* 帶出去的那一排石片。二十根排在一起，就是一個學期的形狀。 */
   if (e.keeps.length) {
     H.push('<div class="card"><div class="eyebrow">你帶出去的</div>');
     H.push('<div class="rack">');

@@ -316,10 +316,14 @@ function buildPick(t) {
     H.push('<button class="bp' + (fit ? ' fit' : '') + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'bld:' + b.key + ',' + d })) + '\'>');
     /* 兩個口畫在上下兩緣。有就是一段亮的，沒有就是空的。 */
+    /* 深色剪影要有亮的地面才看得見，而那塊地面剛好就是它蓋好之後
+       在剖面圖上站的地方——所以這張卡同時是預覽。 */
+    H.push('<span class="bp-ground">');
     H.push('<i class="bp-p u' + (b.port.indexOf('u') >= 0 ? ' on' : '') + '"></i>');
     H.push(pxTag(b.px, BUILD_PAL, 'bp-px'));
-    H.push('<b>' + esc(b.name) + '</b>');
     H.push('<i class="bp-p dn' + (b.port.indexOf('d') >= 0 ? ' on' : '') + '"></i>');
+    H.push('</span>');
+    H.push('<b>' + esc(b.name) + '</b>');
     H.push('</button>');
   });
   H.push('</div>');

@@ -613,7 +613,7 @@ button.ac:active{transform:translateY(1px)}
   clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
 }
 .bp:hover{box-shadow:inset 0 0 0 2px var(--gold), inset 2px 2px 0 rgba(255,255,255,.12)}
-.bp-px{width:44px;height:44px;image-rendering:pixelated}
+.bp-px{width:66px;height:50px;image-rendering:pixelated}
 .bp b{font-size:11px;font-weight:400}
 
 /* 點一座建築：那是哪一趟。建築不是獎品，是那一趟的紀念碑。 */
@@ -1079,7 +1079,7 @@ button.tk-k:hover span{color:var(--gold)}
 
 /* 上一層留下的那個口。畫出來就是題目。 */
 .bp-above{display:flex;flex-direction:column;align-items:center;margin:0 0 6px}
-.bp-ax{width:44px;height:44px;image-rendering:pixelated;opacity:.75}
+.bp-ax{width:55px;height:41px;image-rendering:pixelated;opacity:.75}
 .bp-drop{width:5px;height:16px;background:var(--gold-d)}
 
 /* ── 接起來的那一段 ──
@@ -1094,8 +1094,9 @@ button.tk-k:hover span{color:var(--gold)}
 }
 
 /* 建築本身放大：那條廊道要讀起來像一條街，不是一排小圖示。 */
-.xs-bld{width:44px;height:44px;margin-left:-22px;bottom:2px}
-.xs-bld .px{width:44px;height:44px}
+/* 六種形狀要看得出輪廓，44px 還是太小。放到 55px，貼齊地面。 */
+.xs-bld{width:55px;height:41px;margin-left:-27px;bottom:2px}
+.xs-bld .px{width:55px;height:41px}
 
 /* 排行榜改成三顆點：實心是準的，空心是還沒。
    畫成點不畫成長條——長條會讀成「量」，而這裡是次數。 */
@@ -1125,3 +1126,16 @@ button.tk-k:hover span{color:var(--gold)}
 .msr-e i{font-size:11px;font-style:normal;color:var(--dim);
   font-variant-numeric:tabular-nums}
 .msr-e b{color:var(--ink);font-weight:400}
+
+/* 三選一那三張：建築是深色剪影，畫在深色卡片上等於看不見。
+   給它一塊亮的地面站著——那也剛好就是它蓋好之後在剖面圖上的樣子
+   （那裡的底色是自己那一組的顏色），所以這張卡同時是預覽。 */
+.bp{position:relative;padding-top:0;padding-bottom:11px;overflow:hidden}
+.bp-ground{
+  display:block;width:100%;height:55px;margin:0 0 9px;
+  background:var(--gold);position:relative;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.30), inset 0 -3px 0 rgba(0,0,0,.45)
+}
+.bp-ground .bp-px{position:absolute;left:50%;bottom:2px;margin-left:-33px}
+.bp-p.u{top:0}
+.bp-p.dn{bottom:2px}

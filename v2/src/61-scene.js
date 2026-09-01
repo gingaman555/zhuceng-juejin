@@ -229,7 +229,7 @@ function scene(t, row, st, kind) {
 
 /* 角色背上背著的東西。
 
-   這個系統裡拿得到的東西只有一種：封存過的岩心。所以背上背的就是它們——
+   這個系統裡拿得到的東西只有一種：封存過的石片。所以背上背的就是它們——
    一趟一根，學期越後面背得越滿。那不是裝飾，那是「你帶著什麼在走」。
 
    它不加速、不擋失準、不換任何東西（一旦能換到好處，人就為好處做事）。
@@ -247,7 +247,7 @@ function heroPack(teamId) {
   var ks = keepsOf(teamId);
   if (!ks.length) return '';
   var show = ks.slice(-4);
-  var H = ['<div class="hpack" title="' + esc('背上的岩心 ' + ks.length + ' 根') + '">'];
+  var H = ['<div class="hpack" title="' + esc('背上的石片 ' + ks.length + ' 根') + '">'];
   show.forEach(function (k, i) {
     var z = STRATA[0];
     STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
@@ -261,11 +261,11 @@ function heroPack(teamId) {
 /* ---------- 洞口 ----------
    左邊是你進來的地方：拱門、從上面落下來的光、掛著的招牌。
    招牌就在這裡，不在標題列——它是廊道入口的看板，不是頁首。 */
-/* 洞口。招牌、營火、岩心架、往上的光——全部在這裡，而且一直在。
+/* 洞口。招牌、營火、石片架、往上的光——全部在這裡，而且一直在。
 
    為什麼要一直在：沒觸發過的東西等於不存在。一個學生如果從來沒有
    失準過，他整學期不會知道有營火這個地方；一個還沒封存過的人不會
-   知道岩心架是什麼。所以它們在那裡，只是沒點著——
+   知道石片架是什麼。所以它們在那裡，只是沒點著——
    「看得到但還沒發生」跟「不存在」是兩件事。 */
 function sceneMouth(t, next) {
   var sg = signOf(t.teamId);
@@ -323,7 +323,7 @@ function sceneMouth(t, next) {
     }
   }
 
-  /* 岩心架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
+  /* 石片架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
   H.push('<button class="mrack" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
     esc(ks.length ? '封存的：' + ks.length + ' 根' : '還沒封存過') + '">');

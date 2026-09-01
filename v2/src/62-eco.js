@@ -164,7 +164,7 @@ function xsShaft(r, i, maxD, mine) {
     H.push('</div>');
   }
 
-  /* 封存過的岩心掛在它們被封存的那個深度。
+  /* 封存過的石片掛在它們被封存的那個深度。
 
      這是這張圖上唯一會一直長出新東西的地方，而且長出新東西的是別人。
      內容一定會用完（六層走完一圈就沒有新的石頭了），同學不會。
@@ -221,7 +221,7 @@ function faunaCard() {
 ACTS.fauna = function (name) { DRAFT.fa = name; DRAFT.ck = null; render(); };
 ACTS.core = function (id) { DRAFT.ck = id; DRAFT.fa = null; render(); };
 
-/* 點開的那一根岩心。別組的也點得開——那是這張圖上唯一會一直
+/* 點開的那一根石片。別組的也點得開——那是這張圖上唯一會一直
    長出新東西的地方，而且長出新東西的是別人。 */
 function coreCard() {
   if (!DRAFT.ck) return '';
@@ -253,7 +253,7 @@ function coreCard() {
 
 /* 圖例拿掉了。一張要配對照表才看得懂的圖，是那張圖沒畫好——
    顏色對到地層、實心對到走過、小人對到人在哪，這幾件事看一次就會了。
-   點得開的那幾樣（生物、別組的岩心）自己會說明自己。 */
+   點得開的那幾樣（生物、別組的石片）自己會說明自己。 */
 
 function ecoRows(classId) {
   return ecology(classId).map(function (r) {
@@ -322,7 +322,7 @@ PAGES.classeco = function () {
      這一頁本來在底下又用文字卡把同樣的事一組一張再列一遍——
      五組五張，整頁 3424px，是全系統最高的一頁。刪掉了。
 
-     要細節就點那一組（digTeamCard 會攤開他們封存過的每一根岩心）；
+     要細節就點那一組（digTeamCard 會攤開他們封存過的每一根石片）；
      要去勾就在審核那一頁，那才是它該在的地方。 */
   H.push(xsScene(rows, null, u.classId));
   H.push(digTeamCard(u.classId));
