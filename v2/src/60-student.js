@@ -129,7 +129,7 @@ function stepRow(runId) {
 function taskTag(next) {
   return ({
     commit: '新的', doing: '正在做', submit: '走到底了',
-    stamped: '判定', review: '在老師那邊', gear: '老師看完了',
+    stamped: '判定', review: '在老師那邊', gear: '老師勾了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
 }
@@ -555,7 +555,7 @@ PAGES.pick = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">給這一趟取個名字　選填</div>');
   H.push('<div class="rn-row">');
-  H.push('<input id="cname" maxlength="16" placeholder="' +
+  H.push('<input id="cname" value="' + esc(draft('cName', '')) + '" oninput="DRAFT[\'cName\']=this.value" maxlength="16" placeholder="' +
     esc('例：訪談那一週') + '">');
   H.push('</div>');
   H.push(btn('封存', 'seal:' + r.runId, 'big'));
@@ -590,12 +590,13 @@ PAGES.dash = function () {
     H.push('</div>');
   }
 
-  /* 封存完手上多一格可以打通。那一下要在地圖上做——
-     地圖是動手的地方，不是一個看的頁面。 */
-  if (claimsOf(t.teamId)) {
+  /* 封存完就多一層。 */
+  /* 走完一趟就多一層。往下一層不是一個動作——
+     要選的只有「在這一層蓋什麼」。 */
+  if (unbuiltDepth(t.teamId) >= 0) {
     H.push('<div class="card">');
-    H.push('<div class="eyebrow">你有 ' + claimsOf(t.teamId) + ' 格可以打通</div>');
-    H.push(btn('去地圖上打通', 'go:home', 'big'));
+    H.push('<div class="eyebrow lit">新的一層</div>');
+    H.push(btn('去看看那一層', 'go:eco', 'big'));
     H.push('</div>');
   } else {
     H.push(btn('回廊道', 'go:home', 'big'));

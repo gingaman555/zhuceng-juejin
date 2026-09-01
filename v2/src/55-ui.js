@@ -39,6 +39,7 @@ var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', submit: 'student', stamp: 'student',
   camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
+  battle: 'student',
   exit: 'student', codex: 'student', sign: 'student',
   log: 'student', claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
@@ -126,6 +127,8 @@ function render() {
   /* 走廊比視窗長的時候，重畫預設回到最左邊——那樣按完推進會看到
      走廊變了卻看不到自己動。鏡頭跟著人走。 */
   if (typeof scrollScene === 'function') scrollScene();
+  /* 那一場要花幾秒鐘發生。結果是算好的，這裡只負責演。 */
+  if (typeof battleRun === 'function') battleRun();
 }
 
 function flashBar() {
@@ -228,7 +231,7 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '廊道'], ['pack', '岩心架'], ['codex', '圖鑑'],
+      ['home', '廊道'], ['pack', '任務清單'], ['codex', '圖鑑'],
       ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
@@ -315,7 +318,7 @@ var ACTS = {
       var t = myTeam();
       var n = nextThing(t.teamId);
       if (n.kind === 'camp') return go('camp', { id: n.row.run.runId });
-      return say('營火。比你自己說的天數久的時候，會在這裡坐下來說一句哪一段比想的久。這不扣任何東西。');
+      return say('營火。比你自己說的天數久的時候，會在這裡坐下來說一句哪一段比想的久。這不會拿走任何權利。');
     }
   },
 
@@ -422,8 +425,10 @@ var ACTS = {
     /* 交出去之前想的那一句一起存。在看到判定之前存下來，
        所以它不是看到結果之後回頭解釋的。 */
     actReflect(t.teamId, runId, DRAFT.overs || []);
-    var r = actSubmit(t.teamId, runId, '');
-    if (r) go('stamp', { id: runId });
+    /* 先進戰鬥，交出去是戰鬥裡的「上」。
+       進去了還可以退出來重新想幾天——做到一半發現寫不出來
+       是真的會發生的事，而且承認它比硬交出去好。 */
+    go('battle', { id: runId, at: 'menu' });
   },
 
   skipcamp: function (runId) { actSkipCamp(runId); go('home'); },
@@ -432,7 +437,7 @@ var ACTS = {
     var t = myTeam();
     actReflect(t.teamId, runId, DRAFT.overs || []);
     go('home');
-    say('說出來了。老師看得到，而且這不會扣任何東西。');
+    say('說出來了。老師看得到，而且這不會拿走任何權利。');
   },
 
   /* 老師勾可以了 → 去挑裝備 */
@@ -471,6 +476,7 @@ var ACTS = {
   seal: function (runId) {
     var name = (document.getElementById('cname') || {}).value || '';
     if (!actSeal(runId, name)) return say('這一趟已經封存了。');
+    DRAFT.cName = '';
     go('dash', { id: runId });
     animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
   },
@@ -494,6 +500,9 @@ var ACTS = {
       .split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
     actPublish(me().classId, { title: title.trim(), note: note.trim(),
       steps: steps, teams: DRAFT.to || [] });
+    /* 草稿清掉，不然下一個會帶著上一個的字。
+       （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
+    DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.msSteps = ''; DRAFT.to = [];
     go('ms');
     say('派出去了。學生那邊會先被問「你打算花幾天」。');
   },

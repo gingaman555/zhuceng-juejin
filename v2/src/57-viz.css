@@ -892,3 +892,31 @@ button.ac:active{transform:translateY(1px)}
   position:absolute;top:11px;left:6px;font-size:11px;color:var(--gold);
   white-space:nowrap;background:rgba(0,0,0,.55);padding:2px 5px
 }
+
+/* ── 任務清單 ──
+   老師派過的每一件事，各自走到哪。數字靠右對齊，因為「你說幾天」跟
+   「實際幾天」是要被互相比較的——這一頁順便就是他們自己的估算史。 */
+.tk-list{display:flex;flex-direction:column}
+.tk{padding:14px 0;border-bottom:2px solid rgba(0,0,0,.16)}
+.tk:last-child{border-bottom:0}
+.tk-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.tk-h b{font-size:22px;font-weight:400;line-height:33px;color:var(--ink)}
+.tk-s{
+  flex:0 0 auto;font-size:11px;font-style:normal;padding:2px 8px;
+  color:var(--mute);background:var(--sunk);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.28)
+}
+.tk-s.go{color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold-d)}
+.tk-s.ok{color:#7FA866;box-shadow:inset 0 0 0 2px rgba(127,168,102,.5)}
+
+.tk-n{display:flex;align-items:baseline;gap:6px;margin-top:6px}
+.tk-n span{font-size:11px;color:var(--dim)}
+.tk-n b{font-size:22px;font-weight:400;color:var(--ink);
+  font-variant-numeric:tabular-nums;margin-right:11px}
+.tk-n b.late{color:var(--over)}
+.tk-n .tk-u{margin-left:-8px}
+
+/* 岩心掛在它自己那一趟旁邊——它終於有出處了。 */
+.tk-k{display:flex;align-items:center;gap:9px;margin-top:9px}
+.tk-k .core{height:22px;width:auto;image-rendering:pixelated}
+.tk-k span{font-size:11px;color:var(--dim)}

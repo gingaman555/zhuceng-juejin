@@ -22,44 +22,86 @@
 
 PAGES.pack = function () {
   var t = myTeam();
-  var ks = keepsOf(t.teamId).slice().reverse();
+  var rows = runsFor(t.teamId).slice().reverse();
+  /* 重新想過的那幾趟不會出現在 runsFor（runOf 跳過它們），
+     但它們是真的發生過的事，所以另外撈出來一起排。 */
+  var again = where('Runs', function (r) {
+    return r.teamId === t.teamId && r.state === 'rethought';
+  }).map(function (r) { return { ms: msOf(r.msId), run: r }; });
 
-  var H = [head('岩心架', ks.length + ' 根', '')];
+  var H = [head('任務清單', '老師派過的每一件事', '')];
 
-  if (!ks.length) {
-    H.push('<div class="card dim">走完一趟、老師勾了可以之後，' +
-      '那一趟會長成一根岩心。形狀由那一趟自己決定。</div>');
+  if (!rows.length && !again.length) {
+    H.push('<div class="card dim">老師還沒派過任何一件事。</div>');
     H.push(btn('回廊道', 'go:home', 'ghost'));
     return H.join('');
   }
 
-  /* 圖例。看得懂才讀得出自己的歷史。 */
-  H.push('<div class="card quiet">');
-  H.push('<div class="eyebrow">怎麼讀</div>');
-  H.push('<div class="corekey">');
-  H.push('<span><b class="c1"></b>那一天你來過</span>');
-  H.push('<span><b class="c2"></b>你說那天沒動</span>');
-  H.push('<span><b class="c3"></b>那一天沒有紀錄</span>');
-  H.push('</div>');
-  H.push('<p class="dim">長度就是那一趟過了幾天。顏色是你當時在哪一層。</p>');
-  H.push('</div>');
-
   H.push('<div class="card">');
-  H.push('<div class="rack">');
-  ks.forEach(function (k) {
-    var z = STRATA[0];
-    STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
-    var r = find('Runs', function (x) { return x.runId === k.runId; });
-    var m = r ? msOf(r.msId) : null;
-    H.push('<div class="rk">');
-    H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'core'));
-    H.push('<b>' + esc(k.name || (m ? m.title : '')) + '</b>');
-    H.push('<span>' + (k.elapsed || 0) + ' 天　·　來過 ' + (k.moved || 0) + '</span>');
-    H.push('<em>' + esc(z.name) + '</em>');
-    H.push('</div>');
-  });
-  H.push('</div></div>');
+  H.push('<div class="tk-list">');
+  rows.forEach(function (x) { H.push(taskRow(x.ms, x.run, t)); });
+  again.forEach(function (x) { H.push(taskRow(x.ms, x.run, t)); });
+  H.push('</div>');
+  H.push('</div>');
 
   H.push(btn('回廊道', 'go:home', 'ghost'));
   return H.join('');
 };
+
+/* 一列＝一件事。狀態、你說幾天、實際幾天、那一趟叫什麼。
+
+   數字靠右對齊，因為「說幾天」跟「實際幾天」是要被互相比較的——
+   這一頁順便就是他們自己的估算史。 */
+function taskRow(m, r, t) {
+  if (!m) return '';
+  var st = TASK_STATE[r.state] || TASK_STATE.fresh;
+  var H = ['<div class="tk ' + (r.stamp || '') + '">'];
+
+  H.push('<div class="tk-h">');
+  H.push('<i class="tk-s ' + st.k + '">' + esc(st.n) + '</i>');
+  H.push('<b>' + esc(m.title) + '</b>');
+  H.push('</div>');
+
+  /* 說幾天 → 實際幾天。還沒交的那幾趟只有左邊那個數字。 */
+  if (r.est) {
+    H.push('<div class="tk-n">');
+    H.push('<span>你說</span><b>' + r.est + '</b>');
+    if (r.actual) { H.push('<span>實際</span><b class="' + (r.stamp || '') + '">' +
+      r.actual + '</b>'); }
+    else if (r.went) { H.push('<span>走了</span><b>' + r.went + '</b>'); }
+    else if (r.state === 'running') {
+      var gone = daysBetween(r.committedAt, now());
+      H.push('<span>過了</span><b>' + gone + '</b>');
+    }
+    H.push('<span class="tk-u">天</span>');
+    H.push('</div>');
+  }
+
+  /* 封存過的那一趟：名字跟那一根岩心。
+     岩心終於有出處了——它掛在它自己那一趟旁邊。 */
+  var kp = null;
+  keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
+  if (kp) {
+    var z = STRATA[0];
+    STRATA.forEach(function (x) { if (x.key === kp.zone) z = x; });
+    H.push('<div class="tk-k">');
+    H.push(pxTag(kp.px || coreOf(kp.runId), z.pal, 'core'));
+    H.push('<span>' + esc(kp.name || '（沒取名）') + '</span>');
+    H.push('</div>');
+  }
+
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 每一種狀態一句人話。沒有一句在講「你做得好不好」。 */
+var TASK_STATE = {
+  fresh:     { k: 'wait', n: '還沒說幾天' },
+  running:   { k: 'go',   n: '正在做' },
+  judged:    { k: 'go',   n: '交出去了' },
+  submitted: { k: 'go',   n: '在老師那邊' },
+  approved:  { k: 'ok',   n: '老師勾了' },
+  done:      { k: 'ok',   n: '走完了' },
+  rethought: { k: 'wait', n: '重新想過' }
+};
+

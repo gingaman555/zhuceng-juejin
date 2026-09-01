@@ -32,7 +32,7 @@ PAGES.codex = function () {
       esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
   });
   H.push('<button class="cxt gear' + (tab === 'gear' ? ' on' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:gear' })) + '\'>東西</button>');
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:gear' })) + '\'>物件</button>');
   H.push('</div>');
 
   if (tab === 'gear') {
@@ -79,14 +79,14 @@ function codexThings(t, here) {
   H.push('</div></div>');
 
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">地上的東西</div>');
+  H.push('<div class="eyebrow">地上的物件</div>');
   H.push('<p class="dim">每一層長的不一樣——那是你怎麼知道自己換了地方。</p>');
   H.push('<div class="cx">');
   [['碎石', RUBBLE.px, '打通的時候崩下來的。'],
-   ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點東西。'],
+   ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點輪廓。'],
    ['蕈菇', SHROOM.px, '走通的地方才長得出來。'],
    ['鐵件', BOLT.px, '有人來過。鏽住了，轉不動。'],
-   ['餘燼', EMBER.px, '地上還有東西在燒。'],
+   ['餘燼', EMBER.px, '地上還有餘燼在燒。'],
    ['火把', TORCH.frames[0], '你來過的每一天，牆上多一盞。']
   ].forEach(function (p) {
     H.push('<div class="cxi met">');

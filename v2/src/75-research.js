@@ -52,7 +52,7 @@ PAGES.rs = function () {
   });
   H.push('<div class="eyebrow" style="margin-top:14px">開一個新的班</div>');
   H.push('<div class="rn-row">');
-  H.push('<input id="ncls" placeholder="' + esc('班級名稱，例：設計專題') + '">');
+  H.push('<input id="ncls" value="' + esc(draft('nCls', '')) + '" oninput="DRAFT[\'nCls\']=this.value" placeholder="' + esc('班級名稱，例：設計專題') + '">');
   H.push(btn('建立', 'newclass', 'ghost'));
   H.push('</div>');
   H.push('</div>');
@@ -61,8 +61,8 @@ PAGES.rs = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">開一個老師或研究者的帳號</div>');
   H.push('<div class="rn-row">');
-  H.push('<input id="nu-acc" placeholder="' + esc('帳號') + '">');
-  H.push('<input id="nu-name" placeholder="' + esc('顯示名稱') + '">');
+  H.push('<input id="nu-acc" value="' + esc(draft('nuAcc', '')) + '" oninput="DRAFT[\'nuAcc\']=this.value" placeholder="' + esc('帳號') + '">');
+  H.push('<input id="nu-name" value="' + esc(draft('nuName', '')) + '" oninput="DRAFT[\'nuName\']=this.value" placeholder="' + esc('顯示名稱') + '">');
   H.push('<input id="nu-pw" placeholder="' + esc('先給一個密碼，之後請他自己換') + '">');
   H.push('</div>');
   H.push('<div class="row" style="margin:11px 0 0">');

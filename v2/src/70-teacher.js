@@ -82,7 +82,7 @@ PAGES.radar = function () {
 
   H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '目前沒有等你看的',
     rows.length
-      ? '照等最久的排。看完他們交的東西，回來勾一個「可以」——挑哪一件裝備是他們的事。'
+      ? '照等最久的排。看完他們交的成果，回來勾一個「可以」——挑哪一件裝備是他們的事。'
       : '學生交出去之後會排在這裡。在那之前，你可以去發下一個里程碑。'));
 
   if (!rows.length) {
@@ -137,7 +137,7 @@ PAGES.review = function () {
   var acc = accuracyOf(r.teamId);
 
   var H = [head('審核', t.name + '　·　' + m.title,
-    '東西他們交在你原本收的地方。這裡要你做的只有一件事：勾一個「可以」。' +
+    '成果他們交在你原本收的地方。這裡要你做的只有一件事：勾一個「可以」。' +
     '想說一句話再說，不想說就直接勾。')];
 
   H.push('<div class="card">');
@@ -183,12 +183,12 @@ PAGES.ms = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">派一個新的</div>');
-  H.push('<input id="ms-title" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
-  H.push('<textarea id="ms-note" rows="2" placeholder="' +
-    esc('要注意的地方。選填。') + '"></textarea>');
+  H.push('<input id="ms-title" value="' + esc(draft('msTitle', '')) + '" oninput="DRAFT[\'msTitle\']=this.value" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
+  H.push('<textarea id="ms-note" oninput="DRAFT[\'msNote\']=this.value" rows="2" placeholder="' +
+    esc('要注意的地方。選填。') + '">' + esc(draft('msNote', '')) + '</textarea>');
   H.push('<div class="eyebrow" style="margin-top:14px">分段　選填　一行一段</div>');
-  H.push('<textarea id="ms-steps" rows="4" placeholder="' +
-    esc('訪三個人\n整理逐字稿\n收斂成一句話') + '"></textarea>');
+  H.push('<textarea id="ms-steps" oninput="DRAFT[\'msSteps\']=this.value" rows="4" placeholder="' +
+    esc('訪三個人\n整理逐字稿\n收斂成一句話') + '">' + esc(draft('msSteps', '')) + '</textarea>');
   H.push('<p class="dim">分了段，學生每天可以點「今天動的是哪一段」，' +
          '也可以一段一段勾掉。不分段一樣走得完。</p>');
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');

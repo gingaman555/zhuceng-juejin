@@ -162,6 +162,11 @@ function scene(t, row, st, kind) {
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
     '" style="left:' + hx + 'px">');
+  /* 頭上寫他在幹嘛。本來只靠姿勢，而姿勢在 66px 上看不太出來——
+     寫出來最快，而且它同時說明了「現在沒事做」是一個正常狀態。 */
+  H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
+    '">' + (walking ? '前進中' : resting ? '休息中' :
+      st.level >= 2 ? '停很久了' : '待命') + '</div>');
   if (walking) {
     H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
     H.push(pxTag(HERO.walkB, HERO.pal, 'ch wf wb'));

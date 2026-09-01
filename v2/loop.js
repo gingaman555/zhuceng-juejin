@@ -48,9 +48,10 @@ console.log('迴圈測試　' + ROUNDS + ' 輪\n');
 runsFor(TEAM).forEach(function (x) {
   if (x.run.state === 'running') {
     while (RULES.progress(x.run.pushes, x.run.est) < 1) { tick(); actPush(TEAM, x.run.runId, -1, 0); }
+    /* 省思在「上」之前，而且每一次都問。 */
+    actReflect(TEAM, x.run.runId, [0]);
     actSubmit(TEAM, x.run.runId);
-    if (x.run.stamp === 'late') actReflect(TEAM, x.run.runId, [0]);
-    else actSkipCamp(x.run.runId);
+    actSkipCamp(x.run.runId);
     actApprove(x.run.runId, '');
     actSeal(x.run.runId, '');
   }
@@ -100,6 +101,8 @@ for (let n = 1; n <= ROUNDS; n++) {
   }
 
   /* 7. 上傳 → 判定 */
+  /* 省思在「上」之前。 */
+  actReflect(TEAM, run.runId, [0]);
   const r = actSubmit(TEAM, run.runId);
   if (!r || !r.stamp) { fail(label + '：上傳之後沒有判定'); break; }
   stamps[r.stamp]++;
@@ -107,17 +110,15 @@ for (let n = 1; n <= ROUNDS; n++) {
   const expect = RULES.judge(r.est, r.actual).key;
   if (r.stamp !== expect) fail(label + '：判定不一致 ' + r.stamp + ' vs ' + expect);
 
-  /* 8. 失準 → 一定要先復盤才進老師的雷達 */
-  if (r.stamp === 'late') {
-    nt = nextThing(TEAM);
-    if (nt.kind !== 'stamped') fail(label + '：交完之後應該看判定，卻是 ' + nt.kind);
-    if (radar(CID).some(function (x) { return x.run.runId === r.runId; })) {
-      fail(label + '：還沒復盤就出現在老師的雷達上');
-    }
-    actReflect(TEAM, r.runId, ['scope', 'wait']);
-  } else {
-    actSkipCamp(r.runId);
+  /* 8. 交完一定先看判定，看完按「好」才進老師的雷達。
+     這裡本來會分岔（失準才復盤），省思搬到「上」之前之後不再分岔——
+     每一個人都想過一次，不是只有失準的人。 */
+  nt = nextThing(TEAM);
+  if (nt.kind !== 'stamped') fail(label + '：交完之後應該看判定，卻是 ' + nt.kind);
+  if (radar(CID).some(function (x) { return x.run.runId === r.runId; })) {
+    fail(label + '：還沒看判定就出現在老師的雷達上');
   }
+  actSkipCamp(r.runId);
 
   /* 9. 現在才該出現在雷達上 */
   if (!radar(CID).some(function (x) { return x.run.runId === r.runId; })) {
@@ -167,8 +168,9 @@ else ok('剛承諾 → 正在做');
 var rX = runOf(TEAM, mX.msId);
 var g2 = 0;
 while (RULES.progress(rX.pushes, rX.est) < 1 && g2++ < 30) { actPush(TEAM, rX.runId, -1, 0); tick(); }
+actReflect(TEAM, rX.runId, [0]);
 actSubmit(TEAM, rX.runId);
-if (rX.stamp === 'late') actReflect(TEAM, rX.runId, [0]); else actSkipCamp(rX.runId);
+actSkipCamp(rX.runId);
 actApprove(rX.runId, '');
 actSeal(rX.runId, '');
 
@@ -218,5 +220,16 @@ if (eco.map(function (e) { return e.teamId; }).join(',') !== order) {
   fail('生態圖的順序跟名冊不一樣——那就是排名了');
 } else ok('生態圖照名冊排，沒有排名');
 
+/* 省思不可以動狀態。
+   actReflect 曾經把 state 設成 submitted，等於跳過整個判定，
+   而這一支測試直接呼叫 DB 函式，所以完全沒抓到。 */
+(function () {
+  var t = where('Teams', function () { return true; })[0];
+  var m = actPublish(t.classId, { title: '省思不動狀態', teams: [] });
+  var r = actCommit(t.teamId, m.msId, 5, []);
+  actReflect(t.teamId, r.runId, [0]);
+  if (r.state !== 'running') fail('省思之後狀態被改成 ' + r.state + '，判定會被跳過');
+  else ok('省思不動狀態');
+})();
 console.log('\n' + (bad ? '── ' + bad + ' 項失敗 ──' : '── 全部通過：這台機器轉得動 ──'));
 process.exit(bad ? 1 : 0);

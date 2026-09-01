@@ -13,6 +13,7 @@ window.AUDIT = function () {
   var run = where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'running'; })[0];
   var ms = where('Milestones', function (m) { return m.classId === cls; })[0];
   var P = [['home', {}], ['commit', { id: ms.msId }], ['submit', { id: (run || done).runId }],
+           ['battle', { id: (run || done).runId, at: 'end' }],
            ['stamp', { id: done.runId }], ['pick', { id: done.runId }],
            ['dash', { id: done.runId }], ['pack', {}], ['codex', {}],
            ['eco', {}], ['log', {}], ['exit', {}], ['sign', {}]];

@@ -61,8 +61,14 @@ function where(tbl, fn) { return DB[tbl].filter(fn); }
 function teamOf(id) { return find('Teams', function (t) { return t.teamId === id; }); }
 function userOf(id) { return find('Users', function (u) { return u.userId === id; }); }
 function msOf(id) { return find('Milestones', function (m) { return m.msId === id; }); }
+/* 這一組在這個里程碑上的那一趟。
+
+   「重新想過」的那幾趟要跳過：它們留在資料庫裡當紀錄，但那個里程碑
+   對這一組來說是重新開始的，所以要讓畫面回到「還沒承諾」。 */
 function runOf(teamId, msId) {
-  return find('Runs', function (r) { return r.teamId === teamId && r.msId === msId; });
+  return find('Runs', function (r) {
+    return r.teamId === teamId && r.msId === msId && r.state !== 'rethought';
+  });
 }
 
 /* ---------- 一組看得到哪些里程碑 ---------- */
@@ -490,6 +496,25 @@ function todayMovers(classId, exceptTeam) {
 }
 
 /* 上傳：走到終點之後交出去。判定就在這一刻。 */
+/* 還沒好，退出來重新想。
+
+   原本那一趟留著當紀錄（確實承諾了幾天、確實走了幾天），但它沒有
+   判定也沒有印章，所以不會進那根尺——退出去不是失準，是兩件事。
+   新的一趟從今天重新算。
+
+   如果退出去可以擦掉紀錄，每個人都會在快超時的時候退一次，
+   這個系統就再也量不到任何東西。 */
+function actRethink(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.teamId !== teamId || r.state !== 'running') return false;
+  r.state = 'rethought';
+  r.went = Math.max(1, daysBetween(r.committedAt, now()));
+  r.rethoughtAt = now();
+  save();
+  logEvent('rethink', { teamId: teamId, runId: runId, est: r.est, went: r.went });
+  return true;
+}
+
 function actSubmit(teamId, runId, link) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return null;
@@ -504,11 +529,18 @@ function actSubmit(teamId, runId, link) {
 }
 
 /* 復盤：點圖示標籤說明卡在哪。只有失準的時候會走到。 */
+/* 上之前想的那一句。
+
+   這裡本來還有一行 r.state = 'submitted'——那是舊營火流程的殘留：
+   那時候省思排在判定之後，說完才進老師的清單。省思搬到「上」之前
+   以後，那一行等於跳過整個判定：actSubmit 永遠拿不到 running。
+
+   自己當學生走一次才發現的。loop.js 抓不到，因為它直接呼叫 DB 的
+   函式，不走介面——所以下面補了一條斷言。 */
 function actReflect(teamId, runId, overs) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return null;
   r.overs = overs || [];
-  r.state = 'submitted';        /* 說完才排進老師的審核清單 */
   save();
   logEvent('reflect', { teamId: teamId, runId: runId,
     overs: (overs || []).map(function (i) { return stepName(runId, i); }).join('、') });
