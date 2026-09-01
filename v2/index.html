@@ -287,26 +287,80 @@ a.plain:hover{color:var(--gold)}
 .gcard i{font-style:normal;font-size:22px;color:var(--ink)}
 .gcard em{font-style:normal;font-size:11px;color:var(--mute);line-height:1.7}
 
-/* ---------- 生態圖 ---------- */
+/* ---------- 全班地下城：2.5D 剖面 ---------- */
 
-.eco{background:var(--panel);border:1px solid var(--line);padding:22px;margin:0 0 22px}
-.eco-surface{
+.eco-scroll{
+  overflow-x:auto;overflow-y:hidden;
+  background:var(--sunk);border:1px solid var(--line);
+  padding:22px;margin:0 0 22px
+}
+.eco2{position:relative;min-width:100%}
+
+.eco2-sky{
+  position:absolute;top:0;left:0;right:0;height:44px;
+  border-bottom:2px solid var(--line2);
+  background:linear-gradient(180deg,rgba(233,179,65,.06),transparent)
+}
+.eco2-sky span{
   font-size:11px;color:var(--mute);letter-spacing:.2em;
-  border-bottom:1px solid var(--line2);padding-bottom:5px;margin-bottom:14px
+  position:absolute;left:0;bottom:5px
 }
-.eco-row{display:flex;align-items:center;gap:11px;padding:9px 0;flex-wrap:wrap}
-.eco-row.me .eco-name{color:var(--gold)}
-.eco-name{flex:0 0 154px;font-size:22px;color:var(--dim)}
-.eco-tube{flex:1;min-width:154px;display:flex;gap:2px;position:relative;height:22px}
-.eco-seg{flex:1;background:rgba(0,0,0,.45);border:1px solid var(--line)}
-.eco-seg.dug{background:var(--Ld);border-color:var(--L)}
-.eco-hero{
-  position:absolute;top:-3px;width:11px;height:28px;background:var(--gold);
-  transition:left .4s
+
+/* 深度刻度。只標數字，不標「應該到哪」——沒有基準線就沒有落後。 */
+.eco2-rule{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none}
+.eco2-rule span{
+  font-size:11px;color:var(--mute);opacity:.5;
+  position:absolute;right:0;top:-14px
 }
-.eco-hero.vine{background:#4A6B3A}
-.eco-hero.sleep{background:var(--mute);opacity:.6}
-.eco-state{flex:0 0 88px;font-size:11px;color:var(--mute);text-align:right}
+
+/* 一條坑道 */
+.shaft{position:absolute;top:48px;width:128px}
+.shaft-head{
+  position:absolute;top:-46px;left:0;width:128px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px
+}
+.shaft-head b{font-size:11px;color:var(--dim);font-weight:400;white-space:nowrap}
+.shaft-head span{font-size:11px;color:var(--mute);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:128px}
+.px.sign-s{width:22px;height:22px}
+
+/* 挖出來的一格。往右斜是為了做出「往下往裡」的立體感。 */
+/* 一塊挖出來的空間。右邊掛一個斜的側面——立體感來自這裡，
+   不是把整塊往旁邊推（推的話幾格之後就壓到隔壁那條坑道）。 */
+.seg{
+  position:absolute;left:0;width:88px;height:44px;
+  background:rgba(0,0,0,.5);border:1px solid var(--line);
+  transition:background .3s
+}
+.seg::after{
+  content:"";position:absolute;left:100%;top:0;width:18px;height:100%;
+  background:rgba(0,0,0,.62);
+  clip-path:polygon(0 0,100% -22%,100% 78%,0 100%)
+}
+.seg.dug::after{background:var(--Ld);filter:brightness(.62)}
+.seg.dug{
+  background:var(--Ld);border-color:var(--L);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.10), inset 0 -3px 0 rgba(0,0,0,.35)
+}
+/* 正在挖的那一格：從底下往上填到承諾的比例 */
+.seg.here{border-color:var(--gold-d);border-style:dashed}
+.seg.here i{
+  position:absolute;left:0;right:0;bottom:0;
+  background:rgba(233,179,65,.30);border-top:1px solid var(--gold)
+}
+
+.shaft.mine .seg.dug{background:var(--L);border-color:var(--Ll)}
+.shaft.mine .shaft-head b{color:var(--gold)}
+
+.shaft-hero{position:absolute;width:36px;height:36px}
+.px.ch-s{width:36px;height:36px}
+.px.vine-s{position:absolute;inset:0;width:36px;height:36px;opacity:.9}
+.shaft-hero.sleep{opacity:.6}
+
+.shaft-foot{
+  position:absolute;left:0;width:128px;
+  font-size:11px;color:var(--mute);text-align:center
+}
 
 /* ---------- 老師端 ---------- */
 
@@ -330,8 +384,12 @@ a.plain:hover{color:var(--gold)}
 
 .log-row .log-head{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:5px}
 .log-row .log-head b{font-size:22px;font-weight:400}
-.rn-row{display:flex;gap:11px;align-items:baseline;padding:5px 0;flex-wrap:wrap}
-.rn-row b{flex:0 0 132px;font-size:22px;font-weight:400;color:var(--dim)}
+.rn-row{display:flex;gap:11px;align-items:center;padding:9px 0;flex-wrap:wrap;
+  border-top:1px solid var(--line)}
+.rn-row b{flex:0 0 110px;font-size:22px;font-weight:400;color:var(--dim)}
+.rn-row input{flex:1;min-width:176px;margin:0}
+.sg-tier{font-size:11px;color:var(--mute);flex:0 0 44px}
+.sg-tier.top{color:var(--gold)}
 
 @media (max-width:860px){
   .side{display:none}
@@ -668,6 +726,116 @@ function pxSvg(px, pal, dim) {
 }
 
 
+/* ===== 35-anim.js ===== */
+/* 逐格動畫。
+
+   上一個作品的原則是「互動不做動畫」——那是對的，因為那裡的回饋是
+   老師寫的字。這裡相反：推進鍵按下去如果什麼都沒發生，那顆鍵就只是
+   一個打卡機。角色揮劍、藤蔓碎裂、衝刺拖影——那一下就是獎勵本身。
+
+   做法：不用 CSS transition，用真的換格。每一幀是一張像素圖，
+   固定間隔換一張，換完回到靜止。這樣它跟 8-bit 是同一種東西，
+   而不是「像素圖上面套了現代動畫」。
+
+   全部尊重 prefers-reduced-motion：關掉的話直接跳到結果。 */
+
+var REDUCED = (function () {
+  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  catch (e) { return false; }
+})();
+
+/* 一次只跑一個。跑到一半又按，前一個直接收掉。 */
+var ANIM = null;
+
+function stopAnim() {
+  if (ANIM) { clearTimeout(ANIM.t); ANIM = null; }
+}
+
+/* 把一連串的幀放進某一個位置。
+     el     要換 src 的 <img>
+     frames [[px, pal], …]
+     ms     每一幀停多久
+     done   放完之後做什麼 */
+function playFrames(el, frames, ms, done) {
+  stopAnim();
+  if (!el || REDUCED || !frames.length) { if (done) done(); return; }
+  var i = 0;
+  ANIM = { t: null };
+  var step = function () {
+    if (i >= frames.length) { ANIM = null; if (done) done(); return; }
+    el.src = pxSvg(frames[i][0], frames[i][1], false);
+    i++;
+    ANIM.t = setTimeout(step, ms);
+  };
+  step();
+}
+
+/* ---------- 揮劍 ----------
+   推進的那一下。靜止 → 揮 → 靜止，中間格子亮一格。 */
+function animPush(onDone) {
+  var el = document.querySelector('.hero .ch');
+  if (!el) { if (onDone) onDone(); return; }
+  playFrames(el, [
+    [HERO.swing, HERO.pal],
+    [HERO.swing, HERO.pal],
+    [HERO.idle, HERO.pal]
+  ], 110, onDone);
+}
+
+/* ---------- 藤蔓碎裂 ----------
+   停滯之後推進的那一下。藤蔓不是淡出，是碎成三段再消失——
+   淡出看起來像「系統原諒你」，碎裂看起來像「你自己弄斷的」。 */
+var VINE_BREAK = [
+  ['+#..........#+..', '.+#........#+...', '..+#..*...#+....', '...+#.#*.#+.....',
+   '....+#.*.#+.....', '.....+#.#+......', '....+#.*.#+.....', '...+#.#*.#+.....',
+   '..+#..*...#+....', '.+#........#+...', '+#..........#+..', '................',
+   '................', '................', '................', '................'],
+  ['.#..........#...', '..#........#....', '...#..*...#.....', '....#....#......',
+   '................', '.....#..#.......', '................', '...#..*...#.....',
+   '..#........#....', '.#..........#...', '................', '................',
+   '................', '................', '................', '................'],
+  ['..*..........*..', '................', '......*.........', '................',
+   '................', '................', '................', '.........*......',
+   '................', '..*..........*..', '................', '................',
+   '................', '................', '................', '................']
+];
+
+function animVineBreak(onDone) {
+  var el = document.querySelector('.hero .vine');
+  if (!el) { if (onDone) onDone(); return; }
+  playFrames(el, VINE_BREAK.map(function (px) { return [px, VINE.pal]; }), 90, function () {
+    el.style.display = 'none';
+    if (onDone) onDone();
+  });
+}
+
+/* ---------- 大躍進 ----------
+   拿到裝備之後的衝刺。四幀：蹲 → 起 → 衝 → 衝（拖影更長）。 */
+var DASH_2 = [
+  '................', '.~~~~..++++.....', '~~~~..+#**#+....', '.~~~~.+#**#+....',
+  '..~~~..+##+.....', '...~~+++####++..', '....+#*######*+.', '....+#*######*+.',
+  '.....+########+.', '......+#....#+..', '.....+#......#+.', '....+#........#+',
+  '...++..........+', '................', '................', '................'
+];
+
+function animDash(onDone) {
+  var el = document.querySelector('.dash .ch');
+  if (!el) { if (onDone) onDone(); return; }
+  playFrames(el, [
+    [HERO.idle, HERO.pal],
+    [HERO.swing, HERO.pal],
+    [HERO.dash, HERO.pal],
+    [DASH_2, HERO.pal],
+    [HERO.dash, HERO.pal],
+    [DASH_2, HERO.pal]
+  ], 130, onDone);
+}
+
+/* ---------- 睡著的呼吸 ----------
+   不是動畫，是狀態。用 CSS 做（見 50-style.css 的 .px.sleep），
+   這裡不管——逐格動畫留給「有事發生」的那一刻。 */
+
+
 /* ===== 40-db.js ===== */
 /* 資料與動作。
 
@@ -983,10 +1151,11 @@ function actGear(runId, gearKey, word) {
 function actRename(teamId, name) {
   var t = teamOf(teamId);
   if (!t) return null;
-  if (t.project !== name) {
-    t.project = name;
-    t.signTier = Math.min(RULES.SIGN_TIERS.length - 1, (t.signTier || 0) + 1);
-  }
+  /* 名字沒變就不升階。升一階代表「又收斂了一次」——
+     按兩下同一個名字不該讓招牌發光。 */
+  if (String(t.project || '') === String(name)) return null;
+  t.project = name;
+  t.signTier = Math.min(RULES.SIGN_TIERS.length - 1, (t.signTier || 0) + 1);
   save();
   return t;
 }
@@ -1146,6 +1315,7 @@ var DRAFT = {};
 function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback || ''); }
 
 function go(page, p) {
+  if (typeof stopAnim === 'function') stopAnim();
   S.page = page; S.p = p || {}; S.flash = null; DRAFT = {};
   window.scrollTo(0, 0);
   render();
@@ -1325,14 +1495,19 @@ var ACTS = {
 
   push: function (runId) {
     var t = myTeam();
-    if (actPush(t.teamId, runId)) {
-      var r = find('Runs', function (x) { return x.runId === runId; });
-      say(RULES.progress(r.pushes, r.est) >= 1
-        ? '走到終點了。交出去之後系統會比對你當初承諾的天數。'
-        : '推進了一格。明天再來。');
-    } else {
-      say('今天已經推過了。一天一格——多按沒有用。');
+    /* 有沒有藤蔓要碎——推之前先問，推完狀態就變了 */
+    var wasStuck = stallOf(t.teamId).level;
+    if (!actPush(t.teamId, runId)) {
+      return say('今天已經推過了。一天一格——多按沒有用。');
     }
+    var r = find('Runs', function (x) { return x.runId === runId; });
+    var msg = RULES.progress(r.pushes, r.est) >= 1
+      ? '走到終點了。交出去之後系統會比對你當初承諾的天數。'
+      : '推進了一格。明天再來。';
+    /* 先播完動畫再重畫——重畫會把 <img> 換掉，動畫就沒了。
+       藤蔓先碎，再揮劍：那個順序就是「你把它弄斷了，然後繼續走」。 */
+    var swing = function () { animPush(function () { say(msg); }); };
+    if (wasStuck === 1) animVineBreak(swing); else swing();
   },
 
   submit: function (runId) {
@@ -1351,7 +1526,11 @@ var ACTS = {
     say('說出來了。老師看得到，而且這不會扣任何東西。');
   },
 
-  gear: function (runId) { actTakeGear(runId); go('dash', { id: runId }); },
+  gear: function (runId) {
+    actTakeGear(runId);
+    go('dash', { id: runId });
+    animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
+  },
 
   /* ---- 老師 ---- */
   publish: function () {
@@ -1381,10 +1560,11 @@ var ACTS = {
   },
 
   rename: function (teamId) {
-    var v = (document.getElementById('rn') || {}).value || '';
+    var v = (document.getElementById('rn-' + teamId) || {}).value || '';
     if (!v.trim()) return say('要寫一個新的名字。');
-    actRename(teamId, v.trim());
-    say('招牌升級了。收斂本身就是成果。');
+    var t2 = actRename(teamId, v.trim());
+    if (!t2) return say('名字沒有變。升一階代表又收斂了一次。');
+    say('招牌升成「' + SIGNS[RULES.SIGN_TIERS[t2.signTier]].name + '」了。收斂本身就是成果。');
   }
 };
 
@@ -1725,37 +1905,7 @@ PAGES.dash = function () {
   return H.join('');
 };
 
-/* ---------- 全班生態圖（Zoom Out） ---------- */
-PAGES.eco = function () {
-  var t = myTeam();
-  var rows = ecology(t.classId);
-  var H = [head('全班地下城', '大家都在挖',
-    '看得到別人也在坑道裡，就夠了。每一組挖的是自己的專案。')];
-
-  H.push('<div class="eco">');
-  H.push('<div class="eco-surface">地表</div>');
-  var maxD = Math.max(3, rows.reduce(function (a, r) { return Math.max(a, r.depth); }, 0));
-  rows.forEach(function (r) {
-    var mine = r.teamId === t.teamId;
-    H.push('<div class="eco-row' + (mine ? ' me' : '') + '">');
-    H.push('<span class="eco-name">' + esc(r.name) + (mine ? '（你們）' : '') + '</span>');
-    H.push('<span class="eco-tube">');
-    for (var i = 0; i < maxD; i++) {
-      H.push('<span class="eco-seg' + (i < r.depth ? ' dug' : '') + '"></span>');
-    }
-    H.push('<span class="eco-hero ' + (r.stall >= 2 ? 'sleep' : r.stall === 1 ? 'vine' : 'ok') +
-           '" style="left:' + Math.min(96, (r.depth + r.at) / maxD * 100) + '%"></span>');
-    H.push('</span>');
-    H.push('<span class="eco-state">' +
-      (r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '挖掘中' : '等派任務') +
-      '</span>');
-    H.push('</div>');
-  });
-  H.push('</div>');
-  H.push('<p class="dim">深度＝走完幾個里程碑。每一組的坑道長度不一樣，' +
-         '因為每一組的專案不一樣——這裡不比誰快。</p>');
-  return H.join('');
-};
+/* 全班地下城搬到 62-eco.js——那是一整張 2.5D 剖面，值得自己一個檔。 */
 
 /* ---------- 走過的每一段 ---------- */
 PAGES.log = function () {
@@ -1781,6 +1931,149 @@ PAGES.log = function () {
     if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
     H.push('</div>');
   });
+  return H.join('');
+};
+
+
+/* ===== 62-eco.js ===== */
+/* 全班地下城：2.5D 蟻巢剖面。
+
+   這是「關聯性」那根柱子的全部。它要做到一件事，而且只有這一件：
+   讓你看得到別人也在坑道裡——不比較、不排名、不知道誰比較好。
+
+   所以它畫的是空間，不是名次。每一組往下挖自己的一條豎坑，深度是
+   走完幾個里程碑。坑道之間沒有共同的終點線，因為每一組的專案不一樣。
+
+   立體感來自每一塊右邊的側面，不是把整條坑道斜著推——正交的長條看起來
+   像進度表，有側面的豎坑看起來像地下城。 */
+
+var ECO_W = 128;     /* 一條坑道的寬 */
+var ECO_SEG = 46;    /* 一格深度的高 */
+/* 立體感靠每一塊右邊的側面（見 50-style.css 的 .seg::after），
+   不是把整塊往旁邊推——推的話四格之後就壓到隔壁那條坑道了。 */
+
+function ecoScene(rows, meId) {
+  var maxD = Math.max(4, rows.reduce(function (a, r) {
+    return Math.max(a, r.depth + (r.at > 0 ? 1 : 0));
+  }, 0));
+  var H = ecoHeight(maxD);
+
+  var out = ['<div class="eco2" style="height:' + (H + 96) + 'px">'];
+
+  /* 地表 */
+  out.push('<div class="eco2-sky"><span>地表</span></div>');
+
+  /* 深度刻度：只標數字，不標「應該到哪」 */
+  for (var d = 1; d <= maxD; d++) {
+    out.push('<div class="eco2-rule" style="top:' + (ecoTop(d) + 48) + 'px">' +
+      '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
+  }
+
+  /* 每一組一條豎坑 */
+  rows.forEach(function (r, i) {
+    out.push(ecoShaft(r, i, maxD, r.teamId === meId));
+  });
+
+  out.push('</div>');
+  return out.join('');
+}
+
+function ecoTop(d) { return d * ECO_SEG; }
+function ecoHeight(maxD) { return ecoTop(maxD) + ECO_SEG; }
+
+/* 一條坑道 */
+function ecoShaft(r, i, maxD, mine) {
+  var x = i * (ECO_W + 18);
+  var H = [];
+  H.push('<div class="shaft' + (mine ? ' mine' : '') + '" style="left:' + x + 'px">');
+
+  /* 坑道口的招牌 */
+  var sg = SIGNS[r.sign] || SIGNS.wood;
+  H.push('<div class="shaft-head">');
+  H.push(pxTag(sg.px, sg.pal, 'sign-s'));
+  H.push('<b>' + esc(r.name) + '</b>');
+  H.push('<span>' + esc(r.project || '（還沒定）') + '</span>');
+  H.push('</div>');
+
+  /* 挖出來的每一格。垂直對齊，立體感靠 CSS 給的側面。 */
+  for (var d = 1; d <= maxD; d++) {
+    var dug = d <= r.depth;
+    var here = d === r.depth + 1 && r.at > 0;
+    H.push('<div class="seg' + (dug ? ' dug' : '') + (here ? ' here' : '') + '"' +
+      ' style="top:' + ecoTop(d - 1) + 'px">');
+    if (here) {
+      /* 正在挖的那一格：填到承諾的比例 */
+      H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
+    }
+    H.push('</div>');
+  }
+
+  /* 小人站在最深的那一格 */
+  var at = r.depth + (r.at > 0 ? 1 : 0);
+  var pose = r.stall >= 2 ? HERO.sleep : HERO.idle;
+  H.push('<div class="shaft-hero ' + (r.stall >= 2 ? 'sleep' : r.stall === 1 ? 'vine' : '') + '"' +
+    ' style="top:' + (ecoTop(Math.max(0, at - 1)) + 4) + 'px">');
+  H.push(pxTag(pose, HERO.pal, 'ch-s'));
+  if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
+  H.push('</div>');
+
+  /* 底下一句狀態。不講快慢，只講現在在做什麼。 */
+  H.push('<div class="shaft-foot" style="top:' + (ecoHeight(maxD) + 8) + 'px">' +
+    esc(r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '挖掘中' : '等派任務') +
+    '</div>');
+
+  H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 學生看到的（Zoom Out） ---------- */
+PAGES.eco = function () {
+  var t = myTeam();
+  var rows = ecology(t.classId).map(function (r) {
+    var tm = teamOf(r.teamId);
+    r.project = tm && tm.project;
+    return r;
+  });
+  var H = [head('全班地下城', '大家都在挖',
+    '每一條坑道往下挖的是自己的專案。看得到別人也在裡面，就夠了。')];
+  H.push('<div class="eco-scroll">' + ecoScene(rows, t.teamId) + '</div>');
+  H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
+         '坑道長度本來就不同——這裡沒有共同的終點線。</p>');
+  H.push(btn('回坑道', 'go:home', 'ghost'));
+  return H.join('');
+};
+
+/* ---------- 老師看到的（同一張圖，多一排改招牌） ---------- */
+PAGES.classeco = function () {
+  var u = me();
+  var rows = ecology(u.classId).map(function (r) {
+    var tm = teamOf(r.teamId);
+    r.project = tm && tm.project;
+    return r;
+  });
+  var H = [head('全班地下城', '每一組挖到哪',
+    '深度是走完幾個里程碑。每一組的專案不一樣，坑道長度本來就不同。')];
+  H.push('<div class="eco-scroll">' + ecoScene(rows, null) + '</div>');
+
+  /* 改寫專案名稱 → 招牌升一階 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">改寫專案名稱</div>');
+  H.push('<p class="dim">名稱收斂了就改寫一次。坑道口的招牌會從木牌升成鐵牌、' +
+         '再升成會發光的銘牌——不用多說一句話，材質就是肯定。</p>');
+  rows.forEach(function (r) {
+    var t = teamOf(r.teamId);
+    var sg = SIGNS[RULES.SIGN_TIERS[Math.min(2, t.signTier || 0)]];
+    var top = (t.signTier || 0) >= RULES.SIGN_TIERS.length - 1;
+    H.push('<div class="rn-row">');
+    H.push(pxTag(sg.px, sg.pal, 'sign-s'));
+    H.push('<b>' + esc(t.name) + '</b>');
+    H.push('<input id="rn-' + t.teamId + '" value="' + esc(t.project || '') +
+           '" placeholder="' + esc('重寫一次專案名稱') + '">');
+    H.push('<span class="sg-tier' + (top ? ' top' : '') + '">' + esc(sg.name) + '</span>');
+    H.push(btn('改寫', 'rename:' + t.teamId, 'ghost'));
+    H.push('</div>');
+  });
+  H.push('</div>');
   return H.join('');
 };
 
@@ -1956,47 +2249,7 @@ PAGES.ms = function () {
   return H.join('');
 };
 
-/* ---------- 全班地下城（老師版：沒有霧） ---------- */
-PAGES.classeco = function () {
-  var u = me();
-  var rows = ecology(u.classId);
-  var H = [head('全班地下城', '每一組挖到哪',
-    '深度是走完幾個里程碑。每一組的專案不一樣，長度本來就不同。')];
-
-  H.push('<div class="eco">');
-  H.push('<div class="eco-surface">地表</div>');
-  var maxD = Math.max(3, rows.reduce(function (a, r) { return Math.max(a, r.depth); }, 0));
-  rows.forEach(function (r) {
-    H.push('<div class="eco-row">');
-    H.push('<span class="eco-name">' + esc(r.name) + '</span>');
-    H.push('<span class="eco-tube">');
-    for (var i = 0; i < maxD; i++) {
-      H.push('<span class="eco-seg' + (i < r.depth ? ' dug' : '') + '"></span>');
-    }
-    H.push('<span class="eco-hero ' + (r.stall >= 2 ? 'sleep' : r.stall === 1 ? 'vine' : 'ok') +
-      '" style="left:' + Math.min(96, (r.depth + r.at) / maxD * 100) + '%"></span>');
-    H.push('</span>');
-    H.push('<span class="eco-state">' +
-      (r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '挖掘中' : '等派任務') +
-      '</span>');
-    H.push('</div>');
-  });
-  H.push('</div>');
-
-  /* 改寫專案名稱 → 招牌升階 */
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">改寫某一組的專案名稱</div>');
-  H.push('<p class="dim">名稱收斂了就改寫一次。坑道口的招牌會從木牌升成鐵牌、' +
-         '再升成會發光的銘牌——不用多說一句話，材質就是肯定。</p>');
-  rows.forEach(function (r) {
-    var t = teamOf(r.teamId);
-    H.push('<div class="rn-row"><b>' + esc(t.name) + '</b>' +
-      '<span class="dim">' + esc(t.project || '（還沒定）') + '　·　' +
-      esc(SIGNS[RULES.SIGN_TIERS[Math.min(2, t.signTier || 0)]].name) + '</span></div>');
-  });
-  H.push('</div>');
-  return H.join('');
-};
+/* 全班地下城（老師版）也搬到 62-eco.js——跟學生看的是同一張圖。 */
 
 
 /* ===== 80-app.js ===== */

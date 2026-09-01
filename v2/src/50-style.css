@@ -277,26 +277,80 @@ a.plain:hover{color:var(--gold)}
 .gcard i{font-style:normal;font-size:22px;color:var(--ink)}
 .gcard em{font-style:normal;font-size:11px;color:var(--mute);line-height:1.7}
 
-/* ---------- 生態圖 ---------- */
+/* ---------- 全班地下城：2.5D 剖面 ---------- */
 
-.eco{background:var(--panel);border:1px solid var(--line);padding:22px;margin:0 0 22px}
-.eco-surface{
+.eco-scroll{
+  overflow-x:auto;overflow-y:hidden;
+  background:var(--sunk);border:1px solid var(--line);
+  padding:22px;margin:0 0 22px
+}
+.eco2{position:relative;min-width:100%}
+
+.eco2-sky{
+  position:absolute;top:0;left:0;right:0;height:44px;
+  border-bottom:2px solid var(--line2);
+  background:linear-gradient(180deg,rgba(233,179,65,.06),transparent)
+}
+.eco2-sky span{
   font-size:11px;color:var(--mute);letter-spacing:.2em;
-  border-bottom:1px solid var(--line2);padding-bottom:5px;margin-bottom:14px
+  position:absolute;left:0;bottom:5px
 }
-.eco-row{display:flex;align-items:center;gap:11px;padding:9px 0;flex-wrap:wrap}
-.eco-row.me .eco-name{color:var(--gold)}
-.eco-name{flex:0 0 154px;font-size:22px;color:var(--dim)}
-.eco-tube{flex:1;min-width:154px;display:flex;gap:2px;position:relative;height:22px}
-.eco-seg{flex:1;background:rgba(0,0,0,.45);border:1px solid var(--line)}
-.eco-seg.dug{background:var(--Ld);border-color:var(--L)}
-.eco-hero{
-  position:absolute;top:-3px;width:11px;height:28px;background:var(--gold);
-  transition:left .4s
+
+/* 深度刻度。只標數字，不標「應該到哪」——沒有基準線就沒有落後。 */
+.eco2-rule{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none}
+.eco2-rule span{
+  font-size:11px;color:var(--mute);opacity:.5;
+  position:absolute;right:0;top:-14px
 }
-.eco-hero.vine{background:#4A6B3A}
-.eco-hero.sleep{background:var(--mute);opacity:.6}
-.eco-state{flex:0 0 88px;font-size:11px;color:var(--mute);text-align:right}
+
+/* 一條坑道 */
+.shaft{position:absolute;top:48px;width:128px}
+.shaft-head{
+  position:absolute;top:-46px;left:0;width:128px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px
+}
+.shaft-head b{font-size:11px;color:var(--dim);font-weight:400;white-space:nowrap}
+.shaft-head span{font-size:11px;color:var(--mute);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:128px}
+.px.sign-s{width:22px;height:22px}
+
+/* 挖出來的一格。往右斜是為了做出「往下往裡」的立體感。 */
+/* 一塊挖出來的空間。右邊掛一個斜的側面——立體感來自這裡，
+   不是把整塊往旁邊推（推的話幾格之後就壓到隔壁那條坑道）。 */
+.seg{
+  position:absolute;left:0;width:88px;height:44px;
+  background:rgba(0,0,0,.5);border:1px solid var(--line);
+  transition:background .3s
+}
+.seg::after{
+  content:"";position:absolute;left:100%;top:0;width:18px;height:100%;
+  background:rgba(0,0,0,.62);
+  clip-path:polygon(0 0,100% -22%,100% 78%,0 100%)
+}
+.seg.dug::after{background:var(--Ld);filter:brightness(.62)}
+.seg.dug{
+  background:var(--Ld);border-color:var(--L);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.10), inset 0 -3px 0 rgba(0,0,0,.35)
+}
+/* 正在挖的那一格：從底下往上填到承諾的比例 */
+.seg.here{border-color:var(--gold-d);border-style:dashed}
+.seg.here i{
+  position:absolute;left:0;right:0;bottom:0;
+  background:rgba(233,179,65,.30);border-top:1px solid var(--gold)
+}
+
+.shaft.mine .seg.dug{background:var(--L);border-color:var(--Ll)}
+.shaft.mine .shaft-head b{color:var(--gold)}
+
+.shaft-hero{position:absolute;width:36px;height:36px}
+.px.ch-s{width:36px;height:36px}
+.px.vine-s{position:absolute;inset:0;width:36px;height:36px;opacity:.9}
+.shaft-hero.sleep{opacity:.6}
+
+.shaft-foot{
+  position:absolute;left:0;width:128px;
+  font-size:11px;color:var(--mute);text-align:center
+}
 
 /* ---------- 老師端 ---------- */
 
@@ -320,8 +374,12 @@ a.plain:hover{color:var(--gold)}
 
 .log-row .log-head{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:5px}
 .log-row .log-head b{font-size:22px;font-weight:400}
-.rn-row{display:flex;gap:11px;align-items:baseline;padding:5px 0;flex-wrap:wrap}
-.rn-row b{flex:0 0 132px;font-size:22px;font-weight:400;color:var(--dim)}
+.rn-row{display:flex;gap:11px;align-items:center;padding:9px 0;flex-wrap:wrap;
+  border-top:1px solid var(--line)}
+.rn-row b{flex:0 0 110px;font-size:22px;font-weight:400;color:var(--dim)}
+.rn-row input{flex:1;min-width:176px;margin:0}
+.sg-tier{font-size:11px;color:var(--mute);flex:0 0 44px}
+.sg-tier.top{color:var(--gold)}
 
 @media (max-width:860px){
   .side{display:none}

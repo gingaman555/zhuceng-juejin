@@ -168,44 +168,4 @@ PAGES.ms = function () {
   return H.join('');
 };
 
-/* ---------- 全班地下城（老師版：沒有霧） ---------- */
-PAGES.classeco = function () {
-  var u = me();
-  var rows = ecology(u.classId);
-  var H = [head('全班地下城', '每一組挖到哪',
-    '深度是走完幾個里程碑。每一組的專案不一樣，長度本來就不同。')];
-
-  H.push('<div class="eco">');
-  H.push('<div class="eco-surface">地表</div>');
-  var maxD = Math.max(3, rows.reduce(function (a, r) { return Math.max(a, r.depth); }, 0));
-  rows.forEach(function (r) {
-    H.push('<div class="eco-row">');
-    H.push('<span class="eco-name">' + esc(r.name) + '</span>');
-    H.push('<span class="eco-tube">');
-    for (var i = 0; i < maxD; i++) {
-      H.push('<span class="eco-seg' + (i < r.depth ? ' dug' : '') + '"></span>');
-    }
-    H.push('<span class="eco-hero ' + (r.stall >= 2 ? 'sleep' : r.stall === 1 ? 'vine' : 'ok') +
-      '" style="left:' + Math.min(96, (r.depth + r.at) / maxD * 100) + '%"></span>');
-    H.push('</span>');
-    H.push('<span class="eco-state">' +
-      (r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '挖掘中' : '等派任務') +
-      '</span>');
-    H.push('</div>');
-  });
-  H.push('</div>');
-
-  /* 改寫專案名稱 → 招牌升階 */
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">改寫某一組的專案名稱</div>');
-  H.push('<p class="dim">名稱收斂了就改寫一次。坑道口的招牌會從木牌升成鐵牌、' +
-         '再升成會發光的銘牌——不用多說一句話，材質就是肯定。</p>');
-  rows.forEach(function (r) {
-    var t = teamOf(r.teamId);
-    H.push('<div class="rn-row"><b>' + esc(t.name) + '</b>' +
-      '<span class="dim">' + esc(t.project || '（還沒定）') + '　·　' +
-      esc(SIGNS[RULES.SIGN_TIERS[Math.min(2, t.signTier || 0)]].name) + '</span></div>');
-  });
-  H.push('</div>');
-  return H.join('');
-};
+/* 全班地下城（老師版）也搬到 62-eco.js——跟學生看的是同一張圖。 */

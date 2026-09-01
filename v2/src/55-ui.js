@@ -17,6 +17,7 @@ var DRAFT = {};
 function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback || ''); }
 
 function go(page, p) {
+  if (typeof stopAnim === 'function') stopAnim();
   S.page = page; S.p = p || {}; S.flash = null; DRAFT = {};
   window.scrollTo(0, 0);
   render();
@@ -196,14 +197,19 @@ var ACTS = {
 
   push: function (runId) {
     var t = myTeam();
-    if (actPush(t.teamId, runId)) {
-      var r = find('Runs', function (x) { return x.runId === runId; });
-      say(RULES.progress(r.pushes, r.est) >= 1
-        ? '走到終點了。交出去之後系統會比對你當初承諾的天數。'
-        : '推進了一格。明天再來。');
-    } else {
-      say('今天已經推過了。一天一格——多按沒有用。');
+    /* 有沒有藤蔓要碎——推之前先問，推完狀態就變了 */
+    var wasStuck = stallOf(t.teamId).level;
+    if (!actPush(t.teamId, runId)) {
+      return say('今天已經推過了。一天一格——多按沒有用。');
     }
+    var r = find('Runs', function (x) { return x.runId === runId; });
+    var msg = RULES.progress(r.pushes, r.est) >= 1
+      ? '走到終點了。交出去之後系統會比對你當初承諾的天數。'
+      : '推進了一格。明天再來。';
+    /* 先播完動畫再重畫——重畫會把 <img> 換掉，動畫就沒了。
+       藤蔓先碎，再揮劍：那個順序就是「你把它弄斷了，然後繼續走」。 */
+    var swing = function () { animPush(function () { say(msg); }); };
+    if (wasStuck === 1) animVineBreak(swing); else swing();
   },
 
   submit: function (runId) {
@@ -222,7 +228,11 @@ var ACTS = {
     say('說出來了。老師看得到，而且這不會扣任何東西。');
   },
 
-  gear: function (runId) { actTakeGear(runId); go('dash', { id: runId }); },
+  gear: function (runId) {
+    actTakeGear(runId);
+    go('dash', { id: runId });
+    animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
+  },
 
   /* ---- 老師 ---- */
   publish: function () {
@@ -252,9 +262,10 @@ var ACTS = {
   },
 
   rename: function (teamId) {
-    var v = (document.getElementById('rn') || {}).value || '';
+    var v = (document.getElementById('rn-' + teamId) || {}).value || '';
     if (!v.trim()) return say('要寫一個新的名字。');
-    actRename(teamId, v.trim());
-    say('招牌升級了。收斂本身就是成果。');
+    var t2 = actRename(teamId, v.trim());
+    if (!t2) return say('名字沒有變。升一階代表又收斂了一次。');
+    say('招牌升成「' + SIGNS[RULES.SIGN_TIERS[t2.signTier]].name + '」了。收斂本身就是成果。');
   }
 };

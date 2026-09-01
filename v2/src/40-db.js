@@ -312,10 +312,11 @@ function actGear(runId, gearKey, word) {
 function actRename(teamId, name) {
   var t = teamOf(teamId);
   if (!t) return null;
-  if (t.project !== name) {
-    t.project = name;
-    t.signTier = Math.min(RULES.SIGN_TIERS.length - 1, (t.signTier || 0) + 1);
-  }
+  /* 名字沒變就不升階。升一階代表「又收斂了一次」——
+     按兩下同一個名字不該讓招牌發光。 */
+  if (String(t.project || '') === String(name)) return null;
+  t.project = name;
+  t.signTier = Math.min(RULES.SIGN_TIERS.length - 1, (t.signTier || 0) + 1);
   save();
   return t;
 }

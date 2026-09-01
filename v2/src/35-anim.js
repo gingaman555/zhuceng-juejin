@@ -1,0 +1,107 @@
+/* 逐格動畫。
+
+   上一個作品的原則是「互動不做動畫」——那是對的，因為那裡的回饋是
+   老師寫的字。這裡相反：推進鍵按下去如果什麼都沒發生，那顆鍵就只是
+   一個打卡機。角色揮劍、藤蔓碎裂、衝刺拖影——那一下就是獎勵本身。
+
+   做法：不用 CSS transition，用真的換格。每一幀是一張像素圖，
+   固定間隔換一張，換完回到靜止。這樣它跟 8-bit 是同一種東西，
+   而不是「像素圖上面套了現代動畫」。
+
+   全部尊重 prefers-reduced-motion：關掉的話直接跳到結果。 */
+
+var REDUCED = (function () {
+  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  catch (e) { return false; }
+})();
+
+/* 一次只跑一個。跑到一半又按，前一個直接收掉。 */
+var ANIM = null;
+
+function stopAnim() {
+  if (ANIM) { clearTimeout(ANIM.t); ANIM = null; }
+}
+
+/* 把一連串的幀放進某一個位置。
+     el     要換 src 的 <img>
+     frames [[px, pal], …]
+     ms     每一幀停多久
+     done   放完之後做什麼 */
+function playFrames(el, frames, ms, done) {
+  stopAnim();
+  if (!el || REDUCED || !frames.length) { if (done) done(); return; }
+  var i = 0;
+  ANIM = { t: null };
+  var step = function () {
+    if (i >= frames.length) { ANIM = null; if (done) done(); return; }
+    el.src = pxSvg(frames[i][0], frames[i][1], false);
+    i++;
+    ANIM.t = setTimeout(step, ms);
+  };
+  step();
+}
+
+/* ---------- 揮劍 ----------
+   推進的那一下。靜止 → 揮 → 靜止，中間格子亮一格。 */
+function animPush(onDone) {
+  var el = document.querySelector('.hero .ch');
+  if (!el) { if (onDone) onDone(); return; }
+  playFrames(el, [
+    [HERO.swing, HERO.pal],
+    [HERO.swing, HERO.pal],
+    [HERO.idle, HERO.pal]
+  ], 110, onDone);
+}
+
+/* ---------- 藤蔓碎裂 ----------
+   停滯之後推進的那一下。藤蔓不是淡出，是碎成三段再消失——
+   淡出看起來像「系統原諒你」，碎裂看起來像「你自己弄斷的」。 */
+var VINE_BREAK = [
+  ['+#..........#+..', '.+#........#+...', '..+#..*...#+....', '...+#.#*.#+.....',
+   '....+#.*.#+.....', '.....+#.#+......', '....+#.*.#+.....', '...+#.#*.#+.....',
+   '..+#..*...#+....', '.+#........#+...', '+#..........#+..', '................',
+   '................', '................', '................', '................'],
+  ['.#..........#...', '..#........#....', '...#..*...#.....', '....#....#......',
+   '................', '.....#..#.......', '................', '...#..*...#.....',
+   '..#........#....', '.#..........#...', '................', '................',
+   '................', '................', '................', '................'],
+  ['..*..........*..', '................', '......*.........', '................',
+   '................', '................', '................', '.........*......',
+   '................', '..*..........*..', '................', '................',
+   '................', '................', '................', '................']
+];
+
+function animVineBreak(onDone) {
+  var el = document.querySelector('.hero .vine');
+  if (!el) { if (onDone) onDone(); return; }
+  playFrames(el, VINE_BREAK.map(function (px) { return [px, VINE.pal]; }), 90, function () {
+    el.style.display = 'none';
+    if (onDone) onDone();
+  });
+}
+
+/* ---------- 大躍進 ----------
+   拿到裝備之後的衝刺。四幀：蹲 → 起 → 衝 → 衝（拖影更長）。 */
+var DASH_2 = [
+  '................', '.~~~~..++++.....', '~~~~..+#**#+....', '.~~~~.+#**#+....',
+  '..~~~..+##+.....', '...~~+++####++..', '....+#*######*+.', '....+#*######*+.',
+  '.....+########+.', '......+#....#+..', '.....+#......#+.', '....+#........#+',
+  '...++..........+', '................', '................', '................'
+];
+
+function animDash(onDone) {
+  var el = document.querySelector('.dash .ch');
+  if (!el) { if (onDone) onDone(); return; }
+  playFrames(el, [
+    [HERO.idle, HERO.pal],
+    [HERO.swing, HERO.pal],
+    [HERO.dash, HERO.pal],
+    [DASH_2, HERO.pal],
+    [HERO.dash, HERO.pal],
+    [DASH_2, HERO.pal]
+  ], 130, onDone);
+}
+
+/* ---------- 睡著的呼吸 ----------
+   不是動畫，是狀態。用 CSS 做（見 50-style.css 的 .px.sleep），
+   這裡不管——逐格動畫留給「有事發生」的那一刻。 */

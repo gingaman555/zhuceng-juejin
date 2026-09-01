@@ -333,37 +333,7 @@ PAGES.dash = function () {
   return H.join('');
 };
 
-/* ---------- 全班生態圖（Zoom Out） ---------- */
-PAGES.eco = function () {
-  var t = myTeam();
-  var rows = ecology(t.classId);
-  var H = [head('全班地下城', '大家都在挖',
-    '看得到別人也在坑道裡，就夠了。每一組挖的是自己的專案。')];
-
-  H.push('<div class="eco">');
-  H.push('<div class="eco-surface">地表</div>');
-  var maxD = Math.max(3, rows.reduce(function (a, r) { return Math.max(a, r.depth); }, 0));
-  rows.forEach(function (r) {
-    var mine = r.teamId === t.teamId;
-    H.push('<div class="eco-row' + (mine ? ' me' : '') + '">');
-    H.push('<span class="eco-name">' + esc(r.name) + (mine ? '（你們）' : '') + '</span>');
-    H.push('<span class="eco-tube">');
-    for (var i = 0; i < maxD; i++) {
-      H.push('<span class="eco-seg' + (i < r.depth ? ' dug' : '') + '"></span>');
-    }
-    H.push('<span class="eco-hero ' + (r.stall >= 2 ? 'sleep' : r.stall === 1 ? 'vine' : 'ok') +
-           '" style="left:' + Math.min(96, (r.depth + r.at) / maxD * 100) + '%"></span>');
-    H.push('</span>');
-    H.push('<span class="eco-state">' +
-      (r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '挖掘中' : '等派任務') +
-      '</span>');
-    H.push('</div>');
-  });
-  H.push('</div>');
-  H.push('<p class="dim">深度＝走完幾個里程碑。每一組的坑道長度不一樣，' +
-         '因為每一組的專案不一樣——這裡不比誰快。</p>');
-  return H.join('');
-};
+/* 全班地下城搬到 62-eco.js——那是一整張 2.5D 剖面，值得自己一個檔。 */
 
 /* ---------- 走過的每一段 ---------- */
 PAGES.log = function () {
