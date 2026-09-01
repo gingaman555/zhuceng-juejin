@@ -1,22 +1,6 @@
 {
   "version": "0.0.1",
   "configurations": [
-    {
-      "name": "jlz-preview",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "serve.js"
-      ],
-      "port": 8791
-    },
-    {
-      "name": "jlz-v2",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "v2/serve.js"
-      ],
-      "port": 8792,
-      "autoPort": true
-    }
+    { "name": "dungeon", "runtimeExecutable": "node", "runtimeArgs": ["v2/serve.js"], "port": 8792 }
   ]
 }

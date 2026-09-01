@@ -1,6 +1,6 @@
 /* 畫面的底：字串拼 HTML、一個路由、一次重畫。
 
-   沒有覆寫層，也沒有模板補丁——每一個畫面就是下面那幾支函式，
+   沒有覆寫層，也沒有模板補丁——每一個畫面就是一支函式，
    改一句話只要改一個地方。 */
 
 function esc(s) {
@@ -12,16 +12,8 @@ function nl(s) { return esc(s).replace(/\n/g, '<br>'); }
 
 var S = { who: 'U1', page: 'home', p: {}, flash: null };
 
-/* 打到一半的字。畫面每次動作都整頁重畫，沒有這一層的話
-   「這一項多做了什麼」打到一半去勾一條清單，字就沒了。
-   它只活在記憶體裡——沒按送出的東西不會進資料表。 */
+/* 沒按送出的東西不會進資料表，但重畫的時候要留著。 */
 var DRAFT = {};
-function keepDraft() {
-  ['extra', 'blocker', 'reason', 'redig', 'verdict'].forEach(function (id) {
-    var e = document.getElementById(id);
-    if (e) DRAFT[id] = e.value;
-  });
-}
 function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback || ''); }
 
 function go(page, p) {
@@ -33,32 +25,21 @@ function me() { return userOf(S.who); }
 function isTeacher() { return me().role === 'teacher'; }
 function myTeam() { return teamOf(me().teamId); }
 
-/* 一段固定的頁首 */
 function head(eyebrow, title, lead) {
   return '<div class="eyebrow">' + esc(eyebrow) + '</div>' +
     '<h1>' + esc(title) + '</h1>' +
     (lead ? '<p class="lead">' + nl(lead) + '</p>' : '');
 }
 
-function layerVars(L) {
-  var p = layerPal(L);
-  return 'style="--L:' + p['#'] + ';--Ld:' + p.o + ';--Ll:' + p['*'] +
-    ';--Lbg:' + p.bg + ';--Lline:' + p.line + '"';
+/* 像素圖標籤。所有的圖都走這一支——沒有第二種畫圖的方式。 */
+function pxTag(px, pal, cls) {
+  return '<img class="px ' + (cls || '') + '" src="' + pxSvg(px, pal, false) + '" alt="">';
 }
 
-/* 期限一律走 RULES.due，畫面不自己算日期 */
-function dueTag(due) {
-  var d = RULES.due(due, now());
-  if (d.none) return '<span class="pill">期限　不設限</span>';
-  return '<span class="pill ' + (d.over ? 'over' : d.tone === 'warn' ? 'gold' : '') + '">期限　' +
-    esc(d.text) + '</span>';
-}
-
-var EFFORT = { fast: '比預估快', same: '差不多', slow: '比預估慢' };
-
-function mobImg(m, dim, cls) {
-  var pal = m.pal || layerPal(m.L || 1);
-  return '<img class="' + (cls || '') + '" src="' + pxSvg(m.px, pal, dim) + '" alt="">';
+/* 按鈕。act 是「動作:參數」的字串，全部收在 ACTS 裡。 */
+function btn(label, act, kind) {
+  return '<button class="btn ' + (kind || '') + '" data-act="run" data-p="' +
+    esc(JSON.stringify({ a: act })) + '">' + esc(label) + '</button>';
 }
 
 /* ---------- 路由 ---------- */
@@ -67,37 +48,42 @@ var PAGES = {};
 
 function render() {
   var f = PAGES[S.page];
-  if (!f) { S.page = isTeacher() ? 'queue' : 'home'; f = PAGES[S.page]; }
+  if (!f) { S.page = isTeacher() ? 'radar' : 'home'; f = PAGES[S.page]; }
   var body = f();
   document.getElementById('app').innerHTML =
     sideBar() + '<div class="main">' + topBar() + demoBar() +
-    '<div class="wrap">' + body + '</div></div>';
+    '<div class="wrap">' + (S.flash ? flashBar() : '') + body + '</div></div>';
 }
+
+function flashBar() {
+  return '<div class="flash">' + esc(S.flash) + '</div>';
+}
+/* say() 自己重畫。本來要記得先 say 再 render——順序寫反訊息就永遠不出現，
+   而且那是一種只有測試才抓得到的錯。讓它自己負責。 */
+function say(m) { S.flash = m; render(); }
 
 function topBar() {
   var u = me();
   if (u.role === 'teacher') {
-    var st = teacherStats();
+    var r = radar(u.classId);
     return '<div class="top">' +
       '<span class="badge t">老師端</span>' +
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
-      '<span>設計專題　·　' + classTeams('C1').length + ' 組</span>' +
-      '<span>合格考量 ' + st.n + ' 件</span>' +
+      '<span>' + esc(DB.Classes[0].name) + '　·　' +
+        where('Teams', function (t) { return t.classId === u.classId; }).length + ' 組</span>' +
+      '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' +
       '</div>';
   }
   var t = myTeam();
-  var L = LAYERS[t.layer - 1];
-  var sc = scoreOf(t.teamId), b = board('C1');
-  var rank = 0;
-  b.forEach(function (r) { if (r.team.teamId === t.teamId) rank = r.rank; });
+  var st = stallOf(t.teamId);
   return '<div class="top">' +
     '<span class="badge">學生端</span>' +
     '<span class="who">' + esc(t.name) + '</span>' +
     '<span class="sp"></span>' +
-    '<span>' + esc(L.name) + '　·　停留 ' + RULES.stayDays(t.enteredAt, now()) + ' 天</span>' +
-    '<a class="plain" data-go="board">' + sc.total + ' 分　·　第 ' + rank + ' 名 / ' +
-      b.length + ' 組</a>' +
+    '<span>' + esc(t.project || '（還沒定）') + '</span>' +
+    '<span class="' + (st.level ? 'warnx' : '') + '">深度 ' +
+      (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</span>' +
     '</div>';
 }
 
@@ -109,10 +95,10 @@ function demoBar() {
   }).join('');
   return '<div class="demo">' +
     '<b>試用</b><span>切換身分</span>' +
-    '<select data-act="who" style="width:auto;padding:2px 8px;font-size:11px">' + opts + '</select>' +
+    '<select data-act="who">' + opts + '</select>' +
     '<span class="sp" style="flex:1"></span>' +
-    '<a class="plain" style="font-size:11px" data-act="forward">把時間往前推一天</a>' +
-    '<a class="plain" style="font-size:11px" data-act="reset">整班重來</a>' +
+    '<a class="plain" data-act="run" data-p=\'{"a":"forward"}\'>把時間往前推一天</a>' +
+    '<a class="plain" data-act="run" data-p=\'{"a":"reset"}\'>整班重來</a>' +
     '</div>';
 }
 
@@ -122,23 +108,18 @@ function sideBar() {
   if (u.role === 'teacher') {
     headBlock = '<div class="side-head"><div class="k">TEACHER</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
-      '<div class="s">設計專題 · 加入碼 ' + esc(DB.Classes[0].joinCode) + '</div></div>';
+      '<div class="s">' + esc(DB.Classes[0].name) + ' · 加入碼 ' +
+      esc(DB.Classes[0].joinCode) + '</div></div>';
     nav = [
-      ['queue', '待你驗收'], ['tasks', '任務清單'], ['gate', '關卡審核'],
-      ['tcurve', '各組的剖面'], ['classmap', '全班位置'],
-      ['world', '學生端的世界'], ['final', '期末回顧']
+      ['radar', '雷達'], ['ms', '里程碑'], ['classeco', '全班地下城']
     ];
   } else {
     var t = myTeam();
-    headBlock = '<div class="side-head"><div class="k">TEAM</div>' +
+    headBlock = '<div class="side-head"><div class="k">TUNNEL</div>' +
       '<div class="n">' + esc(t.name) + '</div>' +
-      '<div class="s">' + esc(LAYERS[t.layer - 1].name) + ' · 停留 ' +
-        RULES.stayDays(t.enteredAt, now()) + ' 天</div></div>';
+      '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '首頁'], ['list', '任務清單'], ['stack', '他寫過的'],
-      ['dex', '圖鑑'], ['curve', '剖面'], ['board', '排行榜'],
-      ['log', '紀錄'], ['map', '迷霧地圖'],
-      ['end', t.finished ? '結局' : '？？？']
+      ['home', '坑道'], ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   var items = nav.map(function (n) {
@@ -150,26 +131,130 @@ function sideBar() {
 
 /* ---------- 事件 ---------- */
 
-function val(sel) { var e = document.querySelector(sel); return e ? e.value : ''; }
-
 document.addEventListener('click', function (ev) {
   var g = ev.target.closest('[data-go]');
   if (g) { go(g.getAttribute('data-go'), JSON.parse(g.getAttribute('data-p') || '{}')); return; }
   var a = ev.target.closest('[data-act]');
   if (!a) return;
   var act = a.getAttribute('data-act');
+  if (act !== 'run') return;
   var p = JSON.parse(a.getAttribute('data-p') || '{}');
-  if (ACTS[act]) { ACTS[act](p, a); }
+  runAct(p.a);
 });
 
 document.addEventListener('change', function (ev) {
-  var a = ev.target.closest('[data-act]');
+  var a = ev.target.closest('[data-act="who"]');
   if (!a) return;
-  var act = a.getAttribute('data-act');
-  if (act === 'who') { S.who = a.value; S.page = userOf(S.who).role === 'teacher' ? 'queue' : 'home'; render(); }
+  S.who = a.value;
+  S.page = userOf(S.who).role === 'teacher' ? 'radar' : 'home';
+  DRAFT = {};
+  render();
 });
 
+/* 動作字串：「名稱」或「名稱:參數」 */
+function runAct(str) {
+  var i = String(str || '').indexOf(':');
+  var name = i < 0 ? str : str.slice(0, i);
+  var arg = i < 0 ? '' : str.slice(i + 1);
+  var f = ACTS[name];
+  if (f) f(arg);
+}
+
 var ACTS = {
-  forward: function () { CLOCK += 86400000; render(); },
-  reset: function () { seed(); S.who = 'U1'; go('home'); }
+  forward: function () { CLOCK += DAY; render(); },
+  reset: function () { seed(); S.who = 'U1'; go('home'); },
+
+  go: function (arg) {
+    var i = arg.indexOf(':');
+    if (i < 0) return go(arg);
+    go(arg.slice(0, i), { id: arg.slice(i + 1) });
+  },
+
+  /* 滑桿：只改草稿，不進資料表 */
+  est: function (v) { DRAFT.est = v; render(); },
+
+  risk: function (k) {
+    DRAFT.risks = DRAFT.risks || [];
+    var i = DRAFT.risks.indexOf(k);
+    if (i < 0) DRAFT.risks.push(k); else DRAFT.risks.splice(i, 1);
+    render();
+  },
+
+  snag: function (k) {
+    DRAFT.snags = DRAFT.snags || [];
+    var i = DRAFT.snags.indexOf(k);
+    if (i < 0) DRAFT.snags.push(k); else DRAFT.snags.splice(i, 1);
+    render();
+  },
+
+  commit: function (msId) {
+    var t = myTeam();
+    actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.risks || []);
+    go('home');
+    say('承諾了。從今天開始，每天推一格。');
+  },
+
+  push: function (runId) {
+    var t = myTeam();
+    if (actPush(t.teamId, runId)) {
+      var r = find('Runs', function (x) { return x.runId === runId; });
+      say(RULES.progress(r.pushes, r.est) >= 1
+        ? '走到終點了。交出去之後系統會比對你當初承諾的天數。'
+        : '推進了一格。明天再來。');
+    } else {
+      say('今天已經推過了。一天一格——多按沒有用。');
+    }
+  },
+
+  submit: function (runId) {
+    var t = myTeam();
+    var r = actSubmit(t.teamId, runId, '');
+    if (r) go('stamp', { id: runId });
+  },
+
+  skipcamp: function (runId) { actSkipCamp(runId); go('home'); },
+
+  reflect: function (runId) {
+    var t = myTeam();
+    if (!(DRAFT.snags || []).length) return say('點一個就好——哪一個最像。');
+    actReflect(t.teamId, runId, DRAFT.snags);
+    go('home');
+    say('說出來了。老師看得到，而且這不會扣任何東西。');
+  },
+
+  gear: function (runId) { actTakeGear(runId); go('dash', { id: runId }); },
+
+  /* ---- 老師 ---- */
+  publish: function () {
+    var title = (document.getElementById('ms-title') || {}).value || '';
+    var note = (document.getElementById('ms-note') || {}).value || '';
+    if (!title.trim()) return say('先寫這一個里程碑要交什麼。');
+    actPublish(me().classId, { title: title.trim(), note: note.trim(), teams: DRAFT.to || [] });
+    go('ms');
+    say('派出去了。學生那邊會先被問「你打算花幾天」。');
+  },
+
+  to: function (teamId) {
+    DRAFT.to = DRAFT.to || [];
+    var i = DRAFT.to.indexOf(teamId);
+    if (i < 0) DRAFT.to.push(teamId); else DRAFT.to.splice(i, 1);
+    render();
+  },
+
+  pickgear: function (k) { DRAFT.gear = k; render(); },
+
+  grant: function (runId) {
+    if (!DRAFT.gear) return say('先選一件。選哪一件等於選一句話。');
+    var word = (document.getElementById('gr-word') || {}).value || '';
+    actGear(runId, DRAFT.gear, word.trim());
+    go('radar');
+    say('發出去了。學生那邊會空投落下，然後衝刺。');
+  },
+
+  rename: function (teamId) {
+    var v = (document.getElementById('rn') || {}).value || '';
+    if (!v.trim()) return say('要寫一個新的名字。');
+    actRename(teamId, v.trim());
+    say('招牌升級了。收斂本身就是成果。');
+  }
 };

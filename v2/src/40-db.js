@@ -1,457 +1,320 @@
-/* 假後端。整套跑在瀏覽器裡，存在 localStorage。
+/* 資料與動作。
 
-   資料表照規格書 08，已經砍掉的那幾張（Plans、Files）跟那幾個欄位
-   （toolLevels、enteredWeek、semesterWeeks、mineral、vow）不在這裡。
+   所有會改到資料的事都叫 act*，而且只有這裡改得到 DB。畫面只讀不寫。
+   存在 localStorage，因為這一版是給人打開就能走一遍的原型。
 
-   所有會算數的地方都呼叫 RULES——這一支不自己算分數、不自己算抽數。 */
+   跟上一版最大的差別：沒有分數、沒有層、沒有收集。
+   一個里程碑的一生是：派發 → 承諾天數 → 每日推進 → 上傳 → 判定 →
+   （失準就復盤）→ 老師發裝備 → 大躍進。 */
 
 var DB = null;
-var STORE = 'jlz.v2';
+var STORE = 'dungeon.v1';
 
-/* 時間。假後端可以被快轉，所以不直接讀 Date.now()。 */
+/* 試用時可以快轉。所有時間都走 now()，不直接用 Date.now()。 */
 var CLOCK = 0;
 function now() { return Date.now() + CLOCK; }
+var DAY = 86400000;
+
+/* 只比日期，不比時分——「今天推過了沒」問的是日子，不是 24 小時。 */
+function dayOf(ts) {
+  var d = new Date(ts);
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+function daysBetween(a, b) {
+  var A = new Date(a), B = new Date(b);
+  A = new Date(A.getFullYear(), A.getMonth(), A.getDate());
+  B = new Date(B.getFullYear(), B.getMonth(), B.getDate());
+  return Math.round((B - A) / DAY);
+}
 
 function blank() {
   return {
-    Users: [], Classes: [], Roster: [], Teams: [], Tasks: [], TeamTasks: [],
-    Submissions: [], Reviews: [], Redigs: [], Checks: [], Passes: [], Picks: [], Finales: [],
-    Config: { seq: 1 }
+    Config: { seq: 1 },
+    Users: [], Classes: [], Roster: [], Teams: [],
+    /* 里程碑：老師派的。同一個里程碑可以只發給某幾組。 */
+    Milestones: [],
+    /* 一組在一個里程碑上的狀態。這張表是整個系統的心臟。 */
+    Runs: [],
+    /* 每一次推進打卡。一天一筆。 */
+    Pushes: [],
+    /* 老師發的裝備 */
+    Gears: []
   };
 }
 
 function nid(p) { return p + (DB.Config.seq++); }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {} }
 function load() {
-  try { var s = localStorage.getItem(STORE); if (s) { DB = JSON.parse(s); return true; } } catch (e) {}
-  return false;
+  try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
+  return !!(DB && DB.Users && DB.Users.length);
 }
 function find(tbl, fn) { for (var i = 0; i < DB[tbl].length; i++) if (fn(DB[tbl][i])) return DB[tbl][i]; return null; }
 function where(tbl, fn) { return DB[tbl].filter(fn); }
 
-/* ================= 查 ================= */
-
 function teamOf(id) { return find('Teams', function (t) { return t.teamId === id; }); }
-function taskOf(id) { return find('Tasks', function (t) { return t.taskId === id; }); }
 function userOf(id) { return find('Users', function (u) { return u.userId === id; }); }
-function ttOf(teamId, taskId) {
-  return find('TeamTasks', function (x) { return x.teamId === teamId && x.taskId === taskId; });
+function msOf(id) { return find('Milestones', function (m) { return m.msId === id; }); }
+function runOf(teamId, msId) {
+  return find('Runs', function (r) { return r.teamId === teamId && r.msId === msId; });
 }
 
-/* 一組在某一層被指派到的所有任務 */
-function tasksFor(teamId, layer) {
-  return where('Tasks', function (t) {
-    return (layer == null || t.layer === layer) && t.teams.indexOf(teamId) >= 0;
-  }).sort(function (a, b) { return a.ts - b.ts; });
-}
-function rowsFor(teamId, layer) {
-  return tasksFor(teamId, layer).map(function (t) {
-    return { task: t, tt: ttOf(teamId, t.taskId) };
-  }).filter(function (r) { return r.tt; });
+/* ---------- 一組看得到哪些里程碑 ---------- */
+function msFor(teamId) {
+  var t = teamOf(teamId);
+  if (!t) return [];
+  return where('Milestones', function (m) {
+    return m.classId === t.classId && (!m.teams.length || m.teams.indexOf(teamId) >= 0);
+  });
 }
 
-/* 一組現在的分數。明細與總分同一支函式，不會兜不起來。 */
-function scoreOf(teamId) {
-  var tts = where('TeamTasks', function (x) { return x.teamId === teamId; });
-  var passed = tts.filter(function (x) { return x.status === 'done'; }).length;
-  var drops = tts.reduce(function (s, x) { return s + (x.finds || []).length; }, 0);
-  var released = where('Passes', function (p) { return p.teamId === teamId; }).length;
-  return RULES.score({ passed: passed, drops: drops, released: released });
+/* 這一組的所有 run，照派發時間排 */
+function runsFor(teamId) {
+  return msFor(teamId).map(function (m) {
+    var r = runOf(teamId, m.msId);
+    if (!r) {
+      /* 派了但還沒承諾——先給一個空的，畫面才知道要問滑桿 */
+      r = { runId: null, teamId: teamId, msId: m.msId, state: 'fresh',
+            est: 0, risks: [], pushes: 0, snags: [], gear: null };
+    }
+    return { ms: m, run: r };
+  }).sort(function (a, b) { return a.ms.at - b.ms.at; });
 }
 
-/* 有沒有在動：來回幾次、其中幾次是被退回之後改的。不計分，只說明這一組在動。 */
-function motionOf(teamId) {
-  var subs = where('Submissions', function (s) { return s.teamId === teamId; });
-  return { rounds: subs.length, changed: subs.filter(function (s) { return s.attempt > 1; }).length };
-}
-
-function classTeams(classId) {
-  return where('Teams', function (t) { return t.classId === classId; });
-}
-
-/* 排行榜：分數高的在前，同分的照停留天數少的在前 */
-function board(classId) {
-  return classTeams(classId).map(function (t) {
-    return {
-      team: t, score: scoreOf(t.teamId), motion: motionOf(t.teamId),
-      stay: RULES.stayDays(t.enteredAt, now())
-    };
-  }).sort(function (a, b) { return b.score.total - a.score.total || a.stay - b.stay; })
-    .map(function (r, i) { r.rank = i + 1; return r; });
-}
-
-/* ================= 學生端 ================= */
-
-/* 一組在這一層有沒有交齊：老師的佇列吃這個條件。
-   老師隨時可以再開一項，所以交齊之後可能又變成沒交齊——那不是退步，
-   是這一層本來就沒有「做完」這個狀態。 */
-function allIn(teamId, layer) {
-  var rows = rowsFor(teamId, layer);
-  if (!rows.length) return false;
-  var waiting = 0;
-  for (var i = 0; i < rows.length; i++) {
-    var st = rows[i].tt.status;
-    if (st === 'open' || st === 'back') return false;
-    if (st === 'sent') waiting++;
-  }
-  return waiting > 0;
-}
-
-/* 首頁那一顆唯一的 CTA。首頁只給一件事，所以這裡只回傳一件。 */
+/* ---------- 這一組現在該做什麼 ----------
+   一次只回答一件事。首頁只給一個動作，其餘都是資訊。 */
 function nextThing(teamId) {
-  var team = teamOf(teamId);
-  /* 上一層留下的那一件還沒挑。這不是工作，是十秒鐘的一個決定——
-     所以它插在最前面，挑完馬上回到原本該做的事。 */
-  var pk = pendingPick(teamId);
-  if (pk) return { kind: 'pick', pick: pk };
-  if (team.finished) return { kind: 'finale' };
-  var rows = rowsFor(teamId, team.layer);
-  var back = rows.filter(function (r) { return r.tt.status === 'back'; });
-  if (back.length) return { kind: 'back', task: back[0].task, cta: '去看他寫了什麼' };
-  var open = rows.filter(function (r) { return r.tt.status === 'open'; });
-  if (open.length) {
-    open.sort(function (a, b) {
-      return (a.task.due || Infinity) - (b.task.due || Infinity);
-    });
-    return { kind: 'open', task: open[0].task, cta: '去做這一項' };
+  var rows = runsFor(teamId);
+  /* 1. 判定失準、還沒復盤 */
+  var camp = rows.filter(function (x) {
+    return x.run.state === 'judged' && x.run.stamp === 'late' && !x.run.snags.length;
+  })[0];
+  if (camp) return { kind: 'camp', row: camp };
+  /* 2. 老師發了裝備、還沒領 */
+  var gear = rows.filter(function (x) { return x.run.state === 'geared'; })[0];
+  if (gear) return { kind: 'gear', row: gear };
+  /* 3. 睡著了或長藤蔓——叫醒牠比接新任務重要。
+     這是整個設計的招牌互動：推一下，藤蔓碎掉，角色重新揮劍。
+     如果讓「接新任務」排在前面，那一下就永遠不會發生。 */
+  var st = stallOf(teamId);
+  if (st.level > 0) {
+    var stuck = rows.filter(function (x) { return x.run.state === 'running'; })[0];
+    if (stuck) return { kind: 'wake', row: stuck, stall: st };
   }
-  var sent = rows.filter(function (r) { return r.tt.status === 'sent'; });
-  if (sent.length) return { kind: 'wait', n: sent.length };
-  /* 手上沒有非做不可的事。系統在這裡主動邀請回頭補強：
-     老師給 0 的那一項 ＝ 你交了，但他覺得你沒有多做。 */
-  var zero = where('TeamTasks', function (x) {
-    return x.teamId === teamId && x.status === 'done' && (x.gave || 0) === 0;
+
+  /* 4. 派了但還沒承諾 */
+  var fresh = rows.filter(function (x) { return x.run.state === 'fresh'; })[0];
+  if (fresh) return { kind: 'commit', row: fresh };
+  /* 5. 進行中、今天還沒推進 */
+  var run = rows.filter(function (x) {
+    return x.run.state === 'running' && !pushedToday(teamId, x.run.runId);
+  })[0];
+  if (run) return { kind: 'push', row: run };
+  /* 6. 走完了、還沒上傳 */
+  var done = rows.filter(function (x) {
+    return x.run.state === 'running' && RULES.progress(x.run.pushes, x.run.est) >= 1;
+  })[0];
+  if (done) return { kind: 'submit', row: done };
+  /* 7. 都推過了，在等 */
+  var wait = rows.filter(function (x) { return x.run.state === 'running'; })[0];
+  if (wait) return { kind: 'waiting', row: wait };
+  var sent = rows.filter(function (x) { return x.run.state === 'submitted'; })[0];
+  if (sent) return { kind: 'review', row: sent };
+  return { kind: 'idle', row: null };
+}
+
+function pushedToday(teamId, runId) {
+  if (!runId) return false;
+  var d = dayOf(now());
+  return !!find('Pushes', function (p) {
+    return p.teamId === teamId && p.runId === runId && p.day === d;
   });
-  if (zero.length && redigLeft(teamId) === 0) {
-    return { kind: 'redig', task: taskOf(zero[0].taskId), cta: '回頭補強這一項' };
-  }
-  return { kind: 'idle' };
 }
 
-/* 回頭補強：滾動 7 天一次。回傳還要等幾天，0 ＝ 現在就可以送。 */
-function redigLeft(teamId) {
-  var rs = where('Redigs', function (r) { return r.teamId === teamId; });
-  if (!rs.length) return 0;
-  var last = rs.reduce(function (m, r) { return Math.max(m, r.ts); }, 0);
-  return RULES.redigWaitDays(last, now());
+/* 最後一次推進是什麼時候——停滯判斷用 */
+function lastPush(teamId) {
+  var ps = where('Pushes', function (p) { return p.teamId === teamId; });
+  if (!ps.length) return 0;
+  return ps[ps.length - 1].at;
 }
 
-/* ---------- 學生的動作 ---------- */
-
-/* 勾選 0 分。它只剩「我走到哪了」，那是它唯一能誠實的條件。 */
-function actCheck(teamId, taskId, idx) {
-  var tt = ttOf(teamId, taskId);
-  if (tt.status === 'done' || tt.status === 'sent') return;
-  var on = tt.checked.indexOf(idx) >= 0;
-  tt.checked = on ? tt.checked.filter(function (i) { return i !== idx; }) : tt.checked.concat([idx]);
-  DB.Checks.push({ teamId: teamId, taskId: taskId, idx: idx, act: on ? 'off' : 'on', ts: now() });
-  save();
-}
-function actEffort(teamId, taskId, v) { ttOf(teamId, taskId).effort = v; save(); }
-function actExtra(teamId, taskId, v) { ttOf(teamId, taskId).text = v; save(); }
-
-/* 卡住可以現在就說，不用等送出。隨時可以放下。 */
-function actBlocker(teamId, taskId, v) { ttOf(teamId, taskId).blocker = v || ''; save(); }
-
-function actSubmit(teamId, taskId) {
-  var tt = ttOf(teamId, taskId);
-  if (!tt.effort) return { err: '先回答「這一組現在的狀態」。' };
-  tt.attempt = (tt.attempt || 0) + 1;
-  tt.status = 'sent';
-  tt.sentAt = now();
-  DB.Submissions.push({ teamId: teamId, taskId: taskId, attempt: tt.attempt,
-    text: tt.text || '', effort: tt.effort, ts: now() });
-  save();
-  return { ok: true };
+/* 這一組的停滯狀態 */
+function stallOf(teamId) {
+  var t = teamOf(teamId);
+  var has = runsFor(teamId).some(function (x) { return x.run.state === 'running'; });
+  if (!has) return { level: 0, days: 0 };
+  return RULES.stallOf(lastPush(teamId) || (t && t.joinedAt) || now(), now());
 }
 
-function actRedig(teamId, taskId, note) {
-  var left = redigLeft(teamId);
-  if (left > 0) return { err: '還要等 ' + left + ' 天。' };
-  DB.Redigs.push({ redigId: nid('R'), teamId: teamId, taskId: taskId, note: note,
-    status: 'sent', reason: '', ts: now() });
-  save();
-  return { ok: true };
+/* 深度＝完成過幾個里程碑。沒有終點。 */
+function depthOf(teamId) {
+  return where('Runs', function (r) {
+    return r.teamId === teamId && r.state === 'done';
+  }).length;
 }
 
-/* ================= 老師端 ================= */
+/* 招牌的階：老師改寫過幾次專案名稱 */
+function signOf(teamId) {
+  var t = teamOf(teamId);
+  var n = Math.min(RULES.SIGN_TIERS.length - 1, (t && t.signTier) || 0);
+  return SIGNS[RULES.SIGN_TIERS[n]];
+}
 
-/* 待你驗收：依停留天數排序，待最久的排最前面。舉手的組排最前面。 */
-function queue(classId) {
-  return classTeams(classId).map(function (t) {
-    var rows = rowsFor(t.teamId, t.layer);
-    var sent = rows.filter(function (r) { return r.tt.status === 'sent'; });
-    var blockers = rows.filter(function (r) { return r.tt.blocker; });
-    var redigs = where('Redigs', function (r) { return r.teamId === t.teamId && r.status === 'sent'; });
+/* 這一組的預估準度紀錄——復盤與老師審閱都要看 */
+function accuracyOf(teamId) {
+  var done = where('Runs', function (r) {
+    return r.teamId === teamId && r.stamp;
+  });
+  var n = { early: 0, exact: 0, late: 0 };
+  done.forEach(function (r) { n[r.stamp] = (n[r.stamp] || 0) + 1; });
+  return { total: done.length, early: n.early, exact: n.exact, late: n.late, rows: done };
+}
+
+/* ---------- 全班生態 ----------
+   沒有名次。只有「誰在哪一條坑道、挖到多深、現在是什麼狀態」。 */
+function ecology(classId) {
+  return where('Teams', function (t) { return t.classId === classId; }).map(function (t) {
+    var st = stallOf(t.teamId);
+    var cur = runsFor(t.teamId).filter(function (x) { return x.run.state === 'running'; })[0];
     return {
-      team: t, stay: RULES.stayDays(t.enteredAt, now()),
-      sent: sent, redigs: redigs, blockers: blockers,
-      ready: allIn(t.teamId, t.layer)
+      teamId: t.teamId, name: t.name,
+      depth: depthOf(t.teamId),
+      stall: st.level,
+      /* 正在打的那一隻，跟走到哪 */
+      onMs: cur ? cur.ms.title : '',
+      at: cur ? RULES.progress(cur.run.pushes, cur.run.est) : 0,
+      sign: signOf(t.teamId).key
     };
-  }).filter(function (r) { return r.ready || r.blockers.length || r.redigs.length; })
-    .sort(function (a, b) {
-      var ab = a.blockers.length ? 1 : 0, bb = b.blockers.length ? 1 : 0;
-      return bb - ab || b.stay - a.stay;
+  });
+}
+
+/* ================= 學生的動作 ================= */
+
+/* 承諾：拉滑桿決定幾天，順便標風險 */
+function actCommit(teamId, msId, est, risks) {
+  var r = runOf(teamId, msId);
+  if (r) return r;
+  r = {
+    runId: nid('R'), teamId: teamId, msId: msId,
+    state: 'running',
+    est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
+    risks: risks || [],
+    committedAt: now(),
+    pushes: 0, snags: [], gear: null, stamp: null
+  };
+  DB.Runs.push(r);
+  save();
+  return r;
+}
+
+/* 推進：一天一次。回傳有沒有真的推到。 */
+function actPush(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'running') return false;
+  if (pushedToday(teamId, runId)) return false;
+  DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId, day: dayOf(now()), at: now() });
+  r.pushes++;
+  save();
+  return true;
+}
+
+/* 上傳：走到終點之後交出去。判定就在這一刻。 */
+function actSubmit(teamId, runId, link) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'running') return null;
+  r.actual = Math.max(1, daysBetween(r.committedAt, now()));
+  r.stamp = RULES.judge(r.est, r.actual).key;
+  r.link = link || '';
+  r.submittedAt = now();
+  r.state = 'judged';
+  save();
+  return r;
+}
+
+/* 復盤：點圖示標籤說明卡在哪。只有失準的時候會走到。 */
+function actReflect(teamId, runId, snags) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  r.snags = snags || [];
+  r.state = 'submitted';        /* 復盤完才排進老師的雷達 */
+  save();
+  return r;
+}
+
+/* 準時的直接排進老師的雷達，不用復盤 */
+function actSkipCamp(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  r.state = 'submitted';
+  save();
+  return r;
+}
+
+/* 領裝備 → 大躍進 */
+function actTakeGear(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'geared') return null;
+  r.state = 'done';
+  r.doneAt = now();
+  save();
+  return r;
+}
+
+/* ================= 老師的動作 ================= */
+
+/* 派一個里程碑。teams 空陣列＝全班。 */
+function actPublish(classId, o) {
+  var m = {
+    msId: nid('M'), classId: classId,
+    title: o.title, note: o.note || '',
+    teams: o.teams || [],
+    at: now()
+  };
+  DB.Milestones.push(m);
+  save();
+  return m;
+}
+
+/* 老師的雷達：誰交了、等多久了 */
+function radar(classId) {
+  var out = [];
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    runsFor(t.teamId).forEach(function (x) {
+      if (x.run.state !== 'submitted') return;
+      out.push({
+        team: t, run: x.run, ms: x.ms,
+        waited: daysBetween(x.run.submittedAt, now())
+      });
     });
-}
-
-/* 老師寫了幾件合格考量、平均幾個字、學生平均等他多久 */
-function teacherStats() {
-  var rs = DB.Reviews;
-  var chars = rs.reduce(function (s, r) { return s + String(r.reason || '').length; }, 0);
-  var lat = rs.reduce(function (s, r) { return s + (r.latency || 0); }, 0);
-  return {
-    n: rs.length,
-    avgChars: rs.length ? Math.round(chars / rs.length) : 0,
-    avgWait: rs.length ? (lat / rs.length / 86400000) : 0
-  };
-}
-
-/* 老師自己寫過三次以上的起頭句——是他的話，不是系統的罐頭。 */
-function starters() {
-  var seen = {};
-  DB.Reviews.forEach(function (r) {
-    var head = String(r.reason || '').slice(0, 6);
-    if (head.length < 4) return;
-    seen[head] = (seen[head] || 0) + 1;
   });
-  return Object.keys(seen).filter(function (k) { return seen[k] >= 2; }).slice(0, 4);
+  return out.sort(function (a, b) { return b.waited - a.waited; });
 }
 
-function actPublish(classId, layer, o) {
-  var t = {
-    taskId: nid('K'), classId: classId, layer: layer, title: o.title,
-    cond: o.cond, note: o.note || '', spec: o.spec || '',
-    due: o.due || null, checks: o.checks || [], teams: o.teams || [], ts: now()
-  };
-  DB.Tasks.push(t);
-  t.teams.forEach(function (tid) {
-    DB.TeamTasks.push({ teamId: tid, taskId: t.taskId, status: 'open', checked: [],
-      text: '', effort: '', blocker: '', gave: 0, finds: [], attempt: 0 });
-  });
+/* 發裝備。gearKey 是資訊性回饋——選哪一件等於選一句話。 */
+function actGear(runId, gearKey, word) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  r.gear = gearKey;
+  r.word = word || '';
+  r.state = 'geared';
+  r.gearedAt = now();
+  DB.Gears.push({ gearId: nid('G'), teamId: r.teamId, runId: runId, key: gearKey, at: now() });
+  save();
+  return r;
+}
+
+/* 改寫專案名稱 → 招牌升一階。收斂本身就是成果。 */
+function actRename(teamId, name) {
+  var t = teamOf(teamId);
+  if (!t) return null;
+  if (t.project !== name) {
+    t.project = name;
+    t.signTier = Math.min(RULES.SIGN_TIERS.length - 1, (t.signTier || 0) + 1);
+  }
   save();
   return t;
 }
 
-/* 判一項。給的 0–5 只決定抽幾次，不決定過不過。 */
-function actReview(teamId, taskId, o) {
-  var tt = ttOf(teamId, taskId), task = taskOf(taskId);
-  DB.Reviews.push({ teamId: teamId, taskId: taskId, result: o.result, reason: o.reason,
-    gave: o.gave, attempt: tt.attempt, latency: tt.sentAt ? (now() - tt.sentAt) : 0, ts: now() });
-  if (o.result === 'back') { tt.status = 'back'; save(); return { ok: true }; }
-  tt.status = 'done';
-  tt.gave = o.gave;
-  tt.doneAt = now();
-  tt.seen = false;
-  var n = RULES.draws(task.layer, o.gave);
-  tt.finds = rollFinds(task.layer, n, teamId + '/' + taskId + '/' + tt.attempt);
-  save();
-  return { ok: true, draws: n };
-}
-
-function actRedigJudge(redigId, accept, reason) {
-  var r = find('Redigs', function (x) { return x.redigId === redigId; });
-  r.status = accept ? 'ok' : 'no';
-  r.reason = reason || '';
-  r.judgedAt = now();
-  if (accept) {
-    var tt = ttOf(r.teamId, r.taskId), task = taskOf(r.taskId);
-    /* 接受 ＝ 那一項多抽一次（多一件進圖鑑，分數跟著加） */
-    tt.finds = (tt.finds || []).concat(rollFinds(task.layer, 1, r.redigId));
-    tt.seen = false;
-  }
-  save();
-}
-
-/* 放行。這是整個系統唯一的門。 */
-function actRelease(teamId, verdict, reason) {
-  var team = teamOf(teamId);
-  DB.Passes.push({ teamId: teamId, layer: team.layer, verdict: verdict, reason: reason, ts: now() });
-  team.tools = (team.tools || []).concat([team.layer]);
-  /* 戰利品不在這裡發。攤開三件，等他們自己挑一件帶走——
-     系統不決定誰帶走哪一句話。 */
-  DB.Picks.push({ pickId: nid('P'), teamId: teamId, layer: team.layer,
-    offer: offerTrophies(team.layer, team.tro || [], teamId + '/' + team.layer),
-    chosen: null, ts: now() });
-  team.fresh = team.layer;
-  if (team.layer < RULES.LAYERS) { team.layer++; team.enteredAt = now(); }
-  else team.finished = true;
-  save();
-}
-
-/* ---------- 挑一件帶走 ---------- */
-/* 一組同一時間最多只會有一件在等他們挑。 */
-
-function pendingPick(teamId) {
-  return find('Picks', function (p) { return p.teamId === teamId && !p.chosen; });
-}
-
-function actPick(pickId, id) {
-  var p = find('Picks', function (x) { return x.pickId === pickId; });
-  if (!p || p.chosen) return;
-  if (p.offer.indexOf(id) < 0) return;      /* 只能挑攤出來的那幾件 */
-  p.chosen = id;
-  p.pickedAt = now();
-  var team = teamOf(p.teamId);
-  team.tro = (team.tro || []).concat([id]);
-  save();
-}
-
-/* 中途接手：課程走到一半才導入時，前面在系統外做完的直接認列。 */
-function actStartAt(teamId, doneLayers) {
-  var team = teamOf(teamId);
-  team.startedAt = doneLayers;
-  team.layer = clamp(1, RULES.LAYERS, doneLayers + 1);
-  team.enteredAt = now();
-  save();
-}
-
-function actFinale(teamId, o) {
-  var f = find('Finales', function (x) { return x.teamId === teamId; });
-  if (!f) { f = { teamId: teamId }; DB.Finales.push(f); }
-  Object.keys(o).forEach(function (k) { f[k] = o[k]; });
-  save();
-  return f;
-}
-function finaleOf(teamId) { return find('Finales', function (x) { return x.teamId === teamId; }); }
-
-/* ================= 他寫過的那一疊 ================= */
-/* 老師每判一件都要寫一段字——那件事他本來就在做，所以這一疊是零負擔的累積。
-   一次性看過就過去的話，那些字只影響那一件；疊起來之後它影響下一件。
-
-   跟圖鑑一樣是個人的：這個人走過的每一組都算進來。 */
-function stackOf(userId) {
-  var u = userOf(userId);
-  var teams = (u.history || []).concat([u.teamId]);
-  var out = [];
-  teams.forEach(function (tid) {
-    var team = teamOf(tid);
-    if (!team) return;
-    where('Reviews', function (r) { return r.teamId === tid; }).forEach(function (r) {
-      var task = taskOf(r.taskId);
-      if (!task) return;
-      out.push({
-        kind: r.result === 'ok' ? 'ok' : 'back',
-        layer: task.layer, title: task.title, cond: task.cond,
-        gave: r.gave, text: r.reason, ts: r.ts, taskId: r.taskId, teamId: tid,
-        mine: tid === u.teamId
-      });
-    });
-    where('Redigs', function (r) { return r.teamId === tid && r.status !== 'sent'; })
-      .forEach(function (r) {
-        var task = taskOf(r.taskId);
-        if (!task || !r.reason) return;
-        out.push({
-          kind: r.status === 'ok' ? 'redig-ok' : 'redig-no',
-          layer: task.layer, title: task.title, cond: task.cond,
-          text: r.reason, ts: r.judgedAt || r.ts, taskId: r.taskId, teamId: tid,
-          mine: tid === u.teamId
-        });
-      });
-    where('Passes', function (p) { return p.teamId === tid; }).forEach(function (p) {
-      out.push({
-        kind: 'pass', layer: p.layer, title: LAYERS[p.layer - 1].name + ' · 放行',
-        text: p.reason, ts: p.ts, teamId: tid, mine: tid === u.teamId
-      });
-    });
-  });
-  return out.sort(function (a, b) { return b.ts - a.ts; });
-}
-
-/* ================= 這一趟的剖面 ================= */
-/* 深度對時間。系統手上本來就有這些時間戳，一個都不必碰作業內容。
-
-   全部是描述，沒有一項是評價：哪一天開的、哪一天交的、走了幾輪、等了幾天。
-   沒有「應該長這樣」的那一條線，也不跟別組比。 */
-function timelineOf(teamId) {
-  var team = teamOf(teamId);
-  var passes = where('Passes', function (p) { return p.teamId === teamId; })
-    .sort(function (a, b) { return a.ts - b.ts; });
-  var rows = [];
-  LAYERS.forEach(function (l) { rowsFor(teamId, l.n).forEach(function (r) { rows.push(r); }); });
-
-  /* 起點：這一組最早看到的那一項，或最早的一次放行 */
-  var t0 = rows.reduce(function (m, r) { return Math.min(m, r.task.ts); },
-    passes.length ? passes[0].ts : (team.enteredAt || now()));
-  t0 = Math.min(t0, team.enteredAt || t0);
-  var t1 = now();
-  var span = Math.max(1, Math.round((t1 - t0) / 86400000));
-
-  /* 每一層待了哪一段 */
-  var bands = [], from = t0;
-  passes.forEach(function (p) {
-    bands.push({ layer: p.layer, from: from, to: p.ts });
-    from = p.ts;
-  });
-  if (!team.finished) bands.push({ layer: team.layer, from: from, to: t1, now: true });
-
-  /* 每一項的事件 */
-  var items = rows.map(function (r) {
-    var subs = where('Submissions', function (s) {
-      return s.teamId === teamId && s.taskId === r.task.taskId;
-    }).sort(function (a, b) { return a.ts - b.ts; });
-    var revs = where('Reviews', function (v) {
-      return v.teamId === teamId && v.taskId === r.task.taskId;
-    }).sort(function (a, b) { return a.ts - b.ts; });
-    var first = subs[0], last = revs[revs.length - 1];
-    return {
-      task: r.task, tt: r.tt, layer: r.task.layer,
-      opened: r.task.ts,
-      subs: subs, revs: revs,
-      rounds: subs.length,
-      /* 開啟到第一次交隔了幾天 */
-      toFirst: first ? (first.ts - r.task.ts) / 86400000 : null,
-      /* 等裁決等了幾天（每一輪加起來除以輪數） */
-      wait: revs.length ? revs.reduce(function (s, v) { return s + (v.latency || 0); }, 0)
-        / revs.length / 86400000 : null,
-      /* 期限前幾天交（負的是逾期） */
-      slack: (first && r.task.due) ? (r.task.due - first.ts) / 86400000 : null,
-      done: r.tt.status === 'done', doneAt: r.tt.doneAt || (last ? last.ts : null)
-    };
-  }).sort(function (a, b) { return a.opened - b.opened; });
-
-  var avg = function (list) {
-    var v = list.filter(function (x) { return x != null; });
-    return v.length ? v.reduce(function (s, x) { return s + x; }, 0) / v.length : null;
-  };
-  return {
-    t0: t0, t1: t1, span: span, bands: bands, items: items,
-    stats: {
-      n: items.length,
-      toFirst: avg(items.map(function (i) { return i.toFirst; })),
-      rounds: avg(items.map(function (i) { return i.rounds || null; })),
-      wait: avg(items.map(function (i) { return i.wait; })),
-      slack: avg(items.map(function (i) { return i.slack; })),
-      late: items.filter(function (i) { return i.slack != null && i.slack < 0; }).length,
-      tight: items.filter(function (i) { return i.slack != null && i.slack >= 0 && i.slack < 1; }).length,
-      multi: items.filter(function (i) { return i.rounds > 1; }).length
-    }
-  };
-}
-
-/* ================= 個人圖鑑 ================= */
-/* 圖鑑是個人的。換組換班換專案都跟著人走，所以它從這個人走過的
-   每一組累積，不是從現在這一組算。 */
-function dexOf(userId) {
-  var u = userOf(userId);
-  var teams = (u.history || []).concat([u.teamId]);
-  var mobs = {}, finds = {}, tros = {}, tools = {};
-  teams.forEach(function (tid) {
-    var t = teamOf(tid);
-    if (!t) return;
-    where('TeamTasks', function (x) { return x.teamId === tid && x.status === 'done'; })
-      .forEach(function (x) {
-        var task = taskOf(x.taskId);
-        if (!task) return;
-        mobs[mobFor(x.taskId, tid, task.layer).name] = task.layer;
-        (x.finds || []).forEach(function (id) { finds[id] = 1; });
-      });
-    (t.tools || []).forEach(function (L) { tools[L] = 1; });
-    (t.tro || []).forEach(function (id) { tros[id] = 1; });
-    where('Passes', function (p) { return p.teamId === tid; })
-      .forEach(function (p) { mobs['BOSS' + p.layer] = p.layer; });
-  });
-  return { mobs: mobs, finds: finds, tros: tros, tools: tools,
-    nMob: Object.keys(mobs).length,
-    nItem: Object.keys(finds).length + Object.keys(tros).length + Object.keys(tools).length };
+/* 這一組拿過的裝備 */
+function gearsOf(teamId) {
+  return where('Gears', function (g) { return g.teamId === teamId; });
 }

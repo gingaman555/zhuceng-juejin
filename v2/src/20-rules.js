@@ -1,154 +1,142 @@
 /* 全部的計算都在這裡，而且只在這裡。
 
-   規格書 00 的第二條原則：一個概念一個來源。分數、抽數、期限這種規則
-   各只有一份定義。第三條：文案跟規則綁在一起——所以講規則的句子不是寫死的
-   字串，是從下面的數字組出來的。改 PASS 的值，畫面上那句話會跟著變，
-   不會變成一句謊話。 */
+   一個概念一個來源。文案跟規則綁在一起——講規則的句子不是寫死的字串，
+   是從下面的數字組出來的。改 BAND 的值，畫面上那句話會跟著變，
+   不會變成一句謊話。
+
+   這個系統跟成績無關。它不判斷作業好不好，只判斷「你對自己的預估準不準」。
+   那是刻意的：拖延的根不是懶，是對「這件事要花多久」沒有體感。 */
 
 var RULES = {
 
-  /* ---------- 分數 ---------- */
-  PASS: 100,        /* 通過一項 */
-  DROP: 30,         /* 掉落物一件 */
-  TOOL: 500,        /* 放行一層給的道具 */
-  TROPHY: 500,      /* 放行一層給的守關戰利品 */
-  CHECK: 0,         /* 勾選一條 */
-  ROUND: 0,         /* 來回一次 */
+  /* ---------- 自我承諾 ---------- */
+  EST_MIN: 1,          /* 滑桿最少 1 天 */
+  EST_MAX: 21,         /* 最多三週。再長就不是一個里程碑了 */
+  EST_DEFAULT: 5,
 
-  /* ---------- 抽數 ---------- */
-  DRAW_MIN: 1,
-  DRAW_MAX: 8,
+  /* ---------- 判定 ---------- */
+  /* 容許誤差＝預估天數的兩成，最少 1 天。
+     estimate 5 天 → ±1 天算準；estimate 14 天 → ±3 天算準。
+     用比例而不是固定值，因為估 3 天差 2 天跟估 20 天差 2 天不是同一回事。 */
+  BAND_RATIO: 0.2,
+  BAND_MIN: 1,
 
-  /* ---------- 其他 ---------- */
-  GAVE_MIN: 0,
-  GAVE_MAX: 5,
-  REDIG_DAYS: 7,    /* 回頭補強：滾動 7 天一次，不是日曆週 */
-  OFFER: 3,         /* 放行一層時攤開幾件戰利品讓他們挑 */
-  LAYERS: 4,
-  START_MIN: 0,     /* 中途接手：起點可設 0–4 層 */
-  START_MAX: 4
+  /* ---------- 推進 ---------- */
+  PUSH_PER_DAY: 1,     /* 一天一次。多按沒有用，這不是點擊遊戲 */
+  STALL_DAYS: 2,       /* 幾天沒推進就開始長藤蔓 */
+  SLEEP_DAYS: 4,       /* 幾天沒推進角色會睡著 */
+
+  /* ---------- 招牌 ---------- */
+  /* 專案名稱看板的三階。老師每改寫一次名稱就往上升一階——
+     視覺材質的升級就是對邏輯收斂最直接的肯定，不用多說一句話。 */
+  SIGN_TIERS: ['wood', 'iron', 'glow'],
+
+  /* 這個系統沒有的東西寫在 check.js 的 BANNED 裡，不寫在這裡——
+     寫在這裡等於把那些詞放進畫面，檢查器會抓（而且抓得對）。 */
+  _: null
 };
-
-RULES.RELEASE = RULES.TOOL + RULES.TROPHY;   /* 老師放行一層 */
-
-/* 老師給分的六個錨點。分數就是索引，所以順序不能動。 */
-RULES.GAVE = [
-  { n: 0, anchor: '完全沒有', effect: '抽數 ＝ 層數（無加成）' },
-  { n: 1, anchor: '幾乎沒有', effect: '＋1 次' },
-  { n: 2, anchor: '有一點', effect: '＋2 次' },
-  { n: 3, anchor: '中等', effect: '＋3 次' },
-  { n: 4, anchor: '明顯多做', effect: '＋4 次' },
-  { n: 5, anchor: '遠超出要求', effect: '＋5 次' }
-];
-
-/* 老師那一格的題目。它是一個陳述句，不是問句——老師是在判斷這句話成不成立。
-   這是整個系統唯一能獎勵「不只把作業交出來」的地方。 */
-RULES.GAVE_STATEMENT =
-  '這一組在這一項裡，不只是把作業交出來——多研究了、多畫了別的草圖、' +
-  '給了不同的做法，或是有額外的產出。';
 
 function clamp(lo, hi, n) { return Math.max(lo, Math.min(hi, n)); }
 
-/* 抽幾次 ＝ clamp(1, 8, 層數 ＋ 老師給的 0–5)
-   L1 給 0 ＝ 抽 1 次；L4 給 5 ＝ 抽 8 次（上限）。 */
-RULES.draws = function (layer, gave) {
-  return clamp(RULES.DRAW_MIN, RULES.DRAW_MAX,
-    (Number(layer) || 1) + (Number(gave) || 0));
+/* 容許誤差：估幾天，準的範圍就有多寬 */
+RULES.band = function (est) {
+  return Math.max(RULES.BAND_MIN, Math.round((Number(est) || 0) * RULES.BAND_RATIO));
 };
 
-RULES.gaveAnchor = function (g) {
-  var row = RULES.GAVE[clamp(RULES.GAVE_MIN, RULES.GAVE_MAX, Number(g) || 0)];
-  return row ? row.anchor : RULES.GAVE[0].anchor;
+/* ---------- 三種印章 ----------
+   這是整個系統唯一的「評價」，而且評的是預估能力，不是作品好壞。
+   遲到不是失敗，是一次判斷失準——那本身就是可以拿來練的資料。 */
+RULES.STAMPS = {
+  early: { key: 'early', mark: '🚀', name: '超乎預期',
+           why: '比你自己承諾的還早。你把它想得比實際難。' },
+  exact: { key: 'exact', mark: '🎯', name: '精準預測',
+           why: '你說幾天就是幾天。這是專案管理裡最難練的一件事。' },
+  late:  { key: 'late',  mark: '❌', name: '判斷失準',
+           why: '比你承諾的久。承認並說出卡在哪，比準時更有價值。' }
 };
 
-/* ---------- 天 ---------- */
-/* 週整套拿掉了。這裡沒有任何東西會問「今天禮拜幾」——所以學期中間
-   任何一天開始用都一樣。 */
-
-var DAY = 86400000;
-
-function dayStart(ts) { var d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); }
-
-/* 停留天數：從進到這一層那一刻起算 */
-RULES.stayDays = function (enteredAt, now) {
-  if (!enteredAt) return 0;
-  return Math.max(0, Math.floor(((now || Date.now()) - enteredAt) / DAY));
+/* 判定：拿實際花的天數比對當初承諾的 */
+RULES.judge = function (est, actual) {
+  var e = Number(est) || 0, a = Number(actual) || 0, b = RULES.band(e);
+  if (a < e - b) return RULES.STAMPS.early;
+  if (a > e + b) return RULES.STAMPS.late;
+  return RULES.STAMPS.exact;
 };
 
-/* 回頭補強：滾動 7 天一次。回傳還要等幾天，0 ＝ 現在就可以送。 */
-RULES.redigWaitDays = function (lastAt, now) {
-  if (!lastAt) return 0;
-  var passed = ((now || Date.now()) - lastAt) / DAY;
-  return Math.max(0, Math.ceil(RULES.REDIG_DAYS - passed));
+/* 判定的說明句。從數字組出來，所以改 BAND_RATIO 這句話會跟著變。 */
+RULES.judgeWhy = function (est, actual) {
+  var b = RULES.band(est);
+  return '你承諾 ' + est + ' 天，實際花了 ' + actual + ' 天。' +
+         '誤差 ' + b + ' 天以內算準（預估的 ' + Math.round(RULES.BAND_RATIO * 100) + '％）。';
 };
 
-/* ---------- 期限 ---------- */
-/* 幾天後／指定日期／不設限。逾期只標示，不阻擋。 */
+/* ---------- 卡關的原因 ----------
+   全部做成圖示快選，不要輸入框。要打字的反思沒有人會寫，
+   而且打字會把防衛心叫起來——點一個標籤不會。 */
+RULES.SNAGS = [
+  { key: 'scope',  icon: '🌀', label: '範圍變大了',   hint: '做著做著發現要做的比想的多' },
+  { key: 'wait',   icon: '⏳', label: '在等別人',     hint: '等回覆、等資料、等隊友' },
+  { key: 'skill',  icon: '🔧', label: '不會做',       hint: '需要先學一個沒學過的東西' },
+  { key: 'start',  icon: '🪨', label: '開不了頭',     hint: '知道要做什麼，但一直沒動' },
+  { key: 'split',  icon: '✂️', label: '拆得太粗',     hint: '一件事其實是三件事' },
+  { key: 'life',   icon: '🌧️', label: '別的事插進來', hint: '其他課、打工、身體' },
+  { key: 'redo',   icon: '🔁', label: '做了又重做',   hint: '方向改過' },
+  { key: 'guess',  icon: '🎲', label: '純粹估錯',     hint: '沒有特別的原因，就是想得太快' }
+];
 
-var WEEK_CH = ['日', '一', '二', '三', '四', '五', '六'];
-
-RULES.due = function (due, now) {
-  if (!due) return { none: true, text: '不設限', tone: 'mute' };
-  var d = new Date(due);
-  var left = Math.round((dayStart(due) - dayStart(now || Date.now())) / DAY);
-  var head = (d.getMonth() + 1) + '/' + d.getDate() + '（' + WEEK_CH[d.getDay()] + '）';
-  if (left > 0) return { text: head + ' · 還有 ' + left + ' 天', left: left, tone: left <= 2 ? 'warn' : 'ok' };
-  if (left === 0) return { text: head + ' · 就是今天', left: 0, tone: 'warn' };
-  return { text: head + ' · 逾期 ' + (-left) + ' 天', left: left, over: true, tone: 'over' };
-};
-
-/* ---------- 分數怎麼來的 ---------- */
-/* 排行榜每一列拆給你看的那一段，跟總分是同一支函式算的——
-   不會有「明細加起來不等於總分」這種事。 */
-RULES.score = function (t) {
-  var parts = [];
-  var passed = t.passed || 0, drops = t.drops || 0, released = t.released || 0;
-  if (passed)   parts.push({ k: '通過 ' + passed + ' 項', v: passed * RULES.PASS });
-  if (drops)    parts.push({ k: '掉落物 ' + drops + ' 件', v: drops * RULES.DROP });
-  if (released) parts.push({ k: '放行 ' + released + ' 層', v: released * RULES.RELEASE });
-  var total = parts.reduce(function (s, p) { return s + p.v; }, 0);
-  return { parts: parts, total: total };
-};
-
-/* ---------- 講規則的句子 ---------- */
-/* 這些不是文案常數，是從上面的數字組出來的。規則改了，句子跟著改。 */
-RULES.say = {
-  pass:    function () { return '通過一項 ＋' + RULES.PASS + ' 分'; },
-  drop:    function () { return '掉落物一件 ＋' + RULES.DROP + ' 分'; },
-  release: function () { return '老師放行一層 ＋' + RULES.RELEASE + ' 分（道具 ' +
-                                RULES.TOOL + ' ＋ 守關戰利品 ' + RULES.TROPHY + '）'; },
-  check:   function () { return '勾選一條 ' + RULES.CHECK + ' 分'; },
-  round:   function () { return '來回一次 ' + RULES.ROUND + ' 分'; },
-  draws:   function () { return '抽幾次 ＝ 層數 ＋ 老師給的 ' + RULES.GAVE_MIN + '–' + RULES.GAVE_MAX +
-                                '，最少 ' + RULES.DRAW_MIN + ' 次、最多 ' + RULES.DRAW_MAX + ' 次'; },
-  redig:   function () { return '滾動 ' + RULES.REDIG_DAYS + ' 天一次'; },
-  drawsFor: function (layer, gave) {
-    return '第 ' + layer + ' 層 ＋ 他給的 ' + gave + ' ＝ 抽 ' + RULES.draws(layer, gave) + ' 次';
-  },
-  /* 每一件掉落物一樣重。不寫明學生會腦補稀有的比較值錢。 */
-  sameWeight: function () {
-    return '每一件都是 ' + RULES.DROP + ' 分，一件不多一件不少。稀有度只影響出現機率，撿到哪一件不影響名次。';
+RULES.snagOf = function (key) {
+  for (var i = 0; i < RULES.SNAGS.length; i++) {
+    if (RULES.SNAGS[i].key === key) return RULES.SNAGS[i];
   }
+  return null;
 };
 
-/* 戰利品是「挑」的，不是「發」的。
+/* ---------- 風險標記 ----------
+   派發任務時學生可以先標「我覺得這裡會卡」。事後對照——
+   標對了就是預見能力，那比準時更值錢。 */
+RULES.RISKS = RULES.SNAGS.slice(0, 6);
 
-   攤開哪三件只跟「這一層還有哪幾件沒拿過」有關，跟這一組做得好不好
-   完全無關——反過來做（重交三次所以發給你斷柄鑿）的那一秒，它就從
-   一句話變成一個評價，而這個系統從頭到尾不評價任何人。
+/* ---------- 裝備 ----------
+   老師發的，不是抽的、不是買的。它是一句「我看到你做了什麼」的具體化，
+   所以每一件都綁一個理由，而且發的時候要選那個理由。 */
+RULES.GEARS = [
+  { key: 'sword',   icon: '⚔️', name: '銳劍',   why: '這一項推進得乾脆——沒有拖，也沒有等到最後一天。' },
+  { key: 'compass', icon: '🧭', name: '指南針', why: '預估得準。你對自己的判斷開始可靠了。' },
+  { key: 'lamp',    icon: '🏮', name: '提燈',   why: '你把卡在哪講清楚了。看得見的困難才處理得掉。' },
+  { key: 'shield',  icon: '🛡️', name: '盾',     why: '你事先標了風險，而且標對了。' },
+  { key: 'boots',   icon: '👢', name: '快靴',   why: '這一次比上一次快。你把上次的教訓用上了。' },
+  { key: 'map',     icon: '🗺️', name: '殘圖',   why: '你把一件事拆成看得懂的幾件。' }
+];
 
-   三件一樣重、分數在放行那一刻就記上了，所以挑哪一件不影響任何數字。
-   它只影響你帶走哪一句話——挑那一句本身就是省思。 */
-RULES.PICK_SAY = '這 ' + RULES.OFFER + ' 件是這一層你們還沒拿過的裡面攤出來的，跟你們做得好不好無關。' +
-  '三件一樣重，' + RULES.TROPHY + ' 分在他放行的那一刻就記上了——挑哪一件不影響任何數字，' +
-  '只影響你們帶走哪一句話。';
+RULES.gearOf = function (key) {
+  for (var i = 0; i < RULES.GEARS.length; i++) {
+    if (RULES.GEARS[i].key === key) return RULES.GEARS[i];
+  }
+  return null;
+};
 
-/* 老師寫過的那些字會累積成一疊。他本來就要寫，所以這是零負擔的那一種累積。 */
-RULES.STACK_SAY = '他每判一件就寫一段。那些字在這裡疊起來——交下一件之前可以先翻。' +
-  '第十次交件的時候，你對「合格長什麼樣」的掌握不會跟第一次一樣。';
+/* ---------- 停滯 ----------
+   系統不發「已逾期」通知。狀態本身就是回饋：幾天沒推進，畫面自己會暗下來。
+   這是勸導式設計的核心——不指責，只是讓停下來這件事看得見。 */
+RULES.stallOf = function (lastPushAt, nowTs) {
+  if (!lastPushAt) return { level: 0, days: 0 };
+  var days = Math.floor((nowTs - lastPushAt) / 86400000);
+  if (days >= RULES.SLEEP_DAYS) return { level: 2, days: days };   /* 睡著 */
+  if (days >= RULES.STALL_DAYS) return { level: 1, days: days };   /* 長藤蔓 */
+  return { level: 0, days: days };
+};
 
-/* 剖面是描述，不是評價。 */
-RULES.CURVE_SAY = '這一頁只有你們自己走過的時間：哪一天開的、哪一天交的、走了幾輪、等了幾天。' +
-  '它不打分、不跟別組比，也沒有一條「應該長這樣」的線。看得到自己的節奏，才有得調。';
-/* 唯一的門檻。所有畫面都不該暗示還有第二道。 */
-RULES.GATE = '只有老師放行，一組才會往下一層。';
+/* 停滯的說法。不講「你逾期了」，講畫面上發生了什麼。 */
+RULES.stallSay = function (level, days) {
+  if (level === 2) return '牠睡著了。' + days + ' 天沒有推進——按一下就會醒。';
+  if (level === 1) return '藤蔓爬上來了。' + days + ' 天沒有推進——推一次就會碎掉。';
+  return '';
+};
+
+/* ---------- 走到哪了 ----------
+   迷霧走廊的長度＝承諾的天數。推進一次前進一格。
+   走完不等於完成——完成是上傳作業那一刻。 */
+RULES.progress = function (pushes, est) {
+  var e = Math.max(1, Number(est) || 1);
+  return clamp(0, 1, (Number(pushes) || 0) / e);
+};

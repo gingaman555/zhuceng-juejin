@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>地心圖鑑 v2</title>
+<title>專案地下城</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -90,213 +90,253 @@ img{display:block}
 
 .eyebrow{font-size:11px;color:var(--mute);letter-spacing:.2em;margin-bottom:5px}
 h1{font-size:44px;line-height:1.35;margin:0 0 11px;font-weight:400}
-h2{font-size:33px;line-height:1.45;margin:44px 0 11px;font-weight:400}
+h2{font-size:33px;line-height:1.45;margin:0 0 11px;font-weight:400}
 h3{font-size:22px;line-height:1.6;margin:22px 0 11px;font-weight:400}
 p{margin:0 0 11px}
 .lead{font-size:22px;color:var(--dim);max-width:63ch}
-.fine{font-size:11px;color:var(--mute);line-height:1.9}
-.fine b{color:var(--dim);font-weight:400}
+.dim{font-size:11px;color:var(--mute);line-height:1.9;max-width:70ch}
+.ok{font-size:11px;color:var(--ok);line-height:1.9}
+.warnx{color:var(--over)}
+.quote{
+  font-size:22px;color:var(--ink);line-height:1.8;
+  border-left:3px solid var(--gold-d);padding:11px 0 11px 14px;margin:11px 0
+}
 
 .card{
-  background:var(--panel);border:1px solid var(--line);padding:22px;margin-bottom:22px
+  background:var(--panel);border:1px solid var(--line);
+  padding:22px;margin:0 0 22px
 }
-.card.sunk{background:var(--sunk)}
-.card.hot{border-color:var(--gold-d);background:linear-gradient(180deg,#1C1710,#141009)}
-.card.layer{border-color:var(--Lline);background:var(--Lbg)}
+.row{display:flex;gap:11px;flex-wrap:wrap;margin:22px 0}
+.px{display:block;image-rendering:pixelated}
 
-.row{display:flex;gap:22px;flex-wrap:wrap}
-.row>*{flex:1;min-width:242px}
-.grid{display:grid;gap:11px}
-
+/* 按鈕：左上右下各切 11px。這是這一套視覺的簽名。 */
 .btn{
-  display:inline-block;padding:11px 22px;background:var(--gold);color:#1A1408;
-  border:0;cursor:pointer;box-shadow:4px 4px 0 #00000099;font-size:22px;line-height:1.4
+  font-size:22px;padding:14px 22px;cursor:pointer;border:none;
+  background:var(--gold);color:#1A1408;letter-spacing:.06em;
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
 }
 .btn:hover{background:var(--gold2)}
-.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #00000099}
-.btn[disabled]{background:var(--line);color:var(--mute);cursor:not-allowed;box-shadow:none}
-.btn.ghost{background:transparent;color:var(--gold);border:1px dashed var(--gold-d);box-shadow:none}
-.btn.ghost:hover{background:#1A1408;color:var(--gold2)}
-.btn.flat{background:var(--panel2);color:var(--ink);border:1px solid var(--line2);box-shadow:none}
-.btn.flat:hover{border-color:var(--dim)}
-.btn.sm{font-size:11px;padding:8px 11px;box-shadow:2px 2px 0 #00000099}
-.btn.wide{width:100%;text-align:center}
-
-.pill{
-  display:inline-flex;align-items:center;gap:5px;padding:2px 8px;font-size:11px;
-  border:1px solid var(--line2);color:var(--dim)
+.btn.big{font-size:33px;padding:22px 44px}
+.btn.ghost{
+  background:none;color:var(--dim);border:1px solid var(--line);clip-path:none;padding:14px 22px
 }
-.pill.ok{border-color:#2F5C3A;color:var(--ok)}
-.pill.gold{border-color:var(--gold-d);color:var(--gold)}
-.pill.over{border-color:#5C2A1B;color:var(--over)}
-.pill.hand{border-color:var(--gold);color:var(--gold);background:#1A1408}
+.btn.ghost:hover{color:var(--ink);border-color:var(--line2)}
 
-.kv{display:flex;gap:11px;align-items:baseline;font-size:11px;color:var(--mute)}
-.big{font-size:55px;line-height:1.1;color:var(--gold)}
-.big.plain{color:var(--ink)}
-
-label{display:block;font-size:11px;color:var(--dim);margin:11px 0 5px}
-input[type=text],input[type=date],textarea,select{
+input,textarea,select{
   width:100%;background:var(--sunk);border:1px solid var(--line);
-  color:var(--ink);padding:11px;outline:0
+  color:var(--ink);padding:11px;margin:5px 0 11px;font-size:22px
 }
-input:focus,textarea:focus,select:focus{border-color:var(--gold-d)}
-textarea{resize:vertical;min-height:99px;line-height:1.7}
+select{width:auto;padding:2px 8px;font-size:11px}
+textarea{resize:vertical;line-height:1.7}
 ::placeholder{color:var(--mute)}
 
-.sep{height:1px;background:var(--line);margin:22px 0}
-
-/* 勾選：0 分，所以它長得不像分數。 */
-.check{
-  display:flex;gap:11px;align-items:flex-start;padding:11px;cursor:pointer;
-  border:1px solid transparent
+.flash{
+  background:var(--panel2);border-left:3px solid var(--gold);
+  padding:11px 14px;margin:0 0 22px;font-size:11px;color:var(--dim);line-height:1.9
 }
-.check:hover{background:var(--panel2)}
-.check .box{
-  width:22px;height:22px;flex:0 0 22px;border:1px solid var(--line2);
-  background:var(--sunk);color:var(--gold);text-align:center;line-height:20px;font-size:11px
+a.plain{color:var(--dim);cursor:pointer;text-decoration:none}
+a.plain:hover{color:var(--gold)}
+
+/* ---------- 坑道 ---------- */
+
+.tunnel{
+  background:var(--Lbg);border:1px solid var(--Lline);
+  padding:22px;margin:0 0 22px;position:relative;overflow:hidden
 }
-.check.on .box{background:var(--gold);color:#1A1408;border-color:var(--gold)}
-.check.lock{cursor:default;opacity:.75}
-.check.lock:hover{background:transparent}
-
-/* 三選一 */
-.seg{display:flex;gap:0;border:1px solid var(--line2);width:fit-content;flex-wrap:wrap}
-.seg button{
-  background:transparent;border:0;border-right:1px solid var(--line2);
-  padding:11px 22px;cursor:pointer;color:var(--dim);font-size:22px
+.tunnel::after{
+  content:'';position:absolute;inset:0;pointer-events:none;transition:background .4s
 }
-.seg button:last-child{border-right:0}
-.seg button.on{background:var(--gold);color:#1A1408}
-.seg button:hover:not(.on){background:var(--panel2);color:var(--ink)}
+.tunnel.dim::after{background:rgba(0,0,0,.30)}
+.tunnel.dark::after{background:rgba(0,0,0,.55)}
 
-/* ---------- 生物與物品 ---------- */
+.tunnel-top{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;position:relative;z-index:2}
+.px.sign{width:66px;height:66px;flex:0 0 66px}
+.sign-txt{flex:1;min-width:160px}
+.sign-txt b{display:block;font-size:33px;font-weight:400;color:var(--ink)}
+.sign-txt span{display:block;font-size:11px;color:var(--mute);margin-top:5px;line-height:1.8}
+.depth{text-align:right;font-size:11px;color:var(--mute)}
+.depth b{display:block;font-size:33px;color:var(--gold);font-weight:400;margin:3px 0}
 
-.mob{
-  display:flex;gap:22px;align-items:center;border:1px solid var(--Lline);
-  background:var(--Lbg);padding:22px
+/* 迷霧走廊：角色 → 格子 → 魔物 */
+.corr{
+  display:flex;align-items:center;gap:11px;margin:22px 0 11px;
+  position:relative;z-index:2;flex-wrap:nowrap;overflow-x:auto
 }
-.mob img{width:132px;height:88px;object-fit:contain;flex:0 0 132px}
-.mob.sm img{width:66px;height:44px;flex:0 0 66px}
-.mob .n{font-size:22px;color:var(--Ll)}
-.mob .t{font-size:11px;color:var(--dim);line-height:1.9}
-
-.slot{
-  width:100%;aspect-ratio:1;background:var(--sunk);border:1px solid var(--line);
-  display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer
+.corr.empty{
+  display:block;font-size:11px;color:var(--mute);line-height:1.9;
+  border:1px dashed var(--Lline);padding:22px;text-align:center
 }
-.slot img{width:80%;height:80%;object-fit:contain}
-.slot.off{cursor:default}
-.slot.off:after{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(circle at 50% 50%,#FFFFFF07,transparent 70%)
+.hero{position:relative;flex:0 0 66px}
+.px.ch{width:66px;height:66px}
+.px.ch.big{width:132px;height:132px}
+.px.vine{position:absolute;inset:0;width:66px;height:66px;opacity:.85}
+
+.cells{display:flex;gap:3px;flex:1;min-width:0}
+.cell{
+  flex:1;min-width:11px;height:22px;
+  background:rgba(0,0,0,.45);border:1px solid var(--Lline)
 }
-.slot.on:hover{border-color:var(--line2)}
-.slot .q{font-size:22px;color:#251F19}
-.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(77px,1fr));gap:5px}
-.dexname{font-size:11px;color:var(--mute);text-align:center;margin-top:2px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell.on{background:var(--L);border-color:var(--Ll)}
+.cell.here{box-shadow:0 0 0 2px var(--gold) inset}
 
-/* ---------- 清單列 ---------- */
+.mob{flex:0 0 66px;text-align:center}
+.mob span{display:block;font-size:11px;color:var(--dim);margin-top:3px}
+.corr-note{font-size:11px;color:var(--mute);position:relative;z-index:2}
 
-.item{
-  display:flex;gap:22px;align-items:flex-start;border:1px solid var(--line);
-  background:var(--panel);padding:22px;margin-bottom:11px;cursor:pointer
+/* 唯一的動作 */
+.act-card{
+  background:var(--panel2);border:1px solid var(--line2);
+  border-left:3px solid var(--gold);padding:22px;margin:0 0 22px
 }
-.item:hover{border-color:var(--line2);background:var(--panel2)}
-.item .body{flex:1;min-width:0}
-.item .t{font-size:22px}
-.item .m{font-size:11px;color:var(--mute);margin-top:5px;line-height:1.9}
-.item .art{
-  width:66px;height:66px;flex:0 0 66px;background:var(--sunk);border:1px solid var(--line);
-  display:flex;align-items:center;justify-content:center
+.act-card h2{margin:0 0 11px}
+
+/* ---------- 滑桿 ---------- */
+
+.slider-wrap{display:flex;align-items:center;gap:22px;margin:11px 0}
+.slider{
+  -webkit-appearance:none;appearance:none;flex:1;height:22px;
+  background:var(--sunk);border:1px solid var(--line);margin:0;padding:0
 }
-.item .art img{width:88%;height:88%;object-fit:contain}
-.item .art .q{color:#2A241E;font-size:22px}
-.item.flat{cursor:default}
-.item.flat:hover{border-color:var(--line);background:var(--panel)}
-
-/* ---------- 地圖 ---------- */
-/* 只有一條軸：深度。層裡面不鋪格子——任務沒有順序。 */
-
-.map{border:1px solid var(--line);background:var(--sunk)}
-.map .band{
-  position:relative;border-bottom:1px solid var(--line);padding:22px;min-height:110px;
-  display:flex;align-items:center;gap:22px
+.slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:22px;height:22px;background:var(--gold);
+  border:none;cursor:pointer
 }
-.map .band:last-child{border-bottom:0}
-.map .band .lab{width:176px;flex:0 0 176px}
-.map .band .code{font-size:11px;color:var(--mute);letter-spacing:.2em}
-.map .band .nm{font-size:22px}
-.map .band .field{flex:1;position:relative;height:66px}
-.map .fog{
-  position:absolute;inset:0;background:repeating-linear-gradient(
-    135deg,#1A1611 0 6px,#141009 6px 12px);opacity:.9;
-  display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--mute)
+.slider::-moz-range-thumb{width:22px;height:22px;background:var(--gold);border:none;cursor:pointer}
+.slider-read{flex:0 0 auto;text-align:center}
+.slider-read b{display:block;font-size:66px;line-height:1;color:var(--gold);font-weight:400}
+.slider-read span{font-size:11px;color:var(--mute)}
+
+.big-num{font-size:66px;line-height:1;color:var(--gold);font-weight:400}
+.big-num span{font-size:22px;color:var(--mute)}
+
+/* ---------- 標籤 ---------- */
+
+.tags{display:flex;gap:11px;flex-wrap:wrap;margin:11px 0}
+.tags .k{font-size:11px;color:var(--mute);align-self:center;margin-right:5px}
+.tag{
+  font-size:22px;padding:9px 13px;cursor:pointer;white-space:nowrap;
+  background:none;color:var(--dim);border:1px solid var(--line)
 }
-.map .guy{position:absolute;top:50%;transform:translateY(-50%);text-align:center}
-.map .guy .p{font-size:22px}
-.map .guy .g{font-size:11px;color:var(--dim);white-space:nowrap}
-.map .guy.me .p{color:var(--gold)}
-.map .boss{position:absolute;right:11px;top:50%;transform:translateY(-50%);opacity:.8}
-.map .boss img{width:55px;height:55px;object-fit:contain}
-
-/* ---------- 結算 ---------- */
-
-.drop{
-  display:flex;gap:11px;flex-wrap:wrap;padding:22px;background:var(--sunk);
-  border:1px solid var(--line)
+.tag:hover{color:var(--ink);border-color:var(--line2)}
+.tag.on{background:rgba(233,179,65,.14);color:var(--gold);border-color:var(--gold)}
+.tag.static{cursor:default;font-size:11px;padding:5px 9px}
+.tag.static.hit{color:var(--gold);border-color:var(--gold-d)}
+.tags.small .tag{font-size:11px;padding:5px 9px}
+.tags.big{gap:11px}
+.tags.big .tag{
+  display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+  min-width:154px;padding:14px;white-space:normal;text-align:left
 }
-.drop .one{width:88px;text-align:center}
-.drop .one img{width:66px;height:66px;object-fit:contain;margin:0 auto}
-.drop .one .n{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.5}
-.drop .one .q{font-size:11px;color:var(--mute)}
+.tags.big .tag b{font-size:33px;line-height:1}
+.tags.big .tag i{font-style:normal;font-size:22px;color:var(--ink)}
+.tags.big .tag em{font-style:normal;font-size:11px;color:var(--mute);line-height:1.7}
+.tag.static em{display:block;font-style:normal;color:var(--mute);margin-top:3px}
 
-.stamp{
-  display:inline-block;border:2px solid var(--ok);color:var(--ok);
-  padding:5px 11px;font-size:22px;transform:rotate(-2deg)
+/* ---------- 判定印章 ---------- */
+
+.stamp-card{
+  background:var(--panel);border:1px solid var(--line);
+  border-top:3px solid var(--gold);padding:44px 22px;text-align:center;margin:0 0 22px
 }
-.stamp.back{border-color:var(--over);color:var(--over)}
+.stamp-card.late{border-top-color:var(--over)}
+.stamp-card.early{border-top-color:var(--ok)}
+.stamp-mark{font-size:66px;line-height:1;margin-bottom:11px}
+.stamp-card h1{font-size:44px;margin:0 0 11px}
+.stamp-card .lead{margin:0 auto 22px;max-width:44ch}
+.stamp-num{display:flex;justify-content:center;gap:11px;align-items:baseline;margin:22px 0}
+.stamp-num b{font-size:44px;color:var(--gold);font-weight:400}
+.stamp-num span{font-size:11px;color:var(--mute);margin-right:22px}
 
-/* 並排：你們寫的 ／ 他給的 */
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.pair>div{background:var(--sunk);border:1px solid var(--line);padding:11px}
-.pair .h{font-size:11px;color:var(--mute);margin-bottom:5px}
-@media (max-width:900px){ .pair{grid-template-columns:1fr} }
+/* ---------- 營火 ---------- */
 
-/* 往返紀錄 */
-.log{border-left:1px solid var(--line);padding-left:22px;margin-left:11px}
-.log .n{position:relative;padding-bottom:22px}
-.log .n:before{
-  content:'';position:absolute;left:-27px;top:9px;width:9px;height:9px;background:var(--line2)
+.camp{display:flex;align-items:center;gap:22px;margin:0 0 22px;flex-wrap:wrap}
+.px.fire{width:110px;height:110px;flex:0 0 110px}
+
+/* ---------- 大躍進 ---------- */
+
+.dash{text-align:center;padding:44px 22px;background:var(--panel);border:1px solid var(--line);margin:0 0 22px}
+.dash .px{margin:0 auto 22px}
+.dash h1{font-size:44px}
+
+/* ---------- 準度 ---------- */
+
+.acc{display:flex;gap:11px;margin:11px 0}
+.acc-c{
+  flex:1;text-align:center;padding:14px;background:var(--sunk);border:1px solid var(--line)
 }
-.log .n.ok:before{background:var(--ok)}
-.log .n.back:before{background:var(--over)}
-.log .h{font-size:11px;color:var(--mute)}
-.log .b{font-size:22px;line-height:1.7;margin-top:5px}
+.acc-c b{display:block;font-size:33px;line-height:1}
+.acc-c i{display:block;font-style:normal;font-size:44px;color:var(--gold);line-height:1.2}
+.acc-c span{font-size:11px;color:var(--mute)}
 
-/* 剖面：深度對時間 */
-.curvebox{border:1px solid var(--line);background:var(--sunk);padding:11px;overflow-x:auto}
-.curve{width:100%;min-width:583px;height:auto;display:block;font-family:'C11','Noto Sans TC',monospace}
+.gear-row{display:flex;gap:11px;flex-wrap:wrap;margin-top:11px}
+.gear{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:11px 14px;background:var(--sunk);border:1px solid var(--line);font-size:33px
+}
+.gear i{font-style:normal;font-size:11px;color:var(--dim)}
 
-/* 排行榜 */
-.rank{border:1px solid var(--line);background:var(--panel);padding:22px;margin-bottom:11px}
-.rank.me{border-color:var(--gold-d);background:#161209}
-.rank .top{background:transparent;border:0;padding:0;position:static;display:flex;
-  align-items:baseline;gap:11px}
-.rank .no{font-size:33px;color:var(--gold);width:44px}
-.rank .nm{font-size:22px;flex:1}
-.rank .sc{font-size:33px}
-.rank .how{font-size:11px;color:var(--mute);margin-top:11px}
+.gear-pick{display:flex;gap:11px;flex-wrap:wrap;margin-top:11px}
+.gcard{
+  display:flex;flex-direction:column;align-items:flex-start;gap:5px;
+  width:242px;padding:14px;cursor:pointer;text-align:left;
+  background:var(--sunk);color:var(--dim);border:1px solid var(--line)
+}
+.gcard:hover{border-color:var(--line2)}
+.gcard.on{background:rgba(233,179,65,.12);border-color:var(--gold)}
+.gcard b{font-size:33px;line-height:1}
+.gcard i{font-style:normal;font-size:22px;color:var(--ink)}
+.gcard em{font-style:normal;font-size:11px;color:var(--mute);line-height:1.7}
 
-.hr{height:1px;background:var(--line);margin:11px 0}
+/* ---------- 生態圖 ---------- */
 
-a.plain{color:var(--gold);cursor:pointer;text-decoration:none}
-a.plain:hover{color:var(--gold2)}
+.eco{background:var(--panel);border:1px solid var(--line);padding:22px;margin:0 0 22px}
+.eco-surface{
+  font-size:11px;color:var(--mute);letter-spacing:.2em;
+  border-bottom:1px solid var(--line2);padding-bottom:5px;margin-bottom:14px
+}
+.eco-row{display:flex;align-items:center;gap:11px;padding:9px 0;flex-wrap:wrap}
+.eco-row.me .eco-name{color:var(--gold)}
+.eco-name{flex:0 0 154px;font-size:22px;color:var(--dim)}
+.eco-tube{flex:1;min-width:154px;display:flex;gap:2px;position:relative;height:22px}
+.eco-seg{flex:1;background:rgba(0,0,0,.45);border:1px solid var(--line)}
+.eco-seg.dug{background:var(--Ld);border-color:var(--L)}
+.eco-hero{
+  position:absolute;top:-3px;width:11px;height:28px;background:var(--gold);
+  transition:left .4s
+}
+.eco-hero.vine{background:#4A6B3A}
+.eco-hero.sleep{background:var(--mute);opacity:.6}
+.eco-state{flex:0 0 88px;font-size:11px;color:var(--mute);text-align:right}
 
-.ta-r{text-align:right}
-.mt0{margin-top:0}
-.nowrap{white-space:nowrap}
+/* ---------- 老師端 ---------- */
+
+.radar-row{border-left:3px solid var(--ok)}
+.radar-head{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:11px}
+.radar-head b{font-size:22px;font-weight:400}
+.radar-head .sp{flex:1}
+.green{width:11px;height:11px;background:var(--ok);flex:0 0 11px}
+.radar-ms{font-size:22px;color:var(--ink);margin-bottom:5px}
+.log-num{font-size:11px;color:var(--mute);margin:5px 0}
+.log-num b{font-size:22px;color:var(--gold)}
+.st{font-size:11px;padding:3px 8px;border:1px solid var(--line2);color:var(--dim)}
+.st.exact{color:var(--gold);border-color:var(--gold-d)}
+.st.early{color:var(--ok);border-color:var(--ok)}
+.st.late{color:var(--over);border-color:var(--over)}
+
+.mini{display:flex;flex-direction:column;gap:5px;margin-top:11px}
+.mini-row{display:flex;gap:11px;align-items:center;font-size:11px;color:var(--mute)}
+.mini-row b{flex:0 0 132px;font-size:22px;color:var(--dim);font-weight:400}
+.mini-row .ok{color:var(--ok)}
+
+.log-row .log-head{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:5px}
+.log-row .log-head b{font-size:22px;font-weight:400}
+.rn-row{display:flex;gap:11px;align-items:baseline;padding:5px 0;flex-wrap:wrap}
+.rn-row b{flex:0 0 132px;font-size:22px;font-weight:400;color:var(--dim)}
+
+@media (max-width:860px){
+  .side{display:none}
+  .wrap{padding:22px}
+}
 
 </style>
 </head>
@@ -311,287 +351,280 @@ var PACK = {"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":"潛"
 
 
 /* ===== 11-world.js ===== */
-/* 四層。固定，沒有第五層——走完第四層就是結局。
+/* 世界的字彙。
 
-   每一層綁死四樣東西：一個世界、一個課程階段、一隻守關生物、一件道具。
-   規格書 01 的表就是這一份資料，欄位名字照那張表取。 */
+   這個作品沒有固定的層、沒有課綱、沒有必經路線。每一組挖自己的坑道，
+   老師派一個里程碑，坑道裡就多一隻擋路的魔物。全班的坑道併在同一張
+   剖面上，看起來像一座蟻巢——那是「關聯性」：看得到別人也在挖，
+   但沒有人被排名。
 
-var LAYERS = [
-  {
-    n: 1, code: 'L1', name: '微光荒原', stage: '專案定義',
-    hard: '難的不是動不了手，是不知道第一件該做的是什麼。',
-    scene: '一望無際、未開發的大平原。黃昏光線，地上散落微弱發光的碎片，地平線上一層薄霧。沒有任何地標。',
-    pal: { '#': '#C9A227', o: '#9A7E22', '*': '#F2E6C8', bg: '#171208', line: '#3A2E12' },
-    boss: {
-      name: '霧面者',
-      look: '比人高一截的細長身影，站在霧裡。頭的位置是空的——牠沒有臉，所以你看不出牠朝哪一邊。牠不動，也不攻擊。',
-      trait: '牠是「範圍未定義」的樣子。你說不出自己要挖什麼的時候，牠就是那個形狀：站在那裡，但你指不出牠在哪。',
-      line: '你連我在哪都說不出來。',
-      beat: '霧散開，你才發現牠一直站在同一個地方。'
-    },
-    tool: {
-      name: '辨向羅盤',
-      px: ['................', '.....*####*.....', '...*##++++##*...', '..*#++....++#*..', 
-           '..#+..*##*..+#..', '.*#+.*#++#*.+#*.', '.*#+.#+**+#.+#*.', '.*#+.#*..*#.+#*.', 
-           '.*#+.#+**+#.+#*.', '.*#+.*#++#*.+#*.', '..#+..*##*..+#..', '..*#++....++#*..', 
-           '...*##++++##*...', '.....*####*.....', '......+##+......', '................'],
-      desc: '辨認方向真假',
-      look: '掌心大的黃銅圓盤，附一條皮繩。盤面沒有指針——那是一層渾濁的液體，裡面懸著一絲金屬粉末。盤緣刻著三圈同心刻度。',
-      trait: '朝值得走的方向，粉末會聚成一條線。走不通的方向會讓它四散。',
-      why: '羅盤辨認方向真假——哪條路通、哪條不值得追。有了它，牠就不再是一團形狀不明的東西。',
-      rec: '你在什麼都沒有的平原上選了一個點開挖，並且為那個選擇負責。多數隊伍在這裡花掉的時間不是挖得慢，是改了三次地點。'
-    }
+   所以這裡定義的不是「第幾層長什麼樣」，而是「一條坑道由什麼組成」。 */
+
+/* ---------- 坑道的環境 ---------- */
+var WORLD = {
+  name: '地下城',
+  surface: '地表',
+  /* 坑道往下挖，深度＝這一組完成過幾個里程碑。沒有終點，也沒有「走完」。 */
+  depthPerMilestone: 40,   /* 每完成一個里程碑往下 40 公尺（只是說法，不是門檻） */
+
+  /* 一天的光。停滯越久越暗——不是懲罰，是狀態本身看得見。 */
+  light: [
+    { level: 0, key: 'lit',  label: '火把亮著', wash: 'rgba(233,179,65,.05)' },
+    { level: 1, key: 'dim',  label: '火要滅了', wash: 'rgba(0,0,0,.30)' },
+    { level: 2, key: 'dark', label: '火滅了',   wash: 'rgba(0,0,0,.55)' }
+  ]
+};
+
+/* ---------- 專案招牌 ----------
+   坑道口的看板。老師每重寫一次專案名稱就升一階：
+   粗糙木牌 → 鍛造鐵牌 → 發光銘牌。
+   不需要多餘解釋，材質的升級就是對邏輯收斂最高的肯定。 */
+var SIGNS = {
+  wood: {
+    key: 'wood', name: '木牌', note: '刻得很淺，邊緣還有毛刺。',
+    pal: { '#': '#8A6A3A', o: '#5C4423', '*': '#C9A46A' },
+    px: ['................', '................', '..++++++++++++..', '..+##########+..',
+         '..+#*#*#*#*##+..', '..+##########+..', '..+#*#*#*#*##+..', '..+##########+..',
+         '..++++++++++++..', '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....',
+         '.....+#..#+.....', '....++#..#++....', '................', '................']
   },
-  {
-    n: 2, code: 'L2', name: '水晶迴廊', stage: '調查分析',
-    hard: '難的是查不完，不知道什麼時候該停。',
-    scene: '上下對生的巨大水晶柱交錯成蜿蜒走廊。地下水穿過晶體折射出稜鏡光帶，越深處水晶越密、通道越窄。',
-    pal: { '#': '#5FA8C7', o: '#3E7E96', '*': '#D8F2FA', bg: '#0C1720', line: '#173445' },
-    boss: {
-      name: '千晶母',
-      look: '中央一顆晶核，四周不斷長出新的晶簇。你採掉一叢，旁邊又亮起兩叢——看起來永遠採不完。',
-      trait: '牠是「範圍蔓延」的樣子。挖越多長越多，沒有一個時刻會自己告訴你「夠了」。',
-      line: '還有喔。這裡永遠還有。',
-      beat: '外圍碎晶停止增生，只剩中央那一顆。'
-    },
-    tool: {
-      name: '地層切割器',
-      px: ['................', '..............*.', '.............**.', '............***.', 
-           '...........***..', '..........***...', '.........***....', '.####++.***.....', 
-           '.#++##+**.......', '.####++.........', '.#++##+.........', '.####++.........', 
-           '.#++##+.........', '.++++++.........', '................', '................'],
-      desc: '切開擋路的東西',
-      look: '前臂長的手持器械，握把包著皮革。前端不是刀刃，是一根細長的石英棒。握把上有個小玻璃窗顯示共振頻率。',
-      trait: '靠頻率讓晶體沿自然紋理裂開，不是硬切。棒身有使用後的細微崩口。',
-      why: '切割器切開擋路的東西——一刀斬斷長不完的那些。停手是決定，不是放棄。',
-      rec: '你在查不完的地方決定了「夠了」。沒有人是查完才離開水晶迴廊的——那個判斷本身就是這一層要學的東西。'
-    }
+  iron: {
+    key: 'iron', name: '鐵牌', note: '鍛過，字口是深的。',
+    pal: { '#': '#9AA6B0', o: '#5C666F', '*': '#DDE6EC' },
+    px: ['................', '..++++++++++++..', '..+##########+..', '..+#**####**#+..',
+         '..+#**####**#+..', '..+##########+..', '..+#**####**#+..', '..+##########+..',
+         '..++++++++++++..', '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....',
+         '.....+#..#+.....', '....++#..#++....', '................', '................']
   },
-  {
-    n: 3, code: 'L3', name: '迴聲迷宮', stage: '設計發展',
-    hard: '難的是你以為知道的其實不知道。',
-    scene: '方塊狀的黑暗迷宮牆，中間一條蜿蜒通道。牆上有前人刻的箭頭，但方向全部是錯的。幾乎沒有光源。',
-    pal: { '#': '#8C7BC7', o: '#625397', '*': '#E4DCFA', bg: '#131024', line: '#2E2750' },
-    boss: {
-      name: '擬聲者',
-      look: '一個實體、兩個錯位的殘影，形狀跟你一模一樣。牠在模仿你。',
-      trait: '牠是「未驗證的假設」的樣子。你聽到的都是自己的回音，聽久了會以為那是答案。',
-      line: '你剛剛說的話，是你查過的，還是你以為的？',
-      beat: '殘影收攏成一個，你才分得出哪個是牠。'
-    },
-    tool: {
-      name: '壓力量規',
-      px: ['................', '....########....', '..##++++++++##..', '.#+**......**+#.', 
-           '.#+..........+#.', '#+....*.......+#', '#+.....*......+#', '#+..*...*.....+#', 
-           '#+.......*....+#', '.#+.......*..+#.', '.#+**......**+#.', '..##++++++++##..', 
-           '....########....', '...++..++..++...', '...+...+...+....', '................'],
-      desc: '提前知道哪裡會斷',
-      look: '可貼在岩壁上的扁圓儀器，背面有三支短探針。正面是凸出的表玻璃，底下一根極細的指針與一圈紅色危險區。',
-      trait: '能讀出岩層內部的應力分布——在裂開之前。',
-      why: '量規給的是量出來的數字，不是聽來的。牠沒辦法模仿一個你真的去測過的東西。',
-      rec: '你在漆黑裡發現自己以為知道的事其實不知道，然後重新排了順序。這是第一次「回音會騙人」變得無法忽視。'
-    }
-  },
-  {
-    n: 4, code: 'L4', name: '熔火深淵', stage: '設計修正',
-    hard: '難的是改不完，不知道何時算收尾。',
-    scene: '暗紅色熔岩河從下方發光，中間浮著幾道搖搖欲墜的岩橋，兩根火柱竄起，空中飄著灰燼般的光點。',
-    pal: { '#': '#D9603F', o: '#9E4026', '*': '#FAD9CC', bg: '#1C0E09', line: '#4A2013' },
-    boss: {
-      name: '漲潮者',
-      look: '熔岩構成的身軀，下半身泡在不斷上漲的岩漿裡。牠每站高一寸，你能走的路就少一段。',
-      trait: '牠是「時程壓縮」的樣子。時間會漲，而且不等你決定要先做哪一個。',
-      line: '你還在挑要先做哪一個。時間不等。',
-      beat: '岩漿退到腰部，牠整個站起來。'
-    },
-    tool: {
-      name: '熱流導航儀',
-      px: ['................', '..####+..+####..', '.######++######.', '.#++++++++++++#.', 
-           '.#+**********+#.', '.#+*++**++**#+#.', '.#+*+**++**+#+#.', '.#+**++**++*#+#.', 
-           '.#+*++**++**#+#.', '.#+**********+#.', '.#++++++++++++#.', '.######++######.', 
-           '..####+..+####..', '....+......+....', '................', '................'],
-      desc: '壓力下重新排序',
-      look: '可掛在胸前的方形儀器，外殼是隔熱的深色陶瓷。正面一片薄玻璃，內部是不斷流動的彩色熱圖——藍是可走的路，紅是不能踩的。',
-      trait: '熱源沒有規律，所以它只能告訴你「現在」哪裡能走。下一波潮汐來，圖就變了。',
-      why: '導航儀在無規律裡找路——壓力下重新排序。捨掉一些東西，剩下的才走得完。',
-      rec: '你承認了原路是死的，然後改。改計畫在這一層不是失敗，是能力——但你要能說出為什麼這樣改是對的。'
-    }
+  glow: {
+    key: 'glow', name: '銘牌', note: '自己在發光。遠遠就看得到這條坑道在做什麼。',
+    pal: { '#': '#E9B341', o: '#7A5A18', '*': '#FFF3D0' },
+    px: ['......*..*......', '..*+++++++++*+..', '..+##########+..', '..+#********#+..',
+         '..+#*######*#+..', '..+#********#+..', '..+#*######*#+..', '..+##########+..',
+         '..*+++++++++*+..', '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....',
+         '.....+#..#+.....', '....++#..#++....', '.....*....*.....', '................']
   }
+};
+
+/* ---------- 角色 ----------
+   四種狀態，逐格切換。互動有動畫，環境沒有——跟上一版相反，
+   因為這個作品的回饋就是「角色動起來了」。 */
+var HERO = {
+  pal: { '#': '#D9C08A', o: '#8A7346', '*': '#F7ECD2' },
+  idle: ['................', '......++++......', '.....+#**#+.....', '.....+#**#+.....',
+         '......+##+......', '....++####++....', '...+#*####*#+...', '...+#*####*#+...',
+         '....+######+....', '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....',
+         '....++#..#++....', '...++#+..+#++...', '................', '................'],
+  /* 揮劍：推進的那一幀 */
+  swing: ['................', '......++++...*..', '.....+#**#+.*#..', '.....+#**#+*#*..',
+          '......+##+*#*...', '....++####*#....', '...+#*####*#+...', '...+#*#####*+...',
+          '....+######+....', '.....+#..#+.....', '.....+#..#+.....', '....+#+..+#+....',
+          '....+#+..+#+....', '...++#+..+#++...', '................', '................'],
+  /* 睡著：長時間沒推進 */
+  sleep: ['................', '..............z.', '............z...', '.........zZ.....',
+          '................', '................', '....++++++++....', '...+#**####*#+..',
+          '...+##########+.', '...+##########+.', '....++++++++++..', '................',
+          '................', '................', '................', '................'],
+  /* 大躍進：拿到裝備之後的衝刺 */
+  dash: ['................', '...~~~..++++....', '..~~~..+#**#+...', '.~~~...+#**#+...',
+         '..~~~...+##+....', '...~~+++####++..', '....+#*######*+.', '....+#*######*+.',
+         '.....+########+.', '......+#....#+..', '.....+#......#+.', '....+#........#+',
+         '...++..........+', '................', '................', '................']
+};
+
+/* ---------- 藤蔓 ----------
+   停滯兩天開始爬。推進一次就碎掉——那一下的手感是整個系統的獎勵。 */
+var VINE = {
+  pal: { '#': '#4A6B3A', o: '#2E4523', '*': '#7FA866' },
+  px: ['+#..........#+..', '.+#........#+...', '..+#..*...#+....', '...+#.#*.#+.....',
+       '....+##*##+.....', '.....+###+......', '....+##*##+.....', '...+#.#*.#+.....',
+       '..+#..*...#+....', '.+#........#+...', '+#..........#+..', '................',
+       '................', '................', '................', '................']
+};
+
+/* ---------- 營火 ----------
+   判定失準之後角色退到這裡。溫暖、不刺眼——這是安全網，不是罰站。 */
+var CAMPFIRE = {
+  pal: { '#': '#E9843F', o: '#8A4520', '*': '#FFD9A0', '~': '#5C4423' },
+  px: ['................', '.......*........', '......*#*.......', '.....*#*#*......',
+       '....*#*#*#*.....', '....#*###*#.....', '...*#*###*#*....', '...*#######*....',
+       '....*#####*.....', '..~~~*###*~~~...', '.~~~~~~#~~~~~~..', '..~~~~~~~~~~~...',
+       '................', '................', '................', '................']
+};
+
+/* ---------- 魔物 ----------
+   里程碑的具象化。用上一版那 40 隻的像素圖，但這裡不分區、不分層——
+   哪一組遇到哪一隻，是任務 id ＋ 組 id 算出來的，全班同一個里程碑
+   遇到的不是同一隻。那讓「打贏了」是自己的事，不是跟別人比。 */
+var MOBS = PACK.creatures;
+
+/* 魔物在坑道裡的配色。跟深度走，越深越冷——只是氛圍，不是等級。 */
+var DEPTH_PAL = [
+  { '#': '#C9A227', o: '#9A7E22', '*': '#F2E6C8' },
+  { '#': '#5FA8C7', o: '#3E7E96', '*': '#D8F2FA' },
+  { '#': '#8C7BC7', o: '#625397', '*': '#E4DCFA' },
+  { '#': '#D9603F', o: '#9E4026', '*': '#FAD9CC' }
 ];
 
-/* 斗篷人。開頭就說明白，不是要拼湊的謎。 */
-var CLOAK = {
-  who: '帶你們做完這個專案的人。',
-  say: '他一項一項給任務，說清楚做到什麼程度算完成，然後寫下他判過或判不過的理由。',
-  road: '路上會有東西擋著、會撿到一些沒有用處的小東西、會跟別組比分數。那些是這趟路的樣子。你真正在做的事只有一件：把一個專案做完。'
-};
+/* ---------- 裝備 ----------
+   老師發的。圖用上一版的戰利品像素圖，意義完全換掉：
+   那不是打贏掉的東西，是老師看到你做了什麼之後遞過來的。 */
+var GEAR_PX = PACK.trophies;
 
 
 /* ===== 20-rules.js ===== */
 /* 全部的計算都在這裡，而且只在這裡。
 
-   規格書 00 的第二條原則：一個概念一個來源。分數、抽數、期限這種規則
-   各只有一份定義。第三條：文案跟規則綁在一起——所以講規則的句子不是寫死的
-   字串，是從下面的數字組出來的。改 PASS 的值，畫面上那句話會跟著變，
-   不會變成一句謊話。 */
+   一個概念一個來源。文案跟規則綁在一起——講規則的句子不是寫死的字串，
+   是從下面的數字組出來的。改 BAND 的值，畫面上那句話會跟著變，
+   不會變成一句謊話。
+
+   這個系統跟成績無關。它不判斷作業好不好，只判斷「你對自己的預估準不準」。
+   那是刻意的：拖延的根不是懶，是對「這件事要花多久」沒有體感。 */
 
 var RULES = {
 
-  /* ---------- 分數 ---------- */
-  PASS: 100,        /* 通過一項 */
-  DROP: 30,         /* 掉落物一件 */
-  TOOL: 500,        /* 放行一層給的道具 */
-  TROPHY: 500,      /* 放行一層給的守關戰利品 */
-  CHECK: 0,         /* 勾選一條 */
-  ROUND: 0,         /* 來回一次 */
+  /* ---------- 自我承諾 ---------- */
+  EST_MIN: 1,          /* 滑桿最少 1 天 */
+  EST_MAX: 21,         /* 最多三週。再長就不是一個里程碑了 */
+  EST_DEFAULT: 5,
 
-  /* ---------- 抽數 ---------- */
-  DRAW_MIN: 1,
-  DRAW_MAX: 8,
+  /* ---------- 判定 ---------- */
+  /* 容許誤差＝預估天數的兩成，最少 1 天。
+     estimate 5 天 → ±1 天算準；estimate 14 天 → ±3 天算準。
+     用比例而不是固定值，因為估 3 天差 2 天跟估 20 天差 2 天不是同一回事。 */
+  BAND_RATIO: 0.2,
+  BAND_MIN: 1,
 
-  /* ---------- 其他 ---------- */
-  GAVE_MIN: 0,
-  GAVE_MAX: 5,
-  REDIG_DAYS: 7,    /* 回頭補強：滾動 7 天一次，不是日曆週 */
-  OFFER: 3,         /* 放行一層時攤開幾件戰利品讓他們挑 */
-  LAYERS: 4,
-  START_MIN: 0,     /* 中途接手：起點可設 0–4 層 */
-  START_MAX: 4
+  /* ---------- 推進 ---------- */
+  PUSH_PER_DAY: 1,     /* 一天一次。多按沒有用，這不是點擊遊戲 */
+  STALL_DAYS: 2,       /* 幾天沒推進就開始長藤蔓 */
+  SLEEP_DAYS: 4,       /* 幾天沒推進角色會睡著 */
+
+  /* ---------- 招牌 ---------- */
+  /* 專案名稱看板的三階。老師每改寫一次名稱就往上升一階——
+     視覺材質的升級就是對邏輯收斂最直接的肯定，不用多說一句話。 */
+  SIGN_TIERS: ['wood', 'iron', 'glow'],
+
+  /* 這個系統沒有的東西寫在 check.js 的 BANNED 裡，不寫在這裡——
+     寫在這裡等於把那些詞放進畫面，檢查器會抓（而且抓得對）。 */
+  _: null
 };
-
-RULES.RELEASE = RULES.TOOL + RULES.TROPHY;   /* 老師放行一層 */
-
-/* 老師給分的六個錨點。分數就是索引，所以順序不能動。 */
-RULES.GAVE = [
-  { n: 0, anchor: '完全沒有', effect: '抽數 ＝ 層數（無加成）' },
-  { n: 1, anchor: '幾乎沒有', effect: '＋1 次' },
-  { n: 2, anchor: '有一點', effect: '＋2 次' },
-  { n: 3, anchor: '中等', effect: '＋3 次' },
-  { n: 4, anchor: '明顯多做', effect: '＋4 次' },
-  { n: 5, anchor: '遠超出要求', effect: '＋5 次' }
-];
-
-/* 老師那一格的題目。它是一個陳述句，不是問句——老師是在判斷這句話成不成立。
-   這是整個系統唯一能獎勵「不只把作業交出來」的地方。 */
-RULES.GAVE_STATEMENT =
-  '這一組在這一項裡，不只是把作業交出來——多研究了、多畫了別的草圖、' +
-  '給了不同的做法，或是有額外的產出。';
 
 function clamp(lo, hi, n) { return Math.max(lo, Math.min(hi, n)); }
 
-/* 抽幾次 ＝ clamp(1, 8, 層數 ＋ 老師給的 0–5)
-   L1 給 0 ＝ 抽 1 次；L4 給 5 ＝ 抽 8 次（上限）。 */
-RULES.draws = function (layer, gave) {
-  return clamp(RULES.DRAW_MIN, RULES.DRAW_MAX,
-    (Number(layer) || 1) + (Number(gave) || 0));
+/* 容許誤差：估幾天，準的範圍就有多寬 */
+RULES.band = function (est) {
+  return Math.max(RULES.BAND_MIN, Math.round((Number(est) || 0) * RULES.BAND_RATIO));
 };
 
-RULES.gaveAnchor = function (g) {
-  var row = RULES.GAVE[clamp(RULES.GAVE_MIN, RULES.GAVE_MAX, Number(g) || 0)];
-  return row ? row.anchor : RULES.GAVE[0].anchor;
+/* ---------- 三種印章 ----------
+   這是整個系統唯一的「評價」，而且評的是預估能力，不是作品好壞。
+   遲到不是失敗，是一次判斷失準——那本身就是可以拿來練的資料。 */
+RULES.STAMPS = {
+  early: { key: 'early', mark: '🚀', name: '超乎預期',
+           why: '比你自己承諾的還早。你把它想得比實際難。' },
+  exact: { key: 'exact', mark: '🎯', name: '精準預測',
+           why: '你說幾天就是幾天。這是專案管理裡最難練的一件事。' },
+  late:  { key: 'late',  mark: '❌', name: '判斷失準',
+           why: '比你承諾的久。承認並說出卡在哪，比準時更有價值。' }
 };
 
-/* ---------- 天 ---------- */
-/* 週整套拿掉了。這裡沒有任何東西會問「今天禮拜幾」——所以學期中間
-   任何一天開始用都一樣。 */
-
-var DAY = 86400000;
-
-function dayStart(ts) { var d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); }
-
-/* 停留天數：從進到這一層那一刻起算 */
-RULES.stayDays = function (enteredAt, now) {
-  if (!enteredAt) return 0;
-  return Math.max(0, Math.floor(((now || Date.now()) - enteredAt) / DAY));
+/* 判定：拿實際花的天數比對當初承諾的 */
+RULES.judge = function (est, actual) {
+  var e = Number(est) || 0, a = Number(actual) || 0, b = RULES.band(e);
+  if (a < e - b) return RULES.STAMPS.early;
+  if (a > e + b) return RULES.STAMPS.late;
+  return RULES.STAMPS.exact;
 };
 
-/* 回頭補強：滾動 7 天一次。回傳還要等幾天，0 ＝ 現在就可以送。 */
-RULES.redigWaitDays = function (lastAt, now) {
-  if (!lastAt) return 0;
-  var passed = ((now || Date.now()) - lastAt) / DAY;
-  return Math.max(0, Math.ceil(RULES.REDIG_DAYS - passed));
+/* 判定的說明句。從數字組出來，所以改 BAND_RATIO 這句話會跟著變。 */
+RULES.judgeWhy = function (est, actual) {
+  var b = RULES.band(est);
+  return '你承諾 ' + est + ' 天，實際花了 ' + actual + ' 天。' +
+         '誤差 ' + b + ' 天以內算準（預估的 ' + Math.round(RULES.BAND_RATIO * 100) + '％）。';
 };
 
-/* ---------- 期限 ---------- */
-/* 幾天後／指定日期／不設限。逾期只標示，不阻擋。 */
+/* ---------- 卡關的原因 ----------
+   全部做成圖示快選，不要輸入框。要打字的反思沒有人會寫，
+   而且打字會把防衛心叫起來——點一個標籤不會。 */
+RULES.SNAGS = [
+  { key: 'scope',  icon: '🌀', label: '範圍變大了',   hint: '做著做著發現要做的比想的多' },
+  { key: 'wait',   icon: '⏳', label: '在等別人',     hint: '等回覆、等資料、等隊友' },
+  { key: 'skill',  icon: '🔧', label: '不會做',       hint: '需要先學一個沒學過的東西' },
+  { key: 'start',  icon: '🪨', label: '開不了頭',     hint: '知道要做什麼，但一直沒動' },
+  { key: 'split',  icon: '✂️', label: '拆得太粗',     hint: '一件事其實是三件事' },
+  { key: 'life',   icon: '🌧️', label: '別的事插進來', hint: '其他課、打工、身體' },
+  { key: 'redo',   icon: '🔁', label: '做了又重做',   hint: '方向改過' },
+  { key: 'guess',  icon: '🎲', label: '純粹估錯',     hint: '沒有特別的原因，就是想得太快' }
+];
 
-var WEEK_CH = ['日', '一', '二', '三', '四', '五', '六'];
-
-RULES.due = function (due, now) {
-  if (!due) return { none: true, text: '不設限', tone: 'mute' };
-  var d = new Date(due);
-  var left = Math.round((dayStart(due) - dayStart(now || Date.now())) / DAY);
-  var head = (d.getMonth() + 1) + '/' + d.getDate() + '（' + WEEK_CH[d.getDay()] + '）';
-  if (left > 0) return { text: head + ' · 還有 ' + left + ' 天', left: left, tone: left <= 2 ? 'warn' : 'ok' };
-  if (left === 0) return { text: head + ' · 就是今天', left: 0, tone: 'warn' };
-  return { text: head + ' · 逾期 ' + (-left) + ' 天', left: left, over: true, tone: 'over' };
-};
-
-/* ---------- 分數怎麼來的 ---------- */
-/* 排行榜每一列拆給你看的那一段，跟總分是同一支函式算的——
-   不會有「明細加起來不等於總分」這種事。 */
-RULES.score = function (t) {
-  var parts = [];
-  var passed = t.passed || 0, drops = t.drops || 0, released = t.released || 0;
-  if (passed)   parts.push({ k: '通過 ' + passed + ' 項', v: passed * RULES.PASS });
-  if (drops)    parts.push({ k: '掉落物 ' + drops + ' 件', v: drops * RULES.DROP });
-  if (released) parts.push({ k: '放行 ' + released + ' 層', v: released * RULES.RELEASE });
-  var total = parts.reduce(function (s, p) { return s + p.v; }, 0);
-  return { parts: parts, total: total };
-};
-
-/* ---------- 講規則的句子 ---------- */
-/* 這些不是文案常數，是從上面的數字組出來的。規則改了，句子跟著改。 */
-RULES.say = {
-  pass:    function () { return '通過一項 ＋' + RULES.PASS + ' 分'; },
-  drop:    function () { return '掉落物一件 ＋' + RULES.DROP + ' 分'; },
-  release: function () { return '老師放行一層 ＋' + RULES.RELEASE + ' 分（道具 ' +
-                                RULES.TOOL + ' ＋ 守關戰利品 ' + RULES.TROPHY + '）'; },
-  check:   function () { return '勾選一條 ' + RULES.CHECK + ' 分'; },
-  round:   function () { return '來回一次 ' + RULES.ROUND + ' 分'; },
-  draws:   function () { return '抽幾次 ＝ 層數 ＋ 老師給的 ' + RULES.GAVE_MIN + '–' + RULES.GAVE_MAX +
-                                '，最少 ' + RULES.DRAW_MIN + ' 次、最多 ' + RULES.DRAW_MAX + ' 次'; },
-  redig:   function () { return '滾動 ' + RULES.REDIG_DAYS + ' 天一次'; },
-  drawsFor: function (layer, gave) {
-    return '第 ' + layer + ' 層 ＋ 他給的 ' + gave + ' ＝ 抽 ' + RULES.draws(layer, gave) + ' 次';
-  },
-  /* 每一件掉落物一樣重。不寫明學生會腦補稀有的比較值錢。 */
-  sameWeight: function () {
-    return '每一件都是 ' + RULES.DROP + ' 分，一件不多一件不少。稀有度只影響出現機率，撿到哪一件不影響名次。';
+RULES.snagOf = function (key) {
+  for (var i = 0; i < RULES.SNAGS.length; i++) {
+    if (RULES.SNAGS[i].key === key) return RULES.SNAGS[i];
   }
+  return null;
 };
 
-/* 戰利品是「挑」的，不是「發」的。
+/* ---------- 風險標記 ----------
+   派發任務時學生可以先標「我覺得這裡會卡」。事後對照——
+   標對了就是預見能力，那比準時更值錢。 */
+RULES.RISKS = RULES.SNAGS.slice(0, 6);
 
-   攤開哪三件只跟「這一層還有哪幾件沒拿過」有關，跟這一組做得好不好
-   完全無關——反過來做（重交三次所以發給你斷柄鑿）的那一秒，它就從
-   一句話變成一個評價，而這個系統從頭到尾不評價任何人。
+/* ---------- 裝備 ----------
+   老師發的，不是抽的、不是買的。它是一句「我看到你做了什麼」的具體化，
+   所以每一件都綁一個理由，而且發的時候要選那個理由。 */
+RULES.GEARS = [
+  { key: 'sword',   icon: '⚔️', name: '銳劍',   why: '這一項推進得乾脆——沒有拖，也沒有等到最後一天。' },
+  { key: 'compass', icon: '🧭', name: '指南針', why: '預估得準。你對自己的判斷開始可靠了。' },
+  { key: 'lamp',    icon: '🏮', name: '提燈',   why: '你把卡在哪講清楚了。看得見的困難才處理得掉。' },
+  { key: 'shield',  icon: '🛡️', name: '盾',     why: '你事先標了風險，而且標對了。' },
+  { key: 'boots',   icon: '👢', name: '快靴',   why: '這一次比上一次快。你把上次的教訓用上了。' },
+  { key: 'map',     icon: '🗺️', name: '殘圖',   why: '你把一件事拆成看得懂的幾件。' }
+];
 
-   三件一樣重、分數在放行那一刻就記上了，所以挑哪一件不影響任何數字。
-   它只影響你帶走哪一句話——挑那一句本身就是省思。 */
-RULES.PICK_SAY = '這 ' + RULES.OFFER + ' 件是這一層你們還沒拿過的裡面攤出來的，跟你們做得好不好無關。' +
-  '三件一樣重，' + RULES.TROPHY + ' 分在他放行的那一刻就記上了——挑哪一件不影響任何數字，' +
-  '只影響你們帶走哪一句話。';
+RULES.gearOf = function (key) {
+  for (var i = 0; i < RULES.GEARS.length; i++) {
+    if (RULES.GEARS[i].key === key) return RULES.GEARS[i];
+  }
+  return null;
+};
 
-/* 老師寫過的那些字會累積成一疊。他本來就要寫，所以這是零負擔的那一種累積。 */
-RULES.STACK_SAY = '他每判一件就寫一段。那些字在這裡疊起來——交下一件之前可以先翻。' +
-  '第十次交件的時候，你對「合格長什麼樣」的掌握不會跟第一次一樣。';
+/* ---------- 停滯 ----------
+   系統不發「已逾期」通知。狀態本身就是回饋：幾天沒推進，畫面自己會暗下來。
+   這是勸導式設計的核心——不指責，只是讓停下來這件事看得見。 */
+RULES.stallOf = function (lastPushAt, nowTs) {
+  if (!lastPushAt) return { level: 0, days: 0 };
+  var days = Math.floor((nowTs - lastPushAt) / 86400000);
+  if (days >= RULES.SLEEP_DAYS) return { level: 2, days: days };   /* 睡著 */
+  if (days >= RULES.STALL_DAYS) return { level: 1, days: days };   /* 長藤蔓 */
+  return { level: 0, days: days };
+};
 
-/* 剖面是描述，不是評價。 */
-RULES.CURVE_SAY = '這一頁只有你們自己走過的時間：哪一天開的、哪一天交的、走了幾輪、等了幾天。' +
-  '它不打分、不跟別組比，也沒有一條「應該長這樣」的線。看得到自己的節奏，才有得調。';
-/* 唯一的門檻。所有畫面都不該暗示還有第二道。 */
-RULES.GATE = '只有老師放行，一組才會往下一層。';
+/* 停滯的說法。不講「你逾期了」，講畫面上發生了什麼。 */
+RULES.stallSay = function (level, days) {
+  if (level === 2) return '牠睡著了。' + days + ' 天沒有推進——按一下就會醒。';
+  if (level === 1) return '藤蔓爬上來了。' + days + ' 天沒有推進——推一次就會碎掉。';
+  return '';
+};
+
+/* ---------- 走到哪了 ----------
+   迷霧走廊的長度＝承諾的天數。推進一次前進一格。
+   走完不等於完成——完成是上傳作業那一刻。 */
+RULES.progress = function (pushes, est) {
+  var e = Math.max(1, Number(est) || 1);
+  return clamp(0, 1, (Number(pushes) || 0) / e);
+};
 
 
 /* ===== 30-art.js ===== */
-/* 像素圖與「哪一隻／哪一件」的算法。
+/* 畫圖。只有兩件事：一個雜湊、一個把像素字串變成 SVG 的函式。
 
-   這裡的函式全都是純函式：同樣的輸入永遠得到同一隻、同一件。
-   沒有任何一個地方會在 render 的時候擲骰子——抽掉落物是後端抽完存起來的，
-   畫面只負責把存好的那幾件畫出來。 */
+   全都是純函式：同樣的輸入永遠得到同一張圖、同一隻魔物。
+   沒有任何一個地方會在 render 的時候擲骰子。 */
 
-/* 字串雜湊。同一個字串永遠得到同一個數字，兩端都用它。 */
+/* 字串雜湊。同一個字串永遠得到同一個數字——
+   「哪一組遇到哪一隻」就是靠它算的，所以不能換演算法。 */
 function hash(s) {
   var h = 2166136261;
   s = String(s);
@@ -599,855 +632,489 @@ function hash(s) {
   return h >>> 0;
 }
 
-var REGION_L = { '微光荒原': 1, '水晶迴廊': 2, '迴聲迷宮': 3, '熔火深淵': 4 };
-
-/* 依領域分好組，索引就是那一區的第幾個 */
-var MOB = [[], [], [], []], DEB = [[], [], [], []], TRO = [[], [], [], []];
-PACK.creatures.forEach(function (c) { var L = REGION_L[c.r]; if (L) MOB[L - 1].push(c); });
-PACK.trophies.forEach(function (t) { var L = REGION_L[t.r]; if (L) TRO[L - 1].push(t); });
-/* 掉落物照「領域 → 稀有度」排，所以整條 1..108 的編號就是「第幾區的第幾件」 */
-var FINDS = [];
-[0, 1, 2, 3].forEach(function (li) {
-  ['常見', '少見', '罕見'].forEach(function (q) {
-    PACK.debris.forEach(function (d) {
-      if (REGION_L[d.r] !== li + 1 || d.q !== q) return;
-      var item = { id: FINDS.length + 1, name: d.n, look: d.l, tier: q, L: li + 1, px: d.px };
-      FINDS.push(item); DEB[li].push(item);
-    });
-  });
-});
-
-/* ---------- 畫 ---------- */
-
 var ART_CACHE = {};
 
-/* 像素字元：. 透明 · # 身體 · + 陰影 · * 反光 */
+/* 像素字元：. 透明 · # 身體 · + 陰影 · * 反光 · ~ 拖影
+   一張圖是一個字串陣列，每一格畫成一個 <rect>。
+   換配色就是換同一張圖的意思——魔物越深越冷，招牌越好越亮。 */
 function pxSvg(px, pal, dim) {
   if (!px || !px.length) return '';
   var key = px.join('') + '|' + pal['#'] + '|' + (dim ? 1 : 0);
   if (ART_CACHE[key]) return ART_CACHE[key];
-  var W = px[0].length, out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' +
+
+  var W = px[0].length;
+  var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' +
     W + ' ' + px.length + '" shape-rendering="crispEdges">'];
+
   px.forEach(function (row, y) {
     for (var x = 0; x < row.length; x++) {
       var ch = row[x];
       if (ch === '.' || ch === ' ') continue;
-      var fill = ch === '*' ? pal['*'] : (ch === '+' || ch === 'o') ? pal.o : ch === '~' ? (pal['~'] || pal.o) : pal['#'];
+      var fill =
+        ch === '*' ? pal['*'] :
+        (ch === '+' || ch === 'o') ? pal.o :
+        ch === '~' ? (pal['~'] || pal.o) :
+        ch === 'z' || ch === 'Z' ? (pal['*'] || pal['#']) :
+        pal['#'];
       out.push('<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + fill + '"' +
         (dim ? ' opacity=".26"' : '') + '/>');
     }
   });
+
   out.push('</svg>');
-  ART_CACHE[key] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out.join(''));
-  return ART_CACHE[key];
+  var url = 'data:image/svg+xml;utf8,' + encodeURIComponent(out.join(''));
+  ART_CACHE[key] = url;
+  return url;
 }
-
-function layerPal(L) { return (LAYERS[clamp(1, 4, Number(L) || 1) - 1]).pal; }
-
-function mobArt(c, dim) { return pxSvg(c.px, layerPal(c.L || REGION_L[c.r] || 1), dim); }
-function bossArt(b, dim) { return pxSvg(b.px, b.hue, dim); }
-
-/* ---------- 誰擋在這一項前面 ---------- */
-/* 同一項任務，不同組遇到的不是同一隻——由任務 id ＋ 組 id 算出來。
-   所以「你打贏的那一隻」是你們這一組的事，別組講的是另一隻。 */
-function mobFor(taskId, teamId, layer) {
-  var list = MOB[clamp(1, 4, layer) - 1];
-  var c = list[hash(taskId + '/' + teamId) % list.length];
-  return { name: c.n, trait: c.t, px: c.px, L: layer, region: c.r };
-}
-
-/* ---------- 抽掉落物 ---------- */
-/* 走到第 L 層時，第 1..L 層的都抽得到。稀有度只影響出現機率——
-   每一件都一樣重，所以運氣不會決定名次。 */
-var TIER_W = { '常見': 60, '少見': 32, '罕見': 8 };
-
-function rollFinds(layer, n, seed) {
-  var pool = [];
-  for (var i = 0; i < clamp(1, 4, layer); i++) pool = pool.concat(DEB[i]);
-  var out = [], h = hash(seed);
-  for (var k = 0; k < n; k++) {
-    var total = 0, j;
-    for (j = 0; j < pool.length; j++) total += TIER_W[pool[j].tier];
-    h = (h * 1664525 + 1013904223) >>> 0;
-    var pick = (h / 4294967296) * total, acc = 0, chosen = pool[0];
-    for (j = 0; j < pool.length; j++) { acc += TIER_W[pool[j].tier]; if (pick < acc) { chosen = pool[j]; break; } }
-    out.push(chosen.id);
-  }
-  return out;
-}
-
-/* 守關戰利品：一區六件。放行一層時攤開還沒拿過的裡面的三件，
-   讓他們自己挑一件帶走。
-
-   攤開哪三件由「組 ＋ 層」算出來，是純函式——同一組在同一層永遠看到
-   同一組三件。它讀不到任何跟表現有關的東西（分數、輪數、天數都不在
-   參數裡），所以它不可能變成一個評價。 */
-function offerTrophies(layer, ownedIds, seed) {
-  var list = TRO[clamp(1, 4, layer) - 1];
-  var left = list.filter(function (t) { return ownedIds.indexOf(troId(t)) < 0; });
-  if (left.length <= RULES.OFFER) return left.map(troId);
-  var h = hash(seed), out = [], pool = left.slice();
-  for (var k = 0; k < RULES.OFFER; k++) {
-    h = (h * 1664525 + 1013904223) >>> 0;
-    out.push(troId(pool.splice(h % pool.length, 1)[0]));
-  }
-  return out;
-}
-
-function troOf(id) {
-  for (var L = 0; L < 4; L++)
-    for (var i = 0; i < TRO[L].length; i++)
-      if (troId(TRO[L][i]) === id) return TRO[L][i];
-  return null;
-}
-function troLayer(id) { return Math.floor(Number(String(id).slice(1)) / 100); }
-function troId(t) { return 'T' + (REGION_L[t.r] * 100 + TRO[REGION_L[t.r] - 1].indexOf(t)); }
-
-/* ---------- 你自己的那一隻 ＋ 那一件 ---------- */
-/* 從帳號算出來，別人拿不到同一組。不算在 44／136 裡——
-   它不是收集進度的一格，是「這一趟從第一天就有的東西」。 */
-var MAT = ['霧', '砂', '苔', '灰', '晶', '稜', '光', '脈', '聲', '影', '空', '迴', '燼', '熔', '銹', '焰'];
-var ACT = ['面', '擬', '漲', '蝕', '織', '眠', '潛', '裂', '銜'];
-var SUF = ['者', '母', '群', '獸'];
-
-function ownMob(account) {
-  var h = hash('mob:' + account);
-  var body = PACK.creatures[h % PACK.creatures.length];
-  var hue = (hash('hue:' + account) % 360);
-  var pal = {
-    '#': 'hsl(' + hue + ',48%,58%)',
-    o:   'hsl(' + hue + ',44%,34%)',
-    '*': 'hsl(' + hue + ',60%,84%)'
-  };
-  var name = (h % 2)
-    ? MAT[h % MAT.length] + ACT[(h >> 4) % ACT.length] + SUF[(h >> 8) % SUF.length]
-    : ACT[(h >> 4) % ACT.length] + MAT[h % MAT.length] + SUF[(h >> 8) % SUF.length];
-  return { name: name, trait: body.t, px: body.px, pal: pal, own: true };
-}
-
-function ownFind(account) {
-  var h = hash('find:' + account);
-  var body = FINDS[h % FINDS.length];
-  var hue = (hash('fhue:' + account) % 360);
-  return {
-    name: MAT[h % MAT.length] + ['砂', '晶', '片', '核', '塊'][(h >> 6) % 5],
-    look: body.look, px: body.px, own: true,
-    pal: { '#': 'hsl(' + hue + ',44%,60%)', o: 'hsl(' + hue + ',40%,36%)', '*': 'hsl(' + hue + ',58%,86%)' }
-  };
-}
-
-/* ---------- 圖鑑的總量 ---------- */
-/* 生物 44 ＝ 一區 10 隻普通 ＋ 4 隻守關。
-   物品 136 ＝ 108 掉落物 ＋ 24 戰利品 ＋ 4 道具。 */
-var TOTAL_MOB = PACK.creatures.length + PACK.bosses.length;
-var TOTAL_ITEM = FINDS.length + PACK.trophies.length + LAYERS.length;
 
 
 /* ===== 40-db.js ===== */
-/* 假後端。整套跑在瀏覽器裡，存在 localStorage。
+/* 資料與動作。
 
-   資料表照規格書 08，已經砍掉的那幾張（Plans、Files）跟那幾個欄位
-   （toolLevels、enteredWeek、semesterWeeks、mineral、vow）不在這裡。
+   所有會改到資料的事都叫 act*，而且只有這裡改得到 DB。畫面只讀不寫。
+   存在 localStorage，因為這一版是給人打開就能走一遍的原型。
 
-   所有會算數的地方都呼叫 RULES——這一支不自己算分數、不自己算抽數。 */
+   跟上一版最大的差別：沒有分數、沒有層、沒有收集。
+   一個里程碑的一生是：派發 → 承諾天數 → 每日推進 → 上傳 → 判定 →
+   （失準就復盤）→ 老師發裝備 → 大躍進。 */
 
 var DB = null;
-var STORE = 'jlz.v2';
+var STORE = 'dungeon.v1';
 
-/* 時間。假後端可以被快轉，所以不直接讀 Date.now()。 */
+/* 試用時可以快轉。所有時間都走 now()，不直接用 Date.now()。 */
 var CLOCK = 0;
 function now() { return Date.now() + CLOCK; }
+var DAY = 86400000;
+
+/* 只比日期，不比時分——「今天推過了沒」問的是日子，不是 24 小時。 */
+function dayOf(ts) {
+  var d = new Date(ts);
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+function daysBetween(a, b) {
+  var A = new Date(a), B = new Date(b);
+  A = new Date(A.getFullYear(), A.getMonth(), A.getDate());
+  B = new Date(B.getFullYear(), B.getMonth(), B.getDate());
+  return Math.round((B - A) / DAY);
+}
 
 function blank() {
   return {
-    Users: [], Classes: [], Roster: [], Teams: [], Tasks: [], TeamTasks: [],
-    Submissions: [], Reviews: [], Redigs: [], Checks: [], Passes: [], Picks: [], Finales: [],
-    Config: { seq: 1 }
+    Config: { seq: 1 },
+    Users: [], Classes: [], Roster: [], Teams: [],
+    /* 里程碑：老師派的。同一個里程碑可以只發給某幾組。 */
+    Milestones: [],
+    /* 一組在一個里程碑上的狀態。這張表是整個系統的心臟。 */
+    Runs: [],
+    /* 每一次推進打卡。一天一筆。 */
+    Pushes: [],
+    /* 老師發的裝備 */
+    Gears: []
   };
 }
 
 function nid(p) { return p + (DB.Config.seq++); }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {} }
 function load() {
-  try { var s = localStorage.getItem(STORE); if (s) { DB = JSON.parse(s); return true; } } catch (e) {}
-  return false;
+  try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
+  return !!(DB && DB.Users && DB.Users.length);
 }
 function find(tbl, fn) { for (var i = 0; i < DB[tbl].length; i++) if (fn(DB[tbl][i])) return DB[tbl][i]; return null; }
 function where(tbl, fn) { return DB[tbl].filter(fn); }
 
-/* ================= 查 ================= */
-
 function teamOf(id) { return find('Teams', function (t) { return t.teamId === id; }); }
-function taskOf(id) { return find('Tasks', function (t) { return t.taskId === id; }); }
 function userOf(id) { return find('Users', function (u) { return u.userId === id; }); }
-function ttOf(teamId, taskId) {
-  return find('TeamTasks', function (x) { return x.teamId === teamId && x.taskId === taskId; });
+function msOf(id) { return find('Milestones', function (m) { return m.msId === id; }); }
+function runOf(teamId, msId) {
+  return find('Runs', function (r) { return r.teamId === teamId && r.msId === msId; });
 }
 
-/* 一組在某一層被指派到的所有任務 */
-function tasksFor(teamId, layer) {
-  return where('Tasks', function (t) {
-    return (layer == null || t.layer === layer) && t.teams.indexOf(teamId) >= 0;
-  }).sort(function (a, b) { return a.ts - b.ts; });
-}
-function rowsFor(teamId, layer) {
-  return tasksFor(teamId, layer).map(function (t) {
-    return { task: t, tt: ttOf(teamId, t.taskId) };
-  }).filter(function (r) { return r.tt; });
+/* ---------- 一組看得到哪些里程碑 ---------- */
+function msFor(teamId) {
+  var t = teamOf(teamId);
+  if (!t) return [];
+  return where('Milestones', function (m) {
+    return m.classId === t.classId && (!m.teams.length || m.teams.indexOf(teamId) >= 0);
+  });
 }
 
-/* 一組現在的分數。明細與總分同一支函式，不會兜不起來。 */
-function scoreOf(teamId) {
-  var tts = where('TeamTasks', function (x) { return x.teamId === teamId; });
-  var passed = tts.filter(function (x) { return x.status === 'done'; }).length;
-  var drops = tts.reduce(function (s, x) { return s + (x.finds || []).length; }, 0);
-  var released = where('Passes', function (p) { return p.teamId === teamId; }).length;
-  return RULES.score({ passed: passed, drops: drops, released: released });
+/* 這一組的所有 run，照派發時間排 */
+function runsFor(teamId) {
+  return msFor(teamId).map(function (m) {
+    var r = runOf(teamId, m.msId);
+    if (!r) {
+      /* 派了但還沒承諾——先給一個空的，畫面才知道要問滑桿 */
+      r = { runId: null, teamId: teamId, msId: m.msId, state: 'fresh',
+            est: 0, risks: [], pushes: 0, snags: [], gear: null };
+    }
+    return { ms: m, run: r };
+  }).sort(function (a, b) { return a.ms.at - b.ms.at; });
 }
 
-/* 有沒有在動：來回幾次、其中幾次是被退回之後改的。不計分，只說明這一組在動。 */
-function motionOf(teamId) {
-  var subs = where('Submissions', function (s) { return s.teamId === teamId; });
-  return { rounds: subs.length, changed: subs.filter(function (s) { return s.attempt > 1; }).length };
-}
-
-function classTeams(classId) {
-  return where('Teams', function (t) { return t.classId === classId; });
-}
-
-/* 排行榜：分數高的在前，同分的照停留天數少的在前 */
-function board(classId) {
-  return classTeams(classId).map(function (t) {
-    return {
-      team: t, score: scoreOf(t.teamId), motion: motionOf(t.teamId),
-      stay: RULES.stayDays(t.enteredAt, now())
-    };
-  }).sort(function (a, b) { return b.score.total - a.score.total || a.stay - b.stay; })
-    .map(function (r, i) { r.rank = i + 1; return r; });
-}
-
-/* ================= 學生端 ================= */
-
-/* 一組在這一層有沒有交齊：老師的佇列吃這個條件。
-   老師隨時可以再開一項，所以交齊之後可能又變成沒交齊——那不是退步，
-   是這一層本來就沒有「做完」這個狀態。 */
-function allIn(teamId, layer) {
-  var rows = rowsFor(teamId, layer);
-  if (!rows.length) return false;
-  var waiting = 0;
-  for (var i = 0; i < rows.length; i++) {
-    var st = rows[i].tt.status;
-    if (st === 'open' || st === 'back') return false;
-    if (st === 'sent') waiting++;
-  }
-  return waiting > 0;
-}
-
-/* 首頁那一顆唯一的 CTA。首頁只給一件事，所以這裡只回傳一件。 */
+/* ---------- 這一組現在該做什麼 ----------
+   一次只回答一件事。首頁只給一個動作，其餘都是資訊。 */
 function nextThing(teamId) {
-  var team = teamOf(teamId);
-  /* 上一層留下的那一件還沒挑。這不是工作，是十秒鐘的一個決定——
-     所以它插在最前面，挑完馬上回到原本該做的事。 */
-  var pk = pendingPick(teamId);
-  if (pk) return { kind: 'pick', pick: pk };
-  if (team.finished) return { kind: 'finale' };
-  var rows = rowsFor(teamId, team.layer);
-  var back = rows.filter(function (r) { return r.tt.status === 'back'; });
-  if (back.length) return { kind: 'back', task: back[0].task, cta: '去看他寫了什麼' };
-  var open = rows.filter(function (r) { return r.tt.status === 'open'; });
-  if (open.length) {
-    open.sort(function (a, b) {
-      return (a.task.due || Infinity) - (b.task.due || Infinity);
-    });
-    return { kind: 'open', task: open[0].task, cta: '去做這一項' };
+  var rows = runsFor(teamId);
+  /* 1. 判定失準、還沒復盤 */
+  var camp = rows.filter(function (x) {
+    return x.run.state === 'judged' && x.run.stamp === 'late' && !x.run.snags.length;
+  })[0];
+  if (camp) return { kind: 'camp', row: camp };
+  /* 2. 老師發了裝備、還沒領 */
+  var gear = rows.filter(function (x) { return x.run.state === 'geared'; })[0];
+  if (gear) return { kind: 'gear', row: gear };
+  /* 3. 睡著了或長藤蔓——叫醒牠比接新任務重要。
+     這是整個設計的招牌互動：推一下，藤蔓碎掉，角色重新揮劍。
+     如果讓「接新任務」排在前面，那一下就永遠不會發生。 */
+  var st = stallOf(teamId);
+  if (st.level > 0) {
+    var stuck = rows.filter(function (x) { return x.run.state === 'running'; })[0];
+    if (stuck) return { kind: 'wake', row: stuck, stall: st };
   }
-  var sent = rows.filter(function (r) { return r.tt.status === 'sent'; });
-  if (sent.length) return { kind: 'wait', n: sent.length };
-  /* 手上沒有非做不可的事。系統在這裡主動邀請回頭補強：
-     老師給 0 的那一項 ＝ 你交了，但他覺得你沒有多做。 */
-  var zero = where('TeamTasks', function (x) {
-    return x.teamId === teamId && x.status === 'done' && (x.gave || 0) === 0;
+
+  /* 4. 派了但還沒承諾 */
+  var fresh = rows.filter(function (x) { return x.run.state === 'fresh'; })[0];
+  if (fresh) return { kind: 'commit', row: fresh };
+  /* 5. 進行中、今天還沒推進 */
+  var run = rows.filter(function (x) {
+    return x.run.state === 'running' && !pushedToday(teamId, x.run.runId);
+  })[0];
+  if (run) return { kind: 'push', row: run };
+  /* 6. 走完了、還沒上傳 */
+  var done = rows.filter(function (x) {
+    return x.run.state === 'running' && RULES.progress(x.run.pushes, x.run.est) >= 1;
+  })[0];
+  if (done) return { kind: 'submit', row: done };
+  /* 7. 都推過了，在等 */
+  var wait = rows.filter(function (x) { return x.run.state === 'running'; })[0];
+  if (wait) return { kind: 'waiting', row: wait };
+  var sent = rows.filter(function (x) { return x.run.state === 'submitted'; })[0];
+  if (sent) return { kind: 'review', row: sent };
+  return { kind: 'idle', row: null };
+}
+
+function pushedToday(teamId, runId) {
+  if (!runId) return false;
+  var d = dayOf(now());
+  return !!find('Pushes', function (p) {
+    return p.teamId === teamId && p.runId === runId && p.day === d;
   });
-  if (zero.length && redigLeft(teamId) === 0) {
-    return { kind: 'redig', task: taskOf(zero[0].taskId), cta: '回頭補強這一項' };
-  }
-  return { kind: 'idle' };
 }
 
-/* 回頭補強：滾動 7 天一次。回傳還要等幾天，0 ＝ 現在就可以送。 */
-function redigLeft(teamId) {
-  var rs = where('Redigs', function (r) { return r.teamId === teamId; });
-  if (!rs.length) return 0;
-  var last = rs.reduce(function (m, r) { return Math.max(m, r.ts); }, 0);
-  return RULES.redigWaitDays(last, now());
+/* 最後一次推進是什麼時候——停滯判斷用 */
+function lastPush(teamId) {
+  var ps = where('Pushes', function (p) { return p.teamId === teamId; });
+  if (!ps.length) return 0;
+  return ps[ps.length - 1].at;
 }
 
-/* ---------- 學生的動作 ---------- */
-
-/* 勾選 0 分。它只剩「我走到哪了」，那是它唯一能誠實的條件。 */
-function actCheck(teamId, taskId, idx) {
-  var tt = ttOf(teamId, taskId);
-  if (tt.status === 'done' || tt.status === 'sent') return;
-  var on = tt.checked.indexOf(idx) >= 0;
-  tt.checked = on ? tt.checked.filter(function (i) { return i !== idx; }) : tt.checked.concat([idx]);
-  DB.Checks.push({ teamId: teamId, taskId: taskId, idx: idx, act: on ? 'off' : 'on', ts: now() });
-  save();
-}
-function actEffort(teamId, taskId, v) { ttOf(teamId, taskId).effort = v; save(); }
-function actExtra(teamId, taskId, v) { ttOf(teamId, taskId).text = v; save(); }
-
-/* 卡住可以現在就說，不用等送出。隨時可以放下。 */
-function actBlocker(teamId, taskId, v) { ttOf(teamId, taskId).blocker = v || ''; save(); }
-
-function actSubmit(teamId, taskId) {
-  var tt = ttOf(teamId, taskId);
-  if (!tt.effort) return { err: '先回答「這一組現在的狀態」。' };
-  tt.attempt = (tt.attempt || 0) + 1;
-  tt.status = 'sent';
-  tt.sentAt = now();
-  DB.Submissions.push({ teamId: teamId, taskId: taskId, attempt: tt.attempt,
-    text: tt.text || '', effort: tt.effort, ts: now() });
-  save();
-  return { ok: true };
+/* 這一組的停滯狀態 */
+function stallOf(teamId) {
+  var t = teamOf(teamId);
+  var has = runsFor(teamId).some(function (x) { return x.run.state === 'running'; });
+  if (!has) return { level: 0, days: 0 };
+  return RULES.stallOf(lastPush(teamId) || (t && t.joinedAt) || now(), now());
 }
 
-function actRedig(teamId, taskId, note) {
-  var left = redigLeft(teamId);
-  if (left > 0) return { err: '還要等 ' + left + ' 天。' };
-  DB.Redigs.push({ redigId: nid('R'), teamId: teamId, taskId: taskId, note: note,
-    status: 'sent', reason: '', ts: now() });
-  save();
-  return { ok: true };
+/* 深度＝完成過幾個里程碑。沒有終點。 */
+function depthOf(teamId) {
+  return where('Runs', function (r) {
+    return r.teamId === teamId && r.state === 'done';
+  }).length;
 }
 
-/* ================= 老師端 ================= */
+/* 招牌的階：老師改寫過幾次專案名稱 */
+function signOf(teamId) {
+  var t = teamOf(teamId);
+  var n = Math.min(RULES.SIGN_TIERS.length - 1, (t && t.signTier) || 0);
+  return SIGNS[RULES.SIGN_TIERS[n]];
+}
 
-/* 待你驗收：依停留天數排序，待最久的排最前面。舉手的組排最前面。 */
-function queue(classId) {
-  return classTeams(classId).map(function (t) {
-    var rows = rowsFor(t.teamId, t.layer);
-    var sent = rows.filter(function (r) { return r.tt.status === 'sent'; });
-    var blockers = rows.filter(function (r) { return r.tt.blocker; });
-    var redigs = where('Redigs', function (r) { return r.teamId === t.teamId && r.status === 'sent'; });
+/* 這一組的預估準度紀錄——復盤與老師審閱都要看 */
+function accuracyOf(teamId) {
+  var done = where('Runs', function (r) {
+    return r.teamId === teamId && r.stamp;
+  });
+  var n = { early: 0, exact: 0, late: 0 };
+  done.forEach(function (r) { n[r.stamp] = (n[r.stamp] || 0) + 1; });
+  return { total: done.length, early: n.early, exact: n.exact, late: n.late, rows: done };
+}
+
+/* ---------- 全班生態 ----------
+   沒有名次。只有「誰在哪一條坑道、挖到多深、現在是什麼狀態」。 */
+function ecology(classId) {
+  return where('Teams', function (t) { return t.classId === classId; }).map(function (t) {
+    var st = stallOf(t.teamId);
+    var cur = runsFor(t.teamId).filter(function (x) { return x.run.state === 'running'; })[0];
     return {
-      team: t, stay: RULES.stayDays(t.enteredAt, now()),
-      sent: sent, redigs: redigs, blockers: blockers,
-      ready: allIn(t.teamId, t.layer)
+      teamId: t.teamId, name: t.name,
+      depth: depthOf(t.teamId),
+      stall: st.level,
+      /* 正在打的那一隻，跟走到哪 */
+      onMs: cur ? cur.ms.title : '',
+      at: cur ? RULES.progress(cur.run.pushes, cur.run.est) : 0,
+      sign: signOf(t.teamId).key
     };
-  }).filter(function (r) { return r.ready || r.blockers.length || r.redigs.length; })
-    .sort(function (a, b) {
-      var ab = a.blockers.length ? 1 : 0, bb = b.blockers.length ? 1 : 0;
-      return bb - ab || b.stay - a.stay;
+  });
+}
+
+/* ================= 學生的動作 ================= */
+
+/* 承諾：拉滑桿決定幾天，順便標風險 */
+function actCommit(teamId, msId, est, risks) {
+  var r = runOf(teamId, msId);
+  if (r) return r;
+  r = {
+    runId: nid('R'), teamId: teamId, msId: msId,
+    state: 'running',
+    est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
+    risks: risks || [],
+    committedAt: now(),
+    pushes: 0, snags: [], gear: null, stamp: null
+  };
+  DB.Runs.push(r);
+  save();
+  return r;
+}
+
+/* 推進：一天一次。回傳有沒有真的推到。 */
+function actPush(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'running') return false;
+  if (pushedToday(teamId, runId)) return false;
+  DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId, day: dayOf(now()), at: now() });
+  r.pushes++;
+  save();
+  return true;
+}
+
+/* 上傳：走到終點之後交出去。判定就在這一刻。 */
+function actSubmit(teamId, runId, link) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'running') return null;
+  r.actual = Math.max(1, daysBetween(r.committedAt, now()));
+  r.stamp = RULES.judge(r.est, r.actual).key;
+  r.link = link || '';
+  r.submittedAt = now();
+  r.state = 'judged';
+  save();
+  return r;
+}
+
+/* 復盤：點圖示標籤說明卡在哪。只有失準的時候會走到。 */
+function actReflect(teamId, runId, snags) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  r.snags = snags || [];
+  r.state = 'submitted';        /* 復盤完才排進老師的雷達 */
+  save();
+  return r;
+}
+
+/* 準時的直接排進老師的雷達，不用復盤 */
+function actSkipCamp(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  r.state = 'submitted';
+  save();
+  return r;
+}
+
+/* 領裝備 → 大躍進 */
+function actTakeGear(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'geared') return null;
+  r.state = 'done';
+  r.doneAt = now();
+  save();
+  return r;
+}
+
+/* ================= 老師的動作 ================= */
+
+/* 派一個里程碑。teams 空陣列＝全班。 */
+function actPublish(classId, o) {
+  var m = {
+    msId: nid('M'), classId: classId,
+    title: o.title, note: o.note || '',
+    teams: o.teams || [],
+    at: now()
+  };
+  DB.Milestones.push(m);
+  save();
+  return m;
+}
+
+/* 老師的雷達：誰交了、等多久了 */
+function radar(classId) {
+  var out = [];
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    runsFor(t.teamId).forEach(function (x) {
+      if (x.run.state !== 'submitted') return;
+      out.push({
+        team: t, run: x.run, ms: x.ms,
+        waited: daysBetween(x.run.submittedAt, now())
+      });
     });
-}
-
-/* 老師寫了幾件合格考量、平均幾個字、學生平均等他多久 */
-function teacherStats() {
-  var rs = DB.Reviews;
-  var chars = rs.reduce(function (s, r) { return s + String(r.reason || '').length; }, 0);
-  var lat = rs.reduce(function (s, r) { return s + (r.latency || 0); }, 0);
-  return {
-    n: rs.length,
-    avgChars: rs.length ? Math.round(chars / rs.length) : 0,
-    avgWait: rs.length ? (lat / rs.length / 86400000) : 0
-  };
-}
-
-/* 老師自己寫過三次以上的起頭句——是他的話，不是系統的罐頭。 */
-function starters() {
-  var seen = {};
-  DB.Reviews.forEach(function (r) {
-    var head = String(r.reason || '').slice(0, 6);
-    if (head.length < 4) return;
-    seen[head] = (seen[head] || 0) + 1;
   });
-  return Object.keys(seen).filter(function (k) { return seen[k] >= 2; }).slice(0, 4);
+  return out.sort(function (a, b) { return b.waited - a.waited; });
 }
 
-function actPublish(classId, layer, o) {
-  var t = {
-    taskId: nid('K'), classId: classId, layer: layer, title: o.title,
-    cond: o.cond, note: o.note || '', spec: o.spec || '',
-    due: o.due || null, checks: o.checks || [], teams: o.teams || [], ts: now()
-  };
-  DB.Tasks.push(t);
-  t.teams.forEach(function (tid) {
-    DB.TeamTasks.push({ teamId: tid, taskId: t.taskId, status: 'open', checked: [],
-      text: '', effort: '', blocker: '', gave: 0, finds: [], attempt: 0 });
-  });
+/* 發裝備。gearKey 是資訊性回饋——選哪一件等於選一句話。 */
+function actGear(runId, gearKey, word) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  r.gear = gearKey;
+  r.word = word || '';
+  r.state = 'geared';
+  r.gearedAt = now();
+  DB.Gears.push({ gearId: nid('G'), teamId: r.teamId, runId: runId, key: gearKey, at: now() });
+  save();
+  return r;
+}
+
+/* 改寫專案名稱 → 招牌升一階。收斂本身就是成果。 */
+function actRename(teamId, name) {
+  var t = teamOf(teamId);
+  if (!t) return null;
+  if (t.project !== name) {
+    t.project = name;
+    t.signTier = Math.min(RULES.SIGN_TIERS.length - 1, (t.signTier || 0) + 1);
+  }
   save();
   return t;
 }
 
-/* 判一項。給的 0–5 只決定抽幾次，不決定過不過。 */
-function actReview(teamId, taskId, o) {
-  var tt = ttOf(teamId, taskId), task = taskOf(taskId);
-  DB.Reviews.push({ teamId: teamId, taskId: taskId, result: o.result, reason: o.reason,
-    gave: o.gave, attempt: tt.attempt, latency: tt.sentAt ? (now() - tt.sentAt) : 0, ts: now() });
-  if (o.result === 'back') { tt.status = 'back'; save(); return { ok: true }; }
-  tt.status = 'done';
-  tt.gave = o.gave;
-  tt.doneAt = now();
-  tt.seen = false;
-  var n = RULES.draws(task.layer, o.gave);
-  tt.finds = rollFinds(task.layer, n, teamId + '/' + taskId + '/' + tt.attempt);
-  save();
-  return { ok: true, draws: n };
-}
-
-function actRedigJudge(redigId, accept, reason) {
-  var r = find('Redigs', function (x) { return x.redigId === redigId; });
-  r.status = accept ? 'ok' : 'no';
-  r.reason = reason || '';
-  r.judgedAt = now();
-  if (accept) {
-    var tt = ttOf(r.teamId, r.taskId), task = taskOf(r.taskId);
-    /* 接受 ＝ 那一項多抽一次（多一件進圖鑑，分數跟著加） */
-    tt.finds = (tt.finds || []).concat(rollFinds(task.layer, 1, r.redigId));
-    tt.seen = false;
-  }
-  save();
-}
-
-/* 放行。這是整個系統唯一的門。 */
-function actRelease(teamId, verdict, reason) {
-  var team = teamOf(teamId);
-  DB.Passes.push({ teamId: teamId, layer: team.layer, verdict: verdict, reason: reason, ts: now() });
-  team.tools = (team.tools || []).concat([team.layer]);
-  /* 戰利品不在這裡發。攤開三件，等他們自己挑一件帶走——
-     系統不決定誰帶走哪一句話。 */
-  DB.Picks.push({ pickId: nid('P'), teamId: teamId, layer: team.layer,
-    offer: offerTrophies(team.layer, team.tro || [], teamId + '/' + team.layer),
-    chosen: null, ts: now() });
-  team.fresh = team.layer;
-  if (team.layer < RULES.LAYERS) { team.layer++; team.enteredAt = now(); }
-  else team.finished = true;
-  save();
-}
-
-/* ---------- 挑一件帶走 ---------- */
-/* 一組同一時間最多只會有一件在等他們挑。 */
-
-function pendingPick(teamId) {
-  return find('Picks', function (p) { return p.teamId === teamId && !p.chosen; });
-}
-
-function actPick(pickId, id) {
-  var p = find('Picks', function (x) { return x.pickId === pickId; });
-  if (!p || p.chosen) return;
-  if (p.offer.indexOf(id) < 0) return;      /* 只能挑攤出來的那幾件 */
-  p.chosen = id;
-  p.pickedAt = now();
-  var team = teamOf(p.teamId);
-  team.tro = (team.tro || []).concat([id]);
-  save();
-}
-
-/* 中途接手：課程走到一半才導入時，前面在系統外做完的直接認列。 */
-function actStartAt(teamId, doneLayers) {
-  var team = teamOf(teamId);
-  team.startedAt = doneLayers;
-  team.layer = clamp(1, RULES.LAYERS, doneLayers + 1);
-  team.enteredAt = now();
-  save();
-}
-
-function actFinale(teamId, o) {
-  var f = find('Finales', function (x) { return x.teamId === teamId; });
-  if (!f) { f = { teamId: teamId }; DB.Finales.push(f); }
-  Object.keys(o).forEach(function (k) { f[k] = o[k]; });
-  save();
-  return f;
-}
-function finaleOf(teamId) { return find('Finales', function (x) { return x.teamId === teamId; }); }
-
-/* ================= 他寫過的那一疊 ================= */
-/* 老師每判一件都要寫一段字——那件事他本來就在做，所以這一疊是零負擔的累積。
-   一次性看過就過去的話，那些字只影響那一件；疊起來之後它影響下一件。
-
-   跟圖鑑一樣是個人的：這個人走過的每一組都算進來。 */
-function stackOf(userId) {
-  var u = userOf(userId);
-  var teams = (u.history || []).concat([u.teamId]);
-  var out = [];
-  teams.forEach(function (tid) {
-    var team = teamOf(tid);
-    if (!team) return;
-    where('Reviews', function (r) { return r.teamId === tid; }).forEach(function (r) {
-      var task = taskOf(r.taskId);
-      if (!task) return;
-      out.push({
-        kind: r.result === 'ok' ? 'ok' : 'back',
-        layer: task.layer, title: task.title, cond: task.cond,
-        gave: r.gave, text: r.reason, ts: r.ts, taskId: r.taskId, teamId: tid,
-        mine: tid === u.teamId
-      });
-    });
-    where('Redigs', function (r) { return r.teamId === tid && r.status !== 'sent'; })
-      .forEach(function (r) {
-        var task = taskOf(r.taskId);
-        if (!task || !r.reason) return;
-        out.push({
-          kind: r.status === 'ok' ? 'redig-ok' : 'redig-no',
-          layer: task.layer, title: task.title, cond: task.cond,
-          text: r.reason, ts: r.judgedAt || r.ts, taskId: r.taskId, teamId: tid,
-          mine: tid === u.teamId
-        });
-      });
-    where('Passes', function (p) { return p.teamId === tid; }).forEach(function (p) {
-      out.push({
-        kind: 'pass', layer: p.layer, title: LAYERS[p.layer - 1].name + ' · 放行',
-        text: p.reason, ts: p.ts, teamId: tid, mine: tid === u.teamId
-      });
-    });
-  });
-  return out.sort(function (a, b) { return b.ts - a.ts; });
-}
-
-/* ================= 這一趟的剖面 ================= */
-/* 深度對時間。系統手上本來就有這些時間戳，一個都不必碰作業內容。
-
-   全部是描述，沒有一項是評價：哪一天開的、哪一天交的、走了幾輪、等了幾天。
-   沒有「應該長這樣」的那一條線，也不跟別組比。 */
-function timelineOf(teamId) {
-  var team = teamOf(teamId);
-  var passes = where('Passes', function (p) { return p.teamId === teamId; })
-    .sort(function (a, b) { return a.ts - b.ts; });
-  var rows = [];
-  LAYERS.forEach(function (l) { rowsFor(teamId, l.n).forEach(function (r) { rows.push(r); }); });
-
-  /* 起點：這一組最早看到的那一項，或最早的一次放行 */
-  var t0 = rows.reduce(function (m, r) { return Math.min(m, r.task.ts); },
-    passes.length ? passes[0].ts : (team.enteredAt || now()));
-  t0 = Math.min(t0, team.enteredAt || t0);
-  var t1 = now();
-  var span = Math.max(1, Math.round((t1 - t0) / 86400000));
-
-  /* 每一層待了哪一段 */
-  var bands = [], from = t0;
-  passes.forEach(function (p) {
-    bands.push({ layer: p.layer, from: from, to: p.ts });
-    from = p.ts;
-  });
-  if (!team.finished) bands.push({ layer: team.layer, from: from, to: t1, now: true });
-
-  /* 每一項的事件 */
-  var items = rows.map(function (r) {
-    var subs = where('Submissions', function (s) {
-      return s.teamId === teamId && s.taskId === r.task.taskId;
-    }).sort(function (a, b) { return a.ts - b.ts; });
-    var revs = where('Reviews', function (v) {
-      return v.teamId === teamId && v.taskId === r.task.taskId;
-    }).sort(function (a, b) { return a.ts - b.ts; });
-    var first = subs[0], last = revs[revs.length - 1];
-    return {
-      task: r.task, tt: r.tt, layer: r.task.layer,
-      opened: r.task.ts,
-      subs: subs, revs: revs,
-      rounds: subs.length,
-      /* 開啟到第一次交隔了幾天 */
-      toFirst: first ? (first.ts - r.task.ts) / 86400000 : null,
-      /* 等裁決等了幾天（每一輪加起來除以輪數） */
-      wait: revs.length ? revs.reduce(function (s, v) { return s + (v.latency || 0); }, 0)
-        / revs.length / 86400000 : null,
-      /* 期限前幾天交（負的是逾期） */
-      slack: (first && r.task.due) ? (r.task.due - first.ts) / 86400000 : null,
-      done: r.tt.status === 'done', doneAt: r.tt.doneAt || (last ? last.ts : null)
-    };
-  }).sort(function (a, b) { return a.opened - b.opened; });
-
-  var avg = function (list) {
-    var v = list.filter(function (x) { return x != null; });
-    return v.length ? v.reduce(function (s, x) { return s + x; }, 0) / v.length : null;
-  };
-  return {
-    t0: t0, t1: t1, span: span, bands: bands, items: items,
-    stats: {
-      n: items.length,
-      toFirst: avg(items.map(function (i) { return i.toFirst; })),
-      rounds: avg(items.map(function (i) { return i.rounds || null; })),
-      wait: avg(items.map(function (i) { return i.wait; })),
-      slack: avg(items.map(function (i) { return i.slack; })),
-      late: items.filter(function (i) { return i.slack != null && i.slack < 0; }).length,
-      tight: items.filter(function (i) { return i.slack != null && i.slack >= 0 && i.slack < 1; }).length,
-      multi: items.filter(function (i) { return i.rounds > 1; }).length
-    }
-  };
-}
-
-/* ================= 個人圖鑑 ================= */
-/* 圖鑑是個人的。換組換班換專案都跟著人走，所以它從這個人走過的
-   每一組累積，不是從現在這一組算。 */
-function dexOf(userId) {
-  var u = userOf(userId);
-  var teams = (u.history || []).concat([u.teamId]);
-  var mobs = {}, finds = {}, tros = {}, tools = {};
-  teams.forEach(function (tid) {
-    var t = teamOf(tid);
-    if (!t) return;
-    where('TeamTasks', function (x) { return x.teamId === tid && x.status === 'done'; })
-      .forEach(function (x) {
-        var task = taskOf(x.taskId);
-        if (!task) return;
-        mobs[mobFor(x.taskId, tid, task.layer).name] = task.layer;
-        (x.finds || []).forEach(function (id) { finds[id] = 1; });
-      });
-    (t.tools || []).forEach(function (L) { tools[L] = 1; });
-    (t.tro || []).forEach(function (id) { tros[id] = 1; });
-    where('Passes', function (p) { return p.teamId === tid; })
-      .forEach(function (p) { mobs['BOSS' + p.layer] = p.layer; });
-  });
-  return { mobs: mobs, finds: finds, tros: tros, tools: tools,
-    nMob: Object.keys(mobs).length,
-    nItem: Object.keys(finds).length + Object.keys(tros).length + Object.keys(tools).length };
+/* 這一組拿過的裝備 */
+function gearsOf(teamId) {
+  return where('Gears', function (g) { return g.teamId === teamId; });
 }
 
 
 /* ===== 45-seed.js ===== */
 /* 試用資料：一個班、一位老師、五組。
 
-   規格書說每一條規則都用「五組＋一位老師」的全班模擬驗證過，這裡種的就是
-   那一班。時間全部往回推，所以一進來就看得到停留天數、期限、往返紀錄。 */
-
-var D = 86400000;
+   五組刻意做成五種不同的狀態，因為這個系統要證明的正是「它認得出
+   五種不同的動」——準時的、估太少的、卡住的、剛派到的、睡著的。
+   時間全部往回推，所以一打開就看得到推進紀錄與判定結果。 */
 
 function seed() {
   DB = blank();
   var T0 = Date.now();
-  var ago = function (d) { return T0 - Math.round(d * D); };
-
+  var ago = function (d) { return T0 - Math.round(d * DAY); };
   var cid = 'C1';
-  DB.Classes.push({ classId: cid, name: '設計專題', courseStart: ago(24),
-    joinCode: 'J3AJE5', teacherId: 'U0', sandbox: true });
 
-  DB.Users.push({ userId: 'U0', account: 'tea01', name: '斗篷人', role: 'teacher', classId: cid });
+  DB.Classes.push({
+    classId: cid, name: '設計專題', joinCode: 'DG7K2M',
+    teacherId: 'U0', startedAt: ago(30)
+  });
+  DB.Users.push({ userId: 'U0', account: 'tea01', name: '指導老師', role: 'teacher', classId: cid });
 
   var TEAMS = [
-    { id: 'G1', name: '第一組 · 甲', layer: 2, entered: 3 },
-    { id: 'G2', name: '第二組 · 乙', layer: 1, entered: 11 },
-    { id: 'G3', name: '第三組 · 丙', layer: 1, entered: 6 },
-    { id: 'G4', name: '第四組 · 丁', layer: 3, entered: 1 },
-    { id: 'G5', name: '第五組 · 戊', layer: 1, entered: 8 }
+    { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30 },
+    { id: 'G2', name: '第二組 · 乙', project: '課表 App',     tier: 0, joined: 30 },
+    { id: 'G3', name: '第三組 · 丙', project: '宿舍回收動線', tier: 1, joined: 30 },
+    { id: 'G4', name: '第四組 · 丁', project: '系上導覽',     tier: 1, joined: 30 },
+    { id: 'G5', name: '第五組 · 戊', project: '（還沒定）',   tier: 0, joined: 30 }
   ];
   TEAMS.forEach(function (t, i) {
-    DB.Teams.push({ teamId: t.id, classId: cid, name: t.name, layer: t.layer,
-      enteredAt: ago(t.entered), tools: [], tro: [], history: [] });
-    DB.Users.push({ userId: 'U' + (i + 1), account: 'stu0' + (i + 1), name: '學生' + (i + 1),
-      role: 'student', classId: cid, teamId: t.id, history: [] });
+    DB.Teams.push({
+      teamId: t.id, classId: cid, name: t.name,
+      project: t.project, signTier: t.tier, joinedAt: ago(t.joined)
+    });
+    DB.Users.push({
+      userId: 'U' + (i + 1), account: 'stu0' + (i + 1), name: '學生' + (i + 1),
+      role: 'student', classId: cid, teamId: t.id
+    });
     DB.Roster.push({ classId: cid, teamName: t.name, memberName: '學生' + (i + 1), claimedBy: 'U' + (i + 1) });
   });
-
   var ALL = TEAMS.map(function (t) { return t.id; });
 
-  /* ---------- 老師開的任務 ---------- */
+  /* ---------- 三個里程碑 ---------- */
+  var M1 = { msId: 'M1', classId: cid, teams: [], at: ago(24),
+    title: '訪三個人，記下他們怎麼講',
+    note: '不要問「你覺得好不好」。問他上一次遇到這件事是什麼時候。' };
+  var M2 = { msId: 'M2', classId: cid, teams: [], at: ago(14),
+    title: '把痛點收斂成一句話',
+    note: '不要寫題目，寫問題。' };
+  var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3),
+    title: '畫一張現在的流程圖',
+    note: '猜的那幾步用虛線。' };
+  DB.Milestones.push(M1, M2, M3);
+  DB.Config.seq = 10;
 
-  var L1 = [
-    { title: '寫下你們要做什麼',
-      cond: '一句話講得完，而且講得出為什麼是這一件。',
-      note: '不要寫題目，寫問題。「做一個 App」不是問題。',
-      checks: ['看過至少三個相近的案子', '寫出一句話的題目', '說得出為什麼是這一件',
-        '列出這一版還不確定的地方'],
-      due: ago(21) },
-    { title: '這件事現在誰在做',
-      cond: '找得出三個正在做同一件事的人或單位，並說得出他們之間的差別。',
-      note: '找不到競爭者通常不是因為沒有，是因為關鍵字還沒找對。',
-      checks: ['列出三個', '每一個寫一句他們在解什麼', '說出他們彼此的差別'],
-      due: ago(15) },
-    { title: '第一版路線圖',
-      cond: '畫得出從現在到期末的順序，並標出哪一段最可能出錯。',
-      note: '第一版一定會改。沒有它就沒有東西可以改。',
-      checks: ['排出順序', '標出最可能出錯的一段', '寫下這一版的前提'],
-      due: null }
-  ];
-  var L2 = [
-    { title: '你們去問了誰',
-      cond: '至少三個人，而且寫得出他們說的跟你們原本以為的差在哪。',
-      note: '訪談不是去確認你已經想好的答案。',
-      checks: ['訪了三個人以上', '每一個記下一句原話', '寫出跟原本假設不一樣的地方'],
-      due: ago(-2) },
-    { title: '查到的東西怎麼收',
-      cond: '收斂成不超過五條，每一條說得出來源。',
-      note: '查不完是正常的。這一項要練的是決定什麼時候停。',
-      checks: ['收斂成五條以內', '每一條標出來源', '寫下你們決定停下來的理由'],
-      due: ago(-5) },
-    { title: '這一版的問題定義',
-      cond: '跟第一層那一句比，說得出改了什麼、為什麼改。',
-      note: '沒改也可以，但要說得出為什麼查完了還是同一句。',
-      checks: ['寫出新的一句', '並排列出舊的那一句', '說明改了什麼'],
-      due: null }
-  ];
-  var L3 = [
-    { title: '三個真的不一樣的做法',
-      cond: '三個做法要能各自被否定，不是同一個做法的三種顏色。',
-      note: '如果三個都做得出來，那它們大概是同一個。',
-      checks: ['畫出三個', '寫出每一個成立的前提', '寫出每一個會死在哪'],
-      due: ago(-3) }
-  ];
-
-  var mk = function (layer, list, teams) {
-    return list.map(function (o) {
-      return actPublish(cid, layer, {
-        title: o.title, cond: o.cond, note: o.note, checks: o.checks,
-        due: o.due, teams: teams
-      });
-    });
-  };
-
-  var k1 = mk(1, L1, ALL);
-  var k2 = mk(2, L2, ['G1', 'G4']);
-  var k3 = mk(3, L3, ['G4']);
-
-  /* 任務是老師陸續開的，不是同一秒 */
-  k1[0].ts = ago(22); k1[1].ts = ago(19); k1[2].ts = ago(17);
-  k2[0].ts = ago(12); k2[1].ts = ago(10); k2[2].ts = ago(4);
-  k3[0].ts = ago(2);
-
-  /* ---------- 走過的路 ---------- */
-
-  var pass = function (teamId, task, gave, reason, sentAgo, judgedAgo, said, attempt) {
-    var tt = ttOf(teamId, task.taskId);
-    tt.checked = task.checks.map(function (_, i) { return i; });
-    tt.effort = 'same';
-    tt.text = said || '';
-    tt.attempt = attempt || 1;
-    for (var a = 1; a <= tt.attempt; a++) {
-      DB.Submissions.push({ teamId: teamId, taskId: task.taskId, attempt: a,
-        text: a === tt.attempt ? (said || '') : '', effort: 'same',
-        ts: ago(sentAgo + (tt.attempt - a) * 3) });
+  /* 幫忙塞推進紀錄 */
+  function pushes(teamId, runId, days, from) {
+    for (var i = 0; i < days; i++) {
+      var at = ago(from - i);
+      DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId,
+        day: dayOf(at), at: at });
     }
-    tt.sentAt = ago(sentAgo);
-    tt.status = 'done'; tt.gave = gave; tt.doneAt = ago(judgedAgo); tt.seen = true;
-    tt.finds = rollFinds(task.layer, RULES.draws(task.layer, gave), teamId + '/' + task.taskId + '/' + tt.attempt);
-    DB.Reviews.push({ teamId: teamId, taskId: task.taskId, result: 'ok', reason: reason,
-      gave: gave, attempt: tt.attempt, latency: (sentAgo - judgedAgo) * D, ts: ago(judgedAgo) });
-  };
+  }
 
-  var sendBack = function (teamId, task, reason, sentAgo, judgedAgo, said) {
-    var tt = ttOf(teamId, task.taskId);
-    tt.checked = task.checks.map(function (_, i) { return i; });
-    tt.effort = 'slow'; tt.text = said || ''; tt.attempt = 1;
-    DB.Submissions.push({ teamId: teamId, taskId: task.taskId, attempt: 1,
-      text: said || '', effort: 'slow', ts: ago(sentAgo) });
-    tt.sentAt = ago(sentAgo);
-    tt.status = 'back';
-    DB.Reviews.push({ teamId: teamId, taskId: task.taskId, result: 'back', reason: reason,
-      gave: 0, attempt: 1, latency: (sentAgo - judgedAgo) * D, ts: ago(judgedAgo) });
-  };
+  /* ---------- G1 甲：估得準，已經跑完兩個，第三個進行中 ---------- */
+  DB.Runs.push({ runId: 'R1', teamId: 'G1', msId: 'M1', state: 'done',
+    est: 6, actual: 6, stamp: 'exact', risks: ['wait'], snags: [], pushes: 6,
+    committedAt: ago(24), submittedAt: ago(18), doneAt: ago(17),
+    gear: 'compass', word: '你說六天就是六天。訪談這種事最容易低估，你們沒有。' });
+  pushes('G1', 'R1', 6, 23);
 
-  var sent = function (teamId, task, sentAgo, said, effort) {
-    var tt = ttOf(teamId, task.taskId);
-    tt.checked = task.checks.map(function (_, i) { return i; });
-    tt.effort = effort || 'same'; tt.text = said || ''; tt.attempt = 1;
-    tt.status = 'sent'; tt.sentAt = ago(sentAgo);
-    DB.Submissions.push({ teamId: teamId, taskId: task.taskId, attempt: 1,
-      text: said || '', effort: tt.effort, ts: ago(sentAgo) });
-  };
+  DB.Runs.push({ runId: 'R2', teamId: 'G1', msId: 'M2', state: 'done',
+    est: 4, actual: 3, stamp: 'early', risks: [], snags: [], pushes: 4,
+    committedAt: ago(14), submittedAt: ago(11), doneAt: ago(10),
+    gear: 'boots', word: '比上一次快。你們把訪談那一輪的教訓用上了。' });
+  pushes('G1', 'R2', 4, 13);
 
-  /* 第一組：第一層走完，老師放行過一次 */
-  pass('G1', k1[0], 3,
-    '你們把題目從「做一個提醒帶傘的 App」改成「人是在什麼時候決定不帶傘的」——' +
-    '這一步比你們想的重要，後面每一個決定都會回來對照這一句。' +
-    '多找的那六個案子沒有白找，第三個那個我沒看過。',
-    20, 19, '除了要求的三個，我們另外看了六個，其中兩個是國外的。', 1);
-  pass('G1', k1[1], 0,
-    '三個都找到了，寫的是它們長什麼樣子，不是它們在解什麼。' +
-    '長相會過時，問題不會——下一次先問「他們在替誰解決什麼」，再看畫面。',
-    16, 15, '', 1);
-  pass('G1', k1[2], 4,
-    '你們標出來的那一段（等訪談排期）確實是最可能出錯的地方，而且你們自己先排了備案。' +
-    '第一版路線圖能做到這樣少見。順序我沒有要改的。',
-    13, 12, '我們另外畫了一版「如果訪談約不到人」的路線，兩版都附上了。', 2);
-  DB.Passes.push({ teamId: 'G1', layer: 1, verdict: 'ok',
-    reason: '你們說得出自己要挖什麼了。第二層開始會查不完——記得那一層要練的是停下來。',
-    ts: ago(3) });
-  var g1 = teamOf('G1');
-  g1.tools = [1];
-  /* 霧面者退開的時候留了三件。第一組還沒回來挑——所以一進來看到的第一件事
-     就是那三句話擺在面前。 */
-  DB.Picks.push({ pickId: nid('P'), teamId: 'G1', layer: 1,
-    offer: offerTrophies(1, [], 'G1/1'), chosen: null, ts: ago(3) });
+  DB.Runs.push({ runId: 'R3', teamId: 'G1', msId: 'M3', state: 'running',
+    est: 5, risks: ['scope'], snags: [], pushes: 2, committedAt: ago(3) });
+  pushes('G1', 'R3', 2, 2);
 
-  /* 第一組的第二層：要補的／還沒交／等老師驗收，各一項 */
-  sendBack('G1', k2[0],
-    '三個人裡有兩個是你們同學。同學會順著你們講，這一份訪談等於問了一個人。' +
-    '再找兩個真的會遇到這個問題的人——不用多，兩個就好。',
-    5, 4, '訪了三個，有兩個是班上同學。');
-  sent('G1', k2[1], 1, '我們列了七條收不完，最後砍成五條，砍掉的兩條也附在後面。', 'slow');
-  /* k2[2] 留在「還沒交」 */
+  /* ---------- G2 乙：估太少，判定失準，還沒復盤 ---------- */
+  DB.Runs.push({ runId: 'R4', teamId: 'G2', msId: 'M1', state: 'done',
+    est: 3, actual: 9, stamp: 'late', risks: [], snags: ['scope', 'start'], pushes: 5,
+    committedAt: ago(24), submittedAt: ago(15), doneAt: ago(14),
+    gear: 'lamp', word: '你把卡在哪講清楚了。看得見的困難才處理得掉。' });
+  pushes('G2', 'R4', 5, 22);
 
-  /* 第二組：這一層目前開的都交了，等最久 */
-  k1.forEach(function (t, i) { sent('G2', t, 7 - i, i === 0 ? '這一版我們改過三次。' : ''); });
+  DB.Runs.push({ runId: 'R5', teamId: 'G2', msId: 'M2', state: 'judged',
+    est: 4, actual: 11, stamp: 'late', risks: [], snags: [], pushes: 6,
+    committedAt: ago(14), submittedAt: ago(3) });
+  pushes('G2', 'R5', 6, 12);
 
-  /* 第三組：交了一項，而且說卡住了 */
-  sent('G3', k1[0], 4, '');
-  var b = ttOf('G3', k1[1].taskId);
-  b.blocker = '找不到第三個在做同一件事的單位，關鍵字換了十幾組都是同一批結果。';
-  b.checked = [0];
+  /* ---------- G3 丙：正在跑，但四天沒推進——睡著了 ---------- */
+  DB.Runs.push({ runId: 'R6', teamId: 'G3', msId: 'M1', state: 'done',
+    est: 7, actual: 7, stamp: 'exact', risks: ['skill'], snags: [], pushes: 7,
+    committedAt: ago(24), submittedAt: ago(17), doneAt: ago(16),
+    gear: 'sword', word: '推進得乾脆——沒有拖到最後一天。' });
+  pushes('G3', 'R6', 7, 23);
 
-  /* 第四組：走到第三層 */
-  pass('G4', k1[0], 2, '題目講得清楚。為什麼是這一件講得比較弱，之後會被問到。', 18, 17, '', 1);
-  pass('G4', k1[1], 1, '三個找到了，差別寫得太快。', 15, 14, '', 1);
-  pass('G4', k1[2], 3, '順序合理，而且你們自己標出了會出錯的那一段。', 12, 11, '', 1);
-  DB.Passes.push({ teamId: 'G4', layer: 1, verdict: 'ok', reason: '可以往下。', ts: ago(10) });
-  pass('G4', k2[0], 2, '訪談有做，記的是結論不是原話。原話比結論有用。', 8, 7, '', 1);
-  pass('G4', k2[1], 0, '五條收得乾淨。來源標了，但停下來的理由沒寫。', 5, 4, '', 1);
-  pass('G4', k2[2], 1, '改了，也說得出為什麼改。', 3, 2, '', 2);
-  DB.Passes.push({ teamId: 'G4', layer: 2, verdict: 'ok',
-    reason: '你們在查不完的地方決定了夠了。那個判斷本身就是這一層要學的東西。', ts: ago(1) });
-  var g4 = teamOf('G4');
-  g4.tools = [1, 2];
-  /* 第四組兩層都挑過了 */
-  [1, 2].forEach(function (L) {
-    var offer = offerTrophies(L, g4.tro, 'G4/' + L);
-    var took = offer[L % offer.length];
-    DB.Picks.push({ pickId: nid('P'), teamId: 'G4', layer: L, offer: offer,
-      chosen: took, ts: ago(11 - L), pickedAt: ago(11 - L) });
-    g4.tro.push(took);
-  });
+  DB.Runs.push({ runId: 'R7', teamId: 'G3', msId: 'M2', state: 'running',
+    est: 8, risks: ['wait'], snags: [], pushes: 3, committedAt: ago(14) });
+  pushes('G3', 'R7', 3, 12);   /* 最後一次在 12 天前 → 睡著 */
 
-  /* 第五組：來了，還沒交 */
-  var f = ttOf('G5', k1[0].taskId);
-  f.checked = [0, 1];
+  /* ---------- G4 丁：交出去了，在等老師 ---------- */
+  DB.Runs.push({ runId: 'R8', teamId: 'G4', msId: 'M1', state: 'done',
+    est: 5, actual: 5, stamp: 'exact', risks: [], snags: [], pushes: 5,
+    committedAt: ago(24), submittedAt: ago(19), doneAt: ago(18),
+    gear: 'shield', word: '你事先標了風險，而且標對了。' });
+  pushes('G4', 'R8', 5, 23);
 
-  /* 第一組有一件回頭補強在等他判 */
-  DB.Redigs.push({ redigId: nid('R'), teamId: 'G1', taskId: k1[1].taskId,
-    note: '那一項你說我們寫的是長相不是問題。我們回去把三個案子重寫成「他們替誰解決什麼」，' +
-      '重寫之後發現其中一個其實跟我們不是同一件事，換掉了。',
-    status: 'sent', reason: '', ts: ago(1) });
+  DB.Runs.push({ runId: 'R9', teamId: 'G4', msId: 'M2', state: 'submitted',
+    est: 6, actual: 6, stamp: 'exact', risks: ['split'], snags: [], pushes: 6,
+    committedAt: ago(14), submittedAt: ago(2) });
+  pushes('G4', 'R9', 6, 13);
 
-  /* ---------- 上一個專案 ---------- */
-  /* 圖鑑是個人的：換組、換班、換專案都跟著人走。
-     學生1 上學期在另一班另一組走過兩項——那兩隻與那幾件現在還在他的圖鑑裡，
-     但不進這一班的排行榜、地圖與任務清單。 */
-  (function () {
-    DB.Classes.push({ classId: 'C0', name: '上學期 · 基礎設計', courseStart: ago(300),
-      joinCode: 'OLD001', teacherId: 'U0', sandbox: true, past: true });
-    DB.Teams.push({ teamId: 'G0', classId: 'C0', name: '上學期 · 第二組', layer: 2,
-      enteredAt: ago(260), tools: [1], tro: [], history: [] });
-    var old = [
-      { layer: 1, title: '上學期：題目一句話', cond: '一句話講得完。',
-        checks: ['寫出一句'], gave: 2 },
-      { layer: 1, title: '上學期：前例調查', cond: '找得出三個相近的做法。',
-        checks: ['列出三個'], gave: 4 }
-    ];
-    old.forEach(function (o, i) {
-      var t = actPublish('C0', o.layer, { title: o.title, cond: o.cond,
-        checks: o.checks, due: null, teams: ['G0'] });
-      t.ts = ago(290 - i * 10);
-      var tt = ttOf('G0', t.taskId);
-      tt.checked = [0]; tt.effort = 'same'; tt.attempt = 1;
-      tt.status = 'done'; tt.gave = o.gave; tt.doneAt = ago(280 - i * 10); tt.seen = true;
-      tt.finds = rollFinds(o.layer, RULES.draws(o.layer, o.gave), 'G0/' + t.taskId);
-      DB.Reviews.push({ teamId: 'G0', taskId: t.taskId, result: 'ok',
-        reason: '上學期的判斷。', gave: o.gave, attempt: 1, latency: D, ts: ago(280 - i * 10) });
-    });
-    DB.Passes.push({ teamId: 'G0', layer: 1, verdict: 'ok', reason: '上學期放行。', ts: ago(275) });
-    var offer0 = offerTrophies(1, [], 'G0/1');
-    DB.Picks.push({ pickId: nid('P'), teamId: 'G0', layer: 1, offer: offer0,
-      chosen: offer0[2], ts: ago(275), pickedAt: ago(275) });
-    teamOf('G0').tro = [offer0[2]];
-    userOf('U1').history = ['G0'];
-  })();
+  /* ---------- G5 戊：什麼都還沒承諾 ---------- */
+  /* 刻意留白：三個里程碑都派了，一個都沒拉滑桿。
+     系統要看得出這一組跟「在動但卡住」的不一樣。 */
+
+  DB.Gears.push(
+    { gearId: 'G01', teamId: 'G1', runId: 'R1', key: 'compass', at: ago(17) },
+    { gearId: 'G02', teamId: 'G1', runId: 'R2', key: 'boots',   at: ago(10) },
+    { gearId: 'G03', teamId: 'G2', runId: 'R4', key: 'lamp',    at: ago(14) },
+    { gearId: 'G04', teamId: 'G3', runId: 'R6', key: 'sword',   at: ago(16) },
+    { gearId: 'G05', teamId: 'G4', runId: 'R8', key: 'shield',  at: ago(18) }
+  );
   DB.Config.seq = 100;
   save();
 }
@@ -1456,7 +1123,7 @@ function seed() {
 /* ===== 55-ui.js ===== */
 /* 畫面的底：字串拼 HTML、一個路由、一次重畫。
 
-   沒有覆寫層，也沒有模板補丁——每一個畫面就是下面那幾支函式，
+   沒有覆寫層，也沒有模板補丁——每一個畫面就是一支函式，
    改一句話只要改一個地方。 */
 
 function esc(s) {
@@ -1468,16 +1135,8 @@ function nl(s) { return esc(s).replace(/\n/g, '<br>'); }
 
 var S = { who: 'U1', page: 'home', p: {}, flash: null };
 
-/* 打到一半的字。畫面每次動作都整頁重畫，沒有這一層的話
-   「這一項多做了什麼」打到一半去勾一條清單，字就沒了。
-   它只活在記憶體裡——沒按送出的東西不會進資料表。 */
+/* 沒按送出的東西不會進資料表，但重畫的時候要留著。 */
 var DRAFT = {};
-function keepDraft() {
-  ['extra', 'blocker', 'reason', 'redig', 'verdict'].forEach(function (id) {
-    var e = document.getElementById(id);
-    if (e) DRAFT[id] = e.value;
-  });
-}
 function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback || ''); }
 
 function go(page, p) {
@@ -1489,32 +1148,21 @@ function me() { return userOf(S.who); }
 function isTeacher() { return me().role === 'teacher'; }
 function myTeam() { return teamOf(me().teamId); }
 
-/* 一段固定的頁首 */
 function head(eyebrow, title, lead) {
   return '<div class="eyebrow">' + esc(eyebrow) + '</div>' +
     '<h1>' + esc(title) + '</h1>' +
     (lead ? '<p class="lead">' + nl(lead) + '</p>' : '');
 }
 
-function layerVars(L) {
-  var p = layerPal(L);
-  return 'style="--L:' + p['#'] + ';--Ld:' + p.o + ';--Ll:' + p['*'] +
-    ';--Lbg:' + p.bg + ';--Lline:' + p.line + '"';
+/* 像素圖標籤。所有的圖都走這一支——沒有第二種畫圖的方式。 */
+function pxTag(px, pal, cls) {
+  return '<img class="px ' + (cls || '') + '" src="' + pxSvg(px, pal, false) + '" alt="">';
 }
 
-/* 期限一律走 RULES.due，畫面不自己算日期 */
-function dueTag(due) {
-  var d = RULES.due(due, now());
-  if (d.none) return '<span class="pill">期限　不設限</span>';
-  return '<span class="pill ' + (d.over ? 'over' : d.tone === 'warn' ? 'gold' : '') + '">期限　' +
-    esc(d.text) + '</span>';
-}
-
-var EFFORT = { fast: '比預估快', same: '差不多', slow: '比預估慢' };
-
-function mobImg(m, dim, cls) {
-  var pal = m.pal || layerPal(m.L || 1);
-  return '<img class="' + (cls || '') + '" src="' + pxSvg(m.px, pal, dim) + '" alt="">';
+/* 按鈕。act 是「動作:參數」的字串，全部收在 ACTS 裡。 */
+function btn(label, act, kind) {
+  return '<button class="btn ' + (kind || '') + '" data-act="run" data-p="' +
+    esc(JSON.stringify({ a: act })) + '">' + esc(label) + '</button>';
 }
 
 /* ---------- 路由 ---------- */
@@ -1523,37 +1171,42 @@ var PAGES = {};
 
 function render() {
   var f = PAGES[S.page];
-  if (!f) { S.page = isTeacher() ? 'queue' : 'home'; f = PAGES[S.page]; }
+  if (!f) { S.page = isTeacher() ? 'radar' : 'home'; f = PAGES[S.page]; }
   var body = f();
   document.getElementById('app').innerHTML =
     sideBar() + '<div class="main">' + topBar() + demoBar() +
-    '<div class="wrap">' + body + '</div></div>';
+    '<div class="wrap">' + (S.flash ? flashBar() : '') + body + '</div></div>';
 }
+
+function flashBar() {
+  return '<div class="flash">' + esc(S.flash) + '</div>';
+}
+/* say() 自己重畫。本來要記得先 say 再 render——順序寫反訊息就永遠不出現，
+   而且那是一種只有測試才抓得到的錯。讓它自己負責。 */
+function say(m) { S.flash = m; render(); }
 
 function topBar() {
   var u = me();
   if (u.role === 'teacher') {
-    var st = teacherStats();
+    var r = radar(u.classId);
     return '<div class="top">' +
       '<span class="badge t">老師端</span>' +
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
-      '<span>設計專題　·　' + classTeams('C1').length + ' 組</span>' +
-      '<span>合格考量 ' + st.n + ' 件</span>' +
+      '<span>' + esc(DB.Classes[0].name) + '　·　' +
+        where('Teams', function (t) { return t.classId === u.classId; }).length + ' 組</span>' +
+      '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' +
       '</div>';
   }
   var t = myTeam();
-  var L = LAYERS[t.layer - 1];
-  var sc = scoreOf(t.teamId), b = board('C1');
-  var rank = 0;
-  b.forEach(function (r) { if (r.team.teamId === t.teamId) rank = r.rank; });
+  var st = stallOf(t.teamId);
   return '<div class="top">' +
     '<span class="badge">學生端</span>' +
     '<span class="who">' + esc(t.name) + '</span>' +
     '<span class="sp"></span>' +
-    '<span>' + esc(L.name) + '　·　停留 ' + RULES.stayDays(t.enteredAt, now()) + ' 天</span>' +
-    '<a class="plain" data-go="board">' + sc.total + ' 分　·　第 ' + rank + ' 名 / ' +
-      b.length + ' 組</a>' +
+    '<span>' + esc(t.project || '（還沒定）') + '</span>' +
+    '<span class="' + (st.level ? 'warnx' : '') + '">深度 ' +
+      (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</span>' +
     '</div>';
 }
 
@@ -1565,10 +1218,10 @@ function demoBar() {
   }).join('');
   return '<div class="demo">' +
     '<b>試用</b><span>切換身分</span>' +
-    '<select data-act="who" style="width:auto;padding:2px 8px;font-size:11px">' + opts + '</select>' +
+    '<select data-act="who">' + opts + '</select>' +
     '<span class="sp" style="flex:1"></span>' +
-    '<a class="plain" style="font-size:11px" data-act="forward">把時間往前推一天</a>' +
-    '<a class="plain" style="font-size:11px" data-act="reset">整班重來</a>' +
+    '<a class="plain" data-act="run" data-p=\'{"a":"forward"}\'>把時間往前推一天</a>' +
+    '<a class="plain" data-act="run" data-p=\'{"a":"reset"}\'>整班重來</a>' +
     '</div>';
 }
 
@@ -1578,23 +1231,18 @@ function sideBar() {
   if (u.role === 'teacher') {
     headBlock = '<div class="side-head"><div class="k">TEACHER</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
-      '<div class="s">設計專題 · 加入碼 ' + esc(DB.Classes[0].joinCode) + '</div></div>';
+      '<div class="s">' + esc(DB.Classes[0].name) + ' · 加入碼 ' +
+      esc(DB.Classes[0].joinCode) + '</div></div>';
     nav = [
-      ['queue', '待你驗收'], ['tasks', '任務清單'], ['gate', '關卡審核'],
-      ['tcurve', '各組的剖面'], ['classmap', '全班位置'],
-      ['world', '學生端的世界'], ['final', '期末回顧']
+      ['radar', '雷達'], ['ms', '里程碑'], ['classeco', '全班地下城']
     ];
   } else {
     var t = myTeam();
-    headBlock = '<div class="side-head"><div class="k">TEAM</div>' +
+    headBlock = '<div class="side-head"><div class="k">TUNNEL</div>' +
       '<div class="n">' + esc(t.name) + '</div>' +
-      '<div class="s">' + esc(LAYERS[t.layer - 1].name) + ' · 停留 ' +
-        RULES.stayDays(t.enteredAt, now()) + ' 天</div></div>';
+      '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '首頁'], ['list', '任務清單'], ['stack', '他寫過的'],
-      ['dex', '圖鑑'], ['curve', '剖面'], ['board', '排行榜'],
-      ['log', '紀錄'], ['map', '迷霧地圖'],
-      ['end', t.finished ? '結局' : '？？？']
+      ['home', '坑道'], ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   var items = nav.map(function (n) {
@@ -1606,1536 +1254,737 @@ function sideBar() {
 
 /* ---------- 事件 ---------- */
 
-function val(sel) { var e = document.querySelector(sel); return e ? e.value : ''; }
-
 document.addEventListener('click', function (ev) {
   var g = ev.target.closest('[data-go]');
   if (g) { go(g.getAttribute('data-go'), JSON.parse(g.getAttribute('data-p') || '{}')); return; }
   var a = ev.target.closest('[data-act]');
   if (!a) return;
   var act = a.getAttribute('data-act');
+  if (act !== 'run') return;
   var p = JSON.parse(a.getAttribute('data-p') || '{}');
-  if (ACTS[act]) { ACTS[act](p, a); }
+  runAct(p.a);
 });
 
 document.addEventListener('change', function (ev) {
-  var a = ev.target.closest('[data-act]');
+  var a = ev.target.closest('[data-act="who"]');
   if (!a) return;
-  var act = a.getAttribute('data-act');
-  if (act === 'who') { S.who = a.value; S.page = userOf(S.who).role === 'teacher' ? 'queue' : 'home'; render(); }
+  S.who = a.value;
+  S.page = userOf(S.who).role === 'teacher' ? 'radar' : 'home';
+  DRAFT = {};
+  render();
 });
 
+/* 動作字串：「名稱」或「名稱:參數」 */
+function runAct(str) {
+  var i = String(str || '').indexOf(':');
+  var name = i < 0 ? str : str.slice(0, i);
+  var arg = i < 0 ? '' : str.slice(i + 1);
+  var f = ACTS[name];
+  if (f) f(arg);
+}
+
 var ACTS = {
-  forward: function () { CLOCK += 86400000; render(); },
-  reset: function () { seed(); S.who = 'U1'; go('home'); }
+  forward: function () { CLOCK += DAY; render(); },
+  reset: function () { seed(); S.who = 'U1'; go('home'); },
+
+  go: function (arg) {
+    var i = arg.indexOf(':');
+    if (i < 0) return go(arg);
+    go(arg.slice(0, i), { id: arg.slice(i + 1) });
+  },
+
+  /* 滑桿：只改草稿，不進資料表 */
+  est: function (v) { DRAFT.est = v; render(); },
+
+  risk: function (k) {
+    DRAFT.risks = DRAFT.risks || [];
+    var i = DRAFT.risks.indexOf(k);
+    if (i < 0) DRAFT.risks.push(k); else DRAFT.risks.splice(i, 1);
+    render();
+  },
+
+  snag: function (k) {
+    DRAFT.snags = DRAFT.snags || [];
+    var i = DRAFT.snags.indexOf(k);
+    if (i < 0) DRAFT.snags.push(k); else DRAFT.snags.splice(i, 1);
+    render();
+  },
+
+  commit: function (msId) {
+    var t = myTeam();
+    actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.risks || []);
+    go('home');
+    say('承諾了。從今天開始，每天推一格。');
+  },
+
+  push: function (runId) {
+    var t = myTeam();
+    if (actPush(t.teamId, runId)) {
+      var r = find('Runs', function (x) { return x.runId === runId; });
+      say(RULES.progress(r.pushes, r.est) >= 1
+        ? '走到終點了。交出去之後系統會比對你當初承諾的天數。'
+        : '推進了一格。明天再來。');
+    } else {
+      say('今天已經推過了。一天一格——多按沒有用。');
+    }
+  },
+
+  submit: function (runId) {
+    var t = myTeam();
+    var r = actSubmit(t.teamId, runId, '');
+    if (r) go('stamp', { id: runId });
+  },
+
+  skipcamp: function (runId) { actSkipCamp(runId); go('home'); },
+
+  reflect: function (runId) {
+    var t = myTeam();
+    if (!(DRAFT.snags || []).length) return say('點一個就好——哪一個最像。');
+    actReflect(t.teamId, runId, DRAFT.snags);
+    go('home');
+    say('說出來了。老師看得到，而且這不會扣任何東西。');
+  },
+
+  gear: function (runId) { actTakeGear(runId); go('dash', { id: runId }); },
+
+  /* ---- 老師 ---- */
+  publish: function () {
+    var title = (document.getElementById('ms-title') || {}).value || '';
+    var note = (document.getElementById('ms-note') || {}).value || '';
+    if (!title.trim()) return say('先寫這一個里程碑要交什麼。');
+    actPublish(me().classId, { title: title.trim(), note: note.trim(), teams: DRAFT.to || [] });
+    go('ms');
+    say('派出去了。學生那邊會先被問「你打算花幾天」。');
+  },
+
+  to: function (teamId) {
+    DRAFT.to = DRAFT.to || [];
+    var i = DRAFT.to.indexOf(teamId);
+    if (i < 0) DRAFT.to.push(teamId); else DRAFT.to.splice(i, 1);
+    render();
+  },
+
+  pickgear: function (k) { DRAFT.gear = k; render(); },
+
+  grant: function (runId) {
+    if (!DRAFT.gear) return say('先選一件。選哪一件等於選一句話。');
+    var word = (document.getElementById('gr-word') || {}).value || '';
+    actGear(runId, DRAFT.gear, word.trim());
+    go('radar');
+    say('發出去了。學生那邊會空投落下，然後衝刺。');
+  },
+
+  rename: function (teamId) {
+    var v = (document.getElementById('rn') || {}).value || '';
+    if (!v.trim()) return say('要寫一個新的名字。');
+    actRename(teamId, v.trim());
+    say('招牌升級了。收斂本身就是成果。');
+  }
 };
 
 
 /* ===== 60-student.js ===== */
-/* 學生端。 */
+/* 學生端。
 
-/* ================= 首頁 ================= */
-/* 首頁只給一件事：下一件要做的事。 */
+   一頁只給一個動作。首頁就是坑道本身——招牌、角色、迷霧走廊、魔物，
+   底下一顆巨大的推進鍵。其餘都是資訊，不是選項。
 
+   零輸入框：天數用滑桿，風險與卡關用圖示標籤。要打字的東西沒有人會寫，
+   而且打字會把防衛心叫起來。 */
+
+/* ---------- 坑道（首頁） ---------- */
 PAGES.home = function () {
-  var t = myTeam(), L = LAYERS[t.layer - 1], boss = L.boss;
-  var bossPx = PACK.bosses[t.layer - 1];
-  var stay = RULES.stayDays(t.enteredAt, now());
-  var nx = nextThing(t.teamId);
+  var t = myTeam();
+  var next = nextThing(t.teamId);
+  var st = stallOf(t.teamId);
+  var sign = signOf(t.teamId);
+  var depth = depthOf(t.teamId);
+  var acc = accuracyOf(t.teamId);
+  var light = WORLD.light[st.level];
 
-  var cta;
-  if (nx.kind === 'pick') {
-    var pl = LAYERS[nx.pick.layer - 1];
-    cta = '<div class="card hot"><div class="eyebrow">' + esc(pl.code) + ' 留下的</div>' +
-      '<div style="display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap">' +
-        '<div style="flex:1;min-width:330px">' +
-          '<h1 style="margin-bottom:11px">' + esc(pl.boss.name) + '退開了，留下 ' +
-            RULES.OFFER + ' 件。</h1>' +
-          '<p class="lead">挑一件帶走。</p></div>' +
-        '<span class="btn" data-go="pick">去挑一件</span>' +
-      '</div></div>';
-  } else if (nx.kind === 'back') {
-    cta = ctaCard('他要你們補的那一項', nx.task.title,
-      '他寫了為什麼還不到。讀完再改，比重寫一次快。', nx.cta, nx.task.taskId);
-  } else if (nx.kind === 'open') {
-    cta = ctaCard('下一件要做的事', nx.task.title,
-      nx.task.cond, nx.cta, nx.task.taskId);
-  } else if (nx.kind === 'redig') {
-    cta = ctaCard('沒有非做不可的事了', nx.task.title,
-      '這一項你們交了，他給的是「' + RULES.gaveAnchor(0) + '」。' +
-      '專案走到現在，如果你們發現它不夠，可以回頭補完——' + RULES.say.redig() + '。',
-      nx.cta, nx.task.taskId);
-  } else if (nx.kind === 'wait') {
-    cta = '<div class="card hot"><div class="eyebrow">現在</div>' +
-      '<h1 style="margin-bottom:11px">等他看。</h1>' +
-      '<p class="lead">你們交出去的 ' + nx.n + ' 項在他那裡。他看完會寫下判斷。</p>' +
-      '<p class="fine">他的裁決時間不可預測，這裡不會給你一個「幾小時內」的承諾。' +
-      '這一段沒有動作可做——所以這裡也沒有按鈕。</p></div>';
-  } else if (nx.kind === 'finale') {
-    cta = '<div class="card hot"><div class="eyebrow">最後</div>' +
-      '<h1 style="margin-bottom:11px">四層都放行了。</h1>' +
-      '<p class="lead">剩下一件事：幫這一趟取一個名字。</p>' +
-      '<p><span class="btn" data-go="end">去命名封存</span></p></div>';
-  } else {
-    cta = '<div class="card hot"><div class="eyebrow">現在</div>' +
-      '<h1 style="margin-bottom:11px">交出去的他都判過了。</h1>' +
-      '<p class="lead">他隨時可能再開新的一項。</p>' +
-      '<p class="fine">' + esc(RULES.GATE) + '</p></div>';
+  var H = [];
+
+  /* ── 坑道口：招牌 ── */
+  H.push('<div class="tunnel ' + light.key + '">');
+  H.push('<div class="tunnel-top">');
+  H.push(pxTag(sign.px, sign.pal, 'sign'));
+  H.push('<div class="sign-txt"><b>' + esc(t.project || '（還沒定）') + '</b>' +
+         '<span>' + esc(sign.name) + '　·　' + esc(sign.note) + '</span></div>');
+  H.push('<div class="depth"><span>深度</span><b>' + (depth * WORLD.depthPerMilestone) + ' m</b>' +
+         '<span>走完 ' + depth + ' 個里程碑</span></div>');
+  H.push('</div>');
+
+  /* ── 走廊 ── */
+  H.push(corridor(t, next, st));
+  H.push('</div>');
+
+  /* ── 唯一的動作 ── */
+  H.push(actionCard(t, next, st));
+
+  /* ── 我的預估體感 ── */
+  if (acc.total) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">你對自己的預估</div>');
+    H.push('<div class="acc">');
+    ['exact', 'early', 'late'].forEach(function (k) {
+      var s = RULES.STAMPS[k];
+      H.push('<div class="acc-c"><b>' + s.mark + '</b><i>' + acc[k] + '</i><span>' + s.name + '</span></div>');
+    });
+    H.push('</div>');
+    H.push('<p class="dim">' + esc(accSay(acc)) + '</p>');
+    H.push('</div>');
   }
 
-  var steps = [
-    ['1', '點開一項', '看擋著它的是哪一隻'],
-    ['2', '作業照他原本的方式交', '回來把清單勾完、回答一題，送出'],
-    ['3', '他寫下判斷', '打贏那一隻 → 抽掉落物 → 進圖鑑'],
-    ['4', '他覺得可以', '放你們往下一層']
-  ].map(function (s) {
-    return '<div class="card sunk" style="margin:0"><div class="kv"><b style="color:var(--gold)">' +
-      s[0] + '</b>' + esc(s[1]) + '</div><div style="font-size:11px;color:var(--dim);margin-top:5px">' +
-      esc(s[2]) + '</div></div>';
-  }).join('');
-
-  var dex = dexOf(S.who);
-  var redigN = where('Redigs', function (r) { return r.teamId === t.teamId && r.status === 'ok'; }).length;
-
-  return '<div ' + layerVars(t.layer) + '>' +
-    head('DEPTH ' + L.code + ' · 目前所在', L.name, L.hard) +
-
-    '<div class="row" style="margin:22px 0">' +
-      '<div class="mob" style="flex:2">' + mobImg({ px: bossPx.px, pal: bossPx.hue }) +
-        '<div><div class="eyebrow">守關生物</div><div class="n">' + esc(boss.name) + '</div>' +
-        '<div class="t">' + esc(boss.trait) + '</div>' +
-        '<div class="t" style="margin-top:5px;color:var(--mute)">牠擋在這一層的盡頭。' +
-        esc(RULES.GATE) + '</div></div></div>' +
-      '<div class="card" style="flex:1;margin:0;text-align:right">' +
-        '<div class="eyebrow">停留天數</div><div class="big">' + stay + '</div>' +
-        '<div class="fine">從進到這一層那一刻起算。老師的佇列照這個排序，待最久的排最前面。</div>' +
-      '</div>' +
-    '</div>' +
-
-    cta +
-
-    '<h2>這四步一直重複</h2>' +
-    '<div class="row">' + steps + '</div>' +
-
-    '<h2>你在這裡</h2>' +
-    mapBands(true) +
-    '<p><a class="plain" data-go="map">看整張地圖與其他隊伍 →</a></p>' +
-
-    '<h2>這一趟走完是什麼樣子</h2>' +
-    '<div class="row">' +
-      sumCard('四個領域', where('Passes', function (p) { return p.teamId === t.teamId; }).length +
-        ' / ' + RULES.LAYERS + ' 層', RULES.GATE) +
-      sumCard('生物', dex.nMob + ' / ' + TOTAL_MOB + ' 種',
-        '每一項任務前面站一隻，每一層的盡頭再站一隻大的。同一項任務，別組遇到的不是同一隻。') +
-      sumCard('物品', dex.nItem + ' / ' + TOTAL_ITEM + ' 種',
-        RULES.say.sameWeight()) +
-    '</div>' +
-    '<div class="row">' +
-      sumCard('他寫過的', stackOf(S.who).length + ' 件',
-        '他每判一件就寫一段。那些字在這裡疊起來，交下一件之前可以先翻——' +
-        '這一疊是唯一會改變下一輪的東西。') +
-      sumCard('回頭補強', redigN + ' 項',
-        '已經過了的任務，專案走下去之後你們可能發現它不夠——回頭補完，寫下補了什麼送去。' +
-        '他接受就多抽一次。' + RULES.say.redig() + '，不做也不扣分。') +
-      sumCard('最後', '命名封存',
-        '四層走完，你們會幫這一趟取一個名字留下來。下一個專案打開紀錄還看得到。') +
-    '</div>' +
-    '</div>';
-};
-
-function ctaCard(eyebrow, title, lead, cta, taskId) {
-  return '<div class="card hot">' +
-    '<div class="eyebrow">' + esc(eyebrow) + '</div>' +
-    '<div style="display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap">' +
-      '<div style="flex:1;min-width:330px">' +
-        '<h1 style="margin-bottom:11px">' + esc(title) + '</h1>' +
-        '<p class="lead">' + esc(lead) + '</p></div>' +
-      '<span class="btn" data-go="task" data-p=\'{"id":"' + taskId + '"}\'>' + esc(cta) + '</span>' +
-    '</div></div>';
-}
-
-function sumCard(k, v, note) {
-  return '<div class="card"><div class="eyebrow">' + esc(k) + '</div>' +
-    '<div style="font-size:33px;color:var(--gold);line-height:1.3">' + esc(v) + '</div>' +
-    '<div class="fine" style="margin-top:11px">' + esc(note) + '</div></div>';
-}
-
-/* ================= 任務清單 ================= */
-/* 依狀態分區。做完的不在這裡，移到紀錄。 */
-
-PAGES.list = function () {
-  var t = myTeam(), L = LAYERS[t.layer - 1];
-  var rows = rowsFor(t.teamId, t.layer);
-  var back = rows.filter(function (r) { return r.tt.status === 'back'; });
-  var open = rows.filter(function (r) { return r.tt.status === 'open'; });
-  var sent = rows.filter(function (r) { return r.tt.status === 'sent'; });
-  var done = rows.filter(function (r) { return r.tt.status === 'done'; });
-
-  var sec = function (title, list, note) {
-    if (!list.length) return '';
-    return '<h2>' + esc(title) + '　<span class="pill">' + list.length + ' 項</span></h2>' +
-      '<p class="fine">' + esc(note) + '</p>' +
-      list.map(function (r) { return taskRow(r, t); }).join('');
-  };
-
-  return '<div ' + layerVars(t.layer) + '>' +
-    head(L.code + ' · 任務清單', L.name + ' · 這一層開了什麼',
-      '每一項前面都站著一隻——點進去才知道是哪一隻。打贏牠，就是他判過這一項。') +
-    '<p class="fine">' + esc(RULES.GATE) + '　他隨時可以再開一項，所以這張清單沒有一個「全部做完」的狀態。</p>' +
-
-    sec('要補的', back, '他寫了為什麼還不到。讀完他寫的那一段再改。') +
-    sec('還沒交', open, '作業照他原本的方式交。交完點進來把清單勾完、回答一題，再送出。') +
-    sec('等他看', sent, '這一區沒有動作可做。') +
-
-    (done.length ? '<div class="sep"></div><p class="fine">這一層已經判過的 ' + done.length +
-      ' 項移到了 <a class="plain" data-go="log">紀錄</a>——那裡並排放著你們寫的與他給的。</p>' : '') +
-
-    (rows.length ? '' : '<div class="card"><p class="lead">他還沒在這一層開任何一項。</p>' +
-      '<p class="fine">開幾項、什麼時候開，是他依進度決定的。</p></div>') +
-    '</div>';
-};
-
-function taskRow(r, t) {
-  var m = mobFor(r.task.taskId, t.teamId, r.task.layer);
-  var seen = r.tt.status === 'done';
-  var art = seen
-    ? '<img src="' + pxSvg(m.px, layerPal(r.task.layer)) + '" alt="">'
-    : '<span class="q">？</span>';
-  var tag = r.tt.status === 'back' ? '<span class="pill over">要補的</span>'
-    : r.tt.status === 'sent' ? '<span class="pill">等他看</span>'
-    : r.tt.status === 'done' ? '<span class="pill ok">他判過了</span>'
-    : '<span class="pill gold">還沒交</span>';
-  var checkN = (r.tt.checked || []).length, checkT = (r.task.checks || []).length;
-  return '<div class="item" data-go="task" data-p=\'{"id":"' + r.task.taskId + '"}\'>' +
-    '<div class="body"><div class="t">' + esc(r.task.title) + '</div>' +
-      '<div class="m">通過條件　' + esc(r.task.cond) + '</div>' +
-      '<div style="margin-top:11px;display:flex;gap:5px;flex-wrap:wrap">' + tag +
-        dueTag(r.task.due) +
-        (checkT ? '<span class="pill">清單 ' + checkN + '/' + checkT + '</span>' : '') +
-        (r.tt.blocker ? '<span class="pill hand">✋ 說了卡住</span>' : '') +
-      '</div></div>' +
-    '<div class="art">' + art + '</div></div>';
-}
-
-/* ================= 任務頁 ================= */
-
-PAGES.task = function () {
-  var t = myTeam(), id = S.p.id, task = taskOf(id), tt = ttOf(t.teamId, id);
-  if (!task || !tt) return '<p>找不到這一項。</p>';
-  if (tt.status === 'done') return taskDone(task, tt, t);
-
-  var m = mobFor(id, t.teamId, task.layer);
-  var subs = where('Submissions', function (s) { return s.teamId === t.teamId && s.taskId === id; });
-  var revs = where('Reviews', function (s) { return s.teamId === t.teamId && s.taskId === id; });
-  var locked = tt.status === 'sent';
-
-  var checks = (task.checks || []).map(function (c, i) {
-    var on = (tt.checked || []).indexOf(i) >= 0;
-    return '<div class="check ' + (on ? 'on' : '') + (locked ? ' lock' : '') + '"' +
-      (locked ? '' : ' data-act="check" data-p=\'{"i":' + i + '}\'') + '>' +
-      '<span class="box">' + (on ? '✓' : '') + '</span><span>' + esc(c) + '</span></div>';
-  }).join('');
-
-  var seg = Object.keys(EFFORT).map(function (k) {
-    return '<button data-act="effort" data-p=\'{"v":"' + k + '"}\'' +
-      (tt.effort === k ? ' class="on"' : '') + (locked ? ' disabled' : '') + '>' +
-      esc(EFFORT[k]) + '</button>';
-  }).join('');
-
-  return '<div ' + layerVars(task.layer) + '>' +
-    '<p><a class="plain" data-go="list">← 回任務清單</a></p>' +
-    head(LAYERS[task.layer - 1].code + ' · ' + LAYERS[task.layer - 1].stage, task.title, '') +
-    '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:22px">' + dueTag(task.due) +
-      (tt.status === 'back' ? '<span class="pill over">他要你們補</span>' : '') +
-      (locked ? '<span class="pill">等他看</span>' : '') + '</div>' +
-
-    '<div class="row">' +
-      '<div class="card layer" style="flex:2;margin:0">' +
-        '<div class="eyebrow">通過條件</div><p style="margin:0 0 11px">' + esc(task.cond) + '</p>' +
-        (task.note ? '<div class="eyebrow">要注意的</div><p class="lead" style="margin:0">' +
-          esc(task.note) + '</p>' : '') +
-      '</div>' +
-      '<div class="mob sm" style="flex:1">' + mobImg(m) +
-        '<div><div class="eyebrow">擋在前面的</div><div class="n">' + esc(m.name) + '</div>' +
-        '<div class="t">' + esc(m.trait) + '</div></div></div>' +
-    '</div>' +
-
-    (subs.length || revs.length ? roundLog(subs, revs, task) : '') +
-
-    '<h2>作業交到他原本收作業的地方</h2>' +
-    '<p class="fine">系統不收檔案、看不到內容，也不評品質。它只知道你們什麼時候按了送出，' +
-    '跟他後來寫了什麼。</p>' +
-
-    (task.checks && task.checks.length ?
-      '<h2>清單</h2><p class="fine">勾選 ' + RULES.CHECK + ' 分。這是你們自己的紀錄，' +
-      '不是成績，也不是送出的門檻。</p><div class="card" style="padding:11px">' + checks + '</div>' : '') +
-
-    '<h2>這一組現在的狀態</h2>' +
-    '<p class="fine">必填。比起「做完沒」，這一題問的是「跟你們自己原本估的比」。</p>' +
-    '<div class="seg">' + seg + '</div>' +
-
-    '<h2>這一項多做了什麼</h2>' +
-    '<p class="fine">選填。' + esc(RULES.GAVE_STATEMENT) + '　他的 ' +
-      RULES.GAVE_MIN + '–' + RULES.GAVE_MAX + ' 看的就是這一段。' +
-      '留白不扣分——但他也只能照他看到的判。</p>' +
-    '<textarea id="extra"' + (locked ? ' disabled' : '') + ' placeholder="多研究了什麼、多畫了什麼、給了不同的做法⋯⋯">' +
-      esc(draft('extra', tt.text)) + '</textarea>' +
-
-    '<h2>卡住了嗎</h2>' +
-    '<p class="fine">不用等送出。寫下來他的佇列上會排最前面，你們隨時可以放下。</p>' +
-    '<textarea id="blocker" style="min-height:66px" placeholder="卡在哪裡？">' + esc(draft('blocker', tt.blocker)) + '</textarea>' +
-    '<p><span class="btn flat sm" data-act="blocker">' +
-      (tt.blocker ? '更新／放下這一句' : '送出這一句') + '</span></p>' +
-
-    (locked
-      ? '<div class="sep"></div><div class="card"><h3 class="mt0">等。</h3>' +
-        '<p class="lead">你們交出去了。他看完會寫下判斷。</p>' +
-        '<p class="fine">這一段沒有動作可做，所以這裡沒有按鈕。</p></div>'
-      : '<div class="sep"></div>' +
-        /* 交出去之前先翻一下他寫過的——那一疊是唯一會改變下一輪的東西 */
-        (stackOf(S.who).length
-          ? '<div class="card sunk" style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">' +
-            '<div style="flex:1;min-width:264px"><div class="eyebrow">送出之前</div>' +
-            '<div style="font-size:22px">他寫過 ' + stackOf(S.who).length + ' 件判斷。</div>' +
-            '<div class="fine">翻一下他上一次是怎麼算合格的，比猜快。</div></div>' +
-            '<span class="btn flat" data-go="stack">去翻那一疊</span></div>'
-          : '') +
-        (S.flash ? '<p class="pill over">' + esc(S.flash) + '</p>' : '') +
-        '<p><span class="btn" data-act="submit">我做完了，請他確認</span></p>' +
-        '<p class="fine">送出之後清單就鎖住了。退回不扣分，重交次數不限——' +
-        '每一次的內容與他寫的理由都留著。</p>') +
-    '</div>';
-};
-
-/* 往返紀錄。不是「你被退了 N 次」，是「你們來回了 N 次，中間改了這些」。 */
-function roundLog(subs, revs, task) {
-  var ev = subs.map(function (s) { return { ts: s.ts, kind: 'sub', d: s }; })
-    .concat(revs.map(function (r) { return { ts: r.ts, kind: 'rev', d: r }; }))
-    .sort(function (a, b) { return a.ts - b.ts; });
-  var days = function (ts) { return Math.max(0, Math.round((now() - ts) / 86400000)); };
-  var body = ev.map(function (e) {
-    if (e.kind === 'sub') {
-      return '<div class="n"><div class="h">第 ' + e.d.attempt + ' 次送出 · ' + days(e.ts) + ' 天前' +
-        (e.d.effort ? '　·　你們說「' + esc(EFFORT[e.d.effort]) + '」' : '') + '</div>' +
-        (e.d.text ? '<div class="b">' + nl(e.d.text) + '</div>' : '') + '</div>';
-    }
-    var ok = e.d.result === 'ok';
-    return '<div class="n ' + (ok ? 'ok' : 'back') + '"><div class="h">他' +
-      (ok ? '判過了' : '要你們補') + ' · ' + days(e.ts) + ' 天前' +
-      (ok ? '　·　他給「' + esc(RULES.gaveAnchor(e.d.gave)) + '」' : '') + '</div>' +
-      '<div class="b">' + nl(e.d.reason) + '</div></div>';
-  }).join('');
-  var n = subs.length;
-  return '<h2>往返紀錄</h2>' +
-    '<p class="fine">你們來回了 ' + n + ' 次。' + RULES.say.round() +
-    '——它不進成績，但兩份草稿就並排在這裡，' +
-    '中間改了什麼是這一趟唯一不需要任何人批准的進步。</p>' +
-    '<div class="log">' + body + '</div>';
-}
-
-/* ---------- 通過之後：整頁變結算頁 ---------- */
-
-function taskDone(task, tt, t) {
-  var m = mobFor(task.taskId, t.teamId, task.layer);
-  var rev = where('Reviews', function (r) {
-    return r.teamId === t.teamId && r.taskId === task.taskId && r.result === 'ok';
-  }).pop();
-  var subs = where('Submissions', function (s) { return s.teamId === t.teamId && s.taskId === task.taskId; });
-  var revs = where('Reviews', function (s) { return s.teamId === t.teamId && s.taskId === task.taskId; });
-  var gave = rev ? rev.gave : 0;
-  var finds = (tt.finds || []).map(function (id) { return FINDS[id - 1]; });
-
-  var drops = finds.map(function (f) {
-    return '<div class="one"><img src="' + pxSvg(f.px, layerPal(f.L)) + '" alt="">' +
-      '<div class="n">' + esc(f.name) + '</div><div class="q">' + esc(f.tier) + '</div></div>';
-  }).join('');
-
-  var redigs = where('Redigs', function (r) {
-    return r.teamId === t.teamId && r.taskId === task.taskId;
-  });
-  var wait = redigLeft(t.teamId);
-
-  return '<div ' + layerVars(task.layer) + '>' +
-    '<p><a class="plain" data-go="log">← 回紀錄</a></p>' +
-    '<div class="eyebrow">' + LAYERS[task.layer - 1].code + ' · 結算</div>' +
-    '<h1>' + esc(task.title) + '</h1>' +
-    '<p><span class="stamp">他判過了</span></p>' +
-
-    '<div class="row" style="margin-top:22px">' +
-      '<div class="mob" style="flex:1">' + mobImg(m) +
-        '<div><div class="eyebrow">你們打贏的</div><div class="n">' + esc(m.name) + '</div>' +
-        '<div class="t">' + esc(m.trait) + '</div>' +
-        '<div class="t" style="color:var(--mute);margin-top:5px">' +
-        '同一項任務，別組遇到的不是這一隻。</div></div></div>' +
-    '</div>' +
-
-    '<h2>他寫的合格考量</h2>' +
-    '<p class="fine">這一段是這個系統裡最重要的東西。他寫的判斷就是教材。</p>' +
-    '<div class="card layer"><p style="margin:0;font-size:22px;line-height:1.9">' +
-      nl(rev ? rev.reason : '') + '</p></div>' +
-    '<p class="fine">這一段留在<a class="plain" data-go="stack">他寫過的那一疊</a>裡（' +
-      stackOf(S.who).length + ' 件）——下一件交出去之前可以回來翻。</p>' +
-
-    '<h2>他給的</h2>' +
-    '<div class="card">' +
-      '<div style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">' +
-        '<div><div class="eyebrow">' + RULES.GAVE_MIN + '–' + RULES.GAVE_MAX + '</div>' +
-        '<div class="big">' + gave + '</div></div>' +
-        '<div style="flex:1;min-width:242px"><div style="font-size:22px">' +
-          esc(RULES.gaveAnchor(gave)) + '</div>' +
-          '<div class="fine">' + esc(RULES.GAVE_STATEMENT) + '</div>' +
-          '<div class="fine" style="margin-top:11px;color:var(--dim)">' +
-            esc(RULES.say.drawsFor(task.layer, gave)) + '。它只決定抽幾次，不決定過不過。</div>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-
-    '<h2>掉落物 ' + finds.length + ' 件</h2>' +
-    '<p class="fine">' + esc(RULES.say.sameWeight()) + '</p>' +
-    '<div class="drop">' + drops + '</div>' +
-    '<p class="fine" style="margin-top:11px">通過這一項 ＋' + RULES.PASS + ' 分，' +
-      '掉落物 ' + finds.length + ' 件 ＋' + (finds.length * RULES.DROP) + ' 分。' +
-      '進圖鑑的那幾件跟著你走，換組換班換專案都在。</p>' +
-
-    roundLog(subs, revs, task) +
-
-    '<h2>回頭補強</h2>' +
-    '<p class="fine">專案走下去之後你們發現這一項不夠，可以回頭補完。' +
-      '他照這一項<b>本來的通過條件</b>判——' + esc(task.cond) + '　' +
-      RULES.say.redig() + '，不做也不扣分。接受 ＝ 這一項多抽一次。</p>' +
-    redigBlock(redigs, wait, task) +
-    '</div>';
-}
-
-function redigBlock(redigs, wait, task) {
-  var past = redigs.map(function (r) {
-    var tag = r.status === 'sent' ? '<span class="pill">等他看</span>'
-      : r.status === 'ok' ? '<span class="pill ok">他接受了</span>'
-      : '<span class="pill over">他沒接受</span>';
-    return '<div class="card sunk"><div style="margin-bottom:5px">' + tag + '</div>' +
-      '<div class="pair"><div><div class="h">你們回頭補的</div>' + nl(r.note) + '</div>' +
-      '<div><div class="h">他寫的</div>' + (r.reason ? nl(r.reason) : '<span class="fine">—</span>') +
-      '</div></div></div>';
-  }).join('');
-  var open = redigs.some(function (r) { return r.status === 'sent'; });
-  var form;
-  if (open) form = '<p class="fine">已經送出一件，等他看。</p>';
-  else if (wait > 0) form = '<p class="fine">還要等 ' + wait + ' 天。' + RULES.say.redig() +
-    '——不是日曆週，所以今天禮拜幾不影響。</p>';
-  else form = '<textarea id="redig" placeholder="我回頭補了什麼">' + esc(draft('redig')) + '</textarea>' +
-    (S.flash ? '<p class="pill over">' + esc(S.flash) + '</p>' : '') +
-    '<p><span class="btn" data-act="redig" data-p=\'{"id":"' + task.taskId + '"}\'>送去給他看</span></p>';
-  return past + form;
-}
-
-/* ================= 圖鑑 ================= */
-
-PAGES.dex = function () {
-  var dex = dexOf(S.who), u = me();
-  var pick = S.p.L || 0;
-  var tabs = [[0, '四個領域']].concat(LAYERS.map(function (l) { return [l.n, l.code + ' ' + l.name]; }))
-    .map(function (x) {
-      return '<button class="' + (pick === x[0] ? 'on' : '') + '" data-go="dex" data-p=\'{"L":' +
-        x[0] + '}\'>' + esc(x[1]) + '</button>';
-    }).join('');
-
-  var own = ownMob(u.account), ownIt = ownFind(u.account);
-
-  /* 篩到哪一層，數字就講那一層——不然「L1 十一格」配「4 / 44」讀起來對不上 */
-  var tally = { mob: [0, 0], item: [0, 0] };
-
-  /* 生物：一區 10 隻 ＋ 4 隻守關 */
-  var mobCells = [];
-  LAYERS.forEach(function (l) {
-    if (pick && pick !== l.n) return;
-    MOB[l.n - 1].forEach(function (c) {
-      var got = dex.mobs[c.n];
-      mobCells.push(cellT(tally.mob, got, pxSvg(c.px, l.pal, !got), got ? c.n : '？？？',
-        got ? c.t : l.name + ' · 還沒遇到'));
+  /* ── 裝備架 ── */
+  var gs = gearsOf(t.teamId);
+  if (gs.length) {
+    H.push('<div class="card"><div class="eyebrow">老師給過的</div><div class="gear-row">');
+    gs.forEach(function (g) {
+      var d = RULES.gearOf(g.key);
+      if (d) H.push('<span class="gear" title="' + esc(d.why) + '">' + d.icon + '<i>' + esc(d.name) + '</i></span>');
     });
-  });
-  LAYERS.forEach(function (l) {
-    if (pick && pick !== l.n) return;
-    var b = PACK.bosses[l.n - 1], got = dex.mobs['BOSS' + l.n];
-    mobCells.push(cellT(tally.mob, got, pxSvg(b.px, b.hue, !got), got ? b.name : '？？？',
-      got ? l.boss.trait : l.name + ' · 層底'));
-  });
+    H.push('</div></div>');
+  }
 
-  /* 物品：108 掉落物 ＋ 24 戰利品 ＋ 4 道具 */
-  var itemCells = [];
-  LAYERS.forEach(function (l) {
-    if (pick && pick !== l.n) return;
-    var got = dex.tools[l.n];
-    itemCells.push(cellT(tally.item, got, pxSvg(l.tool.px, l.pal, !got), got ? l.tool.name : '？？？',
-      got ? l.tool.why : l.name + ' · 放行才有'));
-  });
-  LAYERS.forEach(function (l) {
-    if (pick && pick !== l.n) return;
-    TRO[l.n - 1].forEach(function (tr) {
-      var got = dex.tros[troId(tr)];
-      itemCells.push(cellT(tally.item, got, pxSvg(tr.px, l.pal, !got), got ? tr.n : '？？？',
-        got ? tr.w : l.name + ' · 戰利品'));
-    });
-  });
-  LAYERS.forEach(function (l) {
-    if (pick && pick !== l.n) return;
-    DEB[l.n - 1].forEach(function (f) {
-      var got = dex.finds[f.id];
-      itemCells.push(cellT(tally.item, got, pxSvg(f.px, l.pal, !got), got ? f.name : '？？？',
-        got ? f.look : l.name + ' · ' + f.tier));
-    });
-  });
-
-  return head('COLLECTION', '圖鑑',
-    '一次攤開。沒拿到的只留位置與微光。\n圖鑑是個人的——換組、換班、換專案，這一頁都跟著你走。') +
-    '<div class="seg" style="margin:22px 0">' + tabs + '</div>' +
-
-    '<h2>只有你有的那一組</h2>' +
-    '<p class="fine">從帳號算出來的，別人拿不到同一組。它不算在 ' + TOTAL_MOB + ' ／ ' +
-      TOTAL_ITEM + ' 裡——它不是一格進度，是這一趟從第一天就有的東西。</p>' +
-    '<div class="row">' +
-      '<div class="mob" style="flex:1"><img src="' + pxSvg(own.px, own.pal) + '" alt="">' +
-        '<div><div class="eyebrow">你的那一隻</div><div class="n">' + esc(own.name) + '</div>' +
-        '<div class="t">' + esc(own.trait) + '</div></div></div>' +
-      '<div class="mob sm" style="flex:1"><img src="' + pxSvg(ownIt.px, ownIt.pal) + '" alt="">' +
-        '<div><div class="eyebrow">你的那一件</div><div class="n">' + esc(ownIt.name) + '</div>' +
-        '<div class="t">' + esc(ownIt.look) + '</div></div></div>' +
-    '</div>' +
-
-    '<h2>生物　' + tally.mob[0] + ' / ' + tally.mob[1] + ' 種</h2>' +
-    '<p class="fine">一區 ' + MOB[0].length + ' 隻，加上四隻守關。' +
-      '每一項任務前面站一隻；同一項任務，不同組遇到的不是同一隻。</p>' +
-    '<div class="dex">' + mobCells.join('') + '</div>' +
-
-    '<h2>物品　' + tally.item[0] + ' / ' + tally.item[1] + ' 種</h2>' +
-    '<p class="fine">' + FINDS.length + ' 掉落物 ＋ ' + PACK.trophies.length + ' 戰利品 ＋ ' +
-      LAYERS.length + ' 道具。' + esc(RULES.say.sameWeight()) + '<br>' +
-      '掉落物是打贏那一隻的時候抽的；<b>戰利品是你們自己挑的</b>——每放行一層，' +
-      '層底那一隻留下 ' + RULES.OFFER + ' 件，你們帶走一件。' +
-      '道具是放行的證明，一層一件。</p>' +
-    '<div class="dex">' + itemCells.join('') + '</div>';
+  return H.join('');
 };
 
-function cellT(t, got, src, name, tip) {
-  t[1]++; if (got) t[0]++;
-  return cell(got, src, name, tip);
+/* 準度的一句話。從數字組出來，不是寫死的。 */
+function accSay(a) {
+  if (!a.total) return '';
+  if (a.late === 0 && a.total >= 2) return '你到目前為止沒有失準過。這比做得快更難。';
+  if (a.late > a.exact) return '多數時候你把事情想得比實際簡單。下一次試著往上加幾天。';
+  if (a.early > a.exact) return '你常常比自己承諾的早完成——可能是把事情想得太難了。';
+  return '準的次數最多。你的時間體感正在成形。';
 }
 
-function cell(got, src, name, tip) {
-  return '<div><div class="slot ' + (got ? 'on' : 'off') + '" title="' + esc(tip) + '">' +
-    (got ? '<img src="' + src + '" alt="">' : '<img src="' + src + '" alt="" style="opacity:.5">') +
-    '</div><div class="dexname">' + esc(name) + '</div></div>';
+/* ---------- 迷霧走廊 ----------
+   長度＝承諾的天數。推進一次前進一格。走過的格子霧散了，沒走的還蓋著。 */
+function corridor(t, next, st) {
+  var row = next.row;
+  if (!row || !row.run.runId) {
+    return '<div class="corr empty">霧還沒散開。老師派了新的里程碑，' +
+           '先決定你要花幾天。</div>';
+  }
+  var run = row.run, est = run.est || 1;
+  var at = run.pushes;
+  var H = ['<div class="corr">'];
+
+  /* 角色 */
+  var pose = st.level >= 2 ? HERO.sleep : (next.kind === 'push' ? HERO.idle : HERO.idle);
+  H.push('<div class="hero">' + pxTag(pose, HERO.pal, 'ch') +
+         (st.level === 1 ? pxTag(VINE.px, VINE.pal, 'vine') : '') + '</div>');
+
+  /* 格子 */
+  H.push('<div class="cells">');
+  for (var i = 0; i < est; i++) {
+    var on = i < at;
+    H.push('<span class="cell' + (on ? ' on' : '') + (i === at ? ' here' : '') + '"></span>');
+  }
+  H.push('</div>');
+
+  /* 魔物 */
+  var mob = mobFor(row.ms.msId, t.teamId);
+  var pal = DEPTH_PAL[Math.min(3, depthOf(t.teamId))];
+  H.push('<div class="mob">' + pxTag(mob.px, pal, 'ch') +
+         '<span>' + esc(mob.n) + '</span></div>');
+  H.push('</div>');
+
+  H.push('<div class="corr-note">' +
+    esc(row.ms.title) + '　·　你承諾 ' + est + ' 天，已推進 ' + at + ' 天' +
+    '</div>');
+  return H.join('');
 }
 
-/* ================= 排行榜 ================= */
+/* 哪一組遇到哪一隻：任務 ＋ 組算出來，全班同一個里程碑不是同一隻 */
+function mobFor(msId, teamId) {
+  return MOBS[hash(msId + '|' + teamId) % MOBS.length];
+}
 
-PAGES.board = function () {
+/* ---------- 唯一的那一顆動作 ---------- */
+function actionCard(t, next, st) {
+  var H = ['<div class="act-card">'];
+  var row = next.row;
+
+  if (next.kind === 'wake') {
+    H.push('<div class="eyebrow">' + esc(WORLD.light[st.level].label) + '</div>');
+    H.push('<h2>' + esc(RULES.stallSay(st.level, st.days)) + '</h2>');
+    H.push('<p class="dim">這裡只是把「停下來了」畫出來，沒有別的後果。' +
+           '推一下就回來了。</p>');
+    H.push(btn('推進', 'push:' + row.run.runId, 'big'));
+
+  } else if (next.kind === 'commit') {
+    H.push('<div class="eyebrow">新的里程碑</div>');
+    H.push('<h2>' + esc(row.ms.title) + '</h2>');
+    if (row.ms.note) H.push('<p class="dim">' + nl(row.ms.note) + '</p>');
+    H.push('<p class="lead">你打算花幾天？這是你對自己的承諾，老師不會替你決定。</p>');
+    H.push(btn('決定天數', 'go:commit:' + row.ms.msId, 'big'));
+
+  } else if (next.kind === 'push') {
+    H.push('<div class="eyebrow">今天</div>');
+    H.push('<h2>推進一格。</h2>');
+    H.push('<p class="dim">不用交東西，也不用寫字。按下去就算今天動過了——' +
+           '重點是不要停，不是一次做完。</p>');
+    H.push(btn('推進', 'push:' + row.run.runId, 'big'));
+
+  } else if (next.kind === 'submit') {
+    H.push('<div class="eyebrow">走到終點了</div>');
+    H.push('<h2>' + esc(row.ms.title) + '</h2>');
+    H.push('<p class="dim">把作業交到老師原本收的地方，然後在這裡按一下。' +
+           '系統會比對你當初承諾的天數。</p>');
+    H.push(btn('我交出去了', 'go:submit:' + row.run.runId, 'big'));
+
+  } else if (next.kind === 'camp') {
+    H.push('<div class="eyebrow">營火</div>');
+    H.push('<h2>比你承諾的久。</h2>');
+    H.push('<p class="dim">先坐下來。說出卡在哪不會扣任何東西——' +
+           '講得清楚的困難，老師才幫得上忙。</p>');
+    H.push(btn('去營火旁', 'go:camp:' + row.run.runId, 'big'));
+
+  } else if (next.kind === 'gear') {
+    var g = RULES.gearOf(row.run.gear);
+    H.push('<div class="eyebrow">老師給了你一件東西</div>');
+    H.push('<h2>' + (g ? g.icon + ' ' + esc(g.name) : '裝備') + '</h2>');
+    if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
+    H.push(btn('接下', 'gear:' + row.run.runId, 'big'));
+
+  } else if (next.kind === 'waiting') {
+    H.push('<div class="eyebrow">今天推過了</div>');
+    H.push('<h2>明天再來一次。</h2>');
+    H.push('<p class="dim">一天一格。這不是點擊遊戲，多按沒有用。</p>');
+
+  } else if (next.kind === 'review') {
+    H.push('<div class="eyebrow">在老師那邊</div>');
+    H.push('<h2>他還沒看。</h2>');
+    H.push('<p class="dim">他看的順序是照等最久的排，不是先交先看。</p>');
+
+  } else {
+    H.push('<div class="eyebrow">坑道很安靜</div>');
+    H.push('<h2>目前沒有等你做的。</h2>');
+    H.push('<p class="dim">老師隨時可能派新的里程碑。</p>');
+  }
+
+  H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 承諾：滑桿 ＋ 風險標籤 ---------- */
+PAGES.commit = function () {
   var t = myTeam();
-  var rows = board('C1').map(function (r) {
-    var mine = r.team.teamId === t.teamId;
-    var how = r.score.parts.map(function (p) { return esc(p.k) + ' ＝ ' + p.v + ' 分'; }).join('　·　');
-    return '<div class="rank ' + (mine ? 'me' : '') + '">' +
-      '<div class="top"><span class="no">' + r.rank + '</span>' +
-      '<span class="nm">' + esc(r.team.name) + (mine ? '　（你們）' : '') + '</span>' +
-      '<span class="sc">' + r.score.total + '</span></div>' +
-      '<div class="how">' + (how || '還沒有分數') + '</div>' +
-      '<div class="how">' + esc(LAYERS[r.team.layer - 1].name) + ' · 停留 ' + r.stay + ' 天' +
-        '　·　' + (r.motion.rounds
-          ? '來回 ' + r.motion.rounds + ' 次（改過 ' + r.motion.changed + ' 次）'
-          : '還沒送過任何一次') +
-      '</div></div>';
-  }).join('');
+  var m = msOf(S.p.id);
+  if (!m) return '<div class="card">找不到這一個里程碑。</div>';
+  var est = Number(draft('est', RULES.EST_DEFAULT));
+  var risks = DRAFT.risks || [];
 
-  return head('LEADERBOARD', '排行榜',
-    '每一列都拆給你看分數是怎麼來的。') +
-    '<div class="card sunk"><div class="fine">' +
-      esc(RULES.say.pass()) + '　·　' + esc(RULES.say.drop()) + '　·　' +
-      esc(RULES.say.release()) + '<br>' +
-      esc(RULES.say.check()) + '　·　' + esc(RULES.say.round()) +
-      '——「來回 N 次」不算分，它只說明這一組有沒有在動。' +
-      '兩次被退回而且真的在改的組，跟沒動過的組，不該在榜上長得一樣。<br>' +
-      esc(RULES.GATE) + '名次不決定誰往下。' +
-    '</div></div>' + rows;
+  var H = [head('自我承諾', m.title, m.note)];
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你打算花幾天</div>');
+  H.push('<div class="slider-wrap">');
+  H.push('<input type="range" class="slider" id="est" min="' + RULES.EST_MIN +
+         '" max="' + RULES.EST_MAX + '" value="' + est +
+         '" oninput="ACTS.est(this.value)">');
+  H.push('<div class="slider-read"><b>' + est + '</b><span>天</span></div>');
+  H.push('</div>');
+  H.push('<p class="dim">這個數字是你自己說的。誤差 ' + RULES.band(est) +
+         ' 天以內都算準——' + Math.round(RULES.BAND_RATIO * 100) + '％ 的容許範圍。</p>');
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你覺得會卡在哪　選填</div>');
+  H.push('<p class="dim">先標起來。事後對照——標對了就是預見能力，那比準時更值錢。</p>');
+  H.push('<div class="tags">');
+  RULES.RISKS.forEach(function (r) {
+    var on = risks.indexOf(r.key) >= 0;
+    H.push('<button class="tag' + (on ? ' on' : '') + '" onclick="ACTS.risk(\'' + r.key + '\')">' +
+           r.icon + ' ' + esc(r.label) + '</button>');
+  });
+  H.push('</div></div>');
+
+  H.push('<div class="row">');
+  H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big'));
+  H.push(btn('回坑道', 'go:home', 'ghost'));
+  H.push('</div>');
+  return H.join('');
 };
 
-/* ================= 紀錄 ================= */
+/* ---------- 上傳 ---------- */
+PAGES.submit = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId);
+  var used = Math.max(1, daysBetween(r.committedAt, now()));
+  var s = RULES.judge(r.est, used);
 
+  var H = [head('交出去', m.title, '')];
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你當初承諾</div>');
+  H.push('<div class="big-num">' + r.est + ' <span>天</span></div>');
+  H.push('<div class="eyebrow" style="margin-top:22px">實際花了</div>');
+  H.push('<div class="big-num">' + used + ' <span>天</span></div>');
+  H.push('<p class="dim">' + esc(RULES.judgeWhy(r.est, used)) + '</p>');
+  H.push('</div>');
+  H.push('<p class="lead">作業交到老師原本收的地方。這裡不收檔案，也看不到內容。</p>');
+  H.push('<div class="row">');
+  H.push(btn('確認交出去了', 'submit:' + r.runId, 'big'));
+  H.push(btn('還沒', 'go:home', 'ghost'));
+  H.push('</div>');
+  return H.join('');
+};
+
+/* ---------- 判定結果 ---------- */
+PAGES.stamp = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId), s = RULES.STAMPS[r.stamp];
+
+  var H = ['<div class="stamp-card ' + r.stamp + '">'];
+  H.push('<div class="stamp-mark">' + s.mark + '</div>');
+  H.push('<h1>' + esc(s.name) + '</h1>');
+  H.push('<p class="lead">' + esc(s.why) + '</p>');
+  H.push('<div class="stamp-num"><b>' + r.est + '</b><span>承諾</span>' +
+         '<b>' + r.actual + '</b><span>實際</span></div>');
+  H.push('<p class="dim">' + esc(RULES.judgeWhy(r.est, r.actual)) + '</p>');
+  H.push('</div>');
+
+  if (r.stamp === 'late') {
+    H.push(btn('去營火旁說一下', 'go:camp:' + r.runId, 'big'));
+  } else {
+    H.push(btn('好', 'skipcamp:' + r.runId, 'big'));
+  }
+  return H.join('');
+};
+
+/* ---------- 營火復盤 ---------- */
+PAGES.camp = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId);
+  var picked = DRAFT.snags || [];
+
+  var H = ['<div class="camp">'];
+  H.push(pxTag(CAMPFIRE.px, CAMPFIRE.pal, 'fire'));
+  H.push('<div>');
+  H.push('<div class="eyebrow">營火</div>');
+  H.push('<h2>卡在哪？</h2>');
+  H.push('<p class="dim">點就好，不用打字。這不會扣任何東西——' +
+         '說得出卡在哪，本身就是一種專案能力。</p>');
+  H.push('</div></div>');
+
+  H.push('<div class="card"><div class="tags big">');
+  RULES.SNAGS.forEach(function (g) {
+    var on = picked.indexOf(g.key) >= 0;
+    H.push('<button class="tag' + (on ? ' on' : '') + '" onclick="ACTS.snag(\'' + g.key + '\')">' +
+           '<b>' + g.icon + '</b><i>' + esc(g.label) + '</i><em>' + esc(g.hint) + '</em></button>');
+  });
+  H.push('</div></div>');
+
+  /* 當初標的風險有沒有中 */
+  if (r.risks && r.risks.length) {
+    var hit = r.risks.filter(function (k) { return picked.indexOf(k) >= 0; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">你當初標的風險</div>');
+    H.push('<div class="tags">');
+    r.risks.forEach(function (k) {
+      var d = RULES.snagOf(k);
+      if (d) H.push('<span class="tag static' + (picked.indexOf(k) >= 0 ? ' hit' : '') + '">' +
+                    d.icon + ' ' + esc(d.label) + '</span>');
+    });
+    H.push('</div>');
+    if (hit.length) H.push('<p class="ok">你預見到了。那比準時更值錢。</p>');
+    H.push('</div>');
+  }
+
+  H.push(btn('說完了', 'reflect:' + r.runId, 'big'));
+  return H.join('');
+};
+
+/* ---------- 大躍進 ---------- */
+PAGES.dash = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r) return '<div class="card">找不到。</div>';
+  var g = RULES.gearOf(r.gear);
+  var H = ['<div class="dash">'];
+  H.push(pxTag(HERO.dash, HERO.pal, 'ch big'));
+  H.push('<h1>' + (g ? g.icon + ' ' + esc(g.name) : '裝備') + ' 到手</h1>');
+  if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
+  if (g) H.push('<p class="dim">' + esc(g.why) + '</p>');
+  H.push('</div>');
+  H.push(btn('回坑道', 'go:home', 'big'));
+  return H.join('');
+};
+
+/* ---------- 全班生態圖（Zoom Out） ---------- */
+PAGES.eco = function () {
+  var t = myTeam();
+  var rows = ecology(t.classId);
+  var H = [head('全班地下城', '大家都在挖',
+    '看得到別人也在坑道裡，就夠了。每一組挖的是自己的專案。')];
+
+  H.push('<div class="eco">');
+  H.push('<div class="eco-surface">地表</div>');
+  var maxD = Math.max(3, rows.reduce(function (a, r) { return Math.max(a, r.depth); }, 0));
+  rows.forEach(function (r) {
+    var mine = r.teamId === t.teamId;
+    H.push('<div class="eco-row' + (mine ? ' me' : '') + '">');
+    H.push('<span class="eco-name">' + esc(r.name) + (mine ? '（你們）' : '') + '</span>');
+    H.push('<span class="eco-tube">');
+    for (var i = 0; i < maxD; i++) {
+      H.push('<span class="eco-seg' + (i < r.depth ? ' dug' : '') + '"></span>');
+    }
+    H.push('<span class="eco-hero ' + (r.stall >= 2 ? 'sleep' : r.stall === 1 ? 'vine' : 'ok') +
+           '" style="left:' + Math.min(96, (r.depth + r.at) / maxD * 100) + '%"></span>');
+    H.push('</span>');
+    H.push('<span class="eco-state">' +
+      (r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '挖掘中' : '等派任務') +
+      '</span>');
+    H.push('</div>');
+  });
+  H.push('</div>');
+  H.push('<p class="dim">深度＝走完幾個里程碑。每一組的坑道長度不一樣，' +
+         '因為每一組的專案不一樣——這裡不比誰快。</p>');
+  return H.join('');
+};
+
+/* ---------- 走過的每一段 ---------- */
 PAGES.log = function () {
   var t = myTeam();
-  var rows = [];
-  LAYERS.forEach(function (l) {
-    rowsFor(t.teamId, l.n).filter(function (r) { return r.tt.status === 'done'; })
-      .forEach(function (r) { rows.push({ L: l, r: r }); });
-  });
-  var body = rows.map(function (x) {
-    var rev = where('Reviews', function (v) {
-      return v.teamId === t.teamId && v.taskId === x.r.task.taskId && v.result === 'ok';
-    }).pop();
-    var sub = where('Submissions', function (v) {
-      return v.teamId === t.teamId && v.taskId === x.r.task.taskId;
-    }).pop();
-    var gave = rev ? rev.gave : 0;
-    return '<div class="item" data-go="task" data-p=\'{"id":"' + x.r.task.taskId + '"}\'>' +
-      '<div class="body">' +
-        '<div class="t">' + esc(x.L.code) + '　' + esc(x.r.task.title) + '</div>' +
-        '<div class="pair" style="margin-top:11px">' +
-          '<div><div class="h">你們寫的</div>' +
-            (sub && sub.text ? nl(sub.text) : '<span class="fine">（留白）</span>') + '</div>' +
-          '<div><div class="h">他給的</div>「' + esc(RULES.gaveAnchor(gave)) + '」，抽了 ' +
-            RULES.draws(x.L.n, gave) + ' 次</div>' +
-        '</div>' +
-        '<div class="m">' + esc(String(rev ? rev.reason : '').slice(0, 60)) + '⋯</div>' +
-      '</div>' +
-      '<div class="art"><img src="' +
-        pxSvg(mobFor(x.r.task.taskId, t.teamId, x.L.n).px, x.L.pal) + '" alt=""></div>' +
-      '</div>';
-  }).join('');
+  var rows = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).reverse();
+  var H = [head('紀錄', '走過的每一段', '你當初怎麼估、實際花多久、他說了什麼。')];
+  if (!rows.length) return H.join('') + '<div class="card dim">還沒有走完的里程碑。</div>';
 
-  var passes = where('Passes', function (p) { return p.teamId === t.teamId; }).map(function (p) {
-    return '<div class="card layer" ' + layerVars(p.layer) + '>' +
-      '<div class="eyebrow">' + esc(LAYERS[p.layer - 1].code) + ' 放行</div>' +
-      '<p style="margin:0">' + nl(p.reason) + '</p></div>';
-  }).join('');
-
-  return head('RECORD', '紀錄',
-    '走過的每一項都在這裡，點得進去。\n' +
-    '寫得認真的那幾次拿 3–4、留白的那幾次拿 0——那條線自己會講話。') +
-    (rows.length ? body : '<div class="card"><p class="lead">還沒有判過的項目。</p></div>') +
-    (passes ? '<h2>他放行的理由</h2>' + passes : '');
-};
-
-/* ================= 迷霧地圖 ================= */
-/* 只有一條軸：深度。層裡面不鋪格子——任務沒有順序，鋪成一排等於系統
-   在替學生排「先做哪一項」。 */
-
-function mapBands(mini) {
-  var t = myTeam();
-  var teams = classTeams('C1');
-  var body = LAYERS.map(function (l) {
-    var here = t.layer === l.n;
-    var seen = t.layer >= l.n;
-    var b = PACK.bosses[l.n - 1];
-    var guys = '';
-    if (!mini) {
-      var on = teams.filter(function (x) { return x.layer === l.n; });
-      guys = on.map(function (x, i) {
-        var mine = x.teamId === t.teamId;
-        var left = 8 + (i * 100 / Math.max(1, on.length));
-        return '<div class="guy ' + (mine ? 'me' : '') + '" style="left:' + left + '%">' +
-          '<div class="p">' + (mine ? '☗' : '☖') + '</div>' +
-          '<div class="g">' + esc(mine ? '你們' : x.name.split(' · ')[0]) + '</div></div>';
-      }).join('');
-    } else if (here) {
-      guys = '<div class="guy me" style="left:8%"><div class="p">☗</div><div class="g">你們</div></div>';
+  rows.forEach(function (x) {
+    var r = x.run, s = RULES.STAMPS[r.stamp];
+    H.push('<div class="card log-row">');
+    H.push('<div class="log-head"><b>' + esc(x.ms.title) + '</b>' +
+           '<span class="st ' + r.stamp + '">' + s.mark + ' ' + esc(s.name) + '</span></div>');
+    H.push('<div class="log-num">承諾 <b>' + r.est + '</b> 天　·　實際 <b>' + r.actual + '</b> 天</div>');
+    if (r.snags && r.snags.length) {
+      H.push('<div class="tags small">');
+      r.snags.forEach(function (k) {
+        var d = RULES.snagOf(k);
+        if (d) H.push('<span class="tag static">' + d.icon + ' ' + esc(d.label) + '</span>');
+      });
+      H.push('</div>');
     }
-    return '<div class="band" ' + layerVars(l.n) + '>' +
-      '<div class="lab"><div class="code">' + l.code + (here ? ' · 現在' : '') + '</div>' +
-      '<div class="nm" style="color:' + (seen ? 'var(--Ll)' : 'var(--mute)') + '">' +
-        (seen ? esc(l.name) : '？？？') + '</div>' +
-      (seen ? '<div class="code" style="letter-spacing:0">' + esc(l.stage) + '</div>' : '') + '</div>' +
-      /* 霧遮的是「那一層是什麼」，不是「誰在那裡」——
-         已經在下面的組看得到，那是這張圖唯一會催人的東西。 */
-      '<div class="field">' +
-        (seen ? '' : '<div class="fog">下面還沒開</div>') + guys +
-        (seen ? '<div class="boss"><img src="' + pxSvg(b.px, b.hue, !here) + '" alt=""></div>' : '') +
-      '</div></div>';
-  }).join('');
-  return '<div class="map">' + body + '</div>';
-}
-
-PAGES.map = function () {
-  var t = myTeam();
-  var opened = where('Passes', function (p) { return p.teamId === t.teamId; }).length;
-  return head('MAP', '迷霧地圖',
-    '這張圖只有一條軸：深度。') +
-    '<div class="card sunk"><div class="fine">' +
-      '頂上是 ' + opened + ' / ' + RULES.LAYERS + ' 層，不是任務數——' +
-      '任務沒有固定總量，他隨時可以再開，所以那個數字不是進度。<br>' +
-      '層裡面不鋪格子：任務沒有順序，鋪成一排等於系統在替你們排先做哪一項。' +
-      '下面還沒開的那幾層看不到是什麼，但看得到誰已經在那裡。<br>' +
-      '留下的只有小人（你們在哪一層）與霧（下面還沒開）。<br>' +
-      esc(RULES.GATE) +
-    '</div></div>' +
-    mapBands(false);
-};
-
-/* ================= 結局 ================= */
-
-PAGES.end = function () {
-  var t = myTeam();
-  if (!t.finished) {
-    return head('？？？', '？？？',
-      '四層都放行之後才亮。') +
-      '<div class="card"><p class="lead">現在在 ' + esc(LAYERS[t.layer - 1].name) +
-      '，' + esc(RULES.GATE) + '</p></div>';
-  }
-  var f = finaleOf(t.teamId) || {};
-  if (!f.opened) {
-    return head('FINALE', '他讀完了。',
-      f.teacherWord || '') +
-      '<div class="card"><p class="lead">還在等他寫期末回顧的最後那段話。</p></div>';
-  }
-  return head('FINALE', '命名封存',
-    '四層走完了。幫這一趟取一個名字留下來——下一個專案打開紀錄還看得到。') +
-    '<div class="card layer" ' + layerVars(4) + '>' +
-      '<div class="eyebrow">他最後寫的</div><p style="margin:0">' + nl(f.teacherWord || '') + '</p></div>' +
-    (f.submitted
-      ? '<div class="card"><div class="eyebrow">你們取的名字</div>' +
-        '<div class="big plain">' + esc(f.lightName) + '</div></div>'
-      : '<label>這一趟叫什麼</label><input type="text" id="light" placeholder="取一個名字">' +
-        '<p><span class="btn" data-act="finale">封存</span></p>');
-};
-
-/* ================= 挑一件帶走 ================= */
-/* 這是整個系統裡學生唯一一次做「選擇」的地方。
-
-   三件一樣重、分數已經記上了，所以這個選擇不影響任何數字——它只決定
-   你帶走哪一句話。挑那一句本身就是一次省思。
-
-   反過來做（因為你重交了三次，所以發給你斷柄鑿）不可以：那一秒它就從
-   一句話變成一個評價，而這個系統從頭到尾不評價任何人。 */
-
-PAGES.pick = function () {
-  var t = myTeam();
-  var pk = pendingPick(t.teamId);
-  if (!pk) return picked(t);
-  var L = LAYERS[pk.layer - 1];
-  var boss = PACK.bosses[pk.layer - 1];
-
-  var cards = pk.offer.map(function (id) {
-    var tr = troOf(id);
-    return '<div class="card layer" style="flex:1;min-width:264px;margin:0;display:flex;' +
-      'flex-direction:column;gap:11px">' +
-      '<img src="' + pxSvg(tr.px, L.pal) + '" style="width:88px;height:88px;object-fit:contain">' +
-      '<div class="n" style="font-size:22px;color:var(--Ll)">' + esc(tr.n) + '</div>' +
-      '<p style="margin:0;font-size:22px;line-height:1.8">「' + esc(tr.w) + '」</p>' +
-      '<div class="fine" style="flex:1">' + esc(tr.l) + '</div>' +
-      '<span class="btn wide" data-act="pick" data-p=\'{"pick":"' + pk.pickId +
-        '","id":"' + id + '"}\'>帶走這一件</span>' +
-    '</div>';
-  }).join('');
-
-  return '<div ' + layerVars(pk.layer) + '>' +
-    head(L.code + ' · ' + esc(L.name), esc(L.boss.name) + '退開了。', L.boss.beat) +
-
-    '<div class="row" style="margin:22px 0">' +
-      '<div class="mob" style="flex:1">' + mobImg({ px: boss.px, pal: boss.hue }) +
-        '<div><div class="eyebrow">牠最後說的</div>' +
-        '<div class="n">「' + esc(L.boss.line) + '」</div>' +
-        '<div class="t">' + esc(L.tool.why) + '</div></div></div>' +
-      '<div class="card layer" style="flex:1;margin:0;display:flex;gap:22px;align-items:center">' +
-        '<img src="' + pxSvg(L.tool.px, L.pal) + '" style="width:66px;height:66px;object-fit:contain">' +
-        '<div><div class="eyebrow">他放行給的道具</div>' +
-        '<div style="font-size:22px;color:var(--Ll)">' + esc(L.tool.name) + '</div>' +
-        '<div class="fine">' + esc(L.tool.rec) + '</div></div>' +
-      '</div>' +
-    '</div>' +
-
-    '<h2>挑一件帶走</h2>' +
-    '<p class="lead">' + esc(RULES.PICK_SAY) + '</p>' +
-    '<div class="row">' + cards + '</div>' +
-    '<p class="fine">挑完就進圖鑑，換組換班換專案都跟著你走。' +
-      '沒挑走的那兩件還留在這一層——下一個專案再下來，關底還是有東西。</p>' +
-    '</div>';
-};
-
-/* 挑完之後 */
-function picked(t) {
-  var last = where('Picks', function (p) { return p.teamId === t.teamId && p.chosen; }).pop();
-  if (!last) {
-    return head('PICK', '現在沒有可以挑的。',
-      '每放行一層，層底那一隻會留下 ' + RULES.OFFER + ' 件，那時候再回來挑。');
-  }
-  var tr = troOf(last.chosen), L = LAYERS[last.layer - 1];
-  return '<div ' + layerVars(last.layer) + '>' +
-    head(L.code + ' · ' + esc(L.name), '你們帶走了 ' + esc(tr.n) + '。', '') +
-    '<div class="card layer" style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">' +
-      '<img src="' + pxSvg(tr.px, L.pal) + '" style="width:110px;height:110px;object-fit:contain">' +
-      '<div style="flex:1;min-width:264px">' +
-        '<p style="margin:0 0 11px;font-size:33px;line-height:1.6">「' + esc(tr.w) + '」</p>' +
-        '<div class="fine">' + esc(tr.l) + '</div></div>' +
-    '</div>' +
-    '<p><a class="plain" data-go="dex">去圖鑑看 →</a></p></div>';
-}
-
-/* ================= 這一趟的剖面 ================= */
-/* 深度對時間。系統手上本來就有這些時間戳，一個都不必碰作業內容。 */
-
-PAGES.curve = function () {
-  return head('SECTION', '這一趟的剖面', '往下挖了多深，花了多久。') +
-    '<p class="lead">' + esc(RULES.CURVE_SAY) + '</p>' +
-    curveReport(myTeam().teamId, '你們');
-};
-
-/* 圖 ＋ 數字 ＋ 每一項。學生看自己那一組，老師看他選的那一組，同一份。 */
-function curveReport(teamId, you) {
-  var t = teamOf(teamId);
-  var tl = timelineOf(teamId);
-  var s = tl.stats;
-  var d1 = function (x) { return x == null ? '—' : (Math.round(x * 10) / 10); };
-
-  return curveSvg(tl) +
-
-    '<h2>' + esc(you) + '的節奏</h2>' +
-    '<p class="fine">下面每一個數字都是從時間戳算出來的描述——沒有一個是評價，' +
-      '也沒有一個進成績。</p>' +
-    '<div class="row">' +
-      sumCard('開啟到第一次交', d1(s.toFirst) + ' 天',
-        '他開出來那一天算起，到' + you + '第一次按送出。' + s.n + ' 項的平均。') +
-      sumCard('一項走幾輪', d1(s.rounds) + ' 輪',
-        s.multi ? s.n + ' 項裡有 ' + s.multi + ' 項走了不只一輪。退回不扣分，' +
-          '走幾輪只是說明這一項來回過幾次。' : '目前每一項都是一輪。') +
-      sumCard('等他判', d1(s.wait) + ' 天',
-        you + '按下送出到他寫下判斷之間。裁決時間不可預測，這個數字只是已經發生的事。') +
-    '</div>' +
-    '<div class="row">' +
-      sumCard('交的時候離期限', d1(s.slack) + ' 天',
-        (s.late ? '有 ' + s.late + ' 項是逾期交的（逾期只標示，不扣分）。' : '') +
-        (s.tight ? '有 ' + s.tight + ' 項是在期限前不到一天交的。' : '') +
-        (!s.late && !s.tight ? '目前都在期限前一天以上交出去。' : '')) +
-      sumCard('這一層停留', RULES.stayDays(t.enteredAt, now()) + ' 天',
-        '從進到' + esc(LAYERS[t.layer - 1].name) + '那一刻起算。') +
-      sumCard('他對這一組寫過', stackOf2(teamId) + ' 件',
-        '判一件寫一段。' + you + '在結算頁一字不改讀到那一段，而且它會留在' + you +
-        '手上那一疊裡（那一疊是跟著人走的，會比這個數字多）。') +
-    '</div>' +
-
-    '<h2>每一項各自的樣子</h2>' +
-    tl.items.map(function (i) {
-      var L = LAYERS[i.layer - 1];
-      return '<div class="item flat" ' + layerVars(i.layer) + '>' +
-        '<div class="body"><div class="t">' + esc(L.code) + '　' + esc(i.task.title) + '</div>' +
-        '<div style="margin-top:11px;display:flex;gap:5px;flex-wrap:wrap">' +
-          '<span class="pill">開啟到交 ' + (i.toFirst == null ? '還沒交' : d1(i.toFirst) + ' 天') + '</span>' +
-          '<span class="pill' + (i.rounds > 1 ? ' gold' : '') + '">' +
-            (i.rounds ? '來回 ' + i.rounds + ' 輪' : '還沒送過') + '</span>' +
-          (i.wait != null ? '<span class="pill">等他 ' + d1(i.wait) + ' 天</span>' : '') +
-          (i.slack != null ? '<span class="pill' + (i.slack < 0 ? ' over' : '') + '">' +
-            (i.slack < 0 ? '逾期 ' + d1(-i.slack) + ' 天交' : '期限前 ' + d1(i.slack) + ' 天交') +
-            '</span>' : '<span class="pill">期限不設限</span>') +
-        '</div></div></div>';
-    }).join('');
-}
-
-/* 這一組收到過幾段字。跟 stackOf 不同：那一支是「一個人」的，這一支是「一組」的。 */
-function stackOf2(teamId) {
-  return where('Reviews', function (r) { return r.teamId === teamId; }).length +
-    where('Passes', function (p) { return p.teamId === teamId; }).length;
-}
-
-/* 剖面圖。X 是天，Y 是深度——世界觀本來就是這張圖。 */
-function curveSvg(tl) {
-  var W = 720, padL = 66, padR = 22, top = 33, rowH = 55, bot = 44;
-  var H = top + LAYERS.length * rowH + bot;
-  var span = Math.max(1, tl.t1 - tl.t0);
-  var x = function (ts) { return padL + (ts - tl.t0) / span * (W - padL - padR); };
-  var y = function (L) { return top + (L - 0.5) * rowH; };
-  var day = function (ts) { return Math.round((ts - tl.t0) / 86400000); };
-
-  var o = ['<svg viewBox="0 0 ' + W + ' ' + H + '" class="curve" xmlns="http://www.w3.org/2000/svg">'];
-
-  /* 四層的底線與標籤 */
-  LAYERS.forEach(function (l) {
-    var yy = y(l.n);
-    o.push('<line x1="' + padL + '" y1="' + yy + '" x2="' + (W - padR) + '" y2="' + yy +
-      '" stroke="#2E2822" stroke-width="1"/>');
-    o.push('<text x="6" y="' + (yy - 6) + '" fill="#63594C" font-size="11">' + l.code + '</text>');
-    o.push('<text x="6" y="' + (yy + 8) + '" fill="' + l.pal['#'] + '" font-size="11">' +
-      l.name + '</text>');
+    if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
+    H.push('</div>');
   });
-
-  /* 每七天一條刻度 */
-  for (var d = 0; d * 86400000 <= span; d += 7) {
-    var xx = x(tl.t0 + d * 86400000);
-    o.push('<line x1="' + xx + '" y1="' + top + '" x2="' + xx + '" y2="' + (H - bot) +
-      '" stroke="#1A1611" stroke-width="1"/>');
-    o.push('<text x="' + xx + '" y="' + (H - bot + 16) + '" fill="#63594C" font-size="11" ' +
-      'text-anchor="middle">第 ' + d + ' 天</text>');
-  }
-
-  /* 深度對時間：一條往下走的階梯 */
-  var pts = [];
-  tl.bands.forEach(function (b) {
-    pts.push([x(b.from), y(b.layer)]);
-    pts.push([x(b.to), y(b.layer)]);
-  });
-  if (pts.length) {
-    o.push('<polyline fill="none" stroke="#E9B341" stroke-width="2" points="' +
-      pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '"/>');
-  }
-
-  /* 每一項的事件：開啟 → 送出 → 判 */
-  tl.items.forEach(function (i) {
-    var yy = y(i.layer), pal = LAYERS[i.layer - 1].pal;
-    o.push('<line x1="' + x(i.opened) + '" y1="' + (yy - 9) + '" x2="' + x(i.opened) +
-      '" y2="' + (yy + 9) + '" stroke="' + pal.o + '" stroke-width="1"/>');
-    if (i.task.due) {
-      o.push('<line x1="' + x(i.task.due) + '" y1="' + (yy - 13) + '" x2="' + x(i.task.due) +
-        '" y2="' + (yy + 13) + '" stroke="#4A3F2A" stroke-width="1" stroke-dasharray="2 3"/>');
-    }
-    i.subs.forEach(function (sb) {
-      o.push('<circle cx="' + x(sb.ts) + '" cy="' + yy + '" r="3.5" fill="' + pal['#'] + '"/>');
-    });
-    i.revs.forEach(function (rv) {
-      if (rv.result === 'ok') {
-        o.push('<circle cx="' + x(rv.ts) + '" cy="' + yy + '" r="5" fill="none" stroke="#7CC98F" ' +
-          'stroke-width="2"/>');
-      } else {
-        o.push('<path d="M' + (x(rv.ts) - 4) + ' ' + (yy - 4) + ' l8 8 M' + (x(rv.ts) + 4) + ' ' +
-          (yy - 4) + ' l-8 8" stroke="#D9603F" stroke-width="2"/>');
-      }
-    });
-  });
-
-  /* 現在 */
-  o.push('<line x1="' + x(tl.t1) + '" y1="' + top + '" x2="' + x(tl.t1) + '" y2="' + (H - bot) +
-    '" stroke="#E9B341" stroke-width="1" stroke-dasharray="3 3"/>');
-  o.push('<text x="' + (x(tl.t1) - 4) + '" y="' + (top - 8) + '" fill="#E9B341" font-size="11" ' +
-    'text-anchor="end">今天 · 第 ' + day(tl.t1) + ' 天</text>');
-  o.push('</svg>');
-
-  return '<div class="curvebox">' + o.join('') + '</div>' +
-    '<div class="fine" style="margin-top:11px">' +
-    '直線刻痕 ＝ 他開出這一項　·　實心點 ＝ 你們按了送出　·　' +
-    '<span style="color:var(--ok)">綠圈</span> ＝ 他判過　·　' +
-    '<span style="color:var(--over)">紅叉</span> ＝ 他要你們補　·　虛線 ＝ 期限　·　' +
-    '金線 ＝ 你們的深度。往下的那一階，每一階都是他放行的那一天。</div>';
-}
-
-/* ================= 他寫過的那一疊 ================= */
-
-PAGES.stack = function () {
-  var list = stackOf(S.who);
-  var pick = S.p.k || 'all';
-  var KINDS = [
-    ['all', '全部'], ['ok', '判過的'], ['back', '要你們補的'], ['pass', '放行']
-  ];
-  var tabs = KINDS.map(function (k) {
-    return '<button class="' + (pick === k[0] ? 'on' : '') + '" data-go="stack" data-p=\'{"k":"' +
-      k[0] + '"}\'>' + esc(k[1]) + '</button>';
-  }).join('');
-
-  var shown = list.filter(function (r) {
-    if (pick === 'all') return true;
-    if (pick === 'ok') return r.kind === 'ok' || r.kind === 'redig-ok';
-    if (pick === 'back') return r.kind === 'back' || r.kind === 'redig-no';
-    return r.kind === 'pass';
-  });
-
-  var TAG = {
-    ok: ['pill ok', '他判過了'], back: ['pill over', '他要你們補'],
-    'redig-ok': ['pill ok', '回頭補強 · 他接受'], 'redig-no': ['pill over', '回頭補強 · 他沒接受'],
-    pass: ['pill gold', '放行']
-  };
-
-  var body = shown.map(function (r) {
-    var L = LAYERS[r.layer - 1];
-    var tag = TAG[r.kind];
-    var days = Math.max(0, Math.round((now() - r.ts) / 86400000));
-    return '<div class="card layer" ' + layerVars(r.layer) + '>' +
-      '<div style="display:flex;gap:11px;align-items:baseline;flex-wrap:wrap;margin-bottom:11px">' +
-        '<span class="' + tag[0] + '">' + esc(tag[1]) + '</span>' +
-        '<span class="pill">' + esc(L.code) + ' ' + esc(L.name) + '</span>' +
-        (r.gave != null && r.kind === 'ok'
-          ? '<span class="pill">他給「' + esc(RULES.gaveAnchor(r.gave)) + '」</span>' : '') +
-        (r.mine ? '' : '<span class="pill">上一個專案</span>') +
-        '<span class="sp" style="flex:1"></span>' +
-        '<span class="fine">' + days + ' 天前</span>' +
-      '</div>' +
-      '<div style="font-size:22px;color:var(--Ll);margin-bottom:5px">' + esc(r.title) + '</div>' +
-      (r.cond ? '<div class="fine" style="margin-bottom:11px">通過條件　' + esc(r.cond) + '</div>' : '') +
-      '<p style="margin:0;font-size:22px;line-height:1.9">' + nl(r.text) + '</p>' +
-      (r.taskId && r.mine
-        ? '<p style="margin:11px 0 0"><a class="plain" style="font-size:11px" data-go="task" ' +
-          'data-p=\'{"id":"' + r.taskId + '"}\'>去看這一項 →</a></p>' : '') +
-    '</div>';
-  }).join('');
-
-  return head('RATIONALE', '他寫過的　' + list.length + ' 件',
-    '') +
-    '<p class="lead">' + esc(RULES.STACK_SAY) + '</p>' +
-    '<p class="fine">這一疊跟圖鑑一樣是你的——換組、換班、換專案都跟著你走。' +
-      '要補的那幾件也留著：「為什麼還不到」跟「為什麼算合格」一樣有用。</p>' +
-    '<div class="seg" style="margin:22px 0">' + tabs + '</div>' +
-    (body || '<div class="card"><p class="lead">這一格還沒有東西。</p></div>');
-};
-
-/* ---------- 學生的動作 ---------- */
-
-ACTS.pick = function (p) { actPick(p.pick, p.id); render(); };
-ACTS.check = function (p) { keepDraft(); actCheck(myTeam().teamId, S.p.id, p.i); render(); };
-ACTS.effort = function (p) { keepDraft(); actEffort(myTeam().teamId, S.p.id, p.v); render(); };
-ACTS.blocker = function () {
-  actExtra(myTeam().teamId, S.p.id, val('#extra'));
-  actBlocker(myTeam().teamId, S.p.id, val('#blocker'));
-  render();
-};
-ACTS.submit = function () {
-  var tid = myTeam().teamId;
-  actExtra(tid, S.p.id, val('#extra'));
-  actBlocker(tid, S.p.id, val('#blocker'));
-  var r = actSubmit(tid, S.p.id);
-  S.flash = r.err || null;
-  render();
-};
-ACTS.redig = function (p) {
-  var v = val('#redig');
-  if (!v.trim()) { S.flash = '寫一句你們回頭補了什麼。'; render(); return; }
-  var r = actRedig(myTeam().teamId, p.id, v);
-  S.flash = r.err || null;
-  render();
-};
-ACTS.finale = function () {
-  var v = val('#light');
-  if (!v.trim()) return;
-  actFinale(myTeam().teamId, { lightName: v, submitted: true });
-  render();
+  return H.join('');
 };
 
 
 /* ===== 70-teacher.js ===== */
 /* 老師端。
 
-   他做的事跟系統出現之前一樣：讀學生交的東西，寫下判斷。
-   系統只做兩件事——把該看的排出來，把他寫的字留下來。 */
+   三頁：雷達（誰交了）、里程碑（派什麼）、全班地下城（誰在哪）。
+   他做的事只有兩件：派一個里程碑、看完之後遞一件裝備過去。
 
-/* ================= 待你驗收 ================= */
+   系統不替他決定任何事，也不用分數轉譯他的判斷——
+   他選哪一件裝備，就等於他說了哪一句話。 */
 
-PAGES.queue = function () {
-  var q = queue('C1'), st = teacherStats();
+/* ---------- 雷達 ---------- */
+PAGES.radar = function () {
+  var u = me();
+  var rows = radar(u.classId);
+  var eco = ecology(u.classId);
+  var H = [head('雷達', '誰交了',
+    '照等最久的排。綠光是完工——拉近看檔案與他們說的卡關原因。')];
 
-  var cards = q.map(function (r) {
-    var hand = r.blockers.map(function (b) {
-      return '<div class="card sunk" style="margin:11px 0 0;border-color:var(--gold-d)">' +
-        '<div class="eyebrow">✋ 他們說卡住了 · ' + esc(b.task.title) + '</div>' +
-        '<p style="margin:0">' + nl(b.tt.blocker) + '</p></div>';
-    }).join('');
-    return '<div class="card' + (r.blockers.length ? ' hot' : '') + '">' +
-      '<div style="display:flex;gap:11px;align-items:baseline;flex-wrap:wrap">' +
-        '<span style="font-size:22px">' + esc(r.team.name) + '</span>' +
-        '<span class="pill">' + esc(LAYERS[r.team.layer - 1].code) + ' ' +
-          esc(LAYERS[r.team.layer - 1].name) + '</span>' +
-        '<span class="pill' + (r.stay >= 7 ? ' gold' : '') + '">停留 ' + r.stay + ' 天</span>' +
-        (r.blockers.length ? '<span class="pill hand">✋ 卡住</span>' : '') +
-        '<span class="sp" style="flex:1"></span>' +
-        '<span class="btn flat sm" data-go="tcurve" data-p=\'{"id":"' + r.team.teamId + '"}\'>看剖面</span>' +
-        '<span class="btn sm" data-go="team" data-p=\'{"id":"' + r.team.teamId + '"}\'>逐項確認</span>' +
-      '</div>' +
-      '<div class="fine" style="margin-top:11px">' +
-        (r.ready ? '交齊了 ' + r.sent.length + ' 項——這一層目前開的都在你這裡。'
-                 : '還沒交齊，但他們舉手了。') +
-        (r.redigs.length ? '　·　回頭補強 ' + r.redigs.length + ' 件' : '') +
-      '</div>' + hand +
-    '</div>';
-  }).join('');
-
-  var idle = classTeams('C1').filter(function (t) {
-    return !q.some(function (r) { return r.team.teamId === t.teamId; });
-  }).map(function (t) {
-    var rows = rowsFor(t.teamId, t.layer);
-    var doneN = rows.filter(function (r) { return r.tt.status === 'done'; }).length;
-    var motion = motionOf(t.teamId);
-    return '<div class="item flat"><div class="body">' +
-      '<div class="t">' + esc(t.name) + '</div>' +
-      '<div class="m">' + esc(LAYERS[t.layer - 1].name) + ' · 停留 ' +
-        RULES.stayDays(t.enteredAt, now()) + ' 天　·　這一層開了 ' + rows.length +
-        ' 項，判過 ' + doneN + ' 項' +
-        (motion.rounds ? '　·　來回 ' + motion.rounds + ' 次（改過 ' + motion.changed + ' 次）'
-                       : '　·　還沒送過任何一次') +
-      '</div></div>' +
-      '<div class="art"><span class="q">' + (rows.length - doneN) + '</span></div></div>';
-  }).join('');
-
-  return head('REVIEW QUEUE', '待你驗收',
-    '依停留天數排序，待最久的排最前面。舉手的組排最前面。') +
-    '<p class="fine">一組要把這一層目前開的全部交出來，才會排進這裡——' +
-    '同一組一起看，跨項的問題才看得出來。你隨時可以再開新的一項，' +
-    '開了之後那一組就會退出佇列，直到再交齊。</p>' +
-
-    (cards || '<div class="card"><p class="lead">現在沒有人在等你。</p></div>') +
-
-    '<h2>還沒排進來的</h2>' +
-    '<p class="fine">卡到一半的組跟完全沒來的組，在這裡長得不一樣——' +
-    '「來回幾次」不進成績，它只說明這一組有沒有在動。</p>' +
-    (idle || '<p class="fine">全班都在佇列裡。</p>') +
-
-    '<h2>你寫的</h2>' +
-    '<div class="row">' +
-      sumCard('合格考量', st.n + ' 件', '你寫下的判斷就是教材。學生在結算頁讀到的就是這一段。') +
-      sumCard('平均長度', st.avgChars + ' 字', '不是越長越好。夠具體，讓他們知道下一次改什麼就好。') +
-      sumCard('他們平均等你', st.avgWait.toFixed(1) + ' 天',
-        '系統不對學生承諾任何回覆時間，這個數字只給你自己看。') +
-    '</div>';
-};
-
-/* ================= 任務清單 ================= */
-
-PAGES.tasks = function () {
-  var blocks = LAYERS.map(function (l) {
-    /* 要連班一起比對——同一個人上一個專案的任務也在 Tasks 裡 */
-    var ts = where('Tasks', function (t) { return t.classId === 'C1' && t.layer === l.n; });
-    var rows = ts.map(function (t) {
-      var stat = t.teams.map(function (tid) { return ttOf(tid, t.taskId); }).filter(Boolean);
-      var done = stat.filter(function (x) { return x.status === 'done'; }).length;
-      var sent = stat.filter(function (x) { return x.status === 'sent'; }).length;
-      return '<div class="item flat"><div class="body">' +
-        '<div class="t">' + esc(t.title) + '</div>' +
-        '<div class="m">通過條件　' + esc(t.cond) + '</div>' +
-        '<div style="margin-top:11px;display:flex;gap:5px;flex-wrap:wrap">' +
-          dueTag(t.due) +
-          '<span class="pill">發給 ' + t.teams.length + ' 組</span>' +
-          '<span class="pill">清單 ' + (t.checks || []).length + ' 條</span>' +
-          (sent ? '<span class="pill gold">' + sent + ' 組在等你</span>' : '') +
-          (done ? '<span class="pill ok">' + done + ' 組判過了</span>' : '') +
-        '</div></div></div>';
-    }).join('');
-    return '<h2>' + l.code + '　' + esc(l.name) + '　<span class="pill">' + esc(l.stage) + '</span></h2>' +
-      '<p class="fine">' + esc(l.hard) + '</p>' +
-      (rows || '<p class="fine">這一層還沒開任何一項。</p>') +
-      '<p><span class="btn flat sm" data-go="newtask" data-p=\'{"L":' + l.n + '}\'>在這一層新增一項</span></p>';
-  }).join('');
-
-  return head('TASKS', '任務清單',
-    '四個階段各一塊。開幾項沒有上限——依進度決定開什麼、什麼時候開。') +
-    '<p class="fine">數量不是門檻，' + esc(RULES.GATE) + '</p>' + blocks;
-};
-
-/* ================= 新增一項 ================= */
-
-PAGES.newtask = function () {
-  var L = S.p.L || 1;
-  var teams = classTeams('C1').map(function (t) {
-    return '<label class="check" style="border:1px solid var(--line)">' +
-      '<input type="checkbox" class="pick" value="' + t.teamId + '"' +
-      (t.layer === L ? ' checked' : '') + ' ' +
-      'style="width:22px;height:22px;accent-color:var(--gold)">' +
-      '<span>' + esc(t.name) + '　<span class="fine">' +
-        esc(LAYERS[t.layer - 1].name) + '</span></span></label>';
-  }).join('');
-
-  return '<p><a class="plain" data-go="tasks">← 回任務清單</a></p>' +
-    head(LAYERS[L - 1].code + ' · ' + LAYERS[L - 1].stage, '新增一項',
-      '兩分鐘就開得完。系統不收檔案——作業照你原本的方式收。') +
-
-    '<p class="fine">預設只勾現在人在這一層的組。發給還沒下來的組也可以——' +
-    '他們走到這一層的時候就會看到。</p>' +
-
-    '<label>名稱</label><input type="text" id="t-title" placeholder="這一項叫什麼">' +
-    '<label>通過條件<span class="fine">　學生會照這一句判斷自己做完了沒有，' +
-      '回頭補強也是照它判</span></label>' +
-    '<input type="text" id="t-cond" placeholder="做到什麼程度算完成">' +
-    '<label>要注意的<span class="fine">　選填</span></label>' +
-    '<input type="text" id="t-note" placeholder="最容易做錯的地方">' +
-    '<label>勾選項<span class="fine">　一行一條。' + esc(RULES.say.check()) +
-      '——它是學生自己的紀錄，不是成績，也不是送出的門檻</span></label>' +
-    '<textarea id="t-checks" placeholder="一行一條"></textarea>' +
-    '<label>期限<span class="fine">　留白 ＝ 不設限。逾期只標示，不阻擋</span></label>' +
-    '<input type="date" id="t-due">' +
-    '<label>發給誰</label>' +
-    '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(242px,1fr))">' +
-      teams + '</div>' +
-
-    (S.flash ? '<p class="pill over" style="margin-top:11px">' + esc(S.flash) + '</p>' : '') +
-    '<p style="margin-top:22px"><span class="btn" data-act="publish" data-p=\'{"L":' + L + '}\'>發出去</span></p>';
-};
-
-/* ================= 逐項確認 ================= */
-/* 先選一組，同一組一起看——跨項的問題才看得出來。 */
-
-PAGES.team = function () {
-  var id = S.p.id, t = teamOf(id);
-  if (!t) {
-    var list = classTeams('C1').map(function (x) {
-      var rows = rowsFor(x.teamId, x.layer);
-      var sent = rows.filter(function (r) { return r.tt.status === 'sent'; }).length;
-      return '<div class="item" data-go="team" data-p=\'{"id":"' + x.teamId + '"}\'>' +
-        '<div class="body"><div class="t">' + esc(x.name) + '</div>' +
-        '<div class="m">' + esc(LAYERS[x.layer - 1].name) + ' · 停留 ' +
-          RULES.stayDays(x.enteredAt, now()) + ' 天　·　' + sent + ' 項在等你</div></div>' +
-        '<div class="art"><span class="q">' + sent + '</span></div></div>';
-    }).join('');
-    return head('TEAM', '逐項確認', '先選一組。') + list;
+  if (!rows.length) {
+    H.push('<div class="card dim">目前沒有人在等你。學生交出去之後會亮在這裡。</div>');
   }
-
-  var rows = rowsFor(id, t.layer);
-  var sent = rows.filter(function (r) { return r.tt.status === 'sent'; });
-  var redigs = where('Redigs', function (r) { return r.teamId === id && r.status === 'sent'; });
-
-  var pend = sent.map(function (r) {
-    return '<div class="item" data-go="review" data-p=\'{"team":"' + id + '","task":"' +
-      r.task.taskId + '"}\'>' +
-      '<div class="body"><div class="t">' + esc(r.task.title) + '</div>' +
-      '<div class="m">通過條件　' + esc(r.task.cond) + '</div>' +
-      '<div style="margin-top:11px;display:flex;gap:5px;flex-wrap:wrap">' +
-        '<span class="pill">第 ' + r.tt.attempt + ' 次送出</span>' +
-        '<span class="pill">他們說「' + esc(EFFORT[r.tt.effort] || '—') + '」</span>' +
-        (r.tt.text ? '<span class="pill gold">寫了多做的</span>' : '<span class="pill">多做的留白</span>') +
-        (r.tt.blocker ? '<span class="pill hand">✋ 卡住</span>' : '') +
-      '</div></div><div class="art"><span class="q">→</span></div></div>';
-  }).join('');
-
-  var red = redigs.map(function (r) {
-    var task = taskOf(r.taskId);
-    return '<div class="item" data-go="redig" data-p=\'{"id":"' + r.redigId + '"}\'>' +
-      '<div class="body"><div class="t">回頭補強　' + esc(task.title) + '</div>' +
-      '<div class="m">' + esc(String(r.note).slice(0, 70)) + '⋯</div></div>' +
-      '<div class="art"><span class="q">→</span></div></div>';
-  }).join('');
-
-  var allDone = rows.length && rows.every(function (r) { return r.tt.status === 'done'; });
-
-  var s = timelineOf(id).stats;
-  var d1 = function (x) { return x == null ? '—' : (Math.round(x * 10) / 10); };
-
-  return '<p><a class="plain" data-go="queue">← 回待你驗收</a>　' +
-      '<a class="plain" data-go="tcurve" data-p=\'{"id":"' + id + '"}\'>看他們的剖面 →</a></p>' +
-    head('TEAM', t.name,
-      esc(LAYERS[t.layer - 1].name) + ' · ' + esc(LAYERS[t.layer - 1].stage) +
-      ' · 停留 ' + RULES.stayDays(t.enteredAt, now()) + ' 天') +
-    '<p class="fine">跨任務看得到的：開啟到交平均 ' + d1(s.toFirst) + ' 天　·　' +
-      '一項平均 ' + d1(s.rounds) + ' 輪' +
-      (s.tight ? '　·　' + s.n + ' 項裡有 ' + s.tight + ' 項是期限前不到一天交的' : '') +
-      (s.late ? '　·　逾期交過 ' + s.late + ' 次' : '') +
-      '。這幾個是描述，不是評價——判過不過還是照通過條件。</p>' +
-    (pend ? '<h2>待審 ' + sent.length + ' 項</h2>' + pend : '') +
-    (red ? '<h2>回頭補強 ' + redigs.length + ' 件</h2>' +
-      '<p class="fine">照那一項本來的通過條件判。接受 ＝ 那一項多抽一次。</p>' + red : '') +
-    (allDone ? '<div class="card hot"><h3 class="mt0">他們這一層交出去的你都判過了。</h3>' +
-      '<p class="lead">要不要放他們往下一層？' + esc(RULES.GATE) + '</p>' +
-      '<p><span class="btn" data-go="gate" data-p=\'{"id":"' + id + '"}\'>去關卡審核</span>' +
-      '　<span class="btn flat" data-go="newtask" data-p=\'{"L":' + t.layer + '}\'>' +
-      '還是先再開一項</span></p></div>' : '') +
-    (!pend && !red && !allDone ? '<div class="card"><p class="lead">這一組現在沒有在等你的東西。</p></div>' : '');
-};
-
-/* ================= 一組的剖面 ================= */
-/* 學生看得到自己的，你看得到每一組的。同一份資料、同一張圖——
-   它是描述，不是評價，所以兩邊看到的東西一樣。 */
-
-PAGES.tcurve = function () {
-  var id = S.p.id, t = teamOf(id);
-  if (!t) {
-    return head('SECTION', '剖面', '先選一組。') +
-      classTeams('C1').map(function (x) {
-        var s = timelineOf(x.teamId).stats;
-        return '<div class="item" data-go="tcurve" data-p=\'{"id":"' + x.teamId + '"}\'>' +
-          '<div class="body"><div class="t">' + esc(x.name) + '</div>' +
-          '<div class="m">' + esc(LAYERS[x.layer - 1].name) + '　·　' + s.n + ' 項　·　' +
-          (s.rounds ? '平均 ' + (Math.round(s.rounds * 10) / 10) + ' 輪' : '還沒送過') +
-          '</div></div><div class="art"><span class="q">→</span></div></div>';
-      }).join('');
-  }
-  return '<p><a class="plain" data-go="tcurve" data-p=\'{}\'>← 換一組</a>　' +
-      '<a class="plain" data-go="team" data-p=\'{"id":"' + id + '"}\'>去逐項確認 →</a></p>' +
-    head('SECTION', t.name + ' · 剖面',
-      '他們走過的時間。這一頁沒有一個數字是評價，也沒有一個進成績。') +
-    curveReport(id, '他們');
-};
-
-/* ================= 審一項 ================= */
-
-PAGES.review = function () {
-  var tid = S.p.team, kid = S.p.task;
-  var t = teamOf(tid), task = taskOf(kid), tt = ttOf(tid, kid);
-  var subs = where('Submissions', function (s) { return s.teamId === tid && s.taskId === kid; });
-  var revs = where('Reviews', function (s) { return s.teamId === tid && s.taskId === kid; });
-  var last = subs[subs.length - 1];
-  var st = starters();
-
-  var gave = S.p.gave == null ? 0 : S.p.gave;
-  var gaveBtns = RULES.GAVE.map(function (g) {
-    return '<button class="' + (gave === g.n ? 'on' : '') + '" data-act="gave" data-p=\'{"g":' +
-      g.n + '}\'>' + g.n + '</button>';
-  }).join('');
-
-  var checkList = (task.checks || []).map(function (c, i) {
-    var on = (tt.checked || []).indexOf(i) >= 0;
-    return '<div class="check lock ' + (on ? 'on' : '') + '"><span class="box">' +
-      (on ? '✓' : '') + '</span><span>' + esc(c) + '</span></div>';
-  }).join('');
-
-  return '<p><a class="plain" data-go="team" data-p=\'{"id":"' + tid + '"}\'>← 回 ' +
-      esc(t.name) + '</a></p>' +
-    head('REVIEW', task.title,
-      esc(t.name) + ' · 第 ' + tt.attempt + ' 次送出') +
-
-    '<div class="row">' +
-      '<div class="card" style="flex:1;margin:0"><div class="eyebrow">通過條件</div>' +
-        '<p style="margin:0">' + esc(task.cond) + '</p>' +
-        (task.note ? '<div class="eyebrow" style="margin-top:11px">要注意的</div>' +
-          '<p class="fine" style="margin:0">' + esc(task.note) + '</p>' : '') + '</div>' +
-      '<div class="card" style="flex:1;margin:0"><div class="eyebrow">他們對自己的判斷</div>' +
-        '<p style="margin:0;font-size:22px">' + esc(EFFORT[tt.effort] || '—') + '</p>' +
-        '<div class="fine">跟他們自己原本估的比。</div>' +
-        (tt.blocker ? '<div class="eyebrow" style="margin-top:11px">✋ 他們說卡住了</div>' +
-          '<p class="fine" style="margin:0">' + nl(tt.blocker) + '</p>' : '') + '</div>' +
-    '</div>' +
-
-    '<h2>他們交了什麼</h2>' +
-    '<p class="fine">系統不收檔案、看不到內容——作業在你原本收作業的地方。' +
-    '下面這一段是他們自己寫的「這一項多做了什麼」。</p>' +
-    '<div class="card sunk"><p style="margin:0">' +
-      (last && last.text ? nl(last.text) : '<span class="fine">（留白）</span>') + '</p></div>' +
-
-    (task.checks && task.checks.length ?
-      '<h3>他們的清單（' + (tt.checked || []).length + '/' + task.checks.length + '）</h3>' +
-      '<p class="fine">' + esc(RULES.say.check()) + '——這是他們自己的紀錄，不是成績。</p>' +
-      '<div class="card" style="padding:11px">' + checkList + '</div>' : '') +
-
-    (revs.length ? roundLog(subs, revs, task) : '') +
-
-    '<h2>合格考量</h2>' +
-    '<p class="fine">你寫的這一段就是教材。學生會在結算頁一字不改讀到它。</p>' +
-    (st.length ? '<div class="fine">你常用的起頭：' + st.map(function (s) {
-      return '<a class="plain" data-act="starter" data-p=\'{"s":"' + esc(s) + '"}\'>' +
-        esc(s) + '⋯</a>';
-    }).join('　') + '</div>' : '') +
-    '<textarea id="reason" style="min-height:154px" placeholder="他們做到了什麼、還差什麼、下一次改什麼">' +
-      esc(draft('reason')) + '</textarea>' +
-
-    '<h2>' + RULES.GAVE_MIN + '–' + RULES.GAVE_MAX + '</h2>' +
-    '<p class="lead">' + esc(RULES.GAVE_STATEMENT) + '</p>' +
-    '<div class="seg">' + gaveBtns + '</div>' +
-    '<p class="fine" style="margin-top:11px">' +
-      '<b>' + gave + '　' + esc(RULES.GAVE[gave].anchor) + '</b>　' + esc(RULES.GAVE[gave].effect) +
-      '　→　' + esc(RULES.say.drawsFor(task.layer, gave)) + '。<br>' +
-      '這一格只決定抽幾次，<b>不決定過不過</b>。它是這個系統裡唯一能獎勵' +
-      '「不只把作業交出來」的地方。</p>' +
-
-    (S.flash ? '<p class="pill over">' + esc(S.flash) + '</p>' : '') +
-    '<div class="sep"></div>' +
-    '<p><span class="btn" data-act="judge" data-p=\'{"r":"ok"}\'>通過</span>' +
-    '　<span class="btn flat" data-act="judge" data-p=\'{"r":"back"}\'>需補充</span></p>' +
-    '<p class="fine">需補充不扣任何分數，重交次數不限。每一次的內容與理由都留著，' +
-    '兩份草稿會並排放在他們的往返紀錄裡。</p>';
-};
-
-/* 回頭補強：接受／不接受 */
-PAGES.redig = function () {
-  var r = find('Redigs', function (x) { return x.redigId === S.p.id; });
-  var task = taskOf(r.taskId), t = teamOf(r.teamId);
-  return '<p><a class="plain" data-go="team" data-p=\'{"id":"' + r.teamId + '"}\'>← 回 ' +
-      esc(t.name) + '</a></p>' +
-    head('REDIG', '回頭補強　' + task.title, esc(t.name)) +
-    '<div class="card"><div class="eyebrow">這一項本來的通過條件</div>' +
-      '<p style="margin:0">' + esc(task.cond) + '</p>' +
-      '<div class="fine" style="margin-top:11px">照它判，不是照現在的標準判。</div></div>' +
-    '<h2>他們回頭補了什麼</h2>' +
-    '<div class="card sunk"><p style="margin:0">' + nl(r.note) + '</p></div>' +
-    '<h2>你的理由</h2>' +
-    '<p class="fine">不接受也要寫——學生讀得到，而且可以再送。</p>' +
-    '<textarea id="rreason"></textarea>' +
-    '<p><span class="btn" data-act="rjudge" data-p=\'{"id":"' + r.redigId + '","ok":1}\'>接受（那一項多抽一次）</span>' +
-    '　<span class="btn flat" data-act="rjudge" data-p=\'{"id":"' + r.redigId + '","ok":0}\'>不接受</span></p>';
-};
-
-/* ================= 關卡審核 ================= */
-
-PAGES.gate = function () {
-  var id = S.p.id;
-  if (!id) {
-    var list = classTeams('C1').map(function (x) {
-      var rows = rowsFor(x.teamId, x.layer);
-      var done = rows.filter(function (r) { return r.tt.status === 'done'; }).length;
-      return '<div class="item" data-go="gate" data-p=\'{"id":"' + x.teamId + '"}\'>' +
-        '<div class="body"><div class="t">' + esc(x.name) + '</div>' +
-        '<div class="m">' + esc(LAYERS[x.layer - 1].name) + ' · 停留 ' +
-          RULES.stayDays(x.enteredAt, now()) + ' 天　·　這一層判過 ' + done + ' / ' + rows.length +
-          ' 項</div></div><div class="art"><span class="q">→</span></div></div>';
-    }).join('');
-    return head('GATE', '關卡審核', RULES.GATE + '\n沒有任何數量條件、時間條件或分數條件替你決定。') +
-      '<p class="fine">學生不送申請——你覺得可以就放行。</p>' + list;
-  }
-
-  var t = teamOf(id), rows = rowsFor(id, t.layer);
-  var table = rows.map(function (r) {
-    var rev = where('Reviews', function (v) {
-      return v.teamId === id && v.taskId === r.task.taskId && v.result === 'ok';
-    }).pop();
-    return '<div class="item flat"><div class="body">' +
-      '<div class="t">' + esc(r.task.title) + '</div>' +
-      '<div class="m">' + (r.tt.status === 'done'
-        ? '判過了　·　你給「' + esc(RULES.gaveAnchor(rev ? rev.gave : 0)) + '」'
-        : r.tt.status === 'sent' ? '還在你這裡'
-        : r.tt.status === 'back' ? '你要他們補' : '他們還沒交') + '</div></div>' +
-      '<div class="art"><span class="q">' + (r.tt.status === 'done' ? '✓' : '·') + '</span></div></div>';
-  }).join('');
-
-  return '<p><a class="plain" data-go="gate" data-p=\'{}\'>← 換一組</a></p>' +
-    head('GATE', t.name + ' · ' + LAYERS[t.layer - 1].name,
-      '這是整個系統唯一的門。所有畫面都不該暗示還有第二道。') +
-
-    '<h2>這一層的項目對照</h2>' +
-    '<p class="fine">數量不是條件——你隨時可以再開一項，也可以現在就放他們往下。</p>' +
-    (table || '<p class="fine">這一層還沒開任何一項。</p>') +
-
-    '<h2>中途接手</h2>' +
-    '<p class="fine">課程走到一半才導入時，前面在系統外做完的直接認列。設定之後這一組從下一層開始。</p>' +
-    '<div class="seg">' + [0, 1, 2, 3, 4].map(function (n) {
-      return '<button class="' + ((t.startedAt || 0) === n ? 'on' : '') +
-        '" data-act="startat" data-p=\'{"id":"' + id + '","n":' + n + '}\'>認列 ' + n + ' 層</button>';
-    }).join('') + '</div>' +
-
-    '<h2>判斷理由</h2>' +
-    '<p class="fine">學生在紀錄裡讀得到這一段，而且它會留在他們手上那一疊裡。' +
-      '放行 ＋' + RULES.RELEASE + ' 分（道具 ' + RULES.TOOL + ' ＋ 守關戰利品 ' +
-      RULES.TROPHY + '），並且擊退' + esc(LAYERS[t.layer - 1].boss.name) + '。<br>' +
-      '戰利品你不用選——牠會留下 ' + RULES.OFFER + ' 件，' +
-      '<b>由他們自己挑一件帶走</b>。攤開哪 ' + RULES.OFFER + ' 件跟他們做得好不好無關，' +
-      '你也沒有辦法用它獎勵或懲罰任何人。</p>' +
-    '<textarea id="verdict" placeholder="為什麼現在可以往下">' + esc(draft('verdict')) + '</textarea>' +
-    (S.flash ? '<p class="pill over">' + esc(S.flash) + '</p>' : '') +
-    '<p><span class="btn" data-act="release" data-p=\'{"id":"' + id + '"}\'>' +
-      (t.layer < RULES.LAYERS ? '放他們往下一層' : '放行到結局') + '</span></p>';
-};
-
-/* ================= 全班位置 ================= */
-
-PAGES.classmap = function () {
-  var teams = classTeams('C1');
-  var body = LAYERS.map(function (l) {
-    var on = teams.filter(function (x) { return x.layer === l.n; });
-    var b = PACK.bosses[l.n - 1];
-    var guys = on.map(function (x, i) {
-      return '<div class="guy" style="left:' + (8 + i * 100 / Math.max(1, on.length)) + '%">' +
-        '<div class="p">☖</div><div class="g">' + esc(x.name.split(' · ')[0]) + '</div>' +
-        '<div class="g" style="color:var(--mute)">' + RULES.stayDays(x.enteredAt, now()) + ' 天</div></div>';
-    }).join('');
-    return '<div class="band" ' + layerVars(l.n) + '>' +
-      '<div class="lab"><div class="code">' + l.code + '</div><div class="nm">' + esc(l.name) + '</div>' +
-      '<div class="code" style="letter-spacing:0">' + esc(l.stage) + '　' + on.length + ' 組</div></div>' +
-      '<div class="field">' + guys +
-      '<div class="boss"><img src="' + pxSvg(b.px, b.hue) + '" alt=""></div></div></div>';
-  }).join('');
-  return head('CLASS', '全班位置', '整班在同一張剖面上，沒有迷霧。') +
-    '<div class="map">' + body + '</div>' +
-    '<p class="fine">學生看到的是同一張圖，但下面還沒開的那幾層是霧。</p>';
-};
-
-/* ================= 學生端的世界 ================= */
-
-PAGES.world = function () {
-  var blocks = LAYERS.map(function (l) {
-    var b = PACK.bosses[l.n - 1];
-    return '<div class="card layer" ' + layerVars(l.n) + '>' +
-      '<div style="display:flex;gap:22px;flex-wrap:wrap">' +
-        '<img src="' + pxSvg(b.px, b.hue) + '" style="width:110px;height:110px;object-fit:contain">' +
-        '<div style="flex:1;min-width:330px">' +
-          '<div class="eyebrow">' + l.code + '　' + esc(l.stage) + '</div>' +
-          '<h3 class="mt0">' + esc(l.name) + '　·　' + esc(l.boss.name) + '</h3>' +
-          '<p style="margin:0 0 11px">' + esc(l.hard) + '</p>' +
-          '<p class="fine">' + esc(l.boss.trait) + '<br>' +
-          '「' + esc(l.boss.line) + '」<br>' +
-          '道具　' + esc(l.tool.name) + '——' + esc(l.tool.why) + '</p>' +
-        '</div></div></div>';
-  }).join('');
-
-  return head('WORLD', '學生端的世界',
-    '學生看到的是一趟往地心的挖掘。你做的事沒有變：開任務、讀他們交的東西、寫下判斷。') +
-    '<div class="card"><div class="eyebrow">你在故事裡</div>' +
-      '<h3 class="mt0">斗篷人　·　' + esc(CLOAK.who) + '</h3>' +
-      '<p style="margin:0">' + esc(CLOAK.say) + '</p>' +
-      '<p class="fine" style="margin-top:11px">' + esc(CLOAK.road) + '</p></div>' +
-    blocks +
-    '<h2>全部的計算</h2>' +
-    '<div class="card sunk"><div class="fine" style="line-height:2.2">' +
-      esc(RULES.say.pass()) + '<br>' + esc(RULES.say.drop()) + '<br>' +
-      esc(RULES.say.release()) + '<br>' + esc(RULES.say.check()) + '<br>' +
-      esc(RULES.say.round()) + '<br>' + esc(RULES.say.draws()) + '<br>' +
-      '回頭補強　' + esc(RULES.say.redig()) + '<br>' +
-      '期限　幾天後／指定日期／不設限。逾期只標示，不阻擋<br>' +
-      '停留天數　從進到那一層那一刻起算<br>' +
-      '每層任務數　沒有上限<br>' +
-      esc(RULES.GATE) +
-    '</div></div>';
-};
-
-/* ================= 期末回顧 ================= */
-
-PAGES.final = function () {
-  var done = classTeams('C1').filter(function (t) { return t.finished; });
-  if (!done.length) {
-    return head('FINALE', '期末回顧', '四層走完的組會出現在這裡。') +
-      '<div class="card"><p class="lead">還沒有組走完四層。</p></div>';
-  }
-  var body = done.map(function (t) {
-    var f = finaleOf(t.teamId) || {};
-    var passes = where('Passes', function (p) { return p.teamId === t.teamId; });
-    var tts = where('TeamTasks', function (x) { return x.teamId === t.teamId && x.status === 'done'; });
-    var sc = scoreOf(t.teamId), mo = motionOf(t.teamId);
-    return '<div class="card">' +
-      '<h3 class="mt0">' + esc(t.name) + '</h3>' +
-      '<div class="fine">判過 ' + tts.length + ' 項　·　放行 ' + passes.length + ' 層　·　' +
-        sc.total + ' 分　·　來回 ' + mo.rounds + ' 次（改過 ' + mo.changed + ' 次）</div>' +
-      '<div class="log" style="margin-top:22px">' + passes.map(function (p) {
-        return '<div class="n ok"><div class="h">' + LAYERS[p.layer - 1].code + ' ' +
-          esc(LAYERS[p.layer - 1].name) + '</div><div class="b">' + nl(p.reason) + '</div></div>';
-      }).join('') + '</div>' +
-      (f.opened
-        ? '<div class="card sunk"><div class="eyebrow">你寫的最後那段話</div>' +
-          '<p style="margin:0">' + nl(f.teacherWord) + '</p>' +
-          (f.submitted ? '<div class="eyebrow" style="margin-top:11px">他們取的名字</div>' +
-            '<p style="margin:0;font-size:33px;color:var(--gold)">' + esc(f.lightName) + '</p>'
-            : '<div class="fine" style="margin-top:11px">等他們命名封存。</div>') + '</div>'
-        : '<label>讀完之後，寫最後那段話</label>' +
-          '<textarea id="word-' + t.teamId + '" placeholder="這一趟他們做到了什麼"></textarea>' +
-          '<p><span class="btn" data-act="openend" data-p=\'{"id":"' + t.teamId + '"}\'>' +
-          '放行結局</span></p>') +
-    '</div>';
-  }).join('');
-  return head('FINALE', '期末回顧', '四層走完的組，讀完寫話 → 放行結局。') + body;
-};
-
-/* ---------- 老師的動作 ---------- */
-
-ACTS.publish = function (p) {
-  var title = val('#t-title'), cond = val('#t-cond');
-  if (!title.trim() || !cond.trim()) { S.flash = '名稱與通過條件要寫。'; render(); return; }
-  var picks = [].slice.call(document.querySelectorAll('.pick'))
-    .filter(function (c) { return c.checked; }).map(function (c) { return c.value; });
-  if (!picks.length) { S.flash = '至少發給一組。'; render(); return; }
-  var due = val('#t-due');
-  actPublish('C1', p.L, {
-    title: title, cond: cond, note: val('#t-note'),
-    checks: val('#t-checks').split('\n').map(function (s) { return s.trim(); })
-      .filter(function (s) { return s; }),
-    due: due ? new Date(due + 'T23:59:59').getTime() : null,
-    teams: picks
+  rows.forEach(function (x) {
+    var s = RULES.STAMPS[x.run.stamp];
+    H.push('<div class="card radar-row">');
+    H.push('<div class="radar-head">');
+    H.push('<span class="green"></span>');
+    H.push('<b>' + esc(x.team.name) + '</b>');
+    H.push('<span class="st ' + x.run.stamp + '">' + s.mark + ' ' + esc(s.name) + '</span>');
+    H.push('<span class="sp"></span><span class="dim">等 ' + x.waited + ' 天</span>');
+    H.push('</div>');
+    H.push('<div class="radar-ms">' + esc(x.ms.title) + '</div>');
+    H.push('<div class="log-num">承諾 <b>' + x.run.est + '</b> 天　·　實際 <b>' +
+           x.run.actual + '</b> 天</div>');
+    if (x.run.risks && x.run.risks.length) {
+      H.push('<div class="tags small"><span class="k">他們事先標的風險</span>');
+      x.run.risks.forEach(function (k) {
+        var d = RULES.snagOf(k);
+        if (d) H.push('<span class="tag static">' + d.icon + ' ' + esc(d.label) + '</span>');
+      });
+      H.push('</div>');
+    }
+    if (x.run.snags && x.run.snags.length) {
+      H.push('<div class="tags small"><span class="k">他們說卡在哪</span>');
+      x.run.snags.forEach(function (k) {
+        var d = RULES.snagOf(k);
+        if (d) H.push('<span class="tag static hit">' + d.icon + ' ' + esc(d.label) + '</span>');
+      });
+      H.push('</div>');
+    }
+    H.push(btn('看完了，發裝備', 'go:grant:' + x.run.runId, ''));
+    H.push('</div>');
   });
-  go('tasks');
+
+  /* 底下：全班一眼 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">全班現在</div>');
+  H.push('<div class="mini">');
+  eco.forEach(function (e) {
+    H.push('<div class="mini-row"><b>' + esc(e.name) + '</b>' +
+      '<span class="' + (e.stall >= 2 ? 'warnx' : e.stall === 1 ? 'dim' : 'ok') + '">' +
+      (e.stall >= 2 ? '休息中' : e.stall === 1 ? '慢下來了' : e.onMs ? '挖掘中' : '等派任務') +
+      '</span><span class="dim">深度 ' + e.depth + '</span></div>');
+  });
+  H.push('</div></div>');
+  return H.join('');
 };
 
-ACTS.gave = function (p) { keepDraft(); S.p.gave = p.g; render(); };
-ACTS.starter = function (p) {
-  var e = document.getElementById('reason');
-  if (e) { e.value = p.s; DRAFT.reason = p.s; e.focus(); }
+/* ---------- 發裝備 ---------- */
+PAGES.grant = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId), t = teamOf(r.teamId);
+  var s = RULES.STAMPS[r.stamp];
+  var acc = accuracyOf(r.teamId);
+
+  var H = [head('發裝備', t.name + '　·　' + m.title,
+    '選哪一件等於說哪一句話。每一件都綁一個理由——你選的是那句話。')];
+
+  H.push('<div class="card">');
+  H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + s.mark + ' ' +
+         esc(s.name) + '</span></div>');
+  H.push('<div class="log-num">承諾 <b>' + r.est + '</b> 天　·　實際 <b>' + r.actual + '</b> 天</div>');
+  H.push('<p class="dim">' + esc(RULES.judgeWhy(r.est, r.actual)) + '</p>');
+  H.push('<p class="dim">這一組到目前：準 ' + acc.exact + ' 次、早 ' + acc.early +
+         ' 次、失準 ' + acc.late + ' 次。</p>');
+  if (r.snags && r.snags.length) {
+    H.push('<div class="tags small"><span class="k">他們說卡在哪</span>');
+    r.snags.forEach(function (k) {
+      var d = RULES.snagOf(k);
+      if (d) H.push('<span class="tag static hit">' + d.icon + ' ' + esc(d.label) +
+                    '<em>' + esc(d.hint) + '</em></span>');
+    });
+    H.push('</div>');
+  }
+  H.push('</div>');
+
+  H.push('<div class="card"><div class="eyebrow">選一件</div><div class="gear-pick">');
+  RULES.GEARS.forEach(function (g) {
+    var on = DRAFT.gear === g.key;
+    H.push('<button class="gcard' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'pickgear:' + g.key })) + '\'>' +
+      '<b>' + g.icon + '</b><i>' + esc(g.name) + '</i><em>' + esc(g.why) + '</em></button>');
+  });
+  H.push('</div></div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">再加一句　選填</div>');
+  H.push('<textarea id="gr-word" rows="3" placeholder="' +
+    esc('例：訪談這種事最容易低估，你們沒有。') + '">' + esc(draft('gr-word')) + '</textarea>');
+  H.push('</div>');
+
+  H.push('<div class="row">');
+  H.push(btn('發出去', 'grant:' + r.runId, 'big'));
+  H.push(btn('回雷達', 'go:radar', 'ghost'));
+  H.push('</div>');
+  return H.join('');
 };
-ACTS.judge = function (p) {
-  var reason = val('#reason');
-  if (!reason.trim()) { keepDraft(); S.flash = '寫下合格考量。學生讀的就是這一段。'; render(); return; }
-  var gave = S.p.gave || 0;
-  actReview(S.p.team, S.p.task, { result: p.r, reason: reason, gave: gave });
-  go('team', { id: S.p.team });
+
+/* ---------- 里程碑 ---------- */
+PAGES.ms = function () {
+  var u = me();
+  var list = where('Milestones', function (m) { return m.classId === u.classId; })
+    .sort(function (a, b) { return b.at - a.at; });
+  var teams = where('Teams', function (t) { return t.classId === u.classId; });
+  var to = DRAFT.to || [];
+
+  var H = [head('里程碑', '你要他們交什麼',
+    '一次派一個。派出去之後，學生那邊會先被問「你打算花幾天」——' +
+    '期限是他們自己訂的，不是你。')];
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">派一個新的</div>');
+  H.push('<input id="ms-title" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
+  H.push('<textarea id="ms-note" rows="2" placeholder="' +
+    esc('要注意的地方。寫提醒，不要寫步驟。') + '"></textarea>');
+  H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
+  H.push('<div class="tags">');
+  H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
+         (to.length ? '只發給 ' + to.length + ' 組' : '全班') + '</span>');
+  teams.forEach(function (t) {
+    var on = to.indexOf(t.teamId) >= 0;
+    H.push('<button class="tag' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'to:' + t.teamId })) + '\'>' + esc(t.name) + '</button>');
+  });
+  H.push('</div>');
+  H.push(btn('派出去', 'publish', 'big'));
+  H.push('</div>');
+
+  list.forEach(function (m) {
+    var got = where('Runs', function (r) { return r.msId === m.msId; });
+    var done = got.filter(function (r) { return r.state === 'done'; }).length;
+    H.push('<div class="card">');
+    H.push('<div class="radar-head"><b>' + esc(m.title) + '</b><span class="sp"></span>' +
+      '<span class="dim">' + (m.teams.length ? m.teams.length + ' 組' : '全班') + '</span></div>');
+    if (m.note) H.push('<p class="dim">' + nl(m.note) + '</p>');
+    H.push('<div class="log-num">承諾了 <b>' + got.length + '</b> 組　·　走完 <b>' +
+           done + '</b> 組</div>');
+    /* 各組承諾了幾天——這是老師唯一看得到的「他們怎麼想這件事」 */
+    if (got.length) {
+      H.push('<div class="tags small"><span class="k">他們各自承諾</span>');
+      got.forEach(function (r) {
+        var t = teamOf(r.teamId);
+        H.push('<span class="tag static">' + esc(t ? t.name.slice(0, 4) : '') +
+               ' ' + r.est + ' 天' + (r.actual ? ' → ' + r.actual : '') + '</span>');
+      });
+      H.push('</div>');
+    }
+    H.push('</div>');
+  });
+  return H.join('');
 };
-ACTS.rjudge = function (p) {
-  var reason = val('#rreason');
-  if (!p.ok && !reason.trim()) { keepDraft(); S.flash = '不接受也要寫理由。'; render(); return; }
-  var r = find('Redigs', function (x) { return x.redigId === p.id; });
-  actRedigJudge(p.id, !!p.ok, reason);
-  go('team', { id: r.teamId });
-};
-ACTS.startat = function (p) { keepDraft(); actStartAt(p.id, p.n); render(); };
-ACTS.release = function (p) {
-  var v = val('#verdict');
-  if (!v.trim()) { keepDraft(); S.flash = '寫下你為什麼現在放他們往下。'; render(); return; }
-  actRelease(p.id, 'ok', v);
-  go('queue');
-};
-ACTS.openend = function (p) {
-  var e = document.getElementById('word-' + p.id);
-  if (!e || !e.value.trim()) { S.flash = '寫完最後那段話再放行結局。'; render(); return; }
-  actFinale(p.id, { teacherWord: e.value, opened: true });
-  render();
+
+/* ---------- 全班地下城（老師版：沒有霧） ---------- */
+PAGES.classeco = function () {
+  var u = me();
+  var rows = ecology(u.classId);
+  var H = [head('全班地下城', '每一組挖到哪',
+    '深度是走完幾個里程碑。每一組的專案不一樣，長度本來就不同。')];
+
+  H.push('<div class="eco">');
+  H.push('<div class="eco-surface">地表</div>');
+  var maxD = Math.max(3, rows.reduce(function (a, r) { return Math.max(a, r.depth); }, 0));
+  rows.forEach(function (r) {
+    H.push('<div class="eco-row">');
+    H.push('<span class="eco-name">' + esc(r.name) + '</span>');
+    H.push('<span class="eco-tube">');
+    for (var i = 0; i < maxD; i++) {
+      H.push('<span class="eco-seg' + (i < r.depth ? ' dug' : '') + '"></span>');
+    }
+    H.push('<span class="eco-hero ' + (r.stall >= 2 ? 'sleep' : r.stall === 1 ? 'vine' : 'ok') +
+      '" style="left:' + Math.min(96, (r.depth + r.at) / maxD * 100) + '%"></span>');
+    H.push('</span>');
+    H.push('<span class="eco-state">' +
+      (r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '挖掘中' : '等派任務') +
+      '</span>');
+    H.push('</div>');
+  });
+  H.push('</div>');
+
+  /* 改寫專案名稱 → 招牌升階 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">改寫某一組的專案名稱</div>');
+  H.push('<p class="dim">名稱收斂了就改寫一次。坑道口的招牌會從木牌升成鐵牌、' +
+         '再升成會發光的銘牌——不用多說一句話，材質就是肯定。</p>');
+  rows.forEach(function (r) {
+    var t = teamOf(r.teamId);
+    H.push('<div class="rn-row"><b>' + esc(t.name) + '</b>' +
+      '<span class="dim">' + esc(t.project || '（還沒定）') + '　·　' +
+      esc(SIGNS[RULES.SIGN_TIERS[Math.min(2, t.signTier || 0)]].name) + '</span></div>');
+  });
+  H.push('</div>');
+  return H.join('');
 };
 
 
@@ -3143,9 +1992,8 @@ ACTS.openend = function (p) {
 /* 開機。 */
 
 (function () {
-  if (!load()) seed();
-  /* 種子換過（欄位加減）就重種一次，不要拿舊的資料撐新的畫面 */
-  if (!DB.Teams.length || !DB.Teams[0].tro) seed();
+  /* 資料結構換過就重種一次，不要拿舊的撐新的畫面 */
+  if (!load() || !DB.Milestones || !DB.Runs) seed();
   S.who = 'U1';
   S.page = 'home';
   render();
