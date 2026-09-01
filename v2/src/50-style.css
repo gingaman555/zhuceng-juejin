@@ -1,0 +1,289 @@
+/* 樣子。
+
+   字級只用 11 的倍數——Cubic 11 是 11px 的點陣字，放到 13px、17px 會糊掉。
+   所以整份只有 11 / 22 / 33 / 44 / 55 / 66 六級，沒有中間值。 */
+
+:root{
+  --bg:#0B0A09; --panel:#14110D; --panel2:#1A1611; --sunk:#0E0C0A;
+  --line:#2E2822; --line2:#443B31;
+  --ink:#E8E0D2; --dim:#9A8F7D; --mute:#63594C;
+  --gold:#E9B341; --gold2:#F5CB74; --gold-d:#7A5A18;
+  --ok:#7CC98F; --over:#D9603F; --warn:#E9B341;
+  --L:#C9A227; --Ld:#9A7E22; --Ll:#F2E6C8; --Lbg:#171208; --Lline:#3A2E12;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink)}
+body{
+  font-family:'C11','Noto Sans TC',monospace;
+  font-size:22px; line-height:1.7;
+  -webkit-font-smoothing:none;
+  image-rendering:pixelated;
+}
+button,input,textarea,select{font-family:inherit;font-size:22px;color:inherit}
+img{display:block}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-thumb{background:var(--line)}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- 版面 ---------- */
+
+#app{display:flex;min-height:100vh}
+
+.side{
+  width:242px;flex:0 0 242px;background:var(--panel);
+  border-right:1px solid var(--line);display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow:auto
+}
+.side-head{padding:22px;border-bottom:1px solid var(--line)}
+.side-head .k{font-size:11px;color:var(--mute);letter-spacing:.2em}
+.side-head .n{font-size:22px;margin-top:5px}
+.side-head .s{font-size:11px;color:var(--dim);margin-top:5px}
+
+.nav{padding:11px 0;flex:1}
+.nav a{
+  display:flex;align-items:center;gap:11px;padding:11px 22px;
+  color:var(--dim);cursor:pointer;border-left:3px solid transparent;font-size:22px
+}
+.nav a:hover{color:var(--ink);background:var(--panel2)}
+.nav a.on{color:var(--gold);background:var(--panel2);border-left-color:var(--gold)}
+.nav a .dot{width:11px;height:11px;background:currentColor;opacity:.55;flex:0 0 11px}
+.nav a.on .dot{opacity:1}
+.nav .gap{height:11px}
+
+.main{flex:1;min-width:0}
+.wrap{max-width:1078px;padding:33px 44px 88px}
+
+/* ---------- 頂條 ---------- */
+
+.top{
+  display:flex;align-items:center;gap:11px;padding:11px 22px;
+  background:var(--panel);border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:20;font-size:11px;color:var(--dim);flex-wrap:wrap
+}
+.top .who{font-size:22px;color:var(--ink)}
+.top .sp{flex:1}
+.badge{
+  display:inline-block;padding:2px 8px;font-size:11px;
+  background:var(--gold);color:#1A1408
+}
+.badge.t{background:#7C6BC7;color:#F0ECFF}
+
+/* 試用列：只有原型有。真的上線沒有這一條。 */
+.demo{
+  display:flex;align-items:center;gap:11px;padding:11px 22px;flex-wrap:wrap;
+  background:#100D0A;border-bottom:1px solid var(--line);font-size:11px;color:var(--mute)
+}
+.demo b{color:var(--dim);font-weight:400}
+
+/* ---------- 元件 ---------- */
+
+.eyebrow{font-size:11px;color:var(--mute);letter-spacing:.2em;margin-bottom:5px}
+h1{font-size:44px;line-height:1.35;margin:0 0 11px;font-weight:400}
+h2{font-size:33px;line-height:1.45;margin:44px 0 11px;font-weight:400}
+h3{font-size:22px;line-height:1.6;margin:22px 0 11px;font-weight:400}
+p{margin:0 0 11px}
+.lead{font-size:22px;color:var(--dim);max-width:63ch}
+.fine{font-size:11px;color:var(--mute);line-height:1.9}
+.fine b{color:var(--dim);font-weight:400}
+
+.card{
+  background:var(--panel);border:1px solid var(--line);padding:22px;margin-bottom:22px
+}
+.card.sunk{background:var(--sunk)}
+.card.hot{border-color:var(--gold-d);background:linear-gradient(180deg,#1C1710,#141009)}
+.card.layer{border-color:var(--Lline);background:var(--Lbg)}
+
+.row{display:flex;gap:22px;flex-wrap:wrap}
+.row>*{flex:1;min-width:242px}
+.grid{display:grid;gap:11px}
+
+.btn{
+  display:inline-block;padding:11px 22px;background:var(--gold);color:#1A1408;
+  border:0;cursor:pointer;box-shadow:4px 4px 0 #00000099;font-size:22px;line-height:1.4
+}
+.btn:hover{background:var(--gold2)}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #00000099}
+.btn[disabled]{background:var(--line);color:var(--mute);cursor:not-allowed;box-shadow:none}
+.btn.ghost{background:transparent;color:var(--gold);border:1px dashed var(--gold-d);box-shadow:none}
+.btn.ghost:hover{background:#1A1408;color:var(--gold2)}
+.btn.flat{background:var(--panel2);color:var(--ink);border:1px solid var(--line2);box-shadow:none}
+.btn.flat:hover{border-color:var(--dim)}
+.btn.sm{font-size:11px;padding:8px 11px;box-shadow:2px 2px 0 #00000099}
+.btn.wide{width:100%;text-align:center}
+
+.pill{
+  display:inline-flex;align-items:center;gap:5px;padding:2px 8px;font-size:11px;
+  border:1px solid var(--line2);color:var(--dim)
+}
+.pill.ok{border-color:#2F5C3A;color:var(--ok)}
+.pill.gold{border-color:var(--gold-d);color:var(--gold)}
+.pill.over{border-color:#5C2A1B;color:var(--over)}
+.pill.hand{border-color:var(--gold);color:var(--gold);background:#1A1408}
+
+.kv{display:flex;gap:11px;align-items:baseline;font-size:11px;color:var(--mute)}
+.big{font-size:55px;line-height:1.1;color:var(--gold)}
+.big.plain{color:var(--ink)}
+
+label{display:block;font-size:11px;color:var(--dim);margin:11px 0 5px}
+input[type=text],input[type=date],textarea,select{
+  width:100%;background:var(--sunk);border:1px solid var(--line);
+  color:var(--ink);padding:11px;outline:0
+}
+input:focus,textarea:focus,select:focus{border-color:var(--gold-d)}
+textarea{resize:vertical;min-height:99px;line-height:1.7}
+::placeholder{color:var(--mute)}
+
+.sep{height:1px;background:var(--line);margin:22px 0}
+
+/* 勾選：0 分，所以它長得不像分數。 */
+.check{
+  display:flex;gap:11px;align-items:flex-start;padding:11px;cursor:pointer;
+  border:1px solid transparent
+}
+.check:hover{background:var(--panel2)}
+.check .box{
+  width:22px;height:22px;flex:0 0 22px;border:1px solid var(--line2);
+  background:var(--sunk);color:var(--gold);text-align:center;line-height:20px;font-size:11px
+}
+.check.on .box{background:var(--gold);color:#1A1408;border-color:var(--gold)}
+.check.lock{cursor:default;opacity:.75}
+.check.lock:hover{background:transparent}
+
+/* 三選一 */
+.seg{display:flex;gap:0;border:1px solid var(--line2);width:fit-content;flex-wrap:wrap}
+.seg button{
+  background:transparent;border:0;border-right:1px solid var(--line2);
+  padding:11px 22px;cursor:pointer;color:var(--dim);font-size:22px
+}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--gold);color:#1A1408}
+.seg button:hover:not(.on){background:var(--panel2);color:var(--ink)}
+
+/* ---------- 生物與物品 ---------- */
+
+.mob{
+  display:flex;gap:22px;align-items:center;border:1px solid var(--Lline);
+  background:var(--Lbg);padding:22px
+}
+.mob img{width:132px;height:88px;object-fit:contain;flex:0 0 132px}
+.mob.sm img{width:66px;height:44px;flex:0 0 66px}
+.mob .n{font-size:22px;color:var(--Ll)}
+.mob .t{font-size:11px;color:var(--dim);line-height:1.9}
+
+.slot{
+  width:100%;aspect-ratio:1;background:var(--sunk);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer
+}
+.slot img{width:80%;height:80%;object-fit:contain}
+.slot.off{cursor:default}
+.slot.off:after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 50%,#FFFFFF07,transparent 70%)
+}
+.slot.on:hover{border-color:var(--line2)}
+.slot .q{font-size:22px;color:#251F19}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(77px,1fr));gap:5px}
+.dexname{font-size:11px;color:var(--mute);text-align:center;margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- 清單列 ---------- */
+
+.item{
+  display:flex;gap:22px;align-items:flex-start;border:1px solid var(--line);
+  background:var(--panel);padding:22px;margin-bottom:11px;cursor:pointer
+}
+.item:hover{border-color:var(--line2);background:var(--panel2)}
+.item .body{flex:1;min-width:0}
+.item .t{font-size:22px}
+.item .m{font-size:11px;color:var(--mute);margin-top:5px;line-height:1.9}
+.item .art{
+  width:66px;height:66px;flex:0 0 66px;background:var(--sunk);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center
+}
+.item .art img{width:88%;height:88%;object-fit:contain}
+.item .art .q{color:#2A241E;font-size:22px}
+.item.flat{cursor:default}
+.item.flat:hover{border-color:var(--line);background:var(--panel)}
+
+/* ---------- 地圖 ---------- */
+/* 只有一條軸：深度。層裡面不鋪格子——任務沒有順序。 */
+
+.map{border:1px solid var(--line);background:var(--sunk)}
+.map .band{
+  position:relative;border-bottom:1px solid var(--line);padding:22px;min-height:110px;
+  display:flex;align-items:center;gap:22px
+}
+.map .band:last-child{border-bottom:0}
+.map .band .lab{width:176px;flex:0 0 176px}
+.map .band .code{font-size:11px;color:var(--mute);letter-spacing:.2em}
+.map .band .nm{font-size:22px}
+.map .band .field{flex:1;position:relative;height:66px}
+.map .fog{
+  position:absolute;inset:0;background:repeating-linear-gradient(
+    135deg,#1A1611 0 6px,#141009 6px 12px);opacity:.9;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--mute)
+}
+.map .guy{position:absolute;top:50%;transform:translateY(-50%);text-align:center}
+.map .guy .p{font-size:22px}
+.map .guy .g{font-size:11px;color:var(--dim);white-space:nowrap}
+.map .guy.me .p{color:var(--gold)}
+.map .boss{position:absolute;right:11px;top:50%;transform:translateY(-50%);opacity:.8}
+.map .boss img{width:55px;height:55px;object-fit:contain}
+
+/* ---------- 結算 ---------- */
+
+.drop{
+  display:flex;gap:11px;flex-wrap:wrap;padding:22px;background:var(--sunk);
+  border:1px solid var(--line)
+}
+.drop .one{width:88px;text-align:center}
+.drop .one img{width:66px;height:66px;object-fit:contain;margin:0 auto}
+.drop .one .n{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.5}
+.drop .one .q{font-size:11px;color:var(--mute)}
+
+.stamp{
+  display:inline-block;border:2px solid var(--ok);color:var(--ok);
+  padding:5px 11px;font-size:22px;transform:rotate(-2deg)
+}
+.stamp.back{border-color:var(--over);color:var(--over)}
+
+/* 並排：你們寫的 ／ 他給的 */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.pair>div{background:var(--sunk);border:1px solid var(--line);padding:11px}
+.pair .h{font-size:11px;color:var(--mute);margin-bottom:5px}
+@media (max-width:900px){ .pair{grid-template-columns:1fr} }
+
+/* 往返紀錄 */
+.log{border-left:1px solid var(--line);padding-left:22px;margin-left:11px}
+.log .n{position:relative;padding-bottom:22px}
+.log .n:before{
+  content:'';position:absolute;left:-27px;top:9px;width:9px;height:9px;background:var(--line2)
+}
+.log .n.ok:before{background:var(--ok)}
+.log .n.back:before{background:var(--over)}
+.log .h{font-size:11px;color:var(--mute)}
+.log .b{font-size:22px;line-height:1.7;margin-top:5px}
+
+/* 剖面：深度對時間 */
+.curvebox{border:1px solid var(--line);background:var(--sunk);padding:11px;overflow-x:auto}
+.curve{width:100%;min-width:583px;height:auto;display:block;font-family:'C11','Noto Sans TC',monospace}
+
+/* 排行榜 */
+.rank{border:1px solid var(--line);background:var(--panel);padding:22px;margin-bottom:11px}
+.rank.me{border-color:var(--gold-d);background:#161209}
+.rank .top{background:transparent;border:0;padding:0;position:static;display:flex;
+  align-items:baseline;gap:11px}
+.rank .no{font-size:33px;color:var(--gold);width:44px}
+.rank .nm{font-size:22px;flex:1}
+.rank .sc{font-size:33px}
+.rank .how{font-size:11px;color:var(--mute);margin-top:11px}
+
+.hr{height:1px;background:var(--line);margin:11px 0}
+
+a.plain{color:var(--gold);cursor:pointer;text-decoration:none}
+a.plain:hover{color:var(--gold2)}
+
+.ta-r{text-align:right}
+.mt0{margin-top:0}
+.nowrap{white-space:nowrap}
