@@ -27,7 +27,7 @@ var SCN = {
      t     這一組
      row   現在在跑的那一個 run（可能沒有）
      st    停滯狀態 */
-function scene(t, row, st) {
+function scene(t, row, st, kind) {
   var run = row && row.run;
   var est = run ? (run.est || 1) : 4;
 
@@ -82,7 +82,7 @@ function scene(t, row, st) {
   }
 
   /* ── 洞口 ── */
-  H.push(sceneMouth(t));
+  H.push(sceneMouth(t, { kind: kind }));
 
   /* ── 地板 ── */
   H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
@@ -185,16 +185,51 @@ function scene(t, row, st) {
 /* ---------- 洞口 ----------
    左邊是你進來的地方：拱門、從上面落下來的光、掛著的招牌。
    招牌就在這裡，不在標題列——它是廊道入口的看板，不是頁首。 */
-function sceneMouth(t) {
+/* 洞口。招牌、營火、岩心架、往上的光——全部在這裡，而且一直在。
+
+   為什麼要一直在：沒觸發過的東西等於不存在。一個學生如果從來沒有
+   失準過，他整學期不會知道有營火這個地方；一個還沒封存過的人不會
+   知道岩心架是什麼。所以它們在那裡，只是沒點著——
+   「看得到但還沒發生」跟「不存在」是兩件事。 */
+function sceneMouth(t, next) {
   var sg = signOf(t.teamId);
+  var kind = next && next.kind;
+  var ks = keepsOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + SCN.ENT + 'px">'];
-  H.push('<div class="shaft"></div>');
+
+  /* 往上的光：出口。一直在，走出去之前它就只是一道光。 */
+  H.push('<div class="shaft' + (t.exitAsk || t.leftAt ? ' open' : '') + '"></div>');
   H.push('<div class="arch"></div>');
+
+  /* 招牌 */
   H.push('<div class="hang">');
   H.push('<div class="chain"></div>');
   H.push(pxTag(sg.px, sg.pal, 'sign'));
   H.push('</div>');
   H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b></div>');
+
+  /* 營火。失準的時候才點著，其餘時候是一堆沒點的柴。 */
+  H.push('<button class="mfire' + (kind === 'camp' ? ' lit' : '') + '"' +
+    ' data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'peek:camp' })) + '\'' +
+    ' title="' + esc(kind === 'camp' ? '營火：說一下哪一段比想的久'
+                                     : '營火（還沒點著）') + '">' +
+    pxTag(CAMPFIRE.px, kind === 'camp' ? CAMPFIRE.pal : COLD_PAL, '') + '</button>');
+
+  /* 岩心架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
+  H.push('<button class="mrack" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
+    esc(ks.length ? '岩心架：' + ks.length + ' 根' : '岩心架（還是空的）') + '">');
+  if (ks.length) {
+    ks.slice(-3).forEach(function (k) {
+      var kz = STRATA[0];
+      STRATA.forEach(function (x) { if (x.key === k.zone) kz = x; });
+      H.push(pxTag(k.px || coreOf(k.runId), kz.pal, 'mcore'));
+    });
+  } else {
+    H.push('<i></i><i></i><i></i>');
+  }
+  H.push('</button>');
+
   H.push('</div>');
   return H.join('');
 }

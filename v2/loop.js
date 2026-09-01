@@ -162,8 +162,8 @@ if (stX.level !== 0) fail('剛承諾就被判成停滯 level=' + stX.level + '�
   '——停滯應該從這一輪開始算，不是從上一輪的最後一次推進');
 else ok('停 9 天之後承諾新的一輪，沒有被誤判成停滯');
 var ntY = nextThing(TEAM);
-if (ntY.kind !== 'push') fail('剛承諾，下一件事應該是 push，卻是 ' + ntY.kind);
-else ok('剛承諾 → 今天該推一格');
+if (ntY.kind !== 'doing') fail('剛承諾，下一件事應該是 doing，卻是 ' + ntY.kind);
+else ok('剛承諾 → 正在做');
 var rX = runOf(TEAM, mX.msId);
 var g2 = 0;
 while (RULES.progress(rX.pushes, rX.est) < 1 && g2++ < 30) { actPush(TEAM, rX.runId, -1, 0); tick(); }

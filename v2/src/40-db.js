@@ -105,33 +105,20 @@ function nextThing(teamId) {
   /* 2. 老師勾可以了，還沒挑裝備 */
   var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
   if (gear) return { kind: 'gear', row: gear };
-  /* 3. 睡著了或長藤蔓——叫醒牠比接新任務重要。
-     這是整個設計的招牌互動：推一下，藤蔓碎掉，角色重新揮劍。
-     如果讓「接新任務」排在前面，那一下就永遠不會發生。 */
-  var st = stallOf(teamId);
-  if (st.level > 0) {
-    var stuck = rows.filter(function (x) { return x.run.state === 'running'; })[0];
-    if (stuck) return { kind: 'wake', row: stuck, stall: st };
-  }
-
-  /* 4. 派了但還沒承諾 */
+  /* 3. 派了但還沒承諾 */
   var fresh = rows.filter(function (x) { return x.run.state === 'fresh'; })[0];
   if (fresh) return { kind: 'commit', row: fresh };
-  /* 5. 進行中、今天還沒推進 */
-  var run = rows.filter(function (x) {
-    return x.run.state === 'running' && !pushedToday(teamId, x.run.runId);
-  })[0];
-  if (run) return { kind: 'push', row: run };
-  /* 6. 走完承諾的長度了——該交了 */
-  var done = rows.filter(function (x) {
-    return x.run.state === 'running' && RULES.progress(x.run.pushes, x.run.est) >= 1;
-  })[0];
-  if (done) return { kind: 'submit', row: done };
-  /* 7. 今天推過了。走廊還沒走完，但隨時交得出去——
-     走廊是「你承諾的長度」的視覺化，不是交件的門檻。
-     提早做完就該交，那才判得成「超乎預期」。 */
+
+  /* 4. 正在做。
+
+     這裡本來有三個狀態：叫醒（幾天沒按）、今天還沒按、今天按過了。
+     那三個都在催他每天開一次。拿掉了——他開始之前來說幾天，
+     做完回來交，中間不用開。
+
+     過了自己說的天數，畫面會暗、水會漫過來（見 stallOf），
+     但那不是一件「要他去處理」的事，它只是狀態，所以不排進這裡。 */
   var wait = rows.filter(function (x) { return x.run.state === 'running'; })[0];
-  if (wait) return { kind: 'waiting', row: wait };
+  if (wait) return { kind: 'doing', row: wait };
   var sent = rows.filter(function (x) { return x.run.state === 'submitted'; })[0];
   if (sent) return { kind: 'review', row: sent };
   return { kind: 'idle', row: null };
@@ -146,8 +133,7 @@ function pushedToday(teamId, runId) {
 }
 
 /* 這一個 run 最後一次推進是什麼時候 */
-/* 停滯只看真的動過的那幾天。說了「今天沒動」不會讓計時歸零——
-   那就是它沒有作弊空間的原因。 */
+/* 這一趟動過的最後一天。標日子的時候會用到。 */
 function lastPush(runId) {
   var ps = where('Pushes', function (p) {
     return p.runId === runId && (p.kind || 'move') === 'move';
@@ -155,16 +141,23 @@ function lastPush(runId) {
   return ps.length ? ps[ps.length - 1].at : 0;
 }
 
-/* 這一組的停滯狀態。
-   從「這一輪」開始算，不是從上一輪的最後一次推進——
-   一組跑完一輪、隔了九天老師才派新的，他一承諾就被判成睡著是錯的。
-   所以基準點取「這一輪的最後一次推進」與「這一輪承諾的時間」之中比較晚的那一個。 */
+/* 這一組現在的光。
+
+   本來看「幾天沒有按推進」。學生不必每天開了之後，那個數字算不出來，
+   而且它本來就把「有沒有開 app」跟「有沒有在做事」混為一談。
+
+   改成看行事曆：過了自己說的天數，畫面就開始暗。
+   那個數字是他自己說的，不是我規定的期限；而且系統不用問任何人
+   就知道今天是幾號。他不開，它也在走。 */
 function stallOf(teamId) {
   var cur = runsFor(teamId).filter(function (x) { return x.run.state === 'running'; })[0];
   if (!cur) return { level: 0, days: 0 };
-  var from = Math.max(lastPush(cur.run.runId) || 0, cur.run.committedAt || 0);
-  if (!from) return { level: 0, days: 0 };
-  return RULES.stallOf(from, now());
+  var est = cur.run.est || 1;
+  var gone = daysBetween(cur.run.committedAt, now());
+  var over = gone - est;
+  if (over >= RULES.band(est) + 1) return { level: 2, days: over };
+  if (over > 0) return { level: 1, days: over };
+  return { level: 0, days: 0 };
 }
 
 /* 深度＝完成過幾個里程碑。沒有終點。 */
@@ -333,6 +326,38 @@ function openDays(teamId, runId) {
     }
   }
   return out;
+}
+
+/* 標／取消標「那一天我動過」。
+
+   每天要按的那一版拿掉之後，這一份資料改成在交出去那一頁一次補齊。
+   i 是從承諾那天算起的第幾天（0 起算）。
+
+   它不進判定——判定只看承諾幾天與行事曆過了幾天——所以標不標、
+   標得準不準都不會改變任何結果，也因此沒有說謊的理由。 */
+function actMarkDay(teamId, runId, i) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return false;
+  var when = r.committedAt + i * DAY;
+  if (when > now() + DAY) return false;
+  var day = dayOf(when);
+  var has = find('Pushes', function (p) { return p.runId === runId && p.day === day; });
+  if (has) {
+    DB.Pushes = DB.Pushes.filter(function (p) {
+      return !(p.runId === runId && p.day === day);
+    });
+  } else {
+    DB.Pushes.push({
+      pushId: nid('P'), teamId: teamId, runId: runId, kind: 'move',
+      day: day, at: when, step: -1, back: 0
+    });
+  }
+  r.pushes = where('Pushes', function (p) {
+    return p.runId === runId && (p.kind || 'move') === 'move';
+  }).length;
+  save();
+  logEvent('mark', { teamId: teamId, runId: runId, n: r.pushes });
+  return true;
 }
 
 /* 這一趟的日誌。一格一天，從承諾那一天算起。
@@ -520,6 +545,42 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
+}
+
+/* ---------- 全班怎麼看這一個里程碑 ----------
+
+   同一個里程碑，別人說要花幾天。匿名，只回天數，不回是誰——
+   要的是「我是不是低估了」，不是「誰比較快」。
+
+   兩組以下不給看：三組的時候剩下那兩個數字誰是誰，猜得出來。 */
+function estSpread(msId, exceptTeam) {
+  var days = where('Runs', function (r) {
+    return r.msId === msId && r.est && r.teamId !== exceptTeam;
+  }).map(function (r) { return r.est; });
+  if (days.length < 2) return null;
+  days.sort(function (a, b) { return a - b; });
+  return {
+    n: days.length,
+    lo: days[0],
+    hi: days[days.length - 1],
+    mid: days[Math.floor(days.length / 2)],
+    all: days
+  };
+}
+
+/* 這一個班有沒有開排行榜。預設關。 */
+function rankOn(classId) {
+  var c = find('Classes', function (x) { return x.classId === classId; });
+  return !!(c && c.rank);
+}
+
+function actSetRank(classId, on) {
+  var c = find('Classes', function (x) { return x.classId === classId; });
+  if (!c) return null;
+  c.rank = !!on;
+  save();
+  logEvent('rank', { on: c.rank ? 1 : 0 });
+  return c;
 }
 
 /* 老師的雷達：誰交了、等多久了 */

@@ -138,10 +138,11 @@ RULES.stallOf = function (lastPushAt, nowTs) {
   return { level: 0, days: days };
 };
 
-/* 停滯的說法。不講「你逾期了」，講畫面上發生了什麼。 */
+/* 停滯的說法。不講「你逾期了」，講畫面上發生了什麼。
+   而且講的是他自己說的那個數字，不是我規定的期限。 */
 RULES.stallSay = function (level, days) {
-  if (level === 2) return '牠睡著了。' + days + ' 天沒有推進——按一下就會醒。';
-  if (level === 1) return '藤蔓爬上來了。' + days + ' 天沒有推進——推一次就會碎掉。';
+  if (level === 2) return '水淹過頭了。比你自己說的多 ' + days + ' 天。';
+  if (level === 1) return '水漫過來了。比你自己說的多 ' + days + ' 天。';
   return '';
 };
 

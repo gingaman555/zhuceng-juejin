@@ -62,7 +62,7 @@ img{display:block}
 .nav .gap{height:11px}
 
 .main{flex:1;min-width:0}
-.wrap{max-width:1078px;padding:33px 44px 88px}
+.wrap{max-width:1540px;padding:33px 44px 88px}
 
 /* ---------- 頂條 ---------- */
 
@@ -961,6 +961,35 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   background:var(--mute);z-index:3
 }
 
+/* ---------- 洞口那幾樣一直在的東西 ----------
+   沒觸發過的東西等於不存在。所以營火與岩心架一直在那裡，只是沒點著。 */
+.mouth .mfire{
+  position:absolute;left:11px;bottom:44px;width:44px;height:44px;
+  padding:0;border:none;background:none;cursor:pointer;opacity:.45
+}
+.mouth .mfire .px{width:44px;height:44px}
+.mouth .mfire:hover{opacity:.8}
+.mouth .mfire.lit{opacity:1;animation:bob 1.1s steps(1,end) infinite}
+
+.mouth .mrack{
+  position:absolute;right:33px;bottom:44px;width:55px;height:44px;
+  padding:0;border:none;background:none;cursor:pointer;
+  display:flex;align-items:flex-end;justify-content:center;gap:2px;opacity:.7
+}
+.mouth .mrack:hover{opacity:1}
+.mouth .mrack .px.mcore{width:14px;height:auto;max-height:44px}
+.mouth .mrack i{width:11px;height:14px;display:block;
+  box-shadow:inset 0 0 0 1px rgba(255,240,214,.14)}
+
+/* 出口的光。走出去之前它就只是一道光。 */
+.mouth .shaft.open{
+  background:linear-gradient(180deg,
+    rgba(233,179,65,.34) 0 33px,
+    rgba(233,179,65,.18) 33px 110px,
+    rgba(233,179,65,.08) 110px 176px,
+    transparent 176px);
+}
+
 /* 全班地下城的樣子。
 
    跟 52 / 53 同一套規矩：hard stop、0 模糊、光從左上來。
@@ -1300,6 +1329,29 @@ button.ac:active{transform:translateY(1px)}
 .coreview .cv-in{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
 .coreview .cv-in > div{flex:1;min-width:220px}
 
+/* ---------- 這幾天你動過哪幾天 ----------
+   一格一天。點一下切換。它不進判定，所以它不是一個要被填滿的東西。 */
+.dgrid{display:flex;flex-wrap:wrap;gap:5px;margin:11px 0}
+.dg{
+  width:44px;height:44px;padding:0;border:none;cursor:pointer;
+  background:var(--sunk);color:var(--mute);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06), 0 0 0 1px #000
+}
+.dg b{font-size:11px;font-weight:400}
+.dg:hover{color:var(--dim)}
+.dg:active{transform:translateY(1px)}
+.dg.on{background:var(--gold-d);color:var(--ink)}
+.dg.on b{color:#1A1408}
+
+/* ---------- 別組怎麼看這一件事 ----------
+   匿名的分布。沒有名字、沒有名次——只有「大家覺得這件事多大」。 */
+.spread{display:flex;align-items:flex-end;gap:3px;margin:11px 0;min-height:66px}
+.sp-c{flex:1;min-width:11px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.sp-c b{display:block;width:100%;background:var(--line2)}
+.sp-c i{font-style:normal;font-size:11px;color:var(--mute)}
+.sp-c.me b{background:var(--gold)}
+.sp-c.me i{color:var(--gold)}
+
 /* 手機。
 
    之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
@@ -1420,6 +1472,51 @@ button.ac:active{transform:translateY(1px)}
 }
 
 
+
+/* ---------- 寬螢幕：整個螢幕都用上 ----------
+
+   桌機本來跟手機是同一條窄欄，只是置中——一台 27 吋螢幕上，
+   兩側各空一大片，而中間那條還在往下捲。
+
+   做法不改 HTML：把 .wrap 變成會換行的排版，
+   廊道與「今天要做的」佔滿一整列（它們本來就該大），
+   其餘那幾張安靜的卡並排流下去。這樣同一份結構在兩種螢幕上
+   讀起來一樣，只是攤開的方式不同。 */
+
+@media (min-width: 1200px) {
+  .wrap{
+    display:flex;flex-wrap:wrap;align-items:flex-start;
+    gap:22px;align-content:flex-start
+  }
+  /* 整列：一眼要看到的東西 */
+  .wrap > .steps,
+  .wrap > .scn,
+  .wrap > .scn-foot,
+  .wrap > .act-card,
+  .wrap > .xsec-wrap,
+  .wrap > .flash,
+  .wrap > .eyebrow,
+  .wrap > h1,
+  .wrap > .lead,
+  .wrap > .stamp-card,
+  .wrap > .camp,
+  .wrap > .dash,
+  .wrap > .gate{flex:0 0 100%;margin-bottom:0}
+
+  /* 其餘並排。420 是一張卡讀起來還舒服的最小寬度。 */
+  .wrap > .card{flex:1 1 420px;margin-bottom:0;min-width:0}
+  .wrap > .row{flex:0 0 100%;margin:0}
+  .wrap > .btn{flex:0 0 auto}
+
+  /* 廊道與剖面圖越寬越好——那是它們本來就想要的 */
+  .scn{height:330px}
+  .scn-in{height:330px}
+}
+
+@media (min-width: 1700px) {
+  .wrap{max-width:1760px}
+  .wrap > .card{flex:1 1 480px}
+}
 
 </style>
 </head>
@@ -1549,6 +1646,10 @@ var MOBS = PACK.creatures;
    老師發的。圖用上一版的戰利品像素圖，意義完全換掉：
    那不是打贏掉的東西，是老師看到你做了什麼之後遞過來的。 */
 var GEAR_PX = PACK.trophies;
+
+/* 沒點著的東西。同一張圖，換一組冷掉的顏色——
+   「看得到但還沒發生」跟「不存在」是兩件事。 */
+var COLD_PAL = { '#': '#4A4038', o: '#2A241E', '*': '#6B5F51', '~': '#332C25' };
 
 
 /* ===== 12-props.js ===== */
@@ -2524,10 +2625,11 @@ RULES.stallOf = function (lastPushAt, nowTs) {
   return { level: 0, days: days };
 };
 
-/* 停滯的說法。不講「你逾期了」，講畫面上發生了什麼。 */
+/* 停滯的說法。不講「你逾期了」，講畫面上發生了什麼。
+   而且講的是他自己說的那個數字，不是我規定的期限。 */
 RULES.stallSay = function (level, days) {
-  if (level === 2) return '牠睡著了。' + days + ' 天沒有推進——按一下就會醒。';
-  if (level === 1) return '藤蔓爬上來了。' + days + ' 天沒有推進——推一次就會碎掉。';
+  if (level === 2) return '水淹過頭了。比你自己說的多 ' + days + ' 天。';
+  if (level === 1) return '水漫過來了。比你自己說的多 ' + days + ' 天。';
   return '';
 };
 
@@ -2821,33 +2923,20 @@ function nextThing(teamId) {
   /* 2. 老師勾可以了，還沒挑裝備 */
   var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
   if (gear) return { kind: 'gear', row: gear };
-  /* 3. 睡著了或長藤蔓——叫醒牠比接新任務重要。
-     這是整個設計的招牌互動：推一下，藤蔓碎掉，角色重新揮劍。
-     如果讓「接新任務」排在前面，那一下就永遠不會發生。 */
-  var st = stallOf(teamId);
-  if (st.level > 0) {
-    var stuck = rows.filter(function (x) { return x.run.state === 'running'; })[0];
-    if (stuck) return { kind: 'wake', row: stuck, stall: st };
-  }
-
-  /* 4. 派了但還沒承諾 */
+  /* 3. 派了但還沒承諾 */
   var fresh = rows.filter(function (x) { return x.run.state === 'fresh'; })[0];
   if (fresh) return { kind: 'commit', row: fresh };
-  /* 5. 進行中、今天還沒推進 */
-  var run = rows.filter(function (x) {
-    return x.run.state === 'running' && !pushedToday(teamId, x.run.runId);
-  })[0];
-  if (run) return { kind: 'push', row: run };
-  /* 6. 走完承諾的長度了——該交了 */
-  var done = rows.filter(function (x) {
-    return x.run.state === 'running' && RULES.progress(x.run.pushes, x.run.est) >= 1;
-  })[0];
-  if (done) return { kind: 'submit', row: done };
-  /* 7. 今天推過了。走廊還沒走完，但隨時交得出去——
-     走廊是「你承諾的長度」的視覺化，不是交件的門檻。
-     提早做完就該交，那才判得成「超乎預期」。 */
+
+  /* 4. 正在做。
+
+     這裡本來有三個狀態：叫醒（幾天沒按）、今天還沒按、今天按過了。
+     那三個都在催他每天開一次。拿掉了——他開始之前來說幾天，
+     做完回來交，中間不用開。
+
+     過了自己說的天數，畫面會暗、水會漫過來（見 stallOf），
+     但那不是一件「要他去處理」的事，它只是狀態，所以不排進這裡。 */
   var wait = rows.filter(function (x) { return x.run.state === 'running'; })[0];
-  if (wait) return { kind: 'waiting', row: wait };
+  if (wait) return { kind: 'doing', row: wait };
   var sent = rows.filter(function (x) { return x.run.state === 'submitted'; })[0];
   if (sent) return { kind: 'review', row: sent };
   return { kind: 'idle', row: null };
@@ -2862,8 +2951,7 @@ function pushedToday(teamId, runId) {
 }
 
 /* 這一個 run 最後一次推進是什麼時候 */
-/* 停滯只看真的動過的那幾天。說了「今天沒動」不會讓計時歸零——
-   那就是它沒有作弊空間的原因。 */
+/* 這一趟動過的最後一天。標日子的時候會用到。 */
 function lastPush(runId) {
   var ps = where('Pushes', function (p) {
     return p.runId === runId && (p.kind || 'move') === 'move';
@@ -2871,16 +2959,23 @@ function lastPush(runId) {
   return ps.length ? ps[ps.length - 1].at : 0;
 }
 
-/* 這一組的停滯狀態。
-   從「這一輪」開始算，不是從上一輪的最後一次推進——
-   一組跑完一輪、隔了九天老師才派新的，他一承諾就被判成睡著是錯的。
-   所以基準點取「這一輪的最後一次推進」與「這一輪承諾的時間」之中比較晚的那一個。 */
+/* 這一組現在的光。
+
+   本來看「幾天沒有按推進」。學生不必每天開了之後，那個數字算不出來，
+   而且它本來就把「有沒有開 app」跟「有沒有在做事」混為一談。
+
+   改成看行事曆：過了自己說的天數，畫面就開始暗。
+   那個數字是他自己說的，不是我規定的期限；而且系統不用問任何人
+   就知道今天是幾號。他不開，它也在走。 */
 function stallOf(teamId) {
   var cur = runsFor(teamId).filter(function (x) { return x.run.state === 'running'; })[0];
   if (!cur) return { level: 0, days: 0 };
-  var from = Math.max(lastPush(cur.run.runId) || 0, cur.run.committedAt || 0);
-  if (!from) return { level: 0, days: 0 };
-  return RULES.stallOf(from, now());
+  var est = cur.run.est || 1;
+  var gone = daysBetween(cur.run.committedAt, now());
+  var over = gone - est;
+  if (over >= RULES.band(est) + 1) return { level: 2, days: over };
+  if (over > 0) return { level: 1, days: over };
+  return { level: 0, days: 0 };
 }
 
 /* 深度＝完成過幾個里程碑。沒有終點。 */
@@ -3049,6 +3144,38 @@ function openDays(teamId, runId) {
     }
   }
   return out;
+}
+
+/* 標／取消標「那一天我動過」。
+
+   每天要按的那一版拿掉之後，這一份資料改成在交出去那一頁一次補齊。
+   i 是從承諾那天算起的第幾天（0 起算）。
+
+   它不進判定——判定只看承諾幾天與行事曆過了幾天——所以標不標、
+   標得準不準都不會改變任何結果，也因此沒有說謊的理由。 */
+function actMarkDay(teamId, runId, i) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return false;
+  var when = r.committedAt + i * DAY;
+  if (when > now() + DAY) return false;
+  var day = dayOf(when);
+  var has = find('Pushes', function (p) { return p.runId === runId && p.day === day; });
+  if (has) {
+    DB.Pushes = DB.Pushes.filter(function (p) {
+      return !(p.runId === runId && p.day === day);
+    });
+  } else {
+    DB.Pushes.push({
+      pushId: nid('P'), teamId: teamId, runId: runId, kind: 'move',
+      day: day, at: when, step: -1, back: 0
+    });
+  }
+  r.pushes = where('Pushes', function (p) {
+    return p.runId === runId && (p.kind || 'move') === 'move';
+  }).length;
+  save();
+  logEvent('mark', { teamId: teamId, runId: runId, n: r.pushes });
+  return true;
 }
 
 /* 這一趟的日誌。一格一天，從承諾那一天算起。
@@ -3236,6 +3363,42 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
+}
+
+/* ---------- 全班怎麼看這一個里程碑 ----------
+
+   同一個里程碑，別人說要花幾天。匿名，只回天數，不回是誰——
+   要的是「我是不是低估了」，不是「誰比較快」。
+
+   兩組以下不給看：三組的時候剩下那兩個數字誰是誰，猜得出來。 */
+function estSpread(msId, exceptTeam) {
+  var days = where('Runs', function (r) {
+    return r.msId === msId && r.est && r.teamId !== exceptTeam;
+  }).map(function (r) { return r.est; });
+  if (days.length < 2) return null;
+  days.sort(function (a, b) { return a - b; });
+  return {
+    n: days.length,
+    lo: days[0],
+    hi: days[days.length - 1],
+    mid: days[Math.floor(days.length / 2)],
+    all: days
+  };
+}
+
+/* 這一個班有沒有開排行榜。預設關。 */
+function rankOn(classId) {
+  var c = find('Classes', function (x) { return x.classId === classId; });
+  return !!(c && c.rank);
+}
+
+function actSetRank(classId, on) {
+  var c = find('Classes', function (x) { return x.classId === classId; });
+  if (!c) return null;
+  c.rank = !!on;
+  save();
+  logEvent('rank', { on: c.rank ? 1 : 0 });
+  return c;
 }
 
 /* 老師的雷達：誰交了、等多久了 */
@@ -3991,6 +4154,24 @@ var ACTS = {
     render();
   },
 
+  /* 點洞口那幾樣還沒點著的東西。它不做事，只說那是什麼——
+     沒觸發過的東西如果連問都不能問，它等於不存在。 */
+  peek: function (what) {
+    if (what === 'camp') {
+      var t = myTeam();
+      var n = nextThing(t.teamId);
+      if (n.kind === 'camp') return go('camp', { id: n.row.run.runId });
+      return say('營火。比你自己說的天數久的時候，會在這裡坐下來說一句哪一段比想的久。這不扣任何東西。');
+    }
+  },
+
+  /* 交出去那一頁：標／取消標「那一天我動過」。 */
+  mark: function (arg) {
+    var i = arg.indexOf('|');
+    actMarkDay(myTeam().teamId, arg.slice(0, i), Number(arg.slice(i + 1)));
+    render();
+  },
+
   /* 今天沒有動。
      跟推進一樣一下點擊，但不會讓畫面變亮，也不會讓停滯計時歸零——
      說實話不用付代價，也買不到東西，所以沒有說謊的理由。 */
@@ -4280,6 +4461,42 @@ function shapeLine(runId) {
   return H.join('');
 }
 
+/* ---------- 這幾天你動過哪幾天 ----------
+
+   每天要按的那一版拿掉之後，這一份資料本來就會不見。改成在交出去那一頁
+   一次補齊：一格一天，點一下切換「動過／沒動」。
+
+   它不進判定，所以標不標、標得準不準，都不會改變任何結果——
+   也因此沒有說謊的理由。它唯一影響的是那一趟長成什麼樣子的岩心。 */
+function dayGrid(runId) {
+  var log = dayLog(runId);
+  var H = ['<div class="dgrid">'];
+  log.forEach(function (d, i) {
+    var on = d && d.kind === 'move';
+    H.push('<button class="dg' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'mark:' + runId + '|' + i })) + '\'>' +
+      '<b>' + (i + 1) + '</b></button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 全班怎麼看這一個里程碑。匿名——只有天數，沒有誰是誰。
+   要的是「我是不是低估了」，不是「誰比較快」。 */
+function spreadBar(sp, mine) {
+  var hi = Math.max(sp.hi, Number(mine) || 0, RULES.EST_MIN);
+  var H = ['<div class="spread">'];
+  for (var i = 1; i <= hi; i++) {
+    var n = 0;
+    sp.all.forEach(function (d) { if (d === i) n++; });
+    H.push('<span class="sp-c' + (i === Number(mine) ? ' me' : '') + '">' +
+      '<b style="height:' + (n ? 11 + n * 11 : 3) + 'px"></b>' +
+      '<i>' + i + '</i></span>');
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
 
 /* ===== 58-gate.js ===== */
 /* 門口：還沒登入之前看得到的每一頁。
@@ -4506,15 +4723,15 @@ PAGES.home = function () {
 
   var H = [];
 
+  /* 三步，不是四步：中間那一段不用他開。 */
   H.push(stepBar([
-    ['接任務', '你決定花幾天'],
-    ['每天推進', '動過就按一下'],
-    ['交出去', '比對你承諾的天數'],
-    ['留一件', '這一趟留下哪一件']
+    ['開始前', '你說要花幾天'],
+    ['做完回來', '交出去，比對天數'],
+    ['封存', '那一趟長成一根岩心']
   ], STEP_AT[next.kind] == null ? -1 : STEP_AT[next.kind]));
 
   /* ── 廊道本身。招牌、深度、魔物全在裡面（見 61-scene.js） ── */
-  H.push(scene(t, next.row, st));
+  H.push(scene(t, next.row, st, next.kind));
 
   /* ── 今天要做的那一件。放在廊道正下面，而且是整頁最大聲的一張——
         本來它排在兩條尺跟分段清單後面，每一張卡看起來又都一樣重，
@@ -4639,9 +4856,8 @@ function exitCard(t) {
 /* nextThing 回的那個字，對到步驟條的第幾格。 */
 var STEP_AT = {
   commit: 0,
-  push: 1, waiting: 1, wake: 1,
-  submit: 2, camp: 2, review: 2,
-  gear: 3
+  doing: 1, submit: 1, camp: 1, review: 1,
+  gear: 2
 };
 
 /* 上一次自己留下的那一句 */
@@ -4667,25 +4883,14 @@ function actionCard(t, next, st) {
     H.push('<h2>在等老師確認。</h2>');
     H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
 
-  } else if (next.kind === 'wake') {
-    H.push('<div class="eyebrow">' + esc(WORLD.light[st.level].label) + '　·　' +
-      st.days + ' 天</div>');
-    H.push('<h2>' + (st.level === 2 ? '牠睡著了。' : '藤蔓爬上來了。') + '</h2>');
-    H.push(actRow(t, row.run.runId));
-
   } else if (next.kind === 'commit') {
     H.push('<div class="eyebrow">新的里程碑</div>');
     H.push('<h2>' + esc(row.ms.title) + '</h2>');
     if (row.ms.note) H.push('<p class="lead">' + nl(row.ms.note) + '</p>');
     H.push(btn('決定天數', 'go:commit:' + row.ms.msId, 'big'));
 
-  } else if (next.kind === 'push') {
-    H.push(doingCard(t, row, '今天'));
-
-  } else if (next.kind === 'submit') {
-    H.push('<div class="eyebrow">走到底了</div>');
-    H.push('<h2>' + esc(row.ms.title) + '</h2>');
-    H.push(btn('我交出去了', 'go:submit:' + row.run.runId, 'big'));
+  } else if (next.kind === 'doing') {
+    H.push(doingCard(t, row, st));
 
   } else if (next.kind === 'camp') {
     H.push('<div class="eyebrow">營火</div>');
@@ -4697,14 +4902,6 @@ function actionCard(t, next, st) {
     H.push('<h2>這一趟長成什麼樣子。</h2>');
     if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
     H.push(btn('去看', 'gear:' + row.run.runId, 'big'));
-
-  } else if (next.kind === 'waiting') {
-    var open2 = openDays(t.teamId, row.run.runId);
-    H.push('<div class="eyebrow">今天那一盞點好了</div>');
-    H.push('<h2>' + (open2.length ? '還有沒點的那幾盞。' : '明天再來一次。') + '</h2>');
-    if (open2.length) H.push(backRow(open2));
-    if (DRAFT.back) H.push(actRow(t, row.run.runId));
-    H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
 
   } else if (next.kind === 'review') {
     H.push('<div class="eyebrow">在老師那邊</div>');
@@ -4719,52 +4916,26 @@ function actionCard(t, next, st) {
   return H.join('');
 }
 
-/* ---------- 今天動的是哪一段 ----------
-   這一排就是推進鍵本身。點任何一段都算今天來過了，還是一下點擊。
-   點的是老師分的段——系統不列選項，也不用任何人先做設定。
-   老師沒分段就退回一顆鍵，一樣走得完。 */
-function actRow(t, runId) {
+/* ---------- 正在做 ----------
+
+   這一張本來是「今天動的是哪一段？」加一排每天要按的鍵。
+   拿掉了：兩個接觸點就夠——開始之前說幾天，做完回來交。
+
+   所以這一頁上只有一個動作，而且它一直都在：交出去。
+   底下那一句講的是狀態，不是催促——水在哪裡是行事曆決定的，
+   他開不開這一頁都一樣。 */
+function doingCard(t, row, st) {
+  var r = row.run;
+  var gone = daysBetween(r.committedAt, now()) + 1;
   var H = [];
-  if (!stepNames(runId).length) {
-    H.push('<div class="row">' + btn('我今天來過了', 'push:' + runId, 'big') + '</div>');
+  H.push('<div class="eyebrow">正在做　·　' + esc(row.ms.title) + '</div>');
+  if (st && st.level) {
+    H.push('<h2>' + esc(RULES.stallSay(st.level, st.days)) + '</h2>');
   } else {
-    H.push(stepLegend(runId, null, 'push:' + runId + '|'));
+    H.push('<h2>你說 ' + r.est + ' 天。今天是第 ' + gone + ' 天。</h2>');
   }
-  /* 「今天沒有動」跟上面那幾顆一樣是一下點擊。
-     它不會讓廊道變亮，也不會讓停滯計時歸零——說實話不用付代價，
-     也買不到東西。剛好是這樣，才沒有說謊的理由。 */
-  H.push('<button class="ac rest" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'rest:' + runId })) + '\'>' +
-    '<b></b>今天沒有動</button>');
-  return H.join('');
-}
-
-/* 補登。忘一天就再也補不回來的話，人會把整條廊道一起放掉。 */
-function backRow(open) {
-  var H = ['<div class="tags"><span class="k">忘了按</span>'];
-  open.forEach(function (o) {
-    H.push('<button class="tag' + (Number(DRAFT.back) === o.back ? ' on' : '') +
-      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'back:' + o.back })) +
-      '\'>' + esc(o.label) + '</button>');
-  });
-  if (DRAFT.back) {
-    H.push('<button class="tag" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'back:0' })) + '\'>算了</button>');
-  }
-  H.push('</div>');
-  return H.join('');
-}
-
-function doingCard(t, row, whenWord) {
-  var open = openDays(t.teamId, row.run.runId);
-  var b = Number(DRAFT.back || 0);
-  var word = b ? (b === 1 ? '昨天' : '前天') : whenWord;
-  var H = [];
-  H.push('<div class="eyebrow">' + esc(word) + '　·　' + esc(row.ms.title) + '</div>');
-  H.push('<h2>' + esc(word) + '動的是哪一段？</h2>');
-  H.push(actRow(t, row.run.runId));
-  if (open.length) H.push(backRow(open));
-  H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
+  H.push(btn('做完了，交出去', 'go:submit:' + r.runId, 'big'));
+  H.push('<p class="dim">中間不用來。做完再回來就好。</p>');
   return H.join('');
 }
 
@@ -4795,6 +4966,18 @@ PAGES.commit = function () {
       H.push(estBar(x.run.est, x.run.actual, false));
       H.push('</div>');
     });
+    H.push('</div>');
+  }
+
+  /* 全班怎麼看這一件事。匿名，只有天數。
+     它出現在拉滑桿之前——那一刻才是它有用的時候。 */
+  var sp = estSpread(m.msId, t.teamId);
+  if (sp) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">別組怎麼看這一件事</div>');
+    H.push(spreadBar(sp, est));
+    H.push('<div class="log-num">' + sp.n + ' 組已經說了　·　最少 <b>' +
+      sp.lo + '</b> 天　·　最多 <b>' + sp.hi + '</b> 天</div>');
     H.push('</div>');
   }
 
@@ -4849,6 +5032,20 @@ PAGES.submit = function () {
 
   H.push('<div class="card">');
   H.push(estBar(r.est, used, false));
+  H.push('</div>');
+
+  /* 這幾天你動過哪幾天。
+
+     每天要按的那一版拿掉之後，這一份資料本來就會不見。改成在這裡一次
+     補齊：一張那幾天的格子，點一下標起來。選填——不標一樣交得出去，
+     而且它不進判定（判定只看承諾幾天與行事曆過了幾天）。
+
+     它唯一影響的是那一趟長成什麼樣子的岩心。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">這幾天你動過哪幾天　選填</div>');
+  H.push(dayGrid(r.runId));
+  H.push('<p class="dim">點一下標起來。這不會影響判定——它決定的是' +
+         '這一趟封存起來長什麼樣子。</p>');
   H.push('</div>');
 
   H.push('<div class="row">');
@@ -5162,7 +5359,7 @@ var SCN = {
      t     這一組
      row   現在在跑的那一個 run（可能沒有）
      st    停滯狀態 */
-function scene(t, row, st) {
+function scene(t, row, st, kind) {
   var run = row && row.run;
   var est = run ? (run.est || 1) : 4;
 
@@ -5217,7 +5414,7 @@ function scene(t, row, st) {
   }
 
   /* ── 洞口 ── */
-  H.push(sceneMouth(t));
+  H.push(sceneMouth(t, { kind: kind }));
 
   /* ── 地板 ── */
   H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
@@ -5320,16 +5517,51 @@ function scene(t, row, st) {
 /* ---------- 洞口 ----------
    左邊是你進來的地方：拱門、從上面落下來的光、掛著的招牌。
    招牌就在這裡，不在標題列——它是廊道入口的看板，不是頁首。 */
-function sceneMouth(t) {
+/* 洞口。招牌、營火、岩心架、往上的光——全部在這裡，而且一直在。
+
+   為什麼要一直在：沒觸發過的東西等於不存在。一個學生如果從來沒有
+   失準過，他整學期不會知道有營火這個地方；一個還沒封存過的人不會
+   知道岩心架是什麼。所以它們在那裡，只是沒點著——
+   「看得到但還沒發生」跟「不存在」是兩件事。 */
+function sceneMouth(t, next) {
   var sg = signOf(t.teamId);
+  var kind = next && next.kind;
+  var ks = keepsOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + SCN.ENT + 'px">'];
-  H.push('<div class="shaft"></div>');
+
+  /* 往上的光：出口。一直在，走出去之前它就只是一道光。 */
+  H.push('<div class="shaft' + (t.exitAsk || t.leftAt ? ' open' : '') + '"></div>');
   H.push('<div class="arch"></div>');
+
+  /* 招牌 */
   H.push('<div class="hang">');
   H.push('<div class="chain"></div>');
   H.push(pxTag(sg.px, sg.pal, 'sign'));
   H.push('</div>');
   H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b></div>');
+
+  /* 營火。失準的時候才點著，其餘時候是一堆沒點的柴。 */
+  H.push('<button class="mfire' + (kind === 'camp' ? ' lit' : '') + '"' +
+    ' data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'peek:camp' })) + '\'' +
+    ' title="' + esc(kind === 'camp' ? '營火：說一下哪一段比想的久'
+                                     : '營火（還沒點著）') + '">' +
+    pxTag(CAMPFIRE.px, kind === 'camp' ? CAMPFIRE.pal : COLD_PAL, '') + '</button>');
+
+  /* 岩心架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
+  H.push('<button class="mrack" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
+    esc(ks.length ? '岩心架：' + ks.length + ' 根' : '岩心架（還是空的）') + '">');
+  if (ks.length) {
+    ks.slice(-3).forEach(function (k) {
+      var kz = STRATA[0];
+      STRATA.forEach(function (x) { if (x.key === k.zone) kz = x; });
+      H.push(pxTag(k.px || coreOf(k.runId), kz.pal, 'mcore'));
+    });
+  } else {
+    H.push('<i></i><i></i><i></i>');
+  }
+  H.push('</button>');
+
   H.push('</div>');
   return H.join('');
 }

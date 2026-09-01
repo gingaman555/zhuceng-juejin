@@ -132,3 +132,39 @@ function shapeLine(runId) {
   H.push('</div>');
   return H.join('');
 }
+
+/* ---------- 這幾天你動過哪幾天 ----------
+
+   每天要按的那一版拿掉之後，這一份資料本來就會不見。改成在交出去那一頁
+   一次補齊：一格一天，點一下切換「動過／沒動」。
+
+   它不進判定，所以標不標、標得準不準，都不會改變任何結果——
+   也因此沒有說謊的理由。它唯一影響的是那一趟長成什麼樣子的岩心。 */
+function dayGrid(runId) {
+  var log = dayLog(runId);
+  var H = ['<div class="dgrid">'];
+  log.forEach(function (d, i) {
+    var on = d && d.kind === 'move';
+    H.push('<button class="dg' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'mark:' + runId + '|' + i })) + '\'>' +
+      '<b>' + (i + 1) + '</b></button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 全班怎麼看這一個里程碑。匿名——只有天數，沒有誰是誰。
+   要的是「我是不是低估了」，不是「誰比較快」。 */
+function spreadBar(sp, mine) {
+  var hi = Math.max(sp.hi, Number(mine) || 0, RULES.EST_MIN);
+  var H = ['<div class="spread">'];
+  for (var i = 1; i <= hi; i++) {
+    var n = 0;
+    sp.all.forEach(function (d) { if (d === i) n++; });
+    H.push('<span class="sp-c' + (i === Number(mine) ? ' me' : '') + '">' +
+      '<b style="height:' + (n ? 11 + n * 11 : 3) + 'px"></b>' +
+      '<i>' + i + '</i></span>');
+  }
+  H.push('</div>');
+  return H.join('');
+}

@@ -292,6 +292,24 @@ var ACTS = {
     render();
   },
 
+  /* 點洞口那幾樣還沒點著的東西。它不做事，只說那是什麼——
+     沒觸發過的東西如果連問都不能問，它等於不存在。 */
+  peek: function (what) {
+    if (what === 'camp') {
+      var t = myTeam();
+      var n = nextThing(t.teamId);
+      if (n.kind === 'camp') return go('camp', { id: n.row.run.runId });
+      return say('營火。比你自己說的天數久的時候，會在這裡坐下來說一句哪一段比想的久。這不扣任何東西。');
+    }
+  },
+
+  /* 交出去那一頁：標／取消標「那一天我動過」。 */
+  mark: function (arg) {
+    var i = arg.indexOf('|');
+    actMarkDay(myTeam().teamId, arg.slice(0, i), Number(arg.slice(i + 1)));
+    render();
+  },
+
   /* 今天沒有動。
      跟推進一樣一下點擊，但不會讓畫面變亮，也不會讓停滯計時歸零——
      說實話不用付代價，也買不到東西，所以沒有說謊的理由。 */

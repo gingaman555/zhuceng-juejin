@@ -26,15 +26,15 @@ PAGES.home = function () {
 
   var H = [];
 
+  /* 三步，不是四步：中間那一段不用他開。 */
   H.push(stepBar([
-    ['接任務', '你決定花幾天'],
-    ['每天推進', '動過就按一下'],
-    ['交出去', '比對你承諾的天數'],
-    ['留一件', '這一趟留下哪一件']
+    ['開始前', '你說要花幾天'],
+    ['做完回來', '交出去，比對天數'],
+    ['封存', '那一趟長成一根岩心']
   ], STEP_AT[next.kind] == null ? -1 : STEP_AT[next.kind]));
 
   /* ── 廊道本身。招牌、深度、魔物全在裡面（見 61-scene.js） ── */
-  H.push(scene(t, next.row, st));
+  H.push(scene(t, next.row, st, next.kind));
 
   /* ── 今天要做的那一件。放在廊道正下面，而且是整頁最大聲的一張——
         本來它排在兩條尺跟分段清單後面，每一張卡看起來又都一樣重，
@@ -159,9 +159,8 @@ function exitCard(t) {
 /* nextThing 回的那個字，對到步驟條的第幾格。 */
 var STEP_AT = {
   commit: 0,
-  push: 1, waiting: 1, wake: 1,
-  submit: 2, camp: 2, review: 2,
-  gear: 3
+  doing: 1, submit: 1, camp: 1, review: 1,
+  gear: 2
 };
 
 /* 上一次自己留下的那一句 */
@@ -187,25 +186,14 @@ function actionCard(t, next, st) {
     H.push('<h2>在等老師確認。</h2>');
     H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
 
-  } else if (next.kind === 'wake') {
-    H.push('<div class="eyebrow">' + esc(WORLD.light[st.level].label) + '　·　' +
-      st.days + ' 天</div>');
-    H.push('<h2>' + (st.level === 2 ? '牠睡著了。' : '藤蔓爬上來了。') + '</h2>');
-    H.push(actRow(t, row.run.runId));
-
   } else if (next.kind === 'commit') {
     H.push('<div class="eyebrow">新的里程碑</div>');
     H.push('<h2>' + esc(row.ms.title) + '</h2>');
     if (row.ms.note) H.push('<p class="lead">' + nl(row.ms.note) + '</p>');
     H.push(btn('決定天數', 'go:commit:' + row.ms.msId, 'big'));
 
-  } else if (next.kind === 'push') {
-    H.push(doingCard(t, row, '今天'));
-
-  } else if (next.kind === 'submit') {
-    H.push('<div class="eyebrow">走到底了</div>');
-    H.push('<h2>' + esc(row.ms.title) + '</h2>');
-    H.push(btn('我交出去了', 'go:submit:' + row.run.runId, 'big'));
+  } else if (next.kind === 'doing') {
+    H.push(doingCard(t, row, st));
 
   } else if (next.kind === 'camp') {
     H.push('<div class="eyebrow">營火</div>');
@@ -217,14 +205,6 @@ function actionCard(t, next, st) {
     H.push('<h2>這一趟長成什麼樣子。</h2>');
     if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
     H.push(btn('去看', 'gear:' + row.run.runId, 'big'));
-
-  } else if (next.kind === 'waiting') {
-    var open2 = openDays(t.teamId, row.run.runId);
-    H.push('<div class="eyebrow">今天那一盞點好了</div>');
-    H.push('<h2>' + (open2.length ? '還有沒點的那幾盞。' : '明天再來一次。') + '</h2>');
-    if (open2.length) H.push(backRow(open2));
-    if (DRAFT.back) H.push(actRow(t, row.run.runId));
-    H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
 
   } else if (next.kind === 'review') {
     H.push('<div class="eyebrow">在老師那邊</div>');
@@ -239,52 +219,26 @@ function actionCard(t, next, st) {
   return H.join('');
 }
 
-/* ---------- 今天動的是哪一段 ----------
-   這一排就是推進鍵本身。點任何一段都算今天來過了，還是一下點擊。
-   點的是老師分的段——系統不列選項，也不用任何人先做設定。
-   老師沒分段就退回一顆鍵，一樣走得完。 */
-function actRow(t, runId) {
+/* ---------- 正在做 ----------
+
+   這一張本來是「今天動的是哪一段？」加一排每天要按的鍵。
+   拿掉了：兩個接觸點就夠——開始之前說幾天，做完回來交。
+
+   所以這一頁上只有一個動作，而且它一直都在：交出去。
+   底下那一句講的是狀態，不是催促——水在哪裡是行事曆決定的，
+   他開不開這一頁都一樣。 */
+function doingCard(t, row, st) {
+  var r = row.run;
+  var gone = daysBetween(r.committedAt, now()) + 1;
   var H = [];
-  if (!stepNames(runId).length) {
-    H.push('<div class="row">' + btn('我今天來過了', 'push:' + runId, 'big') + '</div>');
+  H.push('<div class="eyebrow">正在做　·　' + esc(row.ms.title) + '</div>');
+  if (st && st.level) {
+    H.push('<h2>' + esc(RULES.stallSay(st.level, st.days)) + '</h2>');
   } else {
-    H.push(stepLegend(runId, null, 'push:' + runId + '|'));
+    H.push('<h2>你說 ' + r.est + ' 天。今天是第 ' + gone + ' 天。</h2>');
   }
-  /* 「今天沒有動」跟上面那幾顆一樣是一下點擊。
-     它不會讓廊道變亮，也不會讓停滯計時歸零——說實話不用付代價，
-     也買不到東西。剛好是這樣，才沒有說謊的理由。 */
-  H.push('<button class="ac rest" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'rest:' + runId })) + '\'>' +
-    '<b></b>今天沒有動</button>');
-  return H.join('');
-}
-
-/* 補登。忘一天就再也補不回來的話，人會把整條廊道一起放掉。 */
-function backRow(open) {
-  var H = ['<div class="tags"><span class="k">忘了按</span>'];
-  open.forEach(function (o) {
-    H.push('<button class="tag' + (Number(DRAFT.back) === o.back ? ' on' : '') +
-      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'back:' + o.back })) +
-      '\'>' + esc(o.label) + '</button>');
-  });
-  if (DRAFT.back) {
-    H.push('<button class="tag" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'back:0' })) + '\'>算了</button>');
-  }
-  H.push('</div>');
-  return H.join('');
-}
-
-function doingCard(t, row, whenWord) {
-  var open = openDays(t.teamId, row.run.runId);
-  var b = Number(DRAFT.back || 0);
-  var word = b ? (b === 1 ? '昨天' : '前天') : whenWord;
-  var H = [];
-  H.push('<div class="eyebrow">' + esc(word) + '　·　' + esc(row.ms.title) + '</div>');
-  H.push('<h2>' + esc(word) + '動的是哪一段？</h2>');
-  H.push(actRow(t, row.run.runId));
-  if (open.length) H.push(backRow(open));
-  H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
+  H.push(btn('做完了，交出去', 'go:submit:' + r.runId, 'big'));
+  H.push('<p class="dim">中間不用來。做完再回來就好。</p>');
   return H.join('');
 }
 
@@ -315,6 +269,18 @@ PAGES.commit = function () {
       H.push(estBar(x.run.est, x.run.actual, false));
       H.push('</div>');
     });
+    H.push('</div>');
+  }
+
+  /* 全班怎麼看這一件事。匿名，只有天數。
+     它出現在拉滑桿之前——那一刻才是它有用的時候。 */
+  var sp = estSpread(m.msId, t.teamId);
+  if (sp) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">別組怎麼看這一件事</div>');
+    H.push(spreadBar(sp, est));
+    H.push('<div class="log-num">' + sp.n + ' 組已經說了　·　最少 <b>' +
+      sp.lo + '</b> 天　·　最多 <b>' + sp.hi + '</b> 天</div>');
     H.push('</div>');
   }
 
@@ -369,6 +335,20 @@ PAGES.submit = function () {
 
   H.push('<div class="card">');
   H.push(estBar(r.est, used, false));
+  H.push('</div>');
+
+  /* 這幾天你動過哪幾天。
+
+     每天要按的那一版拿掉之後，這一份資料本來就會不見。改成在這裡一次
+     補齊：一張那幾天的格子，點一下標起來。選填——不標一樣交得出去，
+     而且它不進判定（判定只看承諾幾天與行事曆過了幾天）。
+
+     它唯一影響的是那一趟長成什麼樣子的岩心。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">這幾天你動過哪幾天　選填</div>');
+  H.push(dayGrid(r.runId));
+  H.push('<p class="dim">點一下標起來。這不會影響判定——它決定的是' +
+         '這一趟封存起來長什麼樣子。</p>');
   H.push('</div>');
 
   H.push('<div class="row">');
