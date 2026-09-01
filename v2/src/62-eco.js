@@ -143,6 +143,21 @@ function xsShaft(r, i, maxD, mine) {
     H.push('</div>');
   }
 
+  /* 封存過的岩心掛在它們被封存的那個深度。
+
+     這是這張圖上唯一會一直長出新東西的地方，而且長出新東西的是別人。
+     內容一定會用完（六層走完一圈就沒有新的石頭了），同學不會。
+     點得開——好奇「他們那一週長什麼樣」比任何名次都有用。 */
+  keepsOf(r.teamId).forEach(function (k, n) {
+    if (n >= maxD) return;
+    var kz = STRATA[0];
+    STRATA.forEach(function (z) { if (z.key === k.zone) kz = z; });
+    H.push('<button class="xs-core" style="top:' + (xsTop(n) + 6) + 'px" ' +
+      'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'core:' + k.keepId })) +
+      '\' title="' + esc(k.name || '（沒取名）') + '">' +
+      pxTag(k.px || coreOf(k.runId), kz.pal, 'mcore') + '</button>');
+  });
+
   /* 小人站在最深的那一格 */
   var at = r.depth + (r.at > 0 ? 1 : 0);
   var pose = r.stall >= 2 ? HERO.sleep : HERO.idle;
@@ -181,7 +196,38 @@ function faunaCard() {
   return H.join('');
 }
 
-ACTS.fauna = function (name) { DRAFT.fa = name; render(); };
+ACTS.fauna = function (name) { DRAFT.fa = name; DRAFT.ck = null; render(); };
+ACTS.core = function (id) { DRAFT.ck = id; DRAFT.fa = null; render(); };
+
+/* 點開的那一根岩心。別組的也點得開——那是這張圖上唯一會一直
+   長出新東西的地方，而且長出新東西的是別人。 */
+function coreCard() {
+  if (!DRAFT.ck) return '';
+  var k = null;
+  DB.Keeps.forEach(function (x) { if (x.keepId === DRAFT.ck) k = x; });
+  if (!k) return '';
+  var z = STRATA[0];
+  STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
+  var tm = teamOf(k.teamId);
+  var r = find('Runs', function (x) { return x.runId === k.runId; });
+  var m = r ? msOf(r.msId) : null;
+
+  var H = ['<div class="card fa ' + z.key + '"><div class="fa-in">'];
+  H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'core big'));
+  H.push('<div>');
+  H.push('<div class="eyebrow">' + esc(tm ? tm.name : '') + '　·　' + esc(z.name) + '</div>');
+  H.push('<h2>' + esc(k.name || '（沒取名）') + '</h2>');
+  if (m) H.push('<p class="lead">' + esc(m.title) + '</p>');
+  H.push('<div class="corekey">');
+  H.push('<span><b class="c1"></b>來過 ' + (k.moved || 0) + ' 天</span>');
+  if (k.rested) H.push('<span><b class="c2"></b>說沒動 ' + k.rested + ' 天</span>');
+  if (k.blank) H.push('<span><b class="c3"></b>沒有紀錄 ' + k.blank + ' 天</span>');
+  H.push('</div>');
+  H.push('<div class="log-num">說 <b>' + (k.est || 0) + '</b> 天　·　過了 <b>' +
+    (k.elapsed || 0) + '</b> 天</div>');
+  H.push('</div></div></div>');
+  return H.join('');
+}
 
 /* 圖例。看得懂才叫呈現。 */
 function xsLegend() {
@@ -190,6 +236,7 @@ function xsLegend() {
   H.push('<div><b class="lg-here"></b><span>正在走的那一格＝這一趟走到哪</span></div>');
   H.push('<div><b class="lg-hero"></b><span>小人＝那一組現在在多深的地方</span></div>');
   H.push('<div><b class="lg-fa"></b><span>岩壁裡的東西＝住在那一層的生物</span></div>');
+  H.push('<div><b class="lg-core"></b><span>掛著的岩心＝那一組封存過的一趟</span></div>');
   H.push('</div>');
   H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
          '廊道長度本來就不同——這裡沒有共同的終點線，也沒有排名。' +
@@ -213,6 +260,7 @@ PAGES.eco = function () {
   var H = [head('全班地下城', '大家都在下面',
     '同一片石頭，每一組往下走自己的一條。看得到別人也在裡面，就夠了。')];
   H.push(xsScene(rows, t.teamId, t.classId));
+  H.push(coreCard());
   H.push(faunaCard());
   H.push(xsLegend());
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
@@ -227,6 +275,7 @@ PAGES.classeco = function () {
     '走完幾趟、現在這一趟有多大、每天動的是哪一段。' +
     '估得準不準在審核那一頁——那時候你看的是一組人交的一件東西。')];
   H.push(xsScene(rows, null, u.classId));
+  H.push(coreCard());
   H.push(faunaCard());
 
   rows.forEach(function (r) {

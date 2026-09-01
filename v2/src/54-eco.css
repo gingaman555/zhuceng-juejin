@@ -151,3 +151,13 @@
 .card.fa{background-color:var(--zbg)}
 
 @media (prefers-reduced-motion: reduce){ .xs-fauna{animation:none} }
+
+/* 別組封存的岩心，掛在它們被封存的那個深度。
+   這是這張圖上唯一會一直長出新東西的地方，而且長出新東西的是別人。 */
+.xs-core{
+  position:absolute;right:-8px;width:22px;height:44px;z-index:7;
+  padding:0;border:none;background:none;cursor:pointer;opacity:.75
+}
+.xs-core:hover{opacity:1}
+.xs-core .px.mcore{width:22px;height:auto;max-height:44px}
+.lg .lg-core{background:#8C7BC7}

@@ -162,14 +162,19 @@ function topBar() {
       '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' + topEnd() +
       '</div>';
   }
+  /* 學生的頂條做成 HUD：招牌、隊伍、所在的層、深度。
+     一排文字讀起來是網站的狀態列；掛上招牌那張圖之後，
+     它讀起來是角色身上的東西。 */
   var t = myTeam();
   var st = stallOf(t.teamId);
-  return '<div class="top">' +
-    '<span class="badge">學生端</span>' +
+  var z = strataAt(depthOf(t.teamId), t.teamId);
+  return '<div class="top hud z-' + z.key + '">' +
+    pxTag(signOf(t.teamId).px, signOf(t.teamId).pal, 'hud-sign') +
     '<span class="who">' + esc(t.name) + '</span>' +
+    '<span class="hud-pj">' + esc(t.project || '（還沒定）') + '</span>' +
     '<span class="sp"></span>' +
-    '<span>' + esc(t.project || '（還沒定）') + '</span>' +
-    '<span class="' + (st.level ? 'warnx' : '') + '">深度 ' +
+    '<span class="hud-z">' + esc(z.name) + '</span>' +
+    '<span class="hud-d' + (st.level ? ' warnx' : '') + '">' +
       (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</span>' + topEnd() +
     '</div>';
 }
@@ -221,9 +226,14 @@ function sideBar() {
       ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
+  /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
+     變成「背包裡的幾樣東西」。 */
   var items = nav.map(function (n) {
-    return '<a class="' + (S.page === n[0] ? 'on' : '') + '" data-go="' + n[0] + '">' +
-      '<span class="dot"></span>' + esc(n[1]) + '</a>';
+    var on = S.page === n[0];
+    var ic = ICONS[n[0]];
+    return '<a class="' + (on ? 'on' : '') + '" data-go="' + n[0] + '">' +
+      (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
+      esc(n[1]) + '</a>';
   }).join('');
   return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div></div>';
 }

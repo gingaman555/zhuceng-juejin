@@ -245,10 +245,17 @@ function sceneMob(t, row, prog, span) {
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
      其中一遍看起來就會像壞掉的東西。 */
   var H = [];
+  /* 名字要走到一半才看得清。
+
+     本來牠的名字從第一天就寫在那裡——那等於一趟開始就把唯一的未知
+     揭曉了。現在前半段只有一團形狀跟一排問號，走近了名字才浮出來。
+     每一趟因此有一條小小的線從頭拉到尾。 */
+  var near = prog >= 0.5;
   H.push('<div class="scn-mob" style="left:' + x + 'px;opacity:' +
-    (0.40 + 0.60 * prog).toFixed(2) + '">');
+    (0.30 + 0.70 * prog).toFixed(2) + '">');
   H.push(pxTag(mob.px, pal, 'ch'));
-  H.push('<span class="mobn">' + esc(mob.n) + '</span>');
+  H.push('<span class="mobn' + (near ? '' : ' hid') + '">' +
+    (near ? esc(mob.n) : '？？？') + '</span>');
   H.push('</div>');
   return H.join('');
 }

@@ -1144,6 +1144,16 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
 @media (prefers-reduced-motion: reduce){ .xs-fauna{animation:none} }
 
+/* 別組封存的岩心，掛在它們被封存的那個深度。
+   這是這張圖上唯一會一直長出新東西的地方，而且長出新東西的是別人。 */
+.xs-core{
+  position:absolute;right:-8px;width:22px;height:44px;z-index:7;
+  padding:0;border:none;background:none;cursor:pointer;opacity:.75
+}
+.xs-core:hover{opacity:1}
+.xs-core .px.mcore{width:22px;height:auto;max-height:44px}
+.lg .lg-core{background:#8C7BC7}
+
 /* 把數字畫出來的那幾個東西。
 
    這一份存在的理由：介面上本來有一堆我寫的說明句，在解釋畫面上的數字
@@ -1376,6 +1386,45 @@ button.ac:active{transform:translateY(1px)}
   overflow:hidden
 }
 @media (min-width:1200px){ .cxi{width:calc(33.33% - 8px)} }
+
+/* ---------- 選單：背包裡的幾樣東西 ---------- */
+.nav a{gap:11px}
+.px.nic{width:22px;height:22px;flex:0 0 22px}
+.nav a .dot{display:none}
+@media (max-width:860px){
+  .nav a{flex-direction:column;gap:2px}
+  .px.nic{width:18px;height:18px;flex:0 0 18px}
+}
+
+/* ---------- 頂條：角色身上的東西，不是網站的狀態列 ---------- */
+.top.hud{
+  gap:14px;
+  background-color:var(--zbg,var(--panel));
+  background-image:var(--ztex,none), linear-gradient(180deg,
+    rgba(255,240,214,.07) 0 1px, transparent 1px calc(100% - 3px),
+    rgba(0,0,0,.72) calc(100% - 3px) 100%);
+}
+.px.hud-sign{width:33px;height:33px;flex:0 0 33px}
+.top.hud .who{font-size:22px;color:var(--ink)}
+.top.hud .hud-pj{font-size:11px;color:var(--dim)}
+.top.hud .hud-z{font-size:11px;color:var(--zink,var(--gold))}
+.top.hud .hud-d{
+  font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums;
+  padding:0 9px;background:rgba(0,0,0,.45)
+}
+.top.hud .hud-d.warnx{color:var(--over)}
+
+/* ---------- 卡片切角：跟按鈕同一個簽名 ---------- */
+.card,.act-card,.stamp-card,.dash{
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
+}
+.cxt,.ac,.stp{clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+
+/* ---------- 頁首做成刻在石頭上的牌子 ---------- */
+.wrap > h1{
+  display:inline-block;padding:5px 22px 5px 0;margin-bottom:14px
+}
+.wrap > .eyebrow{color:var(--gold-d)}
 
 /* 手機。
 
@@ -2507,6 +2556,79 @@ function exportCsv(classId) {
     }).join(',');
   }).join('\n');
 }
+
+
+/* ===== 17-icons.js ===== */
+/* 選單的圖示。
+
+   側欄本來是「一個小方點 ＋ 一行字」——那是網頁的選單，不是遊戲的選單。
+   換成像素圖之後，同一份結構讀起來是「背包裡的幾樣東西」，
+   而不是「網站的幾個分頁」。
+
+   12×12，跟其他像素圖同一套字元：. 透明 · # 身體 · + 陰影 · * 反光。
+   小到這個尺寸沒辦法畫細節，所以每一個只做一件事：讓輪廓認得出來。 */
+
+var ICONS = {
+
+  /* 廊道：一支火把。key 要跟側欄的頁名對得上（home，不是 hall）。 */
+  home: ['....*.......', '...*#*......', '...*#*......', '..*###*.....',
+         '...*#*......', '...+#+......', '...+#+......', '.+++#+......',
+         '.+..+#+.....', '.+..........', '.+..........', '.+++........'],
+
+  /* 岩心架：一根柱狀樣本 */
+  pack: ['..++++++....', '.+#####+....', '.+#***#+....', '.+#####+....',
+         '.+#+.+#+....', '.+#+.+#+....', '.+#####+....', '.+#***#+....',
+         '.+#####+....', '.+#+.+#+....', '.+#####+....', '..++++++....'],
+
+  /* 圖鑑：一本翻開的書 */
+  codex: ['............', '..++++++++..', '.+##+..+##+.', '+#*#+..+#*#+',
+          '+##*+..+*##+', '+#*#+..+#*#+', '+##*+..+*##+', '+#*#+..+#*#+',
+          '+##*+..+*##+', '.+##+..+##+.', '..++++++++..', '............'],
+
+  /* 全班地下城：一片剖面 */
+  eco: ['++++++++++++', '+##########+', '+#+.+#+.+#++', '+#+.+#+.+#++',
+        '+##########+', '+#+.+#+.+#++', '+#+.+#+.+#++', '+##########+',
+        '+#+.+#+.+#++', '+##########+', '+##########+', '++++++++++++'],
+
+  /* 紀錄：一卷攤開的紙 */
+  log: ['............', '.++++++++++.', '.+########+.', '.+#*####*#+.',
+        '.+########+.', '.+#*##*###+.', '.+########+.', '.+#*####*#+.',
+        '.+########+.', '.+#*##*###+.', '.++++++++++.', '............'],
+
+  /* 審核：一枚印章 */
+  radar: ['............', '....++++....', '...+####+...', '...+#**#+...',
+          '...+####+...', '....+##+....', '....+##+....', '..++####++..',
+          '.+########+.', '.+#*####*#+.', '.++++++++++.', '............'],
+
+  /* 發里程碑：一支插著的旗 */
+  ms: ['..+#........', '..+#####+...', '..+#*###*+..', '..+#####*+..',
+       '..+####*+...', '..+##*+.....', '..+#........', '..+#........',
+       '..+#........', '..+#........', '.+++++......', '............'],
+
+  /* 各組進度：幾條往下的線 */
+  classeco: ['............', '.+#+.+#+.+#+', '.+#+.+#+.+#+', '.+#+.+#+.+#+',
+             '.+#+.+#+.+#+', '.+#+.+#+.+#+', '.+#+.+#+.+#+', '.+#+.+#+....',
+             '.+#+.+#+....', '.+#+........', '.+#+........', '............'],
+
+  /* 帳號：一把鑰匙 */
+  rs: ['............', '...++++.....', '..+#**#+....', '..+#..#+....',
+       '..+#**#+....', '...++#+.....', '....+#+.....', '....+#+.....',
+       '....+#++....', '....+#+.....', '....+#++....', '............'],
+
+  /* 名冊：一疊名字 */
+  roster: ['............', '.++++++++++.', '.+#*#####*+.', '.+########+.',
+           '.++++++++++.', '.+#*#####*+.', '.+########+.', '.++++++++++.',
+           '.+#*#####*+.', '.+########+.', '.++++++++++.', '............'],
+
+  /* 紀錄（研究者）：一疊卡 */
+  events: ['..++++++++..', '..+######+..', '.++++++++++.', '.+########+.',
+           '++++++++++++', '+#*######*#+', '+##########+', '+#*######*#+',
+           '+##########+', '+#*######*#+', '++++++++++++', '............']
+};
+
+/* 選單圖示的配色。跟金色那條線同一組，亮起來的時候整個變金的。 */
+var ICON_PAL = { '#': '#8A7F6E', o: '#4A4038', '*': '#B5A992' };
+var ICON_ON = { '#': '#E9B341', o: '#7A5A18', '*': '#F5CB74' };
 
 
 /* ===== 20-rules.js ===== */
@@ -4049,14 +4171,19 @@ function topBar() {
       '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' + topEnd() +
       '</div>';
   }
+  /* 學生的頂條做成 HUD：招牌、隊伍、所在的層、深度。
+     一排文字讀起來是網站的狀態列；掛上招牌那張圖之後，
+     它讀起來是角色身上的東西。 */
   var t = myTeam();
   var st = stallOf(t.teamId);
-  return '<div class="top">' +
-    '<span class="badge">學生端</span>' +
+  var z = strataAt(depthOf(t.teamId), t.teamId);
+  return '<div class="top hud z-' + z.key + '">' +
+    pxTag(signOf(t.teamId).px, signOf(t.teamId).pal, 'hud-sign') +
     '<span class="who">' + esc(t.name) + '</span>' +
+    '<span class="hud-pj">' + esc(t.project || '（還沒定）') + '</span>' +
     '<span class="sp"></span>' +
-    '<span>' + esc(t.project || '（還沒定）') + '</span>' +
-    '<span class="' + (st.level ? 'warnx' : '') + '">深度 ' +
+    '<span class="hud-z">' + esc(z.name) + '</span>' +
+    '<span class="hud-d' + (st.level ? ' warnx' : '') + '">' +
       (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</span>' + topEnd() +
     '</div>';
 }
@@ -4108,9 +4235,14 @@ function sideBar() {
       ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
+  /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
+     變成「背包裡的幾樣東西」。 */
   var items = nav.map(function (n) {
-    return '<a class="' + (S.page === n[0] ? 'on' : '') + '" data-go="' + n[0] + '">' +
-      '<span class="dot"></span>' + esc(n[1]) + '</a>';
+    var on = S.page === n[0];
+    var ic = ICONS[n[0]];
+    return '<a class="' + (on ? 'on' : '') + '" data-go="' + n[0] + '">' +
+      (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
+      esc(n[1]) + '</a>';
   }).join('');
   return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div></div>';
 }
@@ -5589,10 +5721,17 @@ function sceneMob(t, row, prog, span) {
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
      其中一遍看起來就會像壞掉的東西。 */
   var H = [];
+  /* 名字要走到一半才看得清。
+
+     本來牠的名字從第一天就寫在那裡——那等於一趟開始就把唯一的未知
+     揭曉了。現在前半段只有一團形狀跟一排問號，走近了名字才浮出來。
+     每一趟因此有一條小小的線從頭拉到尾。 */
+  var near = prog >= 0.5;
   H.push('<div class="scn-mob" style="left:' + x + 'px;opacity:' +
-    (0.40 + 0.60 * prog).toFixed(2) + '">');
+    (0.30 + 0.70 * prog).toFixed(2) + '">');
   H.push(pxTag(mob.px, pal, 'ch'));
-  H.push('<span class="mobn">' + esc(mob.n) + '</span>');
+  H.push('<span class="mobn' + (near ? '' : ' hid') + '">' +
+    (near ? esc(mob.n) : '？？？') + '</span>');
   H.push('</div>');
   return H.join('');
 }
@@ -5773,6 +5912,21 @@ function xsShaft(r, i, maxD, mine) {
     H.push('</div>');
   }
 
+  /* 封存過的岩心掛在它們被封存的那個深度。
+
+     這是這張圖上唯一會一直長出新東西的地方，而且長出新東西的是別人。
+     內容一定會用完（六層走完一圈就沒有新的石頭了），同學不會。
+     點得開——好奇「他們那一週長什麼樣」比任何名次都有用。 */
+  keepsOf(r.teamId).forEach(function (k, n) {
+    if (n >= maxD) return;
+    var kz = STRATA[0];
+    STRATA.forEach(function (z) { if (z.key === k.zone) kz = z; });
+    H.push('<button class="xs-core" style="top:' + (xsTop(n) + 6) + 'px" ' +
+      'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'core:' + k.keepId })) +
+      '\' title="' + esc(k.name || '（沒取名）') + '">' +
+      pxTag(k.px || coreOf(k.runId), kz.pal, 'mcore') + '</button>');
+  });
+
   /* 小人站在最深的那一格 */
   var at = r.depth + (r.at > 0 ? 1 : 0);
   var pose = r.stall >= 2 ? HERO.sleep : HERO.idle;
@@ -5811,7 +5965,38 @@ function faunaCard() {
   return H.join('');
 }
 
-ACTS.fauna = function (name) { DRAFT.fa = name; render(); };
+ACTS.fauna = function (name) { DRAFT.fa = name; DRAFT.ck = null; render(); };
+ACTS.core = function (id) { DRAFT.ck = id; DRAFT.fa = null; render(); };
+
+/* 點開的那一根岩心。別組的也點得開——那是這張圖上唯一會一直
+   長出新東西的地方，而且長出新東西的是別人。 */
+function coreCard() {
+  if (!DRAFT.ck) return '';
+  var k = null;
+  DB.Keeps.forEach(function (x) { if (x.keepId === DRAFT.ck) k = x; });
+  if (!k) return '';
+  var z = STRATA[0];
+  STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
+  var tm = teamOf(k.teamId);
+  var r = find('Runs', function (x) { return x.runId === k.runId; });
+  var m = r ? msOf(r.msId) : null;
+
+  var H = ['<div class="card fa ' + z.key + '"><div class="fa-in">'];
+  H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'core big'));
+  H.push('<div>');
+  H.push('<div class="eyebrow">' + esc(tm ? tm.name : '') + '　·　' + esc(z.name) + '</div>');
+  H.push('<h2>' + esc(k.name || '（沒取名）') + '</h2>');
+  if (m) H.push('<p class="lead">' + esc(m.title) + '</p>');
+  H.push('<div class="corekey">');
+  H.push('<span><b class="c1"></b>來過 ' + (k.moved || 0) + ' 天</span>');
+  if (k.rested) H.push('<span><b class="c2"></b>說沒動 ' + k.rested + ' 天</span>');
+  if (k.blank) H.push('<span><b class="c3"></b>沒有紀錄 ' + k.blank + ' 天</span>');
+  H.push('</div>');
+  H.push('<div class="log-num">說 <b>' + (k.est || 0) + '</b> 天　·　過了 <b>' +
+    (k.elapsed || 0) + '</b> 天</div>');
+  H.push('</div></div></div>');
+  return H.join('');
+}
 
 /* 圖例。看得懂才叫呈現。 */
 function xsLegend() {
@@ -5820,6 +6005,7 @@ function xsLegend() {
   H.push('<div><b class="lg-here"></b><span>正在走的那一格＝這一趟走到哪</span></div>');
   H.push('<div><b class="lg-hero"></b><span>小人＝那一組現在在多深的地方</span></div>');
   H.push('<div><b class="lg-fa"></b><span>岩壁裡的東西＝住在那一層的生物</span></div>');
+  H.push('<div><b class="lg-core"></b><span>掛著的岩心＝那一組封存過的一趟</span></div>');
   H.push('</div>');
   H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
          '廊道長度本來就不同——這裡沒有共同的終點線，也沒有排名。' +
@@ -5843,6 +6029,7 @@ PAGES.eco = function () {
   var H = [head('全班地下城', '大家都在下面',
     '同一片石頭，每一組往下走自己的一條。看得到別人也在裡面，就夠了。')];
   H.push(xsScene(rows, t.teamId, t.classId));
+  H.push(coreCard());
   H.push(faunaCard());
   H.push(xsLegend());
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
@@ -5857,6 +6044,7 @@ PAGES.classeco = function () {
     '走完幾趟、現在這一趟有多大、每天動的是哪一段。' +
     '估得準不準在審核那一頁——那時候你看的是一組人交的一件東西。')];
   H.push(xsScene(rows, null, u.classId));
+  H.push(coreCard());
   H.push(faunaCard());
 
   rows.forEach(function (r) {
