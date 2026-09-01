@@ -47,7 +47,7 @@ console.log('迴圈測試　' + ROUNDS + ' 輪\n');
 /* ---------- 先把種子裡進行中的那一輪收掉，從乾淨狀態開始 ---------- */
 runsFor(TEAM).forEach(function (x) {
   if (x.run.state === 'running') {
-    while (RULES.progress(x.run.pushes, x.run.est) < 1) { tick(); actPush(TEAM, x.run.runId); }
+    while (RULES.progress(x.run.pushes, x.run.est) < 1) { tick(); actPush(TEAM, x.run.runId, -1, 0); }
     actSubmit(TEAM, x.run.runId);
     if (x.run.stamp === 'late') actReflect(TEAM, x.run.runId, ['guess']);
     else actSkipCamp(x.run.runId);
@@ -175,7 +175,7 @@ if (ntY.kind !== 'push') fail('剛承諾，下一件事應該是 push，卻是 '
 else ok('剛承諾 → 今天該推一格');
 var rX = runOf(TEAM, mX.msId);
 var g2 = 0;
-while (RULES.progress(rX.pushes, rX.est) < 1 && g2++ < 30) { actPush(TEAM, rX.runId); tick(); }
+while (RULES.progress(rX.pushes, rX.est) < 1 && g2++ < 30) { actPush(TEAM, rX.runId, -1, 0); tick(); }
 actSubmit(TEAM, rX.runId);
 if (rX.stamp === 'late') actReflect(TEAM, rX.runId, ['guess']); else actSkipCamp(rX.runId);
 actApprove(rX.runId, '');

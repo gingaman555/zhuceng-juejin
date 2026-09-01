@@ -6,9 +6,9 @@
    兩條原則，這一版收得比之前緊：
 
    一 · 系統不定義他們在做什麼。
-        每天點的那幾件、承諾時標的那幾件、營火說的那幾件，全部來自
-        同一份清單，而那份清單是那一組自己寫的（見 40-db.js 的 actSetActs）。
-        沒寫的組也走得完：推進那一顆鍵退回「我今天來過了」。
+        每天點的那幾段、承諾時標的那幾段、營火說的那幾段，全部來自
+        同一個地方：老師分段時寫的那幾行。系統一個字都沒有列。
+        老師沒分段也走得完：推進那一顆鍵退回「我今天來過了」。
 
    二 · 介面不解釋自己。
         本來每一張卡底下都有一段我寫的說明（「這一下就是推進，不用再
@@ -45,6 +45,11 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
+  /* ── 這一趟的分段（老師有分才有） ── */
+  if (next.row && next.row.run && next.row.run.runId) {
+    H.push(stepCard(next.row.run.runId));
+  }
+
   /* ── 唯一的動作 ── */
   H.push(actionCard(t, next, st));
 
@@ -66,33 +71,80 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
-  /* ── 他們自己那一份清單 ── */
-  H.push(actsCard(t));
 
-  /* ── 招牌 ── */
-  var ns = nextSignIn(t.teamId);
+  /* ── 出口 ──
+     放在最底下，而且不是那顆大的：宣告結案是想清楚才做的事，
+     不是順手點到的。 */
+  if (!t.leftAt) H.push(exitCard(t));
+
+  /* ── 招牌 ──
+     它只有一個用途：廊道口掛的是誰。本來還有三階材質（走得越深牌子
+     越好），拿掉了——深度已經不是進度了，留著一個「越多越好」的漸層
+     跟其他每一條規則都打架。名字是他們自己寫的，這才是招牌的意義。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">招牌</div>');
+  H.push('<div class="eyebrow">廊道口掛的</div>');
   H.push('<div class="rn-row">');
   H.push('<input id="pj-name" value="' + esc(t.project || '') +
          '" placeholder="' + esc('這個專案叫什麼') + '">');
   H.push(btn('換字', 'rename', 'ghost'));
   H.push('</div>');
-  H.push('<div class="sgline">');
-  RULES.SIGN_TIERS.forEach(function (k, i) {
-    var on = i <= RULES.signTierOf(depthOf(t.teamId));
-    H.push('<span class="sg' + (on ? ' on' : '') + '">' +
-      pxTag(SIGNS[k].px, SIGNS[k].pal, 'sign-s') +
-      '<i>' + esc(SIGNS[k].name) + '</i></span>');
-  });
-  H.push('</div>');
-  if (ns.need) {
-    H.push('<div class="log-num">再 <b>' + ns.need + '</b> 趟換成「' + esc(ns.name) + '」</div>');
-  }
   H.push('</div>');
 
   return H.join('');
 };
+
+/* 承諾那一頁還沒有 run，所以直接從里程碑上讀那幾段。 */
+function previewSteps(m) { return (m && m.steps) || []; }
+function msStepLegend(m, sel, act) {
+  var a = previewSteps(m);
+  if (!a.length) return '';
+  var H = ['<div class="alist">'];
+  a.forEach(function (x, i) {
+    var on = sel && sel.indexOf(i) >= 0;
+    H.push('<button class="ac' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: act + ':' + i })) + '\'>' +
+      '<b style="background:' + stepHue(i) + '"></b>' + esc(x) + '</button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 老師分的段 ----------
+   他有分才畫。勾一段跟每天推進是兩件事：推進是「今天我來過」，
+   勾是「這一段做完了」。兩件事都不影響判定。 */
+function stepCard(runId) {
+  var s = stepsOf(runId);
+  if (!s) return '';
+  var H = ['<div class="card">'];
+  H.push('<div class="eyebrow">老師分的段　' + s.on.length + ' / ' + s.all.length + '</div>');
+  H.push('<div class="steps-list">');
+  s.all.forEach(function (x, i) {
+    var on = s.on.indexOf(i) >= 0;
+    H.push('<button class="stp' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'tick:' + runId + '|' + i })) + '\'>' +
+      '<b></b><i>' + esc(x) + '</i></button>');
+  });
+  H.push('</div></div>');
+  return H.join('');
+}
+
+/* ---------- 出口 ----------
+   往下走不出去，六層一直循環。唯一的出口是把手上這個專案做完，
+   而那件事只有他們自己知道——所以是他們宣告，老師確認。 */
+function exitCard(t) {
+  var H = ['<div class="card exitc">'];
+  H.push('<div class="eyebrow">出口</div>');
+  if (t.exitAsk) {
+    H.push('<h2>你說這個專案做完了。</h2>');
+    H.push('<p class="lead">在等老師確認。</p>');
+    H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
+  } else {
+    H.push('<h2>這個專案做完了。</h2>');
+    H.push(btn('去出口', 'go:exit', 'ghost'));
+  }
+  H.push('</div>');
+  return H.join('');
+}
 
 /* nextThing 回的那個字，對到步驟條的第幾格。 */
 var STEP_AT = {
@@ -111,7 +163,7 @@ var STEP_AT = {
 
    哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個里程碑不是同一隻。 */
 function mobFor(msId, teamId) {
-  var f = faunaOf(strataAt(depthOf(teamId)).key);
+  var f = faunaOf(strataAt(depthOf(teamId), teamId).key);
   if (!f.length) f = allFauna();
   return f[hash(msId + '|' + teamId) % f.length];
 }
@@ -122,38 +174,24 @@ function lastKeep(teamId) {
   return ks.length ? ks[ks.length - 1] : null;
 }
 
-/* ---------- 他們自己那一份清單 ----------
-   系統不替他們定義一個專案會做哪些事。這一張卡是整個系統裡
-   唯一要打字的地方，而且只打一次。 */
-function actsCard(t) {
-  var acts = actsOf(t.teamId);
-  var editing = DRAFT.acts != null || !acts.length;
-  var H = ['<div class="card"' + (acts.length ? '' : ' id="setup"') + '>'];
-  H.push('<div class="eyebrow">我們會做的事</div>');
-
-  if (!editing) {
-    H.push(actLegend(t.teamId, null, null));
-    H.push(btn('改', 'editacts', 'ghost'));
-    H.push('</div>');
-    return H.join('');
-  }
-
-  H.push('<textarea id="acts" rows="6" placeholder="' +
-    esc('一行一件\n訪談\n找案例\n畫草圖\n打樣\n剪片') + '">' +
-    esc(DRAFT.acts != null ? DRAFT.acts
-      : acts.map(function (a) { return a.label; }).join('\n')) + '</textarea>');
-  H.push('<div class="log-num">最多 <b>' + RULES.ACTS_MAX + '</b> 件</div>');
-  H.push(btn('記下來', 'setacts', ''));
-  H.push('</div>');
-  return H.join('');
-}
 
 /* ---------- 唯一的那一顆動作 ---------- */
 function actionCard(t, next, st) {
   var H = ['<div class="act-card">'];
   var row = next.row;
 
-  if (next.kind === 'wake') {
+  if (next.kind === 'left') {
+    H.push('<div class="eyebrow">你出去了</div>');
+    H.push('<h2>' + (t.exitWord ? '' : '地面。') + '</h2>');
+    if (t.exitWord) H.push('<p class="quote">' + nl(t.exitWord) + '</p>');
+    H.push(btn('看你帶出來的', 'go:exit', 'big'));
+
+  } else if (next.kind === 'waitexit') {
+    H.push('<div class="eyebrow">出口</div>');
+    H.push('<h2>在等老師確認。</h2>');
+    H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
+
+  } else if (next.kind === 'wake') {
     H.push('<div class="eyebrow">' + esc(WORLD.light[st.level].label) + '　·　' +
       st.days + ' 天</div>');
     H.push('<h2>' + (st.level === 2 ? '牠睡著了。' : '藤蔓爬上來了。') + '</h2>');
@@ -205,16 +243,15 @@ function actionCard(t, next, st) {
   return H.join('');
 }
 
-/* ---------- 今天動的是哪一件 ----------
-   這一排就是推進鍵本身。點任何一件都算今天來過了，還是一下點擊。
-   點的是他們自己寫的清單——系統不列選項。 */
+/* ---------- 今天動的是哪一段 ----------
+   這一排就是推進鍵本身。點任何一段都算今天來過了，還是一下點擊。
+   點的是老師分的段——系統不列選項，也不用任何人先做設定。
+   老師沒分段就退回一顆鍵，一樣走得完。 */
 function actRow(t, runId) {
-  var acts = actsOf(t.teamId);
-  if (!acts.length) {
-    return '<div class="row">' + btn('我今天來過了', 'push:' + runId, 'big') +
-      btn('先寫我們會做的事', 'editacts', 'ghost') + '</div>';
+  if (!stepNames(runId).length) {
+    return btn('我今天來過了', 'push:' + runId, 'big');
   }
-  return actLegend(t.teamId, null, 'push:' + runId + '|');
+  return stepLegend(runId, null, 'push:' + runId + '|');
 }
 
 /* 補登。忘一天就再也補不回來的話，人會把整條廊道一起放掉。 */
@@ -239,7 +276,7 @@ function doingCard(t, row, whenWord) {
   var word = b ? (b === 1 ? '昨天' : '前天') : whenWord;
   var H = [];
   H.push('<div class="eyebrow">' + esc(word) + '　·　' + esc(row.ms.title) + '</div>');
-  H.push('<h2>' + esc(word) + '動的是哪一件？</h2>');
+  H.push('<h2>' + esc(word) + '動的是哪一段？</h2>');
   H.push(actRow(t, row.run.runId));
   if (open.length) H.push(backRow(open));
   H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
@@ -256,7 +293,6 @@ PAGES.commit = function () {
   if (!m) return '<div class="card">找不到這一個里程碑。</div>';
   var est = Number(draft('est', RULES.EST_DEFAULT));
   var flags = DRAFT.flags || [];
-  var acts = actsOf(t.teamId);
 
   var H = [head('自我承諾', m.title, m.note)];
 
@@ -279,10 +315,13 @@ PAGES.commit = function () {
   H.push(estBar(est, 0, true));
   H.push('</div>');
 
-  if (acts.length) {
+  /* 老師分了段才問。標的是他分的那幾段，不是我列的選項。 */
+  var run0 = runOf(t.teamId, m.msId);
+  var pv = previewSteps(m);
+  if (pv.length) {
     H.push('<div class="card">');
-    H.push('<div class="eyebrow">哪幾件會比你想的久　選填</div>');
-    H.push(actLegend(t.teamId, flags, 'flag'));
+    H.push('<div class="eyebrow">哪幾段會比你想的久　選填</div>');
+    H.push(msStepLegend(m, flags, 'flag'));
     H.push('</div>');
   }
 
@@ -305,7 +344,7 @@ PAGES.submit = function () {
 
   /* 走到底了才看得清楚牠。前面那些天牠都在霧裡。 */
   var mob = mobFor(r.msId, t.teamId);
-  var zone = strataAt(depthOf(t.teamId));
+  var zone = strataAt(depthOf(t.teamId), t.teamId);
   H.push('<div class="card fa ' + zone.key + '"><div class="fa-in">');
   H.push(pxTag(mob.px, zone.pal, 'fa-px'));
   H.push('<div><div class="eyebrow">' + esc(zone.name) + '</div>');
@@ -332,7 +371,7 @@ PAGES.stamp = function () {
   var s = RULES.STAMPS[r.stamp];
 
   var t = myTeam();
-  var zone = strataAt(depthOf(t.teamId));
+  var zone = strataAt(depthOf(t.teamId), t.teamId);
   var mob = mobFor(r.msId, t.teamId);
 
   var H = ['<div class="stamp-card ' + r.stamp + '">'];
@@ -363,7 +402,6 @@ PAGES.camp = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var t = myTeam();
-  var acts = actsOf(t.teamId);
   var picked = DRAFT.overs || [];
   var flags = r.flags || [];
 
@@ -378,18 +416,14 @@ PAGES.camp = function () {
   H.push(estBar(r.est, r.actual, false));
   H.push('</div>');
 
-  if (!acts.length) {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">還沒有清單</div>');
-    H.push(btn('先寫我們會做的事', 'go:home', 'ghost'));
-    H.push('</div>');
-  } else {
+  if (stepNames(r.runId).length) {
     H.push('<div class="card">');
     if (flags.length) {
       H.push('<div class="eyebrow">承諾時你標的</div>');
-      H.push(actLegend(t.teamId, flags, null));
+      H.push(stepLegend(r.runId, flags, null));
     }
-    H.push(actLegend(t.teamId, picked, 'over'));
+    H.push('<div class="eyebrow">哪一段真的比想的久</div>');
+    H.push(stepLegend(r.runId, picked, 'over'));
     H.push('</div>');
   }
 
@@ -418,7 +452,7 @@ PAGES.pick = function () {
     var k = RULES.keepOf(o.key);
     H.push('<button class="gcard" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'take:' + r.runId + '|' + o.key })) + '\'>' +
-      pxTag(GEAR_PX[k.tro].px, strataAt(depthOf(t.teamId)).pal, 'kp-px') +
+      pxTag(GEAR_PX[k.tro].px, strataAt(depthOf(t.teamId), t.teamId).pal, 'kp-px') +
       '<span class="ke">' + esc(k.eyebrow) + '</span>' +
       '<i>' + esc(o.line) + '</i></button>');
   });
@@ -442,7 +476,7 @@ PAGES.dash = function () {
 
   /* 跨進新的一區。世界自己變了，不是給的獎勵。 */
   var d = depthOf(r.teamId);
-  var now2 = strataAt(d), was = strataAt(d - 1);
+  var now2 = strataAt(d, r.teamId), was = strataAt(d - 1, r.teamId);
   if (d > 0 && now2.key !== was.key) {
     H.push('<div class="card fa ' + now2.key + ' zone-in">');
     H.push('<div class="eyebrow">石頭變了</div>');
@@ -452,6 +486,89 @@ PAGES.dash = function () {
   }
 
   H.push(btn('回廊道', 'go:home', 'big'));
+  return H.join('');
+};
+
+/* ---------- 出口 ----------
+
+   這一頁是整個系統唯一的結尾。它不打分、不總評，只把他自己留下的
+   紀錄攤開來：每一趟說幾天走幾天、走過哪幾層、留下哪幾句。
+
+   「規劃妥善」不是開門的條件，是走出去的時候帶著的東西——
+   同一道門，不同的故事。 */
+PAGES.exit = function () {
+  var t = myTeam();
+  var e = exitRecord(t.teamId);
+  var out = !!t.leftAt;
+
+  var H = [head(out ? '地面' : '出口',
+    out ? '你出去了' : '這個專案做完了？',
+    out ? '' : '往下走不出去——六層會一直重來。出去的方式只有一個：' +
+          '把手上這個專案做完，然後說一聲。')];
+
+  if (out && t.exitWord) {
+    H.push('<div class="card"><div class="eyebrow">老師說</div>' +
+      '<p class="quote">' + nl(t.exitWord) + '</p></div>');
+  }
+
+  /* 帶出來的東西。全部是他自己的紀錄。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你帶出來的</div>');
+  H.push('<div class="outnum">');
+  H.push('<div><b>' + e.runs.length + '</b><span>走完的里程碑</span></div>');
+  H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
+  H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
+  H.push('<div><b>' + e.keeps.length + '</b><span>留下的話</span></div>');
+  H.push('</div>');
+  if (e.acc.total) H.push(accBar(e.acc));
+  H.push('</div>');
+
+  /* 走過的地層 */
+  if (e.zones.length) {
+    H.push('<div class="card"><div class="eyebrow">你走過的</div><div class="zones">');
+    e.zones.forEach(function (z) {
+      var c = faunaOf(z.key)[0];
+      H.push('<div class="zn ' + z.key + '">');
+      if (c) H.push(pxTag(c.px, z.pal, 'zn-px'));
+      H.push('<b>' + esc(z.name) + '</b>');
+      H.push('</div>');
+    });
+    H.push('</div></div>');
+  }
+
+  /* 每一趟說幾天、走幾天 */
+  if (e.runs.length) {
+    H.push('<div class="card"><div class="eyebrow">每一趟</div>');
+    e.runs.forEach(function (x) {
+      H.push('<div class="outrun"><span>' + esc(x.ms.title) + '</span>');
+      H.push(estBar(x.run.est, x.run.actual, false));
+      H.push('</div>');
+    });
+    H.push('</div>');
+  }
+
+  /* 留下的那幾句 */
+  if (e.keeps.length) {
+    H.push('<div class="card"><div class="eyebrow">你留下的</div>');
+    e.keeps.slice().reverse().forEach(function (k) {
+      H.push('<p class="quote">' + esc(k.line) + '</p>');
+    });
+    H.push('</div>');
+  }
+
+  if (!out) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">說一聲</div>');
+    H.push('<p class="dim">老師確認之後你就出去了。之後不會再收到新的里程碑，' +
+           '這幾頁還看得到。</p>');
+    H.push('<div class="row">');
+    H.push(btn(t.exitAsk ? '已經說了，在等他' : '這個專案做完了',
+      t.exitAsk ? 'noop' : 'askexit', 'big'));
+    H.push(btn('回廊道', 'go:home', 'ghost'));
+    H.push('</div></div>');
+  } else {
+    H.push(btn('回廊道', 'go:home', 'ghost'));
+  }
   return H.join('');
 };
 
@@ -469,7 +586,16 @@ PAGES.log = function () {
            '<span class="st ' + r.stamp + '">' + s.mark + '</span></div>');
     H.push(estBar(r.est, r.actual, false));
     H.push(dayStrip(t.teamId, r.runId));
-    var ov = (r.overs || []).map(function (id) { return actLabel(t.teamId, id); })
+    var sp = stepsOf(r.runId);
+    if (sp) {
+      H.push('<div class="tags small"><span class="k">老師分的段</span>');
+      sp.all.forEach(function (x, i) {
+        H.push('<span class="tag static' + (sp.on.indexOf(i) >= 0 ? ' hit' : '') +
+          '">' + esc(x) + '</span>');
+      });
+      H.push('</div>');
+    }
+    var ov = (r.overs || []).map(function (i) { return stepName(r.runId, i); })
       .filter(Boolean);
     if (ov.length) {
       H.push('<div class="tags small"><span class="k">比想的久</span>');

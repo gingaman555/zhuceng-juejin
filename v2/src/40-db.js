@@ -81,7 +81,7 @@ function runsFor(teamId) {
     if (!r) {
       /* 派了但還沒承諾——先給一個空的，畫面才知道要問滑桿 */
       r = { runId: null, teamId: teamId, msId: m.msId, state: 'fresh',
-            est: 0, flags: [], pushes: 0, overs: [], keep: null };
+            est: 0, flags: [], pushes: 0, overs: [], steps: [], keep: null };
     }
     return { ms: m, run: r };
   }).sort(function (a, b) { return a.ms.at - b.ms.at; });
@@ -90,6 +90,12 @@ function runsFor(teamId) {
 /* ---------- 這一組現在該做什麼 ----------
    一次只回答一件事。首頁只給一個動作，其餘都是資訊。 */
 function nextThing(teamId) {
+  /* 已經走出去的組不再有下一件事。這不是鎖住畫面——
+     他們還看得到留下的、全班地下城、紀錄，只是不再被派任務。 */
+  var tm = teamOf(teamId);
+  if (tm && tm.leftAt) return { kind: 'left' };
+  if (tm && tm.exitAsk) return { kind: 'waitexit' };
+
   var rows = runsFor(teamId);
   /* 1. 判定失準、還沒復盤 */
   var camp = rows.filter(function (x) {
@@ -165,23 +171,16 @@ function depthOf(teamId) {
   }).length;
 }
 
-/* 招牌的階＝走到多深。
+/* 廊道口掛的那塊牌子。
 
-   招牌上的字是學生自己寫的（專案名稱），材質不是——材質是走完幾個
-   里程碑自己長出來的。這樣改名字改不出一塊發光的牌子，
-   而牌子發光的時候，那是他們自己走出來的。 */
+   本來它有三階材質，走得越深牌子越好。拿掉了——深度已經不是進度
+   （路是隨機給的，而且一直循環），留著一個「越多越好」的漸層
+   跟其他每一條規則都打架。
+
+   它現在只有一個用途，而且那個用途一直都在：廊道口掛的是誰。
+   上面寫什麼是他們自己決定的。 */
 function signOf(teamId) {
-  var n = Math.min(RULES.SIGN_TIERS.length - 1, RULES.signTierOf(depthOf(teamId)));
-  return SIGNS[RULES.SIGN_TIERS[n]];
-}
-
-/* 再走幾個里程碑招牌會換材質。沒有下一階就回 0。 */
-function nextSignIn(teamId) {
-  var d = depthOf(teamId);
-  for (var i = 0; i < RULES.SIGN_AT.length; i++) {
-    if (RULES.SIGN_AT[i] > d) return { need: RULES.SIGN_AT[i] - d, name: SIGNS[RULES.SIGN_TIERS[i]].name };
-  }
-  return { need: 0, name: '' };
+  return SIGNS.iron;
 }
 
 /* 這一組的預估準度紀錄——復盤與老師審閱都要看 */
@@ -214,8 +213,8 @@ function ecology(classId) {
 
 /* ================= 學生的動作 ================= */
 
-/* 承諾：拉滑桿決定幾天，順便標「哪幾件我覺得會比想的久」。
-   標的是他們自己清單上的東西，不是我列的八種卡關原因。 */
+/* 承諾：拉滑桿決定幾天，順便標「哪幾段我覺得會比想的久」。
+   標的是老師分的段，不是我列的八種卡關原因。 */
 function actCommit(teamId, msId, est, flags) {
   var r = runOf(teamId, msId);
   if (r) return r;
@@ -225,26 +224,26 @@ function actCommit(teamId, msId, est, flags) {
     est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
     flags: flags || [],
     committedAt: now(),
-    pushes: 0, overs: [], keep: null, stamp: null
+    pushes: 0, overs: [], steps: [], keep: null, stamp: null
   };
   DB.Runs.push(r);
   save();
   logEvent('commit', { teamId: teamId, runId: r.runId, msId: msId, est: r.est,
-    flags: (r.flags || []).map(function (i) { return actLabel(teamId, i); }).join('、') });
+    flags: (r.flags || []).map(function (i) { return stepName(r.runId, i); }).join('、') });
   return r;
 }
 
 /* 推進：一天一次。回傳有沒有真的推到。 */
 /* 推進。
 
-     actId 今天動的是他們清單上的哪一件（沒寫清單就是空的）
+     step  今天動的是老師分的第幾段（沒分段就是 -1）
      back  補登幾天前。0 是今天，1 是昨天，最多到 2。
 
    補登這件事看起來像作弊，其實相反：實際天數是從承諾那天到交出去
    那天算的，補登一格不會讓誰早一天完成，也不會改判定。它唯一改變的
    是走廊上少不少一盞燈——而「忘了按一天就再也補不回來」正是
    讓人整條放棄的那個崖。 */
-function actPush(teamId, runId, actId, back) {
+function actPush(teamId, runId, step, back) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return false;
   var b = Math.max(0, Math.min(RULES.BACKFILL_MAX, Number(back) || 0));
@@ -253,13 +252,40 @@ function actPush(teamId, runId, actId, back) {
   if (pushedOn(teamId, runId, dayOf(when))) return false;
   DB.Pushes.push({
     pushId: nid('P'), teamId: teamId, runId: runId,
-    day: dayOf(when), at: when, actId: actId || '', back: b
+    day: dayOf(when), at: when, step: (step == null ? -1 : step), back: b
   });
   r.pushes++;
   save();
   logEvent('push', { teamId: teamId, runId: runId, n: r.pushes,
-    act: actId ? actLabel(teamId, actId) : '', back: b });
+    seg: stepName(runId, step), back: b });
   return true;
+}
+
+/* 勾掉／取消勾掉一段。隨時可以改——勾錯了不該是一件要去求人的事。 */
+function actTickStep(teamId, runId, i) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  r.steps = r.steps || [];
+  var k = r.steps.indexOf(i);
+  if (k < 0) r.steps.push(i); else r.steps.splice(k, 1);
+  save();
+  var m = msOf(r.msId);
+  logEvent('tick', {
+    teamId: teamId, runId: runId,
+    step: (m && m.steps && m.steps[i]) || '',
+    on: k < 0 ? 1 : 0
+  });
+  return r;
+}
+
+/* 這一趟勾了幾段。沒有分段的里程碑回 null——
+   沒有的東西不要畫成 0/0，那看起來像什麼都沒做。 */
+function stepsOf(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  var m = msOf(r.msId);
+  if (!m || !m.steps || !m.steps.length) return null;
+  return { all: m.steps, on: r.steps || [] };
 }
 
 /* 這一個 run 在某一天推過了沒 */
@@ -282,11 +308,11 @@ function openDays(teamId, runId) {
   return out;
 }
 
-/* 這一趟每一天動的是哪一件，照時間排。回的是他們清單上的 id。 */
-function actIdsOfRun(runId) {
+/* 這一趟每一天動的是第幾段，照時間排。沒分段的那幾天回 -1。 */
+function stepIdxOfRun(runId) {
   return where('Pushes', function (p) { return p.runId === runId; })
     .sort(function (a, b) { return a.day - b.day; })
-    .map(function (p) { return p.actId || ''; });
+    .map(function (p) { return p.step == null ? -1 : p.step; });
 }
 
 /* 今天班上有幾條廊道今天也有人在走。
@@ -325,7 +351,7 @@ function actReflect(teamId, runId, overs) {
   r.state = 'submitted';        /* 說完才排進老師的審核清單 */
   save();
   logEvent('reflect', { teamId: teamId, runId: runId,
-    overs: (overs || []).map(function (i) { return actLabel(teamId, i); }).join('、') });
+    overs: (overs || []).map(function (i) { return stepName(runId, i); }).join('、') });
   return r;
 }
 
@@ -343,16 +369,26 @@ function actSkipCamp(runId) {
 /* ================= 老師的動作 ================= */
 
 /* 派一個里程碑。teams 空陣列＝全班。 */
+/* 老師派一個里程碑。steps 是他自己分的段，選填。
+
+   分段是老師寫的，不是系統列的——這跟「系統不定義他們在做什麼」
+   不衝突：老師是人，而且那是他出的題目。系統只負責記住哪幾段被勾了。
+
+   勾一段跟每天推進是兩件事，不要混：推進是「今天我來過」（一天一次），
+   勾是「這一段做完了」（隨時，幾段都可以）。兩件事都不影響判定——
+   判定從頭到尾只看承諾幾天與實際幾天。 */
 function actPublish(classId, o) {
   var m = {
     msId: nid('M'), classId: classId,
     title: o.title, note: o.note || '',
+    steps: (o.steps || []).slice(0, 12),
     teams: o.teams || [],
     at: now()
   };
   DB.Milestones.push(m);
   save();
-  logEvent('publish', { title: m.title, teams: (m.teams || []).length });
+  logEvent('publish', { title: m.title, teams: (m.teams || []).length,
+    steps: (m.steps || []).length });
   return m;
 }
 
@@ -399,7 +435,7 @@ function actKeep(runId, key) {
     keepId: nid('K'), teamId: r.teamId, runId: runId,
     key: key, line: pick.line, at: now(),
     /* 當時在哪一層也記下來。架子上那一排的顏色就是他走過的地層。 */
-    zone: strataAt(depthOf(r.teamId)).key
+    zone: strataAt(depthOf(r.teamId), r.teamId).key
   });
   save();
   logEvent('keep', { teamId: r.teamId, runId: runId, keep: key });
@@ -419,45 +455,93 @@ function actRename(teamId, name) {
   return t;
 }
 
-/* ---------- 他們自己那一份清單 ----------
+/* ---------- 這一趟的段 ----------
 
-   系統不定義一個專案會做哪些事——那份清單是那一組自己寫的。
-   一行一件，最多十件。沒寫的組也走得完，推進那一顆鍵會退回
-   「我今天來過了」；寫了之後每天就是一下點擊。
+   本來這裡是那一組自己寫的一份清單。老師開始分段之後，那份清單就
+   多餘了——分段是老師寫的，是這一次的題目本身，而且不用先做設定。
+   這個系統要能在專案中途才開始用，多一道「先寫清單」等於多一道門。
 
-   id 用寫進去的順序 ＋ 字本身算，這樣改了清單裡的別行，
-   已經記錄過的那幾天還對得回原本那一件。 */
-function actsOf(teamId) {
-  var t = teamOf(teamId);
-  return (t && t.acts) || [];
+   系統一樣沒有定義任何東西：那幾個字是老師打的。 */
+function stepNames(runId) {
+  var s = stepsOf(runId);
+  return s ? s.all : [];
 }
 
-function actLabel(teamId, id) {
-  var a = actsOf(teamId);
-  for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i].label;
-  return '';
-}
-
-function actSetActs(teamId, text) {
-  var t = teamOf(teamId);
-  if (!t) return { err: '找不到這一組。' };
-  var seen = {}, out = [];
-  String(text || '').split('\n').forEach(function (line) {
-    var s = line.trim().slice(0, RULES.ACTS_LEN);
-    if (!s || seen[s] || out.length >= RULES.ACTS_MAX) return;
-    seen[s] = 1;
-    out.push({ id: 'a' + (hash(s) % 100000), label: s });
-  });
-  if (!out.length) return { err: '一行寫一件。空的清單沒辦法用。' };
-  t.acts = out;
-  save();
-  logEvent('acts', { teamId: teamId, n: out.length });
-  return { acts: out };
+function stepName(runId, i) {
+  var a = stepNames(runId);
+  return a[i] == null ? '' : a[i];
 }
 
 /* 這一組留下過的那些話 */
 function keepsOf(teamId) {
   return where('Keeps', function (g) { return g.teamId === teamId; });
+}
+
+/* ---------- 出口 ----------
+
+   往下走不出去：六層是隨機給的，而且一直循環（見 13-strata.js）。
+   唯一的出口是把手上這個專案做完。
+
+   兩件事要說清楚，因為很容易做歪：
+
+   一 · 「做完了」不是系統算出來的。系統不知道他們的專案有幾件事、
+        也不知道走到哪——尤其這個系統本來就要能在專案進行到一半的時候
+        才開始用。所以是他們自己宣告，老師確認。
+
+   二 · 開門的條件只有「做完了」，不是「估得夠準」。一旦準度變成門檻，
+        系統就在判定他規劃得夠不夠好，那是這個作品從頭到尾拒絕做的事。
+        準度決定的是走出去的時候帶著什麼——同一道門，不同的故事。
+        check.js 有一條在守這件事。 */
+function actAskExit(teamId) {
+  var t = teamOf(teamId);
+  if (!t || t.leftAt) return null;
+  t.exitAsk = now();
+  save();
+  logEvent('askexit', { teamId: teamId });
+  return t;
+}
+
+function actCancelExit(teamId) {
+  var t = teamOf(teamId);
+  if (!t || t.leftAt) return null;
+  t.exitAsk = 0;
+  save();
+  return t;
+}
+
+/* 老師確認。他寫的那一句會留在出口那一頁上。 */
+function actLetGo(teamId, word) {
+  var t = teamOf(teamId);
+  if (!t || !t.exitAsk || t.leftAt) return null;
+  t.leftAt = now();
+  t.exitWord = word || '';
+  t.exitAsk = 0;
+  save();
+  logEvent('left', { teamId: teamId });
+  return t;
+}
+
+/* 走出去的時候帶著的東西。全部是他們自己的紀錄，沒有一項是評分。 */
+function exitRecord(teamId) {
+  var runs = runsFor(teamId).filter(function (x) { return x.run.stamp; });
+  var acc = accuracyOf(teamId);
+  var d = depthOf(teamId);
+  var zones = {};
+  for (var i = 0; i < d; i++) zones[strataAt(i, teamId).key] = 1;
+  return {
+    runs: runs, acc: acc, depth: d,
+    cycles: cycleAt(d),
+    zones: STRATA.filter(function (z) { return zones[z.key]; }),
+    keeps: keepsOf(teamId),
+    days: where('Pushes', function (p) { return p.teamId === teamId; }).length
+  };
+}
+
+/* 等著老師確認出口的那幾組 */
+function exitQueue(classId) {
+  return where('Teams', function (t) {
+    return t.classId === classId && t.exitAsk && !t.leftAt;
+  });
 }
 
 /* 攤開三張讓學生挑一張留下。
@@ -474,10 +558,10 @@ function keepOffers(runId) {
   var out = [];
 
   /* 一 · 這幾天你在做什麼 */
-  var ids = actIdsOfRun(runId).filter(Boolean);
+  var ids = stepIdxOfRun(runId).filter(function (i) { return i >= 0; });
   var n = {}, top = null;
-  ids.forEach(function (i) { n[i] = (n[i] || 0) + 1; if (!top || n[i] > n[top]) top = i; });
-  var topName = top ? actLabel(r.teamId, top) : '';
+  ids.forEach(function (i) { n[i] = (n[i] || 0) + 1; if (top === null || n[i] > n[top]) top = i; });
+  var topName = top === null ? '' : stepName(runId, top);
   out.push({
     key: 'days',
     line: topName
@@ -494,7 +578,7 @@ function keepOffers(runId) {
   });
 
   /* 三 · 哪一件比你想的久。這是他們在營火自己說的。 */
-  var ov = (r.overs || []).map(function (id) { return actLabel(r.teamId, id); })
+  var ov = (r.overs || []).map(function (i) { return stepName(runId, i); })
     .filter(Boolean);
   var fl = r.flags || [];
   var hit = (r.overs || []).filter(function (id) { return fl.indexOf(id) >= 0; });

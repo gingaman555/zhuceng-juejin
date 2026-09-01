@@ -34,14 +34,14 @@ function scene(t, row, st) {
   var done = run && run.state !== 'running';
   var walked = done ? est : at;
   var seed = t.teamId + (run ? '|' + run.runId : '');
-  /* 每一格頭上掛的是那一天做了什麼。走廊因此讀得出形狀——
+  /* 每一格頭上掛的是那一天動的是哪一段。廊道因此讀得出形狀——
      七格全是 🔍 跟七格全是 🛠️ 是完全不同的一趟。 */
-  var did = run ? actIdsOfRun(run.runId) : [];
+  var did = run ? stepIdxOfRun(run.runId) : [];
   var light = WORLD.light[st.level];
   var W = SCN.ENT + est * SCN.TILE + SCN.END;
   /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
      世界觀不寫在說明裡，寫在牆上。 */
-  var zone = strataAt(depthOf(t.teamId));
+  var zone = strataAt(depthOf(t.teamId), t.teamId);
 
   var H = ['<div class="scn ' + light.key + ' z-' + zone.key + '">'];
 
@@ -89,9 +89,9 @@ function scene(t, row, st) {
 
     /* 那一天動的是哪一件。畫顏色不畫字——名字長度不一定，
        塞不進 44px；顏色對到哪一件，清單上看一次就記得了。 */
-    if (on && did[i]) {
+    if (on && did[i] >= 0) {
       H.push('<span class="doing" style="left:' + x + 'px;background:' +
-        actHue(t.teamId, did[i]) + '" title="' + esc(actLabel(t.teamId, did[i])) +
+        stepHue(did[i]) + '" title="' + esc(stepName(run.runId, did[i])) +
         '"></span>');
     }
 
@@ -157,8 +157,7 @@ function sceneMouth(t) {
   H.push('<div class="chain"></div>');
   H.push(pxTag(sg.px, sg.pal, 'sign'));
   H.push('</div>');
-  H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b>' +
-    '<span>' + esc(sg.name) + '</span></div>');
+  H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b></div>');
   H.push('</div>');
   return H.join('');
 }
@@ -168,7 +167,7 @@ function sceneMouth(t) {
    剛出發的時候只看得到一團影子，走到底才看得清牠長什麼樣。 */
 function sceneMob(t, row, prog) {
   var mob = mobFor(row.ms.msId, t.teamId);
-  var pal = strataAt(depthOf(t.teamId)).pal;
+  var pal = strataAt(depthOf(t.teamId), t.teamId).pal;
   var x = SCN.ENT + (row.run.est || 1) * SCN.TILE + 33;
   /* 這裡本來還掛一塊寫著里程碑名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，

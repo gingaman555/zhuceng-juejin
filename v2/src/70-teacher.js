@@ -18,10 +18,10 @@ function teacherStep(classId) {
   return 0;
 }
 
-/* 他們自己標的、他們自己說的。用的是那一組寫的詞，不是我列的選項。 */
+/* 他們自己標的、他們自己說的。用的是老師分段時寫的詞，不是我列的選項。 */
 function overTags(teamId, run) {
-  var fl = (run.flags || []).map(function (i) { return actLabel(teamId, i); }).filter(Boolean);
-  var ov = (run.overs || []).map(function (i) { return actLabel(teamId, i); }).filter(Boolean);
+  var fl = (run.flags || []).map(function (i) { return stepName(run.runId, i); }).filter(Boolean);
+  var ov = (run.overs || []).map(function (i) { return stepName(run.runId, i); }).filter(Boolean);
   if (!fl.length && !ov.length) return '';
   var H = ['<div class="tags small">'];
   if (fl.length) {
@@ -32,6 +32,19 @@ function overTags(teamId, run) {
     H.push('<span class="k">後來說比想的久</span>');
     ov.forEach(function (l) { H.push('<span class="tag static hit">' + esc(l) + '</span>'); });
   }
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 他們勾了哪幾段。老師自己分的，所以他讀得懂。 */
+function stepTags(run) {
+  var s = stepsOf(run.runId);
+  if (!s) return '';
+  var H = ['<div class="tags small"><span class="k">分段</span>'];
+  s.all.forEach(function (x, i) {
+    H.push('<span class="tag static' + (s.on.indexOf(i) >= 0 ? ' hit' : '') + '">' +
+      esc(x) + '</span>');
+  });
   H.push('</div>');
   return H.join('');
 }
@@ -50,6 +63,22 @@ PAGES.radar = function () {
   var H = [];
 
   H.push(stepBar(TEACHER_STEPS, teacherStep(u.classId)));
+
+  /* 想出去的那幾組排在最前面。往下走不出去，出口只有這一個，
+     而且要他確認——那是這個系統裡他做的最後一件事。 */
+  exitQueue(u.classId).forEach(function (t) {
+    var acc = accuracyOf(t.teamId);
+    H.push('<div class="card exitq">');
+    H.push('<div class="eyebrow">出口</div>');
+    H.push('<h2>' + esc(t.name) + ' 說專案做完了。</h2>');
+    H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
+      depthOf(t.teamId) + ' 個里程碑</p>');
+    if (acc.total) H.push(accBar(acc));
+    H.push('<div class="eyebrow" style="margin-top:14px">說一句話　選填</div>');
+    H.push('<textarea id="gr-word" rows="2"></textarea>');
+    H.push(btn('讓他們出去', 'letgo:' + t.teamId, 'big'));
+    H.push('</div>');
+  });
 
   H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '目前沒有等你看的',
     rows.length
@@ -78,6 +107,7 @@ PAGES.radar = function () {
     H.push('<div class="radar-ms">' + esc(x.ms.title) + '</div>');
       H.push(estBar(x.run.est, x.run.actual, false));
     H.push(overTags(x.team.teamId, x.run));
+    H.push(stepTags(x.run));
     H.push(btn('看完了，去勾', 'go:review:' + x.run.runId, ''));
     H.push('</div>');
   });
@@ -155,7 +185,12 @@ PAGES.ms = function () {
   H.push('<div class="eyebrow">派一個新的</div>');
   H.push('<input id="ms-title" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
   H.push('<textarea id="ms-note" rows="2" placeholder="' +
-    esc('要注意的地方。寫提醒，不要寫步驟。') + '"></textarea>');
+    esc('要注意的地方。選填。') + '"></textarea>');
+  H.push('<div class="eyebrow" style="margin-top:14px">分段　選填　一行一段</div>');
+  H.push('<textarea id="ms-steps" rows="4" placeholder="' +
+    esc('訪三個人\n整理逐字稿\n收斂成一句話') + '"></textarea>');
+  H.push('<p class="dim">分了段，學生每天可以點「今天動的是哪一段」，' +
+         '也可以一段一段勾掉。不分段一樣走得完。</p>');
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +

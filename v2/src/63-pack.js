@@ -33,10 +33,10 @@ PAGES.pack = function () {
   /* 帶在身上的：最近留下的那一句。下一次承諾時會出現的就是它。 */
   var top = ks[0];
   var tk = RULES.keepOf(top.key);
-  H.push('<div class="card carry ' + strataAt(depthOf(t.teamId)).key + '">');
+  H.push('<div class="card carry ' + strataAt(depthOf(t.teamId), t.teamId).key + '">');
   H.push('<div class="eyebrow">帶在身上的</div>');
   H.push('<div class="carry-in">');
-  H.push(pxTag(GEAR_PX[tk.tro].px, strataAt(depthOf(t.teamId)).pal, 'kp-px'));
+  H.push(pxTag(GEAR_PX[tk.tro].px, strataAt(depthOf(t.teamId), t.teamId).pal, 'kp-px'));
   H.push('<div><i>' + esc(tk.eyebrow) + '</i><em>' + esc(top.line) + '</em></div>');
   H.push('</div></div>');
 
@@ -49,7 +49,7 @@ PAGES.pack = function () {
     var r = find('Runs', function (x) { return x.runId === k.runId; });
     var m = r ? msOf(r.msId) : null;
     H.push('<div class="kp">');
-    var kz = k.zone ? strataAt(0) : STRATA[0];
+    var kz = STRATA[0];
     STRATA.forEach(function (z) { if (z.key === k.zone) kz = z; });
     H.push(pxTag(GEAR_PX[kk.tro].px, kz.pal, 'kp-px sm'));
     H.push('<div>');

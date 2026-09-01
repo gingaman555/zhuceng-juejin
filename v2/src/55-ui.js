@@ -35,6 +35,7 @@ var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', submit: 'student', stamp: 'student',
   camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
+  exit: 'student',
   log: 'student', claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -290,27 +291,33 @@ var ACTS = {
     render();
   },
 
-  /* 打開清單那一張來改 */
-  editacts: function () {
-    var pre = actsOf(myTeam().teamId).map(function (a) { return a.label; }).join('\n');
-    go('home');
-    DRAFT.acts = pre;
+  /* 勾掉／取消勾掉老師分的一段 */
+  tick: function (arg) {
+    var i = arg.indexOf('|');
+    actTickStep(myTeam().teamId, arg.slice(0, i), Number(arg.slice(i + 1)));
     render();
-    setTimeout(function () {
-      var el = document.getElementById('acts');
-      if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
-    }, 0);
   },
 
-  /* 寫自己那一份清單。系統不替他們定義一個專案會做哪些事。 */
-  setacts: function () {
-    var t = myTeam();
-    var v = (document.getElementById('acts') || {}).value || '';
-    var r = actSetActs(t.teamId, v);
-    if (r.err) { DRAFT.acts = v; return say(r.err); }
-    DRAFT.acts = null;
-    render();
-    say('記下來了。之後每天就點這幾件裡的一件。');
+  /* ---- 出口 ---- */
+  noop: function () {},
+
+  askexit: function () {
+    actAskExit(myTeam().teamId);
+    go('exit');
+    say('說出去了。老師確認之後你就出去了。');
+  },
+
+  cancelexit: function () {
+    actCancelExit(myTeam().teamId);
+    go('home');
+    say('收回來了。');
+  },
+
+  letgo: function (teamId) {
+    var word = (document.getElementById('gr-word') || {}).value || '';
+    if (!actLetGo(teamId, word.trim())) return say('這一組沒有在等出口。');
+    go('radar');
+    say('他們出去了。');
   },
 
   commit: function (msId) {
@@ -330,17 +337,17 @@ var ACTS = {
     arg = arg.replace('|:', '|');
     var i = arg.indexOf('|');
     var runId = i < 0 ? arg : arg.slice(0, i);
-    var actId = i < 0 ? '' : arg.slice(i + 1);
+    var step = i < 0 ? -1 : Number(arg.slice(i + 1));
     var t = myTeam();
     var back = Number(DRAFT.back || 0);
     /* 有沒有藤蔓要碎——推之前先問，推完狀態就變了 */
     var wasStuck = stallOf(t.teamId).level;
-    if (!actPush(t.teamId, runId, actId, back)) {
+    if (!actPush(t.teamId, runId, step, back)) {
       return say(back ? '那一天已經點過了。' : '今天那一盞已經點好了。一天一盞——多按沒有用。');
     }
     DRAFT.back = 0;
     var r = find('Runs', function (x) { return x.runId === runId; });
-    var lab = actId ? actLabel(t.teamId, actId) : '';
+    var lab = stepName(runId, step);
     var msg;
     if (RULES.progress(r.pushes, r.est) >= 1) {
       msg = '走到走廊底了。交出去之後，系統會比對你當初承諾的天數。';
@@ -401,7 +408,10 @@ var ACTS = {
     var title = (document.getElementById('ms-title') || {}).value || '';
     var note = (document.getElementById('ms-note') || {}).value || '';
     if (!title.trim()) return say('先寫這一個里程碑要交什麼。');
-    actPublish(me().classId, { title: title.trim(), note: note.trim(), teams: DRAFT.to || [] });
+    var steps = ((document.getElementById('ms-steps') || {}).value || '')
+      .split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    actPublish(me().classId, { title: title.trim(), note: note.trim(),
+      steps: steps, teams: DRAFT.to || [] });
     go('ms');
     say('派出去了。學生那邊會先被問「你打算花幾天」。');
   },

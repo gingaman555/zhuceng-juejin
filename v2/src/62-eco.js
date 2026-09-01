@@ -127,7 +127,7 @@ function xsShaft(r, i, maxD, mine) {
   for (var d = 0; d < maxD; d++) {
     var dug = d < r.depth;
     var here = d === r.depth && r.at > 0;
-    var band = strataAt(d);
+    var band = strataAt(d, r.teamId);
     H.push('<div class="xs-seg ' + band.key + (dug ? ' dug' : '') + (here ? ' here' : '') +
       '" style="top:' + xsTop(d) + 'px">');
     if (here) H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
@@ -236,7 +236,7 @@ PAGES.classeco = function () {
     H.push('<b>' + esc(t.name) + '</b>');
     H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
     H.push('<span class="sp"></span>');
-    H.push('<span class="dim">' + esc(strataAt(r.depth).name) + '　·　深度 ' +
+    H.push('<span class="dim">' + esc(strataAt(r.depth, r.teamId).name) + '　·　深度 ' +
       (r.depth * WORLD.depthPerMilestone) + ' m</span>');
     H.push('</div>');
 

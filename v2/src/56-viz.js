@@ -50,35 +50,32 @@ function estBar(est, actual, live) {
 
 /* ---------- 每一件一個顏色 ----------
 
-   他們寫的那幾件事，名字可能是「訪談」也可能是「找工廠報價」——
-   長度不一定，塞不進廊道上一格 44px 的位置。所以廊道上畫的是顏色，
-   顏色對到哪一件在清單上讀一次就記得了。
+   老師分的那幾段，名字長度不一定，塞不進廊道上一格 44px 的位置。
+   所以廊道上畫的是顏色，顏色對到第幾段，在清單上讀一次就記得了。
 
-   顏色照清單的順序給，不照內容——系統不知道「打樣」該是什麼顏色，
+   顏色照段的順序給，不照內容——系統不知道「打樣」該是什麼顏色，
    也不該假裝知道。 */
 var ACT_HUE = [
   '#E9B341', '#5FA8C7', '#7FA866', '#C77BA8', '#D9843F',
   '#8C7BC7', '#5AA88F', '#C7645F', '#9AA6B0', '#B8A05A'
 ];
-function actHue(teamId, id) {
-  var a = actsOf(teamId);
-  for (var i = 0; i < a.length; i++) if (a[i].id === id) return ACT_HUE[i % ACT_HUE.length];
-  return '#4A4038';
+function stepHue(i) {
+  return i < 0 ? '#4A4038' : ACT_HUE[i % ACT_HUE.length];
 }
 
-/* 清單本身就是圖例。看過一次就對得起來。 */
-function actLegend(teamId, sel, act) {
-  var a = actsOf(teamId);
+/* 段的清單就是圖例。同一個元件當三種用：圖例、推進鍵、標記鍵。 */
+function stepLegend(runId, sel, act) {
+  var a = stepNames(runId);
   if (!a.length) return '';
   var H = ['<div class="alist">'];
   a.forEach(function (x, i) {
-    var on = sel && sel.indexOf(x.id) >= 0;
+    var on = sel && sel.indexOf(i) >= 0;
     var tag = act ? 'button' : 'span';
     H.push('<' + tag + ' class="ac' + (on ? ' on' : '') + '"' +
       (act ? ' data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: act + ':' + x.id })) + '\'' : '') + '>' +
-      '<b style="background:' + ACT_HUE[i % ACT_HUE.length] + '"></b>' +
-      esc(x.label) + '</' + tag + '>');
+        esc(JSON.stringify({ a: act + ':' + i })) + '\'' : '') + '>' +
+      '<b style="background:' + stepHue(i) + '"></b>' +
+      esc(x) + '</' + tag + '>');
   });
   H.push('</div>');
   return H.join('');
@@ -87,13 +84,12 @@ function actLegend(teamId, sel, act) {
 /* 這一趟每一天動的是哪一件，排成一條。
    沒有清單的組就是一排腳印——那也是資訊：你來了幾天。 */
 function dayStrip(teamId, runId) {
-  var ids = actIdsOfRun(runId);
+  var ids = stepIdxOfRun(runId);
   if (!ids.length) return '';
   var H = ['<div class="dstrip">'];
   ids.forEach(function (id, i) {
-    var lab = id ? actLabel(teamId, id) : '';
-    H.push('<span class="ds" style="background:' +
-      (lab ? actHue(teamId, id) : '#3A342C') + '" title="' +
+    var lab = stepName(runId, id);
+    H.push('<span class="ds" style="background:' + stepHue(id) + '" title="' +
       esc('第 ' + (i + 1) + ' 天' + (lab ? '　' + lab : '')) + '"></span>');
   });
   H.push('</div>');

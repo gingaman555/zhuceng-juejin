@@ -31,9 +31,9 @@ var RULES = {
   BACKFILL_MAX: 2,
 
   /* ---------- 招牌 ---------- */
-  /* 專案名稱看板的三階。老師每改寫一次名稱就往上升一階——
-     視覺材質的升級就是對邏輯收斂最直接的肯定，不用多說一句話。 */
-  SIGN_TIERS: ['wood', 'iron', 'glow'],
+  /* 只剩一種材質。三階那個「越深牌子越好」的漸層拿掉了——
+     深度已經不是進度，留著它跟其他每一條規則都打架。 */
+  SIGN_TIERS: ['iron'],
 
   /* 這個系統沒有的東西寫在 check.js 的 BANNED 裡，不寫在這裡——
      寫在這裡等於把那些詞放進畫面，檢查器會抓（而且抓得對）。 */
@@ -93,8 +93,7 @@ RULES.judgeWhy = function (est, actual) {
 
    零輸入框那條原則沒有破：清單只寫一次，之後每天都是一下點擊。
    沒寫的組也走得完——那一顆鍵就退回「我今天來過了」。 */
-RULES.ACTS_MAX = 10;      /* 再多就選不動了 */
-RULES.ACTS_LEN = 12;      /* 一件事的名字最多幾個字 */
+RULES.STEPS_MAX = 12;     /* 一個里程碑最多分幾段 */
 
 /* ---------- 這一趟留下哪一件 ----------
 
@@ -124,17 +123,6 @@ RULES.keepOf = function (key) {
     if (RULES.KEEPS[i].key === key) return RULES.KEEPS[i];
   }
   return null;
-};
-
-/* 招牌的階由深度決定，不由任何人手動調。
-   走完的里程碑越多，廊道入口的招牌材質越好——木牌、鐵牌、會發光的銘牌。 */
-RULES.SIGN_AT = [0, 2, 4];
-RULES.signTierOf = function (depth) {
-  var n = 0;
-  for (var i = 0; i < RULES.SIGN_AT.length; i++) {
-    if ((Number(depth) || 0) >= RULES.SIGN_AT[i]) n = i;
-  }
-  return n;
 };
 
 

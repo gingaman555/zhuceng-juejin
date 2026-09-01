@@ -55,24 +55,20 @@ function seed() {
   });
   var ALL = TEAMS.map(function (t) { return t.id; });
 
-  /* 每一組自己寫的清單。刻意五組五個樣子——系統不定義一個專案會做
-     哪些事，所以試用資料也不該讓五組長得一樣。
-     第五組沒寫，那一組證明沒有清單也走得完。 */
-  actSetActs('G1', '訪談\n找案例\n畫草圖\n寫文案\n修改');
-  actSetActs('G2', '查資料\n排功能\n畫介面\n做原型\n測試');
-  actSetActs('G3', '現場觀察\n拍照\n量尺寸\n畫圖\n做模型');
-  actSetActs('G4', '訪談\n整理逐字稿\n分類\n畫地圖\n寫報告');
-  function aid(teamId, i) {
-    var a = actsOf(teamId);
-    return a[i] ? a[i].id : '';
-  }
+
+  /* 老師分的段寫在里程碑上（見下面的 M1／M2）。第三個刻意不分——
+     沒分段一樣走得完，那一個里程碑就是在證明這件事。 */
 
   /* ---------- 三個里程碑 ---------- */
   var M1 = { msId: 'M1', classId: cid, teams: [], at: ago(24),
     title: '訪三個人，記下他們怎麼講',
+    steps: ['找到人', '約時間', '訪談', '整理逐字稿'],
+    steps: ['找到人', '約時間', '訪談', '整理逐字稿'],
     note: '不要問「你覺得好不好」。問他上一次遇到這件事是什麼時候。' };
   var M2 = { msId: 'M2', classId: cid, teams: [], at: ago(14),
     title: '把痛點收斂成一句話',
+    steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
+    steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
     note: '不要寫題目，寫問題。' };
   var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3),
     title: '畫一張現在的流程圖',
@@ -82,23 +78,23 @@ function seed() {
 
   /* 幫忙塞推進紀錄。
 
-     每一天動的是哪一件也一起塞，取自那一組自己的清單——不然試用資料的
+     每一天動的是哪一段也一起塞，取自那一個里程碑的分段——不然試用資料的
      廊道每一格都長一樣，看不出「這一趟大半在訪談」跟「這一趟一直在修改」
      的差別，而那正是這個機制要讓人看見的東西。
-     沒有清單的組（G5）塞空的，那也是一種樣子。 */
+     沒分段的里程碑塞 -1，那也是一種樣子。 */
   function pushes(teamId, runId, days, from) {
-    var a = actsOf(teamId);
+    var a = (msOf((find('Runs', function (x) { return x.runId === runId; }) || {}).msId) || {}).steps || [];
     for (var i = 0; i < days; i++) {
       var at = ago(from - i);
       DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId,
         day: dayOf(at), at: at,
-        actId: a.length ? a[hash(runId + i) % a.length].id : '' });
+        step: a.length ? hash(runId + i) % a.length : -1 });
     }
   }
 
   /* ---------- G1 甲：估得準，已經跑完兩個，第三個進行中 ---------- */
   DB.Runs.push({ runId: 'R1', teamId: 'G1', msId: 'M1', state: 'done',
-    est: 6, actual: 6, stamp: 'exact', flags: [aid('G1', 0)], overs: [], pushes: 6,
+    est: 6, actual: 6, stamp: 'exact', flags: [0], overs: [], pushes: 6,
     committedAt: ago(24), submittedAt: ago(18), doneAt: ago(17),
     word: '你說六天就是六天。訪談那幾天沒有拖。' });
   pushes('G1', 'R1', 6, 23);
@@ -110,12 +106,12 @@ function seed() {
   pushes('G1', 'R2', 4, 13);
 
   DB.Runs.push({ runId: 'R3', teamId: 'G1', msId: 'M3', state: 'running',
-    est: 5, flags: [aid('G1', 2)], overs: [], pushes: 2, committedAt: ago(3) });
+    est: 5, flags: [2], overs: [], pushes: 2, committedAt: ago(3) });
   pushes('G1', 'R3', 2, 2);
 
   /* ---------- G2 乙：估太少，判定失準，還沒復盤 ---------- */
   DB.Runs.push({ runId: 'R4', teamId: 'G2', msId: 'M1', state: 'done',
-    est: 3, actual: 9, stamp: 'late', flags: [], overs: [aid('G2', 3), aid('G2', 4)], pushes: 5,
+    est: 3, actual: 9, stamp: 'late', flags: [], overs: [1, 2], pushes: 5,
     committedAt: ago(24), submittedAt: ago(15), doneAt: ago(14),
     word: '你們說做原型跟測試比想的久，這兩件我看到了。' });
   pushes('G2', 'R4', 5, 22);
@@ -127,13 +123,13 @@ function seed() {
 
   /* ---------- G3 丙：正在跑，但四天沒推進——睡著了 ---------- */
   DB.Runs.push({ runId: 'R6', teamId: 'G3', msId: 'M1', state: 'done',
-    est: 7, actual: 7, stamp: 'exact', flags: [aid('G3', 4)], overs: [], pushes: 7,
+    est: 7, actual: 7, stamp: 'exact', flags: [2], overs: [], pushes: 7,
     committedAt: ago(24), submittedAt: ago(17), doneAt: ago(16),
     word: '七天你們來了七天。' });
   pushes('G3', 'R6', 7, 23);
 
   DB.Runs.push({ runId: 'R7', teamId: 'G3', msId: 'M2', state: 'running',
-    est: 8, flags: [aid('G3', 0)], overs: [], pushes: 3, committedAt: ago(14) });
+    est: 8, flags: [0], overs: [], pushes: 3, committedAt: ago(14) });
   pushes('G3', 'R7', 3, 12);   /* 最後一次在 12 天前 → 睡著 */
 
   /* ---------- G4 丁：交出去了，在等老師 ---------- */
@@ -144,7 +140,7 @@ function seed() {
   pushes('G4', 'R8', 5, 23);
 
   DB.Runs.push({ runId: 'R9', teamId: 'G4', msId: 'M2', state: 'submitted',
-    est: 6, actual: 6, stamp: 'exact', flags: [aid('G4', 1)], overs: [], pushes: 6,
+    est: 6, actual: 6, stamp: 'exact', flags: [1], overs: [], pushes: 6,
     committedAt: ago(14), submittedAt: ago(2) });
   pushes('G4', 'R9', 6, 13);
 

@@ -10,7 +10,7 @@
    誰在哪一層都看得到，也沒有哪一層需要「開」。深度變了，岩石就變了——
    就這樣，沒有別的意思。
 
-   另外兩層是這一版新的：根脈層（表土下面，上面那片林子的根穿下來）
+   另外兩層是這一版新的：根脈層（上面那片林子的根穿下來）
    與銹層（有人來過，鐵件鏽在岩層裡）。放在這兩個位置是因為
    它們各自回答一件事——上面還有東西活著、你不是第一個下來的。
 
@@ -20,55 +20,97 @@
      tex    牆的紋理（廊道與剖面圖共用同一份，見 53/54 的 z- 與 .xs-band）
      fauna  住在這一層的東西（見 14-fauna.js 與 PACK.creatures 的 r 欄位）
 
-   底下那一句寫的是「這裡的石頭長什麼樣」，不是「你在這一層要學會什麼」。
+   六層沒有先後。哪一層先給到是隨機的（見 routeOf），所以底下那一句寫的是
+   「這裡的石頭長什麼樣」，不是「你在這一層要學會什麼」。
    一旦寫成後者，那張剖面圖就變回一條進度條。 */
 
 var STRATA = [
   {
-    key: 'wild', name: '微光荒原', from: 0, to: 1,
+    key: 'wild', name: '微光荒原',
     note: '表土。碎石多，光還下得來一點。',
     pal: { '#': '#C9A227', o: '#9A7E22', '*': '#F2E6C8' },
     bg: '#171208', line: '#3A2E12'
   },
   {
-    key: 'root', name: '根脈層', from: 2, to: 3,
+    key: 'root', name: '根脈層',
     note: '上面那片林子的根穿下來。牆是活的，摸起來是濕的。',
     pal: { '#': '#7FA866', o: '#3E5533', '*': '#D8F0C0' },
     bg: '#0F1A0C', line: '#26381D'
   },
   {
-    key: 'crys', name: '水晶迴廊', from: 4, to: 5,
+    key: 'crys', name: '水晶迴廊',
     note: '地下水穿過晶體。走通的斷面會折光。',
     pal: { '#': '#5FA8C7', o: '#3E7E96', '*': '#D8F2FA' },
     bg: '#0C1720', line: '#173445'
   },
   {
-    key: 'echo', name: '迴聲迷宮', from: 6, to: 7,
+    key: 'echo', name: '迴聲迷宮',
     note: '方塊狀的硬岩。聲音在裡面會繞，你會聽到自己剛剛講的話。',
     pal: { '#': '#8C7BC7', o: '#625397', '*': '#E4DCFA' },
     bg: '#131024', line: '#2E2750'
   },
   {
-    key: 'rust', name: '銹層', from: 8, to: 9,
+    key: 'rust', name: '銹層',
     note: '有人來過。鐵件鏽在岩層裡，接縫還看得出來。',
     pal: { '#': '#B07A4A', o: '#6B4526', '*': '#E8C79A' },
     bg: '#1A1310', line: '#3E2A1C'
   },
   {
-    key: 'fire', name: '熔火深淵', from: 10, to: 9999,
-    note: '底下有熱源。往下沒有盡頭，只是越來越燙。',
+    key: 'fire', name: '熔火深淵',
+    note: '底下有熱源。再往下，你會回到微光荒原。',
     pal: { '#': '#D9603F', o: '#9E4026', '*': '#FAD9CC' },
     bg: '#1C0E09', line: '#4A2013'
   }
 ];
 
-/* 這個深度是哪一層的岩石 */
-function strataAt(depth) {
-  var d = Number(depth) || 0;
-  for (var i = 0; i < STRATA.length; i++) {
-    if (d >= STRATA[i].from && d <= STRATA[i].to) return STRATA[i];
+/* ---------- 無盡輪迴 ----------
+
+   六層走完會回到第一層，順序是隨機給的，而且一直循環。
+
+   隨機有兩個理由，第二個才是真正的：
+
+   一 · 被困在裡面。往下走不出去，深度因此徹底不是進度，也不是出口。
+   二 · 這個系統要在專案進行到一半的時候也能開始用。固定的路線等於
+        「你從第一層開始」，那預設了使用者的專案剛起步。隨機給就沒有
+        這個預設——你在哪一層醒來只是你在哪一層醒來。
+
+   隨機但不是每次重畫都不一樣：用組別算，同一組同一個深度永遠同一層。
+   會亂跳的東西不是地下城，是特效。
+
+   代價是全班那張剖面圖不再有共通的地層帶。那是對的——同樣 160 公尺，
+   兩組看到的東西不一樣，就沒得比。 */
+var ZONE_SPAN = 2;                    /* 一層待幾個里程碑 */
+var CYCLE = ZONE_SPAN * STRATA.length;
+
+/* 這一組被給到的順序。洗牌用組別算，所以它是固定的。 */
+function routeOf(teamId) {
+  var idx = [], i;
+  for (i = 0; i < STRATA.length; i++) idx.push(i);
+  var h = hash('route|' + (teamId || ''));
+  for (i = idx.length - 1; i > 0; i--) {
+    h = (h * 1103515245 + 12345) >>> 0;
+    var j = h % (i + 1), t = idx[i];
+    idx[i] = idx[j]; idx[j] = t;
   }
-  return STRATA[STRATA.length - 1];
+  return idx;
+}
+
+/* 這一組在這個深度會在哪一層 */
+function strataAt(depth, teamId) {
+  var r = routeOf(teamId);
+  var n = Math.floor((Number(depth) || 0) / ZONE_SPAN);
+  return STRATA[r[((n % r.length) + r.length) % r.length]];
+}
+
+/* 第幾圈。走完六層算一圈。 */
+function cycleAt(depth) {
+  return Math.floor((Number(depth) || 0) / CYCLE);
+}
+
+/* 這一層還要待幾個里程碑才換 */
+function untilNextZone(depth) {
+  var d = Number(depth) || 0;
+  return ZONE_SPAN - (d % ZONE_SPAN);
 }
 
 /* 一層裡住著哪些東西。
