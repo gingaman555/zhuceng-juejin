@@ -1,0 +1,124 @@
+/* 手機。
+
+   之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
+   而導覽全部在側欄裡。也就是說手機打開之後按不到任何一頁。
+   那不是版面問題，那是功能不見了。
+
+   做法不是另寫一套版面，是讓同一段 HTML 換一個排法：側欄從左邊那一條
+   變成釘在底部的一列。兩邊的資訊、順序、狀態完全一樣，
+   只有方向不同——這樣兩個平台不會各自長出自己的邏輯。 */
+
+@media (max-width: 860px) {
+
+  /* ---------- 導覽：左邊那一條變成底下那一列 ---------- */
+  .side{
+    position:fixed;left:0;right:0;bottom:0;top:auto;z-index:50;
+    width:auto;flex:none;height:auto;overflow:visible;
+    flex-direction:row;
+    border-right:none;
+    box-shadow:0 -3px 0 rgba(0,0,0,.72), 0 -4px 0 rgba(255,240,214,.05)
+  }
+  .side-head{display:none}
+  .nav{display:flex;flex-direction:row;padding:0;width:100%}
+  .nav a{
+    flex:1;min-width:0;flex-direction:column;justify-content:center;
+    gap:3px;padding:9px 3px;font-size:11px;text-align:center;line-height:1.3;
+    border-left:none;border-top:3px solid transparent
+  }
+  .nav a.on{border-top-color:var(--gold);background:var(--panel2)}
+  .nav a .dot{width:8px;height:8px;flex:0 0 8px}
+
+  /* 底下那一列會蓋住內容，把位置留出來 */
+  .wrap{padding:22px 14px 121px}
+  .gate .gate-box{padding-bottom:0}
+
+  /* ---------- 字級 ---------- */
+  h1{font-size:33px}
+  h2{font-size:22px}
+  .lead{font-size:22px}
+  .stamp-card h1{font-size:33px}
+  .stamp-mark{font-size:44px}
+  .big-num,.slider-read b{font-size:44px}
+  .dash h1{font-size:33px}
+
+  /* ---------- 按鈕：一顆一行，不要擠成兩個字一行 ---------- */
+  .btn{font-size:22px;padding:14px 18px}
+  .btn.big{font-size:22px;padding:16px 22px;width:100%}
+  .row{gap:8px}
+  .row .btn{flex:1 1 auto;min-width:132px}
+
+  /* ---------- 輸入 ---------- */
+  input,textarea,select{font-size:22px}
+  .rn-row{flex-direction:column;align-items:stretch}
+  .rn-row b{flex:none}
+  .rn-row input{min-width:0;width:100%}
+  .rn-row .btn{width:100%}
+
+  /* ---------- 頂條與試用列 ---------- */
+  .top{padding:8px 14px;gap:8px}
+  .top .who{font-size:22px}
+  .demo{padding:8px 14px;gap:8px}
+
+  /* ---------- 步驟條：兩個一排 ---------- */
+  .step{min-width:calc(50% - 1px);border-right:1px solid var(--line)}
+  .step i{font-size:11px}
+
+  /* ---------- 廊道 ---------- */
+  .scn,.scn-in{height:231px}
+  .scn-hud{padding:4px 7px}
+  .scn-hud em{font-size:11px}
+  .scn-hud b{font-size:22px}
+  .scn-hud .zn-note{display:none}
+  .scn-cap{margin-top:0}
+
+  /* ---------- 兩條尺 ---------- */
+  .eb-r b{flex:0 0 33px}
+  .eb{height:18px}
+
+  /* ---------- 清單與標記 ---------- */
+  .ac{font-size:22px;padding:11px 13px}
+
+  /* ---------- 卡片與清單類 ---------- */
+  .card,.act-card{padding:14px}
+  .gcard,.slot{width:100%}
+  .zn{min-width:calc(50% - 6px)}
+  .acc-c{padding:9px}
+  .acc-c i{font-size:33px}
+
+  /* ---------- 全班地下城 ---------- */
+  .fa-in{gap:14px}
+  .px.fa-px{width:66px;height:66px;flex:0 0 66px}
+  .fa-in > div{min-width:0}
+  .lg{gap:8px 14px}
+}
+
+/* 很窄的手機（375 以下）再收一階 */
+@media (max-width: 400px) {
+  h1{font-size:22px}
+  .wrap{padding:14px 11px 121px}
+  .step{min-width:100%;border-right:1px solid var(--line)}
+  .nav a{font-size:11px;padding:8px 1px}
+  .zn{min-width:100%}
+}
+
+/* 觸控：hover 不存在，所以「滑過去才看得到」的東西要一直看得到 */
+@media (hover: none) {
+  .xs-fauna{opacity:.6}
+  .btn:hover{background-image:none}
+}
+
+/* 上面那一段只換了排法，沒有換 display——50-style.css 曾經在這個寬度
+   把側欄整個藏起來。那條已經拿掉了，這裡再寫一次當保險：
+   導覽在任何寬度都必須在。 */
+@media (max-width: 860px) {
+  .side{display:flex !important}
+  /* 試用列在手機會排到三行，收成一行 */
+  .demo{font-size:11px;flex-wrap:nowrap;overflow-x:auto}
+  .demo select{max-width:132px}
+}
+
+@media (max-width: 860px) {
+  /* 走廊盡頭那塊木牌在手機會壓到角落那一塊，而且它寫的字
+     底下那張卡已經有了——重複的東西先讓位。 */
+  .goal{display:none}
+}

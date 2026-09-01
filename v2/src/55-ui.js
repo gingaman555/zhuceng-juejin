@@ -128,6 +128,13 @@ function flashBar() {
    而且那是一種只有測試才抓得到的錯。讓它自己負責。 */
 function say(m) { S.flash = m; render(); }
 
+/* 頂條右邊那一段。三種角色共用——登出在哪裡不該因為身分而不同，
+   而且側欄在手機會變成底下那一列，放在那裡會被擠掉。 */
+function topEnd() {
+  return '<a class="plain" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'logout' })) + '\'>登出</a>';
+}
+
 function classOf(u) {
   return find('Classes', function (c) { return c.classId === u.classId; }) || DB.Classes[0] || { name: '' };
 }
@@ -140,7 +147,7 @@ function topBar() {
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
       '<span>' + DB.Users.length + ' 個帳號　·　' + DB.Classes.length + ' 個班　·　' +
-        DB.Events.length + ' 筆紀錄</span>' +
+        DB.Events.length + ' 筆紀錄</span>' + topEnd() +
       '</div>';
   }
   if (u.role === 'teacher') {
@@ -151,7 +158,7 @@ function topBar() {
       '<span class="sp"></span>' +
       '<span>' + esc(classOf(u).name) + '　·　' +
         where('Teams', function (t) { return t.classId === u.classId; }).length + ' 組</span>' +
-      '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' +
+      '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' + topEnd() +
       '</div>';
   }
   var t = myTeam();
@@ -162,7 +169,7 @@ function topBar() {
     '<span class="sp"></span>' +
     '<span>' + esc(t.project || '（還沒定）') + '</span>' +
     '<span class="' + (st.level ? 'warnx' : '') + '">深度 ' +
-      (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</span>' +
+      (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</span>' + topEnd() +
     '</div>';
 }
 
@@ -209,16 +216,14 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '廊道'], ['pack', '裝備架'], ['eco', '全班地下城'], ['log', '紀錄']
+      ['home', '廊道'], ['pack', '留下的'], ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   var items = nav.map(function (n) {
     return '<a class="' + (S.page === n[0] ? 'on' : '') + '" data-go="' + n[0] + '">' +
       '<span class="dot"></span>' + esc(n[1]) + '</a>';
   }).join('');
-  return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div>' +
-    '<div class="side-foot"><a class="plain" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'logout' })) + '\'>登出</a></div></div>';
+  return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div></div>';
 }
 
 /* ---------- 事件 ---------- */
@@ -269,23 +274,48 @@ var ACTS = {
   /* 滑桿：只改草稿，不進資料表 */
   est: function (v) { DRAFT.est = v; render(); },
 
-  risk: function (k) {
-    DRAFT.risks = DRAFT.risks || [];
-    var i = DRAFT.risks.indexOf(k);
-    if (i < 0) DRAFT.risks.push(k); else DRAFT.risks.splice(i, 1);
+  /* 承諾的時候標「這一件我覺得會比想的久」 */
+  flag: function (k) {
+    DRAFT.flags = DRAFT.flags || [];
+    var i = DRAFT.flags.indexOf(k);
+    if (i < 0) DRAFT.flags.push(k); else DRAFT.flags.splice(i, 1);
     render();
   },
 
-  snag: function (k) {
-    DRAFT.snags = DRAFT.snags || [];
-    var i = DRAFT.snags.indexOf(k);
-    if (i < 0) DRAFT.snags.push(k); else DRAFT.snags.splice(i, 1);
+  /* 營火：哪一件真的比你想的久 */
+  over: function (k) {
+    DRAFT.overs = DRAFT.overs || [];
+    var i = DRAFT.overs.indexOf(k);
+    if (i < 0) DRAFT.overs.push(k); else DRAFT.overs.splice(i, 1);
     render();
+  },
+
+  /* 打開清單那一張來改 */
+  editacts: function () {
+    var pre = actsOf(myTeam().teamId).map(function (a) { return a.label; }).join('\n');
+    go('home');
+    DRAFT.acts = pre;
+    render();
+    setTimeout(function () {
+      var el = document.getElementById('acts');
+      if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
+    }, 0);
+  },
+
+  /* 寫自己那一份清單。系統不替他們定義一個專案會做哪些事。 */
+  setacts: function () {
+    var t = myTeam();
+    var v = (document.getElementById('acts') || {}).value || '';
+    var r = actSetActs(t.teamId, v);
+    if (r.err) { DRAFT.acts = v; return say(r.err); }
+    DRAFT.acts = null;
+    render();
+    say('記下來了。之後每天就點這幾件裡的一件。');
   },
 
   commit: function (msId) {
     var t = myTeam();
-    actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.risks || []);
+    actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.flags || []);
     go('home');
     say('承諾了。從今天開始，每天推一格。');
   },
@@ -295,19 +325,22 @@ var ACTS = {
 
   /* 推進。參數是「runId|今天動的是哪一塊」。 */
   push: function (arg) {
+    /* 圖例那一排送過來的字是「push:R12|:a123」，中間那一段是 runId。
+       沒有 | 就是「我今天來過了」——那一組還沒寫自己的清單。 */
+    arg = arg.replace('|:', '|');
     var i = arg.indexOf('|');
     var runId = i < 0 ? arg : arg.slice(0, i);
-    var kind = i < 0 ? 'any' : arg.slice(i + 1);
+    var actId = i < 0 ? '' : arg.slice(i + 1);
     var t = myTeam();
     var back = Number(DRAFT.back || 0);
     /* 有沒有藤蔓要碎——推之前先問，推完狀態就變了 */
     var wasStuck = stallOf(t.teamId).level;
-    if (!actPush(t.teamId, runId, kind, back)) {
+    if (!actPush(t.teamId, runId, actId, back)) {
       return say(back ? '那一天已經點過了。' : '今天那一盞已經點好了。一天一盞——多按沒有用。');
     }
     DRAFT.back = 0;
     var r = find('Runs', function (x) { return x.runId === runId; });
-    var d = RULES.doingOf(kind);
+    var lab = actId ? actLabel(t.teamId, actId) : '';
     var msg;
     if (RULES.progress(r.pushes, r.est) >= 1) {
       msg = '走到走廊底了。交出去之後，系統會比對你當初承諾的天數。';
@@ -316,7 +349,7 @@ var ACTS = {
     } else {
       /* 有人跟你一起在下面。這不是名次——它不排序，也不說誰比較多。 */
       var others = todayMovers(t.classId, t.teamId);
-      msg = (d ? d.icon + ' ' + d.label + '。' : '') +
+      msg = (lab ? '「' + lab + '」記下了。' : '記下了。') +
         (others ? '今天班上還有 ' + others + ' 條廊道今天也有人在走。'
                 : '今天你是第一個下來的。');
     }
@@ -336,8 +369,7 @@ var ACTS = {
 
   reflect: function (runId) {
     var t = myTeam();
-    if (!(DRAFT.snags || []).length) return say('點一個就好——哪一個最像。');
-    actReflect(t.teamId, runId, DRAFT.snags);
+    actReflect(t.teamId, runId, DRAFT.overs || []);
     go('home');
     say('說出來了。老師看得到，而且這不會扣任何東西。');
   },
@@ -345,11 +377,11 @@ var ACTS = {
   /* 老師勾可以了 → 去挑裝備 */
   gear: function (runId) { go('pick', { id: runId }); },
 
-  /* 三選一，挑走那一件。參數是「runId|裝備」。 */
+  /* 三張裡挑一張留下。參數是「runId|角度」。 */
   take: function (arg) {
     var i = arg.indexOf('|');
     var runId = arg.slice(0, i), key = arg.slice(i + 1);
-    if (!actPickGear(runId, key)) return say('這一件不在攤開的三件裡。');
+    if (!actKeep(runId, key)) return say('這一張不在攤開的三張裡。');
     go('dash', { id: runId });
     animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
   },

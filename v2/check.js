@@ -112,22 +112,42 @@ METAPHOR.forEach(function (pair) {
   console.error('　　' + scan.slice(Math.max(0, i - 40), i + 40).replace(/s+/g, ' '));
 });
 
-/* ---------- 三之二 · 攤開哪三件不可以看表現 ----------
-   一旦 offerGears 讀到估了幾天、實際幾天、判定結果、推了幾次，
-   「三選一」那一秒就從自主變成評價。 */
-const offerFn = src.match(/function offerGears[\s\S]*?\n\}/);
-if (!offerFn) {
+/* ---------- 三之二 · 系統不定義他們在做什麼 ----------
+
+   本來有三份我寫死的詞表：RULES.DOING（今天動的是哪一塊）、
+   RULES.SNAGS（八種卡關原因）、RULES.GEARS（六句「下一次應該……」）。
+   三份都等於系統先替他們定義了「一個專案會做的事」跟「會出的錯」。
+   全部換成那一組自己寫的清單（Teams.acts）。這幾個名字不可以回來。 */
+const OWN = ['RULES.DOING', 'RULES.SNAGS', 'RULES.RISKS', 'RULES.GEARS', 'snagOf', 'doingOf'];
+OWN.forEach(function (w) {
+  if (src.indexOf(w) < 0) return;
   bad++;
-  console.error('找不到 offerGears——三選一的攤牌邏輯不見了');
-} else {
-  ['est', 'actual', 'stamp', 'pushes', 'snags', 'risks', 'accuracy', 'depth']
-    .forEach(function (w) {
-      if (new RegExp('\\b' + w + '\\b').test(offerFn[0])) {
-        bad++;
-        console.error('offerGears 讀到了「' + w + '」　——攤開哪三件不可以跟表現有關');
-      }
-    });
+  console.error('系統又自己定義了一份詞表　' + w + '　——那份清單要由那一組自己寫');
+});
+
+/* ---------- 三之二半 · 留下的那一句不可以是老師寫的 ----------
+   三張攤開的是這一趟的事實，用他們自己的詞。一旦 keepOffers 讀到 word，
+   學生留下的就變成老師的評語，不是他自己的觀察。 */
+const keepFn = src.match(/function keepOffers[\s\S]*?\n\}/);
+if (!keepFn) {
+  bad++;
+  console.error('找不到 keepOffers——攤開三張的邏輯不見了');
+} else if (/word/.test(keepFn[0])) {
+  bad++;
+  console.error('keepOffers 讀到了老師寫的 word　——那三張只能是他們自己的事實');
 }
+
+/* ---------- 三之二又半 · 介面不解釋自己 ----------
+   能畫出來的就畫出來。系統陳述它記到的東西，不說那代表什麼、
+   也不說下一次該怎麼做——那是使用者自己的事。 */
+const PREACH = ['下一次應該', '你應該', '建議你', '難怪', '這表示你', '這代表你', '你可以試著'];
+PREACH.forEach(function (w) {
+  var k = scan.indexOf(w);
+  if (k < 0) return;
+  bad++;
+  console.error('介面在替使用者下結論　' + w + '　——只陳述記到的東西');
+  console.error('　　' + scan.slice(Math.max(0, k - 40), k + 40).replace(/\s+/g, ' '));
+});
 
 /* ---------- 三之三 · 老師只做三件事 ----------
    發里程碑、審核、看各組進度。他不改學生的招牌，也不挑裝備。 */

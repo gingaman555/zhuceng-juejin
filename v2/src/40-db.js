@@ -39,8 +39,9 @@ function blank() {
     Runs: [],
     /* 每一次推進打卡。一天一筆。 */
     Pushes: [],
-    /* 學生自己挑走的裝備 */
-    Gears: [],
+    /* 每一趟留下的那一句。存的是當下算出來的字，不是規則的 key——
+       規則以後改了，他當時留的那句話不會跟著變成別的意思。 */
+    Keeps: [],
     /* 研究紀錄：誰、什麼時候、做了什麼。只增不刪。 */
     Events: [],
     /* 登入狀態 */
@@ -80,7 +81,7 @@ function runsFor(teamId) {
     if (!r) {
       /* 派了但還沒承諾——先給一個空的，畫面才知道要問滑桿 */
       r = { runId: null, teamId: teamId, msId: m.msId, state: 'fresh',
-            est: 0, risks: [], pushes: 0, snags: [], gear: null };
+            est: 0, flags: [], pushes: 0, overs: [], keep: null };
     }
     return { ms: m, run: r };
   }).sort(function (a, b) { return a.ms.at - b.ms.at; });
@@ -92,7 +93,7 @@ function nextThing(teamId) {
   var rows = runsFor(teamId);
   /* 1. 判定失準、還沒復盤 */
   var camp = rows.filter(function (x) {
-    return x.run.state === 'judged' && x.run.stamp === 'late' && !x.run.snags.length;
+    return x.run.state === 'judged' && x.run.stamp === 'late' && !(x.run.overs || []).length;
   })[0];
   if (camp) return { kind: 'camp', row: camp };
   /* 2. 老師勾可以了，還沒挑裝備 */
@@ -213,35 +214,37 @@ function ecology(classId) {
 
 /* ================= 學生的動作 ================= */
 
-/* 承諾：拉滑桿決定幾天，順便標風險 */
-function actCommit(teamId, msId, est, risks) {
+/* 承諾：拉滑桿決定幾天，順便標「哪幾件我覺得會比想的久」。
+   標的是他們自己清單上的東西，不是我列的八種卡關原因。 */
+function actCommit(teamId, msId, est, flags) {
   var r = runOf(teamId, msId);
   if (r) return r;
   r = {
     runId: nid('R'), teamId: teamId, msId: msId,
     state: 'running',
     est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
-    risks: risks || [],
+    flags: flags || [],
     committedAt: now(),
-    pushes: 0, snags: [], gear: null, stamp: null
+    pushes: 0, overs: [], keep: null, stamp: null
   };
   DB.Runs.push(r);
   save();
-  logEvent('commit', { teamId: teamId, runId: r.runId, msId: msId, est: r.est, risks: (r.risks || []).length });
+  logEvent('commit', { teamId: teamId, runId: r.runId, msId: msId, est: r.est,
+    flags: (r.flags || []).map(function (i) { return actLabel(teamId, i); }).join('、') });
   return r;
 }
 
 /* 推進：一天一次。回傳有沒有真的推到。 */
 /* 推進。
 
-     kind  今天動的是哪一塊（RULES.DOING 的 key）
+     actId 今天動的是他們清單上的哪一件（沒寫清單就是空的）
      back  補登幾天前。0 是今天，1 是昨天，最多到 2。
 
    補登這件事看起來像作弊，其實相反：實際天數是從承諾那天到交出去
    那天算的，補登一格不會讓誰早一天完成，也不會改判定。它唯一改變的
    是走廊上少不少一盞燈——而「忘了按一天就再也補不回來」正是
    讓人整條放棄的那個崖。 */
-function actPush(teamId, runId, kind, back) {
+function actPush(teamId, runId, actId, back) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return false;
   var b = Math.max(0, Math.min(RULES.BACKFILL_MAX, Number(back) || 0));
@@ -250,11 +253,12 @@ function actPush(teamId, runId, kind, back) {
   if (pushedOn(teamId, runId, dayOf(when))) return false;
   DB.Pushes.push({
     pushId: nid('P'), teamId: teamId, runId: runId,
-    day: dayOf(when), at: when, kind: kind || 'any', back: b
+    day: dayOf(when), at: when, actId: actId || '', back: b
   });
   r.pushes++;
   save();
-  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes, kind: kind || 'any', back: b });
+  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes,
+    act: actId ? actLabel(teamId, actId) : '', back: b });
   return true;
 }
 
@@ -278,11 +282,11 @@ function openDays(teamId, runId) {
   return out;
 }
 
-/* 這一趟每一天動的是哪一塊，照時間排 */
-function doingOfRun(runId) {
+/* 這一趟每一天動的是哪一件，照時間排。回的是他們清單上的 id。 */
+function actIdsOfRun(runId) {
   return where('Pushes', function (p) { return p.runId === runId; })
     .sort(function (a, b) { return a.day - b.day; })
-    .map(function (p) { return p.kind || 'any'; });
+    .map(function (p) { return p.actId || ''; });
 }
 
 /* 今天班上有幾條廊道今天也有人在走。
@@ -314,13 +318,14 @@ function actSubmit(teamId, runId, link) {
 }
 
 /* 復盤：點圖示標籤說明卡在哪。只有失準的時候會走到。 */
-function actReflect(teamId, runId, snags) {
+function actReflect(teamId, runId, overs) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return null;
-  r.snags = snags || [];
-  r.state = 'submitted';        /* 復盤完才排進老師的雷達 */
+  r.overs = overs || [];
+  r.state = 'submitted';        /* 說完才排進老師的審核清單 */
   save();
-  logEvent('reflect', { teamId: teamId, runId: runId, snags: (snags || []).join('/') });
+  logEvent('reflect', { teamId: teamId, runId: runId,
+    overs: (overs || []).map(function (i) { return actLabel(teamId, i); }).join('、') });
   return r;
 }
 
@@ -379,18 +384,23 @@ function actApprove(runId, word) {
   return r;
 }
 
-/* 學生從攤開的三件裡挑一件 */
-function actPickGear(runId, gearKey) {
+/* 學生從攤開的三張裡挑一張留下 */
+function actKeep(runId, key) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'approved') return null;
-  var offer = offerGears(runId);
-  if (!offer.some(function (g) { return g.key === gearKey; })) return null;
-  r.gear = gearKey;
+  var pick = null;
+  keepOffers(runId).forEach(function (o) { if (o.key === key) pick = o; });
+  if (!pick) return null;
+  r.keep = key;
   r.state = 'done';
   r.doneAt = now();
-  DB.Gears.push({ gearId: nid('G'), teamId: r.teamId, runId: runId, key: gearKey, at: now() });
+  /* 存字不存 key：規則以後改了，他當時留的那句話不會跟著變成別的意思。 */
+  DB.Keeps.push({
+    keepId: nid('K'), teamId: r.teamId, runId: runId,
+    key: key, line: pick.line, at: now()
+  });
   save();
-  logEvent('pick', { teamId: r.teamId, runId: runId, gear: gearKey });
+  logEvent('keep', { teamId: r.teamId, runId: runId, keep: key });
   return r;
 }
 
@@ -407,24 +417,92 @@ function actRename(teamId, name) {
   return t;
 }
 
-/* 這一組拿過的裝備 */
-function gearsOf(teamId) {
-  return where('Gears', function (g) { return g.teamId === teamId; });
+/* ---------- 他們自己那一份清單 ----------
+
+   系統不定義一個專案會做哪些事——那份清單是那一組自己寫的。
+   一行一件，最多十件。沒寫的組也走得完，推進那一顆鍵會退回
+   「我今天來過了」；寫了之後每天就是一下點擊。
+
+   id 用寫進去的順序 ＋ 字本身算，這樣改了清單裡的別行，
+   已經記錄過的那幾天還對得回原本那一件。 */
+function actsOf(teamId) {
+  var t = teamOf(teamId);
+  return (t && t.acts) || [];
 }
 
-/* 攤開哪三件讓學生挑。
+function actLabel(teamId, id) {
+  var a = actsOf(teamId);
+  for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i].label;
+  return '';
+}
 
-   純函式：用 runId 算，同一個 run 每次算出來都一樣——畫面不擲骰子。
-   而且刻意不看任何表現資料（估得準不準、推進幾次、被退幾次）——
-   一旦攤開的內容跟表現有關，它那一秒就從「你想記住什麼」變成
-   「系統覺得你值得什麼」，也就是評價。 */
-function offerGears(runId) {
-  var pool = RULES.GEARS.slice();
-  var h = hash(String(runId));
+function actSetActs(teamId, text) {
+  var t = teamOf(teamId);
+  if (!t) return { err: '找不到這一組。' };
+  var seen = {}, out = [];
+  String(text || '').split('\n').forEach(function (line) {
+    var s = line.trim().slice(0, RULES.ACTS_LEN);
+    if (!s || seen[s] || out.length >= RULES.ACTS_MAX) return;
+    seen[s] = 1;
+    out.push({ id: 'a' + (hash(s) % 100000), label: s });
+  });
+  if (!out.length) return { err: '一行寫一件。空的清單沒辦法用。' };
+  t.acts = out;
+  save();
+  logEvent('acts', { teamId: teamId, n: out.length });
+  return { acts: out };
+}
+
+/* 這一組留下過的那些話 */
+function keepsOf(teamId) {
+  return where('Keeps', function (g) { return g.teamId === teamId; });
+}
+
+/* 攤開三張讓學生挑一張留下。
+
+   三張是這一趟真的發生的三件事，用他們自己的詞寫的，永遠是同樣
+   三個角度（不隨機——隨機會讓它跟剛剛那幾天斷開）。
+
+   每一張只陳述。沒有一張會說「所以下一次應該……」——
+   那一句一旦寫出來，這個系統就變回一個替他們想結論的東西。
+   哪一張是重點，是他自己挑的，這裡不預設。 */
+function keepOffers(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return [];
   var out = [];
-  for (var i = 0; i < 3 && pool.length; i++) {
-    h = (h * 1103515245 + 12345) >>> 0;
-    out.push(pool.splice(h % pool.length, 1)[0]);
-  }
+
+  /* 一 · 這幾天你在做什麼 */
+  var ids = actIdsOfRun(runId).filter(Boolean);
+  var n = {}, top = null;
+  ids.forEach(function (i) { n[i] = (n[i] || 0) + 1; if (!top || n[i] > n[top]) top = i; });
+  var topName = top ? actLabel(r.teamId, top) : '';
+  out.push({
+    key: 'days',
+    line: topName
+      ? '這 ' + r.pushes + ' 天裡，有 ' + n[top] + ' 天你動的是「' + topName + '」。'
+      : '這一趟你來了 ' + r.pushes + ' 天。'
+  });
+
+  /* 二 · 你估得怎麼樣。只有兩個數字跟一段算出來的範圍。 */
+  var b = RULES.band(r.est);
+  out.push({
+    key: 'est',
+    line: '你估 ' + r.est + ' 天，走了 ' + r.actual + ' 天。' +
+          '你自己說的範圍是 ' + Math.max(1, r.est - b) + ' 到 ' + (r.est + b) + ' 天。'
+  });
+
+  /* 三 · 哪一件比你想的久。這是他們在營火自己說的。 */
+  var ov = (r.overs || []).map(function (id) { return actLabel(r.teamId, id); })
+    .filter(Boolean);
+  var fl = r.flags || [];
+  var hit = (r.overs || []).filter(function (id) { return fl.indexOf(id) >= 0; });
+  out.push({
+    key: 'over',
+    line: ov.length
+      ? '你說「' + ov.join('」「') + '」比你想的久。' +
+        (hit.length ? '承諾的時候你就標了它。' : '承諾的時候你沒有標到它。')
+      : '這一趟你沒有說哪一件比想的久。'
+  });
+
   return out;
 }

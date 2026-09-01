@@ -308,10 +308,7 @@ a.plain:hover{color:var(--gold)}
 .sg-tier{font-size:11px;color:var(--mute);flex:0 0 44px}
 .sg-tier.top{color:var(--gold)}
 
-@media (max-width:860px){
-  .side{display:none}
-  .wrap{padding:22px}
-}
+/* 窄螢幕的排法全部在 59-mobile.css。這裡不再藏側欄——藏了導覽就沒了。 */
 
 /* ---------- 步驟條 ----------
    不是教學，是位置：亮著的那一格就是現在輪到你的。 */

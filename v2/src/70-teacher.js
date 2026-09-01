@@ -18,6 +18,24 @@ function teacherStep(classId) {
   return 0;
 }
 
+/* 他們自己標的、他們自己說的。用的是那一組寫的詞，不是我列的選項。 */
+function overTags(teamId, run) {
+  var fl = (run.flags || []).map(function (i) { return actLabel(teamId, i); }).filter(Boolean);
+  var ov = (run.overs || []).map(function (i) { return actLabel(teamId, i); }).filter(Boolean);
+  if (!fl.length && !ov.length) return '';
+  var H = ['<div class="tags small">'];
+  if (fl.length) {
+    H.push('<span class="k">承諾時標的</span>');
+    fl.forEach(function (l) { H.push('<span class="tag static">' + esc(l) + '</span>'); });
+  }
+  if (ov.length) {
+    H.push('<span class="k">後來說比想的久</span>');
+    ov.forEach(function (l) { H.push('<span class="tag static hit">' + esc(l) + '</span>'); });
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
 var TEACHER_STEPS = [
   ['發里程碑', '寫要交什麼'],
   ['他們承諾天數', '這一段你不用管'],
@@ -58,24 +76,8 @@ PAGES.radar = function () {
     H.push('<span class="sp"></span><span class="dim">等 ' + x.waited + ' 天</span>');
     H.push('</div>');
     H.push('<div class="radar-ms">' + esc(x.ms.title) + '</div>');
-    H.push('<div class="log-num">承諾 <b>' + x.run.est + '</b> 天　·　實際 <b>' +
-           x.run.actual + '</b> 天</div>');
-    if (x.run.risks && x.run.risks.length) {
-      H.push('<div class="tags small"><span class="k">他們事先標的風險</span>');
-      x.run.risks.forEach(function (k) {
-        var d = RULES.snagOf(k);
-        if (d) H.push('<span class="tag static">' + d.icon + ' ' + esc(d.label) + '</span>');
-      });
-      H.push('</div>');
-    }
-    if (x.run.snags && x.run.snags.length) {
-      H.push('<div class="tags small"><span class="k">他們說卡在哪</span>');
-      x.run.snags.forEach(function (k) {
-        var d = RULES.snagOf(k);
-        if (d) H.push('<span class="tag static hit">' + d.icon + ' ' + esc(d.label) + '</span>');
-      });
-      H.push('</div>');
-    }
+      H.push(estBar(x.run.est, x.run.actual, false));
+    H.push(overTags(x.team.teamId, x.run));
     H.push(btn('看完了，去勾', 'go:review:' + x.run.runId, ''));
     H.push('</div>');
   });
@@ -111,19 +113,10 @@ PAGES.review = function () {
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + s.mark + ' ' +
          esc(s.name) + '</span></div>');
-  H.push('<div class="log-num">承諾 <b>' + r.est + '</b> 天　·　實際 <b>' + r.actual + '</b> 天</div>');
-  H.push('<p class="dim">' + esc(RULES.judgeWhy(r.est, r.actual)) + '</p>');
-  H.push('<p class="dim">這一組到目前：準 ' + acc.exact + ' 次、早 ' + acc.early +
-         ' 次、失準 ' + acc.late + ' 次。</p>');
-  if (r.snags && r.snags.length) {
-    H.push('<div class="tags small"><span class="k">他們說卡在哪</span>');
-    r.snags.forEach(function (k) {
-      var d = RULES.snagOf(k);
-      if (d) H.push('<span class="tag static hit">' + d.icon + ' ' + esc(d.label) +
-                    '<em>' + esc(d.hint) + '</em></span>');
-    });
-    H.push('</div>');
-  }
+  H.push(estBar(r.est, r.actual, false));
+  H.push(accBar(acc));
+  H.push(dayStrip(r.teamId, r.runId));
+  H.push(overTags(r.teamId, r));
   H.push('</div>');
 
   H.push('<div class="card">');

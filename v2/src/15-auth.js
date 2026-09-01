@@ -66,12 +66,13 @@ var EV_SAY = {
   claim:    function (e) { return '認領身分：' + e.who + '（' + e.team + '）'; },
   login:    function () { return '登入'; },
   publish:  function (e) { return '派了里程碑「' + e.title + '」'; },
-  commit:   function (e) { return '承諾 ' + e.est + ' 天' + (e.risks ? '，標了風險 ' + e.risks : ''); },
-  push:     function (e) { return '推進一格（第 ' + e.n + ' 次）'; },
+  commit:   function (e) { return '承諾 ' + e.est + ' 天' + (e.flags ? '，標了「' + e.flags + '」' : ''); },
+  push:     function (e) { return '第 ' + e.n + ' 天' + (e.act ? '：' + e.act : '') + (e.back ? '（補登）' : ''); },
   submit:   function (e) { return '交出去：承諾 ' + e.est + ' 天，實際 ' + e.actual + ' 天 → ' + e.stamp; },
-  reflect:  function (e) { return '復盤：' + e.snags; },
+  reflect:  function (e) { return '說「' + (e.overs || '（沒有）') + '」比想的久'; },
   approve:  function () { return '勾了可以'; },
-  pick:     function (e) { return '挑走了裝備 ' + e.gear; },
+  keep:     function (e) { return '留下了「' + e.keep + '」那一張'; },
+  acts:     function (e) { return '寫了自己的清單，' + e.n + ' 件'; },
   rename:   function (e) { return '把招牌改成「' + e.name + '」'; }
 };
 function evSay(e) {

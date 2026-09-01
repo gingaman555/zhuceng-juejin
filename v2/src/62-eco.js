@@ -253,28 +253,13 @@ PAGES.classeco = function () {
     } else if (cur) {
       var run = cur.run;
       H.push('<p class="lead">正在走：' + esc(cur.ms.title) + '</p>');
-      H.push('<div class="log-num">自己承諾 <b>' + run.est + '</b> 天　·　已推進 <b>' +
-        run.pushes + '</b> 天' +
-        (r.stall >= 2 ? '　·　<span class="warnx">休息中</span>' :
-         r.stall === 1 ? '　·　<span class="dim">慢下來了</span>' : '') + '</div>');
-      var seq = doingOfRun(run.runId);
-      if (seq.length) {
-        H.push('<div class="seq">');
-        seq.forEach(function (k) {
-          var d = RULES.doingOf(k);
-          H.push('<span title="' + esc(d ? d.label : '') + '">' + (d ? d.icon : '⛏️') + '</span>');
-        });
-        H.push('</div>');
-      }
+      H.push(estBar(run.est, run.pushes, true));
+      H.push(dayStrip(r.teamId, run.runId));
     } else {
       H.push('<p class="dim">手上沒有里程碑。派一個給他們就會開始。</p>');
     }
 
-    if (acc.total) {
-      H.push('<div class="log-num">走完 <b>' + r.depth + '</b> 個　·　' +
-        '準 <b>' + acc.exact + '</b>　早 <b>' + acc.early + '</b>　失準 <b>' +
-        acc.late + '</b></div>');
-    }
+    if (acc.total) H.push(accBar(acc));
     H.push('</div>');
   });
   return H.join('');

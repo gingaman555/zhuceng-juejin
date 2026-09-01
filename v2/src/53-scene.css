@@ -36,7 +36,7 @@
 /* 角落的深度。走廊往旁邊捲，它不跟著捲。 */
 .scn-hud{
   position:absolute;top:11px;right:11px;z-index:9;text-align:right;pointer-events:none;
-  padding:5px 9px;background:rgba(0,0,0,.45)
+  padding:5px 9px;background:rgba(6,5,4,.82)
 }
 .scn-hud b{display:block;font-size:33px;line-height:1;color:var(--gold);font-weight:400}
 .scn-hud span{font-size:11px;color:var(--mute)}
@@ -80,10 +80,12 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .foot{position:absolute;bottom:66px;width:22px;height:11px;opacity:.45}
 /* 那一天做了什麼。掛在那一格頭上，底下墊一道硬影子——
    走廊亮起來之後，沒有影子的圖示會被牆的光吃掉。 */
+/* 那一天動的是哪一件。畫的是顏色不是字——名字長度不一定，
+   塞不進 44px 一格；顏色對到哪一件，清單上看一次就記得了。 */
 .doing{
-  position:absolute;bottom:132px;width:44px;text-align:center;
-  font-size:22px;line-height:1;z-index:3;pointer-events:none;
-  filter:drop-shadow(0 2px 0 rgba(0,0,0,.85)) drop-shadow(2px 0 0 rgba(0,0,0,.85))
+  position:absolute;bottom:121px;left:0;width:22px;height:11px;
+  margin-left:11px;z-index:3;pointer-events:none;
+  box-shadow:0 0 0 1px rgba(0,0,0,.8), inset 0 2px 0 rgba(255,255,255,.25)
 }
 .dayn{
   position:absolute;bottom:11px;width:44px;text-align:center;

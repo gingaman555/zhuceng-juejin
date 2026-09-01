@@ -1,0 +1,78 @@
+/* 把數字畫出來的那幾個東西。
+
+   這一份存在的理由：介面上本來有一堆我寫的說明句，在解釋畫面上的數字
+   是什麼意思。能畫出來的就畫出來，畫出來之後那些句子全部可以刪掉。 */
+
+/* ---------- 承諾與實際：兩條尺 ----------
+   上面是你說的（範圍框出來），下面是實際走的。
+   超出框的那幾格自己會是另一個顏色——那就是判定，不用寫字。 */
+.ebar{margin:11px 0}
+.eb-r{display:flex;align-items:center;gap:11px;margin:3px 0}
+.eb-r b{
+  flex:0 0 44px;font-size:11px;font-weight:400;color:var(--mute);text-align:right
+}
+.eb-r i{
+  flex:0 0 33px;font-style:normal;font-size:22px;color:var(--gold);
+  text-align:right;font-variant-numeric:tabular-nums
+}
+.eb-c{display:flex;gap:2px;flex:1;min-width:0}
+.eb{
+  flex:1;min-width:5px;height:22px;background:rgba(0,0,0,.45);
+  box-shadow:inset 0 0 0 1px rgba(255,240,214,.06)
+}
+/* 你自己說的範圍 */
+.eb.band{background:rgba(233,179,65,.10);box-shadow:inset 0 0 0 1px var(--gold-d)}
+/* 承諾的那一天 */
+.eb.pin{background:rgba(233,179,65,.30);box-shadow:inset 0 0 0 2px var(--gold)}
+/* 實際走過的 */
+.eb.on{background:var(--gold-d);box-shadow:inset 0 2px 0 rgba(255,255,255,.16)}
+.eb.on.band{background:var(--gold)}
+/* 走出框外的那幾格 */
+.eb.out{background:var(--over);box-shadow:inset 0 2px 0 rgba(255,255,255,.20)}
+
+/* ---------- 他們自己那一份清單 ----------
+   同一個元件當三種用：圖例、推進鍵、標記鍵。
+   顏色照清單順序給——系統不知道「打樣」該是什麼顏色，也不假裝知道。 */
+.alist{display:flex;flex-wrap:wrap;gap:8px;margin:11px 0}
+.ac{
+  display:flex;align-items:center;gap:8px;padding:9px 13px;
+  font-size:22px;line-height:1.2;color:var(--dim);
+  background:var(--sunk);border:none;cursor:default;
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06),
+    0 0 0 1px #000
+}
+button.ac{cursor:pointer}
+button.ac:hover{color:var(--ink)}
+button.ac:active{transform:translateY(1px)}
+.ac b{flex:0 0 14px;width:14px;height:14px;display:block}
+.ac.on{color:var(--ink);background:#2E2210;box-shadow:inset 0 2px 0 rgba(0,0,0,.6),
+  inset 0 -2px 0 rgba(255,240,214,.06), 0 0 0 1px var(--gold)}
+
+/* 一趟走下來，每一天一格顏色 */
+.dstrip{display:flex;gap:2px;flex-wrap:wrap;margin:11px 0}
+.ds{width:22px;height:11px;display:block}
+
+/* ---------- 招牌的三階 ---------- */
+.sgline{display:flex;gap:22px;margin:11px 0;align-items:flex-end}
+.sg{display:flex;flex-direction:column;align-items:center;gap:3px;opacity:.3}
+.sg.on{opacity:1}
+.sg i{font-style:normal;font-size:11px;color:var(--mute)}
+.sg.on i{color:var(--gold)}
+
+/* ---------- 留下的 ---------- */
+.px.kp-px{width:66px;height:66px;flex:0 0 66px}
+.px.kp-px.sm{width:44px;height:44px;flex:0 0 44px}
+.ke{display:block;font-size:11px;color:var(--mute);letter-spacing:.1em}
+.keeps{display:flex;flex-direction:column;gap:11px;margin-top:11px}
+.kp{display:flex;gap:14px;align-items:flex-start;padding:11px 0;
+  border-top:1px solid var(--line)}
+.kp i{display:block;font-style:normal;font-size:22px;color:var(--ink);line-height:1.6}
+.kp .km{display:block;font-size:11px;color:var(--gold-d);margin-top:3px}
+.carry-in em{line-height:1.7}
+
+/* 挑一張留下：三張並排 */
+.gcard .ke{margin-bottom:5px}
+.gcard i{display:block;font-style:normal;font-size:22px;color:var(--ink);line-height:1.7}
+
+/* 老師寫的那一句，跟自己留下的那一句要分得出來 */
+.quote.tw{border-left-color:var(--line2);color:var(--dim)}

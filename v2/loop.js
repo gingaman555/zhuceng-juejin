@@ -51,7 +51,7 @@ runsFor(TEAM).forEach(function (x) {
     if (x.run.stamp === 'late') actReflect(TEAM, x.run.runId, ['guess']);
     else actSkipCamp(x.run.runId);
     actApprove(x.run.runId, '');
-    actPickGear(x.run.runId, offerGears(x.run.runId)[0].key);
+    actKeep(x.run.runId, keepOffers(x.run.runId)[0].key);
   }
 });
 
@@ -129,19 +129,21 @@ for (let n = 1; n <= ROUNDS; n++) {
   if (nt.kind !== 'gear') fail(label + '：勾完可以，學生那邊應該是 gear，卻是 ' + nt.kind);
 
   /* 11. 三選一 → 這一輪結束 */
-  const offer = offerGears(r.runId);
-  if (offer.length !== 3) fail(label + '：攤開的不是三件，是 ' + offer.length + ' 件');
+  const offer = keepOffers(r.runId);
+  if (offer.length !== 3) fail(label + '：攤開的不是三張，是 ' + offer.length + ' 張');
   if (offer[0].key === offer[1].key || offer[1].key === offer[2].key || offer[0].key === offer[2].key)
-    fail(label + '：攤開的三件有重複');
-  const off2 = offerGears(r.runId);
+    fail(label + '：攤開的三張有重複');
+  const off2 = keepOffers(r.runId);
   if (off2.map(function (g) { return g.key; }).join() !== offer.map(function (g) { return g.key; }).join())
-    fail(label + '：同一個 run 兩次攤開的三件不一樣——畫面在擲骰子');
-  if (actPickGear(r.runId, RULES.GEARS.filter(function (g) {
-    return !offer.some(function (o) { return o.key === g.key; });
-  })[0].key)) fail(label + '：挑到了沒有攤開的那一件');
-  actPickGear(r.runId, offer[n % 3].key);
-  if (r.state !== 'done') fail(label + '：挑完裝備狀態應該是 done，卻是 ' + r.state);
-  if (r.gear !== offer[n % 3].key) fail(label + '：挑走的跟記下來的不是同一件');
+    fail(label + '：同一個 run 兩次攤開的三張不一樣——畫面在擲骰子');
+  if (actKeep(r.runId, 'nope')) fail(label + '：挑到了沒有攤開的那一張');
+  offer.forEach(function (o) {
+    if (!o.line || /應該|建議|難怪|試著/.test(o.line))
+      fail(label + '：攤開的那一張在替他下結論——' + o.line);
+  });
+  actKeep(r.runId, offer[n % 3].key);
+  if (r.state !== 'done') fail(label + '：挑完狀態應該是 done，卻是 ' + r.state);
+  if (r.keep !== offer[n % 3].key) fail(label + '：挑走的跟記下來的不是同一張');
 
   /* 12. 回到乾淨狀態 */
   nt = nextThing(TEAM);
@@ -176,7 +178,7 @@ while (RULES.progress(rX.pushes, rX.est) < 1 && g2++ < 30) { actPush(TEAM, rX.ru
 actSubmit(TEAM, rX.runId);
 if (rX.stamp === 'late') actReflect(TEAM, rX.runId, ['guess']); else actSkipCamp(rX.runId);
 actApprove(rX.runId, '');
-actPickGear(rX.runId, offerGears(rX.runId)[0].key);
+actKeep(rX.runId, keepOffers(rX.runId)[0].key);
 
 console.log('\n跑完 ' + ROUNDS + ' 輪。');
 console.log('  印章分布　🎯 ' + stamps.exact + '　🚀 ' + stamps.early + '　❌ ' + stamps.late);

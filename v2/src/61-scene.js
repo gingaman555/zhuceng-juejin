@@ -36,7 +36,7 @@ function scene(t, row, st) {
   var seed = t.teamId + (run ? '|' + run.runId : '');
   /* 每一格頭上掛的是那一天做了什麼。走廊因此讀得出形狀——
      七格全是 🔍 跟七格全是 🛠️ 是完全不同的一趟。 */
-  var did = run ? doingOfRun(run.runId) : [];
+  var did = run ? actIdsOfRun(run.runId) : [];
   var light = WORLD.light[st.level];
   var W = SCN.ENT + est * SCN.TILE + SCN.END;
   /* 走到多深，牆就是哪一區的石頭。世界觀不寫在說明裡，寫在牆上。 */
@@ -86,11 +86,12 @@ function scene(t, row, st) {
     if (on) H.push('<img class="px foot" style="left:' + (x + 11) + 'px" src="' +
       pxSvg(STEP_PX.px, STEP_PX.pal, false) + '" alt="">');
 
-    /* 那一天做了什麼 */
+    /* 那一天動的是哪一件。畫顏色不畫字——名字長度不一定，
+       塞不進 44px；顏色對到哪一件，清單上看一次就記得了。 */
     if (on && did[i]) {
-      var dd = RULES.doingOf(did[i]);
-      if (dd) H.push('<span class="doing" style="left:' + x + 'px" title="' +
-        esc(dd.label) + '">' + dd.icon + '</span>');
+      H.push('<span class="doing" style="left:' + x + 'px;background:' +
+        actHue(t.teamId, did[i]) + '" title="' + esc(actLabel(t.teamId, did[i])) +
+        '"></span>');
     }
 
     /* 第幾天 */
