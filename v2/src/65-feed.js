@@ -94,3 +94,38 @@ function feedWhen(at) {
   var d = daysBetween(at, now());
   return d <= 0 ? '今天' : d === 1 ? '昨天' : d + ' 天前';
 }
+
+/* ── 你不在的這幾天 ──
+
+   死線勇者的節奏：專注的時候不開 app，回來看發生了什麼。這個系統的
+   限制剛好一樣（做之前開、做完開），所以那一半可以搬——但要搬得誠實。
+   那邊掛機會自動打怪爆裝；這裡掛機只有日曆在走，所以這一條只報真的
+   發生過的事。沒有憑空長出來的東西，也沒有為了讓人回來而發的獎勵。
+
+   回傳 null 代表沒隔多久，那就什麼都不要畫。 */
+function awayOf(meId) {
+  var u = userOf(meId);
+  if (!u || !u.seenAt) return null;
+  var d = daysBetween(u.seenAt, now());
+  if (d < 1) return null;
+  var t = teamOf(u.teamId);
+  var cut = u.seenAt;
+  var cells = 0;
+  where('Keeps', function (k) {
+    return teamOf(k.teamId) && teamOf(k.teamId).classId === t.classId && k.at > cut;
+  }).forEach(function () { cells++; });
+  var run = where('Runs', function (r) {
+    return r.teamId === t.teamId && r.state === 'running';
+  })[0];
+  return {
+    days: d,
+    cells: cells,
+    left: run ? Math.max(0, run.est - daysBetween(run.committedAt, now())) : null
+  };
+}
+
+/* 看過就記下來。不記的話它每次進來都會再喊一次同樣的話。 */
+function markSeen(meId) {
+  var u = userOf(meId);
+  if (u) { u.seenAt = now(); save(); }
+}

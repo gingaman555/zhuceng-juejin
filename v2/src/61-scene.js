@@ -194,6 +194,13 @@ function scene(t, row, st, kind) {
    它只有一個作用：走著走著，你身上的東西變多了。
 
    最多畫四根。再多背上就是一團色塊，看不出那是幾根樣本。 */
+/* 照面那一頁上的自己。跟廊道裡走的是同一個人、同一身裝備——
+   不然那一下就不是「我上去」，只是一張圖。 */
+function heroTag(teamId) {
+  return '<div class="hero duel-h">' + pxTag(HERO.idle, HERO.pal, 'ch') +
+    heroPack(teamId) + '</div>';
+}
+
 function heroPack(teamId) {
   var ks = keepsOf(teamId);
   if (!ks.length) return '';

@@ -97,11 +97,11 @@ function nextThing(teamId) {
   if (tm && tm.exitAsk) return { kind: 'waitexit' };
 
   var rows = runsFor(teamId);
-  /* 1. 判定失準、還沒復盤 */
-  var camp = rows.filter(function (x) {
-    return x.run.state === 'judged' && x.run.stamp === 'late' && !(x.run.overs || []).length;
-  })[0];
-  if (camp) return { kind: 'camp', row: camp };
+  /* 1. 交了、判定出來了、還沒按「好」。
+     省思那一題搬到交出去之前了，所以這裡不再分岔——
+     每一個人都想過一次，不是只有失準的人。 */
+  var judged = rows.filter(function (x) { return x.run.state === 'judged'; })[0];
+  if (judged) return { kind: 'stamped', row: judged };
   /* 2. 老師勾可以了，還沒挑裝備 */
   var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
   if (gear) return { kind: 'gear', row: gear };

@@ -110,7 +110,7 @@ for (let n = 1; n <= ROUNDS; n++) {
   /* 8. 失準 → 一定要先復盤才進老師的雷達 */
   if (r.stamp === 'late') {
     nt = nextThing(TEAM);
-    if (nt.kind !== 'camp') fail(label + '：失準之後應該去營火，卻是 ' + nt.kind);
+    if (nt.kind !== 'stamped') fail(label + '：交完之後應該看判定，卻是 ' + nt.kind);
     if (radar(CID).some(function (x) { return x.run.runId === r.runId; })) {
       fail(label + '：還沒復盤就出現在老師的雷達上');
     }

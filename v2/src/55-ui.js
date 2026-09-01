@@ -27,6 +27,10 @@ function me() { return S.who ? userOf(S.who) : null; }
 function isTeacher() { var u = me(); return !!u && u.role === 'teacher'; }
 function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
 
+/* 首頁那一條「你不在的這幾天」看過就記下來，不然每次進來都再喊一次。
+   記在畫完之後，所以這一次還看得到。 */
+function seen() { if (S.page === 'home' && S.who) markSeen(S.who); }
+
 /* 哪一種身分走得到哪一頁。
 
    這不是裝飾。研究者看得到全班的紀錄、老師看得到別組的進度——
@@ -113,6 +117,8 @@ function render() {
   if (!PAGES[S.page] || !allowed(u, S.page)) S.page = homeFor(u);
 
   var body = PAGES[S.page]();
+  /* 畫完才記，所以這一次還看得到那一條。 */
+  seen();
   document.getElementById('app').innerHTML =
     sideBar() + '<div class="main">' + topBar() + demoBar() +
     '<div class="wrap">' + (S.flash ? flashBar() : '') + body + '</div></div>';
@@ -407,8 +413,15 @@ var ACTS = {
     if (wasStuck === 1) animVineBreak(swing); else swing();
   },
 
+  /* 「都差不多」也是一個答案，所以要記下來——
+     它跟「沒有回答」不一樣。 */
+  oversame: function () { DRAFT.overs = []; DRAFT.said = 1; render(); },
+
   submit: function (runId) {
     var t = myTeam();
+    /* 交出去之前想的那一句一起存。在看到判定之前存下來，
+       所以它不是看到結果之後回頭解釋的。 */
+    actReflect(t.teamId, runId, DRAFT.overs || []);
     var r = actSubmit(t.teamId, runId, '');
     if (r) go('stamp', { id: runId });
   },

@@ -30,6 +30,9 @@ function digMap(classId, meId) {
   if (canClaim) {
     openCells(classId, meId).forEach(function (c) { open[c[0] + ',' + c[1]] = 1; });
   }
+  /* 兩組都構得到的那幾格。誰先點誰拿走——最軟的一種競爭：
+     沒有名次，也不會失去任何已經有的東西。 */
+  var hot = contestedCells(classId);
 
   /* 誰在哪一格，先攤成一張表，不然每一格都要掃一次全班。 */
   var own = {}, hue = {};
@@ -57,11 +60,12 @@ function digMap(classId, meId) {
           'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'digteam:' + o })) + '\' ' +
           'title="' + esc(teamOf(o).name) + '"></button>');
       } else if (open[x + ',' + y]) {
-        out.push('<button class="dg-c rock can ' + z.key + '" style="' + st + '" ' +
+        out.push('<button class="dg-c rock can' + (hot[x + ',' + y] ? ' hot' : '') + ' ' + z.key + '" style="' + st + '" ' +
           'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'dig:' + x + ',' + y })) + '\' ' +
           'title="打通這一格"></button>');
       } else {
-        out.push('<div class="dg-c rock ' + z.key + '" style="' + st + '"></div>');
+        out.push('<div class="dg-c rock' + (hot[x + ',' + y] ? ' hot2' : '') +
+          ' ' + z.key + '" style="' + st + '"></div>');
       }
     }
     /* 層的名字放在左邊那一條裡，一層只標一次。 */

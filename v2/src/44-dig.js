@@ -118,6 +118,31 @@ function teamHue(classId, teamId) {
   return ACT_HUE[i % ACT_HUE.length];
 }
 
+/* ---------- 兩組都構得到的那幾格 ----------
+
+   最軟的一種競爭：那一格兩組都打得通，誰先點誰拿走。
+
+   軟在哪裡——沒有名次、沒有分數、也不會失去任何已經有的東西。
+   輸掉的代價只是「往別的方向長」，而方向本來就是自己選的。
+   它給的是一個理由：早一點去看那張圖。
+
+   這是 PaGamO 的競爭元素裡唯一能留的那一半：它搶的是還沒有人要的地，
+   不是別人已經有的地。搶別人的地會讓人為了「不要失去」而上線，
+   那是受控動機，而這個作品要證的正好是自發。 */
+function contestedCells(classId) {
+  var n = {};
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    if (!(t.cells || []).length) return;
+    openCells(classId, t.teamId).forEach(function (c) {
+      var k = c[0] + ',' + c[1];
+      n[k] = (n[k] || 0) + 1;
+    });
+  });
+  var out = {};
+  Object.keys(n).forEach(function (k) { if (n[k] > 1) out[k] = n[k]; });
+  return out;
+}
+
 /* 打通到旁邊碰在一起的兩組。這是這張圖上最好的一件事：
    「甲組跟丙組打通了」是一個會真的發生的教室事件，而且它不是比較。 */
 function neighbours(classId) {

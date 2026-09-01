@@ -50,6 +50,20 @@ PAGES.home = function () {
   var H = [];
 
   /* ── 主功能：廊道。這不是裝飾，是「說幾天 → 交出去」被畫出來的樣子。 ── */
+  /* 回來的時候先說一句不在的這幾天發生了什麼。
+     只在真的隔了一天以上出現，而且只報真的發生過的事。 */
+  var aw = awayOf(S.who);
+  if (aw) {
+    H.push('<div class="away">');
+    H.push('<b>' + aw.days + '</b><span>天過去了</span>');
+    if (aw.left !== null) {
+      H.push(aw.left > 0 ? '<b>' + aw.left + '</b><span>天到期</span>'
+        : '<em>已經超過你說的天數</em>');
+    }
+    if (aw.cells) H.push('<b>' + aw.cells + '</b><span>全班新打通</span>');
+    H.push('</div>');
+  }
+
   H.push(scene(t, next.row, st, next.kind));
 
   /* ── 任務的內容。接在廊道正下面當說明行，不另外開一張卡——
@@ -70,8 +84,17 @@ PAGES.home = function () {
   /* ── 副功能：小圖示 ── */
   H.push(deskRow(t, next));
 
-  /* 全班最近搬到全班地下城那一頁了。首頁只做一件事：
-     手上這一趟，跟那一顆鍵。 */
+  /* ── 全班那片地 ──
+
+     使用者說「還是很無聊，而且不知道要幹嘛」。根因不是版面：
+     這個系統一個里程碑只有兩個接觸點，所以九成的日子它真的沒事給你做。
+     那是刻意的，但代價就是打開來空的。
+
+     沒事做的日子還值得看的東西只有一種——別人。文字列表他們不要，
+     那就放地圖：它是圖、它會因為別人動而改變、而且有可以打通的格子
+     的時候它自己會亮。PaGamO 的首頁就是地圖。 */
+  H.push('<div class="eyebrow feed-h">全班那片地</div>');
+  H.push(digMap(t.classId, t.teamId));
   return H.join('');
 };
 
@@ -95,7 +118,7 @@ function stepRow(runId) {
 function taskTag(next) {
   return ({
     commit: '新的', doing: '正在做', submit: '走到底了',
-    camp: '營火', review: '在老師那邊', gear: '老師看完了',
+    stamped: '判定', review: '在老師那邊', gear: '老師看完了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
 }
@@ -146,7 +169,7 @@ function stepCard(runId) {
 /* nextThing 回的那個字，對到步驟條的第幾格。 */
 var STEP_AT = {
   commit: 0,
-  doing: 1, submit: 1, camp: 1, review: 1,
+  doing: 1, submit: 1, stamped: 1, review: 1,
   gear: 2
 };
 
@@ -190,10 +213,9 @@ function actionCard(t, next, st) {
       H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
     }
 
-  } else if (next.kind === 'camp') {
-    H.push('<div class="eyebrow">營火　·　' + row.run.actual + ' 天，你說 ' +
-      row.run.est + ' 天</div>');
-    H.push(btn('去營火旁', 'go:camp:' + row.run.runId, 'big'));
+  } else if (next.kind === 'stamped') {
+    H.push('<div class="eyebrow">交出去了</div>');
+    H.push(btn('看判定', 'go:stamp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'gear') {
     H.push('<div class="eyebrow">老師看完了</div>');
@@ -252,6 +274,41 @@ PAGES.sign = function () {
   H.push('</div></div></div>');
   return H.join('');
 };
+
+/* 「哪一段比你想的久」那一排。
+   「都差不多」跟其他選項一樣大——它不是逃生口，它是一個真的答案。 */
+function overRow(r) {
+  var picked = DRAFT.overs || [];
+  var none = DRAFT.overs && !DRAFT.overs.length && DRAFT.said;
+  var H = [];
+  if (stepNames(r.runId).length) {
+    H.push(stepLegend(r.runId, picked, 'over'));
+  }
+  H.push('<div class="alist">');
+  H.push('<button class="ac' + (none ? ' on' : '') + '" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'oversame' })) + '\'><b></b>都差不多</button>');
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 承諾那一頁還沒有 run，所以直接從里程碑上讀老師分的那幾段。
+   那一排同時是兩件事：這一趟有哪幾段（範圍），
+   以及點起來標「這一段會比想的久」。 */
+function previewSteps(m) { return (m && m.steps) || []; }
+
+function msStepLegend(m, sel, act) {
+  var a = previewSteps(m);
+  if (!a.length) return '';
+  var H = ['<div class="alist">'];
+  a.forEach(function (x, i) {
+    var on = sel && sel.indexOf(i) >= 0;
+    H.push('<button class="ac' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: act + ':' + i })) + '\'>' +
+      '<b style="background:' + stepHue(i) + '"></b>' + esc(x) + '</button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
 
 /* ---------- 承諾：滑桿 ＋ 自己標哪幾件會比想的久 ---------- */
 PAGES.commit = function () {
@@ -340,17 +397,23 @@ PAGES.submit = function () {
   var m = msOf(r.msId);
   var used = Math.max(1, daysBetween(r.committedAt, now()));
 
-  var H = [head('交出去', m.title, '')];
-
-  /* 走到底了才看得清楚牠。前面那些天牠都在霧裡。 */
   var mob = mobOfRun(r);
   var zone = strataAt(depthOf(t.teamId), t.teamId);
-  H.push('<div class="card fa ' + zone.key + '"><div class="fa-in">');
-  H.push(pxTag(mob.px, zone.pal, 'fa-px'));
-  H.push('<div><div class="eyebrow">' + esc(zone.name) + '</div>');
-  H.push('<h2>' + esc(mob.n) + '</h2>');
-  H.push('<p class="lead">' + esc(mob.t) + '</p>');
-  H.push('</div></div></div>');
+
+  var H = [head(mob.n, m.title, '')];
+
+  /* 走到底了才看得清楚牠。前面那些天牠都在霧裡。
+
+     這一整頁本來長得像一張表單，而它是整個流程最有份量的一下。
+     改成一個照面：自己在左邊，牠在右邊，中間是還沒發生的事。
+
+     勝負不在這一頁上——它由承諾幾天與過了幾天決定，跟按得多快無關。 */
+  H.push('<div class="duel ' + zone.key + '">');
+  H.push('<div class="duel-me">' + heroTag(t.teamId) + '</div>');
+  H.push('<div class="duel-gap"><span></span><span></span><span></span></div>');
+  H.push('<div class="duel-mob">' + pxTag(mob.px, zone.pal, 'fa-px') + '</div>');
+  H.push('</div>');
+  H.push('<p class="duel-t">' + esc(mob.t) + '</p>');
 
   H.push('<div class="card">');
   H.push(estBar(r.est, used, false));
@@ -358,6 +421,22 @@ PAGES.submit = function () {
 
   /* 老師分的段：勾掉做完的。 */
   H.push(stepCard(r.runId));
+
+  /* 交出去之前先想一次，而且是在看到判定之前。
+
+     本來這一題只有失準的人會被問（營火），所以一路準時的組整學期
+     不會反省一次；而且它排在判定之後，那是事後合理化不是省思。
+
+     「都差不多」是第一等的選項：逼人找一個「比較久的」會讓他為了
+     回答而回答，那一秒資料就開始說謊。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">上之前　·　哪一段比你想的久</div>');
+  H.push(overRow(r));
+  if ((r.flags || []).length) {
+    H.push('<div class="eyebrow" style="margin-top:14px">承諾的時候你標的</div>');
+    H.push(stepLegend(r.runId, r.flags, null));
+  }
+  H.push('</div>');
 
   /* 這幾天你動過哪幾天。
 
@@ -374,7 +453,7 @@ PAGES.submit = function () {
   H.push('</div>');
 
   H.push('<div class="row">');
-  H.push(btn('確認交出去了', 'submit:' + r.runId, 'big'));
+  H.push(btn('上', 'submit:' + r.runId, 'big go'));
   H.push(btn('還沒', 'go:home', 'ghost'));
   H.push('</div>');
   H.push('<p class="dim">作業交到老師原本收的地方。這裡不收檔案。</p>');
@@ -391,25 +470,36 @@ PAGES.stamp = function () {
   var zone = strataAt(depthOf(t.teamId), t.teamId);
   var mob = mobOfRun(r);
 
-  var H = ['<div class="stamp-card ' + r.stamp + '">'];
+  /* 打完了。牠讓開的那一格，跟自己往前站的那一格，一起演一次。
+     一次就好——重新整理不會再演，因為它報的是結果不是過程。 */
+  var H = ['<div class="duel done ' + zone.key + ' ' + r.stamp + '">'];
+  H.push('<div class="duel-me">' + heroTag(t.teamId) + '</div>');
+  H.push('<div class="duel-gap"><span></span><span></span><span></span></div>');
+  H.push('<div class="duel-mob">' + pxTag(mob.px, zone.pal, 'fa-px') + '</div>');
+  H.push('</div>');
+
+  /* 戰報。死線勇者的結果是一份回頭讀的報告，不是一張貼紙——
+     那一份報告本身就是這個系統要教的東西：你說幾天、實際幾天、差多少。
+     所以把它排成可以互相比較的幾行，數字靠右對齊。 */
+  H.push('<div class="stamp-card ' + r.stamp + '">');
   H.push('<div class="stamp-mark">' + s.mark + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
+  H.push('<dl class="rep">');
+  H.push('<dt>你說</dt><dd>' + r.est + '</dd>');
+  H.push('<dt>實際</dt><dd>' + r.actual + '</dd>');
+  H.push('<dt>差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
+    (r.actual - r.est) + '</dd>');
+  var ov = (r.overs || []).map(function (i) { return stepName(r.runId, i); })
+    .filter(Boolean);
+  H.push('<dt>上之前你說</dt><dd class="s">' +
+    (ov.length ? esc(ov.join('、')) + ' 比想的久' : '都差不多') + '</dd>');
+  H.push('</dl>');
   H.push(estBar(r.est, r.actual, false));
   H.push('</div>');
 
-  /* 擋路的那一隻讓開了。這一趟真的結束了的訊號——
-     牠不是被打敗的，牠只是不再擋在那裡。 */
-  H.push('<div class="card fa ' + zone.key + ' aside"><div class="fa-in">');
-  H.push(pxTag(mob.px, zone.pal, 'fa-px gone'));
-  H.push('<div><div class="eyebrow">' + esc(zone.name) + '</div>');
-  H.push('<h2>' + esc(mob.n) + '讓開了。</h2>');
-  H.push('</div></div></div>');
+  H.push('<p class="duel-t">' + esc(mob.n) + '讓開了。</p>');
 
-  if (r.stamp === 'late') {
-    H.push(btn('去營火旁說一下', 'go:camp:' + r.runId, 'big'));
-  } else {
-    H.push(btn('好', 'skipcamp:' + r.runId, 'big'));
-  }
+  H.push(btn('好', 'skipcamp:' + r.runId, 'big'));
   return H.join('');
 };
 

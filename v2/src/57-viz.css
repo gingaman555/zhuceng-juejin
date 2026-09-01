@@ -403,3 +403,120 @@ button.ac:active{transform:translateY(1px)}
   background:rgba(233,179,65,.10);box-shadow:inset 0 0 0 1px var(--gold-d)
 }
 @media (prefers-reduced-motion: reduce){ .dg-c.rock.can{animation:none} }
+
+/* 兩組都構得到的那一格。誰先點誰拿走——最軟的一種競爭：
+   沒有名次，也不會失去任何已經有的東西。 */
+.dg-c.rock.hot2{
+  background-image:repeating-linear-gradient(45deg,
+    rgba(217,96,63,.30) 0 3px, transparent 3px 8px)
+}
+.dg-c.rock.can.hot{
+  box-shadow:inset 0 0 0 2px var(--over), inset 0 0 0 6px rgba(217,96,63,.22);
+  animation:hotg .9s steps(1,end) infinite
+}
+@keyframes hotg{
+  0%,49%{box-shadow:inset 0 0 0 2px var(--over), inset 0 0 0 6px rgba(217,96,63,.22)}
+  50%,100%{box-shadow:inset 0 0 0 2px #F08A6B, inset 0 0 0 6px rgba(217,96,63,.40)}
+}
+@media (prefers-reduced-motion: reduce){ .dg-c.rock.can.hot{animation:none} }
+
+/* ── 照面 ──
+   作業是行走，交代是戰鬥。整個流程最有份量的那一下本來長得像一張表單，
+   現在是一個照面：自己在左邊，牠在右邊，中間是還沒發生的事。
+
+   勝負不在這一頁上。它由承諾幾天與行事曆過了幾天決定——
+   按得快、按得多，都不會改變任何東西。 */
+.duel{
+  position:relative;display:flex;align-items:flex-end;justify-content:space-between;
+  gap:11px;padding:22px 22px 0;height:132px;overflow:hidden;
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px);
+  background:linear-gradient(180deg,var(--z1) 0 62%,var(--z2) 62% 100%);
+  box-shadow:inset 0 0 0 3px rgba(0,0,0,.28), inset 3px 3px 0 rgba(255,255,255,.10)
+}
+.duel::after{ /* 地面那一條硬邊。沒有模糊，光永遠從左上來 */
+  content:'';position:absolute;left:0;right:0;bottom:22px;height:3px;
+  background:rgba(0,0,0,.34)
+}
+.duel-me,.duel-mob{position:relative;z-index:2;transform-origin:50% 100%}
+.duel-me{animation:dbob 1.1s steps(2,end) infinite}
+.duel-mob{animation:dbob 1.1s steps(2,end) infinite reverse}
+/* 牠原本跟人一樣大，那就不像擋路的東西。直接把圖放大成兩倍寬——
+   用 transform 放大會把它推出面板外，所以改成給尺寸。
+   原圖是 24×16，比例照著給才不會被拉扁。 */
+.duel-mob .fa-px{width:132px;height:88px;transform:scaleX(-1);image-rendering:pixelated}
+@keyframes dbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+/* 中間那三點：還沒發生的事。 */
+.duel-gap{display:flex;gap:11px;align-items:center;padding-bottom:44px;z-index:2}
+.duel-gap span{width:5px;height:5px;background:rgba(255,255,255,.45)}
+.duel-gap span:nth-child(1){animation:dpt 1.2s steps(1,end) infinite}
+.duel-gap span:nth-child(2){animation:dpt 1.2s steps(1,end) .4s infinite}
+.duel-gap span:nth-child(3){animation:dpt 1.2s steps(1,end) .8s infinite}
+@keyframes dpt{0%,60%{opacity:.15}61%,100%{opacity:1}}
+
+.duel-t{margin:11px 0 0;color:var(--dim);font-size:11px;line-height:22px}
+
+/* 打完了。牠退開，自己往前站一格。演一次，不循環。 */
+.duel.done .duel-me{animation:dstep .5s steps(3,end) 1 forwards}
+.duel.done .duel-mob{animation:dgone .6s steps(3,end) .2s 1 forwards}
+.duel.done .duel-gap{opacity:0}
+@keyframes dstep{to{transform:translateX(22px)}}
+@keyframes dgone{to{transform:translateX(44px);opacity:.15}}
+
+@media (prefers-reduced-motion: reduce){
+  .duel-me,.duel-mob,.duel-gap span{animation:none}
+  .duel.done .duel-mob{opacity:.15}
+}
+
+/* ── 你不在的這幾天 ──
+   死線勇者回來看戰利品的那一下，換成誠實的版本：只報真的發生過的事。
+   數字大、名字小，一眼掃完就過去，不佔位置。 */
+.away{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;
+  padding:11px 14px;margin-bottom:11px;
+  background:var(--card2);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.22), inset 2px 2px 0 rgba(255,255,255,.08);
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
+}
+.away b{font-size:22px;line-height:22px;color:var(--ink);font-variant-numeric:tabular-nums}
+.away span{font-size:11px;color:var(--dim);margin-left:-16px}
+.away em{font-size:11px;font-style:normal;color:var(--over)}
+
+/* ── 面板 ──
+   參考死線勇者：它整個畫面是一組有框的面板，不是一頁網頁。框、鉚釘、
+   標題掛在框上，那三件事就足以讓一張卡片讀起來像遊戲介面。
+
+   守住原本的規則：硬邊、零模糊、光從左上來、圓角一律 11px 的切角。 */
+.card{position:relative}
+.card::after{
+  content:'';position:absolute;inset:6px;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,0,0,.26) 0 100%),linear-gradient(rgba(0,0,0,.26) 0 100%),
+    linear-gradient(rgba(0,0,0,.26) 0 100%),linear-gradient(rgba(0,0,0,.26) 0 100%);
+  background-size:3px 3px;background-repeat:no-repeat;
+  background-position:0 0,100% 0,0 100%,100% 100%
+}
+.card > *{position:relative;z-index:1}
+
+/* 標題掛在框上，像面板的名牌。 */
+.card > .eyebrow:first-child{
+  display:inline-block;margin:-4px 0 11px -6px;padding:3px 11px;
+  background:var(--card2);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.22), inset 2px 2px 0 rgba(255,255,255,.10);
+  clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%)
+}
+
+/* ── 戰報 ──
+   死線勇者的結果是一份回頭讀的報告。這裡也一樣：判定不是一張貼紙，
+   是那一趟的幾行數字。數字對齊，因為它們是要被互相比較的。 */
+.rep{margin:0;display:grid;grid-template-columns:auto 1fr;gap:0 22px}
+.rep dt{
+  font-size:11px;color:var(--dim);line-height:33px;
+  border-bottom:2px solid rgba(0,0,0,.14)
+}
+.rep dd{
+  margin:0;font-size:22px;line-height:33px;color:var(--ink);text-align:right;
+  font-variant-numeric:tabular-nums;border-bottom:2px solid rgba(0,0,0,.14)
+}
+.rep dd.s{font-size:11px;text-align:left;color:var(--dim)}
+.rep dt:last-of-type,.rep dd:last-of-type{border-bottom:0}
