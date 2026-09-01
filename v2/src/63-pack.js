@@ -22,29 +22,35 @@
 
 PAGES.pack = function () {
   var t = myTeam();
+  /* 老師派過的每一件事，各自走到哪。包含還沒承諾的，
+     所以它是「清單」不只是「紀錄」。 */
   var rows = runsFor(t.teamId).slice().reverse();
-  /* 重新想過的那幾趟不會出現在 runsFor（runOf 跳過它們），
-     但它們是真的發生過的事，所以另外撈出來一起排。 */
-  var again = where('Runs', function (r) {
-    return r.teamId === t.teamId && r.state === 'rethought';
-  }).map(function (r) { return { ms: msOf(r.msId), run: r }; });
+  /* 重新想過的那幾趟也是紀錄——它們確實發生過，只是沒有判定。 */
+  where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'rethought'; })
+    .forEach(function (r) { rows.push({ ms: msOf(r.msId), run: r }); });
 
   var H = [head('任務清單', '老師派過的每一件事', '')];
 
-  if (!rows.length && !again.length) {
+  if (!rows.length) {
     H.push('<div class="card dim">老師還沒派過任何一件事。</div>');
     H.push(btn('回廊道', 'go:home', 'ghost'));
     return H.join('');
   }
 
+  /* 準度總表。本來在「紀錄」那一頁上——那一頁跟這一頁幾乎是同一份資料，
+     併過來之後這裡是唯一一個看得到自己走過幾趟、準了幾次的地方。 */
+  var acc = accuracyOf(t.teamId);
+  if (acc.total) {
+    H.push('<div class="card quiet"><div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
+    H.push(accBar(acc));
+    H.push('</div>');
+  }
+
   H.push(coreCard());
 
-  H.push('<div class="card">');
-  H.push('<div class="tk-list">');
-  rows.forEach(function (x) { H.push(taskRow(x.ms, x.run, t)); });
-  again.forEach(function (x) { H.push(taskRow(x.ms, x.run, t)); });
-  H.push('</div>');
-  H.push('</div>');
+  H.push('<div class="card"><div class="rec-list">');
+  rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
+  H.push('</div></div>');
 
   H.push(btn('回廊道', 'go:home', 'ghost'));
   return H.join('');

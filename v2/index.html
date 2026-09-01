@@ -4792,6 +4792,12 @@ function nextThing(teamId) {
      他們還看得到留下的、全班地下城、紀錄，只是不再被派任務。 */
   var tm = teamOf(teamId);
   if (tm && tm.leftAt) return { kind: 'left' };
+  /* 第一件事：先給這個專案取個名字。
+
+     本來第一次進來看到的是一條空廊道，寫著「等老師派下一個」——
+     那是最糟的第一印象：第一個動作是「等」。取名字三十秒做得完，
+     而且它完全屬於他們自己（那塊牌子掛在洞口上，別組也看得到）。 */
+  if (tm && !tm.project) return { kind: 'name' };
   if (tm && tm.exitAsk) return { kind: 'waitexit' };
 
   var rows = runsFor(teamId);
@@ -6056,10 +6062,10 @@ function seen() { if (S.page === 'home' && S.who) markSeen(S.who); }
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
-  camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
+  camp: 'student', pick: 'student', eco: 'student', pack: 'student',
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student',
-  log: 'student', claim: 'student',
+  claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
 };
@@ -6258,7 +6264,7 @@ function sideBar() {
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
       ['home', '廊道'], ['pack', '任務清單'], ['codex', '圖鑑'],
-      ['eco', '全班地下城'], ['log', '紀錄']
+      ['eco', '全班地下城']
     ];
   }
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
@@ -6308,6 +6314,9 @@ function runAct(str) {
   if (f) f(arg);
 }
 
+/* 2026-09-02：push／rest／back／submit 四個刪掉了。它們是「每天按一下
+   推進」那一版的殘留——程式還在，但畫面上沒有任何地方按得到。
+   留著只會讓下一個讀的人以為那個機制還在。 */
 var ACTS = {
   forward: function () { CLOCK += DAY; render(); },
   reset: function () { seed(); S.who = 'U1'; go('home'); },
@@ -6357,15 +6366,6 @@ var ACTS = {
 
   /* 今天沒有動。
      跟推進一樣一下點擊，但不會讓畫面變亮，也不會讓停滯計時歸零——
-     說實話不用付代價，也買不到東西，所以沒有說謊的理由。 */
-  rest: function (runId) {
-    var t = myTeam();
-    var back = Number(DRAFT.back || 0);
-    if (!actRest(t.teamId, runId, back)) return say('那一天已經記過了。');
-    DRAFT.back = 0;
-    go('home');
-    say('記下來了。沒動也是這一趟的一部分。');
-  },
 
   /* 勾掉／取消勾掉老師分的一段 */
   tick: function (arg) {
@@ -6403,59 +6403,9 @@ var ACTS = {
     say('承諾了。從今天開始，每天推一格。');
   },
 
-  /* 補登哪一天。0 是今天。 */
-  back: function (v) { DRAFT.back = Number(v) || 0; render(); },
-
-  /* 推進。參數是「runId|今天動的是哪一塊」。 */
-  push: function (arg) {
-    /* 圖例那一排送過來的字是「push:R12|:a123」，中間那一段是 runId。
-       沒有 | 就是「我今天來過了」——那一組還沒寫自己的清單。 */
-    arg = arg.replace('|:', '|');
-    var i = arg.indexOf('|');
-    var runId = i < 0 ? arg : arg.slice(0, i);
-    var step = i < 0 ? -1 : Number(arg.slice(i + 1));
-    var t = myTeam();
-    var back = Number(DRAFT.back || 0);
-    /* 有沒有藤蔓要碎——推之前先問，推完狀態就變了 */
-    var wasStuck = stallOf(t.teamId).level;
-    if (!actPush(t.teamId, runId, step, back)) {
-      return say(back ? '那一天已經點過了。' : '今天那一盞已經點好了。一天一盞——多按沒有用。');
-    }
-    DRAFT.back = 0;
-    var r = find('Runs', function (x) { return x.runId === runId; });
-    var lab = stepName(runId, step);
-    var msg;
-    if (RULES.progress(r.pushes, r.est) >= 1) {
-      msg = '走到走廊底了。交出去之後，系統會比對你當初承諾的天數。';
-    } else if (back) {
-      msg = '補回來了。那一盞亮了。';
-    } else {
-      /* 有人跟你一起在下面。這不是名次——它不排序，也不說誰比較多。 */
-      var others = todayMovers(t.classId, t.teamId);
-      msg = (lab ? '「' + lab + '」記下了。' : '記下了。') +
-        (others ? '今天班上還有 ' + others + ' 條廊道今天也有人在走。'
-                : '今天你是第一個下來的。');
-    }
-    /* 先播完動畫再重畫——重畫會把 <img> 換掉，動畫就沒了。
-       藤蔓先碎，再揮劍：那個順序就是「你把它弄斷了，然後繼續走」。 */
-    var swing = function () { shakeScene(); animPush(function () { say(msg); }); };
-    if (wasStuck === 1) animVineBreak(swing); else swing();
-  },
-
   /* 「都差不多」也是一個答案，所以要記下來——
      它跟「沒有回答」不一樣。 */
   oversame: function () { DRAFT.overs = []; DRAFT.said = 1; render(); },
-
-  submit: function (runId) {
-    var t = myTeam();
-    /* 交出去之前想的那一句一起存。在看到判定之前存下來，
-       所以它不是看到結果之後回頭解釋的。 */
-    actReflect(t.teamId, runId, DRAFT.overs || []);
-    /* 先進戰鬥，交出去是戰鬥裡的「上」。
-       進去了還可以退出來重新想幾天——做到一半發現寫不出來
-       是真的會發生的事，而且承認它比硬交出去好。 */
-    go('battle', { id: runId, at: 'menu' });
-  },
 
   skipcamp: function (runId) { actSkipCamp(runId); go('home'); },
 
@@ -6503,8 +6453,10 @@ var ACTS = {
     var name = (document.getElementById('cname') || {}).value || '';
     if (!actSeal(runId, name)) return say('這一趟已經封存了。');
     DRAFT.cName = '';
-    go('dash', { id: runId });
-    animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
+    /* 封存完直接到全班地下城：新的一層在那裡，石頭變了、
+       埋著的東西、蓋什麼，都在同一頁發生。中間本來還隔一頁「大躍進」，
+       那一頁只說了一句「去看看那一層」。 */
+    go('eco', {});
   },
 
   /* 學生改自己的招牌 */
@@ -7076,7 +7028,8 @@ PAGES.home = function () {
   H.push('<div class="dock">');
   H.push('<div class="tline">');
   H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
-  H.push('<b>' + esc(row && row.ms ? row.ms.title : '還沒有任務') + '</b>');
+  H.push('<b>' + esc(next.kind === 'name' ? '還沒取名字'
+    : (row && row.ms ? row.ms.title : '還沒有任務')) + '</b>');
   if (st.level) H.push('<i class="warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</i>');
   H.push('</div>');
   H.push(actionCard(t, next, st));
@@ -7122,7 +7075,7 @@ function stepRow(runId) {
 /* 這一趟現在是什麼狀態。一個短標籤，不是一句解釋。 */
 function taskTag(next) {
   return ({
-    commit: '新的', doing: '正在做',
+    name: '第一件事', commit: '新的', doing: '正在做',
     stamped: '判定', review: '在老師那邊', gear: '老師勾了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
@@ -7196,7 +7149,12 @@ function actionCard(t, next, st) {
   var H = ['<div class="act-card">'];
   var row = next.row;
 
-  if (next.kind === 'left') {
+  if (next.kind === 'name') {
+    /* 第一個動作不可以是「等」。 */
+    H.push('<div class="eyebrow lit">先取個名字</div>');
+    H.push(btn('這個專案叫什麼', 'go:sign', 'big'));
+
+  } else if (next.kind === 'left') {
     H.push('<div class="eyebrow">地面</div>');
     if (t.exitWord) H.push('<p class="quote">' + nl(t.exitWord) + '</p>');
     H.push(btn('看你帶出來的', 'go:exit', 'big'));
@@ -7406,6 +7364,11 @@ PAGES.stamp = function () {
 
   H.push('<p class="duel-t">' + esc(mob.n) + '讓開了。</p>');
 
+  /* 圖鑑接回主流程。它是全系統內容量最大的一塊，而主流程從來沒提過它——
+     打敗一隻之後這裡說一句，是唯一一個「剛好會想去看」的時刻。 */
+  H.push('<p class="dim">' + esc(mob.n) + ' 在圖鑑裡。' +
+    '<a class="plain" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:codex' })) + '\'>去看看</a></p>');
   H.push(btn('好', 'skipcamp:' + r.runId, 'big'));
   return H.join('');
 };
@@ -7511,43 +7474,8 @@ PAGES.pick = function () {
    地圖是動手的地方，不是一個看的頁面。 */
 
 /* ---------- 大躍進 ---------- */
-PAGES.dash = function () {
-  var r = find('Runs', function (x) { return x.runId === S.p.id; });
-  if (!r) return '<div class="card">找不到。</div>';
-  var t = myTeam();
-  var keep = lastKeep(t.teamId);
-
-  var H = ['<div class="dash">'];
-  H.push(pxTag(HERO.dash, HERO.pal, 'ch big'));
-  H.push('<h1>' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m</h1>');
-  if (keep && keep.name) H.push('<p class="lead">「' + esc(keep.name) + '」封存了。</p>');
-  if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
-  H.push('</div>');
-
-  /* 跨進新的一區。世界自己變了，不是給的獎勵。 */
-  var d = depthOf(r.teamId);
-  var now2 = strataAt(d, r.teamId), was = strataAt(d - 1, r.teamId);
-  if (d > 0 && now2.key !== was.key) {
-    H.push('<div class="card fa ' + now2.key + ' zone-in">');
-    H.push('<div class="eyebrow">石頭變了</div>');
-    H.push('<h2>' + esc(now2.name) + '</h2>');
-    H.push('<p class="lead">' + esc(now2.note) + '</p>');
-    H.push('</div>');
-  }
-
-  /* 封存完就多一層。 */
-  /* 走完一趟就多一層。往下一層不是一個動作——
-     要選的只有「在這一層蓋什麼」。 */
-  if (unbuiltDepth(t.teamId) >= 0) {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow lit">新的一層</div>');
-    H.push(btn('去看看那一層', 'go:eco', 'big'));
-    H.push('</div>');
-  } else {
-    H.push(btn('回廊道', 'go:home', 'big'));
-  }
-  return H.join('');
-};
+/* 大躍進那一頁退休了：「石頭變了」搬到全班地下城（那才是新的一層
+   實際發生的地方），其餘只是一句「去看看那一層」。 */
 
 /* ---------- 出口 ----------
 
@@ -7651,29 +7579,8 @@ PAGES.exit = function () {
 };
 
 /* ---------- 走過的每一趟 ---------- */
-PAGES.log = function () {
-  var t = myTeam();
-  var rows = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).reverse();
-  /* 重新想過的那幾趟也是紀錄——它們確實發生過，只是沒有判定。 */
-  where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'rethought'; })
-    .forEach(function (r) { rows.push({ ms: msOf(r.msId), run: r }); });
-
-  var H = [head('紀錄', '走過的每一趟', '')];
-  if (!rows.length) {
-    return H.join('') + '<div class="card dim">還沒有走完的里程碑。</div>';
-  }
-
-  var acc = accuracyOf(t.teamId);
-  H.push('<div class="card quiet"><div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
-  H.push(accBar(acc));
-  H.push('</div>');
-
-  H.push('<div class="card"><div class="rec-list">');
-  rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
-  H.push('</div></div>');
-  return H.join('');
-};
-
+/* 紀錄那一頁併進任務清單了：兩頁幾乎是同一份資料。
+   下面那一支 logRow 留著——任務清單在用。 */
 /* 一列一趟。牠在最左邊，資訊在右邊，點開才看細節。 */
 function logRow(m, r, t) {
   if (!m) return '';
@@ -8600,6 +8507,21 @@ PAGES.eco = function () {
   /* 排行榜。刻意加進來、準備好隨時拿掉的——見 68-rank.js。
      要拿掉就刪掉這一行跟那兩個檔案，沒有別的地方依賴它。 */
   H.push(rankCard(t.classId, t.teamId));
+  /* 跨進新的一層的時候石頭會變。這一張本來在「大躍進」那一頁上，
+     但那一頁只有這一張是內容，其餘是「去看看那一層」——
+     而去看看到的就是這裡。所以它直接長在這裡。 */
+  var nd = unbuiltDepth(t.teamId);
+  if (nd > 0) {
+    var zn = strataAt(nd, t.teamId), zw = strataAt(nd - 1, t.teamId);
+    if (zn.key !== zw.key) {
+      H.push('<div class="card fa ' + zn.key + ' zone-in">');
+      H.push('<div class="eyebrow">石頭變了</div>');
+      H.push('<h2>' + esc(zn.name) + '</h2>');
+      H.push('<p class="lead">' + esc(zn.note) + '</p>');
+      H.push('</div>');
+    }
+  }
+
   H.push(uncoverCard(t));
   H.push(buildPick(t));
   H.push(buildCard(t));
@@ -8695,29 +8617,35 @@ PAGES.classeco = function () {
 
 PAGES.pack = function () {
   var t = myTeam();
+  /* 老師派過的每一件事，各自走到哪。包含還沒承諾的，
+     所以它是「清單」不只是「紀錄」。 */
   var rows = runsFor(t.teamId).slice().reverse();
-  /* 重新想過的那幾趟不會出現在 runsFor（runOf 跳過它們），
-     但它們是真的發生過的事，所以另外撈出來一起排。 */
-  var again = where('Runs', function (r) {
-    return r.teamId === t.teamId && r.state === 'rethought';
-  }).map(function (r) { return { ms: msOf(r.msId), run: r }; });
+  /* 重新想過的那幾趟也是紀錄——它們確實發生過，只是沒有判定。 */
+  where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'rethought'; })
+    .forEach(function (r) { rows.push({ ms: msOf(r.msId), run: r }); });
 
   var H = [head('任務清單', '老師派過的每一件事', '')];
 
-  if (!rows.length && !again.length) {
+  if (!rows.length) {
     H.push('<div class="card dim">老師還沒派過任何一件事。</div>');
     H.push(btn('回廊道', 'go:home', 'ghost'));
     return H.join('');
   }
 
+  /* 準度總表。本來在「紀錄」那一頁上——那一頁跟這一頁幾乎是同一份資料，
+     併過來之後這裡是唯一一個看得到自己走過幾趟、準了幾次的地方。 */
+  var acc = accuracyOf(t.teamId);
+  if (acc.total) {
+    H.push('<div class="card quiet"><div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
+    H.push(accBar(acc));
+    H.push('</div>');
+  }
+
   H.push(coreCard());
 
-  H.push('<div class="card">');
-  H.push('<div class="tk-list">');
-  rows.forEach(function (x) { H.push(taskRow(x.ms, x.run, t)); });
-  again.forEach(function (x) { H.push(taskRow(x.ms, x.run, t)); });
-  H.push('</div>');
-  H.push('</div>');
+  H.push('<div class="card"><div class="rec-list">');
+  rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
+  H.push('</div></div>');
 
   H.push(btn('回廊道', 'go:home', 'ghost'));
   return H.join('');

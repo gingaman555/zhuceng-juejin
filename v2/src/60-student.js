@@ -82,7 +82,8 @@ PAGES.home = function () {
   H.push('<div class="dock">');
   H.push('<div class="tline">');
   H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
-  H.push('<b>' + esc(row && row.ms ? row.ms.title : '還沒有任務') + '</b>');
+  H.push('<b>' + esc(next.kind === 'name' ? '還沒取名字'
+    : (row && row.ms ? row.ms.title : '還沒有任務')) + '</b>');
   if (st.level) H.push('<i class="warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</i>');
   H.push('</div>');
   H.push(actionCard(t, next, st));
@@ -128,7 +129,7 @@ function stepRow(runId) {
 /* 這一趟現在是什麼狀態。一個短標籤，不是一句解釋。 */
 function taskTag(next) {
   return ({
-    commit: '新的', doing: '正在做',
+    name: '第一件事', commit: '新的', doing: '正在做',
     stamped: '判定', review: '在老師那邊', gear: '老師勾了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
@@ -202,7 +203,12 @@ function actionCard(t, next, st) {
   var H = ['<div class="act-card">'];
   var row = next.row;
 
-  if (next.kind === 'left') {
+  if (next.kind === 'name') {
+    /* 第一個動作不可以是「等」。 */
+    H.push('<div class="eyebrow lit">先取個名字</div>');
+    H.push(btn('這個專案叫什麼', 'go:sign', 'big'));
+
+  } else if (next.kind === 'left') {
     H.push('<div class="eyebrow">地面</div>');
     if (t.exitWord) H.push('<p class="quote">' + nl(t.exitWord) + '</p>');
     H.push(btn('看你帶出來的', 'go:exit', 'big'));
@@ -412,6 +418,11 @@ PAGES.stamp = function () {
 
   H.push('<p class="duel-t">' + esc(mob.n) + '讓開了。</p>');
 
+  /* 圖鑑接回主流程。它是全系統內容量最大的一塊，而主流程從來沒提過它——
+     打敗一隻之後這裡說一句，是唯一一個「剛好會想去看」的時刻。 */
+  H.push('<p class="dim">' + esc(mob.n) + ' 在圖鑑裡。' +
+    '<a class="plain" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:codex' })) + '\'>去看看</a></p>');
   H.push(btn('好', 'skipcamp:' + r.runId, 'big'));
   return H.join('');
 };
@@ -517,43 +528,8 @@ PAGES.pick = function () {
    地圖是動手的地方，不是一個看的頁面。 */
 
 /* ---------- 大躍進 ---------- */
-PAGES.dash = function () {
-  var r = find('Runs', function (x) { return x.runId === S.p.id; });
-  if (!r) return '<div class="card">找不到。</div>';
-  var t = myTeam();
-  var keep = lastKeep(t.teamId);
-
-  var H = ['<div class="dash">'];
-  H.push(pxTag(HERO.dash, HERO.pal, 'ch big'));
-  H.push('<h1>' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m</h1>');
-  if (keep && keep.name) H.push('<p class="lead">「' + esc(keep.name) + '」封存了。</p>');
-  if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
-  H.push('</div>');
-
-  /* 跨進新的一區。世界自己變了，不是給的獎勵。 */
-  var d = depthOf(r.teamId);
-  var now2 = strataAt(d, r.teamId), was = strataAt(d - 1, r.teamId);
-  if (d > 0 && now2.key !== was.key) {
-    H.push('<div class="card fa ' + now2.key + ' zone-in">');
-    H.push('<div class="eyebrow">石頭變了</div>');
-    H.push('<h2>' + esc(now2.name) + '</h2>');
-    H.push('<p class="lead">' + esc(now2.note) + '</p>');
-    H.push('</div>');
-  }
-
-  /* 封存完就多一層。 */
-  /* 走完一趟就多一層。往下一層不是一個動作——
-     要選的只有「在這一層蓋什麼」。 */
-  if (unbuiltDepth(t.teamId) >= 0) {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow lit">新的一層</div>');
-    H.push(btn('去看看那一層', 'go:eco', 'big'));
-    H.push('</div>');
-  } else {
-    H.push(btn('回廊道', 'go:home', 'big'));
-  }
-  return H.join('');
-};
+/* 大躍進那一頁退休了：「石頭變了」搬到全班地下城（那才是新的一層
+   實際發生的地方），其餘只是一句「去看看那一層」。 */
 
 /* ---------- 出口 ----------
 
@@ -657,29 +633,8 @@ PAGES.exit = function () {
 };
 
 /* ---------- 走過的每一趟 ---------- */
-PAGES.log = function () {
-  var t = myTeam();
-  var rows = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).reverse();
-  /* 重新想過的那幾趟也是紀錄——它們確實發生過，只是沒有判定。 */
-  where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'rethought'; })
-    .forEach(function (r) { rows.push({ ms: msOf(r.msId), run: r }); });
-
-  var H = [head('紀錄', '走過的每一趟', '')];
-  if (!rows.length) {
-    return H.join('') + '<div class="card dim">還沒有走完的里程碑。</div>';
-  }
-
-  var acc = accuracyOf(t.teamId);
-  H.push('<div class="card quiet"><div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
-  H.push(accBar(acc));
-  H.push('</div>');
-
-  H.push('<div class="card"><div class="rec-list">');
-  rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
-  H.push('</div></div>');
-  return H.join('');
-};
-
+/* 紀錄那一頁併進任務清單了：兩頁幾乎是同一份資料。
+   下面那一支 logRow 留著——任務清單在用。 */
 /* 一列一趟。牠在最左邊，資訊在右邊，點開才看細節。 */
 function logRow(m, r, t) {
   if (!m) return '';

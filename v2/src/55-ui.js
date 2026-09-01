@@ -38,10 +38,10 @@ function seen() { if (S.page === 'home' && S.who) markSeen(S.who); }
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
-  camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
+  camp: 'student', pick: 'student', eco: 'student', pack: 'student',
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student',
-  log: 'student', claim: 'student',
+  claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
 };
@@ -240,7 +240,7 @@ function sideBar() {
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
       ['home', '廊道'], ['pack', '任務清單'], ['codex', '圖鑑'],
-      ['eco', '全班地下城'], ['log', '紀錄']
+      ['eco', '全班地下城']
     ];
   }
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
@@ -290,6 +290,9 @@ function runAct(str) {
   if (f) f(arg);
 }
 
+/* 2026-09-02：push／rest／back／submit 四個刪掉了。它們是「每天按一下
+   推進」那一版的殘留——程式還在，但畫面上沒有任何地方按得到。
+   留著只會讓下一個讀的人以為那個機制還在。 */
 var ACTS = {
   forward: function () { CLOCK += DAY; render(); },
   reset: function () { seed(); S.who = 'U1'; go('home'); },
@@ -339,15 +342,6 @@ var ACTS = {
 
   /* 今天沒有動。
      跟推進一樣一下點擊，但不會讓畫面變亮，也不會讓停滯計時歸零——
-     說實話不用付代價，也買不到東西，所以沒有說謊的理由。 */
-  rest: function (runId) {
-    var t = myTeam();
-    var back = Number(DRAFT.back || 0);
-    if (!actRest(t.teamId, runId, back)) return say('那一天已經記過了。');
-    DRAFT.back = 0;
-    go('home');
-    say('記下來了。沒動也是這一趟的一部分。');
-  },
 
   /* 勾掉／取消勾掉老師分的一段 */
   tick: function (arg) {
@@ -385,59 +379,9 @@ var ACTS = {
     say('承諾了。從今天開始，每天推一格。');
   },
 
-  /* 補登哪一天。0 是今天。 */
-  back: function (v) { DRAFT.back = Number(v) || 0; render(); },
-
-  /* 推進。參數是「runId|今天動的是哪一塊」。 */
-  push: function (arg) {
-    /* 圖例那一排送過來的字是「push:R12|:a123」，中間那一段是 runId。
-       沒有 | 就是「我今天來過了」——那一組還沒寫自己的清單。 */
-    arg = arg.replace('|:', '|');
-    var i = arg.indexOf('|');
-    var runId = i < 0 ? arg : arg.slice(0, i);
-    var step = i < 0 ? -1 : Number(arg.slice(i + 1));
-    var t = myTeam();
-    var back = Number(DRAFT.back || 0);
-    /* 有沒有藤蔓要碎——推之前先問，推完狀態就變了 */
-    var wasStuck = stallOf(t.teamId).level;
-    if (!actPush(t.teamId, runId, step, back)) {
-      return say(back ? '那一天已經點過了。' : '今天那一盞已經點好了。一天一盞——多按沒有用。');
-    }
-    DRAFT.back = 0;
-    var r = find('Runs', function (x) { return x.runId === runId; });
-    var lab = stepName(runId, step);
-    var msg;
-    if (RULES.progress(r.pushes, r.est) >= 1) {
-      msg = '走到走廊底了。交出去之後，系統會比對你當初承諾的天數。';
-    } else if (back) {
-      msg = '補回來了。那一盞亮了。';
-    } else {
-      /* 有人跟你一起在下面。這不是名次——它不排序，也不說誰比較多。 */
-      var others = todayMovers(t.classId, t.teamId);
-      msg = (lab ? '「' + lab + '」記下了。' : '記下了。') +
-        (others ? '今天班上還有 ' + others + ' 條廊道今天也有人在走。'
-                : '今天你是第一個下來的。');
-    }
-    /* 先播完動畫再重畫——重畫會把 <img> 換掉，動畫就沒了。
-       藤蔓先碎，再揮劍：那個順序就是「你把它弄斷了，然後繼續走」。 */
-    var swing = function () { shakeScene(); animPush(function () { say(msg); }); };
-    if (wasStuck === 1) animVineBreak(swing); else swing();
-  },
-
   /* 「都差不多」也是一個答案，所以要記下來——
      它跟「沒有回答」不一樣。 */
   oversame: function () { DRAFT.overs = []; DRAFT.said = 1; render(); },
-
-  submit: function (runId) {
-    var t = myTeam();
-    /* 交出去之前想的那一句一起存。在看到判定之前存下來，
-       所以它不是看到結果之後回頭解釋的。 */
-    actReflect(t.teamId, runId, DRAFT.overs || []);
-    /* 先進戰鬥，交出去是戰鬥裡的「上」。
-       進去了還可以退出來重新想幾天——做到一半發現寫不出來
-       是真的會發生的事，而且承認它比硬交出去好。 */
-    go('battle', { id: runId, at: 'menu' });
-  },
 
   skipcamp: function (runId) { actSkipCamp(runId); go('home'); },
 
@@ -485,8 +429,10 @@ var ACTS = {
     var name = (document.getElementById('cname') || {}).value || '';
     if (!actSeal(runId, name)) return say('這一趟已經封存了。');
     DRAFT.cName = '';
-    go('dash', { id: runId });
-    animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
+    /* 封存完直接到全班地下城：新的一層在那裡，石頭變了、
+       埋著的東西、蓋什麼，都在同一頁發生。中間本來還隔一頁「大躍進」，
+       那一頁只說了一句「去看看那一層」。 */
+    go('eco', {});
   },
 
   /* 學生改自己的招牌 */

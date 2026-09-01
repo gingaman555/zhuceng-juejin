@@ -100,6 +100,12 @@ function nextThing(teamId) {
      他們還看得到留下的、全班地下城、紀錄，只是不再被派任務。 */
   var tm = teamOf(teamId);
   if (tm && tm.leftAt) return { kind: 'left' };
+  /* 第一件事：先給這個專案取個名字。
+
+     本來第一次進來看到的是一條空廊道，寫著「等老師派下一個」——
+     那是最糟的第一印象：第一個動作是「等」。取名字三十秒做得完，
+     而且它完全屬於他們自己（那塊牌子掛在洞口上，別組也看得到）。 */
+  if (tm && !tm.project) return { kind: 'name' };
   if (tm && tm.exitAsk) return { kind: 'waitexit' };
 
   var rows = runsFor(teamId);

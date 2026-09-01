@@ -277,6 +277,21 @@ PAGES.eco = function () {
   /* 排行榜。刻意加進來、準備好隨時拿掉的——見 68-rank.js。
      要拿掉就刪掉這一行跟那兩個檔案，沒有別的地方依賴它。 */
   H.push(rankCard(t.classId, t.teamId));
+  /* 跨進新的一層的時候石頭會變。這一張本來在「大躍進」那一頁上，
+     但那一頁只有這一張是內容，其餘是「去看看那一層」——
+     而去看看到的就是這裡。所以它直接長在這裡。 */
+  var nd = unbuiltDepth(t.teamId);
+  if (nd > 0) {
+    var zn = strataAt(nd, t.teamId), zw = strataAt(nd - 1, t.teamId);
+    if (zn.key !== zw.key) {
+      H.push('<div class="card fa ' + zn.key + ' zone-in">');
+      H.push('<div class="eyebrow">石頭變了</div>');
+      H.push('<h2>' + esc(zn.name) + '</h2>');
+      H.push('<p class="lead">' + esc(zn.note) + '</p>');
+      H.push('</div>');
+    }
+  }
+
   H.push(uncoverCard(t));
   H.push(buildPick(t));
   H.push(buildCard(t));
