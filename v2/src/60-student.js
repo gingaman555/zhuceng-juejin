@@ -139,7 +139,10 @@ function actionCard(t, next, st) {
     H.push('<h2>推進一格。</h2>');
     H.push('<p class="dim">不用交東西，也不用寫字。按下去就算今天動過了——' +
            '重點是不要停，不是一次做完。</p>');
+    H.push('<div class="row">');
     H.push(btn('推進', 'push:' + row.run.runId, 'big'));
+    H.push(btn('提早做完了', 'go:submit:' + row.run.runId, 'ghost'));
+    H.push('</div>');
 
   } else if (next.kind === 'submit') {
     H.push('<div class="eyebrow">走到終點了</div>');
@@ -165,7 +168,9 @@ function actionCard(t, next, st) {
   } else if (next.kind === 'waiting') {
     H.push('<div class="eyebrow">今天推過了</div>');
     H.push('<h2>明天再來一次。</h2>');
-    H.push('<p class="dim">一天一格。這不是點擊遊戲，多按沒有用。</p>');
+    H.push('<p class="dim">一天一格。推進是每天的打卡，不是工作的單位——' +
+           '真的做完了是你說了算，隨時交得出去。</p>');
+    H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
 
   } else if (next.kind === 'review') {
     H.push('<div class="eyebrow">在老師那邊</div>');

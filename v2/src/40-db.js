@@ -109,12 +109,14 @@ function nextThing(teamId) {
     return x.run.state === 'running' && !pushedToday(teamId, x.run.runId);
   })[0];
   if (run) return { kind: 'push', row: run };
-  /* 6. 走完了、還沒上傳 */
+  /* 6. 走完承諾的長度了——該交了 */
   var done = rows.filter(function (x) {
     return x.run.state === 'running' && RULES.progress(x.run.pushes, x.run.est) >= 1;
   })[0];
   if (done) return { kind: 'submit', row: done };
-  /* 7. 都推過了，在等 */
+  /* 7. 今天推過了。走廊還沒走完，但隨時交得出去——
+     走廊是「你承諾的長度」的視覺化，不是交件的門檻。
+     提早做完就該交，那才判得成「超乎預期」。 */
   var wait = rows.filter(function (x) { return x.run.state === 'running'; })[0];
   if (wait) return { kind: 'waiting', row: wait };
   var sent = rows.filter(function (x) { return x.run.state === 'submitted'; })[0];
@@ -130,19 +132,23 @@ function pushedToday(teamId, runId) {
   });
 }
 
-/* 最後一次推進是什麼時候——停滯判斷用 */
-function lastPush(teamId) {
-  var ps = where('Pushes', function (p) { return p.teamId === teamId; });
+/* 這一個 run 最後一次推進是什麼時候 */
+function lastPush(runId) {
+  var ps = where('Pushes', function (p) { return p.runId === runId; });
   if (!ps.length) return 0;
   return ps[ps.length - 1].at;
 }
 
-/* 這一組的停滯狀態 */
+/* 這一組的停滯狀態。
+   從「這一輪」開始算，不是從上一輪的最後一次推進——
+   一組跑完一輪、隔了九天老師才派新的，他一承諾就被判成睡著是錯的。
+   所以基準點取「這一輪的最後一次推進」與「這一輪承諾的時間」之中比較晚的那一個。 */
 function stallOf(teamId) {
-  var t = teamOf(teamId);
-  var has = runsFor(teamId).some(function (x) { return x.run.state === 'running'; });
-  if (!has) return { level: 0, days: 0 };
-  return RULES.stallOf(lastPush(teamId) || (t && t.joinedAt) || now(), now());
+  var cur = runsFor(teamId).filter(function (x) { return x.run.state === 'running'; })[0];
+  if (!cur) return { level: 0, days: 0 };
+  var from = Math.max(lastPush(cur.run.runId) || 0, cur.run.committedAt || 0);
+  if (!from) return { level: 0, days: 0 };
+  return RULES.stallOf(from, now());
 }
 
 /* 深度＝完成過幾個里程碑。沒有終點。 */
