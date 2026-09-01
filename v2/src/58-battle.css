@@ -347,3 +347,73 @@
   .bt-side.foe .bt-ch{animation:none}
   .bt-side.foe .bt-pad::after{animation:none;opacity:0}
 }
+
+/* ── 舊版寶可夢那種框，往主流程推 ──
+
+   那個年代的介面只有一種框：外面一圈粗黑、裡面一圈亮邊、方角。
+   它之所以好認，是因為整個畫面上每一個「要你讀」或「要你選」的東西
+   都長成那樣——所以這裡也只給那兩種東西用：
+
+     .tline     現在要做的是什麼（讀）
+     .act-card  那一顆鍵在的地方（選）
+     .bt-say / .bt-menu / .bt-q  戰鬥裡的字幕與選單
+
+   其餘（卡片、地圖、圖鑑）維持原本 11px 的切角——
+   全部換成方角的話，這個作品就變成寶可夢的仿作，而不是它自己。 */
+.tline, .act-card{
+  clip-path:none;border-radius:0;
+  background:var(--card2);
+  box-shadow:0 0 0 3px #0D0B08, inset 0 0 0 2px rgba(255,240,214,.30)
+}
+.tline{margin-bottom:11px}
+
+/* 主要那一顆鍵：選單的一行，前面有游標。 */
+.act-card .btn.big{
+  clip-path:none;border-radius:0;text-align:left;
+  background:none;color:var(--gold);
+  box-shadow:none;padding:6px 11px
+}
+.act-card .btn.big::before{
+  content:'▶';margin-right:9px;color:var(--gold);
+  animation:btar .7s steps(1,end) infinite
+}
+.act-card .btn.big:hover{background:rgba(233,179,65,.12)}
+@media (prefers-reduced-motion: reduce){ .act-card .btn.big::before{animation:none} }
+
+/* ── 收掉太像的那幾筆 ──
+
+   使用者：「不要太明顯，我不想被說抄襲。」他是對的。
+
+   結構可以留（照面、名牌、字幕框、兩個選項、閃爍後倒下）——那些是
+   那個年代通用的做法，不屬於任何一款遊戲。要收掉的是那幾筆一眼就
+   認得出是誰的：
+
+     ▶ 游標          那是最好認的一筆
+     名牌的斜尾線     第二好認
+     閃動的 ▼        第三
+     全方角的框      跟這個作品自己的 11px 切角衝突
+
+   換回這個作品自己的語彙：11px 切角、金色的小方塊、硬邊的亮邊。 */
+
+/* 游標換成這個作品自己的金色方塊，不閃。 */
+.bm::before{content:'';display:inline-block;width:6px;height:6px;
+  margin-right:9px;vertical-align:middle;background:transparent}
+.bm:hover::before,.bm:focus::before{background:var(--gold)}
+.act-card .btn.big::before{
+  content:'';display:inline-block;width:6px;height:6px;margin-right:11px;
+  vertical-align:middle;background:var(--gold);animation:none
+}
+
+/* 名牌的斜尾線拿掉，角改回 11px 的切角。 */
+.bt-plate::after{display:none}
+.bt-plate,.bt-say,.bt-menu,.bt-q,.tline,.act-card{
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
+}
+/* 切角配不上外框的粗黑圈，改成往內的亮邊——跟全作其他卡片同一套。 */
+.bt-plate,.bt-say,.bt-menu,.bt-q,.tline,.act-card{
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.34), inset 2px 2px 0 rgba(255,255,255,.10)
+}
+.bm:hover{box-shadow:none}
+
+/* 字幕框那個三角拿掉。有按鍵在旁邊，不需要「按 A 繼續」的提示。 */
+.bt-arrow{display:none}

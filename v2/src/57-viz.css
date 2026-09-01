@@ -1001,3 +1001,8 @@ button.ac:active{transform:translateY(1px)}
    系統不解讀、不歸類——原話放上去就好。 */
 .quote b{display:block;font-size:11px;font-weight:400;color:var(--gold2);
   margin-bottom:3px}
+
+/* 廊道抓得住。桌機上本來只能靠捲軸，等於不能前後看。 */
+.scn-scroll{cursor:grab}
+.scn-scroll.dragging{cursor:grabbing;user-select:none}
+.scn-scroll.dragging .scn-in{pointer-events:none}

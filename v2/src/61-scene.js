@@ -405,6 +405,9 @@ function keepScroll(box, key, centre) {
 }
 
 function scrollScene() {
+  /* 廊道拖得動。每次重畫都要重掛，因為 innerHTML 被換掉了。 */
+  dragScene();
+
   var box = document.querySelector('.scn-scroll');
   var hero = document.querySelector('.scn-hero');
   if (box && hero) {
@@ -470,4 +473,55 @@ function exitScene(t) {
 
   H.push('</div>');
   return H.join('');
+}
+
+/* ---------- 廊道拖得動 ----------
+
+   本來只能靠捲軸或觸控慣性，桌機上等於不能前後看。抓著廊道拉，
+   前面幾天跟後面幾天都看得到——那條廊道是這個作品的主畫面，
+   看不了前後就等於只看得到一格。
+
+   兩件要小心的事：
+   一 · 拖跟點要分得開。移動超過五個像素才算拖，不然招牌與出口
+        會變成點不到。
+   二 · 拖完不要讓瀏覽器把它當成點擊送出去（見 click 的攔截）。 */
+function dragScene() {
+  var box = document.querySelector('.scn-scroll');
+  if (!box || box.dataset.drag) return;
+  box.dataset.drag = '1';
+
+  var down = false, moved = false, x0 = 0, l0 = 0;
+
+  box.addEventListener('pointerdown', function (e) {
+    if (e.button) return;
+    down = true; moved = false;
+    x0 = e.clientX; l0 = box.scrollLeft;
+  });
+
+  box.addEventListener('pointermove', function (e) {
+    if (!down) return;
+    var dx = e.clientX - x0;
+    if (!moved && Math.abs(dx) < 5) return;
+    if (!moved) { moved = true; box.classList.add('dragging'); }
+    box.scrollLeft = l0 - dx;
+    /* 記住拖到哪裡，重畫之後放回去（見 keepScroll）。 */
+    var k = SEEN_AT.scn;
+    if (k) k.x = box.scrollLeft;
+    e.preventDefault();
+  });
+
+  function up() {
+    down = false;
+    box.classList.remove('dragging');
+    /* 拖完那一下的 click 不要送出去，不然會誤觸招牌或出口。 */
+    if (moved) {
+      box.addEventListener('click', function stop(ev) {
+        ev.stopPropagation(); ev.preventDefault();
+        box.removeEventListener('click', stop, true);
+      }, true);
+    }
+  }
+  box.addEventListener('pointerup', up);
+  box.addEventListener('pointercancel', up);
+  box.addEventListener('pointerleave', up);
 }
