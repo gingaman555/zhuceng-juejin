@@ -129,37 +129,39 @@
    其餘那幾張安靜的卡並排流下去。這樣同一份結構在兩種螢幕上
    讀起來一樣，只是攤開的方式不同。 */
 
+/* ---------- 寬螢幕：整個螢幕都用上 ----------
+
+   桌機本來跟手機是同一條窄欄，只是置中——一台 27 吋螢幕上，
+   兩側各空一大片，而中間那條還在往下捲。
+
+   做法不改 HTML：把 .wrap 變成會換行的排版。
+
+   一個教訓寫在這裡：第一版是白名單制（只有列進去的元素給整列寬），
+   結果後來每加一個新元素就少列一個，那幾個就縮成畫面上一小塊，
+   看起來像整個版面壞掉。改成預設整列、只有指定的才並排——
+   新加的東西不會再無聲地跑掉。 */
+
 @media (min-width: 1200px) {
   .wrap{
     display:flex;flex-wrap:wrap;align-items:flex-start;
     gap:22px;align-content:flex-start
   }
-  /* 整列：一眼要看到的東西 */
-  .wrap > .steps,
-  .wrap > .scn,
-  .wrap > .scn-foot,
-  .wrap > .act-card,
-  .wrap > .xsec-wrap,
-  .wrap > .flash,
-  .wrap > .eyebrow,
-  .wrap > h1,
-  .wrap > .lead,
-  .wrap > .stamp-card,
-  .wrap > .camp,
-  .wrap > .dash,
-  .wrap > .gate{flex:0 0 100%;margin-bottom:0}
+  /* 預設整列。任何新加的東西都吃這一條。 */
+  .wrap > *{flex:0 0 100%;margin-bottom:0;min-width:0}
 
-  /* 其餘並排。420 是一張卡讀起來還舒服的最小寬度。 */
-  .wrap > .card{flex:1 1 420px;margin-bottom:0;min-width:0}
-  .wrap > .row{flex:0 0 100%;margin:0}
+  /* 只有安靜的卡並排。420 是一張卡讀起來還舒服的最小寬度。 */
+  .wrap > .card.quiet{flex:1 1 420px}
+  .wrap > .row{margin:0}
   .wrap > .btn{flex:0 0 auto}
 
-  /* 廊道與剖面圖越寬越好——那是它們本來就想要的 */
+  /* 廊道與地圖越寬越好——那是它們本來就想要的 */
   .scn{height:330px}
   .scn-in{height:330px}
 }
 
 @media (min-width: 1700px) {
   .wrap{max-width:1760px}
-  .wrap > .card{flex:1 1 480px}
+  .wrap > .card.quiet{flex:1 1 480px}
+}
+
 }
