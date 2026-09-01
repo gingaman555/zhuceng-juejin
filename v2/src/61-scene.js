@@ -153,6 +153,7 @@ function scene(t, row, st, kind) {
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
     '" style="left:' + hx + 'px">');
   H.push(pxTag(pose, HERO.pal, 'ch'));
+  H.push(heroPack(t.teamId));
   if (st.level === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine'));
   H.push('</div>');
 
@@ -181,6 +182,30 @@ function scene(t, row, st, kind) {
   }
 
   H.push('</div>');         /* scn */
+  return H.join('');
+}
+
+/* 角色背上背著的東西。
+
+   這個系統裡拿得到的東西只有一種：封存過的岩心。所以背上背的就是它們——
+   一趟一根，學期越後面背得越滿。那不是裝飾，那是「你帶著什麼在走」。
+
+   它不加速、不擋失準、不換任何東西（一旦能換到好處，人就為好處做事）。
+   它只有一個作用：走著走著，你身上的東西變多了。
+
+   最多畫四根。再多背上就是一團色塊，看不出那是幾根樣本。 */
+function heroPack(teamId) {
+  var ks = keepsOf(teamId);
+  if (!ks.length) return '';
+  var show = ks.slice(-4);
+  var H = ['<div class="hpack" title="' + esc('背上的岩心 ' + ks.length + ' 根') + '">'];
+  show.forEach(function (k, i) {
+    var z = STRATA[0];
+    STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
+    H.push('<img class="px hp" style="left:' + (i * 5) + 'px;bottom:' + (i * 3) +
+      'px" src="' + pxSvg(k.px || coreOf(k.runId), z.pal, false) + '" alt="">');
+  });
+  H.push('</div>');
   return H.join('');
 }
 
