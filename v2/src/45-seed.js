@@ -1,8 +1,19 @@
-/* 試用資料：一個班、一位老師、五組。
+/* 試用資料：一個班、一位老師、五組、一個研究者。
 
    五組刻意做成五種不同的狀態，因為這個系統要證明的正是「它認得出
    五種不同的動」——準時的、估太少的、卡住的、剛派到的、睡著的。
-   時間全部往回推，所以一打開就看得到推進紀錄與判定結果。 */
+   時間全部往回推，所以一打開就看得到推進紀錄與判定結果。
+
+   每個帳號的密碼都是 DEMO_PW。這是試用資料，不是任何人的真帳號。 */
+
+var DEMO_PW = '1234';
+
+/* 把密碼種進一個使用者。真的註冊走 actRegister，這裡只是讓試用資料登得進去。 */
+function seedPw(u) {
+  u.salt = 'seed|' + u.userId;
+  u.hash = pwHash(DEMO_PW, u.salt);
+  return u;
+}
 
 function seed() {
   DB = blank();
@@ -14,7 +25,12 @@ function seed() {
     classId: cid, name: '設計專題', joinCode: 'DG7K2M',
     teacherId: 'U0', startedAt: ago(30)
   });
-  DB.Users.push({ userId: 'U0', account: 'tea01', name: '指導老師', role: 'teacher', classId: cid });
+  DB.Users.push(seedPw({ userId: 'U0', account: 'tea01', name: '指導老師',
+    role: 'teacher', classId: cid, createdAt: ago(30) }));
+
+  /* 研究者。管帳號、看紀錄、匯出——不進坑道。 */
+  DB.Users.push(seedPw({ userId: 'U9', account: 'lab01', name: '研究者',
+    role: 'researcher', classId: cid, createdAt: ago(31) }));
 
   var TEAMS = [
     { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30 },
@@ -26,13 +42,16 @@ function seed() {
   TEAMS.forEach(function (t, i) {
     DB.Teams.push({
       teamId: t.id, classId: cid, name: t.name,
-      project: t.project, signTier: t.tier, joinedAt: ago(t.joined)
+      project: t.project, joinedAt: ago(t.joined)
     });
-    DB.Users.push({
+    DB.Users.push(seedPw({
       userId: 'U' + (i + 1), account: 'stu0' + (i + 1), name: '學生' + (i + 1),
-      role: 'student', classId: cid, teamId: t.id
+      role: 'student', classId: cid, teamId: t.id, createdAt: ago(30)
+    }));
+    DB.Roster.push({
+      rosterId: 'RS' + (i + 1), classId: cid, teamId: t.id, teamName: t.name,
+      memberName: '學生' + (i + 1), claimedBy: 'U' + (i + 1), claimedAt: ago(30)
     });
-    DB.Roster.push({ classId: cid, teamName: t.name, memberName: '學生' + (i + 1), claimedBy: 'U' + (i + 1) });
   });
   var ALL = TEAMS.map(function (t) { return t.id; });
 

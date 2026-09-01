@@ -44,7 +44,7 @@ const BANNED = [
   ['圖鑑', '這個作品沒有收集系統'],
   ['掉落物', '同上'],
   ['守關生物', '這裡的魔物是里程碑，不是關卡'],
-  ['放行', '老師不放行，他發裝備'],
+  ['放行', '老師只勾一個「可以」，裝備是學生自己挑的'],
   ['學期第', '預設了一個學生沒有的行事曆'],
   ['甘特', '沒有排程表'],
   ['怎麼用這一頁', '要看說明才會用，就表示那一頁沒寫好']
@@ -97,6 +97,46 @@ if (!judgeFn) {
         console.error('RULES.judge 讀到了「' + w + '」　——判定只能看承諾天數與實際天數');
       }
     });
+}
+
+/* ---------- 三之二 · 攤開哪三件不可以看表現 ----------
+   一旦 offerGears 讀到估了幾天、實際幾天、判定結果、推了幾次，
+   「三選一」那一秒就從自主變成評價。 */
+const offerFn = src.match(/function offerGears[\s\S]*?\n\}/);
+if (!offerFn) {
+  bad++;
+  console.error('找不到 offerGears——三選一的攤牌邏輯不見了');
+} else {
+  ['est', 'actual', 'stamp', 'pushes', 'snags', 'risks', 'accuracy', 'depth']
+    .forEach(function (w) {
+      if (new RegExp('\\b' + w + '\\b').test(offerFn[0])) {
+        bad++;
+        console.error('offerGears 讀到了「' + w + '」　——攤開哪三件不可以跟表現有關');
+      }
+    });
+}
+
+/* ---------- 三之三 · 老師只做三件事 ----------
+   發里程碑、審核、看各組進度。他不改學生的招牌，也不挑裝備。 */
+if (/['"]rename:/.test(src)) {
+  bad++;
+  console.error('有人把改招牌接回老師端　——招牌上寫什麼是學生自己的事');
+}
+if (/DRAFT\.gear/.test(src)) {
+  bad++;
+  console.error('老師端還在挑裝備　——他只勾可以，三選一是學生做的');
+}
+
+/* ---------- 三之四 · 密碼那件事要說出來 ----------
+   這一版的雜湊只擋肉眼。那句警語必須留在畫面上——一旦有人把它拿掉，
+   下一個人就會以為它已經安全了。 */
+if (scan.indexOf('不是真的加密') < 0) {
+  bad++;
+  console.error('建立帳號那一頁沒有說密碼還不是真的加密　——那句話不可以拿掉');
+}
+if (/passwords*:/.test(src) && !/o.password/.test(src)) {
+  bad++;
+  console.error('好像有地方把密碼原封不動存起來了　——只存 salt 與 hash');
 }
 
 /* ---------- 四 · 生態圖不可以排序 ----------

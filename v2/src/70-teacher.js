@@ -1,22 +1,53 @@
 /* 老師端。
 
-   三頁：雷達（誰交了）、里程碑（派什麼）、全班地下城（誰在哪）。
-   他做的事只有兩件：派一個里程碑、看完之後遞一件裝備過去。
+   他只做三件事，側欄就只有三格：
 
-   系統不替他決定任何事，也不用分數轉譯他的判斷——
-   他選哪一件裝備，就等於他說了哪一句話。 */
+     發里程碑   要他們交什麼
+     審核       他們交了，你看完勾一個「可以」
+     各組進度   誰在哪、誰慢下來了
 
-/* ---------- 雷達 ---------- */
+   他不決定期限（那是學生拉滑桿承諾的），不打分，也不挑裝備——
+   勾完可以之後，學生自己從三件裡挑一件。少一件他要煩惱的事，
+   就少一次「老師替我決定」的機會。 */
+
+/* 老師走到哪一步了。有人等你看就是第三步，其餘看班上有沒有人在挖。 */
+function teacherStep(classId) {
+  if (radar(classId).length) return 2;
+  var running = where('Runs', function (r) { return r.state === 'running'; }).length;
+  if (running) return 1;
+  return 0;
+}
+
+var TEACHER_STEPS = [
+  ['發里程碑', '寫要交什麼'],
+  ['他們承諾天數', '這一段你不用管'],
+  ['審核', '看完勾一個可以']
+];
+
+/* ---------- 審核（首頁） ---------- */
 PAGES.radar = function () {
   var u = me();
   var rows = radar(u.classId);
   var eco = ecology(u.classId);
-  var H = [head('雷達', '誰交了',
-    '照等最久的排。綠光是完工——拉近看檔案與他們說的卡關原因。')];
+  var H = [];
+
+  H.push(stepBar(TEACHER_STEPS, teacherStep(u.classId)));
+
+  H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '目前沒有等你看的',
+    rows.length
+      ? '照等最久的排。看完他們交的東西，回來勾一個「可以」——挑哪一件裝備是他們的事。'
+      : '學生交出去之後會排在這裡。在那之前，你可以去發下一個里程碑。'));
 
   if (!rows.length) {
-    H.push('<div class="card dim">目前沒有人在等你。學生交出去之後會亮在這裡。</div>');
+    H.push('<div class="card">');
+    H.push('<p class="dim">現在沒有人在等你。要開始的話，去發一個里程碑——' +
+           '只要寫他們要交什麼，期限他們自己會決定。</p>');
+    H.push('<div class="row">');
+    H.push(btn('去發一個里程碑', 'go:ms', 'big'));
+    H.push(btn('看各組進度', 'go:classeco', 'ghost'));
+    H.push('</div></div>');
   }
+
   rows.forEach(function (x) {
     var s = RULES.STAMPS[x.run.stamp];
     H.push('<div class="card radar-row">');
@@ -45,11 +76,11 @@ PAGES.radar = function () {
       });
       H.push('</div>');
     }
-    H.push(btn('看完了，發裝備', 'go:grant:' + x.run.runId, ''));
+    H.push(btn('看完了，去勾', 'go:review:' + x.run.runId, ''));
     H.push('</div>');
   });
 
-  /* 底下：全班一眼 */
+  /* 底下：全班一眼。詳細的在「各組進度」。 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">全班現在</div>');
   H.push('<div class="mini">');
@@ -59,20 +90,23 @@ PAGES.radar = function () {
       (e.stall >= 2 ? '休息中' : e.stall === 1 ? '慢下來了' : e.onMs ? '挖掘中' : '等派任務') +
       '</span><span class="dim">深度 ' + e.depth + '</span></div>');
   });
-  H.push('</div></div>');
+  H.push('</div>');
+  H.push(btn('看各組進度', 'go:classeco', 'ghost'));
+  H.push('</div>');
   return H.join('');
 };
 
-/* ---------- 發裝備 ---------- */
-PAGES.grant = function () {
+/* ---------- 勾一個可以 ---------- */
+PAGES.review = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var m = msOf(r.msId), t = teamOf(r.teamId);
   var s = RULES.STAMPS[r.stamp];
   var acc = accuracyOf(r.teamId);
 
-  var H = [head('發裝備', t.name + '　·　' + m.title,
-    '選哪一件等於說哪一句話。每一件都綁一個理由——你選的是那句話。')];
+  var H = [head('審核', t.name + '　·　' + m.title,
+    '東西他們交在你原本收的地方。這裡要你做的只有一件事：勾一個「可以」。' +
+    '想說一句話再說，不想說就直接勾。')];
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + s.mark + ' ' +
@@ -92,29 +126,25 @@ PAGES.grant = function () {
   }
   H.push('</div>');
 
-  H.push('<div class="card"><div class="eyebrow">選一件</div><div class="gear-pick">');
-  RULES.GEARS.forEach(function (g) {
-    var on = DRAFT.gear === g.key;
-    H.push('<button class="gcard' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'pickgear:' + g.key })) + '\'>' +
-      '<b>' + g.icon + '</b><i>' + esc(g.name) + '</i><em>' + esc(g.why) + '</em></button>');
-  });
-  H.push('</div></div>');
-
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">再加一句　選填</div>');
+  H.push('<div class="eyebrow">說一句話　選填</div>');
+  H.push('<p class="dim">這句話會出現在他們挑裝備的那一頁。' +
+         '講你看到什麼就好，不用講他們該怎麼改。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪談這種事最容易低估，你們沒有。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
+  H.push('<div class="card dim">勾完之後，他們那邊會攤開三件裝備自己挑一件。' +
+         '攤開哪三件是隨機的，跟他們做得如何無關——那是給他們自己留的一句話，不是你的評語。</div>');
+
   H.push('<div class="row">');
-  H.push(btn('發出去', 'grant:' + r.runId, 'big'));
-  H.push(btn('回雷達', 'go:radar', 'ghost'));
+  H.push(btn('可以', 'approve:' + r.runId, 'big'));
+  H.push(btn('回審核清單', 'go:radar', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
 
-/* ---------- 里程碑 ---------- */
+/* ---------- 發里程碑 ---------- */
 PAGES.ms = function () {
   var u = me();
   var list = where('Milestones', function (m) { return m.classId === u.classId; })
@@ -122,9 +152,11 @@ PAGES.ms = function () {
   var teams = where('Teams', function (t) { return t.classId === u.classId; });
   var to = DRAFT.to || [];
 
-  var H = [head('里程碑', '你要他們交什麼',
-    '一次派一個。派出去之後，學生那邊會先被問「你打算花幾天」——' +
-    '期限是他們自己訂的，不是你。')];
+  var H = [];
+  H.push(stepBar(TEACHER_STEPS, 0));
+  H.push(head('發里程碑', '你要他們交什麼',
+    '一次派一個。寫要交什麼就好——派出去之後，學生那邊會先被問「你打算花幾天」，' +
+    '期限是他們自己訂的，不是你。'));
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">派一個新的</div>');
@@ -143,6 +175,10 @@ PAGES.ms = function () {
   H.push('</div>');
   H.push(btn('派出去', 'publish', 'big'));
   H.push('</div>');
+
+  if (!list.length) {
+    H.push('<div class="card dim">還沒派過。派出去之後，這裡會列出各組各自承諾了幾天。</div>');
+  }
 
   list.forEach(function (m) {
     var got = where('Runs', function (r) { return r.msId === m.msId; });
@@ -168,4 +204,4 @@ PAGES.ms = function () {
   return H.join('');
 };
 
-/* 全班地下城（老師版）也搬到 62-eco.js——跟學生看的是同一張圖。 */
+/* 各組進度那一頁在 62-eco.js——跟學生看的是同一張剖面圖。 */

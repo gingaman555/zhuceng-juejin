@@ -25,7 +25,7 @@ global.localStorage = {
 /* 只載規則與資料層，不載畫面 */
 const SRC = path.join(__dirname, 'src');
 /* 一次 eval 全部——分開 eval 的話 var 會落在各自的作用域裡，彼此看不到 */
-eval(['10-pack.js', '11-world.js', '20-rules.js', '30-art.js', '40-db.js', '45-seed.js']
+eval(['10-pack.js', '11-world.js', '15-auth.js', '20-rules.js', '30-art.js', '40-db.js', '45-seed.js']
   .map(function (f) { return fs.readFileSync(path.join(SRC, f), 'utf8'); })
   .join(String.fromCharCode(10)));
 
@@ -50,8 +50,8 @@ runsFor(TEAM).forEach(function (x) {
     actSubmit(TEAM, x.run.runId);
     if (x.run.stamp === 'late') actReflect(TEAM, x.run.runId, ['guess']);
     else actSkipCamp(x.run.runId);
-    actGear(x.run.runId, 'sword', '');
-    actTakeGear(x.run.runId);
+    actApprove(x.run.runId, '');
+    actPickGear(x.run.runId, offerGears(x.run.runId)[0].key);
   }
 });
 
@@ -123,21 +123,31 @@ for (let n = 1; n <= ROUNDS; n++) {
     fail(label + '：復盤完了卻沒出現在老師的雷達上');
   }
 
-  /* 10. 老師發裝備 */
-  const gk = RULES.GEARS[n % RULES.GEARS.length].key;
-  actGear(r.runId, gk, '第 ' + n + ' 輪的話');
+  /* 10. 老師只勾一個可以 */
+  actApprove(r.runId, '第 ' + n + ' 輪的話');
   nt = nextThing(TEAM);
-  if (nt.kind !== 'gear') fail(label + '：發了裝備，學生那邊應該是 gear，卻是 ' + nt.kind);
+  if (nt.kind !== 'gear') fail(label + '：勾完可以，學生那邊應該是 gear，卻是 ' + nt.kind);
 
-  /* 11. 領取 → 這一輪結束 */
-  actTakeGear(r.runId);
-  if (r.state !== 'done') fail(label + '：領完裝備狀態應該是 done，卻是 ' + r.state);
+  /* 11. 三選一 → 這一輪結束 */
+  const offer = offerGears(r.runId);
+  if (offer.length !== 3) fail(label + '：攤開的不是三件，是 ' + offer.length + ' 件');
+  if (offer[0].key === offer[1].key || offer[1].key === offer[2].key || offer[0].key === offer[2].key)
+    fail(label + '：攤開的三件有重複');
+  const off2 = offerGears(r.runId);
+  if (off2.map(function (g) { return g.key; }).join() !== offer.map(function (g) { return g.key; }).join())
+    fail(label + '：同一個 run 兩次攤開的三件不一樣——畫面在擲骰子');
+  if (actPickGear(r.runId, RULES.GEARS.filter(function (g) {
+    return !offer.some(function (o) { return o.key === g.key; });
+  })[0].key)) fail(label + '：挑到了沒有攤開的那一件');
+  actPickGear(r.runId, offer[n % 3].key);
+  if (r.state !== 'done') fail(label + '：挑完裝備狀態應該是 done，卻是 ' + r.state);
+  if (r.gear !== offer[n % 3].key) fail(label + '：挑走的跟記下來的不是同一件');
 
   /* 12. 回到乾淨狀態 */
   nt = nextThing(TEAM);
   if (nt.kind !== 'idle') fail(label + '：一輪跑完應該回到 idle，卻是 ' + nt.kind);
   if (radar(CID).some(function (x) { return x.run.runId === r.runId; })) {
-    fail(label + '：發完裝備還留在雷達上');
+    fail(label + '：勾完可以還留在審核清單上');
   }
 
   /* 13. 深度要跟著長 */
@@ -165,8 +175,8 @@ var g2 = 0;
 while (RULES.progress(rX.pushes, rX.est) < 1 && g2++ < 30) { actPush(TEAM, rX.runId); tick(); }
 actSubmit(TEAM, rX.runId);
 if (rX.stamp === 'late') actReflect(TEAM, rX.runId, ['guess']); else actSkipCamp(rX.runId);
-actGear(rX.runId, 'sword', '');
-actTakeGear(rX.runId);
+actApprove(rX.runId, '');
+actPickGear(rX.runId, offerGears(rX.runId)[0].key);
 
 console.log('\n跑完 ' + ROUNDS + ' 輪。');
 console.log('  印章分布　🎯 ' + stamps.exact + '　🚀 ' + stamps.early + '　❌ ' + stamps.late);

@@ -5,7 +5,9 @@
 
    跟上一版最大的差別：沒有分數、沒有層、沒有收集。
    一個里程碑的一生是：派發 → 承諾天數 → 每日推進 → 上傳 → 判定 →
-   （失準就復盤）→ 老師發裝備 → 大躍進。 */
+   （失準就復盤）→ 老師勾可以 → 學生三選一 → 大躍進。
+
+   老師在這整條線上只碰兩個地方：派發、勾可以。其他每一步都是學生的。 */
 
 var DB = null;
 var STORE = 'dungeon.v1';
@@ -37,8 +39,12 @@ function blank() {
     Runs: [],
     /* 每一次推進打卡。一天一筆。 */
     Pushes: [],
-    /* 老師發的裝備 */
-    Gears: []
+    /* 學生自己挑走的裝備 */
+    Gears: [],
+    /* 研究紀錄：誰、什麼時候、做了什麼。只增不刪。 */
+    Events: [],
+    /* 登入狀態 */
+    Session: null
   };
 }
 
@@ -89,8 +95,8 @@ function nextThing(teamId) {
     return x.run.state === 'judged' && x.run.stamp === 'late' && !x.run.snags.length;
   })[0];
   if (camp) return { kind: 'camp', row: camp };
-  /* 2. 老師發了裝備、還沒領 */
-  var gear = rows.filter(function (x) { return x.run.state === 'geared'; })[0];
+  /* 2. 老師勾可以了，還沒挑裝備 */
+  var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
   if (gear) return { kind: 'gear', row: gear };
   /* 3. 睡著了或長藤蔓——叫醒牠比接新任務重要。
      這是整個設計的招牌互動：推一下，藤蔓碎掉，角色重新揮劍。
@@ -158,11 +164,23 @@ function depthOf(teamId) {
   }).length;
 }
 
-/* 招牌的階：老師改寫過幾次專案名稱 */
+/* 招牌的階＝挖到多深。
+
+   招牌上的字是學生自己寫的（專案名稱），材質不是——材質是走完幾個
+   里程碑自己長出來的。這樣改名字改不出一塊發光的牌子，
+   而牌子發光的時候，那是他們自己挖來的。 */
 function signOf(teamId) {
-  var t = teamOf(teamId);
-  var n = Math.min(RULES.SIGN_TIERS.length - 1, (t && t.signTier) || 0);
+  var n = Math.min(RULES.SIGN_TIERS.length - 1, RULES.signTierOf(depthOf(teamId)));
   return SIGNS[RULES.SIGN_TIERS[n]];
+}
+
+/* 再挖幾個里程碑招牌會換材質。沒有下一階就回 0。 */
+function nextSignIn(teamId) {
+  var d = depthOf(teamId);
+  for (var i = 0; i < RULES.SIGN_AT.length; i++) {
+    if (RULES.SIGN_AT[i] > d) return { need: RULES.SIGN_AT[i] - d, name: SIGNS[RULES.SIGN_TIERS[i]].name };
+  }
+  return { need: 0, name: '' };
 }
 
 /* 這一組的預估準度紀錄——復盤與老師審閱都要看 */
@@ -209,6 +227,7 @@ function actCommit(teamId, msId, est, risks) {
   };
   DB.Runs.push(r);
   save();
+  logEvent('commit', { teamId: teamId, runId: r.runId, msId: msId, est: r.est, risks: (r.risks || []).length });
   return r;
 }
 
@@ -220,6 +239,7 @@ function actPush(teamId, runId) {
   DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId, day: dayOf(now()), at: now() });
   r.pushes++;
   save();
+  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes });
   return true;
 }
 
@@ -233,6 +253,7 @@ function actSubmit(teamId, runId, link) {
   r.submittedAt = now();
   r.state = 'judged';
   save();
+  logEvent('submit', { teamId: teamId, runId: runId, est: r.est, actual: r.actual, stamp: r.stamp });
   return r;
 }
 
@@ -243,6 +264,7 @@ function actReflect(teamId, runId, snags) {
   r.snags = snags || [];
   r.state = 'submitted';        /* 復盤完才排進老師的雷達 */
   save();
+  logEvent('reflect', { teamId: teamId, runId: runId, snags: (snags || []).join('/') });
   return r;
 }
 
@@ -255,15 +277,7 @@ function actSkipCamp(runId) {
   return r;
 }
 
-/* 領裝備 → 大躍進 */
-function actTakeGear(runId) {
-  var r = find('Runs', function (x) { return x.runId === runId; });
-  if (!r || r.state !== 'geared') return null;
-  r.state = 'done';
-  r.doneAt = now();
-  save();
-  return r;
-}
+/* 「領裝備」那一步併進 actPickGear 了：挑完就是領完，不用再按一次。 */
 
 /* ================= 老師的動作 ================= */
 
@@ -277,6 +291,7 @@ function actPublish(classId, o) {
   };
   DB.Milestones.push(m);
   save();
+  logEvent('publish', { title: m.title, teams: (m.teams || []).length });
   return m;
 }
 
@@ -295,33 +310,65 @@ function radar(classId) {
   return out.sort(function (a, b) { return b.waited - a.waited; });
 }
 
-/* 發裝備。gearKey 是資訊性回饋——選哪一件等於選一句話。 */
-function actGear(runId, gearKey, word) {
+/* 老師勾「可以」。他不選裝備——選哪一件是學生的事。
+   他能加一句話，那句話才是他的回饋。 */
+function actApprove(runId, word) {
   var r = find('Runs', function (x) { return x.runId === runId; });
-  if (!r) return null;
-  r.gear = gearKey;
+  if (!r || r.state !== 'submitted') return null;
   r.word = word || '';
-  r.state = 'geared';
-  r.gearedAt = now();
-  DB.Gears.push({ gearId: nid('G'), teamId: r.teamId, runId: runId, key: gearKey, at: now() });
+  r.state = 'approved';
+  r.approvedAt = now();
   save();
+  logEvent('approve', { teamId: r.teamId, runId: runId, len: String(word || '').length });
   return r;
 }
 
-/* 改寫專案名稱 → 招牌升一階。收斂本身就是成果。 */
+/* 學生從攤開的三件裡挑一件 */
+function actPickGear(runId, gearKey) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'approved') return null;
+  var offer = offerGears(runId);
+  if (!offer.some(function (g) { return g.key === gearKey; })) return null;
+  r.gear = gearKey;
+  r.state = 'done';
+  r.doneAt = now();
+  DB.Gears.push({ gearId: nid('G'), teamId: r.teamId, runId: runId, key: gearKey, at: now() });
+  save();
+  logEvent('pick', { teamId: r.teamId, runId: runId, gear: gearKey });
+  return r;
+}
+
+/* 改寫專案名稱。這是學生自己做的——招牌上寫什麼是他們的事，
+   老師不替他們命名。改名字不會動到招牌的材質（那個吃深度）。 */
 function actRename(teamId, name) {
   var t = teamOf(teamId);
   if (!t) return null;
-  /* 名字沒變就不升階。升一階代表「又收斂了一次」——
-     按兩下同一個名字不該讓招牌發光。 */
   if (String(t.project || '') === String(name)) return null;
+  var old = t.project;
   t.project = name;
-  t.signTier = Math.min(RULES.SIGN_TIERS.length - 1, (t.signTier || 0) + 1);
   save();
+  logEvent('rename', { teamId: teamId, name: name, from: old });
   return t;
 }
 
 /* 這一組拿過的裝備 */
 function gearsOf(teamId) {
   return where('Gears', function (g) { return g.teamId === teamId; });
+}
+
+/* 攤開哪三件讓學生挑。
+
+   純函式：用 runId 算，同一個 run 每次算出來都一樣——畫面不擲骰子。
+   而且刻意不看任何表現資料（估得準不準、推進幾次、被退幾次）——
+   一旦攤開的內容跟表現有關，它那一秒就從「你想記住什麼」變成
+   「系統覺得你值得什麼」，也就是評價。 */
+function offerGears(runId) {
+  var pool = RULES.GEARS.slice();
+  var h = hash(String(runId));
+  var out = [];
+  for (var i = 0; i < 3 && pool.length; i++) {
+    h = (h * 1103515245 + 12345) >>> 0;
+    out.push(pool.splice(h % pool.length, 1)[0]);
+  }
+  return out;
 }

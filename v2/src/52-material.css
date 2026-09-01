@@ -1,0 +1,252 @@
+/* 材質。
+
+   前一份（50-style.css）決定的是尺寸、顏色、排版；這一份只決定「摸起來
+   像什麼」。分開是因為它們壞掉的方式不一樣：改版面會弄亂位置，改材質
+   只會弄醜，兩件事不要混在同一個檔裡互相牽扯。
+
+   規則跟像素圖一樣硬：
+
+     · 不准有模糊。所有的漸層都用 hard stop（0 3px, 3px 100%），
+       所有的陰影 blur 都是 0。一有模糊，它就變成「像素圖上面套現代 UI」，
+       那正是這一套視覺最忌諱的東西。
+     · 斜面厚度固定 3px，等於角色身上一個像素的厚度。
+     · 光一律從左上來。左緣與上緣受光，右緣與下緣背光——整個畫面
+       只有一個光源，這是它看起來像實體而不像色塊的原因。
+     · 材質不帶狀態色。綠的紅的金的都還是 50-style.css 在管。 */
+
+:root{
+  --px:3px;
+  --lit:rgba(255,240,214,.07);
+  --lit2:rgba(255,240,214,.14);
+  --shd:rgba(0,0,0,.45);
+  --shd2:rgba(0,0,0,.72);
+}
+
+/* ---------- 岩壁 ----------
+   整個畫面的底是鑿開的岩層。縫隙淡到幾乎看不見——看得見就變壁紙了。 */
+body{
+  background-color:var(--bg);
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(255,244,222,.016) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.55)        0 1px, transparent 1px 88px);
+}
+
+/* ---------- 石塊 ----------
+   卡片是一塊鑿出來的石頭：四邊有 3px 的斜面，表面有兩層錯開的顆粒。
+   顆粒用 radial-gradient 點陣做，1px 的圓點在點陣字旁邊就是一顆像素。 */
+.card,
+.stamp-card,
+.dash{
+  border:none;
+  background-color:var(--panel);
+  background-image:
+    radial-gradient(rgba(255,244,222,.030) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,.42) 1px, transparent 1px);
+  background-size:22px 22px, 33px 33px;
+  background-position:0 0, 11px 14px;
+  box-shadow:
+    inset 0 var(--px) 0 var(--lit),
+    inset var(--px) 0 0 var(--lit),
+    inset 0 calc(var(--px) * -1) 0 var(--shd2),
+    inset calc(var(--px) * -1) 0 0 var(--shd2),
+    0 0 0 1px #000;
+}
+/* 上緣還留著狀態色的那幾張，斜面讓給它 */
+.stamp-card{box-shadow:
+  inset var(--px) 0 0 var(--lit),
+  inset 0 calc(var(--px) * -1) 0 var(--shd2),
+  inset calc(var(--px) * -1) 0 0 var(--shd2),
+  0 0 0 1px #000}
+.radar-row{box-shadow:
+  inset 0 var(--px) 0 var(--lit),
+  inset 0 calc(var(--px) * -1) 0 var(--shd2),
+  inset calc(var(--px) * -1) 0 0 var(--shd2),
+  0 0 0 1px #000}
+
+/* 動作那一張：站在光裡的石台。比別的石塊亮一階。 */
+.act-card{
+  border:none;border-left:var(--px) solid var(--gold);
+  background-color:var(--panel2);
+  background-image:
+    radial-gradient(rgba(255,244,222,.045) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,.38) 1px, transparent 1px);
+  background-size:22px 22px, 33px 33px;
+  background-position:0 0, 11px 14px;
+  box-shadow:
+    inset 0 var(--px) 0 var(--lit2),
+    inset 0 calc(var(--px) * -1) 0 var(--shd2),
+    inset calc(var(--px) * -1) 0 0 var(--shd2),
+    0 0 0 1px #000;
+}
+
+/* ---------- 鐵板 ----------
+   按鈕是一塊敲出來的鐵。上緣一道 3px 的亮邊、下緣一道暗邊，
+   底下墊一個沒有模糊的硬陰影——按下去的時候它真的往右下沉。
+
+   陰影用 drop-shadow 而不是 box-shadow：clip-path 會把 box-shadow
+   一起裁掉，切角那個簽名就沒有影子了。 */
+.btn{
+  background-image:linear-gradient(180deg,
+    var(--gold2) 0 var(--px),
+    var(--gold)  var(--px) calc(100% - var(--px)),
+    var(--gold-d) calc(100% - var(--px)) 100%);
+  filter:drop-shadow(4px 4px 0 rgba(0,0,0,.75));
+  transition:none;
+}
+.btn:hover{background-image:linear-gradient(180deg,
+  #FFE29A 0 var(--px), var(--gold2) var(--px) calc(100% - var(--px)),
+  var(--gold) calc(100% - var(--px)) 100%)}
+.btn:active{transform:translate(2px,2px);filter:drop-shadow(2px 2px 0 rgba(0,0,0,.75))}
+
+/* 次要的那顆是刻進石頭裡的，不是墊在上面。所以斜面反過來。 */
+.btn.ghost{
+  border:none;background:var(--sunk);filter:none;
+  box-shadow:
+    inset 0 var(--px) 0 var(--shd2),
+    inset var(--px) 0 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+.btn.ghost:hover{background:var(--panel2)}
+.btn.ghost:active{transform:translateY(1px)}
+
+/* ---------- 鑿出來的凹槽 ----------
+   輸入框、滑桿槽、下沉的小格子。斜面跟石塊完全相反：
+   上緣暗、下緣亮，眼睛就讀成「凹進去」。 */
+input,textarea,select,.slider,
+.acc-c,.gear,.gcard,.step,.eco-scroll{
+  border:none;
+  box-shadow:
+    inset 0 var(--px) 0 var(--shd2),
+    inset var(--px) 0 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+input:focus,textarea:focus{outline:none;box-shadow:
+  inset 0 var(--px) 0 var(--shd2),
+  inset var(--px) 0 0 var(--shd2),
+  inset 0 calc(var(--px) * -1) 0 var(--lit),
+  0 0 0 1px var(--gold-d)}
+.step:last-child{border-right:none}
+
+/* 滑桿的把手是一顆鐵鉚釘 */
+.slider::-webkit-slider-thumb{
+  background-image:linear-gradient(180deg,
+    var(--gold2) 0 var(--px),
+    var(--gold)  var(--px) calc(100% - var(--px)),
+    var(--gold-d) calc(100% - var(--px)) 100%);
+  box-shadow:2px 2px 0 rgba(0,0,0,.6);
+}
+.slider::-moz-range-thumb{
+  background-image:linear-gradient(180deg,
+    var(--gold2) 0 3px, var(--gold) 3px calc(100% - 3px),
+    var(--gold-d) calc(100% - 3px) 100%);
+}
+
+/* ---------- 木料 ----------
+   三選一的那三張是木匣。直紋，不是石頭的顆粒——材質不同，
+   眼睛就知道這一排跟旁邊的資訊不是同一種東西。 */
+.gcard{
+  background-color:#20180F;
+  background-image:
+    repeating-linear-gradient(90deg,
+      rgba(255,244,222,.030) 0 1px,
+      transparent 1px 7px,
+      rgba(0,0,0,.30) 7px 8px,
+      transparent 8px 18px);
+}
+.gcard:hover{background-color:#2B2013}
+.gcard:active{transform:translateY(1px)}
+.gcard.on{background-color:#2E2210;box-shadow:
+  inset 0 var(--px) 0 var(--shd2),
+  inset var(--px) 0 0 var(--shd2),
+  inset 0 calc(var(--px) * -1) 0 var(--lit),
+  0 0 0 1px var(--gold)}
+
+/* ---------- 岩層 ----------
+   側欄是一整面沒有鑿開的岩壁，所以它比卡片更粗、層更寬。 */
+.side{
+  border-right:none;
+  background-color:var(--panel);
+  background-image:
+    repeating-linear-gradient(0deg,
+      rgba(255,244,222,.022) 0 1px,
+      transparent 1px 3px,
+      rgba(0,0,0,.30) 3px 4px,
+      transparent 4px 66px);
+  box-shadow:inset calc(var(--px) * -1) 0 0 var(--shd2), 1px 0 0 #000;
+}
+.nav a.on{box-shadow:inset 0 1px 0 var(--lit), inset 0 -1px 0 var(--shd)}
+
+/* ---------- 鐵箍 ----------
+   頂條與試用列是釘在岩壁上的兩條鐵。 */
+.top,.demo{
+  border-bottom:none;
+  background-image:linear-gradient(180deg,
+    var(--lit) 0 1px,
+    transparent 1px calc(100% - var(--px)),
+    var(--shd2) calc(100% - var(--px)) 100%);
+  box-shadow:0 1px 0 #000;
+}
+
+/* ---------- 小石片 ---------- */
+.tag,.st,.badge{
+  box-shadow:inset 0 1px 0 var(--lit), inset 0 -1px 0 var(--shd2);
+}
+.tag:active{transform:translateY(1px)}
+.tags.big .tag{
+  background-color:var(--sunk);
+  box-shadow:
+    inset 0 var(--px) 0 var(--shd2),
+    inset var(--px) 0 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+.tags.big .tag.on{background-color:#2E2210;box-shadow:
+  inset 0 var(--px) 0 var(--shd2),
+  inset var(--px) 0 0 var(--shd2),
+  inset 0 calc(var(--px) * -1) 0 var(--lit),
+  0 0 0 1px var(--gold)}
+
+/* ---------- 坑道 ----------
+   角色站的地方比別的地方更深、更潮。上緣壓一道暗，
+   讓人覺得上面還有一整座山。 */
+.tunnel{
+  border:none;
+  background-color:var(--Lbg);
+  background-image:
+    radial-gradient(rgba(233,179,65,.040) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,.50) 1px, transparent 1px);
+  background-size:22px 22px, 33px 33px;
+  background-position:0 0, 11px 14px;
+  box-shadow:
+    inset 0 4px 0 rgba(0,0,0,.55),
+    inset 0 8px 0 rgba(0,0,0,.28),
+    inset 0 calc(var(--px) * -1) 0 var(--shd2),
+    inset calc(var(--px) * -1) 0 0 var(--shd2),
+    inset var(--px) 0 0 var(--lit),
+    0 0 0 1px #000;
+}
+
+/* 走廊的格子：走過的那一格是被劈開的岩石，還沒走的是實心的 */
+.cell{border:none;box-shadow:inset 0 1px 0 var(--shd2), 0 0 0 1px var(--Lline)}
+.cell.on{box-shadow:inset 0 2px 0 rgba(255,255,255,.22), inset 0 -2px 0 rgba(0,0,0,.35),
+  0 0 0 1px var(--Ll)}
+
+/* 剖面圖裡那一格已經挖開的空間，用同一套斜面，只是薄一半 */
+.seg{border:none;box-shadow:0 0 0 1px var(--line)}
+.seg.dug{box-shadow:inset 0 2px 0 rgba(255,255,255,.12),
+  inset 0 -2px 0 rgba(0,0,0,.40), 0 0 0 1px var(--L)}
+
+/* ---------- 角色與招牌 ----------
+   像素圖也要有影子，不然它是浮在畫面上的貼紙。
+   偏移 2px、不模糊——跟身上一個像素同一個量級。 */
+.px.ch,.px.sign,.px.fire{
+  filter:drop-shadow(2px 2px 0 rgba(0,0,0,.55));
+}
+.px.vine,.px.vine-s{filter:none}
+
+/* ---------- 會動的時候 ---------- */
+@media (prefers-reduced-motion: reduce){
+  .btn:active,.gcard:active,.tag:active{transform:none}
+}

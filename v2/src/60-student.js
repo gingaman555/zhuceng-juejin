@@ -18,6 +18,14 @@ PAGES.home = function () {
 
   var H = [];
 
+  /* ── 你在第幾步 ── */
+  H.push(stepBar([
+    ['接任務', '你決定花幾天'],
+    ['每天推進', '動過就按一下'],
+    ['交出去', '比對你承諾的天數'],
+    ['挑裝備', '三選一，你自己挑']
+  ], STEP_AT[next.kind] == null ? -1 : STEP_AT[next.kind]));
+
   /* ── 坑道口：招牌 ── */
   H.push('<div class="tunnel ' + light.key + '">');
   H.push('<div class="tunnel-top">');
@@ -52,7 +60,7 @@ PAGES.home = function () {
   /* ── 裝備架 ── */
   var gs = gearsOf(t.teamId);
   if (gs.length) {
-    H.push('<div class="card"><div class="eyebrow">老師給過的</div><div class="gear-row">');
+    H.push('<div class="card"><div class="eyebrow">你挑走的</div><div class="gear-row">');
     gs.forEach(function (g) {
       var d = RULES.gearOf(g.key);
       if (d) H.push('<span class="gear" title="' + esc(d.why) + '">' + d.icon + '<i>' + esc(d.name) + '</i></span>');
@@ -60,7 +68,28 @@ PAGES.home = function () {
     H.push('</div></div>');
   }
 
+  /* ── 招牌 ── */
+  var ns = nextSignIn(t.teamId);
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">坑道口的招牌</div>');
+  H.push('<p class="dim">上面寫什麼是你們的事，老師不替你們命名。' +
+         '材質不是——那個是挖出來的' +
+         (ns.need ? '，再走完 ' + ns.need + ' 個里程碑會換成「' + esc(ns.name) + '」' : '') + '。</p>');
+  H.push('<div class="rn-row">');
+  H.push('<input id="pj-name" value="' + esc(t.project || '') +
+         '" placeholder="' + esc('這個專案現在叫什麼') + '">');
+  H.push(btn('換字', 'rename', 'ghost'));
+  H.push('</div></div>');
+
   return H.join('');
+};
+
+/* nextThing 回的那個字，對到步驟條的第幾格。 */
+var STEP_AT = {
+  commit: 0,
+  push: 1, waiting: 1, wake: 1,
+  submit: 2, camp: 2, review: 2,
+  gear: 3
 };
 
 /* 準度的一句話。從數字組出來，不是寫死的。 */
@@ -135,10 +164,10 @@ function actionCard(t, next, st) {
     H.push(btn('決定天數', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'push') {
-    H.push('<div class="eyebrow">今天</div>');
-    H.push('<h2>推進一格。</h2>');
+    H.push('<div class="eyebrow">今天　·　' + esc(row.ms.title) + '</div>');
+    H.push('<h2>今天去動它一下，然後按這顆鍵。</h2>');
     H.push('<p class="dim">不用交東西，也不用寫字。按下去就算今天動過了——' +
-           '重點是不要停，不是一次做完。</p>');
+           '重點是不要停，不是一次做完。真的做完了就按旁邊那顆。</p>');
     H.push('<div class="row">');
     H.push(btn('推進', 'push:' + row.run.runId, 'big'));
     H.push(btn('提早做完了', 'go:submit:' + row.run.runId, 'ghost'));
@@ -159,11 +188,12 @@ function actionCard(t, next, st) {
     H.push(btn('去營火旁', 'go:camp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'gear') {
-    var g = RULES.gearOf(row.run.gear);
-    H.push('<div class="eyebrow">老師給了你一件東西</div>');
-    H.push('<h2>' + (g ? g.icon + ' ' + esc(g.name) : '裝備') + '</h2>');
+    H.push('<div class="eyebrow">老師看完了</div>');
+    H.push('<h2>挑一件帶走。</h2>');
     if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
-    H.push(btn('接下', 'gear:' + row.run.runId, 'big'));
+    H.push('<p class="dim">會攤開三件。挑哪一件是你的事——' +
+           '那句話是給你自己讀的。</p>');
+    H.push(btn('去挑', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'waiting') {
     H.push('<div class="eyebrow">今天推過了</div>');
@@ -318,6 +348,33 @@ PAGES.camp = function () {
   return H.join('');
 };
 
+/* ---------- 三選一 ----------
+   攤開的是哪三件，跟你這一次做得如何完全無關（見 offerGears）。
+   它問的不是「你值得什麼」，是「這一次你想記住哪一句」。 */
+PAGES.pick = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId);
+
+  var H = [head('挑一件', m.title,
+    '三件裡挑一件帶走。攤開哪三件是隨機的，跟你這一次做得如何沒有關係——' +
+    '每一件底下那句話，是你自己選要記住的。')];
+
+  if (r.word) {
+    H.push('<div class="card"><div class="eyebrow">老師說</div>' +
+           '<p class="quote">' + nl(r.word) + '</p></div>');
+  }
+
+  H.push('<div class="card"><div class="gear-pick">');
+  offerGears(r.runId).forEach(function (g) {
+    H.push('<button class="gcard" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'take:' + r.runId + '|' + g.key })) + '\'>' +
+      '<b>' + g.icon + '</b><i>' + esc(g.name) + '</i><em>' + esc(g.why) + '</em></button>');
+  });
+  H.push('</div></div>');
+  return H.join('');
+};
+
 /* ---------- 大躍進 ---------- */
 PAGES.dash = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
@@ -326,8 +383,9 @@ PAGES.dash = function () {
   var H = ['<div class="dash">'];
   H.push(pxTag(HERO.dash, HERO.pal, 'ch big'));
   H.push('<h1>' + (g ? g.icon + ' ' + esc(g.name) : '裝備') + ' 到手</h1>');
+  if (g) H.push('<p class="lead">' + esc(g.why) + '</p>');
   if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
-  if (g) H.push('<p class="dim">' + esc(g.why) + '</p>');
+  H.push('<p class="dim">深度 ' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m。</p>');
   H.push('</div>');
   H.push(btn('回坑道', 'go:home', 'big'));
   return H.join('');

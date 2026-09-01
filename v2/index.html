@@ -396,6 +396,303 @@ a.plain:hover{color:var(--gold)}
   .wrap{padding:22px}
 }
 
+/* ---------- 步驟條 ----------
+   不是教學，是位置：亮著的那一格就是現在輪到你的。 */
+
+.steps{display:flex;gap:0;margin:0 0 22px;flex-wrap:wrap}
+.step{
+  flex:1;min-width:154px;display:flex;align-items:flex-start;gap:11px;
+  padding:11px 14px;background:var(--sunk);border:1px solid var(--line);
+  border-right:none;color:var(--mute)
+}
+.step:last-child{border-right:1px solid var(--line)}
+.step b{
+  flex:0 0 22px;width:22px;height:22px;line-height:22px;text-align:center;
+  font-size:11px;font-weight:400;background:var(--line);color:var(--bg)
+}
+.step i{display:block;font-style:normal;font-size:22px;line-height:1.4}
+.step em{display:block;font-style:normal;font-size:11px;line-height:1.7;margin-top:3px}
+.step.past{color:var(--dim)}
+.step.past b{background:var(--gold-d);color:var(--Ll)}
+.step.on{background:var(--Lbg);border-color:var(--gold-d);color:var(--ink)}
+.step.on b{background:var(--gold);color:#1A1408}
+.step.on em{color:var(--dim)}
+
+/* 老師端各組進度的一張卡 */
+.tm .radar-head b{font-size:22px}
+
+/* ---------- 門口 ----------
+   還不知道你是誰的時候，畫面上不該有側欄、頂條、深度、組名。
+   只有一欄，置中，寬度剛好一句話讀得完。 */
+
+.gate{display:flex;justify-content:center;padding:44px 0 88px}
+.gate-box{width:100%;max-width:539px}
+.gate-box .px.sign{width:88px;height:88px;margin-bottom:22px}
+.gate-box h1{font-size:44px}
+.gate-box .lead{max-width:none}
+.gate-box .eyebrow{margin-top:11px}
+
+.badge.r{background:#5A8F6B;color:#EAF6EE}
+.side-foot{padding:11px 22px 22px;border-top:1px solid var(--line)}
+
+/* 研究者那幾頁的一排：名字、說明、幾顆小鍵 */
+.rn-row .btn.ghost{padding:5px 11px;font-size:11px}
+.rn-row span{font-size:11px}
+.rn-row input{min-width:132px}
+
+/* 材質。
+
+   前一份（50-style.css）決定的是尺寸、顏色、排版；這一份只決定「摸起來
+   像什麼」。分開是因為它們壞掉的方式不一樣：改版面會弄亂位置，改材質
+   只會弄醜，兩件事不要混在同一個檔裡互相牽扯。
+
+   規則跟像素圖一樣硬：
+
+     · 不准有模糊。所有的漸層都用 hard stop（0 3px, 3px 100%），
+       所有的陰影 blur 都是 0。一有模糊，它就變成「像素圖上面套現代 UI」，
+       那正是這一套視覺最忌諱的東西。
+     · 斜面厚度固定 3px，等於角色身上一個像素的厚度。
+     · 光一律從左上來。左緣與上緣受光，右緣與下緣背光——整個畫面
+       只有一個光源，這是它看起來像實體而不像色塊的原因。
+     · 材質不帶狀態色。綠的紅的金的都還是 50-style.css 在管。 */
+
+:root{
+  --px:3px;
+  --lit:rgba(255,240,214,.07);
+  --lit2:rgba(255,240,214,.14);
+  --shd:rgba(0,0,0,.45);
+  --shd2:rgba(0,0,0,.72);
+}
+
+/* ---------- 岩壁 ----------
+   整個畫面的底是鑿開的岩層。縫隙淡到幾乎看不見——看得見就變壁紙了。 */
+body{
+  background-color:var(--bg);
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(255,244,222,.016) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.55)        0 1px, transparent 1px 88px);
+}
+
+/* ---------- 石塊 ----------
+   卡片是一塊鑿出來的石頭：四邊有 3px 的斜面，表面有兩層錯開的顆粒。
+   顆粒用 radial-gradient 點陣做，1px 的圓點在點陣字旁邊就是一顆像素。 */
+.card,
+.stamp-card,
+.dash{
+  border:none;
+  background-color:var(--panel);
+  background-image:
+    radial-gradient(rgba(255,244,222,.030) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,.42) 1px, transparent 1px);
+  background-size:22px 22px, 33px 33px;
+  background-position:0 0, 11px 14px;
+  box-shadow:
+    inset 0 var(--px) 0 var(--lit),
+    inset var(--px) 0 0 var(--lit),
+    inset 0 calc(var(--px) * -1) 0 var(--shd2),
+    inset calc(var(--px) * -1) 0 0 var(--shd2),
+    0 0 0 1px #000;
+}
+/* 上緣還留著狀態色的那幾張，斜面讓給它 */
+.stamp-card{box-shadow:
+  inset var(--px) 0 0 var(--lit),
+  inset 0 calc(var(--px) * -1) 0 var(--shd2),
+  inset calc(var(--px) * -1) 0 0 var(--shd2),
+  0 0 0 1px #000}
+.radar-row{box-shadow:
+  inset 0 var(--px) 0 var(--lit),
+  inset 0 calc(var(--px) * -1) 0 var(--shd2),
+  inset calc(var(--px) * -1) 0 0 var(--shd2),
+  0 0 0 1px #000}
+
+/* 動作那一張：站在光裡的石台。比別的石塊亮一階。 */
+.act-card{
+  border:none;border-left:var(--px) solid var(--gold);
+  background-color:var(--panel2);
+  background-image:
+    radial-gradient(rgba(255,244,222,.045) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,.38) 1px, transparent 1px);
+  background-size:22px 22px, 33px 33px;
+  background-position:0 0, 11px 14px;
+  box-shadow:
+    inset 0 var(--px) 0 var(--lit2),
+    inset 0 calc(var(--px) * -1) 0 var(--shd2),
+    inset calc(var(--px) * -1) 0 0 var(--shd2),
+    0 0 0 1px #000;
+}
+
+/* ---------- 鐵板 ----------
+   按鈕是一塊敲出來的鐵。上緣一道 3px 的亮邊、下緣一道暗邊，
+   底下墊一個沒有模糊的硬陰影——按下去的時候它真的往右下沉。
+
+   陰影用 drop-shadow 而不是 box-shadow：clip-path 會把 box-shadow
+   一起裁掉，切角那個簽名就沒有影子了。 */
+.btn{
+  background-image:linear-gradient(180deg,
+    var(--gold2) 0 var(--px),
+    var(--gold)  var(--px) calc(100% - var(--px)),
+    var(--gold-d) calc(100% - var(--px)) 100%);
+  filter:drop-shadow(4px 4px 0 rgba(0,0,0,.75));
+  transition:none;
+}
+.btn:hover{background-image:linear-gradient(180deg,
+  #FFE29A 0 var(--px), var(--gold2) var(--px) calc(100% - var(--px)),
+  var(--gold) calc(100% - var(--px)) 100%)}
+.btn:active{transform:translate(2px,2px);filter:drop-shadow(2px 2px 0 rgba(0,0,0,.75))}
+
+/* 次要的那顆是刻進石頭裡的，不是墊在上面。所以斜面反過來。 */
+.btn.ghost{
+  border:none;background:var(--sunk);filter:none;
+  box-shadow:
+    inset 0 var(--px) 0 var(--shd2),
+    inset var(--px) 0 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+.btn.ghost:hover{background:var(--panel2)}
+.btn.ghost:active{transform:translateY(1px)}
+
+/* ---------- 鑿出來的凹槽 ----------
+   輸入框、滑桿槽、下沉的小格子。斜面跟石塊完全相反：
+   上緣暗、下緣亮，眼睛就讀成「凹進去」。 */
+input,textarea,select,.slider,
+.acc-c,.gear,.gcard,.step,.eco-scroll{
+  border:none;
+  box-shadow:
+    inset 0 var(--px) 0 var(--shd2),
+    inset var(--px) 0 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+input:focus,textarea:focus{outline:none;box-shadow:
+  inset 0 var(--px) 0 var(--shd2),
+  inset var(--px) 0 0 var(--shd2),
+  inset 0 calc(var(--px) * -1) 0 var(--lit),
+  0 0 0 1px var(--gold-d)}
+.step:last-child{border-right:none}
+
+/* 滑桿的把手是一顆鐵鉚釘 */
+.slider::-webkit-slider-thumb{
+  background-image:linear-gradient(180deg,
+    var(--gold2) 0 var(--px),
+    var(--gold)  var(--px) calc(100% - var(--px)),
+    var(--gold-d) calc(100% - var(--px)) 100%);
+  box-shadow:2px 2px 0 rgba(0,0,0,.6);
+}
+.slider::-moz-range-thumb{
+  background-image:linear-gradient(180deg,
+    var(--gold2) 0 3px, var(--gold) 3px calc(100% - 3px),
+    var(--gold-d) calc(100% - 3px) 100%);
+}
+
+/* ---------- 木料 ----------
+   三選一的那三張是木匣。直紋，不是石頭的顆粒——材質不同，
+   眼睛就知道這一排跟旁邊的資訊不是同一種東西。 */
+.gcard{
+  background-color:#20180F;
+  background-image:
+    repeating-linear-gradient(90deg,
+      rgba(255,244,222,.030) 0 1px,
+      transparent 1px 7px,
+      rgba(0,0,0,.30) 7px 8px,
+      transparent 8px 18px);
+}
+.gcard:hover{background-color:#2B2013}
+.gcard:active{transform:translateY(1px)}
+.gcard.on{background-color:#2E2210;box-shadow:
+  inset 0 var(--px) 0 var(--shd2),
+  inset var(--px) 0 0 var(--shd2),
+  inset 0 calc(var(--px) * -1) 0 var(--lit),
+  0 0 0 1px var(--gold)}
+
+/* ---------- 岩層 ----------
+   側欄是一整面沒有鑿開的岩壁，所以它比卡片更粗、層更寬。 */
+.side{
+  border-right:none;
+  background-color:var(--panel);
+  background-image:
+    repeating-linear-gradient(0deg,
+      rgba(255,244,222,.022) 0 1px,
+      transparent 1px 3px,
+      rgba(0,0,0,.30) 3px 4px,
+      transparent 4px 66px);
+  box-shadow:inset calc(var(--px) * -1) 0 0 var(--shd2), 1px 0 0 #000;
+}
+.nav a.on{box-shadow:inset 0 1px 0 var(--lit), inset 0 -1px 0 var(--shd)}
+
+/* ---------- 鐵箍 ----------
+   頂條與試用列是釘在岩壁上的兩條鐵。 */
+.top,.demo{
+  border-bottom:none;
+  background-image:linear-gradient(180deg,
+    var(--lit) 0 1px,
+    transparent 1px calc(100% - var(--px)),
+    var(--shd2) calc(100% - var(--px)) 100%);
+  box-shadow:0 1px 0 #000;
+}
+
+/* ---------- 小石片 ---------- */
+.tag,.st,.badge{
+  box-shadow:inset 0 1px 0 var(--lit), inset 0 -1px 0 var(--shd2);
+}
+.tag:active{transform:translateY(1px)}
+.tags.big .tag{
+  background-color:var(--sunk);
+  box-shadow:
+    inset 0 var(--px) 0 var(--shd2),
+    inset var(--px) 0 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+.tags.big .tag.on{background-color:#2E2210;box-shadow:
+  inset 0 var(--px) 0 var(--shd2),
+  inset var(--px) 0 0 var(--shd2),
+  inset 0 calc(var(--px) * -1) 0 var(--lit),
+  0 0 0 1px var(--gold)}
+
+/* ---------- 坑道 ----------
+   角色站的地方比別的地方更深、更潮。上緣壓一道暗，
+   讓人覺得上面還有一整座山。 */
+.tunnel{
+  border:none;
+  background-color:var(--Lbg);
+  background-image:
+    radial-gradient(rgba(233,179,65,.040) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,.50) 1px, transparent 1px);
+  background-size:22px 22px, 33px 33px;
+  background-position:0 0, 11px 14px;
+  box-shadow:
+    inset 0 4px 0 rgba(0,0,0,.55),
+    inset 0 8px 0 rgba(0,0,0,.28),
+    inset 0 calc(var(--px) * -1) 0 var(--shd2),
+    inset calc(var(--px) * -1) 0 0 var(--shd2),
+    inset var(--px) 0 0 var(--lit),
+    0 0 0 1px #000;
+}
+
+/* 走廊的格子：走過的那一格是被劈開的岩石，還沒走的是實心的 */
+.cell{border:none;box-shadow:inset 0 1px 0 var(--shd2), 0 0 0 1px var(--Lline)}
+.cell.on{box-shadow:inset 0 2px 0 rgba(255,255,255,.22), inset 0 -2px 0 rgba(0,0,0,.35),
+  0 0 0 1px var(--Ll)}
+
+/* 剖面圖裡那一格已經挖開的空間，用同一套斜面，只是薄一半 */
+.seg{border:none;box-shadow:0 0 0 1px var(--line)}
+.seg.dug{box-shadow:inset 0 2px 0 rgba(255,255,255,.12),
+  inset 0 -2px 0 rgba(0,0,0,.40), 0 0 0 1px var(--L)}
+
+/* ---------- 角色與招牌 ----------
+   像素圖也要有影子，不然它是浮在畫面上的貼紙。
+   偏移 2px、不模糊——跟身上一個像素同一個量級。 */
+.px.ch,.px.sign,.px.fire{
+  filter:drop-shadow(2px 2px 0 rgba(0,0,0,.55));
+}
+.px.vine,.px.vine-s{filter:none}
+
+/* ---------- 會動的時候 ---------- */
+@media (prefers-reduced-motion: reduce){
+  .btn:active,.gcard:active,.tag:active{transform:none}
+}
+
 </style>
 </head>
 <body>
@@ -530,6 +827,296 @@ var DEPTH_PAL = [
 var GEAR_PX = PACK.trophies;
 
 
+/* ===== 15-auth.js ===== */
+/* 帳號、登入、身分認領，以及研究紀錄的事件流。
+
+   三種角色：
+     student    學生。用加入碼註冊，然後從名冊裡認領自己是誰。
+     teacher    老師。研究者建的。
+     researcher 研究者。管帳號、看紀錄、匯出。
+
+   密碼：這一版存在瀏覽器裡，所以雜湊只是「不要用明碼躺在 localStorage」，
+   不是真的安全措施。真的上線要換成後端 ＋ bcrypt——這件事寫在這裡，
+   免得有人以為它已經安全了。 */
+
+var AUTH_NOTE = '這一版的密碼雜湊只擋肉眼，不是真的加密。上線前要換成後端驗證。';
+
+/* 加鹽的字串雜湊。同一組帳密永遠得到同一個值。 */
+function pwHash(pw, salt) {
+  var s = String(salt) + '|' + String(pw);
+  var h1 = 2166136261, h2 = 5381;
+  for (var i = 0; i < s.length; i++) {
+    h1 ^= s.charCodeAt(i); h1 = (h1 * 16777619) >>> 0;
+    h2 = ((h2 * 33) ^ s.charCodeAt(i)) >>> 0;
+  }
+  return h1.toString(36) + h2.toString(36);
+}
+
+function newSalt() {
+  return Math.floor(Math.random() * 2176782336).toString(36) + now().toString(36);
+}
+
+/* ---------- 事件流（研究紀錄） ----------
+   每一個會改到資料的動作都記一筆。這就是研究資料本身：
+   誰、在哪一個里程碑上、做了什麼、什麼時候。
+
+   刻意不記「內容」——系統本來就不收作業。記的是行為的形狀：
+   承諾幾天、推進的節奏、判定結果、卡在哪。 */
+function logEvent(kind, o) {
+  if (!DB || !DB.Events) return;
+  /* 登入與註冊那兩筆是在還沒有 S.who 的時候記的，所以要讓呼叫端
+     自己帶 by 進來——不然研究資料裡最重要的兩個動作會沒有角色。 */
+  var u = (typeof S !== 'undefined' && S.who) ? userOf(S.who) : null;
+  if (!u && o && o.by) u = userOf(o.by);
+  DB.Events.push(Object.assign({
+    evId: nid('E'),
+    at: now(),
+    by: u ? u.userId : (o && o.by) || '',
+    role: u ? u.role : '',
+    kind: kind
+  }, o || {}));
+  /* 事件只增不刪。原型跑久了會長，但它就是資料本身。 */
+}
+
+function eventsOf(classId, filter) {
+  var teamIds = {};
+  where('Teams', function (t) { return t.classId === classId; })
+    .forEach(function (t) { teamIds[t.teamId] = t.name; });
+  return DB.Events.filter(function (e) {
+    if (e.teamId && !teamIds[e.teamId]) return false;
+    if (filter && filter.kind && e.kind !== filter.kind) return false;
+    if (filter && filter.teamId && e.teamId !== filter.teamId) return false;
+    return true;
+  }).slice().reverse();
+}
+
+/* 事件的中文說法。同一份資料，人看得懂的那一面。 */
+var EV_SAY = {
+  register: function (e) { return '註冊了帳號 ' + e.account; },
+  claim:    function (e) { return '認領身分：' + e.who + '（' + e.team + '）'; },
+  login:    function () { return '登入'; },
+  publish:  function (e) { return '派了里程碑「' + e.title + '」'; },
+  commit:   function (e) { return '承諾 ' + e.est + ' 天' + (e.risks ? '，標了風險 ' + e.risks : ''); },
+  push:     function (e) { return '推進一格（第 ' + e.n + ' 次）'; },
+  submit:   function (e) { return '交出去：承諾 ' + e.est + ' 天，實際 ' + e.actual + ' 天 → ' + e.stamp; },
+  reflect:  function (e) { return '復盤：' + e.snags; },
+  approve:  function () { return '勾了可以'; },
+  pick:     function (e) { return '挑走了裝備 ' + e.gear; },
+  rename:   function (e) { return '把招牌改成「' + e.name + '」'; }
+};
+function evSay(e) {
+  var f = EV_SAY[e.kind];
+  return f ? f(e) : e.kind;
+}
+
+/* ---------- 註冊 ---------- */
+
+function accountTaken(account) {
+  return !!find('Users', function (u) {
+    return String(u.account).toLowerCase() === String(account).toLowerCase();
+  });
+}
+
+function classByCode(code) {
+  return find('Classes', function (c) {
+    return String(c.joinCode).toUpperCase() === String(code || '').toUpperCase();
+  });
+}
+
+/* 學生註冊：加入碼 → 帳號密碼。註冊完還沒有身分，要再認領。 */
+function actRegister(o) {
+  var acc = String(o.account || '').trim();
+  var pw = String(o.password || '');
+  if (acc.length < 3) return { err: '帳號至少三個字。' };
+  if (pw.length < 4) return { err: '密碼至少四個字。' };
+  if (accountTaken(acc)) return { err: '這個帳號有人用了。' };
+
+  var kl = null;
+  if (o.role !== 'researcher') {
+    kl = classByCode(o.code);
+    if (!kl) return { err: '找不到這個加入碼。跟老師確認一次。' };
+  }
+
+  var salt = newSalt();
+  var u = {
+    userId: nid('U'), account: acc, salt: salt, hash: pwHash(pw, salt),
+    role: o.role || 'student',
+    name: String(o.name || acc).trim(),
+    classId: kl ? kl.classId : '',
+    teamId: '',
+    createdAt: now()
+  };
+  DB.Users.push(u);
+  save();
+  logEvent('register', { by: u.userId, account: acc, role: u.role });
+  return { user: u };
+}
+
+/* ---------- 登入 ---------- */
+function actLogin(account, pw) {
+  var u = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
+  });
+  if (!u) return { err: '找不到這個帳號。' };
+  if (!u.salt) return { err: '這個帳號還沒設定密碼，請研究者重設一次。' };
+  if (pwHash(pw, u.salt) !== u.hash) return { err: '密碼不對。' };
+  u.lastLogin = now();
+  save();
+  logEvent('login', { by: u.userId });
+  return { user: u };
+}
+
+/* ---------- 名冊與身分認領 ----------
+   老師先把名冊貼進來（一行一組），學生註冊之後從裡面挑自己是誰。
+   這樣系統知道「這個帳號是哪一組的誰」，而且不用學生自己打組名。 */
+
+/* 「甲：小明, 小華」一行一組 */
+function parseRoster(text) {
+  var out = [];
+  String(text || '').split('\n').forEach(function (line) {
+    line = line.trim();
+    if (!line) return;
+    var i = line.search(/[:：]/);
+    if (i < 0) return;
+    var team = line.slice(0, i).trim();
+    var members = line.slice(i + 1).split(/[,，、]/)
+      .map(function (x) { return x.trim(); }).filter(Boolean);
+    if (team && members.length) out.push({ team: team, members: members });
+  });
+  return out;
+}
+
+/* 存名冊。已經存在的組不重建，才不會把認領過的身分洗掉。 */
+function actSaveRoster(classId, text) {
+  var rows = parseRoster(text);
+  if (!rows.length) return { err: '看不懂這份名冊。一行一組，像「甲：小明, 小華」。' };
+  var added = 0;
+  rows.forEach(function (r) {
+    var name = '第' + (where('Teams', function (t) {
+      return t.classId === classId;
+    }).length + 1) + '組 · ' + r.team;
+    var exist = find('Teams', function (t) {
+      return t.classId === classId && t.name.indexOf('· ' + r.team) >= 0;
+    });
+    var team = exist;
+    if (!team) {
+      team = {
+        teamId: nid('G'), classId: classId, name: name,
+        project: '（還沒定）', signTier: 0, joinedAt: now()
+      };
+      DB.Teams.push(team);
+    }
+    r.members.forEach(function (m) {
+      if (find('Roster', function (x) {
+        return x.classId === classId && x.teamId === team.teamId && x.memberName === m;
+      })) return;
+      DB.Roster.push({
+        rosterId: nid('R'), classId: classId, teamId: team.teamId,
+        teamName: team.name, memberName: m, claimedBy: ''
+      });
+      added++;
+    });
+  });
+  save();
+  return { added: added };
+}
+
+/* 一個班還沒被認領的名字 */
+function freeRoster(classId) {
+  return where('Roster', function (r) { return r.classId === classId && !r.claimedBy; });
+}
+
+/* 認領：把帳號綁到名冊上的某一個人 */
+function actClaim(userId, rosterId) {
+  var u = userOf(userId);
+  var r = find('Roster', function (x) { return x.rosterId === rosterId; });
+  if (!u || !r) return { err: '找不到。' };
+  if (r.claimedBy) return { err: '這個名字已經有人認領了。' };
+  r.claimedBy = u.userId;
+  r.claimedAt = now();
+  u.teamId = r.teamId;
+  u.name = r.memberName;
+  save();
+  logEvent('claim', { by: u.userId, teamId: r.teamId, who: r.memberName, team: r.teamName });
+  return { user: u };
+}
+
+/* 認錯人了：研究者解開，學生可以重認 */
+function actUnclaim(rosterId) {
+  var r = find('Roster', function (x) { return x.rosterId === rosterId; });
+  if (!r || !r.claimedBy) return { err: '這個名字沒有人認領。' };
+  var u = userOf(r.claimedBy);
+  if (u) { u.teamId = ''; }
+  r.claimedBy = ''; r.claimedAt = 0;
+  save();
+  return { ok: true };
+}
+
+/* ---------- 研究者的帳號處理 ---------- */
+
+function actResetPw(userId, pw) {
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個帳號。' };
+  if (String(pw).length < 4) return { err: '密碼至少四個字。' };
+  u.salt = newSalt();
+  u.hash = pwHash(pw, u.salt);
+  save();
+  return { ok: true };
+}
+
+function actDeleteUser(userId) {
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個帳號。' };
+  if (u.role === 'researcher' &&
+      where('Users', function (x) { return x.role === 'researcher'; }).length <= 1) {
+    return { err: '這是最後一個研究者帳號，刪掉就沒有人管得了系統。' };
+  }
+  /* 認領過的名字要放回去，不然那個位子永遠卡著 */
+  where('Roster', function (r) { return r.claimedBy === userId; })
+    .forEach(function (r) { r.claimedBy = ''; r.claimedAt = 0; });
+  DB.Users = DB.Users.filter(function (x) { return x.userId !== userId; });
+  save();
+  return { ok: true };
+}
+
+function actCreateClass(name, teacherId) {
+  var code = '';
+  var CH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   /* 去掉會看錯的 I O 0 1 */
+  for (var i = 0; i < 6; i++) code += CH[Math.floor(Math.random() * CH.length)];
+  var c = {
+    classId: nid('C'), name: String(name || '未命名的班').trim(),
+    joinCode: code, teacherId: teacherId || '', startedAt: now()
+  };
+  DB.Classes.push(c);
+  save();
+  return { klass: c };
+}
+
+/* ---------- 匯出 ----------
+   研究資料。CSV，因為那是最容易進統計軟體的東西。 */
+function exportCsv(classId) {
+  var teamName = {};
+  where('Teams', function (t) { return t.classId === classId; })
+    .forEach(function (t) { teamName[t.teamId] = t.name; });
+  var head = ['時間', '角色', '組別', '事件', '說明'];
+  var rows = eventsOf(classId).map(function (e) {
+    return [
+      new Date(e.at).toISOString(),
+      e.role || '',
+      teamName[e.teamId] || '',
+      e.kind,
+      evSay(e)
+    ];
+  });
+  return [head].concat(rows).map(function (r) {
+    return r.map(function (c) {
+      var s = String(c == null ? '' : c);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(',');
+  }).join('\n');
+}
+
+
 /* ===== 20-rules.js ===== */
 /* 全部的計算都在這裡，而且只在這裡。
 
@@ -630,16 +1217,35 @@ RULES.snagOf = function (key) {
 RULES.RISKS = RULES.SNAGS.slice(0, 6);
 
 /* ---------- 裝備 ----------
-   老師發的，不是抽的、不是買的。它是一句「我看到你做了什麼」的具體化，
-   所以每一件都綁一個理由，而且發的時候要選那個理由。 */
+   老師不發裝備。他只勾「可以」，然後學生從隨機攤開的三件裡挑一件。
+
+   為什麼是學生挑：老師選哪一件＝老師替他決定「你這一次的優點是什麼」，
+   那是評價。學生自己挑＝他自己說「這一次我想記住的是這句」，那是自主。
+   每一件綁的那句話因此是給他自己讀的，不是老師的評語。 */
+/* 每一件底下那句話，是「下一次帶著走的」，不是「這一次做得如何」。
+
+   這件事很要緊：三件是隨機攤開的，所以句子如果在講剛剛那一輪，
+   一個失準的人抽到「推進得乾脆」就變成謊話。寫成往前看的一句話，
+   它才是學生自己選要記住的東西，而不是系統對他的評語。 */
 RULES.GEARS = [
-  { key: 'sword',   icon: '⚔️', name: '銳劍',   why: '這一項推進得乾脆——沒有拖，也沒有等到最後一天。' },
-  { key: 'compass', icon: '🧭', name: '指南針', why: '預估得準。你對自己的判斷開始可靠了。' },
-  { key: 'lamp',    icon: '🏮', name: '提燈',   why: '你把卡在哪講清楚了。看得見的困難才處理得掉。' },
-  { key: 'shield',  icon: '🛡️', name: '盾',     why: '你事先標了風險，而且標對了。' },
-  { key: 'boots',   icon: '👢', name: '快靴',   why: '這一次比上一次快。你把上次的教訓用上了。' },
-  { key: 'map',     icon: '🗺️', name: '殘圖',   why: '你把一件事拆成看得懂的幾件。' }
+  { key: 'sword',   icon: '⚔️', name: '銳劍',   why: '下一次一開始就動。最難的從來不是做完，是開始。' },
+  { key: 'compass', icon: '🧭', name: '指南針', why: '下一次先想清楚要走去哪，再決定要走幾天。' },
+  { key: 'lamp',    icon: '🏮', name: '提燈',   why: '卡住的時候先講出來。看得見的困難才處理得掉。' },
+  { key: 'shield',  icon: '🛡️', name: '盾',     why: '下一次先把會出事的地方標起來。預見比準時值錢。' },
+  { key: 'boots',   icon: '👢', name: '快靴',   why: '一天一步也是往前。不要等到有一整天的空檔才開始。' },
+  { key: 'map',     icon: '🗺️', name: '殘圖',   why: '太大的事先拆開。拆得動，才估得準。' }
 ];
+
+/* 招牌的階由深度決定，不由任何人手動調。
+   走完的里程碑越多，坑道口的招牌材質越好——木牌、鐵牌、會發光的銘牌。 */
+RULES.SIGN_AT = [0, 2, 4];
+RULES.signTierOf = function (depth) {
+  var n = 0;
+  for (var i = 0; i < RULES.SIGN_AT.length; i++) {
+    if ((Number(depth) || 0) >= RULES.SIGN_AT[i]) n = i;
+  }
+  return n;
+};
 
 RULES.gearOf = function (key) {
   for (var i = 0; i < RULES.GEARS.length; i++) {
@@ -844,7 +1450,9 @@ function animDash(onDone) {
 
    跟上一版最大的差別：沒有分數、沒有層、沒有收集。
    一個里程碑的一生是：派發 → 承諾天數 → 每日推進 → 上傳 → 判定 →
-   （失準就復盤）→ 老師發裝備 → 大躍進。 */
+   （失準就復盤）→ 老師勾可以 → 學生三選一 → 大躍進。
+
+   老師在這整條線上只碰兩個地方：派發、勾可以。其他每一步都是學生的。 */
 
 var DB = null;
 var STORE = 'dungeon.v1';
@@ -876,8 +1484,12 @@ function blank() {
     Runs: [],
     /* 每一次推進打卡。一天一筆。 */
     Pushes: [],
-    /* 老師發的裝備 */
-    Gears: []
+    /* 學生自己挑走的裝備 */
+    Gears: [],
+    /* 研究紀錄：誰、什麼時候、做了什麼。只增不刪。 */
+    Events: [],
+    /* 登入狀態 */
+    Session: null
   };
 }
 
@@ -928,8 +1540,8 @@ function nextThing(teamId) {
     return x.run.state === 'judged' && x.run.stamp === 'late' && !x.run.snags.length;
   })[0];
   if (camp) return { kind: 'camp', row: camp };
-  /* 2. 老師發了裝備、還沒領 */
-  var gear = rows.filter(function (x) { return x.run.state === 'geared'; })[0];
+  /* 2. 老師勾可以了，還沒挑裝備 */
+  var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
   if (gear) return { kind: 'gear', row: gear };
   /* 3. 睡著了或長藤蔓——叫醒牠比接新任務重要。
      這是整個設計的招牌互動：推一下，藤蔓碎掉，角色重新揮劍。
@@ -997,11 +1609,23 @@ function depthOf(teamId) {
   }).length;
 }
 
-/* 招牌的階：老師改寫過幾次專案名稱 */
+/* 招牌的階＝挖到多深。
+
+   招牌上的字是學生自己寫的（專案名稱），材質不是——材質是走完幾個
+   里程碑自己長出來的。這樣改名字改不出一塊發光的牌子，
+   而牌子發光的時候，那是他們自己挖來的。 */
 function signOf(teamId) {
-  var t = teamOf(teamId);
-  var n = Math.min(RULES.SIGN_TIERS.length - 1, (t && t.signTier) || 0);
+  var n = Math.min(RULES.SIGN_TIERS.length - 1, RULES.signTierOf(depthOf(teamId)));
   return SIGNS[RULES.SIGN_TIERS[n]];
+}
+
+/* 再挖幾個里程碑招牌會換材質。沒有下一階就回 0。 */
+function nextSignIn(teamId) {
+  var d = depthOf(teamId);
+  for (var i = 0; i < RULES.SIGN_AT.length; i++) {
+    if (RULES.SIGN_AT[i] > d) return { need: RULES.SIGN_AT[i] - d, name: SIGNS[RULES.SIGN_TIERS[i]].name };
+  }
+  return { need: 0, name: '' };
 }
 
 /* 這一組的預估準度紀錄——復盤與老師審閱都要看 */
@@ -1048,6 +1672,7 @@ function actCommit(teamId, msId, est, risks) {
   };
   DB.Runs.push(r);
   save();
+  logEvent('commit', { teamId: teamId, runId: r.runId, msId: msId, est: r.est, risks: (r.risks || []).length });
   return r;
 }
 
@@ -1059,6 +1684,7 @@ function actPush(teamId, runId) {
   DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId, day: dayOf(now()), at: now() });
   r.pushes++;
   save();
+  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes });
   return true;
 }
 
@@ -1072,6 +1698,7 @@ function actSubmit(teamId, runId, link) {
   r.submittedAt = now();
   r.state = 'judged';
   save();
+  logEvent('submit', { teamId: teamId, runId: runId, est: r.est, actual: r.actual, stamp: r.stamp });
   return r;
 }
 
@@ -1082,6 +1709,7 @@ function actReflect(teamId, runId, snags) {
   r.snags = snags || [];
   r.state = 'submitted';        /* 復盤完才排進老師的雷達 */
   save();
+  logEvent('reflect', { teamId: teamId, runId: runId, snags: (snags || []).join('/') });
   return r;
 }
 
@@ -1094,15 +1722,7 @@ function actSkipCamp(runId) {
   return r;
 }
 
-/* 領裝備 → 大躍進 */
-function actTakeGear(runId) {
-  var r = find('Runs', function (x) { return x.runId === runId; });
-  if (!r || r.state !== 'geared') return null;
-  r.state = 'done';
-  r.doneAt = now();
-  save();
-  return r;
-}
+/* 「領裝備」那一步併進 actPickGear 了：挑完就是領完，不用再按一次。 */
 
 /* ================= 老師的動作 ================= */
 
@@ -1116,6 +1736,7 @@ function actPublish(classId, o) {
   };
   DB.Milestones.push(m);
   save();
+  logEvent('publish', { title: m.title, teams: (m.teams || []).length });
   return m;
 }
 
@@ -1134,29 +1755,44 @@ function radar(classId) {
   return out.sort(function (a, b) { return b.waited - a.waited; });
 }
 
-/* 發裝備。gearKey 是資訊性回饋——選哪一件等於選一句話。 */
-function actGear(runId, gearKey, word) {
+/* 老師勾「可以」。他不選裝備——選哪一件是學生的事。
+   他能加一句話，那句話才是他的回饋。 */
+function actApprove(runId, word) {
   var r = find('Runs', function (x) { return x.runId === runId; });
-  if (!r) return null;
-  r.gear = gearKey;
+  if (!r || r.state !== 'submitted') return null;
   r.word = word || '';
-  r.state = 'geared';
-  r.gearedAt = now();
-  DB.Gears.push({ gearId: nid('G'), teamId: r.teamId, runId: runId, key: gearKey, at: now() });
+  r.state = 'approved';
+  r.approvedAt = now();
   save();
+  logEvent('approve', { teamId: r.teamId, runId: runId, len: String(word || '').length });
   return r;
 }
 
-/* 改寫專案名稱 → 招牌升一階。收斂本身就是成果。 */
+/* 學生從攤開的三件裡挑一件 */
+function actPickGear(runId, gearKey) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'approved') return null;
+  var offer = offerGears(runId);
+  if (!offer.some(function (g) { return g.key === gearKey; })) return null;
+  r.gear = gearKey;
+  r.state = 'done';
+  r.doneAt = now();
+  DB.Gears.push({ gearId: nid('G'), teamId: r.teamId, runId: runId, key: gearKey, at: now() });
+  save();
+  logEvent('pick', { teamId: r.teamId, runId: runId, gear: gearKey });
+  return r;
+}
+
+/* 改寫專案名稱。這是學生自己做的——招牌上寫什麼是他們的事，
+   老師不替他們命名。改名字不會動到招牌的材質（那個吃深度）。 */
 function actRename(teamId, name) {
   var t = teamOf(teamId);
   if (!t) return null;
-  /* 名字沒變就不升階。升一階代表「又收斂了一次」——
-     按兩下同一個名字不該讓招牌發光。 */
   if (String(t.project || '') === String(name)) return null;
+  var old = t.project;
   t.project = name;
-  t.signTier = Math.min(RULES.SIGN_TIERS.length - 1, (t.signTier || 0) + 1);
   save();
+  logEvent('rename', { teamId: teamId, name: name, from: old });
   return t;
 }
 
@@ -1165,13 +1801,41 @@ function gearsOf(teamId) {
   return where('Gears', function (g) { return g.teamId === teamId; });
 }
 
+/* 攤開哪三件讓學生挑。
+
+   純函式：用 runId 算，同一個 run 每次算出來都一樣——畫面不擲骰子。
+   而且刻意不看任何表現資料（估得準不準、推進幾次、被退幾次）——
+   一旦攤開的內容跟表現有關，它那一秒就從「你想記住什麼」變成
+   「系統覺得你值得什麼」，也就是評價。 */
+function offerGears(runId) {
+  var pool = RULES.GEARS.slice();
+  var h = hash(String(runId));
+  var out = [];
+  for (var i = 0; i < 3 && pool.length; i++) {
+    h = (h * 1103515245 + 12345) >>> 0;
+    out.push(pool.splice(h % pool.length, 1)[0]);
+  }
+  return out;
+}
+
 
 /* ===== 45-seed.js ===== */
-/* 試用資料：一個班、一位老師、五組。
+/* 試用資料：一個班、一位老師、五組、一個研究者。
 
    五組刻意做成五種不同的狀態，因為這個系統要證明的正是「它認得出
    五種不同的動」——準時的、估太少的、卡住的、剛派到的、睡著的。
-   時間全部往回推，所以一打開就看得到推進紀錄與判定結果。 */
+   時間全部往回推，所以一打開就看得到推進紀錄與判定結果。
+
+   每個帳號的密碼都是 DEMO_PW。這是試用資料，不是任何人的真帳號。 */
+
+var DEMO_PW = '1234';
+
+/* 把密碼種進一個使用者。真的註冊走 actRegister，這裡只是讓試用資料登得進去。 */
+function seedPw(u) {
+  u.salt = 'seed|' + u.userId;
+  u.hash = pwHash(DEMO_PW, u.salt);
+  return u;
+}
 
 function seed() {
   DB = blank();
@@ -1183,7 +1847,12 @@ function seed() {
     classId: cid, name: '設計專題', joinCode: 'DG7K2M',
     teacherId: 'U0', startedAt: ago(30)
   });
-  DB.Users.push({ userId: 'U0', account: 'tea01', name: '指導老師', role: 'teacher', classId: cid });
+  DB.Users.push(seedPw({ userId: 'U0', account: 'tea01', name: '指導老師',
+    role: 'teacher', classId: cid, createdAt: ago(30) }));
+
+  /* 研究者。管帳號、看紀錄、匯出——不進坑道。 */
+  DB.Users.push(seedPw({ userId: 'U9', account: 'lab01', name: '研究者',
+    role: 'researcher', classId: cid, createdAt: ago(31) }));
 
   var TEAMS = [
     { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30 },
@@ -1195,13 +1864,16 @@ function seed() {
   TEAMS.forEach(function (t, i) {
     DB.Teams.push({
       teamId: t.id, classId: cid, name: t.name,
-      project: t.project, signTier: t.tier, joinedAt: ago(t.joined)
+      project: t.project, joinedAt: ago(t.joined)
     });
-    DB.Users.push({
+    DB.Users.push(seedPw({
       userId: 'U' + (i + 1), account: 'stu0' + (i + 1), name: '學生' + (i + 1),
-      role: 'student', classId: cid, teamId: t.id
+      role: 'student', classId: cid, teamId: t.id, createdAt: ago(30)
+    }));
+    DB.Roster.push({
+      rosterId: 'RS' + (i + 1), classId: cid, teamId: t.id, teamName: t.name,
+      memberName: '學生' + (i + 1), claimedBy: 'U' + (i + 1), claimedAt: ago(30)
     });
-    DB.Roster.push({ classId: cid, teamName: t.name, memberName: '學生' + (i + 1), claimedBy: 'U' + (i + 1) });
   });
   var ALL = TEAMS.map(function (t) { return t.id; });
 
@@ -1308,7 +1980,8 @@ function esc(s) {
 }
 function nl(s) { return esc(s).replace(/\n/g, '<br>'); }
 
-var S = { who: 'U1', page: 'home', p: {}, flash: null };
+/* 一開始沒有人登入。S.who 是 null 的時候只走得到門口那幾頁。 */
+var S = { who: null, page: 'gate', p: {}, flash: null };
 
 /* 沒按送出的東西不會進資料表，但重畫的時候要留著。 */
 var DRAFT = {};
@@ -1320,14 +1993,50 @@ function go(page, p) {
   window.scrollTo(0, 0);
   render();
 }
-function me() { return userOf(S.who); }
-function isTeacher() { return me().role === 'teacher'; }
-function myTeam() { return teamOf(me().teamId); }
+function me() { return S.who ? userOf(S.who) : null; }
+function isTeacher() { var u = me(); return !!u && u.role === 'teacher'; }
+function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
+
+/* 哪一種身分走得到哪一頁。
+
+   這不是裝飾。研究者看得到全班的紀錄、老師看得到別組的進度——
+   路由如果不擋，改一下網址就變成別人。 */
+var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
+var PAGE_ROLE = {
+  home: 'student', commit: 'student', submit: 'student', stamp: 'student',
+  camp: 'student', pick: 'student', dash: 'student', eco: 'student',
+  log: 'student', claim: 'student',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
+  rs: 'researcher', roster: 'researcher', events: 'researcher'
+};
+function allowed(u, page) {
+  var need = PAGE_ROLE[page];
+  return !need || need === u.role;
+}
 
 function head(eyebrow, title, lead) {
   return '<div class="eyebrow">' + esc(eyebrow) + '</div>' +
     '<h1>' + esc(title) + '</h1>' +
     (lead ? '<p class="lead">' + nl(lead) + '</p>' : '');
+}
+
+/* 一條「你在第幾步」。
+
+   加這個是因為第一次打開會不知道要做什麼：畫面很乾淨，但乾淨到看不出
+   自己站在哪。它不是教學，是位置——亮著的那一格就是現在輪到你的。
+
+     steps  [[標題, 副標], …]
+     at     現在在第幾格（0 起算；-1 代表都不在） */
+function stepBar(steps, at) {
+  var H = ['<div class="steps">'];
+  steps.forEach(function (s, i) {
+    H.push('<div class="step' + (i === at ? ' on' : (i < at ? ' past' : '')) + '">' +
+      '<b>' + (i + 1) + '</b>' +
+      '<div><i>' + esc(s[0]) + '</i>' + (s[1] ? '<em>' + esc(s[1]) + '</em>' : '') + '</div>' +
+      '</div>');
+  });
+  H.push('</div>');
+  return H.join('');
 }
 
 /* 像素圖標籤。所有的圖都走這一支——沒有第二種畫圖的方式。 */
@@ -1346,9 +2055,33 @@ function btn(label, act, kind) {
 var PAGES = {};
 
 function render() {
-  var f = PAGES[S.page];
-  if (!f) { S.page = isTeacher() ? 'radar' : 'home'; f = PAGES[S.page]; }
-  var body = f();
+  var u = me();
+
+  /* 沒登入：只有門口那幾頁，而且沒有側欄也沒有頂條——
+     還不知道你是誰的時候，畫面上不該有任何「你的」東西。 */
+  if (!u) {
+    if (!GATE_PAGES[S.page]) S.page = 'gate';
+    document.getElementById('app').innerHTML =
+      '<div class="main"><div class="wrap">' +
+      (S.flash ? flashBar() : '') + PAGES[S.page]() + '</div></div>';
+    return;
+  }
+
+  /* 學生還沒對上名冊：先認領，別的哪裡都去不了。
+     沒有組別的話，坑道不知道要畫哪一條——側欄跟頂條也一樣，
+     它們每一格都在講「你的組」，這時候還沒有那個東西。 */
+  if (u.role === 'student' && !u.teamId) {
+    document.getElementById('app').innerHTML =
+      '<div class="main"><div class="wrap">' +
+      (S.flash ? flashBar() : '') + PAGES.claim() + '</div></div>';
+    S.page = 'claim';
+    return;
+  }
+  if (S.page === 'claim' || GATE_PAGES[S.page]) S.page = homeFor(u);
+
+  if (!PAGES[S.page] || !allowed(u, S.page)) S.page = homeFor(u);
+
+  var body = PAGES[S.page]();
   document.getElementById('app').innerHTML =
     sideBar() + '<div class="main">' + topBar() + demoBar() +
     '<div class="wrap">' + (S.flash ? flashBar() : '') + body + '</div></div>';
@@ -1361,15 +2094,28 @@ function flashBar() {
    而且那是一種只有測試才抓得到的錯。讓它自己負責。 */
 function say(m) { S.flash = m; render(); }
 
+function classOf(u) {
+  return find('Classes', function (c) { return c.classId === u.classId; }) || DB.Classes[0] || { name: '' };
+}
+
 function topBar() {
   var u = me();
+  if (u.role === 'researcher') {
+    return '<div class="top">' +
+      '<span class="badge r">研究者</span>' +
+      '<span class="who">' + esc(u.name) + '</span>' +
+      '<span class="sp"></span>' +
+      '<span>' + DB.Users.length + ' 個帳號　·　' + DB.Classes.length + ' 個班　·　' +
+        DB.Events.length + ' 筆紀錄</span>' +
+      '</div>';
+  }
   if (u.role === 'teacher') {
     var r = radar(u.classId);
     return '<div class="top">' +
       '<span class="badge t">老師端</span>' +
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
-      '<span>' + esc(DB.Classes[0].name) + '　·　' +
+      '<span>' + esc(classOf(u).name) + '　·　' +
         where('Teams', function (t) { return t.classId === u.classId; }).length + ' 組</span>' +
       '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' +
       '</div>';
@@ -1389,8 +2135,9 @@ function topBar() {
 /* 試用列。真的上線沒有這一條——它在這裡只是為了讓你兩邊都走得完。 */
 function demoBar() {
   var opts = DB.Users.map(function (u) {
+    var t = u.teamId ? teamOf(u.teamId) : null;
     return '<option value="' + u.userId + '"' + (u.userId === S.who ? ' selected' : '') + '>' +
-      (u.role === 'teacher' ? '老師' : teamOf(u.teamId).name) + '</option>';
+      esc(t ? t.name : u.name) + '</option>';
   }).join('');
   return '<div class="demo">' +
     '<b>試用</b><span>切換身分</span>' +
@@ -1404,13 +2151,23 @@ function demoBar() {
 function sideBar() {
   var u = me();
   var nav, headBlock;
-  if (u.role === 'teacher') {
+  if (u.role === 'researcher') {
+    headBlock = '<div class="side-head"><div class="k">LAB</div>' +
+      '<div class="n">' + esc(u.name) + '</div>' +
+      '<div class="s">帳號與紀錄</div></div>';
+    nav = [['rs', '帳號'], ['roster', '名冊'], ['events', '紀錄']];
+  } else if (u.role === 'teacher') {
+    var kl = classOf(u);
     headBlock = '<div class="side-head"><div class="k">TEACHER</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
-      '<div class="s">' + esc(DB.Classes[0].name) + ' · 加入碼 ' +
-      esc(DB.Classes[0].joinCode) + '</div></div>';
+      '<div class="s">' + esc(kl.name) + ' · 加入碼 ' +
+      esc(kl.joinCode) + '</div></div>';
+    /* 老師只有三件事，側欄就只有三格——多一格就是多一件他要煩惱的事。 */
+    var wait = radar(u.classId).length;
     nav = [
-      ['radar', '雷達'], ['ms', '里程碑'], ['classeco', '全班地下城']
+      ['radar', '審核' + (wait ? '（' + wait + '）' : '')],
+      ['ms', '發里程碑'],
+      ['classeco', '各組進度']
     ];
   } else {
     var t = myTeam();
@@ -1425,7 +2182,9 @@ function sideBar() {
     return '<a class="' + (S.page === n[0] ? 'on' : '') + '" data-go="' + n[0] + '">' +
       '<span class="dot"></span>' + esc(n[1]) + '</a>';
   }).join('');
-  return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div></div>';
+  return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div>' +
+    '<div class="side-foot"><a class="plain" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'logout' })) + '\'>登出</a></div></div>';
 }
 
 /* ---------- 事件 ---------- */
@@ -1445,7 +2204,11 @@ document.addEventListener('change', function (ev) {
   var a = ev.target.closest('[data-act="who"]');
   if (!a) return;
   S.who = a.value;
-  S.page = userOf(S.who).role === 'teacher' ? 'radar' : 'home';
+  DB.Session = S.who;
+  save();
+  S.page = homeFor(userOf(S.who));
+  /* 上一個人的訊息不要跟著換身分過去——那句話不是講給這個人聽的 */
+  S.flash = null;
   DRAFT = {};
   render();
 });
@@ -1526,10 +2289,26 @@ var ACTS = {
     say('說出來了。老師看得到，而且這不會扣任何東西。');
   },
 
-  gear: function (runId) {
-    actTakeGear(runId);
+  /* 老師勾可以了 → 去挑裝備 */
+  gear: function (runId) { go('pick', { id: runId }); },
+
+  /* 三選一，挑走那一件。參數是「runId|裝備」。 */
+  take: function (arg) {
+    var i = arg.indexOf('|');
+    var runId = arg.slice(0, i), key = arg.slice(i + 1);
+    if (!actPickGear(runId, key)) return say('這一件不在攤開的三件裡。');
     go('dash', { id: runId });
     animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
+  },
+
+  /* 學生改自己的招牌 */
+  rename: function () {
+    var t = myTeam();
+    var v = (document.getElementById('pj-name') || {}).value || '';
+    if (!v.trim()) return say('招牌上總要寫點什麼。');
+    if (!actRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
+    go('home');
+    say('招牌換字了。材質是挖出來的，那個急不得。');
   },
 
   /* ---- 老師 ---- */
@@ -1549,24 +2328,190 @@ var ACTS = {
     render();
   },
 
-  pickgear: function (k) { DRAFT.gear = k; render(); },
-
-  grant: function (runId) {
-    if (!DRAFT.gear) return say('先選一件。選哪一件等於選一句話。');
+  /* 老師只勾一個「可以」。挑哪一件是學生的事。 */
+  approve: function (runId) {
     var word = (document.getElementById('gr-word') || {}).value || '';
-    actGear(runId, DRAFT.gear, word.trim());
+    if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
     go('radar');
-    say('發出去了。學生那邊會空投落下，然後衝刺。');
-  },
-
-  rename: function (teamId) {
-    var v = (document.getElementById('rn-' + teamId) || {}).value || '';
-    if (!v.trim()) return say('要寫一個新的名字。');
-    var t2 = actRename(teamId, v.trim());
-    if (!t2) return say('名字沒有變。升一階代表又收斂了一次。');
-    say('招牌升成「' + SIGNS[RULES.SIGN_TIERS[t2.signTier]].name + '」了。收斂本身就是成果。');
+    say('回過去了。他們那邊會攤開三件裝備，自己挑一件帶走。');
   }
 };
+
+
+/* ===== 58-gate.js ===== */
+/* 門口：還沒登入之前看得到的每一頁。
+
+   四頁，一頁只問一件事：
+
+     gate   這是什麼、你要登入還是建帳號
+     login  帳號密碼
+     reg    加入碼 → 帳號密碼（學生自己開；老師與研究者的帳號由研究者開）
+     claim  你是名冊上的誰
+
+   為什麼認領要獨立一頁：如果讓學生自己打組名，五個人會打出五種寫法，
+   資料就對不起來了。老師先貼名冊，學生從裡面點自己——一次點擊，
+   不用打字，而且組別一定對得上。
+
+   密碼在這一版只是雜湊過的字串，擋得住肉眼、擋不住真的攻擊。
+   AUTH_NOTE 那句話會印在建立帳號那一頁上，不藏起來。 */
+
+/* ---------- 啟動 ---------- */
+PAGES.gate = function () {
+  var H = ['<div class="gate">'];
+  H.push('<div class="gate-box">');
+  H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
+  H.push('<h1>專案地下城</h1>');
+  H.push('<p class="lead">你的專案是一條往下挖的坑道。老師派里程碑，' +
+         '你自己決定花幾天——這裡不打分，只看你說的天數跟實際差多少。</p>');
+  H.push('<div class="row">');
+  H.push(btn('登入', 'go:login', 'big'));
+  H.push(btn('我是新的，建一個帳號', 'go:reg', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* ---------- 登入 ---------- */
+PAGES.login = function () {
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('登入', '你是誰', ''));
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">帳號</div>');
+  H.push('<input id="lg-acc" value="' + esc(draft('lg-acc')) + '" placeholder="' +
+         esc('註冊時取的帳號') + '">');
+  H.push('<div class="eyebrow">密碼</div>');
+  H.push('<input id="lg-pw" type="password" placeholder="' + esc('密碼') + '">');
+  H.push('</div>');
+  H.push('<div class="row">');
+  H.push(btn('進去', 'login', 'big'));
+  H.push(btn('還沒有帳號', 'go:reg', 'ghost'));
+  H.push('</div>');
+  H.push('<p class="dim">試用的帳號：學生 stu01 到 stu05、老師 tea01、研究者 lab01，' +
+         '密碼都是 ' + DEMO_PW + '。</p>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* ---------- 建立帳號 ----------
+   只有學生走這一頁。老師跟研究者的帳號由研究者開，因為那兩種身分
+   看得到別人的資料——能自己註冊的話，任何人貼一個加入碼就變成老師了。 */
+PAGES.reg = function () {
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('建立帳號', '先報上你在哪一班',
+    '加入碼跟老師拿。老師與研究者的帳號不從這裡開——請研究者幫你建。'));
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">班級加入碼</div>');
+  H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
+         esc('六個英數字，跟老師拿') + '">');
+  H.push('<div class="eyebrow">帳號</div>');
+  H.push('<input id="rg-acc" value="' + esc(draft('rg-acc')) + '" placeholder="' +
+         esc('至少三個字，登入用') + '">');
+  H.push('<div class="eyebrow">密碼</div>');
+  H.push('<input id="rg-pw" type="password" placeholder="' + esc('至少四個字') + '">');
+  H.push('</div>');
+  H.push('<div class="row">');
+  H.push(btn('建立', 'reg', 'big'));
+  H.push(btn('我有帳號了', 'go:login', 'ghost'));
+  H.push('</div>');
+  H.push('<p class="dim">' + esc(AUTH_NOTE) + '</p>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* ---------- 認領身分 ----------
+   登入了但還沒對上名冊。這一頁不能跳過——沒有組別，坑道就不知道要挖哪一條。 */
+PAGES.claim = function () {
+  var u = me();
+  var free = freeRoster(u.classId);
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('你是誰', '從名冊上點自己',
+    '點一下就好，不用打字。點錯了找研究者解開，再點一次。'));
+
+  if (!free.length) {
+    H.push('<div class="card dim">這個班的名冊還沒貼，或是名字都被認領完了。' +
+           '找老師或研究者確認一次。</div>');
+    H.push(btn('登出', 'logout', 'ghost'));
+    H.push('</div></div>');
+    return H.join('');
+  }
+
+  /* 照組別分堆。同一組的名字排在一起，找自己比較快。 */
+  var byTeam = {};
+  free.forEach(function (r) {
+    (byTeam[r.teamName] = byTeam[r.teamName] || []).push(r);
+  });
+  Object.keys(byTeam).forEach(function (name) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">' + esc(name) + '</div>');
+    H.push('<div class="tags">');
+    byTeam[name].forEach(function (r) {
+      H.push('<button class="tag" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'claim:' + r.rosterId })) + '\'>' +
+        esc(r.memberName) + '</button>');
+    });
+    H.push('</div></div>');
+  });
+  H.push(btn('登出', 'logout', 'ghost'));
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* ---------- 門口的動作 ---------- */
+
+ACTS.login = function () {
+  var acc = (document.getElementById('lg-acc') || {}).value || '';
+  var pw = (document.getElementById('lg-pw') || {}).value || '';
+  var r = actLogin(acc, pw);
+  if (r.err) { DRAFT['lg-acc'] = acc; return say(r.err); }
+  signIn(r.user);
+};
+
+ACTS.reg = function () {
+  var o = {
+    code: (document.getElementById('rg-code') || {}).value || '',
+    account: (document.getElementById('rg-acc') || {}).value || '',
+    password: (document.getElementById('rg-pw') || {}).value || '',
+    role: 'student'
+  };
+  var r = actRegister(o);
+  if (r.err) {
+    DRAFT['rg-code'] = o.code; DRAFT['rg-acc'] = o.account;
+    return say(r.err);
+  }
+  signIn(r.user);
+  say('帳號好了。接下來從名冊上點自己是誰。');
+};
+
+ACTS.claim = function (rosterId) {
+  var r = actClaim(S.who, rosterId);
+  if (r.err) return say(r.err);
+  go('home');
+  say('對上了。這條坑道從現在起是你們的。');
+};
+
+ACTS.logout = function () {
+  DB.Session = null;
+  save();
+  S.who = null;
+  go('gate');
+};
+
+/* 登入成功之後要去哪。學生還沒認領就先去認領——這件事沒做完，
+   後面每一頁都不知道要畫哪一組。 */
+function signIn(u) {
+  S.who = u.userId;
+  DB.Session = u.userId;
+  save();
+  DRAFT = {};
+  go(homeFor(u));
+}
+
+function homeFor(u) {
+  if (u.role === 'researcher') return 'rs';
+  if (u.role === 'teacher') return 'radar';
+  if (!u.teamId) return 'claim';
+  return 'home';
+}
 
 
 /* ===== 60-student.js ===== */
@@ -1589,6 +2534,14 @@ PAGES.home = function () {
   var light = WORLD.light[st.level];
 
   var H = [];
+
+  /* ── 你在第幾步 ── */
+  H.push(stepBar([
+    ['接任務', '你決定花幾天'],
+    ['每天推進', '動過就按一下'],
+    ['交出去', '比對你承諾的天數'],
+    ['挑裝備', '三選一，你自己挑']
+  ], STEP_AT[next.kind] == null ? -1 : STEP_AT[next.kind]));
 
   /* ── 坑道口：招牌 ── */
   H.push('<div class="tunnel ' + light.key + '">');
@@ -1624,7 +2577,7 @@ PAGES.home = function () {
   /* ── 裝備架 ── */
   var gs = gearsOf(t.teamId);
   if (gs.length) {
-    H.push('<div class="card"><div class="eyebrow">老師給過的</div><div class="gear-row">');
+    H.push('<div class="card"><div class="eyebrow">你挑走的</div><div class="gear-row">');
     gs.forEach(function (g) {
       var d = RULES.gearOf(g.key);
       if (d) H.push('<span class="gear" title="' + esc(d.why) + '">' + d.icon + '<i>' + esc(d.name) + '</i></span>');
@@ -1632,7 +2585,28 @@ PAGES.home = function () {
     H.push('</div></div>');
   }
 
+  /* ── 招牌 ── */
+  var ns = nextSignIn(t.teamId);
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">坑道口的招牌</div>');
+  H.push('<p class="dim">上面寫什麼是你們的事，老師不替你們命名。' +
+         '材質不是——那個是挖出來的' +
+         (ns.need ? '，再走完 ' + ns.need + ' 個里程碑會換成「' + esc(ns.name) + '」' : '') + '。</p>');
+  H.push('<div class="rn-row">');
+  H.push('<input id="pj-name" value="' + esc(t.project || '') +
+         '" placeholder="' + esc('這個專案現在叫什麼') + '">');
+  H.push(btn('換字', 'rename', 'ghost'));
+  H.push('</div></div>');
+
   return H.join('');
+};
+
+/* nextThing 回的那個字，對到步驟條的第幾格。 */
+var STEP_AT = {
+  commit: 0,
+  push: 1, waiting: 1, wake: 1,
+  submit: 2, camp: 2, review: 2,
+  gear: 3
 };
 
 /* 準度的一句話。從數字組出來，不是寫死的。 */
@@ -1707,10 +2681,10 @@ function actionCard(t, next, st) {
     H.push(btn('決定天數', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'push') {
-    H.push('<div class="eyebrow">今天</div>');
-    H.push('<h2>推進一格。</h2>');
+    H.push('<div class="eyebrow">今天　·　' + esc(row.ms.title) + '</div>');
+    H.push('<h2>今天去動它一下，然後按這顆鍵。</h2>');
     H.push('<p class="dim">不用交東西，也不用寫字。按下去就算今天動過了——' +
-           '重點是不要停，不是一次做完。</p>');
+           '重點是不要停，不是一次做完。真的做完了就按旁邊那顆。</p>');
     H.push('<div class="row">');
     H.push(btn('推進', 'push:' + row.run.runId, 'big'));
     H.push(btn('提早做完了', 'go:submit:' + row.run.runId, 'ghost'));
@@ -1731,11 +2705,12 @@ function actionCard(t, next, st) {
     H.push(btn('去營火旁', 'go:camp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'gear') {
-    var g = RULES.gearOf(row.run.gear);
-    H.push('<div class="eyebrow">老師給了你一件東西</div>');
-    H.push('<h2>' + (g ? g.icon + ' ' + esc(g.name) : '裝備') + '</h2>');
+    H.push('<div class="eyebrow">老師看完了</div>');
+    H.push('<h2>挑一件帶走。</h2>');
     if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
-    H.push(btn('接下', 'gear:' + row.run.runId, 'big'));
+    H.push('<p class="dim">會攤開三件。挑哪一件是你的事——' +
+           '那句話是給你自己讀的。</p>');
+    H.push(btn('去挑', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'waiting') {
     H.push('<div class="eyebrow">今天推過了</div>');
@@ -1890,6 +2865,33 @@ PAGES.camp = function () {
   return H.join('');
 };
 
+/* ---------- 三選一 ----------
+   攤開的是哪三件，跟你這一次做得如何完全無關（見 offerGears）。
+   它問的不是「你值得什麼」，是「這一次你想記住哪一句」。 */
+PAGES.pick = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId);
+
+  var H = [head('挑一件', m.title,
+    '三件裡挑一件帶走。攤開哪三件是隨機的，跟你這一次做得如何沒有關係——' +
+    '每一件底下那句話，是你自己選要記住的。')];
+
+  if (r.word) {
+    H.push('<div class="card"><div class="eyebrow">老師說</div>' +
+           '<p class="quote">' + nl(r.word) + '</p></div>');
+  }
+
+  H.push('<div class="card"><div class="gear-pick">');
+  offerGears(r.runId).forEach(function (g) {
+    H.push('<button class="gcard" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'take:' + r.runId + '|' + g.key })) + '\'>' +
+      '<b>' + g.icon + '</b><i>' + esc(g.name) + '</i><em>' + esc(g.why) + '</em></button>');
+  });
+  H.push('</div></div>');
+  return H.join('');
+};
+
 /* ---------- 大躍進 ---------- */
 PAGES.dash = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
@@ -1898,8 +2900,9 @@ PAGES.dash = function () {
   var H = ['<div class="dash">'];
   H.push(pxTag(HERO.dash, HERO.pal, 'ch big'));
   H.push('<h1>' + (g ? g.icon + ' ' + esc(g.name) : '裝備') + ' 到手</h1>');
+  if (g) H.push('<p class="lead">' + esc(g.why) + '</p>');
   if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
-  if (g) H.push('<p class="dim">' + esc(g.why) + '</p>');
+  H.push('<p class="dim">深度 ' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m。</p>');
   H.push('</div>');
   H.push(btn('回坑道', 'go:home', 'big'));
   return H.join('');
@@ -2039,11 +3042,15 @@ PAGES.eco = function () {
   H.push('<div class="eco-scroll">' + ecoScene(rows, t.teamId) + '</div>');
   H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
          '坑道長度本來就不同——這裡沒有共同的終點線。</p>');
-  H.push(btn('回坑道', 'go:home', 'ghost'));
+  H.push(btn('回自己的坑道', 'go:home', 'ghost'));
   return H.join('');
 };
 
-/* ---------- 老師看到的（同一張圖，多一排改招牌） ---------- */
+/* ---------- 老師看到的：各組進度 ----------
+
+   跟學生看的是同一張剖面圖，底下多一段可以讀的細節。
+   細節只講「他們現在在哪一步、承諾了幾天、推了幾天」——不排序、不比較，
+   順序照名冊。老師在這一頁不做任何動作，這裡是拿來看的。 */
 PAGES.classeco = function () {
   var u = me();
   var rows = ecology(u.classId).map(function (r) {
@@ -2051,29 +3058,65 @@ PAGES.classeco = function () {
     r.project = tm && tm.project;
     return r;
   });
-  var H = [head('全班地下城', '每一組挖到哪',
-    '深度是走完幾個里程碑。每一組的專案不一樣，坑道長度本來就不同。')];
+  var H = [head('各組進度', '每一組挖到哪',
+    '深度是走完幾個里程碑。每一組的專案不一樣，坑道長度本來就不同——' +
+    '這裡沒有共同的終點線，也沒有排名。')];
   H.push('<div class="eco-scroll">' + ecoScene(rows, null) + '</div>');
 
-  /* 改寫專案名稱 → 招牌升一階 */
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">改寫專案名稱</div>');
-  H.push('<p class="dim">名稱收斂了就改寫一次。坑道口的招牌會從木牌升成鐵牌、' +
-         '再升成會發光的銘牌——不用多說一句話，材質就是肯定。</p>');
   rows.forEach(function (r) {
     var t = teamOf(r.teamId);
-    var sg = SIGNS[RULES.SIGN_TIERS[Math.min(2, t.signTier || 0)]];
-    var top = (t.signTier || 0) >= RULES.SIGN_TIERS.length - 1;
-    H.push('<div class="rn-row">');
+    var sg = signOf(r.teamId);
+    var acc = accuracyOf(r.teamId);
+    var all = runsFor(r.teamId);
+    var cur = all.filter(function (x) { return x.run.state === 'running'; })[0];
+    var wait = all.filter(function (x) { return x.run.state === 'submitted'; })[0];
+    var camp = all.filter(function (x) { return x.run.state === 'judged'; })[0];
+    var offer = all.filter(function (x) { return x.run.state === 'approved'; })[0];
+
+    H.push('<div class="card tm">');
+    H.push('<div class="radar-head">');
     H.push(pxTag(sg.px, sg.pal, 'sign-s'));
     H.push('<b>' + esc(t.name) + '</b>');
-    H.push('<input id="rn-' + t.teamId + '" value="' + esc(t.project || '') +
-           '" placeholder="' + esc('重寫一次專案名稱') + '">');
-    H.push('<span class="sg-tier' + (top ? ' top' : '') + '">' + esc(sg.name) + '</span>');
-    H.push(btn('改寫', 'rename:' + t.teamId, 'ghost'));
+    H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
+    H.push('<span class="sp"></span>');
+    H.push('<span class="dim">深度 ' + (r.depth * WORLD.depthPerMilestone) + ' m</span>');
+    H.push('</div>');
+
+    /* 現在在做什麼 */
+    if (wait) {
+      H.push('<p class="lead">在等你看：' + esc(wait.ms.title) + '</p>');
+      H.push(btn('去勾', 'go:review:' + wait.run.runId, ''));
+    } else if (offer) {
+      H.push('<p class="dim">你勾過了，他們還沒挑裝備：' + esc(offer.ms.title) + '</p>');
+    } else if (camp) {
+      H.push('<p class="dim">交了，正在營火旁說卡在哪：' + esc(camp.ms.title) + '</p>');
+    } else if (cur) {
+      var run = cur.run;
+      H.push('<p class="lead">正在挖：' + esc(cur.ms.title) + '</p>');
+      H.push('<div class="log-num">自己承諾 <b>' + run.est + '</b> 天　·　已推進 <b>' +
+             run.pushes + '</b> 天' +
+             (r.stall >= 2 ? '　·　<span class="warnx">' + r.stall + ' 級休息中</span>' :
+              r.stall === 1 ? '　·　<span class="dim">慢下來了</span>' : '') + '</div>');
+      if (run.risks && run.risks.length) {
+        H.push('<div class="tags small"><span class="k">他們事先標的風險</span>');
+        run.risks.forEach(function (k) {
+          var d = RULES.snagOf(k);
+          if (d) H.push('<span class="tag static">' + d.icon + ' ' + esc(d.label) + '</span>');
+        });
+        H.push('</div>');
+      }
+    } else {
+      H.push('<p class="dim">手上沒有里程碑。派一個給他們就會開始。</p>');
+    }
+
+    /* 走過的準度。這是他們的體感，不是成績。 */
+    if (acc.total) {
+      H.push('<div class="log-num">走完 <b>' + r.depth + '</b> 個　·　' +
+             '準 <b>' + acc.exact + '</b>　早 <b>' + acc.early + '</b>　失準 <b>' +
+             acc.late + '</b></div>');
+    }
     H.push('</div>');
   });
-  H.push('</div>');
   return H.join('');
 };
 
@@ -2081,23 +3124,54 @@ PAGES.classeco = function () {
 /* ===== 70-teacher.js ===== */
 /* 老師端。
 
-   三頁：雷達（誰交了）、里程碑（派什麼）、全班地下城（誰在哪）。
-   他做的事只有兩件：派一個里程碑、看完之後遞一件裝備過去。
+   他只做三件事，側欄就只有三格：
 
-   系統不替他決定任何事，也不用分數轉譯他的判斷——
-   他選哪一件裝備，就等於他說了哪一句話。 */
+     發里程碑   要他們交什麼
+     審核       他們交了，你看完勾一個「可以」
+     各組進度   誰在哪、誰慢下來了
 
-/* ---------- 雷達 ---------- */
+   他不決定期限（那是學生拉滑桿承諾的），不打分，也不挑裝備——
+   勾完可以之後，學生自己從三件裡挑一件。少一件他要煩惱的事，
+   就少一次「老師替我決定」的機會。 */
+
+/* 老師走到哪一步了。有人等你看就是第三步，其餘看班上有沒有人在挖。 */
+function teacherStep(classId) {
+  if (radar(classId).length) return 2;
+  var running = where('Runs', function (r) { return r.state === 'running'; }).length;
+  if (running) return 1;
+  return 0;
+}
+
+var TEACHER_STEPS = [
+  ['發里程碑', '寫要交什麼'],
+  ['他們承諾天數', '這一段你不用管'],
+  ['審核', '看完勾一個可以']
+];
+
+/* ---------- 審核（首頁） ---------- */
 PAGES.radar = function () {
   var u = me();
   var rows = radar(u.classId);
   var eco = ecology(u.classId);
-  var H = [head('雷達', '誰交了',
-    '照等最久的排。綠光是完工——拉近看檔案與他們說的卡關原因。')];
+  var H = [];
+
+  H.push(stepBar(TEACHER_STEPS, teacherStep(u.classId)));
+
+  H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '目前沒有等你看的',
+    rows.length
+      ? '照等最久的排。看完他們交的東西，回來勾一個「可以」——挑哪一件裝備是他們的事。'
+      : '學生交出去之後會排在這裡。在那之前，你可以去發下一個里程碑。'));
 
   if (!rows.length) {
-    H.push('<div class="card dim">目前沒有人在等你。學生交出去之後會亮在這裡。</div>');
+    H.push('<div class="card">');
+    H.push('<p class="dim">現在沒有人在等你。要開始的話，去發一個里程碑——' +
+           '只要寫他們要交什麼，期限他們自己會決定。</p>');
+    H.push('<div class="row">');
+    H.push(btn('去發一個里程碑', 'go:ms', 'big'));
+    H.push(btn('看各組進度', 'go:classeco', 'ghost'));
+    H.push('</div></div>');
   }
+
   rows.forEach(function (x) {
     var s = RULES.STAMPS[x.run.stamp];
     H.push('<div class="card radar-row">');
@@ -2126,11 +3200,11 @@ PAGES.radar = function () {
       });
       H.push('</div>');
     }
-    H.push(btn('看完了，發裝備', 'go:grant:' + x.run.runId, ''));
+    H.push(btn('看完了，去勾', 'go:review:' + x.run.runId, ''));
     H.push('</div>');
   });
 
-  /* 底下：全班一眼 */
+  /* 底下：全班一眼。詳細的在「各組進度」。 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">全班現在</div>');
   H.push('<div class="mini">');
@@ -2140,20 +3214,23 @@ PAGES.radar = function () {
       (e.stall >= 2 ? '休息中' : e.stall === 1 ? '慢下來了' : e.onMs ? '挖掘中' : '等派任務') +
       '</span><span class="dim">深度 ' + e.depth + '</span></div>');
   });
-  H.push('</div></div>');
+  H.push('</div>');
+  H.push(btn('看各組進度', 'go:classeco', 'ghost'));
+  H.push('</div>');
   return H.join('');
 };
 
-/* ---------- 發裝備 ---------- */
-PAGES.grant = function () {
+/* ---------- 勾一個可以 ---------- */
+PAGES.review = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var m = msOf(r.msId), t = teamOf(r.teamId);
   var s = RULES.STAMPS[r.stamp];
   var acc = accuracyOf(r.teamId);
 
-  var H = [head('發裝備', t.name + '　·　' + m.title,
-    '選哪一件等於說哪一句話。每一件都綁一個理由——你選的是那句話。')];
+  var H = [head('審核', t.name + '　·　' + m.title,
+    '東西他們交在你原本收的地方。這裡要你做的只有一件事：勾一個「可以」。' +
+    '想說一句話再說，不想說就直接勾。')];
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + s.mark + ' ' +
@@ -2173,29 +3250,25 @@ PAGES.grant = function () {
   }
   H.push('</div>');
 
-  H.push('<div class="card"><div class="eyebrow">選一件</div><div class="gear-pick">');
-  RULES.GEARS.forEach(function (g) {
-    var on = DRAFT.gear === g.key;
-    H.push('<button class="gcard' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'pickgear:' + g.key })) + '\'>' +
-      '<b>' + g.icon + '</b><i>' + esc(g.name) + '</i><em>' + esc(g.why) + '</em></button>');
-  });
-  H.push('</div></div>');
-
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">再加一句　選填</div>');
+  H.push('<div class="eyebrow">說一句話　選填</div>');
+  H.push('<p class="dim">這句話會出現在他們挑裝備的那一頁。' +
+         '講你看到什麼就好，不用講他們該怎麼改。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪談這種事最容易低估，你們沒有。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
+  H.push('<div class="card dim">勾完之後，他們那邊會攤開三件裝備自己挑一件。' +
+         '攤開哪三件是隨機的，跟他們做得如何無關——那是給他們自己留的一句話，不是你的評語。</div>');
+
   H.push('<div class="row">');
-  H.push(btn('發出去', 'grant:' + r.runId, 'big'));
-  H.push(btn('回雷達', 'go:radar', 'ghost'));
+  H.push(btn('可以', 'approve:' + r.runId, 'big'));
+  H.push(btn('回審核清單', 'go:radar', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
 
-/* ---------- 里程碑 ---------- */
+/* ---------- 發里程碑 ---------- */
 PAGES.ms = function () {
   var u = me();
   var list = where('Milestones', function (m) { return m.classId === u.classId; })
@@ -2203,9 +3276,11 @@ PAGES.ms = function () {
   var teams = where('Teams', function (t) { return t.classId === u.classId; });
   var to = DRAFT.to || [];
 
-  var H = [head('里程碑', '你要他們交什麼',
-    '一次派一個。派出去之後，學生那邊會先被問「你打算花幾天」——' +
-    '期限是他們自己訂的，不是你。')];
+  var H = [];
+  H.push(stepBar(TEACHER_STEPS, 0));
+  H.push(head('發里程碑', '你要他們交什麼',
+    '一次派一個。寫要交什麼就好——派出去之後，學生那邊會先被問「你打算花幾天」，' +
+    '期限是他們自己訂的，不是你。'));
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">派一個新的</div>');
@@ -2224,6 +3299,10 @@ PAGES.ms = function () {
   H.push('</div>');
   H.push(btn('派出去', 'publish', 'big'));
   H.push('</div>');
+
+  if (!list.length) {
+    H.push('<div class="card dim">還沒派過。派出去之後，這裡會列出各組各自承諾了幾天。</div>');
+  }
 
   list.forEach(function (m) {
     var got = where('Runs', function (r) { return r.msId === m.msId; });
@@ -2249,17 +3328,288 @@ PAGES.ms = function () {
   return H.join('');
 };
 
-/* 全班地下城（老師版）也搬到 62-eco.js——跟學生看的是同一張圖。 */
+/* 各組進度那一頁在 62-eco.js——跟學生看的是同一張剖面圖。 */
+
+
+/* ===== 75-research.js ===== */
+/* 研究者端。
+
+   這一端不是給老師用的，也不進坑道。它做三件事：
+
+     帳號   建班、開老師的帳號、重設密碼、解除認領、刪帳號
+     名冊   把班上的名單貼進來，學生才點得到自己
+     紀錄   每一個動作的流水帳，可以匯出
+
+   紀錄那一頁是這個研究真正的資料。它記的是行為的形狀——承諾幾天、
+   哪一天推進、判定結果、卡在哪——不記作業內容，因為系統本來就不收作業。
+   看得到誰做了什麼，看不到他做得好不好。 */
+
+function rsClassId() {
+  var c = DRAFT.rsClass ? find('Classes', function (x) { return x.classId === DRAFT.rsClass; }) : null;
+  if (c) return c.classId;
+  return DB.Classes.length ? DB.Classes[0].classId : '';
+}
+
+/* 換班的那一排。只有一個班就不畫——一個選項的選單是雜訊。 */
+function classPicker() {
+  if (DB.Classes.length < 2) return '';
+  var cur = rsClassId();
+  var H = ['<div class="tags">'];
+  DB.Classes.forEach(function (c) {
+    H.push('<button class="tag' + (c.classId === cur ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'rscls:' + c.classId })) + '\'>' + esc(c.name) + '</button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
+
+var ROLE_SAY = { student: '學生', teacher: '老師', researcher: '研究者' };
+
+/* ---------- 帳號 ---------- */
+PAGES.rs = function () {
+  var cid = rsClassId();
+  var H = [head('帳號', '誰在這個系統裡',
+    '學生自己用加入碼註冊。老師與研究者的帳號從這裡開——那兩種身分看得到別人的資料，' +
+    '所以不開放自己註冊。')];
+
+  H.push(classPicker());
+
+  /* 班級 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">班級</div>');
+  DB.Classes.forEach(function (c) {
+    var t = userOf(c.teacherId);
+    H.push('<div class="rn-row"><b>' + esc(c.name) + '</b>' +
+      '<span class="dim">加入碼 ' + esc(c.joinCode) + '　·　' +
+      where('Teams', function (x) { return x.classId === c.classId; }).length + ' 組　·　' +
+      '老師 ' + esc(t ? t.name : '（還沒指定）') + '</span></div>');
+  });
+  H.push('<div class="eyebrow" style="margin-top:14px">開一個新的班</div>');
+  H.push('<div class="rn-row">');
+  H.push('<input id="ncls" placeholder="' + esc('班級名稱，例：設計專題') + '">');
+  H.push(btn('建立', 'newclass', 'ghost'));
+  H.push('</div>');
+  H.push('</div>');
+
+  /* 開一個老師或研究者 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">開一個老師或研究者的帳號</div>');
+  H.push('<div class="rn-row">');
+  H.push('<input id="nu-acc" placeholder="' + esc('帳號') + '">');
+  H.push('<input id="nu-name" placeholder="' + esc('顯示名稱') + '">');
+  H.push('<input id="nu-pw" placeholder="' + esc('先給一個密碼，之後請他自己換') + '">');
+  H.push('</div>');
+  H.push('<div class="row" style="margin:11px 0 0">');
+  H.push(btn('建老師', 'newuser:teacher', 'ghost'));
+  H.push(btn('建研究者', 'newuser:researcher', 'ghost'));
+  H.push('</div>');
+  H.push('</div>');
+
+  /* 帳號清單 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">帳號　' + DB.Users.length + ' 個</div>');
+  DB.Users.forEach(function (u) {
+    var t = u.teamId ? teamOf(u.teamId) : null;
+    H.push('<div class="rn-row">');
+    H.push('<b>' + esc(u.name) + '</b>');
+    H.push('<span class="dim">' + esc(u.account) + '　·　' + esc(ROLE_SAY[u.role] || u.role) +
+      (t ? '　·　' + esc(t.name) : '') +
+      (u.lastLogin ? '　·　上次登入 ' + daysBetween(u.lastLogin, now()) + ' 天前' : '　·　還沒登入過') +
+      '</span>');
+    H.push('<span class="sp" style="flex:1"></span>');
+    H.push(btn('重設密碼', 'respw:' + u.userId, 'ghost'));
+    H.push(btn('刪除', 'deluser:' + u.userId, 'ghost'));
+    H.push('</div>');
+  });
+  H.push('</div>');
+  return H.join('');
+};
+
+/* ---------- 名冊 ---------- */
+PAGES.roster = function () {
+  var cid = rsClassId();
+  var rows = where('Roster', function (r) { return r.classId === cid; });
+  var H = [head('名冊', '誰在這個班',
+    '一行一組，像「甲：小明, 小華」。貼上去之後，學生註冊完就從裡面點自己是誰——' +
+    '不用他們自己打組名，資料才對得起來。')];
+
+  H.push(classPicker());
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">貼上名冊</div>');
+  H.push('<textarea id="rt" rows="6" placeholder="' +
+    esc('甲：小明, 小華, 阿哲\n乙：怡君, 小柏\n丙：家豪, 品彤, 宥廷') + '">' +
+    esc(draft('rt')) + '</textarea>');
+  H.push('<p class="dim">同一組再貼一次不會重建，只會補上新的名字。' +
+         '已經被認領的名字不會被洗掉。</p>');
+  H.push(btn('存進去', 'saveroster', ''));
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">現在的名冊　' + rows.length + ' 人</div>');
+  if (!rows.length) H.push('<p class="dim">還沒有人。貼一份上去。</p>');
+  rows.forEach(function (r) {
+    var u = r.claimedBy ? userOf(r.claimedBy) : null;
+    H.push('<div class="rn-row">');
+    H.push('<b>' + esc(r.teamName) + '</b>');
+    H.push('<span>' + esc(r.memberName) + '</span>');
+    H.push('<span class="sp" style="flex:1"></span>');
+    if (u) {
+      H.push('<span class="dim">' + esc(u.account) + ' 認領了</span>');
+      H.push(btn('解除', 'unclaim:' + r.rosterId, 'ghost'));
+    } else {
+      H.push('<span class="dim">還沒有人認領</span>');
+    }
+    H.push('</div>');
+  });
+  H.push('</div>');
+  return H.join('');
+};
+
+/* ---------- 紀錄 ---------- */
+PAGES.events = function () {
+  var cid = rsClassId();
+  var only = DRAFT.evTeam || '';
+  var all = eventsOf(cid, only ? { teamId: only } : null);
+  var show = all.slice(0, 200);
+
+  var H = [head('紀錄', all.length + ' 筆',
+    '每一個會改到資料的動作都留一筆。記的是行為的形狀——承諾幾天、哪一天推進、' +
+    '判定結果、卡在哪。系統不收作業，所以這裡看不到任何作業內容。')];
+
+  H.push(classPicker());
+
+  /* 篩組別 */
+  H.push('<div class="tags">');
+  H.push('<button class="tag' + (only ? '' : ' on') + '" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'evteam:' })) + '\'>全班</button>');
+  where('Teams', function (t) { return t.classId === cid; }).forEach(function (t) {
+    H.push('<button class="tag' + (only === t.teamId ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'evteam:' + t.teamId })) + '\'>' + esc(t.name) + '</button>');
+  });
+  H.push('</div>');
+
+  /* 匯出 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">匯出　CSV</div>');
+  H.push('<p class="dim">貼進試算表就能算。欄位：時間、角色、組別、事件、說明。</p>');
+  H.push('<textarea id="csv" rows="4" readonly>' + esc(exportCsv(cid)) + '</textarea>');
+  H.push(btn('存成檔案', 'csv', 'ghost'));
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">流水帳' +
+    (all.length > show.length ? '　只列最近 ' + show.length + ' 筆' : '') + '</div>');
+  if (!show.length) H.push('<p class="dim">還沒有動作。</p>');
+  show.forEach(function (e) {
+    var t = e.teamId ? teamOf(e.teamId) : null;
+    H.push('<div class="rn-row">');
+    H.push('<b>' + esc(t ? t.name : (ROLE_SAY[e.role] || '')) + '</b>');
+    H.push('<span>' + esc(evSay(e)) + '</span>');
+    H.push('<span class="sp" style="flex:1"></span>');
+    H.push('<span class="dim">' + daysBetween(e.at, now()) + ' 天前</span>');
+    H.push('</div>');
+  });
+  H.push('</div>');
+  return H.join('');
+};
+
+/* ---------- 研究者的動作 ---------- */
+
+ACTS.rscls = function (id) { DRAFT.rsClass = id; render(); };
+ACTS.evteam = function (id) { DRAFT.evTeam = id; render(); };
+
+ACTS.newclass = function () {
+  var v = (document.getElementById('ncls') || {}).value || '';
+  if (!v.trim()) return say('先給這個班一個名字。');
+  var r = actCreateClass(v.trim(), '');
+  DRAFT.rsClass = r.klass.classId;
+  render();
+  say('建好了。加入碼是 ' + r.klass.joinCode + '——把它給學生。');
+};
+
+ACTS.newuser = function (role) {
+  var acc = (document.getElementById('nu-acc') || {}).value || '';
+  var name = (document.getElementById('nu-name') || {}).value || '';
+  var pw = (document.getElementById('nu-pw') || {}).value || '';
+  var kl = find('Classes', function (c) { return c.classId === rsClassId(); });
+  var r = actRegister({
+    account: acc, password: pw, name: name, role: role,
+    code: kl ? kl.joinCode : ''
+  });
+  if (r.err) return say(r.err);
+  /* 老師要跟班綁在一起，不然他打開來看不到任何一組 */
+  if (role === 'teacher' && kl && !kl.teacherId) { kl.teacherId = r.user.userId; save(); }
+  say((role === 'teacher' ? '老師' : '研究者') + '帳號好了。請他用這個密碼登入之後自己換掉。');
+};
+
+ACTS.respw = function (userId) {
+  var pw = (document.getElementById('nu-pw') || {}).value || '';
+  if (!pw.trim()) return say('先在上面那格「先給一個密碼」寫一個新的，再按重設。');
+  var r = actResetPw(userId, pw.trim());
+  if (r.err) return say(r.err);
+  say(userOf(userId).name + ' 的密碼換成你寫的那一個了。');
+};
+
+ACTS.deluser = function (userId) {
+  if (DRAFT.del !== userId) {
+    DRAFT.del = userId;
+    return say('再按一次「刪除」就真的刪掉 ' + userOf(userId).name + ' 的帳號。');
+  }
+  var name = userOf(userId).name;
+  var r = actDeleteUser(userId);
+  DRAFT.del = null;
+  if (r.err) return say(r.err);
+  if (userId === S.who) return ACTS.logout();
+  render();
+  say(name + ' 的帳號刪掉了。他認領過的名字放回名冊上了。');
+};
+
+ACTS.saveroster = function () {
+  var v = (document.getElementById('rt') || {}).value || '';
+  var r = actSaveRoster(rsClassId(), v);
+  if (r.err) { DRAFT.rt = v; return say(r.err); }
+  DRAFT.rt = '';
+  render();
+  say('存好了，補上 ' + r.added + ' 個名字。');
+};
+
+ACTS.unclaim = function (rosterId) {
+  var r = actUnclaim(rosterId);
+  if (r.err) return say(r.err);
+  render();
+  say('解開了。那個人重新登入之後可以再點一次。');
+};
+
+ACTS.csv = function () {
+  var name = '專案地下城-紀錄.csv';
+  try {
+    /* BOM，不然 Excel 開起來中文是亂碼 */
+    var blob = new Blob(['﻿' + exportCsv(rsClassId())], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    say('存成 ' + name + ' 了。');
+  } catch (e) {
+    say('這個瀏覽器不給存檔。上面那格的字全選複製也一樣。');
+  }
+};
 
 
 /* ===== 80-app.js ===== */
 /* 開機。 */
 
 (function () {
-  /* 資料結構換過就重種一次，不要拿舊的撐新的畫面 */
-  if (!load() || !DB.Milestones || !DB.Runs) seed();
-  S.who = 'U1';
-  S.page = 'home';
+  /* 資料結構換過就重種一次，不要拿舊的撐新的畫面。
+     Events 是後來才加的表——舊的存檔沒有它，畫面一讀就會炸。 */
+  if (!load() || !DB.Milestones || !DB.Runs || !DB.Events) seed();
+
+  /* 上次登入的人還記得。關掉分頁再打開不用重登。 */
+  var u = DB.Session ? userOf(DB.Session) : null;
+  if (u) { S.who = u.userId; S.page = homeFor(u); }
+  else { S.who = null; S.page = 'gate'; }
   render();
 })();
 

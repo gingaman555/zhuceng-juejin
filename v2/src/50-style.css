@@ -385,3 +385,47 @@ a.plain:hover{color:var(--gold)}
   .side{display:none}
   .wrap{padding:22px}
 }
+
+/* ---------- 步驟條 ----------
+   不是教學，是位置：亮著的那一格就是現在輪到你的。 */
+
+.steps{display:flex;gap:0;margin:0 0 22px;flex-wrap:wrap}
+.step{
+  flex:1;min-width:154px;display:flex;align-items:flex-start;gap:11px;
+  padding:11px 14px;background:var(--sunk);border:1px solid var(--line);
+  border-right:none;color:var(--mute)
+}
+.step:last-child{border-right:1px solid var(--line)}
+.step b{
+  flex:0 0 22px;width:22px;height:22px;line-height:22px;text-align:center;
+  font-size:11px;font-weight:400;background:var(--line);color:var(--bg)
+}
+.step i{display:block;font-style:normal;font-size:22px;line-height:1.4}
+.step em{display:block;font-style:normal;font-size:11px;line-height:1.7;margin-top:3px}
+.step.past{color:var(--dim)}
+.step.past b{background:var(--gold-d);color:var(--Ll)}
+.step.on{background:var(--Lbg);border-color:var(--gold-d);color:var(--ink)}
+.step.on b{background:var(--gold);color:#1A1408}
+.step.on em{color:var(--dim)}
+
+/* 老師端各組進度的一張卡 */
+.tm .radar-head b{font-size:22px}
+
+/* ---------- 門口 ----------
+   還不知道你是誰的時候，畫面上不該有側欄、頂條、深度、組名。
+   只有一欄，置中，寬度剛好一句話讀得完。 */
+
+.gate{display:flex;justify-content:center;padding:44px 0 88px}
+.gate-box{width:100%;max-width:539px}
+.gate-box .px.sign{width:88px;height:88px;margin-bottom:22px}
+.gate-box h1{font-size:44px}
+.gate-box .lead{max-width:none}
+.gate-box .eyebrow{margin-top:11px}
+
+.badge.r{background:#5A8F6B;color:#EAF6EE}
+.side-foot{padding:11px 22px 22px;border-top:1px solid var(--line)}
+
+/* 研究者那幾頁的一排：名字、說明、幾顆小鍵 */
+.rn-row .btn.ghost{padding:5px 11px;font-size:11px}
+.rn-row span{font-size:11px}
+.rn-row input{min-width:132px}

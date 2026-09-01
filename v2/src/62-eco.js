@@ -101,11 +101,15 @@ PAGES.eco = function () {
   H.push('<div class="eco-scroll">' + ecoScene(rows, t.teamId) + '</div>');
   H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
          '坑道長度本來就不同——這裡沒有共同的終點線。</p>');
-  H.push(btn('回坑道', 'go:home', 'ghost'));
+  H.push(btn('回自己的坑道', 'go:home', 'ghost'));
   return H.join('');
 };
 
-/* ---------- 老師看到的（同一張圖，多一排改招牌） ---------- */
+/* ---------- 老師看到的：各組進度 ----------
+
+   跟學生看的是同一張剖面圖，底下多一段可以讀的細節。
+   細節只講「他們現在在哪一步、承諾了幾天、推了幾天」——不排序、不比較，
+   順序照名冊。老師在這一頁不做任何動作，這裡是拿來看的。 */
 PAGES.classeco = function () {
   var u = me();
   var rows = ecology(u.classId).map(function (r) {
@@ -113,28 +117,64 @@ PAGES.classeco = function () {
     r.project = tm && tm.project;
     return r;
   });
-  var H = [head('全班地下城', '每一組挖到哪',
-    '深度是走完幾個里程碑。每一組的專案不一樣，坑道長度本來就不同。')];
+  var H = [head('各組進度', '每一組挖到哪',
+    '深度是走完幾個里程碑。每一組的專案不一樣，坑道長度本來就不同——' +
+    '這裡沒有共同的終點線，也沒有排名。')];
   H.push('<div class="eco-scroll">' + ecoScene(rows, null) + '</div>');
 
-  /* 改寫專案名稱 → 招牌升一階 */
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">改寫專案名稱</div>');
-  H.push('<p class="dim">名稱收斂了就改寫一次。坑道口的招牌會從木牌升成鐵牌、' +
-         '再升成會發光的銘牌——不用多說一句話，材質就是肯定。</p>');
   rows.forEach(function (r) {
     var t = teamOf(r.teamId);
-    var sg = SIGNS[RULES.SIGN_TIERS[Math.min(2, t.signTier || 0)]];
-    var top = (t.signTier || 0) >= RULES.SIGN_TIERS.length - 1;
-    H.push('<div class="rn-row">');
+    var sg = signOf(r.teamId);
+    var acc = accuracyOf(r.teamId);
+    var all = runsFor(r.teamId);
+    var cur = all.filter(function (x) { return x.run.state === 'running'; })[0];
+    var wait = all.filter(function (x) { return x.run.state === 'submitted'; })[0];
+    var camp = all.filter(function (x) { return x.run.state === 'judged'; })[0];
+    var offer = all.filter(function (x) { return x.run.state === 'approved'; })[0];
+
+    H.push('<div class="card tm">');
+    H.push('<div class="radar-head">');
     H.push(pxTag(sg.px, sg.pal, 'sign-s'));
     H.push('<b>' + esc(t.name) + '</b>');
-    H.push('<input id="rn-' + t.teamId + '" value="' + esc(t.project || '') +
-           '" placeholder="' + esc('重寫一次專案名稱') + '">');
-    H.push('<span class="sg-tier' + (top ? ' top' : '') + '">' + esc(sg.name) + '</span>');
-    H.push(btn('改寫', 'rename:' + t.teamId, 'ghost'));
+    H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
+    H.push('<span class="sp"></span>');
+    H.push('<span class="dim">深度 ' + (r.depth * WORLD.depthPerMilestone) + ' m</span>');
+    H.push('</div>');
+
+    /* 現在在做什麼 */
+    if (wait) {
+      H.push('<p class="lead">在等你看：' + esc(wait.ms.title) + '</p>');
+      H.push(btn('去勾', 'go:review:' + wait.run.runId, ''));
+    } else if (offer) {
+      H.push('<p class="dim">你勾過了，他們還沒挑裝備：' + esc(offer.ms.title) + '</p>');
+    } else if (camp) {
+      H.push('<p class="dim">交了，正在營火旁說卡在哪：' + esc(camp.ms.title) + '</p>');
+    } else if (cur) {
+      var run = cur.run;
+      H.push('<p class="lead">正在挖：' + esc(cur.ms.title) + '</p>');
+      H.push('<div class="log-num">自己承諾 <b>' + run.est + '</b> 天　·　已推進 <b>' +
+             run.pushes + '</b> 天' +
+             (r.stall >= 2 ? '　·　<span class="warnx">' + r.stall + ' 級休息中</span>' :
+              r.stall === 1 ? '　·　<span class="dim">慢下來了</span>' : '') + '</div>');
+      if (run.risks && run.risks.length) {
+        H.push('<div class="tags small"><span class="k">他們事先標的風險</span>');
+        run.risks.forEach(function (k) {
+          var d = RULES.snagOf(k);
+          if (d) H.push('<span class="tag static">' + d.icon + ' ' + esc(d.label) + '</span>');
+        });
+        H.push('</div>');
+      }
+    } else {
+      H.push('<p class="dim">手上沒有里程碑。派一個給他們就會開始。</p>');
+    }
+
+    /* 走過的準度。這是他們的體感，不是成績。 */
+    if (acc.total) {
+      H.push('<div class="log-num">走完 <b>' + r.depth + '</b> 個　·　' +
+             '準 <b>' + acc.exact + '</b>　早 <b>' + acc.early + '</b>　失準 <b>' +
+             acc.late + '</b></div>');
+    }
     H.push('</div>');
   });
-  H.push('</div>');
   return H.join('');
 };

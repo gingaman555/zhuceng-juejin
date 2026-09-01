@@ -10,7 +10,8 @@ function esc(s) {
 }
 function nl(s) { return esc(s).replace(/\n/g, '<br>'); }
 
-var S = { who: 'U1', page: 'home', p: {}, flash: null };
+/* 一開始沒有人登入。S.who 是 null 的時候只走得到門口那幾頁。 */
+var S = { who: null, page: 'gate', p: {}, flash: null };
 
 /* 沒按送出的東西不會進資料表，但重畫的時候要留著。 */
 var DRAFT = {};
@@ -22,14 +23,50 @@ function go(page, p) {
   window.scrollTo(0, 0);
   render();
 }
-function me() { return userOf(S.who); }
-function isTeacher() { return me().role === 'teacher'; }
-function myTeam() { return teamOf(me().teamId); }
+function me() { return S.who ? userOf(S.who) : null; }
+function isTeacher() { var u = me(); return !!u && u.role === 'teacher'; }
+function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
+
+/* 哪一種身分走得到哪一頁。
+
+   這不是裝飾。研究者看得到全班的紀錄、老師看得到別組的進度——
+   路由如果不擋，改一下網址就變成別人。 */
+var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
+var PAGE_ROLE = {
+  home: 'student', commit: 'student', submit: 'student', stamp: 'student',
+  camp: 'student', pick: 'student', dash: 'student', eco: 'student',
+  log: 'student', claim: 'student',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
+  rs: 'researcher', roster: 'researcher', events: 'researcher'
+};
+function allowed(u, page) {
+  var need = PAGE_ROLE[page];
+  return !need || need === u.role;
+}
 
 function head(eyebrow, title, lead) {
   return '<div class="eyebrow">' + esc(eyebrow) + '</div>' +
     '<h1>' + esc(title) + '</h1>' +
     (lead ? '<p class="lead">' + nl(lead) + '</p>' : '');
+}
+
+/* 一條「你在第幾步」。
+
+   加這個是因為第一次打開會不知道要做什麼：畫面很乾淨，但乾淨到看不出
+   自己站在哪。它不是教學，是位置——亮著的那一格就是現在輪到你的。
+
+     steps  [[標題, 副標], …]
+     at     現在在第幾格（0 起算；-1 代表都不在） */
+function stepBar(steps, at) {
+  var H = ['<div class="steps">'];
+  steps.forEach(function (s, i) {
+    H.push('<div class="step' + (i === at ? ' on' : (i < at ? ' past' : '')) + '">' +
+      '<b>' + (i + 1) + '</b>' +
+      '<div><i>' + esc(s[0]) + '</i>' + (s[1] ? '<em>' + esc(s[1]) + '</em>' : '') + '</div>' +
+      '</div>');
+  });
+  H.push('</div>');
+  return H.join('');
 }
 
 /* 像素圖標籤。所有的圖都走這一支——沒有第二種畫圖的方式。 */
@@ -48,9 +85,33 @@ function btn(label, act, kind) {
 var PAGES = {};
 
 function render() {
-  var f = PAGES[S.page];
-  if (!f) { S.page = isTeacher() ? 'radar' : 'home'; f = PAGES[S.page]; }
-  var body = f();
+  var u = me();
+
+  /* 沒登入：只有門口那幾頁，而且沒有側欄也沒有頂條——
+     還不知道你是誰的時候，畫面上不該有任何「你的」東西。 */
+  if (!u) {
+    if (!GATE_PAGES[S.page]) S.page = 'gate';
+    document.getElementById('app').innerHTML =
+      '<div class="main"><div class="wrap">' +
+      (S.flash ? flashBar() : '') + PAGES[S.page]() + '</div></div>';
+    return;
+  }
+
+  /* 學生還沒對上名冊：先認領，別的哪裡都去不了。
+     沒有組別的話，坑道不知道要畫哪一條——側欄跟頂條也一樣，
+     它們每一格都在講「你的組」，這時候還沒有那個東西。 */
+  if (u.role === 'student' && !u.teamId) {
+    document.getElementById('app').innerHTML =
+      '<div class="main"><div class="wrap">' +
+      (S.flash ? flashBar() : '') + PAGES.claim() + '</div></div>';
+    S.page = 'claim';
+    return;
+  }
+  if (S.page === 'claim' || GATE_PAGES[S.page]) S.page = homeFor(u);
+
+  if (!PAGES[S.page] || !allowed(u, S.page)) S.page = homeFor(u);
+
+  var body = PAGES[S.page]();
   document.getElementById('app').innerHTML =
     sideBar() + '<div class="main">' + topBar() + demoBar() +
     '<div class="wrap">' + (S.flash ? flashBar() : '') + body + '</div></div>';
@@ -63,15 +124,28 @@ function flashBar() {
    而且那是一種只有測試才抓得到的錯。讓它自己負責。 */
 function say(m) { S.flash = m; render(); }
 
+function classOf(u) {
+  return find('Classes', function (c) { return c.classId === u.classId; }) || DB.Classes[0] || { name: '' };
+}
+
 function topBar() {
   var u = me();
+  if (u.role === 'researcher') {
+    return '<div class="top">' +
+      '<span class="badge r">研究者</span>' +
+      '<span class="who">' + esc(u.name) + '</span>' +
+      '<span class="sp"></span>' +
+      '<span>' + DB.Users.length + ' 個帳號　·　' + DB.Classes.length + ' 個班　·　' +
+        DB.Events.length + ' 筆紀錄</span>' +
+      '</div>';
+  }
   if (u.role === 'teacher') {
     var r = radar(u.classId);
     return '<div class="top">' +
       '<span class="badge t">老師端</span>' +
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
-      '<span>' + esc(DB.Classes[0].name) + '　·　' +
+      '<span>' + esc(classOf(u).name) + '　·　' +
         where('Teams', function (t) { return t.classId === u.classId; }).length + ' 組</span>' +
       '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' +
       '</div>';
@@ -91,8 +165,9 @@ function topBar() {
 /* 試用列。真的上線沒有這一條——它在這裡只是為了讓你兩邊都走得完。 */
 function demoBar() {
   var opts = DB.Users.map(function (u) {
+    var t = u.teamId ? teamOf(u.teamId) : null;
     return '<option value="' + u.userId + '"' + (u.userId === S.who ? ' selected' : '') + '>' +
-      (u.role === 'teacher' ? '老師' : teamOf(u.teamId).name) + '</option>';
+      esc(t ? t.name : u.name) + '</option>';
   }).join('');
   return '<div class="demo">' +
     '<b>試用</b><span>切換身分</span>' +
@@ -106,13 +181,23 @@ function demoBar() {
 function sideBar() {
   var u = me();
   var nav, headBlock;
-  if (u.role === 'teacher') {
+  if (u.role === 'researcher') {
+    headBlock = '<div class="side-head"><div class="k">LAB</div>' +
+      '<div class="n">' + esc(u.name) + '</div>' +
+      '<div class="s">帳號與紀錄</div></div>';
+    nav = [['rs', '帳號'], ['roster', '名冊'], ['events', '紀錄']];
+  } else if (u.role === 'teacher') {
+    var kl = classOf(u);
     headBlock = '<div class="side-head"><div class="k">TEACHER</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
-      '<div class="s">' + esc(DB.Classes[0].name) + ' · 加入碼 ' +
-      esc(DB.Classes[0].joinCode) + '</div></div>';
+      '<div class="s">' + esc(kl.name) + ' · 加入碼 ' +
+      esc(kl.joinCode) + '</div></div>';
+    /* 老師只有三件事，側欄就只有三格——多一格就是多一件他要煩惱的事。 */
+    var wait = radar(u.classId).length;
     nav = [
-      ['radar', '雷達'], ['ms', '里程碑'], ['classeco', '全班地下城']
+      ['radar', '審核' + (wait ? '（' + wait + '）' : '')],
+      ['ms', '發里程碑'],
+      ['classeco', '各組進度']
     ];
   } else {
     var t = myTeam();
@@ -127,7 +212,9 @@ function sideBar() {
     return '<a class="' + (S.page === n[0] ? 'on' : '') + '" data-go="' + n[0] + '">' +
       '<span class="dot"></span>' + esc(n[1]) + '</a>';
   }).join('');
-  return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div></div>';
+  return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div>' +
+    '<div class="side-foot"><a class="plain" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'logout' })) + '\'>登出</a></div></div>';
 }
 
 /* ---------- 事件 ---------- */
@@ -147,7 +234,11 @@ document.addEventListener('change', function (ev) {
   var a = ev.target.closest('[data-act="who"]');
   if (!a) return;
   S.who = a.value;
-  S.page = userOf(S.who).role === 'teacher' ? 'radar' : 'home';
+  DB.Session = S.who;
+  save();
+  S.page = homeFor(userOf(S.who));
+  /* 上一個人的訊息不要跟著換身分過去——那句話不是講給這個人聽的 */
+  S.flash = null;
   DRAFT = {};
   render();
 });
@@ -228,10 +319,26 @@ var ACTS = {
     say('說出來了。老師看得到，而且這不會扣任何東西。');
   },
 
-  gear: function (runId) {
-    actTakeGear(runId);
+  /* 老師勾可以了 → 去挑裝備 */
+  gear: function (runId) { go('pick', { id: runId }); },
+
+  /* 三選一，挑走那一件。參數是「runId|裝備」。 */
+  take: function (arg) {
+    var i = arg.indexOf('|');
+    var runId = arg.slice(0, i), key = arg.slice(i + 1);
+    if (!actPickGear(runId, key)) return say('這一件不在攤開的三件裡。');
     go('dash', { id: runId });
     animDash();   /* 畫面畫好之後才播——go() 已經重畫過了 */
+  },
+
+  /* 學生改自己的招牌 */
+  rename: function () {
+    var t = myTeam();
+    var v = (document.getElementById('pj-name') || {}).value || '';
+    if (!v.trim()) return say('招牌上總要寫點什麼。');
+    if (!actRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
+    go('home');
+    say('招牌換字了。材質是挖出來的，那個急不得。');
   },
 
   /* ---- 老師 ---- */
@@ -251,21 +358,11 @@ var ACTS = {
     render();
   },
 
-  pickgear: function (k) { DRAFT.gear = k; render(); },
-
-  grant: function (runId) {
-    if (!DRAFT.gear) return say('先選一件。選哪一件等於選一句話。');
+  /* 老師只勾一個「可以」。挑哪一件是學生的事。 */
+  approve: function (runId) {
     var word = (document.getElementById('gr-word') || {}).value || '';
-    actGear(runId, DRAFT.gear, word.trim());
+    if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
     go('radar');
-    say('發出去了。學生那邊會空投落下，然後衝刺。');
-  },
-
-  rename: function (teamId) {
-    var v = (document.getElementById('rn-' + teamId) || {}).value || '';
-    if (!v.trim()) return say('要寫一個新的名字。');
-    var t2 = actRename(teamId, v.trim());
-    if (!t2) return say('名字沒有變。升一階代表又收斂了一次。');
-    say('招牌升成「' + SIGNS[RULES.SIGN_TIERS[t2.signTier]].name + '」了。收斂本身就是成果。');
+    say('回過去了。他們那邊會攤開三件裝備，自己挑一件帶走。');
   }
 };
