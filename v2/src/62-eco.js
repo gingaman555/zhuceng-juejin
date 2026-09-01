@@ -248,6 +248,16 @@ PAGES.eco = function () {
   H.push(digMap(t.classId, t.teamId));
   H.push(digTeamCard(t.classId));
   H.push(coreCard());
+
+  /* 全班最近。它從首頁搬過來——首頁只做一件事，
+     而『別人在幹嘛』本來就屬於全班這一頁。 */
+  var fd = feedOf(t.classId, 20);
+  if (fd.length) {
+    H.push('<div class="eyebrow feed-h">全班最近</div>');
+    H.push('<div class="feed">');
+    fd.forEach(function (f) { H.push(feedRow(f, t.teamId)); });
+    H.push('</div>');
+  }
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
   return H.join('');
 };

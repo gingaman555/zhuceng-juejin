@@ -70,17 +70,8 @@ PAGES.home = function () {
   /* ── 副功能：小圖示 ── */
   H.push(deskRow(t, next));
 
-  /* ── 別人 ── */
-  var fd = feedOf(t.classId, 20);
-  H.push('<div class="eyebrow feed-h">全班最近</div>');
-  if (!fd.length) {
-    H.push('<div class="card dim">還沒有事情發生。</div>');
-  } else {
-    H.push('<div class="feed">');
-    fd.forEach(function (f) { H.push(feedRow(f, t.teamId)); });
-    H.push('</div>');
-  }
-  H.push(coreCard());
+  /* 全班最近搬到全班地下城那一頁了。首頁只做一件事：
+     手上這一趟，跟那一顆鍵。 */
   return H.join('');
 };
 

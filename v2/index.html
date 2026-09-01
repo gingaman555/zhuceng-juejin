@@ -5238,17 +5238,8 @@ PAGES.home = function () {
   /* ── 副功能：小圖示 ── */
   H.push(deskRow(t, next));
 
-  /* ── 別人 ── */
-  var fd = feedOf(t.classId, 20);
-  H.push('<div class="eyebrow feed-h">全班最近</div>');
-  if (!fd.length) {
-    H.push('<div class="card dim">還沒有事情發生。</div>');
-  } else {
-    H.push('<div class="feed">');
-    fd.forEach(function (f) { H.push(feedRow(f, t.teamId)); });
-    H.push('</div>');
-  }
-  H.push(coreCard());
+  /* 全班最近搬到全班地下城那一頁了。首頁只做一件事：
+     手上這一趟，跟那一顆鍵。 */
   return H.join('');
 };
 
@@ -6400,6 +6391,16 @@ PAGES.eco = function () {
   H.push(digMap(t.classId, t.teamId));
   H.push(digTeamCard(t.classId));
   H.push(coreCard());
+
+  /* 全班最近。它從首頁搬過來——首頁只做一件事，
+     而『別人在幹嘛』本來就屬於全班這一頁。 */
+  var fd = feedOf(t.classId, 20);
+  if (fd.length) {
+    H.push('<div class="eyebrow feed-h">全班最近</div>');
+    H.push('<div class="feed">');
+    fd.forEach(function (f) { H.push(feedRow(f, t.teamId)); });
+    H.push('</div>');
+  }
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
   return H.join('');
 };
@@ -6736,23 +6737,31 @@ function feedWhen(at) {
    一個學期下來全班刻出一座真的洞窟，每個班長得都不一樣。
 
    這張圖上沒有名次、沒有計數、沒有排序。看得到的是形狀，
-   而形狀是每一組自己挑出來的。 */
+   而形狀是每一組自己挑出來的。
+
+   版面留邊，這件事第一版做壞了：組名放在 top:-18px，整排被切掉看不見；
+   層的名字壓在最左邊那一組的格子上。所以左邊留一條給層名、
+   上面留一條給組名與地表線，格子從那兩條之後才開始。 */
+
+var MAP_L = 88;   /* 左邊那一條：層的名字 */
+var MAP_T = 30;   /* 上面那一條：組名與地表線 */
 
 function digMap(classId, meId) {
-  /* 自己有幾格可以打通。有的話，能打通的那幾格會亮起來、點得動。 */
-  var canClaim = meId ? claimsOf(meId) : 0;
-  var open = {};
-  if (canClaim) {
-    openCells(classId, meId).forEach(function (c) { open[c[0] + ',' + c[1]] = 1; });
-  }
   var teams = where('Teams', function (t) { return t.classId === classId; });
   var deep = 0;
   teams.forEach(function (t) {
     (t.cells || []).forEach(function (c) { if (c[1] > deep) deep = c[1]; });
   });
   var rows = Math.max(6, deep + 3);
-  var W = DIG.W * DIG.CELL;
-  var H = rows * DIG.CELL;
+  var W = MAP_L + DIG.W * DIG.CELL;
+  var H = MAP_T + rows * DIG.CELL;
+
+  /* 自己有幾格可以打通。有的話，能打通的那幾格會亮起來、點得動。 */
+  var canClaim = meId ? claimsOf(meId) : 0;
+  var open = {};
+  if (canClaim) {
+    openCells(classId, meId).forEach(function (c) { open[c[0] + ',' + c[1]] = 1; });
+  }
 
   /* 誰在哪一格，先攤成一張表，不然每一格都要掃一次全班。 */
   var own = {}, hue = {};
@@ -6764,14 +6773,16 @@ function digMap(classId, meId) {
   var out = ['<div class="dig-wrap"><div class="dig" style="width:' + W +
     'px;height:' + H + 'px">'];
 
-  /* 地表 */
-  out.push('<div class="dig-sky" style="width:' + W + 'px"></div>');
+  /* 地表。從格子開始的地方畫起，不要壓到左邊那一條。 */
+  out.push('<div class="dig-sky" style="left:' + MAP_L + 'px;top:' + (MAP_T - 4) +
+    'px;width:' + (DIG.W * DIG.CELL) + 'px"></div>');
 
   for (var y = 0; y < rows; y++) {
     var z = strataAt(y, classId);
+    var cy = MAP_T + y * DIG.CELL;
     for (var x = 0; x < DIG.W; x++) {
       var o = own[x + ',' + y];
-      var st = 'left:' + (x * DIG.CELL) + 'px;top:' + (y * DIG.CELL) + 'px';
+      var st = 'left:' + (MAP_L + x * DIG.CELL) + 'px;top:' + cy + 'px';
       if (o) {
         out.push('<button class="dg-c dug' + (o === meId ? ' mine' : '') +
           '" style="' + st + ';background:' + hue[o] + '" ' +
@@ -6779,41 +6790,39 @@ function digMap(classId, meId) {
           'title="' + esc(teamOf(o).name) + '"></button>');
       } else if (open[x + ',' + y]) {
         out.push('<button class="dg-c rock can ' + z.key + '" style="' + st + '" ' +
-          'data-act="run" data-p=\'' +
-          esc(JSON.stringify({ a: 'dig:' + x + ',' + y })) + '\' ' +
-          'title="' + esc('打通這一格') + '"></button>');
+          'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'dig:' + x + ',' + y })) + '\' ' +
+          'title="打通這一格"></button>');
       } else {
         out.push('<div class="dg-c rock ' + z.key + '" style="' + st + '"></div>');
       }
     }
-    /* 左邊標一次那一層叫什麼。一層兩格，只標上面那一格。 */
+    /* 層的名字放在左邊那一條裡，一層只標一次。 */
     if (y % ZONE_SPAN === 0) {
-      out.push('<div class="dig-z ' + z.key + '" style="top:' + (y * DIG.CELL + 4) +
-        'px">' + esc(z.name) + '</div>');
+      out.push('<div class="dig-z ' + z.key + '" style="top:' + (cy + 6) + 'px">' +
+        esc(z.name) + '</div>');
     }
   }
 
-  /* 每一組的名字掛在它最上面那一格 */
+  /* 組名掛在上面那一條裡，對齊它最上面那一格。 */
   teams.forEach(function (t) {
     var cs = t.cells || [];
     if (!cs.length) return;
     var top = cs[0];
     cs.forEach(function (c) { if (c[1] < top[1]) top = c; });
     out.push('<div class="dig-n' + (t.teamId === meId ? ' mine' : '') +
-      '" style="left:' + (top[0] * DIG.CELL) + 'px;top:' +
-      (top[1] * DIG.CELL - 18) + 'px;color:' + hue[t.teamId] + '">' +
-      esc(t.name.replace('第', '').replace('組 · ', '')) + '</div>');
+      '" style="left:' + (MAP_L + top[0] * DIG.CELL - 11) + 'px;top:6px;color:' +
+      hue[t.teamId] + '">' + esc(shortName(t.name)) + '</div>');
   });
 
   out.push('</div></div>');
 
-  /* 有權利的時候說一聲。一句話，因為那一下本來就很明顯——
-     會亮的那幾格就在畫面上。 */
+  /* 有權利的時候說一聲。會亮的那幾格就在畫面上，所以一句就夠。 */
   if (canClaim) {
     out.push('<div class="dig-can">你有 ' + canClaim + ' 格可以打通。點亮起來的那幾格。</div>');
   }
 
-  /* 打通到碰在一起的那幾對。這是這張圖上最好的一件事。 */
+  /* 打通到碰在一起的那幾對。這是這張圖上最好的一件事：
+     「甲組跟丙組打通了」是一個會真的發生的教室事件，而且它不是比較。 */
   var nb = neighbours(classId);
   if (nb.length) {
     out.push('<div class="dig-nb">');
@@ -6826,7 +6835,13 @@ function digMap(classId, meId) {
   return out.join('');
 }
 
-/* 點一組：看他們打通了幾格、走到哪一層、封存過哪幾根。 */
+/* 「第一組 · 甲」在格子上方只放得下兩三個字。 */
+function shortName(n) {
+  var m = String(n).split('·');
+  return (m[1] || m[0]).trim().slice(0, 4);
+}
+
+/* 點一組：看他們走到哪一層、封存過哪幾根。 */
 ACTS.digteam = function (id) { DRAFT.dt = id; DRAFT.ck = null; render(); };
 
 function digTeamCard(classId) {
