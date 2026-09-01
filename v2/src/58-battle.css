@@ -266,3 +266,47 @@
   .bt-side.foe .bt-pad{right:77px}
   .bt-side.me .bt-pad{left:77px}
 }
+
+/* ── 兩問 ──
+   接在字幕框底下，跟選單同一個位置。答完打牠一下。 */
+.bt-q{
+  margin:0 0 11px;padding:14px 16px;background:var(--card2);
+  box-shadow:0 0 0 3px #0D0B08, inset 0 0 0 2px rgba(255,240,214,.30)
+}
+@media (min-width: 900px){ .bt-q{max-width:704px;margin-left:auto;margin-right:auto} }
+.bt-q .steps-list,.bt-q .alist{margin:0 0 11px}
+.bt-menu.wide{display:flex;gap:22px;background:none;box-shadow:none;padding:0}
+.bt-menu.wide .bm{width:auto}
+
+/* ── 受傷 ──
+   答完一問打牠一下：整個畫面震一下，牠往右退、閃三下。
+   牠不會倒——倒下是最後那一句數字才發生的事。 */
+.bt.hurt{animation:bthit .26s steps(2,end) 1}
+.bt.hurt .bt-side.foe .bt-ch{animation:bthurt .56s steps(1,end) 1}
+@keyframes bthurt{
+  0%{transform:translateX(0);opacity:1}
+  10%{transform:translateX(14px);opacity:.15}
+  22%{opacity:1}  34%{opacity:.15}
+  46%{opacity:1}  58%{opacity:.15}
+  70%{opacity:1;transform:translateX(14px)}
+  100%{transform:translateX(0);opacity:1}
+}
+.bt.hurt::after{
+  content:'';position:absolute;inset:0;z-index:8;pointer-events:none;
+  background:rgba(255,243,216,.6);
+  animation:btflash .26s steps(1,end) 1 forwards
+}
+
+/* ── 逃跑 ──
+   填到一半發現寫不出來就走。角色往回跑出畫面——
+   那不是認輸，是承認做不完，而承認比硬交出去好。 */
+.bt.flee .bt-side.me .bt-ch{
+  animation:btflee .8s steps(6,end) 1 forwards
+}
+@keyframes btflee{to{transform:translateX(-352px)}}
+.bt.flee .bt-side.me .bt-plate{opacity:.4}
+
+@media (prefers-reduced-motion: reduce){
+  .bt.hurt,.bt.hurt .bt-side.foe .bt-ch,.bt.hurt::after{animation:none}
+  .bt.flee .bt-side.me .bt-ch{animation:none;opacity:.2}
+}

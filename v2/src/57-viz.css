@@ -899,3 +899,40 @@ button.ac:active{transform:translateY(1px)}
 @keyframes pxfl{0%{opacity:1}55%{opacity:.55}100%{opacity:0}}
 .pxwrap{position:relative;display:inline-block;flex:0 0 auto}
 .bt-ch{position:absolute}
+
+/* ── 紀錄 ──
+   一列一趟：牠在最左邊、資訊在右邊、點開才看細節。
+   本來每一趟是一張攤開的大卡，五六趟之後整頁要捲很久，而且每一張長得
+   一樣——那不是紀錄，是一疊表格。一頁能不能兩秒看懂，靠的是預設收起來。 */
+.rec-list{display:flex;flex-direction:column}
+/* 一列用格線排：左邊一格放牠，中間三列放資訊，右邊一格放印章。
+   本來是 button 裡面再包一層區塊，那樣第一個子元素會被收縮成內容寬
+   ——標題就變成一個字一行。格線沒有這個問題。 */
+.rec{
+  display:grid;grid-template-columns:55px 1fr auto;column-gap:14px;
+  width:100%;text-align:left;align-items:start;
+  padding:11px 0;border:none;background:none;font:inherit;color:var(--ink);
+  cursor:pointer;border-bottom:2px solid rgba(0,0,0,.16)
+}
+.rec-px{grid-column:1;grid-row:1 / 4;display:flex;align-items:center;height:44px}
+.rec-px .px{width:55px;height:auto;image-rendering:pixelated}
+.rec-t{
+  grid-column:2;grid-row:1;font-size:22px;font-weight:400;line-height:33px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.rec-d{grid-column:2;grid-row:2;font-size:11px;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+.rec-w{
+  grid-column:2;grid-row:3;font-size:11px;color:var(--mute);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.rec-s{grid-column:3;grid-row:1 / 4;font-size:22px;line-height:33px;opacity:.9}
+.rec-s.none{color:var(--dim)}
+.rec:hover .rec-t{color:var(--gold)}
+.rec.open{border-bottom:0}
+.rec.open .rec-t{color:var(--gold)}
+.rec-more{
+  padding:0 0 14px 69px;border-bottom:2px solid rgba(0,0,0,.16)
+}
+.rec-more .tags{margin-top:11px}
+@media (max-width: 599px){ .rec-more{padding-left:0} }

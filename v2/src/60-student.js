@@ -128,7 +128,7 @@ function stepRow(runId) {
 /* 這一趟現在是什麼狀態。一個短標籤，不是一句解釋。 */
 function taskTag(next) {
   return ({
-    commit: '新的', doing: '正在做', submit: '走到底了',
+    commit: '新的', doing: '正在做',
     stamped: '判定', review: '在老師那邊', gear: '老師勾了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
@@ -182,7 +182,7 @@ function stepCard(runId) {
 /* nextThing 回的那個字，對到步驟條的第幾格。 */
 var STEP_AT = {
   commit: 0,
-  doing: 1, submit: 1, stamped: 1, review: 1,
+  doing: 1, stamped: 1, review: 1,
   gear: 2
 };
 
@@ -263,7 +263,7 @@ function doingCard(t, row, st) {
   var H = [];
   H.push('<div class="eyebrow">' + esc(row.ms.title) +
     (st && st.level ? '　·　' + esc(RULES.stallSay(st.level, st.days)) : '') + '</div>');
-  H.push(btn('做完了', 'go:submit:' + r.runId, 'big'));
+  H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
   return H.join('');
 }
 
@@ -366,75 +366,8 @@ PAGES.commit = function () {
 };
 
 /* ---------- 交出去 ---------- */
-PAGES.submit = function () {
-  var r = find('Runs', function (x) { return x.runId === S.p.id; });
-  if (!r) return '<div class="card">找不到。</div>';
-  var t = myTeam();
-  var m = msOf(r.msId);
-  var used = Math.max(1, daysBetween(r.committedAt, now()));
-
-  var mob = mobOfRun(r);
-  var zone = strataAt(depthOf(t.teamId), t.teamId);
-
-  var H = [head(mob.n, m.title, '')];
-
-  /* 走到底了才看得清楚牠。前面那些天牠都在霧裡。
-
-     這一整頁本來長得像一張表單，而它是整個流程最有份量的一下。
-     改成一個照面：自己在左邊，牠在右邊，中間是還沒發生的事。
-
-     勝負不在這一頁上——它由承諾幾天與過了幾天決定，跟按得多快無關。 */
-  H.push('<div class="duel ' + zone.key + '">');
-  H.push('<div class="duel-me">' + heroTag(t.teamId) + '</div>');
-  H.push('<div class="duel-gap"><span></span><span></span><span></span></div>');
-  H.push('<div class="duel-mob">' + pxTag(mob.px, zone.pal, 'fa-px') + '</div>');
-  H.push('</div>');
-  H.push('<p class="duel-t">' + esc(mob.t) + '</p>');
-
-  H.push('<div class="card">');
-  H.push(estBar(r.est, used, false));
-  H.push('</div>');
-
-  /* 老師分的段：勾掉做完的。 */
-  H.push(stepCard(r.runId));
-
-  /* 交出去之前先想一次，而且是在看到判定之前。
-
-     本來這一題只有失準的人會被問（營火），所以一路準時的組整學期
-     不會反省一次；而且它排在判定之後，那是事後合理化不是省思。
-
-     「都差不多」是第一等的選項：逼人找一個「比較久的」會讓他為了
-     回答而回答，那一秒資料就開始說謊。 */
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">上之前　·　哪一段比你想的久</div>');
-  H.push(overRow(r));
-  if ((r.flags || []).length) {
-    H.push('<div class="eyebrow" style="margin-top:14px">承諾的時候你標的</div>');
-    H.push(stepLegend(r.runId, r.flags, null));
-  }
-  H.push('</div>');
-
-  /* 這幾天你動過哪幾天。
-
-     每天要按的那一版拿掉之後，這一份資料本來就會不見。改成在這裡一次
-     補齊：一張那幾天的格子，點一下標起來。選填——不標一樣交得出去，
-     而且它不進判定（判定只看承諾幾天與行事曆過了幾天）。
-
-     它唯一影響的是那一趟長成什麼樣子的岩心。 */
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">這幾天你動過哪幾天　選填</div>');
-  H.push(dayGrid(r.runId));
-  H.push('<p class="dim">點一下標起來。這不會影響判定——它決定的是' +
-         '這一趟封存起來長什麼樣子。</p>');
-  H.push('</div>');
-
-  H.push('<div class="row">');
-  H.push(btn('上', 'submit:' + r.runId, 'big go'));
-  H.push(btn('還沒', 'go:home', 'ghost'));
-  H.push('</div>');
-  H.push('<p class="dim">作業交到老師原本收的地方。這裡不收檔案。</p>');
-  return H.join('');
-};
+/* 交出去那一頁退休了：兩問搬進戰鬥（見 67-battle.js），
+   那張選填的日子表搬到封存——它決定的是岩心長什麼樣子。 */
 
 /* ---------- 判定結果 ---------- */
 PAGES.stamp = function () {
@@ -553,6 +486,20 @@ PAGES.pick = function () {
     s.elapsed + '</b> 天</div>');
   H.push('</div></div></div>');
 
+
+  /* 這幾天你動過哪幾天。
+
+     每天要按的那一版拿掉之後，這一份資料本來就會不見。改成在這裡一次
+     補齊：一張那幾天的格子，點一下標起來。選填——不標一樣交得出去，
+     而且它不進判定（判定只看承諾幾天與行事曆過了幾天）。
+
+     它唯一影響的是那一趟長成什麼樣子的岩心。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">這幾天你動過哪幾天　選填</div>');
+  H.push(dayGrid(r.runId));
+  H.push('<p class="dim">點一下標起來。這不會影響判定——它決定的是' +
+         '這一趟封存起來長什麼樣子。</p>');
+  H.push('</div>');
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">給這一趟取個名字　選填</div>');
@@ -700,26 +647,75 @@ PAGES.exit = function () {
 PAGES.log = function () {
   var t = myTeam();
   var rows = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).reverse();
-  var acc = accuracyOf(t.teamId);
+  /* 重新想過的那幾趟也是紀錄——它們確實發生過，只是沒有判定。 */
+  where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'rethought'; })
+    .forEach(function (r) { rows.push({ ms: msOf(r.msId), run: r }); });
+
   var H = [head('紀錄', '走過的每一趟', '')];
-  if (!rows.length) return H.join('') + '<div class="card dim">還沒有走完的里程碑。</div>';
+  if (!rows.length) {
+    return H.join('') + '<div class="card dim">還沒有走完的里程碑。</div>';
+  }
+
+  var acc = accuracyOf(t.teamId);
   H.push('<div class="card quiet"><div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
   H.push(accBar(acc));
   H.push('</div>');
 
-  rows.forEach(function (x) {
-    var r = x.run, s = RULES.STAMPS[r.stamp];
-    H.push('<div class="card log-row">');
-    H.push('<div class="log-head"><b>' + esc(x.ms.title) + '</b>' +
-           '<span class="st ' + r.stamp + '">' + s.mark + '</span></div>');
-    H.push(estBar(r.est, r.actual, false));
-    H.push(dayStrip(t.teamId, r.runId));
+  H.push('<div class="card"><div class="rec-list">');
+  rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* 一列一趟。牠在最左邊，資訊在右邊，點開才看細節。 */
+function logRow(m, r, t) {
+  if (!m) return '';
+  var open = DRAFT.lg === r.runId;
+  var z = STRATA[0];
+  STRATA.forEach(function (q) { if (q.key === r.zone) z = q; });
+  var mob = mobOfRun(r);
+  var s = r.stamp ? RULES.STAMPS[r.stamp] : null;
+  var kp = null;
+  keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
+
+  /* 老師回的話優先；沒有的話放自己封存時取的名字。
+     兩個都沒有就不放——不要用一句系統寫的話把位置填滿。 */
+  var line = r.word ? r.word : (kp && kp.name ? '「' + kp.name + '」' : '');
+
+  /* 用 div 不用 button：<button> 上的 grid／flex 在 Chromium 不完整生效
+     ——內容會被包進一個匿名區塊，第一個子元素因此被收縮成內容寬，
+     標題就變成一個字一行。role 與 tabindex 補回鍵盤與輔助工具。 */
+  var H = ['<div role="button" tabindex="0" class="rec' + (open ? ' open' : '') + '" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'lgopen:' + r.runId })) + '\'>'];
+
+  /* 直接排在格線上，不要再包一層。<button> 裡面包巢狀區塊的時候，
+     第一個子元素會被收縮成內容寬（標題變成一個字一行）。 */
+  H.push('<span class="rec-px">' + pxTag(mob.px, z.pal, '') + '</span>');
+  H.push('<b class="rec-t">' + esc(m.title) + '</b>');
+  H.push('<span class="rec-d">' + esc(dayText(r.committedAt)) +
+    (r.submittedAt ? ' – ' + esc(dayText(r.submittedAt)) : '') + '</span>');
+  H.push('<span class="rec-w">' + (line ? esc(line) : '') + '</span>');
+
+  H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">' +
+    (s ? s.mark : '·') + '</span>');
+  H.push('</div>');
+
+  /* 點開才出現的細節。收起來的時候整列兩秒看得完。 */
+  if (open) {
+    H.push('<div class="rec-more">');
+    if (r.stamp) {
+      H.push(estBar(r.est, r.actual, false));
+      H.push(dayStrip(t.teamId, r.runId));
+    } else {
+      H.push('<p class="dim">這一趟重新想過。說 ' + r.est + ' 天，走了 ' +
+        (r.went || 0) + ' 天之後退回去重新說。</p>');
+    }
     var sp = stepsOf(r.runId);
     if (sp) {
       H.push('<div class="tags small"><span class="k">老師分的段</span>');
-      sp.all.forEach(function (x, i) {
+      sp.all.forEach(function (q, i) {
         H.push('<span class="tag static' + (sp.on.indexOf(i) >= 0 ? ' hit' : '') +
-          '">' + esc(x) + '</span>');
+          '">' + esc(q) + '</span>');
       });
       H.push('</div>');
     }
@@ -730,12 +726,16 @@ PAGES.log = function () {
       ov.forEach(function (l) { H.push('<span class="tag static hit">' + esc(l) + '</span>'); });
       H.push('</div>');
     }
-    var kp = keepsOf(t.teamId).filter(function (k) { return k.runId === r.runId; })[0];
-    if (kp && kp.name) H.push('<p class="quote">' + esc(kp.name) + '</p>');
     if (r.word) H.push('<p class="quote tw">' + nl(r.word) + '</p>');
     H.push('</div>');
-  });
+  }
   return H.join('');
+}
+
+/* 點開／收起來。一次只開一列。 */
+ACTS.lgopen = function (id) {
+  DRAFT.lg = DRAFT.lg === id ? null : id;
+  render();
 };
 
 /* ---------- 這一圈走到哪 ----------

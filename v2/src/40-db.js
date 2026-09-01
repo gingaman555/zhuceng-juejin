@@ -835,3 +835,11 @@ function keepOffers(runId) {
 
   return out;
 }
+
+/* 日期寫成「9/2」。紀錄那一頁要的是「什麼時候走的」，
+   不是完整的時間戳——年份對一個學期之內的紀錄沒有意義。 */
+function dayText(ts) {
+  if (!ts) return '';
+  var d = new Date(ts);
+  return (d.getMonth() + 1) + '/' + d.getDate();
+}

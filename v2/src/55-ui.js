@@ -37,7 +37,7 @@ function seen() { if (S.page === 'home' && S.who) markSeen(S.who); }
    路由如果不擋，改一下網址就變成別人。 */
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
-  home: 'student', commit: 'student', submit: 'student', stamp: 'student',
+  home: 'student', commit: 'student', stamp: 'student',
   camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student',
