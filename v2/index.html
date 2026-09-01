@@ -7776,8 +7776,13 @@ function scene(t, row, st, kind) {
 
   var seed = t.teamId + (run ? '|' + run.runId : '');
   var light = WORLD.light[st.level];
-  var span = Math.max(est, tide);
-  var W = SCN.ENT + span * SCN.TILE + SCN.END;
+  /* 往前多畫幾格。本來只畫到承諾與過了幾天的較大者，所以拖到底就
+     沒東西了。多出來的那幾格在霧裡，看不出有什麼——
+     那才是還沒走到的地方該有的樣子。 */
+  var AHEAD = 5;
+  var span = Math.max(est, tide);          /* 這一趟的長度 */
+  var draw = span + AHEAD;                 /* 畫到哪裡（多的在霧裡） */
+  var W = SCN.ENT + draw * SCN.TILE + SCN.END;
   /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
      世界觀不寫在說明裡，寫在牆上。 */
   var zone = strataAt(depthOf(t.teamId), t.teamId);
