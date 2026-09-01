@@ -61,6 +61,7 @@ PAGES.home = function () {
         : '<em>已經超過你說的天數</em>');
     }
     if (aw.cells) H.push('<b>' + aw.cells + '</b><span>全班新打通</span>');
+    if (aw.okd) H.push('<em class="ok">老師勾了 ' + aw.okd + ' 件</em>');
     H.push('</div>');
   }
 
@@ -151,7 +152,9 @@ function taskTag(next) {
 /* 底下那三樣：營火、出口、招牌。都是偶爾才用的，但都不能藏起來——
    沒觸發過的東西等於不存在。 */
 function deskRow(t, next) {
-  var lit = next.kind === 'camp';
+  /* 營火在兩趟之間點著，跟廊道裡那一堆是同一件事——
+     本來寫的是 camp，而那個分岔已經拿掉了，所以它永遠不會亮。 */
+  var lit = !next.row || !next.row.run;
   var H = ['<div class="desk">'];
   H.push('<button class="dk' + (lit ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'peek:camp' })) + '\' title="' +
@@ -243,8 +246,10 @@ function actionCard(t, next, st) {
     H.push(btn('看判定', 'go:stamp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'gear') {
-    H.push('<div class="eyebrow">老師看完了</div>');
-    if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
+    /* 這是整條流程裡唯一「別人為你做了一件事」的時刻，
+       而它本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
+    H.push('<div class="eyebrow lit">老師勾了</div>');
+    if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
     H.push(btn('封存這一趟', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {

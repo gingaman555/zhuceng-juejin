@@ -117,9 +117,15 @@ function awayOf(meId) {
   var run = where('Runs', function (r) {
     return r.teamId === t.teamId && r.state === 'running';
   })[0];
+  /* 老師勾了也算「你不在的時候發生的事」——而且是唯一一件
+     有人特地為你做的。 */
+  var ok = where('Runs', function (r) {
+    return r.teamId === t.teamId && r.state === 'approved';
+  }).length;
   return {
     days: d,
     cells: cells,
+    okd: ok,
     left: run ? Math.max(0, run.est - daysBetween(run.committedAt, now())) : null
   };
 }

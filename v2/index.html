@@ -1891,6 +1891,110 @@ button.ac:active{transform:translateY(1px)}
 .unc .quote{margin:11px 0 0;padding-left:11px;
   box-shadow:inset 3px 0 0 var(--gold-d);color:var(--ink)}
 
+/* 老師勾了：這是整條流程裡唯一「別人為你做了一件事」的時刻，
+   本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
+.eyebrow.lit{color:var(--gold);
+  animation:arrive 1.6s steps(1,end) 2}
+@keyframes arrive{0%,49%{color:var(--gold)}50%,100%{color:var(--gold2)}}
+.quote.big{font-size:22px;line-height:33px;color:var(--ink);
+  padding:11px 0 11px 14px;box-shadow:inset 3px 0 0 var(--gold)}
+.away em.ok{font-size:11px;font-style:normal;color:var(--gold)}
+
+/* 「上」那一下的撞擊。整條流程最有份量的一按，本來按下去直接換頁。
+   一次，不循環——它報的是結果不是過程。 */
+.duel.done{animation:duelhit .22s steps(2,end) 1}
+@keyframes duelhit{
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  50%{transform:translateX(4px)}
+  75%{transform:translateX(-2px)}
+  100%{transform:translateX(0)}
+}
+.duel.done::before{
+  content:'';position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:rgba(255,243,216,.8);
+  animation:duelflash .22s steps(1,end) 1 forwards
+}
+@keyframes duelflash{0%{opacity:.9}30%{opacity:.35}100%{opacity:0}}
+
+/* 戰報一行一行落下來。死線勇者的戰報是回來要讀的東西，
+   一次全部出現就只是三個數字。 */
+.rep dt,.rep dd{animation:repin .28s steps(3,end) both}
+.rep dt:nth-of-type(1),.rep dd:nth-of-type(1){animation-delay:.20s}
+.rep dt:nth-of-type(2),.rep dd:nth-of-type(2){animation-delay:.42s}
+.rep dt:nth-of-type(3),.rep dd:nth-of-type(3){animation-delay:.64s}
+.rep dt:nth-of-type(4),.rep dd:nth-of-type(4){animation-delay:.90s}
+@keyframes repin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+@media (prefers-reduced-motion: reduce){
+  .duel.done{animation:none}
+  .duel.done::before{display:none}
+  .rep dt,.rep dd{animation:none}
+  .eyebrow.lit{animation:none}
+}
+
+/* 坐著：兩幀，差在呼吸。停下來不是停止。 */
+.scn-hero.resting .wa{animation:wkA 1.6s steps(1,end) infinite}
+.scn-hero.resting .wb{animation:wkB 1.6s steps(1,end) infinite}
+
+/* 營火三幀，跟火把同一套做法。
+   火本來就絕對定位在洞口裡，所以這裡只擺三幀，不要再蓋一次 position——
+   蓋掉它就會掉回文件流，畫成兩堆火。 */
+.mouth .mfire .ff{position:absolute;left:0;top:0;width:44px;height:44px;opacity:0;
+  animation:flk 420ms steps(1,end) infinite}
+.mouth .mfire .f1{animation-delay:140ms}
+.mouth .mfire .f2{animation-delay:280ms}
+/* 點著的火在旁邊打出一圈光。沒有模糊——一有模糊就變成現代特效。 */
+.mouth .mfire.lit::after{
+  content:'';position:absolute;left:-44px;top:-33px;width:132px;height:110px;
+  pointer-events:none;z-index:-1;
+  background:radial-gradient(circle at 50% 60%,
+    rgba(233,132,63,.13) 0 33px, rgba(233,132,63,.06) 33px 55px, transparent 55px)
+}
+@media (prefers-reduced-motion: reduce){
+  .mouth .mfire .ff{animation:none;opacity:0}
+  .mouth .mfire .f0{opacity:1}
+  .scn-hero.resting .wa{animation:none;opacity:1}
+  .scn-hero.resting .wb{animation:none;opacity:0}
+}
+
+/* 老師勾了：這是整條流程裡唯一「別人為你做了一件事」的時刻，
+   本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
+.eyebrow.lit{color:var(--gold);animation:arrive 1.6s steps(1,end) 2}
+@keyframes arrive{0%,49%{color:var(--gold)}50%,100%{color:var(--gold2)}}
+.quote.big{font-size:22px;line-height:33px;color:var(--ink);
+  padding:11px 0 11px 14px;box-shadow:inset 3px 0 0 var(--gold)}
+.away em.ok{font-size:11px;font-style:normal;color:var(--gold)}
+
+/* 「上」那一下的撞擊。整條流程最有份量的一按，本來按下去直接換頁。
+   一次，不循環——它報的是結果不是過程。 */
+.duel.done{animation:duelhit .22s steps(2,end) 1}
+@keyframes duelhit{
+  0%{transform:translateX(0)}   25%{transform:translateX(-5px)}
+  50%{transform:translateX(4px)} 75%{transform:translateX(-2px)}
+  100%{transform:translateX(0)}
+}
+.duel.done::before{
+  content:'';position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:rgba(255,243,216,.8);
+  animation:duelflash .22s steps(1,end) 1 forwards
+}
+@keyframes duelflash{0%{opacity:.9}30%{opacity:.35}100%{opacity:0}}
+
+/* 戰報一行一行落下來。死線勇者的戰報是回來要讀的東西，
+   一次全部出現就只是三個數字。 */
+.rep dt,.rep dd{animation:repin .28s steps(3,end) both}
+.rep dt:nth-of-type(1),.rep dd:nth-of-type(1){animation-delay:.20s}
+.rep dt:nth-of-type(2),.rep dd:nth-of-type(2){animation-delay:.42s}
+.rep dt:nth-of-type(3),.rep dd:nth-of-type(3){animation-delay:.64s}
+.rep dt:nth-of-type(4),.rep dd:nth-of-type(4){animation-delay:.90s}
+@keyframes repin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+@media (prefers-reduced-motion: reduce){
+  .duel.done{animation:none} .duel.done::before{display:none}
+  .rep dt,.rep dd{animation:none} .eyebrow.lit{animation:none}
+}
+
 /* 手機。
 
    之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
@@ -2165,6 +2269,16 @@ var HERO = {
           '....++####++....', '...+#*####*#+...', '...+#*####*#+...', '....+######+....',
           '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....',
           '....++#..#++....', '...++#+..+#++...', '................', '................'],
+  /* 坐著：兩趟之間，在營火旁邊。兩幀，差在呼吸——
+     頭低一格再回來。停下來不是停止，人還在那裡。 */
+  sitA: ['................', '................', '................', '......++++......',
+         '.....+#**#+.....', '.....+#**#+.....', '......+##+......', '.....++###+.....',
+         '....+#*####+....', '....+#*####+....', '....+#######+...', '....+########+..',
+         '...++###+++##+..', '...+#####..+#+..', '...+++++++++++..', '................'],
+  sitB: ['................', '................', '................', '................',
+         '......++++......', '.....+#**#+.....', '.....+#**#+.....', '......+##+......',
+         '....+#*####+....', '....+#*####+....', '....+#######+...', '....+########+..',
+         '...++###+++##+..', '...+#####..+#+..', '...+++++++++++..', '................'],
   /* 睡著：長時間沒推進 */
   sleep: ['................', '..............z.', '............z...', '.........zZ.....',
           '................', '................', '....++++++++....', '...+#**####*#+..',
@@ -2194,7 +2308,23 @@ var CAMPFIRE = {
   px: ['................', '.......*........', '......*#*.......', '.....*#*#*......',
        '....*#*#*#*.....', '....#*###*#.....', '...*#*###*#*....', '...*#######*....',
        '....*#####*.....', '..~~~*###*~~~...', '.~~~~~~#~~~~~~..', '..~~~~~~~~~~~...',
-       '................', '................', '................', '................']
+       '................', '................', '................', '................'],
+  /* 火要動。三幀輪流，跟火把同一套做法——
+     用 CSS 拉伸做火焰的話，那一下就會看起來像貼在像素圖上的特效。 */
+  frames: [
+    ['................', '.......*........', '......*#*.......', '.....*#*#*......',
+     '....*#*#*#*.....', '....#*###*#.....', '...*#*###*#*....', '...*#######*....',
+     '....*#####*.....', '..~~~*###*~~~...', '.~~~~~~#~~~~~~..', '..~~~~~~~~~~~...',
+     '................', '................', '................', '................'],
+    ['................', '......*.........', '......*#*.......', '.....*#*#*......',
+     '.....*#*#*......', '....*#*###*.....', '....#*###*#.....', '...*#######*....',
+     '....*#####*.....', '..~~~*###*~~~...', '.~~~~~~#~~~~~~..', '..~~~~~~~~~~~...',
+     '................', '................', '................', '................'],
+    ['................', '........*.......', '.......*#*......', '......*#*#*.....',
+     '....*#*#*#*.....', '....#*###*#.....', '...*#*###*#*....', '....*#####*.....',
+     '....*#####*.....', '..~~~*###*~~~...', '.~~~~~~#~~~~~~..', '..~~~~~~~~~~~...',
+     '................', '................', '................', '................']
+  ]
 };
 
 /* ---------- 魔物 ----------
@@ -6077,6 +6207,7 @@ PAGES.home = function () {
         : '<em>已經超過你說的天數</em>');
     }
     if (aw.cells) H.push('<b>' + aw.cells + '</b><span>全班新打通</span>');
+    if (aw.okd) H.push('<em class="ok">老師勾了 ' + aw.okd + ' 件</em>');
     H.push('</div>');
   }
 
@@ -6167,7 +6298,9 @@ function taskTag(next) {
 /* 底下那三樣：營火、出口、招牌。都是偶爾才用的，但都不能藏起來——
    沒觸發過的東西等於不存在。 */
 function deskRow(t, next) {
-  var lit = next.kind === 'camp';
+  /* 營火在兩趟之間點著，跟廊道裡那一堆是同一件事——
+     本來寫的是 camp，而那個分岔已經拿掉了，所以它永遠不會亮。 */
+  var lit = !next.row || !next.row.run;
   var H = ['<div class="desk">'];
   H.push('<button class="dk' + (lit ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'peek:camp' })) + '\' title="' +
@@ -6259,8 +6392,10 @@ function actionCard(t, next, st) {
     H.push(btn('看判定', 'go:stamp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'gear') {
-    H.push('<div class="eyebrow">老師看完了</div>');
-    if (row.run.word) H.push('<p class="quote">' + nl(row.run.word) + '</p>');
+    /* 這是整條流程裡唯一「別人為你做了一件事」的時刻，
+       而它本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
+    H.push('<div class="eyebrow lit">老師勾了</div>');
+    if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
     H.push(btn('封存這一趟', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {
@@ -6950,15 +7085,26 @@ function scene(t, row, st, kind) {
   if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), span));
 
   /* ── 角色 ── */
-  /* 睡著就不走了；有一趟在走就走路，兩幀輪流。
-     沒有一趟在走的時候他站著——那時候沒有前進這回事。 */
-  var hx = SCN.ENT + walked * SCN.TILE - 11;
+  /* 接了任務就往前走，沒有任務就在營火旁邊坐下來。
+
+     停下來不是停止：坐著那兩幀差在呼吸，火也一直在動。
+     而且營地是休息的地方，不是罰站的地方——
+     沒有任務的時候本來就該是這個樣子。
+
+     睡著是另一回事：那是有任務但很多天沒有動。 */
   var walking = run && st.level < 2;
+  var resting = !run && st.level < 2;
+  /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
+  var hx = resting ? 66 : SCN.ENT + walked * SCN.TILE - 11;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
-    (walking ? ' walking' : '') + '" style="left:' + hx + 'px">');
+    (walking ? ' walking' : '') + (resting ? ' resting' : '') +
+    '" style="left:' + hx + 'px">');
   if (walking) {
     H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
     H.push(pxTag(HERO.walkB, HERO.pal, 'ch wf wb'));
+  } else if (resting) {
+    H.push(pxTag(HERO.sitA, HERO.pal, 'ch wf wa'));
+    H.push(pxTag(HERO.sitB, HERO.pal, 'ch wf wb'));
   } else {
     H.push(pxTag(st.level >= 2 ? HERO.sleep : HERO.idle, HERO.pal, 'ch'));
   }
@@ -7059,12 +7205,25 @@ function sceneMouth(t, next) {
   H.push('</button>');
   H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b></div>');
 
-  /* 營火。失準的時候才點著，其餘時候是一堆沒點的柴。 */
-  H.push('<button class="mfire' + (kind === 'camp' ? ' lit' : '') + '"' +
-    ' data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'peek:camp' })) + '\'' +
-    ' title="' + esc(kind === 'camp' ? '營火：說一下哪一段比想的久'
-                                     : '營火（還沒點著）') + '">' +
-    pxTag(CAMPFIRE.px, kind === 'camp' ? CAMPFIRE.pal : COLD_PAL, '') + '</button>');
+  /* 營火。兩趟之間點著——那時候人坐在旁邊。
+
+     本來是「判定失準才點著」，但那個分岔在改成
+     『每一次交出去之前都省思』的時候拿掉了，所以它再也不會亮，
+     變成一堆死掉的內容。改成休息的時候點著，才是它本來的意思：
+     營地是休息的地方，不是罰站的地方。 */
+  var lit = !next || !next.run;
+  H.push('<button class="mfire' + (lit ? ' lit' : '') + '"' +
+    ' data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:pack' })) + '\'' +
+    ' title="' + esc(lit ? '營火：還沒接下一件事' : '營火（走著的時候是暗的）') +
+    '">');
+  if (lit) {
+    CAMPFIRE.frames.forEach(function (f, n) {
+      H.push(pxTag(f, CAMPFIRE.pal, 'ff f' + n));
+    });
+  } else {
+    H.push(pxTag(CAMPFIRE.px, COLD_PAL, ''));
+  }
+  H.push('</button>');
 
   /* 岩心架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
   H.push('<button class="mrack" data-act="run" data-p=\'' +
@@ -7796,9 +7955,15 @@ function awayOf(meId) {
   var run = where('Runs', function (r) {
     return r.teamId === t.teamId && r.state === 'running';
   })[0];
+  /* 老師勾了也算「你不在的時候發生的事」——而且是唯一一件
+     有人特地為你做的。 */
+  var ok = where('Runs', function (r) {
+    return r.teamId === t.teamId && r.state === 'approved';
+  }).length;
   return {
     days: d,
     cells: cells,
+    okd: ok,
     left: run ? Math.max(0, run.est - daysBetween(run.committedAt, now())) : null
   };
 }

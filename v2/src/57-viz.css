@@ -726,3 +726,107 @@ button.ac:active{transform:translateY(1px)}
 .unc h2{margin:6px 0;font-size:22px;font-weight:400}
 .unc .quote{margin:11px 0 0;padding-left:11px;
   box-shadow:inset 3px 0 0 var(--gold-d);color:var(--ink)}
+
+/* 老師勾了：這是整條流程裡唯一「別人為你做了一件事」的時刻，
+   本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
+.eyebrow.lit{color:var(--gold);
+  animation:arrive 1.6s steps(1,end) 2}
+@keyframes arrive{0%,49%{color:var(--gold)}50%,100%{color:var(--gold2)}}
+.quote.big{font-size:22px;line-height:33px;color:var(--ink);
+  padding:11px 0 11px 14px;box-shadow:inset 3px 0 0 var(--gold)}
+.away em.ok{font-size:11px;font-style:normal;color:var(--gold)}
+
+/* 「上」那一下的撞擊。整條流程最有份量的一按，本來按下去直接換頁。
+   一次，不循環——它報的是結果不是過程。 */
+.duel.done{animation:duelhit .22s steps(2,end) 1}
+@keyframes duelhit{
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  50%{transform:translateX(4px)}
+  75%{transform:translateX(-2px)}
+  100%{transform:translateX(0)}
+}
+.duel.done::before{
+  content:'';position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:rgba(255,243,216,.8);
+  animation:duelflash .22s steps(1,end) 1 forwards
+}
+@keyframes duelflash{0%{opacity:.9}30%{opacity:.35}100%{opacity:0}}
+
+/* 戰報一行一行落下來。死線勇者的戰報是回來要讀的東西，
+   一次全部出現就只是三個數字。 */
+.rep dt,.rep dd{animation:repin .28s steps(3,end) both}
+.rep dt:nth-of-type(1),.rep dd:nth-of-type(1){animation-delay:.20s}
+.rep dt:nth-of-type(2),.rep dd:nth-of-type(2){animation-delay:.42s}
+.rep dt:nth-of-type(3),.rep dd:nth-of-type(3){animation-delay:.64s}
+.rep dt:nth-of-type(4),.rep dd:nth-of-type(4){animation-delay:.90s}
+@keyframes repin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+@media (prefers-reduced-motion: reduce){
+  .duel.done{animation:none}
+  .duel.done::before{display:none}
+  .rep dt,.rep dd{animation:none}
+  .eyebrow.lit{animation:none}
+}
+
+/* 坐著：兩幀，差在呼吸。停下來不是停止。 */
+.scn-hero.resting .wa{animation:wkA 1.6s steps(1,end) infinite}
+.scn-hero.resting .wb{animation:wkB 1.6s steps(1,end) infinite}
+
+/* 營火三幀，跟火把同一套做法。
+   火本來就絕對定位在洞口裡，所以這裡只擺三幀，不要再蓋一次 position——
+   蓋掉它就會掉回文件流，畫成兩堆火。 */
+.mouth .mfire .ff{position:absolute;left:0;top:0;width:44px;height:44px;opacity:0;
+  animation:flk 420ms steps(1,end) infinite}
+.mouth .mfire .f1{animation-delay:140ms}
+.mouth .mfire .f2{animation-delay:280ms}
+/* 點著的火在旁邊打出一圈光。沒有模糊——一有模糊就變成現代特效。 */
+.mouth .mfire.lit::after{
+  content:'';position:absolute;left:-44px;top:-33px;width:132px;height:110px;
+  pointer-events:none;z-index:-1;
+  background:radial-gradient(circle at 50% 60%,
+    rgba(233,132,63,.13) 0 33px, rgba(233,132,63,.06) 33px 55px, transparent 55px)
+}
+@media (prefers-reduced-motion: reduce){
+  .mouth .mfire .ff{animation:none;opacity:0}
+  .mouth .mfire .f0{opacity:1}
+  .scn-hero.resting .wa{animation:none;opacity:1}
+  .scn-hero.resting .wb{animation:none;opacity:0}
+}
+
+/* 老師勾了：這是整條流程裡唯一「別人為你做了一件事」的時刻，
+   本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
+.eyebrow.lit{color:var(--gold);animation:arrive 1.6s steps(1,end) 2}
+@keyframes arrive{0%,49%{color:var(--gold)}50%,100%{color:var(--gold2)}}
+.quote.big{font-size:22px;line-height:33px;color:var(--ink);
+  padding:11px 0 11px 14px;box-shadow:inset 3px 0 0 var(--gold)}
+.away em.ok{font-size:11px;font-style:normal;color:var(--gold)}
+
+/* 「上」那一下的撞擊。整條流程最有份量的一按，本來按下去直接換頁。
+   一次，不循環——它報的是結果不是過程。 */
+.duel.done{animation:duelhit .22s steps(2,end) 1}
+@keyframes duelhit{
+  0%{transform:translateX(0)}   25%{transform:translateX(-5px)}
+  50%{transform:translateX(4px)} 75%{transform:translateX(-2px)}
+  100%{transform:translateX(0)}
+}
+.duel.done::before{
+  content:'';position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:rgba(255,243,216,.8);
+  animation:duelflash .22s steps(1,end) 1 forwards
+}
+@keyframes duelflash{0%{opacity:.9}30%{opacity:.35}100%{opacity:0}}
+
+/* 戰報一行一行落下來。死線勇者的戰報是回來要讀的東西，
+   一次全部出現就只是三個數字。 */
+.rep dt,.rep dd{animation:repin .28s steps(3,end) both}
+.rep dt:nth-of-type(1),.rep dd:nth-of-type(1){animation-delay:.20s}
+.rep dt:nth-of-type(2),.rep dd:nth-of-type(2){animation-delay:.42s}
+.rep dt:nth-of-type(3),.rep dd:nth-of-type(3){animation-delay:.64s}
+.rep dt:nth-of-type(4),.rep dd:nth-of-type(4){animation-delay:.90s}
+@keyframes repin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+@media (prefers-reduced-motion: reduce){
+  .duel.done{animation:none} .duel.done::before{display:none}
+  .rep dt,.rep dd{animation:none} .eyebrow.lit{animation:none}
+}

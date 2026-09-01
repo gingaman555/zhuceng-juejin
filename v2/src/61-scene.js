@@ -148,15 +148,26 @@ function scene(t, row, st, kind) {
   if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), span));
 
   /* ── 角色 ── */
-  /* 睡著就不走了；有一趟在走就走路，兩幀輪流。
-     沒有一趟在走的時候他站著——那時候沒有前進這回事。 */
-  var hx = SCN.ENT + walked * SCN.TILE - 11;
+  /* 接了任務就往前走，沒有任務就在營火旁邊坐下來。
+
+     停下來不是停止：坐著那兩幀差在呼吸，火也一直在動。
+     而且營地是休息的地方，不是罰站的地方——
+     沒有任務的時候本來就該是這個樣子。
+
+     睡著是另一回事：那是有任務但很多天沒有動。 */
   var walking = run && st.level < 2;
+  var resting = !run && st.level < 2;
+  /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
+  var hx = resting ? 66 : SCN.ENT + walked * SCN.TILE - 11;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
-    (walking ? ' walking' : '') + '" style="left:' + hx + 'px">');
+    (walking ? ' walking' : '') + (resting ? ' resting' : '') +
+    '" style="left:' + hx + 'px">');
   if (walking) {
     H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
     H.push(pxTag(HERO.walkB, HERO.pal, 'ch wf wb'));
+  } else if (resting) {
+    H.push(pxTag(HERO.sitA, HERO.pal, 'ch wf wa'));
+    H.push(pxTag(HERO.sitB, HERO.pal, 'ch wf wb'));
   } else {
     H.push(pxTag(st.level >= 2 ? HERO.sleep : HERO.idle, HERO.pal, 'ch'));
   }
@@ -257,12 +268,25 @@ function sceneMouth(t, next) {
   H.push('</button>');
   H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b></div>');
 
-  /* 營火。失準的時候才點著，其餘時候是一堆沒點的柴。 */
-  H.push('<button class="mfire' + (kind === 'camp' ? ' lit' : '') + '"' +
-    ' data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'peek:camp' })) + '\'' +
-    ' title="' + esc(kind === 'camp' ? '營火：說一下哪一段比想的久'
-                                     : '營火（還沒點著）') + '">' +
-    pxTag(CAMPFIRE.px, kind === 'camp' ? CAMPFIRE.pal : COLD_PAL, '') + '</button>');
+  /* 營火。兩趟之間點著——那時候人坐在旁邊。
+
+     本來是「判定失準才點著」，但那個分岔在改成
+     『每一次交出去之前都省思』的時候拿掉了，所以它再也不會亮，
+     變成一堆死掉的內容。改成休息的時候點著，才是它本來的意思：
+     營地是休息的地方，不是罰站的地方。 */
+  var lit = !next || !next.run;
+  H.push('<button class="mfire' + (lit ? ' lit' : '') + '"' +
+    ' data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:pack' })) + '\'' +
+    ' title="' + esc(lit ? '營火：還沒接下一件事' : '營火（走著的時候是暗的）') +
+    '">');
+  if (lit) {
+    CAMPFIRE.frames.forEach(function (f, n) {
+      H.push(pxTag(f, CAMPFIRE.pal, 'ff f' + n));
+    });
+  } else {
+    H.push(pxTag(CAMPFIRE.px, COLD_PAL, ''));
+  }
+  H.push('</button>');
 
   /* 岩心架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
   H.push('<button class="mrack" data-act="run" data-p=\'' +
