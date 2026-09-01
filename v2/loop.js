@@ -25,7 +25,8 @@ global.localStorage = {
 /* 只載規則與資料層，不載畫面 */
 const SRC = path.join(__dirname, 'src');
 /* 一次 eval 全部——分開 eval 的話 var 會落在各自的作用域裡，彼此看不到 */
-eval(['10-pack.js', '11-world.js', '15-auth.js', '20-rules.js', '30-art.js', '40-db.js', '45-seed.js']
+eval(['10-pack.js', '11-world.js', '12-props.js', '13-strata.js', '14-fauna.js',
+      '15-auth.js', '20-rules.js', '30-art.js', '40-db.js', '45-seed.js']
   .map(function (f) { return fs.readFileSync(path.join(SRC, f), 'utf8'); })
   .join(String.fromCharCode(10)));
 

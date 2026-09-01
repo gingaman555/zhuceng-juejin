@@ -397,7 +397,9 @@ function actKeep(runId, key) {
   /* 存字不存 key：規則以後改了，他當時留的那句話不會跟著變成別的意思。 */
   DB.Keeps.push({
     keepId: nid('K'), teamId: r.teamId, runId: runId,
-    key: key, line: pick.line, at: now()
+    key: key, line: pick.line, at: now(),
+    /* 當時在哪一層也記下來。架子上那一排的顏色就是他走過的地層。 */
+    zone: strataAt(depthOf(r.teamId)).key
   });
   save();
   logEvent('keep', { teamId: r.teamId, runId: runId, keep: key });

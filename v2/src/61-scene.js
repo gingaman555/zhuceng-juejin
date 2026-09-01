@@ -39,7 +39,8 @@ function scene(t, row, st) {
   var did = run ? actIdsOfRun(run.runId) : [];
   var light = WORLD.light[st.level];
   var W = SCN.ENT + est * SCN.TILE + SCN.END;
-  /* 走到多深，牆就是哪一區的石頭。世界觀不寫在說明裡，寫在牆上。 */
+  /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
+     世界觀不寫在說明裡，寫在牆上。 */
   var zone = strataAt(depthOf(t.teamId));
 
   var H = ['<div class="scn ' + light.key + ' z-' + zone.key + '">'];
@@ -60,7 +61,7 @@ function scene(t, row, st) {
     var dp = dripFor(seed, d);
     if (!dp) continue;
     H.push('<span class="drip" style="left:' + (d * 44 + dp.off) + 'px">' +
-      pxTag(dp.px, DRIP.pal, '') + '</span>');
+      pxTag(dp.px, zone.pal, '') + '</span>');
   }
 
   /* ── 洞口 ── */
@@ -98,15 +99,20 @@ function scene(t, row, st) {
     H.push('<span class="dayn' + (i === walked ? ' here' : (on ? ' past' : '')) +
       '" style="left:' + x + 'px">' + (i + 1) + '</span>');
 
-    /* 走通的地方才長得出東西 */
+    /* 走通的地方才長得出東西，而且每一層長的不一樣（見 12-props.js）。
+       全部用那一層的配色——換了地方，連地上的石頭都該換顏色。 */
     if (on) {
-      var p = propFor(seed, i);
+      var p = propFor(seed, i, zone.key);
       if (p === 'rubble') H.push('<img class="px prop rubble" style="left:' + (x + 5) +
-        'px" src="' + pxSvg(RUBBLE.px, RUBBLE.pal, false) + '" alt="">');
+        'px" src="' + pxSvg(RUBBLE.px, zone.pal, false) + '" alt="">');
       if (p === 'crystal') H.push('<img class="px prop cry" style="left:' + (x + 22) +
-        'px" src="' + pxSvg(CRYSTAL.px, CRYSTAL.pal, false) + '" alt="">');
+        'px" src="' + pxSvg(CRYSTAL.px, zone.pal, false) + '" alt="">');
       if (p === 'shroom') H.push('<img class="px prop shr" style="left:' + (x + 22) +
-        'px" src="' + pxSvg(SHROOM.px, SHROOM.pal, false) + '" alt="">');
+        'px" src="' + pxSvg(SHROOM.px, zone.pal, false) + '" alt="">');
+      if (p === 'bolt') H.push('<img class="px prop cry" style="left:' + (x + 22) +
+        'px" src="' + pxSvg(BOLT.px, zone.pal, false) + '" alt="">');
+      if (p === 'ember') H.push('<img class="px prop shr" style="left:' + (x + 22) +
+        'px" src="' + pxSvg(EMBER.px, zone.pal, false) + '" alt="">');
     }
   }
 
@@ -164,9 +170,10 @@ function sceneMob(t, row, prog) {
   var mob = mobFor(row.ms.msId, t.teamId);
   var pal = strataAt(depthOf(t.teamId)).pal;
   var x = SCN.ENT + (row.run.est || 1) * SCN.TILE + 33;
+  /* 這裡本來還掛一塊寫著里程碑名字的木牌。拿掉了：它浮在半空、會壓到
+     角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
+     其中一遍看起來就會像壞掉的東西。 */
   var H = [];
-  /* 任務牌不在魔物那一層——魔物要藏在霧裡，要交什麼不可以。 */
-  H.push('<div class="goal" style="left:' + x + 'px">' + esc(row.ms.title) + '</div>');
   H.push('<div class="scn-mob" style="left:' + x + 'px;opacity:' +
     (0.40 + 0.60 * prog).toFixed(2) + '">');
   H.push(pxTag(mob.px, pal, 'ch'));

@@ -117,8 +117,4 @@
   .demo select{max-width:132px}
 }
 
-@media (max-width: 860px) {
-  /* 走廊盡頭那塊木牌在手機會壓到角落那一塊，而且它寫的字
-     底下那張卡已經有了——重複的東西先讓位。 */
-  .goal{display:none}
-}
+

@@ -155,10 +155,7 @@ function faunaCard() {
     return '<div class="card dim">岩壁裡住著東西。點任何一隻，看牠是什麼。' +
       '牠們跟哪一組走到多深都沒有關係——牠們只是住在那裡。</div>';
   }
-  var c = null;
-  for (var i = 0; i < PACK.creatures.length; i++) {
-    if (PACK.creatures[i].n === pick) c = PACK.creatures[i];
-  }
+  var c = faunaByName(pick);
   if (!c) return '';
   var s = null;
   STRATA.forEach(function (x) { if (x.name === c.r) s = x; });
@@ -169,8 +166,8 @@ function faunaCard() {
   H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
   H.push('<h2>' + esc(c.n) + '</h2>');
   H.push('<p class="lead">' + esc(c.t) + '</p>');
-  H.push('<p class="dim">牠住在這一層。老師派下一個里程碑的時候，' +
-         '擋在你走廊盡頭的可能就是牠——同一個里程碑，每一組遇到的不是同一隻。</p>');
+  H.push('<p class="dim">牠住在這一層。你走到這一層的時候，' +
+         '擋在廊道盡頭的就是這一層的住民——同一個里程碑，每一組遇到的不是同一隻。</p>');
   H.push('</div></div></div>');
   return H.join('');
 }

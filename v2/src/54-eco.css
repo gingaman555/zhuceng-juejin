@@ -15,32 +15,12 @@
 .xsec{position:relative}
 
 /* ---------- 地層 ----------
-   每一層的岩石紋理不一樣：荒原是碎的、水晶是斜的、
-   迷宮是方的、深淵是橫流的。 */
-.xs-band{position:absolute;left:0;z-index:0}
-.xs-band.wild{
-  background-color:#171208;
-  background-image:
-    repeating-linear-gradient(0deg,  rgba(242,230,200,.030) 0 1px, transparent 1px 22px),
-    repeating-linear-gradient(90deg, rgba(0,0,0,.45)        0 2px, transparent 2px 55px);
-}
-.xs-band.crys{
-  background-color:#0C1720;
-  background-image:
-    repeating-linear-gradient(58deg,  rgba(216,242,250,.045) 0 1px, transparent 1px 22px),
-    repeating-linear-gradient(-58deg, rgba(0,0,0,.40)        0 1px, transparent 1px 33px);
-}
-.xs-band.echo{
-  background-color:#131024;
-  background-image:
-    repeating-linear-gradient(0deg,  rgba(228,220,250,.035) 0 2px, transparent 2px 33px),
-    repeating-linear-gradient(90deg, rgba(0,0,0,.50)        0 2px, transparent 2px 33px);
-}
-.xs-band.fire{
-  background-color:#1C0E09;
-  background-image:
-    repeating-linear-gradient(0deg,  rgba(250,217,204,.045) 0 1px, transparent 1px 11px),
-    repeating-linear-gradient(96deg, rgba(217,96,63,.10)    0 3px, transparent 3px 44px);
+   顏色與紋理讀 51-zones.css 的變數，跟自己那條廊道同一個來源。
+   每一層的紋理是那一層的個性：荒原碎的、根脈直的、水晶斜的、
+   迷宮方的、銹層橫的、深淵流的。 */
+.xs-band{
+  position:absolute;left:0;z-index:0;
+  background-color:var(--zbg);background-image:var(--ztex);
 }
 /* 層與層之間有一道界線。地質圖上那條線就是這樣畫的。 */
 .xs-band::before{
@@ -52,10 +32,7 @@
 .xs-bandn{position:absolute;left:6px;width:132px;z-index:2;pointer-events:none}
 .xs-bandn b{display:block;font-size:11px;font-weight:400;line-height:1.5}
 .xs-bandn span{display:block;font-size:11px;color:var(--mute);line-height:1.6;margin-top:2px}
-.xs-bandn.wild b{color:#C9A227}
-.xs-bandn.crys b{color:#5FA8C7}
-.xs-bandn.echo b{color:#8C7BC7}
-.xs-bandn.fire b{color:#D9603F}
+.xs-bandn b{color:var(--zink)}
 
 /* ---------- 地表 ---------- */
 .xs-sky{
@@ -133,17 +110,17 @@
   inset 0 2px 0 rgba(255,255,255,.14),
   inset 0 -3px 0 rgba(0,0,0,.40),
   inset 0 0 0 1px rgba(0,0,0,.5)}
-.xs-seg.wild.dug{background:#9A7E22}
-.xs-seg.crys.dug{background:#3E7E96}
-.xs-seg.echo.dug{background:#625397}
-.xs-seg.fire.dug{background:#9E4026}
-.xs-seg.wild.dug::after{background:#6B571700}
+/* 打通的那一格：那一層的石頭顏色。同一個深度，六條廊道一定同一個顏色。 */
+.xs-seg.wild{--zdug:#9A7E22;--zink:#C9A227}
+.xs-seg.root{--zdug:#3E5533;--zink:#7FA866}
+.xs-seg.crys{--zdug:#3E7E96;--zink:#5FA8C7}
+.xs-seg.echo{--zdug:#625397;--zink:#8C7BC7}
+.xs-seg.rust{--zdug:#6B4526;--zink:#B07A4A}
+.xs-seg.fire{--zdug:#9E4026;--zink:#D9603F}
+.xs-seg.dug{background:var(--zdug)}
 .xs-seg.dug::after{background:rgba(0,0,0,.5)}
-
-.xs-shaft.mine .xs-seg.wild.dug{background:#C9A227}
-.xs-shaft.mine .xs-seg.crys.dug{background:#5FA8C7}
-.xs-shaft.mine .xs-seg.echo.dug{background:#8C7BC7}
-.xs-shaft.mine .xs-seg.fire.dug{background:#D9603F}
+/* 自己那一條亮一階。這不是名次，是「哪一條是我的」。 */
+.xs-shaft.mine .xs-seg.dug{background:var(--zink)}
 
 /* 正在走的那一格：從底下往上填到承諾的比例 */
 .xs-seg.here{box-shadow:inset 0 0 0 1px var(--gold-d)}
@@ -171,9 +148,6 @@
 .px.fa-px{width:110px;height:110px;flex:0 0 110px}
 .fa-in > div{flex:1;min-width:264px}
 .fa-in h2{margin:0 0 11px}
-.card.fa.wild{background-color:#171208}
-.card.fa.crys{background-color:#0C1720}
-.card.fa.echo{background-color:#131024}
-.card.fa.fire{background-color:#1C0E09}
+.card.fa{background-color:var(--zbg)}
 
 @media (prefers-reduced-motion: reduce){ .xs-fauna{animation:none} }

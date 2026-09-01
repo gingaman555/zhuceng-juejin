@@ -49,7 +49,9 @@ PAGES.pack = function () {
     var r = find('Runs', function (x) { return x.runId === k.runId; });
     var m = r ? msOf(r.msId) : null;
     H.push('<div class="kp">');
-    H.push(pxTag(GEAR_PX[kk.tro].px, STRATA[0].pal, 'kp-px sm'));
+    var kz = k.zone ? strataAt(0) : STRATA[0];
+    STRATA.forEach(function (z) { if (z.key === k.zone) kz = z; });
+    H.push(pxTag(GEAR_PX[kk.tro].px, kz.pal, 'kp-px sm'));
     H.push('<div>');
     H.push('<span class="ke">' + esc(kk.eyebrow) + '</span>');
     H.push('<i>' + esc(k.line) + '</i>');

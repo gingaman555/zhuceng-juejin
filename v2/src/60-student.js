@@ -102,9 +102,18 @@ var STEP_AT = {
   gear: 3
 };
 
-/* 哪一組遇到哪一隻：任務 ＋ 組算出來，全班同一個里程碑不是同一隻 */
+/* 擋在廊道盡頭的那一隻。
+
+   這裡本來是從全部四十隻裡挑，跟你在多深的地方無關——那條線是斷的。
+   現在牠來自你所在那一層的住民：走到 160 公尺，擋你的就是住在水晶
+   迴廊的東西。生物跟系統的連接就是這一條，而且是雙向的——
+   你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
+
+   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個里程碑不是同一隻。 */
 function mobFor(msId, teamId) {
-  return MOBS[hash(msId + '|' + teamId) % MOBS.length];
+  var f = faunaOf(strataAt(depthOf(teamId)).key);
+  if (!f.length) f = allFauna();
+  return f[hash(msId + '|' + teamId) % f.length];
 }
 
 /* 上一次自己留下的那一句 */
@@ -322,11 +331,23 @@ PAGES.stamp = function () {
   if (!r) return '<div class="card">找不到。</div>';
   var s = RULES.STAMPS[r.stamp];
 
+  var t = myTeam();
+  var zone = strataAt(depthOf(t.teamId));
+  var mob = mobFor(r.msId, t.teamId);
+
   var H = ['<div class="stamp-card ' + r.stamp + '">'];
   H.push('<div class="stamp-mark">' + s.mark + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push(estBar(r.est, r.actual, false));
   H.push('</div>');
+
+  /* 擋路的那一隻讓開了。這一趟真的結束了的訊號——
+     牠不是被打敗的，牠只是不再擋在那裡。 */
+  H.push('<div class="card fa ' + zone.key + ' aside"><div class="fa-in">');
+  H.push(pxTag(mob.px, zone.pal, 'fa-px gone'));
+  H.push('<div><div class="eyebrow">' + esc(zone.name) + '</div>');
+  H.push('<h2>' + esc(mob.n) + '讓開了。</h2>');
+  H.push('</div></div></div>');
 
   if (r.stamp === 'late') {
     H.push(btn('去營火旁說一下', 'go:camp:' + r.runId, 'big'));

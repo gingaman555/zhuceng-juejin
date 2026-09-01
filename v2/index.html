@@ -394,10 +394,82 @@ a.plain:hover{color:var(--gold)}
 .zn b{display:block;font-size:22px;font-weight:400;line-height:1.3}
 .zn span{display:block;font-size:11px;color:var(--mute);line-height:1.7;margin-top:5px}
 .zn i{display:block;font-style:normal;font-size:11px;color:var(--gold-d);margin-top:5px}
-.zn.wild{background:#171208} .zn.wild b{color:#C9A227}
-.zn.crys{background:#0C1720} .zn.crys b{color:#5FA8C7}
-.zn.echo{background:#131024} .zn.echo b{color:#8C7BC7}
-.zn.fire{background:#1C0E09} .zn.fire b{color:#D9603F}
+.zn{background:var(--zbg)}
+.zn b{color:var(--zink)}
+
+/* 六個區域的顏色與紋理，一個來源。
+
+   這一份存在的理由：自己的廊道跟全班那張剖面圖，同一個深度必須長得
+   一模一樣。之前兩邊各寫一次，剖面圖上是斜的水晶紋、廊道裡是通用的磚牆——
+   那就變成兩個世界了。
+
+   所以顏色與紋理都定義成變數，兩邊都只讀變數：
+     .scn.z-crys     自己的廊道（見 53-scene.css）
+     .xs-band.crys   剖面圖上那一條（見 54-eco.css）
+
+   紋理是每一層的個性，不是裝飾：
+     wild 碎的     表土，石頭是散的
+     root 直的     根往下穿
+     crys 斜的     晶體是斜著長的
+     echo 方的     方塊狀的硬岩
+     rust 橫的     鏽掉的鐵板是一層一層疊的
+     fire 流的     底下有東西在動 */
+
+.z-wild, .xs-band.wild, .card.fa.wild, .zn.wild {
+  --zbg:#171208; --zln:#3A2E12;
+  --zfl:#241B0C; --zfl2:#3B2D11;
+  --zink:#C9A227;
+  --zli:rgba(242,230,200,.030);
+  --ztex:
+    repeating-linear-gradient(0deg,  rgba(242,230,200,.030) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.45)        0 2px, transparent 2px 55px);
+}
+.z-root, .xs-band.root, .card.fa.root, .zn.root {
+  --zbg:#0F1A0C; --zln:#26381D;
+  --zfl:#16250F; --zfl2:#254019;
+  --zink:#7FA866;
+  --zli:rgba(216,240,192,.034);
+  --ztex:
+    repeating-linear-gradient(90deg, rgba(216,240,192,.055) 0 2px, transparent 2px 18px),
+    repeating-linear-gradient(84deg, rgba(0,0,0,.40)        0 1px, transparent 1px 31px);
+}
+.z-crys, .xs-band.crys, .card.fa.crys, .zn.crys {
+  --zbg:#0C1720; --zln:#173445;
+  --zfl:#12222E; --zfl2:#1D3A4C;
+  --zink:#5FA8C7;
+  --zli:rgba(216,242,250,.035);
+  --ztex:
+    repeating-linear-gradient(58deg,  rgba(216,242,250,.045) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(-58deg, rgba(0,0,0,.40)        0 1px, transparent 1px 33px);
+}
+.z-echo, .xs-band.echo, .card.fa.echo, .zn.echo {
+  --zbg:#131024; --zln:#2E2750;
+  --zfl:#1B1733; --zfl2:#2A2450;
+  --zink:#8C7BC7;
+  --zli:rgba(228,220,250,.032);
+  --ztex:
+    repeating-linear-gradient(0deg,  rgba(228,220,250,.035) 0 2px, transparent 2px 33px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.50)        0 2px, transparent 2px 33px);
+}
+.z-rust, .xs-band.rust, .card.fa.rust, .zn.rust {
+  --zbg:#1A1310; --zln:#3E2A1C;
+  --zfl:#251A14; --zfl2:#3E2A1C;
+  --zink:#B07A4A;
+  --zli:rgba(232,199,154,.034);
+  --ztex:
+    repeating-linear-gradient(0deg,  rgba(232,199,154,.050) 0 1px, transparent 1px 13px,
+                                     rgba(0,0,0,.42)       13px 15px, transparent 15px 26px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.30)        0 2px, transparent 2px 44px);
+}
+.z-fire, .xs-band.fire, .card.fa.fire, .zn.fire {
+  --zbg:#1C0E09; --zln:#4A2013;
+  --zfl:#2A1510; --zfl2:#43201A;
+  --zink:#D9603F;
+  --zli:rgba(250,217,204,.038);
+  --ztex:
+    repeating-linear-gradient(0deg,  rgba(250,217,204,.045) 0 1px, transparent 1px 11px),
+    repeating-linear-gradient(96deg, rgba(217,96,63,.10)    0 3px, transparent 3px 44px);
+}
 
 /* 材質。
 
@@ -655,20 +727,13 @@ input:focus,textarea:focus{outline:none;box-shadow:
    多一條只有這裡才有的：會動的東西一律逐格，用 steps() 換狀態，
    不用 ease 補間。火焰用 ease 一補就變成呼吸燈，那不是火。 */
 
-/* 走到多深，牆就是哪一區的石頭。四組顏色跟 13-strata.js 的 STRATA 同一份，
-   跟全班那張剖面圖上同一個深度的顏色也是同一組——
-   自己的廊道跟剖面圖對不起來的話，那兩張圖就不是同一個世界了。 */
-.scn.z-wild{--zbg:#171208;--zfl:#241B0C;--zfl2:#3B2D11;--zli:rgba(242,230,200,.030)}
-.scn.z-crys{--zbg:#0C1720;--zfl:#12222E;--zfl2:#1D3A4C;--zli:rgba(216,242,250,.035)}
-.scn.z-echo{--zbg:#131024;--zfl:#1B1733;--zfl2:#2A2450;--zli:rgba(228,220,250,.032)}
-.scn.z-fire{--zbg:#1C0E09;--zfl:#2A1510;--zfl2:#43201A;--zli:rgba(250,217,204,.038)}
-
+/* 顏色與紋理全部讀 51-zones.css 的變數——自己的廊道跟全班那張剖面圖，
+   同一個深度必須長得一模一樣，所以兩邊只能有一個來源。 */
 .scn{
   position:relative;height:286px;overflow:hidden;margin:0 0 22px;
   background-color:var(--zbg,#0C0A08);
-  background-image:
-    repeating-linear-gradient(0deg,  var(--zli,rgba(255,244,222,.028)) 0 1px, transparent 1px 44px),
-    repeating-linear-gradient(90deg, rgba(0,0,0,.60)        0 2px, transparent 2px 88px);
+  background-image:var(--ztex,
+    repeating-linear-gradient(0deg,  rgba(255,244,222,.028) 0 1px, transparent 1px 44px));
   box-shadow:
     inset 0 4px 0 rgba(0,0,0,.65),
     inset 0 8px 0 rgba(0,0,0,.30),
@@ -791,19 +856,6 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   position:absolute;left:50%;transform:translateX(-50%);bottom:-22px;
   font-size:11px;color:var(--dim);white-space:nowrap
 }
-/* 走廊盡頭的木牌：這一趟要交的東西。
-   它在霧上面——走廊可以暗，但「要交什麼」永遠要讀得到。 */
-.goal{
-  position:absolute;bottom:143px;z-index:7;
-  width:176px;margin-left:-44px;padding:5px 8px;font-size:11px;line-height:1.6;
-  color:#E8D8B0;background:#20180F;text-align:center;
-  background-image:repeating-linear-gradient(90deg,
-    rgba(255,244,222,.030) 0 1px, transparent 1px 7px,
-    rgba(0,0,0,.30) 7px 8px, transparent 8px 18px);
-  box-shadow:inset 0 2px 0 rgba(255,244,222,.10),
-    inset 0 -2px 0 rgba(0,0,0,.55), 0 0 0 1px #000;
-}
-
 /* ---------- 洞口 ---------- */
 .mouth{position:absolute;left:0;top:0;bottom:0;z-index:3}
 /* 從上面落下來的光。你是從那裡進來的。 */
@@ -866,10 +918,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   display:block;font-style:normal;font-size:22px;line-height:1.2;margin-bottom:2px
 }
 .scn-hud .zn-note{max-width:198px;margin-left:auto;line-height:1.7;margin-top:3px}
-.scn.z-wild .scn-hud em{color:#C9A227}
-.scn.z-crys .scn-hud em{color:#5FA8C7}
-.scn.z-echo .scn-hud em{color:#8C7BC7}
-.scn.z-fire .scn-hud em{color:#D9603F}
+.scn .scn-hud em{color:var(--zink,#E9B341)}
 
 /* 跨進新的一區的那一張。這是少數幾個「世界自己變了」的時刻。 */
 .card.zone-in{margin-top:22px}
@@ -892,32 +941,12 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .xsec{position:relative}
 
 /* ---------- 地層 ----------
-   每一層的岩石紋理不一樣：荒原是碎的、水晶是斜的、
-   迷宮是方的、深淵是橫流的。 */
-.xs-band{position:absolute;left:0;z-index:0}
-.xs-band.wild{
-  background-color:#171208;
-  background-image:
-    repeating-linear-gradient(0deg,  rgba(242,230,200,.030) 0 1px, transparent 1px 22px),
-    repeating-linear-gradient(90deg, rgba(0,0,0,.45)        0 2px, transparent 2px 55px);
-}
-.xs-band.crys{
-  background-color:#0C1720;
-  background-image:
-    repeating-linear-gradient(58deg,  rgba(216,242,250,.045) 0 1px, transparent 1px 22px),
-    repeating-linear-gradient(-58deg, rgba(0,0,0,.40)        0 1px, transparent 1px 33px);
-}
-.xs-band.echo{
-  background-color:#131024;
-  background-image:
-    repeating-linear-gradient(0deg,  rgba(228,220,250,.035) 0 2px, transparent 2px 33px),
-    repeating-linear-gradient(90deg, rgba(0,0,0,.50)        0 2px, transparent 2px 33px);
-}
-.xs-band.fire{
-  background-color:#1C0E09;
-  background-image:
-    repeating-linear-gradient(0deg,  rgba(250,217,204,.045) 0 1px, transparent 1px 11px),
-    repeating-linear-gradient(96deg, rgba(217,96,63,.10)    0 3px, transparent 3px 44px);
+   顏色與紋理讀 51-zones.css 的變數，跟自己那條廊道同一個來源。
+   每一層的紋理是那一層的個性：荒原碎的、根脈直的、水晶斜的、
+   迷宮方的、銹層橫的、深淵流的。 */
+.xs-band{
+  position:absolute;left:0;z-index:0;
+  background-color:var(--zbg);background-image:var(--ztex);
 }
 /* 層與層之間有一道界線。地質圖上那條線就是這樣畫的。 */
 .xs-band::before{
@@ -929,10 +958,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .xs-bandn{position:absolute;left:6px;width:132px;z-index:2;pointer-events:none}
 .xs-bandn b{display:block;font-size:11px;font-weight:400;line-height:1.5}
 .xs-bandn span{display:block;font-size:11px;color:var(--mute);line-height:1.6;margin-top:2px}
-.xs-bandn.wild b{color:#C9A227}
-.xs-bandn.crys b{color:#5FA8C7}
-.xs-bandn.echo b{color:#8C7BC7}
-.xs-bandn.fire b{color:#D9603F}
+.xs-bandn b{color:var(--zink)}
 
 /* ---------- 地表 ---------- */
 .xs-sky{
@@ -1010,17 +1036,17 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   inset 0 2px 0 rgba(255,255,255,.14),
   inset 0 -3px 0 rgba(0,0,0,.40),
   inset 0 0 0 1px rgba(0,0,0,.5)}
-.xs-seg.wild.dug{background:#9A7E22}
-.xs-seg.crys.dug{background:#3E7E96}
-.xs-seg.echo.dug{background:#625397}
-.xs-seg.fire.dug{background:#9E4026}
-.xs-seg.wild.dug::after{background:#6B571700}
+/* 打通的那一格：那一層的石頭顏色。同一個深度，六條廊道一定同一個顏色。 */
+.xs-seg.wild{--zdug:#9A7E22;--zink:#C9A227}
+.xs-seg.root{--zdug:#3E5533;--zink:#7FA866}
+.xs-seg.crys{--zdug:#3E7E96;--zink:#5FA8C7}
+.xs-seg.echo{--zdug:#625397;--zink:#8C7BC7}
+.xs-seg.rust{--zdug:#6B4526;--zink:#B07A4A}
+.xs-seg.fire{--zdug:#9E4026;--zink:#D9603F}
+.xs-seg.dug{background:var(--zdug)}
 .xs-seg.dug::after{background:rgba(0,0,0,.5)}
-
-.xs-shaft.mine .xs-seg.wild.dug{background:#C9A227}
-.xs-shaft.mine .xs-seg.crys.dug{background:#5FA8C7}
-.xs-shaft.mine .xs-seg.echo.dug{background:#8C7BC7}
-.xs-shaft.mine .xs-seg.fire.dug{background:#D9603F}
+/* 自己那一條亮一階。這不是名次，是「哪一條是我的」。 */
+.xs-shaft.mine .xs-seg.dug{background:var(--zink)}
 
 /* 正在走的那一格：從底下往上填到承諾的比例 */
 .xs-seg.here{box-shadow:inset 0 0 0 1px var(--gold-d)}
@@ -1048,10 +1074,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .px.fa-px{width:110px;height:110px;flex:0 0 110px}
 .fa-in > div{flex:1;min-width:264px}
 .fa-in h2{margin:0 0 11px}
-.card.fa.wild{background-color:#171208}
-.card.fa.crys{background-color:#0C1720}
-.card.fa.echo{background-color:#131024}
-.card.fa.fire{background-color:#1C0E09}
+.card.fa{background-color:var(--zbg)}
 
 @media (prefers-reduced-motion: reduce){ .xs-fauna{animation:none} }
 
@@ -1253,11 +1276,7 @@ button.ac:active{transform:translateY(1px)}
   .demo select{max-width:132px}
 }
 
-@media (max-width: 860px) {
-  /* 走廊盡頭那塊木牌在手機會壓到角落那一塊，而且它寫的字
-     底下那張卡已經有了——重複的東西先讓位。 */
-  .goal{display:none}
-}
+
 
 </style>
 </head>
@@ -1471,17 +1490,39 @@ var STEP_PX = {
   px: ['.####.', '.####.', '..##..', '......']
 };
 
-/* 哪一格放什麼裝飾。
+/* ---------- 鐵件 ----------
+   銹層才有。有人來過，東西留下來了。 */
+var BOLT = {
+  px: ['..........', '...####...', '..#*##*#..', '.+#*##*#+.',
+       '.+##..##+.', '..+#..#+..', '..+#..#+..', '..++..++..',
+       '..........', '..........']
+};
 
-   用組別與里程碑算，不擲骰子——同一條走廊每次打開，石頭都在同一個
-   地方。畫面每重畫一次石頭就跳一次的話，那條走廊就不是一個地方了。 */
-function propFor(seed, i) {
-  var h = hash(seed + '#' + i);
-  var r = h % 100;
-  if (r < 14) return 'rubble';
-  if (r < 22) return 'crystal';
-  if (r < 30) return 'shroom';
-  return '';
+/* ---------- 餘燼 ----------
+   熔火深淵才有。地上還有東西在燒。 */
+var EMBER = {
+  px: ['........', '...*....', '..*#*...', '.*#*#*..',
+       '.*###*..', '..*#*...', '.++#++..', '.++++++.']
+};
+
+/* 哪一格放什麼東西。
+
+   一 · 用組別與里程碑算，不擲骰子——同一條廊道每次打開，石頭都在同一個
+        地方。畫面每重畫一次石頭就跳一次的話，那條廊道就不是一個地方了。
+   二 · 每一層長的東西不一樣。表土是碎石，根脈層長蕈菇，水晶迴廊到處是
+        晶體，銹層卡著鐵件，熔火深淵地上還有餘燼。
+        六層都放同樣三種東西的話，換了顏色也還是同一個地方。 */
+var ZONE_PROPS = {
+  wild: ['rubble', 'rubble', 'crystal', '', '', '', ''],
+  root: ['shroom', 'shroom', 'rubble', '', '', '', ''],
+  crys: ['crystal', 'crystal', 'crystal', 'rubble', '', '', ''],
+  echo: ['rubble', 'rubble', '', '', '', '', ''],
+  rust: ['bolt', 'bolt', 'rubble', '', '', '', ''],
+  fire: ['ember', 'ember', 'rubble', '', '', '', '']
+};
+function propFor(seed, i, zoneKey) {
+  var set = ZONE_PROPS[zoneKey] || ZONE_PROPS.wild;
+  return set[hash(seed + '#' + i) % set.length];
 }
 
 /* 鐘乳石掛在哪、哪一根。同樣是算出來的。 */
@@ -1493,9 +1534,10 @@ function dripFor(seed, i) {
 
 
 /* ===== 13-strata.js ===== */
-/* 地層。
+/* 地層。六層。
 
-   這四個世界是上一個作品留下來的，配色與名字照搬——但意思整個換掉了。
+   四層是上一個作品留下來的（微光荒原、水晶迴廊、迴聲迷宮、熔火深淵），
+   配色與名字照搬——但意思整個換掉了。
 
    在那邊，它們是四個關卡：第一層專案定義、第二層調查分析……走完一層
    才准進下一層，每一層有一隻守關生物擋著。那是課綱，不是地質。
@@ -1504,34 +1546,55 @@ function dripFor(seed, i) {
    誰在哪一層都看得到，也沒有哪一層需要「開」。深度變了，岩石就變了——
    就這樣，沒有別的意思。
 
-   所以每一層底下寫的是「這裡的岩石長什麼樣」，不是「你在這一層要學會
-   什麼」。一旦寫成後者，那張剖面圖就變回一條進度條，而且是全班一起看的
-   那一種。 */
+   另外兩層是這一版新的：根脈層（表土下面，上面那片林子的根穿下來）
+   與銹層（有人來過，鐵件鏽在岩層裡）。放在這兩個位置是因為
+   它們各自回答一件事——上面還有東西活著、你不是第一個下來的。
+
+   每一層綁四樣東西，而且四樣都要一起換，不然那一層只是換個顏色：
+     pal    生物與物件的配色
+     bg     牆的底色
+     tex    牆的紋理（廊道與剖面圖共用同一份，見 53/54 的 z- 與 .xs-band）
+     fauna  住在這一層的東西（見 14-fauna.js 與 PACK.creatures 的 r 欄位）
+
+   底下那一句寫的是「這裡的石頭長什麼樣」，不是「你在這一層要學會什麼」。
+   一旦寫成後者，那張剖面圖就變回一條進度條。 */
 
 var STRATA = [
   {
-    key: 'wild', name: '微光荒原', from: 0, to: 2,
+    key: 'wild', name: '微光荒原', from: 0, to: 1,
     note: '表土。碎石多，光還下得來一點。',
     pal: { '#': '#C9A227', o: '#9A7E22', '*': '#F2E6C8' },
-    bg: '#171208', line: '#3A2E12', glow: 'rgba(201,162,39,.07)'
+    bg: '#171208', line: '#3A2E12'
   },
   {
-    key: 'crys', name: '水晶迴廊', from: 3, to: 5,
+    key: 'root', name: '根脈層', from: 2, to: 3,
+    note: '上面那片林子的根穿下來。牆是活的，摸起來是濕的。',
+    pal: { '#': '#7FA866', o: '#3E5533', '*': '#D8F0C0' },
+    bg: '#0F1A0C', line: '#26381D'
+  },
+  {
+    key: 'crys', name: '水晶迴廊', from: 4, to: 5,
     note: '地下水穿過晶體。走通的斷面會折光。',
     pal: { '#': '#5FA8C7', o: '#3E7E96', '*': '#D8F2FA' },
-    bg: '#0C1720', line: '#173445', glow: 'rgba(95,168,199,.07)'
+    bg: '#0C1720', line: '#173445'
   },
   {
-    key: 'echo', name: '迴聲迷宮', from: 6, to: 8,
-    note: '方塊狀的硬岩。聲音在裡面會繞。',
+    key: 'echo', name: '迴聲迷宮', from: 6, to: 7,
+    note: '方塊狀的硬岩。聲音在裡面會繞，你會聽到自己剛剛講的話。',
     pal: { '#': '#8C7BC7', o: '#625397', '*': '#E4DCFA' },
-    bg: '#131024', line: '#2E2750', glow: 'rgba(140,123,199,.07)'
+    bg: '#131024', line: '#2E2750'
   },
   {
-    key: 'fire', name: '熔火深淵', from: 9, to: 9999,
+    key: 'rust', name: '銹層', from: 8, to: 9,
+    note: '有人來過。鐵件鏽在岩層裡，接縫還看得出來。',
+    pal: { '#': '#B07A4A', o: '#6B4526', '*': '#E8C79A' },
+    bg: '#1A1310', line: '#3E2A1C'
+  },
+  {
+    key: 'fire', name: '熔火深淵', from: 10, to: 9999,
     note: '底下有熱源。往下沒有盡頭，只是越來越燙。',
     pal: { '#': '#D9603F', o: '#9E4026', '*': '#FAD9CC' },
-    bg: '#1C0E09', line: '#4A2013', glow: 'rgba(217,96,63,.08)'
+    bg: '#1C0E09', line: '#4A2013'
   }
 ];
 
@@ -1546,13 +1609,18 @@ function strataAt(depth) {
 
 /* 一層裡住著哪些東西。
 
-   creatures 的 r 欄位就是這四個名字，所以生態系不用另外編——
-   牠們本來就分在這四層裡。擋在你走廊盡頭的那一隻，只是其中一隻。 */
+   PACK.creatures 的 r 欄位就是原本那四層的名字，新的兩層在 14-fauna.js。
+   兩邊一起找——生態系不用另外編，牠們本來就分在各層裡。
+   擋在你廊道盡頭的那一隻，就是從這裡挑出來的（見 mobFor）。 */
+function allFauna() {
+  return PACK.creatures.concat(typeof EXTRA_FAUNA === 'undefined' ? [] : EXTRA_FAUNA);
+}
+
 function faunaOf(key) {
   var s = null;
   for (var i = 0; i < STRATA.length; i++) if (STRATA[i].key === key) s = STRATA[i];
   if (!s) return [];
-  return PACK.creatures.filter(function (c) { return c.r === s.name; });
+  return allFauna().filter(function (c) { return c.r === s.name; });
 }
 
 /* 這一層的第 n 隻。用層與序號算，不擲骰子——
@@ -1562,6 +1630,254 @@ function faunaAt(key, n) {
   if (!f.length) return null;
   return f[hash(key + '~' + n) % f.length];
 }
+
+/* 名字找生物。點開剖面圖上那一隻的時候用。 */
+function faunaByName(n) {
+  var all = allFauna();
+  for (var i = 0; i < all.length; i++) if (all[i].n === n) return all[i];
+  return null;
+}
+
+
+/* ===== 14-fauna.js ===== */
+/* 兩個新區域的住民。
+
+   PACK.creatures 那 40 隻是上一個作品留下來的，剛好分成四區。
+   區域從四個加到六個之後，新的兩區得有自己的東西住——
+   借舊的來充數會讓「每一層住的不一樣」變成一句空話。
+
+   格式跟 PACK.creatures 一模一樣（16 列 × 24 行，. 透明 # 身體
+   + 陰影 * 反光），所以 faunaOf 兩邊一起找就好。
+
+   描述那一句只寫牠長什麼樣、在做什麼。不寫牠代表什麼——
+   那是看的人自己的事。 */
+
+var EXTRA_FAUNA = [
+
+  /* ---------- 根脈層 ---------- */
+  {
+    r: '根脈層', n: '垂根者',
+    t: '從上面垂下來的一團，末端還在長。你走過去的時候它會縮一下。',
+    px: [
+      '.........+##+...........',
+      '.........+##+...........',
+      '........+####+..........',
+      '.......+#*##*#+.........',
+      '......+#*#**#*#+........',
+      '......+#*#**#*#+........',
+      '......+#*######+........',
+      '.......+#*##*#+.........',
+      '........+####+..........',
+      '.......+#+..+#+.........',
+      '......+#+....+#+........',
+      '.....+#+......+#+.......',
+      '....+#+........+#+......',
+      '....+*..........*+......',
+      '........................',
+      '........................'
+    ]
+  },
+  {
+    r: '根脈層', n: '纏行蟲',
+    t: '一節一節的，貼著牆走。走過的地方留下一條濕痕。',
+    px: [
+      '........................',
+      '........................',
+      '..++++..++++..++++......',
+      '.+#**#++#**#++#**#+.....',
+      '.+#**#++#**#++#**#+.....',
+      '.+####++####++####+..++.',
+      '..++++..++++..++++..+#*+',
+      '.....................+#+',
+      '..++++..++++..++++...++.',
+      '.+####++####++####+.....',
+      '.+#**#++#**#++#**#+.....',
+      '.+#**#++#**#++#**#+.....',
+      '..++++..++++..++++......',
+      '........................',
+      '........................',
+      '........................'
+    ]
+  },
+  {
+    r: '根脈層', n: '苔面',
+    t: '整片牆的一塊在呼吸。靠近才看得出邊界在哪。',
+    px: [
+      '..*##*..*##*..*##*......',
+      '.*####**####**####*.....',
+      '*##################*....',
+      '+##################+....',
+      '+##*##*##*##*##*###+....',
+      '+##################+....',
+      '+####*########*####+....',
+      '+##################+....',
+      '+###*####**####*###+....',
+      '+##################+....',
+      '.+################+.....',
+      '..+##############+......',
+      '...++##########++.......',
+      '.....++######++.........',
+      '.......++##++...........',
+      '........................'
+    ]
+  },
+  {
+    r: '根脈層', n: '吸水囊',
+    t: '鼓起來的一顆，底下連著一條細管。滿的時候會微微發亮。',
+    px: [
+      '........................',
+      '.........+####+.........',
+      '.......+#*####*#+.......',
+      '......+#*######*#+......',
+      '.....+#*########*#+.....',
+      '.....+#**#########+.....',
+      '.....+#**#########+.....',
+      '.....+#*########*#+.....',
+      '......+#*######*#+......',
+      '.......+#*####*#+.......',
+      '.........+####+.........',
+      '..........+##+..........',
+      '..........+##+..........',
+      '...........+#+..........',
+      '...........+#+..........',
+      '...........+*...........'
+    ]
+  },
+  {
+    r: '根脈層', n: '斷根獸',
+    t: '身上的根都是斷的，斷面很舊。牠自己還在往前爬。',
+    px: [
+      '........................',
+      '...+#+..........+#+.....',
+      '....+#+........+#+......',
+      '.....+####++####+.......',
+      '....+#**######**#+......',
+      '...+#*##########*#+.....',
+      '...+#*#**####**#*#+.....',
+      '...+##############+.....',
+      '...+#*##########*#+.....',
+      '....+############+......',
+      '.....++##++##++.........',
+      '.....+#+..+#+...........',
+      '....+#+....+#+..........',
+      '...+#+......+#+.........',
+      '...+*........*+.........',
+      '........................'
+    ]
+  },
+
+  /* ---------- 銹層 ---------- */
+  {
+    r: '銹層', n: '鏽甲',
+    t: '殼是鐵做的，接縫處鏽住了。牠好像轉不太動。',
+    px: [
+      '........................',
+      '.......++######++.......',
+      '.....++##########++.....',
+      '....+####**##**####+....',
+      '...+####**####**####+...',
+      '...+##################+.',
+      '...+#*##*##**##*##*##+..',
+      '...+##################+.',
+      '...+####**####**####+...',
+      '....+####**##**####+....',
+      '.....++##########++.....',
+      '.......++######++.......',
+      '......+#+......+#+......',
+      '.....+#+........+#+.....',
+      '.....+*..........*+.....',
+      '........................'
+    ]
+  },
+  {
+    r: '銹層', n: '齒輪蟲',
+    t: '身體是一排咬合的齒。牠爬的時候會發出很規律的聲音。',
+    px: [
+      '........................',
+      '....+#+....+#+....+#+...',
+      '...+###+..+###+..+###+..',
+      '..+#*#*#++#*#*#++#*#*#+.',
+      '.+##*#*##+#*#*##+#*#*##+',
+      '.+#*#####+######+######+',
+      '.+##*#*##+#*#*##+#*#*##+',
+      '..+#*#*#++#*#*#++#*#*#+.',
+      '...+###+..+###+..+###+..',
+      '....+#+....+#+....+#+...',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................'
+    ]
+  },
+  {
+    r: '銹層', n: '殘架',
+    t: '本來是一個架子，現在自己會動。上面該掛東西的地方是空的。',
+    px: [
+      '.....+############+.....',
+      '.....+#**######**#+.....',
+      '.....+############+.....',
+      '.......+#+....+#+.......',
+      '.......+#+....+#+.......',
+      '......+###+..+###+......',
+      '......+#*#+..+#*#+......',
+      '......+###+..+###+......',
+      '.......+#+....+#+.......',
+      '.......+#+....+#+.......',
+      '.....++###++++###++.....',
+      '.....+###########+......',
+      '.....+#+.......+#+......',
+      '....+#+.........+#+.....',
+      '....+*...........*+.....',
+      '........................'
+    ]
+  },
+  {
+    r: '銹層', n: '磁滯者',
+    t: '身上黏著一堆碎鐵，甩不掉。牠經過的時候你手上的東西會被拉一下。',
+    px: [
+      '........................',
+      '....+#+....+#+..........',
+      '...+###+..+###+.........',
+      '....+#######+...........',
+      '...+#*#####*#+..........',
+      '..+#*#######*#+.....++..',
+      '..+###########+....+##+.',
+      '..+#*#######*#+.....++..',
+      '..+###########+.........',
+      '...+#########+..++......',
+      '....+#######+..+##+.....',
+      '.....+#+.+#+....++......',
+      '....+#+...+#+...........',
+      '...+#+.....+#+..........',
+      '...+*.......*+..........',
+      '........................'
+    ]
+  },
+  {
+    r: '銹層', n: '螺紋母',
+    t: '一圈一圈往內收，中間看不到底。旁邊散著幾個一樣紋路的小的。',
+    px: [
+      '........................',
+      '......++########++......',
+      '....++############++....',
+      '...+####++++++++####+...',
+      '..+###++########++###+..',
+      '..+##+++#**####*++##+...',
+      '..+##++#**+++#**+##+....',
+      '..+##++#*+###+*+##+.....',
+      '..+##++#*+#*#+*+##+.....',
+      '..+##+++#*+++#++##+.....',
+      '..+###++#####++###+.....',
+      '...+####+++++####+......',
+      '....++##########+.......',
+      '......++######++........',
+      '........++++++..........',
+      '........................'
+    ]
+  }
+];
 
 
 /* ===== 15-auth.js ===== */
@@ -2597,7 +2913,9 @@ function actKeep(runId, key) {
   /* 存字不存 key：規則以後改了，他當時留的那句話不會跟著變成別的意思。 */
   DB.Keeps.push({
     keepId: nid('K'), teamId: r.teamId, runId: runId,
-    key: key, line: pick.line, at: now()
+    key: key, line: pick.line, at: now(),
+    /* 當時在哪一層也記下來。架子上那一排的顏色就是他走過的地層。 */
+    zone: strataAt(depthOf(r.teamId)).key
   });
   save();
   logEvent('keep', { teamId: r.teamId, runId: runId, keep: key });
@@ -3720,9 +4038,18 @@ var STEP_AT = {
   gear: 3
 };
 
-/* 哪一組遇到哪一隻：任務 ＋ 組算出來，全班同一個里程碑不是同一隻 */
+/* 擋在廊道盡頭的那一隻。
+
+   這裡本來是從全部四十隻裡挑，跟你在多深的地方無關——那條線是斷的。
+   現在牠來自你所在那一層的住民：走到 160 公尺，擋你的就是住在水晶
+   迴廊的東西。生物跟系統的連接就是這一條，而且是雙向的——
+   你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
+
+   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個里程碑不是同一隻。 */
 function mobFor(msId, teamId) {
-  return MOBS[hash(msId + '|' + teamId) % MOBS.length];
+  var f = faunaOf(strataAt(depthOf(teamId)).key);
+  if (!f.length) f = allFauna();
+  return f[hash(msId + '|' + teamId) % f.length];
 }
 
 /* 上一次自己留下的那一句 */
@@ -3940,11 +4267,23 @@ PAGES.stamp = function () {
   if (!r) return '<div class="card">找不到。</div>';
   var s = RULES.STAMPS[r.stamp];
 
+  var t = myTeam();
+  var zone = strataAt(depthOf(t.teamId));
+  var mob = mobFor(r.msId, t.teamId);
+
   var H = ['<div class="stamp-card ' + r.stamp + '">'];
   H.push('<div class="stamp-mark">' + s.mark + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push(estBar(r.est, r.actual, false));
   H.push('</div>');
+
+  /* 擋路的那一隻讓開了。這一趟真的結束了的訊號——
+     牠不是被打敗的，牠只是不再擋在那裡。 */
+  H.push('<div class="card fa ' + zone.key + ' aside"><div class="fa-in">');
+  H.push(pxTag(mob.px, zone.pal, 'fa-px gone'));
+  H.push('<div><div class="eyebrow">' + esc(zone.name) + '</div>');
+  H.push('<h2>' + esc(mob.n) + '讓開了。</h2>');
+  H.push('</div></div></div>');
 
   if (r.stamp === 'late') {
     H.push(btn('去營火旁說一下', 'go:camp:' + r.runId, 'big'));
@@ -4124,7 +4463,8 @@ function scene(t, row, st) {
   var did = run ? actIdsOfRun(run.runId) : [];
   var light = WORLD.light[st.level];
   var W = SCN.ENT + est * SCN.TILE + SCN.END;
-  /* 走到多深，牆就是哪一區的石頭。世界觀不寫在說明裡，寫在牆上。 */
+  /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
+     世界觀不寫在說明裡，寫在牆上。 */
   var zone = strataAt(depthOf(t.teamId));
 
   var H = ['<div class="scn ' + light.key + ' z-' + zone.key + '">'];
@@ -4145,7 +4485,7 @@ function scene(t, row, st) {
     var dp = dripFor(seed, d);
     if (!dp) continue;
     H.push('<span class="drip" style="left:' + (d * 44 + dp.off) + 'px">' +
-      pxTag(dp.px, DRIP.pal, '') + '</span>');
+      pxTag(dp.px, zone.pal, '') + '</span>');
   }
 
   /* ── 洞口 ── */
@@ -4183,15 +4523,20 @@ function scene(t, row, st) {
     H.push('<span class="dayn' + (i === walked ? ' here' : (on ? ' past' : '')) +
       '" style="left:' + x + 'px">' + (i + 1) + '</span>');
 
-    /* 走通的地方才長得出東西 */
+    /* 走通的地方才長得出東西，而且每一層長的不一樣（見 12-props.js）。
+       全部用那一層的配色——換了地方，連地上的石頭都該換顏色。 */
     if (on) {
-      var p = propFor(seed, i);
+      var p = propFor(seed, i, zone.key);
       if (p === 'rubble') H.push('<img class="px prop rubble" style="left:' + (x + 5) +
-        'px" src="' + pxSvg(RUBBLE.px, RUBBLE.pal, false) + '" alt="">');
+        'px" src="' + pxSvg(RUBBLE.px, zone.pal, false) + '" alt="">');
       if (p === 'crystal') H.push('<img class="px prop cry" style="left:' + (x + 22) +
-        'px" src="' + pxSvg(CRYSTAL.px, CRYSTAL.pal, false) + '" alt="">');
+        'px" src="' + pxSvg(CRYSTAL.px, zone.pal, false) + '" alt="">');
       if (p === 'shroom') H.push('<img class="px prop shr" style="left:' + (x + 22) +
-        'px" src="' + pxSvg(SHROOM.px, SHROOM.pal, false) + '" alt="">');
+        'px" src="' + pxSvg(SHROOM.px, zone.pal, false) + '" alt="">');
+      if (p === 'bolt') H.push('<img class="px prop cry" style="left:' + (x + 22) +
+        'px" src="' + pxSvg(BOLT.px, zone.pal, false) + '" alt="">');
+      if (p === 'ember') H.push('<img class="px prop shr" style="left:' + (x + 22) +
+        'px" src="' + pxSvg(EMBER.px, zone.pal, false) + '" alt="">');
     }
   }
 
@@ -4249,9 +4594,10 @@ function sceneMob(t, row, prog) {
   var mob = mobFor(row.ms.msId, t.teamId);
   var pal = strataAt(depthOf(t.teamId)).pal;
   var x = SCN.ENT + (row.run.est || 1) * SCN.TILE + 33;
+  /* 這裡本來還掛一塊寫著里程碑名字的木牌。拿掉了：它浮在半空、會壓到
+     角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
+     其中一遍看起來就會像壞掉的東西。 */
   var H = [];
-  /* 任務牌不在魔物那一層——魔物要藏在霧裡，要交什麼不可以。 */
-  H.push('<div class="goal" style="left:' + x + 'px">' + esc(row.ms.title) + '</div>');
   H.push('<div class="scn-mob" style="left:' + x + 'px;opacity:' +
     (0.40 + 0.60 * prog).toFixed(2) + '">');
   H.push(pxTag(mob.px, pal, 'ch'));
@@ -4448,10 +4794,7 @@ function faunaCard() {
     return '<div class="card dim">岩壁裡住著東西。點任何一隻，看牠是什麼。' +
       '牠們跟哪一組走到多深都沒有關係——牠們只是住在那裡。</div>';
   }
-  var c = null;
-  for (var i = 0; i < PACK.creatures.length; i++) {
-    if (PACK.creatures[i].n === pick) c = PACK.creatures[i];
-  }
+  var c = faunaByName(pick);
   if (!c) return '';
   var s = null;
   STRATA.forEach(function (x) { if (x.name === c.r) s = x; });
@@ -4462,8 +4805,8 @@ function faunaCard() {
   H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
   H.push('<h2>' + esc(c.n) + '</h2>');
   H.push('<p class="lead">' + esc(c.t) + '</p>');
-  H.push('<p class="dim">牠住在這一層。老師派下一個里程碑的時候，' +
-         '擋在你走廊盡頭的可能就是牠——同一個里程碑，每一組遇到的不是同一隻。</p>');
+  H.push('<p class="dim">牠住在這一層。你走到這一層的時候，' +
+         '擋在廊道盡頭的就是這一層的住民——同一個里程碑，每一組遇到的不是同一隻。</p>');
   H.push('</div></div></div>');
   return H.join('');
 }
@@ -4611,7 +4954,9 @@ PAGES.pack = function () {
     var r = find('Runs', function (x) { return x.runId === k.runId; });
     var m = r ? msOf(r.msId) : null;
     H.push('<div class="kp">');
-    H.push(pxTag(GEAR_PX[kk.tro].px, STRATA[0].pal, 'kp-px sm'));
+    var kz = k.zone ? strataAt(0) : STRATA[0];
+    STRATA.forEach(function (z) { if (z.key === k.zone) kz = z; });
+    H.push(pxTag(GEAR_PX[kk.tro].px, kz.pal, 'kp-px sm'));
     H.push('<div>');
     H.push('<span class="ke">' + esc(kk.eyebrow) + '</span>');
     H.push('<i>' + esc(k.line) + '</i>');
