@@ -8,30 +8,43 @@
 
      全部看得到。沒有鎖、沒有問號、沒有「收集了幾件」。
 
-   它記的是「你遇過牠」——那是一段回憶，不是一個分數。沒遇過的那幾隻
-   一樣看得到長什麼樣、住在哪一層、是什麼東西。所以它不會讓任何人
-   為了填滿它而多做一件事，它只是這座地下城的說明：下面住著這些。 */
+   它記的是「你遇過牠」——那是一段回憶，不是一個分數。
+
+   版面：一次只看一層。
+
+   本來六層一路往下攤開，五十幾隻排成一條看不完的捲軸——那不是圖鑑，
+   那是一份清單。改成切頁：上面一排是層，點一層看一層，一屏剛好一層。
+   預設停在他現在所在的那一層。 */
 
 PAGES.codex = function () {
   var t = myTeam();
-  var met = metMobs(t.teamId);
   var here = strataAt(depthOf(t.teamId), t.teamId);
+  var tab = DRAFT.cx || here.key;
+  var met = metMobs(t.teamId);
 
-  var H = [head('圖鑑', '這座地下城裡有什麼',
-    '這座地下城裡住的東西，全部在這裡。標「你遇過」的那幾隻是回憶。')];
+  var H = [head('圖鑑', '這座地下城裡有什麼', '')];
 
-  /* ---- 生物 ---- */
+  /* 上面那一排：六層 ＋ 東西。一次只看一頁。 */
+  H.push('<div class="cxtabs">');
   STRATA.forEach(function (z) {
-    var list = faunaOf(z.key);
-    if (!list.length) return;
+    H.push('<button class="cxt ' + z.key + (tab === z.key ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:' + z.key })) + '\'>' +
+      esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
+  });
+  H.push('<button class="cxt gear' + (tab === 'gear' ? ' on' : '') +
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:gear' })) + '\'>東西</button>');
+  H.push('</div>');
+
+  if (tab === 'gear') {
+    H.push(codexThings(t, here));
+  } else {
+    var z = here;
+    STRATA.forEach(function (x) { if (x.key === tab) z = x; });
     H.push('<div class="card fa ' + z.key + '">');
-    H.push('<div class="cx-head">');
-    H.push('<div><div class="eyebrow">' + (z.key === here.key ? '你現在在這一層' : '地層') + '</div>');
-    H.push('<h2>' + esc(z.name) + '</h2>');
-    H.push('<p class="dim">' + esc(z.note) + '</p></div>');
-    H.push('</div>');
+    H.push('<div class="eyebrow">' + (z.key === here.key ? '你現在在這一層' : '地層') + '</div>');
+    H.push('<p class="lead">' + esc(z.note) + '</p>');
     H.push('<div class="cx">');
-    list.forEach(function (c) {
+    faunaOf(z.key).forEach(function (c) {
       H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + '">');
       H.push(pxTag(c.px, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
@@ -40,19 +53,22 @@ PAGES.codex = function () {
       H.push('</div></div>');
     });
     H.push('</div></div>');
-  });
+  }
 
-  /* ---- 帶得走的 ----
-     只有一種，而且它不是我發的：那一趟自己長出來的岩心。 */
+  return H.join('');
+};
+
+/* 東西那一頁：帶得走的一種，與地上撿得到的幾種。 */
+function codexThings(t, here) {
   var mine = keepsOf(t.teamId);
-  H.push('<div class="card">');
+  var H = ['<div class="card">'];
   H.push('<div class="eyebrow">帶得走的</div>');
   H.push('<div class="cx">');
   H.push('<div class="cxi' + (mine.length ? ' met' : '') + '">');
   H.push(pxTag(mine.length ? (mine[mine.length - 1].px || coreOf(mine[mine.length - 1].runId))
-    : coreOf('none') || ['..++++++++++..', '.+##########+.', '.+#*######*#+.',
-      '.+##########+.', '.+#+......+#+.', '.+#+......+#+.',
-      '.+#..+..+..#+.', '.+..+..+..+..', '.+##########+.', '..++++++++++..'],
+    : ['..++++++++++..', '.+##########+.', '.+#*######*#+.', '.+##########+.',
+       '.+#+......+#+.', '.+#+......+#+.', '.+#..+..+..#+.', '.+..+..+..+..',
+       '.+##########+.', '..++++++++++..'],
     here.pal, 'cx-px core'));
   H.push('<div><b>岩心</b>');
   H.push('<em>走完一趟、老師勾了可以之後，那一趟自己長成的一根樣本。' +
@@ -64,8 +80,7 @@ PAGES.codex = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">地上的東西</div>');
-  H.push('<p class="dim">每一層長的不一樣——' +
-         '那是你怎麼知道自己換了地方。</p>');
+  H.push('<p class="dim">每一層長的不一樣——那是你怎麼知道自己換了地方。</p>');
   H.push('<div class="cx">');
   [['碎石', RUBBLE.px, '打通的時候崩下來的。'],
    ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點東西。'],
@@ -80,7 +95,7 @@ PAGES.codex = function () {
     H.push('</div>');
   });
   H.push('</div></div>');
-
-  H.push(btn('回廊道', 'go:home', 'ghost'));
   return H.join('');
-};
+}
+
+ACTS.cx = function (k) { DRAFT.cx = k; render(); };
