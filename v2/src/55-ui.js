@@ -129,6 +129,14 @@ function render() {
   if (typeof scrollScene === 'function') scrollScene();
   /* 那一場要花幾秒鐘發生。結果是算好的，這裡只負責演。 */
   if (typeof battleRun === 'function') battleRun();
+  /* 那一閃收尾。用 JS 不用動畫——動畫的時鐘會被凍住
+     （背景分頁、省電），那時候白色會一直蓋在圖上。 */
+  setTimeout(function () {
+    var f = document.querySelectorAll('.pxflash');
+    for (var i = 0; i < f.length; i++) {
+      if (f[i].parentNode) f[i].parentNode.removeChild(f[i]);
+    }
+  }, 520);
 }
 
 function flashBar() {

@@ -446,17 +446,9 @@ PAGES.stamp = function () {
   var zone = strataAt(depthOf(t.teamId), t.teamId);
   var mob = mobOfRun(r);
 
-  /* 打完了。牠讓開的那一格，跟自己往前站的那一格，一起演一次。
-     一次就好——重新整理不會再演，因為它報的是結果不是過程。 */
-  var H = ['<div class="duel done ' + zone.key + ' ' + r.stamp + '">'];
-  H.push('<div class="duel-me">' + heroTag(t.teamId) + '</div>');
-  H.push('<div class="duel-gap"><span></span><span></span><span></span></div>');
-  H.push('<div class="duel-mob">' + pxTag(mob.px, zone.pal, 'fa-px') + '</div>');
-  H.push('</div>');
-
-  /* 戰報。死線勇者的結果是一份回頭讀的報告，不是一張貼紙——
-     那一份報告本身就是這個系統要教的東西：你說幾天、實際幾天、差多少。
-     所以把它排成可以互相比較的幾行，數字靠右對齊。 */
+  /* 戲在戰鬥那一頁演完了，這裡只留報告。
+     再演一次是重複，而且那一層閃光在動畫被凍住的時候會蓋成一片白。 */
+  var H = [];
   H.push('<div class="stamp-card ' + r.stamp + '">');
   H.push('<div class="stamp-mark">' + s.mark + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
@@ -465,6 +457,16 @@ PAGES.stamp = function () {
   H.push('<dt>實際</dt><dd>' + r.actual + '</dd>');
   H.push('<dt>差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
     (r.actual - r.est) + '</dd>');
+
+  /* 承諾的時候標的那幾段，跟實際比較久的那幾段，對到幾個。
+     兩份資料本來就都在（flags 與 overs），只是從來沒有比對過。
+     沒標過就整行不出現。 */
+  var fl = r.flags || [];
+  if (fl.length) {
+    var hit = 0;
+    fl.forEach(function (i) { if ((r.overs || []).indexOf(i) >= 0) hit++; });
+    H.push('<dt>標對的段</dt><dd>' + hit + '/ ' + fl.length + '</dd>');
+  }
   var ov = (r.overs || []).map(function (i) { return stepName(r.runId, i); })
     .filter(Boolean);
   H.push('<dt>上之前你說</dt><dd class="s">' +

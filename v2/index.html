@@ -1924,7 +1924,10 @@ button.ac:active{transform:translateY(1px)}
 .rep dt:nth-of-type(2),.rep dd:nth-of-type(2){animation-delay:.42s}
 .rep dt:nth-of-type(3),.rep dd:nth-of-type(3){animation-delay:.64s}
 .rep dt:nth-of-type(4),.rep dd:nth-of-type(4){animation-delay:.90s}
-@keyframes repin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+/* 只搬位置，不動 opacity——動畫的時鐘被凍住的時候（背景分頁、省電、
+   自動化瀏覽器），用 opacity 當起始值會讓整行永遠看不見。
+   動畫只能加東西，不能當成顯示的閘門。 */
+@keyframes repin{from{transform:translateY(-8px)}to{transform:none}}
 
 @media (prefers-reduced-motion: reduce){
   .duel.done{animation:none}
@@ -1958,42 +1961,6 @@ button.ac:active{transform:translateY(1px)}
   .scn-hero.resting .wb{animation:none;opacity:0}
 }
 
-/* 老師勾了：這是整條流程裡唯一「別人為你做了一件事」的時刻，
-   本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
-.eyebrow.lit{color:var(--gold);animation:arrive 1.6s steps(1,end) 2}
-@keyframes arrive{0%,49%{color:var(--gold)}50%,100%{color:var(--gold2)}}
-.quote.big{font-size:22px;line-height:33px;color:var(--ink);
-  padding:11px 0 11px 14px;box-shadow:inset 3px 0 0 var(--gold)}
-.away em.ok{font-size:11px;font-style:normal;color:var(--gold)}
-
-/* 「上」那一下的撞擊。整條流程最有份量的一按，本來按下去直接換頁。
-   一次，不循環——它報的是結果不是過程。 */
-.duel.done{animation:duelhit .22s steps(2,end) 1}
-@keyframes duelhit{
-  0%{transform:translateX(0)}   25%{transform:translateX(-5px)}
-  50%{transform:translateX(4px)} 75%{transform:translateX(-2px)}
-  100%{transform:translateX(0)}
-}
-.duel.done::before{
-  content:'';position:absolute;inset:0;z-index:5;pointer-events:none;
-  background:rgba(255,243,216,.8);
-  animation:duelflash .22s steps(1,end) 1 forwards
-}
-@keyframes duelflash{0%{opacity:.9}30%{opacity:.35}100%{opacity:0}}
-
-/* 戰報一行一行落下來。死線勇者的戰報是回來要讀的東西，
-   一次全部出現就只是三個數字。 */
-.rep dt,.rep dd{animation:repin .28s steps(3,end) both}
-.rep dt:nth-of-type(1),.rep dd:nth-of-type(1){animation-delay:.20s}
-.rep dt:nth-of-type(2),.rep dd:nth-of-type(2){animation-delay:.42s}
-.rep dt:nth-of-type(3),.rep dd:nth-of-type(3){animation-delay:.64s}
-.rep dt:nth-of-type(4),.rep dd:nth-of-type(4){animation-delay:.90s}
-@keyframes repin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-
-@media (prefers-reduced-motion: reduce){
-  .duel.done{animation:none} .duel.done::before{display:none}
-  .rep dt,.rep dd{animation:none} .eyebrow.lit{animation:none}
-}
 
 /* ── 營火旁 ──
    火在左邊，人面對火。要讓「他在那裡休息」不用一句話解釋，
@@ -2084,6 +2051,18 @@ button.ac:active{transform:translateY(1px)}
 .tk-k{display:flex;align-items:center;gap:9px;margin-top:9px}
 .tk-k .core{height:22px;width:auto;image-rendering:pixelated}
 .tk-k span{font-size:11px;color:var(--dim)}
+
+/* ── 那一閃 ──
+   同一張圖用全白的配色再畫一次疊在上面，然後淡出。
+   用一塊白色方塊蓋上去會變成方形的閃光，那不是剪影。 */
+.pxflash{
+  position:absolute;left:0;top:0;width:100%;height:100%;
+  pointer-events:none;z-index:5;image-rendering:pixelated;
+  animation:pxfl .45s steps(3,end) 1 forwards
+}
+@keyframes pxfl{0%{opacity:1}55%{opacity:.55}100%{opacity:0}}
+.pxwrap{position:relative;display:inline-block;flex:0 0 auto}
+.bt-ch{position:absolute}
 
 /* ---------- 交出去的那一場 ----------
 
@@ -2213,19 +2192,30 @@ button.ac:active{transform:translateY(1px)}
 @keyframes tagb{0%,60%{background:var(--gold)}61%,100%{background:var(--gold2)}}
 @media (prefers-reduced-motion: reduce){ .hero-tag.go{animation:none} }
 
-/* ── 戰鬥選單 ──
-   舊版寶可夢的たたかう／にげる。兩格一樣大——「還沒好」不是次要選項，
-   做到一半發現寫不出來是真的會發生的事，而且承認它比硬交出去好。 */
-.bt-menu{display:flex;gap:11px;flex-wrap:wrap;margin:0 0 22px}
-.bm{
-  flex:1 1 150px;padding:14px 16px;text-align:left;cursor:pointer;
-  border:none;font:inherit;color:var(--ink);background:var(--card2);
+/* ── 選單 ──
+   貼在畫面右下角，寶可夢的招式選單就長在那裡。
+   登場演完才出現（JS 加 .ready），不是用動畫開——
+   動畫的時鐘會被凍住，setTimeout 不會。 */
+/* 下面那一條：左邊字幕框、右邊選單。
+   本來選單貼在畫面右下角，跟自己的名牌疊在一起。 */
+.bt-bottom{display:flex;gap:11px;align-items:stretch;margin:0 0 11px}
+.bt-bottom .bt-say{flex:1;margin:0;min-width:0}
+.bt-menu{
+  flex:0 0 auto;display:none;align-self:stretch;
+  background:var(--card2);padding:9px 11px;
   box-shadow:0 0 0 3px #0D0B08, inset 0 0 0 2px rgba(255,240,214,.30)
 }
-.bm b{display:block;font-size:22px;font-weight:400;line-height:33px}
-.bm span{display:block;font-size:11px;color:var(--dim)}
-.bm.go b{color:var(--gold)}
-.bm:hover{box-shadow:0 0 0 3px #0D0B08, inset 0 0 0 2px var(--gold)}
+.bt-bottom.ready .bt-menu{display:block;animation:btpop .2s steps(2,end) 1}
+@keyframes btpop{from{transform:translateY(11px)}to{transform:none}}
+.bm{
+  display:block;width:100%;padding:3px 22px 3px 14px;text-align:left;
+  border:none;background:none;font:inherit;cursor:pointer;
+  font-size:22px;line-height:33px;color:var(--ink);white-space:nowrap
+}
+/* 寶可夢的游標：選到的那一行前面有一個 ▶。 */
+.bm::before{content:'▶';margin-right:6px;opacity:0;color:var(--gold)}
+.bm:hover::before,.bm:focus::before{opacity:1}
+.bm.go{color:var(--gold)}
 
 /* 名牌與字幕框照舊版寶可夢：方角、粗黑外框、裡面一圈亮邊。
    那個年代的畫面能力低，靠的全是輪廓與對比——
@@ -2321,6 +2311,14 @@ button.ac:active{transform:translateY(1px)}
   .bt-side.foe .bt-ch,.bt-side .bt-plate{animation:none}
   .bt.foe-out .bt-side.foe .bt-ch{animation:none;opacity:.15}
   .bt.told .bt-plate{animation:none}
+}
+
+
+/* 手機上下面那一條擠不下並排，就上下疊。 */
+@media (max-width: 599px){
+  .bt-bottom{flex-direction:column;gap:9px}
+  .bt-menu{align-self:stretch}
+  .bm{display:inline-block;width:auto;margin-right:22px}
 }
 
 /* 手機。
@@ -4119,6 +4117,23 @@ function pxSvg(px, pal, dim) {
   return url;
 }
 
+/* ---------- 那一閃 ----------
+
+   登場、還有拿到什麼的時候，先看到一張純白的剪影，再落回本來的顏色。
+   舊版寶可夢就是這樣做的：沒有粒子、沒有光暈，靠的是一瞬間的反白。
+
+   做法是把同一張圖用全白的配色再畫一次疊在上面，然後淡出——
+   用一塊白色的方塊蓋上去會變成一個方形的閃光，那不是剪影。
+
+   收尾用 JS（見 55-ui.js 的 render），不是靠動畫跑完：
+   動畫的時鐘會被凍住，那時候白色會一直蓋著。 */
+var FLASH_PAL = { '#': '#FFF3D8', o: '#FFF3D8', '*': '#FFFFFF' };
+
+function pxFlash(px) {
+  if (!px || !px.length) return '';
+  return '<img class="px pxflash" src="' + pxSvg(px, FLASH_PAL) + '" alt="">';
+}
+
 
 /* ===== 35-anim.js ===== */
 /* 逐格動畫。
@@ -5688,6 +5703,14 @@ function render() {
   if (typeof scrollScene === 'function') scrollScene();
   /* 那一場要花幾秒鐘發生。結果是算好的，這裡只負責演。 */
   if (typeof battleRun === 'function') battleRun();
+  /* 那一閃收尾。用 JS 不用動畫——動畫的時鐘會被凍住
+     （背景分頁、省電），那時候白色會一直蓋在圖上。 */
+  setTimeout(function () {
+    var f = document.querySelectorAll('.pxflash');
+    for (var i = 0; i < f.length; i++) {
+      if (f[i].parentNode) f[i].parentNode.removeChild(f[i]);
+    }
+  }, 520);
 }
 
 function flashBar() {
@@ -6970,17 +6993,9 @@ PAGES.stamp = function () {
   var zone = strataAt(depthOf(t.teamId), t.teamId);
   var mob = mobOfRun(r);
 
-  /* 打完了。牠讓開的那一格，跟自己往前站的那一格，一起演一次。
-     一次就好——重新整理不會再演，因為它報的是結果不是過程。 */
-  var H = ['<div class="duel done ' + zone.key + ' ' + r.stamp + '">'];
-  H.push('<div class="duel-me">' + heroTag(t.teamId) + '</div>');
-  H.push('<div class="duel-gap"><span></span><span></span><span></span></div>');
-  H.push('<div class="duel-mob">' + pxTag(mob.px, zone.pal, 'fa-px') + '</div>');
-  H.push('</div>');
-
-  /* 戰報。死線勇者的結果是一份回頭讀的報告，不是一張貼紙——
-     那一份報告本身就是這個系統要教的東西：你說幾天、實際幾天、差多少。
-     所以把它排成可以互相比較的幾行，數字靠右對齊。 */
+  /* 戲在戰鬥那一頁演完了，這裡只留報告。
+     再演一次是重複，而且那一層閃光在動畫被凍住的時候會蓋成一片白。 */
+  var H = [];
   H.push('<div class="stamp-card ' + r.stamp + '">');
   H.push('<div class="stamp-mark">' + s.mark + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
@@ -6989,6 +7004,16 @@ PAGES.stamp = function () {
   H.push('<dt>實際</dt><dd>' + r.actual + '</dd>');
   H.push('<dt>差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
     (r.actual - r.est) + '</dd>');
+
+  /* 承諾的時候標的那幾段，跟實際比較久的那幾段，對到幾個。
+     兩份資料本來就都在（flags 與 overs），只是從來沒有比對過。
+     沒標過就整行不出現。 */
+  var fl = r.flags || [];
+  if (fl.length) {
+    var hit = 0;
+    fl.forEach(function (i) { if ((r.overs || []).indexOf(i) >= 0) hit++; });
+    H.push('<dt>標對的段</dt><dd>' + hit + '/ ' + fl.length + '</dd>');
+  }
   var ov = (r.overs || []).map(function (i) { return stepName(r.runId, i); })
     .filter(Boolean);
   H.push('<dt>上之前你說</dt><dd class="s">' +
@@ -8798,10 +8823,12 @@ function uncoverCard(t) {
   if (r.mob) {
     var mo = null;
     allFauna().forEach(function (f) { if (f.n === r.mob) mo = f; });
-    if (mo) H.push(pxTag(mo.px, z.pal, 'unc-px' + (r.early ? '' : ' gone')));
+    if (mo) H.push('<span class="pxwrap">' + pxTag(mo.px, z.pal, 'unc-px' + (r.early ? '' : ' gone')) +
+      pxFlash(mo.px) + '</span>');
   } else if (r.build) {
     var bd = buildDef(r.build);
-    if (bd) H.push(pxTag(bd.px, BUILD_PAL, 'unc-px' + (r.early ? '' : ' gone')));
+    if (bd) H.push('<span class="pxwrap">' + pxTag(bd.px, BUILD_PAL, 'unc-px' + (r.early ? '' : ' gone')) +
+      pxFlash(bd.px) + '</span>');
   } else {
     H.push('<div class="unc-px ' + z.key + ' blank"></div>');
   }
@@ -8870,21 +8897,21 @@ PAGES.battle = function () {
   var est = r.est || 1;
   var act = r.actual || est;
 
-  /* 三段：登場與選單 → 演出 → 打敗。
-     還在走的那一趟就是還沒上，所以停在選單。 */
-  var at = r.state === 'running' ? 'menu' : (S.p.at || 'end');
+  /* 兩段：登場與選單 → 演出。演完直接換到戰報那一頁。 */
+  var at = r.state === 'running' ? 'menu' : 'play';
 
-  var H = ['<div class="bt ' + zone.key + ' at-' + at + '">'];
+  var H = ['<div class="bt ' + zone.key + ' at-' + at + '" data-run="' +
+    esc(r.runId) + '">'];
 
   /* 遭遇：整個畫面閃一次再進場。 */
   H.push('<div class="bt-wipe"></div>');
 
   /* ── 牠 ── */
   H.push('<div class="bt-side foe">');
-  H.push(btPlate(esc(mob.n), 'foe',
-    at === 'end' ? '走了 ' + act + ' 天' : ''));
+  H.push(btPlate(esc(mob.n), 'foe', ''));
   H.push('<div class="bt-pad"></div>');
-  H.push('<div class="bt-ch foe">' + pxTag(mob.px, zone.pal, 'bt-px') + '</div>');
+  H.push('<div class="bt-ch foe">' + pxTag(mob.px, zone.pal, 'bt-px') +
+    pxFlash(mob.px) + '</div>');
   H.push('</div>');
 
   /* ── 你 ── */
@@ -8892,43 +8919,36 @@ PAGES.battle = function () {
   H.push('<div class="bt-pad"></div>');
   H.push('<div class="bt-ch me">' + pxTag(HERO.back, HERO.pal, 'bt-px') +
     heroPack(t.teamId) + '</div>');
-  H.push(btPlate(esc(shortName(t.name)), 'me',
-    at === 'end' ? '說了 ' + est + ' 天' : ''));
+  H.push(btPlate(esc(shortName(t.name)), 'me', ''));
   H.push('</div>');
-
-  H.push('</div>');
-
-  /* 字幕框。一句一句走，跟舊版寶可夢一樣——
-     一次全部倒出來就不是一場戰鬥，是一張結果表。 */
-  var first = at === 'menu' ? mob.n + ' 擋在路上。'
-    : at === 'end' ? btVerdict(r).line : '你上前。';
-  H.push('<div class="bt-say"><i class="bt-arrow"></i><b id="btline">' +
-    esc(first) + '</b></div>');
 
   /* ── 選單 ──
-     舊版寶可夢的たたかう／にげる。「還沒好」不是認輸——
-     做到一半發現寫不出來是真的會發生的事，而且承認它比硬交出去好。
-     退出去那一趟留著當紀錄，但沒有判定：那不是失準，是另一件事。 */
+     貼在畫面右下角，寶可夢的招式選單就長在那裡。
+     登場演完才出現（JS 加 .ready），所以第一眼只有牠。
+
+     「還沒好」不是認輸——做到一半發現寫不出來是真的會發生的事，
+     承認它比硬交出去好。退出去那一趟留著當紀錄，但沒有判定。 */
+  H.push('</div>');
+
+  /* ── 下面那一條 ──
+     舊版寶可夢的排法：左邊字幕框、右邊選單。
+     本來選單貼在畫面右下角，跟自己的名牌疊在一起。 */
+  H.push('<div class="bt-bottom">');
+  H.push('<div class="bt-say"><i class="bt-arrow"></i><b id="btline">' +
+    esc(at === 'menu' ? mob.n + ' 出現了！' : '你上前。') + '</b></div>');
   if (at === 'menu') {
     H.push('<div class="bt-menu">');
     H.push('<button class="bm go" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'btgo:' + r.runId })) + '\'>' +
-      '<b>上</b><span>把這一趟報出來</span></button>');
+      esc(JSON.stringify({ a: 'btgo:' + r.runId })) + '\'>上</button>');
     H.push('<button class="bm back" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'btback:' + r.runId })) + '\'>' +
-      '<b>還沒好</b><span>退回去，重新說幾天</span></button>');
-    H.push('</div>');
-  } else {
-    H.push('<div class="row bt-btn">');
-    if (at === 'end') {
-      H.push(btn('看戰報', 'go:stamp:' + r.runId, 'big'));
-    } else {
-      H.push(btn('跳過', 'btskip:' + r.runId, 'ghost'));
-    }
+      esc(JSON.stringify({ a: 'btback:' + r.runId })) + '\'>還沒好</button>');
     H.push('</div>');
   }
+  H.push('</div>');
+
   return H.join('');
 };
+
 
 
 
@@ -8966,23 +8986,30 @@ function battleRun() {
   var box = document.querySelector('.bt');
   if (!box) return;
 
-  /* 黑幕用 JS 拿掉，不能只靠動畫收尾。
-     動畫的時鐘會被凍住（背景分頁、省電、自動化瀏覽器），
-     那時候黑幕會一直蓋著，整頁是黑的。setTimeout 不會被凍住。 */
+  /* 黑幕用 JS 拿掉，不能只靠動畫收尾。動畫的時鐘會被凍住
+     （背景分頁、省電、自動化瀏覽器），那時候黑幕會一直蓋著。 */
   var wipe = box.querySelector('.bt-wipe');
-  if (wipe) btAt(480, function () { if (wipe.parentNode) wipe.parentNode.removeChild(wipe); });
-
-  if (S.p.at !== 'play') return;
+  if (wipe) btAt(460, function () { if (wipe.parentNode) wipe.parentNode.removeChild(wipe); });
 
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return;
-  var est = r.est || 1;
-  var act = r.actual || est;
   var line = document.getElementById('btline');
   function say(s) { if (line) line.textContent = s; }
 
+  /* 還沒上：牠先跳進來報名字，演完才把選單開出來。 */
+  if (r.state === 'running') {
+    btAt(900, function () {
+      var bo = document.querySelector('.bt-bottom');
+      if (bo) bo.classList.add('ready');
+    });
+    return;
+  }
+
+  var est = r.est || 1;
+  var act = r.actual || est;
+
   /* 一 · 上前。人往前跨，畫面震一下、閃一下。 */
-  btAt(600, function () {
+  btAt(500, function () {
     say('你上前。');
     box.classList.add('hit');
     btAt(260, function () { box.classList.remove('hit'); });
@@ -8990,26 +9017,27 @@ function battleRun() {
 
   /* 二 · 把這一趟報出來。這是整場唯一的「內容」——
      說了幾天、實際走了幾天，其餘都是演出。 */
-  btAt(1300, function () {
+  btAt(1200, function () {
     say('你說 ' + est + ' 天，實際走了 ' + act + ' 天。');
     box.classList.add('told');
   });
 
   /* 三 · 牠被打敗。閃四下，然後往下滑出畫面——
      舊版寶可夢就是這樣做的：沒有爆炸，沒有粒子，就是滑下去。 */
-  btAt(2400, function () {
+  btAt(2300, function () {
     say(mobOfRun(r).n + ' 讓開了。');
     box.classList.add('foe-out');
   });
 
-  btAt(3500, function () { S.p.at = 'end'; render(); });
+  /* 四 · 演完直接換頁。不用再按一次「看戰報」。 */
+  btAt(3600, function () { go('stamp', { id: r.runId }); });
 }
 
 /* 上。交出去，然後演一次。 */
 ACTS.btgo = function (id) {
   var t = myTeam();
   if (!actSubmit(t.teamId, id, '')) return say('這一趟已經交過了。');
-  S.p = { id: id, at: 'play' };
+  S.p = { id: id };
   render();
 };
 
@@ -9026,11 +9054,8 @@ ACTS.btback = function (id) {
 };
 
 /* 跳過：直接停在結果上。結果本來就是算好的，跳過不會改變任何事。 */
-ACTS.btskip = function (id) {
-  battleStop();
-  S.p = { id: id, at: 'end' };
-  render();
-};
+/* 跳過：直接到戰報。結果本來就是算好的，跳過不會改變任何事。 */
+ACTS.btskip = function (id) { battleStop(); go('stamp', { id: id }); };
 
 
 /* ===== 70-teacher.js ===== */

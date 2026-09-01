@@ -46,3 +46,20 @@ function pxSvg(px, pal, dim) {
   ART_CACHE[key] = url;
   return url;
 }
+
+/* ---------- 那一閃 ----------
+
+   登場、還有拿到什麼的時候，先看到一張純白的剪影，再落回本來的顏色。
+   舊版寶可夢就是這樣做的：沒有粒子、沒有光暈，靠的是一瞬間的反白。
+
+   做法是把同一張圖用全白的配色再畫一次疊在上面，然後淡出——
+   用一塊白色的方塊蓋上去會變成一個方形的閃光，那不是剪影。
+
+   收尾用 JS（見 55-ui.js 的 render），不是靠動畫跑完：
+   動畫的時鐘會被凍住，那時候白色會一直蓋著。 */
+var FLASH_PAL = { '#': '#FFF3D8', o: '#FFF3D8', '*': '#FFFFFF' };
+
+function pxFlash(px) {
+  if (!px || !px.length) return '';
+  return '<img class="px pxflash" src="' + pxSvg(px, FLASH_PAL) + '" alt="">';
+}

@@ -51,21 +51,21 @@ PAGES.battle = function () {
   var est = r.est || 1;
   var act = r.actual || est;
 
-  /* 三段：登場與選單 → 演出 → 打敗。
-     還在走的那一趟就是還沒上，所以停在選單。 */
-  var at = r.state === 'running' ? 'menu' : (S.p.at || 'end');
+  /* 兩段：登場與選單 → 演出。演完直接換到戰報那一頁。 */
+  var at = r.state === 'running' ? 'menu' : 'play';
 
-  var H = ['<div class="bt ' + zone.key + ' at-' + at + '">'];
+  var H = ['<div class="bt ' + zone.key + ' at-' + at + '" data-run="' +
+    esc(r.runId) + '">'];
 
   /* 遭遇：整個畫面閃一次再進場。 */
   H.push('<div class="bt-wipe"></div>');
 
   /* ── 牠 ── */
   H.push('<div class="bt-side foe">');
-  H.push(btPlate(esc(mob.n), 'foe',
-    at === 'end' ? '走了 ' + act + ' 天' : ''));
+  H.push(btPlate(esc(mob.n), 'foe', ''));
   H.push('<div class="bt-pad"></div>');
-  H.push('<div class="bt-ch foe">' + pxTag(mob.px, zone.pal, 'bt-px') + '</div>');
+  H.push('<div class="bt-ch foe">' + pxTag(mob.px, zone.pal, 'bt-px') +
+    pxFlash(mob.px) + '</div>');
   H.push('</div>');
 
   /* ── 你 ── */
@@ -73,43 +73,36 @@ PAGES.battle = function () {
   H.push('<div class="bt-pad"></div>');
   H.push('<div class="bt-ch me">' + pxTag(HERO.back, HERO.pal, 'bt-px') +
     heroPack(t.teamId) + '</div>');
-  H.push(btPlate(esc(shortName(t.name)), 'me',
-    at === 'end' ? '說了 ' + est + ' 天' : ''));
+  H.push(btPlate(esc(shortName(t.name)), 'me', ''));
   H.push('</div>');
-
-  H.push('</div>');
-
-  /* 字幕框。一句一句走，跟舊版寶可夢一樣——
-     一次全部倒出來就不是一場戰鬥，是一張結果表。 */
-  var first = at === 'menu' ? mob.n + ' 擋在路上。'
-    : at === 'end' ? btVerdict(r).line : '你上前。';
-  H.push('<div class="bt-say"><i class="bt-arrow"></i><b id="btline">' +
-    esc(first) + '</b></div>');
 
   /* ── 選單 ──
-     舊版寶可夢的たたかう／にげる。「還沒好」不是認輸——
-     做到一半發現寫不出來是真的會發生的事，而且承認它比硬交出去好。
-     退出去那一趟留著當紀錄，但沒有判定：那不是失準，是另一件事。 */
+     貼在畫面右下角，寶可夢的招式選單就長在那裡。
+     登場演完才出現（JS 加 .ready），所以第一眼只有牠。
+
+     「還沒好」不是認輸——做到一半發現寫不出來是真的會發生的事，
+     承認它比硬交出去好。退出去那一趟留著當紀錄，但沒有判定。 */
+  H.push('</div>');
+
+  /* ── 下面那一條 ──
+     舊版寶可夢的排法：左邊字幕框、右邊選單。
+     本來選單貼在畫面右下角，跟自己的名牌疊在一起。 */
+  H.push('<div class="bt-bottom">');
+  H.push('<div class="bt-say"><i class="bt-arrow"></i><b id="btline">' +
+    esc(at === 'menu' ? mob.n + ' 出現了！' : '你上前。') + '</b></div>');
   if (at === 'menu') {
     H.push('<div class="bt-menu">');
     H.push('<button class="bm go" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'btgo:' + r.runId })) + '\'>' +
-      '<b>上</b><span>把這一趟報出來</span></button>');
+      esc(JSON.stringify({ a: 'btgo:' + r.runId })) + '\'>上</button>');
     H.push('<button class="bm back" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'btback:' + r.runId })) + '\'>' +
-      '<b>還沒好</b><span>退回去，重新說幾天</span></button>');
-    H.push('</div>');
-  } else {
-    H.push('<div class="row bt-btn">');
-    if (at === 'end') {
-      H.push(btn('看戰報', 'go:stamp:' + r.runId, 'big'));
-    } else {
-      H.push(btn('跳過', 'btskip:' + r.runId, 'ghost'));
-    }
+      esc(JSON.stringify({ a: 'btback:' + r.runId })) + '\'>還沒好</button>');
     H.push('</div>');
   }
+  H.push('</div>');
+
   return H.join('');
 };
+
 
 
 
@@ -147,23 +140,30 @@ function battleRun() {
   var box = document.querySelector('.bt');
   if (!box) return;
 
-  /* 黑幕用 JS 拿掉，不能只靠動畫收尾。
-     動畫的時鐘會被凍住（背景分頁、省電、自動化瀏覽器），
-     那時候黑幕會一直蓋著，整頁是黑的。setTimeout 不會被凍住。 */
+  /* 黑幕用 JS 拿掉，不能只靠動畫收尾。動畫的時鐘會被凍住
+     （背景分頁、省電、自動化瀏覽器），那時候黑幕會一直蓋著。 */
   var wipe = box.querySelector('.bt-wipe');
-  if (wipe) btAt(480, function () { if (wipe.parentNode) wipe.parentNode.removeChild(wipe); });
-
-  if (S.p.at !== 'play') return;
+  if (wipe) btAt(460, function () { if (wipe.parentNode) wipe.parentNode.removeChild(wipe); });
 
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return;
-  var est = r.est || 1;
-  var act = r.actual || est;
   var line = document.getElementById('btline');
   function say(s) { if (line) line.textContent = s; }
 
+  /* 還沒上：牠先跳進來報名字，演完才把選單開出來。 */
+  if (r.state === 'running') {
+    btAt(900, function () {
+      var bo = document.querySelector('.bt-bottom');
+      if (bo) bo.classList.add('ready');
+    });
+    return;
+  }
+
+  var est = r.est || 1;
+  var act = r.actual || est;
+
   /* 一 · 上前。人往前跨，畫面震一下、閃一下。 */
-  btAt(600, function () {
+  btAt(500, function () {
     say('你上前。');
     box.classList.add('hit');
     btAt(260, function () { box.classList.remove('hit'); });
@@ -171,26 +171,27 @@ function battleRun() {
 
   /* 二 · 把這一趟報出來。這是整場唯一的「內容」——
      說了幾天、實際走了幾天，其餘都是演出。 */
-  btAt(1300, function () {
+  btAt(1200, function () {
     say('你說 ' + est + ' 天，實際走了 ' + act + ' 天。');
     box.classList.add('told');
   });
 
   /* 三 · 牠被打敗。閃四下，然後往下滑出畫面——
      舊版寶可夢就是這樣做的：沒有爆炸，沒有粒子，就是滑下去。 */
-  btAt(2400, function () {
+  btAt(2300, function () {
     say(mobOfRun(r).n + ' 讓開了。');
     box.classList.add('foe-out');
   });
 
-  btAt(3500, function () { S.p.at = 'end'; render(); });
+  /* 四 · 演完直接換頁。不用再按一次「看戰報」。 */
+  btAt(3600, function () { go('stamp', { id: r.runId }); });
 }
 
 /* 上。交出去，然後演一次。 */
 ACTS.btgo = function (id) {
   var t = myTeam();
   if (!actSubmit(t.teamId, id, '')) return say('這一趟已經交過了。');
-  S.p = { id: id, at: 'play' };
+  S.p = { id: id };
   render();
 };
 
@@ -207,8 +208,5 @@ ACTS.btback = function (id) {
 };
 
 /* 跳過：直接停在結果上。結果本來就是算好的，跳過不會改變任何事。 */
-ACTS.btskip = function (id) {
-  battleStop();
-  S.p = { id: id, at: 'end' };
-  render();
-};
+/* 跳過：直接到戰報。結果本來就是算好的，跳過不會改變任何事。 */
+ACTS.btskip = function (id) { battleStop(); go('stamp', { id: id }); };

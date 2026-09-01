@@ -367,10 +367,12 @@ function uncoverCard(t) {
   if (r.mob) {
     var mo = null;
     allFauna().forEach(function (f) { if (f.n === r.mob) mo = f; });
-    if (mo) H.push(pxTag(mo.px, z.pal, 'unc-px' + (r.early ? '' : ' gone')));
+    if (mo) H.push('<span class="pxwrap">' + pxTag(mo.px, z.pal, 'unc-px' + (r.early ? '' : ' gone')) +
+      pxFlash(mo.px) + '</span>');
   } else if (r.build) {
     var bd = buildDef(r.build);
-    if (bd) H.push(pxTag(bd.px, BUILD_PAL, 'unc-px' + (r.early ? '' : ' gone')));
+    if (bd) H.push('<span class="pxwrap">' + pxTag(bd.px, BUILD_PAL, 'unc-px' + (r.early ? '' : ' gone')) +
+      pxFlash(bd.px) + '</span>');
   } else {
     H.push('<div class="unc-px ' + z.key + ' blank"></div>');
   }

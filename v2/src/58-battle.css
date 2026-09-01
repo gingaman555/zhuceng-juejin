@@ -126,19 +126,30 @@
 @keyframes tagb{0%,60%{background:var(--gold)}61%,100%{background:var(--gold2)}}
 @media (prefers-reduced-motion: reduce){ .hero-tag.go{animation:none} }
 
-/* ── 戰鬥選單 ──
-   舊版寶可夢的たたかう／にげる。兩格一樣大——「還沒好」不是次要選項，
-   做到一半發現寫不出來是真的會發生的事，而且承認它比硬交出去好。 */
-.bt-menu{display:flex;gap:11px;flex-wrap:wrap;margin:0 0 22px}
-.bm{
-  flex:1 1 150px;padding:14px 16px;text-align:left;cursor:pointer;
-  border:none;font:inherit;color:var(--ink);background:var(--card2);
+/* ── 選單 ──
+   貼在畫面右下角，寶可夢的招式選單就長在那裡。
+   登場演完才出現（JS 加 .ready），不是用動畫開——
+   動畫的時鐘會被凍住，setTimeout 不會。 */
+/* 下面那一條：左邊字幕框、右邊選單。
+   本來選單貼在畫面右下角，跟自己的名牌疊在一起。 */
+.bt-bottom{display:flex;gap:11px;align-items:stretch;margin:0 0 11px}
+.bt-bottom .bt-say{flex:1;margin:0;min-width:0}
+.bt-menu{
+  flex:0 0 auto;display:none;align-self:stretch;
+  background:var(--card2);padding:9px 11px;
   box-shadow:0 0 0 3px #0D0B08, inset 0 0 0 2px rgba(255,240,214,.30)
 }
-.bm b{display:block;font-size:22px;font-weight:400;line-height:33px}
-.bm span{display:block;font-size:11px;color:var(--dim)}
-.bm.go b{color:var(--gold)}
-.bm:hover{box-shadow:0 0 0 3px #0D0B08, inset 0 0 0 2px var(--gold)}
+.bt-bottom.ready .bt-menu{display:block;animation:btpop .2s steps(2,end) 1}
+@keyframes btpop{from{transform:translateY(11px)}to{transform:none}}
+.bm{
+  display:block;width:100%;padding:3px 22px 3px 14px;text-align:left;
+  border:none;background:none;font:inherit;cursor:pointer;
+  font-size:22px;line-height:33px;color:var(--ink);white-space:nowrap
+}
+/* 寶可夢的游標：選到的那一行前面有一個 ▶。 */
+.bm::before{content:'▶';margin-right:6px;opacity:0;color:var(--gold)}
+.bm:hover::before,.bm:focus::before{opacity:1}
+.bm.go{color:var(--gold)}
 
 /* 名牌與字幕框照舊版寶可夢：方角、粗黑外框、裡面一圈亮邊。
    那個年代的畫面能力低，靠的全是輪廓與對比——
@@ -234,4 +245,12 @@
   .bt-side.foe .bt-ch,.bt-side .bt-plate{animation:none}
   .bt.foe-out .bt-side.foe .bt-ch{animation:none;opacity:.15}
   .bt.told .bt-plate{animation:none}
+}
+
+
+/* 手機上下面那一條擠不下並排，就上下疊。 */
+@media (max-width: 599px){
+  .bt-bottom{flex-direction:column;gap:9px}
+  .bt-menu{align-self:stretch}
+  .bm{display:inline-block;width:auto;margin-right:22px}
 }
