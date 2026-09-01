@@ -425,7 +425,20 @@ var ACTS = {
   /* 老師勾可以了 → 去挑裝備 */
   gear: function (runId) { go('pick', { id: runId }); },
 
-  /* 封存這一趟。名字選填。 */
+  /* 往哪裡挖 */
+  /* 點一塊地，它變成你的。PaGamO 最直覺的那一下——
+     地圖是動手的地方，不是一個看的頁面。 */
+  dig: function (v) {
+    var t = myTeam();
+    var p = v.split(',');
+    if (!actClaimCell(t.classId, t.teamId, Number(p[0]), Number(p[1]))) {
+      return say('那一格點不動。');
+    }
+    var left = claimsOf(t.teamId);
+    say(left ? '打通了。還有 ' + left + ' 格。' : '打通了。');
+  },
+
+  /* 封存這一趟。名字與方向都選填。 */
   seal: function (runId) {
     var name = (document.getElementById('cname') || {}).value || '';
     if (!actSeal(runId, name)) return say('這一趟已經封存了。');

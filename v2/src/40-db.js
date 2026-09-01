@@ -632,6 +632,15 @@ function actSeal(runId, name) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'approved') return null;
   var s = runShape(runId);
+  /* 封存給的是「一格的權利」，不是直接占掉一格。
+
+     權利要拿到全班那張圖上去用：能打通的那幾格會亮起來，點下去它才
+     變成你的。那一下才是 PaGamO 真正直覺的動作——地圖本身就是介面，
+     不是一個看的頁面。
+
+     這一格不影響任何判定。它給的是「這是我們打通的」。 */
+  var tm = teamOf(r.teamId);
+  if (tm) { tm.claims = (tm.claims || 0) + 1; }
   r.state = 'done';
   r.doneAt = now();
   r.coreName = String(name || '').trim().slice(0, 16);

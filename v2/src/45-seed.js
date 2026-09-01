@@ -148,6 +148,14 @@ function seed() {
   /* 刻意留白：三個里程碑都派了，一個都沒拉滑桿。
      系統要看得出這一組跟「在動但卡住」的不一樣。 */
 
+  /* 每一組已經打通的那幾格。往下打通，數量跟走完幾趟一樣。 */
+  TEAMS.forEach(function (tm) {
+    var n = where('Runs', function (r) {
+      return r.teamId === tm.id && r.state === 'done';
+    }).length;
+    for (var i = 0; i < n + 1; i++) digCell(cid, tm.id, null);
+  });
+
   /* 封存過的岩心。直接用 coreOf 算一次，跟真的走完一趟長出來的一模一樣。 */
   [['G1', 'R1', '訪談那一週', 17], ['G1', 'R2', '收斂', 10], ['G2', 'R4', '拖到最後', 14],
    ['G3', 'R6', '', 16], ['G4', 'R8', '逐字稿地獄', 18]].forEach(function (k, i) {

@@ -330,3 +330,76 @@ button.ac:active{transform:translateY(1px)}
   padding:0;border:none;background:none;cursor:pointer}
 .px.core.sm{width:22px;max-height:66px}
 @media (min-width:1200px){ .wrap > .task,.wrap > .feed,.wrap > .feed-h{flex:0 0 100%} }
+
+/* 任務那一行：接在廊道正下面，不是一張卡 */
+.tline{
+  display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;
+  margin:-11px 0 11px;padding:11px 14px;background:var(--sunk);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), 0 0 0 1px #000
+}
+.tline b{font-size:22px;font-weight:400;color:var(--ink)}
+.tline i{font-style:normal;font-size:11px}
+.srow{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 11px}
+.sq{
+  display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:11px;
+  background:var(--sunk);color:var(--mute);border:none;cursor:pointer;
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), 0 0 0 1px #000
+}
+.sq b{width:11px;height:11px;display:block;box-shadow:inset 0 0 0 2px var(--line2)}
+.sq.on{color:var(--dim)}
+.sq.on b{background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+.sq:hover{color:var(--dim)}
+
+/* ---------- 全班：一片被打通的岩層 ----------
+   一格一格，往哪裡打通是自己選的。沒有名次、沒有計數、沒有排序。 */
+.dig-wrap{
+  overflow:auto;max-height:70vh;margin:0 0 22px;background:#070605;
+  box-shadow:inset 0 3px 0 rgba(0,0,0,.7), inset 3px 0 0 rgba(0,0,0,.7),
+    inset 0 -3px 0 rgba(255,240,214,.05), 0 0 0 1px #000
+}
+.dig{position:relative}
+.dig-sky{position:absolute;left:0;top:0;height:6px;
+  background:linear-gradient(180deg,#4A5C33 0 3px,#2E3A22 3px 6px);z-index:3}
+.dg-c{position:absolute;width:40px;height:40px;padding:0;border:none}
+.dg-c.rock{background-color:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+.dg-c.dug{
+  cursor:pointer;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.22), inset 0 -3px 0 rgba(0,0,0,.45),
+    inset 0 0 0 1px rgba(0,0,0,.7)
+}
+.dg-c.dug:hover{filter:brightness(1.25)}
+.dg-c.dug.mine{box-shadow:inset 0 3px 0 rgba(255,255,255,.35),
+  inset 0 -3px 0 rgba(0,0,0,.45), 0 0 0 2px var(--ink)}
+.dig-z{position:absolute;left:3px;font-size:11px;color:var(--zink);opacity:.7;z-index:2}
+.dig-n{position:absolute;font-size:11px;white-space:nowrap;z-index:4}
+.dig-n.mine{font-weight:500}
+.dig-nb{display:flex;flex-wrap:wrap;gap:11px;margin:-11px 0 22px}
+.dig-nb span{font-size:11px;color:var(--gold);padding:5px 9px;background:var(--sunk)}
+
+/* 封存那一頁的小地圖：往哪裡打通 */
+.pickmap{position:relative;margin:11px 0}
+.pk-c{position:absolute;width:33px;height:33px;padding:0;border:none}
+.pk-c.rock{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(0,0,0,.6)}
+.pk-c.own{box-shadow:inset 0 2px 0 rgba(255,255,255,.25), inset 0 0 0 1px rgba(0,0,0,.7)}
+.pk-c.can{background:rgba(233,179,65,.18);cursor:pointer;
+  box-shadow:inset 0 0 0 2px var(--gold-d)}
+.pk-c.can:hover{background:rgba(233,179,65,.34)}
+.pk-c.can.on{background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold2)}
+
+/* 能打通的那幾格：亮起來，點得動。PaGamO 最直覺的那一下。 */
+.dg-c.rock.can{
+  cursor:pointer;
+  box-shadow:inset 0 0 0 2px var(--gold), inset 0 0 0 6px rgba(233,179,65,.18);
+  animation:cang 1.2s steps(1,end) infinite
+}
+@keyframes cang{
+  0%,49%{box-shadow:inset 0 0 0 2px var(--gold), inset 0 0 0 6px rgba(233,179,65,.18)}
+  50%,100%{box-shadow:inset 0 0 0 2px var(--gold2), inset 0 0 0 6px rgba(233,179,65,.34)}
+}
+.dg-c.rock.can:hover{box-shadow:inset 0 0 0 3px var(--gold2), inset 0 0 0 20px rgba(233,179,65,.30)}
+.dig-can{
+  margin:-11px 0 22px;padding:11px 14px;font-size:22px;color:var(--gold);
+  background:rgba(233,179,65,.10);box-shadow:inset 0 0 0 1px var(--gold-d)
+}
+@media (prefers-reduced-motion: reduce){ .dg-c.rock.can{animation:none} }

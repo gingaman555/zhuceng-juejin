@@ -1487,6 +1487,79 @@ button.ac:active{transform:translateY(1px)}
 .px.core.sm{width:22px;max-height:66px}
 @media (min-width:1200px){ .wrap > .task,.wrap > .feed,.wrap > .feed-h{flex:0 0 100%} }
 
+/* 任務那一行：接在廊道正下面，不是一張卡 */
+.tline{
+  display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;
+  margin:-11px 0 11px;padding:11px 14px;background:var(--sunk);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), 0 0 0 1px #000
+}
+.tline b{font-size:22px;font-weight:400;color:var(--ink)}
+.tline i{font-style:normal;font-size:11px}
+.srow{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 11px}
+.sq{
+  display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:11px;
+  background:var(--sunk);color:var(--mute);border:none;cursor:pointer;
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), 0 0 0 1px #000
+}
+.sq b{width:11px;height:11px;display:block;box-shadow:inset 0 0 0 2px var(--line2)}
+.sq.on{color:var(--dim)}
+.sq.on b{background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+.sq:hover{color:var(--dim)}
+
+/* ---------- 全班：一片被打通的岩層 ----------
+   一格一格，往哪裡打通是自己選的。沒有名次、沒有計數、沒有排序。 */
+.dig-wrap{
+  overflow:auto;max-height:70vh;margin:0 0 22px;background:#070605;
+  box-shadow:inset 0 3px 0 rgba(0,0,0,.7), inset 3px 0 0 rgba(0,0,0,.7),
+    inset 0 -3px 0 rgba(255,240,214,.05), 0 0 0 1px #000
+}
+.dig{position:relative}
+.dig-sky{position:absolute;left:0;top:0;height:6px;
+  background:linear-gradient(180deg,#4A5C33 0 3px,#2E3A22 3px 6px);z-index:3}
+.dg-c{position:absolute;width:40px;height:40px;padding:0;border:none}
+.dg-c.rock{background-color:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+.dg-c.dug{
+  cursor:pointer;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.22), inset 0 -3px 0 rgba(0,0,0,.45),
+    inset 0 0 0 1px rgba(0,0,0,.7)
+}
+.dg-c.dug:hover{filter:brightness(1.25)}
+.dg-c.dug.mine{box-shadow:inset 0 3px 0 rgba(255,255,255,.35),
+  inset 0 -3px 0 rgba(0,0,0,.45), 0 0 0 2px var(--ink)}
+.dig-z{position:absolute;left:3px;font-size:11px;color:var(--zink);opacity:.7;z-index:2}
+.dig-n{position:absolute;font-size:11px;white-space:nowrap;z-index:4}
+.dig-n.mine{font-weight:500}
+.dig-nb{display:flex;flex-wrap:wrap;gap:11px;margin:-11px 0 22px}
+.dig-nb span{font-size:11px;color:var(--gold);padding:5px 9px;background:var(--sunk)}
+
+/* 封存那一頁的小地圖：往哪裡打通 */
+.pickmap{position:relative;margin:11px 0}
+.pk-c{position:absolute;width:33px;height:33px;padding:0;border:none}
+.pk-c.rock{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(0,0,0,.6)}
+.pk-c.own{box-shadow:inset 0 2px 0 rgba(255,255,255,.25), inset 0 0 0 1px rgba(0,0,0,.7)}
+.pk-c.can{background:rgba(233,179,65,.18);cursor:pointer;
+  box-shadow:inset 0 0 0 2px var(--gold-d)}
+.pk-c.can:hover{background:rgba(233,179,65,.34)}
+.pk-c.can.on{background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold2)}
+
+/* 能打通的那幾格：亮起來，點得動。PaGamO 最直覺的那一下。 */
+.dg-c.rock.can{
+  cursor:pointer;
+  box-shadow:inset 0 0 0 2px var(--gold), inset 0 0 0 6px rgba(233,179,65,.18);
+  animation:cang 1.2s steps(1,end) infinite
+}
+@keyframes cang{
+  0%,49%{box-shadow:inset 0 0 0 2px var(--gold), inset 0 0 0 6px rgba(233,179,65,.18)}
+  50%,100%{box-shadow:inset 0 0 0 2px var(--gold2), inset 0 0 0 6px rgba(233,179,65,.34)}
+}
+.dg-c.rock.can:hover{box-shadow:inset 0 0 0 3px var(--gold2), inset 0 0 0 20px rgba(233,179,65,.30)}
+.dig-can{
+  margin:-11px 0 22px;padding:11px 14px;font-size:22px;color:var(--gold);
+  background:rgba(233,179,65,.10);box-shadow:inset 0 0 0 1px var(--gold-d)
+}
+@media (prefers-reduced-motion: reduce){ .dg-c.rock.can{animation:none} }
+
 /* 手機。
 
    之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
@@ -3658,6 +3731,15 @@ function actSeal(runId, name) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'approved') return null;
   var s = runShape(runId);
+  /* 封存給的是「一格的權利」，不是直接占掉一格。
+
+     權利要拿到全班那張圖上去用：能打通的那幾格會亮起來，點下去它才
+     變成你的。那一下才是 PaGamO 真正直覺的動作——地圖本身就是介面，
+     不是一個看的頁面。
+
+     這一格不影響任何判定。它給的是「這是我們打通的」。 */
+  var tm = teamOf(r.teamId);
+  if (tm) { tm.claims = (tm.claims || 0) + 1; }
   r.state = 'done';
   r.doneAt = now();
   r.coreName = String(name || '').trim().slice(0, 16);
@@ -3902,6 +3984,149 @@ function coreFacts(runId) {
 }
 
 
+/* ===== 44-dig.js ===== */
+/* 全班共用的一片岩層，一格一格被打通。
+
+   PaGamO 真正在運作的不是問答，是「共用地圖上你的顏色會擴散」。
+   把問答拿掉、換成專案之後，剩下的那個機制是：
+
+     · 一片全班共用、不會重置的地
+     · 你做的事會在上面留下永久看得見的痕跡
+     · 地圖本身就是介面，不是一張儀表板
+     · 你會看到旁邊的人在長大
+     · 兩塊地會靠在一起
+
+   本來的全班地下城是五根平行的柱子——那是有美術的長條圖，不是領土。
+   改成方格：每封存一趟，選一個方向打通一格。一個學期下來全班刻出一座
+   真的洞窟，每個班長得都不一樣，而且兩組走著走著會打通。
+
+   要小心的一條：面積 ＝ 走完幾趟，所以面積還是看得出多寡。
+   跟深度一樣，我們已經接受它看得見，靠的是別的地方擋住比較——
+   每一格一樣大、沒有計數、沒有排序、路線隨機所以顏色的分布沒有優劣。
+   兩組同樣五格可以長得完全不一樣，因為往哪裡打通是他們自己選的。
+
+   選方向不影響任何判定。它給的是「這是我們打通的」——那才是重點。 */
+
+var DIG = {
+  W: 15,      /* 幾欄。一個班五組，每組中間留得下彼此 */
+  CELL: 40    /* 一格幾 px */
+};
+
+/* 這一組打通的每一格 */
+function cellsOf(teamId) {
+  var t = teamOf(teamId);
+  return (t && t.cells) || [];
+}
+
+/* 誰佔了這一格。沒有人就回空字串。 */
+function ownerAt(classId, x, y) {
+  var who = '';
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    (t.cells || []).forEach(function (c) { if (c[0] === x && c[1] === y) who = t.teamId; });
+  });
+  return who;
+}
+
+/* 一組的起點：照名冊順序在最上面一排分開站，中間留得下彼此。 */
+function startCell(classId, teamId) {
+  var list = where('Teams', function (t) { return t.classId === classId; });
+  var i = 0;
+  list.forEach(function (t, n) { if (t.teamId === teamId) i = n; });
+  var step = Math.max(2, Math.floor(DIG.W / Math.max(1, list.length)));
+  return [Math.min(DIG.W - 1, Math.floor(step / 2) + i * step), 0];
+}
+
+/* 下一格可以打通哪裡：已經打通的那幾格的上下左右，而且還沒有人佔。
+   往上不能通到地表（y < 0）。 */
+function openCells(classId, teamId) {
+  var mine = cellsOf(teamId);
+  if (!mine.length) return [startCell(classId, teamId)];
+  var seen = {}, out = [];
+  mine.forEach(function (c) {
+    [[0, 1], [1, 0], [-1, 0], [0, -1]].forEach(function (d) {
+      var x = c[0] + d[0], y = c[1] + d[1];
+      if (x < 0 || x >= DIG.W || y < 0) return;
+      var k = x + ',' + y;
+      if (seen[k]) return;
+      if (ownerAt(classId, x, y)) return;
+      seen[k] = 1;
+      out.push([x, y]);
+    });
+  });
+  /* 往下的排前面——那是最直覺的方向，不用想也點得下去。 */
+  out.sort(function (a, b) { return (b[1] - a[1]) || (a[0] - b[0]); });
+  return out;
+}
+
+/* 打通一格。cell 沒給就往下——不選也走得完。 */
+function digCell(classId, teamId, cell) {
+  var t = teamOf(teamId);
+  if (!t) return null;
+  var open = openCells(classId, teamId);
+  var pick = null;
+  if (cell) {
+    open.forEach(function (c) { if (c[0] === cell[0] && c[1] === cell[1]) pick = c; });
+  }
+  if (!pick) pick = open[0];
+  if (!pick) return null;
+  t.cells = (t.cells || []).concat([pick]);
+  save();
+  return pick;
+}
+
+/* 還有幾格可以打通 */
+function claimsOf(teamId) {
+  var t = teamOf(teamId);
+  return (t && t.claims) || 0;
+}
+
+/* 點下去，那一格變成你的。
+   有權利才點得動；點的那一格必須跟自己已經打通的那幾格相鄰。 */
+function actClaimCell(classId, teamId, x, y) {
+  var t = teamOf(teamId);
+  if (!t || !(t.claims > 0)) return null;
+  var ok = false;
+  openCells(classId, teamId).forEach(function (c) {
+    if (c[0] === x && c[1] === y) ok = true;
+  });
+  if (!ok) return null;
+  t.cells = (t.cells || []).concat([[x, y]]);
+  t.claims--;
+  save();
+  logEvent('claim', { teamId: teamId, cell: x + ',' + y });
+  return [x, y];
+}
+
+/* 這一組的顏色。照名冊順序給，不照表現。 */
+function teamHue(classId, teamId) {
+  var list = where('Teams', function (t) { return t.classId === classId; });
+  var i = 0;
+  list.forEach(function (t, n) { if (t.teamId === teamId) i = n; });
+  return ACT_HUE[i % ACT_HUE.length];
+}
+
+/* 打通到旁邊碰在一起的兩組。這是這張圖上最好的一件事：
+   「甲組跟丙組打通了」是一個會真的發生的教室事件，而且它不是比較。 */
+function neighbours(classId) {
+  var pairs = {};
+  var list = where('Teams', function (t) { return t.classId === classId; });
+  list.forEach(function (t) {
+    (t.cells || []).forEach(function (c) {
+      [[0, 1], [1, 0], [-1, 0], [0, -1]].forEach(function (d) {
+        var o = ownerAt(classId, c[0] + d[0], c[1] + d[1]);
+        if (!o || o === t.teamId) return;
+        var k = [t.teamId, o].sort().join('|');
+        pairs[k] = 1;
+      });
+    });
+  });
+  return Object.keys(pairs).map(function (k) {
+    var ab = k.split('|');
+    return [teamOf(ab[0]), teamOf(ab[1])];
+  });
+}
+
+
 /* ===== 45-seed.js ===== */
 /* 試用資料：一個班、一位老師、五組、一個研究者。
 
@@ -4052,6 +4277,14 @@ function seed() {
   /* ---------- G5 戊：什麼都還沒承諾 ---------- */
   /* 刻意留白：三個里程碑都派了，一個都沒拉滑桿。
      系統要看得出這一組跟「在動但卡住」的不一樣。 */
+
+  /* 每一組已經打通的那幾格。往下打通，數量跟走完幾趟一樣。 */
+  TEAMS.forEach(function (tm) {
+    var n = where('Runs', function (r) {
+      return r.teamId === tm.id && r.state === 'done';
+    }).length;
+    for (var i = 0; i < n + 1; i++) digCell(cid, tm.id, null);
+  });
 
   /* 封存過的岩心。直接用 coreOf 算一次，跟真的走完一趟長出來的一模一樣。 */
   [['G1', 'R1', '訪談那一週', 17], ['G1', 'R2', '收斂', 10], ['G2', 'R4', '拖到最後', 14],
@@ -4500,7 +4733,20 @@ var ACTS = {
   /* 老師勾可以了 → 去挑裝備 */
   gear: function (runId) { go('pick', { id: runId }); },
 
-  /* 封存這一趟。名字選填。 */
+  /* 往哪裡挖 */
+  /* 點一塊地，它變成你的。PaGamO 最直覺的那一下——
+     地圖是動手的地方，不是一個看的頁面。 */
+  dig: function (v) {
+    var t = myTeam();
+    var p = v.split(',');
+    if (!actClaimCell(t.classId, t.teamId, Number(p[0]), Number(p[1]))) {
+      return say('那一格點不動。');
+    }
+    var left = claimsOf(t.teamId);
+    say(left ? '打通了。還有 ' + left + ' 格。' : '打通了。');
+  },
+
+  /* 封存這一趟。名字與方向都選填。 */
   seal: function (runId) {
     var name = (document.getElementById('cname') || {}).value || '';
     if (!actSeal(runId, name)) return say('這一趟已經封存了。');
@@ -4953,40 +5199,46 @@ function homeFor(u) {
 
    廊道那一整片場景搬到全班地下城了——世界該是全班共用的，
    不是他一個人的背景。 */
+/* ---------- 首頁 ----------
+
+   層級：
+     主功能  廊道 ＋ 那一顆鍵。大、在最上面、是遊戲的樣子。
+     副功能  廊道底下那三個小圖示（營火、出口、招牌）。
+     別人    全班最近。打開這個系統的理由，但不是主功能，所以在底下。
+
+   YouTube 的首頁放的是別人的影片，主流程卻是把影片放上去——
+   那句話講的是層級，不是「拿掉自己的東西」。 */
 PAGES.home = function () {
   var t = myTeam();
   var next = nextThing(t.teamId);
   var st = stallOf(t.teamId);
-  var z = strataAt(depthOf(t.teamId), t.teamId);
   var row = next.row;
   var r = row && row.run && row.run.runId ? row.run : null;
 
   var H = [];
 
-  /* ── 你手上這一趟 ── */
-  H.push('<div class="task z-' + z.key + '">');
-  H.push('<div class="task-top">');
-  H.push('<div><div class="eyebrow">' + esc(taskTag(next)) + '</div>');
-  H.push('<h1>' + esc(row && row.ms ? row.ms.title : '還沒有任務') + '</h1></div>');
-  H.push('<div class="task-z"><em>' + esc(z.name) + '</em>' +
-    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b></div>');
+  /* ── 主功能：廊道。這不是裝飾，是「說幾天 → 交出去」被畫出來的樣子。 ── */
+  H.push(scene(t, next.row, st, next.kind));
+
+  /* ── 任務的內容。接在廊道正下面當說明行，不另外開一張卡——
+        那是同一件事的兩個部分，中間不該有一條卡片的邊。 ── */
+  H.push('<div class="tline">');
+  H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
+  H.push('<b>' + esc(row && row.ms ? row.ms.title : '還沒有任務') + '</b>');
+  if (st.level) H.push('<i class="warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</i>');
   H.push('</div>');
+  if (r) H.push(stepRow(r.runId));
 
-  if (r) {
-    H.push(estBar(r.est, r.actual || daysBetween(r.committedAt, now()) + 1,
-      r.state === 'running'));
-    if (st.level) H.push('<p class="dim warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</p>');
-  }
-  if (r) H.push(stepCard(r.runId));
-
+  /* ── 主功能：那一顆鍵 ── */
   H.push(actionCard(t, next, st));
   if (next.more) {
     H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
   }
-  H.push(deskRow(t, next));
-  H.push('</div>');
 
-  /* ── 全班最近發生的事 ── */
+  /* ── 副功能：小圖示 ── */
+  H.push(deskRow(t, next));
+
+  /* ── 別人 ── */
   var fd = feedOf(t.classId, 20);
   H.push('<div class="eyebrow feed-h">全班最近</div>');
   if (!fd.length) {
@@ -4999,6 +5251,22 @@ PAGES.home = function () {
   H.push(coreCard());
   return H.join('');
 };
+
+/* 老師分的段，排成一列小方塊。勾得掉。
+   它接在任務那一行下面，不是一張卡——段是任務的一部分，不是另一件事。 */
+function stepRow(runId) {
+  var sp = stepsOf(runId);
+  if (!sp) return '';
+  var H = ['<div class="srow">'];
+  sp.all.forEach(function (x, i) {
+    var on = sp.on.indexOf(i) >= 0;
+    H.push('<button class="sq' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'tick:' + runId + '|' + i })) + '\'>' +
+      '<b></b>' + esc(x) + '</button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
 
 /* 這一趟現在是什麼狀態。一個短標籤，不是一句解釋。 */
 function taskTag(next) {
@@ -5394,6 +5662,7 @@ PAGES.pick = function () {
     s.elapsed + '</b> 天</div>');
   H.push('</div></div></div>');
 
+
   H.push('<div class="card">');
   H.push('<div class="eyebrow">給這一趟取個名字　選填</div>');
   H.push('<div class="rn-row">');
@@ -5404,6 +5673,8 @@ PAGES.pick = function () {
   H.push('</div>');
   return H.join('');
 };
+/* 選方向那張小地圖拿掉了：占地那一下改在全班那張圖上做。
+   地圖是動手的地方，不是一個看的頁面。 */
 
 /* ---------- 大躍進 ---------- */
 PAGES.dash = function () {
@@ -5430,7 +5701,16 @@ PAGES.dash = function () {
     H.push('</div>');
   }
 
-  H.push(btn('回廊道', 'go:home', 'big'));
+  /* 封存完手上多一格可以打通。那一下要在地圖上做——
+     地圖是動手的地方，不是一個看的頁面。 */
+  if (claimsOf(t.teamId)) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">你有 ' + claimsOf(t.teamId) + ' 格可以打通</div>');
+    H.push(btn('去地圖上打通', 'go:eco', 'big'));
+    H.push('</div>');
+  } else {
+    H.push(btn('回廊道', 'go:home', 'big'));
+  }
   return H.join('');
 };
 
@@ -6117,9 +6397,9 @@ PAGES.eco = function () {
   var t = myTeam();
   var rows = ecoRows(t.classId);
   var H = [head('全班地下城', '大家都在下面', '')];
-  H.push(xsScene(rows, t.teamId, t.classId));
+  H.push(digMap(t.classId, t.teamId));
+  H.push(digTeamCard(t.classId));
   H.push(coreCard());
-  H.push(faunaCard());
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
   return H.join('');
 };
@@ -6129,9 +6409,9 @@ PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
   var H = [head('各組進度', '每一組走到哪', '')];
-  H.push(xsScene(rows, null, u.classId));
+  H.push(digMap(u.classId, null));
+  H.push(digTeamCard(u.classId));
   H.push(coreCard());
-  H.push(faunaCard());
 
   rows.forEach(function (r) {
     var t = teamOf(r.teamId);
@@ -6445,6 +6725,141 @@ function feedRow(f, meId) {
 function feedWhen(at) {
   var d = daysBetween(at, now());
   return d <= 0 ? '今天' : d === 1 ? '昨天' : d + ' 天前';
+}
+
+
+/* ===== 66-map.js ===== */
+/* 全班地下城：一片被打通的岩層。
+
+   本來是五根平行的柱子，深度一根一根往下——那是有美術的長條圖。
+   現在是一片方格：每一組封存一趟就打通一格，往哪裡打通是他們自己選的。
+   一個學期下來全班刻出一座真的洞窟，每個班長得都不一樣。
+
+   這張圖上沒有名次、沒有計數、沒有排序。看得到的是形狀，
+   而形狀是每一組自己挑出來的。 */
+
+function digMap(classId, meId) {
+  /* 自己有幾格可以打通。有的話，能打通的那幾格會亮起來、點得動。 */
+  var canClaim = meId ? claimsOf(meId) : 0;
+  var open = {};
+  if (canClaim) {
+    openCells(classId, meId).forEach(function (c) { open[c[0] + ',' + c[1]] = 1; });
+  }
+  var teams = where('Teams', function (t) { return t.classId === classId; });
+  var deep = 0;
+  teams.forEach(function (t) {
+    (t.cells || []).forEach(function (c) { if (c[1] > deep) deep = c[1]; });
+  });
+  var rows = Math.max(6, deep + 3);
+  var W = DIG.W * DIG.CELL;
+  var H = rows * DIG.CELL;
+
+  /* 誰在哪一格，先攤成一張表，不然每一格都要掃一次全班。 */
+  var own = {}, hue = {};
+  teams.forEach(function (t) {
+    hue[t.teamId] = teamHue(classId, t.teamId);
+    (t.cells || []).forEach(function (c) { own[c[0] + ',' + c[1]] = t.teamId; });
+  });
+
+  var out = ['<div class="dig-wrap"><div class="dig" style="width:' + W +
+    'px;height:' + H + 'px">'];
+
+  /* 地表 */
+  out.push('<div class="dig-sky" style="width:' + W + 'px"></div>');
+
+  for (var y = 0; y < rows; y++) {
+    var z = strataAt(y, classId);
+    for (var x = 0; x < DIG.W; x++) {
+      var o = own[x + ',' + y];
+      var st = 'left:' + (x * DIG.CELL) + 'px;top:' + (y * DIG.CELL) + 'px';
+      if (o) {
+        out.push('<button class="dg-c dug' + (o === meId ? ' mine' : '') +
+          '" style="' + st + ';background:' + hue[o] + '" ' +
+          'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'digteam:' + o })) + '\' ' +
+          'title="' + esc(teamOf(o).name) + '"></button>');
+      } else if (open[x + ',' + y]) {
+        out.push('<button class="dg-c rock can ' + z.key + '" style="' + st + '" ' +
+          'data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'dig:' + x + ',' + y })) + '\' ' +
+          'title="' + esc('打通這一格') + '"></button>');
+      } else {
+        out.push('<div class="dg-c rock ' + z.key + '" style="' + st + '"></div>');
+      }
+    }
+    /* 左邊標一次那一層叫什麼。一層兩格，只標上面那一格。 */
+    if (y % ZONE_SPAN === 0) {
+      out.push('<div class="dig-z ' + z.key + '" style="top:' + (y * DIG.CELL + 4) +
+        'px">' + esc(z.name) + '</div>');
+    }
+  }
+
+  /* 每一組的名字掛在它最上面那一格 */
+  teams.forEach(function (t) {
+    var cs = t.cells || [];
+    if (!cs.length) return;
+    var top = cs[0];
+    cs.forEach(function (c) { if (c[1] < top[1]) top = c; });
+    out.push('<div class="dig-n' + (t.teamId === meId ? ' mine' : '') +
+      '" style="left:' + (top[0] * DIG.CELL) + 'px;top:' +
+      (top[1] * DIG.CELL - 18) + 'px;color:' + hue[t.teamId] + '">' +
+      esc(t.name.replace('第', '').replace('組 · ', '')) + '</div>');
+  });
+
+  out.push('</div></div>');
+
+  /* 有權利的時候說一聲。一句話，因為那一下本來就很明顯——
+     會亮的那幾格就在畫面上。 */
+  if (canClaim) {
+    out.push('<div class="dig-can">你有 ' + canClaim + ' 格可以打通。點亮起來的那幾格。</div>');
+  }
+
+  /* 打通到碰在一起的那幾對。這是這張圖上最好的一件事。 */
+  var nb = neighbours(classId);
+  if (nb.length) {
+    out.push('<div class="dig-nb">');
+    nb.forEach(function (p) {
+      if (!p[0] || !p[1]) return;
+      out.push('<span>' + esc(p[0].name) + ' ✕ ' + esc(p[1].name) + ' 打通了</span>');
+    });
+    out.push('</div>');
+  }
+  return out.join('');
+}
+
+/* 點一組：看他們打通了幾格、走到哪一層、封存過哪幾根。 */
+ACTS.digteam = function (id) { DRAFT.dt = id; DRAFT.ck = null; render(); };
+
+function digTeamCard(classId) {
+  if (!DRAFT.dt) return '';
+  var t = teamOf(DRAFT.dt);
+  if (!t) return '';
+  var ks = keepsOf(t.teamId).slice().reverse();
+  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var H = ['<div class="card fa ' + z.key + '">'];
+  H.push('<div class="radar-head">');
+  H.push(pxTag(signOf(t.teamId).px, signOf(t.teamId).pal, 'sign-s'));
+  H.push('<b>' + esc(t.name) + '</b>');
+  H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
+  H.push('<span class="sp"></span>');
+  H.push('<span class="dim">' + esc(z.name) + '</span>');
+  H.push('</div>');
+  if (ks.length) {
+    H.push('<div class="rack">');
+    ks.forEach(function (k) {
+      var kz = STRATA[0];
+      STRATA.forEach(function (x) { if (x.key === k.zone) kz = x; });
+      H.push('<div class="rk">');
+      H.push(pxTag(k.px || coreOf(k.runId), kz.pal, 'core'));
+      H.push('<b>' + esc(k.name || '') + '</b>');
+      H.push('<span>' + (k.elapsed || 0) + ' 天</span>');
+      H.push('</div>');
+    });
+    H.push('</div>');
+  } else {
+    H.push('<p class="dim">還沒有封存過的岩心。</p>');
+  }
+  H.push('</div>');
+  return H.join('');
 }
 
 

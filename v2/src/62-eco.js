@@ -245,9 +245,9 @@ PAGES.eco = function () {
   var t = myTeam();
   var rows = ecoRows(t.classId);
   var H = [head('全班地下城', '大家都在下面', '')];
-  H.push(xsScene(rows, t.teamId, t.classId));
+  H.push(digMap(t.classId, t.teamId));
+  H.push(digTeamCard(t.classId));
   H.push(coreCard());
-  H.push(faunaCard());
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
   return H.join('');
 };
@@ -257,9 +257,9 @@ PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
   var H = [head('各組進度', '每一組走到哪', '')];
-  H.push(xsScene(rows, null, u.classId));
+  H.push(digMap(u.classId, null));
+  H.push(digTeamCard(u.classId));
   H.push(coreCard());
-  H.push(faunaCard());
 
   rows.forEach(function (r) {
     var t = teamOf(r.teamId);

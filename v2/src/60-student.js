@@ -31,40 +31,46 @@
 
    廊道那一整片場景搬到全班地下城了——世界該是全班共用的，
    不是他一個人的背景。 */
+/* ---------- 首頁 ----------
+
+   層級：
+     主功能  廊道 ＋ 那一顆鍵。大、在最上面、是遊戲的樣子。
+     副功能  廊道底下那三個小圖示（營火、出口、招牌）。
+     別人    全班最近。打開這個系統的理由，但不是主功能，所以在底下。
+
+   YouTube 的首頁放的是別人的影片，主流程卻是把影片放上去——
+   那句話講的是層級，不是「拿掉自己的東西」。 */
 PAGES.home = function () {
   var t = myTeam();
   var next = nextThing(t.teamId);
   var st = stallOf(t.teamId);
-  var z = strataAt(depthOf(t.teamId), t.teamId);
   var row = next.row;
   var r = row && row.run && row.run.runId ? row.run : null;
 
   var H = [];
 
-  /* ── 你手上這一趟 ── */
-  H.push('<div class="task z-' + z.key + '">');
-  H.push('<div class="task-top">');
-  H.push('<div><div class="eyebrow">' + esc(taskTag(next)) + '</div>');
-  H.push('<h1>' + esc(row && row.ms ? row.ms.title : '還沒有任務') + '</h1></div>');
-  H.push('<div class="task-z"><em>' + esc(z.name) + '</em>' +
-    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b></div>');
+  /* ── 主功能：廊道。這不是裝飾，是「說幾天 → 交出去」被畫出來的樣子。 ── */
+  H.push(scene(t, next.row, st, next.kind));
+
+  /* ── 任務的內容。接在廊道正下面當說明行，不另外開一張卡——
+        那是同一件事的兩個部分，中間不該有一條卡片的邊。 ── */
+  H.push('<div class="tline">');
+  H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
+  H.push('<b>' + esc(row && row.ms ? row.ms.title : '還沒有任務') + '</b>');
+  if (st.level) H.push('<i class="warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</i>');
   H.push('</div>');
+  if (r) H.push(stepRow(r.runId));
 
-  if (r) {
-    H.push(estBar(r.est, r.actual || daysBetween(r.committedAt, now()) + 1,
-      r.state === 'running'));
-    if (st.level) H.push('<p class="dim warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</p>');
-  }
-  if (r) H.push(stepCard(r.runId));
-
+  /* ── 主功能：那一顆鍵 ── */
   H.push(actionCard(t, next, st));
   if (next.more) {
     H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
   }
-  H.push(deskRow(t, next));
-  H.push('</div>');
 
-  /* ── 全班最近發生的事 ── */
+  /* ── 副功能：小圖示 ── */
+  H.push(deskRow(t, next));
+
+  /* ── 別人 ── */
   var fd = feedOf(t.classId, 20);
   H.push('<div class="eyebrow feed-h">全班最近</div>');
   if (!fd.length) {
@@ -77,6 +83,22 @@ PAGES.home = function () {
   H.push(coreCard());
   return H.join('');
 };
+
+/* 老師分的段，排成一列小方塊。勾得掉。
+   它接在任務那一行下面，不是一張卡——段是任務的一部分，不是另一件事。 */
+function stepRow(runId) {
+  var sp = stepsOf(runId);
+  if (!sp) return '';
+  var H = ['<div class="srow">'];
+  sp.all.forEach(function (x, i) {
+    var on = sp.on.indexOf(i) >= 0;
+    H.push('<button class="sq' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'tick:' + runId + '|' + i })) + '\'>' +
+      '<b></b>' + esc(x) + '</button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
 
 /* 這一趟現在是什麼狀態。一個短標籤，不是一句解釋。 */
 function taskTag(next) {
@@ -472,6 +494,7 @@ PAGES.pick = function () {
     s.elapsed + '</b> 天</div>');
   H.push('</div></div></div>');
 
+
   H.push('<div class="card">');
   H.push('<div class="eyebrow">給這一趟取個名字　選填</div>');
   H.push('<div class="rn-row">');
@@ -482,6 +505,8 @@ PAGES.pick = function () {
   H.push('</div>');
   return H.join('');
 };
+/* 選方向那張小地圖拿掉了：占地那一下改在全班那張圖上做。
+   地圖是動手的地方，不是一個看的頁面。 */
 
 /* ---------- 大躍進 ---------- */
 PAGES.dash = function () {
@@ -508,7 +533,16 @@ PAGES.dash = function () {
     H.push('</div>');
   }
 
-  H.push(btn('回廊道', 'go:home', 'big'));
+  /* 封存完手上多一格可以打通。那一下要在地圖上做——
+     地圖是動手的地方，不是一個看的頁面。 */
+  if (claimsOf(t.teamId)) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">你有 ' + claimsOf(t.teamId) + ' 格可以打通</div>');
+    H.push(btn('去地圖上打通', 'go:eco', 'big'));
+    H.push('</div>');
+  } else {
+    H.push(btn('回廊道', 'go:home', 'big'));
+  }
   return H.join('');
 };
 
