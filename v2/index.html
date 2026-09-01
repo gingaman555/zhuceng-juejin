@@ -950,7 +950,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .sf{font-size:11px;color:var(--mute);display:flex;align-items:baseline;gap:6px}
 .sf b{font-size:33px;line-height:1;font-weight:400}
 .sf.you b{color:var(--gold)}
-.sf.tide b{color:#5FA8C7}
+.sf.days b{color:#5FA8C7}
 .sf.est b{color:var(--ink)}
 .sf.rest b{color:var(--mute)}
 
@@ -1685,6 +1685,144 @@ button.ac:active{transform:translateY(1px)}
 .rep dd.s{font-size:11px;text-align:left;color:var(--dim)}
 .rep dt:last-of-type,.rep dd:last-of-type{border-bottom:0}
 
+/* ── 地圖的環境 ──
+   PaGamO 的地圖讀起來像一塊大陸，靠的不是格子畫得漂亮，是地表上有東西、
+   地裡有東西、而且領土是一塊有輪廓的形狀。這三件事這裡都補上了。 */
+
+/* 天。硬停的漸層，沒有模糊——一有模糊它就不是像素了。 */
+.dig-sky{
+  position:absolute;top:0;z-index:0;
+  background:linear-gradient(180deg,#0B1020 0 40%,#141B31 40% 72%,#1E2440 72% 100%)
+}
+/* 上面那片林子。根脈層那一句說的根，就是從這裡穿下來的。 */
+.dig-tree{
+  position:absolute;width:9px;z-index:1;background:#1C2A18;
+  clip-path:polygon(50% 0,100% 100%,0 100%)
+}
+/* 泥土。岩層從這一條下面開始。 */
+.dig-soil{
+  position:absolute;height:8px;z-index:2;
+  background:linear-gradient(180deg,#3E4A2C 0 3px,#2A2418 3px 8px)
+}
+/* 每一組下來的那個井口。自己那一個亮一點。 */
+.dig-shaft{
+  position:absolute;width:40px;height:11px;z-index:3;
+  background:linear-gradient(180deg,rgba(255,240,214,.20) 0 3px,rgba(255,240,214,.07) 3px 11px)
+}
+.dig-shaft.mine{
+  background:linear-gradient(180deg,rgba(233,179,65,.55) 0 3px,rgba(233,179,65,.16) 3px 11px)
+}
+
+/* 岩層交界。每一欄高度不同，所以它犬牙交錯——
+   一條直線會讓整張圖讀起來像表格。 */
+.dig-seam{position:absolute;width:40px;z-index:1;background:var(--zln);opacity:.85}
+
+/* 岩層裡的東西。位置用座標算，所以石頭永遠在同一個地方。 */
+.dg-c.rock{overflow:hidden}
+.mp{position:absolute;width:18px;height:auto;opacity:.5;image-rendering:pixelated}
+
+/* 同一層裡每一格的深淺差一點點，不然整片會像一塊布。 */
+.dg-c.rock.v1{filter:brightness(1.08)}
+.dg-c.rock.v2{filter:brightness(.92)}
+
+/* 打通了的地：輪廓在 JS 那邊算（只描對外的邊），所以這裡不要再蓋一次。 */
+.dg-c.dug{box-shadow:none}
+.dg-c.dug.mine{outline:2px solid var(--ink);outline-offset:-2px;z-index:2}
+
+/* 走路：兩幀疊著，輪流出現。steps(1) 是硬切——
+   淡入淡出會讓像素看起來像有殘影。 */
+.scn-hero.walking{position:absolute}
+.scn-hero .wf{position:absolute;left:0;top:0}
+.scn-hero .wa{animation:wkA .44s steps(1,end) infinite}
+.scn-hero .wb{animation:wkB .44s steps(1,end) infinite}
+@keyframes wkA{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes wkB{0%,49%{opacity:0}50%,100%{opacity:1}}
+@media (prefers-reduced-motion: reduce){
+  .scn-hero .wa{animation:none;opacity:1}
+  .scn-hero .wb{animation:none;opacity:0}
+}
+
+/* 地圖上的角色：站在自己最前緣那一格。 */
+.dig-hero{position:absolute;z-index:6;width:44px;height:44px;pointer-events:none}
+.dig-hero .ch{width:44px;height:44px;image-rendering:pixelated;
+  filter:drop-shadow(2px 0 0 rgba(0,0,0,.55)) drop-shadow(-2px 0 0 rgba(0,0,0,.55))
+         drop-shadow(0 2px 0 rgba(0,0,0,.55))}
+.dig-hero .wf{position:absolute;left:0;top:0}
+.dig-hero .wa{animation:wkA .44s steps(1,end) infinite}
+.dig-hero .wb{animation:wkB .44s steps(1,end) infinite}
+@media (prefers-reduced-motion: reduce){
+  .dig-hero .wa{animation:none;opacity:1}
+  .dig-hero .wb{animation:none;opacity:0}
+}
+
+/* ── 蓋在地上的東西 ──
+   地是組別的顏色，建築一律深色剪影加高光——所以每一組的建築讀起來
+   一樣重，差別只在形狀。用顏色分強弱的話，那張圖就會被讀成排名。 */
+.dg-c.dug{position:relative;display:block}
+.bld{position:absolute;left:4px;bottom:2px;width:32px;height:32px;
+  image-rendering:pixelated;pointer-events:none}
+
+/* 兩組的地貼在一起長出來的路。 */
+.dig-link{position:absolute;z-index:5;background:var(--gold);opacity:.8}
+.dig-link.v{width:6px;height:18px}
+.dig-link.h{width:18px;height:6px}
+
+/* 三選一。三個一樣大、一樣亮——沒有一個看起來比較厲害。 */
+.bp-row{display:flex;gap:11px;flex-wrap:wrap}
+.bp{
+  flex:1 1 88px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:11px;cursor:pointer;border:none;color:var(--ink);font:inherit;
+  background:var(--card2);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.28), inset 2px 2px 0 rgba(255,255,255,.08);
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
+}
+.bp:hover{box-shadow:inset 0 0 0 2px var(--gold), inset 2px 2px 0 rgba(255,255,255,.12)}
+.bp-px{width:44px;height:44px;image-rendering:pixelated}
+.bp b{font-size:11px;font-weight:400}
+
+/* 點一座建築：那是哪一趟。建築不是獎品，是那一趟的紀念碑。 */
+.bstory .bs-in{display:flex;gap:14px;align-items:flex-start}
+.bs-px{width:66px;height:66px;image-rendering:pixelated;flex:0 0 auto}
+.bstory h2{margin:6px 0 11px;font-size:22px;font-weight:400}
+
+/* 廊道要滑得動、滑得順，而且不要搶走整頁的上下捲動。
+   兩邊留一道暗邊，讓人看得出來它還有得滑。 */
+.scn-scroll{
+  -webkit-overflow-scrolling:touch;touch-action:pan-x;overscroll-behavior-x:contain;
+  scrollbar-width:thin
+}
+.dig-wrap{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.scn::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:6;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.45) 0 6px,transparent 6px 100%),
+    linear-gradient(270deg,rgba(0,0,0,.45) 0 6px,transparent 6px 100%)
+}
+
+/* ── 這一圈走到哪 ──
+   四拍，走完接回第一拍。這座地下城是無盡輪迴的，所以它是環不是條——
+   沒有百分比、沒有終點。 */
+.cyc{
+  display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;
+  padding:11px 14px;margin:0 0 11px;background:var(--sunk);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06);
+  scrollbar-width:none
+}
+.cyc::-webkit-scrollbar{display:none}
+.cy{display:flex;flex-direction:column;gap:1px;padding:3px 9px;white-space:nowrap;
+  opacity:.42}
+.cy b{font-size:11px;font-weight:400;color:var(--mute)}
+.cy i{font-size:11px;font-style:normal;color:var(--dim)}
+.cy.on{
+  opacity:1;background:rgba(233,179,65,.12);
+  box-shadow:inset 0 0 0 2px var(--gold-d)
+}
+.cy.on b{color:var(--gold)}
+.cy.on i{color:var(--ink)}
+/* 拍與拍之間的那一小段。最後一段接回第一拍，所以畫成虛的。 */
+.cyd{flex:0 0 11px;height:3px;background:var(--line)}
+.cyd.loop{background:repeating-linear-gradient(90deg,var(--line) 0 3px,transparent 3px 6px)}
+
 /* 手機。
 
    之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
@@ -1853,6 +1991,19 @@ button.ac:active{transform:translateY(1px)}
 
 }
 
+/* ── 要做的那一件事，釘在畫面下面 ──
+   地圖變成首頁之後它本來被推到整頁最底下，那樣就得先捲過整張圖才按得到。
+   看地圖跟動手不是先後關係——PaGamO 打開來就能動手。 */
+.dock{
+  position:sticky;z-index:9;margin:0 0 22px;
+  background:var(--bg);
+  box-shadow:0 -11px 0 var(--bg), inset 0 3px 0 rgba(255,240,214,.10)
+}
+.dock .tline{margin:0}
+.dock .act-card{margin:0}
+@media (max-width: 899px){ .dock{bottom:66px} }
+@media (min-width: 900px){ .dock{bottom:0} }
+
 </style>
 </head>
 <body>
@@ -1935,6 +2086,17 @@ var HERO = {
           '......+##+*#*...', '....++####*#....', '...+#*####*#+...', '...+#*#####*+...',
           '....+######+....', '.....+#..#+.....', '.....+#..#+.....', '....+#+..+#+....',
           '....+#+..+#+....', '...++#+..+#++...', '................', '................'],
+  /* 走路：兩幀。一幀跨開、一幀併攏而且身體高一格。
+     像素的走路兩幀就夠，重點是腳的分合與身體的上下。
+     他站在第幾格是行事曆算的，走路只是讓他活著，不宣稱任何事。 */
+  walkA: ['................', '......++++......', '.....+#**#+.....', '.....+#**#+.....',
+          '......+##+......', '....++####++....', '...+#*####*#+...', '...+#*####*#+...',
+          '....+######+....', '.....+#..#+.....', '.....+#..#+.....', '....+#+..+#+....',
+          '...+#+....+#+...', '..++#......+#++.', '................', '................'],
+  walkB: ['......++++......', '.....+#**#+.....', '.....+#**#+.....', '......+##+......',
+          '....++####++....', '...+#*####*#+...', '...+#*####*#+...', '....+######+....',
+          '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....', '.....+#..#+.....',
+          '....++#..#++....', '...++#+..+#++...', '................', '................'],
   /* 睡著：長時間沒推進 */
   sleep: ['................', '..............z.', '............z...', '.........zZ.....',
           '................', '................', '....++++++++....', '...+#**####*#+..',
@@ -2816,6 +2978,188 @@ function exportCsv(classId) {
       return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     }).join(',');
   }).join('\n');
+}
+
+
+/* ===== 15-builds.js ===== */
+/* ---------- 蓋在自己那塊地上的東西 ----------
+
+   本來這一步是三選一的裝備。裝備的問題是它沒有地方去：拿到了放在背包裡，
+   沒有人看得到，也不改變任何事——所以「道具的意義在哪裡」問了兩次都答不好。
+
+   改成蓋東西，那個問題就消失了：它有一個地方（你打通的那一格），
+   而且全班都看得到。
+
+   三條規則，缺一條這件事就會反過來咬整個作品：
+
+   一 · 建築是那一趟的紀念碑，不是獎品。
+        一趟封存蓋一座，就蓋在那一趟打通的那一格上。點下去看到的是
+        那一趟他們自己取的名、幾天、他們說幾天。所以整片領土就是
+        他們的預估史被畫成一個地方——那才是這個系統要教的東西。
+
+   二 · 三個選項完全沒有強弱。沒有產出、沒有加速、不擋任何事。
+        只要有一個「比較好」，人就會為了那個蓋，而不是為了專案做事。
+        那是受控動機，正好推翻這個作品要證的自發性。
+        它們只差在長相。
+
+   三 · 選項由岩層決定，而路線是隨機給的（見 13-strata.js 的 routeOf）。
+        所以你的地長什麼樣，記錄的是「你剛好在哪一層」，
+        不是「你做得多好」。兩組同樣五格可以完全不像——
+        這是平行陪伴的保險：那張圖讀不出高下。
+
+   還有一條是為了陪伴：兩組的建築貼在一起會長出一條連通的路
+   （見 66-map.js 的 linkPath）。別人在旁邊是好事，不是威脅。
+
+   畫法跟全作一致：'.' 透空、'#' 本體、'+' 陰影、'*' 高光，光從左上來。
+   顏色不用組別的顏色——地是組別的顏色，建築一律深色剪影加高光，
+   所以每一組的建築讀起來一樣重，差別只在形狀。 */
+
+var BUILD_PAL = { '#': '#171310', o: '#0B0908', '*': '#FFF3D8' };
+
+var BUILDS = [
+  /* ── 微光荒原：表土，碎石多 ── */
+  { key: 'cairn', zone: 'wild', name: '石堆',
+    px: ['............', '............', '.....**.....', '....*##+....',
+         '....+##+....', '...*####+...', '...+####+...', '..*######+..',
+         '..+######+..', '.*########+.', '.+########+.', '+##########+'] },
+  { key: 'flag', zone: 'wild', name: '風旗',
+    px: ['............', '...*###+....', '...*####+...', '...*###+....',
+         '...*#+......', '....#+......', '....#+......', '....#+......',
+         '....#+......', '....#+......', '...*#+......', '..+####+....'] },
+  { key: 'well', zone: 'wild', name: '井',
+    px: ['............', '..*+....+*..', '..*#+..+#*..', '..*#######..',
+         '....+##+....', '............', '..*######+..', '..+######+..',
+         '..+#*..*#+..', '..+#....#+..', '..+######+..', '.+########+.'] },
+
+  /* ── 根脈層：上面那片林子的根穿下來，牆是活的 ── */
+  { key: 'moss', zone: 'root', name: '苔丘',
+    px: ['............', '............', '......*.....', '....*.#*..*.',
+         '...*#*#*#*..', '..*#######*.', '.*#########*', '.+#########+',
+         '..+#######+.', '...+#####+..', '..+#######+.', '.+#########+'] },
+  { key: 'vinebr', zone: 'root', name: '藤橋',
+    px: ['............', '.+#+....+#+.', '.+#+*##*+#+.', '.+#*####*#+.',
+         '.+##########', '.+#+....+#+.', '.+#+....+#+.', '.+#+.*..+#+.',
+         '.+#+*#*.+#+.', '.+#+.#..+#+.', '.+#+.#..+#+.', '+###+#++###+'] },
+  { key: 'rootgt', zone: 'root', name: '根門',
+    px: ['............', '..*+....+*..', '..*#+..+#*..', '.*##*##*##*.',
+         '.+#########+', '.+#*#####*#+', '.+#+.....+#+', '.+#+.....+#+',
+         '.+#+.....+#+', '.+#+.....+#+', '.+#+.....+#+', '+###+...+###'] },
+
+  /* ── 水晶迴廊：地下水穿過晶體，斷面會折光 ── */
+  { key: 'spire', zone: 'crys', name: '晶柱',
+    px: ['.....*......', '....*#*.....', '...*###*....', '...*###*..*.', '...*###*.*#*',
+         '..*#####*#*.', '..*#####*...', '..+#####+...', '.*#######*..',
+         '.+#######+..', '+#########+.', '+#########+.'] },
+  { key: 'lamp', zone: 'crys', name: '燈臺',
+    px: ['.....*......', '....*#*.....', '...*#*#*....', '....*#*.....',
+         '.....#+.....', '.....#+.....', '....*##+....', '....+##+....',
+         '....+##+....', '...*####+...', '..*######+..', '.+########+.'] },
+  { key: 'crysbr', zone: 'crys', name: '晶橋',
+    px: ['............', '............', '.*.......*..', '*#*.....*#*.',
+         '*###*.*###*.', '.+#########+', '..+#######+.', '...+#+.+#+..',
+         '...+#+.+#+..', '...+#+.+#+..', '...+#+.+#+..', '..+###+###+.'] },
+
+  /* ── 迴聲迷宮：方塊狀硬岩，聲音在裡面會繞 ── */
+  { key: 'bell', zone: 'echo', name: '鐘塔',
+    px: ['............', '.....*......', '....*#*.....', '...*###*....',
+         '..*#####*...', '..+#####+...', '..+#*#*#+...', '...+###+....',
+         '....+#+.....', '...*###+....', '..*#####+...', '.+#######+..'] },
+  { key: 'arch', zone: 'echo', name: '拱門',
+    px: ['............', '....*##*....', '..*##**##*..', '.*##*..*##*.',
+         '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.',
+         '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.', '+###+..+###+'] },
+  { key: 'stele', zone: 'echo', name: '方碑',
+    px: ['............', '...*####+...', '...*#**#+...', '...*#**#+...',
+         '...*####+...', '...*#**#+...', '...*####+...', '...*#**#+...',
+         '...*####+...', '..*######+..', '.*########+.', '+##########+'] },
+
+  /* ── 銹層：有人來過，鐵件鏽在岩層裡 ── */
+  { key: 'tower', zone: 'rust', name: '鐵塔',
+    px: ['.....*......', '....*#+.....', '....*#+.....', '...*###+....',
+         '...+#*#+....', '..*##*##+...', '..+#*.*#+...', '.*##*..*#+..',
+         '.+#*....*#+.', '*##*.....*#+', '+#+.......+#', '+##+.....+##'] },
+  { key: 'pipe', zone: 'rust', name: '管橋',
+    px: ['............', '............', '*##########+', '*#**##**##*+',
+         '+##########+', '..+#+..+#+..', '..+#+..+#+..', '..+#+..+#+..',
+         '..+#+..+#+..', '..+#+..+#+..', '..+#+..+#+..', '.+###++###+.'] },
+  { key: 'furn', zone: 'rust', name: '爐',
+    px: ['............', '....+..+....', '...*#+*#+...', '...*#+*#+...',
+         '..*######+..', '..+######+..', '.*########+.', '.+#*....*#+.',
+         '.+#+.**.+#+.', '.+#+.**.+#+.', '.+########+.', '+##########+'] },
+
+  /* ── 熔火深淵：底下有熱源 ── */
+  { key: 'brazier', zone: 'fire', name: '火臺',
+    px: ['............', '.....*......', '....*#*.....', '...*#*#*....',
+         '..*##*##*...', '...*###*....', '....+#+.....', '....+#+.....',
+         '...*###+....', '..*#####+...', '.*#######+..', '+##########+'] },
+  { key: 'stonebr', zone: 'fire', name: '石橋',
+    px: ['............', '............', '*##########+', '+##########+',
+         '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.',
+         '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.', '+###+..+###+'] },
+  { key: 'kiln', zone: 'fire', name: '窯',
+    px: ['............', '......+.....', '.....*#+....', '....*###+...',
+         '...*#####+..', '..*#######+.', '..+#######+.', '.*#########+',
+         '.+#*.....*#+', '.+#+.**..+#+', '.+#+.**..+#+', '+###++++###+'] }
+];
+
+/* 這一層蓋得出來的三種。三種就是那一層的全部——
+   選單再長就會變成城市模擬，而且會有人開始挑「哪一個看起來比較厲害」。 */
+function buildsIn(zoneKey) {
+  return BUILDS.filter(function (b) { return b.zone === zoneKey; });
+}
+
+function buildDef(key) {
+  var out = null;
+  BUILDS.forEach(function (b) { if (b.key === key) out = b; });
+  return out;
+}
+
+/* 這一格蓋了什麼。回傳 { k, runId } 或 null。 */
+function buildAt(teamId, x, y) {
+  var t = teamOf(teamId);
+  return (t && t.builds && t.builds[x + ',' + y]) || null;
+}
+
+/* 蓋下去。一格只蓋一次——蓋錯了也留著，那也是那一趟的一部分。 */
+function actBuild(teamId, x, y, key, runId) {
+  var t = teamOf(teamId);
+  if (!t) return false;
+  if (!buildDef(key)) return false;
+  var k = x + ',' + y;
+  var has = false;
+  (t.cells || []).forEach(function (c) { if (c[0] === x && c[1] === y) has = true; });
+  if (!has) return false;
+  t.builds = t.builds || {};
+  if (t.builds[k]) return false;
+  t.builds[k] = { k: key, runId: runId || '' };
+  save();
+  return true;
+}
+
+/* 還沒蓋東西的那幾格。封存完會被帶到這裡挑一格。 */
+function unbuiltCells(teamId) {
+  var t = teamOf(teamId);
+  if (!t) return [];
+  var b = t.builds || {};
+  return (t.cells || []).filter(function (c) { return !b[c[0] + ',' + c[1]]; });
+}
+
+/* 最近封存的那一趟。蓋下去的東西要記得它是哪一趟的紀念碑——
+   沒有這一條，建築就只是裝飾。 */
+function lastSealed(teamId) {
+  var ks = keepsOf(teamId);
+  return ks.length ? ks[ks.length - 1].runId : '';
+}
+
+/* 這一格上站的是哪一趟。點下去看得到的就是這個。 */
+function buildStory(teamId, x, y) {
+  var b = buildAt(teamId, x, y);
+  if (!b) return null;
+  var d = buildDef(b.k);
+  var k = null;
+  keepsOf(teamId).forEach(function (x2) { if (x2.runId === b.runId) k = x2; });
+  var r = b.runId ? find('Runs', function (x2) { return x2.runId === b.runId; }) : null;
+  return { def: d, keep: k, run: r };
 }
 
 
@@ -4907,9 +5251,27 @@ var ACTS = {
     if (!actClaimCell(t.classId, t.teamId, Number(p[0]), Number(p[1]))) {
       return say('那一格點不動。');
     }
-    var left = claimsOf(t.teamId);
-    say(left ? '打通了。還有 ' + left + ' 格。' : '打通了。');
+    /* 打通完接著挑要在那一格上蓋什麼。那是同一件事的第二下，
+       不是另一個功能。 */
+    DRAFT.build = [Number(p[0]), Number(p[1])];
+    render();
   },
+
+  /* 蓋下去。三個選項沒有強弱，只差在長相——
+     只要有一個比較好，人就會為了那個蓋，而不是為了專案做事。 */
+  bld: function (v) {
+    var t = myTeam();
+    var p = v.split(',');
+    if (!actBuild(t.teamId, Number(p[1]), Number(p[2]), p[0], lastSealed(t.teamId))) {
+      return say('那一格蓋不了。');
+    }
+    DRAFT.build = null;
+    var left = claimsOf(t.teamId);
+    say(left ? '蓋好了。還有 ' + left + ' 格可以打通。' : '蓋好了。');
+  },
+
+  /* 點誰蓋的東西：看那是哪一趟。 */
+  seeb: function (v) { var p = v.split(','); DRAFT.sb = p; DRAFT.dt = p[0]; render(); },
 
   /* 封存這一趟。名字與方向都選填。 */
   seal: function (runId) {
@@ -5397,22 +5759,44 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
-  H.push(scene(t, next.row, st, next.kind));
+  /* 這一圈走到哪。死線勇者一直讓你知道現在是專注還是休息，
+     那個迴圈才會上癮。 */
+  H.push(beatBar(next, t));
 
-  /* ── 任務的內容。接在廊道正下面當說明行，不另外開一張卡——
-        那是同一件事的兩個部分，中間不該有一條卡片的邊。 ── */
+  /* 地圖先。PaGamO 打開來就是地圖，你的地在上面——
+     不是先看一份自己的儀表板再進地圖。 */
+  H.push(digMap(t.classId, t.teamId));
+
+  /* ── 要做的那一件事。釘在畫面下面，地圖怎麼捲它都在。
+        地圖變成首頁之後它本來被推到整頁最底下，那樣就得先捲過整張圖
+        才按得到——看地圖跟動手不是先後關係。 ── */
+  H.push('<div class="dock">');
   H.push('<div class="tline">');
   H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
   H.push('<b>' + esc(row && row.ms ? row.ms.title : '還沒有任務') + '</b>');
   if (st.level) H.push('<i class="warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</i>');
   H.push('</div>');
-  if (r) H.push(stepRow(r.runId));
-
-  /* ── 主功能：那一顆鍵 ── */
   H.push(actionCard(t, next, st));
+  H.push('</div>');
+  /* 打通完，接著挑要在那一格上蓋什麼。
+
+     三個選項由那一格所在的岩層決定，而路線是隨機給的——所以你的地
+     長什麼樣，記錄的是「你剛好在哪一層」，不是「你做得多好」。
+     兩組同樣五格可以完全不像，那張圖因此讀不出高下。
+
+     三個選項之間沒有任何強弱。只要有一個比較好，人就會為了那個蓋，
+     而不是為了專案做事。 */
+  H.push(buildPick(t));
+  H.push(buildCard(t));
+
+  /* 自己那條廊道往下捲才看得到。它是細節，不是入口。 */
+  H.push('<div class="eyebrow feed-h">你們這一趟</div>');
+  H.push(scene(t, next.row, st, next.kind));
+  if (r) H.push(stepRow(r.runId));
   if (next.more) {
     H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
   }
+
 
   /* ── 副功能：小圖示 ── */
   H.push(deskRow(t, next));
@@ -5426,8 +5810,6 @@ PAGES.home = function () {
      沒事做的日子還值得看的東西只有一種——別人。文字列表他們不要，
      那就放地圖：它是圖、它會因為別人動而改變、而且有可以打通的格子
      的時候它自己會亮。PaGamO 的首頁就是地圖。 */
-  H.push('<div class="eyebrow feed-h">全班那片地</div>');
-  H.push(digMap(t.classId, t.teamId));
   return H.join('');
 };
 
@@ -6092,6 +6474,43 @@ PAGES.log = function () {
   return H.join('');
 };
 
+/* ---------- 這一圈走到哪 ----------
+
+   死線勇者的迴圈是四拍，而且它一直讓你知道現在是哪一拍。
+   這裡四拍是：準備（說幾天）→ 遠征（去做事，不用開）→ 戰報（交出去、
+   看判定）→ 營地（封存、打通、蓋一座）。
+
+   畫成環不是條：這座地下城是無盡輪迴的，四拍走完回到第一拍。
+   所以它沒有百分比、沒有終點，也不可以有。 */
+var BEATS = [
+  { k: 'prep', n: '準備', s: '說幾天' },
+  { k: 'away', n: '遠征', s: '去做事' },
+  { k: 'rep',  n: '戰報', s: '交出去' },
+  { k: 'camp', n: '營地', s: '封存·蓋' }
+];
+
+function beatAt(next, t) {
+  var k = next.kind;
+  if (k === 'doing') return 'away';
+  if (k === 'submit' || k === 'stamped' || k === 'review') return 'rep';
+  if (k === 'gear' || k === 'left' || k === 'waitexit') return 'camp';
+  if (claimsOf(t.teamId) || DRAFT.build) return 'camp';
+  return 'prep';
+}
+
+function beatBar(next, t) {
+  var at = beatAt(next, t);
+  var H = ['<div class="cyc">'];
+  BEATS.forEach(function (s, i) {
+    H.push('<span class="cy' + (s.k === at ? ' on' : '') + '">' +
+      '<b>' + esc(s.n) + '</b><i>' + esc(s.s) + '</i></span>');
+    if (i < BEATS.length - 1) H.push('<span class="cyd"></span>');
+  });
+  /* 最後接回第一拍。走完不是結束，是再一圈。 */
+  H.push('<span class="cyd loop"></span>');
+  H.push('</div>');
+  return H.join('');
+}
 
 /* ===== 61-scene.js ===== */
 /* 廊道的場景。
@@ -6244,11 +6663,18 @@ function scene(t, row, st, kind) {
   if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), span));
 
   /* ── 角色 ── */
-  var pose = st.level >= 2 ? HERO.sleep : HERO.idle;
+  /* 睡著就不走了；有一趟在走就走路，兩幀輪流。
+     沒有一趟在走的時候他站著——那時候沒有前進這回事。 */
   var hx = SCN.ENT + walked * SCN.TILE - 11;
+  var walking = run && st.level < 2;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
-    '" style="left:' + hx + 'px">');
-  H.push(pxTag(pose, HERO.pal, 'ch'));
+    (walking ? ' walking' : '') + '" style="left:' + hx + 'px">');
+  if (walking) {
+    H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
+    H.push(pxTag(HERO.walkB, HERO.pal, 'ch wf wb'));
+  } else {
+    H.push(pxTag(st.level >= 2 ? HERO.sleep : HERO.idle, HERO.pal, 'ch'));
+  }
   H.push(heroPack(t.teamId));
   if (st.level === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine'));
   H.push('</div>');
@@ -6267,17 +6693,18 @@ function scene(t, row, st, kind) {
 
   H.push('</div></div>');   /* scn-in / scn-scroll */
 
-  /* 底下那一行。三個數字就是整個處境，不用一句話解釋。 */
+  H.push('</div>');         /* scn */
+
+  /* 底下那一行掛在廊道外面。它的負邊界是為了往上貼住廊道，
+     寫在 .scn 裡面的話會被 overflow:hidden 吸到頂上去。 */
   if (run) {
     H.push('<div class="scn-foot">');
     H.push('<span class="sf you"><b>' + moved + '</b>你來過</span>');
-    H.push('<span class="sf tide"><b>' + tide + '</b>過了幾天</span>');
+    H.push('<span class="sf days"><b>' + tide + '</b>過了幾天</span>');
     H.push('<span class="sf est"><b>' + est + '</b>你說的</span>');
     if (rests) H.push('<span class="sf rest"><b>' + rests + '</b>說沒動</span>');
     H.push('</div>');
   }
-
-  H.push('</div>');         /* scn */
   return H.join('');
 }
 
@@ -6418,12 +6845,48 @@ function torchAt(x, lit, i) {
 
    走廊比視窗長的時候，重畫預設會回到最左邊——那樣按了推進之後，
    會看到走廊動了但看不到自己動。這一支讓鏡頭跟著人走。 */
+/* 滑到哪裡要記住。重畫會把 innerHTML 換掉，捲軸歸零——
+   不記的話你永遠滑不到廊道的另一端。 */
+var SEEN_AT = {};
+
+function keepScroll(box, key, centre) {
+  if (!box) return;
+  var s = SEEN_AT[key];
+  if (s && s.at === centre.at) {
+    /* 角色沒換位置：放回你剛剛滑到的地方 */
+    box.scrollLeft = s.x; box.scrollTop = s.y;
+  } else {
+    box.scrollLeft = centre.x; box.scrollTop = centre.y;
+    SEEN_AT[key] = { at: centre.at, x: centre.x, y: centre.y };
+  }
+  box.onscroll = function () {
+    var k = SEEN_AT[key];
+    if (k) { k.x = box.scrollLeft; k.y = box.scrollTop; }
+  };
+}
+
 function scrollScene() {
   var box = document.querySelector('.scn-scroll');
   var hero = document.querySelector('.scn-hero');
-  if (!box || !hero) return;
-  var want = hero.offsetLeft + hero.offsetWidth / 2 - box.clientWidth / 2;
-  box.scrollLeft = Math.max(0, want);
+  if (box && hero) {
+    keepScroll(box, 'scn', {
+      at: hero.offsetLeft,
+      x: Math.max(0, hero.offsetLeft + hero.offsetWidth / 2 - box.clientWidth / 2),
+      y: 0
+    });
+  }
+
+  /* 地圖一樣：打開來要先看到自己那塊地，不然全班那片地上
+     你得先找自己在哪裡。 */
+  var mb = document.querySelector('.dig-wrap');
+  var mh = mb && mb.querySelector('.dig-hero');
+  if (mb && mh) {
+    keepScroll(mb, 'dig', {
+      at: mh.offsetLeft + ',' + mh.offsetTop,
+      x: Math.max(0, mh.offsetLeft + mh.offsetWidth / 2 - mb.clientWidth / 2),
+      y: Math.max(0, mh.offsetTop + mh.offsetHeight / 2 - mb.clientHeight / 2)
+    });
+  }
 }
 
 
@@ -7065,7 +7528,29 @@ function markSeen(meId) {
    上面留一條給組名與地表線，格子從那兩條之後才開始。 */
 
 var MAP_L = 88;   /* 左邊那一條：層的名字 */
-var MAP_T = 30;   /* 上面那一條：組名與地表線 */
+var MAP_T = 72;   /* 上面那一條：地表。天、林子、組名、每一組的井口 */
+
+/* 岩層裡長什麼東西，直接用廊道那一套。同一層在兩個地方長的是同一種
+   東西，不然那兩個畫面就不是同一座地下城。 */
+var MAP_PX = {
+  rubble: RUBBLE, crystal: CRYSTAL, shroom: SHROOM, bolt: BOLT, ember: EMBER
+};
+
+/* 一塊地的輪廓：只有對外的那幾邊要描。內部的接縫不描，
+   五格連在一起才會讀成一塊地而不是五個方塊。
+   光還是從左上來，但現在照的是整塊地。 */
+function edgeShadow(own, x, y, who) {
+  var s = [];
+  var up = own[x + ',' + (y - 1)] === who;
+  var dn = own[x + ',' + (y + 1)] === who;
+  var lf = own[(x - 1) + ',' + y] === who;
+  var rt = own[(x + 1) + ',' + y] === who;
+  if (!up) s.push('inset 0 3px 0 rgba(255,255,255,.38)');
+  if (!lf) s.push('inset 3px 0 0 rgba(255,255,255,.20)');
+  if (!dn) s.push('inset 0 -3px 0 rgba(0,0,0,.55)');
+  if (!rt) s.push('inset -3px 0 0 rgba(0,0,0,.42)');
+  return s.join(',');
+}
 
 function digMap(classId, meId) {
   var teams = where('Teams', function (t) { return t.classId === classId; });
@@ -7097,9 +7582,7 @@ function digMap(classId, meId) {
   var out = ['<div class="dig-wrap"><div class="dig" style="width:' + W +
     'px;height:' + H + 'px">'];
 
-  /* 地表。從格子開始的地方畫起，不要壓到左邊那一條。 */
-  out.push('<div class="dig-sky" style="left:' + MAP_L + 'px;top:' + (MAP_T - 4) +
-    'px;width:' + (DIG.W * DIG.CELL) + 'px"></div>');
+  out.push(mapSurface(classId, teams, hue, meId));
 
   for (var y = 0; y < rows; y++) {
     var z = strataAt(y, classId);
@@ -7108,18 +7591,35 @@ function digMap(classId, meId) {
       var o = own[x + ',' + y];
       var st = 'left:' + (MAP_L + x * DIG.CELL) + 'px;top:' + cy + 'px';
       if (o) {
+        /* 打通了的地。只描對外的那幾邊。 */
+        /* 上面站著那一趟蓋的東西。地是空的沒有意義，
+           上面站著東西才是「這是我們的」。 */
+        var bd = buildAt(o, x, y);
+        var bg = bd && buildDef(bd.k);
         out.push('<button class="dg-c dug' + (o === meId ? ' mine' : '') +
-          '" style="' + st + ';background:' + hue[o] + '" ' +
-          'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'digteam:' + o })) + '\' ' +
-          'title="' + esc(teamOf(o).name) + '"></button>');
+          '" style="' + st + ';background:' + hue[o] + ';box-shadow:' +
+          edgeShadow(own, x, y, o) + '" ' +
+          'data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: bd ? 'seeb:' + o + ',' + x + ',' + y : 'digteam:' + o })) +
+          '\' title="' + esc(teamOf(o).name + (bg ? '　' + bg.name : '')) + '">' +
+          (bg ? pxTag(bg.px, BUILD_PAL, 'bld') : '') + '</button>');
       } else if (open[x + ',' + y]) {
-        out.push('<button class="dg-c rock can' + (hot[x + ',' + y] ? ' hot' : '') + ' ' + z.key + '" style="' + st + '" ' +
-          'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'dig:' + x + ',' + y })) + '\' ' +
-          'title="打通這一格"></button>');
+        var h = hot[x + ',' + y];
+        out.push('<button class="dg-c rock can' + (h ? ' hot' : '') + ' ' + z.key +
+          '" style="' + st + '" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'dig:' + x + ',' + y })) + '\' title="' +
+          esc(h ? '這一格另一組也構得到——誰先點誰拿走' : '打通這一格') + '"></button>');
       } else {
-        out.push('<div class="dg-c rock' + (hot[x + ',' + y] ? ' hot2' : '') +
-          ' ' + z.key + '" style="' + st + '"></div>');
+        /* 還沒打通的岩層。裡面有東西——同一層長的跟廊道裡一樣。 */
+        out.push('<div class="dg-c rock v' + (hash(classId + '~' + x + ',' + y) % 3) +
+          (hot[x + ',' + y] ? ' hot2' : '') + ' ' + z.key + '" style="' + st + '">' +
+          mapProp(classId, x, y, z) + '</div>');
       }
+    }
+    /* 岩層交界不是一條直線。每一欄的高度用座標算，所以它犬牙交錯，
+       看起來像地質不像表格。 */
+    if (y > 0 && y % ZONE_SPAN === 0) {
+      out.push(zoneSeam(classId, y, cy, strataAt(y - 1, classId)));
     }
     /* 層的名字放在左邊那一條裡，一層只標一次。 */
     if (y % ZONE_SPAN === 0) {
@@ -7128,15 +7628,41 @@ function digMap(classId, meId) {
     }
   }
 
-  /* 組名掛在上面那一條裡，對齊它最上面那一格。 */
-  teams.forEach(function (t) {
-    var cs = t.cells || [];
-    if (!cs.length) return;
-    var top = cs[0];
-    cs.forEach(function (c) { if (c[1] < top[1]) top = c; });
-    out.push('<div class="dig-n' + (t.teamId === meId ? ' mine' : '') +
-      '" style="left:' + (MAP_L + top[0] * DIG.CELL - 11) + 'px;top:6px;color:' +
-      hue[t.teamId] + '">' + esc(shortName(t.name)) + '</div>');
+  /* 角色站在自己最前緣那一格上——下一步會從那裡打通出去。
+     有一趟在走的時候他就在那裡走。 */
+  if (meId) {
+    var mine = cellsOf(meId);
+    if (mine.length) {
+      var f = mine[mine.length - 1];
+      var run = where('Runs', function (r) {
+        return r.teamId === meId && r.state === 'running';
+      })[0];
+      out.push('<div class="dig-hero' + (run ? ' walking' : '') + '" style="left:' +
+        (MAP_L + f[0] * DIG.CELL + 4) + 'px;top:' + (MAP_T + f[1] * DIG.CELL - 16) + 'px">');
+      if (run) {
+        out.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
+        out.push(pxTag(HERO.walkB, HERO.pal, 'ch wf wb'));
+      } else {
+        out.push(pxTag(HERO.idle, HERO.pal, 'ch'));
+      }
+      out.push('</div>');
+    }
+  }
+
+  /* 兩組的地貼在一起的地方長出一條路。別人在旁邊是好事，不是威脅——
+     這是這張圖上唯一會因為別人靠近而多出來的東西。 */
+  Object.keys(own).forEach(function (k) {
+    var p = k.split(','), x = Number(p[0]), y = Number(p[1]);
+    if (own[(x + 1) + ',' + y] && own[(x + 1) + ',' + y] !== own[k]) {
+      out.push('<div class="dig-link v" style="left:' +
+        (MAP_L + (x + 1) * DIG.CELL - 3) + 'px;top:' +
+        (MAP_T + y * DIG.CELL + 11) + 'px"></div>');
+    }
+    if (own[x + ',' + (y + 1)] && own[x + ',' + (y + 1)] !== own[k]) {
+      out.push('<div class="dig-link h" style="left:' +
+        (MAP_L + x * DIG.CELL + 11) + 'px;top:' +
+        (MAP_T + (y + 1) * DIG.CELL - 3) + 'px"></div>');
+    }
   });
 
   out.push('</div></div>');
@@ -7158,6 +7684,71 @@ function digMap(classId, meId) {
     out.push('</div>');
   }
   return out.join('');
+}
+
+/* ---------- 地表 ----------
+
+   本來這裡只有一條 6px 的綠線。有了天空與林子之後，整張圖才有「上面」——
+   而「上面」是這個作品唯一的方向感：往下沒有出口，出口在你來的地方。
+
+   根脈層那一句寫「上面那片林子的根穿下來」，現在圖上看得到那片林子。
+
+   每一組的井口畫在他們的起點那一欄：那是他們下來的地方。 */
+function mapSurface(classId, teams, hue, meId) {
+  var W = DIG.W * DIG.CELL;
+  var H = ['<div class="dig-sky" style="left:0;width:' + (MAP_L + W) + 'px;height:' +
+    MAP_T + 'px"></div>'];
+
+  /* 林子。位置與高矮用班級算，所以每個班的地表長得不一樣，
+     而且同一個班每次打開都一樣。 */
+  for (var i = -2; i < DIG.W; i++) {
+    var h = hash(classId + 'tree' + i);
+    if (h % 100 < 38) continue;
+    var th = 16 + (h >> 3) % 14;
+    var tx = MAP_L + i * DIG.CELL + ((h >> 7) % (DIG.CELL - 14));
+    H.push('<div class="dig-tree" style="left:' + tx + 'px;top:' +
+      (MAP_T - 8 - th) + 'px;height:' + th + 'px"></div>');
+  }
+
+  /* 地面那一條。硬邊，沒有漸層——泥土在上，岩層從這裡開始。 */
+  H.push('<div class="dig-soil" style="left:0;top:' + (MAP_T - 8) +
+    'px;width:' + (MAP_L + W) + 'px"></div>');
+
+  /* 每一組下來的井口，加一道光。 */
+  teams.forEach(function (t) {
+    var st = startCell(classId, t.teamId);
+    var x = MAP_L + st[0] * DIG.CELL;
+    H.push('<div class="dig-shaft' + (t.teamId === meId ? ' mine' : '') +
+      '" style="left:' + x + 'px;top:' + (MAP_T - 8) + 'px"></div>');
+    H.push('<div class="dig-n' + (t.teamId === meId ? ' mine' : '') +
+      '" style="left:' + (x - 11) + 'px;top:' + (MAP_T - 30) + 'px;color:' +
+      hue[t.teamId] + '">' + esc(shortName(t.name)) + '</div>');
+  });
+  return H.join('');
+}
+
+/* 岩層交界。每一欄的高度用座標算：0、3、6 px 三種，所以那一條是犬牙
+   交錯的。一條直線會讓整張圖讀起來像表格，而它應該讀起來像地質。 */
+function zoneSeam(classId, y, cy, above) {
+  var H = [];
+  for (var x = 0; x < DIG.W; x++) {
+    var h = hash(classId + 'seam' + y + ',' + x) % 3;
+    if (!h) continue;
+    H.push('<div class="dig-seam ' + above.key + '" style="left:' +
+      (MAP_L + x * DIG.CELL) + 'px;top:' + cy + 'px;height:' + (h * 3) + 'px"></div>');
+  }
+  return H.join('');
+}
+
+/* 這一格的岩層裡有什麼。用班級與座標算，不擲骰子——
+   每次重畫石頭都跳一次的話，那就不是一個地方。 */
+function mapProp(classId, x, y, z) {
+  var p = propFor(classId + 'map', y * DIG.W + x, z.key);
+  var g = MAP_PX[p];
+  if (!g) return '';
+  var h = hash(classId + 'p' + x + ',' + y);
+  return '<img class="px mp" src="' + pxSvg(g.px, z.pal) + '" alt="" style="left:' +
+    (3 + h % 18) + 'px;bottom:' + (2 + (h >> 5) % 12) + 'px">';
 }
 
 /* 「第一組 · 甲」在格子上方只放得下兩三個字。 */
@@ -7199,6 +7790,65 @@ function digTeamCard(classId) {
     H.push('<p class="dim">還沒有封存過的岩心。</p>');
   }
   H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 挑要蓋什麼 ----------
+
+   打通完那一格之後跳出來的三選一。這是本來的「三選一裝備」搬過來的位置，
+   但東西換了：裝備沒有地方去，蓋的東西有——它就站在你剛打通的那一格上，
+   而且全班都看得到。
+
+   三個選項是那一層的全部，沒有強弱，只差在長相。 */
+function buildPick(t) {
+  var c = DRAFT.build;
+  if (!c) return '';
+  var z = strataAt(c[1], t.classId);
+  var set = buildsIn(z.key);
+  if (!set.length) { DRAFT.build = null; return ''; }
+  var H = ['<div class="card bpick">'];
+  H.push('<div class="eyebrow">在這一格上蓋什麼</div>');
+  H.push('<div class="bp-row">');
+  set.forEach(function (b) {
+    H.push('<button class="bp" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'bld:' + b.key + ',' + c[0] + ',' + c[1] })) + '\'>');
+    H.push(pxTag(b.px, BUILD_PAL, 'bp-px'));
+    H.push('<b>' + esc(b.name) + '</b>');
+    H.push('</button>');
+  });
+  H.push('</div>');
+  H.push('<p class="dim">三個都一樣——它們不改變任何事，只是長得不同。</p>');
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 點地圖上一座建築：那是哪一趟。
+
+   這是整件事的重點。建築不是獎品，是那一趟的紀念碑——
+   點下去看到的是他們自己取的名、幾天、他們說幾天。
+   所以整片領土就是他們的預估史被畫成一個地方。 */
+function buildCard(t) {
+  if (!DRAFT.sb) return '';
+  var p = DRAFT.sb;
+  var st = buildStory(p[0], Number(p[1]), Number(p[2]));
+  if (!st || !st.def) return '';
+  var tm = teamOf(p[0]);
+  var z = strataAt(Number(p[2]), t.classId);
+  var H = ['<div class="card bstory ' + z.key + '">'];
+  H.push('<div class="bs-in">');
+  H.push(pxTag(st.def.px, BUILD_PAL, 'bs-px'));
+  H.push('<div>');
+  H.push('<div class="eyebrow">' + esc(tm ? tm.name : '') + '　·　' + esc(st.def.name) + '</div>');
+  if (st.keep && st.keep.name) {
+    H.push('<h2>' + esc(st.keep.name) + '</h2>');
+  }
+  if (st.run) {
+    H.push('<dl class="rep">');
+    H.push('<dt>他們說</dt><dd>' + st.run.est + '</dd>');
+    H.push('<dt>實際</dt><dd>' + (st.run.actual || st.keep && st.keep.elapsed || 0) + '</dd>');
+    H.push('</dl>');
+  }
+  H.push('</div></div></div>');
   return H.join('');
 }
 
@@ -7722,6 +8372,54 @@ ACTS.csv = function () {
   else { S.who = null; S.page = 'gate'; }
   render();
 })();
+
+
+/* ===== 99-audit.js ===== */
+/* 兩端一起檢查。貼進瀏覽器的 console 就會裝上 AUDIT()。
+
+   為什麼要有這一支：這個作品的畫面改得很密，而預覽窗只有一種寬度，
+   所以只看一端的話另一端壞掉不會有人發現。實際發生過兩次——
+   桌機那條 flex 版面本來是白名單制，後來加的元素全部縮成一小塊；
+   承諾那一頁用到的兩支函式被誤刪，整頁是壞的，而手機端看不出來。
+
+   用法：AUDIT() 跑完目前寬度的全部頁面。換寬度再跑一次。
+   會略過因為行長而收窄的（max-width 不是 none）——那是排版該做的事。 */
+window.AUDIT = function () {
+  var t = myTeam(), cls = t.classId;
+  var done = where('Runs', function (r) { return r.teamId === t.teamId && r.stamp; })[0];
+  var run = where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'running'; })[0];
+  var ms = where('Milestones', function (m) { return m.classId === cls; })[0];
+  var P = [['home', {}], ['commit', { id: ms.msId }], ['submit', { id: (run || done).runId }],
+           ['stamp', { id: done.runId }], ['pick', { id: done.runId }],
+           ['dash', { id: done.runId }], ['pack', {}], ['codex', {}],
+           ['eco', {}], ['log', {}], ['exit', {}], ['sign', {}]];
+  var out = [];
+  P.forEach(function (pp) {
+    try {
+      S.page = pp[0]; S.p = pp[1]; S.flash = null; render();
+      var de = document.documentElement;
+      var w = document.querySelector('.wrap'), wr = w.getBoundingClientRect();
+      var bad = [];
+      if (de.scrollWidth > de.clientWidth + 2) {
+        bad.push('橫向溢出 ' + de.scrollWidth + '>' + de.clientWidth);
+      }
+      [].forEach.call(w.children, function (e) {
+        var cs = getComputedStyle(e), b = e.getBoundingClientRect();
+        if (cs.display.indexOf('inline') === 0) return;
+        if (cs.maxWidth !== 'none') return;
+        if (e.classList.contains('btn') || e.classList.contains('quiet')) return;
+        if (b.width > 0 && b.width < wr.width * 0.55) {
+          bad.push('窄:' + (e.className || e.tagName).slice(0, 14) + '=' + Math.round(b.width));
+        }
+        if (b.right > wr.right + 4) bad.push('超出:' + (e.className || e.tagName).slice(0, 14));
+      });
+      if (!document.querySelectorAll('.nav a, .nav button').length) bad.push('沒導覽');
+      out.push(pp[0] + (bad.length ? ' ✗ ' + bad.join(' / ') : ' ✓'));
+    } catch (e) { out.push(pp[0] + ' ERR ' + e.message); }
+  });
+  S.page = 'home'; S.p = {}; render();
+  return out.join('　');
+};
 
 </script>
 </body>

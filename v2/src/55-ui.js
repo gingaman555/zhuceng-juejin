@@ -447,9 +447,27 @@ var ACTS = {
     if (!actClaimCell(t.classId, t.teamId, Number(p[0]), Number(p[1]))) {
       return say('那一格點不動。');
     }
-    var left = claimsOf(t.teamId);
-    say(left ? '打通了。還有 ' + left + ' 格。' : '打通了。');
+    /* 打通完接著挑要在那一格上蓋什麼。那是同一件事的第二下，
+       不是另一個功能。 */
+    DRAFT.build = [Number(p[0]), Number(p[1])];
+    render();
   },
+
+  /* 蓋下去。三個選項沒有強弱，只差在長相——
+     只要有一個比較好，人就會為了那個蓋，而不是為了專案做事。 */
+  bld: function (v) {
+    var t = myTeam();
+    var p = v.split(',');
+    if (!actBuild(t.teamId, Number(p[1]), Number(p[2]), p[0], lastSealed(t.teamId))) {
+      return say('那一格蓋不了。');
+    }
+    DRAFT.build = null;
+    var left = claimsOf(t.teamId);
+    say(left ? '蓋好了。還有 ' + left + ' 格可以打通。' : '蓋好了。');
+  },
+
+  /* 點誰蓋的東西：看那是哪一趟。 */
+  seeb: function (v) { var p = v.split(','); DRAFT.sb = p; DRAFT.dt = p[0]; render(); },
 
   /* 封存這一趟。名字與方向都選填。 */
   seal: function (runId) {

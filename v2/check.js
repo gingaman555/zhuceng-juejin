@@ -58,6 +58,23 @@ const BANNED = [
 /* 畫面代號不可以露在標題上 */
 const CODE = /(^|[^A-Za-z])[STC]-\d{2}([^A-Za-z]|$)/;
 
+/* 同名的函式：後面載入的會把前面那一份靜靜地蓋掉。
+   已經咬過三次（ACTS.claim、cycleAt、還有 CSS 的 .tide），
+   而且每一次看起來都只是某一頁壞了，很難找。 */
+function dupNames(files) {
+  const seen = {}, dup = [];
+  files.forEach((f) => {
+    const src = fs.readFileSync(f, 'utf8');
+    const re = /^function ([A-Za-z_$][\w$]*)/gm;
+    let m;
+    while ((m = re.exec(src))) {
+      if (seen[m[1]] && seen[m[1]] !== f) dup.push(m[1] + '　' + seen[m[1]] + ' 與 ' + f);
+      else seen[m[1]] = f;
+    }
+  });
+  return dup;
+}
+
 let bad = 0;
 
 BANNED.forEach(([w, why]) => {
@@ -66,6 +83,16 @@ BANNED.forEach(([w, why]) => {
   bad++;
   console.error('禁用詞　' + w + '　——' + why);
   console.error('　　' + scan.slice(Math.max(0, i - 40), i + 40).replace(/\s+/g, ' '));
+});
+
+/* 同名的函式：兩支同名，後面載入的那一支會靜靜地蓋掉前面那一支。 */
+const SRC = fs.readdirSync(path.join(__dirname, 'src'))
+  .filter((f) => f.slice(-3) === '.js').sort()
+  .map((f) => path.join(__dirname, 'src', f));
+const dups = dupNames(SRC);
+dups.forEach((d) => {
+  bad++;
+  console.error('同名的函式　' + d + '　——後面載入的會蓋掉前面那一支');
 });
 
 if (CODE.test(scan)) {

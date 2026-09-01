@@ -165,3 +165,16 @@
 }
 
 }
+
+/* ── 要做的那一件事，釘在畫面下面 ──
+   地圖變成首頁之後它本來被推到整頁最底下，那樣就得先捲過整張圖才按得到。
+   看地圖跟動手不是先後關係——PaGamO 打開來就能動手。 */
+.dock{
+  position:sticky;z-index:9;margin:0 0 22px;
+  background:var(--bg);
+  box-shadow:0 -11px 0 var(--bg), inset 0 3px 0 rgba(255,240,214,.10)
+}
+.dock .tline{margin:0}
+.dock .act-card{margin:0}
+@media (max-width: 899px){ .dock{bottom:66px} }
+@media (min-width: 900px){ .dock{bottom:0} }

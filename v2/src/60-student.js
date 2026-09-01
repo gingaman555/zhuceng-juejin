@@ -64,22 +64,44 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
-  H.push(scene(t, next.row, st, next.kind));
+  /* 這一圈走到哪。死線勇者一直讓你知道現在是專注還是休息，
+     那個迴圈才會上癮。 */
+  H.push(beatBar(next, t));
 
-  /* ── 任務的內容。接在廊道正下面當說明行，不另外開一張卡——
-        那是同一件事的兩個部分，中間不該有一條卡片的邊。 ── */
+  /* 地圖先。PaGamO 打開來就是地圖，你的地在上面——
+     不是先看一份自己的儀表板再進地圖。 */
+  H.push(digMap(t.classId, t.teamId));
+
+  /* ── 要做的那一件事。釘在畫面下面，地圖怎麼捲它都在。
+        地圖變成首頁之後它本來被推到整頁最底下，那樣就得先捲過整張圖
+        才按得到——看地圖跟動手不是先後關係。 ── */
+  H.push('<div class="dock">');
   H.push('<div class="tline">');
   H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
   H.push('<b>' + esc(row && row.ms ? row.ms.title : '還沒有任務') + '</b>');
   if (st.level) H.push('<i class="warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</i>');
   H.push('</div>');
-  if (r) H.push(stepRow(r.runId));
-
-  /* ── 主功能：那一顆鍵 ── */
   H.push(actionCard(t, next, st));
+  H.push('</div>');
+  /* 打通完，接著挑要在那一格上蓋什麼。
+
+     三個選項由那一格所在的岩層決定，而路線是隨機給的——所以你的地
+     長什麼樣，記錄的是「你剛好在哪一層」，不是「你做得多好」。
+     兩組同樣五格可以完全不像，那張圖因此讀不出高下。
+
+     三個選項之間沒有任何強弱。只要有一個比較好，人就會為了那個蓋，
+     而不是為了專案做事。 */
+  H.push(buildPick(t));
+  H.push(buildCard(t));
+
+  /* 自己那條廊道往下捲才看得到。它是細節，不是入口。 */
+  H.push('<div class="eyebrow feed-h">你們這一趟</div>');
+  H.push(scene(t, next.row, st, next.kind));
+  if (r) H.push(stepRow(r.runId));
   if (next.more) {
     H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
   }
+
 
   /* ── 副功能：小圖示 ── */
   H.push(deskRow(t, next));
@@ -93,8 +115,6 @@ PAGES.home = function () {
      沒事做的日子還值得看的東西只有一種——別人。文字列表他們不要，
      那就放地圖：它是圖、它會因為別人動而改變、而且有可以打通的格子
      的時候它自己會亮。PaGamO 的首頁就是地圖。 */
-  H.push('<div class="eyebrow feed-h">全班那片地</div>');
-  H.push(digMap(t.classId, t.teamId));
   return H.join('');
 };
 
@@ -758,3 +778,41 @@ PAGES.log = function () {
   });
   return H.join('');
 };
+
+/* ---------- 這一圈走到哪 ----------
+
+   死線勇者的迴圈是四拍，而且它一直讓你知道現在是哪一拍。
+   這裡四拍是：準備（說幾天）→ 遠征（去做事，不用開）→ 戰報（交出去、
+   看判定）→ 營地（封存、打通、蓋一座）。
+
+   畫成環不是條：這座地下城是無盡輪迴的，四拍走完回到第一拍。
+   所以它沒有百分比、沒有終點，也不可以有。 */
+var BEATS = [
+  { k: 'prep', n: '準備', s: '說幾天' },
+  { k: 'away', n: '遠征', s: '去做事' },
+  { k: 'rep',  n: '戰報', s: '交出去' },
+  { k: 'camp', n: '營地', s: '封存·蓋' }
+];
+
+function beatAt(next, t) {
+  var k = next.kind;
+  if (k === 'doing') return 'away';
+  if (k === 'submit' || k === 'stamped' || k === 'review') return 'rep';
+  if (k === 'gear' || k === 'left' || k === 'waitexit') return 'camp';
+  if (claimsOf(t.teamId) || DRAFT.build) return 'camp';
+  return 'prep';
+}
+
+function beatBar(next, t) {
+  var at = beatAt(next, t);
+  var H = ['<div class="cyc">'];
+  BEATS.forEach(function (s, i) {
+    H.push('<span class="cy' + (s.k === at ? ' on' : '') + '">' +
+      '<b>' + esc(s.n) + '</b><i>' + esc(s.s) + '</i></span>');
+    if (i < BEATS.length - 1) H.push('<span class="cyd"></span>');
+  });
+  /* 最後接回第一拍。走完不是結束，是再一圈。 */
+  H.push('<span class="cyd loop"></span>');
+  H.push('</div>');
+  return H.join('');
+}

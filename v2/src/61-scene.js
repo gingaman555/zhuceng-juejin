@@ -148,11 +148,18 @@ function scene(t, row, st, kind) {
   if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), span));
 
   /* ── 角色 ── */
-  var pose = st.level >= 2 ? HERO.sleep : HERO.idle;
+  /* 睡著就不走了；有一趟在走就走路，兩幀輪流。
+     沒有一趟在走的時候他站著——那時候沒有前進這回事。 */
   var hx = SCN.ENT + walked * SCN.TILE - 11;
+  var walking = run && st.level < 2;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
-    '" style="left:' + hx + 'px">');
-  H.push(pxTag(pose, HERO.pal, 'ch'));
+    (walking ? ' walking' : '') + '" style="left:' + hx + 'px">');
+  if (walking) {
+    H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
+    H.push(pxTag(HERO.walkB, HERO.pal, 'ch wf wb'));
+  } else {
+    H.push(pxTag(st.level >= 2 ? HERO.sleep : HERO.idle, HERO.pal, 'ch'));
+  }
   H.push(heroPack(t.teamId));
   if (st.level === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine'));
   H.push('</div>');
@@ -171,17 +178,18 @@ function scene(t, row, st, kind) {
 
   H.push('</div></div>');   /* scn-in / scn-scroll */
 
-  /* 底下那一行。三個數字就是整個處境，不用一句話解釋。 */
+  H.push('</div>');         /* scn */
+
+  /* 底下那一行掛在廊道外面。它的負邊界是為了往上貼住廊道，
+     寫在 .scn 裡面的話會被 overflow:hidden 吸到頂上去。 */
   if (run) {
     H.push('<div class="scn-foot">');
     H.push('<span class="sf you"><b>' + moved + '</b>你來過</span>');
-    H.push('<span class="sf tide"><b>' + tide + '</b>過了幾天</span>');
+    H.push('<span class="sf days"><b>' + tide + '</b>過了幾天</span>');
     H.push('<span class="sf est"><b>' + est + '</b>你說的</span>');
     if (rests) H.push('<span class="sf rest"><b>' + rests + '</b>說沒動</span>');
     H.push('</div>');
   }
-
-  H.push('</div>');         /* scn */
   return H.join('');
 }
 
@@ -322,10 +330,46 @@ function torchAt(x, lit, i) {
 
    走廊比視窗長的時候，重畫預設會回到最左邊——那樣按了推進之後，
    會看到走廊動了但看不到自己動。這一支讓鏡頭跟著人走。 */
+/* 滑到哪裡要記住。重畫會把 innerHTML 換掉，捲軸歸零——
+   不記的話你永遠滑不到廊道的另一端。 */
+var SEEN_AT = {};
+
+function keepScroll(box, key, centre) {
+  if (!box) return;
+  var s = SEEN_AT[key];
+  if (s && s.at === centre.at) {
+    /* 角色沒換位置：放回你剛剛滑到的地方 */
+    box.scrollLeft = s.x; box.scrollTop = s.y;
+  } else {
+    box.scrollLeft = centre.x; box.scrollTop = centre.y;
+    SEEN_AT[key] = { at: centre.at, x: centre.x, y: centre.y };
+  }
+  box.onscroll = function () {
+    var k = SEEN_AT[key];
+    if (k) { k.x = box.scrollLeft; k.y = box.scrollTop; }
+  };
+}
+
 function scrollScene() {
   var box = document.querySelector('.scn-scroll');
   var hero = document.querySelector('.scn-hero');
-  if (!box || !hero) return;
-  var want = hero.offsetLeft + hero.offsetWidth / 2 - box.clientWidth / 2;
-  box.scrollLeft = Math.max(0, want);
+  if (box && hero) {
+    keepScroll(box, 'scn', {
+      at: hero.offsetLeft,
+      x: Math.max(0, hero.offsetLeft + hero.offsetWidth / 2 - box.clientWidth / 2),
+      y: 0
+    });
+  }
+
+  /* 地圖一樣：打開來要先看到自己那塊地，不然全班那片地上
+     你得先找自己在哪裡。 */
+  var mb = document.querySelector('.dig-wrap');
+  var mh = mb && mb.querySelector('.dig-hero');
+  if (mb && mh) {
+    keepScroll(mb, 'dig', {
+      at: mh.offsetLeft + ',' + mh.offsetTop,
+      x: Math.max(0, mh.offsetLeft + mh.offsetWidth / 2 - mb.clientWidth / 2),
+      y: Math.max(0, mh.offsetTop + mh.offsetHeight / 2 - mb.clientHeight / 2)
+    });
+  }
 }

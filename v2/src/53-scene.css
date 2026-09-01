@@ -227,7 +227,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .sf{font-size:11px;color:var(--mute);display:flex;align-items:baseline;gap:6px}
 .sf b{font-size:33px;line-height:1;font-weight:400}
 .sf.you b{color:var(--gold)}
-.sf.tide b{color:#5FA8C7}
+.sf.days b{color:#5FA8C7}
 .sf.est b{color:var(--ink)}
 .sf.rest b{color:var(--mute)}
 
