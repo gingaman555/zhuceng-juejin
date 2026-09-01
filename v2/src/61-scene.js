@@ -30,15 +30,32 @@ var SCN = {
 function scene(t, row, st) {
   var run = row && row.run;
   var est = run ? (run.est || 1) : 4;
-  var at = run ? Math.min(run.pushes, est) : 0;
+
+  /* 一條軌道，兩個東西在上面：
+       moved   你來過幾天——按一下才往前一格
+       tide    實際過了幾天——你按不按它都會漲 */
+  var log = run ? dayLog(run.runId) : [];
+  var moved = 0, i0;
+  for (i0 = 0; i0 < log.length; i0++) if (log[i0] && log[i0].kind === 'move') moved++;
   var done = run && run.state !== 'running';
-  var walked = done ? est : at;
-  var seed = t.teamId + (run ? '|' + run.runId : '');
+  if (done) moved = Math.max(moved, run.pushes || 0);
+  var tide = Math.min(log.length, est + 2);
+  var walked = Math.min(moved, est);
+
   /* 每一格頭上掛的是那一天動的是哪一段。廊道因此讀得出形狀——
-     七格全是 🔍 跟七格全是 🛠️ 是完全不同的一趟。 */
-  var did = run ? stepIdxOfRun(run.runId) : [];
+     七格同一個顏色跟七格五顏六色，是完全不同的一趟。 */
+  var byTile = [];
+  var k0 = 0;
+  for (i0 = 0; i0 < log.length; i0++) {
+    if (log[i0] && log[i0].kind === 'move') byTile[k0++] = log[i0].step;
+  }
+  var rests = 0;
+  for (i0 = 0; i0 < log.length; i0++) if (log[i0] && log[i0].kind === 'rest') rests++;
+
+  var seed = t.teamId + (run ? '|' + run.runId : '');
   var light = WORLD.light[st.level];
-  var W = SCN.ENT + est * SCN.TILE + SCN.END;
+  var span = Math.max(est, tide);
+  var W = SCN.ENT + span * SCN.TILE + SCN.END;
   /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
      世界觀不寫在說明裡，寫在牆上。 */
   var zone = strataAt(depthOf(t.teamId), t.teamId);
@@ -69,14 +86,13 @@ function scene(t, row, st) {
 
   /* ── 地板 ── */
   H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
-  /* 走過的那一段地板是打通的，亮一階 */
   if (walked > 0) {
     H.push('<div class="floor lit" style="left:' + SCN.ENT + 'px;width:' +
       (walked * SCN.TILE) + 'px"></div>');
   }
 
   /* ── 一天一格 ── */
-  for (var i = 0; i < est; i++) {
+  for (var i = 0; i < span; i++) {
     var x = SCN.ENT + i * SCN.TILE;
     var on = i < walked;
 
@@ -89,9 +105,9 @@ function scene(t, row, st) {
 
     /* 那一天動的是哪一件。畫顏色不畫字——名字長度不一定，
        塞不進 44px；顏色對到哪一件，清單上看一次就記得了。 */
-    if (on && did[i] >= 0) {
+    if (on && byTile[i] >= 0) {
       H.push('<span class="doing" style="left:' + x + 'px;background:' +
-        stepHue(did[i]) + '" title="' + esc(stepName(run.runId, did[i])) +
+        stepHue(byTile[i]) + '" title="' + esc(stepName(run.runId, byTile[i])) +
         '"></span>');
     }
 
@@ -116,8 +132,18 @@ function scene(t, row, st) {
     }
   }
 
+  /* ── 時間漲上來的水 ──
+     一天一格，你按不按它都會漲。水在你後面＝走在自己承諾的前面；
+     淹到腳邊＝剛好；過去了＝會比說的久，而且好幾天前就看得到。
+     它不扣任何東西，走到底一樣可以交——它只是把時間畫出來。 */
+  if (run && tide > 0) {
+    H.push('<div class="tide" style="left:' + SCN.ENT + 'px;width:' +
+      (tide * SCN.TILE) + 'px"></div>');
+    H.push('<div class="tide-edge" style="left:' + (SCN.ENT + tide * SCN.TILE - 4) + 'px"></div>');
+  }
+
   /* ── 魔物 ── */
-  if (run) H.push(sceneMob(t, row, walked / est));
+  if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), span));
 
   /* ── 角色 ── */
   var pose = st.level >= 2 ? HERO.sleep : HERO.idle;
@@ -135,12 +161,23 @@ function scene(t, row, st) {
   /* ── 霧 ──
      從站的地方往前蓋住。它蓋的是「還沒走的那幾天」，
      所以往前一格霧就退一格。 */
-  var fogAt = SCN.ENT + (walked + 1) * SCN.TILE;
+  var fogAt = SCN.ENT + (Math.max(walked, tide) + 1) * SCN.TILE;
   if (fogAt < W) {
     H.push('<div class="fog" style="left:' + fogAt + 'px"></div>');
   }
 
   H.push('</div></div>');   /* scn-in / scn-scroll */
+
+  /* 底下那一行。三個數字就是整個處境，不用一句話解釋。 */
+  if (run) {
+    H.push('<div class="scn-foot">');
+    H.push('<span class="sf you"><b>' + moved + '</b>你來過</span>');
+    H.push('<span class="sf tide"><b>' + tide + '</b>過了幾天</span>');
+    H.push('<span class="sf est"><b>' + est + '</b>你說的</span>');
+    if (rests) H.push('<span class="sf rest"><b>' + rests + '</b>說沒動</span>');
+    H.push('</div>');
+  }
+
   H.push('</div>');         /* scn */
   return H.join('');
 }
@@ -165,10 +202,10 @@ function sceneMouth(t) {
 /* ---------- 魔物 ----------
    站在走廊盡頭。清楚到什麼程度跟你走了多少有關——
    剛出發的時候只看得到一團影子，走到底才看得清牠長什麼樣。 */
-function sceneMob(t, row, prog) {
-  var mob = mobFor(row.ms.msId, t.teamId);
+function sceneMob(t, row, prog, span) {
+  var mob = mobOfRun(row.run);
   var pal = strataAt(depthOf(t.teamId), t.teamId).pal;
-  var x = SCN.ENT + (row.run.est || 1) * SCN.TILE + 33;
+  var x = SCN.ENT + span * SCN.TILE + 33;
   /* 這裡本來還掛一塊寫著里程碑名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
      其中一遍看起來就會像壞掉的東西。 */

@@ -924,6 +924,43 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .card.zone-in{margin-top:22px}
 .card.zone-in h2{margin:0 0 11px}
 
+/* ---------- 時間漲上來的水 ----------
+   一天一格，你按不按它都會漲。它不扣任何東西——它只是把時間畫出來。
+   水面用硬階，不用漸層：漸層一出現它就變成現代特效。 */
+.tide{
+  position:absolute;bottom:44px;height:99px;z-index:4;pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(95,168,199,.28) 0 3px, transparent 3px 6px,
+                            rgba(95,168,199,.16) 6px 100%);
+  box-shadow:inset 0 3px 0 rgba(216,242,250,.30)
+}
+.tide-edge{
+  position:absolute;bottom:44px;width:8px;height:110px;z-index:5;pointer-events:none;
+  background:repeating-linear-gradient(180deg,
+    rgba(216,242,250,.55) 0 3px, transparent 3px 8px)
+}
+
+/* ---------- 廊道底下那一行 ----------
+   三個數字就是整個處境：你來過幾天、過了幾天、你說幾天。不用一句話解釋。 */
+.scn-foot{
+  display:flex;flex-wrap:wrap;gap:22px;margin:-11px 0 22px;padding:11px 14px;
+  background:var(--sunk);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06), 0 0 0 1px #000
+}
+.sf{font-size:11px;color:var(--mute);display:flex;align-items:baseline;gap:6px}
+.sf b{font-size:33px;line-height:1;font-weight:400}
+.sf.you b{color:var(--gold)}
+.sf.tide b{color:#5FA8C7}
+.sf.est b{color:var(--ink)}
+.sf.rest b{color:var(--mute)}
+
+/* 說了「今天沒動」的那一格：熄的托架加一個記號，
+   跟「沒有紀錄」看得出差別——一個是他說了，一個是他沒說。 */
+.restm{
+  position:absolute;bottom:110px;left:0;width:22px;height:3px;margin-left:11px;
+  background:var(--mute);z-index:3
+}
+
 /* 全班地下城的樣子。
 
    跟 52 / 53 同一套規矩：hard stop、0 模糊、光從左上來。
@@ -1186,6 +1223,50 @@ button.ac:active{transform:translateY(1px)}
 .outnum span{font-size:11px;color:var(--mute)}
 .outrun{margin:0 0 14px;padding-bottom:11px;border-bottom:1px solid var(--line)}
 .outrun > span{font-size:11px;color:var(--dim)}
+
+/* 兩條尺的圖例 */
+.bkey{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0 0 55px}
+.bkey span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute)}
+.bkey b{width:18px;height:11px;display:block}
+.bkey .k1{background:rgba(233,179,65,.10);box-shadow:inset 0 0 0 1px var(--gold-d)}
+.bkey .k2{background:var(--gold-d)}
+.bkey .k3{background:var(--over)}
+
+/* 這一趟的形狀：全部是數字，一句判斷都沒有 */
+.shape{display:flex;flex-wrap:wrap;gap:18px;margin:14px 0 0}
+.shape span{display:flex;align-items:baseline;gap:5px;font-size:11px;color:var(--mute)}
+.shape b{font-size:22px;line-height:1;color:var(--ink);font-weight:400}
+.shape .blank b{color:var(--mute)}
+
+/* 「今天沒有動」：跟上面那幾顆一樣好按，但不會讓畫面變亮 */
+.ac.rest{color:var(--mute)}
+.ac.rest b{background:transparent;box-shadow:inset 0 0 0 2px var(--line2)}
+.ac.rest:hover{color:var(--dim)}
+
+/* 安靜的卡：今天要做的那一張以外，其他都退一階 */
+.card.quiet{background-color:#100D0A}
+.card.quiet .eyebrow{color:#4A4038}
+
+/* 今天要做的那一張：整頁最大聲 */
+.act-card{padding:33px 22px}
+.act-card h2{font-size:33px;line-height:1.4}
+@media (max-width:860px){ .act-card{padding:22px 14px} .act-card h2{font-size:22px} }
+
+/* ---------- 圖鑑 ----------
+   全部看得到。沒遇過的只是淡一點，不是鎖起來——一鎖上它就變成
+   一條要填滿的條，那正是這一份不做的事。 */
+.cx-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:11px}
+.cx{display:flex;flex-wrap:wrap;gap:11px}
+.cxi{
+  display:flex;gap:11px;align-items:flex-start;width:264px;padding:11px;
+  background:rgba(0,0,0,.30);opacity:.55
+}
+.cxi.met{opacity:1;background:rgba(0,0,0,.45)}
+.px.cx-px{width:44px;height:44px;flex:0 0 44px}
+.cxi b{display:block;font-size:22px;font-weight:400;color:var(--ink);line-height:1.3}
+.cxi em{display:block;font-style:normal;font-size:11px;color:var(--mute);line-height:1.7;margin-top:3px}
+.cxi .cx-met{display:block;font-size:11px;color:var(--gold);line-height:1.7;margin-top:5px}
+@media (max-width:860px){ .cxi{width:100%} }
 
 /* 手機。
 
@@ -1648,11 +1729,19 @@ var STRATA = [
 var ZONE_SPAN = 2;                    /* 一層待幾個里程碑 */
 var CYCLE = ZONE_SPAN * STRATA.length;
 
-/* 這一組被給到的順序。洗牌用組別算，所以它是固定的。 */
-function routeOf(teamId) {
+/* 順序是一個班洗一次，班內共用。
+
+   本來是一組洗一次。那樣殺得掉比較（同樣 160 公尺，兩組看到的不一樣），
+   但也殺掉了關聯性：同班的人不再站在同一片地質上，
+   「我們在同一個地方」就沒了。
+
+   改成一個班一份：你們班的地下城長什麼樣是你們班的，跟隔壁班不一樣；
+   班內同一個深度看到的是同一種石頭。而順序本身是隨機的，
+   所以它不代表任何進度——第三層不比第一層「後面」。 */
+function routeOf(classId) {
   var idx = [], i;
   for (i = 0; i < STRATA.length; i++) idx.push(i);
-  var h = hash('route|' + (teamId || ''));
+  var h = hash('route|' + (classId || ''));
   for (i = idx.length - 1; i > 0; i--) {
     h = (h * 1103515245 + 12345) >>> 0;
     var j = h % (i + 1), t = idx[i];
@@ -1661,9 +1750,12 @@ function routeOf(teamId) {
   return idx;
 }
 
-/* 這一組在這個深度會在哪一層 */
-function strataAt(depth, teamId) {
-  var r = routeOf(teamId);
+/* 這個深度是哪一層。第二個參數收組別或班級都可以——
+   收到組別就換成它的班，這樣呼叫端不用每一處都改。 */
+function strataAt(depth, who) {
+  var t = who ? teamOf(who) : null;
+  var cid = t ? t.classId : (who || '');
+  var r = routeOf(cid);
   var n = Math.floor((Number(depth) || 0) / ZONE_SPAN);
   return STRATA[r[((n % r.length) + r.length) % r.length]];
 }
@@ -1708,6 +1800,20 @@ function faunaByName(n) {
   var all = allFauna();
   for (var i = 0; i < all.length; i++) if (all[i].n === n) return all[i];
   return null;
+}
+
+/* 擋在廊道盡頭的那一隻。
+
+   這裡本來是從全部四十隻裡挑，跟你在多深的地方無關——那條線是斷的。
+   現在牠來自你所在那一層的住民：走到 160 公尺，擋你的就是住在水晶
+   迴廊的東西。生物跟系統的連接就是這一條，而且是雙向的——
+   你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
+
+   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個里程碑不是同一隻。 */
+function mobFor(msId, teamId) {
+  var f = faunaOf(strataAt(depthOf(teamId), teamId).key);
+  if (!f.length) f = allFauna();
+  return f[hash(msId + '|' + teamId) % f.length];
 }
 
 
@@ -2724,10 +2830,13 @@ function pushedToday(teamId, runId) {
 }
 
 /* 這一個 run 最後一次推進是什麼時候 */
+/* 停滯只看真的動過的那幾天。說了「今天沒動」不會讓計時歸零——
+   那就是它沒有作弊空間的原因。 */
 function lastPush(runId) {
-  var ps = where('Pushes', function (p) { return p.runId === runId; });
-  if (!ps.length) return 0;
-  return ps[ps.length - 1].at;
+  var ps = where('Pushes', function (p) {
+    return p.runId === runId && (p.kind || 'move') === 'move';
+  });
+  return ps.length ? ps[ps.length - 1].at : 0;
 }
 
 /* 這一組的停滯狀態。
@@ -2802,7 +2911,12 @@ function actCommit(teamId, msId, est, flags) {
     est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
     flags: flags || [],
     committedAt: now(),
-    pushes: 0, overs: [], steps: [], keep: null, stamp: null
+    pushes: 0, overs: [], steps: [], keep: null, stamp: null,
+    /* 擋在廊道盡頭的是哪一隻，承諾那一刻就決定並存下來。
+       本來是每次要用再算一次，而算的時候看的是「現在」的深度——
+       所以走深了之後回頭看，過去每一趟遇到的那一隻會跟著變。
+       那是假的紀錄。 */
+    mob: mobFor(msId, teamId).n
   };
   DB.Runs.push(r);
   save();
@@ -2822,6 +2936,21 @@ function actCommit(teamId, msId, est, flags) {
    是走廊上少不少一盞燈——而「忘了按一天就再也補不回來」正是
    讓人整條放棄的那個崖。 */
 function actPush(teamId, runId, step, back) {
+  return logDay(teamId, runId, 'move', step, back);
+}
+
+/* 今天沒有動。
+
+   跟推進一樣是一下點擊，一樣一天一次。差別在它不會讓畫面變亮，
+   也不會讓停滯計時歸零——說實話不用付代價，但也買不到任何東西。
+   剛好是這樣，才沒有說謊的理由。
+
+   它唯一給的是：之後回頭看，那一天是「我說我沒動」，不是一個空格。 */
+function actRest(teamId, runId, back) {
+  return logDay(teamId, runId, 'rest', -1, back);
+}
+
+function logDay(teamId, runId, kind, step, back) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return false;
   var b = Math.max(0, Math.min(RULES.BACKFILL_MAX, Number(back) || 0));
@@ -2829,13 +2958,16 @@ function actPush(teamId, runId, step, back) {
   if (when < r.committedAt) return false;      /* 承諾之前的日子不算 */
   if (pushedOn(teamId, runId, dayOf(when))) return false;
   DB.Pushes.push({
-    pushId: nid('P'), teamId: teamId, runId: runId,
+    pushId: nid('P'), teamId: teamId, runId: runId, kind: kind,
     day: dayOf(when), at: when, step: (step == null ? -1 : step), back: b
   });
-  r.pushes++;
+  /* pushes 只算真的動過的天數。判定不看它，但畫面看得到。 */
+  if (kind === 'move') r.pushes++;
   save();
-  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes,
-    seg: stepName(runId, step), back: b });
+  logEvent(kind === 'move' ? 'push' : 'rest', {
+    teamId: teamId, runId: runId, n: r.pushes,
+    seg: kind === 'move' ? stepName(runId, step) : '', back: b
+  });
   return true;
 }
 
@@ -2886,11 +3018,77 @@ function openDays(teamId, runId) {
   return out;
 }
 
-/* 這一趟每一天動的是第幾段，照時間排。沒分段的那幾天回 -1。 */
+/* 這一趟的日誌。一格一天，從承諾那一天算起。
+
+   本來這裡回的是「按過的那幾次」，所以沒按的日子根本不存在——
+   看起來就像這一趟還沒開始。改成照日曆排之後，缺席看得見了。
+   那不是指控，是把形狀畫出來。
+
+   每一格三種：
+     {kind:'move', step}  來過，動的是第幾段
+     {kind:'rest'}        他自己說那一天沒動
+     null                 沒有紀錄 */
+function dayLog(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return [];
+  var end = r.submittedAt || now();
+  var span = Math.max(r.est || 1, daysBetween(r.committedAt, end) + 1);
+  span = Math.min(span, 60);
+  var byDay = {};
+  where('Pushes', function (p) { return p.runId === runId; }).forEach(function (p) {
+    byDay[p.day] = { kind: p.kind || 'move', step: p.step == null ? -1 : p.step };
+  });
+  var out = [];
+  for (var i = 0; i < span; i++) {
+    out.push(byDay[dayOf(r.committedAt + i * DAY)] || null);
+  }
+  return out;
+}
+
+/* 這一趟動過的那幾天分別是第幾段。keepOffers 用。 */
 function stepIdxOfRun(runId) {
-  return where('Pushes', function (p) { return p.runId === runId; })
-    .sort(function (a, b) { return a.day - b.day; })
+  return where('Pushes', function (p) {
+    return p.runId === runId && (p.kind || 'move') === 'move';
+  }).sort(function (a, b) { return a.day - b.day; })
     .map(function (p) { return p.step == null ? -1 : p.step; });
+}
+
+/* 這一趟擋路的是哪一隻。舊資料沒存就當場算一次。 */
+function mobOfRun(run) {
+  if (run && run.mob) {
+    var c = faunaByName(run.mob);
+    if (c) return c;
+  }
+  return mobFor(run.msId, run.teamId);
+}
+
+/* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
+function metMobs(teamId) {
+  var seen = {};
+  runsFor(teamId).forEach(function (x) {
+    if (!x.run.est) return;
+    var m = mobOfRun(x.run);
+    if (m) seen[m.n] = x.ms.title;
+  });
+  return seen;
+}
+
+/* 這一趟的形狀：承諾幾天、過了幾天、來過幾天、說沒動幾天、勾了幾段。
+   老師看得到這個。系統不說任何一句判斷——它只把數字擺出來。 */
+function runShape(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  var lg = dayLog(runId);
+  var sp = stepsOf(runId);
+  return {
+    est: r.est,
+    elapsed: lg.length,
+    moved: lg.filter(function (d) { return d && d.kind === 'move'; }).length,
+    rested: lg.filter(function (d) { return d && d.kind === 'rest'; }).length,
+    blank: lg.filter(function (d) { return !d; }).length,
+    steps: sp ? sp.on.length : null,
+    stepsAll: sp ? sp.all.length : null
+  };
 }
 
 /* 今天班上有幾條廊道今天也有人在走。
@@ -3377,7 +3575,7 @@ var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', submit: 'student', stamp: 'student',
   camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
-  exit: 'student',
+  exit: 'student', codex: 'student',
   log: 'student', claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -3559,7 +3757,8 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '廊道'], ['pack', '留下的'], ['eco', '全班地下城'], ['log', '紀錄']
+      ['home', '廊道'], ['pack', '留下的'], ['codex', '圖鑑'],
+      ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   var items = nav.map(function (n) {
@@ -3631,6 +3830,18 @@ var ACTS = {
     var i = DRAFT.overs.indexOf(k);
     if (i < 0) DRAFT.overs.push(k); else DRAFT.overs.splice(i, 1);
     render();
+  },
+
+  /* 今天沒有動。
+     跟推進一樣一下點擊，但不會讓畫面變亮，也不會讓停滯計時歸零——
+     說實話不用付代價，也買不到東西，所以沒有說謊的理由。 */
+  rest: function (runId) {
+    var t = myTeam();
+    var back = Number(DRAFT.back || 0);
+    if (!actRest(t.teamId, runId, back)) return say('那一天已經記過了。');
+    DRAFT.back = 0;
+    go('home');
+    say('記下來了。沒動也是這一趟的一部分。');
   },
 
   /* 勾掉／取消勾掉老師分的一段 */
@@ -3886,6 +4097,31 @@ function accBar(acc) {
   return H.join('');
 }
 
+/* 兩條尺的圖例。三個色塊就說完了，不用一句話解釋。 */
+function barKey() {
+  return '<div class="bkey">' +
+    '<span><b class="k1"></b>你說的範圍</span>' +
+    '<span><b class="k2"></b>實際走的</span>' +
+    '<span><b class="k3"></b>超出去的</span>' +
+    '</div>';
+}
+
+/* 這一趟的形狀。全部是數字，一句判斷都沒有——
+   要怎麼讀是他自己的事，不是系統的。 */
+function shapeLine(runId) {
+  var s = runShape(runId);
+  if (!s) return '';
+  var H = ['<div class="shape">'];
+  H.push('<span><b>' + s.est + '</b>你說的天數</span>');
+  H.push('<span><b>' + s.elapsed + '</b>過了幾天</span>');
+  H.push('<span><b>' + s.moved + '</b>你來過</span>');
+  if (s.rested) H.push('<span><b>' + s.rested + '</b>你說沒動</span>');
+  if (s.blank) H.push('<span class="blank"><b>' + s.blank + '</b>沒有紀錄</span>');
+  if (s.stepsAll) H.push('<span><b>' + s.steps + '/' + s.stepsAll + '</b>勾掉的段</span>');
+  H.push('</div>');
+  return H.join('');
+}
+
 
 /* ===== 58-gate.js ===== */
 /* 門口：還沒登入之前看得到的每一頁。
@@ -4120,26 +4356,30 @@ PAGES.home = function () {
   /* ── 廊道本身。招牌、深度、魔物全在裡面（見 61-scene.js） ── */
   H.push(scene(t, next.row, st));
 
-  /* ── 承諾與走到哪，畫成兩條尺 ── */
-  if (next.row && next.row.run && next.row.run.runId) {
-    var run = next.row.run;
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">' + esc(next.row.ms.title) + '</div>');
-    H.push(estBar(run.est, run.pushes, run.state === 'running'));
-    H.push('</div>');
-  }
+  /* ── 今天要做的那一件。放在廊道正下面，而且是整頁最大聲的一張——
+        本來它排在兩條尺跟分段清單後面，每一張卡看起來又都一樣重，
+        所以打開之後第一眼看不出該按哪裡。 ── */
+  H.push(actionCard(t, next, st));
 
   /* ── 這一趟的分段（老師有分才有） ── */
   if (next.row && next.row.run && next.row.run.runId) {
     H.push(stepCard(next.row.run.runId));
   }
 
-  /* ── 唯一的動作 ── */
-  H.push(actionCard(t, next, st));
+  /* ── 這一趟的形狀。說幾天、過了幾天、來過幾天。 ── */
+  if (next.row && next.row.run && next.row.run.runId) {
+    var run = next.row.run;
+    H.push('<div class="card quiet">');
+    H.push('<div class="eyebrow">' + esc(next.row.ms.title) + '</div>');
+    H.push(estBar(run.est, run.actual || run.pushes, run.state === 'running'));
+    H.push(barKey());
+    H.push(shapeLine(run.runId));
+    H.push('</div>');
+  }
 
   /* ── 走過的每一趟 ── */
   if (acc.total) {
-    H.push('<div class="card">');
+    H.push('<div class="card quiet">');
     H.push('<div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
     H.push(accBar(acc));
     H.push('</div>');
@@ -4148,7 +4388,7 @@ PAGES.home = function () {
   /* ── 上一趟自己留下的那一句 ── */
   var keep = lastKeep(t.teamId);
   if (keep) {
-    H.push('<div class="card carry">');
+    H.push('<div class="card carry quiet">');
     H.push('<div class="eyebrow">上一趟你留下的</div>');
     H.push('<p class="quote">' + esc(keep.line) + '</p>');
     H.push(btn('看留下的', 'go:pack', 'ghost'));
@@ -4156,16 +4396,15 @@ PAGES.home = function () {
   }
 
 
-  /* ── 出口 ──
-     放在最底下，而且不是那顆大的：宣告結案是想清楚才做的事，
-     不是順手點到的。 */
+  /* ── 底下那一張：招牌與出口 ──
+     兩件都是偶爾才動的事，放同一張安靜的卡，不要跟今天要做的事搶。 */
   if (!t.leftAt) H.push(exitCard(t));
 
   /* ── 招牌 ──
      它只有一個用途：廊道口掛的是誰。本來還有三階材質（走得越深牌子
      越好），拿掉了——深度已經不是進度了，留著一個「越多越好」的漸層
      跟其他每一條規則都打架。名字是他們自己寫的，這才是招牌的意義。 */
-  H.push('<div class="card">');
+  H.push('<div class="card quiet">');
   H.push('<div class="eyebrow">廊道口掛的</div>');
   H.push('<div class="rn-row">');
   H.push('<input id="pj-name" value="' + esc(t.project || '') +
@@ -4237,20 +4476,6 @@ var STEP_AT = {
   submit: 2, camp: 2, review: 2,
   gear: 3
 };
-
-/* 擋在廊道盡頭的那一隻。
-
-   這裡本來是從全部四十隻裡挑，跟你在多深的地方無關——那條線是斷的。
-   現在牠來自你所在那一層的住民：走到 160 公尺，擋你的就是住在水晶
-   迴廊的東西。生物跟系統的連接就是這一條，而且是雙向的——
-   你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
-
-   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個里程碑不是同一隻。 */
-function mobFor(msId, teamId) {
-  var f = faunaOf(strataAt(depthOf(teamId), teamId).key);
-  if (!f.length) f = allFauna();
-  return f[hash(msId + '|' + teamId) % f.length];
-}
 
 /* 上一次自己留下的那一句 */
 function lastKeep(teamId) {
@@ -4332,10 +4557,19 @@ function actionCard(t, next, st) {
    點的是老師分的段——系統不列選項，也不用任何人先做設定。
    老師沒分段就退回一顆鍵，一樣走得完。 */
 function actRow(t, runId) {
+  var H = [];
   if (!stepNames(runId).length) {
-    return btn('我今天來過了', 'push:' + runId, 'big');
+    H.push('<div class="row">' + btn('我今天來過了', 'push:' + runId, 'big') + '</div>');
+  } else {
+    H.push(stepLegend(runId, null, 'push:' + runId + '|'));
   }
-  return stepLegend(runId, null, 'push:' + runId + '|');
+  /* 「今天沒有動」跟上面那幾顆一樣是一下點擊。
+     它不會讓廊道變亮，也不會讓停滯計時歸零——說實話不用付代價，
+     也買不到東西。剛好是這樣，才沒有說謊的理由。 */
+  H.push('<button class="ac rest" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'rest:' + runId })) + '\'>' +
+    '<b></b>今天沒有動</button>');
+  return H.join('');
 }
 
 /* 補登。忘一天就再也補不回來的話，人會把整條廊道一起放掉。 */
@@ -4427,7 +4661,7 @@ PAGES.submit = function () {
   var H = [head('交出去', m.title, '')];
 
   /* 走到底了才看得清楚牠。前面那些天牠都在霧裡。 */
-  var mob = mobFor(r.msId, t.teamId);
+  var mob = mobOfRun(r);
   var zone = strataAt(depthOf(t.teamId), t.teamId);
   H.push('<div class="card fa ' + zone.key + '"><div class="fa-in">');
   H.push(pxTag(mob.px, zone.pal, 'fa-px'));
@@ -4456,7 +4690,7 @@ PAGES.stamp = function () {
 
   var t = myTeam();
   var zone = strataAt(depthOf(t.teamId), t.teamId);
-  var mob = mobFor(r.msId, t.teamId);
+  var mob = mobOfRun(r);
 
   var H = ['<div class="stamp-card ' + r.stamp + '">'];
   H.push('<div class="stamp-mark">' + s.mark + '</div>');
@@ -4728,15 +4962,32 @@ var SCN = {
 function scene(t, row, st) {
   var run = row && row.run;
   var est = run ? (run.est || 1) : 4;
-  var at = run ? Math.min(run.pushes, est) : 0;
+
+  /* 一條軌道，兩個東西在上面：
+       moved   你來過幾天——按一下才往前一格
+       tide    實際過了幾天——你按不按它都會漲 */
+  var log = run ? dayLog(run.runId) : [];
+  var moved = 0, i0;
+  for (i0 = 0; i0 < log.length; i0++) if (log[i0] && log[i0].kind === 'move') moved++;
   var done = run && run.state !== 'running';
-  var walked = done ? est : at;
-  var seed = t.teamId + (run ? '|' + run.runId : '');
+  if (done) moved = Math.max(moved, run.pushes || 0);
+  var tide = Math.min(log.length, est + 2);
+  var walked = Math.min(moved, est);
+
   /* 每一格頭上掛的是那一天動的是哪一段。廊道因此讀得出形狀——
-     七格全是 🔍 跟七格全是 🛠️ 是完全不同的一趟。 */
-  var did = run ? stepIdxOfRun(run.runId) : [];
+     七格同一個顏色跟七格五顏六色，是完全不同的一趟。 */
+  var byTile = [];
+  var k0 = 0;
+  for (i0 = 0; i0 < log.length; i0++) {
+    if (log[i0] && log[i0].kind === 'move') byTile[k0++] = log[i0].step;
+  }
+  var rests = 0;
+  for (i0 = 0; i0 < log.length; i0++) if (log[i0] && log[i0].kind === 'rest') rests++;
+
+  var seed = t.teamId + (run ? '|' + run.runId : '');
   var light = WORLD.light[st.level];
-  var W = SCN.ENT + est * SCN.TILE + SCN.END;
+  var span = Math.max(est, tide);
+  var W = SCN.ENT + span * SCN.TILE + SCN.END;
   /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
      世界觀不寫在說明裡，寫在牆上。 */
   var zone = strataAt(depthOf(t.teamId), t.teamId);
@@ -4767,14 +5018,13 @@ function scene(t, row, st) {
 
   /* ── 地板 ── */
   H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
-  /* 走過的那一段地板是打通的，亮一階 */
   if (walked > 0) {
     H.push('<div class="floor lit" style="left:' + SCN.ENT + 'px;width:' +
       (walked * SCN.TILE) + 'px"></div>');
   }
 
   /* ── 一天一格 ── */
-  for (var i = 0; i < est; i++) {
+  for (var i = 0; i < span; i++) {
     var x = SCN.ENT + i * SCN.TILE;
     var on = i < walked;
 
@@ -4787,9 +5037,9 @@ function scene(t, row, st) {
 
     /* 那一天動的是哪一件。畫顏色不畫字——名字長度不一定，
        塞不進 44px；顏色對到哪一件，清單上看一次就記得了。 */
-    if (on && did[i] >= 0) {
+    if (on && byTile[i] >= 0) {
       H.push('<span class="doing" style="left:' + x + 'px;background:' +
-        stepHue(did[i]) + '" title="' + esc(stepName(run.runId, did[i])) +
+        stepHue(byTile[i]) + '" title="' + esc(stepName(run.runId, byTile[i])) +
         '"></span>');
     }
 
@@ -4814,8 +5064,18 @@ function scene(t, row, st) {
     }
   }
 
+  /* ── 時間漲上來的水 ──
+     一天一格，你按不按它都會漲。水在你後面＝走在自己承諾的前面；
+     淹到腳邊＝剛好；過去了＝會比說的久，而且好幾天前就看得到。
+     它不扣任何東西，走到底一樣可以交——它只是把時間畫出來。 */
+  if (run && tide > 0) {
+    H.push('<div class="tide" style="left:' + SCN.ENT + 'px;width:' +
+      (tide * SCN.TILE) + 'px"></div>');
+    H.push('<div class="tide-edge" style="left:' + (SCN.ENT + tide * SCN.TILE - 4) + 'px"></div>');
+  }
+
   /* ── 魔物 ── */
-  if (run) H.push(sceneMob(t, row, walked / est));
+  if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), span));
 
   /* ── 角色 ── */
   var pose = st.level >= 2 ? HERO.sleep : HERO.idle;
@@ -4833,12 +5093,23 @@ function scene(t, row, st) {
   /* ── 霧 ──
      從站的地方往前蓋住。它蓋的是「還沒走的那幾天」，
      所以往前一格霧就退一格。 */
-  var fogAt = SCN.ENT + (walked + 1) * SCN.TILE;
+  var fogAt = SCN.ENT + (Math.max(walked, tide) + 1) * SCN.TILE;
   if (fogAt < W) {
     H.push('<div class="fog" style="left:' + fogAt + 'px"></div>');
   }
 
   H.push('</div></div>');   /* scn-in / scn-scroll */
+
+  /* 底下那一行。三個數字就是整個處境，不用一句話解釋。 */
+  if (run) {
+    H.push('<div class="scn-foot">');
+    H.push('<span class="sf you"><b>' + moved + '</b>你來過</span>');
+    H.push('<span class="sf tide"><b>' + tide + '</b>過了幾天</span>');
+    H.push('<span class="sf est"><b>' + est + '</b>你說的</span>');
+    if (rests) H.push('<span class="sf rest"><b>' + rests + '</b>說沒動</span>');
+    H.push('</div>');
+  }
+
   H.push('</div>');         /* scn */
   return H.join('');
 }
@@ -4863,10 +5134,10 @@ function sceneMouth(t) {
 /* ---------- 魔物 ----------
    站在走廊盡頭。清楚到什麼程度跟你走了多少有關——
    剛出發的時候只看得到一團影子，走到底才看得清牠長什麼樣。 */
-function sceneMob(t, row, prog) {
-  var mob = mobFor(row.ms.msId, t.teamId);
+function sceneMob(t, row, prog, span) {
+  var mob = mobOfRun(row.run);
   var pal = strataAt(depthOf(t.teamId), t.teamId).pal;
-  var x = SCN.ENT + (row.run.est || 1) * SCN.TILE + 33;
+  var x = SCN.ENT + span * SCN.TILE + 33;
   /* 這裡本來還掛一塊寫著里程碑名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
      其中一遍看起來就會像壞掉的東西。 */
@@ -5235,6 +5506,95 @@ PAGES.pack = function () {
     H.push('<i>' + esc(k.line) + '</i>');
     if (m) H.push('<span class="km">' + esc(m.title) + '</span>');
     H.push('</div></div>');
+  });
+  H.push('</div></div>');
+
+  H.push(btn('回廊道', 'go:home', 'ghost'));
+  return H.join('');
+};
+
+
+/* ===== 64-codex.js ===== */
+/* 圖鑑。
+
+   這個字曾經被 check.js 擋著，因為上一個作品（地心圖鑑）的圖鑑是一條
+   收集進度條：收集了 12／40，收滿有東西。那種圖鑑會把「做更多任務」
+   變成「填更多格子」，也就是把外在誘因裝回來。
+
+   這一份不是那種。差別只有一條，但那一條就是全部：
+
+     全部看得到。沒有鎖、沒有問號、沒有「收集了幾件」。
+
+   它記的是「你遇過牠」——那是一段回憶，不是一個分數。沒遇過的那幾隻
+   一樣看得到長什麼樣、住在哪一層、是什麼東西。所以它不會讓任何人
+   為了填滿它而多做一件事，它只是這座地下城的說明：下面住著這些。 */
+
+PAGES.codex = function () {
+  var t = myTeam();
+  var met = metMobs(t.teamId);
+  var here = strataAt(depthOf(t.teamId), t.teamId);
+
+  var H = [head('圖鑑', '這座地下城裡有什麼',
+    '這座地下城裡住的東西，全部在這裡。標「你遇過」的那幾隻是回憶。')];
+
+  /* ---- 生物 ---- */
+  STRATA.forEach(function (z) {
+    var list = faunaOf(z.key);
+    if (!list.length) return;
+    H.push('<div class="card fa ' + z.key + '">');
+    H.push('<div class="cx-head">');
+    H.push('<div><div class="eyebrow">' + (z.key === here.key ? '你現在在這一層' : '地層') + '</div>');
+    H.push('<h2>' + esc(z.name) + '</h2>');
+    H.push('<p class="dim">' + esc(z.note) + '</p></div>');
+    H.push('</div>');
+    H.push('<div class="cx">');
+    list.forEach(function (c) {
+      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + '">');
+      H.push(pxTag(c.px, z.pal, 'cx-px'));
+      H.push('<div><b>' + esc(c.n) + '</b>');
+      H.push('<em>' + esc(c.t) + '</em>');
+      if (met[c.n]) H.push('<span class="cx-met">你在「' + esc(met[c.n]) + '」那一趟遇過</span>');
+      H.push('</div></div>');
+    });
+    H.push('</div></div>');
+  });
+
+  /* ---- 物件 ----
+     三件是留下來的那句話的把手（見 63-pack.js），
+     其餘是地上撿得到的東西——每一層長的不一樣。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">帶得走的</div>');
+  H.push('<div class="cx">');
+  RULES.KEEPS.forEach(function (k) {
+    var mine = keepsOf(t.teamId).filter(function (x) { return x.key === k.key; });
+    H.push('<div class="cxi' + (mine.length ? ' met' : '') + '">');
+    H.push(pxTag(GEAR_PX[k.tro].px, here.pal, 'cx-px'));
+    H.push('<div><b>' + esc(k.name) + '</b>');
+    H.push('<em>' + esc(k.eyebrow) + '。走完一趟、老師勾了可以之後，' +
+           '三張裡挑一張留下，這是其中一張的樣子。</em>');
+    if (mine.length) {
+      H.push('<span class="cx-met">' + esc(mine[mine.length - 1].line) + '</span>');
+    }
+    H.push('</div></div>');
+  });
+  H.push('</div></div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">地上的東西</div>');
+  H.push('<p class="dim">每一層長的不一樣——' +
+         '那是你怎麼知道自己換了地方。</p>');
+  H.push('<div class="cx">');
+  [['碎石', RUBBLE.px, '打通的時候崩下來的。'],
+   ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點東西。'],
+   ['蕈菇', SHROOM.px, '走通的地方才長得出來。'],
+   ['鐵件', BOLT.px, '有人來過。鏽住了，轉不動。'],
+   ['餘燼', EMBER.px, '地上還有東西在燒。'],
+   ['火把', TORCH.frames[0], '你來過的每一天，牆上多一盞。']
+  ].forEach(function (p) {
+    H.push('<div class="cxi met">');
+    H.push(pxTag(p[1], here.pal, 'cx-px'));
+    H.push('<div><b>' + esc(p[0]) + '</b><em>' + esc(p[2]) + '</em></div>');
+    H.push('</div>');
   });
   H.push('</div></div>');
 

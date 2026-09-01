@@ -107,3 +107,28 @@ function accBar(acc) {
   H.push('</div>');
   return H.join('');
 }
+
+/* 兩條尺的圖例。三個色塊就說完了，不用一句話解釋。 */
+function barKey() {
+  return '<div class="bkey">' +
+    '<span><b class="k1"></b>你說的範圍</span>' +
+    '<span><b class="k2"></b>實際走的</span>' +
+    '<span><b class="k3"></b>超出去的</span>' +
+    '</div>';
+}
+
+/* 這一趟的形狀。全部是數字，一句判斷都沒有——
+   要怎麼讀是他自己的事，不是系統的。 */
+function shapeLine(runId) {
+  var s = runShape(runId);
+  if (!s) return '';
+  var H = ['<div class="shape">'];
+  H.push('<span><b>' + s.est + '</b>你說的天數</span>');
+  H.push('<span><b>' + s.elapsed + '</b>過了幾天</span>');
+  H.push('<span><b>' + s.moved + '</b>你來過</span>');
+  if (s.rested) H.push('<span><b>' + s.rested + '</b>你說沒動</span>');
+  if (s.blank) H.push('<span class="blank"><b>' + s.blank + '</b>沒有紀錄</span>');
+  if (s.stepsAll) H.push('<span><b>' + s.steps + '/' + s.stepsAll + '</b>勾掉的段</span>');
+  H.push('</div>');
+  return H.join('');
+}

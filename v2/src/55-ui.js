@@ -35,7 +35,7 @@ var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', submit: 'student', stamp: 'student',
   camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
-  exit: 'student',
+  exit: 'student', codex: 'student',
   log: 'student', claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -217,7 +217,8 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '廊道'], ['pack', '留下的'], ['eco', '全班地下城'], ['log', '紀錄']
+      ['home', '廊道'], ['pack', '留下的'], ['codex', '圖鑑'],
+      ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   var items = nav.map(function (n) {
@@ -289,6 +290,18 @@ var ACTS = {
     var i = DRAFT.overs.indexOf(k);
     if (i < 0) DRAFT.overs.push(k); else DRAFT.overs.splice(i, 1);
     render();
+  },
+
+  /* 今天沒有動。
+     跟推進一樣一下點擊，但不會讓畫面變亮，也不會讓停滯計時歸零——
+     說實話不用付代價，也買不到東西，所以沒有說謊的理由。 */
+  rest: function (runId) {
+    var t = myTeam();
+    var back = Number(DRAFT.back || 0);
+    if (!actRest(t.teamId, runId, back)) return say('那一天已經記過了。');
+    DRAFT.back = 0;
+    go('home');
+    say('記下來了。沒動也是這一趟的一部分。');
   },
 
   /* 勾掉／取消勾掉老師分的一段 */

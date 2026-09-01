@@ -36,26 +36,30 @@ PAGES.home = function () {
   /* ── 廊道本身。招牌、深度、魔物全在裡面（見 61-scene.js） ── */
   H.push(scene(t, next.row, st));
 
-  /* ── 承諾與走到哪，畫成兩條尺 ── */
-  if (next.row && next.row.run && next.row.run.runId) {
-    var run = next.row.run;
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">' + esc(next.row.ms.title) + '</div>');
-    H.push(estBar(run.est, run.pushes, run.state === 'running'));
-    H.push('</div>');
-  }
+  /* ── 今天要做的那一件。放在廊道正下面，而且是整頁最大聲的一張——
+        本來它排在兩條尺跟分段清單後面，每一張卡看起來又都一樣重，
+        所以打開之後第一眼看不出該按哪裡。 ── */
+  H.push(actionCard(t, next, st));
 
   /* ── 這一趟的分段（老師有分才有） ── */
   if (next.row && next.row.run && next.row.run.runId) {
     H.push(stepCard(next.row.run.runId));
   }
 
-  /* ── 唯一的動作 ── */
-  H.push(actionCard(t, next, st));
+  /* ── 這一趟的形狀。說幾天、過了幾天、來過幾天。 ── */
+  if (next.row && next.row.run && next.row.run.runId) {
+    var run = next.row.run;
+    H.push('<div class="card quiet">');
+    H.push('<div class="eyebrow">' + esc(next.row.ms.title) + '</div>');
+    H.push(estBar(run.est, run.actual || run.pushes, run.state === 'running'));
+    H.push(barKey());
+    H.push(shapeLine(run.runId));
+    H.push('</div>');
+  }
 
   /* ── 走過的每一趟 ── */
   if (acc.total) {
-    H.push('<div class="card">');
+    H.push('<div class="card quiet">');
     H.push('<div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
     H.push(accBar(acc));
     H.push('</div>');
@@ -64,7 +68,7 @@ PAGES.home = function () {
   /* ── 上一趟自己留下的那一句 ── */
   var keep = lastKeep(t.teamId);
   if (keep) {
-    H.push('<div class="card carry">');
+    H.push('<div class="card carry quiet">');
     H.push('<div class="eyebrow">上一趟你留下的</div>');
     H.push('<p class="quote">' + esc(keep.line) + '</p>');
     H.push(btn('看留下的', 'go:pack', 'ghost'));
@@ -72,16 +76,15 @@ PAGES.home = function () {
   }
 
 
-  /* ── 出口 ──
-     放在最底下，而且不是那顆大的：宣告結案是想清楚才做的事，
-     不是順手點到的。 */
+  /* ── 底下那一張：招牌與出口 ──
+     兩件都是偶爾才動的事，放同一張安靜的卡，不要跟今天要做的事搶。 */
   if (!t.leftAt) H.push(exitCard(t));
 
   /* ── 招牌 ──
      它只有一個用途：廊道口掛的是誰。本來還有三階材質（走得越深牌子
      越好），拿掉了——深度已經不是進度了，留著一個「越多越好」的漸層
      跟其他每一條規則都打架。名字是他們自己寫的，這才是招牌的意義。 */
-  H.push('<div class="card">');
+  H.push('<div class="card quiet">');
   H.push('<div class="eyebrow">廊道口掛的</div>');
   H.push('<div class="rn-row">');
   H.push('<input id="pj-name" value="' + esc(t.project || '') +
@@ -153,20 +156,6 @@ var STEP_AT = {
   submit: 2, camp: 2, review: 2,
   gear: 3
 };
-
-/* 擋在廊道盡頭的那一隻。
-
-   這裡本來是從全部四十隻裡挑，跟你在多深的地方無關——那條線是斷的。
-   現在牠來自你所在那一層的住民：走到 160 公尺，擋你的就是住在水晶
-   迴廊的東西。生物跟系統的連接就是這一條，而且是雙向的——
-   你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
-
-   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個里程碑不是同一隻。 */
-function mobFor(msId, teamId) {
-  var f = faunaOf(strataAt(depthOf(teamId), teamId).key);
-  if (!f.length) f = allFauna();
-  return f[hash(msId + '|' + teamId) % f.length];
-}
 
 /* 上一次自己留下的那一句 */
 function lastKeep(teamId) {
@@ -248,10 +237,19 @@ function actionCard(t, next, st) {
    點的是老師分的段——系統不列選項，也不用任何人先做設定。
    老師沒分段就退回一顆鍵，一樣走得完。 */
 function actRow(t, runId) {
+  var H = [];
   if (!stepNames(runId).length) {
-    return btn('我今天來過了', 'push:' + runId, 'big');
+    H.push('<div class="row">' + btn('我今天來過了', 'push:' + runId, 'big') + '</div>');
+  } else {
+    H.push(stepLegend(runId, null, 'push:' + runId + '|'));
   }
-  return stepLegend(runId, null, 'push:' + runId + '|');
+  /* 「今天沒有動」跟上面那幾顆一樣是一下點擊。
+     它不會讓廊道變亮，也不會讓停滯計時歸零——說實話不用付代價，
+     也買不到東西。剛好是這樣，才沒有說謊的理由。 */
+  H.push('<button class="ac rest" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'rest:' + runId })) + '\'>' +
+    '<b></b>今天沒有動</button>');
+  return H.join('');
 }
 
 /* 補登。忘一天就再也補不回來的話，人會把整條廊道一起放掉。 */
@@ -343,7 +341,7 @@ PAGES.submit = function () {
   var H = [head('交出去', m.title, '')];
 
   /* 走到底了才看得清楚牠。前面那些天牠都在霧裡。 */
-  var mob = mobFor(r.msId, t.teamId);
+  var mob = mobOfRun(r);
   var zone = strataAt(depthOf(t.teamId), t.teamId);
   H.push('<div class="card fa ' + zone.key + '"><div class="fa-in">');
   H.push(pxTag(mob.px, zone.pal, 'fa-px'));
@@ -372,7 +370,7 @@ PAGES.stamp = function () {
 
   var t = myTeam();
   var zone = strataAt(depthOf(t.teamId), t.teamId);
-  var mob = mobFor(r.msId, t.teamId);
+  var mob = mobOfRun(r);
 
   var H = ['<div class="stamp-card ' + r.stamp + '">'];
   H.push('<div class="stamp-mark">' + s.mark + '</div>');

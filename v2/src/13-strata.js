@@ -82,11 +82,19 @@ var STRATA = [
 var ZONE_SPAN = 2;                    /* 一層待幾個里程碑 */
 var CYCLE = ZONE_SPAN * STRATA.length;
 
-/* 這一組被給到的順序。洗牌用組別算，所以它是固定的。 */
-function routeOf(teamId) {
+/* 順序是一個班洗一次，班內共用。
+
+   本來是一組洗一次。那樣殺得掉比較（同樣 160 公尺，兩組看到的不一樣），
+   但也殺掉了關聯性：同班的人不再站在同一片地質上，
+   「我們在同一個地方」就沒了。
+
+   改成一個班一份：你們班的地下城長什麼樣是你們班的，跟隔壁班不一樣；
+   班內同一個深度看到的是同一種石頭。而順序本身是隨機的，
+   所以它不代表任何進度——第三層不比第一層「後面」。 */
+function routeOf(classId) {
   var idx = [], i;
   for (i = 0; i < STRATA.length; i++) idx.push(i);
-  var h = hash('route|' + (teamId || ''));
+  var h = hash('route|' + (classId || ''));
   for (i = idx.length - 1; i > 0; i--) {
     h = (h * 1103515245 + 12345) >>> 0;
     var j = h % (i + 1), t = idx[i];
@@ -95,9 +103,12 @@ function routeOf(teamId) {
   return idx;
 }
 
-/* 這一組在這個深度會在哪一層 */
-function strataAt(depth, teamId) {
-  var r = routeOf(teamId);
+/* 這個深度是哪一層。第二個參數收組別或班級都可以——
+   收到組別就換成它的班，這樣呼叫端不用每一處都改。 */
+function strataAt(depth, who) {
+  var t = who ? teamOf(who) : null;
+  var cid = t ? t.classId : (who || '');
+  var r = routeOf(cid);
   var n = Math.floor((Number(depth) || 0) / ZONE_SPAN);
   return STRATA[r[((n % r.length) + r.length) % r.length]];
 }
@@ -142,4 +153,18 @@ function faunaByName(n) {
   var all = allFauna();
   for (var i = 0; i < all.length; i++) if (all[i].n === n) return all[i];
   return null;
+}
+
+/* 擋在廊道盡頭的那一隻。
+
+   這裡本來是從全部四十隻裡挑，跟你在多深的地方無關——那條線是斷的。
+   現在牠來自你所在那一層的住民：走到 160 公尺，擋你的就是住在水晶
+   迴廊的東西。生物跟系統的連接就是這一條，而且是雙向的——
+   你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
+
+   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個里程碑不是同一隻。 */
+function mobFor(msId, teamId) {
+  var f = faunaOf(strataAt(depthOf(teamId), teamId).key);
+  if (!f.length) f = allFauna();
+  return f[hash(msId + '|' + teamId) % f.length];
 }

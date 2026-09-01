@@ -200,3 +200,40 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 /* 跨進新的一區的那一張。這是少數幾個「世界自己變了」的時刻。 */
 .card.zone-in{margin-top:22px}
 .card.zone-in h2{margin:0 0 11px}
+
+/* ---------- 時間漲上來的水 ----------
+   一天一格，你按不按它都會漲。它不扣任何東西——它只是把時間畫出來。
+   水面用硬階，不用漸層：漸層一出現它就變成現代特效。 */
+.tide{
+  position:absolute;bottom:44px;height:99px;z-index:4;pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(95,168,199,.28) 0 3px, transparent 3px 6px,
+                            rgba(95,168,199,.16) 6px 100%);
+  box-shadow:inset 0 3px 0 rgba(216,242,250,.30)
+}
+.tide-edge{
+  position:absolute;bottom:44px;width:8px;height:110px;z-index:5;pointer-events:none;
+  background:repeating-linear-gradient(180deg,
+    rgba(216,242,250,.55) 0 3px, transparent 3px 8px)
+}
+
+/* ---------- 廊道底下那一行 ----------
+   三個數字就是整個處境：你來過幾天、過了幾天、你說幾天。不用一句話解釋。 */
+.scn-foot{
+  display:flex;flex-wrap:wrap;gap:22px;margin:-11px 0 22px;padding:11px 14px;
+  background:var(--sunk);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06), 0 0 0 1px #000
+}
+.sf{font-size:11px;color:var(--mute);display:flex;align-items:baseline;gap:6px}
+.sf b{font-size:33px;line-height:1;font-weight:400}
+.sf.you b{color:var(--gold)}
+.sf.tide b{color:#5FA8C7}
+.sf.est b{color:var(--ink)}
+.sf.rest b{color:var(--mute)}
+
+/* 說了「今天沒動」的那一格：熄的托架加一個記號，
+   跟「沒有紀錄」看得出差別——一個是他說了，一個是他沒說。 */
+.restm{
+  position:absolute;bottom:110px;left:0;width:22px;height:3px;margin-left:11px;
+  background:var(--mute);z-index:3
+}

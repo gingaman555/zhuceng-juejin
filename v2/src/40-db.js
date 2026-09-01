@@ -146,10 +146,13 @@ function pushedToday(teamId, runId) {
 }
 
 /* 這一個 run 最後一次推進是什麼時候 */
+/* 停滯只看真的動過的那幾天。說了「今天沒動」不會讓計時歸零——
+   那就是它沒有作弊空間的原因。 */
 function lastPush(runId) {
-  var ps = where('Pushes', function (p) { return p.runId === runId; });
-  if (!ps.length) return 0;
-  return ps[ps.length - 1].at;
+  var ps = where('Pushes', function (p) {
+    return p.runId === runId && (p.kind || 'move') === 'move';
+  });
+  return ps.length ? ps[ps.length - 1].at : 0;
 }
 
 /* 這一組的停滯狀態。
@@ -224,7 +227,12 @@ function actCommit(teamId, msId, est, flags) {
     est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
     flags: flags || [],
     committedAt: now(),
-    pushes: 0, overs: [], steps: [], keep: null, stamp: null
+    pushes: 0, overs: [], steps: [], keep: null, stamp: null,
+    /* 擋在廊道盡頭的是哪一隻，承諾那一刻就決定並存下來。
+       本來是每次要用再算一次，而算的時候看的是「現在」的深度——
+       所以走深了之後回頭看，過去每一趟遇到的那一隻會跟著變。
+       那是假的紀錄。 */
+    mob: mobFor(msId, teamId).n
   };
   DB.Runs.push(r);
   save();
@@ -244,6 +252,21 @@ function actCommit(teamId, msId, est, flags) {
    是走廊上少不少一盞燈——而「忘了按一天就再也補不回來」正是
    讓人整條放棄的那個崖。 */
 function actPush(teamId, runId, step, back) {
+  return logDay(teamId, runId, 'move', step, back);
+}
+
+/* 今天沒有動。
+
+   跟推進一樣是一下點擊，一樣一天一次。差別在它不會讓畫面變亮，
+   也不會讓停滯計時歸零——說實話不用付代價，但也買不到任何東西。
+   剛好是這樣，才沒有說謊的理由。
+
+   它唯一給的是：之後回頭看，那一天是「我說我沒動」，不是一個空格。 */
+function actRest(teamId, runId, back) {
+  return logDay(teamId, runId, 'rest', -1, back);
+}
+
+function logDay(teamId, runId, kind, step, back) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return false;
   var b = Math.max(0, Math.min(RULES.BACKFILL_MAX, Number(back) || 0));
@@ -251,13 +274,16 @@ function actPush(teamId, runId, step, back) {
   if (when < r.committedAt) return false;      /* 承諾之前的日子不算 */
   if (pushedOn(teamId, runId, dayOf(when))) return false;
   DB.Pushes.push({
-    pushId: nid('P'), teamId: teamId, runId: runId,
+    pushId: nid('P'), teamId: teamId, runId: runId, kind: kind,
     day: dayOf(when), at: when, step: (step == null ? -1 : step), back: b
   });
-  r.pushes++;
+  /* pushes 只算真的動過的天數。判定不看它，但畫面看得到。 */
+  if (kind === 'move') r.pushes++;
   save();
-  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes,
-    seg: stepName(runId, step), back: b });
+  logEvent(kind === 'move' ? 'push' : 'rest', {
+    teamId: teamId, runId: runId, n: r.pushes,
+    seg: kind === 'move' ? stepName(runId, step) : '', back: b
+  });
   return true;
 }
 
@@ -308,11 +334,77 @@ function openDays(teamId, runId) {
   return out;
 }
 
-/* 這一趟每一天動的是第幾段，照時間排。沒分段的那幾天回 -1。 */
+/* 這一趟的日誌。一格一天，從承諾那一天算起。
+
+   本來這裡回的是「按過的那幾次」，所以沒按的日子根本不存在——
+   看起來就像這一趟還沒開始。改成照日曆排之後，缺席看得見了。
+   那不是指控，是把形狀畫出來。
+
+   每一格三種：
+     {kind:'move', step}  來過，動的是第幾段
+     {kind:'rest'}        他自己說那一天沒動
+     null                 沒有紀錄 */
+function dayLog(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return [];
+  var end = r.submittedAt || now();
+  var span = Math.max(r.est || 1, daysBetween(r.committedAt, end) + 1);
+  span = Math.min(span, 60);
+  var byDay = {};
+  where('Pushes', function (p) { return p.runId === runId; }).forEach(function (p) {
+    byDay[p.day] = { kind: p.kind || 'move', step: p.step == null ? -1 : p.step };
+  });
+  var out = [];
+  for (var i = 0; i < span; i++) {
+    out.push(byDay[dayOf(r.committedAt + i * DAY)] || null);
+  }
+  return out;
+}
+
+/* 這一趟動過的那幾天分別是第幾段。keepOffers 用。 */
 function stepIdxOfRun(runId) {
-  return where('Pushes', function (p) { return p.runId === runId; })
-    .sort(function (a, b) { return a.day - b.day; })
+  return where('Pushes', function (p) {
+    return p.runId === runId && (p.kind || 'move') === 'move';
+  }).sort(function (a, b) { return a.day - b.day; })
     .map(function (p) { return p.step == null ? -1 : p.step; });
+}
+
+/* 這一趟擋路的是哪一隻。舊資料沒存就當場算一次。 */
+function mobOfRun(run) {
+  if (run && run.mob) {
+    var c = faunaByName(run.mob);
+    if (c) return c;
+  }
+  return mobFor(run.msId, run.teamId);
+}
+
+/* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
+function metMobs(teamId) {
+  var seen = {};
+  runsFor(teamId).forEach(function (x) {
+    if (!x.run.est) return;
+    var m = mobOfRun(x.run);
+    if (m) seen[m.n] = x.ms.title;
+  });
+  return seen;
+}
+
+/* 這一趟的形狀：承諾幾天、過了幾天、來過幾天、說沒動幾天、勾了幾段。
+   老師看得到這個。系統不說任何一句判斷——它只把數字擺出來。 */
+function runShape(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return null;
+  var lg = dayLog(runId);
+  var sp = stepsOf(runId);
+  return {
+    est: r.est,
+    elapsed: lg.length,
+    moved: lg.filter(function (d) { return d && d.kind === 'move'; }).length,
+    rested: lg.filter(function (d) { return d && d.kind === 'rest'; }).length,
+    blank: lg.filter(function (d) { return !d; }).length,
+    steps: sp ? sp.on.length : null,
+    stepsAll: sp ? sp.all.length : null
+  };
 }
 
 /* 今天班上有幾條廊道今天也有人在走。
