@@ -206,6 +206,7 @@ function ecology(classId) {
       teamId: t.teamId, name: t.name,
       depth: depthOf(t.teamId),
       stall: st.level,
+      status: statusOf(t.teamId),
       /* 正在打的那一隻，跟走到哪 */
       onMs: cur ? cur.ms.title : '',
       at: cur ? RULES.progress(cur.run.pushes, cur.run.est) : 0,
@@ -367,6 +368,43 @@ function stepIdxOfRun(runId) {
     return p.runId === runId && (p.kind || 'move') === 'move';
   }).sort(function (a, b) { return a.day - b.day; })
     .map(function (p) { return p.step == null ? -1 : p.step; });
+}
+
+/* ---------- 這一組現在是什麼狀態 ----------
+
+   本來只有四種，而且全部從「幾天沒推進」推出來：
+     ≥4 天 休息中／≥2 天 慢下來了／否則 前進中／沒任務 等派任務
+
+   有兩個問題。
+
+   一 · 「休息中」現在是錯的字。系統有了「今天沒有動」那顆鍵之後，
+        休息變成他真的會宣告的狀態；而這個標籤講的是「四天沒推進」，
+        兩件事撞在同一個字上。
+
+   二 · 更要緊的：老師分不出「他說他沒動」跟「他完全沒有消息」。
+        那是兩種完全不同的處境——一個誠實地卡住，要找他談；
+        一個可能整個不見了，要找的是別的東西。系統其實知道差別
+        （rest 那幾筆），只是畫面沒有用上。
+
+   所以狀態改成看兩件事：多久沒推進、那幾天他有沒有回報。
+   系統只陳述，不評價——「沒有消息」講的是紀錄，不是那一組的人。 */
+function statusOf(teamId) {
+  var cur = runsFor(teamId).filter(function (x) { return x.run.state === 'running'; })[0];
+  if (!cur) return { key: 'idle', label: '等派任務', days: 0 };
+
+  var st = stallOf(teamId);
+  if (st.level === 0) return { key: 'move', label: '前進中', days: st.days };
+
+  /* 沒推進的那幾天裡，他有沒有說過「今天沒有動」 */
+  var log = dayLog(cur.run.runId);
+  var tail = log.slice(Math.max(0, log.length - st.days));
+  var told = false;
+  tail.forEach(function (d) { if (d && d.kind === 'rest') told = true; });
+
+  if (!told) return { key: 'quiet', label: '沒有消息', days: st.days };
+  return st.level >= 2
+    ? { key: 'stop', label: '他說在停', days: st.days }
+    : { key: 'slow', label: '慢下來了', days: st.days };
 }
 
 /* 這一趟擋路的是哪一隻。舊資料沒存就當場算一次。 */

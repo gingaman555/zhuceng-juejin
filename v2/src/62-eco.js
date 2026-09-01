@@ -29,7 +29,7 @@ function xsTop(d) { return XS.SURF + d * XS.SEG; }
 function xsX(i) { return XS.RULER + i * (XS.W + XS.GAP); }
 
 /* ---------- 整張圖 ---------- */
-function xsScene(rows, meId) {
+function xsScene(rows, meId, classId) {
   /* 畫多深：最深的那一組再往下兩格，讓底下永遠還有沒有人走過的岩石。
      這很重要——底部如果切齊最深的人，那條線就變成終點線了。 */
   var deep = rows.reduce(function (a, r) {
@@ -42,19 +42,22 @@ function xsScene(rows, meId) {
   var out = ['<div class="xsec-wrap"><div class="xsec" style="width:' + W +
     'px;height:' + H + 'px">'];
 
-  /* ── 地層 ── */
-  STRATA.forEach(function (s) {
-    if (s.from > maxD) return;
-    var top = xsTop(s.from);
-    var bot = xsTop(Math.min(s.to + 1, maxD));
-    out.push('<div class="xs-band ' + s.key + '" style="top:' + top +
+  /* ── 地層 ──
+     層沒有固定深度：順序是一個班洗一次，六層走完回到第一層。
+     所以帶子從班級的路線算，每 ZONE_SPAN 格一帶，一直排到底。
+     同一個班的每一組看到的是同一片地質——那是「我們在同一個地方」。 */
+  for (var bd = 0; bd * ZONE_SPAN < maxD; bd++) {
+    var zs = strataAt(bd * ZONE_SPAN, classId);
+    var top = xsTop(bd * ZONE_SPAN);
+    var bot = xsTop(Math.min((bd + 1) * ZONE_SPAN, maxD));
+    out.push('<div class="xs-band ' + zs.key + '" style="top:' + top +
       'px;height:' + (bot - top) + 'px;width:' + W + 'px"></div>');
-    out.push('<div class="xs-bandn ' + s.key + '" style="top:' + (top + 6) + 'px">' +
-      '<b>' + esc(s.name) + '</b><span>' + esc(s.note) + '</span></div>');
-  });
+    out.push('<div class="xs-bandn ' + zs.key + '" style="top:' + (top + 6) + 'px">' +
+      '<b>' + esc(zs.name) + '</b><span>' + esc(zs.note) + '</span></div>');
+  }
 
   /* ── 岩壁裡的東西 ── */
-  out.push(xsFauna(rows.length, maxD));
+  out.push(xsFauna(rows.length, maxD, classId));
 
   /* ── 地表 ── */
   out.push('<div class="xs-sky" style="width:' + W + 'px"></div>');
@@ -78,7 +81,7 @@ function xsScene(rows, meId) {
 /* ---------- 岩壁裡的生態 ----------
    位置用層與槽算，不擲骰子。每次打開，同一隻都在同一個地方——
    會亂跳的東西不是生態，是特效。 */
-function xsFauna(nTeams, maxD) {
+function xsFauna(nTeams, maxD, classId) {
   var out = [];
   /* 放得下的地方：每一條廊道右邊那道牆，加上最右邊那一大塊 */
   var slots = [];
@@ -87,22 +90,29 @@ function xsFauna(nTeams, maxD) {
   slots.push(xsX(nTeams) + 154);
   slots.push(xsX(nTeams) + 88);
 
-  STRATA.forEach(function (s) {
-    if (s.from > maxD) return;
-    var lo = xsTop(s.from), hi = xsTop(Math.min(s.to + 1, maxD));
-    if (hi - lo < 55) return;
-    slots.forEach(function (x, n) {
-      var h = hash(s.key + '/' + n);
-      if (h % 100 < 42) return;
-      var c = faunaAt(s.key, n);
-      if (!c) return;
-      var y = lo + 11 + ((h >> 5) % Math.max(1, hi - lo - 55));
-      out.push('<button class="xs-fauna" style="left:' + x + 'px;top:' + y + 'px" ' +
-        'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'fauna:' + c.n })) + '\' ' +
-        'title="' + esc(c.n) + '">' + pxTag(c.px, s.pal, '') + '</button>');
-    });
-  });
+  for (var bd = 0; bd * ZONE_SPAN < maxD; bd++) {
+    var s = strataAt(bd * ZONE_SPAN, classId);
+    var lo = xsTop(bd * ZONE_SPAN);
+    var hi = xsTop(Math.min((bd + 1) * ZONE_SPAN, maxD));
+    if (hi - lo < 55) continue;
+    /* 用「第幾帶」而不是層的 key 當種子——同一層在不同深度再出現一次的
+       時候，住在裡面的不該是同一隻站在同一個位置。 */
+    xsPlace(out, slots, s, bd, lo, hi);
+  }
   return out.join('');
+}
+
+function xsPlace(out, slots, s, bd, lo, hi) {
+  slots.forEach(function (x, n) {
+    var h = hash(s.key + '/' + bd + '/' + n);
+    if (h % 100 < 42) return;
+    var c = faunaAt(s.key, bd * 7 + n);
+    if (!c) return;
+    var y = lo + 11 + ((h >> 5) % Math.max(1, hi - lo - 55));
+    out.push('<button class="xs-fauna" style="left:' + x + 'px;top:' + y + 'px" ' +
+      'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'fauna:' + c.n })) + '\' ' +
+      'title="' + esc(c.n) + '">' + pxTag(c.px, s.pal, '') + '</button>');
+  });
 }
 
 /* ---------- 一條廊道 ---------- */
@@ -118,9 +128,8 @@ function xsShaft(r, i, maxD, mine) {
   H.push(pxTag(sg.px, sg.pal, 'sign-s'));
   H.push('<b>' + esc(r.name) + '</b>');
   H.push('<span>' + esc(r.project || '（還沒定）') + '</span>');
-  H.push('<i class="' + (r.stall >= 2 ? 'z' : r.stall === 1 ? 'y' : r.onMs ? 'x' : '') + '">' +
-    (r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '前進中' : '等派任務') +
-    '</i>');
+  H.push('<i class="s-' + r.status.key + '">' + esc(r.status.label) +
+    (r.status.days ? ' ' + r.status.days + ' 天' : '') + '</i>');
   H.push('</div>');
 
   /* 打通的每一格 */
@@ -184,7 +193,7 @@ function xsLegend() {
   H.push('</div>');
   H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
          '廊道長度本來就不同——這裡沒有共同的終點線，也沒有排名。' +
-         '最底下永遠留著沒有人走過的岩石，因為這座地下城沒有最底層。</p>');
+         '最底下永遠留著沒有人走過的石頭——往下走不出去，六層會一直重來。</p>');
   H.push('</div>');
   return H.join('');
 }
@@ -203,7 +212,7 @@ PAGES.eco = function () {
   var rows = ecoRows(t.classId);
   var H = [head('全班地下城', '大家都在下面',
     '同一片石頭，每一組往下走自己的一條。看得到別人也在裡面，就夠了。')];
-  H.push(xsScene(rows, t.teamId));
+  H.push(xsScene(rows, t.teamId, t.classId));
   H.push(faunaCard());
   H.push(xsLegend());
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
@@ -215,15 +224,14 @@ PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
   var H = [head('各組進度', '每一組走到哪',
-    '同一片石頭，每一組往下走自己的一條。深度是走完幾個里程碑——' +
-    '每一組的專案不一樣，廊道長度本來就不同。')];
-  H.push(xsScene(rows, null));
+    '走完幾趟、現在這一趟有多大、每天動的是哪一段。' +
+    '估得準不準在審核那一頁——那時候你看的是一組人交的一件東西。')];
+  H.push(xsScene(rows, null, u.classId));
   H.push(faunaCard());
 
   rows.forEach(function (r) {
     var t = teamOf(r.teamId);
     var sg = signOf(r.teamId);
-    var acc = accuracyOf(r.teamId);
     var all = runsFor(r.teamId);
     var cur = all.filter(function (x) { return x.run.state === 'running'; })[0];
     var wait = all.filter(function (x) { return x.run.state === 'submitted'; })[0];
@@ -237,7 +245,7 @@ PAGES.classeco = function () {
     H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
     H.push('<span class="sp"></span>');
     H.push('<span class="dim">' + esc(strataAt(r.depth, r.teamId).name) + '　·　深度 ' +
-      (r.depth * WORLD.depthPerMilestone) + ' m</span>');
+      (r.depth * WORLD.depthPerMilestone) + ' m　·　走完 ' + r.depth + ' 趟</span>');
     H.push('</div>');
 
     if (wait) {
@@ -250,13 +258,15 @@ PAGES.classeco = function () {
     } else if (cur) {
       var run = cur.run;
       H.push('<p class="lead">正在走：' + esc(cur.ms.title) + '</p>');
-      H.push(estBar(run.est, run.pushes, true));
+      /* 量，不是好壞：這一趟有多大、走到哪、每天動的是哪一段。
+         準度與判定不放在這一頁——這裡是「誰在哪」，
+         「跑得如何」屬於審核，那時候他看的是一組人交的一件東西。 */
+      H.push('<div class="log-num">這一趟 <b>' + run.est + '</b> 天　·　' +
+        '來過 <b>' + run.pushes + '</b> 天</div>');
       H.push(dayStrip(r.teamId, run.runId));
     } else {
       H.push('<p class="dim">手上沒有里程碑。派一個給他們就會開始。</p>');
     }
-
-    if (acc.total) H.push(accBar(acc));
     H.push('</div>');
   });
   return H.join('');

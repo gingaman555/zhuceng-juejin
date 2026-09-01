@@ -150,3 +150,10 @@ button.ac:active{transform:translateY(1px)}
 .cxi em{display:block;font-style:normal;font-size:11px;color:var(--mute);line-height:1.7;margin-top:3px}
 .cxi .cx-met{display:block;font-size:11px;color:var(--gold);line-height:1.7;margin-top:5px}
 @media (max-width:860px){ .cxi{width:100%} }
+
+/* 狀態。系統只陳述——「沒有消息」講的是紀錄，不是那一組的人。 */
+.s-move{color:var(--ok)}
+.s-slow{color:var(--dim)}
+.s-stop{color:var(--gold)}
+.s-quiet{color:var(--over)}
+.s-idle{color:var(--mute)}

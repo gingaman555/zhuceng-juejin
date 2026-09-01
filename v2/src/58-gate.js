@@ -20,11 +20,14 @@ PAGES.gate = function () {
   H.push('<div class="gate-box">');
   H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
   H.push('<h1>專案地下城</h1>');
-  H.push('<p class="lead">你的專案是一條往下走的廊道。' +
-         '老師在入口放下一個里程碑，廊道盡頭就多一隻擋路的東西——' +
+  H.push('<p class="lead">你被困在一座沒有底的地下城裡。' +
+         '六層走完會回到第一層，順序是隨機的——往下走，走不出去。</p>');
+  H.push('<p class="lead">唯一的出口是把手上這個專案做完。' +
+         '老師在入口放下一個里程碑，廊道盡頭就多一隻擋路的東西；' +
          '要花幾天走到牠面前，是你自己說了算。</p>');
 
-  /* 四個區域先露一次。進去之前就知道下面有什麼，那是世界，不是說明。 */
+  /* 六層先露一次。進去之前就知道下面有什麼，那是世界，不是說明。
+     刻意不寫「地下幾公尺起」——層沒有先後，順序是每一個班隨機洗出來的。 */
   H.push('<div class="zones">');
   STRATA.forEach(function (s) {
     var c = faunaOf(s.key)[0];
@@ -32,13 +35,12 @@ PAGES.gate = function () {
     if (c) H.push(pxTag(c.px, s.pal, 'zn-px'));
     H.push('<b>' + esc(s.name) + '</b>');
     H.push('<span>' + esc(s.note) + '</span>');
-    H.push('<i>地下 ' + (s.from * WORLD.depthPerMilestone) + ' 公尺起</i>');
     H.push('</div>');
   });
   H.push('</div>');
-  H.push('<p class="dim">越往下石頭越不一樣，住的東西也不一樣。' +
-         '往下沒有盡頭——這座地下城沒有最底層，所以也沒有人「走完」。' +
-         '這裡不打分，只看你說的天數跟實際差多少。</p>');
+  H.push('<p class="dim">六層沒有先後，你們班會拿到哪一個順序是隨機的。' +
+         '走完六層回到第一層，一直循環。' +
+         '你能帶出去的，是這一路上你說了幾天、實際走了幾天。</p>');
 
   H.push('<div class="row">');
   H.push(btn('登入', 'go:login', 'big'));

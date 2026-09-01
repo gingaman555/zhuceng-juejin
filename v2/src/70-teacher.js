@@ -118,9 +118,9 @@ PAGES.radar = function () {
   H.push('<div class="mini">');
   eco.forEach(function (e) {
     H.push('<div class="mini-row"><b>' + esc(e.name) + '</b>' +
-      '<span class="' + (e.stall >= 2 ? 'warnx' : e.stall === 1 ? 'dim' : 'ok') + '">' +
-      (e.stall >= 2 ? '休息中' : e.stall === 1 ? '慢下來了' : e.onMs ? '前進中' : '等派任務') +
-      '</span><span class="dim">深度 ' + e.depth + '</span></div>');
+      '<span class="s-' + e.status.key + '">' + esc(e.status.label) +
+      (e.status.days ? ' ' + e.status.days + ' 天' : '') + '</span>' +
+      '<span class="dim">深度 ' + e.depth + '</span></div>');
   });
   H.push('</div>');
   H.push(btn('看各組進度', 'go:classeco', 'ghost'));
