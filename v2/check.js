@@ -75,6 +75,10 @@ function dupNames(files) {
   return dup;
 }
 
+const SRC_PRE = fs.readdirSync(path.join(__dirname, 'src'))
+  .filter((f) => f.slice(-3) === '.js').sort()
+  .map((f) => path.join(__dirname, 'src', f));
+
 let bad = 0;
 
 BANNED.forEach(([w, why]) => {
@@ -85,10 +89,20 @@ BANNED.forEach(([w, why]) => {
   console.error('　　' + scan.slice(Math.max(0, i - 40), i + 40).replace(/\s+/g, ' '));
 });
 
+/* hash 回傳無號數，但 >> 是有號位移：超過 2^31 就變負的。
+   咬過一次——地圖上有格子跑到 y = -2，而畫面上看起來只是位置怪怪的。 */
+SRC_PRE.forEach((f) => {
+  const src = fs.readFileSync(f, 'utf8').replace(/\/\*[^]*?\*\//g, ' ');
+  const m = src.match(/[a-z]\s*>>\s*[0-9]/g);
+  if (m) {
+    bad++;
+    console.error('有號位移　' + path.basename(f) + '　' + m.join(' ') +
+      '　——hash 是無號的，要用 >>>，不然超過 2^31 會變負的');
+  }
+});
+
 /* 同名的函式：兩支同名，後面載入的那一支會靜靜地蓋掉前面那一支。 */
-const SRC = fs.readdirSync(path.join(__dirname, 'src'))
-  .filter((f) => f.slice(-3) === '.js').sort()
-  .map((f) => path.join(__dirname, 'src', f));
+const SRC = SRC_PRE;
 const dups = dupNames(SRC);
 dups.forEach((d) => {
   bad++;

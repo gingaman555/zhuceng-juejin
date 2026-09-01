@@ -229,7 +229,7 @@ function sideBar() {
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
       ['home', '廊道'], ['pack', '岩心架'], ['codex', '圖鑑'],
-      ['eco', '全班地下城'], ['log', '紀錄']
+      ['eco', '全班最近'], ['log', '紀錄']
     ];
   }
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
@@ -447,8 +447,9 @@ var ACTS = {
     if (!actClaimCell(t.classId, t.teamId, Number(p[0]), Number(p[1]))) {
       return say('那一格點不動。');
     }
-    /* 打通完接著挑要在那一格上蓋什麼。那是同一件事的第二下，
-       不是另一個功能。 */
+    /* 打通完先看那一格裡有什麼，再挑要蓋什麼。
+       這一下是這個系統唯一「你不知道會遇到什麼」的地方。 */
+    DRAFT.uncover = actUncover(t.teamId, Number(p[0]), Number(p[1]));
     DRAFT.build = [Number(p[0]), Number(p[1])];
     render();
   },
@@ -461,7 +462,7 @@ var ACTS = {
     if (!actBuild(t.teamId, Number(p[1]), Number(p[2]), p[0], lastSealed(t.teamId))) {
       return say('那一格蓋不了。');
     }
-    DRAFT.build = null;
+    DRAFT.build = null; DRAFT.uncover = null;
     var left = claimsOf(t.teamId);
     say(left ? '蓋好了。還有 ' + left + ' 格可以打通。' : '蓋好了。');
   },

@@ -21,7 +21,10 @@
    選方向不影響任何判定。它給的是「這是我們打通的」——那才是重點。 */
 
 var DIG = {
-  W: 15,      /* 幾欄。一個班五組，每組中間留得下彼此 */
+  W: 15,      /* 幾欄 */
+  H: 11,      /* 幾列。有界是重點：無限深的話每一組都有自己的車道，
+                 永遠不會碰到誰，那張圖就會長回五根平行的柱子。
+                 一個學期五組大概用掉七十幾格，15×11 會讓大家真的碰到。 */
   CELL: 40    /* 一格幾 px */
 };
 
@@ -41,12 +44,38 @@ function ownerAt(classId, x, y) {
 }
 
 /* 一組的起點：照名冊順序在最上面一排分開站，中間留得下彼此。 */
+/* 一組從哪裡開始。
+
+   本來是照名冊在第 0 列平均分開——那等於發給每一組一條車道，
+   而車道就是長條圖。改成散在二維：用班級與名次算，彼此隔開，
+   但不排隊、也不都在最上面。
+
+   誰在上面誰在下面沒有意義：地層的順序是隨機給的，深度不是進度。 */
 function startCell(classId, teamId) {
   var list = where('Teams', function (t) { return t.classId === classId; });
   var i = 0;
   list.forEach(function (t, n) { if (t.teamId === teamId) i = n; });
-  var step = Math.max(2, Math.floor(DIG.W / Math.max(1, list.length)));
-  return [Math.min(DIG.W - 1, Math.floor(step / 2) + i * step), 0];
+  return scatterStart(classId, i);
+}
+
+/* 第 i 組的起點。前面幾組先算出來，隔太近就換一個——
+   全部用算的，所以同一個班每次打開都一樣。 */
+function scatterStart(classId, i) {
+  var used = [];
+  for (var n = 0; n <= i; n++) {
+    var pick = null;
+    for (var k = 0; k < 60 && !pick; k++) {
+      var h = hash('start|' + classId + '|' + n + '|' + k);
+      var x = h % DIG.W, y = (h >>> 8) % DIG.H;
+      var ok = true;
+      used.forEach(function (u) {
+        if (Math.abs(u[0] - x) + Math.abs(u[1] - y) < 4) ok = false;
+      });
+      if (ok) pick = [x, y];
+    }
+    used.push(pick || [n % DIG.W, (n * 3) % DIG.H]);
+  }
+  return used[i];
 }
 
 /* 下一格可以打通哪裡：已經打通的那幾格的上下左右，而且還沒有人佔。
@@ -58,7 +87,7 @@ function openCells(classId, teamId) {
   mine.forEach(function (c) {
     [[0, 1], [1, 0], [-1, 0], [0, -1]].forEach(function (d) {
       var x = c[0] + d[0], y = c[1] + d[1];
-      if (x < 0 || x >= DIG.W || y < 0) return;
+      if (x < 0 || x >= DIG.W || y < 0 || y >= DIG.H) return;
       var k = x + ',' + y;
       if (seen[k]) return;
       if (ownerAt(classId, x, y)) return;
@@ -66,12 +95,29 @@ function openCells(classId, teamId) {
       out.push([x, y]);
     });
   });
-  /* 往下的排前面——那是最直覺的方向，不用想也點得下去。 */
-  out.sort(function (a, b) { return (b[1] - a[1]) || (a[0] - b[0]); });
+  /* 照閱讀順序排，不偏任何方向。
+     本來把「往下」排第一，而 digCell 又永遠取第一個——
+     兩件事加起來，自動打通永遠是一條往下的直線。 */
+  out.sort(function (a, b) { return (a[1] - b[1]) || (a[0] - b[0]); });
+
+  /* 被別人包住了：在別的地方另外開一個口。
+     這座地下城本來就寫著「你在哪一層醒來只是你在哪一層醒來」，
+     所以換一個地方下去不需要另外解釋。 */
+  if (!out.length) {
+    for (var y2 = 0; y2 < DIG.H; y2++) {
+      for (var x2 = 0; x2 < DIG.W; x2++) {
+        if (!ownerAt(classId, x2, y2)) out.push([x2, y2]);
+      }
+    }
+  }
   return out;
 }
 
-/* 打通一格。cell 沒給就往下——不選也走得完。 */
+/* 打通一格。
+
+   沒指定的時候用座標算一個，不要永遠取第一個——永遠取第一個的話
+   長出來是一條直線，那就是長條圖。算出來的方向會轉，
+   長出來才是一塊地。 */
 function digCell(classId, teamId, cell) {
   var t = teamOf(teamId);
   if (!t) return null;
@@ -80,7 +126,9 @@ function digCell(classId, teamId, cell) {
   if (cell) {
     open.forEach(function (c) { if (c[0] === cell[0] && c[1] === cell[1]) pick = c; });
   }
-  if (!pick) pick = open[0];
+  if (!pick && open.length) {
+    pick = open[hash('grow|' + teamId + '|' + (t.cells || []).length) % open.length];
+  }
   if (!pick) return null;
   t.cells = (t.cells || []).concat([pick]);
   save();

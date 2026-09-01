@@ -364,6 +364,18 @@ function scrollScene() {
   /* 地圖一樣：打開來要先看到自己那塊地，不然全班那片地上
      你得先找自己在哪裡。 */
   var mb = document.querySelector('.dig-wrap');
+
+  /* 地層的名字放在左邊那一條裡，但地圖比視窗寬——
+     一往右捲就看不見了。讓它跟著橫捲走。 */
+  if (mb) {
+    var zs = mb.querySelectorAll('.dig-z');
+    var pin = function () {
+      for (var i = 0; i < zs.length; i++) zs[i].style.left = (mb.scrollLeft + 3) + 'px';
+    };
+    pin();
+    mb.addEventListener('scroll', pin);
+  }
+
   var mh = mb && mb.querySelector('.dig-hero');
   if (mb && mh) {
     keepScroll(mb, 'dig', {

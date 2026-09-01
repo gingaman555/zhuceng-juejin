@@ -118,5 +118,5 @@ function propFor(seed, i, zoneKey) {
 function dripFor(seed, i) {
   var h = hash(seed + '@' + i);
   if (h % 100 < 42) return null;
-  return { px: (h % 2 ? DRIP.a : DRIP.b), off: (h >> 4) % 22 };
+  return { px: (h % 2 ? DRIP.a : DRIP.b), off: (h >>> 4) % 22 };
 }

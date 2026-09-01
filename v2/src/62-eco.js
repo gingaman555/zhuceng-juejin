@@ -108,7 +108,7 @@ function xsPlace(out, slots, s, bd, lo, hi) {
     if (h % 100 < 42) return;
     var c = faunaAt(s.key, bd * 7 + n);
     if (!c) return;
-    var y = lo + 11 + ((h >> 5) % Math.max(1, hi - lo - 55));
+    var y = lo + 11 + ((h >>> 5) % Math.max(1, hi - lo - 55));
     out.push('<button class="xs-fauna" style="left:' + x + 'px;top:' + y + 'px" ' +
       'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'fauna:' + c.n })) + '\' ' +
       'title="' + esc(c.n) + '">' + pxTag(c.px, s.pal, '') + '</button>');
@@ -244,13 +244,10 @@ function ecoRows(classId) {
 PAGES.eco = function () {
   var t = myTeam();
   var rows = ecoRows(t.classId);
-  var H = [head('全班地下城', '大家都在下面', '')];
-  H.push(digMap(t.classId, t.teamId));
-  H.push(digTeamCard(t.classId));
-  H.push(coreCard());
-
-  /* 全班最近。它從首頁搬過來——首頁只做一件事，
-     而『別人在幹嘛』本來就屬於全班這一頁。 */
+  /* 地圖只在首頁一個地方。同一張圖畫兩次，使用者得自己想
+     「這兩張是同一張嗎」——那是最貴的複雜度。
+     這一頁改成只做它獨有的事：別人最近做了什麼。 */
+  var H = [head('全班最近', '別人在幹嘛', '')];
   var fd = feedOf(t.classId, 20);
   if (fd.length) {
     H.push('<div class="eyebrow feed-h">全班最近</div>');

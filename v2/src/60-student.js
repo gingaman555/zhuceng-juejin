@@ -91,8 +91,13 @@ PAGES.home = function () {
 
      三個選項之間沒有任何強弱。只要有一個比較好，人就會為了那個蓋，
      而不是為了專案做事。 */
+  H.push(uncoverCard(t));
   H.push(buildPick(t));
   H.push(buildCard(t));
+  /* 在地圖上點一組會設 DRAFT.dt，但顯示那一張卡的兩支本來只掛在
+     全班那一頁上——所以首頁的地圖點下去是沒有反應的。 */
+  H.push(digTeamCard(t.classId));
+  H.push(coreCard());
 
   /* 自己那條廊道往下捲才看得到。它是細節，不是入口。 */
   H.push('<div class="eyebrow feed-h">你們這一趟</div>');
@@ -340,66 +345,27 @@ PAGES.commit = function () {
 
   var H = [head('自我承諾', m.title, m.note)];
 
-  /* 你自己的估算歷史。
-
-     這是拉滑桿那一刻真正用得上的東西，而它本來不在這一頁上——
-     本來站在這個位置的是一句留下的話，它站不住。
-     上三趟說了幾天、實際走了幾天，疊在一起就看得出自己的偏差。 */
-  var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
-  if (past.length) {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">你前 ' + past.length + ' 趟</div>');
-    past.reverse().forEach(function (x) {
-      H.push('<div class="outrun"><span>' + esc(x.ms.title) + '</span>');
-      H.push(estBar(x.run.est, x.run.actual, false));
-      H.push('</div>');
-    });
-    H.push('</div>');
-  }
-
-  /* 全班怎麼看這一件事。匿名，只有天數。
-     它出現在拉滑桿之前——那一刻才是它有用的時候。 */
-  var sp = estSpread(m.msId, t.teamId);
-  if (sp) {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">別組怎麼看這一件事</div>');
-    H.push(spreadBar(sp, est));
-    H.push('<div class="log-num">' + sp.n + ' 組已經說了　·　最少 <b>' +
-      sp.lo + '</b> 天　·　最多 <b>' + sp.hi + '</b> 天</div>');
-    H.push('</div>');
-  }
-
+  /* 滑桿先，而且它跟下面那根尺是同一根——同寬、同起點。
+     不同寬的話「拉到哪裡就看到自己落在別人哪裡」就不成立。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">幾天</div>');
-  H.push('<div class="slider-wrap">');
-  H.push('<input type="range" class="slider" id="est" min="' + RULES.EST_MIN +
-         '" max="' + RULES.EST_MAX + '" value="' + est +
-         '" oninput="ACTS.est(this.value)">');
-  H.push('<div class="slider-read"><b>' + est + '</b><span>天</span></div>');
-  H.push('</div>');
-  /* 準的範圍直接畫出來，不用一句話描述它 */
-  H.push(estBar(est, 0, true));
+  H.push('<div class="ax-head"><b>' + est + '</b><span>天</span></div>');
+
+  /* 決定的時候要看的東西全部畫在同一根尺上：你前幾趟說了幾天、
+     實際幾天，別組這一件事說的範圍，還有準的範圍。
+
+     本來是三張卡——三張卡量的是同一個單位，等於叫使用者自己
+     在腦袋裡把它們疊起來。 */
+  var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
+  H.push(estAxis(est, past.reverse(), estSpread(m.msId, t.teamId)));
   H.push('</div>');
 
-  /* 老師分了段才問。標的是他分的那幾段，不是我列的選項。 */
-  var run0 = runOf(t.teamId, m.msId);
-  var pv = previewSteps(m);
-  if (pv.length) {
+  /* 老師分的段。點起來標「這一段會比想的久」——
+     那一排同時就是這一趟的範圍，所以下面不用再列一次清單。 */
+  if (previewSteps(m).length) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">哪幾段會比你想的久　選填</div>');
     H.push(msStepLegend(m, flags, 'flag'));
     H.push('</div>');
-  }
-
-  /* 老師分的段。承諾之前先看到範圍，那是決定幾天的依據。 */
-  if (pv.length) {
-    H.push('<div class="card quiet">');
-    H.push('<div class="eyebrow">這一趟要做的幾段</div>');
-    H.push('<div class="steps-list">');
-    pv.forEach(function (x) {
-      H.push('<div class="stp static"><b></b><i>' + esc(x) + '</i></div>');
-    });
-    H.push('</div></div>');
   }
 
   H.push('<div class="row">');
@@ -639,7 +605,7 @@ PAGES.dash = function () {
   if (claimsOf(t.teamId)) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">你有 ' + claimsOf(t.teamId) + ' 格可以打通</div>');
-    H.push(btn('去地圖上打通', 'go:eco', 'big'));
+    H.push(btn('去地圖上打通', 'go:home', 'big'));
     H.push('</div>');
   } else {
     H.push(btn('回廊道', 'go:home', 'big'));

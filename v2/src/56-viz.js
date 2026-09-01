@@ -168,3 +168,70 @@ function spreadBar(sp, mine) {
   H.push('</div>');
   return H.join('');
 }
+
+
+/* ---------- 承諾那一根尺 ----------
+
+   「你前三趟」「別組怎麼看」「你要說幾天」量的都是天數。
+   本來畫在三張卡上，使用者得自己在腦袋裡疊起來——
+   那正是資訊圖像化應該替他做掉的事。全部畫在同一根尺上。
+
+   看得出來的東西沒有一句話在解釋：
+     你前幾趟的空心點是說的、實心點是實際的，線往右＝低估
+     別組那一條帶子是他們說的範圍
+     亮的那一條是你現在拉到的地方，淺色那一塊是準的範圍 */
+function estAxis(est, past, sp) {
+  var lo = RULES.EST_MIN, hi = RULES.EST_MAX, span = hi - lo;
+  function at(d) {
+    return ((Math.max(lo, Math.min(hi, d)) - lo) / span * 100) + '%';
+  }
+  var b = RULES.band(est);
+  var H = ['<div class="axis">'];
+
+  /* 滑桿。它跟下面每一列同寬、同起點——range 的滑塊圓心是從
+     半個滑塊寬開始走的，所以下面那幾列一起往內縮同樣的距離。 */
+  H.push('<input type="range" class="slider ax-slider" id="est" min="' +
+    RULES.EST_MIN + '" max="' + RULES.EST_MAX + '" value="' + est +
+    '" oninput="ACTS.est(this.value)">');
+  H.push('<div class="ax-in">');
+
+  /* 別組說的範圍。匿名，只有天數。 */
+  if (sp) {
+    H.push('<div class="ax-row ax-sp">');
+    H.push('<div class="ax-band" style="left:' + at(sp.lo) + ';right:' +
+      (100 - parseFloat(at(sp.hi))) + '%"></div>');
+    H.push('<i class="ax-tag" style="left:' + at(sp.lo) + '">別組 ' +
+      sp.n + ' 組</i>');
+    H.push('</div>');
+  }
+
+  /* 你前幾趟：空心＝說的，實心＝實際的。線往右就是低估。 */
+  (past || []).forEach(function (x) {
+    var e = x.run.est, a = x.run.actual || e;
+    var l = Math.min(e, a), r = Math.max(e, a);
+    H.push('<div class="ax-row ax-past">');
+    H.push('<div class="ax-link" style="left:' + at(l) + ';right:' +
+      (100 - parseFloat(at(r))) + '%"></div>');
+    H.push('<b class="ax-said" style="left:' + at(e) + '"></b>');
+    H.push('<b class="ax-was' + (a > e ? ' over' : '') + '" style="left:' +
+      at(a) + '"></b>');
+    H.push('</div>');
+  });
+
+  /* 你現在拉到的地方，跟準的範圍。 */
+  H.push('<div class="ax-row ax-now">');
+  H.push('<div class="ax-ok" style="left:' + at(est - b) + ';right:' +
+    (100 - parseFloat(at(est + b))) + '%"></div>');
+  H.push('<b class="ax-me" style="left:' + at(est) + '"></b>');
+  H.push('</div>');
+
+  /* 尺。只標三個數字，多了就變成一張表。 */
+  H.push('<div class="ax-ruler">');
+  [lo, Math.round((lo + hi) / 2), hi].forEach(function (d) {
+    H.push('<i style="left:' + at(d) + '">' + d + '</i>');
+  });
+  H.push('</div>');
+
+  H.push('</div></div>');
+  return H.join('');
+}

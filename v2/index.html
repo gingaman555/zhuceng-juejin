@@ -1823,6 +1823,74 @@ button.ac:active{transform:translateY(1px)}
 .cyd{flex:0 0 11px;height:3px;background:var(--line)}
 .cyd.loop{background:repeating-linear-gradient(90deg,var(--line) 0 3px,transparent 3px 6px)}
 
+/* ── 承諾那一根尺 ──
+   「你前幾趟」「別組怎麼看」「你要說幾天」量的都是天數。
+   本來三張卡，等於叫使用者自己在腦袋裡疊起來。畫在同一根尺上就不用了。 */
+.axis{position:relative;margin:14px 0 0;padding:0 3px}
+.ax-row{position:relative;height:14px;margin-bottom:3px}
+.ax-band,.ax-ok,.ax-link{position:absolute;top:5px;height:4px}
+
+/* 別組說的範圍。匿名，只有天數。 */
+.ax-band{background:rgba(95,168,199,.34)}
+.ax-sp{height:18px}
+.ax-tag{position:absolute;top:-2px;font-size:11px;font-style:normal;
+  color:#5FA8C7;transform:translateX(-2px);white-space:nowrap}
+
+/* 你前幾趟：空心＝說的，實心＝實際的。線往右就是低估。 */
+.ax-link{background:rgba(255,240,214,.16)}
+.ax-said,.ax-was{position:absolute;top:2px;width:10px;height:10px;
+  margin-left:-5px;border-radius:0}
+.ax-said{background:transparent;box-shadow:inset 0 0 0 2px var(--mute)}
+.ax-was{background:var(--mute)}
+.ax-was.over{background:var(--over)}
+
+/* 你現在拉到的地方，跟準的範圍。 */
+.ax-now{height:18px}
+.ax-ok{top:6px;height:6px;background:rgba(233,179,65,.28)}
+.ax-me{position:absolute;top:0;width:4px;height:18px;margin-left:-2px;
+  background:var(--gold)}
+
+/* 尺。只標三個數字，多了就變成一張表。 */
+.ax-ruler{position:relative;height:16px;margin-top:3px;
+  border-top:2px solid var(--line)}
+.ax-ruler i{position:absolute;top:3px;font-size:11px;font-style:normal;
+  color:var(--dim);transform:translateX(-50%)}
+.ax-ruler i:first-child{transform:none}
+.ax-ruler i:last-child{transform:translateX(-100%)}
+
+/* 滑桿跟尺是同一根：同寬、同起點。
+   range 的滑塊圓心從半個滑塊寬開始走，所以尺往內縮同樣的距離。 */
+.ax-head{display:flex;align-items:baseline;gap:6px;justify-content:flex-end;
+  margin-bottom:6px}
+.ax-head b{font-size:44px;line-height:1;color:var(--gold);font-weight:400;
+  font-variant-numeric:tabular-nums}
+.ax-head span{font-size:11px;color:var(--dim)}
+.ax-slider{display:block;width:100%;margin:0 0 11px}
+.ax-in{position:relative;margin:0 11px}
+
+/* 岩層表面看得出哪幾格裡有東西——但看不出是什麼。
+   看得出來，「往哪裡打通」才是一個真的選擇；
+   看不出是什麼，那一格才值得去。 */
+.dg-c.rock.has::before{
+  content:'';position:absolute;right:6px;top:6px;width:3px;height:14px;
+  background:linear-gradient(180deg,
+    rgba(255,240,214,.42) 0 5px, transparent 5px 7px,
+    rgba(255,240,214,.42) 7px 14px);
+  box-shadow:2px 0 0 rgba(0,0,0,.5)
+}
+.dg-c.rock.can.has::before{background:var(--gold2);box-shadow:2px 0 0 rgba(0,0,0,.5)}
+
+/* 掀開那一格。準的時候牠還在，失準的時候只剩痕跡——
+   兩邊都是一則紀錄，沒有人被扣任何東西。 */
+.unc .unc-in{display:flex;gap:14px;align-items:flex-start}
+.unc-px{width:88px;height:66px;flex:0 0 auto;image-rendering:pixelated}
+.unc-px.gone{opacity:.34;filter:grayscale(1)}
+.unc-px.blank{background-color:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.4)}
+.unc h2{margin:6px 0;font-size:22px;font-weight:400}
+.unc .quote{margin:11px 0 0;padding-left:11px;
+  box-shadow:inset 3px 0 0 var(--gold-d);color:var(--ink)}
+
 /* 手機。
 
    之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
@@ -2270,7 +2338,7 @@ function propFor(seed, i, zoneKey) {
 function dripFor(seed, i) {
   var h = hash(seed + '@' + i);
   if (h % 100 < 42) return null;
-  return { px: (h % 2 ? DRIP.a : DRIP.b), off: (h >> 4) % 22 };
+  return { px: (h % 2 ? DRIP.a : DRIP.b), off: (h >>> 4) % 22 };
 }
 
 
@@ -3160,6 +3228,143 @@ function buildStory(teamId, x, y) {
   keepsOf(teamId).forEach(function (x2) { if (x2.runId === b.runId) k = x2; });
   var r = b.runId ? find('Runs', function (x2) { return x2.runId === b.runId; }) : null;
   return { def: d, keep: k, run: r };
+}
+
+
+/* ===== 16-buried.js ===== */
+/* ---------- 地底下本來就埋著東西 ----------
+
+   兩個洞，同一個修法。
+
+   洞一 · 「打通哪一格」是空的。
+          44-dig.js 的註解自己寫著「選方向不影響任何判定」——
+          這個系統裡最像遊戲的那個選擇，裡面沒有東西。
+          PaGamO 的每一格是一題，這裡的每一格打通就只是變色。
+          低頻的系統不可能靠次數贏（一學期八趟），只能靠每一次都很重。
+
+   洞二 · 準跟失準拿到的東西一模一樣。
+          一個判定、一根岩心、一格地、一座建築，兩邊都拿到。
+          所以唯一有阻力的選擇（估幾天）沒有後果，判定是化妝品。
+          這是勝任感那一根最大的洞：做得準沒有任何事情不一樣。
+
+   修法：地底下埋著東西，而且你遇到什麼跟你到得早不早有關。
+
+   要非常小心的一條線——差別只能在「遇到什麼」，不能在「拿到多少」。
+   失準的人一樣拿到那一格、那座建築、那根岩心、那一筆圖鑑。
+   差的是：準的時候你到得夠早，牠還在；失準的時候牠已經走了，
+   你看到的是牠留下的痕跡。兩邊都是一則紀錄，沒有人被扣任何東西。
+
+   一旦變成「準的拿比較多」，這個作品就從自發變成受控，
+   而且「失準不扣任何東西」那條前提會當場垮掉。
+
+   埋的東西是用班級與座標算出來的，不是擲骰子——同一個班的同一格
+   永遠是同一樣東西。會亂跳的話那就不是一片地，是特效。 */
+
+/* 大約七分之一的格子裡有東西。
+
+   一開始放四分之一，畫出來滿地都是痕跡，反而看不出「這裡有東西」——
+   太密就不值錢，太疏就不會有人想去找。 */
+var BURIED_ODDS = 14;
+
+var BURIED = [
+  { k: 'mob',    n: '蟄伏的東西',
+    here: '牠還在這裡，被你打通的那一下驚醒。',
+    late: '牠已經走了。留下一層蛻下來的殼。' },
+  { k: 'relic',  n: '上一輪的遺跡',
+    here: '有人在這裡蓋過東西，還立著。',
+    late: '有人在這裡蓋過東西，只剩地基。' },
+  { k: 'mark',   n: '牆上刻的字',
+    here: '有人在這面牆上刻了一句話。',
+    late: '有人在這面牆上刻過字，水沖掉一半。' },
+  { k: 'spring', n: '地下水',
+    here: '一道還在流的水。',
+    late: '一道乾掉的水痕。' },
+  { k: 'hollow', n: '空腔',
+    here: '一個空的腔室，什麼都沒有。',
+    late: '一個空的腔室，什麼都沒有。' }
+];
+
+function buriedDef(k) {
+  var out = null;
+  BURIED.forEach(function (b) { if (b.k === k) out = b; });
+  return out;
+}
+
+/* 這一格裡有什麼。用班級與座標算，同一個班的同一格永遠一樣。 */
+function buriedAt(classId, x, y) {
+  var h = hash('buried|' + classId + '|' + x + ',' + y);
+  if (h % 100 >= BURIED_ODDS) return null;
+  return BURIED[(h >>> 9) % BURIED.length];
+}
+
+/* 岩層表面看不看得出來這一格有東西。
+
+   看得出來，「往哪裡打通」才會變成一個真的選擇——
+   而「先到處看看」也才有報酬。看得出「有東西」但看不出「是什麼」，
+   那一格才值得去。 */
+function buriedHint(classId, x, y) {
+  return !!buriedAt(classId, x, y);
+}
+
+/* 打通那一格的時候，把裡面的東西記下來。
+
+   early 是「你到得夠早」：上一趟的判定是準的。
+   它只改變你遇到的是牠本人還是牠留下的痕跡——
+   那一格、那座建築、那根岩心、那一筆圖鑑，兩邊都拿到。 */
+function actUncover(teamId, x, y) {
+  var t = teamOf(teamId);
+  if (!t) return null;
+  var b = buriedAt(t.classId, x, y);
+  if (!b) return null;
+  var k = x + ',' + y;
+  t.found = t.found || {};
+  if (t.found[k]) return t.found[k];
+
+  var last = null;
+  runsFor(teamId).forEach(function (r) { if (r.run.stamp) last = r.run; });
+  var early = !last || last.stamp === 'ok';
+
+  var rec = { k: b.k, early: early ? 1 : 0 };
+
+  /* 牆上刻的字：刻的是真的東西——別的組封存過的某一趟叫什麼名字。
+     系統不編故事，它只是把別人留下來的東西放在你會走到的地方。 */
+  if (b.k === 'mark') {
+    var pool = [];
+    where('Teams', function (o) {
+      return o.classId === t.classId && o.teamId !== teamId;
+    }).forEach(function (o) {
+      keepsOf(o.teamId).forEach(function (kp) { if (kp.name) pool.push(kp.name); });
+    });
+    if (pool.length) rec.say = pool[hash('mark|' + t.classId + '|' + k) % pool.length];
+  }
+
+  /* 蟄伏的東西：那一層住的那幾隻裡的一隻。進圖鑑，標「你遇過」。 */
+  if (b.k === 'mob') {
+    var f = faunaOf(strataAt(y, t.classId).key);
+    if (!f.length) f = allFauna();
+    if (f.length) rec.mob = f[hash('bmob|' + t.classId + '|' + k) % f.length].n;
+  }
+
+  /* 上一輪的遺跡：這一層蓋得出來的東西裡的一種。 */
+  if (b.k === 'relic') {
+    var bs = buildsIn(strataAt(y, t.classId).key);
+    if (bs.length) rec.build = bs[hash('brel|' + t.classId + '|' + k) % bs.length].key;
+  }
+
+  t.found[k] = rec;
+  save();
+  return rec;
+}
+
+/* 這一組在地底下遇過的那幾隻。圖鑑那邊要用。 */
+function foundMobs(teamId) {
+  var t = teamOf(teamId);
+  var out = {};
+  Object.keys((t && t.found) || {}).forEach(function (k) {
+    var r = t.found[k];
+    if (r.mob) out[r.mob] = r.early ? '牠還在' : '只剩痕跡';
+  });
+  return out;
 }
 
 
@@ -4479,7 +4684,10 @@ function coreFacts(runId) {
    選方向不影響任何判定。它給的是「這是我們打通的」——那才是重點。 */
 
 var DIG = {
-  W: 15,      /* 幾欄。一個班五組，每組中間留得下彼此 */
+  W: 15,      /* 幾欄 */
+  H: 11,      /* 幾列。有界是重點：無限深的話每一組都有自己的車道，
+                 永遠不會碰到誰，那張圖就會長回五根平行的柱子。
+                 一個學期五組大概用掉七十幾格，15×11 會讓大家真的碰到。 */
   CELL: 40    /* 一格幾 px */
 };
 
@@ -4499,12 +4707,38 @@ function ownerAt(classId, x, y) {
 }
 
 /* 一組的起點：照名冊順序在最上面一排分開站，中間留得下彼此。 */
+/* 一組從哪裡開始。
+
+   本來是照名冊在第 0 列平均分開——那等於發給每一組一條車道，
+   而車道就是長條圖。改成散在二維：用班級與名次算，彼此隔開，
+   但不排隊、也不都在最上面。
+
+   誰在上面誰在下面沒有意義：地層的順序是隨機給的，深度不是進度。 */
 function startCell(classId, teamId) {
   var list = where('Teams', function (t) { return t.classId === classId; });
   var i = 0;
   list.forEach(function (t, n) { if (t.teamId === teamId) i = n; });
-  var step = Math.max(2, Math.floor(DIG.W / Math.max(1, list.length)));
-  return [Math.min(DIG.W - 1, Math.floor(step / 2) + i * step), 0];
+  return scatterStart(classId, i);
+}
+
+/* 第 i 組的起點。前面幾組先算出來，隔太近就換一個——
+   全部用算的，所以同一個班每次打開都一樣。 */
+function scatterStart(classId, i) {
+  var used = [];
+  for (var n = 0; n <= i; n++) {
+    var pick = null;
+    for (var k = 0; k < 60 && !pick; k++) {
+      var h = hash('start|' + classId + '|' + n + '|' + k);
+      var x = h % DIG.W, y = (h >>> 8) % DIG.H;
+      var ok = true;
+      used.forEach(function (u) {
+        if (Math.abs(u[0] - x) + Math.abs(u[1] - y) < 4) ok = false;
+      });
+      if (ok) pick = [x, y];
+    }
+    used.push(pick || [n % DIG.W, (n * 3) % DIG.H]);
+  }
+  return used[i];
 }
 
 /* 下一格可以打通哪裡：已經打通的那幾格的上下左右，而且還沒有人佔。
@@ -4516,7 +4750,7 @@ function openCells(classId, teamId) {
   mine.forEach(function (c) {
     [[0, 1], [1, 0], [-1, 0], [0, -1]].forEach(function (d) {
       var x = c[0] + d[0], y = c[1] + d[1];
-      if (x < 0 || x >= DIG.W || y < 0) return;
+      if (x < 0 || x >= DIG.W || y < 0 || y >= DIG.H) return;
       var k = x + ',' + y;
       if (seen[k]) return;
       if (ownerAt(classId, x, y)) return;
@@ -4524,12 +4758,29 @@ function openCells(classId, teamId) {
       out.push([x, y]);
     });
   });
-  /* 往下的排前面——那是最直覺的方向，不用想也點得下去。 */
-  out.sort(function (a, b) { return (b[1] - a[1]) || (a[0] - b[0]); });
+  /* 照閱讀順序排，不偏任何方向。
+     本來把「往下」排第一，而 digCell 又永遠取第一個——
+     兩件事加起來，自動打通永遠是一條往下的直線。 */
+  out.sort(function (a, b) { return (a[1] - b[1]) || (a[0] - b[0]); });
+
+  /* 被別人包住了：在別的地方另外開一個口。
+     這座地下城本來就寫著「你在哪一層醒來只是你在哪一層醒來」，
+     所以換一個地方下去不需要另外解釋。 */
+  if (!out.length) {
+    for (var y2 = 0; y2 < DIG.H; y2++) {
+      for (var x2 = 0; x2 < DIG.W; x2++) {
+        if (!ownerAt(classId, x2, y2)) out.push([x2, y2]);
+      }
+    }
+  }
   return out;
 }
 
-/* 打通一格。cell 沒給就往下——不選也走得完。 */
+/* 打通一格。
+
+   沒指定的時候用座標算一個，不要永遠取第一個——永遠取第一個的話
+   長出來是一條直線，那就是長條圖。算出來的方向會轉，
+   長出來才是一塊地。 */
 function digCell(classId, teamId, cell) {
   var t = teamOf(teamId);
   if (!t) return null;
@@ -4538,7 +4789,9 @@ function digCell(classId, teamId, cell) {
   if (cell) {
     open.forEach(function (c) { if (c[0] === cell[0] && c[1] === cell[1]) pick = c; });
   }
-  if (!pick) pick = open[0];
+  if (!pick && open.length) {
+    pick = open[hash('grow|' + teamId + '|' + (t.cells || []).length) % open.length];
+  }
   if (!pick) return null;
   t.cells = (t.cells || []).concat([pick]);
   save();
@@ -5033,7 +5286,7 @@ function sideBar() {
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
       ['home', '廊道'], ['pack', '岩心架'], ['codex', '圖鑑'],
-      ['eco', '全班地下城'], ['log', '紀錄']
+      ['eco', '全班最近'], ['log', '紀錄']
     ];
   }
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
@@ -5251,8 +5504,9 @@ var ACTS = {
     if (!actClaimCell(t.classId, t.teamId, Number(p[0]), Number(p[1]))) {
       return say('那一格點不動。');
     }
-    /* 打通完接著挑要在那一格上蓋什麼。那是同一件事的第二下，
-       不是另一個功能。 */
+    /* 打通完先看那一格裡有什麼，再挑要蓋什麼。
+       這一下是這個系統唯一「你不知道會遇到什麼」的地方。 */
+    DRAFT.uncover = actUncover(t.teamId, Number(p[0]), Number(p[1]));
     DRAFT.build = [Number(p[0]), Number(p[1])];
     render();
   },
@@ -5265,7 +5519,7 @@ var ACTS = {
     if (!actBuild(t.teamId, Number(p[1]), Number(p[2]), p[0], lastSealed(t.teamId))) {
       return say('那一格蓋不了。');
     }
-    DRAFT.build = null;
+    DRAFT.build = null; DRAFT.uncover = null;
     var left = claimsOf(t.teamId);
     say(left ? '蓋好了。還有 ' + left + ' 格可以打通。' : '蓋好了。');
   },
@@ -5490,6 +5744,73 @@ function spreadBar(sp, mine) {
       '<i>' + i + '</i></span>');
   }
   H.push('</div>');
+  return H.join('');
+}
+
+
+/* ---------- 承諾那一根尺 ----------
+
+   「你前三趟」「別組怎麼看」「你要說幾天」量的都是天數。
+   本來畫在三張卡上，使用者得自己在腦袋裡疊起來——
+   那正是資訊圖像化應該替他做掉的事。全部畫在同一根尺上。
+
+   看得出來的東西沒有一句話在解釋：
+     你前幾趟的空心點是說的、實心點是實際的，線往右＝低估
+     別組那一條帶子是他們說的範圍
+     亮的那一條是你現在拉到的地方，淺色那一塊是準的範圍 */
+function estAxis(est, past, sp) {
+  var lo = RULES.EST_MIN, hi = RULES.EST_MAX, span = hi - lo;
+  function at(d) {
+    return ((Math.max(lo, Math.min(hi, d)) - lo) / span * 100) + '%';
+  }
+  var b = RULES.band(est);
+  var H = ['<div class="axis">'];
+
+  /* 滑桿。它跟下面每一列同寬、同起點——range 的滑塊圓心是從
+     半個滑塊寬開始走的，所以下面那幾列一起往內縮同樣的距離。 */
+  H.push('<input type="range" class="slider ax-slider" id="est" min="' +
+    RULES.EST_MIN + '" max="' + RULES.EST_MAX + '" value="' + est +
+    '" oninput="ACTS.est(this.value)">');
+  H.push('<div class="ax-in">');
+
+  /* 別組說的範圍。匿名，只有天數。 */
+  if (sp) {
+    H.push('<div class="ax-row ax-sp">');
+    H.push('<div class="ax-band" style="left:' + at(sp.lo) + ';right:' +
+      (100 - parseFloat(at(sp.hi))) + '%"></div>');
+    H.push('<i class="ax-tag" style="left:' + at(sp.lo) + '">別組 ' +
+      sp.n + ' 組</i>');
+    H.push('</div>');
+  }
+
+  /* 你前幾趟：空心＝說的，實心＝實際的。線往右就是低估。 */
+  (past || []).forEach(function (x) {
+    var e = x.run.est, a = x.run.actual || e;
+    var l = Math.min(e, a), r = Math.max(e, a);
+    H.push('<div class="ax-row ax-past">');
+    H.push('<div class="ax-link" style="left:' + at(l) + ';right:' +
+      (100 - parseFloat(at(r))) + '%"></div>');
+    H.push('<b class="ax-said" style="left:' + at(e) + '"></b>');
+    H.push('<b class="ax-was' + (a > e ? ' over' : '') + '" style="left:' +
+      at(a) + '"></b>');
+    H.push('</div>');
+  });
+
+  /* 你現在拉到的地方，跟準的範圍。 */
+  H.push('<div class="ax-row ax-now">');
+  H.push('<div class="ax-ok" style="left:' + at(est - b) + ';right:' +
+    (100 - parseFloat(at(est + b))) + '%"></div>');
+  H.push('<b class="ax-me" style="left:' + at(est) + '"></b>');
+  H.push('</div>');
+
+  /* 尺。只標三個數字，多了就變成一張表。 */
+  H.push('<div class="ax-ruler">');
+  [lo, Math.round((lo + hi) / 2), hi].forEach(function (d) {
+    H.push('<i style="left:' + at(d) + '">' + d + '</i>');
+  });
+  H.push('</div>');
+
+  H.push('</div></div>');
   return H.join('');
 }
 
@@ -5786,8 +6107,13 @@ PAGES.home = function () {
 
      三個選項之間沒有任何強弱。只要有一個比較好，人就會為了那個蓋，
      而不是為了專案做事。 */
+  H.push(uncoverCard(t));
   H.push(buildPick(t));
   H.push(buildCard(t));
+  /* 在地圖上點一組會設 DRAFT.dt，但顯示那一張卡的兩支本來只掛在
+     全班那一頁上——所以首頁的地圖點下去是沒有反應的。 */
+  H.push(digTeamCard(t.classId));
+  H.push(coreCard());
 
   /* 自己那條廊道往下捲才看得到。它是細節，不是入口。 */
   H.push('<div class="eyebrow feed-h">你們這一趟</div>');
@@ -6035,66 +6361,27 @@ PAGES.commit = function () {
 
   var H = [head('自我承諾', m.title, m.note)];
 
-  /* 你自己的估算歷史。
-
-     這是拉滑桿那一刻真正用得上的東西，而它本來不在這一頁上——
-     本來站在這個位置的是一句留下的話，它站不住。
-     上三趟說了幾天、實際走了幾天，疊在一起就看得出自己的偏差。 */
-  var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
-  if (past.length) {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">你前 ' + past.length + ' 趟</div>');
-    past.reverse().forEach(function (x) {
-      H.push('<div class="outrun"><span>' + esc(x.ms.title) + '</span>');
-      H.push(estBar(x.run.est, x.run.actual, false));
-      H.push('</div>');
-    });
-    H.push('</div>');
-  }
-
-  /* 全班怎麼看這一件事。匿名，只有天數。
-     它出現在拉滑桿之前——那一刻才是它有用的時候。 */
-  var sp = estSpread(m.msId, t.teamId);
-  if (sp) {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">別組怎麼看這一件事</div>');
-    H.push(spreadBar(sp, est));
-    H.push('<div class="log-num">' + sp.n + ' 組已經說了　·　最少 <b>' +
-      sp.lo + '</b> 天　·　最多 <b>' + sp.hi + '</b> 天</div>');
-    H.push('</div>');
-  }
-
+  /* 滑桿先，而且它跟下面那根尺是同一根——同寬、同起點。
+     不同寬的話「拉到哪裡就看到自己落在別人哪裡」就不成立。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">幾天</div>');
-  H.push('<div class="slider-wrap">');
-  H.push('<input type="range" class="slider" id="est" min="' + RULES.EST_MIN +
-         '" max="' + RULES.EST_MAX + '" value="' + est +
-         '" oninput="ACTS.est(this.value)">');
-  H.push('<div class="slider-read"><b>' + est + '</b><span>天</span></div>');
-  H.push('</div>');
-  /* 準的範圍直接畫出來，不用一句話描述它 */
-  H.push(estBar(est, 0, true));
+  H.push('<div class="ax-head"><b>' + est + '</b><span>天</span></div>');
+
+  /* 決定的時候要看的東西全部畫在同一根尺上：你前幾趟說了幾天、
+     實際幾天，別組這一件事說的範圍，還有準的範圍。
+
+     本來是三張卡——三張卡量的是同一個單位，等於叫使用者自己
+     在腦袋裡把它們疊起來。 */
+  var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
+  H.push(estAxis(est, past.reverse(), estSpread(m.msId, t.teamId)));
   H.push('</div>');
 
-  /* 老師分了段才問。標的是他分的那幾段，不是我列的選項。 */
-  var run0 = runOf(t.teamId, m.msId);
-  var pv = previewSteps(m);
-  if (pv.length) {
+  /* 老師分的段。點起來標「這一段會比想的久」——
+     那一排同時就是這一趟的範圍，所以下面不用再列一次清單。 */
+  if (previewSteps(m).length) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">哪幾段會比你想的久　選填</div>');
     H.push(msStepLegend(m, flags, 'flag'));
     H.push('</div>');
-  }
-
-  /* 老師分的段。承諾之前先看到範圍，那是決定幾天的依據。 */
-  if (pv.length) {
-    H.push('<div class="card quiet">');
-    H.push('<div class="eyebrow">這一趟要做的幾段</div>');
-    H.push('<div class="steps-list">');
-    pv.forEach(function (x) {
-      H.push('<div class="stp static"><b></b><i>' + esc(x) + '</i></div>');
-    });
-    H.push('</div></div>');
   }
 
   H.push('<div class="row">');
@@ -6334,7 +6621,7 @@ PAGES.dash = function () {
   if (claimsOf(t.teamId)) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">你有 ' + claimsOf(t.teamId) + ' 格可以打通</div>');
-    H.push(btn('去地圖上打通', 'go:eco', 'big'));
+    H.push(btn('去地圖上打通', 'go:home', 'big'));
     H.push('</div>');
   } else {
     H.push(btn('回廊道', 'go:home', 'big'));
@@ -6879,6 +7166,18 @@ function scrollScene() {
   /* 地圖一樣：打開來要先看到自己那塊地，不然全班那片地上
      你得先找自己在哪裡。 */
   var mb = document.querySelector('.dig-wrap');
+
+  /* 地層的名字放在左邊那一條裡，但地圖比視窗寬——
+     一往右捲就看不見了。讓它跟著橫捲走。 */
+  if (mb) {
+    var zs = mb.querySelectorAll('.dig-z');
+    var pin = function () {
+      for (var i = 0; i < zs.length; i++) zs[i].style.left = (mb.scrollLeft + 3) + 'px';
+    };
+    pin();
+    mb.addEventListener('scroll', pin);
+  }
+
   var mh = mb && mb.querySelector('.dig-hero');
   if (mb && mh) {
     keepScroll(mb, 'dig', {
@@ -7001,7 +7300,7 @@ function xsPlace(out, slots, s, bd, lo, hi) {
     if (h % 100 < 42) return;
     var c = faunaAt(s.key, bd * 7 + n);
     if (!c) return;
-    var y = lo + 11 + ((h >> 5) % Math.max(1, hi - lo - 55));
+    var y = lo + 11 + ((h >>> 5) % Math.max(1, hi - lo - 55));
     out.push('<button class="xs-fauna" style="left:' + x + 'px;top:' + y + 'px" ' +
       'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'fauna:' + c.n })) + '\' ' +
       'title="' + esc(c.n) + '">' + pxTag(c.px, s.pal, '') + '</button>');
@@ -7137,13 +7436,10 @@ function ecoRows(classId) {
 PAGES.eco = function () {
   var t = myTeam();
   var rows = ecoRows(t.classId);
-  var H = [head('全班地下城', '大家都在下面', '')];
-  H.push(digMap(t.classId, t.teamId));
-  H.push(digTeamCard(t.classId));
-  H.push(coreCard());
-
-  /* 全班最近。它從首頁搬過來——首頁只做一件事，
-     而『別人在幹嘛』本來就屬於全班這一頁。 */
+  /* 地圖只在首頁一個地方。同一張圖畫兩次，使用者得自己想
+     「這兩張是同一張嗎」——那是最貴的複雜度。
+     這一頁改成只做它獨有的事：別人最近做了什麼。 */
+  var H = [head('全班最近', '別人在幹嘛', '')];
   var fd = feedOf(t.classId, 20);
   if (fd.length) {
     H.push('<div class="eyebrow feed-h">全班最近</div>');
@@ -7554,11 +7850,9 @@ function edgeShadow(own, x, y, who) {
 
 function digMap(classId, meId) {
   var teams = where('Teams', function (t) { return t.classId === classId; });
-  var deep = 0;
-  teams.forEach(function (t) {
-    (t.cells || []).forEach(function (c) { if (c[1] > deep) deep = c[1]; });
-  });
-  var rows = Math.max(6, deep + 3);
+  /* 列數是固定的。會跟著最深的人長的話，那張圖就會變成
+     「誰把地圖撐得比較長」——那又是一條長條。 */
+  var rows = DIG.H;
   var W = MAP_L + DIG.W * DIG.CELL;
   var H = MAP_T + rows * DIG.CELL;
 
@@ -7584,6 +7878,19 @@ function digMap(classId, meId) {
 
   out.push(mapSurface(classId, teams, hue, meId));
 
+  /* 每一組醒來的地方。散在整片地上，不是排在最上面那一排——
+     排在同一排就等於發給每一組一條車道，而車道就是長條圖。 */
+  teams.forEach(function (t) {
+    var sc = startCell(classId, t.teamId);
+    out.push('<div class="dig-shaft' + (t.teamId === meId ? ' mine' : '') +
+      '" style="left:' + (MAP_L + sc[0] * DIG.CELL) + 'px;top:' +
+      (MAP_T + sc[1] * DIG.CELL - 5) + 'px"></div>');
+    out.push('<div class="dig-n' + (t.teamId === meId ? ' mine' : '') +
+      '" style="left:' + (MAP_L + sc[0] * DIG.CELL - 11) + 'px;top:' +
+      (MAP_T + sc[1] * DIG.CELL - 22) + 'px;color:' + hue[t.teamId] + '">' +
+      esc(shortName(t.name)) + '</div>');
+  });
+
   for (var y = 0; y < rows; y++) {
     var z = strataAt(y, classId);
     var cy = MAP_T + y * DIG.CELL;
@@ -7605,14 +7912,20 @@ function digMap(classId, meId) {
           (bg ? pxTag(bg.px, BUILD_PAL, 'bld') : '') + '</button>');
       } else if (open[x + ',' + y]) {
         var h = hot[x + ',' + y];
-        out.push('<button class="dg-c rock can' + (h ? ' hot' : '') + ' ' + z.key +
+        out.push('<button class="dg-c rock can' + (h ? ' hot' : '') +
+          (buriedHint(classId, x, y) ? ' has' : '') + ' ' + z.key +
           '" style="' + st + '" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'dig:' + x + ',' + y })) + '\' title="' +
           esc(h ? '這一格另一組也構得到——誰先點誰拿走' : '打通這一格') + '"></button>');
       } else {
         /* 還沒打通的岩層。裡面有東西——同一層長的跟廊道裡一樣。 */
+        /* 有東西的那幾格看得出來，但看不出是什麼。
+           看得出來，「往哪裡打通」才是一個真的選擇；
+           看不出是什麼，那一格才值得去。 */
         out.push('<div class="dg-c rock v' + (hash(classId + '~' + x + ',' + y) % 3) +
-          (hot[x + ',' + y] ? ' hot2' : '') + ' ' + z.key + '" style="' + st + '">' +
+          (hot[x + ',' + y] ? ' hot2' : '') +
+          (buriedHint(classId, x, y) ? ' has' : '') +
+          ' ' + z.key + '" style="' + st + '">' +
           mapProp(classId, x, y, z) + '</div>');
       }
     }
@@ -7704,8 +8017,8 @@ function mapSurface(classId, teams, hue, meId) {
   for (var i = -2; i < DIG.W; i++) {
     var h = hash(classId + 'tree' + i);
     if (h % 100 < 38) continue;
-    var th = 16 + (h >> 3) % 14;
-    var tx = MAP_L + i * DIG.CELL + ((h >> 7) % (DIG.CELL - 14));
+    var th = 16 + (h >>> 3) % 14;
+    var tx = MAP_L + i * DIG.CELL + ((h >>> 7) % (DIG.CELL - 14));
     H.push('<div class="dig-tree" style="left:' + tx + 'px;top:' +
       (MAP_T - 8 - th) + 'px;height:' + th + 'px"></div>');
   }
@@ -7714,16 +8027,6 @@ function mapSurface(classId, teams, hue, meId) {
   H.push('<div class="dig-soil" style="left:0;top:' + (MAP_T - 8) +
     'px;width:' + (MAP_L + W) + 'px"></div>');
 
-  /* 每一組下來的井口，加一道光。 */
-  teams.forEach(function (t) {
-    var st = startCell(classId, t.teamId);
-    var x = MAP_L + st[0] * DIG.CELL;
-    H.push('<div class="dig-shaft' + (t.teamId === meId ? ' mine' : '') +
-      '" style="left:' + x + 'px;top:' + (MAP_T - 8) + 'px"></div>');
-    H.push('<div class="dig-n' + (t.teamId === meId ? ' mine' : '') +
-      '" style="left:' + (x - 11) + 'px;top:' + (MAP_T - 30) + 'px;color:' +
-      hue[t.teamId] + '">' + esc(shortName(t.name)) + '</div>');
-  });
   return H.join('');
 }
 
@@ -7748,7 +8051,7 @@ function mapProp(classId, x, y, z) {
   if (!g) return '';
   var h = hash(classId + 'p' + x + ',' + y);
   return '<img class="px mp" src="' + pxSvg(g.px, z.pal) + '" alt="" style="left:' +
-    (3 + h % 18) + 'px;bottom:' + (2 + (h >> 5) % 12) + 'px">';
+    (3 + h % 18) + 'px;bottom:' + (2 + (h >>> 5) % 12) + 'px">';
 }
 
 /* 「第一組 · 甲」在格子上方只放得下兩三個字。 */
@@ -7848,6 +8151,47 @@ function buildCard(t) {
     H.push('<dt>實際</dt><dd>' + (st.run.actual || st.keep && st.keep.elapsed || 0) + '</dd>');
     H.push('</dl>');
   }
+  H.push('</div></div></div>');
+  return H.join('');
+}
+
+/* ---------- 這一格裡有什麼 ----------
+
+   打通之後、挑要蓋什麼之前，先看到裡面的東西。
+   這是這個系統唯一「你不知道會遇到什麼」的地方——
+   本來每一格都是空的，打通就只是變色。
+
+   準跟失準看到的不一樣，但拿到的一樣多：那一格、那座建築、那根岩心、
+   那一筆圖鑑，兩邊都有。差的是你到得早不早——早，牠還在；
+   晚，你看到的是牠留下的痕跡。沒有人被扣任何東西。 */
+function uncoverCard(t) {
+  var r = DRAFT.uncover;
+  if (!r) return '';
+  var d = buriedDef(r.k);
+  if (!d) return '';
+  var c = DRAFT.build || [0, 0];
+  var z = strataAt(c[1], t.classId);
+
+  var H = ['<div class="card unc ' + z.key + (r.early ? '' : ' late') + '">'];
+  H.push('<div class="unc-in">');
+
+  /* 圖：遇到什麼就畫什麼。沒有圖的就畫那一層的紋理。 */
+  if (r.mob) {
+    var mo = null;
+    allFauna().forEach(function (f) { if (f.n === r.mob) mo = f; });
+    if (mo) H.push(pxTag(mo.px, z.pal, 'unc-px' + (r.early ? '' : ' gone')));
+  } else if (r.build) {
+    var bd = buildDef(r.build);
+    if (bd) H.push(pxTag(bd.px, BUILD_PAL, 'unc-px' + (r.early ? '' : ' gone')));
+  } else {
+    H.push('<div class="unc-px ' + z.key + ' blank"></div>');
+  }
+
+  H.push('<div>');
+  H.push('<div class="eyebrow">' + esc(z.name) + '　·　這一格裡</div>');
+  H.push('<h2>' + esc(r.mob || (r.build && buildDef(r.build).name) || d.n) + '</h2>');
+  H.push('<p class="lead">' + esc(r.early ? d.here : d.late) + '</p>');
+  if (r.say) H.push('<p class="quote">' + esc(r.say) + '</p>');
   H.push('</div></div></div>');
   return H.join('');
 }

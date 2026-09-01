@@ -38,11 +38,9 @@ function edgeShadow(own, x, y, who) {
 
 function digMap(classId, meId) {
   var teams = where('Teams', function (t) { return t.classId === classId; });
-  var deep = 0;
-  teams.forEach(function (t) {
-    (t.cells || []).forEach(function (c) { if (c[1] > deep) deep = c[1]; });
-  });
-  var rows = Math.max(6, deep + 3);
+  /* 列數是固定的。會跟著最深的人長的話，那張圖就會變成
+     「誰把地圖撐得比較長」——那又是一條長條。 */
+  var rows = DIG.H;
   var W = MAP_L + DIG.W * DIG.CELL;
   var H = MAP_T + rows * DIG.CELL;
 
@@ -68,6 +66,19 @@ function digMap(classId, meId) {
 
   out.push(mapSurface(classId, teams, hue, meId));
 
+  /* 每一組醒來的地方。散在整片地上，不是排在最上面那一排——
+     排在同一排就等於發給每一組一條車道，而車道就是長條圖。 */
+  teams.forEach(function (t) {
+    var sc = startCell(classId, t.teamId);
+    out.push('<div class="dig-shaft' + (t.teamId === meId ? ' mine' : '') +
+      '" style="left:' + (MAP_L + sc[0] * DIG.CELL) + 'px;top:' +
+      (MAP_T + sc[1] * DIG.CELL - 5) + 'px"></div>');
+    out.push('<div class="dig-n' + (t.teamId === meId ? ' mine' : '') +
+      '" style="left:' + (MAP_L + sc[0] * DIG.CELL - 11) + 'px;top:' +
+      (MAP_T + sc[1] * DIG.CELL - 22) + 'px;color:' + hue[t.teamId] + '">' +
+      esc(shortName(t.name)) + '</div>');
+  });
+
   for (var y = 0; y < rows; y++) {
     var z = strataAt(y, classId);
     var cy = MAP_T + y * DIG.CELL;
@@ -89,14 +100,20 @@ function digMap(classId, meId) {
           (bg ? pxTag(bg.px, BUILD_PAL, 'bld') : '') + '</button>');
       } else if (open[x + ',' + y]) {
         var h = hot[x + ',' + y];
-        out.push('<button class="dg-c rock can' + (h ? ' hot' : '') + ' ' + z.key +
+        out.push('<button class="dg-c rock can' + (h ? ' hot' : '') +
+          (buriedHint(classId, x, y) ? ' has' : '') + ' ' + z.key +
           '" style="' + st + '" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'dig:' + x + ',' + y })) + '\' title="' +
           esc(h ? '這一格另一組也構得到——誰先點誰拿走' : '打通這一格') + '"></button>');
       } else {
         /* 還沒打通的岩層。裡面有東西——同一層長的跟廊道裡一樣。 */
+        /* 有東西的那幾格看得出來，但看不出是什麼。
+           看得出來，「往哪裡打通」才是一個真的選擇；
+           看不出是什麼，那一格才值得去。 */
         out.push('<div class="dg-c rock v' + (hash(classId + '~' + x + ',' + y) % 3) +
-          (hot[x + ',' + y] ? ' hot2' : '') + ' ' + z.key + '" style="' + st + '">' +
+          (hot[x + ',' + y] ? ' hot2' : '') +
+          (buriedHint(classId, x, y) ? ' has' : '') +
+          ' ' + z.key + '" style="' + st + '">' +
           mapProp(classId, x, y, z) + '</div>');
       }
     }
@@ -188,8 +205,8 @@ function mapSurface(classId, teams, hue, meId) {
   for (var i = -2; i < DIG.W; i++) {
     var h = hash(classId + 'tree' + i);
     if (h % 100 < 38) continue;
-    var th = 16 + (h >> 3) % 14;
-    var tx = MAP_L + i * DIG.CELL + ((h >> 7) % (DIG.CELL - 14));
+    var th = 16 + (h >>> 3) % 14;
+    var tx = MAP_L + i * DIG.CELL + ((h >>> 7) % (DIG.CELL - 14));
     H.push('<div class="dig-tree" style="left:' + tx + 'px;top:' +
       (MAP_T - 8 - th) + 'px;height:' + th + 'px"></div>');
   }
@@ -198,16 +215,6 @@ function mapSurface(classId, teams, hue, meId) {
   H.push('<div class="dig-soil" style="left:0;top:' + (MAP_T - 8) +
     'px;width:' + (MAP_L + W) + 'px"></div>');
 
-  /* 每一組下來的井口，加一道光。 */
-  teams.forEach(function (t) {
-    var st = startCell(classId, t.teamId);
-    var x = MAP_L + st[0] * DIG.CELL;
-    H.push('<div class="dig-shaft' + (t.teamId === meId ? ' mine' : '') +
-      '" style="left:' + x + 'px;top:' + (MAP_T - 8) + 'px"></div>');
-    H.push('<div class="dig-n' + (t.teamId === meId ? ' mine' : '') +
-      '" style="left:' + (x - 11) + 'px;top:' + (MAP_T - 30) + 'px;color:' +
-      hue[t.teamId] + '">' + esc(shortName(t.name)) + '</div>');
-  });
   return H.join('');
 }
 
@@ -232,7 +239,7 @@ function mapProp(classId, x, y, z) {
   if (!g) return '';
   var h = hash(classId + 'p' + x + ',' + y);
   return '<img class="px mp" src="' + pxSvg(g.px, z.pal) + '" alt="" style="left:' +
-    (3 + h % 18) + 'px;bottom:' + (2 + (h >> 5) % 12) + 'px">';
+    (3 + h % 18) + 'px;bottom:' + (2 + (h >>> 5) % 12) + 'px">';
 }
 
 /* 「第一組 · 甲」在格子上方只放得下兩三個字。 */
@@ -332,6 +339,47 @@ function buildCard(t) {
     H.push('<dt>實際</dt><dd>' + (st.run.actual || st.keep && st.keep.elapsed || 0) + '</dd>');
     H.push('</dl>');
   }
+  H.push('</div></div></div>');
+  return H.join('');
+}
+
+/* ---------- 這一格裡有什麼 ----------
+
+   打通之後、挑要蓋什麼之前，先看到裡面的東西。
+   這是這個系統唯一「你不知道會遇到什麼」的地方——
+   本來每一格都是空的，打通就只是變色。
+
+   準跟失準看到的不一樣，但拿到的一樣多：那一格、那座建築、那根岩心、
+   那一筆圖鑑，兩邊都有。差的是你到得早不早——早，牠還在；
+   晚，你看到的是牠留下的痕跡。沒有人被扣任何東西。 */
+function uncoverCard(t) {
+  var r = DRAFT.uncover;
+  if (!r) return '';
+  var d = buriedDef(r.k);
+  if (!d) return '';
+  var c = DRAFT.build || [0, 0];
+  var z = strataAt(c[1], t.classId);
+
+  var H = ['<div class="card unc ' + z.key + (r.early ? '' : ' late') + '">'];
+  H.push('<div class="unc-in">');
+
+  /* 圖：遇到什麼就畫什麼。沒有圖的就畫那一層的紋理。 */
+  if (r.mob) {
+    var mo = null;
+    allFauna().forEach(function (f) { if (f.n === r.mob) mo = f; });
+    if (mo) H.push(pxTag(mo.px, z.pal, 'unc-px' + (r.early ? '' : ' gone')));
+  } else if (r.build) {
+    var bd = buildDef(r.build);
+    if (bd) H.push(pxTag(bd.px, BUILD_PAL, 'unc-px' + (r.early ? '' : ' gone')));
+  } else {
+    H.push('<div class="unc-px ' + z.key + ' blank"></div>');
+  }
+
+  H.push('<div>');
+  H.push('<div class="eyebrow">' + esc(z.name) + '　·　這一格裡</div>');
+  H.push('<h2>' + esc(r.mob || (r.build && buildDef(r.build).name) || d.n) + '</h2>');
+  H.push('<p class="lead">' + esc(r.early ? d.here : d.late) + '</p>');
+  if (r.say) H.push('<p class="quote">' + esc(r.say) + '</p>');
   H.push('</div></div></div>');
   return H.join('');
 }

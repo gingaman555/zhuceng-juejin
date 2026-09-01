@@ -658,3 +658,71 @@ button.ac:active{transform:translateY(1px)}
 /* 拍與拍之間的那一小段。最後一段接回第一拍，所以畫成虛的。 */
 .cyd{flex:0 0 11px;height:3px;background:var(--line)}
 .cyd.loop{background:repeating-linear-gradient(90deg,var(--line) 0 3px,transparent 3px 6px)}
+
+/* ── 承諾那一根尺 ──
+   「你前幾趟」「別組怎麼看」「你要說幾天」量的都是天數。
+   本來三張卡，等於叫使用者自己在腦袋裡疊起來。畫在同一根尺上就不用了。 */
+.axis{position:relative;margin:14px 0 0;padding:0 3px}
+.ax-row{position:relative;height:14px;margin-bottom:3px}
+.ax-band,.ax-ok,.ax-link{position:absolute;top:5px;height:4px}
+
+/* 別組說的範圍。匿名，只有天數。 */
+.ax-band{background:rgba(95,168,199,.34)}
+.ax-sp{height:18px}
+.ax-tag{position:absolute;top:-2px;font-size:11px;font-style:normal;
+  color:#5FA8C7;transform:translateX(-2px);white-space:nowrap}
+
+/* 你前幾趟：空心＝說的，實心＝實際的。線往右就是低估。 */
+.ax-link{background:rgba(255,240,214,.16)}
+.ax-said,.ax-was{position:absolute;top:2px;width:10px;height:10px;
+  margin-left:-5px;border-radius:0}
+.ax-said{background:transparent;box-shadow:inset 0 0 0 2px var(--mute)}
+.ax-was{background:var(--mute)}
+.ax-was.over{background:var(--over)}
+
+/* 你現在拉到的地方，跟準的範圍。 */
+.ax-now{height:18px}
+.ax-ok{top:6px;height:6px;background:rgba(233,179,65,.28)}
+.ax-me{position:absolute;top:0;width:4px;height:18px;margin-left:-2px;
+  background:var(--gold)}
+
+/* 尺。只標三個數字，多了就變成一張表。 */
+.ax-ruler{position:relative;height:16px;margin-top:3px;
+  border-top:2px solid var(--line)}
+.ax-ruler i{position:absolute;top:3px;font-size:11px;font-style:normal;
+  color:var(--dim);transform:translateX(-50%)}
+.ax-ruler i:first-child{transform:none}
+.ax-ruler i:last-child{transform:translateX(-100%)}
+
+/* 滑桿跟尺是同一根：同寬、同起點。
+   range 的滑塊圓心從半個滑塊寬開始走，所以尺往內縮同樣的距離。 */
+.ax-head{display:flex;align-items:baseline;gap:6px;justify-content:flex-end;
+  margin-bottom:6px}
+.ax-head b{font-size:44px;line-height:1;color:var(--gold);font-weight:400;
+  font-variant-numeric:tabular-nums}
+.ax-head span{font-size:11px;color:var(--dim)}
+.ax-slider{display:block;width:100%;margin:0 0 11px}
+.ax-in{position:relative;margin:0 11px}
+
+/* 岩層表面看得出哪幾格裡有東西——但看不出是什麼。
+   看得出來，「往哪裡打通」才是一個真的選擇；
+   看不出是什麼，那一格才值得去。 */
+.dg-c.rock.has::before{
+  content:'';position:absolute;right:6px;top:6px;width:3px;height:14px;
+  background:linear-gradient(180deg,
+    rgba(255,240,214,.42) 0 5px, transparent 5px 7px,
+    rgba(255,240,214,.42) 7px 14px);
+  box-shadow:2px 0 0 rgba(0,0,0,.5)
+}
+.dg-c.rock.can.has::before{background:var(--gold2);box-shadow:2px 0 0 rgba(0,0,0,.5)}
+
+/* 掀開那一格。準的時候牠還在，失準的時候只剩痕跡——
+   兩邊都是一則紀錄，沒有人被扣任何東西。 */
+.unc .unc-in{display:flex;gap:14px;align-items:flex-start}
+.unc-px{width:88px;height:66px;flex:0 0 auto;image-rendering:pixelated}
+.unc-px.gone{opacity:.34;filter:grayscale(1)}
+.unc-px.blank{background-color:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.4)}
+.unc h2{margin:6px 0;font-size:22px;font-weight:400}
+.unc .quote{margin:11px 0 0;padding-left:11px;
+  box-shadow:inset 3px 0 0 var(--gold-d);color:var(--ink)}
