@@ -429,3 +429,22 @@ a.plain:hover{color:var(--gold)}
 .rn-row .btn.ghost{padding:5px 11px;font-size:11px}
 .rn-row span{font-size:11px}
 .rn-row input{min-width:132px}
+
+/* ---------- 裝備架 ----------
+   它不是道具欄。每一格是一句話，圖示只是那句話的把手。 */
+
+.carry-in{display:flex;align-items:flex-start;gap:14px;margin:11px 0}
+.carry-in b{font-size:44px;line-height:1}
+.carry-in i{display:block;font-style:normal;font-size:22px;color:var(--ink)}
+.carry-in em{display:block;font-style:normal;font-size:11px;color:var(--dim);line-height:1.9;margin-top:3px}
+
+.shelf{display:flex;flex-wrap:wrap;gap:11px;margin-top:11px}
+.slot{
+  width:242px;padding:14px;background:var(--sunk);opacity:.45
+}
+.slot.got{opacity:1}
+.slot.on{background:#2E2210}
+.slot b{display:block;font-size:33px;line-height:1;margin-bottom:5px}
+.slot i{display:block;font-style:normal;font-size:22px;color:var(--ink)}
+.slot em{display:block;font-style:normal;font-size:11px;color:var(--mute);line-height:1.8;margin:3px 0}
+.slot .from{display:block;font-size:11px;color:var(--gold-d);line-height:1.7;margin-top:5px}

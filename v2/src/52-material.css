@@ -114,7 +114,7 @@ body{
    輸入框、滑桿槽、下沉的小格子。斜面跟石塊完全相反：
    上緣暗、下緣亮，眼睛就讀成「凹進去」。 */
 input,textarea,select,.slider,
-.acc-c,.gear,.gcard,.step,.eco-scroll{
+.acc-c,.gear,.gcard,.step,.eco-scroll,.slot{
   border:none;
   box-shadow:
     inset 0 var(--px) 0 var(--shd2),

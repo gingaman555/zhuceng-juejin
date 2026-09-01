@@ -68,12 +68,18 @@ function seed() {
   DB.Milestones.push(M1, M2, M3);
   DB.Config.seq = 10;
 
-  /* 幫忙塞推進紀錄 */
+  /* 幫忙塞推進紀錄。
+
+     每一天做了什麼也一起塞——不然試用資料的走廊每一格都長一樣，
+     看不出「這一趟是查很多天」跟「這一趟是一直在改」的差別，
+     而那正是這個機制要讓人看見的東西。 */
+  var DID = ['look', 'look', 'plan', 'make', 'make', 'talk', 'redo', 'make', 'any'];
   function pushes(teamId, runId, days, from) {
     for (var i = 0; i < days; i++) {
       var at = ago(from - i);
       DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId,
-        day: dayOf(at), at: at });
+        day: dayOf(at), at: at,
+        kind: DID[hash(runId + i) % DID.length] });
     }
   }
 

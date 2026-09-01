@@ -25,6 +25,10 @@ var RULES = {
   PUSH_PER_DAY: 1,     /* 一天一次。多按沒有用，這不是點擊遊戲 */
   STALL_DAYS: 2,       /* 幾天沒推進就開始長藤蔓 */
   SLEEP_DAYS: 4,       /* 幾天沒推進角色會睡著 */
+  /* 補登補得回幾天前。兩天：忘一次補得回來，忘一週補不回來——
+     再往上加就變成「最後一天一次補完」，那條走廊就不再是紀錄了。
+     補登不會改判定：實際天數是承諾那天到交出去那天算的。 */
+  BACKFILL_MAX: 2,
 
   /* ---------- 招牌 ---------- */
   /* 專案名稱看板的三階。老師每改寫一次名稱就往上升一階——
@@ -130,6 +134,32 @@ RULES.signTierOf = function (depth) {
 RULES.gearOf = function (key) {
   for (var i = 0; i < RULES.GEARS.length; i++) {
     if (RULES.GEARS[i].key === key) return RULES.GEARS[i];
+  }
+  return null;
+};
+
+/* ---------- 今天動的是哪一塊 ----------
+
+   推進那一下要點的東西。它不是額外的一步——那一排圖示「就是」推進鍵，
+   點任何一個都算今天動過了，所以點擊數跟原本的一顆鍵一樣。
+
+   為什麼要分這幾類：一來每一天長得不一樣，走廊回頭看得出形狀；
+   二來營火那一頁可以拿它對照——「你這一趟六天有四天在查，
+   難怪做的時間不夠」，那句話沒有這份資料就講不出來。
+
+   最後一個「說不上來」是必要的。逼人分類會讓他為了分類而分類，
+   那一秒資料就開始說謊。 */
+RULES.DOING = [
+  { key: 'look', icon: '🔍', label: '查',   hint: '找資料、看別人怎麼做' },
+  { key: 'plan', icon: '✏️', label: '想',   hint: '畫草圖、排順序、想清楚' },
+  { key: 'make', icon: '🛠️', label: '做',   hint: '真的動手做出東西' },
+  { key: 'talk', icon: '💬', label: '談',   hint: '討論、訪談、問人' },
+  { key: 'redo', icon: '🔁', label: '改',   hint: '修上一版' },
+  { key: 'any',  icon: '⛏️', label: '說不上來', hint: '就是動了' }
+];
+RULES.doingOf = function (key) {
+  for (var i = 0; i < RULES.DOING.length; i++) {
+    if (RULES.DOING[i].key === key) return RULES.DOING[i];
   }
   return null;
 };

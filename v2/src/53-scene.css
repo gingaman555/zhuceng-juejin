@@ -1,0 +1,199 @@
+/* 坑道場景的樣子。
+
+   跟 52-material.css 同一套規矩：hard stop、0 模糊、斜面 3px、光從左上來。
+   多一條只有這裡才有的：會動的東西一律逐格，用 steps() 換狀態，
+   不用 ease 補間。火焰用 ease 一補就變成呼吸燈，那不是火。 */
+
+.scn{
+  position:relative;height:286px;overflow:hidden;margin:0 0 22px;
+  background-color:#0C0A08;
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(255,244,222,.028) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.60)        0 2px, transparent 2px 88px);
+  box-shadow:
+    inset 0 4px 0 rgba(0,0,0,.65),
+    inset 0 8px 0 rgba(0,0,0,.30),
+    inset -3px 0 0 rgba(0,0,0,.72),
+    inset 3px 0 0 rgba(255,240,214,.05),
+    inset 0 -3px 0 rgba(0,0,0,.72),
+    0 0 0 1px #000;
+}
+.scn-scroll{position:absolute;inset:0;overflow-x:auto;overflow-y:hidden}
+.scn-in{position:relative;height:286px;min-width:100%}
+
+/* 火把全滅之後整條走廊暗下來。這不是懲罰，是狀態本身。 */
+.scn.dim  .scn-in{filter:brightness(.72)}
+.scn.dark .scn-in{filter:brightness(.45)}
+
+/* 角落的深度。走廊往旁邊捲，它不跟著捲。 */
+.scn-hud{
+  position:absolute;top:11px;right:11px;z-index:9;text-align:right;pointer-events:none
+}
+.scn-hud b{display:block;font-size:33px;line-height:1;color:var(--gold);font-weight:400}
+.scn-hud span{font-size:11px;color:var(--mute)}
+
+/* ---------- 地板 ---------- */
+.floor{
+  position:absolute;bottom:44px;height:22px;
+  background-color:#17130E;
+  background-image:
+    linear-gradient(180deg, rgba(255,244,222,.09) 0 2px, transparent 2px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 2px, transparent 2px 44px);
+}
+/* 挖開過的那一段亮一階 */
+.floor.lit{background-color:#2A2318}
+
+/* ---------- 天花板 ---------- */
+.drip{position:absolute;top:0;width:33px;height:33px;opacity:.9}
+.drip .px{width:33px;height:33px}
+
+/* ---------- 火把 ----------
+   三張圖輪流顯示，每一盞的節奏差一點——一整排同步眨眼看起來像壞掉的燈管。 */
+.tor{position:absolute;top:44px;width:33px;height:44px;display:block;z-index:2}
+.tor .f{position:absolute;left:0;top:0;width:33px;height:44px;opacity:0;
+  animation:flk var(--fd,360ms) steps(1,end) infinite}
+.tor .f1{animation-delay:calc(var(--fd,360ms) / 3)}
+.tor .f2{animation-delay:calc(var(--fd,360ms) / 3 * 2)}
+@keyframes flk{0%,32.9%{opacity:1}33%,100%{opacity:0}}
+
+img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
+
+/* 點著的火把在牆上打出一小圈光 */
+.tor::after{
+  content:'';position:absolute;left:-33px;top:-11px;width:99px;height:110px;
+  pointer-events:none;
+  background:radial-gradient(circle at 50% 30%,
+    rgba(233,132,63,.11) 0 22px, rgba(233,132,63,.055) 22px 44px,
+    rgba(233,132,63,.02) 44px 55px, transparent 55px);
+}
+
+/* ---------- 走過的痕跡 ---------- */
+.foot{position:absolute;bottom:66px;width:22px;height:11px;opacity:.45}
+/* 那一天做了什麼。掛在那一格頭上，底下墊一道硬影子——
+   走廊亮起來之後，沒有影子的圖示會被牆的光吃掉。 */
+.doing{
+  position:absolute;bottom:132px;width:44px;text-align:center;
+  font-size:22px;line-height:1;z-index:3;pointer-events:none;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.85)) drop-shadow(2px 0 0 rgba(0,0,0,.85))
+}
+.dayn{
+  position:absolute;bottom:11px;width:44px;text-align:center;
+  font-size:11px;color:#3E362C
+}
+.dayn.past{color:var(--gold-d)}
+.dayn.here{color:var(--gold)}
+
+.prop{position:absolute;bottom:66px}
+.prop.rubble{width:33px;height:22px}
+.prop.cry{width:22px;height:22px}
+.prop.shr{width:22px;height:22px}
+
+/* ---------- 角色 ---------- */
+.scn-hero{
+  position:absolute;bottom:66px;width:66px;height:66px;z-index:6;
+  animation:bob 1.4s steps(1,end) infinite
+}
+.scn-hero.asleep{animation:none;opacity:.75}
+@keyframes bob{0%,54%{transform:translateY(0)}55%,100%{transform:translateY(-3px)}}
+
+/* 手上那一盞的光圈。一圈一圈地暗，不是模糊的漸層。 */
+.halo{
+  position:absolute;bottom:44px;width:308px;height:242px;z-index:2;pointer-events:none;
+  background:radial-gradient(circle at 50% 62%,
+    rgba(233,179,65,.20) 0 44px,
+    rgba(233,179,65,.11) 44px 88px,
+    rgba(233,179,65,.05) 88px 121px,
+    rgba(233,179,65,.02) 121px 143px,
+    transparent 143px);
+}
+
+/* ---------- 霧 ----------
+   蓋住還沒走的那幾天。往前一格，霧就退一格。 */
+.fog{
+  position:absolute;top:0;bottom:44px;right:0;z-index:5;pointer-events:none;
+  background:linear-gradient(90deg,
+    rgba(8,7,6,0)    0 22px,
+    rgba(8,7,6,.30) 22px 66px,
+    rgba(8,7,6,.50) 66px 132px,
+    rgba(8,7,6,.68) 132px 100%);
+}
+
+/* ---------- 魔物 ---------- */
+.scn-mob{
+  position:absolute;bottom:66px;width:88px;z-index:4;text-align:center;
+  animation:bob2 2.2s steps(1,end) infinite
+}
+@keyframes bob2{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-3px)}}
+.scn-mob .px{width:66px;height:66px;margin:0 auto}
+.scn-mob .mobn{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:-22px;
+  font-size:11px;color:var(--dim);white-space:nowrap
+}
+/* 走廊盡頭的木牌：這一趟要交的東西。
+   它在霧上面——走廊可以暗，但「要交什麼」永遠要讀得到。 */
+.goal{
+  position:absolute;bottom:143px;z-index:7;
+  width:176px;margin-left:-44px;padding:5px 8px;font-size:11px;line-height:1.6;
+  color:#E8D8B0;background:#20180F;text-align:center;
+  background-image:repeating-linear-gradient(90deg,
+    rgba(255,244,222,.030) 0 1px, transparent 1px 7px,
+    rgba(0,0,0,.30) 7px 8px, transparent 8px 18px);
+  box-shadow:inset 0 2px 0 rgba(255,244,222,.10),
+    inset 0 -2px 0 rgba(0,0,0,.55), 0 0 0 1px #000;
+}
+
+/* ---------- 洞口 ---------- */
+.mouth{position:absolute;left:0;top:0;bottom:0;z-index:3}
+/* 從上面落下來的光。你是從那裡進來的。 */
+.mouth .shaft{
+  position:absolute;left:22px;top:0;width:99px;bottom:44px;
+  clip-path:polygon(24% 0,76% 0,100% 100%,0 100%);
+  background:linear-gradient(180deg,
+    rgba(233,179,65,.17) 0 33px,
+    rgba(233,179,65,.09) 33px 110px,
+    rgba(233,179,65,.04) 110px 176px,
+    transparent 176px);
+}
+.mouth .arch{
+  position:absolute;right:0;top:0;bottom:44px;width:22px;background:#211C16;
+  box-shadow:inset 3px 0 0 rgba(255,244,222,.07), inset -3px 0 0 rgba(0,0,0,.7)
+}
+.mouth .hang{position:absolute;left:27px;top:0;width:66px;text-align:center}
+.mouth .chain{
+  width:4px;height:33px;margin:0 auto;
+  background:repeating-linear-gradient(180deg,#6E7982 0 4px, #232B31 4px 7px)
+}
+.mouth .px.sign{width:66px;height:66px;margin:0 auto}
+.mouth-txt{position:absolute;left:11px;bottom:110px;width:121px}
+.mouth-txt b{display:block;font-size:11px;line-height:1.5;color:var(--ink);font-weight:400}
+.mouth-txt span{display:block;font-size:11px;color:var(--mute)}
+
+/* ---------- 場景底下那一行 ---------- */
+.scn-cap{font-size:11px;color:var(--mute);margin:-11px 0 22px;line-height:1.9}
+.scn-cap b{font-size:22px;color:var(--gold);font-weight:400}
+
+/* ---------- 關掉動畫的人 ----------
+   火不跳、人不晃，但走廊還是亮著——資訊不能因為關掉動畫就不見。 */
+@media (prefers-reduced-motion: reduce){
+  .tor .f{animation:none;opacity:0}
+  .tor .f0{opacity:1}
+  .scn-hero,.scn-mob{animation:none}
+}
+
+@media (max-width:860px){
+  .scn,.scn-in{height:242px}
+  .scn-hud b{font-size:22px}
+}
+
+/* 鑿下去那一下：整條走廊抖 3px。三幀，不補間。 */
+.scn-in.hit{animation:hit .18s steps(1,end) 1}
+@keyframes hit{
+  0%  {transform:translate(0,0)}
+  33% {transform:translate(-3px,2px)}
+  66% {transform:translate(2px,-2px)}
+  100%{transform:translate(0,0)}
+}
+@media (prefers-reduced-motion: reduce){ .scn-in.hit{animation:none} }
+
+/* 紀錄頁：那一趟每天做的，排成一列 */
+.seq{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0;font-size:22px;line-height:1}

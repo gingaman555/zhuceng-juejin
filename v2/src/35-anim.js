@@ -102,6 +102,18 @@ function animDash(onDone) {
   ], 130, onDone);
 }
 
+/* ---------- 鑿下去那一下 ----------
+   揮劍如果只有角色在動，看起來像角色在原地比劃。整條走廊抖一下，
+   那一下才像是「打到東西了」。位移只有 3px——跟身上一個像素同一個量級。 */
+function shakeScene() {
+  if (REDUCED) return;
+  var el = document.querySelector('.scn-in');
+  if (!el) return;
+  el.classList.remove('hit');
+  void el.offsetWidth;           /* 重新觸發動畫 */
+  el.classList.add('hit');
+}
+
 /* ---------- 睡著的呼吸 ----------
    不是動畫，是狀態。用 CSS 做（見 50-style.css 的 .px.sleep），
    這裡不管——逐格動畫留給「有事發生」的那一刻。 */

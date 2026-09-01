@@ -440,6 +440,25 @@ a.plain:hover{color:var(--gold)}
 .rn-row span{font-size:11px}
 .rn-row input{min-width:132px}
 
+/* ---------- 裝備架 ----------
+   它不是道具欄。每一格是一句話，圖示只是那句話的把手。 */
+
+.carry-in{display:flex;align-items:flex-start;gap:14px;margin:11px 0}
+.carry-in b{font-size:44px;line-height:1}
+.carry-in i{display:block;font-style:normal;font-size:22px;color:var(--ink)}
+.carry-in em{display:block;font-style:normal;font-size:11px;color:var(--dim);line-height:1.9;margin-top:3px}
+
+.shelf{display:flex;flex-wrap:wrap;gap:11px;margin-top:11px}
+.slot{
+  width:242px;padding:14px;background:var(--sunk);opacity:.45
+}
+.slot.got{opacity:1}
+.slot.on{background:#2E2210}
+.slot b{display:block;font-size:33px;line-height:1;margin-bottom:5px}
+.slot i{display:block;font-style:normal;font-size:22px;color:var(--ink)}
+.slot em{display:block;font-style:normal;font-size:11px;color:var(--mute);line-height:1.8;margin:3px 0}
+.slot .from{display:block;font-size:11px;color:var(--gold-d);line-height:1.7;margin-top:5px}
+
 /* 材質。
 
    前一份（50-style.css）決定的是尺寸、顏色、排版；這一份只決定「摸起來
@@ -556,7 +575,7 @@ body{
    輸入框、滑桿槽、下沉的小格子。斜面跟石塊完全相反：
    上緣暗、下緣亮，眼睛就讀成「凹進去」。 */
 input,textarea,select,.slider,
-.acc-c,.gear,.gcard,.step,.eco-scroll{
+.acc-c,.gear,.gcard,.step,.eco-scroll,.slot{
   border:none;
   box-shadow:
     inset 0 var(--px) 0 var(--shd2),
@@ -693,6 +712,206 @@ input:focus,textarea:focus{outline:none;box-shadow:
   .btn:active,.gcard:active,.tag:active{transform:none}
 }
 
+/* 坑道場景的樣子。
+
+   跟 52-material.css 同一套規矩：hard stop、0 模糊、斜面 3px、光從左上來。
+   多一條只有這裡才有的：會動的東西一律逐格，用 steps() 換狀態，
+   不用 ease 補間。火焰用 ease 一補就變成呼吸燈，那不是火。 */
+
+.scn{
+  position:relative;height:286px;overflow:hidden;margin:0 0 22px;
+  background-color:#0C0A08;
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(255,244,222,.028) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.60)        0 2px, transparent 2px 88px);
+  box-shadow:
+    inset 0 4px 0 rgba(0,0,0,.65),
+    inset 0 8px 0 rgba(0,0,0,.30),
+    inset -3px 0 0 rgba(0,0,0,.72),
+    inset 3px 0 0 rgba(255,240,214,.05),
+    inset 0 -3px 0 rgba(0,0,0,.72),
+    0 0 0 1px #000;
+}
+.scn-scroll{position:absolute;inset:0;overflow-x:auto;overflow-y:hidden}
+.scn-in{position:relative;height:286px;min-width:100%}
+
+/* 火把全滅之後整條走廊暗下來。這不是懲罰，是狀態本身。 */
+.scn.dim  .scn-in{filter:brightness(.72)}
+.scn.dark .scn-in{filter:brightness(.45)}
+
+/* 角落的深度。走廊往旁邊捲，它不跟著捲。 */
+.scn-hud{
+  position:absolute;top:11px;right:11px;z-index:9;text-align:right;pointer-events:none
+}
+.scn-hud b{display:block;font-size:33px;line-height:1;color:var(--gold);font-weight:400}
+.scn-hud span{font-size:11px;color:var(--mute)}
+
+/* ---------- 地板 ---------- */
+.floor{
+  position:absolute;bottom:44px;height:22px;
+  background-color:#17130E;
+  background-image:
+    linear-gradient(180deg, rgba(255,244,222,.09) 0 2px, transparent 2px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 2px, transparent 2px 44px);
+}
+/* 挖開過的那一段亮一階 */
+.floor.lit{background-color:#2A2318}
+
+/* ---------- 天花板 ---------- */
+.drip{position:absolute;top:0;width:33px;height:33px;opacity:.9}
+.drip .px{width:33px;height:33px}
+
+/* ---------- 火把 ----------
+   三張圖輪流顯示，每一盞的節奏差一點——一整排同步眨眼看起來像壞掉的燈管。 */
+.tor{position:absolute;top:44px;width:33px;height:44px;display:block;z-index:2}
+.tor .f{position:absolute;left:0;top:0;width:33px;height:44px;opacity:0;
+  animation:flk var(--fd,360ms) steps(1,end) infinite}
+.tor .f1{animation-delay:calc(var(--fd,360ms) / 3)}
+.tor .f2{animation-delay:calc(var(--fd,360ms) / 3 * 2)}
+@keyframes flk{0%,32.9%{opacity:1}33%,100%{opacity:0}}
+
+img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
+
+/* 點著的火把在牆上打出一小圈光 */
+.tor::after{
+  content:'';position:absolute;left:-33px;top:-11px;width:99px;height:110px;
+  pointer-events:none;
+  background:radial-gradient(circle at 50% 30%,
+    rgba(233,132,63,.11) 0 22px, rgba(233,132,63,.055) 22px 44px,
+    rgba(233,132,63,.02) 44px 55px, transparent 55px);
+}
+
+/* ---------- 走過的痕跡 ---------- */
+.foot{position:absolute;bottom:66px;width:22px;height:11px;opacity:.45}
+/* 那一天做了什麼。掛在那一格頭上，底下墊一道硬影子——
+   走廊亮起來之後，沒有影子的圖示會被牆的光吃掉。 */
+.doing{
+  position:absolute;bottom:132px;width:44px;text-align:center;
+  font-size:22px;line-height:1;z-index:3;pointer-events:none;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.85)) drop-shadow(2px 0 0 rgba(0,0,0,.85))
+}
+.dayn{
+  position:absolute;bottom:11px;width:44px;text-align:center;
+  font-size:11px;color:#3E362C
+}
+.dayn.past{color:var(--gold-d)}
+.dayn.here{color:var(--gold)}
+
+.prop{position:absolute;bottom:66px}
+.prop.rubble{width:33px;height:22px}
+.prop.cry{width:22px;height:22px}
+.prop.shr{width:22px;height:22px}
+
+/* ---------- 角色 ---------- */
+.scn-hero{
+  position:absolute;bottom:66px;width:66px;height:66px;z-index:6;
+  animation:bob 1.4s steps(1,end) infinite
+}
+.scn-hero.asleep{animation:none;opacity:.75}
+@keyframes bob{0%,54%{transform:translateY(0)}55%,100%{transform:translateY(-3px)}}
+
+/* 手上那一盞的光圈。一圈一圈地暗，不是模糊的漸層。 */
+.halo{
+  position:absolute;bottom:44px;width:308px;height:242px;z-index:2;pointer-events:none;
+  background:radial-gradient(circle at 50% 62%,
+    rgba(233,179,65,.20) 0 44px,
+    rgba(233,179,65,.11) 44px 88px,
+    rgba(233,179,65,.05) 88px 121px,
+    rgba(233,179,65,.02) 121px 143px,
+    transparent 143px);
+}
+
+/* ---------- 霧 ----------
+   蓋住還沒走的那幾天。往前一格，霧就退一格。 */
+.fog{
+  position:absolute;top:0;bottom:44px;right:0;z-index:5;pointer-events:none;
+  background:linear-gradient(90deg,
+    rgba(8,7,6,0)    0 22px,
+    rgba(8,7,6,.30) 22px 66px,
+    rgba(8,7,6,.50) 66px 132px,
+    rgba(8,7,6,.68) 132px 100%);
+}
+
+/* ---------- 魔物 ---------- */
+.scn-mob{
+  position:absolute;bottom:66px;width:88px;z-index:4;text-align:center;
+  animation:bob2 2.2s steps(1,end) infinite
+}
+@keyframes bob2{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-3px)}}
+.scn-mob .px{width:66px;height:66px;margin:0 auto}
+.scn-mob .mobn{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:-22px;
+  font-size:11px;color:var(--dim);white-space:nowrap
+}
+/* 走廊盡頭的木牌：這一趟要交的東西。
+   它在霧上面——走廊可以暗，但「要交什麼」永遠要讀得到。 */
+.goal{
+  position:absolute;bottom:143px;z-index:7;
+  width:176px;margin-left:-44px;padding:5px 8px;font-size:11px;line-height:1.6;
+  color:#E8D8B0;background:#20180F;text-align:center;
+  background-image:repeating-linear-gradient(90deg,
+    rgba(255,244,222,.030) 0 1px, transparent 1px 7px,
+    rgba(0,0,0,.30) 7px 8px, transparent 8px 18px);
+  box-shadow:inset 0 2px 0 rgba(255,244,222,.10),
+    inset 0 -2px 0 rgba(0,0,0,.55), 0 0 0 1px #000;
+}
+
+/* ---------- 洞口 ---------- */
+.mouth{position:absolute;left:0;top:0;bottom:0;z-index:3}
+/* 從上面落下來的光。你是從那裡進來的。 */
+.mouth .shaft{
+  position:absolute;left:22px;top:0;width:99px;bottom:44px;
+  clip-path:polygon(24% 0,76% 0,100% 100%,0 100%);
+  background:linear-gradient(180deg,
+    rgba(233,179,65,.17) 0 33px,
+    rgba(233,179,65,.09) 33px 110px,
+    rgba(233,179,65,.04) 110px 176px,
+    transparent 176px);
+}
+.mouth .arch{
+  position:absolute;right:0;top:0;bottom:44px;width:22px;background:#211C16;
+  box-shadow:inset 3px 0 0 rgba(255,244,222,.07), inset -3px 0 0 rgba(0,0,0,.7)
+}
+.mouth .hang{position:absolute;left:27px;top:0;width:66px;text-align:center}
+.mouth .chain{
+  width:4px;height:33px;margin:0 auto;
+  background:repeating-linear-gradient(180deg,#6E7982 0 4px, #232B31 4px 7px)
+}
+.mouth .px.sign{width:66px;height:66px;margin:0 auto}
+.mouth-txt{position:absolute;left:11px;bottom:110px;width:121px}
+.mouth-txt b{display:block;font-size:11px;line-height:1.5;color:var(--ink);font-weight:400}
+.mouth-txt span{display:block;font-size:11px;color:var(--mute)}
+
+/* ---------- 場景底下那一行 ---------- */
+.scn-cap{font-size:11px;color:var(--mute);margin:-11px 0 22px;line-height:1.9}
+.scn-cap b{font-size:22px;color:var(--gold);font-weight:400}
+
+/* ---------- 關掉動畫的人 ----------
+   火不跳、人不晃，但走廊還是亮著——資訊不能因為關掉動畫就不見。 */
+@media (prefers-reduced-motion: reduce){
+  .tor .f{animation:none;opacity:0}
+  .tor .f0{opacity:1}
+  .scn-hero,.scn-mob{animation:none}
+}
+
+@media (max-width:860px){
+  .scn,.scn-in{height:242px}
+  .scn-hud b{font-size:22px}
+}
+
+/* 鑿下去那一下：整條走廊抖 3px。三幀，不補間。 */
+.scn-in.hit{animation:hit .18s steps(1,end) 1}
+@keyframes hit{
+  0%  {transform:translate(0,0)}
+  33% {transform:translate(-3px,2px)}
+  66% {transform:translate(2px,-2px)}
+  100%{transform:translate(0,0)}
+}
+@media (prefers-reduced-motion: reduce){ .scn-in.hit{animation:none} }
+
+/* 紀錄頁：那一趟每天做的，排成一列 */
+.seq{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0;font-size:22px;line-height:1}
+
 </style>
 </head>
 <body>
@@ -825,6 +1044,109 @@ var DEPTH_PAL = [
    老師發的。圖用上一版的戰利品像素圖，意義完全換掉：
    那不是打贏掉的東西，是老師看到你做了什麼之後遞過來的。 */
 var GEAR_PX = PACK.trophies;
+
+
+/* ===== 12-props.js ===== */
+/* 坑道裡的東西。
+
+   上面那一份（11-world.js）定義的是角色與招牌——會動、有狀態的東西。
+   這一份是不會動的：火把、鐘乳石、碎石、水晶、腳印。它們不帶任何資訊，
+   純粹是為了讓那條走廊看起來像一個地方，而不是一條進度條。
+
+   有一個例外：火把帶資訊。每推進一天就點亮一盞——走廊會隨著你出現的
+   次數變亮。那不是裝飾，那是「你來過幾次」畫出來的樣子。 */
+
+/* ---------- 火把 ----------
+   三幀，固定間隔換。左邊那一根是釘在牆上的托架，火焰在上面。
+   點陣字旁邊的火焰不可以用 CSS 漸層做——那會立刻看起來像貼上去的。 */
+var TORCH = {
+  pal: { '#': '#E9843F', o: '#6B4A28', '*': '#FFE9A8' },
+  frames: [
+    ['......*.....', '.....*#*....', '.....*#*....', '....*#*#*...',
+     '....*###*...', '.....*#*....', '.....###....', '....+###+...',
+     '....+###+...', '.....+#+....', '.....+#+....', '..++++#+....',
+     '..+..+#+....', '..+.........', '..+.........', '..+++.......'],
+    ['............', '.....*#*....', '....*#*.....', '....*#**....',
+     '....*###*...', '.....*#*....', '.....###....', '....+###+...',
+     '....+###+...', '.....+#+....', '.....+#+....', '..++++#+....',
+     '..+..+#+....', '..+.........', '..+.........', '..+++.......'],
+    ['............', '............', '......*.....', '.....*#*....',
+     '....**#*....', '.....*#*....', '.....###....', '....+###+...',
+     '....+###+...', '.....+#+....', '.....+#+....', '..++++#+....',
+     '..+..+#+....', '..+.........', '..+.........', '..+++.......']
+  ],
+  /* 還沒點的那些。同一支托架，沒有火。 */
+  dead: ['............', '............', '............', '............',
+         '............', '............', '.....###....', '....+###+...',
+         '....+###+...', '.....+#+....', '.....+#+....', '..++++#+....',
+         '..+..+#+....', '..+.........', '..+.........', '..+++.......'],
+  deadPal: { '#': '#4A4038', o: '#2A241E', '*': '#5E5248' }
+};
+
+/* ---------- 鐘乳石 ----------
+   兩根，長短不一。全部一樣長的話天花板看起來像鋸齒圖案，不像岩洞。 */
+var DRIP = {
+  pal: { '#': '#4E463B', o: '#2E2820', '*': '#6E6353' },
+  a: ['************', '+##########+', '.+########+.', '..+######+..',
+      '...+####+...', '....+##+....', '.....##.....', '.....+#.....',
+      '......+.....', '............', '............', '............'],
+  b: ['************', '+##########+', '.+######+...', '..+####+....',
+      '...+##+.....', '...+##+.....', '....##......', '....##......',
+      '....+#......', '.....+......', '............', '............']
+};
+
+/* ---------- 碎石 ----------
+   挖出來的東西堆在腳邊。走廊底部沒有這個的話，地板看起來像一條線。 */
+var RUBBLE = {
+  pal: { '#': '#4A4038', o: '#2A241E', '*': '#6B5F51' },
+  px: ['............', '............', '............', '...**.......',
+       '..*##*..**..', '.+####+*##*.', '+######+##+.', '++++++++++..']
+};
+
+/* ---------- 水晶 ----------
+   礦坑裡本來就會有。它自己微微發亮，所以走廊最暗的時候還看得到一點東西。 */
+var CRYSTAL = {
+  pal: { '#': '#5FA8C7', o: '#2E5E75', '*': '#D8F2FA' },
+  px: ['....*.....', '...*#*....', '...*#*....', '..*###*...',
+       '..*###*...', '..+###+...', '...+#+....', '...+#+....',
+       '....+.....', '..........']
+};
+
+/* ---------- 蕈菇 ----------
+   會發光的那種。放在走過的那幾格旁邊——挖開的地方才長得出東西。 */
+var SHROOM = {
+  pal: { '#': '#7FA866', o: '#3E5533', '*': '#D8F0C0' },
+  px: ['..****..', '.*####*.', '*######*', '.+####+.',
+       '...##...', '...##...', '..+##+..', '..++++..']
+};
+
+/* ---------- 腳印 ----------
+   走過的每一格留一個。這是走廊上唯一一種「歷史」——
+   它不算分，只是說：那一天你來過。 */
+var STEP_PX = {
+  pal: { '#': '#8A7346', o: '#5C4423', '*': '#D9C08A' },
+  px: ['.####.', '.####.', '..##..', '......']
+};
+
+/* 哪一格放什麼裝飾。
+
+   用組別與里程碑算，不擲骰子——同一條走廊每次打開，石頭都在同一個
+   地方。畫面每重畫一次石頭就跳一次的話，那條走廊就不是一個地方了。 */
+function propFor(seed, i) {
+  var h = hash(seed + '#' + i);
+  var r = h % 100;
+  if (r < 14) return 'rubble';
+  if (r < 22) return 'crystal';
+  if (r < 30) return 'shroom';
+  return '';
+}
+
+/* 鐘乳石掛在哪、哪一根。同樣是算出來的。 */
+function dripFor(seed, i) {
+  var h = hash(seed + '@' + i);
+  if (h % 100 < 42) return null;
+  return { px: (h % 2 ? DRIP.a : DRIP.b), off: (h >> 4) % 22 };
+}
 
 
 /* ===== 15-auth.js ===== */
@@ -1145,6 +1467,10 @@ var RULES = {
   PUSH_PER_DAY: 1,     /* 一天一次。多按沒有用，這不是點擊遊戲 */
   STALL_DAYS: 2,       /* 幾天沒推進就開始長藤蔓 */
   SLEEP_DAYS: 4,       /* 幾天沒推進角色會睡著 */
+  /* 補登補得回幾天前。兩天：忘一次補得回來，忘一週補不回來——
+     再往上加就變成「最後一天一次補完」，那條走廊就不再是紀錄了。
+     補登不會改判定：實際天數是承諾那天到交出去那天算的。 */
+  BACKFILL_MAX: 2,
 
   /* ---------- 招牌 ---------- */
   /* 專案名稱看板的三階。老師每改寫一次名稱就往上升一階——
@@ -1250,6 +1576,32 @@ RULES.signTierOf = function (depth) {
 RULES.gearOf = function (key) {
   for (var i = 0; i < RULES.GEARS.length; i++) {
     if (RULES.GEARS[i].key === key) return RULES.GEARS[i];
+  }
+  return null;
+};
+
+/* ---------- 今天動的是哪一塊 ----------
+
+   推進那一下要點的東西。它不是額外的一步——那一排圖示「就是」推進鍵，
+   點任何一個都算今天動過了，所以點擊數跟原本的一顆鍵一樣。
+
+   為什麼要分這幾類：一來每一天長得不一樣，走廊回頭看得出形狀；
+   二來營火那一頁可以拿它對照——「你這一趟六天有四天在查，
+   難怪做的時間不夠」，那句話沒有這份資料就講不出來。
+
+   最後一個「說不上來」是必要的。逼人分類會讓他為了分類而分類，
+   那一秒資料就開始說謊。 */
+RULES.DOING = [
+  { key: 'look', icon: '🔍', label: '查',   hint: '找資料、看別人怎麼做' },
+  { key: 'plan', icon: '✏️', label: '想',   hint: '畫草圖、排順序、想清楚' },
+  { key: 'make', icon: '🛠️', label: '做',   hint: '真的動手做出東西' },
+  { key: 'talk', icon: '💬', label: '談',   hint: '討論、訪談、問人' },
+  { key: 'redo', icon: '🔁', label: '改',   hint: '修上一版' },
+  { key: 'any',  icon: '⛏️', label: '說不上來', hint: '就是動了' }
+];
+RULES.doingOf = function (key) {
+  for (var i = 0; i < RULES.DOING.length; i++) {
+    if (RULES.DOING[i].key === key) return RULES.DOING[i];
   }
   return null;
 };
@@ -1435,6 +1787,18 @@ function animDash(onDone) {
     [HERO.dash, HERO.pal],
     [DASH_2, HERO.pal]
   ], 130, onDone);
+}
+
+/* ---------- 鑿下去那一下 ----------
+   揮劍如果只有角色在動，看起來像角色在原地比劃。整條走廊抖一下，
+   那一下才像是「打到東西了」。位移只有 3px——跟身上一個像素同一個量級。 */
+function shakeScene() {
+  if (REDUCED) return;
+  var el = document.querySelector('.scn-in');
+  if (!el) return;
+  el.classList.remove('hit');
+  void el.offsetWidth;           /* 重新觸發動畫 */
+  el.classList.add('hit');
 }
 
 /* ---------- 睡著的呼吸 ----------
@@ -1677,15 +2041,71 @@ function actCommit(teamId, msId, est, risks) {
 }
 
 /* 推進：一天一次。回傳有沒有真的推到。 */
-function actPush(teamId, runId) {
+/* 推進。
+
+     kind  今天動的是哪一塊（RULES.DOING 的 key）
+     back  補登幾天前。0 是今天，1 是昨天，最多到 2。
+
+   補登這件事看起來像作弊，其實相反：實際天數是從承諾那天到交出去
+   那天算的，補登一格不會讓誰早一天完成，也不會改判定。它唯一改變的
+   是走廊上少不少一盞燈——而「忘了按一天就再也補不回來」正是
+   讓人整條放棄的那個崖。 */
+function actPush(teamId, runId, kind, back) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return false;
-  if (pushedToday(teamId, runId)) return false;
-  DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId, day: dayOf(now()), at: now() });
+  var b = Math.max(0, Math.min(RULES.BACKFILL_MAX, Number(back) || 0));
+  var when = now() - b * DAY;
+  if (when < r.committedAt) return false;      /* 承諾之前的日子不算 */
+  if (pushedOn(teamId, runId, dayOf(when))) return false;
+  DB.Pushes.push({
+    pushId: nid('P'), teamId: teamId, runId: runId,
+    day: dayOf(when), at: when, kind: kind || 'any', back: b
+  });
   r.pushes++;
   save();
-  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes });
+  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes, kind: kind || 'any', back: b });
   return true;
+}
+
+/* 這一個 run 在某一天推過了沒 */
+function pushedOn(teamId, runId, day) {
+  return !!find('Pushes', function (p) { return p.runId === runId && p.day === day; });
+}
+
+/* 最近幾天裡，哪幾天還沒按。回傳 [{back, label}]，只看承諾之後的日子。 */
+function openDays(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return [];
+  var out = [];
+  for (var b = 1; b <= RULES.BACKFILL_MAX; b++) {
+    var when = now() - b * DAY;
+    if (when < r.committedAt) break;
+    if (!pushedOn(teamId, runId, dayOf(when))) {
+      out.push({ back: b, label: b === 1 ? '昨天' : '前天' });
+    }
+  }
+  return out;
+}
+
+/* 這一趟每一天動的是哪一塊，照時間排 */
+function doingOfRun(runId) {
+  return where('Pushes', function (p) { return p.runId === runId; })
+    .sort(function (a, b) { return a.day - b.day; })
+    .map(function (p) { return p.kind || 'any'; });
+}
+
+/* 今天班上有幾條坑道也動過。
+   這不是名次——它不排序、不比大小，只回答「今天只有我一個人在下面嗎」。 */
+function todayMovers(classId, exceptTeam) {
+  var day = dayOf(now());
+  var seen = {};
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    if (t.teamId === exceptTeam) return;
+    if (find('Pushes', function (p) { return p.teamId === t.teamId && p.day === day; })) {
+      seen[t.teamId] = 1;
+    }
+  });
+  return Object.keys(seen).length;
 }
 
 /* 上傳：走到終點之後交出去。判定就在這一刻。 */
@@ -1890,12 +2310,18 @@ function seed() {
   DB.Milestones.push(M1, M2, M3);
   DB.Config.seq = 10;
 
-  /* 幫忙塞推進紀錄 */
+  /* 幫忙塞推進紀錄。
+
+     每一天做了什麼也一起塞——不然試用資料的走廊每一格都長一樣，
+     看不出「這一趟是查很多天」跟「這一趟是一直在改」的差別，
+     而那正是這個機制要讓人看見的東西。 */
+  var DID = ['look', 'look', 'plan', 'make', 'make', 'talk', 'redo', 'make', 'any'];
   function pushes(teamId, runId, days, from) {
     for (var i = 0; i < days; i++) {
       var at = ago(from - i);
       DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId,
-        day: dayOf(at), at: at });
+        day: dayOf(at), at: at,
+        kind: DID[hash(runId + i) % DID.length] });
     }
   }
 
@@ -2004,7 +2430,7 @@ function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', submit: 'student', stamp: 'student',
-  camp: 'student', pick: 'student', dash: 'student', eco: 'student',
+  camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
   log: 'student', claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -2085,6 +2511,10 @@ function render() {
   document.getElementById('app').innerHTML =
     sideBar() + '<div class="main">' + topBar() + demoBar() +
     '<div class="wrap">' + (S.flash ? flashBar() : '') + body + '</div></div>';
+
+  /* 走廊比視窗長的時候，重畫預設回到最左邊——那樣按完推進會看到
+     走廊變了卻看不到自己動。鏡頭跟著人走。 */
+  if (typeof scrollScene === 'function') scrollScene();
 }
 
 function flashBar() {
@@ -2175,7 +2605,7 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '坑道'], ['eco', '全班地下城'], ['log', '紀錄']
+      ['home', '坑道'], ['pack', '裝備架'], ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   var items = nav.map(function (n) {
@@ -2256,20 +2686,39 @@ var ACTS = {
     say('承諾了。從今天開始，每天推一格。');
   },
 
-  push: function (runId) {
+  /* 補登哪一天。0 是今天。 */
+  back: function (v) { DRAFT.back = Number(v) || 0; render(); },
+
+  /* 推進。參數是「runId|今天動的是哪一塊」。 */
+  push: function (arg) {
+    var i = arg.indexOf('|');
+    var runId = i < 0 ? arg : arg.slice(0, i);
+    var kind = i < 0 ? 'any' : arg.slice(i + 1);
     var t = myTeam();
+    var back = Number(DRAFT.back || 0);
     /* 有沒有藤蔓要碎——推之前先問，推完狀態就變了 */
     var wasStuck = stallOf(t.teamId).level;
-    if (!actPush(t.teamId, runId)) {
-      return say('今天已經推過了。一天一格——多按沒有用。');
+    if (!actPush(t.teamId, runId, kind, back)) {
+      return say(back ? '那一天已經點過了。' : '今天那一盞已經點好了。一天一盞——多按沒有用。');
     }
+    DRAFT.back = 0;
     var r = find('Runs', function (x) { return x.runId === runId; });
-    var msg = RULES.progress(r.pushes, r.est) >= 1
-      ? '走到終點了。交出去之後系統會比對你當初承諾的天數。'
-      : '推進了一格。明天再來。';
+    var d = RULES.doingOf(kind);
+    var msg;
+    if (RULES.progress(r.pushes, r.est) >= 1) {
+      msg = '走到走廊底了。交出去之後，系統會比對你當初承諾的天數。';
+    } else if (back) {
+      msg = '補回來了。那一盞亮了。';
+    } else {
+      /* 有人跟你一起在下面。這不是名次——它不排序，也不說誰比較多。 */
+      var others = todayMovers(t.classId, t.teamId);
+      msg = (d ? d.icon + ' ' + d.label + '。' : '') +
+        (others ? '今天班上還有 ' + others + ' 條坑道也在響。'
+                : '今天你是第一個下來的。');
+    }
     /* 先播完動畫再重畫——重畫會把 <img> 換掉，動畫就沒了。
        藤蔓先碎，再揮劍：那個順序就是「你把它弄斷了，然後繼續走」。 */
-    var swing = function () { animPush(function () { say(msg); }); };
+    var swing = function () { shakeScene(); animPush(function () { say(msg); }); };
     if (wasStuck === 1) animVineBreak(swing); else swing();
   },
 
@@ -2528,10 +2977,7 @@ PAGES.home = function () {
   var t = myTeam();
   var next = nextThing(t.teamId);
   var st = stallOf(t.teamId);
-  var sign = signOf(t.teamId);
-  var depth = depthOf(t.teamId);
   var acc = accuracyOf(t.teamId);
-  var light = WORLD.light[st.level];
 
   var H = [];
 
@@ -2543,19 +2989,9 @@ PAGES.home = function () {
     ['挑裝備', '三選一，你自己挑']
   ], STEP_AT[next.kind] == null ? -1 : STEP_AT[next.kind]));
 
-  /* ── 坑道口：招牌 ── */
-  H.push('<div class="tunnel ' + light.key + '">');
-  H.push('<div class="tunnel-top">');
-  H.push(pxTag(sign.px, sign.pal, 'sign'));
-  H.push('<div class="sign-txt"><b>' + esc(t.project || '（還沒定）') + '</b>' +
-         '<span>' + esc(sign.name) + '　·　' + esc(sign.note) + '</span></div>');
-  H.push('<div class="depth"><span>深度</span><b>' + (depth * WORLD.depthPerMilestone) + ' m</b>' +
-         '<span>走完 ' + depth + ' 個里程碑</span></div>');
-  H.push('</div>');
-
-  /* ── 走廊 ── */
-  H.push(corridor(t, next, st));
-  H.push('</div>');
+  /* ── 坑道本身。招牌、深度、走廊、魔物全在裡面（見 61-scene.js） ── */
+  H.push(scene(t, next.row, st));
+  H.push(sceneCap(t, next, st));
 
   /* ── 唯一的動作 ── */
   H.push(actionCard(t, next, st));
@@ -2574,15 +3010,15 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
-  /* ── 裝備架 ── */
-  var gs = gearsOf(t.teamId);
-  if (gs.length) {
-    H.push('<div class="card"><div class="eyebrow">你挑走的</div><div class="gear-row">');
-    gs.forEach(function (g) {
-      var d = RULES.gearOf(g.key);
-      if (d) H.push('<span class="gear" title="' + esc(d.why) + '">' + d.icon + '<i>' + esc(d.name) + '</i></span>');
-    });
-    H.push('</div></div>');
+  /* ── 帶在身上的那一句 ── */
+  var carry = carriedGear(t.teamId);
+  if (carry) {
+    H.push('<div class="card carry">');
+    H.push('<div class="eyebrow">你帶在身上的</div>');
+    H.push('<div class="carry-in"><b>' + carry.icon + '</b><div><i>' +
+      esc(carry.name) + '</i><em>' + esc(carry.why) + '</em></div></div>');
+    H.push(btn('看裝備架', 'go:pack', 'ghost'));
+    H.push('</div>');
   }
 
   /* ── 招牌 ── */
@@ -2618,42 +3054,21 @@ function accSay(a) {
   return '準的次數最多。你的時間體感正在成形。';
 }
 
-/* ---------- 迷霧走廊 ----------
-   長度＝承諾的天數。推進一次前進一格。走過的格子霧散了，沒走的還蓋著。 */
-function corridor(t, next, st) {
+/* ---------- 場景底下那一行 ----------
+   走廊自己不寫字（寫了就變回圖表）。要講的數字放在它底下。 */
+function sceneCap(t, next, st) {
   var row = next.row;
-  if (!row || !row.run.runId) {
-    return '<div class="corr empty">霧還沒散開。老師派了新的里程碑，' +
-           '先決定你要花幾天。</div>';
+  if (!row || !row.run || !row.run.runId) {
+    return '<p class="scn-cap">走廊還是暗的。老師派了里程碑，先決定你要花幾天，' +
+           '火把才點得起來。</p>';
   }
-  var run = row.run, est = run.est || 1;
-  var at = run.pushes;
-  var H = ['<div class="corr">'];
-
-  /* 角色 */
-  var pose = st.level >= 2 ? HERO.sleep : (next.kind === 'push' ? HERO.idle : HERO.idle);
-  H.push('<div class="hero">' + pxTag(pose, HERO.pal, 'ch') +
-         (st.level === 1 ? pxTag(VINE.px, VINE.pal, 'vine') : '') + '</div>');
-
-  /* 格子 */
-  H.push('<div class="cells">');
-  for (var i = 0; i < est; i++) {
-    var on = i < at;
-    H.push('<span class="cell' + (on ? ' on' : '') + (i === at ? ' here' : '') + '"></span>');
-  }
-  H.push('</div>');
-
-  /* 魔物 */
-  var mob = mobFor(row.ms.msId, t.teamId);
-  var pal = DEPTH_PAL[Math.min(3, depthOf(t.teamId))];
-  H.push('<div class="mob">' + pxTag(mob.px, pal, 'ch') +
-         '<span>' + esc(mob.n) + '</span></div>');
-  H.push('</div>');
-
-  H.push('<div class="corr-note">' +
-    esc(row.ms.title) + '　·　你承諾 ' + est + ' 天，已推進 ' + at + ' 天' +
-    '</div>');
-  return H.join('');
+  var run = row.run;
+  var open = run.state === 'running' ? openDays(t.teamId, run.runId) : [];
+  return '<p class="scn-cap">你自己承諾 <b>' + run.est + '</b> 天，已經來過 <b>' +
+    run.pushes + '</b> 天。' +
+    (st.level ? '　·　' + esc(RULES.stallSay(st.level, st.days)) : '') +
+    (open.length ? '　·　' + open.map(function (o) { return o.label; }).join('、') +
+      '那一盞還沒點' : '') + '</p>';
 }
 
 /* 哪一組遇到哪一隻：任務 ＋ 組算出來，全班同一個里程碑不是同一隻 */
@@ -2669,9 +3084,9 @@ function actionCard(t, next, st) {
   if (next.kind === 'wake') {
     H.push('<div class="eyebrow">' + esc(WORLD.light[st.level].label) + '</div>');
     H.push('<h2>' + esc(RULES.stallSay(st.level, st.days)) + '</h2>');
-    H.push('<p class="dim">這裡只是把「停下來了」畫出來，沒有別的後果。' +
-           '推一下就回來了。</p>');
-    H.push(btn('推進', 'push:' + row.run.runId, 'big'));
+    H.push('<p class="dim">這裡只是把「停下來了」畫出來，沒有別的後果——' +
+           '沒有扣任何東西，也沒有人被通知。點一個下面的圖示，火就回來了。</p>');
+    H.push(doingRow(row.run.runId));
 
   } else if (next.kind === 'commit') {
     H.push('<div class="eyebrow">新的里程碑</div>');
@@ -2681,14 +3096,7 @@ function actionCard(t, next, st) {
     H.push(btn('決定天數', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'push') {
-    H.push('<div class="eyebrow">今天　·　' + esc(row.ms.title) + '</div>');
-    H.push('<h2>今天去動它一下，然後按這顆鍵。</h2>');
-    H.push('<p class="dim">不用交東西，也不用寫字。按下去就算今天動過了——' +
-           '重點是不要停，不是一次做完。真的做完了就按旁邊那顆。</p>');
-    H.push('<div class="row">');
-    H.push(btn('推進', 'push:' + row.run.runId, 'big'));
-    H.push(btn('提早做完了', 'go:submit:' + row.run.runId, 'ghost'));
-    H.push('</div>');
+    H.push(doingCard(t, row, '今天'));
 
   } else if (next.kind === 'submit') {
     H.push('<div class="eyebrow">走到終點了</div>');
@@ -2713,10 +3121,13 @@ function actionCard(t, next, st) {
     H.push(btn('去挑', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'waiting') {
-    H.push('<div class="eyebrow">今天推過了</div>');
-    H.push('<h2>明天再來一次。</h2>');
-    H.push('<p class="dim">一天一格。推進是每天的打卡，不是工作的單位——' +
+    var open2 = openDays(t.teamId, row.run.runId);
+    H.push('<div class="eyebrow">今天那一盞點好了</div>');
+    H.push('<h2>' + (open2.length ? '還有沒點的那幾盞。' : '明天再來一次。') + '</h2>');
+    H.push('<p class="dim">一天一盞。這是每天的紀錄，不是工作的單位——' +
            '真的做完了是你說了算，隨時交得出去。</p>');
+    if (open2.length) H.push(backRow(open2));
+    if (DRAFT.back) H.push(doingRow(row.run.runId));
     H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
 
   } else if (next.kind === 'review') {
@@ -2734,6 +3145,74 @@ function actionCard(t, next, st) {
   return H.join('');
 }
 
+/* ---------- 今天動的是哪一塊 ----------
+
+   這一排就是推進鍵本身。點任何一個都算今天來過了，所以還是一下點擊——
+   跟原本那一顆「推進」一樣，只是那一下開始帶意義：走廊上會留下這個圖示。
+
+   刻意沒有「什麼都沒做」那一格。這一排問的是動了什麼，
+   沒動的人本來就不會來按——給他一個按鈕承認自己沒動，那是罰站。 */
+function doingRow(runId) {
+  var H = ['<div class="tags big doing-row">'];
+  RULES.DOING.forEach(function (d) {
+    H.push('<button class="tag" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'push:' + runId + '|' + d.key })) + '\'>' +
+      '<b>' + d.icon + '</b><i>' + esc(d.label) + '</i><em>' + esc(d.hint) + '</em></button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 補登。忘了按的那幾天列在這裡——忘一天就再也補不回來的話，
+   人會把整條走廊一起放掉。 */
+function backRow(open) {
+  var H = ['<div class="tags"><span class="k">忘了按？</span>'];
+  open.forEach(function (o) {
+    H.push('<button class="tag' + (Number(DRAFT.back) === o.back ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'back:' + o.back })) +
+      '\'>' + esc(o.label) + '有動</button>');
+  });
+  if (DRAFT.back) {
+    H.push('<button class="tag" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'back:0' })) + '\'>算了</button>');
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 推進那一整張卡 */
+function doingCard(t, row, whenWord) {
+  var open = openDays(t.teamId, row.run.runId);
+  var b = Number(DRAFT.back || 0);
+  var word = b ? (b === 1 ? '昨天' : '前天') : whenWord;
+  var H = [];
+  H.push('<div class="eyebrow">' + esc(word) + '　·　' + esc(row.ms.title) + '</div>');
+  H.push('<h2>' + esc(word) + '動的是哪一塊？</h2>');
+  H.push('<p class="dim">點一個就算來過了——那一下就是推進，不用再按第二顆。' +
+         '走廊上會留下這個圖示，七天之後回頭看得出你這一趟長什麼樣。</p>');
+  H.push(doingRow(row.run.runId));
+  if (open.length) H.push(backRow(open));
+  H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
+  return H.join('');
+}
+
+/* 這一趟每天做的事，湊出來的一句話。不是評語，是給下一次估天數用的線索。 */
+function doingSay(n, total) {
+  var think = (n.look || 0) + (n.plan || 0);
+  var hands = (n.make || 0) + (n.redo || 0);
+  if (!total) return '';
+  if ((n.redo || 0) * 2 >= total) {
+    return '大半的日子在改。改很難估——下一次留一段時間專門給它，不要算在做的那幾天裡。';
+  }
+  if (think > hands) {
+    return '查跟想佔掉大半。那幾天是真的在做事，只是估天數的時候最容易被漏掉。';
+  }
+  if ((n.talk || 0) >= 2) {
+    return '有好幾天在跟人談。約人這件事排不進自己的行事曆——下一次先把它算進去。';
+  }
+  return '大半的日子真的動到手上的東西。你的時間大致花在你以為的地方。';
+}
+
 /* ---------- 承諾：滑桿 ＋ 風險標籤 ---------- */
 PAGES.commit = function () {
   var t = myTeam();
@@ -2743,6 +3222,17 @@ PAGES.commit = function () {
   var risks = DRAFT.risks || [];
 
   var H = [head('自我承諾', m.title, m.note)];
+
+  /* 上一次自己挑走的那一句。這是裝備唯一的用途，而且是真的有用：
+     它不是系統的建議，是他上一次寫給這一刻的自己看的。 */
+  var carry = carriedGear(t.teamId);
+  if (carry) {
+    H.push('<div class="card carry">');
+    H.push('<div class="eyebrow">你上一次挑走的那一句</div>');
+    H.push('<div class="carry-in"><b>' + carry.icon + '</b><div><i>' +
+      esc(carry.name) + '</i><em>' + esc(carry.why) + '</em></div></div>');
+    H.push('</div>');
+  }
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你打算花幾天</div>');
@@ -2845,6 +3335,23 @@ PAGES.camp = function () {
   });
   H.push('</div></div>');
 
+  /* 這一趟每天做的。這是估不準的線索，不是評語。 */
+  var ds = doingOfRun(r.runId);
+  if (ds.length) {
+    var n = {};
+    ds.forEach(function (k) { n[k] = (n[k] || 0) + 1; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">這一趟你每天做的</div>');
+    H.push('<div class="tags small">');
+    RULES.DOING.forEach(function (d) {
+      if (n[d.key]) H.push('<span class="tag static">' + d.icon + ' ' +
+        esc(d.label) + ' × ' + n[d.key] + '</span>');
+    });
+    H.push('</div>');
+    H.push('<p class="dim">' + esc(doingSay(n, ds.length)) + '</p>');
+    H.push('</div>');
+  }
+
   /* 當初標的風險有沒有中 */
   if (r.risks && r.risks.length) {
     var hit = r.risks.filter(function (k) { return picked.indexOf(k) >= 0; });
@@ -2902,7 +3409,8 @@ PAGES.dash = function () {
   H.push('<h1>' + (g ? g.icon + ' ' + esc(g.name) : '裝備') + ' 到手</h1>');
   if (g) H.push('<p class="lead">' + esc(g.why) + '</p>');
   if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
-  H.push('<p class="dim">深度 ' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m。</p>');
+  H.push('<p class="dim">深度 ' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m。' +
+    '　下一次決定要花幾天的時候，這句話會出現在那一頁。</p>');
   H.push('</div>');
   H.push(btn('回坑道', 'go:home', 'big'));
   return H.join('');
@@ -2923,6 +3431,15 @@ PAGES.log = function () {
     H.push('<div class="log-head"><b>' + esc(x.ms.title) + '</b>' +
            '<span class="st ' + r.stamp + '">' + s.mark + ' ' + esc(s.name) + '</span></div>');
     H.push('<div class="log-num">承諾 <b>' + r.est + '</b> 天　·　實際 <b>' + r.actual + '</b> 天</div>');
+    var seq = doingOfRun(r.runId);
+    if (seq.length) {
+      H.push('<div class="seq">');
+      seq.forEach(function (k) {
+        var d = RULES.doingOf(k);
+        H.push('<span title="' + esc(d ? d.label : '') + '">' + (d ? d.icon : '⛏️') + '</span>');
+      });
+      H.push('</div>');
+    }
     if (r.snags && r.snags.length) {
       H.push('<div class="tags small">');
       r.snags.forEach(function (k) {
@@ -2936,6 +3453,208 @@ PAGES.log = function () {
   });
   return H.join('');
 };
+
+
+/* ===== 61-scene.js ===== */
+/* 坑道的場景。
+
+   之前這裡是一條進度條：角色 → 幾個方格 → 魔物。它讀得懂，但它是圖表。
+   這一支把它改成一個地方——有洞口、有天花板、有地板、有石頭、有火把，
+   角色站在裡面而不是站在旁邊。
+
+   幾件事是有意義的，不是裝飾：
+
+     火把    一天一盞。推進幾次，走廊就亮幾盞——「你來過幾次」畫出來的樣子。
+     腳印    走過的每一格留一個。走廊上唯一的歷史，而且它不算分。
+     迷霧    從你站的地方往前蓋住。往前走一格，霧就退一格。
+     魔物    藏在霧裡，越靠近越清楚。它不是敵人，是這一趟要交的東西。
+
+   還有一件事是刻意不做的：走廊上沒有任何「你應該走到哪」的記號。
+   沒有基準線，就沒有落後這回事。 */
+
+var SCN = {
+  TILE: 44,     /* 一天一格 */
+  ENT: 132,     /* 洞口那一段 */
+  END: 154,     /* 魔物站的那一段 */
+  H: 286,       /* 場景高 */
+  FLOOR: 66     /* 地板上緣離底部多高——站在地上的東西都用這個 */
+};
+
+/* 一條走廊。
+
+     t     這一組
+     row   現在在跑的那一個 run（可能沒有）
+     st    停滯狀態 */
+function scene(t, row, st) {
+  var run = row && row.run;
+  var est = run ? (run.est || 1) : 4;
+  var at = run ? Math.min(run.pushes, est) : 0;
+  var done = run && run.state !== 'running';
+  var walked = done ? est : at;
+  var seed = t.teamId + (run ? '|' + run.runId : '');
+  /* 每一格頭上掛的是那一天做了什麼。走廊因此讀得出形狀——
+     七格全是 🔍 跟七格全是 🛠️ 是完全不同的一趟。 */
+  var did = run ? doingOfRun(run.runId) : [];
+  var light = WORLD.light[st.level];
+  var W = SCN.ENT + est * SCN.TILE + SCN.END;
+
+  var H = ['<div class="scn ' + light.key + '">'];
+
+  /* 固定在角落的深度。走廊往旁邊捲，它不跟著捲——
+     那是「你在多深的地方」，不是走廊上的一個位置。 */
+  H.push('<div class="scn-hud">' +
+    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
+    '<span>走完 ' + depthOf(t.teamId) + ' 個里程碑</span></div>');
+
+  H.push('<div class="scn-scroll"><div class="scn-in" style="width:' + W + 'px">');
+
+  /* ── 天花板：鐘乳石 ── */
+  for (var d = 0; d < Math.ceil(W / 44); d++) {
+    var dp = dripFor(seed, d);
+    if (!dp) continue;
+    H.push('<span class="drip" style="left:' + (d * 44 + dp.off) + 'px">' +
+      pxTag(dp.px, DRIP.pal, '') + '</span>');
+  }
+
+  /* ── 洞口 ── */
+  H.push(sceneMouth(t));
+
+  /* ── 地板 ── */
+  H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
+  /* 走過的那一段地板是挖開的，亮一階 */
+  if (walked > 0) {
+    H.push('<div class="floor lit" style="left:' + SCN.ENT + 'px;width:' +
+      (walked * SCN.TILE) + 'px"></div>');
+  }
+
+  /* ── 一天一格 ── */
+  for (var i = 0; i < est; i++) {
+    var x = SCN.ENT + i * SCN.TILE;
+    var on = i < walked;
+
+    /* 火把：走過的那幾格點著 */
+    H.push(torchAt(x + 6, on, i));
+
+    /* 腳印 */
+    if (on) H.push('<img class="px foot" style="left:' + (x + 11) + 'px" src="' +
+      pxSvg(STEP_PX.px, STEP_PX.pal, false) + '" alt="">');
+
+    /* 那一天做了什麼 */
+    if (on && did[i]) {
+      var dd = RULES.doingOf(did[i]);
+      if (dd) H.push('<span class="doing" style="left:' + x + 'px" title="' +
+        esc(dd.label) + '">' + dd.icon + '</span>');
+    }
+
+    /* 第幾天 */
+    H.push('<span class="dayn' + (i === walked ? ' here' : (on ? ' past' : '')) +
+      '" style="left:' + x + 'px">' + (i + 1) + '</span>');
+
+    /* 挖開的地方才長得出東西 */
+    if (on) {
+      var p = propFor(seed, i);
+      if (p === 'rubble') H.push('<img class="px prop rubble" style="left:' + (x + 5) +
+        'px" src="' + pxSvg(RUBBLE.px, RUBBLE.pal, false) + '" alt="">');
+      if (p === 'crystal') H.push('<img class="px prop cry" style="left:' + (x + 22) +
+        'px" src="' + pxSvg(CRYSTAL.px, CRYSTAL.pal, false) + '" alt="">');
+      if (p === 'shroom') H.push('<img class="px prop shr" style="left:' + (x + 22) +
+        'px" src="' + pxSvg(SHROOM.px, SHROOM.pal, false) + '" alt="">');
+    }
+  }
+
+  /* ── 魔物 ── */
+  if (run) H.push(sceneMob(t, row, walked / est));
+
+  /* ── 角色 ── */
+  var pose = st.level >= 2 ? HERO.sleep : HERO.idle;
+  var hx = SCN.ENT + walked * SCN.TILE - 11;
+  H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
+    '" style="left:' + hx + 'px">');
+  H.push(pxTag(pose, HERO.pal, 'ch'));
+  if (st.level === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine'));
+  H.push('</div>');
+
+  /* 角色手上那一盞的光。一圈一圈地暗下去，不是模糊的漸層——
+     模糊的話它會立刻看起來像貼在像素圖上面的現代特效。 */
+  H.push('<div class="halo" style="left:' + (hx - 121) + 'px"></div>');
+
+  /* ── 霧 ──
+     從站的地方往前蓋住。它蓋的是「還沒走的那幾天」，
+     所以往前一格霧就退一格。 */
+  var fogAt = SCN.ENT + (walked + 1) * SCN.TILE;
+  if (fogAt < W) {
+    H.push('<div class="fog" style="left:' + fogAt + 'px"></div>');
+  }
+
+  H.push('</div></div>');   /* scn-in / scn-scroll */
+  H.push('</div>');         /* scn */
+  return H.join('');
+}
+
+/* ---------- 洞口 ----------
+   左邊是你進來的地方：拱門、從上面落下來的光、掛著的招牌。
+   招牌就在這裡，不在標題列——它是坑道口的看板，不是頁首。 */
+function sceneMouth(t) {
+  var sg = signOf(t.teamId);
+  var H = ['<div class="mouth" style="width:' + SCN.ENT + 'px">'];
+  H.push('<div class="shaft"></div>');
+  H.push('<div class="arch"></div>');
+  H.push('<div class="hang">');
+  H.push('<div class="chain"></div>');
+  H.push(pxTag(sg.px, sg.pal, 'sign'));
+  H.push('</div>');
+  H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b>' +
+    '<span>' + esc(sg.name) + '</span></div>');
+  H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 魔物 ----------
+   站在走廊盡頭。清楚到什麼程度跟你走了多少有關——
+   剛出發的時候只看得到一團影子，走到底才看得清牠長什麼樣。 */
+function sceneMob(t, row, prog) {
+  var mob = mobFor(row.ms.msId, t.teamId);
+  var pal = DEPTH_PAL[Math.min(3, depthOf(t.teamId))];
+  var x = SCN.ENT + (row.run.est || 1) * SCN.TILE + 33;
+  var H = [];
+  /* 任務牌不在魔物那一層——魔物要藏在霧裡，要交什麼不可以。 */
+  H.push('<div class="goal" style="left:' + x + 'px">' + esc(row.ms.title) + '</div>');
+  H.push('<div class="scn-mob" style="left:' + x + 'px;opacity:' +
+    (0.40 + 0.60 * prog).toFixed(2) + '">');
+  H.push(pxTag(mob.px, pal, 'ch'));
+  H.push('<span class="mobn">' + esc(mob.n) + '</span>');
+  H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 火把 ----------
+   三幀真的換圖，不是用 CSS 做出來的「像火」。每一盞的速度差一點點，
+   不然一整排會一起眨眼，那看起來像壞掉的燈管不像火。 */
+function torchAt(x, lit, i) {
+  if (!lit) {
+    return '<img class="px tor dead" style="left:' + x + 'px" src="' +
+      pxSvg(TORCH.dead, TORCH.deadPal, false) + '" alt="">';
+  }
+  var ms = [300, 360, 420, 340][hash('t' + i) % 4];
+  var H = ['<span class="tor" style="left:' + x + 'px;--fd:' + ms + 'ms">'];
+  TORCH.frames.forEach(function (f, n) {
+    H.push('<img class="px f f' + n + '" src="' + pxSvg(f, TORCH.pal, false) + '" alt="">');
+  });
+  H.push('</span>');
+  return H.join('');
+}
+
+/* 重畫之後把角色捲進畫面裡。
+
+   走廊比視窗長的時候，重畫預設會回到最左邊——那樣按了推進之後，
+   會看到走廊動了但看不到自己動。這一支讓鏡頭跟著人走。 */
+function scrollScene() {
+  var box = document.querySelector('.scn-scroll');
+  var hero = document.querySelector('.scn-hero');
+  if (!box || !hero) return;
+  var want = hero.offsetLeft + hero.offsetWidth / 2 - box.clientWidth / 2;
+  box.scrollLeft = Math.max(0, want);
+}
 
 
 /* ===== 62-eco.js ===== */
@@ -3117,6 +3836,101 @@ PAGES.classeco = function () {
     }
     H.push('</div>');
   });
+  return H.join('');
+};
+
+
+/* ===== 63-pack.js ===== */
+/* 裝備架。
+
+   先講裝備到底是什麼，因為這件事很容易做歪。
+
+   它不是道具。它不加速、不擋失準、不換任何東西——一旦裝備能換到好處，
+   學生就會為了那個好處做事，而那正是這個作品要避免的事。
+
+   它是一句話。老師勾了可以之後，系統攤開三件（隨機，跟表現無關），
+   學生挑一件。挑的那一下他其實是在說：「這一次我想記住的是這句。」
+
+   所以它的用途只有一個，而且是真的有用：
+
+     下一次拉滑桿決定要花幾天的時候，他自己挑的那句話會出現在那一頁。
+
+   那不是系統在給建議，是他自己寫給下一次的自己看的。這一頁就是那些
+   句子放在一起的地方。
+
+   還有一件事是刻意的：六件全部列出來，沒拿到的那幾件句子照樣讀得到，
+   而且不寫「幾件收集完成」。寫了就變成收集進度，那一秒它又變回一個
+   要被填滿的條。 */
+
+/* 最近挑走的那一件。它就是「帶在身上的」。 */
+function carriedGear(teamId) {
+  var gs = gearsOf(teamId);
+  if (!gs.length) return null;
+  return RULES.gearOf(gs[gs.length - 1].key);
+}
+
+/* 這一組每一件各挑過幾次、分別是哪一趟 */
+function gearTally(teamId) {
+  var n = {};
+  gearsOf(teamId).forEach(function (g) {
+    var r = find('Runs', function (x) { return x.runId === g.runId; });
+    var m = r ? msOf(r.msId) : null;
+    (n[g.key] = n[g.key] || []).push(m ? m.title : '');
+  });
+  return n;
+}
+
+PAGES.pack = function () {
+  var t = myTeam();
+  var tally = gearTally(t.teamId);
+  var carry = carriedGear(t.teamId);
+
+  var H = [head('裝備架', '你挑走的那些話',
+    '裝備不換任何東西——它不加速，也擋不了失準。它是一句你自己選要記住的話。' +
+    '下一次決定要花幾天的時候，你帶在身上的那一句會出現在那一頁。')];
+
+  /* 帶在身上的 */
+  H.push('<div class="card carry">');
+  H.push('<div class="eyebrow">帶在身上的</div>');
+  if (carry) {
+    H.push('<div class="carry-in">');
+    H.push('<b>' + carry.icon + '</b>');
+    H.push('<div><i>' + esc(carry.name) + '</i>' +
+      '<em>' + esc(carry.why) + '</em></div>');
+    H.push('</div>');
+    H.push('<p class="dim">下一次拉滑桿決定天數的時候，這句話會出現在那一頁。' +
+           '挑走新的一件就換成新的那一句。</p>');
+  } else {
+    H.push('<p class="dim">還沒有。走完一個里程碑、老師勾了可以之後，' +
+           '會攤開三件讓你挑一件。</p>');
+  }
+  H.push('</div>');
+
+  /* 架上全部 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">架上</div>');
+  H.push('<p class="dim">六件都在這裡。攤開哪三件是隨機的，跟你做得如何無關——' +
+         '所以沒拿到的那幾件不代表任何事，句子也照樣讀得到。</p>');
+  H.push('<div class="shelf">');
+  RULES.GEARS.forEach(function (g) {
+    var got = tally[g.key];
+    H.push('<div class="slot' + (got ? ' got' : '') +
+      (carry && carry.key === g.key ? ' on' : '') + '">');
+    H.push('<b>' + g.icon + '</b>');
+    H.push('<i>' + esc(g.name) + (got && got.length > 1 ? ' × ' + got.length : '') + '</i>');
+    H.push('<em>' + esc(g.why) + '</em>');
+    if (got) {
+      H.push('<span class="from">' + got.map(function (x) {
+        return esc(x || '（那一趟）');
+      }).join('　·　') + '</span>');
+    } else {
+      H.push('<span class="from dim">還沒挑到這一件</span>');
+    }
+    H.push('</div>');
+  });
+  H.push('</div></div>');
+
+  H.push(btn('回坑道', 'go:home', 'ghost'));
   return H.join('');
 };
 

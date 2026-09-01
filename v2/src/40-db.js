@@ -232,15 +232,71 @@ function actCommit(teamId, msId, est, risks) {
 }
 
 /* 推進：一天一次。回傳有沒有真的推到。 */
-function actPush(teamId, runId) {
+/* 推進。
+
+     kind  今天動的是哪一塊（RULES.DOING 的 key）
+     back  補登幾天前。0 是今天，1 是昨天，最多到 2。
+
+   補登這件事看起來像作弊，其實相反：實際天數是從承諾那天到交出去
+   那天算的，補登一格不會讓誰早一天完成，也不會改判定。它唯一改變的
+   是走廊上少不少一盞燈——而「忘了按一天就再也補不回來」正是
+   讓人整條放棄的那個崖。 */
+function actPush(teamId, runId, kind, back) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return false;
-  if (pushedToday(teamId, runId)) return false;
-  DB.Pushes.push({ pushId: nid('P'), teamId: teamId, runId: runId, day: dayOf(now()), at: now() });
+  var b = Math.max(0, Math.min(RULES.BACKFILL_MAX, Number(back) || 0));
+  var when = now() - b * DAY;
+  if (when < r.committedAt) return false;      /* 承諾之前的日子不算 */
+  if (pushedOn(teamId, runId, dayOf(when))) return false;
+  DB.Pushes.push({
+    pushId: nid('P'), teamId: teamId, runId: runId,
+    day: dayOf(when), at: when, kind: kind || 'any', back: b
+  });
   r.pushes++;
   save();
-  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes });
+  logEvent('push', { teamId: teamId, runId: runId, n: r.pushes, kind: kind || 'any', back: b });
   return true;
+}
+
+/* 這一個 run 在某一天推過了沒 */
+function pushedOn(teamId, runId, day) {
+  return !!find('Pushes', function (p) { return p.runId === runId && p.day === day; });
+}
+
+/* 最近幾天裡，哪幾天還沒按。回傳 [{back, label}]，只看承諾之後的日子。 */
+function openDays(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return [];
+  var out = [];
+  for (var b = 1; b <= RULES.BACKFILL_MAX; b++) {
+    var when = now() - b * DAY;
+    if (when < r.committedAt) break;
+    if (!pushedOn(teamId, runId, dayOf(when))) {
+      out.push({ back: b, label: b === 1 ? '昨天' : '前天' });
+    }
+  }
+  return out;
+}
+
+/* 這一趟每一天動的是哪一塊，照時間排 */
+function doingOfRun(runId) {
+  return where('Pushes', function (p) { return p.runId === runId; })
+    .sort(function (a, b) { return a.day - b.day; })
+    .map(function (p) { return p.kind || 'any'; });
+}
+
+/* 今天班上有幾條坑道也動過。
+   這不是名次——它不排序、不比大小，只回答「今天只有我一個人在下面嗎」。 */
+function todayMovers(classId, exceptTeam) {
+  var day = dayOf(now());
+  var seen = {};
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    if (t.teamId === exceptTeam) return;
+    if (find('Pushes', function (p) { return p.teamId === t.teamId && p.day === day; })) {
+      seen[t.teamId] = 1;
+    }
+  });
+  return Object.keys(seen).length;
 }
 
 /* 上傳：走到終點之後交出去。判定就在這一刻。 */

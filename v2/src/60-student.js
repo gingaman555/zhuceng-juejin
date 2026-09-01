@@ -11,10 +11,7 @@ PAGES.home = function () {
   var t = myTeam();
   var next = nextThing(t.teamId);
   var st = stallOf(t.teamId);
-  var sign = signOf(t.teamId);
-  var depth = depthOf(t.teamId);
   var acc = accuracyOf(t.teamId);
-  var light = WORLD.light[st.level];
 
   var H = [];
 
@@ -26,19 +23,9 @@ PAGES.home = function () {
     ['挑裝備', '三選一，你自己挑']
   ], STEP_AT[next.kind] == null ? -1 : STEP_AT[next.kind]));
 
-  /* ── 坑道口：招牌 ── */
-  H.push('<div class="tunnel ' + light.key + '">');
-  H.push('<div class="tunnel-top">');
-  H.push(pxTag(sign.px, sign.pal, 'sign'));
-  H.push('<div class="sign-txt"><b>' + esc(t.project || '（還沒定）') + '</b>' +
-         '<span>' + esc(sign.name) + '　·　' + esc(sign.note) + '</span></div>');
-  H.push('<div class="depth"><span>深度</span><b>' + (depth * WORLD.depthPerMilestone) + ' m</b>' +
-         '<span>走完 ' + depth + ' 個里程碑</span></div>');
-  H.push('</div>');
-
-  /* ── 走廊 ── */
-  H.push(corridor(t, next, st));
-  H.push('</div>');
+  /* ── 坑道本身。招牌、深度、走廊、魔物全在裡面（見 61-scene.js） ── */
+  H.push(scene(t, next.row, st));
+  H.push(sceneCap(t, next, st));
 
   /* ── 唯一的動作 ── */
   H.push(actionCard(t, next, st));
@@ -57,15 +44,15 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
-  /* ── 裝備架 ── */
-  var gs = gearsOf(t.teamId);
-  if (gs.length) {
-    H.push('<div class="card"><div class="eyebrow">你挑走的</div><div class="gear-row">');
-    gs.forEach(function (g) {
-      var d = RULES.gearOf(g.key);
-      if (d) H.push('<span class="gear" title="' + esc(d.why) + '">' + d.icon + '<i>' + esc(d.name) + '</i></span>');
-    });
-    H.push('</div></div>');
+  /* ── 帶在身上的那一句 ── */
+  var carry = carriedGear(t.teamId);
+  if (carry) {
+    H.push('<div class="card carry">');
+    H.push('<div class="eyebrow">你帶在身上的</div>');
+    H.push('<div class="carry-in"><b>' + carry.icon + '</b><div><i>' +
+      esc(carry.name) + '</i><em>' + esc(carry.why) + '</em></div></div>');
+    H.push(btn('看裝備架', 'go:pack', 'ghost'));
+    H.push('</div>');
   }
 
   /* ── 招牌 ── */
@@ -101,42 +88,21 @@ function accSay(a) {
   return '準的次數最多。你的時間體感正在成形。';
 }
 
-/* ---------- 迷霧走廊 ----------
-   長度＝承諾的天數。推進一次前進一格。走過的格子霧散了，沒走的還蓋著。 */
-function corridor(t, next, st) {
+/* ---------- 場景底下那一行 ----------
+   走廊自己不寫字（寫了就變回圖表）。要講的數字放在它底下。 */
+function sceneCap(t, next, st) {
   var row = next.row;
-  if (!row || !row.run.runId) {
-    return '<div class="corr empty">霧還沒散開。老師派了新的里程碑，' +
-           '先決定你要花幾天。</div>';
+  if (!row || !row.run || !row.run.runId) {
+    return '<p class="scn-cap">走廊還是暗的。老師派了里程碑，先決定你要花幾天，' +
+           '火把才點得起來。</p>';
   }
-  var run = row.run, est = run.est || 1;
-  var at = run.pushes;
-  var H = ['<div class="corr">'];
-
-  /* 角色 */
-  var pose = st.level >= 2 ? HERO.sleep : (next.kind === 'push' ? HERO.idle : HERO.idle);
-  H.push('<div class="hero">' + pxTag(pose, HERO.pal, 'ch') +
-         (st.level === 1 ? pxTag(VINE.px, VINE.pal, 'vine') : '') + '</div>');
-
-  /* 格子 */
-  H.push('<div class="cells">');
-  for (var i = 0; i < est; i++) {
-    var on = i < at;
-    H.push('<span class="cell' + (on ? ' on' : '') + (i === at ? ' here' : '') + '"></span>');
-  }
-  H.push('</div>');
-
-  /* 魔物 */
-  var mob = mobFor(row.ms.msId, t.teamId);
-  var pal = DEPTH_PAL[Math.min(3, depthOf(t.teamId))];
-  H.push('<div class="mob">' + pxTag(mob.px, pal, 'ch') +
-         '<span>' + esc(mob.n) + '</span></div>');
-  H.push('</div>');
-
-  H.push('<div class="corr-note">' +
-    esc(row.ms.title) + '　·　你承諾 ' + est + ' 天，已推進 ' + at + ' 天' +
-    '</div>');
-  return H.join('');
+  var run = row.run;
+  var open = run.state === 'running' ? openDays(t.teamId, run.runId) : [];
+  return '<p class="scn-cap">你自己承諾 <b>' + run.est + '</b> 天，已經來過 <b>' +
+    run.pushes + '</b> 天。' +
+    (st.level ? '　·　' + esc(RULES.stallSay(st.level, st.days)) : '') +
+    (open.length ? '　·　' + open.map(function (o) { return o.label; }).join('、') +
+      '那一盞還沒點' : '') + '</p>';
 }
 
 /* 哪一組遇到哪一隻：任務 ＋ 組算出來，全班同一個里程碑不是同一隻 */
@@ -152,9 +118,9 @@ function actionCard(t, next, st) {
   if (next.kind === 'wake') {
     H.push('<div class="eyebrow">' + esc(WORLD.light[st.level].label) + '</div>');
     H.push('<h2>' + esc(RULES.stallSay(st.level, st.days)) + '</h2>');
-    H.push('<p class="dim">這裡只是把「停下來了」畫出來，沒有別的後果。' +
-           '推一下就回來了。</p>');
-    H.push(btn('推進', 'push:' + row.run.runId, 'big'));
+    H.push('<p class="dim">這裡只是把「停下來了」畫出來，沒有別的後果——' +
+           '沒有扣任何東西，也沒有人被通知。點一個下面的圖示，火就回來了。</p>');
+    H.push(doingRow(row.run.runId));
 
   } else if (next.kind === 'commit') {
     H.push('<div class="eyebrow">新的里程碑</div>');
@@ -164,14 +130,7 @@ function actionCard(t, next, st) {
     H.push(btn('決定天數', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'push') {
-    H.push('<div class="eyebrow">今天　·　' + esc(row.ms.title) + '</div>');
-    H.push('<h2>今天去動它一下，然後按這顆鍵。</h2>');
-    H.push('<p class="dim">不用交東西，也不用寫字。按下去就算今天動過了——' +
-           '重點是不要停，不是一次做完。真的做完了就按旁邊那顆。</p>');
-    H.push('<div class="row">');
-    H.push(btn('推進', 'push:' + row.run.runId, 'big'));
-    H.push(btn('提早做完了', 'go:submit:' + row.run.runId, 'ghost'));
-    H.push('</div>');
+    H.push(doingCard(t, row, '今天'));
 
   } else if (next.kind === 'submit') {
     H.push('<div class="eyebrow">走到終點了</div>');
@@ -196,10 +155,13 @@ function actionCard(t, next, st) {
     H.push(btn('去挑', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'waiting') {
-    H.push('<div class="eyebrow">今天推過了</div>');
-    H.push('<h2>明天再來一次。</h2>');
-    H.push('<p class="dim">一天一格。推進是每天的打卡，不是工作的單位——' +
+    var open2 = openDays(t.teamId, row.run.runId);
+    H.push('<div class="eyebrow">今天那一盞點好了</div>');
+    H.push('<h2>' + (open2.length ? '還有沒點的那幾盞。' : '明天再來一次。') + '</h2>');
+    H.push('<p class="dim">一天一盞。這是每天的紀錄，不是工作的單位——' +
            '真的做完了是你說了算，隨時交得出去。</p>');
+    if (open2.length) H.push(backRow(open2));
+    if (DRAFT.back) H.push(doingRow(row.run.runId));
     H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
 
   } else if (next.kind === 'review') {
@@ -217,6 +179,74 @@ function actionCard(t, next, st) {
   return H.join('');
 }
 
+/* ---------- 今天動的是哪一塊 ----------
+
+   這一排就是推進鍵本身。點任何一個都算今天來過了，所以還是一下點擊——
+   跟原本那一顆「推進」一樣，只是那一下開始帶意義：走廊上會留下這個圖示。
+
+   刻意沒有「什麼都沒做」那一格。這一排問的是動了什麼，
+   沒動的人本來就不會來按——給他一個按鈕承認自己沒動，那是罰站。 */
+function doingRow(runId) {
+  var H = ['<div class="tags big doing-row">'];
+  RULES.DOING.forEach(function (d) {
+    H.push('<button class="tag" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'push:' + runId + '|' + d.key })) + '\'>' +
+      '<b>' + d.icon + '</b><i>' + esc(d.label) + '</i><em>' + esc(d.hint) + '</em></button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 補登。忘了按的那幾天列在這裡——忘一天就再也補不回來的話，
+   人會把整條走廊一起放掉。 */
+function backRow(open) {
+  var H = ['<div class="tags"><span class="k">忘了按？</span>'];
+  open.forEach(function (o) {
+    H.push('<button class="tag' + (Number(DRAFT.back) === o.back ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'back:' + o.back })) +
+      '\'>' + esc(o.label) + '有動</button>');
+  });
+  if (DRAFT.back) {
+    H.push('<button class="tag" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'back:0' })) + '\'>算了</button>');
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 推進那一整張卡 */
+function doingCard(t, row, whenWord) {
+  var open = openDays(t.teamId, row.run.runId);
+  var b = Number(DRAFT.back || 0);
+  var word = b ? (b === 1 ? '昨天' : '前天') : whenWord;
+  var H = [];
+  H.push('<div class="eyebrow">' + esc(word) + '　·　' + esc(row.ms.title) + '</div>');
+  H.push('<h2>' + esc(word) + '動的是哪一塊？</h2>');
+  H.push('<p class="dim">點一個就算來過了——那一下就是推進，不用再按第二顆。' +
+         '走廊上會留下這個圖示，七天之後回頭看得出你這一趟長什麼樣。</p>');
+  H.push(doingRow(row.run.runId));
+  if (open.length) H.push(backRow(open));
+  H.push(btn('提早做完了，現在就交', 'go:submit:' + row.run.runId, 'ghost'));
+  return H.join('');
+}
+
+/* 這一趟每天做的事，湊出來的一句話。不是評語，是給下一次估天數用的線索。 */
+function doingSay(n, total) {
+  var think = (n.look || 0) + (n.plan || 0);
+  var hands = (n.make || 0) + (n.redo || 0);
+  if (!total) return '';
+  if ((n.redo || 0) * 2 >= total) {
+    return '大半的日子在改。改很難估——下一次留一段時間專門給它，不要算在做的那幾天裡。';
+  }
+  if (think > hands) {
+    return '查跟想佔掉大半。那幾天是真的在做事，只是估天數的時候最容易被漏掉。';
+  }
+  if ((n.talk || 0) >= 2) {
+    return '有好幾天在跟人談。約人這件事排不進自己的行事曆——下一次先把它算進去。';
+  }
+  return '大半的日子真的動到手上的東西。你的時間大致花在你以為的地方。';
+}
+
 /* ---------- 承諾：滑桿 ＋ 風險標籤 ---------- */
 PAGES.commit = function () {
   var t = myTeam();
@@ -226,6 +256,17 @@ PAGES.commit = function () {
   var risks = DRAFT.risks || [];
 
   var H = [head('自我承諾', m.title, m.note)];
+
+  /* 上一次自己挑走的那一句。這是裝備唯一的用途，而且是真的有用：
+     它不是系統的建議，是他上一次寫給這一刻的自己看的。 */
+  var carry = carriedGear(t.teamId);
+  if (carry) {
+    H.push('<div class="card carry">');
+    H.push('<div class="eyebrow">你上一次挑走的那一句</div>');
+    H.push('<div class="carry-in"><b>' + carry.icon + '</b><div><i>' +
+      esc(carry.name) + '</i><em>' + esc(carry.why) + '</em></div></div>');
+    H.push('</div>');
+  }
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你打算花幾天</div>');
@@ -328,6 +369,23 @@ PAGES.camp = function () {
   });
   H.push('</div></div>');
 
+  /* 這一趟每天做的。這是估不準的線索，不是評語。 */
+  var ds = doingOfRun(r.runId);
+  if (ds.length) {
+    var n = {};
+    ds.forEach(function (k) { n[k] = (n[k] || 0) + 1; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">這一趟你每天做的</div>');
+    H.push('<div class="tags small">');
+    RULES.DOING.forEach(function (d) {
+      if (n[d.key]) H.push('<span class="tag static">' + d.icon + ' ' +
+        esc(d.label) + ' × ' + n[d.key] + '</span>');
+    });
+    H.push('</div>');
+    H.push('<p class="dim">' + esc(doingSay(n, ds.length)) + '</p>');
+    H.push('</div>');
+  }
+
   /* 當初標的風險有沒有中 */
   if (r.risks && r.risks.length) {
     var hit = r.risks.filter(function (k) { return picked.indexOf(k) >= 0; });
@@ -385,7 +443,8 @@ PAGES.dash = function () {
   H.push('<h1>' + (g ? g.icon + ' ' + esc(g.name) : '裝備') + ' 到手</h1>');
   if (g) H.push('<p class="lead">' + esc(g.why) + '</p>');
   if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
-  H.push('<p class="dim">深度 ' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m。</p>');
+  H.push('<p class="dim">深度 ' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m。' +
+    '　下一次決定要花幾天的時候，這句話會出現在那一頁。</p>');
   H.push('</div>');
   H.push(btn('回坑道', 'go:home', 'big'));
   return H.join('');
@@ -406,6 +465,15 @@ PAGES.log = function () {
     H.push('<div class="log-head"><b>' + esc(x.ms.title) + '</b>' +
            '<span class="st ' + r.stamp + '">' + s.mark + ' ' + esc(s.name) + '</span></div>');
     H.push('<div class="log-num">承諾 <b>' + r.est + '</b> 天　·　實際 <b>' + r.actual + '</b> 天</div>');
+    var seq = doingOfRun(r.runId);
+    if (seq.length) {
+      H.push('<div class="seq">');
+      seq.forEach(function (k) {
+        var d = RULES.doingOf(k);
+        H.push('<span title="' + esc(d ? d.label : '') + '">' + (d ? d.icon : '⛏️') + '</span>');
+      });
+      H.push('</div>');
+    }
     if (r.snags && r.snags.length) {
       H.push('<div class="tags small">');
       r.snags.forEach(function (k) {

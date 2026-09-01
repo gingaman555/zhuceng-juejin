@@ -34,7 +34,7 @@ function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', submit: 'student', stamp: 'student',
-  camp: 'student', pick: 'student', dash: 'student', eco: 'student',
+  camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
   log: 'student', claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -115,6 +115,10 @@ function render() {
   document.getElementById('app').innerHTML =
     sideBar() + '<div class="main">' + topBar() + demoBar() +
     '<div class="wrap">' + (S.flash ? flashBar() : '') + body + '</div></div>';
+
+  /* 走廊比視窗長的時候，重畫預設回到最左邊——那樣按完推進會看到
+     走廊變了卻看不到自己動。鏡頭跟著人走。 */
+  if (typeof scrollScene === 'function') scrollScene();
 }
 
 function flashBar() {
@@ -205,7 +209,7 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '坑道'], ['eco', '全班地下城'], ['log', '紀錄']
+      ['home', '坑道'], ['pack', '裝備架'], ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   var items = nav.map(function (n) {
@@ -286,20 +290,39 @@ var ACTS = {
     say('承諾了。從今天開始，每天推一格。');
   },
 
-  push: function (runId) {
+  /* 補登哪一天。0 是今天。 */
+  back: function (v) { DRAFT.back = Number(v) || 0; render(); },
+
+  /* 推進。參數是「runId|今天動的是哪一塊」。 */
+  push: function (arg) {
+    var i = arg.indexOf('|');
+    var runId = i < 0 ? arg : arg.slice(0, i);
+    var kind = i < 0 ? 'any' : arg.slice(i + 1);
     var t = myTeam();
+    var back = Number(DRAFT.back || 0);
     /* 有沒有藤蔓要碎——推之前先問，推完狀態就變了 */
     var wasStuck = stallOf(t.teamId).level;
-    if (!actPush(t.teamId, runId)) {
-      return say('今天已經推過了。一天一格——多按沒有用。');
+    if (!actPush(t.teamId, runId, kind, back)) {
+      return say(back ? '那一天已經點過了。' : '今天那一盞已經點好了。一天一盞——多按沒有用。');
     }
+    DRAFT.back = 0;
     var r = find('Runs', function (x) { return x.runId === runId; });
-    var msg = RULES.progress(r.pushes, r.est) >= 1
-      ? '走到終點了。交出去之後系統會比對你當初承諾的天數。'
-      : '推進了一格。明天再來。';
+    var d = RULES.doingOf(kind);
+    var msg;
+    if (RULES.progress(r.pushes, r.est) >= 1) {
+      msg = '走到走廊底了。交出去之後，系統會比對你當初承諾的天數。';
+    } else if (back) {
+      msg = '補回來了。那一盞亮了。';
+    } else {
+      /* 有人跟你一起在下面。這不是名次——它不排序，也不說誰比較多。 */
+      var others = todayMovers(t.classId, t.teamId);
+      msg = (d ? d.icon + ' ' + d.label + '。' : '') +
+        (others ? '今天班上還有 ' + others + ' 條坑道也在響。'
+                : '今天你是第一個下來的。');
+    }
     /* 先播完動畫再重畫——重畫會把 <img> 換掉，動畫就沒了。
        藤蔓先碎，再揮劍：那個順序就是「你把它弄斷了，然後繼續走」。 */
-    var swing = function () { animPush(function () { say(msg); }); };
+    var swing = function () { shakeScene(); animPush(function () { say(msg); }); };
     if (wasStuck === 1) animVineBreak(swing); else swing();
   },
 
