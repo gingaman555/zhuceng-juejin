@@ -73,7 +73,10 @@ PAGES.battle = function () {
   H.push('<div class="bt-pad"></div>');
   H.push('<div class="bt-ch me">' + pxTag(HERO.back, HERO.pal, 'bt-px') +
     heroPack(t.teamId) + '</div>');
-  H.push(btPlate(esc(shortName(t.name)), 'me', ''));
+  /* 自己那一張從一開始就寫著承諾幾天——那是他本來就知道的事。
+     牠那一張只有名字：這一趟實際幾天要等到報出來才知道，
+     那個不對稱就是這一頁的懸念。 */
+  H.push(btPlate(esc(shortName(t.name)), 'me', '說 ' + est + ' 天'));
   H.push('</div>');
 
   /* ── 選單 ──

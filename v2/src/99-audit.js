@@ -44,3 +44,26 @@ window.AUDIT = function () {
   S.page = 'home'; S.p = {}; render();
   return out.join('　');
 };
+
+/* ---------- 把動畫推到任意一格 ----------
+
+   為什麼要有這一支：自動化瀏覽器不會推進動畫的時鐘，所以動畫做出來
+   我看不到，只能等使用者看到不對再回報。那個迴圈不該由使用者跑。
+
+   STEP(ms) 把畫面上每一段動畫都設到第 ms 毫秒並暫停，然後就可以截圖。
+   要看整段就 STEP(0)、STEP(300)、STEP(900) 一格一格看。
+
+   PLAY() 放開，讓它們照常跑。 */
+window.STEP = function (ms) {
+  var a = document.getAnimations();
+  for (var i = 0; i < a.length; i++) {
+    try { a[i].currentTime = ms; a[i].pause(); } catch (e) {}
+  }
+  return ms + 'ms　' + a.length + ' 段動畫';
+};
+
+window.PLAY = function () {
+  var a = document.getAnimations();
+  for (var i = 0; i < a.length; i++) { try { a[i].play(); } catch (e) {} }
+  return a.length + ' 段動畫放開了';
+};

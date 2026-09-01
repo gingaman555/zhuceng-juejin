@@ -254,3 +254,15 @@
   .bt-menu{align-self:stretch}
   .bm{display:inline-block;width:auto;margin-right:22px}
 }
+
+/* 桌機上不要把戰鬥拉成一長條。
+   全寬的話兩邊角色被推到極端、中間整片空，那就不是一個畫面了。
+   舊版寶可夢的戰鬥畫面接近方的，所以這裡也收在一個方框裡。 */
+@media (min-width: 900px){
+  .bt{max-width:704px;margin-left:auto;margin-right:auto;height:396px}
+  .bt-bottom{max-width:704px;margin-left:auto;margin-right:auto}
+  .bt-side.foe .bt-ch{right:110px}
+  .bt-side.me .bt-ch{left:110px}
+  .bt-side.foe .bt-pad{right:77px}
+  .bt-side.me .bt-pad{left:77px}
+}

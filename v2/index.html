@@ -2321,6 +2321,18 @@ button.ac:active{transform:translateY(1px)}
   .bm{display:inline-block;width:auto;margin-right:22px}
 }
 
+/* 桌機上不要把戰鬥拉成一長條。
+   全寬的話兩邊角色被推到極端、中間整片空，那就不是一個畫面了。
+   舊版寶可夢的戰鬥畫面接近方的，所以這裡也收在一個方框裡。 */
+@media (min-width: 900px){
+  .bt{max-width:704px;margin-left:auto;margin-right:auto;height:396px}
+  .bt-bottom{max-width:704px;margin-left:auto;margin-right:auto}
+  .bt-side.foe .bt-ch{right:110px}
+  .bt-side.me .bt-ch{left:110px}
+  .bt-side.foe .bt-pad{right:77px}
+  .bt-side.me .bt-pad{left:77px}
+}
+
 /* 手機。
 
    之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
@@ -8919,7 +8931,10 @@ PAGES.battle = function () {
   H.push('<div class="bt-pad"></div>');
   H.push('<div class="bt-ch me">' + pxTag(HERO.back, HERO.pal, 'bt-px') +
     heroPack(t.teamId) + '</div>');
-  H.push(btPlate(esc(shortName(t.name)), 'me', ''));
+  /* 自己那一張從一開始就寫著承諾幾天——那是他本來就知道的事。
+     牠那一張只有名字：這一趟實際幾天要等到報出來才知道，
+     那個不對稱就是這一頁的懸念。 */
+  H.push(btPlate(esc(shortName(t.name)), 'me', '說 ' + est + ' 天'));
   H.push('</div>');
 
   /* ── 選單 ──
@@ -9625,6 +9640,29 @@ window.AUDIT = function () {
   });
   S.page = 'home'; S.p = {}; render();
   return out.join('　');
+};
+
+/* ---------- 把動畫推到任意一格 ----------
+
+   為什麼要有這一支：自動化瀏覽器不會推進動畫的時鐘，所以動畫做出來
+   我看不到，只能等使用者看到不對再回報。那個迴圈不該由使用者跑。
+
+   STEP(ms) 把畫面上每一段動畫都設到第 ms 毫秒並暫停，然後就可以截圖。
+   要看整段就 STEP(0)、STEP(300)、STEP(900) 一格一格看。
+
+   PLAY() 放開，讓它們照常跑。 */
+window.STEP = function (ms) {
+  var a = document.getAnimations();
+  for (var i = 0; i < a.length; i++) {
+    try { a[i].currentTime = ms; a[i].pause(); } catch (e) {}
+  }
+  return ms + 'ms　' + a.length + ' 段動畫';
+};
+
+window.PLAY = function () {
+  var a = document.getAnimations();
+  for (var i = 0; i < a.length; i++) { try { a[i].play(); } catch (e) {} }
+  return a.length + ' 段動畫放開了';
 };
 
 </script>
