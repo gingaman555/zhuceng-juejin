@@ -164,17 +164,17 @@ function depthOf(teamId) {
   }).length;
 }
 
-/* 招牌的階＝挖到多深。
+/* 招牌的階＝走到多深。
 
    招牌上的字是學生自己寫的（專案名稱），材質不是——材質是走完幾個
    里程碑自己長出來的。這樣改名字改不出一塊發光的牌子，
-   而牌子發光的時候，那是他們自己挖來的。 */
+   而牌子發光的時候，那是他們自己走出來的。 */
 function signOf(teamId) {
   var n = Math.min(RULES.SIGN_TIERS.length - 1, RULES.signTierOf(depthOf(teamId)));
   return SIGNS[RULES.SIGN_TIERS[n]];
 }
 
-/* 再挖幾個里程碑招牌會換材質。沒有下一階就回 0。 */
+/* 再走幾個里程碑招牌會換材質。沒有下一階就回 0。 */
 function nextSignIn(teamId) {
   var d = depthOf(teamId);
   for (var i = 0; i < RULES.SIGN_AT.length; i++) {
@@ -194,7 +194,7 @@ function accuracyOf(teamId) {
 }
 
 /* ---------- 全班生態 ----------
-   沒有名次。只有「誰在哪一條坑道、挖到多深、現在是什麼狀態」。 */
+   沒有名次。只有「誰在哪一條廊道、走到多深、現在是什麼狀態」。 */
 function ecology(classId) {
   return where('Teams', function (t) { return t.classId === classId; }).map(function (t) {
     var st = stallOf(t.teamId);
@@ -285,7 +285,7 @@ function doingOfRun(runId) {
     .map(function (p) { return p.kind || 'any'; });
 }
 
-/* 今天班上有幾條坑道也動過。
+/* 今天班上有幾條廊道今天也有人在走。
    這不是名次——它不排序、不比大小，只回答「今天只有我一個人在下面嗎」。 */
 function todayMovers(classId, exceptTeam) {
   var day = dayOf(now());

@@ -87,6 +87,6 @@ PAGES.pack = function () {
   });
   H.push('</div></div>');
 
-  H.push(btn('回坑道', 'go:home', 'ghost'));
+  H.push(btn('回廊道', 'go:home', 'ghost'));
   return H.join('');
 };

@@ -20,8 +20,26 @@ PAGES.gate = function () {
   H.push('<div class="gate-box">');
   H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
   H.push('<h1>專案地下城</h1>');
-  H.push('<p class="lead">你的專案是一條往下挖的坑道。老師派里程碑，' +
-         '你自己決定花幾天——這裡不打分，只看你說的天數跟實際差多少。</p>');
+  H.push('<p class="lead">你的專案是一條往下走的廊道。' +
+         '老師在入口放下一個里程碑，廊道盡頭就多一隻擋路的東西——' +
+         '要花幾天走到牠面前，是你自己說了算。</p>');
+
+  /* 四個區域先露一次。進去之前就知道下面有什麼，那是世界，不是說明。 */
+  H.push('<div class="zones">');
+  STRATA.forEach(function (s) {
+    var c = faunaOf(s.key)[0];
+    H.push('<div class="zn ' + s.key + '">');
+    if (c) H.push(pxTag(c.px, s.pal, 'zn-px'));
+    H.push('<b>' + esc(s.name) + '</b>');
+    H.push('<span>' + esc(s.note) + '</span>');
+    H.push('<i>地下 ' + (s.from * WORLD.depthPerMilestone) + ' 公尺起</i>');
+    H.push('</div>');
+  });
+  H.push('</div>');
+  H.push('<p class="dim">越往下石頭越不一樣，住的東西也不一樣。' +
+         '往下沒有盡頭——這座地下城沒有最底層，所以也沒有人「走完」。' +
+         '這裡不打分，只看你說的天數跟實際差多少。</p>');
+
   H.push('<div class="row">');
   H.push(btn('登入', 'go:login', 'big'));
   H.push(btn('我是新的，建一個帳號', 'go:reg', 'ghost'));
@@ -78,7 +96,7 @@ PAGES.reg = function () {
 };
 
 /* ---------- 認領身分 ----------
-   登入了但還沒對上名冊。這一頁不能跳過——沒有組別，坑道就不知道要挖哪一條。 */
+   登入了但還沒對上名冊。這一頁不能跳過——沒有組別，就不知道要畫哪一條廊道。 */
 PAGES.claim = function () {
   var u = me();
   var free = freeRoster(u.classId);
@@ -145,7 +163,7 @@ ACTS.claim = function (rosterId) {
   var r = actClaim(S.who, rosterId);
   if (r.err) return say(r.err);
   go('home');
-  say('對上了。這條坑道從現在起是你們的。');
+  say('對上了。這一條廊道從現在起是你們的。');
 };
 
 ACTS.logout = function () {

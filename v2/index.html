@@ -137,7 +137,7 @@ textarea{resize:vertical;line-height:1.7}
 a.plain{color:var(--dim);cursor:pointer;text-decoration:none}
 a.plain:hover{color:var(--gold)}
 
-/* ---------- 坑道 ---------- */
+/* ---------- 廊道 ---------- */
 
 .tunnel{
   background:var(--Lbg);border:1px solid var(--Lline);
@@ -287,80 +287,7 @@ a.plain:hover{color:var(--gold)}
 .gcard i{font-style:normal;font-size:22px;color:var(--ink)}
 .gcard em{font-style:normal;font-size:11px;color:var(--mute);line-height:1.7}
 
-/* ---------- 全班地下城：2.5D 剖面 ---------- */
-
-.eco-scroll{
-  overflow-x:auto;overflow-y:hidden;
-  background:var(--sunk);border:1px solid var(--line);
-  padding:22px;margin:0 0 22px
-}
-.eco2{position:relative;min-width:100%}
-
-.eco2-sky{
-  position:absolute;top:0;left:0;right:0;height:44px;
-  border-bottom:2px solid var(--line2);
-  background:linear-gradient(180deg,rgba(233,179,65,.06),transparent)
-}
-.eco2-sky span{
-  font-size:11px;color:var(--mute);letter-spacing:.2em;
-  position:absolute;left:0;bottom:5px
-}
-
-/* 深度刻度。只標數字，不標「應該到哪」——沒有基準線就沒有落後。 */
-.eco2-rule{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none}
-.eco2-rule span{
-  font-size:11px;color:var(--mute);opacity:.5;
-  position:absolute;right:0;top:-14px
-}
-
-/* 一條坑道 */
-.shaft{position:absolute;top:48px;width:128px}
-.shaft-head{
-  position:absolute;top:-46px;left:0;width:128px;
-  display:flex;flex-direction:column;align-items:flex-start;gap:2px
-}
-.shaft-head b{font-size:11px;color:var(--dim);font-weight:400;white-space:nowrap}
-.shaft-head span{font-size:11px;color:var(--mute);white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;max-width:128px}
-.px.sign-s{width:22px;height:22px}
-
-/* 挖出來的一格。往右斜是為了做出「往下往裡」的立體感。 */
-/* 一塊挖出來的空間。右邊掛一個斜的側面——立體感來自這裡，
-   不是把整塊往旁邊推（推的話幾格之後就壓到隔壁那條坑道）。 */
-.seg{
-  position:absolute;left:0;width:88px;height:44px;
-  background:rgba(0,0,0,.5);border:1px solid var(--line);
-  transition:background .3s
-}
-.seg::after{
-  content:"";position:absolute;left:100%;top:0;width:18px;height:100%;
-  background:rgba(0,0,0,.62);
-  clip-path:polygon(0 0,100% -22%,100% 78%,0 100%)
-}
-.seg.dug::after{background:var(--Ld);filter:brightness(.62)}
-.seg.dug{
-  background:var(--Ld);border-color:var(--L);
-  box-shadow:inset 0 2px 0 rgba(255,255,255,.10), inset 0 -3px 0 rgba(0,0,0,.35)
-}
-/* 正在挖的那一格：從底下往上填到承諾的比例 */
-.seg.here{border-color:var(--gold-d);border-style:dashed}
-.seg.here i{
-  position:absolute;left:0;right:0;bottom:0;
-  background:rgba(233,179,65,.30);border-top:1px solid var(--gold)
-}
-
-.shaft.mine .seg.dug{background:var(--L);border-color:var(--Ll)}
-.shaft.mine .shaft-head b{color:var(--gold)}
-
-.shaft-hero{position:absolute;width:36px;height:36px}
-.px.ch-s{width:36px;height:36px}
-.px.vine-s{position:absolute;inset:0;width:36px;height:36px;opacity:.9}
-.shaft-hero.sleep{opacity:.6}
-
-.shaft-foot{
-  position:absolute;left:0;width:128px;
-  font-size:11px;color:var(--mute);text-align:center
-}
+/* 全班地下城的剖面樣式搬到 54-eco.css——那是一整張地質圖，值得自己一個檔。 */
 
 /* ---------- 老師端 ---------- */
 
@@ -458,6 +385,22 @@ a.plain:hover{color:var(--gold)}
 .slot i{display:block;font-style:normal;font-size:22px;color:var(--ink)}
 .slot em{display:block;font-style:normal;font-size:11px;color:var(--mute);line-height:1.8;margin:3px 0}
 .slot .from{display:block;font-size:11px;color:var(--gold-d);line-height:1.7;margin-top:5px}
+
+/* ---------- 門口的四個區域 ----------
+   還沒登入就先看到下面有什麼。這不是說明，是世界。 */
+
+.zones{display:flex;flex-wrap:wrap;gap:11px;margin:22px 0}
+.zn{
+  flex:1;min-width:110px;padding:14px 11px;text-align:center;background:var(--sunk)
+}
+.zn .px.zn-px{width:44px;height:44px;margin:0 auto 8px;opacity:.9}
+.zn b{display:block;font-size:22px;font-weight:400;line-height:1.3}
+.zn span{display:block;font-size:11px;color:var(--mute);line-height:1.7;margin-top:5px}
+.zn i{display:block;font-style:normal;font-size:11px;color:var(--gold-d);margin-top:5px}
+.zn.wild{background:#171208} .zn.wild b{color:#C9A227}
+.zn.crys{background:#0C1720} .zn.crys b{color:#5FA8C7}
+.zn.echo{background:#131024} .zn.echo b{color:#8C7BC7}
+.zn.fire{background:#1C0E09} .zn.fire b{color:#D9603F}
 
 /* 材質。
 
@@ -669,7 +612,7 @@ input:focus,textarea:focus{outline:none;box-shadow:
   inset 0 calc(var(--px) * -1) 0 var(--lit),
   0 0 0 1px var(--gold)}
 
-/* ---------- 坑道 ----------
+/* ---------- 廊道 ----------
    角色站的地方比別的地方更深、更潮。上緣壓一道暗，
    讓人覺得上面還有一整座山。 */
 .tunnel{
@@ -694,10 +637,7 @@ input:focus,textarea:focus{outline:none;box-shadow:
 .cell.on{box-shadow:inset 0 2px 0 rgba(255,255,255,.22), inset 0 -2px 0 rgba(0,0,0,.35),
   0 0 0 1px var(--Ll)}
 
-/* 剖面圖裡那一格已經挖開的空間，用同一套斜面，只是薄一半 */
-.seg{border:none;box-shadow:0 0 0 1px var(--line)}
-.seg.dug{box-shadow:inset 0 2px 0 rgba(255,255,255,.12),
-  inset 0 -2px 0 rgba(0,0,0,.40), 0 0 0 1px var(--L)}
+/* 剖面圖那幾格的斜面在 54-eco.css，跟地層顏色綁在一起。 */
 
 /* ---------- 角色與招牌 ----------
    像素圖也要有影子，不然它是浮在畫面上的貼紙。
@@ -712,17 +652,25 @@ input:focus,textarea:focus{outline:none;box-shadow:
   .btn:active,.gcard:active,.tag:active{transform:none}
 }
 
-/* 坑道場景的樣子。
+/* 廊道場景的樣子。
 
    跟 52-material.css 同一套規矩：hard stop、0 模糊、斜面 3px、光從左上來。
    多一條只有這裡才有的：會動的東西一律逐格，用 steps() 換狀態，
    不用 ease 補間。火焰用 ease 一補就變成呼吸燈，那不是火。 */
 
+/* 走到多深，牆就是哪一區的石頭。四組顏色跟 13-strata.js 的 STRATA 同一份，
+   跟全班那張剖面圖上同一個深度的顏色也是同一組——
+   自己的廊道跟剖面圖對不起來的話，那兩張圖就不是同一個世界了。 */
+.scn.z-wild{--zbg:#171208;--zfl:#241B0C;--zfl2:#3B2D11;--zli:rgba(242,230,200,.030)}
+.scn.z-crys{--zbg:#0C1720;--zfl:#12222E;--zfl2:#1D3A4C;--zli:rgba(216,242,250,.035)}
+.scn.z-echo{--zbg:#131024;--zfl:#1B1733;--zfl2:#2A2450;--zli:rgba(228,220,250,.032)}
+.scn.z-fire{--zbg:#1C0E09;--zfl:#2A1510;--zfl2:#43201A;--zli:rgba(250,217,204,.038)}
+
 .scn{
   position:relative;height:286px;overflow:hidden;margin:0 0 22px;
-  background-color:#0C0A08;
+  background-color:var(--zbg,#0C0A08);
   background-image:
-    repeating-linear-gradient(0deg,  rgba(255,244,222,.028) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(0deg,  var(--zli,rgba(255,244,222,.028)) 0 1px, transparent 1px 44px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.60)        0 2px, transparent 2px 88px);
   box-shadow:
     inset 0 4px 0 rgba(0,0,0,.65),
@@ -741,7 +689,8 @@ input:focus,textarea:focus{outline:none;box-shadow:
 
 /* 角落的深度。走廊往旁邊捲，它不跟著捲。 */
 .scn-hud{
-  position:absolute;top:11px;right:11px;z-index:9;text-align:right;pointer-events:none
+  position:absolute;top:11px;right:11px;z-index:9;text-align:right;pointer-events:none;
+  padding:5px 9px;background:rgba(0,0,0,.45)
 }
 .scn-hud b{display:block;font-size:33px;line-height:1;color:var(--gold);font-weight:400}
 .scn-hud span{font-size:11px;color:var(--mute)}
@@ -749,13 +698,13 @@ input:focus,textarea:focus{outline:none;box-shadow:
 /* ---------- 地板 ---------- */
 .floor{
   position:absolute;bottom:44px;height:22px;
-  background-color:#17130E;
+  background-color:var(--zfl,#17130E);
   background-image:
     linear-gradient(180deg, rgba(255,244,222,.09) 0 2px, transparent 2px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 2px, transparent 2px 44px);
 }
-/* 挖開過的那一段亮一階 */
-.floor.lit{background-color:#2A2318}
+/* 走通過的那一段亮一階 */
+.floor.lit{background-color:var(--zfl2,#2A2318)}
 
 /* ---------- 天花板 ---------- */
 .drip{position:absolute;top:0;width:33px;height:33px;opacity:.9}
@@ -912,6 +861,201 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 /* 紀錄頁：那一趟每天做的，排成一列 */
 .seq{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0;font-size:22px;line-height:1}
 
+/* 角落那一塊：你在哪一區、多深。釘住不跟著廊道捲——
+   那是「你在哪」，不是廊道上的一個位置。 */
+.scn-hud em{
+  display:block;font-style:normal;font-size:22px;line-height:1.2;margin-bottom:2px
+}
+.scn-hud .zn-note{max-width:198px;margin-left:auto;line-height:1.7;margin-top:3px}
+.scn.z-wild .scn-hud em{color:#C9A227}
+.scn.z-crys .scn-hud em{color:#5FA8C7}
+.scn.z-echo .scn-hud em{color:#8C7BC7}
+.scn.z-fire .scn-hud em{color:#D9603F}
+
+/* 跨進新的一區的那一張。這是少數幾個「世界自己變了」的時刻。 */
+.card.zone-in{margin-top:22px}
+.card.zone-in h2{margin:0 0 11px}
+
+/* 全班地下城的樣子。
+
+   跟 52 / 53 同一套規矩：hard stop、0 模糊、光從左上來。
+   多一條只有這裡才有的：地層是共用的地質，所以顏色屬於「深度」，
+   不屬於任何一組。同一個深度，五條廊道打通的石頭一定同一個顏色——
+   一旦讓某一組的廊道有自己的顏色，那張圖就開始比較誰的比較漂亮。 */
+
+.xsec-wrap{
+  overflow-x:auto;overflow-y:hidden;margin:0 0 22px;
+  background:#070605;
+  box-shadow:
+    inset 0 3px 0 rgba(0,0,0,.7), inset 3px 0 0 rgba(0,0,0,.7),
+    inset 0 -3px 0 rgba(255,240,214,.05), 0 0 0 1px #000;
+}
+.xsec{position:relative}
+
+/* ---------- 地層 ----------
+   每一層的岩石紋理不一樣：荒原是碎的、水晶是斜的、
+   迷宮是方的、深淵是橫流的。 */
+.xs-band{position:absolute;left:0;z-index:0}
+.xs-band.wild{
+  background-color:#171208;
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(242,230,200,.030) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.45)        0 2px, transparent 2px 55px);
+}
+.xs-band.crys{
+  background-color:#0C1720;
+  background-image:
+    repeating-linear-gradient(58deg,  rgba(216,242,250,.045) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(-58deg, rgba(0,0,0,.40)        0 1px, transparent 1px 33px);
+}
+.xs-band.echo{
+  background-color:#131024;
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(228,220,250,.035) 0 2px, transparent 2px 33px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.50)        0 2px, transparent 2px 33px);
+}
+.xs-band.fire{
+  background-color:#1C0E09;
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(250,217,204,.045) 0 1px, transparent 1px 11px),
+    repeating-linear-gradient(96deg, rgba(217,96,63,.10)    0 3px, transparent 3px 44px);
+}
+/* 層與層之間有一道界線。地質圖上那條線就是這樣畫的。 */
+.xs-band::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:3px;
+  background:rgba(0,0,0,.65);box-shadow:0 3px 0 rgba(255,240,214,.05)
+}
+
+/* 層的名字，掛在左邊的空白裡 */
+.xs-bandn{position:absolute;left:6px;width:132px;z-index:2;pointer-events:none}
+.xs-bandn b{display:block;font-size:11px;font-weight:400;line-height:1.5}
+.xs-bandn span{display:block;font-size:11px;color:var(--mute);line-height:1.6;margin-top:2px}
+.xs-bandn.wild b{color:#C9A227}
+.xs-bandn.crys b{color:#5FA8C7}
+.xs-bandn.echo b{color:#8C7BC7}
+.xs-bandn.fire b{color:#D9603F}
+
+/* ---------- 地表 ---------- */
+.xs-sky{
+  position:absolute;left:0;top:0;height:66px;z-index:1;
+  background:linear-gradient(180deg,
+    #0E1520 0 22px, #131B27 22px 44px, #1A202B 44px 66px);
+}
+.xs-surf{
+  position:absolute;left:0;top:66px;height:22px;z-index:1;
+  background-color:#2E3A22;
+  background-image:
+    linear-gradient(180deg, #4A5C33 0 4px, #2E3A22 4px 100%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.35) 0 2px, transparent 2px 22px);
+  box-shadow:0 3px 0 rgba(0,0,0,.55)
+}
+
+/* ---------- 深度尺 ---------- */
+.xs-rule{
+  position:absolute;left:0;z-index:2;pointer-events:none;
+  border-top:1px dashed rgba(255,240,214,.09)
+}
+.xs-rule span{
+  position:absolute;left:6px;top:-14px;font-size:11px;color:var(--mute);opacity:.65
+}
+
+/* ---------- 岩壁裡的生態 ----------
+   平常沉在岩石裡，滑過去才浮出來。牠們是環境，不是資訊。 */
+.xs-fauna{
+  position:absolute;z-index:1;width:44px;height:44px;padding:0;border:none;
+  background:none;cursor:pointer;opacity:.34;
+  animation:drift 6s steps(1,end) infinite
+}
+.xs-fauna .px{width:44px;height:44px}
+.xs-fauna:hover{opacity:1}
+@keyframes drift{
+  0%,49%{transform:translateY(0)}
+  50%,100%{transform:translateY(-4px)}
+}
+
+/* ---------- 一條廊道 ---------- */
+.xs-shaft{position:absolute;top:0;bottom:0;z-index:3}
+
+.xs-head{position:absolute;top:0;left:0;width:110px;text-align:center;z-index:5}
+.xs-head .px.sign-s{width:33px;height:33px;margin:0 auto}
+.xs-head b{
+  display:block;font-size:11px;font-weight:400;color:var(--dim);
+  white-space:nowrap;margin-top:2px
+}
+.xs-head span{
+  display:block;font-size:11px;color:var(--mute);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.xs-head i{
+  display:inline-block;font-style:normal;font-size:11px;color:var(--mute);
+  padding:0 5px;background:rgba(0,0,0,.55);margin-top:2px
+}
+.xs-head i.x{color:var(--ok)}
+.xs-head i.y{color:var(--dim)}
+.xs-head i.z{color:var(--over)}
+.xs-shaft.mine .xs-head b{color:var(--gold)}
+
+/* 一格打通的空間。右邊掛一個斜的側面——立體感來自這裡。 */
+.xs-seg{
+  position:absolute;left:0;width:110px;height:52px;
+  background:rgba(0,0,0,.30);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)
+}
+.xs-seg::after{
+  content:'';position:absolute;left:100%;top:0;width:11px;height:100%;
+  background:rgba(0,0,0,.42);
+  clip-path:polygon(0 0,100% -20%,100% 80%,0 100%)
+}
+/* 打通的：那一區的石頭顏色。同一個深度，五條廊道一定同一個顏色。 */
+.xs-seg.dug{box-shadow:
+  inset 0 2px 0 rgba(255,255,255,.14),
+  inset 0 -3px 0 rgba(0,0,0,.40),
+  inset 0 0 0 1px rgba(0,0,0,.5)}
+.xs-seg.wild.dug{background:#9A7E22}
+.xs-seg.crys.dug{background:#3E7E96}
+.xs-seg.echo.dug{background:#625397}
+.xs-seg.fire.dug{background:#9E4026}
+.xs-seg.wild.dug::after{background:#6B571700}
+.xs-seg.dug::after{background:rgba(0,0,0,.5)}
+
+.xs-shaft.mine .xs-seg.wild.dug{background:#C9A227}
+.xs-shaft.mine .xs-seg.crys.dug{background:#5FA8C7}
+.xs-shaft.mine .xs-seg.echo.dug{background:#8C7BC7}
+.xs-shaft.mine .xs-seg.fire.dug{background:#D9603F}
+
+/* 正在走的那一格：從底下往上填到承諾的比例 */
+.xs-seg.here{box-shadow:inset 0 0 0 1px var(--gold-d)}
+.xs-seg.here i{
+  position:absolute;left:0;right:0;bottom:0;
+  background:rgba(233,179,65,.26);border-top:2px solid var(--gold)
+}
+
+.xs-hero{position:absolute;left:37px;width:36px;height:36px;z-index:6}
+.xs-hero .px.ch-s{width:36px;height:36px}
+.xs-hero .px.vine-s{position:absolute;inset:0;width:36px;height:36px;opacity:.9}
+.xs-hero.sleep{opacity:.6}
+
+/* ---------- 圖例 ---------- */
+.lg{display:flex;flex-wrap:wrap;gap:11px 22px;margin:11px 0}
+.lg div{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mute)}
+.lg b{width:22px;height:11px;display:block}
+.lg .lg-dug{background:#9A7E22}
+.lg .lg-here{background:rgba(233,179,65,.26);box-shadow:inset 0 2px 0 var(--gold)}
+.lg .lg-hero{background:#D9C08A}
+.lg .lg-fa{background:#5FA8C7;opacity:.4}
+
+/* ---------- 點開的那一隻 ---------- */
+.fa-in{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.px.fa-px{width:110px;height:110px;flex:0 0 110px}
+.fa-in > div{flex:1;min-width:264px}
+.fa-in h2{margin:0 0 11px}
+.card.fa.wild{background-color:#171208}
+.card.fa.crys{background-color:#0C1720}
+.card.fa.echo{background-color:#131024}
+.card.fa.fire{background-color:#1C0E09}
+
+@media (prefers-reduced-motion: reduce){ .xs-fauna{animation:none} }
+
 </style>
 </head>
 <body>
@@ -927,18 +1071,18 @@ var PACK = {"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":"潛"
 /* ===== 11-world.js ===== */
 /* 世界的字彙。
 
-   這個作品沒有固定的層、沒有課綱、沒有必經路線。每一組挖自己的坑道，
-   老師派一個里程碑，坑道裡就多一隻擋路的魔物。全班的坑道併在同一張
-   剖面上，看起來像一座蟻巢——那是「關聯性」：看得到別人也在挖，
+   這個作品沒有固定的層、沒有課綱、沒有必經路線。每一組走自己的一條廊道，
+   老師派一個里程碑，廊道盡頭就多一隻擋路的魔物。全班的廊道併在同一張
+   剖面上，看起來像一座巢——那是「關聯性」：看得到別人也在下面，
    但沒有人被排名。
 
-   所以這裡定義的不是「第幾層長什麼樣」，而是「一條坑道由什麼組成」。 */
+   所以這裡定義的不是「第幾層長什麼樣」，而是「一條廊道由什麼組成」。 */
 
-/* ---------- 坑道的環境 ---------- */
+/* ---------- 地下城的環境 ---------- */
 var WORLD = {
   name: '地下城',
   surface: '地表',
-  /* 坑道往下挖，深度＝這一組完成過幾個里程碑。沒有終點，也沒有「走完」。 */
+  /* 廊道往下走，深度＝這一組完成過幾個里程碑。沒有終點，也沒有「走完」。 */
   depthPerMilestone: 40,   /* 每完成一個里程碑往下 40 公尺（只是說法，不是門檻） */
 
   /* 一天的光。停滯越久越暗——不是懲罰，是狀態本身看得見。 */
@@ -950,7 +1094,7 @@ var WORLD = {
 };
 
 /* ---------- 專案招牌 ----------
-   坑道口的看板。老師每重寫一次專案名稱就升一階：
+   廊道入口的看板。老師每重寫一次專案名稱就升一階：
    粗糙木牌 → 鍛造鐵牌 → 發光銘牌。
    不需要多餘解釋，材質的升級就是對邏輯收斂最高的肯定。 */
 var SIGNS = {
@@ -971,7 +1115,7 @@ var SIGNS = {
          '.....+#..#+.....', '....++#..#++....', '................', '................']
   },
   glow: {
-    key: 'glow', name: '銘牌', note: '自己在發光。遠遠就看得到這條坑道在做什麼。',
+    key: 'glow', name: '銘牌', note: '自己在發光。遠遠就看得到這一隊在做什麼。',
     pal: { '#': '#E9B341', o: '#7A5A18', '*': '#FFF3D0' },
     px: ['......*..*......', '..*+++++++++*+..', '..+##########+..', '..+#********#+..',
          '..+#*######*#+..', '..+#********#+..', '..+#*######*#+..', '..+##########+..',
@@ -1032,13 +1176,9 @@ var CAMPFIRE = {
    遇到的不是同一隻。那讓「打贏了」是自己的事，不是跟別人比。 */
 var MOBS = PACK.creatures;
 
-/* 魔物在坑道裡的配色。跟深度走，越深越冷——只是氛圍，不是等級。 */
-var DEPTH_PAL = [
-  { '#': '#C9A227', o: '#9A7E22', '*': '#F2E6C8' },
-  { '#': '#5FA8C7', o: '#3E7E96', '*': '#D8F2FA' },
-  { '#': '#8C7BC7', o: '#625397', '*': '#E4DCFA' },
-  { '#': '#D9603F', o: '#9E4026', '*': '#FAD9CC' }
-];
+/* 魔物的配色跟著牠住的那一區走（見 13-strata.js 的 STRATA）。
+   本來這裡有一份 DEPTH_PAL，跟地層的四組顏色一模一樣——
+   同一件事有兩個來源，改一邊另一邊就變成謊話。刪掉了。 */
 
 /* ---------- 裝備 ----------
    老師發的。圖用上一版的戰利品像素圖，意義完全換掉：
@@ -1047,7 +1187,7 @@ var GEAR_PX = PACK.trophies;
 
 
 /* ===== 12-props.js ===== */
-/* 坑道裡的東西。
+/* 地下城裡的東西。
 
    上面那一份（11-world.js）定義的是角色與招牌——會動、有狀態的東西。
    這一份是不會動的：火把、鐘乳石、碎石、水晶、腳印。它們不帶任何資訊，
@@ -1096,7 +1236,7 @@ var DRIP = {
 };
 
 /* ---------- 碎石 ----------
-   挖出來的東西堆在腳邊。走廊底部沒有這個的話，地板看起來像一條線。 */
+   打通的時候崩下來的碎塊堆在腳邊。走廊底部沒有這個的話，地板看起來像一條線。 */
 var RUBBLE = {
   pal: { '#': '#4A4038', o: '#2A241E', '*': '#6B5F51' },
   px: ['............', '............', '............', '...**.......',
@@ -1104,7 +1244,7 @@ var RUBBLE = {
 };
 
 /* ---------- 水晶 ----------
-   礦坑裡本來就會有。它自己微微發亮，所以走廊最暗的時候還看得到一點東西。 */
+   這種地方本來就會有。它自己微微發亮，所以走廊最暗的時候還看得到一點東西。 */
 var CRYSTAL = {
   pal: { '#': '#5FA8C7', o: '#2E5E75', '*': '#D8F2FA' },
   px: ['....*.....', '...*#*....', '...*#*....', '..*###*...',
@@ -1113,7 +1253,7 @@ var CRYSTAL = {
 };
 
 /* ---------- 蕈菇 ----------
-   會發光的那種。放在走過的那幾格旁邊——挖開的地方才長得出東西。 */
+   會發光的那種。放在走過的那幾格旁邊——走通的地方才長得出東西。 */
 var SHROOM = {
   pal: { '#': '#7FA866', o: '#3E5533', '*': '#D8F0C0' },
   px: ['..****..', '.*####*.', '*######*', '.+####+.',
@@ -1146,6 +1286,78 @@ function dripFor(seed, i) {
   var h = hash(seed + '@' + i);
   if (h % 100 < 42) return null;
   return { px: (h % 2 ? DRIP.a : DRIP.b), off: (h >> 4) % 22 };
+}
+
+
+/* ===== 13-strata.js ===== */
+/* 地層。
+
+   這四個世界是上一個作品留下來的，配色與名字照搬——但意思整個換掉了。
+
+   在那邊，它們是四個關卡：第一層專案定義、第二層調查分析……走完一層
+   才准進下一層，每一層有一隻守關生物擋著。那是課綱，不是地質。
+
+   在這裡，它們是岩層。整座地下城本來就長這樣，全班共用同一片地質，
+   誰在哪一層都看得到，也沒有哪一層需要「開」。深度變了，岩石就變了——
+   就這樣，沒有別的意思。
+
+   所以每一層底下寫的是「這裡的岩石長什麼樣」，不是「你在這一層要學會
+   什麼」。一旦寫成後者，那張剖面圖就變回一條進度條，而且是全班一起看的
+   那一種。 */
+
+var STRATA = [
+  {
+    key: 'wild', name: '微光荒原', from: 0, to: 2,
+    note: '表土。碎石多，光還下得來一點。',
+    pal: { '#': '#C9A227', o: '#9A7E22', '*': '#F2E6C8' },
+    bg: '#171208', line: '#3A2E12', glow: 'rgba(201,162,39,.07)'
+  },
+  {
+    key: 'crys', name: '水晶迴廊', from: 3, to: 5,
+    note: '地下水穿過晶體。走通的斷面會折光。',
+    pal: { '#': '#5FA8C7', o: '#3E7E96', '*': '#D8F2FA' },
+    bg: '#0C1720', line: '#173445', glow: 'rgba(95,168,199,.07)'
+  },
+  {
+    key: 'echo', name: '迴聲迷宮', from: 6, to: 8,
+    note: '方塊狀的硬岩。聲音在裡面會繞。',
+    pal: { '#': '#8C7BC7', o: '#625397', '*': '#E4DCFA' },
+    bg: '#131024', line: '#2E2750', glow: 'rgba(140,123,199,.07)'
+  },
+  {
+    key: 'fire', name: '熔火深淵', from: 9, to: 9999,
+    note: '底下有熱源。往下沒有盡頭，只是越來越燙。',
+    pal: { '#': '#D9603F', o: '#9E4026', '*': '#FAD9CC' },
+    bg: '#1C0E09', line: '#4A2013', glow: 'rgba(217,96,63,.08)'
+  }
+];
+
+/* 這個深度是哪一層的岩石 */
+function strataAt(depth) {
+  var d = Number(depth) || 0;
+  for (var i = 0; i < STRATA.length; i++) {
+    if (d >= STRATA[i].from && d <= STRATA[i].to) return STRATA[i];
+  }
+  return STRATA[STRATA.length - 1];
+}
+
+/* 一層裡住著哪些東西。
+
+   creatures 的 r 欄位就是這四個名字，所以生態系不用另外編——
+   牠們本來就分在這四層裡。擋在你走廊盡頭的那一隻，只是其中一隻。 */
+function faunaOf(key) {
+  var s = null;
+  for (var i = 0; i < STRATA.length; i++) if (STRATA[i].key === key) s = STRATA[i];
+  if (!s) return [];
+  return PACK.creatures.filter(function (c) { return c.r === s.name; });
+}
+
+/* 這一層的第 n 隻。用層與序號算，不擲骰子——
+   每次打開，同一隻都在同一個地方，那張剖面圖才是一個地方。 */
+function faunaAt(key, n) {
+  var f = faunaOf(key);
+  if (!f.length) return null;
+  return f[hash(key + '~' + n) % f.length];
 }
 
 
@@ -1563,7 +1775,7 @@ RULES.GEARS = [
 ];
 
 /* 招牌的階由深度決定，不由任何人手動調。
-   走完的里程碑越多，坑道口的招牌材質越好——木牌、鐵牌、會發光的銘牌。 */
+   走完的里程碑越多，廊道入口的招牌材質越好——木牌、鐵牌、會發光的銘牌。 */
 RULES.SIGN_AT = [0, 2, 4];
 RULES.signTierOf = function (depth) {
   var n = 0;
@@ -1973,17 +2185,17 @@ function depthOf(teamId) {
   }).length;
 }
 
-/* 招牌的階＝挖到多深。
+/* 招牌的階＝走到多深。
 
    招牌上的字是學生自己寫的（專案名稱），材質不是——材質是走完幾個
    里程碑自己長出來的。這樣改名字改不出一塊發光的牌子，
-   而牌子發光的時候，那是他們自己挖來的。 */
+   而牌子發光的時候，那是他們自己走出來的。 */
 function signOf(teamId) {
   var n = Math.min(RULES.SIGN_TIERS.length - 1, RULES.signTierOf(depthOf(teamId)));
   return SIGNS[RULES.SIGN_TIERS[n]];
 }
 
-/* 再挖幾個里程碑招牌會換材質。沒有下一階就回 0。 */
+/* 再走幾個里程碑招牌會換材質。沒有下一階就回 0。 */
 function nextSignIn(teamId) {
   var d = depthOf(teamId);
   for (var i = 0; i < RULES.SIGN_AT.length; i++) {
@@ -2003,7 +2215,7 @@ function accuracyOf(teamId) {
 }
 
 /* ---------- 全班生態 ----------
-   沒有名次。只有「誰在哪一條坑道、挖到多深、現在是什麼狀態」。 */
+   沒有名次。只有「誰在哪一條廊道、走到多深、現在是什麼狀態」。 */
 function ecology(classId) {
   return where('Teams', function (t) { return t.classId === classId; }).map(function (t) {
     var st = stallOf(t.teamId);
@@ -2094,7 +2306,7 @@ function doingOfRun(runId) {
     .map(function (p) { return p.kind || 'any'; });
 }
 
-/* 今天班上有幾條坑道也動過。
+/* 今天班上有幾條廊道今天也有人在走。
    這不是名次——它不排序、不比大小，只回答「今天只有我一個人在下面嗎」。 */
 function todayMovers(classId, exceptTeam) {
   var day = dayOf(now());
@@ -2270,7 +2482,7 @@ function seed() {
   DB.Users.push(seedPw({ userId: 'U0', account: 'tea01', name: '指導老師',
     role: 'teacher', classId: cid, createdAt: ago(30) }));
 
-  /* 研究者。管帳號、看紀錄、匯出——不進坑道。 */
+  /* 研究者。管帳號、看紀錄、匯出——不進地下城。 */
   DB.Users.push(seedPw({ userId: 'U9', account: 'lab01', name: '研究者',
     role: 'researcher', classId: cid, createdAt: ago(31) }));
 
@@ -2494,7 +2706,7 @@ function render() {
   }
 
   /* 學生還沒對上名冊：先認領，別的哪裡都去不了。
-     沒有組別的話，坑道不知道要畫哪一條——側欄跟頂條也一樣，
+     沒有組別的話，不知道要畫哪一條廊道——側欄跟頂條也一樣，
      它們每一格都在講「你的組」，這時候還沒有那個東西。 */
   if (u.role === 'student' && !u.teamId) {
     document.getElementById('app').innerHTML =
@@ -2605,7 +2817,7 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '坑道'], ['pack', '裝備架'], ['eco', '全班地下城'], ['log', '紀錄']
+      ['home', '廊道'], ['pack', '裝備架'], ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   var items = nav.map(function (n) {
@@ -2713,7 +2925,7 @@ var ACTS = {
       /* 有人跟你一起在下面。這不是名次——它不排序，也不說誰比較多。 */
       var others = todayMovers(t.classId, t.teamId);
       msg = (d ? d.icon + ' ' + d.label + '。' : '') +
-        (others ? '今天班上還有 ' + others + ' 條坑道也在響。'
+        (others ? '今天班上還有 ' + others + ' 條廊道今天也有人在走。'
                 : '今天你是第一個下來的。');
     }
     /* 先播完動畫再重畫——重畫會把 <img> 換掉，動畫就沒了。
@@ -2757,7 +2969,7 @@ var ACTS = {
     if (!v.trim()) return say('招牌上總要寫點什麼。');
     if (!actRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
     go('home');
-    say('招牌換字了。材質是挖出來的，那個急不得。');
+    say('招牌換字了。材質是走出來的，那個急不得。');
   },
 
   /* ---- 老師 ---- */
@@ -2810,8 +3022,26 @@ PAGES.gate = function () {
   H.push('<div class="gate-box">');
   H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
   H.push('<h1>專案地下城</h1>');
-  H.push('<p class="lead">你的專案是一條往下挖的坑道。老師派里程碑，' +
-         '你自己決定花幾天——這裡不打分，只看你說的天數跟實際差多少。</p>');
+  H.push('<p class="lead">你的專案是一條往下走的廊道。' +
+         '老師在入口放下一個里程碑，廊道盡頭就多一隻擋路的東西——' +
+         '要花幾天走到牠面前，是你自己說了算。</p>');
+
+  /* 四個區域先露一次。進去之前就知道下面有什麼，那是世界，不是說明。 */
+  H.push('<div class="zones">');
+  STRATA.forEach(function (s) {
+    var c = faunaOf(s.key)[0];
+    H.push('<div class="zn ' + s.key + '">');
+    if (c) H.push(pxTag(c.px, s.pal, 'zn-px'));
+    H.push('<b>' + esc(s.name) + '</b>');
+    H.push('<span>' + esc(s.note) + '</span>');
+    H.push('<i>地下 ' + (s.from * WORLD.depthPerMilestone) + ' 公尺起</i>');
+    H.push('</div>');
+  });
+  H.push('</div>');
+  H.push('<p class="dim">越往下石頭越不一樣，住的東西也不一樣。' +
+         '往下沒有盡頭——這座地下城沒有最底層，所以也沒有人「走完」。' +
+         '這裡不打分，只看你說的天數跟實際差多少。</p>');
+
   H.push('<div class="row">');
   H.push(btn('登入', 'go:login', 'big'));
   H.push(btn('我是新的，建一個帳號', 'go:reg', 'ghost'));
@@ -2868,7 +3098,7 @@ PAGES.reg = function () {
 };
 
 /* ---------- 認領身分 ----------
-   登入了但還沒對上名冊。這一頁不能跳過——沒有組別，坑道就不知道要挖哪一條。 */
+   登入了但還沒對上名冊。這一頁不能跳過——沒有組別，就不知道要畫哪一條廊道。 */
 PAGES.claim = function () {
   var u = me();
   var free = freeRoster(u.classId);
@@ -2935,7 +3165,7 @@ ACTS.claim = function (rosterId) {
   var r = actClaim(S.who, rosterId);
   if (r.err) return say(r.err);
   go('home');
-  say('對上了。這條坑道從現在起是你們的。');
+  say('對上了。這一條廊道從現在起是你們的。');
 };
 
 ACTS.logout = function () {
@@ -2966,13 +3196,13 @@ function homeFor(u) {
 /* ===== 60-student.js ===== */
 /* 學生端。
 
-   一頁只給一個動作。首頁就是坑道本身——招牌、角色、迷霧走廊、魔物，
+   一頁只給一個動作。首頁就是廊道本身——招牌、角色、迷霧、魔物，
    底下一顆巨大的推進鍵。其餘都是資訊，不是選項。
 
    零輸入框：天數用滑桿，風險與卡關用圖示標籤。要打字的東西沒有人會寫，
    而且打字會把防衛心叫起來。 */
 
-/* ---------- 坑道（首頁） ---------- */
+/* ---------- 廊道（首頁） ---------- */
 PAGES.home = function () {
   var t = myTeam();
   var next = nextThing(t.teamId);
@@ -2989,7 +3219,7 @@ PAGES.home = function () {
     ['挑裝備', '三選一，你自己挑']
   ], STEP_AT[next.kind] == null ? -1 : STEP_AT[next.kind]));
 
-  /* ── 坑道本身。招牌、深度、走廊、魔物全在裡面（見 61-scene.js） ── */
+  /* ── 廊道本身。招牌、深度、魔物全在裡面（見 61-scene.js） ── */
   H.push(scene(t, next.row, st));
   H.push(sceneCap(t, next, st));
 
@@ -3024,9 +3254,9 @@ PAGES.home = function () {
   /* ── 招牌 ── */
   var ns = nextSignIn(t.teamId);
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">坑道口的招牌</div>');
+  H.push('<div class="eyebrow">廊道入口的招牌</div>');
   H.push('<p class="dim">上面寫什麼是你們的事，老師不替你們命名。' +
-         '材質不是——那個是挖出來的' +
+         '材質不是——那個是走出來的' +
          (ns.need ? '，再走完 ' + ns.need + ' 個里程碑會換成「' + esc(ns.name) + '」' : '') + '。</p>');
   H.push('<div class="rn-row">');
   H.push('<input id="pj-name" value="' + esc(t.project || '') +
@@ -3136,7 +3366,7 @@ function actionCard(t, next, st) {
     H.push('<p class="dim">他看的順序是照等最久的排，不是先交先看。</p>');
 
   } else {
-    H.push('<div class="eyebrow">坑道很安靜</div>');
+    H.push('<div class="eyebrow">廊道很安靜</div>');
     H.push('<h2>目前沒有等你做的。</h2>');
     H.push('<p class="dim">老師隨時可能派新的里程碑。</p>');
   }
@@ -3259,7 +3489,7 @@ PAGES.commit = function () {
 
   H.push('<div class="row">');
   H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big'));
-  H.push(btn('回坑道', 'go:home', 'ghost'));
+  H.push(btn('回廊道', 'go:home', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
@@ -3268,11 +3498,24 @@ PAGES.commit = function () {
 PAGES.submit = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
+  var t = myTeam();
   var m = msOf(r.msId);
   var used = Math.max(1, daysBetween(r.committedAt, now()));
   var s = RULES.judge(r.est, used);
 
   var H = [head('交出去', m.title, '')];
+
+  /* 走到底了才看得清楚牠。前面那些天牠都在霧裡——
+     這一段是世界觀，也是這一趟真的結束了的訊號。 */
+  var mob = mobFor(r.msId, t.teamId);
+  var zone = strataAt(depthOf(t.teamId));
+  H.push('<div class="card fa ' + zone.key + '"><div class="fa-in">');
+  H.push(pxTag(mob.px, zone.pal, 'fa-px'));
+  H.push('<div><div class="eyebrow">' + esc(zone.name) + '　·　擋在你前面的</div>');
+  H.push('<h2>' + esc(mob.n) + '</h2>');
+  H.push('<p class="lead">' + esc(mob.t) + '</p>');
+  H.push('</div></div></div>');
+
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你當初承諾</div>');
   H.push('<div class="big-num">' + r.est + ' <span>天</span></div>');
@@ -3411,8 +3654,22 @@ PAGES.dash = function () {
   if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
   H.push('<p class="dim">深度 ' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m。' +
     '　下一次決定要花幾天的時候，這句話會出現在那一頁。</p>');
+
+  /* 跨進新的一區。這是整個系統裡少數幾個「世界自己變了」的時刻，
+     而且它不是獎勵——是你走到那裡，石頭就不一樣了。 */
+  var d = depthOf(r.teamId);
+  var now2 = strataAt(d), was = strataAt(d - 1);
+  if (d > 0 && now2.key !== was.key) {
+    H.push('<div class="card fa ' + now2.key + ' zone-in">');
+    H.push('<div class="eyebrow">石頭變了</div>');
+    H.push('<h2>你進到' + esc(now2.name) + '了。</h2>');
+    H.push('<p class="lead">' + esc(now2.note) + '</p>');
+    H.push('<p class="dim">往下沒有盡頭，這座地下城沒有最底層。' +
+           '這裡住的東西跟上面那一區不一樣——去全班地下城那張圖上點牠們看看。</p>');
+    H.push('</div>');
+  }
   H.push('</div>');
-  H.push(btn('回坑道', 'go:home', 'big'));
+  H.push(btn('回廊道', 'go:home', 'big'));
   return H.join('');
 };
 
@@ -3456,7 +3713,7 @@ PAGES.log = function () {
 
 
 /* ===== 61-scene.js ===== */
-/* 坑道的場景。
+/* 廊道的場景。
 
    之前這裡是一條進度條：角色 → 幾個方格 → 魔物。它讀得懂，但它是圖表。
    這一支把它改成一個地方——有洞口、有天花板、有地板、有石頭、有火把，
@@ -3497,14 +3754,19 @@ function scene(t, row, st) {
   var did = run ? doingOfRun(run.runId) : [];
   var light = WORLD.light[st.level];
   var W = SCN.ENT + est * SCN.TILE + SCN.END;
+  /* 走到多深，牆就是哪一區的石頭。世界觀不寫在說明裡，寫在牆上。 */
+  var zone = strataAt(depthOf(t.teamId));
 
-  var H = ['<div class="scn ' + light.key + '">'];
+  var H = ['<div class="scn ' + light.key + ' z-' + zone.key + '">'];
+
 
   /* 固定在角落的深度。走廊往旁邊捲，它不跟著捲——
      那是「你在多深的地方」，不是走廊上的一個位置。 */
   H.push('<div class="scn-hud">' +
+    '<em>' + esc(zone.name) + '</em>' +
     '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
-    '<span>走完 ' + depthOf(t.teamId) + ' 個里程碑</span></div>');
+    '<span>走完 ' + depthOf(t.teamId) + ' 個里程碑</span>' +
+    '<span class="zn-note">' + esc(zone.note) + '</span></div>');
 
   H.push('<div class="scn-scroll"><div class="scn-in" style="width:' + W + 'px">');
 
@@ -3521,7 +3783,7 @@ function scene(t, row, st) {
 
   /* ── 地板 ── */
   H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
-  /* 走過的那一段地板是挖開的，亮一階 */
+  /* 走過的那一段地板是打通的，亮一階 */
   if (walked > 0) {
     H.push('<div class="floor lit" style="left:' + SCN.ENT + 'px;width:' +
       (walked * SCN.TILE) + 'px"></div>');
@@ -3550,7 +3812,7 @@ function scene(t, row, st) {
     H.push('<span class="dayn' + (i === walked ? ' here' : (on ? ' past' : '')) +
       '" style="left:' + x + 'px">' + (i + 1) + '</span>');
 
-    /* 挖開的地方才長得出東西 */
+    /* 走通的地方才長得出東西 */
     if (on) {
       var p = propFor(seed, i);
       if (p === 'rubble') H.push('<img class="px prop rubble" style="left:' + (x + 5) +
@@ -3593,7 +3855,7 @@ function scene(t, row, st) {
 
 /* ---------- 洞口 ----------
    左邊是你進來的地方：拱門、從上面落下來的光、掛著的招牌。
-   招牌就在這裡，不在標題列——它是坑道口的看板，不是頁首。 */
+   招牌就在這裡，不在標題列——它是廊道入口的看板，不是頁首。 */
 function sceneMouth(t) {
   var sg = signOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + SCN.ENT + 'px">'];
@@ -3614,7 +3876,7 @@ function sceneMouth(t) {
    剛出發的時候只看得到一團影子，走到底才看得清牠長什麼樣。 */
 function sceneMob(t, row, prog) {
   var mob = mobFor(row.ms.msId, t.teamId);
-  var pal = DEPTH_PAL[Math.min(3, depthOf(t.teamId))];
+  var pal = strataAt(depthOf(t.teamId)).pal;
   var x = SCN.ENT + (row.run.est || 1) * SCN.TILE + 33;
   var H = [];
   /* 任務牌不在魔物那一層——魔物要藏在霧裡，要交什麼不可以。 */
@@ -3658,129 +3920,230 @@ function scrollScene() {
 
 
 /* ===== 62-eco.js ===== */
-/* 全班地下城：2.5D 蟻巢剖面。
+/* 全班地下城：一張地質剖面。
 
-   這是「關聯性」那根柱子的全部。它要做到一件事，而且只有這一件：
-   讓你看得到別人也在坑道裡——不比較、不排名、不知道誰比較好。
+   這是「關聯性」那根柱子的全部，而且它只做一件事：
+   讓你看得到別人也在下面——不比較、不排名、不知道誰比較好。
 
-   所以它畫的是空間，不是名次。每一組往下挖自己的一條豎坑，深度是
-   走完幾個里程碑。坑道之間沒有共同的終點線，因為每一組的專案不一樣。
+   為什麼是剖面而不是列表：列表只要有兩列就會被讀成名次，剖面讀起來
+   是一個地方。每一組往下走自己的一條廊道，廊道之間沒有共同的終點線，
+   因為每一組的專案本來就不一樣。
 
-   立體感來自每一塊右邊的側面，不是把整條坑道斜著推——正交的長條看起來
-   像進度表，有側面的豎坑看起來像地下城。 */
+   岩層（見 13-strata.js）是全班共用的地質，不是關卡。誰都看得到全部
+   四層，沒有哪一層需要「開」。深度變了岩石就變了，就這樣。
 
-var ECO_W = 128;     /* 一條坑道的寬 */
-var ECO_SEG = 46;    /* 一格深度的高 */
-/* 立體感靠每一塊右邊的側面（見 50-style.css 的 .seg::after），
-   不是把整塊往旁邊推——推的話四格之後就壓到隔壁那條坑道了。 */
+   岩壁裡住著東西。牠們跟任何一組的進度都無關，就只是住在那裡——
+   擋在你走廊盡頭的那一隻，只是其中一隻。點一下看牠是什麼。
 
-function ecoScene(rows, meId) {
-  var maxD = Math.max(4, rows.reduce(function (a, r) {
+   立體感來自每一塊右邊的側面（見 54-eco.css），不是把整條廊道斜著推——
+   正交的長條看起來像進度表，有側面的廊道看起來像地下城。 */
+
+var XS = {
+  RULER: 154,    /* 左邊：深度尺與層的名字 */
+  W: 110,        /* 一條廊道的寬 */
+  GAP: 66,       /* 廊道之間的牆 */
+  SEG: 55,       /* 一個里程碑的深度 */
+  SURF: 88,      /* 地表那一段 */
+  ROCK: 264      /* 最右邊留一大塊沒有人走過的岩壁，給生態用 */
+};
+
+function xsTop(d) { return XS.SURF + d * XS.SEG; }
+function xsX(i) { return XS.RULER + i * (XS.W + XS.GAP); }
+
+/* ---------- 整張圖 ---------- */
+function xsScene(rows, meId) {
+  /* 畫多深：最深的那一組再往下兩格，讓底下永遠還有沒有人走過的岩石。
+     這很重要——底部如果切齊最深的人，那條線就變成終點線了。 */
+  var deep = rows.reduce(function (a, r) {
     return Math.max(a, r.depth + (r.at > 0 ? 1 : 0));
-  }, 0));
-  var H = ecoHeight(maxD);
+  }, 0);
+  var maxD = Math.max(5, deep + 2);
+  var W = xsX(rows.length) + XS.ROCK;
+  var H = xsTop(maxD) + 44;
 
-  var out = ['<div class="eco2" style="height:' + (H + 96) + 'px">'];
+  var out = ['<div class="xsec-wrap"><div class="xsec" style="width:' + W +
+    'px;height:' + H + 'px">'];
 
-  /* 地表 */
-  out.push('<div class="eco2-sky"><span>地表</span></div>');
+  /* ── 地層 ── */
+  STRATA.forEach(function (s) {
+    if (s.from > maxD) return;
+    var top = xsTop(s.from);
+    var bot = xsTop(Math.min(s.to + 1, maxD));
+    out.push('<div class="xs-band ' + s.key + '" style="top:' + top +
+      'px;height:' + (bot - top) + 'px;width:' + W + 'px"></div>');
+    out.push('<div class="xs-bandn ' + s.key + '" style="top:' + (top + 6) + 'px">' +
+      '<b>' + esc(s.name) + '</b><span>' + esc(s.note) + '</span></div>');
+  });
 
-  /* 深度刻度：只標數字，不標「應該到哪」 */
+  /* ── 岩壁裡的東西 ── */
+  out.push(xsFauna(rows.length, maxD));
+
+  /* ── 地表 ── */
+  out.push('<div class="xs-sky" style="width:' + W + 'px"></div>');
+  out.push('<div class="xs-surf" style="width:' + W + 'px"></div>');
+
+  /* ── 深度尺。只標數字，不標「應該到哪」 ── */
   for (var d = 1; d <= maxD; d++) {
-    out.push('<div class="eco2-rule" style="top:' + (ecoTop(d) + 48) + 'px">' +
+    out.push('<div class="xs-rule" style="top:' + xsTop(d) + 'px;width:' + W + 'px">' +
       '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
   }
 
-  /* 每一組一條豎坑 */
+  /* ── 每一組一條廊道 ── */
   rows.forEach(function (r, i) {
-    out.push(ecoShaft(r, i, maxD, r.teamId === meId));
+    out.push(xsShaft(r, i, maxD, r.teamId === meId));
   });
 
-  out.push('</div>');
+  out.push('</div></div>');
   return out.join('');
 }
 
-function ecoTop(d) { return d * ECO_SEG; }
-function ecoHeight(maxD) { return ecoTop(maxD) + ECO_SEG; }
+/* ---------- 岩壁裡的生態 ----------
+   位置用層與槽算，不擲骰子。每次打開，同一隻都在同一個地方——
+   會亂跳的東西不是生態，是特效。 */
+function xsFauna(nTeams, maxD) {
+  var out = [];
+  /* 放得下的地方：每一條廊道右邊那道牆，加上最右邊那一大塊 */
+  var slots = [];
+  for (var i = 0; i < nTeams; i++) slots.push(xsX(i) + XS.W + 14);
+  slots.push(xsX(nTeams) + 33);
+  slots.push(xsX(nTeams) + 154);
+  slots.push(xsX(nTeams) + 88);
 
-/* 一條坑道 */
-function ecoShaft(r, i, maxD, mine) {
-  var x = i * (ECO_W + 18);
+  STRATA.forEach(function (s) {
+    if (s.from > maxD) return;
+    var lo = xsTop(s.from), hi = xsTop(Math.min(s.to + 1, maxD));
+    if (hi - lo < 55) return;
+    slots.forEach(function (x, n) {
+      var h = hash(s.key + '/' + n);
+      if (h % 100 < 42) return;
+      var c = faunaAt(s.key, n);
+      if (!c) return;
+      var y = lo + 11 + ((h >> 5) % Math.max(1, hi - lo - 55));
+      out.push('<button class="xs-fauna" style="left:' + x + 'px;top:' + y + 'px" ' +
+        'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'fauna:' + c.n })) + '\' ' +
+        'title="' + esc(c.n) + '">' + pxTag(c.px, s.pal, '') + '</button>');
+    });
+  });
+  return out.join('');
+}
+
+/* ---------- 一條廊道 ---------- */
+function xsShaft(r, i, maxD, mine) {
+  var x = xsX(i);
   var H = [];
-  H.push('<div class="shaft' + (mine ? ' mine' : '') + '" style="left:' + x + 'px">');
+  H.push('<div class="xs-shaft' + (mine ? ' mine' : '') + '" style="left:' + x +
+    'px;width:' + XS.W + 'px">');
 
-  /* 坑道口的招牌 */
+  /* 入口。招牌立在地表上，不是埋在土裡。 */
   var sg = SIGNS[r.sign] || SIGNS.wood;
-  H.push('<div class="shaft-head">');
+  H.push('<div class="xs-head">');
   H.push(pxTag(sg.px, sg.pal, 'sign-s'));
   H.push('<b>' + esc(r.name) + '</b>');
   H.push('<span>' + esc(r.project || '（還沒定）') + '</span>');
+  H.push('<i class="' + (r.stall >= 2 ? 'z' : r.stall === 1 ? 'y' : r.onMs ? 'x' : '') + '">' +
+    (r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '前進中' : '等派任務') +
+    '</i>');
   H.push('</div>');
 
-  /* 挖出來的每一格。垂直對齊，立體感靠 CSS 給的側面。 */
-  for (var d = 1; d <= maxD; d++) {
-    var dug = d <= r.depth;
-    var here = d === r.depth + 1 && r.at > 0;
-    H.push('<div class="seg' + (dug ? ' dug' : '') + (here ? ' here' : '') + '"' +
-      ' style="top:' + ecoTop(d - 1) + 'px">');
-    if (here) {
-      /* 正在挖的那一格：填到承諾的比例 */
-      H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
-    }
+  /* 打通的每一格 */
+  for (var d = 0; d < maxD; d++) {
+    var dug = d < r.depth;
+    var here = d === r.depth && r.at > 0;
+    var band = strataAt(d);
+    H.push('<div class="xs-seg ' + band.key + (dug ? ' dug' : '') + (here ? ' here' : '') +
+      '" style="top:' + xsTop(d) + 'px">');
+    if (here) H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
     H.push('</div>');
   }
 
   /* 小人站在最深的那一格 */
   var at = r.depth + (r.at > 0 ? 1 : 0);
   var pose = r.stall >= 2 ? HERO.sleep : HERO.idle;
-  H.push('<div class="shaft-hero ' + (r.stall >= 2 ? 'sleep' : r.stall === 1 ? 'vine' : '') + '"' +
-    ' style="top:' + (ecoTop(Math.max(0, at - 1)) + 4) + 'px">');
+  H.push('<div class="xs-hero' + (r.stall >= 2 ? ' sleep' : '') + '" style="top:' +
+    (xsTop(Math.max(0, at - 1)) + 11) + 'px">');
   H.push(pxTag(pose, HERO.pal, 'ch-s'));
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</div>');
-
-  /* 底下一句狀態。不講快慢，只講現在在做什麼。 */
-  H.push('<div class="shaft-foot" style="top:' + (ecoHeight(maxD) + 8) + 'px">' +
-    esc(r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '挖掘中' : '等派任務') +
-    '</div>');
 
   H.push('</div>');
   return H.join('');
 }
 
-/* ---------- 學生看到的（Zoom Out） ---------- */
-PAGES.eco = function () {
-  var t = myTeam();
-  var rows = ecology(t.classId).map(function (r) {
+/* ---------- 點開的那一隻 ----------
+   生態不是背景。點得開才叫生態——不然那些圖只是牆紙。 */
+function faunaCard() {
+  var pick = DRAFT.fa;
+  if (!pick) {
+    return '<div class="card dim">岩壁裡住著東西。點任何一隻，看牠是什麼。' +
+      '牠們跟哪一組走到多深都沒有關係——牠們只是住在那裡。</div>';
+  }
+  var c = null;
+  for (var i = 0; i < PACK.creatures.length; i++) {
+    if (PACK.creatures[i].n === pick) c = PACK.creatures[i];
+  }
+  if (!c) return '';
+  var s = null;
+  STRATA.forEach(function (x) { if (x.name === c.r) s = x; });
+  var H = ['<div class="card fa ' + (s ? s.key : '') + '">'];
+  H.push('<div class="fa-in">');
+  H.push(pxTag(c.px, (s || STRATA[0]).pal, 'fa-px'));
+  H.push('<div>');
+  H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
+  H.push('<h2>' + esc(c.n) + '</h2>');
+  H.push('<p class="lead">' + esc(c.t) + '</p>');
+  H.push('<p class="dim">牠住在這一層。老師派下一個里程碑的時候，' +
+         '擋在你走廊盡頭的可能就是牠——同一個里程碑，每一組遇到的不是同一隻。</p>');
+  H.push('</div></div></div>');
+  return H.join('');
+}
+
+ACTS.fauna = function (name) { DRAFT.fa = name; render(); };
+
+/* 圖例。看得懂才叫呈現。 */
+function xsLegend() {
+  var H = ['<div class="card"><div class="eyebrow">這張圖在說什麼</div><div class="lg">'];
+  H.push('<div><b class="lg-dug"></b><span>打通的廊道＝走完的里程碑</span></div>');
+  H.push('<div><b class="lg-here"></b><span>正在走的那一格＝這一趟走到哪</span></div>');
+  H.push('<div><b class="lg-hero"></b><span>小人＝那一組現在在多深的地方</span></div>');
+  H.push('<div><b class="lg-fa"></b><span>岩壁裡的東西＝住在那一層的生物</span></div>');
+  H.push('</div>');
+  H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
+         '廊道長度本來就不同——這裡沒有共同的終點線，也沒有排名。' +
+         '最底下永遠留著沒有人走過的岩石，因為這座地下城沒有最底層。</p>');
+  H.push('</div>');
+  return H.join('');
+}
+
+function ecoRows(classId) {
+  return ecology(classId).map(function (r) {
     var tm = teamOf(r.teamId);
     r.project = tm && tm.project;
     return r;
   });
-  var H = [head('全班地下城', '大家都在挖',
-    '每一條坑道往下挖的是自己的專案。看得到別人也在裡面，就夠了。')];
-  H.push('<div class="eco-scroll">' + ecoScene(rows, t.teamId) + '</div>');
-  H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
-         '坑道長度本來就不同——這裡沒有共同的終點線。</p>');
-  H.push(btn('回自己的坑道', 'go:home', 'ghost'));
+}
+
+/* ---------- 學生看到的 ---------- */
+PAGES.eco = function () {
+  var t = myTeam();
+  var rows = ecoRows(t.classId);
+  var H = [head('全班地下城', '大家都在下面',
+    '同一片石頭，每一組往下走自己的一條。看得到別人也在裡面，就夠了。')];
+  H.push(xsScene(rows, t.teamId));
+  H.push(faunaCard());
+  H.push(xsLegend());
+  H.push(btn('回自己的廊道', 'go:home', 'ghost'));
   return H.join('');
 };
 
-/* ---------- 老師看到的：各組進度 ----------
-
-   跟學生看的是同一張剖面圖，底下多一段可以讀的細節。
-   細節只講「他們現在在哪一步、承諾了幾天、推了幾天」——不排序、不比較，
-   順序照名冊。老師在這一頁不做任何動作，這裡是拿來看的。 */
+/* ---------- 老師看到的：同一張圖，底下多一段細節 ---------- */
 PAGES.classeco = function () {
   var u = me();
-  var rows = ecology(u.classId).map(function (r) {
-    var tm = teamOf(r.teamId);
-    r.project = tm && tm.project;
-    return r;
-  });
-  var H = [head('各組進度', '每一組挖到哪',
-    '深度是走完幾個里程碑。每一組的專案不一樣，坑道長度本來就不同——' +
-    '這裡沒有共同的終點線，也沒有排名。')];
-  H.push('<div class="eco-scroll">' + ecoScene(rows, null) + '</div>');
+  var rows = ecoRows(u.classId);
+  var H = [head('各組進度', '每一組走到哪',
+    '同一片石頭，每一組往下走自己的一條。深度是走完幾個里程碑——' +
+    '每一組的專案不一樣，廊道長度本來就不同。')];
+  H.push(xsScene(rows, null));
+  H.push(faunaCard());
 
   rows.forEach(function (r) {
     var t = teamOf(r.teamId);
@@ -3798,10 +4161,10 @@ PAGES.classeco = function () {
     H.push('<b>' + esc(t.name) + '</b>');
     H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
     H.push('<span class="sp"></span>');
-    H.push('<span class="dim">深度 ' + (r.depth * WORLD.depthPerMilestone) + ' m</span>');
+    H.push('<span class="dim">' + esc(strataAt(r.depth).name) + '　·　深度 ' +
+      (r.depth * WORLD.depthPerMilestone) + ' m</span>');
     H.push('</div>');
 
-    /* 現在在做什麼 */
     if (wait) {
       H.push('<p class="lead">在等你看：' + esc(wait.ms.title) + '</p>');
       H.push(btn('去勾', 'go:review:' + wait.run.runId, ''));
@@ -3811,16 +4174,17 @@ PAGES.classeco = function () {
       H.push('<p class="dim">交了，正在營火旁說卡在哪：' + esc(camp.ms.title) + '</p>');
     } else if (cur) {
       var run = cur.run;
-      H.push('<p class="lead">正在挖：' + esc(cur.ms.title) + '</p>');
+      H.push('<p class="lead">正在走：' + esc(cur.ms.title) + '</p>');
       H.push('<div class="log-num">自己承諾 <b>' + run.est + '</b> 天　·　已推進 <b>' +
-             run.pushes + '</b> 天' +
-             (r.stall >= 2 ? '　·　<span class="warnx">' + r.stall + ' 級休息中</span>' :
-              r.stall === 1 ? '　·　<span class="dim">慢下來了</span>' : '') + '</div>');
-      if (run.risks && run.risks.length) {
-        H.push('<div class="tags small"><span class="k">他們事先標的風險</span>');
-        run.risks.forEach(function (k) {
-          var d = RULES.snagOf(k);
-          if (d) H.push('<span class="tag static">' + d.icon + ' ' + esc(d.label) + '</span>');
+        run.pushes + '</b> 天' +
+        (r.stall >= 2 ? '　·　<span class="warnx">休息中</span>' :
+         r.stall === 1 ? '　·　<span class="dim">慢下來了</span>' : '') + '</div>');
+      var seq = doingOfRun(run.runId);
+      if (seq.length) {
+        H.push('<div class="seq">');
+        seq.forEach(function (k) {
+          var d = RULES.doingOf(k);
+          H.push('<span title="' + esc(d ? d.label : '') + '">' + (d ? d.icon : '⛏️') + '</span>');
         });
         H.push('</div>');
       }
@@ -3828,11 +4192,10 @@ PAGES.classeco = function () {
       H.push('<p class="dim">手上沒有里程碑。派一個給他們就會開始。</p>');
     }
 
-    /* 走過的準度。這是他們的體感，不是成績。 */
     if (acc.total) {
       H.push('<div class="log-num">走完 <b>' + r.depth + '</b> 個　·　' +
-             '準 <b>' + acc.exact + '</b>　早 <b>' + acc.early + '</b>　失準 <b>' +
-             acc.late + '</b></div>');
+        '準 <b>' + acc.exact + '</b>　早 <b>' + acc.early + '</b>　失準 <b>' +
+        acc.late + '</b></div>');
     }
     H.push('</div>');
   });
@@ -3930,7 +4293,7 @@ PAGES.pack = function () {
   });
   H.push('</div></div>');
 
-  H.push(btn('回坑道', 'go:home', 'ghost'));
+  H.push(btn('回廊道', 'go:home', 'ghost'));
   return H.join('');
 };
 
@@ -3948,7 +4311,7 @@ PAGES.pack = function () {
    勾完可以之後，學生自己從三件裡挑一件。少一件他要煩惱的事，
    就少一次「老師替我決定」的機會。 */
 
-/* 老師走到哪一步了。有人等你看就是第三步，其餘看班上有沒有人在挖。 */
+/* 老師走到哪一步了。有人等你看就是第三步，其餘看班上有沒有人在走。 */
 function teacherStep(classId) {
   if (radar(classId).length) return 2;
   var running = where('Runs', function (r) { return r.state === 'running'; }).length;
@@ -4025,7 +4388,7 @@ PAGES.radar = function () {
   eco.forEach(function (e) {
     H.push('<div class="mini-row"><b>' + esc(e.name) + '</b>' +
       '<span class="' + (e.stall >= 2 ? 'warnx' : e.stall === 1 ? 'dim' : 'ok') + '">' +
-      (e.stall >= 2 ? '休息中' : e.stall === 1 ? '慢下來了' : e.onMs ? '挖掘中' : '等派任務') +
+      (e.stall >= 2 ? '休息中' : e.stall === 1 ? '慢下來了' : e.onMs ? '前進中' : '等派任務') +
       '</span><span class="dim">深度 ' + e.depth + '</span></div>');
   });
   H.push('</div>');
@@ -4148,7 +4511,7 @@ PAGES.ms = function () {
 /* ===== 75-research.js ===== */
 /* 研究者端。
 
-   這一端不是給老師用的，也不進坑道。它做三件事：
+   這一端不是給老師用的，也不進地下城。它做三件事：
 
      帳號   建班、開老師的帳號、重設密碼、解除認領、刪帳號
      名冊   把班上的名單貼進來，學生才點得到自己

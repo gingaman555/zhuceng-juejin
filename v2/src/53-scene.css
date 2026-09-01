@@ -1,14 +1,22 @@
-/* 坑道場景的樣子。
+/* 廊道場景的樣子。
 
    跟 52-material.css 同一套規矩：hard stop、0 模糊、斜面 3px、光從左上來。
    多一條只有這裡才有的：會動的東西一律逐格，用 steps() 換狀態，
    不用 ease 補間。火焰用 ease 一補就變成呼吸燈，那不是火。 */
 
+/* 走到多深，牆就是哪一區的石頭。四組顏色跟 13-strata.js 的 STRATA 同一份，
+   跟全班那張剖面圖上同一個深度的顏色也是同一組——
+   自己的廊道跟剖面圖對不起來的話，那兩張圖就不是同一個世界了。 */
+.scn.z-wild{--zbg:#171208;--zfl:#241B0C;--zfl2:#3B2D11;--zli:rgba(242,230,200,.030)}
+.scn.z-crys{--zbg:#0C1720;--zfl:#12222E;--zfl2:#1D3A4C;--zli:rgba(216,242,250,.035)}
+.scn.z-echo{--zbg:#131024;--zfl:#1B1733;--zfl2:#2A2450;--zli:rgba(228,220,250,.032)}
+.scn.z-fire{--zbg:#1C0E09;--zfl:#2A1510;--zfl2:#43201A;--zli:rgba(250,217,204,.038)}
+
 .scn{
   position:relative;height:286px;overflow:hidden;margin:0 0 22px;
-  background-color:#0C0A08;
+  background-color:var(--zbg,#0C0A08);
   background-image:
-    repeating-linear-gradient(0deg,  rgba(255,244,222,.028) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(0deg,  var(--zli,rgba(255,244,222,.028)) 0 1px, transparent 1px 44px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.60)        0 2px, transparent 2px 88px);
   box-shadow:
     inset 0 4px 0 rgba(0,0,0,.65),
@@ -27,7 +35,8 @@
 
 /* 角落的深度。走廊往旁邊捲，它不跟著捲。 */
 .scn-hud{
-  position:absolute;top:11px;right:11px;z-index:9;text-align:right;pointer-events:none
+  position:absolute;top:11px;right:11px;z-index:9;text-align:right;pointer-events:none;
+  padding:5px 9px;background:rgba(0,0,0,.45)
 }
 .scn-hud b{display:block;font-size:33px;line-height:1;color:var(--gold);font-weight:400}
 .scn-hud span{font-size:11px;color:var(--mute)}
@@ -35,13 +44,13 @@
 /* ---------- 地板 ---------- */
 .floor{
   position:absolute;bottom:44px;height:22px;
-  background-color:#17130E;
+  background-color:var(--zfl,#17130E);
   background-image:
     linear-gradient(180deg, rgba(255,244,222,.09) 0 2px, transparent 2px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 2px, transparent 2px 44px);
 }
-/* 挖開過的那一段亮一階 */
-.floor.lit{background-color:#2A2318}
+/* 走通過的那一段亮一階 */
+.floor.lit{background-color:var(--zfl2,#2A2318)}
 
 /* ---------- 天花板 ---------- */
 .drip{position:absolute;top:0;width:33px;height:33px;opacity:.9}
@@ -197,3 +206,18 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
 /* 紀錄頁：那一趟每天做的，排成一列 */
 .seq{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0;font-size:22px;line-height:1}
+
+/* 角落那一塊：你在哪一區、多深。釘住不跟著廊道捲——
+   那是「你在哪」，不是廊道上的一個位置。 */
+.scn-hud em{
+  display:block;font-style:normal;font-size:22px;line-height:1.2;margin-bottom:2px
+}
+.scn-hud .zn-note{max-width:198px;margin-left:auto;line-height:1.7;margin-top:3px}
+.scn.z-wild .scn-hud em{color:#C9A227}
+.scn.z-crys .scn-hud em{color:#5FA8C7}
+.scn.z-echo .scn-hud em{color:#8C7BC7}
+.scn.z-fire .scn-hud em{color:#D9603F}
+
+/* 跨進新的一區的那一張。這是少數幾個「世界自己變了」的時刻。 */
+.card.zone-in{margin-top:22px}
+.card.zone-in h2{margin:0 0 11px}

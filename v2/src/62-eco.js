@@ -1,126 +1,227 @@
-/* 全班地下城：2.5D 蟻巢剖面。
+/* 全班地下城：一張地質剖面。
 
-   這是「關聯性」那根柱子的全部。它要做到一件事，而且只有這一件：
-   讓你看得到別人也在坑道裡——不比較、不排名、不知道誰比較好。
+   這是「關聯性」那根柱子的全部，而且它只做一件事：
+   讓你看得到別人也在下面——不比較、不排名、不知道誰比較好。
 
-   所以它畫的是空間，不是名次。每一組往下挖自己的一條豎坑，深度是
-   走完幾個里程碑。坑道之間沒有共同的終點線，因為每一組的專案不一樣。
+   為什麼是剖面而不是列表：列表只要有兩列就會被讀成名次，剖面讀起來
+   是一個地方。每一組往下走自己的一條廊道，廊道之間沒有共同的終點線，
+   因為每一組的專案本來就不一樣。
 
-   立體感來自每一塊右邊的側面，不是把整條坑道斜著推——正交的長條看起來
-   像進度表，有側面的豎坑看起來像地下城。 */
+   岩層（見 13-strata.js）是全班共用的地質，不是關卡。誰都看得到全部
+   四層，沒有哪一層需要「開」。深度變了岩石就變了，就這樣。
 
-var ECO_W = 128;     /* 一條坑道的寬 */
-var ECO_SEG = 46;    /* 一格深度的高 */
-/* 立體感靠每一塊右邊的側面（見 50-style.css 的 .seg::after），
-   不是把整塊往旁邊推——推的話四格之後就壓到隔壁那條坑道了。 */
+   岩壁裡住著東西。牠們跟任何一組的進度都無關，就只是住在那裡——
+   擋在你走廊盡頭的那一隻，只是其中一隻。點一下看牠是什麼。
 
-function ecoScene(rows, meId) {
-  var maxD = Math.max(4, rows.reduce(function (a, r) {
+   立體感來自每一塊右邊的側面（見 54-eco.css），不是把整條廊道斜著推——
+   正交的長條看起來像進度表，有側面的廊道看起來像地下城。 */
+
+var XS = {
+  RULER: 154,    /* 左邊：深度尺與層的名字 */
+  W: 110,        /* 一條廊道的寬 */
+  GAP: 66,       /* 廊道之間的牆 */
+  SEG: 55,       /* 一個里程碑的深度 */
+  SURF: 88,      /* 地表那一段 */
+  ROCK: 264      /* 最右邊留一大塊沒有人走過的岩壁，給生態用 */
+};
+
+function xsTop(d) { return XS.SURF + d * XS.SEG; }
+function xsX(i) { return XS.RULER + i * (XS.W + XS.GAP); }
+
+/* ---------- 整張圖 ---------- */
+function xsScene(rows, meId) {
+  /* 畫多深：最深的那一組再往下兩格，讓底下永遠還有沒有人走過的岩石。
+     這很重要——底部如果切齊最深的人，那條線就變成終點線了。 */
+  var deep = rows.reduce(function (a, r) {
     return Math.max(a, r.depth + (r.at > 0 ? 1 : 0));
-  }, 0));
-  var H = ecoHeight(maxD);
+  }, 0);
+  var maxD = Math.max(5, deep + 2);
+  var W = xsX(rows.length) + XS.ROCK;
+  var H = xsTop(maxD) + 44;
 
-  var out = ['<div class="eco2" style="height:' + (H + 96) + 'px">'];
+  var out = ['<div class="xsec-wrap"><div class="xsec" style="width:' + W +
+    'px;height:' + H + 'px">'];
 
-  /* 地表 */
-  out.push('<div class="eco2-sky"><span>地表</span></div>');
+  /* ── 地層 ── */
+  STRATA.forEach(function (s) {
+    if (s.from > maxD) return;
+    var top = xsTop(s.from);
+    var bot = xsTop(Math.min(s.to + 1, maxD));
+    out.push('<div class="xs-band ' + s.key + '" style="top:' + top +
+      'px;height:' + (bot - top) + 'px;width:' + W + 'px"></div>');
+    out.push('<div class="xs-bandn ' + s.key + '" style="top:' + (top + 6) + 'px">' +
+      '<b>' + esc(s.name) + '</b><span>' + esc(s.note) + '</span></div>');
+  });
 
-  /* 深度刻度：只標數字，不標「應該到哪」 */
+  /* ── 岩壁裡的東西 ── */
+  out.push(xsFauna(rows.length, maxD));
+
+  /* ── 地表 ── */
+  out.push('<div class="xs-sky" style="width:' + W + 'px"></div>');
+  out.push('<div class="xs-surf" style="width:' + W + 'px"></div>');
+
+  /* ── 深度尺。只標數字，不標「應該到哪」 ── */
   for (var d = 1; d <= maxD; d++) {
-    out.push('<div class="eco2-rule" style="top:' + (ecoTop(d) + 48) + 'px">' +
+    out.push('<div class="xs-rule" style="top:' + xsTop(d) + 'px;width:' + W + 'px">' +
       '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
   }
 
-  /* 每一組一條豎坑 */
+  /* ── 每一組一條廊道 ── */
   rows.forEach(function (r, i) {
-    out.push(ecoShaft(r, i, maxD, r.teamId === meId));
+    out.push(xsShaft(r, i, maxD, r.teamId === meId));
   });
 
-  out.push('</div>');
+  out.push('</div></div>');
   return out.join('');
 }
 
-function ecoTop(d) { return d * ECO_SEG; }
-function ecoHeight(maxD) { return ecoTop(maxD) + ECO_SEG; }
+/* ---------- 岩壁裡的生態 ----------
+   位置用層與槽算，不擲骰子。每次打開，同一隻都在同一個地方——
+   會亂跳的東西不是生態，是特效。 */
+function xsFauna(nTeams, maxD) {
+  var out = [];
+  /* 放得下的地方：每一條廊道右邊那道牆，加上最右邊那一大塊 */
+  var slots = [];
+  for (var i = 0; i < nTeams; i++) slots.push(xsX(i) + XS.W + 14);
+  slots.push(xsX(nTeams) + 33);
+  slots.push(xsX(nTeams) + 154);
+  slots.push(xsX(nTeams) + 88);
 
-/* 一條坑道 */
-function ecoShaft(r, i, maxD, mine) {
-  var x = i * (ECO_W + 18);
+  STRATA.forEach(function (s) {
+    if (s.from > maxD) return;
+    var lo = xsTop(s.from), hi = xsTop(Math.min(s.to + 1, maxD));
+    if (hi - lo < 55) return;
+    slots.forEach(function (x, n) {
+      var h = hash(s.key + '/' + n);
+      if (h % 100 < 42) return;
+      var c = faunaAt(s.key, n);
+      if (!c) return;
+      var y = lo + 11 + ((h >> 5) % Math.max(1, hi - lo - 55));
+      out.push('<button class="xs-fauna" style="left:' + x + 'px;top:' + y + 'px" ' +
+        'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'fauna:' + c.n })) + '\' ' +
+        'title="' + esc(c.n) + '">' + pxTag(c.px, s.pal, '') + '</button>');
+    });
+  });
+  return out.join('');
+}
+
+/* ---------- 一條廊道 ---------- */
+function xsShaft(r, i, maxD, mine) {
+  var x = xsX(i);
   var H = [];
-  H.push('<div class="shaft' + (mine ? ' mine' : '') + '" style="left:' + x + 'px">');
+  H.push('<div class="xs-shaft' + (mine ? ' mine' : '') + '" style="left:' + x +
+    'px;width:' + XS.W + 'px">');
 
-  /* 坑道口的招牌 */
+  /* 入口。招牌立在地表上，不是埋在土裡。 */
   var sg = SIGNS[r.sign] || SIGNS.wood;
-  H.push('<div class="shaft-head">');
+  H.push('<div class="xs-head">');
   H.push(pxTag(sg.px, sg.pal, 'sign-s'));
   H.push('<b>' + esc(r.name) + '</b>');
   H.push('<span>' + esc(r.project || '（還沒定）') + '</span>');
+  H.push('<i class="' + (r.stall >= 2 ? 'z' : r.stall === 1 ? 'y' : r.onMs ? 'x' : '') + '">' +
+    (r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '前進中' : '等派任務') +
+    '</i>');
   H.push('</div>');
 
-  /* 挖出來的每一格。垂直對齊，立體感靠 CSS 給的側面。 */
-  for (var d = 1; d <= maxD; d++) {
-    var dug = d <= r.depth;
-    var here = d === r.depth + 1 && r.at > 0;
-    H.push('<div class="seg' + (dug ? ' dug' : '') + (here ? ' here' : '') + '"' +
-      ' style="top:' + ecoTop(d - 1) + 'px">');
-    if (here) {
-      /* 正在挖的那一格：填到承諾的比例 */
-      H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
-    }
+  /* 打通的每一格 */
+  for (var d = 0; d < maxD; d++) {
+    var dug = d < r.depth;
+    var here = d === r.depth && r.at > 0;
+    var band = strataAt(d);
+    H.push('<div class="xs-seg ' + band.key + (dug ? ' dug' : '') + (here ? ' here' : '') +
+      '" style="top:' + xsTop(d) + 'px">');
+    if (here) H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
     H.push('</div>');
   }
 
   /* 小人站在最深的那一格 */
   var at = r.depth + (r.at > 0 ? 1 : 0);
   var pose = r.stall >= 2 ? HERO.sleep : HERO.idle;
-  H.push('<div class="shaft-hero ' + (r.stall >= 2 ? 'sleep' : r.stall === 1 ? 'vine' : '') + '"' +
-    ' style="top:' + (ecoTop(Math.max(0, at - 1)) + 4) + 'px">');
+  H.push('<div class="xs-hero' + (r.stall >= 2 ? ' sleep' : '') + '" style="top:' +
+    (xsTop(Math.max(0, at - 1)) + 11) + 'px">');
   H.push(pxTag(pose, HERO.pal, 'ch-s'));
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</div>');
-
-  /* 底下一句狀態。不講快慢，只講現在在做什麼。 */
-  H.push('<div class="shaft-foot" style="top:' + (ecoHeight(maxD) + 8) + 'px">' +
-    esc(r.stall >= 2 ? '休息中' : r.stall === 1 ? '慢下來了' : r.onMs ? '挖掘中' : '等派任務') +
-    '</div>');
 
   H.push('</div>');
   return H.join('');
 }
 
-/* ---------- 學生看到的（Zoom Out） ---------- */
-PAGES.eco = function () {
-  var t = myTeam();
-  var rows = ecology(t.classId).map(function (r) {
+/* ---------- 點開的那一隻 ----------
+   生態不是背景。點得開才叫生態——不然那些圖只是牆紙。 */
+function faunaCard() {
+  var pick = DRAFT.fa;
+  if (!pick) {
+    return '<div class="card dim">岩壁裡住著東西。點任何一隻，看牠是什麼。' +
+      '牠們跟哪一組走到多深都沒有關係——牠們只是住在那裡。</div>';
+  }
+  var c = null;
+  for (var i = 0; i < PACK.creatures.length; i++) {
+    if (PACK.creatures[i].n === pick) c = PACK.creatures[i];
+  }
+  if (!c) return '';
+  var s = null;
+  STRATA.forEach(function (x) { if (x.name === c.r) s = x; });
+  var H = ['<div class="card fa ' + (s ? s.key : '') + '">'];
+  H.push('<div class="fa-in">');
+  H.push(pxTag(c.px, (s || STRATA[0]).pal, 'fa-px'));
+  H.push('<div>');
+  H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
+  H.push('<h2>' + esc(c.n) + '</h2>');
+  H.push('<p class="lead">' + esc(c.t) + '</p>');
+  H.push('<p class="dim">牠住在這一層。老師派下一個里程碑的時候，' +
+         '擋在你走廊盡頭的可能就是牠——同一個里程碑，每一組遇到的不是同一隻。</p>');
+  H.push('</div></div></div>');
+  return H.join('');
+}
+
+ACTS.fauna = function (name) { DRAFT.fa = name; render(); };
+
+/* 圖例。看得懂才叫呈現。 */
+function xsLegend() {
+  var H = ['<div class="card"><div class="eyebrow">這張圖在說什麼</div><div class="lg">'];
+  H.push('<div><b class="lg-dug"></b><span>打通的廊道＝走完的里程碑</span></div>');
+  H.push('<div><b class="lg-here"></b><span>正在走的那一格＝這一趟走到哪</span></div>');
+  H.push('<div><b class="lg-hero"></b><span>小人＝那一組現在在多深的地方</span></div>');
+  H.push('<div><b class="lg-fa"></b><span>岩壁裡的東西＝住在那一層的生物</span></div>');
+  H.push('</div>');
+  H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
+         '廊道長度本來就不同——這裡沒有共同的終點線，也沒有排名。' +
+         '最底下永遠留著沒有人走過的岩石，因為這座地下城沒有最底層。</p>');
+  H.push('</div>');
+  return H.join('');
+}
+
+function ecoRows(classId) {
+  return ecology(classId).map(function (r) {
     var tm = teamOf(r.teamId);
     r.project = tm && tm.project;
     return r;
   });
-  var H = [head('全班地下城', '大家都在挖',
-    '每一條坑道往下挖的是自己的專案。看得到別人也在裡面，就夠了。')];
-  H.push('<div class="eco-scroll">' + ecoScene(rows, t.teamId) + '</div>');
-  H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
-         '坑道長度本來就不同——這裡沒有共同的終點線。</p>');
-  H.push(btn('回自己的坑道', 'go:home', 'ghost'));
+}
+
+/* ---------- 學生看到的 ---------- */
+PAGES.eco = function () {
+  var t = myTeam();
+  var rows = ecoRows(t.classId);
+  var H = [head('全班地下城', '大家都在下面',
+    '同一片石頭，每一組往下走自己的一條。看得到別人也在裡面，就夠了。')];
+  H.push(xsScene(rows, t.teamId));
+  H.push(faunaCard());
+  H.push(xsLegend());
+  H.push(btn('回自己的廊道', 'go:home', 'ghost'));
   return H.join('');
 };
 
-/* ---------- 老師看到的：各組進度 ----------
-
-   跟學生看的是同一張剖面圖，底下多一段可以讀的細節。
-   細節只講「他們現在在哪一步、承諾了幾天、推了幾天」——不排序、不比較，
-   順序照名冊。老師在這一頁不做任何動作，這裡是拿來看的。 */
+/* ---------- 老師看到的：同一張圖，底下多一段細節 ---------- */
 PAGES.classeco = function () {
   var u = me();
-  var rows = ecology(u.classId).map(function (r) {
-    var tm = teamOf(r.teamId);
-    r.project = tm && tm.project;
-    return r;
-  });
-  var H = [head('各組進度', '每一組挖到哪',
-    '深度是走完幾個里程碑。每一組的專案不一樣，坑道長度本來就不同——' +
-    '這裡沒有共同的終點線，也沒有排名。')];
-  H.push('<div class="eco-scroll">' + ecoScene(rows, null) + '</div>');
+  var rows = ecoRows(u.classId);
+  var H = [head('各組進度', '每一組走到哪',
+    '同一片石頭，每一組往下走自己的一條。深度是走完幾個里程碑——' +
+    '每一組的專案不一樣，廊道長度本來就不同。')];
+  H.push(xsScene(rows, null));
+  H.push(faunaCard());
 
   rows.forEach(function (r) {
     var t = teamOf(r.teamId);
@@ -138,10 +239,10 @@ PAGES.classeco = function () {
     H.push('<b>' + esc(t.name) + '</b>');
     H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
     H.push('<span class="sp"></span>');
-    H.push('<span class="dim">深度 ' + (r.depth * WORLD.depthPerMilestone) + ' m</span>');
+    H.push('<span class="dim">' + esc(strataAt(r.depth).name) + '　·　深度 ' +
+      (r.depth * WORLD.depthPerMilestone) + ' m</span>');
     H.push('</div>');
 
-    /* 現在在做什麼 */
     if (wait) {
       H.push('<p class="lead">在等你看：' + esc(wait.ms.title) + '</p>');
       H.push(btn('去勾', 'go:review:' + wait.run.runId, ''));
@@ -151,16 +252,17 @@ PAGES.classeco = function () {
       H.push('<p class="dim">交了，正在營火旁說卡在哪：' + esc(camp.ms.title) + '</p>');
     } else if (cur) {
       var run = cur.run;
-      H.push('<p class="lead">正在挖：' + esc(cur.ms.title) + '</p>');
+      H.push('<p class="lead">正在走：' + esc(cur.ms.title) + '</p>');
       H.push('<div class="log-num">自己承諾 <b>' + run.est + '</b> 天　·　已推進 <b>' +
-             run.pushes + '</b> 天' +
-             (r.stall >= 2 ? '　·　<span class="warnx">' + r.stall + ' 級休息中</span>' :
-              r.stall === 1 ? '　·　<span class="dim">慢下來了</span>' : '') + '</div>');
-      if (run.risks && run.risks.length) {
-        H.push('<div class="tags small"><span class="k">他們事先標的風險</span>');
-        run.risks.forEach(function (k) {
-          var d = RULES.snagOf(k);
-          if (d) H.push('<span class="tag static">' + d.icon + ' ' + esc(d.label) + '</span>');
+        run.pushes + '</b> 天' +
+        (r.stall >= 2 ? '　·　<span class="warnx">休息中</span>' :
+         r.stall === 1 ? '　·　<span class="dim">慢下來了</span>' : '') + '</div>');
+      var seq = doingOfRun(run.runId);
+      if (seq.length) {
+        H.push('<div class="seq">');
+        seq.forEach(function (k) {
+          var d = RULES.doingOf(k);
+          H.push('<span title="' + esc(d ? d.label : '') + '">' + (d ? d.icon : '⛏️') + '</span>');
         });
         H.push('</div>');
       }
@@ -168,11 +270,10 @@ PAGES.classeco = function () {
       H.push('<p class="dim">手上沒有里程碑。派一個給他們就會開始。</p>');
     }
 
-    /* 走過的準度。這是他們的體感，不是成績。 */
     if (acc.total) {
       H.push('<div class="log-num">走完 <b>' + r.depth + '</b> 個　·　' +
-             '準 <b>' + acc.exact + '</b>　早 <b>' + acc.early + '</b>　失準 <b>' +
-             acc.late + '</b></div>');
+        '準 <b>' + acc.exact + '</b>　早 <b>' + acc.early + '</b>　失準 <b>' +
+        acc.late + '</b></div>');
     }
     H.push('</div>');
   });

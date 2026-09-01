@@ -1,12 +1,12 @@
 /* 學生端。
 
-   一頁只給一個動作。首頁就是坑道本身——招牌、角色、迷霧走廊、魔物，
+   一頁只給一個動作。首頁就是廊道本身——招牌、角色、迷霧、魔物，
    底下一顆巨大的推進鍵。其餘都是資訊，不是選項。
 
    零輸入框：天數用滑桿，風險與卡關用圖示標籤。要打字的東西沒有人會寫，
    而且打字會把防衛心叫起來。 */
 
-/* ---------- 坑道（首頁） ---------- */
+/* ---------- 廊道（首頁） ---------- */
 PAGES.home = function () {
   var t = myTeam();
   var next = nextThing(t.teamId);
@@ -23,7 +23,7 @@ PAGES.home = function () {
     ['挑裝備', '三選一，你自己挑']
   ], STEP_AT[next.kind] == null ? -1 : STEP_AT[next.kind]));
 
-  /* ── 坑道本身。招牌、深度、走廊、魔物全在裡面（見 61-scene.js） ── */
+  /* ── 廊道本身。招牌、深度、魔物全在裡面（見 61-scene.js） ── */
   H.push(scene(t, next.row, st));
   H.push(sceneCap(t, next, st));
 
@@ -58,9 +58,9 @@ PAGES.home = function () {
   /* ── 招牌 ── */
   var ns = nextSignIn(t.teamId);
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">坑道口的招牌</div>');
+  H.push('<div class="eyebrow">廊道入口的招牌</div>');
   H.push('<p class="dim">上面寫什麼是你們的事，老師不替你們命名。' +
-         '材質不是——那個是挖出來的' +
+         '材質不是——那個是走出來的' +
          (ns.need ? '，再走完 ' + ns.need + ' 個里程碑會換成「' + esc(ns.name) + '」' : '') + '。</p>');
   H.push('<div class="rn-row">');
   H.push('<input id="pj-name" value="' + esc(t.project || '') +
@@ -170,7 +170,7 @@ function actionCard(t, next, st) {
     H.push('<p class="dim">他看的順序是照等最久的排，不是先交先看。</p>');
 
   } else {
-    H.push('<div class="eyebrow">坑道很安靜</div>');
+    H.push('<div class="eyebrow">廊道很安靜</div>');
     H.push('<h2>目前沒有等你做的。</h2>');
     H.push('<p class="dim">老師隨時可能派新的里程碑。</p>');
   }
@@ -293,7 +293,7 @@ PAGES.commit = function () {
 
   H.push('<div class="row">');
   H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big'));
-  H.push(btn('回坑道', 'go:home', 'ghost'));
+  H.push(btn('回廊道', 'go:home', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
@@ -302,11 +302,24 @@ PAGES.commit = function () {
 PAGES.submit = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
+  var t = myTeam();
   var m = msOf(r.msId);
   var used = Math.max(1, daysBetween(r.committedAt, now()));
   var s = RULES.judge(r.est, used);
 
   var H = [head('交出去', m.title, '')];
+
+  /* 走到底了才看得清楚牠。前面那些天牠都在霧裡——
+     這一段是世界觀，也是這一趟真的結束了的訊號。 */
+  var mob = mobFor(r.msId, t.teamId);
+  var zone = strataAt(depthOf(t.teamId));
+  H.push('<div class="card fa ' + zone.key + '"><div class="fa-in">');
+  H.push(pxTag(mob.px, zone.pal, 'fa-px'));
+  H.push('<div><div class="eyebrow">' + esc(zone.name) + '　·　擋在你前面的</div>');
+  H.push('<h2>' + esc(mob.n) + '</h2>');
+  H.push('<p class="lead">' + esc(mob.t) + '</p>');
+  H.push('</div></div></div>');
+
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你當初承諾</div>');
   H.push('<div class="big-num">' + r.est + ' <span>天</span></div>');
@@ -445,8 +458,22 @@ PAGES.dash = function () {
   if (r.word) H.push('<p class="quote">' + nl(r.word) + '</p>');
   H.push('<p class="dim">深度 ' + (depthOf(r.teamId) * WORLD.depthPerMilestone) + ' m。' +
     '　下一次決定要花幾天的時候，這句話會出現在那一頁。</p>');
+
+  /* 跨進新的一區。這是整個系統裡少數幾個「世界自己變了」的時刻，
+     而且它不是獎勵——是你走到那裡，石頭就不一樣了。 */
+  var d = depthOf(r.teamId);
+  var now2 = strataAt(d), was = strataAt(d - 1);
+  if (d > 0 && now2.key !== was.key) {
+    H.push('<div class="card fa ' + now2.key + ' zone-in">');
+    H.push('<div class="eyebrow">石頭變了</div>');
+    H.push('<h2>你進到' + esc(now2.name) + '了。</h2>');
+    H.push('<p class="lead">' + esc(now2.note) + '</p>');
+    H.push('<p class="dim">往下沒有盡頭，這座地下城沒有最底層。' +
+           '這裡住的東西跟上面那一區不一樣——去全班地下城那張圖上點牠們看看。</p>');
+    H.push('</div>');
+  }
   H.push('</div>');
-  H.push(btn('回坑道', 'go:home', 'big'));
+  H.push(btn('回廊道', 'go:home', 'big'));
   return H.join('');
 };
 

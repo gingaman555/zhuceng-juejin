@@ -10,7 +10,7 @@
    勾完可以之後，學生自己從三件裡挑一件。少一件他要煩惱的事，
    就少一次「老師替我決定」的機會。 */
 
-/* 老師走到哪一步了。有人等你看就是第三步，其餘看班上有沒有人在挖。 */
+/* 老師走到哪一步了。有人等你看就是第三步，其餘看班上有沒有人在走。 */
 function teacherStep(classId) {
   if (radar(classId).length) return 2;
   var running = where('Runs', function (r) { return r.state === 'running'; }).length;
@@ -87,7 +87,7 @@ PAGES.radar = function () {
   eco.forEach(function (e) {
     H.push('<div class="mini-row"><b>' + esc(e.name) + '</b>' +
       '<span class="' + (e.stall >= 2 ? 'warnx' : e.stall === 1 ? 'dim' : 'ok') + '">' +
-      (e.stall >= 2 ? '休息中' : e.stall === 1 ? '慢下來了' : e.onMs ? '挖掘中' : '等派任務') +
+      (e.stall >= 2 ? '休息中' : e.stall === 1 ? '慢下來了' : e.onMs ? '前進中' : '等派任務') +
       '</span><span class="dim">深度 ' + e.depth + '</span></div>');
   });
   H.push('</div>');

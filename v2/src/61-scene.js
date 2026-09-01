@@ -1,4 +1,4 @@
-/* 坑道的場景。
+/* 廊道的場景。
 
    之前這裡是一條進度條：角色 → 幾個方格 → 魔物。它讀得懂，但它是圖表。
    這一支把它改成一個地方——有洞口、有天花板、有地板、有石頭、有火把，
@@ -39,14 +39,19 @@ function scene(t, row, st) {
   var did = run ? doingOfRun(run.runId) : [];
   var light = WORLD.light[st.level];
   var W = SCN.ENT + est * SCN.TILE + SCN.END;
+  /* 走到多深，牆就是哪一區的石頭。世界觀不寫在說明裡，寫在牆上。 */
+  var zone = strataAt(depthOf(t.teamId));
 
-  var H = ['<div class="scn ' + light.key + '">'];
+  var H = ['<div class="scn ' + light.key + ' z-' + zone.key + '">'];
+
 
   /* 固定在角落的深度。走廊往旁邊捲，它不跟著捲——
      那是「你在多深的地方」，不是走廊上的一個位置。 */
   H.push('<div class="scn-hud">' +
+    '<em>' + esc(zone.name) + '</em>' +
     '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
-    '<span>走完 ' + depthOf(t.teamId) + ' 個里程碑</span></div>');
+    '<span>走完 ' + depthOf(t.teamId) + ' 個里程碑</span>' +
+    '<span class="zn-note">' + esc(zone.note) + '</span></div>');
 
   H.push('<div class="scn-scroll"><div class="scn-in" style="width:' + W + 'px">');
 
@@ -63,7 +68,7 @@ function scene(t, row, st) {
 
   /* ── 地板 ── */
   H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
-  /* 走過的那一段地板是挖開的，亮一階 */
+  /* 走過的那一段地板是打通的，亮一階 */
   if (walked > 0) {
     H.push('<div class="floor lit" style="left:' + SCN.ENT + 'px;width:' +
       (walked * SCN.TILE) + 'px"></div>');
@@ -92,7 +97,7 @@ function scene(t, row, st) {
     H.push('<span class="dayn' + (i === walked ? ' here' : (on ? ' past' : '')) +
       '" style="left:' + x + 'px">' + (i + 1) + '</span>');
 
-    /* 挖開的地方才長得出東西 */
+    /* 走通的地方才長得出東西 */
     if (on) {
       var p = propFor(seed, i);
       if (p === 'rubble') H.push('<img class="px prop rubble" style="left:' + (x + 5) +
@@ -135,7 +140,7 @@ function scene(t, row, st) {
 
 /* ---------- 洞口 ----------
    左邊是你進來的地方：拱門、從上面落下來的光、掛著的招牌。
-   招牌就在這裡，不在標題列——它是坑道口的看板，不是頁首。 */
+   招牌就在這裡，不在標題列——它是廊道入口的看板，不是頁首。 */
 function sceneMouth(t) {
   var sg = signOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + SCN.ENT + 'px">'];
@@ -156,7 +161,7 @@ function sceneMouth(t) {
    剛出發的時候只看得到一團影子，走到底才看得清牠長什麼樣。 */
 function sceneMob(t, row, prog) {
   var mob = mobFor(row.ms.msId, t.teamId);
-  var pal = DEPTH_PAL[Math.min(3, depthOf(t.teamId))];
+  var pal = strataAt(depthOf(t.teamId)).pal;
   var x = SCN.ENT + (row.run.est || 1) * SCN.TILE + 33;
   var H = [];
   /* 任務牌不在魔物那一層——魔物要藏在霧裡，要交什麼不可以。 */

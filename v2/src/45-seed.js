@@ -28,7 +28,7 @@ function seed() {
   DB.Users.push(seedPw({ userId: 'U0', account: 'tea01', name: '指導老師',
     role: 'teacher', classId: cid, createdAt: ago(30) }));
 
-  /* 研究者。管帳號、看紀錄、匯出——不進坑道。 */
+  /* 研究者。管帳號、看紀錄、匯出——不進地下城。 */
   DB.Users.push(seedPw({ userId: 'U9', account: 'lab01', name: '研究者',
     role: 'researcher', classId: cid, createdAt: ago(31) }));
 

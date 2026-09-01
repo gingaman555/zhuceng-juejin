@@ -98,7 +98,7 @@ function render() {
   }
 
   /* 學生還沒對上名冊：先認領，別的哪裡都去不了。
-     沒有組別的話，坑道不知道要畫哪一條——側欄跟頂條也一樣，
+     沒有組別的話，不知道要畫哪一條廊道——側欄跟頂條也一樣，
      它們每一格都在講「你的組」，這時候還沒有那個東西。 */
   if (u.role === 'student' && !u.teamId) {
     document.getElementById('app').innerHTML =
@@ -209,7 +209,7 @@ function sideBar() {
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     nav = [
-      ['home', '坑道'], ['pack', '裝備架'], ['eco', '全班地下城'], ['log', '紀錄']
+      ['home', '廊道'], ['pack', '裝備架'], ['eco', '全班地下城'], ['log', '紀錄']
     ];
   }
   var items = nav.map(function (n) {
@@ -317,7 +317,7 @@ var ACTS = {
       /* 有人跟你一起在下面。這不是名次——它不排序，也不說誰比較多。 */
       var others = todayMovers(t.classId, t.teamId);
       msg = (d ? d.icon + ' ' + d.label + '。' : '') +
-        (others ? '今天班上還有 ' + others + ' 條坑道也在響。'
+        (others ? '今天班上還有 ' + others + ' 條廊道今天也有人在走。'
                 : '今天你是第一個下來的。');
     }
     /* 先播完動畫再重畫——重畫會把 <img> 換掉，動畫就沒了。
@@ -361,7 +361,7 @@ var ACTS = {
     if (!v.trim()) return say('招牌上總要寫點什麼。');
     if (!actRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
     go('home');
-    say('招牌換字了。材質是挖出來的，那個急不得。');
+    say('招牌換字了。材質是走出來的，那個急不得。');
   },
 
   /* ---- 老師 ---- */
