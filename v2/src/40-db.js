@@ -105,20 +105,25 @@ function nextThing(teamId) {
   /* 2. 老師勾可以了，還沒挑裝備 */
   var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
   if (gear) return { kind: 'gear', row: gear };
-  /* 3. 派了但還沒承諾 */
+  /* 3. 正在做的那一趟。
+
+     這一條排在「還沒承諾的」前面，順序很要緊：反過來的話，老師派了
+     三個里程碑，學生會被連問三次要花幾天，而且從頭到尾看不到自己
+     正在走的那一趟。手上有事的時候，系統不該再遞一件事過來。
+
+     這裡本來還有三個狀態：叫醒、今天還沒按、今天按過了。那三個都在
+     催他每天開一次，拿掉了——他開始之前來說幾天，做完回來交。
+     過了自己說的天數畫面會暗、水會漫過來（見 stallOf），
+     但那不是一件「要他去處理」的事，它只是狀態。 */
+  var wait = rows.filter(function (x) { return x.run.state === 'running'; })[0];
+  if (wait) {
+    var more = rows.filter(function (x) { return x.run.state === 'fresh'; }).length;
+    return { kind: 'doing', row: wait, more: more };
+  }
+
+  /* 4. 派了但還沒承諾 */
   var fresh = rows.filter(function (x) { return x.run.state === 'fresh'; })[0];
   if (fresh) return { kind: 'commit', row: fresh };
-
-  /* 4. 正在做。
-
-     這裡本來有三個狀態：叫醒（幾天沒按）、今天還沒按、今天按過了。
-     那三個都在催他每天開一次。拿掉了——他開始之前來說幾天，
-     做完回來交，中間不用開。
-
-     過了自己說的天數，畫面會暗、水會漫過來（見 stallOf），
-     但那不是一件「要他去處理」的事，它只是狀態，所以不排進這裡。 */
-  var wait = rows.filter(function (x) { return x.run.state === 'running'; })[0];
-  if (wait) return { kind: 'doing', row: wait };
   var sent = rows.filter(function (x) { return x.run.state === 'submitted'; })[0];
   if (sent) return { kind: 'review', row: sent };
   return { kind: 'idle', row: null };

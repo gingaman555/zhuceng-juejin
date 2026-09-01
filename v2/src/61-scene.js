@@ -29,7 +29,9 @@ var SCN = {
      st    停滯狀態 */
 function scene(t, row, st, kind) {
   var run = row && row.run;
-  var est = run ? (run.est || 1) : 4;
+  /* 還沒承諾任何事的時候給一段像樣的空廊道。
+     第一次打開是印象最深的一次，本來它只有一格，看起來像壞掉的。 */
+  var est = run ? (run.est || 1) : 7;
 
   /* 一條軌道，兩個東西在上面：
        moved   你來過幾天——按一下才往前一格
@@ -197,15 +199,22 @@ function sceneMouth(t, next) {
   var ks = keepsOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + SCN.ENT + 'px">'];
 
-  /* 往上的光：出口。一直在，走出去之前它就只是一道光。 */
-  H.push('<div class="shaft' + (t.exitAsk || t.leftAt ? ' open' : '') + '"></div>');
+  /* 往上的光：出口。一直在，而且點得開——
+     宣告專案做完是偶爾才做的事，不該在首頁佔一塊，
+     但它也不能藏起來（沒觸發過的東西等於不存在）。 */
+  H.push('<button class="shaft' + (t.exitAsk || t.leftAt ? ' open' : '') +
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:exit' })) +
+    '\' title="' + esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') +
+    '"></button>');
   H.push('<div class="arch"></div>');
 
-  /* 招牌 */
-  H.push('<div class="hang">');
+  /* 招牌。點得開——改名字是偶爾才做的事，不該在首頁佔一塊。 */
+  H.push('<button class="hang" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:sign' })) + '\' title="' +
+    esc('招牌：' + (t.project || '（還沒定）')) + '">');
   H.push('<div class="chain"></div>');
   H.push(pxTag(sg.px, sg.pal, 'sign'));
-  H.push('</div>');
+  H.push('</button>');
   H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b></div>');
 
   /* 營火。失準的時候才點著，其餘時候是一堆沒點的柴。 */

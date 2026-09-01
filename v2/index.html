@@ -1426,6 +1426,67 @@ button.ac:active{transform:translateY(1px)}
 }
 .wrap > .eyebrow{color:var(--gold-d)}
 
+/* 洞口那幾樣現在也是入口 */
+.mouth .hang{padding:0;border:none;background:none;cursor:pointer}
+.mouth .hang:hover{filter:brightness(1.2)}
+.mouth .shaft{padding:0;border:none;cursor:pointer}
+.stp.static{cursor:default;color:var(--dim)}
+.stp.static b{box-shadow:inset 0 0 0 2px var(--line)}
+
+/* ---------- 首頁上面那一條：你手上這一趟 ----------
+   像 YouTube 的上傳鍵——它在最上面，但它不是那一頁的內容。 */
+.task{
+  background-color:var(--zbg,var(--panel));
+  background-image:var(--ztex,none);
+  padding:22px;margin:0 0 22px;
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px);
+  box-shadow:inset 0 3px 0 rgba(255,240,214,.09), inset 0 -3px 0 rgba(0,0,0,.72), 0 0 0 1px #000
+}
+.task-top{display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap}
+.task-top > div:first-child{flex:1;min-width:0}
+.task h1{font-size:33px;line-height:1.35;margin:0}
+.task .lead{margin:11px 0 0}
+.task-z{text-align:right}
+.task-z em{display:block;font-style:normal;font-size:11px;color:var(--zink,var(--gold))}
+.task-z b{display:block;font-size:22px;color:var(--gold);font-weight:400;
+  font-variant-numeric:tabular-nums}
+.task .act-card{background:none;box-shadow:none;padding:14px 0 0;margin:0}
+.task .ebar{margin:14px 0 0}
+.task .card{background:rgba(0,0,0,.28);box-shadow:none;clip-path:none;margin:14px 0 0;padding:14px}
+
+/* 底下那三樣：偶爾才用，但不能藏起來 */
+.desk{display:flex;gap:11px;flex-wrap:wrap;margin-top:22px;
+  border-top:1px solid rgba(255,240,214,.10);padding-top:14px}
+.dk{
+  display:flex;align-items:center;gap:8px;padding:8px 11px;
+  background:rgba(0,0,0,.30);border:none;cursor:pointer;color:var(--mute);
+  font-size:11px;opacity:.6
+}
+.dk .px{width:22px;height:22px}
+.dk i{font-style:normal;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dk:hover{opacity:1;color:var(--dim)}
+.dk.lit{opacity:1;color:var(--dim)}
+
+/* ---------- 全班最近 ----------
+   打開它的理由是別人，留下來的理由才是自己。
+   放的是「發生了什麼」，不是「誰比較好」——沒有名次、沒有印章。 */
+.feed-h{margin:0 0 11px}
+.feed{display:flex;flex-direction:column;gap:1px;background:#000}
+.fd{
+  display:flex;align-items:center;gap:14px;padding:11px 14px;background:var(--panel);
+  font-size:11px;color:var(--dim)
+}
+.fd.mine{background:var(--panel2)}
+.fd > div{flex:1;min-width:0}
+.fd b{font-size:22px;color:var(--ink);font-weight:400;margin-right:8px}
+.fd span{display:block;font-size:11px;color:var(--mute);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fd > i{font-style:normal;font-size:11px;color:var(--mute);flex:0 0 auto}
+.fd-ic{flex:0 0 44px;display:flex;align-items:center;justify-content:center;
+  padding:0;border:none;background:none;cursor:pointer}
+.px.core.sm{width:22px;max-height:66px}
+@media (min-width:1200px){ .wrap > .task,.wrap > .feed,.wrap > .feed-h{flex:0 0 100%} }
+
 /* 手機。
 
    之前這裡只有一條「.side{display:none}」——側欄在窄螢幕整個消失，
@@ -3070,20 +3131,25 @@ function nextThing(teamId) {
   /* 2. 老師勾可以了，還沒挑裝備 */
   var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
   if (gear) return { kind: 'gear', row: gear };
-  /* 3. 派了但還沒承諾 */
+  /* 3. 正在做的那一趟。
+
+     這一條排在「還沒承諾的」前面，順序很要緊：反過來的話，老師派了
+     三個里程碑，學生會被連問三次要花幾天，而且從頭到尾看不到自己
+     正在走的那一趟。手上有事的時候，系統不該再遞一件事過來。
+
+     這裡本來還有三個狀態：叫醒、今天還沒按、今天按過了。那三個都在
+     催他每天開一次，拿掉了——他開始之前來說幾天，做完回來交。
+     過了自己說的天數畫面會暗、水會漫過來（見 stallOf），
+     但那不是一件「要他去處理」的事，它只是狀態。 */
+  var wait = rows.filter(function (x) { return x.run.state === 'running'; })[0];
+  if (wait) {
+    var more = rows.filter(function (x) { return x.run.state === 'fresh'; }).length;
+    return { kind: 'doing', row: wait, more: more };
+  }
+
+  /* 4. 派了但還沒承諾 */
   var fresh = rows.filter(function (x) { return x.run.state === 'fresh'; })[0];
   if (fresh) return { kind: 'commit', row: fresh };
-
-  /* 4. 正在做。
-
-     這裡本來有三個狀態：叫醒（幾天沒按）、今天還沒按、今天按過了。
-     那三個都在催他每天開一次。拿掉了——他開始之前來說幾天，
-     做完回來交，中間不用開。
-
-     過了自己說的天數，畫面會暗、水會漫過來（見 stallOf），
-     但那不是一件「要他去處理」的事，它只是狀態，所以不排進這裡。 */
-  var wait = rows.filter(function (x) { return x.run.state === 'running'; })[0];
-  if (wait) return { kind: 'doing', row: wait };
   var sent = rows.filter(function (x) { return x.run.state === 'submitted'; })[0];
   if (sent) return { kind: 'review', row: sent };
   return { kind: 'idle', row: null };
@@ -4044,7 +4110,7 @@ var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', submit: 'student', stamp: 'student',
   camp: 'student', pick: 'student', dash: 'student', eco: 'student', pack: 'student',
-  exit: 'student', codex: 'student',
+  exit: 'student', codex: 'student', sign: 'student',
   log: 'student', claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -4874,110 +4940,108 @@ function homeFor(u) {
         跟系統記到的數字。 */
 
 /* ---------- 廊道（首頁） ---------- */
+/* ---------- 首頁 ----------
+
+   YouTube 的首頁放的是別人的影片，但它的主流程是把影片放上去。
+   打開它的理由是別人，留下來的理由才是自己。
+
+   本來反過來：首頁是自己的廊道，別人在另一個分頁裡當背景。
+   一個人的東西看兩次就沒了，所以沒有理由在不必要的時候打開它。
+
+   現在：上面一條是你手上這一趟（狀態、幾段、兩條尺、那一顆鍵），
+   底下是全班最近發生的事，一則一則往下。
+
+   廊道那一整片場景搬到全班地下城了——世界該是全班共用的，
+   不是他一個人的背景。 */
 PAGES.home = function () {
   var t = myTeam();
   var next = nextThing(t.teamId);
   var st = stallOf(t.teamId);
-  var acc = accuracyOf(t.teamId);
+  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var row = next.row;
+  var r = row && row.run && row.run.runId ? row.run : null;
 
   var H = [];
 
-  /* ── 廊道。這是這個系統的 feed：一眼看到的就是它。 ── */
-  H.push(scene(t, next.row, st, next.kind));
+  /* ── 你手上這一趟 ── */
+  H.push('<div class="task z-' + z.key + '">');
+  H.push('<div class="task-top">');
+  H.push('<div><div class="eyebrow">' + esc(taskTag(next)) + '</div>');
+  H.push('<h1>' + esc(row && row.ms ? row.ms.title : '還沒有任務') + '</h1></div>');
+  H.push('<div class="task-z"><em>' + esc(z.name) + '</em>' +
+    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b></div>');
+  H.push('</div>');
 
-  /* ── 唯一可以按的那一個，直接長在廊道底下。
-        不解釋現在是什麼狀態——底下那排數字已經說了。 ── */
+  if (r) {
+    H.push(estBar(r.est, r.actual || daysBetween(r.committedAt, now()) + 1,
+      r.state === 'running'));
+    if (st.level) H.push('<p class="dim warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</p>');
+  }
+  if (r) H.push(stepCard(r.runId));
+
   H.push(actionCard(t, next, st));
-
-  /* ── 這一趟的分段（老師有分才有） ── */
-  if (next.row && next.row.run && next.row.run.runId) {
-    H.push(stepCard(next.row.run.runId));
+  if (next.more) {
+    H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
   }
-
-  /* ── 這一趟的形狀。說幾天、過了幾天、來過幾天。 ── */
-  if (next.row && next.row.run && next.row.run.runId) {
-    var run = next.row.run;
-    H.push('<div class="card quiet">');
-    H.push('<div class="eyebrow">' + esc(next.row.ms.title) + '</div>');
-    H.push(estBar(run.est, run.actual || run.pushes, run.state === 'running'));
-    H.push(barKey());
-    H.push(shapeLine(run.runId));
-    H.push('</div>');
-  }
-
-  /* ── 走過的每一趟 ── */
-  if (acc.total) {
-    H.push('<div class="card quiet">');
-    H.push('<div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
-    H.push(accBar(acc));
-    H.push('</div>');
-  }
-
-  /* ── 上一趟長成什麼樣子 ──
-     掛在他自己看得到的地方，不是躺在一個道具欄裡。 */
-  var keep = lastKeep(t.teamId);
-  if (keep) {
-    var kz = STRATA[0];
-    STRATA.forEach(function (x) { if (x.key === keep.zone) kz = x; });
-    H.push('<div class="card quiet">');
-    H.push('<div class="eyebrow">上一趟</div>');
-    H.push('<div class="rk row-rk">');
-    H.push(pxTag(keep.px || coreOf(keep.runId), kz.pal, 'core'));
-    H.push('<div><b>' + esc(keep.name || '（沒取名）') + '</b>');
-    H.push('<span>' + (keep.elapsed || 0) + ' 天　·　來過 ' + (keep.moved || 0) + '</span></div>');
-    H.push('</div>');
-    H.push(btn('看岩心架', 'go:pack', 'ghost'));
-    H.push('</div>');
-  }
-
-
-  /* ── 底下那一張：招牌與出口 ──
-     兩件都是偶爾才動的事，放同一張安靜的卡，不要跟今天要做的事搶。 */
-  if (!t.leftAt) H.push(exitCard(t));
-
-  /* ── 招牌 ──
-     它只有一個用途：廊道口掛的是誰。本來還有三階材質（走得越深牌子
-     越好），拿掉了——深度已經不是進度了，留著一個「越多越好」的漸層
-     跟其他每一條規則都打架。名字是他們自己寫的，這才是招牌的意義。 */
-  H.push('<div class="card quiet">');
-  H.push('<div class="eyebrow">廊道口掛的</div>');
-  H.push('<div class="rn-row">');
-  H.push('<input id="pj-name" value="' + esc(t.project || '') +
-         '" placeholder="' + esc('這個專案叫什麼') + '">');
-  H.push(btn('換字', 'rename', 'ghost'));
-  H.push('</div>');
+  H.push(deskRow(t, next));
   H.push('</div>');
 
+  /* ── 全班最近發生的事 ── */
+  var fd = feedOf(t.classId, 20);
+  H.push('<div class="eyebrow feed-h">全班最近</div>');
+  if (!fd.length) {
+    H.push('<div class="card dim">還沒有事情發生。</div>');
+  } else {
+    H.push('<div class="feed">');
+    fd.forEach(function (f) { H.push(feedRow(f, t.teamId)); });
+    H.push('</div>');
+  }
+  H.push(coreCard());
   return H.join('');
 };
 
-/* 承諾那一頁還沒有 run，所以直接從里程碑上讀那幾段。 */
-function previewSteps(m) { return (m && m.steps) || []; }
-function msStepLegend(m, sel, act) {
-  var a = previewSteps(m);
-  if (!a.length) return '';
-  var H = ['<div class="alist">'];
-  a.forEach(function (x, i) {
-    var on = sel && sel.indexOf(i) >= 0;
-    H.push('<button class="ac' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: act + ':' + i })) + '\'>' +
-      '<b style="background:' + stepHue(i) + '"></b>' + esc(x) + '</button>');
-  });
+/* 這一趟現在是什麼狀態。一個短標籤，不是一句解釋。 */
+function taskTag(next) {
+  return ({
+    commit: '新的', doing: '正在做', submit: '走到底了',
+    camp: '營火', review: '在老師那邊', gear: '老師看完了',
+    waitexit: '出口', left: '地面', idle: '等老師派'
+  })[next.kind] || '';
+}
+
+/* 底下那三樣：營火、出口、招牌。都是偶爾才用的，但都不能藏起來——
+   沒觸發過的東西等於不存在。 */
+function deskRow(t, next) {
+  var lit = next.kind === 'camp';
+  var H = ['<div class="desk">'];
+  H.push('<button class="dk' + (lit ? ' lit' : '') + '" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'peek:camp' })) + '\' title="' +
+    esc(lit ? '營火：說一下哪一段比想的久' : '營火（還沒點著）') + '">' +
+    pxTag(CAMPFIRE.px, lit ? CAMPFIRE.pal : COLD_PAL, '') + '<i>營火</i></button>');
+  H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
+    esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +
+    pxTag(ICONS.codex, t.exitAsk ? ICON_ON : ICON_PAL, '') + '<i>出口</i></button>');
+  var sg = signOf(t.teamId);
+  H.push('<button class="dk lit" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:sign' })) + '\' title="' +
+    esc('招牌：' + (t.project || '（還沒定）')) + '">' +
+    pxTag(sg.px, sg.pal, '') + '<i>' + esc(t.project || '（還沒定）') + '</i></button>');
   H.push('</div>');
   return H.join('');
 }
 
 /* ---------- 老師分的段 ----------
-   他有分才畫。勾一段跟每天推進是兩件事：推進是「今天我來過」，
-   勾是「這一段做完了」。兩件事都不影響判定。 */
+   他有分才畫。勾一段是「這一段做完了」，隨時可以改——
+   勾錯了不該是一件要去求人的事。它不影響判定。 */
 function stepCard(runId) {
-  var s = stepsOf(runId);
-  if (!s) return '';
+  var sp = stepsOf(runId);
+  if (!sp) return '';
   var H = ['<div class="card">'];
-  H.push('<div class="eyebrow">老師分的段　' + s.on.length + ' / ' + s.all.length + '</div>');
+  H.push('<div class="eyebrow">段　' + sp.on.length + ' / ' + sp.all.length + '</div>');
   H.push('<div class="steps-list">');
-  s.all.forEach(function (x, i) {
-    var on = s.on.indexOf(i) >= 0;
+  sp.all.forEach(function (x, i) {
+    var on = sp.on.indexOf(i) >= 0;
     H.push('<button class="stp' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'tick:' + runId + '|' + i })) + '\'>' +
       '<b></b><i>' + esc(x) + '</i></button>');
@@ -4986,23 +5050,7 @@ function stepCard(runId) {
   return H.join('');
 }
 
-/* ---------- 出口 ----------
-   往下走不出去，六層一直循環。唯一的出口是把手上這個專案做完，
-   而那件事只有他們自己知道——所以是他們宣告，老師確認。 */
-function exitCard(t) {
-  var H = ['<div class="card exitc">'];
-  H.push('<div class="eyebrow">出口</div>');
-  if (t.exitAsk) {
-    H.push('<h2>你說這個專案做完了。</h2>');
-    H.push('<p class="lead">在等老師確認。</p>');
-    H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
-  } else {
-    H.push('<h2>這個專案做完了。</h2>');
-    H.push(btn('去出口', 'go:exit', 'ghost'));
-  }
-  H.push('</div>');
-  return H.join('');
-}
+/* 哪一組遇到哪一隻的 mobFor 在 13-strata.js——那是世界的規則，不是畫面的。 */
 
 /* nextThing 回的那個字，對到步驟條的第幾格。 */
 var STEP_AT = {
@@ -5042,6 +5090,14 @@ function actionCard(t, next, st) {
 
   } else if (next.kind === 'doing') {
     H.push(doingCard(t, row, st));
+    /* 老師又派了幾個。小小地說一聲就好——手上這一趟做完才輪到它們。 */
+    if (next.more) {
+      H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
+    }
+    /* 老師又派了幾個。小小地說一聲就好——手上這一趟做完才輪到它們。 */
+    if (next.more) {
+      H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
+    }
 
   } else if (next.kind === 'camp') {
     H.push('<div class="eyebrow">營火　·　' + row.run.actual + ' 天，你說 ' +
@@ -5085,6 +5141,26 @@ function doingCard(t, row, st) {
 
 /* ---------- 場景底下那一行 ---------- */
 function sceneCap(t, next, st) { return ''; }
+
+/* ---------- 招牌 ----------
+   廊道口掛的是誰。名字是他們自己寫的，這是招牌唯一的意義——
+   本來還有三階材質（走越深牌子越好），拿掉了：深度已經不是進度。 */
+PAGES.sign = function () {
+  var t = myTeam();
+  var sg = signOf(t.teamId);
+  var H = [head('招牌', '廊道口掛的是誰', '')];
+  H.push('<div class="card"><div class="fa-in">');
+  H.push(pxTag(sg.px, sg.pal, 'fa-px'));
+  H.push('<div>');
+  H.push('<input id="pj-name" value="' + esc(t.project || '') +
+         '" placeholder="' + esc('這個專案叫什麼') + '">');
+  H.push('<div class="row">');
+  H.push(btn('換字', 'rename', ''));
+  H.push(btn('回廊道', 'go:home', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div></div>');
+  return H.join('');
+};
 
 /* ---------- 承諾：滑桿 ＋ 自己標哪幾件會比想的久 ---------- */
 PAGES.commit = function () {
@@ -5147,6 +5223,17 @@ PAGES.commit = function () {
     H.push('</div>');
   }
 
+  /* 老師分的段。承諾之前先看到範圍，那是決定幾天的依據。 */
+  if (pv.length) {
+    H.push('<div class="card quiet">');
+    H.push('<div class="eyebrow">這一趟要做的幾段</div>');
+    H.push('<div class="steps-list">');
+    pv.forEach(function (x) {
+      H.push('<div class="stp static"><b></b><i>' + esc(x) + '</i></div>');
+    });
+    H.push('</div></div>');
+  }
+
   H.push('<div class="row">');
   H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big'));
   H.push(btn('回廊道', 'go:home', 'ghost'));
@@ -5177,6 +5264,9 @@ PAGES.submit = function () {
   H.push('<div class="card">');
   H.push(estBar(r.est, used, false));
   H.push('</div>');
+
+  /* 老師分的段：勾掉做完的。 */
+  H.push(stepCard(r.runId));
 
   /* 這幾天你動過哪幾天。
 
@@ -5438,8 +5528,12 @@ PAGES.exit = function () {
 PAGES.log = function () {
   var t = myTeam();
   var rows = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).reverse();
+  var acc = accuracyOf(t.teamId);
   var H = [head('紀錄', '走過的每一趟', '')];
   if (!rows.length) return H.join('') + '<div class="card dim">還沒有走完的里程碑。</div>';
+  H.push('<div class="card quiet"><div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
+  H.push(accBar(acc));
+  H.push('</div>');
 
   rows.forEach(function (x) {
     var r = x.run, s = RULES.STAMPS[r.stamp];
@@ -5505,7 +5599,9 @@ var SCN = {
      st    停滯狀態 */
 function scene(t, row, st, kind) {
   var run = row && row.run;
-  var est = run ? (run.est || 1) : 4;
+  /* 還沒承諾任何事的時候給一段像樣的空廊道。
+     第一次打開是印象最深的一次，本來它只有一格，看起來像壞掉的。 */
+  var est = run ? (run.est || 1) : 7;
 
   /* 一條軌道，兩個東西在上面：
        moved   你來過幾天——按一下才往前一格
@@ -5673,15 +5769,22 @@ function sceneMouth(t, next) {
   var ks = keepsOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + SCN.ENT + 'px">'];
 
-  /* 往上的光：出口。一直在，走出去之前它就只是一道光。 */
-  H.push('<div class="shaft' + (t.exitAsk || t.leftAt ? ' open' : '') + '"></div>');
+  /* 往上的光：出口。一直在，而且點得開——
+     宣告專案做完是偶爾才做的事，不該在首頁佔一塊，
+     但它也不能藏起來（沒觸發過的東西等於不存在）。 */
+  H.push('<button class="shaft' + (t.exitAsk || t.leftAt ? ' open' : '') +
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:exit' })) +
+    '\' title="' + esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') +
+    '"></button>');
   H.push('<div class="arch"></div>');
 
-  /* 招牌 */
-  H.push('<div class="hang">');
+  /* 招牌。點得開——改名字是偶爾才做的事，不該在首頁佔一塊。 */
+  H.push('<button class="hang" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:sign' })) + '\' title="' +
+    esc('招牌：' + (t.project || '（還沒定）')) + '">');
   H.push('<div class="chain"></div>');
   H.push(pxTag(sg.px, sg.pal, 'sign'));
-  H.push('</div>');
+  H.push('</button>');
   H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b></div>');
 
   /* 營火。失準的時候才點著，其餘時候是一堆沒點的柴。 */
@@ -5822,7 +5925,7 @@ function xsScene(rows, meId, classId) {
     out.push('<div class="xs-band ' + zs.key + '" style="top:' + top +
       'px;height:' + (bot - top) + 'px;width:' + W + 'px"></div>');
     out.push('<div class="xs-bandn ' + zs.key + '" style="top:' + (top + 6) + 'px">' +
-      '<b>' + esc(zs.name) + '</b><span>' + esc(zs.note) + '</span></div>');
+      '<b>' + esc(zs.name) + '</b></div>');
   }
 
   /* ── 岩壁裡的東西 ── */
@@ -5945,8 +6048,7 @@ function xsShaft(r, i, maxD, mine) {
 function faunaCard() {
   var pick = DRAFT.fa;
   if (!pick) {
-    return '<div class="card dim">岩壁裡住著東西。點任何一隻，看牠是什麼。' +
-      '牠們跟哪一組走到多深都沒有關係——牠們只是住在那裡。</div>';
+    return '';
   }
   var c = faunaByName(pick);
   if (!c) return '';
@@ -5998,21 +6100,9 @@ function coreCard() {
   return H.join('');
 }
 
-/* 圖例。看得懂才叫呈現。 */
-function xsLegend() {
-  var H = ['<div class="card"><div class="eyebrow">這張圖在說什麼</div><div class="lg">'];
-  H.push('<div><b class="lg-dug"></b><span>打通的廊道＝走完的里程碑</span></div>');
-  H.push('<div><b class="lg-here"></b><span>正在走的那一格＝這一趟走到哪</span></div>');
-  H.push('<div><b class="lg-hero"></b><span>小人＝那一組現在在多深的地方</span></div>');
-  H.push('<div><b class="lg-fa"></b><span>岩壁裡的東西＝住在那一層的生物</span></div>');
-  H.push('<div><b class="lg-core"></b><span>掛著的岩心＝那一組封存過的一趟</span></div>');
-  H.push('</div>');
-  H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
-         '廊道長度本來就不同——這裡沒有共同的終點線，也沒有排名。' +
-         '最底下永遠留著沒有人走過的石頭——往下走不出去，六層會一直重來。</p>');
-  H.push('</div>');
-  return H.join('');
-}
+/* 圖例拿掉了。一張要配對照表才看得懂的圖，是那張圖沒畫好——
+   顏色對到地層、實心對到走過、小人對到人在哪，這幾件事看一次就會了。
+   點得開的那幾樣（生物、別組的岩心）自己會說明自己。 */
 
 function ecoRows(classId) {
   return ecology(classId).map(function (r) {
@@ -6026,12 +6116,10 @@ function ecoRows(classId) {
 PAGES.eco = function () {
   var t = myTeam();
   var rows = ecoRows(t.classId);
-  var H = [head('全班地下城', '大家都在下面',
-    '同一片石頭，每一組往下走自己的一條。看得到別人也在裡面，就夠了。')];
+  var H = [head('全班地下城', '大家都在下面', '')];
   H.push(xsScene(rows, t.teamId, t.classId));
   H.push(coreCard());
   H.push(faunaCard());
-  H.push(xsLegend());
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
   return H.join('');
 };
@@ -6040,9 +6128,7 @@ PAGES.eco = function () {
 PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
-  var H = [head('各組進度', '每一組走到哪',
-    '走完幾趟、現在這一趟有多大、每天動的是哪一段。' +
-    '估得準不準在審核那一頁——那時候你看的是一組人交的一件東西。')];
+  var H = [head('各組進度', '每一組走到哪', '')];
   H.push(xsScene(rows, null, u.classId));
   H.push(coreCard());
   H.push(faunaCard());
@@ -6261,6 +6347,105 @@ function codexThings(t, here) {
 }
 
 ACTS.cx = function (k) { DRAFT.cx = k; render(); };
+
+
+/* ===== 65-feed.js ===== */
+/* 首頁：全班最近發生的事。
+
+   YouTube 的首頁放的是別人的影片，但它的主流程是把影片放上去。
+   打開它的理由是別人，留下來的理由才是自己。
+
+   這個系統本來反過來：首頁是自己的廊道，別人在另一個分頁裡當背景。
+   所以沒有任何理由在不必要的時候打開它——一個人的東西看兩次就沒了。
+
+   改成：
+     上面一條   你手上這一趟（狀態 ＋ 那一顆鍵）。像 YouTube 的上傳。
+     底下       全班最近發生的事，一則一則往下。
+
+   feed 裡放什麼，這件事要小心。放的是「發生了什麼」，不是「誰比較好」：
+
+     封存了一根岩心    ← 最有內容的一則，那根長什麼樣是那一組那一週的形狀
+     交出去了          ← 不寫判定。誰估得準不準不該出現在別人的首頁上
+     走到新的一層
+     走出去了
+     老師派了新的里程碑
+
+   沒有名次、沒有數量、沒有印章。它是時間順序，不是排行榜。 */
+
+/* 全班最近發生的事。從資料直接組，不從 Events——Events 是研究紀錄，
+   欄位是為了匯出設計的，不是為了畫面。 */
+function feedOf(classId, limit) {
+  var out = [];
+  var teams = {};
+  where('Teams', function (t) { return t.classId === classId; })
+    .forEach(function (t) { teams[t.teamId] = t; });
+
+  /* 封存 */
+  DB.Keeps.forEach(function (k) {
+    if (!teams[k.teamId]) return;
+    out.push({ at: k.at, kind: 'seal', team: teams[k.teamId], keep: k });
+  });
+
+  /* 交出去 */
+  where('Runs', function (r) { return teams[r.teamId] && r.submittedAt; })
+    .forEach(function (r) {
+      var m = msOf(r.msId);
+      out.push({ at: r.submittedAt, kind: 'sent', team: teams[r.teamId], ms: m });
+    });
+
+  /* 走出去 */
+  Object.keys(teams).forEach(function (id) {
+    if (teams[id].leftAt) out.push({ at: teams[id].leftAt, kind: 'left', team: teams[id] });
+  });
+
+  /* 老師派的 */
+  where('Milestones', function (m) { return m.classId === classId; })
+    .forEach(function (m) { out.push({ at: m.at, kind: 'pub', ms: m }); });
+
+  out.sort(function (a, b) { return b.at - a.at; });
+  return out.slice(0, limit || 20);
+}
+
+function feedRow(f, meId) {
+  var mine = f.team && f.team.teamId === meId;
+  var H = ['<div class="fd' + (mine ? ' mine' : '') + '">'];
+
+  if (f.kind === 'seal') {
+    var z = STRATA[0];
+    STRATA.forEach(function (x) { if (x.key === f.keep.zone) z = x; });
+    H.push('<button class="fd-ic" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'core:' + f.keep.keepId })) + '\'>' +
+      pxTag(f.keep.px || coreOf(f.keep.runId), z.pal, 'core sm') + '</button>');
+    H.push('<div><b>' + esc(f.team.name) + '</b>封存了一根岩心');
+    H.push('<span>' + esc(f.keep.name || '（沒取名）') + '　·　' +
+      (f.keep.elapsed || 0) + ' 天　·　' + esc(z.name) + '</span>');
+    H.push('</div>');
+
+  } else if (f.kind === 'sent') {
+    H.push('<span class="fd-ic">' + pxTag(ICONS.log, ICON_PAL, 'nic') + '</span>');
+    H.push('<div><b>' + esc(f.team.name) + '</b>交出去了');
+    H.push('<span>' + esc(f.ms ? f.ms.title : '') + '</span></div>');
+
+  } else if (f.kind === 'left') {
+    H.push('<span class="fd-ic">' + pxTag(ICONS.home, ICON_ON, 'nic') + '</span>');
+    H.push('<div><b>' + esc(f.team.name) + '</b>走出去了');
+    H.push('<span>' + esc(f.team.project || '') + '</span></div>');
+
+  } else {
+    H.push('<span class="fd-ic">' + pxTag(ICONS.ms, ICON_PAL, 'nic') + '</span>');
+    H.push('<div><b>老師</b>派了新的里程碑');
+    H.push('<span>' + esc(f.ms.title) + '</span></div>');
+  }
+
+  H.push('<i>' + feedWhen(f.at) + '</i>');
+  H.push('</div>');
+  return H.join('');
+}
+
+function feedWhen(at) {
+  var d = daysBetween(at, now());
+  return d <= 0 ? '今天' : d === 1 ? '昨天' : d + ' 天前';
+}
 
 
 /* ===== 70-teacher.js ===== */

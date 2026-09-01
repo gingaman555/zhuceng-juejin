@@ -53,7 +53,7 @@ function xsScene(rows, meId, classId) {
     out.push('<div class="xs-band ' + zs.key + '" style="top:' + top +
       'px;height:' + (bot - top) + 'px;width:' + W + 'px"></div>');
     out.push('<div class="xs-bandn ' + zs.key + '" style="top:' + (top + 6) + 'px">' +
-      '<b>' + esc(zs.name) + '</b><span>' + esc(zs.note) + '</span></div>');
+      '<b>' + esc(zs.name) + '</b></div>');
   }
 
   /* ── 岩壁裡的東西 ── */
@@ -176,8 +176,7 @@ function xsShaft(r, i, maxD, mine) {
 function faunaCard() {
   var pick = DRAFT.fa;
   if (!pick) {
-    return '<div class="card dim">岩壁裡住著東西。點任何一隻，看牠是什麼。' +
-      '牠們跟哪一組走到多深都沒有關係——牠們只是住在那裡。</div>';
+    return '';
   }
   var c = faunaByName(pick);
   if (!c) return '';
@@ -229,21 +228,9 @@ function coreCard() {
   return H.join('');
 }
 
-/* 圖例。看得懂才叫呈現。 */
-function xsLegend() {
-  var H = ['<div class="card"><div class="eyebrow">這張圖在說什麼</div><div class="lg">'];
-  H.push('<div><b class="lg-dug"></b><span>打通的廊道＝走完的里程碑</span></div>');
-  H.push('<div><b class="lg-here"></b><span>正在走的那一格＝這一趟走到哪</span></div>');
-  H.push('<div><b class="lg-hero"></b><span>小人＝那一組現在在多深的地方</span></div>');
-  H.push('<div><b class="lg-fa"></b><span>岩壁裡的東西＝住在那一層的生物</span></div>');
-  H.push('<div><b class="lg-core"></b><span>掛著的岩心＝那一組封存過的一趟</span></div>');
-  H.push('</div>');
-  H.push('<p class="dim">深度是走完幾個里程碑。每一組的專案不一樣，' +
-         '廊道長度本來就不同——這裡沒有共同的終點線，也沒有排名。' +
-         '最底下永遠留著沒有人走過的石頭——往下走不出去，六層會一直重來。</p>');
-  H.push('</div>');
-  return H.join('');
-}
+/* 圖例拿掉了。一張要配對照表才看得懂的圖，是那張圖沒畫好——
+   顏色對到地層、實心對到走過、小人對到人在哪，這幾件事看一次就會了。
+   點得開的那幾樣（生物、別組的岩心）自己會說明自己。 */
 
 function ecoRows(classId) {
   return ecology(classId).map(function (r) {
@@ -257,12 +244,10 @@ function ecoRows(classId) {
 PAGES.eco = function () {
   var t = myTeam();
   var rows = ecoRows(t.classId);
-  var H = [head('全班地下城', '大家都在下面',
-    '同一片石頭，每一組往下走自己的一條。看得到別人也在裡面，就夠了。')];
+  var H = [head('全班地下城', '大家都在下面', '')];
   H.push(xsScene(rows, t.teamId, t.classId));
   H.push(coreCard());
   H.push(faunaCard());
-  H.push(xsLegend());
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
   return H.join('');
 };
@@ -271,9 +256,7 @@ PAGES.eco = function () {
 PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
-  var H = [head('各組進度', '每一組走到哪',
-    '走完幾趟、現在這一趟有多大、每天動的是哪一段。' +
-    '估得準不準在審核那一頁——那時候你看的是一組人交的一件東西。')];
+  var H = [head('各組進度', '每一組走到哪', '')];
   H.push(xsScene(rows, null, u.classId));
   H.push(coreCard());
   H.push(faunaCard());

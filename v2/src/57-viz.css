@@ -269,3 +269,64 @@ button.ac:active{transform:translateY(1px)}
   display:inline-block;padding:5px 22px 5px 0;margin-bottom:14px
 }
 .wrap > .eyebrow{color:var(--gold-d)}
+
+/* 洞口那幾樣現在也是入口 */
+.mouth .hang{padding:0;border:none;background:none;cursor:pointer}
+.mouth .hang:hover{filter:brightness(1.2)}
+.mouth .shaft{padding:0;border:none;cursor:pointer}
+.stp.static{cursor:default;color:var(--dim)}
+.stp.static b{box-shadow:inset 0 0 0 2px var(--line)}
+
+/* ---------- 首頁上面那一條：你手上這一趟 ----------
+   像 YouTube 的上傳鍵——它在最上面，但它不是那一頁的內容。 */
+.task{
+  background-color:var(--zbg,var(--panel));
+  background-image:var(--ztex,none);
+  padding:22px;margin:0 0 22px;
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px);
+  box-shadow:inset 0 3px 0 rgba(255,240,214,.09), inset 0 -3px 0 rgba(0,0,0,.72), 0 0 0 1px #000
+}
+.task-top{display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap}
+.task-top > div:first-child{flex:1;min-width:0}
+.task h1{font-size:33px;line-height:1.35;margin:0}
+.task .lead{margin:11px 0 0}
+.task-z{text-align:right}
+.task-z em{display:block;font-style:normal;font-size:11px;color:var(--zink,var(--gold))}
+.task-z b{display:block;font-size:22px;color:var(--gold);font-weight:400;
+  font-variant-numeric:tabular-nums}
+.task .act-card{background:none;box-shadow:none;padding:14px 0 0;margin:0}
+.task .ebar{margin:14px 0 0}
+.task .card{background:rgba(0,0,0,.28);box-shadow:none;clip-path:none;margin:14px 0 0;padding:14px}
+
+/* 底下那三樣：偶爾才用，但不能藏起來 */
+.desk{display:flex;gap:11px;flex-wrap:wrap;margin-top:22px;
+  border-top:1px solid rgba(255,240,214,.10);padding-top:14px}
+.dk{
+  display:flex;align-items:center;gap:8px;padding:8px 11px;
+  background:rgba(0,0,0,.30);border:none;cursor:pointer;color:var(--mute);
+  font-size:11px;opacity:.6
+}
+.dk .px{width:22px;height:22px}
+.dk i{font-style:normal;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dk:hover{opacity:1;color:var(--dim)}
+.dk.lit{opacity:1;color:var(--dim)}
+
+/* ---------- 全班最近 ----------
+   打開它的理由是別人，留下來的理由才是自己。
+   放的是「發生了什麼」，不是「誰比較好」——沒有名次、沒有印章。 */
+.feed-h{margin:0 0 11px}
+.feed{display:flex;flex-direction:column;gap:1px;background:#000}
+.fd{
+  display:flex;align-items:center;gap:14px;padding:11px 14px;background:var(--panel);
+  font-size:11px;color:var(--dim)
+}
+.fd.mine{background:var(--panel2)}
+.fd > div{flex:1;min-width:0}
+.fd b{font-size:22px;color:var(--ink);font-weight:400;margin-right:8px}
+.fd span{display:block;font-size:11px;color:var(--mute);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fd > i{font-style:normal;font-size:11px;color:var(--mute);flex:0 0 auto}
+.fd-ic{flex:0 0 44px;display:flex;align-items:center;justify-content:center;
+  padding:0;border:none;background:none;cursor:pointer}
+.px.core.sm{width:22px;max-height:66px}
+@media (min-width:1200px){ .wrap > .task,.wrap > .feed,.wrap > .feed-h{flex:0 0 100%} }
