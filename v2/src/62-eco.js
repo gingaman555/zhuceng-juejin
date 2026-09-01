@@ -157,6 +157,9 @@ function xsShaft(r, i, maxD, mine) {
       H.push('<button class="xs-bld" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'seeb:' + r.teamId + ',' + d })) + '\' title="' +
         esc(bg.name) + '">' + pxTag(bg.px, BUILD_PAL, '') + '</button>');
+      /* 跟下一層接起來了就畫一段。十座接起來是一條街，
+         不是十個各自立著的圖示。 */
+      if (linkedAt(r.teamId, d)) H.push('<div class="xs-link"></div>');
     }
     H.push('</div>');
   }

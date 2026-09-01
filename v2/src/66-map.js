@@ -299,16 +299,30 @@ function buildPick(t) {
   if (!set.length) { DRAFT.build = null; return ''; }
   var H = ['<div class="card bpick">'];
   H.push('<div class="eyebrow">在這一層蓋什麼</div>');
+
+  /* 上一層留下的向下口就是這一層的題目。畫出來就好，不用寫一句話說明——
+     接得起來的那幾個上面會亮一段。 */
+  var above = portAbove(t.teamId, d);
+  if (above) {
+    H.push('<div class="bp-above">');
+    H.push(pxTag(above.px, BUILD_PAL, 'bp-ax'));
+    H.push('<span class="bp-drop"></span>');
+    H.push('</div>');
+  }
+
   H.push('<div class="bp-row">');
   set.forEach(function (b) {
-    H.push('<button class="bp" data-act="run" data-p=\'' +
+    var fit = above && b.port.indexOf('u') >= 0;
+    H.push('<button class="bp' + (fit ? ' fit' : '') + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'bld:' + b.key + ',' + d })) + '\'>');
+    /* 兩個口畫在上下兩緣。有就是一段亮的，沒有就是空的。 */
+    H.push('<i class="bp-p u' + (b.port.indexOf('u') >= 0 ? ' on' : '') + '"></i>');
     H.push(pxTag(b.px, BUILD_PAL, 'bp-px'));
     H.push('<b>' + esc(b.name) + '</b>');
+    H.push('<i class="bp-p dn' + (b.port.indexOf('d') >= 0 ? ' on' : '') + '"></i>');
     H.push('</button>');
   });
   H.push('</div>');
-  H.push('<p class="dim">三個都一樣——它們不改變任何事，只是長得不同。</p>');
   H.push('</div>');
   return H.join('');
 }

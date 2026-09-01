@@ -2227,6 +2227,40 @@ button.tk-k{border:none;background:none;font:inherit;cursor:pointer;padding:0;
   text-align:left}
 button.tk-k:hover span{color:var(--gold)}
 
+/* ── 接口 ──
+   介面只給最少：兩段亮的短邊，一個從上面垂下來的口。
+   看得懂需要的就這些，不用一句話說明。 */
+.bp{position:relative;padding-top:16px;padding-bottom:16px}
+.bp-p{
+  position:absolute;left:50%;width:14px;height:5px;margin-left:-7px;
+  background:rgba(255,240,214,.08)
+}
+.bp-p.u{top:5px}
+.bp-p.dn{bottom:5px}
+.bp-p.on{background:var(--gold-d)}
+.bp.fit{box-shadow:inset 0 0 0 2px var(--gold), inset 2px 2px 0 rgba(255,255,255,.12)}
+.bp.fit .bp-p.u.on{background:var(--gold)}
+
+/* 上一層留下的那個口。畫出來就是題目。 */
+.bp-above{display:flex;flex-direction:column;align-items:center;margin:0 0 6px}
+.bp-ax{width:44px;height:44px;image-rendering:pixelated;opacity:.75}
+.bp-drop{width:5px;height:16px;background:var(--gold-d)}
+
+/* ── 接起來的那一段 ──
+   畫面這一半要滿：兩條側樑加橫檔，像一段真的架起來的東西。 */
+.xs-link{
+  position:absolute;left:50%;bottom:-14px;width:22px;height:22px;margin-left:-11px;
+  z-index:2;pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent 0 3px,#FFE9A8 3px 6px,transparent 6px 16px,
+      #FFE9A8 16px 19px,transparent 19px 22px),
+    repeating-linear-gradient(180deg,#C9A227 0 3px,transparent 3px 8px)
+}
+
+/* 建築本身放大：那條廊道要讀起來像一條街，不是一排小圖示。 */
+.xs-bld{width:44px;height:44px;margin-left:-22px;bottom:2px}
+.xs-bld .px{width:44px;height:44px}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -3919,85 +3953,85 @@ var BUILD_PAL = { '#': '#171310', o: '#0B0908', '*': '#FFF3D8' };
 
 var BUILDS = [
   /* ── 微光荒原：表土，碎石多 ── */
-  { key: 'cairn', zone: 'wild', name: '石堆',
+  { key: 'cairn', port: 'd', zone: 'wild', name: '石堆',
     px: ['............', '............', '.....**.....', '....*##+....',
          '....+##+....', '...*####+...', '...+####+...', '..*######+..',
          '..+######+..', '.*########+.', '.+########+.', '+##########+'] },
-  { key: 'flag', zone: 'wild', name: '風旗',
+  { key: 'flag', port: 'u', zone: 'wild', name: '風旗',
     px: ['............', '...*###+....', '...*####+...', '...*###+....',
          '...*#+......', '....#+......', '....#+......', '....#+......',
          '....#+......', '....#+......', '...*#+......', '..+####+....'] },
-  { key: 'well', zone: 'wild', name: '井',
+  { key: 'well', port: 'ud', zone: 'wild', name: '井',
     px: ['............', '..*+....+*..', '..*#+..+#*..', '..*#######..',
          '....+##+....', '............', '..*######+..', '..+######+..',
          '..+#*..*#+..', '..+#....#+..', '..+######+..', '.+########+.'] },
 
   /* ── 根脈層：上面那片林子的根穿下來，牆是活的 ── */
-  { key: 'moss', zone: 'root', name: '苔丘',
+  { key: 'moss', port: 'd', zone: 'root', name: '苔丘',
     px: ['............', '............', '......*.....', '....*.#*..*.',
          '...*#*#*#*..', '..*#######*.', '.*#########*', '.+#########+',
          '..+#######+.', '...+#####+..', '..+#######+.', '.+#########+'] },
-  { key: 'vinebr', zone: 'root', name: '藤橋',
+  { key: 'vinebr', port: 'ud', zone: 'root', name: '藤橋',
     px: ['............', '.+#+....+#+.', '.+#+*##*+#+.', '.+#*####*#+.',
          '.+##########', '.+#+....+#+.', '.+#+....+#+.', '.+#+.*..+#+.',
          '.+#+*#*.+#+.', '.+#+.#..+#+.', '.+#+.#..+#+.', '+###+#++###+'] },
-  { key: 'rootgt', zone: 'root', name: '根門',
+  { key: 'rootgt', port: 'u', zone: 'root', name: '根門',
     px: ['............', '..*+....+*..', '..*#+..+#*..', '.*##*##*##*.',
          '.+#########+', '.+#*#####*#+', '.+#+.....+#+', '.+#+.....+#+',
          '.+#+.....+#+', '.+#+.....+#+', '.+#+.....+#+', '+###+...+###'] },
 
   /* ── 水晶迴廊：地下水穿過晶體，斷面會折光 ── */
-  { key: 'spire', zone: 'crys', name: '晶柱',
+  { key: 'spire', port: 'u', zone: 'crys', name: '晶柱',
     px: ['.....*......', '....*#*.....', '...*###*....', '...*###*..*.', '...*###*.*#*',
          '..*#####*#*.', '..*#####*...', '..+#####+...', '.*#######*..',
          '.+#######+..', '+#########+.', '+#########+.'] },
-  { key: 'lamp', zone: 'crys', name: '燈臺',
+  { key: 'lamp', port: 'd', zone: 'crys', name: '燈臺',
     px: ['.....*......', '....*#*.....', '...*#*#*....', '....*#*.....',
          '.....#+.....', '.....#+.....', '....*##+....', '....+##+....',
          '....+##+....', '...*####+...', '..*######+..', '.+########+.'] },
-  { key: 'crysbr', zone: 'crys', name: '晶橋',
+  { key: 'crysbr', port: 'ud', zone: 'crys', name: '晶橋',
     px: ['............', '............', '.*.......*..', '*#*.....*#*.',
          '*###*.*###*.', '.+#########+', '..+#######+.', '...+#+.+#+..',
          '...+#+.+#+..', '...+#+.+#+..', '...+#+.+#+..', '..+###+###+.'] },
 
   /* ── 迴聲迷宮：方塊狀硬岩，聲音在裡面會繞 ── */
-  { key: 'bell', zone: 'echo', name: '鐘塔',
+  { key: 'bell', port: 'u', zone: 'echo', name: '鐘塔',
     px: ['............', '.....*......', '....*#*.....', '...*###*....',
          '..*#####*...', '..+#####+...', '..+#*#*#+...', '...+###+....',
          '....+#+.....', '...*###+....', '..*#####+...', '.+#######+..'] },
-  { key: 'arch', zone: 'echo', name: '拱門',
+  { key: 'arch', port: 'ud', zone: 'echo', name: '拱門',
     px: ['............', '....*##*....', '..*##**##*..', '.*##*..*##*.',
          '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.',
          '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.', '+###+..+###+'] },
-  { key: 'stele', zone: 'echo', name: '方碑',
+  { key: 'stele', port: 'd', zone: 'echo', name: '方碑',
     px: ['............', '...*####+...', '...*#**#+...', '...*#**#+...',
          '...*####+...', '...*#**#+...', '...*####+...', '...*#**#+...',
          '...*####+...', '..*######+..', '.*########+.', '+##########+'] },
 
   /* ── 銹層：有人來過，鐵件鏽在岩層裡 ── */
-  { key: 'tower', zone: 'rust', name: '鐵塔',
+  { key: 'tower', port: 'u', zone: 'rust', name: '鐵塔',
     px: ['.....*......', '....*#+.....', '....*#+.....', '...*###+....',
          '...+#*#+....', '..*##*##+...', '..+#*.*#+...', '.*##*..*#+..',
          '.+#*....*#+.', '*##*.....*#+', '+#+.......+#', '+##+.....+##'] },
-  { key: 'pipe', zone: 'rust', name: '管橋',
+  { key: 'pipe', port: 'ud', zone: 'rust', name: '管橋',
     px: ['............', '............', '*##########+', '*#**##**##*+',
          '+##########+', '..+#+..+#+..', '..+#+..+#+..', '..+#+..+#+..',
          '..+#+..+#+..', '..+#+..+#+..', '..+#+..+#+..', '.+###++###+.'] },
-  { key: 'furn', zone: 'rust', name: '爐',
+  { key: 'furn', port: 'd', zone: 'rust', name: '爐',
     px: ['............', '....+..+....', '...*#+*#+...', '...*#+*#+...',
          '..*######+..', '..+######+..', '.*########+.', '.+#*....*#+.',
          '.+#+.**.+#+.', '.+#+.**.+#+.', '.+########+.', '+##########+'] },
 
   /* ── 熔火深淵：底下有熱源 ── */
-  { key: 'brazier', zone: 'fire', name: '火臺',
+  { key: 'brazier', port: 'u', zone: 'fire', name: '火臺',
     px: ['............', '.....*......', '....*#*.....', '...*#*#*....',
          '..*##*##*...', '...*###*....', '....+#+.....', '....+#+.....',
          '...*###+....', '..*#####+...', '.*#######+..', '+##########+'] },
-  { key: 'stonebr', zone: 'fire', name: '石橋',
+  { key: 'stonebr', port: 'ud', zone: 'fire', name: '石橋',
     px: ['............', '............', '*##########+', '+##########+',
          '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.',
          '.+#+....+#+.', '.+#+....+#+.', '.+#+....+#+.', '+###+..+###+'] },
-  { key: 'kiln', zone: 'fire', name: '窯',
+  { key: 'kiln', port: 'd', zone: 'fire', name: '窯',
     px: ['............', '......+.....', '.....*#+....', '....*###+...',
          '...*#####+..', '..*#######+.', '..+#######+.', '.*#########+',
          '.+#*.....*#+', '.+#+.**..+#+', '.+#+.**..+#+', '+###++++###+'] }
@@ -4065,6 +4099,40 @@ function buildStory(teamId, depth) {
   keepsOf(teamId).forEach(function (x) { if (x.runId === b.runId) k = x; });
   var r = b.runId ? find('Runs', function (x) { return x.runId === b.runId; }) : null;
   return { def: buildDef(b.k), keep: k, run: r };
+}
+
+/* ---------- 接口 ----------
+
+   每一座有「上接」與「下接」兩個口。往下走的時候，上一層留下的
+   向下口就是這一層的題目：選一座有向上口的就接起來。
+
+   接得上不會比較好，只是形狀不同——一旦它有好處，人就會為了接而蓋。 */
+function hasPort(key, dir) {
+  var d = buildDef(key);
+  return !!(d && d.port && d.port.indexOf(dir) >= 0);
+}
+
+/* 這一層跟上一層接得起來嗎。 */
+function linksUp(teamId, depth, key) {
+  if (depth <= 0) return false;
+  var up = buildAt(teamId, depth - 1);
+  if (!up) return false;
+  return hasPort(up.k, 'd') && hasPort(key, 'u');
+}
+
+/* 上一層留了向下的口嗎——那就是這一層的題目。 */
+function portAbove(teamId, depth) {
+  if (depth <= 0) return null;
+  var up = buildAt(teamId, depth - 1);
+  if (!up || !hasPort(up.k, 'd')) return null;
+  return buildDef(up.k);
+}
+
+/* 已經接起來的那幾段。剖面圖要畫連接。 */
+function linkedAt(teamId, depth) {
+  var a = buildAt(teamId, depth), b = buildAt(teamId, depth + 1);
+  if (!a || !b) return false;
+  return hasPort(a.k, 'd') && hasPort(b.k, 'u');
 }
 
 
@@ -8412,6 +8480,9 @@ function xsShaft(r, i, maxD, mine) {
       H.push('<button class="xs-bld" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'seeb:' + r.teamId + ',' + d })) + '\' title="' +
         esc(bg.name) + '">' + pxTag(bg.px, BUILD_PAL, '') + '</button>');
+      /* 跟下一層接起來了就畫一段。十座接起來是一條街，
+         不是十個各自立著的圖示。 */
+      if (linkedAt(r.teamId, d)) H.push('<div class="xs-link"></div>');
     }
     H.push('</div>');
   }
@@ -9258,16 +9329,30 @@ function buildPick(t) {
   if (!set.length) { DRAFT.build = null; return ''; }
   var H = ['<div class="card bpick">'];
   H.push('<div class="eyebrow">在這一層蓋什麼</div>');
+
+  /* 上一層留下的向下口就是這一層的題目。畫出來就好，不用寫一句話說明——
+     接得起來的那幾個上面會亮一段。 */
+  var above = portAbove(t.teamId, d);
+  if (above) {
+    H.push('<div class="bp-above">');
+    H.push(pxTag(above.px, BUILD_PAL, 'bp-ax'));
+    H.push('<span class="bp-drop"></span>');
+    H.push('</div>');
+  }
+
   H.push('<div class="bp-row">');
   set.forEach(function (b) {
-    H.push('<button class="bp" data-act="run" data-p=\'' +
+    var fit = above && b.port.indexOf('u') >= 0;
+    H.push('<button class="bp' + (fit ? ' fit' : '') + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'bld:' + b.key + ',' + d })) + '\'>');
+    /* 兩個口畫在上下兩緣。有就是一段亮的，沒有就是空的。 */
+    H.push('<i class="bp-p u' + (b.port.indexOf('u') >= 0 ? ' on' : '') + '"></i>');
     H.push(pxTag(b.px, BUILD_PAL, 'bp-px'));
     H.push('<b>' + esc(b.name) + '</b>');
+    H.push('<i class="bp-p dn' + (b.port.indexOf('d') >= 0 ? ' on' : '') + '"></i>');
     H.push('</button>');
   });
   H.push('</div>');
-  H.push('<p class="dim">三個都一樣——它們不改變任何事，只是長得不同。</p>');
   H.push('</div>');
   return H.join('');
 }
@@ -9691,9 +9776,14 @@ function rankDev(teamId) {
   }).sort(function (a, b) { return (a.submittedAt || 0) - (b.submittedAt || 0); });
   if (!rs.length) return null;
   var use = rs.slice(-RANK_N);
-  var sum = 0;
-  use.forEach(function (r) { sum += Math.abs(r.actual - r.est) / r.est; });
-  return { dev: sum / use.length, n: use.length };
+  var sum = 0, days = 0;
+  use.forEach(function (r) {
+    sum += Math.abs(r.actual - r.est) / r.est;
+    days += Math.abs(r.actual - r.est);
+  });
+  /* dev 是排序用的（比例，才不會被灌大的承諾騙過去）；
+     day 是寫出來給人看的（平均差幾天，整數，不用換算）。 */
+  return { dev: sum / use.length, day: Math.round(days / use.length), n: use.length };
 }
 
 /* 一個班的榜。沒有資料的排在最後，選擇不上榜的整個不出現。 */
@@ -9702,7 +9792,8 @@ function rankRows(classId) {
   where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
     if (t.noRank) return;
     var d = rankDev(t.teamId);
-    out.push({ teamId: t.teamId, name: t.name, dev: d ? d.dev : null, n: d ? d.n : 0 });
+    out.push({ teamId: t.teamId, name: t.name, dev: d ? d.dev : null,
+      day: d ? d.day : 0, n: d ? d.n : 0 });
   });
   out.sort(function (a, b) {
     if (a.dev === null && b.dev === null) return 0;
@@ -9731,7 +9822,7 @@ function rankCard(classId, meId) {
   /* 單位只在這裡說一次。
      本來每一列寫的是偏差率（13%、100%），沒有人那樣想事情——
      而且 100% 看起來像世界末日，其實只是「說 5 天走了 10 天」。 */
-  H.push('<p class="rk-u">每承諾 10 天，實際差幾天</p>');
+  H.push('<p class="rk-u">最近三趟，平均差幾天</p>');
 
   if (!has) {
     H.push('<p class="dim">還沒有人交過。</p>');
@@ -9753,7 +9844,7 @@ function rankCard(classId, meId) {
          寫出來的數字換算成「每 10 天差幾天」，那才讀得動。 */
       var w = Math.min(100, Math.round(r.dev * 100));
       H.push('<div class="rk-bar"><u style="width:' + w + '%"></u></div>');
-      H.push('<span class="rk-d">' + (Math.round(r.dev * 10 * 10) / 10) + ' 天</span>');
+      H.push('<span class="rk-d">' + r.day + ' 天</span>');
     }
     H.push('</div>');
   });

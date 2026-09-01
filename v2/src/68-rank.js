@@ -41,9 +41,14 @@ function rankDev(teamId) {
   }).sort(function (a, b) { return (a.submittedAt || 0) - (b.submittedAt || 0); });
   if (!rs.length) return null;
   var use = rs.slice(-RANK_N);
-  var sum = 0;
-  use.forEach(function (r) { sum += Math.abs(r.actual - r.est) / r.est; });
-  return { dev: sum / use.length, n: use.length };
+  var sum = 0, days = 0;
+  use.forEach(function (r) {
+    sum += Math.abs(r.actual - r.est) / r.est;
+    days += Math.abs(r.actual - r.est);
+  });
+  /* dev 是排序用的（比例，才不會被灌大的承諾騙過去）；
+     day 是寫出來給人看的（平均差幾天，整數，不用換算）。 */
+  return { dev: sum / use.length, day: Math.round(days / use.length), n: use.length };
 }
 
 /* 一個班的榜。沒有資料的排在最後，選擇不上榜的整個不出現。 */
@@ -52,7 +57,8 @@ function rankRows(classId) {
   where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
     if (t.noRank) return;
     var d = rankDev(t.teamId);
-    out.push({ teamId: t.teamId, name: t.name, dev: d ? d.dev : null, n: d ? d.n : 0 });
+    out.push({ teamId: t.teamId, name: t.name, dev: d ? d.dev : null,
+      day: d ? d.day : 0, n: d ? d.n : 0 });
   });
   out.sort(function (a, b) {
     if (a.dev === null && b.dev === null) return 0;
@@ -81,7 +87,7 @@ function rankCard(classId, meId) {
   /* 單位只在這裡說一次。
      本來每一列寫的是偏差率（13%、100%），沒有人那樣想事情——
      而且 100% 看起來像世界末日，其實只是「說 5 天走了 10 天」。 */
-  H.push('<p class="rk-u">每承諾 10 天，實際差幾天</p>');
+  H.push('<p class="rk-u">最近三趟，平均差幾天</p>');
 
   if (!has) {
     H.push('<p class="dim">還沒有人交過。</p>');
@@ -103,7 +109,7 @@ function rankCard(classId, meId) {
          寫出來的數字換算成「每 10 天差幾天」，那才讀得動。 */
       var w = Math.min(100, Math.round(r.dev * 100));
       H.push('<div class="rk-bar"><u style="width:' + w + '%"></u></div>');
-      H.push('<span class="rk-d">' + (Math.round(r.dev * 10 * 10) / 10) + ' 天</span>');
+      H.push('<span class="rk-d">' + r.day + ' 天</span>');
     }
     H.push('</div>');
   });

@@ -1062,3 +1062,37 @@ button.ac:active{transform:translateY(1px)}
 button.tk-k{border:none;background:none;font:inherit;cursor:pointer;padding:0;
   text-align:left}
 button.tk-k:hover span{color:var(--gold)}
+
+/* ── 接口 ──
+   介面只給最少：兩段亮的短邊，一個從上面垂下來的口。
+   看得懂需要的就這些，不用一句話說明。 */
+.bp{position:relative;padding-top:16px;padding-bottom:16px}
+.bp-p{
+  position:absolute;left:50%;width:14px;height:5px;margin-left:-7px;
+  background:rgba(255,240,214,.08)
+}
+.bp-p.u{top:5px}
+.bp-p.dn{bottom:5px}
+.bp-p.on{background:var(--gold-d)}
+.bp.fit{box-shadow:inset 0 0 0 2px var(--gold), inset 2px 2px 0 rgba(255,255,255,.12)}
+.bp.fit .bp-p.u.on{background:var(--gold)}
+
+/* 上一層留下的那個口。畫出來就是題目。 */
+.bp-above{display:flex;flex-direction:column;align-items:center;margin:0 0 6px}
+.bp-ax{width:44px;height:44px;image-rendering:pixelated;opacity:.75}
+.bp-drop{width:5px;height:16px;background:var(--gold-d)}
+
+/* ── 接起來的那一段 ──
+   畫面這一半要滿：兩條側樑加橫檔，像一段真的架起來的東西。 */
+.xs-link{
+  position:absolute;left:50%;bottom:-14px;width:22px;height:22px;margin-left:-11px;
+  z-index:2;pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent 0 3px,#FFE9A8 3px 6px,transparent 6px 16px,
+      #FFE9A8 16px 19px,transparent 19px 22px),
+    repeating-linear-gradient(180deg,#C9A227 0 3px,transparent 3px 8px)
+}
+
+/* 建築本身放大：那條廊道要讀起來像一條街，不是一排小圖示。 */
+.xs-bld{width:44px;height:44px;margin-left:-22px;bottom:2px}
+.xs-bld .px{width:44px;height:44px}
