@@ -10,10 +10,15 @@
    勾完可以之後，學生自己從三件裡挑一件。少一件他要煩惱的事，
    就少一次「老師替我決定」的機會。 */
 
-/* 老師走到哪一步了。有人等你看就是第三步，其餘看班上有沒有人在走。 */
-function teacherStep(classId) {
-  if (radar(classId).length) return 2;
-  var running = where('Runs', function (r) { return r.state === 'running'; }).length;
+/* 老師走到哪一步了。有人等你看就是第三步，其餘看自己帶的組有沒有人在走。
+   本來那個 running 沒有篩班也沒有篩老師——全系統只要有人在走就算，
+   在一個課程三位老師的設定下那是別人的組。 */
+function teacherStep(classId, mentorId) {
+  if (radar(classId, mentorId).length) return 2;
+  var mine = teamsUnder(classId, mentorId).map(function (t) { return t.teamId; });
+  var running = where('Runs', function (r) {
+    return r.state === 'running' && mine.indexOf(r.teamId) >= 0;
+  }).length;
   if (running) return 1;
   return 0;
 }
@@ -58,15 +63,17 @@ var TEACHER_STEPS = [
 /* ---------- 審核（首頁） ---------- */
 PAGES.radar = function () {
   var u = me();
-  var rows = radar(u.classId);
-  var eco = ecology(u.classId);
+  /* 只有自己帶的組。三位老師共用一個課程，同一個佇列會讓
+     A 老師勾到 B 老師的組。 */
+  var rows = radar(u.classId, u.userId);
+  var eco = ecology(u.classId, u.userId);
   var H = [];
 
-  H.push(stepBar(TEACHER_STEPS, teacherStep(u.classId)));
+  H.push(stepBar(TEACHER_STEPS, teacherStep(u.classId, u.userId)));
 
   /* 想出去的那幾組排在最前面。往下走不出去，出口只有這一個，
      而且要他確認——那是這個系統裡他做的最後一件事。 */
-  exitQueue(u.classId).forEach(function (t) {
+  exitQueue(u.classId, u.userId).forEach(function (t) {
     var acc = accuracyOf(t.teamId);
     H.push('<div class="card exitq">');
     H.push('<div class="eyebrow">出口</div>');
@@ -176,9 +183,12 @@ PAGES.review = function () {
 /* ---------- 發派任務 ---------- */
 PAGES.ms = function () {
   var u = me();
-  var list = where('Milestones', function (m) { return m.classId === u.classId; })
+  /* 我派過的。別位老師派的不在這裡——他規劃他的，我規劃我的。 */
+  var list = where('Milestones', function (m) {
+    return m.classId === u.classId && (!m.mentorId || m.mentorId === u.userId);
+  })
     .sort(function (a, b) { return b.at - a.at; });
-  var teams = where('Teams', function (t) { return t.classId === u.classId; });
+  var teams = teamsUnder(u.classId, u.userId);
   var to = DRAFT.to || [];
 
   var H = [];
@@ -220,7 +230,8 @@ PAGES.ms = function () {
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
-         (to.length ? '只發給 ' + to.length + ' 組' : '全班') + '</span>');
+         (to.length ? '只發給 ' + to.length + ' 組'
+           : '我帶的 ' + teams.length + ' 組') + '</span>');
   teams.forEach(function (t) {
     var on = to.indexOf(t.teamId) >= 0;
     H.push('<button class="tag' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
@@ -243,8 +254,10 @@ PAGES.ms = function () {
     var done = got.filter(function (r) { return r.state === 'done'; }).length;
     H.push('<div class="msr">');
     H.push('<b>' + esc(m.title) + '</b>');
-    H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組' : '全班') +
-      '</span>');
+    /* 三種發法。「課程共用」不只是舊資料——一位老師可以刻意派一個
+       不掛自己的任務（期中發表那一種），那時候全課程都收得到。 */
+    H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組'
+      : (m.mentorId ? '我帶的' : '課程共用')) + '</span>');
     H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
     /* 各組承諾了幾天。這是老師唯一看得到的「他們怎麼想這件事」，
        所以留著——但不用標籤的樣子，壓成一行小字。 */

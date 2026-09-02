@@ -72,11 +72,21 @@ function runOf(teamId, msId) {
 }
 
 /* ---------- 一組看得到哪些任務 ---------- */
+/* 這一組收得到哪幾個任務。
+
+   三層篩：同一個課程 → 派的人帶不帶這一組 → 有沒有指名哪幾組。
+   中間那一層是新的：老師對任務規劃有自己的自主性，所以他派的
+   東西不會落到別位老師帶的組上。
+
+   兩邊都可以是空的，空的就不篩——舊資料（沒有 mentorId 的任務、
+   還沒指定老師的組）行為跟以前一模一樣。 */
 function msFor(teamId) {
   var t = teamOf(teamId);
   if (!t) return [];
   return where('Milestones', function (m) {
-    return m.classId === t.classId && (!m.teams.length || m.teams.indexOf(teamId) >= 0);
+    if (m.classId !== t.classId) return false;
+    if (m.mentorId && t.mentorId && m.mentorId !== t.mentorId) return false;
+    return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
 }
 
@@ -229,10 +239,29 @@ function accuracyOf(teamId) {
   return { total: done.length, early: n.early, exact: n.exact, late: n.late, rows: done };
 }
 
+/* ---------- 誰帶哪幾組 ----------
+
+   一個課程三位老師，每位帶不同的組。mentorId 空的組還沒指定，
+   那時候每位老師都看得到它——不然剛貼完名冊的組會沒有人管。 */
+function teachersOf(classId) {
+  return where('Users', function (u) {
+    return u.role === 'teacher' && u.classId === classId;
+  });
+}
+
+/* 這位老師要處理的那幾組。mentorId 沒給就是整個課程。 */
+function teamsUnder(classId, mentorId) {
+  return where('Teams', function (t) {
+    if (t.classId !== classId) return false;
+    if (!mentorId) return true;
+    return !t.mentorId || t.mentorId === mentorId;
+  });
+}
+
 /* ---------- 全班生態 ----------
    沒有名次。只有「誰在哪一條廊道、走到多深、現在是什麼狀態」。 */
-function ecology(classId) {
-  return where('Teams', function (t) { return t.classId === classId; }).map(function (t) {
+function ecology(classId, mentorId) {
+  return teamsUnder(classId, mentorId).map(function (t) {
     var st = stallOf(t.teamId);
     var cur = runsFor(t.teamId).filter(function (x) { return x.run.state === 'running'; })[0];
     return {
@@ -616,6 +645,9 @@ function actSkipCamp(runId) {
 function actPublish(classId, o) {
   var m = {
     msId: nid('M'), classId: classId,
+    /* 誰派的。他派的東西只到他帶的組（見 msFor）——
+       任務規劃與步調是每位老師自己的事。 */
+    mentorId: o.mentorId || '',
     title: o.title, note: o.note || '',
     steps: (o.steps || []).slice(0, 12),
     teams: o.teams || [],
@@ -626,6 +658,15 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
+}
+
+/* 這一組給哪一位老師帶。空字串＝收回來，變成大家都看得到。 */
+function actMentor(teamId, mentorId) {
+  var t = teamOf(teamId);
+  if (!t) return false;
+  t.mentorId = mentorId || '';
+  save();
+  return true;
 }
 
 /* 這一個班有沒有開排行榜。預設關。 */
@@ -644,9 +685,11 @@ function actSetRank(classId, on) {
 }
 
 /* 老師的雷達：誰交了、等多久了 */
-function radar(classId) {
+/* 等你看的那幾件。只有自己帶的組——三位老師共用一個課程，
+   同一個佇列會讓 A 老師勾到 B 老師的組。 */
+function radar(classId, mentorId) {
   var out = [];
-  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+  teamsUnder(classId, mentorId).forEach(function (t) {
     runsFor(t.teamId).forEach(function (x) {
       if (x.run.state !== 'submitted') return;
       out.push({
@@ -854,10 +897,10 @@ function exitRecord(teamId) {
   };
 }
 
-/* 等著老師確認出口的那幾組 */
-function exitQueue(classId) {
-  return where('Teams', function (t) {
-    return t.classId === classId && t.exitAsk && !t.leftAt;
+/* 等著老師確認出口的那幾組。跟 radar 一樣只看自己帶的。 */
+function exitQueue(classId, mentorId) {
+  return teamsUnder(classId, mentorId).filter(function (t) {
+    return t.exitAsk && !t.leftAt;
   });
 }
 

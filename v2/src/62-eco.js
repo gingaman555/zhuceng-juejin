@@ -82,8 +82,12 @@ function xsScene(rows, meId, classId) {
   }
 
   /* ── 每一組一條廊道 ── */
+  /* meId 可以是一個組（學生）或一串組（老師帶的那幾組）。 */
+  var mineSet = {};
+  if (typeof meId === 'string' && meId) mineSet[meId] = 1;
+  else if (meId && meId.length) meId.forEach(function (x) { mineSet[x] = 1; });
   rows.forEach(function (r, i) {
-    out.push(xsShaft(r, i, maxD, r.teamId === meId));
+    out.push(xsShaft(r, i, maxD, !!mineSet[r.teamId]));
   });
 
   out.push('</div></div>');
@@ -129,6 +133,9 @@ function xsPlace(out, slots, s, bd, lo, hi) {
 }
 
 /* ---------- 一條廊道 ---------- */
+/* mine 是「這一條要不要標成自己的」。學生只有一條（自己那一組），
+   老師有好幾條（他帶的那幾組）——所以判斷放在呼叫端，這裡只收
+   一個布林。 */
 function xsShaft(r, i, maxD, mine) {
   var x = xsX(i);
   var tm = teamOf(r.teamId);
@@ -327,7 +334,14 @@ PAGES.eco = function () {
 PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
-  var H = [head('各組進度', '每一組走到哪', '')];
+  /* 整個課程都畫，自己帶的那幾條鑲金邊。
+
+     不切成「只有我帶的」，是因為這張圖跟學生看到的是同一張——
+     一個課程就是一個地方。切開它等於把一個課程拆成三個互相
+     看不到的小班，而那正是這一版要拿掉的複雜度。 */
+  var mine = teamsUnder(u.classId, u.userId).map(function (t) { return t.teamId; });
+  var H = [head('各組進度', '整個課程　·　金邊的是你帶的 ' +
+    mine.length + ' 組', '')];
 
   /* 剖面圖已經畫出每一組走到哪、正在走哪一趟、誰在等你看。
      這一頁本來在底下又用文字卡把同樣的事一組一張再列一遍——
@@ -335,7 +349,7 @@ PAGES.classeco = function () {
 
      要細節就點那一組（digTeamCard 會攤開他們封存過的每一根石片）；
      要去勾就在審核那一頁，那才是它該在的地方。 */
-  H.push(xsScene(rows, null, u.classId));
+  H.push(xsScene(rows, mine, u.classId));
   /* 老師點圖上某一個記號，看到的也是那一趟。 */
   H.push(buildCard(null));
   H.push(digTeamCard(u.classId));

@@ -181,13 +181,15 @@ function topBar() {
       '</div>';
   }
   if (u.role === 'teacher') {
-    var r = radar(u.classId);
+    var r = radar(u.classId, u.userId);
     return '<div class="top">' +
       '<span class="badge t">老師端</span>' +
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
-      '<span>' + esc(classOf(u).name) + '　·　' +
-        where('Teams', function (t) { return t.classId === u.classId; }).length + ' 組</span>' +
+      /* 我帶幾組。本來是整個課程的組數——三位老師共用一個課程
+         之後，那個數字不是他負責的東西。 */
+      '<span>' + esc(classOf(u).name) + '　·　我帶 ' +
+        teamsUnder(u.classId, u.userId).length + ' 組</span>' +
       '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' + topEnd() +
       '</div>';
   }
@@ -465,6 +467,13 @@ var ACTS = {
      一個可以點的東西回答一個問題：記號回答「這一趟是什麼」，
      欄頭回答「那一組是誰」。兩顆鈕做同一件事，就沒有人分得清
      哪一顆是做什麼的。 */
+  /* 這一組給哪一位老師帶。再點一次同一位就是收回來。 */
+  mentor: function (v) {
+    var p = String(v).split(',');
+    actMentor(p[0], p[1] || '');
+    render();
+  },
+
   seeb: function (v) {
     DRAFT.sb = v.split(',');
     render();
@@ -506,7 +515,7 @@ var ACTS = {
     var last = ((document.getElementById('ms-step') || {}).value || '').trim();
     if (last) steps.push(last.slice(0, 24));
     actPublish(me().classId, { title: title.trim(), note: note.trim(),
-      steps: steps, teams: DRAFT.to || [] });
+      steps: steps, teams: DRAFT.to || [], mentorId: me().userId });
     /* 草稿清掉，不然下一個會帶著上一個的字。
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];

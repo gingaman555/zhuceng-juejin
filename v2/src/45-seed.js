@@ -25,23 +25,31 @@ function seed() {
     classId: cid, name: '設計專題', joinCode: 'DG7K2M',
     teacherId: 'U0', startedAt: ago(30)
   });
-  DB.Users.push(seedPw({ userId: 'U0', account: 'tea01', name: '指導老師',
-    role: 'teacher', classId: cid, createdAt: ago(30) }));
+  /* 三位老師，同一個課程。Class.teacherId 不是權限（研究者那一頁
+     只拿它顯示名字），所以共用一個 classId 就是共用一個課程。
+     每位帶哪幾組寫在 Team.mentorId 上。 */
+  [{ id: 'U0', ac: 'tea01', n: '老師·孟' },
+   { id: 'U6', ac: 'tea02', n: '老師·薛' },
+   { id: 'U7', ac: 'tea03', n: '老師·鄰' }].forEach(function (t) {
+    DB.Users.push(seedPw({ userId: t.id, account: t.ac, name: t.n,
+      role: 'teacher', classId: cid, createdAt: ago(30) }));
+  });
 
   /* 研究者。管帳號、看紀錄、匯出——不進地下城。 */
   DB.Users.push(seedPw({ userId: 'U9', account: 'lab01', name: '研究者',
     role: 'researcher', classId: cid, createdAt: ago(31) }));
 
   var TEAMS = [
-    { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30 },
-    { id: 'G2', name: '第二組 · 乙', project: '課表 App',     tier: 0, joined: 30 },
-    { id: 'G3', name: '第三組 · 丙', project: '宿舍回收動線', tier: 1, joined: 30 },
-    { id: 'G4', name: '第四組 · 丁', project: '系上導覽',     tier: 1, joined: 30 },
-    { id: 'G5', name: '第五組 · 戊', project: '（還沒定）',   tier: 0, joined: 30 }
+    /* mentor：誰帶這一組。2／2／1 分給三位老師。 */
+    { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30, mentor: 'U0' },
+    { id: 'G2', name: '第二組 · 乙', project: '課表 App',     tier: 0, joined: 30, mentor: 'U0' },
+    { id: 'G3', name: '第三組 · 丙', project: '宿舍回收動線', tier: 1, joined: 30, mentor: 'U6' },
+    { id: 'G4', name: '第四組 · 丁', project: '系上導覽',     tier: 1, joined: 30, mentor: 'U6' },
+    { id: 'G5', name: '第五組 · 戊', project: '（還沒定）',   tier: 0, joined: 30, mentor: 'U7' }
   ];
   TEAMS.forEach(function (t, i) {
     DB.Teams.push({
-      teamId: t.id, classId: cid, name: t.name,
+      teamId: t.id, classId: cid, name: t.name, mentorId: t.mentor,
       project: t.project, joinedAt: ago(t.joined)
     });
     DB.Users.push(seedPw({
@@ -73,7 +81,16 @@ function seed() {
   var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3),
     title: '畫一張現在的流程圖',
     note: '猜的那幾步用虛線。' };
-  DB.Milestones.push(M1, M2, M3);
+  /* 上面三個不掛 mentorId＝整個課程都收得到。它們底下掛著全部九趟
+     的紀錄，掛上去會讓別位老師帶的組收不到自己已經走完的任務。
+
+     M4 才是在示範「每位老師規劃自己的任務與步調」：薛老師自己派的，
+     只有他帶的那兩組收得到，而且比別人晚了十天才開始。 */
+  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: [], at: ago(1),
+    title: '找兩個人試用紙原型',
+    steps: ['畫紙原型', '約人', '坐在旁邊看他點'],
+    note: '不要跟他解釋。他卡住的地方就是答案。' };
+  DB.Milestones.push(M1, M2, M3, M4);
   DB.Config.seq = 10;
 
   /* 幫忙塞推進紀錄。

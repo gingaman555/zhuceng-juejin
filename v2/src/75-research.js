@@ -111,6 +111,34 @@ PAGES.roster = function () {
   H.push(btn('存進去', 'saveroster', ''));
   H.push('</div>');
 
+  /* 誰帶哪一組。一個課程可以有好幾位老師，每位帶不同的組——
+     老師對任務規劃與步調有自己的自主性，所以他派的東西只會落到
+     他帶的那幾組（見 msFor）。
+
+     只有一位老師的時候整段不畫：沒有東西要分。 */
+  var teas = teachersOf(cid);
+  if (teas.length > 1) {
+    var tms = where('Teams', function (t) { return t.classId === cid; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">誰帶哪一組　' + teas.length + ' 位老師</div>');
+    tms.forEach(function (t) {
+      H.push('<div class="rn-row">');
+      H.push('<b>' + esc(t.name) + '</b>');
+      H.push('<span class="sp" style="flex:1"></span>');
+      H.push('<span class="tags">');
+      teas.forEach(function (te) {
+        var on = t.mentorId === te.userId;
+        H.push('<button class="tag' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'mentor:' + t.teamId + ',' + (on ? '' : te.userId) })) +
+          '\'>' + esc(te.name) + '</button>');
+      });
+      H.push('</span>');
+      H.push('</div>');
+    });
+    H.push('<p class="dim">沒選的組每位老師都看得到。</p>');
+    H.push('</div>');
+  }
+
   H.push('<div class="card">');
   H.push('<div class="eyebrow">現在的名冊　' + rows.length + ' 人</div>');
   if (!rows.length) H.push('<p class="dim">還沒有人。貼一份上去。</p>');

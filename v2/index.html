@@ -5465,11 +5465,21 @@ function runOf(teamId, msId) {
 }
 
 /* ---------- 一組看得到哪些任務 ---------- */
+/* 這一組收得到哪幾個任務。
+
+   三層篩：同一個課程 → 派的人帶不帶這一組 → 有沒有指名哪幾組。
+   中間那一層是新的：老師對任務規劃有自己的自主性，所以他派的
+   東西不會落到別位老師帶的組上。
+
+   兩邊都可以是空的，空的就不篩——舊資料（沒有 mentorId 的任務、
+   還沒指定老師的組）行為跟以前一模一樣。 */
 function msFor(teamId) {
   var t = teamOf(teamId);
   if (!t) return [];
   return where('Milestones', function (m) {
-    return m.classId === t.classId && (!m.teams.length || m.teams.indexOf(teamId) >= 0);
+    if (m.classId !== t.classId) return false;
+    if (m.mentorId && t.mentorId && m.mentorId !== t.mentorId) return false;
+    return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
 }
 
@@ -5622,10 +5632,29 @@ function accuracyOf(teamId) {
   return { total: done.length, early: n.early, exact: n.exact, late: n.late, rows: done };
 }
 
+/* ---------- 誰帶哪幾組 ----------
+
+   一個課程三位老師，每位帶不同的組。mentorId 空的組還沒指定，
+   那時候每位老師都看得到它——不然剛貼完名冊的組會沒有人管。 */
+function teachersOf(classId) {
+  return where('Users', function (u) {
+    return u.role === 'teacher' && u.classId === classId;
+  });
+}
+
+/* 這位老師要處理的那幾組。mentorId 沒給就是整個課程。 */
+function teamsUnder(classId, mentorId) {
+  return where('Teams', function (t) {
+    if (t.classId !== classId) return false;
+    if (!mentorId) return true;
+    return !t.mentorId || t.mentorId === mentorId;
+  });
+}
+
 /* ---------- 全班生態 ----------
    沒有名次。只有「誰在哪一條廊道、走到多深、現在是什麼狀態」。 */
-function ecology(classId) {
-  return where('Teams', function (t) { return t.classId === classId; }).map(function (t) {
+function ecology(classId, mentorId) {
+  return teamsUnder(classId, mentorId).map(function (t) {
     var st = stallOf(t.teamId);
     var cur = runsFor(t.teamId).filter(function (x) { return x.run.state === 'running'; })[0];
     return {
@@ -6009,6 +6038,9 @@ function actSkipCamp(runId) {
 function actPublish(classId, o) {
   var m = {
     msId: nid('M'), classId: classId,
+    /* 誰派的。他派的東西只到他帶的組（見 msFor）——
+       任務規劃與步調是每位老師自己的事。 */
+    mentorId: o.mentorId || '',
     title: o.title, note: o.note || '',
     steps: (o.steps || []).slice(0, 12),
     teams: o.teams || [],
@@ -6019,6 +6051,15 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
+}
+
+/* 這一組給哪一位老師帶。空字串＝收回來，變成大家都看得到。 */
+function actMentor(teamId, mentorId) {
+  var t = teamOf(teamId);
+  if (!t) return false;
+  t.mentorId = mentorId || '';
+  save();
+  return true;
 }
 
 /* 這一個班有沒有開排行榜。預設關。 */
@@ -6037,9 +6078,11 @@ function actSetRank(classId, on) {
 }
 
 /* 老師的雷達：誰交了、等多久了 */
-function radar(classId) {
+/* 等你看的那幾件。只有自己帶的組——三位老師共用一個課程，
+   同一個佇列會讓 A 老師勾到 B 老師的組。 */
+function radar(classId, mentorId) {
   var out = [];
-  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+  teamsUnder(classId, mentorId).forEach(function (t) {
     runsFor(t.teamId).forEach(function (x) {
       if (x.run.state !== 'submitted') return;
       out.push({
@@ -6247,10 +6290,10 @@ function exitRecord(teamId) {
   };
 }
 
-/* 等著老師確認出口的那幾組 */
-function exitQueue(classId) {
-  return where('Teams', function (t) {
-    return t.classId === classId && t.exitAsk && !t.leftAt;
+/* 等著老師確認出口的那幾組。跟 radar 一樣只看自己帶的。 */
+function exitQueue(classId, mentorId) {
+  return teamsUnder(classId, mentorId).filter(function (t) {
+    return t.exitAsk && !t.leftAt;
   });
 }
 
@@ -6631,23 +6674,31 @@ function seed() {
     classId: cid, name: '設計專題', joinCode: 'DG7K2M',
     teacherId: 'U0', startedAt: ago(30)
   });
-  DB.Users.push(seedPw({ userId: 'U0', account: 'tea01', name: '指導老師',
-    role: 'teacher', classId: cid, createdAt: ago(30) }));
+  /* 三位老師，同一個課程。Class.teacherId 不是權限（研究者那一頁
+     只拿它顯示名字），所以共用一個 classId 就是共用一個課程。
+     每位帶哪幾組寫在 Team.mentorId 上。 */
+  [{ id: 'U0', ac: 'tea01', n: '老師·孟' },
+   { id: 'U6', ac: 'tea02', n: '老師·薛' },
+   { id: 'U7', ac: 'tea03', n: '老師·鄰' }].forEach(function (t) {
+    DB.Users.push(seedPw({ userId: t.id, account: t.ac, name: t.n,
+      role: 'teacher', classId: cid, createdAt: ago(30) }));
+  });
 
   /* 研究者。管帳號、看紀錄、匯出——不進地下城。 */
   DB.Users.push(seedPw({ userId: 'U9', account: 'lab01', name: '研究者',
     role: 'researcher', classId: cid, createdAt: ago(31) }));
 
   var TEAMS = [
-    { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30 },
-    { id: 'G2', name: '第二組 · 乙', project: '課表 App',     tier: 0, joined: 30 },
-    { id: 'G3', name: '第三組 · 丙', project: '宿舍回收動線', tier: 1, joined: 30 },
-    { id: 'G4', name: '第四組 · 丁', project: '系上導覽',     tier: 1, joined: 30 },
-    { id: 'G5', name: '第五組 · 戊', project: '（還沒定）',   tier: 0, joined: 30 }
+    /* mentor：誰帶這一組。2／2／1 分給三位老師。 */
+    { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30, mentor: 'U0' },
+    { id: 'G2', name: '第二組 · 乙', project: '課表 App',     tier: 0, joined: 30, mentor: 'U0' },
+    { id: 'G3', name: '第三組 · 丙', project: '宿舍回收動線', tier: 1, joined: 30, mentor: 'U6' },
+    { id: 'G4', name: '第四組 · 丁', project: '系上導覽',     tier: 1, joined: 30, mentor: 'U6' },
+    { id: 'G5', name: '第五組 · 戊', project: '（還沒定）',   tier: 0, joined: 30, mentor: 'U7' }
   ];
   TEAMS.forEach(function (t, i) {
     DB.Teams.push({
-      teamId: t.id, classId: cid, name: t.name,
+      teamId: t.id, classId: cid, name: t.name, mentorId: t.mentor,
       project: t.project, joinedAt: ago(t.joined)
     });
     DB.Users.push(seedPw({
@@ -6679,7 +6730,16 @@ function seed() {
   var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3),
     title: '畫一張現在的流程圖',
     note: '猜的那幾步用虛線。' };
-  DB.Milestones.push(M1, M2, M3);
+  /* 上面三個不掛 mentorId＝整個課程都收得到。它們底下掛著全部九趟
+     的紀錄，掛上去會讓別位老師帶的組收不到自己已經走完的任務。
+
+     M4 才是在示範「每位老師規劃自己的任務與步調」：薛老師自己派的，
+     只有他帶的那兩組收得到，而且比別人晚了十天才開始。 */
+  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: [], at: ago(1),
+    title: '找兩個人試用紙原型',
+    steps: ['畫紙原型', '約人', '坐在旁邊看他點'],
+    note: '不要跟他解釋。他卡住的地方就是答案。' };
+  DB.Milestones.push(M1, M2, M3, M4);
   DB.Config.seq = 10;
 
   /* 幫忙塞推進紀錄。
@@ -6974,13 +7034,15 @@ function topBar() {
       '</div>';
   }
   if (u.role === 'teacher') {
-    var r = radar(u.classId);
+    var r = radar(u.classId, u.userId);
     return '<div class="top">' +
       '<span class="badge t">老師端</span>' +
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
-      '<span>' + esc(classOf(u).name) + '　·　' +
-        where('Teams', function (t) { return t.classId === u.classId; }).length + ' 組</span>' +
+      /* 我帶幾組。本來是整個課程的組數——三位老師共用一個課程
+         之後，那個數字不是他負責的東西。 */
+      '<span>' + esc(classOf(u).name) + '　·　我帶 ' +
+        teamsUnder(u.classId, u.userId).length + ' 組</span>' +
       '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' + topEnd() +
       '</div>';
   }
@@ -7258,6 +7320,13 @@ var ACTS = {
      一個可以點的東西回答一個問題：記號回答「這一趟是什麼」，
      欄頭回答「那一組是誰」。兩顆鈕做同一件事，就沒有人分得清
      哪一顆是做什麼的。 */
+  /* 這一組給哪一位老師帶。再點一次同一位就是收回來。 */
+  mentor: function (v) {
+    var p = String(v).split(',');
+    actMentor(p[0], p[1] || '');
+    render();
+  },
+
   seeb: function (v) {
     DRAFT.sb = v.split(',');
     render();
@@ -7299,7 +7368,7 @@ var ACTS = {
     var last = ((document.getElementById('ms-step') || {}).value || '').trim();
     if (last) steps.push(last.slice(0, 24));
     actPublish(me().classId, { title: title.trim(), note: note.trim(),
-      steps: steps, teams: DRAFT.to || [] });
+      steps: steps, teams: DRAFT.to || [], mentorId: me().userId });
     /* 草稿清掉，不然下一個會帶著上一個的字。
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
@@ -9392,8 +9461,12 @@ function xsScene(rows, meId, classId) {
   }
 
   /* ── 每一組一條廊道 ── */
+  /* meId 可以是一個組（學生）或一串組（老師帶的那幾組）。 */
+  var mineSet = {};
+  if (typeof meId === 'string' && meId) mineSet[meId] = 1;
+  else if (meId && meId.length) meId.forEach(function (x) { mineSet[x] = 1; });
   rows.forEach(function (r, i) {
-    out.push(xsShaft(r, i, maxD, r.teamId === meId));
+    out.push(xsShaft(r, i, maxD, !!mineSet[r.teamId]));
   });
 
   out.push('</div></div>');
@@ -9439,6 +9512,9 @@ function xsPlace(out, slots, s, bd, lo, hi) {
 }
 
 /* ---------- 一條廊道 ---------- */
+/* mine 是「這一條要不要標成自己的」。學生只有一條（自己那一組），
+   老師有好幾條（他帶的那幾組）——所以判斷放在呼叫端，這裡只收
+   一個布林。 */
 function xsShaft(r, i, maxD, mine) {
   var x = xsX(i);
   var tm = teamOf(r.teamId);
@@ -9637,7 +9713,14 @@ PAGES.eco = function () {
 PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
-  var H = [head('各組進度', '每一組走到哪', '')];
+  /* 整個課程都畫，自己帶的那幾條鑲金邊。
+
+     不切成「只有我帶的」，是因為這張圖跟學生看到的是同一張——
+     一個課程就是一個地方。切開它等於把一個課程拆成三個互相
+     看不到的小班，而那正是這一版要拿掉的複雜度。 */
+  var mine = teamsUnder(u.classId, u.userId).map(function (t) { return t.teamId; });
+  var H = [head('各組進度', '整個課程　·　金邊的是你帶的 ' +
+    mine.length + ' 組', '')];
 
   /* 剖面圖已經畫出每一組走到哪、正在走哪一趟、誰在等你看。
      這一頁本來在底下又用文字卡把同樣的事一組一張再列一遍——
@@ -9645,7 +9728,7 @@ PAGES.classeco = function () {
 
      要細節就點那一組（digTeamCard 會攤開他們封存過的每一根石片）；
      要去勾就在審核那一頁，那才是它該在的地方。 */
-  H.push(xsScene(rows, null, u.classId));
+  H.push(xsScene(rows, mine, u.classId));
   /* 老師點圖上某一個記號，看到的也是那一趟。 */
   H.push(buildCard(null));
   H.push(digTeamCard(u.classId));
@@ -10724,10 +10807,15 @@ function rankCard(classId, meId) {
    勾完可以之後，學生自己從三件裡挑一件。少一件他要煩惱的事，
    就少一次「老師替我決定」的機會。 */
 
-/* 老師走到哪一步了。有人等你看就是第三步，其餘看班上有沒有人在走。 */
-function teacherStep(classId) {
-  if (radar(classId).length) return 2;
-  var running = where('Runs', function (r) { return r.state === 'running'; }).length;
+/* 老師走到哪一步了。有人等你看就是第三步，其餘看自己帶的組有沒有人在走。
+   本來那個 running 沒有篩班也沒有篩老師——全系統只要有人在走就算，
+   在一個課程三位老師的設定下那是別人的組。 */
+function teacherStep(classId, mentorId) {
+  if (radar(classId, mentorId).length) return 2;
+  var mine = teamsUnder(classId, mentorId).map(function (t) { return t.teamId; });
+  var running = where('Runs', function (r) {
+    return r.state === 'running' && mine.indexOf(r.teamId) >= 0;
+  }).length;
   if (running) return 1;
   return 0;
 }
@@ -10772,15 +10860,17 @@ var TEACHER_STEPS = [
 /* ---------- 審核（首頁） ---------- */
 PAGES.radar = function () {
   var u = me();
-  var rows = radar(u.classId);
-  var eco = ecology(u.classId);
+  /* 只有自己帶的組。三位老師共用一個課程，同一個佇列會讓
+     A 老師勾到 B 老師的組。 */
+  var rows = radar(u.classId, u.userId);
+  var eco = ecology(u.classId, u.userId);
   var H = [];
 
-  H.push(stepBar(TEACHER_STEPS, teacherStep(u.classId)));
+  H.push(stepBar(TEACHER_STEPS, teacherStep(u.classId, u.userId)));
 
   /* 想出去的那幾組排在最前面。往下走不出去，出口只有這一個，
      而且要他確認——那是這個系統裡他做的最後一件事。 */
-  exitQueue(u.classId).forEach(function (t) {
+  exitQueue(u.classId, u.userId).forEach(function (t) {
     var acc = accuracyOf(t.teamId);
     H.push('<div class="card exitq">');
     H.push('<div class="eyebrow">出口</div>');
@@ -10890,9 +10980,12 @@ PAGES.review = function () {
 /* ---------- 發派任務 ---------- */
 PAGES.ms = function () {
   var u = me();
-  var list = where('Milestones', function (m) { return m.classId === u.classId; })
+  /* 我派過的。別位老師派的不在這裡——他規劃他的，我規劃我的。 */
+  var list = where('Milestones', function (m) {
+    return m.classId === u.classId && (!m.mentorId || m.mentorId === u.userId);
+  })
     .sort(function (a, b) { return b.at - a.at; });
-  var teams = where('Teams', function (t) { return t.classId === u.classId; });
+  var teams = teamsUnder(u.classId, u.userId);
   var to = DRAFT.to || [];
 
   var H = [];
@@ -10934,7 +11027,8 @@ PAGES.ms = function () {
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
-         (to.length ? '只發給 ' + to.length + ' 組' : '全班') + '</span>');
+         (to.length ? '只發給 ' + to.length + ' 組'
+           : '我帶的 ' + teams.length + ' 組') + '</span>');
   teams.forEach(function (t) {
     var on = to.indexOf(t.teamId) >= 0;
     H.push('<button class="tag' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
@@ -10957,8 +11051,10 @@ PAGES.ms = function () {
     var done = got.filter(function (r) { return r.state === 'done'; }).length;
     H.push('<div class="msr">');
     H.push('<b>' + esc(m.title) + '</b>');
-    H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組' : '全班') +
-      '</span>');
+    /* 三種發法。「課程共用」不只是舊資料——一位老師可以刻意派一個
+       不掛自己的任務（期中發表那一種），那時候全課程都收得到。 */
+    H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組'
+      : (m.mentorId ? '我帶的' : '課程共用')) + '</span>');
     H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
     /* 各組承諾了幾天。這是老師唯一看得到的「他們怎麼想這件事」，
        所以留著——但不用標籤的樣子，壓成一行小字。 */
@@ -11093,6 +11189,34 @@ PAGES.roster = function () {
          '已經被認領的名字不會被洗掉。</p>');
   H.push(btn('存進去', 'saveroster', ''));
   H.push('</div>');
+
+  /* 誰帶哪一組。一個課程可以有好幾位老師，每位帶不同的組——
+     老師對任務規劃與步調有自己的自主性，所以他派的東西只會落到
+     他帶的那幾組（見 msFor）。
+
+     只有一位老師的時候整段不畫：沒有東西要分。 */
+  var teas = teachersOf(cid);
+  if (teas.length > 1) {
+    var tms = where('Teams', function (t) { return t.classId === cid; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">誰帶哪一組　' + teas.length + ' 位老師</div>');
+    tms.forEach(function (t) {
+      H.push('<div class="rn-row">');
+      H.push('<b>' + esc(t.name) + '</b>');
+      H.push('<span class="sp" style="flex:1"></span>');
+      H.push('<span class="tags">');
+      teas.forEach(function (te) {
+        var on = t.mentorId === te.userId;
+        H.push('<button class="tag' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'mentor:' + t.teamId + ',' + (on ? '' : te.userId) })) +
+          '\'>' + esc(te.name) + '</button>');
+      });
+      H.push('</span>');
+      H.push('</div>');
+    });
+    H.push('<p class="dim">沒選的組每位老師都看得到。</p>');
+    H.push('</div>');
+  }
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">現在的名冊　' + rows.length + ' 人</div>');
