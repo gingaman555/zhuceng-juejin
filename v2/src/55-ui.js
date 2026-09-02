@@ -28,8 +28,20 @@ function isTeacher() { var u = me(); return !!u && u.role === 'teacher'; }
 function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
 
 /* 首頁那一條「你不在的這幾天」看過就記下來，不然每次進來都再喊一次。
-   記在畫完之後，所以這一次還看得到。 */
-function seen() { if (S.page === 'home' && S.who) markSeen(S.who); }
+   記在畫完之後，所以這一次還看得到。
+
+   蓋掉之前先接住上一次的時間，整個連線都留著（SEEN_CUT）。
+   全班地下城拿它來標「你不在的時候別人留下的」——不接住的話，
+   走過首頁再切過去，圖上就一個新的都沒有了。 */
+var SEEN_CUT = null;
+function seen() {
+  if (S.page !== 'home' || !S.who) return;
+  if (SEEN_CUT === null) {
+    var u = userOf(S.who);
+    SEEN_CUT = (u && u.seenAt) || 0;
+  }
+  markSeen(S.who);
+}
 
 /* 哪一種身分走得到哪一頁。
 
@@ -447,7 +459,18 @@ var ACTS = {
   /* 剖面圖底下那三顆。 */
   tab: function (k) { DRAFT.tab = k; render(); },
 
-  seeb: function (v) { var p = v.split(','); DRAFT.sb = p; DRAFT.dt = p[0]; render(); },
+  /* 圖上某一個記號：那是別組某一趟的紀念碑。
+
+     本來還順手設 DRAFT.dt（把那一整組的面板也打開）。拿掉了——
+     一個可以點的東西回答一個問題：記號回答「這一趟是什麼」，
+     欄頭回答「那一組是誰」。兩顆鈕做同一件事，就沒有人分得清
+     哪一顆是做什麼的。 */
+  seeb: function (v) {
+    DRAFT.sb = v.split(',');
+    render();
+    var c = document.querySelector('.bstory');
+    if (c) c.scrollIntoView({ block: 'center' });
+  },
 
   /* 封存這一趟。名字與方向都選填。 */
   seal: function (runId) {

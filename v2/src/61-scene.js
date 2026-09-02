@@ -472,6 +472,15 @@ function scrollScene() {
      拖不動——「看不到右邊」在桌機上因此是常態。 */
   dragBox('.xsec-wrap', 'xsec');
 
+  /* 打開的時候停在自己那一條。圖有兩千多像素寬，視窗七百五，
+     而它本來從最左邊開始——排在後面的組打開這一頁看到的是別人。 */
+  var xw = document.querySelector('.xsec-wrap');
+  var me = xw && xw.querySelector('.xs-shaft.mine');
+  if (xw && me) {
+    var mx = me.offsetLeft + me.offsetWidth / 2 - xw.clientWidth / 2;
+    keepScroll(xw, 'xsec', { at: me.offsetLeft, x: Math.max(0, mx), y: 0 });
+  }
+
   var rs = document.querySelector('.rstrip');
   if (rs) {
     keepScroll(rs, 'rstrip', { at: rs.scrollWidth, x: rs.scrollWidth, y: 0 });

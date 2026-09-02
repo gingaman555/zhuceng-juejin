@@ -156,8 +156,11 @@ function buildCard(t) {
   if (k) H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'bs-core'));
   else H.push(pxTag(st.def.px, BUILD_PAL, 'bs-px'));
   H.push('<div>');
-  H.push('<div class="eyebrow">' + esc(tm ? tm.name : '') + '　·　' + esc(st.def.name) + '</div>');
-  if (k && k.name) H.push('<h2>' + esc(k.name) + '</h2>');
+  /* 眉標寫「誰、在哪一層」，標題寫他們自己取的名字。
+     本來眉標的第二半是 st.def.name——記號變成那一趟本身之後，
+     那個就等於下面那個標題，同一句話印了兩次。 */
+  H.push('<div class="eyebrow">' + esc(tm ? tm.name : '') + '　·　' + esc(z.name) + '</div>');
+  H.push('<h2>' + esc((k && k.name) || st.def.name) + '</h2>');
   if (st.run) {
     H.push('<dl class="rep">');
     H.push('<dt>他們說</dt><dd>' + st.run.est + '</dd>');

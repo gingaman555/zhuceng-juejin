@@ -11,7 +11,9 @@
    四層，沒有哪一層需要「開」。深度變了岩石就變了，就這樣。
 
    岩壁裡住著東西。牠們跟任何一組的進度都無關，就只是住在那裡——
-   擋在你走廊盡頭的那一隻，只是其中一隻。點一下看牠是什麼。
+   擋在你走廊盡頭的那一隻，只是其中一隻。牠們不是鈕：要查一隻
+   去圖鑑，那裡有全部二十四隻。這張圖上可以點的只有一句話：
+   **別組的東西可以點**——那一組（欄頭），那一組留下的（記號）。
 
    立體感來自每一塊右邊的側面（見 54-eco.css），不是把整條廊道斜著推——
    正交的長條看起來像進度表，有側面的廊道看起來像地下城。 */
@@ -67,6 +69,11 @@ function xsScene(rows, meId, classId) {
   /* ── 深度尺。只標數字，不標「應該到哪」 ── */
   /* 深度尺。一條線上寫兩件事：多深、以及從這裡開始是哪一層。
      本來那兩個是分開的兩層，而且都貼在左邊——每一條尺上都壓著一個帶名。 */
+  /* 從 0 標起。本來從 1 開始，所以最上面那一層——新來的人所在的
+     那一層——整張圖上沒有名字。地表那一條不寫 0 m，寫層名就好。 */
+  out.push('<div class="xs-rule surf" style="top:' + xsTop(0) + 'px;width:' + W + 'px">' +
+    '<i class="' + strataAt(0, classId).key + '">' +
+    esc(strataAt(0, classId).name) + '</i></div>');
   for (var d = 1; d <= maxD; d++) {
     var rz = strataAt(d, classId);
     out.push('<div class="xs-rule" style="top:' + xsTop(d) + 'px;width:' + W + 'px">' +
@@ -114,9 +121,10 @@ function xsPlace(out, slots, s, bd, lo, hi) {
     var c = faunaAt(s.key, bd * 7 + n);
     if (!c) return;
     var y = lo + 11 + ((h >>> 5) % Math.max(1, hi - lo - 55));
-    out.push('<button class="xs-fauna" style="left:' + x + 'px;top:' + y + 'px" ' +
-      'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'fauna:' + c.n })) + '\' ' +
-      'title="' + esc(c.n) + '">' + pxTag(c.px, s.pal, '') + '</button>');
+    /* 不是鈕。牠是牆上的東西——要查牠去圖鑑。
+       本來是鈕，於是這張圖上有二十四個看起來像壁紙的目標。 */
+    out.push('<div class="xs-fauna" style="left:' + x + 'px;top:' + y + 'px" ' +
+      'title="' + esc(c.n) + '">' + pxTag(c.px, s.pal, '') + '</div>');
   });
 }
 
@@ -168,7 +176,14 @@ function xsShaft(r, i, maxD, mine) {
        東西——深度是走出來的，蓋什麼是挑的。 */
     var bg = dug && markAt(r.teamId, d);
     if (bg) {
-      H.push('<button class="xs-bld" data-act="run" data-p=\'' +
+      /* 放在一個有燈的壁龕裡。石頭上挖出來的那一格跟旁邊不一樣，
+         那就是「有人在這裡放了東西」——不用寫一句話說它可以點。
+
+         你上次來之後才插進去的那幾個鑲著金邊。首頁那一條說了
+         「全班新留了幾個」，但數字只說有事發生，圖說發生在哪裡。 */
+      var fresh = SEEN_CUT && bg.keep && bg.keep.at > SEEN_CUT;
+      H.push('<button class="xs-bld' + (fresh ? ' fresh' : '') +
+        '" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'seeb:' + r.teamId + ',' + d })) + '\' title="' +
         esc(bg.name) + '">' + pxTag(bg.px, strataAt(d, r.teamId).pal, '') + '</button>');
       /* 接起來那一段拿掉了：形狀由那一趟長出來，沒有接口這件事。 */
@@ -243,9 +258,13 @@ PAGES.eco = function () {
      打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
   var H = [head('全班地下城', '大家都在下面', '')];
   H.push(xsScene(rows, t.teamId, t.classId));
-  /* 點岩壁裡那一隻會設 DRAFT.fa，但顯示那一張卡的 faunaCard
-     沒有人呼叫——所以點下去一直是沒有反應的。 */
-  H.push(faunaCard());
+  /* 點了圖上某一個記號，答案就出現在圖的正下方。
+
+     這張卡（buildCard）寫好了四十行，但一直沒有任何地方呼叫它——
+     所以點記號一直是沒有反應的。跟 faunaCard 同一種錯，同一頁。 */
+  H.push(buildCard(t));
+  /* 岩壁裡那幾隻不再是鈕（見 xsPlace），所以這裡也不再有那張卡。
+     要查一隻去圖鑑。 */
   /* 排行榜搬到底下「估得準」那一段。刻意加進來、準備好隨時拿掉的
      ——見 68-rank.js。要拿掉就刪掉那一段跟那兩個檔案。 */
   /* 跨進新的一層的時候石頭會變。這一張本來在「大躍進」那一頁上，
@@ -317,6 +336,8 @@ PAGES.classeco = function () {
      要細節就點那一組（digTeamCard 會攤開他們封存過的每一根石片）；
      要去勾就在審核那一頁，那才是它該在的地方。 */
   H.push(xsScene(rows, null, u.classId));
+  /* 老師點圖上某一個記號，看到的也是那一趟。 */
+  H.push(buildCard(null));
   H.push(digTeamCard(u.classId));
 
   /* 只留一句：現在有幾組在等你。等你看的那幾件在審核那一頁。 */
