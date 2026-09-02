@@ -129,41 +129,11 @@ function digTeamCard(classId) {
   return H.join('');
 }
 
-/* ---------- 把這一趟插進這一層 ----------
-
-   本來這裡是三選一。三個選項只差長相，而長相現在由那一趟決定——
-   一個純裝飾的選擇不值得佔掉走完一趟之後那個時刻。
-
-   所以這裡只剩一件事：看一眼那一趟長成什麼樣子，然後把它插下去。
-   旁邊放上「說幾天／走了幾天」，因為那兩個數字就是這根柱子的高度。 */
-function buildPick(t) {
-  var d = unbuiltDepth(t.teamId);
-  if (d < 0) return '';
-  var z = strataAt(d, t.teamId);
-  /* 這一層要插的是最近封存的那一趟。 */
-  var runId = lastSealed(t.teamId);
-  var px = runId ? coreOf(runId) : null;
-  if (!px) return '';
-  var r = find('Runs', function (x) { return x.runId === runId; });
-  var kp = null;
-  keepsOf(t.teamId).forEach(function (x) { if (x.runId === runId) kp = x; });
-
-  var H = ['<div class="card bpick fa ' + z.key + '">'];
-  H.push('<h2 class="bp-h">這一趟長成這樣</h2>');
-  H.push('<div class="bp-one">');
-  H.push('<div class="bp-ground">' + pxTag(px, z.pal, 'bp-px') + '</div>');
-  H.push('<div class="bp-say">');
-  H.push('<b>' + esc((kp && kp.name) || '（沒取名）') + '</b>');
-  if (r) {
-    H.push('<span>說 ' + r.est + ' 天　·　走了 ' +
-      ((kp && kp.elapsed) || r.actual || 0) + ' 天</span>');
-  }
-  H.push('<i>它有多高，就是那一趟過了幾天。</i>');
-  H.push('</div></div>');
-  H.push(btn('插進' + z.name, 'bld:run,' + d, 'big'));
-  H.push('</div>');
-  return H.join('');
-}
+/* buildPick 拿掉了。封存的時候已經自動把那一趟插進那一層（見 actSeal），
+   所以它只剩一條回頭路：舊存檔裡有哪一層沒有記號的時候才冒出來。
+   而它冒出來的時候講的是「這一趟長成這樣」加一句解釋圖的話加
+   「插進水晶迴廊」——沒有一件說得清楚它要你做什麼。
+   一條只在資料出錯時出現、出現了又講不清楚的路，不值得留。 */
 
 /* 點地圖上一座建築：那是哪一趟。
 

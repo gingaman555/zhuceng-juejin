@@ -2688,20 +2688,24 @@ button.tk-k:hover span{color:var(--gold)}
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06)
 }
 .rs-in{display:flex;align-items:flex-end;gap:2px;padding:11px 11px 0}
+/* 一格三行，全部白話：記號＋那個詞、任務名（折行不截斷）、兩個數字。
+   本來還有一根柱子——9 天跟 11 天畫出來差 7px，而且沒有共同的基線
+   可以比。它在營地上成立（一整排站在同一條地上），在這裡不成立。 */
 .rs{
-  flex:0 0 110px;display:flex;flex-direction:column;align-items:center;gap:5px;
-  padding:9px 6px 11px;border:0;background:var(--panel);color:inherit;font:inherit;
-  cursor:pointer
+  flex:0 0 198px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+  padding:14px 14px 16px;border:0;background:var(--panel);color:inherit;font:inherit;
+  cursor:pointer;text-align:left
 }
-.rs-px{display:flex;align-items:flex-end;height:88px}
-.rs-px .px{width:22px;height:auto;max-height:88px;image-rendering:pixelated}
-.rs-s{display:flex;align-items:center;height:25px}
+.rs-s{display:flex;align-items:center;gap:8px}
 .rs-s .px{width:33px;height:25px;image-rendering:pixelated}
-.rs b{
-  font-size:22px;font-weight:400;color:var(--ink);max-width:99px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
-}
-.rs i{font-style:normal;font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+.rs-s em{font-style:normal;font-size:22px;color:var(--dim)}
+.rs-s em.early{color:var(--ok)}
+.rs-s em.exact{color:var(--gold)}
+.rs-s em.late{color:var(--over)}
+.rs b{font-size:22px;font-weight:400;color:var(--ink);line-height:1.35;overflow-wrap:anywhere}
+.rs i{font-style:normal;font-size:22px;color:var(--dim);font-variant-numeric:tabular-nums}
+.rs i u{text-decoration:none;color:var(--gold)}
+.rs-n{font-size:22px;color:var(--mute)}
 
 /* 帶子的名字。概念要有名字，他才知道自己在練什麼。 */
 .rs-h{
@@ -7828,14 +7832,17 @@ function runStrip(t, bare) {
       if (t.builds[bk].runId === r.runId) d = Number(bk.slice(1));
     });
     var z = strataAt(d >= 0 ? d : 0, t.teamId);
-    var px = coreOf(r.runId);
+    var sm = RULES.STAMPS[r.stamp];
     H.push('<button class="rs" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'rec:' + r.runId })) + '\' title="' +
       esc((x.ms ? x.ms.title : '') + '　' + z.name) + '">');
-    H.push('<span class="rs-px">' + (px ? pxTag(px, z.pal, '') : '') + '</span>');
-    H.push('<span class="rs-s">' + stampPx(r.stamp) + '</span>');
-    H.push('<b>' + esc((kp && kp.name) || (x.ms ? x.ms.title : '')) + '</b>');
-    H.push('<i>' + r.est + ' → ' + (r.actual || 0) + '</i>');
+    /* 記號旁邊要有那個詞。在判定頁它旁邊寫著「比承諾的久」所以學得起來，
+       一格裡只放記號的話它是裸的。 */
+    H.push('<span class="rs-s">' + stampPx(r.stamp) +
+      '<em class="' + r.stamp + '">' + esc(sm ? sm.name : '') + '</em></span>');
+    H.push('<b>' + esc(x.ms ? x.ms.title : '') + '</b>');
+    H.push('<i>說 <u>' + r.est + '</u>　實際 <u>' + (r.actual || 0) + '</u> 天</i>');
+    if (kp && kp.name) H.push('<span class="rs-n">「' + esc(kp.name) + '」</span>');
     H.push('</button>');
   });
   H.push('</div></div>');
@@ -8318,7 +8325,7 @@ PAGES.pick = function () {
   /* 這一頁本來還放一張「挑一個記號」。現在按下封存就順手插進去了，
      所以那張不用出現——一個動作就是一顆鈕。 */
 
-  H.push(btn('收起來，插進' + z.name, 'seal:' + r.runId, 'big'));
+  H.push(btn('收起來', 'seal:' + r.runId, 'big'));
   return H.join('');
 };
 /* 選方向那張小地圖拿掉了：占地那一下改在全班那張圖上做。
@@ -9408,7 +9415,6 @@ PAGES.eco = function () {
   /* 留記號是一件在等你做的事，不是一段可以切走的內容，
      所以它跟圖一起留在上面。 */
   H.push(uncoverCard(t));
-  H.push(buildPick(t));
 
   /* ── 底下分成三段，一次只看一段 ──
      本來是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
@@ -9975,41 +9981,11 @@ function digTeamCard(classId) {
   return H.join('');
 }
 
-/* ---------- 把這一趟插進這一層 ----------
-
-   本來這裡是三選一。三個選項只差長相，而長相現在由那一趟決定——
-   一個純裝飾的選擇不值得佔掉走完一趟之後那個時刻。
-
-   所以這裡只剩一件事：看一眼那一趟長成什麼樣子，然後把它插下去。
-   旁邊放上「說幾天／走了幾天」，因為那兩個數字就是這根柱子的高度。 */
-function buildPick(t) {
-  var d = unbuiltDepth(t.teamId);
-  if (d < 0) return '';
-  var z = strataAt(d, t.teamId);
-  /* 這一層要插的是最近封存的那一趟。 */
-  var runId = lastSealed(t.teamId);
-  var px = runId ? coreOf(runId) : null;
-  if (!px) return '';
-  var r = find('Runs', function (x) { return x.runId === runId; });
-  var kp = null;
-  keepsOf(t.teamId).forEach(function (x) { if (x.runId === runId) kp = x; });
-
-  var H = ['<div class="card bpick fa ' + z.key + '">'];
-  H.push('<h2 class="bp-h">這一趟長成這樣</h2>');
-  H.push('<div class="bp-one">');
-  H.push('<div class="bp-ground">' + pxTag(px, z.pal, 'bp-px') + '</div>');
-  H.push('<div class="bp-say">');
-  H.push('<b>' + esc((kp && kp.name) || '（沒取名）') + '</b>');
-  if (r) {
-    H.push('<span>說 ' + r.est + ' 天　·　走了 ' +
-      ((kp && kp.elapsed) || r.actual || 0) + ' 天</span>');
-  }
-  H.push('<i>它有多高，就是那一趟過了幾天。</i>');
-  H.push('</div></div>');
-  H.push(btn('插進' + z.name, 'bld:run,' + d, 'big'));
-  H.push('</div>');
-  return H.join('');
-}
+/* buildPick 拿掉了。封存的時候已經自動把那一趟插進那一層（見 actSeal），
+   所以它只剩一條回頭路：舊存檔裡有哪一層沒有記號的時候才冒出來。
+   而它冒出來的時候講的是「這一趟長成這樣」加一句解釋圖的話加
+   「插進水晶迴廊」——沒有一件說得清楚它要你做什麼。
+   一條只在資料出錯時出現、出現了又講不清楚的路，不值得留。 */
 
 /* 點地圖上一座建築：那是哪一趟。
 

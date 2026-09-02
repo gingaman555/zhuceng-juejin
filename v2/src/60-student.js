@@ -132,14 +132,17 @@ function runStrip(t, bare) {
       if (t.builds[bk].runId === r.runId) d = Number(bk.slice(1));
     });
     var z = strataAt(d >= 0 ? d : 0, t.teamId);
-    var px = coreOf(r.runId);
+    var sm = RULES.STAMPS[r.stamp];
     H.push('<button class="rs" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'rec:' + r.runId })) + '\' title="' +
       esc((x.ms ? x.ms.title : '') + '　' + z.name) + '">');
-    H.push('<span class="rs-px">' + (px ? pxTag(px, z.pal, '') : '') + '</span>');
-    H.push('<span class="rs-s">' + stampPx(r.stamp) + '</span>');
-    H.push('<b>' + esc((kp && kp.name) || (x.ms ? x.ms.title : '')) + '</b>');
-    H.push('<i>' + r.est + ' → ' + (r.actual || 0) + '</i>');
+    /* 記號旁邊要有那個詞。在判定頁它旁邊寫著「比承諾的久」所以學得起來，
+       一格裡只放記號的話它是裸的。 */
+    H.push('<span class="rs-s">' + stampPx(r.stamp) +
+      '<em class="' + r.stamp + '">' + esc(sm ? sm.name : '') + '</em></span>');
+    H.push('<b>' + esc(x.ms ? x.ms.title : '') + '</b>');
+    H.push('<i>說 <u>' + r.est + '</u>　實際 <u>' + (r.actual || 0) + '</u> 天</i>');
+    if (kp && kp.name) H.push('<span class="rs-n">「' + esc(kp.name) + '」</span>');
     H.push('</button>');
   });
   H.push('</div></div>');
@@ -622,7 +625,7 @@ PAGES.pick = function () {
   /* 這一頁本來還放一張「挑一個記號」。現在按下封存就順手插進去了，
      所以那張不用出現——一個動作就是一顆鈕。 */
 
-  H.push(btn('收起來，插進' + z.name, 'seal:' + r.runId, 'big'));
+  H.push(btn('收起來', 'seal:' + r.runId, 'big'));
   return H.join('');
 };
 /* 選方向那張小地圖拿掉了：占地那一下改在全班那張圖上做。

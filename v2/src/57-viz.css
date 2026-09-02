@@ -1298,20 +1298,24 @@ button.tk-k:hover span{color:var(--gold)}
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06)
 }
 .rs-in{display:flex;align-items:flex-end;gap:2px;padding:11px 11px 0}
+/* 一格三行，全部白話：記號＋那個詞、任務名（折行不截斷）、兩個數字。
+   本來還有一根柱子——9 天跟 11 天畫出來差 7px，而且沒有共同的基線
+   可以比。它在營地上成立（一整排站在同一條地上），在這裡不成立。 */
 .rs{
-  flex:0 0 110px;display:flex;flex-direction:column;align-items:center;gap:5px;
-  padding:9px 6px 11px;border:0;background:var(--panel);color:inherit;font:inherit;
-  cursor:pointer
+  flex:0 0 198px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+  padding:14px 14px 16px;border:0;background:var(--panel);color:inherit;font:inherit;
+  cursor:pointer;text-align:left
 }
-.rs-px{display:flex;align-items:flex-end;height:88px}
-.rs-px .px{width:22px;height:auto;max-height:88px;image-rendering:pixelated}
-.rs-s{display:flex;align-items:center;height:25px}
+.rs-s{display:flex;align-items:center;gap:8px}
 .rs-s .px{width:33px;height:25px;image-rendering:pixelated}
-.rs b{
-  font-size:22px;font-weight:400;color:var(--ink);max-width:99px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
-}
-.rs i{font-style:normal;font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+.rs-s em{font-style:normal;font-size:22px;color:var(--dim)}
+.rs-s em.early{color:var(--ok)}
+.rs-s em.exact{color:var(--gold)}
+.rs-s em.late{color:var(--over)}
+.rs b{font-size:22px;font-weight:400;color:var(--ink);line-height:1.35;overflow-wrap:anywhere}
+.rs i{font-style:normal;font-size:22px;color:var(--dim);font-variant-numeric:tabular-nums}
+.rs i u{text-decoration:none;color:var(--gold)}
+.rs-n{font-size:22px;color:var(--mute)}
 
 /* 帶子的名字。概念要有名字，他才知道自己在練什麼。 */
 .rs-h{
