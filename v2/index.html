@@ -1516,9 +1516,21 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 /* ---------- 每一直行的石頭 ----------
    整張圖的底。同一行不管哪一組，石頭都一樣——那是同一片地質。
    顏色與紋理讀 51-zones.css，跟自己那條廊道同一個來源。 */
+.xsec{width:100%;margin:0 auto}
+
+/* 一格有多寬。整張圖上每一個東西的左緣都從這一條算出來。 */
+.xsec{--cw:calc((100% - var(--nm)) / var(--cols))}
+
+/* 沒挖到的岩石。壓暗到只剩紋理——顏色留給挖開的那一塊。
+
+   本來六個直行各用各的底色，六個飽和度差不多的顏色並排，
+   整片背景在跟前面那幾塊搶眼睛。而背景不該有話要說。 */
 .xl-col{
-  position:absolute;top:0;z-index:0;
+  position:absolute;top:0;bottom:0;z-index:0;
+  left:calc(var(--nm) + var(--i) * var(--cw));
+  width:var(--cw);
   background-color:var(--zbg);background-image:var(--ztex);
+  opacity:.34
 }
 /* 行與行之間有一道界線。地質圖上那條線就是這樣畫的。 */
 .xl-col::before{
@@ -1529,11 +1541,12 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 /* ---------- 最上面那條尺 ----------
    只寫多深，不寫「應該到哪」。兩塊一個刻度——一塊一個會太密。 */
 .xl-rule{
-  position:absolute;left:0;top:0;height:55px;z-index:2;pointer-events:none;
+  position:absolute;left:0;right:0;top:0;height:55px;z-index:2;pointer-events:none;
   background:linear-gradient(180deg,#0E1520 0 33px,#151C27 33px 52px,#000 52px 55px)
 }
 .xl-tick{
-  position:absolute;top:0;width:1px;z-index:2;pointer-events:none;
+  position:absolute;top:0;bottom:0;width:1px;z-index:2;pointer-events:none;
+  left:calc(var(--nm) + var(--i) * var(--cw));
   background:repeating-linear-gradient(180deg,
     rgba(255,240,214,.09) 0 4px, transparent 4px 10px)
 }
@@ -1546,13 +1559,13 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .xl-lane{position:absolute;left:0;right:0;z-index:3}
 .xl-lane::after{
   content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
-  background:rgba(255,240,214,.06)
+  background:rgba(255,240,214,.11)
 }
 
 /* 左邊那一格：他們在做什麼，跟他們是誰。
    大的是專案名不是組名——座號不是資料。 */
 .xl-name{
-  position:absolute;left:0;top:0;z-index:5;
+  position:absolute;left:0;top:0;width:var(--nm);z-index:5;
   display:flex;flex-direction:column;justify-content:center;
   padding:4px 11px;border:0;cursor:pointer;text-align:left;
   background:#12100C;font-family:inherit;
@@ -1573,8 +1586,14 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
 /* 疊起來的那幾塊。整排是一顆鈕——空的那幾組也點得到。 */
 .xl-stack{
-  position:absolute;top:0;z-index:4;
+  position:absolute;left:var(--nm);right:0;top:0;z-index:4;
   padding:0;border:0;background:none;cursor:pointer
+}
+/* 那一疊底下有一道影子。石頭要站在什麼東西上面，
+   不然它看起來是浮在牆前面的一張色塊。 */
+.xl-stack::after{
+  content:'';position:absolute;left:0;right:0;bottom:-6px;height:6px;
+  background:linear-gradient(180deg,rgba(0,0,0,.55) 0 3px,transparent 3px)
 }
 .xl-stack:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
@@ -1582,10 +1601,18 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
    所以一塊一塊之間有接縫，數得出來。 */
 .xl-b{
   position:absolute;top:0;height:100%;display:block;
+  left:calc(var(--k) * 100% / var(--cols));
+  width:calc(100% / var(--cols));
   clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))
 }
+/* 一塊石頭。光從左上來：頂上一道亮邊，右邊與底下是暗的，
+   所以塊與塊之間有接縫，一整條數得出來幾塊。
+   裡面兩條硬邊的岩理——沒有的話它是一片塑膠不是一塊石頭。 */
 .xl-b.on{
-  background:linear-gradient(180deg,var(--bk) 0 4px,var(--bd) 4px 100%);
+  background:
+    repeating-linear-gradient(180deg,
+      transparent 0 22px, rgba(0,0,0,.14) 22px 24px),
+    linear-gradient(180deg,var(--bk) 0 4px,var(--bd) 4px 100%);
   box-shadow:
     inset 3px 0 0 rgba(255,240,214,.13),
     inset -5px 0 0 rgba(0,0,0,.42),
@@ -1613,11 +1640,18 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .xl-lane.mine .xl-name b{color:var(--gold)}
 
 /* 角色站在自己疊到的那一塊上面。一整排人的左右，就是一整排的長短。 */
+/* 角色站在第 k 格的正中間。--cw 是一格的寬，所以他跟著格子一起變寬變窄。 */
 .xl-hero{
   position:absolute;top:0;width:44px;height:44px;z-index:6;
+  left:calc(var(--nm) + (var(--k) + .5) * var(--cw) - 22px);
   padding:0;border:0;background:none;cursor:pointer
 }
 .xl-hero .px.ch-s{width:44px;height:44px}
+/* 腳下一道暗。沒有的話他看起來是浮在那一塊上面，不是站著。 */
+.xl-hero::after{
+  content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;
+  background:rgba(0,0,0,.45)
+}
 .xl-hero .px.vine-s{position:absolute;inset:0;width:44px;height:44px;opacity:.9}
 .xl-hero.sleep{opacity:.6}
 .xl-hero:hover{transform:translateY(-3px)}
@@ -1626,6 +1660,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 /* 走出去的那一組，那一條的盡頭是一道光。 */
 .xl-exit{
   position:absolute;top:0;width:22px;height:66px;z-index:5;pointer-events:none;
+  left:calc(var(--nm) + var(--k) * var(--cw));
   background:linear-gradient(90deg,
     rgba(233,179,65,.42) 0 6px, rgba(233,179,65,.16) 6px 14px, transparent 14px)
 }
@@ -1635,6 +1670,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
    沉在岩石裡，滑過去也不浮出來：浮出來是在說「我可以點」。 */
 .xl-fauna{
   position:absolute;z-index:1;width:44px;height:44px;
+  left:calc(var(--nm) + (var(--i) + .5) * var(--cw) - 22px);
   pointer-events:none;opacity:.38;
   animation:drift 6s steps(1,end) infinite
 }
@@ -10604,7 +10640,8 @@ function osTick() {
    六層沒有先後、順序一個班洗一次，所以顏色不帶任何「你該到哪」。 */
 var XL = {
   NAME: 176,   /* 左邊：這是哪一組 */
-  BLK: 55,     /* 一塊的寬 */
+  MIN: 55,     /* 一塊最窄。窄到這裡就不再收，改成橫著捲 */
+  MAX: 88,     /* 一塊最寬。再寬就變成一片色塊，邊角那道斜切也看不出來 */
   BH: 66,      /* 一塊的高 */
   HEAD: 44,    /* 條的上面留給角色站的那一條 */
   LANE: 121,   /* 一條佔的高：44 站的 ＋ 66 條 ＋ 11 間隔 */
@@ -10612,7 +10649,6 @@ var XL = {
   TOP: 55      /* 最上面那條尺 */
 };
 
-function xlX(n) { return XL.NAME + n * XL.BLK; }
 function xlY(i) { return XL.TOP + i * XL.LANE; }
 
 /* 這一組疊到第幾塊。實心幾塊、後面掛不掛一塊虛的。 */
@@ -10624,25 +10660,28 @@ function xsScene(rows, meId, classId) {
      切齊最長的那一組，那條邊就變成終點線了。 */
   var most = rows.reduce(function (a, r) { return Math.max(a, xlCount(r)); }, 0);
   var cols = Math.max(6, most + XL.AHEAD);
-  var W = xlX(cols) + 22;
   var H = xlY(rows.length) + 22;
 
-  var out = ['<div class="xsec-wrap"><div class="xsec" style="width:' + W +
-    'px;height:' + H + 'px">'];
+  /* 橫向全部交給 CSS 算（見 54-eco.css）：--cols 是幾格、--nm 是名牌多寬，
+     每一塊的左緣與寬度都是 (100% − 名牌) ÷ 格數。
+     所以這張圖在電腦上撐滿、在手機上退到最窄再捲。 */
+  var out = ['<div class="xsec-wrap"><div class="xsec" style="--cols:' + cols +
+    ';--nm:' + XL.NAME + 'px;min-width:' + (XL.NAME + cols * XL.MIN) +
+    'px;max-width:' + (XL.NAME + cols * XL.MAX) + 'px;height:' + H + 'px">'];
 
   /* ── 每一直行的石頭 ──
      整張圖的底。同一行不管哪一組，石頭都一樣，因為那是同一片地質。 */
   for (var n = 0; n < cols; n++) {
     var zn = strataAt(n, classId);
-    out.push('<div class="xl-col ' + zn.key + '" style="left:' + xlX(n) +
-      'px;width:' + XL.BLK + 'px;height:' + H + 'px"></div>');
+    out.push('<div class="xl-col ' + zn.key + '" style="--i:' + n + '"></div>');
   }
 
   /* ── 最上面那條尺 ──
      只寫多深，不寫「應該到哪」。兩塊一個刻度，一塊一個會太密。 */
-  out.push('<div class="xl-rule" style="width:' + W + 'px"></div>');
-  for (var d = 2; d <= cols; d += 2) {
-    out.push('<div class="xl-tick" style="left:' + xlX(d) + 'px;height:' + H + 'px">' +
+  out.push('<div class="xl-rule"></div>');
+  /* 最後一格那一條不畫：它剛好落在整張圖的右緣，1px 就撐出一條橫向捲軸。 */
+  for (var d = 2; d < cols; d += 2) {
+    out.push('<div class="xl-tick" style="--i:' + d + '">' +
       '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
   }
 
@@ -10680,8 +10719,9 @@ function xlFauna(rows, cols, classId) {
       var c = faunaAt(z.key, i * 7 + n);
       if (!c) continue;
       /* 不是鈕。牠是岩石裡的東西——要查牠去圖鑑，那裡有全部二十四隻。 */
-      out.push('<div class="xl-fauna" style="left:' + (xlX(n) + 6) + 'px;top:' +
-        (xlY(i) + 11 + (h >>> 5) % 22) + 'px" title="' + esc(c.n) + '">' +
+      /* 跟那一疊同一個高度：牠們住在岩石裡，不是浮在兩排之間。 */
+      out.push('<div class="xl-fauna" style="--i:' + n + ';top:' +
+        (xlY(i) + XL.HEAD + 11 + (h >>> 5) % 22) + 'px" title="' + esc(c.n) + '">' +
         pxTag(c.px, z.pal, '') + '</div>');
     }
   });
@@ -10708,8 +10748,10 @@ function xlLane(r, i, cols, classId, mine) {
      點進去是「他們做了什麼」。一條上兩個問題，各自一顆鈕。 */
   H.push('<button class="xl-name" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'crew:' + r.teamId })) + '\' title="' +
-    esc(r.name) + '" style="top:' + XL.HEAD + 'px;width:' + XL.NAME +
-    'px;height:' + XL.BH + 'px">');
+    esc(r.name) + '" style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
+  /* 這裡試過掛那一組的招牌，撤掉了：signOf 對每一組都回同一張
+     （見 40-db.js，材質跟深度綁的那一版拿掉之後它就是個殘骸）。
+     五個一模一樣的圖示不會讓一排更好認，只會教眼睛忽略那一欄。 */
   H.push('<b>' + esc(r.project || '（還沒定）') + '</b>');
   H.push('<em>' + esc(shortName(r.name)) + '</em>');
   H.push('</button>');
@@ -10720,13 +10762,12 @@ function xlLane(r, i, cols, classId, mine) {
      整條是死的，而那正是最需要被點開看一眼的那一組。 */
   H.push('<button class="xl-stack" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'team:' + r.teamId })) + '\' ' +
-    'style="left:' + xlX(0) + 'px;top:' + XL.HEAD + 'px;width:' +
-    (cols * XL.BLK) + 'px;height:' + XL.BH + 'px">');
+    'style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
   for (var k = 0; k < n; k++) {
     var z = strataAt(k, classId);
     var wait = (k === n - 1) && r.pending;
     H.push('<i class="xl-b ' + z.key + (wait ? ' wait' : ' on') +
-      '" style="left:' + (k * XL.BLK) + 'px;width:' + XL.BLK + 'px"></i>');
+      '" style="--k:' + k + '"></i>');
   }
   H.push('</button>');
 
@@ -10740,7 +10781,7 @@ function xlLane(r, i, cols, classId, mine) {
   H.push('<button class="xl-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
     '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'person:' + r.teamId })) + '\' title="' +
-    esc(shortName(r.name)) + '" style="left:' + (xlX(Math.max(0, n - 1)) + 6) + 'px">');
+    esc(shortName(r.name)) + '" style="--k:' + Math.max(0, n - 1) + '">');
   H.push(pxTag(pose, hr.pal, 'ch-s'));
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</button>');
@@ -10748,7 +10789,7 @@ function xlLane(r, i, cols, classId, mine) {
   /* 走出去的那一組，那一條的盡頭是一道光。
      別人看得到「他們走出去了」——而那跟估得準不準無關。 */
   if (left) H.push('<span class="xl-exit" style="top:' + XL.HEAD +
-    'px;left:' + xlX(n) + 'px"></span>');
+    'px;--k:' + n + '"></span>');
 
   H.push('</div>');
   return H.join('');
@@ -10816,21 +10857,13 @@ PAGES.eco = function () {
      要查一隻去圖鑑。 */
   /* 排行榜搬到底下「估得準」那一段。刻意加進來、準備好隨時拿掉的
      ——見 68-rank.js。要拿掉就刪掉那一段跟那兩個檔案。 */
-  /* 跨進新的一層的時候石頭會變。這一張本來在「大躍進」那一頁上，
-     但那一頁只有這一張是內容，其餘是「去看看那一層」——
-     而去看看到的就是這裡。所以它直接長在這裡。 */
-  /* 本來是看「哪一層還沒插記號」。記號拿掉之後直接看走到多深。 */
-  var nd = depthOf(t.teamId);
-  if (nd > 0) {
-    var zn = strataAt(nd, t.teamId), zw = strataAt(nd - 1, t.teamId);
-    if (zn.key !== zw.key) {
-      H.push('<div class="card fa ' + zn.key + ' zone-in">');
-      H.push('<div class="eyebrow">石頭變了</div>');
-      H.push('<h2>' + esc(zn.name) + '</h2>');
-      H.push('<p class="lead">' + esc(zn.note) + '</p>');
-      H.push('</div>');
-    }
-  }
+  /* 「石頭變了」那張卡拿掉了。
+
+     它寫的是「你走到新的一層了」，而這一版的地形跟走多少刻意脫鉤：
+     六層沒有先後、順序一個班洗一次、顏色只看第幾塊。一張說
+     「你到了新的一層」的卡，跟整張圖在講的事情剛好相反。
+
+     那六層是什麼，圖鑑那一頁有全部六張。 */
 
   /* 留記號是一件在等你做的事，不是一段可以切走的內容，
      所以它跟圖一起留在上面。 */

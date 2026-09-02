@@ -41,7 +41,8 @@
    六層沒有先後、順序一個班洗一次，所以顏色不帶任何「你該到哪」。 */
 var XL = {
   NAME: 176,   /* 左邊：這是哪一組 */
-  BLK: 55,     /* 一塊的寬 */
+  MIN: 55,     /* 一塊最窄。窄到這裡就不再收，改成橫著捲 */
+  MAX: 88,     /* 一塊最寬。再寬就變成一片色塊，邊角那道斜切也看不出來 */
   BH: 66,      /* 一塊的高 */
   HEAD: 44,    /* 條的上面留給角色站的那一條 */
   LANE: 121,   /* 一條佔的高：44 站的 ＋ 66 條 ＋ 11 間隔 */
@@ -49,7 +50,6 @@ var XL = {
   TOP: 55      /* 最上面那條尺 */
 };
 
-function xlX(n) { return XL.NAME + n * XL.BLK; }
 function xlY(i) { return XL.TOP + i * XL.LANE; }
 
 /* 這一組疊到第幾塊。實心幾塊、後面掛不掛一塊虛的。 */
@@ -61,25 +61,28 @@ function xsScene(rows, meId, classId) {
      切齊最長的那一組，那條邊就變成終點線了。 */
   var most = rows.reduce(function (a, r) { return Math.max(a, xlCount(r)); }, 0);
   var cols = Math.max(6, most + XL.AHEAD);
-  var W = xlX(cols) + 22;
   var H = xlY(rows.length) + 22;
 
-  var out = ['<div class="xsec-wrap"><div class="xsec" style="width:' + W +
-    'px;height:' + H + 'px">'];
+  /* 橫向全部交給 CSS 算（見 54-eco.css）：--cols 是幾格、--nm 是名牌多寬，
+     每一塊的左緣與寬度都是 (100% − 名牌) ÷ 格數。
+     所以這張圖在電腦上撐滿、在手機上退到最窄再捲。 */
+  var out = ['<div class="xsec-wrap"><div class="xsec" style="--cols:' + cols +
+    ';--nm:' + XL.NAME + 'px;min-width:' + (XL.NAME + cols * XL.MIN) +
+    'px;max-width:' + (XL.NAME + cols * XL.MAX) + 'px;height:' + H + 'px">'];
 
   /* ── 每一直行的石頭 ──
      整張圖的底。同一行不管哪一組，石頭都一樣，因為那是同一片地質。 */
   for (var n = 0; n < cols; n++) {
     var zn = strataAt(n, classId);
-    out.push('<div class="xl-col ' + zn.key + '" style="left:' + xlX(n) +
-      'px;width:' + XL.BLK + 'px;height:' + H + 'px"></div>');
+    out.push('<div class="xl-col ' + zn.key + '" style="--i:' + n + '"></div>');
   }
 
   /* ── 最上面那條尺 ──
      只寫多深，不寫「應該到哪」。兩塊一個刻度，一塊一個會太密。 */
-  out.push('<div class="xl-rule" style="width:' + W + 'px"></div>');
-  for (var d = 2; d <= cols; d += 2) {
-    out.push('<div class="xl-tick" style="left:' + xlX(d) + 'px;height:' + H + 'px">' +
+  out.push('<div class="xl-rule"></div>');
+  /* 最後一格那一條不畫：它剛好落在整張圖的右緣，1px 就撐出一條橫向捲軸。 */
+  for (var d = 2; d < cols; d += 2) {
+    out.push('<div class="xl-tick" style="--i:' + d + '">' +
       '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
   }
 
@@ -117,8 +120,9 @@ function xlFauna(rows, cols, classId) {
       var c = faunaAt(z.key, i * 7 + n);
       if (!c) continue;
       /* 不是鈕。牠是岩石裡的東西——要查牠去圖鑑，那裡有全部二十四隻。 */
-      out.push('<div class="xl-fauna" style="left:' + (xlX(n) + 6) + 'px;top:' +
-        (xlY(i) + 11 + (h >>> 5) % 22) + 'px" title="' + esc(c.n) + '">' +
+      /* 跟那一疊同一個高度：牠們住在岩石裡，不是浮在兩排之間。 */
+      out.push('<div class="xl-fauna" style="--i:' + n + ';top:' +
+        (xlY(i) + XL.HEAD + 11 + (h >>> 5) % 22) + 'px" title="' + esc(c.n) + '">' +
         pxTag(c.px, z.pal, '') + '</div>');
     }
   });
@@ -145,8 +149,10 @@ function xlLane(r, i, cols, classId, mine) {
      點進去是「他們做了什麼」。一條上兩個問題，各自一顆鈕。 */
   H.push('<button class="xl-name" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'crew:' + r.teamId })) + '\' title="' +
-    esc(r.name) + '" style="top:' + XL.HEAD + 'px;width:' + XL.NAME +
-    'px;height:' + XL.BH + 'px">');
+    esc(r.name) + '" style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
+  /* 這裡試過掛那一組的招牌，撤掉了：signOf 對每一組都回同一張
+     （見 40-db.js，材質跟深度綁的那一版拿掉之後它就是個殘骸）。
+     五個一模一樣的圖示不會讓一排更好認，只會教眼睛忽略那一欄。 */
   H.push('<b>' + esc(r.project || '（還沒定）') + '</b>');
   H.push('<em>' + esc(shortName(r.name)) + '</em>');
   H.push('</button>');
@@ -157,13 +163,12 @@ function xlLane(r, i, cols, classId, mine) {
      整條是死的，而那正是最需要被點開看一眼的那一組。 */
   H.push('<button class="xl-stack" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'team:' + r.teamId })) + '\' ' +
-    'style="left:' + xlX(0) + 'px;top:' + XL.HEAD + 'px;width:' +
-    (cols * XL.BLK) + 'px;height:' + XL.BH + 'px">');
+    'style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
   for (var k = 0; k < n; k++) {
     var z = strataAt(k, classId);
     var wait = (k === n - 1) && r.pending;
     H.push('<i class="xl-b ' + z.key + (wait ? ' wait' : ' on') +
-      '" style="left:' + (k * XL.BLK) + 'px;width:' + XL.BLK + 'px"></i>');
+      '" style="--k:' + k + '"></i>');
   }
   H.push('</button>');
 
@@ -177,7 +182,7 @@ function xlLane(r, i, cols, classId, mine) {
   H.push('<button class="xl-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
     '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'person:' + r.teamId })) + '\' title="' +
-    esc(shortName(r.name)) + '" style="left:' + (xlX(Math.max(0, n - 1)) + 6) + 'px">');
+    esc(shortName(r.name)) + '" style="--k:' + Math.max(0, n - 1) + '">');
   H.push(pxTag(pose, hr.pal, 'ch-s'));
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</button>');
@@ -185,7 +190,7 @@ function xlLane(r, i, cols, classId, mine) {
   /* 走出去的那一組，那一條的盡頭是一道光。
      別人看得到「他們走出去了」——而那跟估得準不準無關。 */
   if (left) H.push('<span class="xl-exit" style="top:' + XL.HEAD +
-    'px;left:' + xlX(n) + 'px"></span>');
+    'px;--k:' + n + '"></span>');
 
   H.push('</div>');
   return H.join('');
@@ -253,21 +258,13 @@ PAGES.eco = function () {
      要查一隻去圖鑑。 */
   /* 排行榜搬到底下「估得準」那一段。刻意加進來、準備好隨時拿掉的
      ——見 68-rank.js。要拿掉就刪掉那一段跟那兩個檔案。 */
-  /* 跨進新的一層的時候石頭會變。這一張本來在「大躍進」那一頁上，
-     但那一頁只有這一張是內容，其餘是「去看看那一層」——
-     而去看看到的就是這裡。所以它直接長在這裡。 */
-  /* 本來是看「哪一層還沒插記號」。記號拿掉之後直接看走到多深。 */
-  var nd = depthOf(t.teamId);
-  if (nd > 0) {
-    var zn = strataAt(nd, t.teamId), zw = strataAt(nd - 1, t.teamId);
-    if (zn.key !== zw.key) {
-      H.push('<div class="card fa ' + zn.key + ' zone-in">');
-      H.push('<div class="eyebrow">石頭變了</div>');
-      H.push('<h2>' + esc(zn.name) + '</h2>');
-      H.push('<p class="lead">' + esc(zn.note) + '</p>');
-      H.push('</div>');
-    }
-  }
+  /* 「石頭變了」那張卡拿掉了。
+
+     它寫的是「你走到新的一層了」，而這一版的地形跟走多少刻意脫鉤：
+     六層沒有先後、順序一個班洗一次、顏色只看第幾塊。一張說
+     「你到了新的一層」的卡，跟整張圖在講的事情剛好相反。
+
+     那六層是什麼，圖鑑那一頁有全部六張。 */
 
   /* 留記號是一件在等你做的事，不是一段可以切走的內容，
      所以它跟圖一起留在上面。 */

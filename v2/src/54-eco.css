@@ -17,9 +17,21 @@
 /* ---------- 每一直行的石頭 ----------
    整張圖的底。同一行不管哪一組，石頭都一樣——那是同一片地質。
    顏色與紋理讀 51-zones.css，跟自己那條廊道同一個來源。 */
+.xsec{width:100%;margin:0 auto}
+
+/* 一格有多寬。整張圖上每一個東西的左緣都從這一條算出來。 */
+.xsec{--cw:calc((100% - var(--nm)) / var(--cols))}
+
+/* 沒挖到的岩石。壓暗到只剩紋理——顏色留給挖開的那一塊。
+
+   本來六個直行各用各的底色，六個飽和度差不多的顏色並排，
+   整片背景在跟前面那幾塊搶眼睛。而背景不該有話要說。 */
 .xl-col{
-  position:absolute;top:0;z-index:0;
+  position:absolute;top:0;bottom:0;z-index:0;
+  left:calc(var(--nm) + var(--i) * var(--cw));
+  width:var(--cw);
   background-color:var(--zbg);background-image:var(--ztex);
+  opacity:.34
 }
 /* 行與行之間有一道界線。地質圖上那條線就是這樣畫的。 */
 .xl-col::before{
@@ -30,11 +42,12 @@
 /* ---------- 最上面那條尺 ----------
    只寫多深，不寫「應該到哪」。兩塊一個刻度——一塊一個會太密。 */
 .xl-rule{
-  position:absolute;left:0;top:0;height:55px;z-index:2;pointer-events:none;
+  position:absolute;left:0;right:0;top:0;height:55px;z-index:2;pointer-events:none;
   background:linear-gradient(180deg,#0E1520 0 33px,#151C27 33px 52px,#000 52px 55px)
 }
 .xl-tick{
-  position:absolute;top:0;width:1px;z-index:2;pointer-events:none;
+  position:absolute;top:0;bottom:0;width:1px;z-index:2;pointer-events:none;
+  left:calc(var(--nm) + var(--i) * var(--cw));
   background:repeating-linear-gradient(180deg,
     rgba(255,240,214,.09) 0 4px, transparent 4px 10px)
 }
@@ -47,13 +60,13 @@
 .xl-lane{position:absolute;left:0;right:0;z-index:3}
 .xl-lane::after{
   content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
-  background:rgba(255,240,214,.06)
+  background:rgba(255,240,214,.11)
 }
 
 /* 左邊那一格：他們在做什麼，跟他們是誰。
    大的是專案名不是組名——座號不是資料。 */
 .xl-name{
-  position:absolute;left:0;top:0;z-index:5;
+  position:absolute;left:0;top:0;width:var(--nm);z-index:5;
   display:flex;flex-direction:column;justify-content:center;
   padding:4px 11px;border:0;cursor:pointer;text-align:left;
   background:#12100C;font-family:inherit;
@@ -74,8 +87,14 @@
 
 /* 疊起來的那幾塊。整排是一顆鈕——空的那幾組也點得到。 */
 .xl-stack{
-  position:absolute;top:0;z-index:4;
+  position:absolute;left:var(--nm);right:0;top:0;z-index:4;
   padding:0;border:0;background:none;cursor:pointer
+}
+/* 那一疊底下有一道影子。石頭要站在什麼東西上面，
+   不然它看起來是浮在牆前面的一張色塊。 */
+.xl-stack::after{
+  content:'';position:absolute;left:0;right:0;bottom:-6px;height:6px;
+  background:linear-gradient(180deg,rgba(0,0,0,.55) 0 3px,transparent 3px)
 }
 .xl-stack:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
@@ -83,10 +102,18 @@
    所以一塊一塊之間有接縫，數得出來。 */
 .xl-b{
   position:absolute;top:0;height:100%;display:block;
+  left:calc(var(--k) * 100% / var(--cols));
+  width:calc(100% / var(--cols));
   clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))
 }
+/* 一塊石頭。光從左上來：頂上一道亮邊，右邊與底下是暗的，
+   所以塊與塊之間有接縫，一整條數得出來幾塊。
+   裡面兩條硬邊的岩理——沒有的話它是一片塑膠不是一塊石頭。 */
 .xl-b.on{
-  background:linear-gradient(180deg,var(--bk) 0 4px,var(--bd) 4px 100%);
+  background:
+    repeating-linear-gradient(180deg,
+      transparent 0 22px, rgba(0,0,0,.14) 22px 24px),
+    linear-gradient(180deg,var(--bk) 0 4px,var(--bd) 4px 100%);
   box-shadow:
     inset 3px 0 0 rgba(255,240,214,.13),
     inset -5px 0 0 rgba(0,0,0,.42),
@@ -114,11 +141,18 @@
 .xl-lane.mine .xl-name b{color:var(--gold)}
 
 /* 角色站在自己疊到的那一塊上面。一整排人的左右，就是一整排的長短。 */
+/* 角色站在第 k 格的正中間。--cw 是一格的寬，所以他跟著格子一起變寬變窄。 */
 .xl-hero{
   position:absolute;top:0;width:44px;height:44px;z-index:6;
+  left:calc(var(--nm) + (var(--k) + .5) * var(--cw) - 22px);
   padding:0;border:0;background:none;cursor:pointer
 }
 .xl-hero .px.ch-s{width:44px;height:44px}
+/* 腳下一道暗。沒有的話他看起來是浮在那一塊上面，不是站著。 */
+.xl-hero::after{
+  content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;
+  background:rgba(0,0,0,.45)
+}
 .xl-hero .px.vine-s{position:absolute;inset:0;width:44px;height:44px;opacity:.9}
 .xl-hero.sleep{opacity:.6}
 .xl-hero:hover{transform:translateY(-3px)}
@@ -127,6 +161,7 @@
 /* 走出去的那一組，那一條的盡頭是一道光。 */
 .xl-exit{
   position:absolute;top:0;width:22px;height:66px;z-index:5;pointer-events:none;
+  left:calc(var(--nm) + var(--k) * var(--cw));
   background:linear-gradient(90deg,
     rgba(233,179,65,.42) 0 6px, rgba(233,179,65,.16) 6px 14px, transparent 14px)
 }
@@ -136,6 +171,7 @@
    沉在岩石裡，滑過去也不浮出來：浮出來是在說「我可以點」。 */
 .xl-fauna{
   position:absolute;z-index:1;width:44px;height:44px;
+  left:calc(var(--nm) + (var(--i) + .5) * var(--cw) - 22px);
   pointer-events:none;opacity:.38;
   animation:drift 6s steps(1,end) infinite
 }
