@@ -491,8 +491,11 @@ button.ac:active{transform:translateY(1px)}
 
    守住原本的規則：硬邊、零模糊、光從左上來、圓角一律 11px 的切角。 */
 .card{position:relative}
+/* 四個角那幾點拿掉了：框畫出來之後，它們正好壓在框的內緣上，
+   而且它們本來在做的事（讓四個角有東西）現在框在做。 */
 .card::after{
   content:'';position:absolute;inset:6px;pointer-events:none;z-index:0;
+  display:none;
   background-image:
     linear-gradient(rgba(0,0,0,.26) 0 100%),linear-gradient(rgba(0,0,0,.26) 0 100%),
     linear-gradient(rgba(0,0,0,.26) 0 100%),linear-gradient(rgba(0,0,0,.26) 0 100%);
@@ -1516,7 +1519,8 @@ button.ac:active{transform:translateY(1px)}
 .gate-walk{
   position:absolute;right:0;bottom:0;display:block;width:66px;height:66px;
   pointer-events:none;
-  animation:gatewalk 9s linear infinite
+  /* 330px 的位移分成 330 步：一步一個整數像素。 */
+  animation:gatewalk 9s steps(330,end) infinite
 }
 .gate-walk .px{position:absolute;left:0;top:0;width:66px;height:66px}
 .gate-walk .wa{animation:wkA .44s steps(1,end) infinite}

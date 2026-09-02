@@ -18,6 +18,9 @@
 :root{
   --bg:#0B0A09; --panel:#14110D; --panel2:#1A1611; --sunk:#0E0C0A;
   --line:#2E2822; --line2:#443B31;
+  /* 視窗的框。--line2 在 --panel 上只有 2:1，畫出來的框讀不到——
+     而框要讀得到才算框。這一階是「看得見但不搶字」。 */
+  --frame:#7A6A55;
   /* 三級字色本來是白、淺灰、更淺灰——而淺灰在這個底色上讀起來
      就是「看不清楚」。使用者：字都盡量作白，不要做淺灰。
 
@@ -567,12 +570,17 @@ body{
     radial-gradient(rgba(0,0,0,.42) 1px, transparent 1px);
   background-size:22px 22px, 33px 33px;
   background-position:0 0, 11px 14px;
+  /* 框是畫出來的，不是斜面。
+
+     本來四邊是 3px 斜面（左上亮、右下暗）——那是 Win95／16-bit 的
+     語法：它在模擬一塊有厚度的東西被光照到。8-bit 的視窗不模擬厚度，
+     它就是一個框：外面一圈暗、裡面一圈亮、中間平的。
+
+     順帶它變得看得見了：斜面那一版的邊在這個底色上幾乎讀不出來，
+     一整頁的卡片是靠間距分開的，不是靠邊。 */
   box-shadow:
-    inset 0 var(--px) 0 var(--lit),
-    inset var(--px) 0 0 var(--lit),
-    inset 0 calc(var(--px) * -1) 0 var(--shd2),
-    inset calc(var(--px) * -1) 0 0 var(--shd2),
-    0 0 0 1px #000;
+    inset 0 0 0 var(--px) #000,
+    inset 0 0 0 calc(var(--px) * 2) var(--frame);
 }
 /* 上緣還留著狀態色的那幾張，斜面讓給它 */
 .stamp-card{box-shadow:
@@ -1265,10 +1273,10 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
     rgba(255,240,214,.13) 0 22px, transparent 22px 88px);
   background-size:176px 100%
 }
-.scn.walking .scn-rush{opacity:1;animation:scnrush 1.1s linear infinite}
+.scn.walking .scn-rush{opacity:1;animation:scnrush 1.1s steps(176,end) infinite}
 /* 位移改成 176：花紋每 176px 一根柱子，本來只移 88（半個週期），
    所以每一圈接縫都會跳一下。 */
-.scn.walking .scn-far{animation:bg176 3.2s linear infinite}
+.scn.walking .scn-far{animation:bg176 3.2s steps(176,end) infinite}
 
 /* ── 休息中 ──
    火是亮的，遠處退下去。那是「現在沒事做」的樣子，不是壞掉。 */
@@ -1499,11 +1507,17 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   pointer-events:none}
 .lamps-in{position:absolute;top:0;bottom:0;left:0;right:0}
 @keyframes lamp176{ to{ transform:translateX(-176px) } }
-.scn.walking .lamps-in{ animation:lamp176 3.2s linear infinite }
+.scn.walking .lamps-in{ animation:lamp176 3.2s steps(176,end) infinite }
 
-.scn.walking .scn-bg  { animation:bg176 5.5s linear infinite }
-.scn.walking .scn-ceil{ animation:bg88  2.2s linear infinite }
-.scn.walking .floor   { animation:bg44  1.4s linear infinite }
+/* 步數＝那一層的花紋週期有幾個像素，所以每一步剛好走一個整數像素。
+
+   本來是 linear。8-bit 主機的捲動其實是平滑的——它每一禎推一個像素，
+   所以不是「跳格」的問題。問題是次像素：176px ÷ 5.5s ≈ 每禎 0.53px，
+   圖層被畫在半個像素上，那正好把 image-rendering:pixelated 想守住的
+   東西糊掉。量化到整數像素之後，它一樣是連續的，只是不再踩在格線中間。 */
+.scn.walking .scn-bg  { animation:bg176 5.5s steps(176,end) infinite }
+.scn.walking .scn-ceil{ animation:bg88  2.2s steps(88,end)  infinite }
+.scn.walking .floor   { animation:bg44  1.4s steps(44,end)  infinite }
 
 /* 頭上那塊岩本來是一片純色，捲起來看不出在動。給它一排方齒。 */
 .scn-ceil{
@@ -2281,8 +2295,11 @@ button.ac:active{transform:translateY(1px)}
 
    守住原本的規則：硬邊、零模糊、光從左上來、圓角一律 11px 的切角。 */
 .card{position:relative}
+/* 四個角那幾點拿掉了：框畫出來之後，它們正好壓在框的內緣上，
+   而且它們本來在做的事（讓四個角有東西）現在框在做。 */
 .card::after{
   content:'';position:absolute;inset:6px;pointer-events:none;z-index:0;
+  display:none;
   background-image:
     linear-gradient(rgba(0,0,0,.26) 0 100%),linear-gradient(rgba(0,0,0,.26) 0 100%),
     linear-gradient(rgba(0,0,0,.26) 0 100%),linear-gradient(rgba(0,0,0,.26) 0 100%);
@@ -3306,7 +3323,8 @@ button.ac:active{transform:translateY(1px)}
 .gate-walk{
   position:absolute;right:0;bottom:0;display:block;width:66px;height:66px;
   pointer-events:none;
-  animation:gatewalk 9s linear infinite
+  /* 330px 的位移分成 330 步：一步一個整數像素。 */
+  animation:gatewalk 9s steps(330,end) infinite
 }
 .gate-walk .px{position:absolute;left:0;top:0;width:66px;height:66px}
 .gate-walk .wa{animation:wkA .44s steps(1,end) infinite}

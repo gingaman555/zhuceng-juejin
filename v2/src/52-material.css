@@ -49,12 +49,17 @@ body{
     radial-gradient(rgba(0,0,0,.42) 1px, transparent 1px);
   background-size:22px 22px, 33px 33px;
   background-position:0 0, 11px 14px;
+  /* 框是畫出來的，不是斜面。
+
+     本來四邊是 3px 斜面（左上亮、右下暗）——那是 Win95／16-bit 的
+     語法：它在模擬一塊有厚度的東西被光照到。8-bit 的視窗不模擬厚度，
+     它就是一個框：外面一圈暗、裡面一圈亮、中間平的。
+
+     順帶它變得看得見了：斜面那一版的邊在這個底色上幾乎讀不出來，
+     一整頁的卡片是靠間距分開的，不是靠邊。 */
   box-shadow:
-    inset 0 var(--px) 0 var(--lit),
-    inset var(--px) 0 0 var(--lit),
-    inset 0 calc(var(--px) * -1) 0 var(--shd2),
-    inset calc(var(--px) * -1) 0 0 var(--shd2),
-    0 0 0 1px #000;
+    inset 0 0 0 var(--px) #000,
+    inset 0 0 0 calc(var(--px) * 2) var(--frame);
 }
 /* 上緣還留著狀態色的那幾張，斜面讓給它 */
 .stamp-card{box-shadow:

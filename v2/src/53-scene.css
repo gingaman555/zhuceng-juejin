@@ -377,10 +377,10 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
     rgba(255,240,214,.13) 0 22px, transparent 22px 88px);
   background-size:176px 100%
 }
-.scn.walking .scn-rush{opacity:1;animation:scnrush 1.1s linear infinite}
+.scn.walking .scn-rush{opacity:1;animation:scnrush 1.1s steps(176,end) infinite}
 /* 位移改成 176：花紋每 176px 一根柱子，本來只移 88（半個週期），
    所以每一圈接縫都會跳一下。 */
-.scn.walking .scn-far{animation:bg176 3.2s linear infinite}
+.scn.walking .scn-far{animation:bg176 3.2s steps(176,end) infinite}
 
 /* ── 休息中 ──
    火是亮的，遠處退下去。那是「現在沒事做」的樣子，不是壞掉。 */
@@ -611,11 +611,17 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   pointer-events:none}
 .lamps-in{position:absolute;top:0;bottom:0;left:0;right:0}
 @keyframes lamp176{ to{ transform:translateX(-176px) } }
-.scn.walking .lamps-in{ animation:lamp176 3.2s linear infinite }
+.scn.walking .lamps-in{ animation:lamp176 3.2s steps(176,end) infinite }
 
-.scn.walking .scn-bg  { animation:bg176 5.5s linear infinite }
-.scn.walking .scn-ceil{ animation:bg88  2.2s linear infinite }
-.scn.walking .floor   { animation:bg44  1.4s linear infinite }
+/* 步數＝那一層的花紋週期有幾個像素，所以每一步剛好走一個整數像素。
+
+   本來是 linear。8-bit 主機的捲動其實是平滑的——它每一禎推一個像素，
+   所以不是「跳格」的問題。問題是次像素：176px ÷ 5.5s ≈ 每禎 0.53px，
+   圖層被畫在半個像素上，那正好把 image-rendering:pixelated 想守住的
+   東西糊掉。量化到整數像素之後，它一樣是連續的，只是不再踩在格線中間。 */
+.scn.walking .scn-bg  { animation:bg176 5.5s steps(176,end) infinite }
+.scn.walking .scn-ceil{ animation:bg88  2.2s steps(88,end)  infinite }
+.scn.walking .floor   { animation:bg44  1.4s steps(44,end)  infinite }
 
 /* 頭上那塊岩本來是一片純色，捲起來看不出在動。給它一排方齒。 */
 .scn-ceil{
