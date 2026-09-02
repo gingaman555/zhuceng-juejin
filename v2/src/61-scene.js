@@ -93,8 +93,18 @@ function scene(t, row, st, kind) {
   var H = ['<div class="scn ' + light.key + ' z-' + zone.key +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
     (launch ? ' launch' : '') + '">'];
-  /* 出發那一道白光。掃過去就沒了，所以它只是一個空的層。 */
-  if (launch) H.push('<div class="scn-launch"></div>');
+  /* 出發那一下：一道白光掃過去，加上一句大字砸在正中間。
+
+     這是整個流程裡唯一一個「從現在開始」的時刻——之前他在營火旁邊
+     坐著，之後他在走。中間那一下要有聲音，不然兩個狀態之間只是
+     畫面換了。
+
+     字砸下來的時候廊道上那幾行小字（第幾天、牌子、角落那一塊）
+     一起收起來：一次只講一件事，而且這樣它們也不會跟大字疊在一起。 */
+  if (launch) {
+    H.push('<div class="scn-launch"></div>');
+    H.push('<div class="scn-go"><b>任務開始</b></div>');
+  }
 
 
   /* 固定在角落的深度。走廊往旁邊捲，它不跟著捲——

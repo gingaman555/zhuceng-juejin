@@ -184,12 +184,22 @@
 /* ── 要做的那一件事，釘在畫面下面 ──
    地圖變成首頁之後它本來被推到整頁最底下，那樣就得先捲過整張圖才按得到。
    看地圖跟動手不是先後關係——PaGamO 打開來就能動手。 */
+/* 要做的那一件事。接在廊道下面，不再釘在畫面底部——
+   釘住是為了解決「動作在摺線以下」，而它現在就在廊道下面。
+   一個釘在底部的東西擺在別的內容上面，只會蓋住它們。 */
 .dock{
-  position:sticky;z-index:9;margin:0 0 22px;
-  background:var(--bg);
-  box-shadow:0 -11px 0 var(--bg), inset 0 3px 0 rgba(255,240,214,.10)
+  margin:0 0 22px;background:var(--bg);
+  box-shadow:inset 0 3px 0 rgba(255,240,214,.10)
 }
 .dock .tline{margin:0}
 .dock .act-card{margin:0}
-@media (max-width: 899px){ .dock{bottom:66px} }
-@media (min-width: 900px){ .dock{bottom:0} }
+
+/* 廊道底下那排數字：手機上本來 gap 22 加大字，四項折成三行 119px，
+   把「要做的那一件事」整個推到摺線以下。
+
+   接在廊道下面的是動作，不是讀數——所以這一排在窄畫面收緊：
+   一行放得下四項，數字仍然是 33px（字級不縮，那是規矩）。 */
+@media (max-width: 480px){
+  .scn-foot{gap:6px 11px;padding:8px 11px;justify-content:space-between}
+  .sf{gap:4px}
+}

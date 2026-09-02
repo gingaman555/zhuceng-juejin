@@ -89,10 +89,16 @@ PAGES.home = function () {
      只在那張圖上動八次，它沒有機會被學會。所以圖回到全班那一頁。 ── */
   H.push(scene(t, next.row, st, next.kind));
   if (r) H.push(stepRow(r.runId));
-  /* 走過的每一趟。往左滑就是往回看。 */
-  H.push(runStrip(t));
 
-  /* ── 要做的那一件事，釘在畫面下面。 ── */
+  /* ── 要做的那一件事，就接在廊道下面。 ──
+
+     本來走過的那一條帶子插在這中間，所以「收到一個新任務」要越過
+     一排過去的紀錄才看得到。過去是這一頁上最不重要的東西——
+     它是拿來回頭看的，不是拿來做的。
+
+     順便把 sticky 拿掉了。它本來釘在畫面底部，是為了解決「動作在
+     摺線以下」；接到廊道下面之後那個問題本來就不存在，而一個
+     釘在底部的東西擺在別的內容上面，只會蓋住它們。 ── */
   H.push('<div class="dock">');
   H.push('<div class="tline">');
   H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
@@ -103,8 +109,12 @@ PAGES.home = function () {
   H.push(actionCard(t, next, st));
   H.push('</div>');
   if (next.more) {
-    H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
+    H.push('<p class="dim">還有 ' + next.more + ' 個在等。</p>');
   }
+
+  /* 走過的每一趟。往左滑就是往回看——它在這一頁上最不重要，
+     所以排在動作後面。 */
+  H.push(runStrip(t));
 
   /* 「新的一層／留一個記號」那張卡拿掉了。
 

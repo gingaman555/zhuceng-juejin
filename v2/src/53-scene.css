@@ -459,3 +459,48 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   .scn.resting .mouth::after{animation:none}
   .scn-launch{display:none}
 }
+
+/* ── 任務開始 ──
+
+   整個流程裡唯一一個「從現在開始」的時刻：之前他在營火旁邊坐著，
+   之後他在走。中間那一下要有聲音，不然兩個狀態之間只是畫面換了。
+
+   砸下來、停住、消失。三段都是 steps()——這個世界裡沒有漸變，
+   一個會慢慢淡出的字看起來像網頁，不像遊戲。 */
+.scn-go{
+  position:absolute;inset:0;z-index:10;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(6,5,4,.55);
+  animation:goveil 1.32s steps(1,end) 1 forwards
+}
+.scn-go b{
+  font-size:66px;line-height:1;font-weight:400;color:var(--gold2);
+  letter-spacing:.08em;white-space:nowrap;
+  /* 硬邊的黑框，不是模糊的陰影。四個方向各一格。 */
+  text-shadow:
+    4px 0 0 #0B0A09, -4px 0 0 #0B0A09, 0 4px 0 #0B0A09, 0 -4px 0 #0B0A09,
+    8px 8px 0 rgba(0,0,0,.75);
+  animation:goslam 1.32s steps(3,end) 1 forwards
+}
+@keyframes goveil{
+  0%{opacity:1} 74%{opacity:1} 75%,100%{opacity:0}
+}
+@keyframes goslam{
+  0%  {transform:scale(2.2);opacity:0}
+  12% {transform:scale(1);opacity:1}
+  70% {transform:scale(1);opacity:1}
+  100%{transform:scale(1.4);opacity:0}
+}
+
+/* 大字砸下來的時候，廊道上那幾行小字收起來——一次只講一件事，
+   而且這樣它們不會跟大字疊在一起。 */
+.scn.launch .dayn,
+.scn.launch .mobn,
+.scn.launch .hero-tag,
+.scn.launch .scn-hud{opacity:0}
+
+@media (max-width:420px){ .scn-go b{font-size:44px} }
+@media (prefers-reduced-motion: reduce){
+  .scn-go,.scn-go b{animation:none}
+  .scn-go{opacity:0}
+}

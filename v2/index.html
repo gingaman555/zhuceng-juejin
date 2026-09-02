@@ -1303,6 +1303,51 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   .scn-launch{display:none}
 }
 
+/* ── 任務開始 ──
+
+   整個流程裡唯一一個「從現在開始」的時刻：之前他在營火旁邊坐著，
+   之後他在走。中間那一下要有聲音，不然兩個狀態之間只是畫面換了。
+
+   砸下來、停住、消失。三段都是 steps()——這個世界裡沒有漸變，
+   一個會慢慢淡出的字看起來像網頁，不像遊戲。 */
+.scn-go{
+  position:absolute;inset:0;z-index:10;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(6,5,4,.55);
+  animation:goveil 1.32s steps(1,end) 1 forwards
+}
+.scn-go b{
+  font-size:66px;line-height:1;font-weight:400;color:var(--gold2);
+  letter-spacing:.08em;white-space:nowrap;
+  /* 硬邊的黑框，不是模糊的陰影。四個方向各一格。 */
+  text-shadow:
+    4px 0 0 #0B0A09, -4px 0 0 #0B0A09, 0 4px 0 #0B0A09, 0 -4px 0 #0B0A09,
+    8px 8px 0 rgba(0,0,0,.75);
+  animation:goslam 1.32s steps(3,end) 1 forwards
+}
+@keyframes goveil{
+  0%{opacity:1} 74%{opacity:1} 75%,100%{opacity:0}
+}
+@keyframes goslam{
+  0%  {transform:scale(2.2);opacity:0}
+  12% {transform:scale(1);opacity:1}
+  70% {transform:scale(1);opacity:1}
+  100%{transform:scale(1.4);opacity:0}
+}
+
+/* 大字砸下來的時候，廊道上那幾行小字收起來——一次只講一件事，
+   而且這樣它們不會跟大字疊在一起。 */
+.scn.launch .dayn,
+.scn.launch .mobn,
+.scn.launch .hero-tag,
+.scn.launch .scn-hud{opacity:0}
+
+@media (max-width:420px){ .scn-go b{font-size:44px} }
+@media (prefers-reduced-motion: reduce){
+  .scn-go,.scn-go b{animation:none}
+  .scn-go{opacity:0}
+}
+
 /* 全班地下城的樣子。
 
    跟 52 / 53 同一套規矩：hard stop、0 模糊、光從左上來。
@@ -3678,15 +3723,25 @@ button.tk-k:hover span{color:var(--gold)}
 /* ── 要做的那一件事，釘在畫面下面 ──
    地圖變成首頁之後它本來被推到整頁最底下，那樣就得先捲過整張圖才按得到。
    看地圖跟動手不是先後關係——PaGamO 打開來就能動手。 */
+/* 要做的那一件事。接在廊道下面，不再釘在畫面底部——
+   釘住是為了解決「動作在摺線以下」，而它現在就在廊道下面。
+   一個釘在底部的東西擺在別的內容上面，只會蓋住它們。 */
 .dock{
-  position:sticky;z-index:9;margin:0 0 22px;
-  background:var(--bg);
-  box-shadow:0 -11px 0 var(--bg), inset 0 3px 0 rgba(255,240,214,.10)
+  margin:0 0 22px;background:var(--bg);
+  box-shadow:inset 0 3px 0 rgba(255,240,214,.10)
 }
 .dock .tline{margin:0}
 .dock .act-card{margin:0}
-@media (max-width: 899px){ .dock{bottom:66px} }
-@media (min-width: 900px){ .dock{bottom:0} }
+
+/* 廊道底下那排數字：手機上本來 gap 22 加大字，四項折成三行 119px，
+   把「要做的那一件事」整個推到摺線以下。
+
+   接在廊道下面的是動作，不是讀數——所以這一排在窄畫面收緊：
+   一行放得下四項，數字仍然是 33px（字級不縮，那是規矩）。 */
+@media (max-width: 480px){
+  .scn-foot{gap:6px 11px;padding:8px 11px;justify-content:space-between}
+  .sf{gap:4px}
+}
 
 </style>
 </head>
@@ -7641,9 +7696,11 @@ var ACTS = {
       S.launch = 0;
       var e = document.querySelector('.scn');
       if (e) e.classList.remove('launch');
-      e = document.querySelector('.scn-launch');
-      if (e && e.parentNode) e.parentNode.removeChild(e);
-    }, 900);
+      ['.scn-launch', '.scn-go'].forEach(function (sel) {
+        var x = document.querySelector(sel);
+        if (x && x.parentNode) x.parentNode.removeChild(x);
+      });
+    }, 1320);
     say('出發。');
   },
 
@@ -8420,10 +8477,16 @@ PAGES.home = function () {
      只在那張圖上動八次，它沒有機會被學會。所以圖回到全班那一頁。 ── */
   H.push(scene(t, next.row, st, next.kind));
   if (r) H.push(stepRow(r.runId));
-  /* 走過的每一趟。往左滑就是往回看。 */
-  H.push(runStrip(t));
 
-  /* ── 要做的那一件事，釘在畫面下面。 ── */
+  /* ── 要做的那一件事，就接在廊道下面。 ──
+
+     本來走過的那一條帶子插在這中間，所以「收到一個新任務」要越過
+     一排過去的紀錄才看得到。過去是這一頁上最不重要的東西——
+     它是拿來回頭看的，不是拿來做的。
+
+     順便把 sticky 拿掉了。它本來釘在畫面底部，是為了解決「動作在
+     摺線以下」；接到廊道下面之後那個問題本來就不存在，而一個
+     釘在底部的東西擺在別的內容上面，只會蓋住它們。 ── */
   H.push('<div class="dock">');
   H.push('<div class="tline">');
   H.push('<span class="eyebrow">' + esc(taskTag(next)) + '</span>');
@@ -8434,8 +8497,12 @@ PAGES.home = function () {
   H.push(actionCard(t, next, st));
   H.push('</div>');
   if (next.more) {
-    H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
+    H.push('<p class="dim">還有 ' + next.more + ' 個在等。</p>');
   }
+
+  /* 走過的每一趟。往左滑就是往回看——它在這一頁上最不重要，
+     所以排在動作後面。 */
+  H.push(runStrip(t));
 
   /* 「新的一層／留一個記號」那張卡拿掉了。
 
@@ -9260,8 +9327,18 @@ function scene(t, row, st, kind) {
   var H = ['<div class="scn ' + light.key + ' z-' + zone.key +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
     (launch ? ' launch' : '') + '">'];
-  /* 出發那一道白光。掃過去就沒了，所以它只是一個空的層。 */
-  if (launch) H.push('<div class="scn-launch"></div>');
+  /* 出發那一下：一道白光掃過去，加上一句大字砸在正中間。
+
+     這是整個流程裡唯一一個「從現在開始」的時刻——之前他在營火旁邊
+     坐著，之後他在走。中間那一下要有聲音，不然兩個狀態之間只是
+     畫面換了。
+
+     字砸下來的時候廊道上那幾行小字（第幾天、牌子、角落那一塊）
+     一起收起來：一次只講一件事，而且這樣它們也不會跟大字疊在一起。 */
+  if (launch) {
+    H.push('<div class="scn-launch"></div>');
+    H.push('<div class="scn-go"><b>任務開始</b></div>');
+  }
 
 
   /* 固定在角落的深度。走廊往旁邊捲，它不跟著捲——

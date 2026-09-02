@@ -468,9 +468,11 @@ var ACTS = {
       S.launch = 0;
       var e = document.querySelector('.scn');
       if (e) e.classList.remove('launch');
-      e = document.querySelector('.scn-launch');
-      if (e && e.parentNode) e.parentNode.removeChild(e);
-    }, 900);
+      ['.scn-launch', '.scn-go'].forEach(function (sel) {
+        var x = document.querySelector(sel);
+        if (x && x.parentNode) x.parentNode.removeChild(x);
+      });
+    }, 1320);
     say('出發。');
   },
 
