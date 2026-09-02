@@ -349,6 +349,36 @@ var ACTS = {
     render();
   },
 
+  /* 拆一件出來。打一句按 Enter 就多一項，預設一天——
+     加一件一定會動到上面那個數字，不然會像沒反應。 */
+  planadd: function (v) {
+    var x = String(v || '').trim();
+    if (!x) return;
+    var p = (DRAFT.plan || []).slice();
+    if (p.length >= RULES.STEPS_MAX) return say('最多 ' + RULES.STEPS_MAX + ' 件。');
+    p.push({ n: x.slice(0, 24), d: 1 });
+    DRAFT.plan = p;
+    render();
+    var el = document.getElementById('pl-add');
+    if (el) { el.value = ''; el.focus(); }
+  },
+  plandel: function (i) {
+    var p = (DRAFT.plan || []).slice();
+    p.splice(Number(i), 1);
+    DRAFT.plan = p;
+    render();
+  },
+  /* 某一件加減一天。到頭停在那裡。 */
+  pland: function (v) {
+    var q = String(v).split(',');
+    var p = (DRAFT.plan || []).slice();
+    var i = Number(q[0]);
+    if (!p[i]) return;
+    p[i] = { n: p[i].n, d: clamp(1, RULES.EST_MAX, p[i].d + Number(q[1])) };
+    DRAFT.plan = p;
+    render();
+  },
+
   /* 說幾天：一按一天。到頭就停在那裡，不會繞回去——
      繞回去會讓「按到底」變成一件要小心的事。 */
   estep: function (d) {
@@ -426,7 +456,8 @@ var ACTS = {
 
   commit: function (msId) {
     var t = myTeam();
-    actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.flags || []);
+    actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT),
+      DRAFT.flags || [], DRAFT.plan || []);
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——

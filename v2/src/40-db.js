@@ -280,13 +280,32 @@ function ecology(classId, mentorId) {
 
 /* 承諾：拉滑桿決定幾天，順便標「哪幾段我覺得會比想的久」。
    標的是老師分的段，不是我列的八種卡關原因。 */
-function actCommit(teamId, msId, est, flags) {
+/* 他自己拆的那幾件，跟每一件估幾天。
+
+   [{ n: '找到人', d: 2 }, ...]。空陣列＝沒拆，那時候 est 是他
+   直接按出來的數字。 */
+function planDays(plan) {
+  var n = 0;
+  (plan || []).forEach(function (x) { n += Number(x.d) || 0; });
+  return n;
+}
+
+function actCommit(teamId, msId, est, flags, plan) {
   var r = runOf(teamId, msId);
   if (r) return r;
+  var pl = (plan || []).filter(function (x) { return x && x.n; })
+    .slice(0, RULES.STEPS_MAX)
+    .map(function (x) {
+      return { n: String(x.n).slice(0, 24),
+        d: clamp(1, RULES.EST_MAX, Number(x.d) || 1) };
+    });
+  /* 列了就是加起來。永遠只有一個地方在輸入。 */
+  if (pl.length) est = planDays(pl);
   r = {
     runId: nid('R'), teamId: teamId, msId: msId,
     state: 'running',
     est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
+    plan: pl,
     flags: flags || [],
     committedAt: now(),
     pushes: 0, overs: [], steps: [], keep: null, stamp: null,
@@ -368,9 +387,19 @@ function actTickStep(teamId, runId, i) {
 
 /* 這一趟勾了幾段。沒有分段的任務回 null——
    沒有的東西不要畫成 0/0，那看起來像什麼都沒做。 */
+/* 這一趟分成哪幾段。
+
+   先看他自己拆的（承諾的時候列的那幾件），沒有才退回老師寫的分段。
+   兩份清單合成一份：畫面上永遠只有一排段，不會有「老師的」跟
+   「我的」兩排。 */
 function stepsOf(runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return null;
+  if (r.plan && r.plan.length) {
+    return { all: r.plan.map(function (x) { return x.n; }),
+      days: r.plan.map(function (x) { return x.d; }),
+      on: r.steps || [] };
+  }
   var m = msOf(r.msId);
   if (!m || !m.steps || !m.steps.length) return null;
   return { all: m.steps, on: r.steps || [] };

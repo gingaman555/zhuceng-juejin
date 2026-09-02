@@ -231,7 +231,8 @@ PAGES.ms = function () {
   H.push('<input id="ms-step" placeholder="' +
     esc(sp.length ? '再切一段，按 Enter' : '例：訪三個人　→ 按 Enter') +
     '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
-  H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段' : '選填') + '</p>');
+  H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段' :
+    '不寫的話他們自己拆。') + '</p>');
   /* ── 排到哪一天 ──
 
      老師對專案制定要有自主權，而排程是那個自主權最具體的一半。

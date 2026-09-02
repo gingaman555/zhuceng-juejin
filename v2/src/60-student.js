@@ -399,7 +399,15 @@ PAGES.commit = function () {
   var t = myTeam();
   var m = msOf(S.p.id);
   if (!m) return '<div class="card">找不到這一個任務。</div>';
-  var est = Number(draft('est', RULES.EST_DEFAULT));
+  /* 他自己拆的那幾件。第一次進來用老師寫的分段當起點——
+     老師沒寫就是一張白紙，那時候拆的人是他。 */
+  if (!DRAFT.plan) {
+    DRAFT.plan = previewSteps(m).map(function (x) { return { n: x, d: 1 }; });
+  }
+  var plan = DRAFT.plan;
+  /* 列了就是加起來，沒列就直接說一個數字。永遠只有一個地方在輸入。 */
+  var est = plan.length ? planDays(plan)
+    : Number(draft('est', RULES.EST_DEFAULT));
   var flags = DRAFT.flags || [];
 
   var H = [head('自我承諾', m.title, m.note)];
@@ -416,7 +424,13 @@ PAGES.commit = function () {
       '<span>老師排到</span><b>' + esc(dueSay(m)) + '</b>' +
       '<em>' + esc(dueLeftSay(m)) + '</em></div>');
   }
-  H.push(estStep(est));
+  /* 列了就顯示加起來的，沒列才給那兩顆鍵。 */
+  if (plan.length) {
+    H.push('<div class="estep"><div class="es-n sum"><b>' + est +
+      '</b><span>天</span></div></div>');
+  } else {
+    H.push(estStep(est));
+  }
 
   /* 決定的時候要看的東西全部畫在同一根尺上：你前幾趟說了幾天、
      實際幾天，別組這一件事說的範圍，還有準的範圍。
@@ -428,6 +442,38 @@ PAGES.commit = function () {
   /* 拉到幾就亮幾格，擋路的那一隻站在盡頭。
      承諾是這裡唯一有阻力的選擇，它不該長得像填表。 */
   H.push(estWalk(t, m, est));
+  H.push('</div>');
+
+  /* ── 你要做哪幾件，每一件幾天 ──
+
+     老師可以只丟一個大任務，拆的人是要做的那一個。他寫過分段的話
+     那幾行就是起點；沒寫就是一張白紙。
+
+     每一件預設一天，所以加一件一定會動到上面那個數字——
+     加了東西畫面沒反應是最容易讓人以為壞掉的事。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你要做哪幾件</div>');
+  if (plan.length) {
+    H.push('<div class="plist">');
+    plan.forEach(function (x, i) {
+      H.push('<div class="pl">');
+      H.push('<b style="background:' + stepHue(i) + '"></b>');
+      H.push('<i>' + esc(x.n) + '</i>');
+      H.push('<button class="pd" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'pland:' + i + ',-1' })) + '\'>−</button>');
+      H.push('<u>' + x.d + '</u>');
+      H.push('<button class="pd" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'pland:' + i + ',1' })) + '\'>＋</button>');
+      H.push('<button class="px-del" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'plandel:' + i })) + '\' title="' +
+        esc('拿掉這一件') + '">×</button>');
+      H.push('</div>');
+    });
+    H.push('</div>');
+  }
+  H.push('<input id="pl-add" placeholder="' +
+    esc(plan.length ? '再一件，按 Enter' : '例：找到人　→ 按 Enter') +
+    '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.planadd(this.value);}">');
   H.push('</div>');
 
   /* 老師分的段。點起來標「這一段會比想的久」——
