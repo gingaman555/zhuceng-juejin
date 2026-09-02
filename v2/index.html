@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>專案地下城</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@v1.500/fonts/web/Cubic_11.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
 <style>
-@font-face{font-family:'C11';src:url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@v1.500/fonts/web/Cubic_11.woff2') format('woff2');font-weight:100 900;font-display:swap}
+@font-face{font-family:'C11';src:url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@v1.500/fonts/web/Cubic_11.woff2') format('woff2');font-weight:100 900;font-display:block}
 /* 樣子。
 
    字級只用 11 的倍數——Cubic 11 是 11px 的點陣字，放到 13px、17px 會糊掉。
@@ -129,10 +131,27 @@ select{width:auto;padding:2px 8px;font-size:22px}
 textarea{resize:vertical;line-height:1.7}
 ::placeholder{color:var(--mute)}
 
+/* ── 動作完成之後那一句 ──
+
+   本來它是一個排在文件流裡的區塊，插在 .wrap 最上面，高度約 65px——
+   所以每一個會 say() 的動作都把整頁往下推 65px，而 say() 走的是
+   render() 不是 go()，捲軸不會回到頂端。結果是你正在看的那一行
+   在按下按鈕的瞬間往下跳一段。那就是「字會跑掉」。
+
+   釘在畫面底下，不佔位置。順帶它變得更看得到——本來它在頁面最上面，
+   而你按的按鈕通常在下面，訊息出現在你看不到的地方。 */
 .flash{
+  position:fixed;left:50%;bottom:88px;transform:translateX(-50%);
+  z-index:60;max-width:min(560px,calc(100vw - 44px));
   background:var(--panel2);border-left:3px solid var(--gold);
-  padding:11px 14px;margin:0 0 22px;font-size:22px;color:var(--dim);line-height:1.9
+  box-shadow:0 0 0 1px #000, 0 6px 0 rgba(0,0,0,.45);
+  padding:11px 18px;font-size:22px;color:var(--ink);line-height:1.5;
+  animation:flashIn .18s steps(2,end) 1
 }
+@keyframes flashIn{0%{opacity:0;transform:translate(-50%,9px)}
+  100%{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion: reduce){ .flash{animation:none} }
+@media (max-width:860px){ .flash{bottom:99px} }
 a.plain{color:var(--dim);cursor:pointer;text-decoration:none}
 a.plain:hover{color:var(--gold)}
 
@@ -721,6 +740,46 @@ input:focus,textarea:focus{outline:none;box-shadow:
 /* ---------- 會動的時候 ---------- */
 @media (prefers-reduced-motion: reduce){
   .btn:active,.gcard:active,.tag:active{transform:none}
+}
+
+/* ══════════ 按下去一定要有反應 ══════════
+
+   本來只有五個 class 有 :active。畫面上按得到的東西有二十種——
+   分頁鈕、留記號那三張、紀錄的每一列、廊道底下那幾扇門、
+   剖面圖的欄頭、洞口的營火與招牌⋯⋯全部沒有。
+
+   而 :hover 在觸控裝置上不存在，所以在手機上按那些東西，
+   從按下去到畫面重畫之間完全沒有任何事情發生。
+
+   掛在 [data-act] 與 [data-go] 上，不一個一個補——
+   那樣下一個新加的還是會漏。只要是按得到的，就一定有。 */
+[data-act],[data-go]{
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:none
+}
+/* 按下去往右下沉 2px，跟主要按鈕同一個手感。 */
+[data-act]:active,[data-go]:active{transform:translate(1px,1px)}
+/* 已經自己訂過位移的那幾個不要疊加。 */
+.btn:active{transform:translate(2px,2px)}
+.btn.ghost:active,.gcard:active,.tag:active,button.ac:active{transform:translateY(1px)}
+
+/* 鍵盤走到哪裡要看得見。本來完全沒有 focus 的樣子——
+   用鍵盤的人在這個介面上是瞎的。 */
+[data-act]:focus-visible,[data-go]:focus-visible,
+input:focus-visible,textarea:focus-visible,select:focus-visible{
+  outline:3px solid var(--gold);outline-offset:2px
+}
+
+/* 絕對定位的那幾個不可以用 transform 位移——它們的位置就是資訊
+   （記號在第幾層、人在第幾格），移了就不對了。改成壓暗。 */
+.mmark:active,.xs-head:active,.xs-bld:active,.xs-core:active,
+.xs-fauna:active,.mouth .hang:active,.mouth .mfire:active{
+  transform:none;filter:brightness(.7)
+}
+
+@media (prefers-reduced-motion: reduce){
+  [data-act]:active,[data-go]:active{transform:none;filter:brightness(.8)}
 }
 
 /* 廊道場景的樣子。
@@ -6641,7 +6700,7 @@ function runAct(str) {
    推進」那一版的殘留——程式還在，但畫面上沒有任何地方按得到。
    留著只會讓下一個讀的人以為那個機制還在。 */
 var ACTS = {
-  forward: function () { CLOCK += DAY; render(); },
+  forward: function () { CLOCK += DAY; say('往前一天了。'); },
   reset: function () { seed(); S.who = 'U1'; go('home'); },
 
   go: function (arg) {

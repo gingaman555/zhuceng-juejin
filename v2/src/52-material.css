@@ -247,3 +247,43 @@ input:focus,textarea:focus{outline:none;box-shadow:
 @media (prefers-reduced-motion: reduce){
   .btn:active,.gcard:active,.tag:active{transform:none}
 }
+
+/* ══════════ 按下去一定要有反應 ══════════
+
+   本來只有五個 class 有 :active。畫面上按得到的東西有二十種——
+   分頁鈕、留記號那三張、紀錄的每一列、廊道底下那幾扇門、
+   剖面圖的欄頭、洞口的營火與招牌⋯⋯全部沒有。
+
+   而 :hover 在觸控裝置上不存在，所以在手機上按那些東西，
+   從按下去到畫面重畫之間完全沒有任何事情發生。
+
+   掛在 [data-act] 與 [data-go] 上，不一個一個補——
+   那樣下一個新加的還是會漏。只要是按得到的，就一定有。 */
+[data-act],[data-go]{
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:none
+}
+/* 按下去往右下沉 2px，跟主要按鈕同一個手感。 */
+[data-act]:active,[data-go]:active{transform:translate(1px,1px)}
+/* 已經自己訂過位移的那幾個不要疊加。 */
+.btn:active{transform:translate(2px,2px)}
+.btn.ghost:active,.gcard:active,.tag:active,button.ac:active{transform:translateY(1px)}
+
+/* 鍵盤走到哪裡要看得見。本來完全沒有 focus 的樣子——
+   用鍵盤的人在這個介面上是瞎的。 */
+[data-act]:focus-visible,[data-go]:focus-visible,
+input:focus-visible,textarea:focus-visible,select:focus-visible{
+  outline:3px solid var(--gold);outline-offset:2px
+}
+
+/* 絕對定位的那幾個不可以用 transform 位移——它們的位置就是資訊
+   （記號在第幾層、人在第幾格），移了就不對了。改成壓暗。 */
+.mmark:active,.xs-head:active,.xs-bld:active,.xs-core:active,
+.xs-fauna:active,.mouth .hang:active,.mouth .mfire:active{
+  transform:none;filter:brightness(.7)
+}
+
+@media (prefers-reduced-motion: reduce){
+  [data-act]:active,[data-go]:active{transform:none;filter:brightness(.8)}
+}

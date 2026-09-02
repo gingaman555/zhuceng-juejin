@@ -301,7 +301,7 @@ function runAct(str) {
    推進」那一版的殘留——程式還在，但畫面上沒有任何地方按得到。
    留著只會讓下一個讀的人以為那個機制還在。 */
 var ACTS = {
-  forward: function () { CLOCK += DAY; render(); },
+  forward: function () { CLOCK += DAY; say('往前一天了。'); },
   reset: function () { seed(); S.who = 'U1'; go('home'); },
 
   go: function (arg) {

@@ -119,10 +119,27 @@ select{width:auto;padding:2px 8px;font-size:22px}
 textarea{resize:vertical;line-height:1.7}
 ::placeholder{color:var(--mute)}
 
+/* ── 動作完成之後那一句 ──
+
+   本來它是一個排在文件流裡的區塊，插在 .wrap 最上面，高度約 65px——
+   所以每一個會 say() 的動作都把整頁往下推 65px，而 say() 走的是
+   render() 不是 go()，捲軸不會回到頂端。結果是你正在看的那一行
+   在按下按鈕的瞬間往下跳一段。那就是「字會跑掉」。
+
+   釘在畫面底下，不佔位置。順帶它變得更看得到——本來它在頁面最上面，
+   而你按的按鈕通常在下面，訊息出現在你看不到的地方。 */
 .flash{
+  position:fixed;left:50%;bottom:88px;transform:translateX(-50%);
+  z-index:60;max-width:min(560px,calc(100vw - 44px));
   background:var(--panel2);border-left:3px solid var(--gold);
-  padding:11px 14px;margin:0 0 22px;font-size:22px;color:var(--dim);line-height:1.9
+  box-shadow:0 0 0 1px #000, 0 6px 0 rgba(0,0,0,.45);
+  padding:11px 18px;font-size:22px;color:var(--ink);line-height:1.5;
+  animation:flashIn .18s steps(2,end) 1
 }
+@keyframes flashIn{0%{opacity:0;transform:translate(-50%,9px)}
+  100%{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion: reduce){ .flash{animation:none} }
+@media (max-width:860px){ .flash{bottom:99px} }
 a.plain{color:var(--dim);cursor:pointer;text-decoration:none}
 a.plain:hover{color:var(--gold)}
 
