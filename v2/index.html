@@ -7252,10 +7252,6 @@ function actionCard(t, next, st) {
     if (next.more) {
       H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
     }
-    /* 老師又派了幾個。小小地說一聲就好——手上這一趟做完才輪到它們。 */
-    if (next.more) {
-      H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
-    }
 
   } else if (next.kind === 'stamped') {
     H.push('<div class="eyebrow">交出去了</div>');
