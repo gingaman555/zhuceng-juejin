@@ -117,7 +117,10 @@ PAGES.home = function () {
 function runStrip(t) {
   var rows = runsFor(t.teamId).filter(function (x) { return x.run.stamp; });
   if (!rows.length) return '';
-  var H = ['<div class="rstrip"><div class="rs-in">'];
+  /* 名字。系統從頭到尾沒在學生面前說過「估算」兩個字——
+     概念沒有被命名，他就不知道自己在練的是什麼。 */
+  var H = ['<div class="rs-h">你的估算　·　走過 ' + rows.length + ' 趟</div>'];
+  H.push('<div class="rstrip"><div class="rs-in">');
   rows.forEach(function (x) {
     var r = x.run;
     var kp = null;
@@ -472,6 +475,21 @@ PAGES.stamp = function () {
   H.push('<dt>實際</dt><dd>' + r.actual + '</dd>');
   H.push('<dt>差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
     (r.actual - r.est) + '</dd>');
+
+  /* 上一趟差幾天。「我在變好」這件事本來沒有任何地方說得出口，
+     而它只需要兩個數字。不寫「比上一趟準」那種結論——
+     兩個數字並排，結論他自己下。 */
+  var prev = null;
+  runsFor(t.teamId).forEach(function (x) {
+    if (x.run.runId === r.runId) return;
+    if (!x.run.stamp || !x.run.actual) return;
+    if ((x.run.submittedAt || 0) >= (r.submittedAt || 0)) return;
+    if (!prev || (x.run.submittedAt || 0) > (prev.submittedAt || 0)) prev = x.run;
+  });
+  if (prev) {
+    H.push('<dt>上一趟差</dt><dd class="dim">' +
+      (prev.actual - prev.est > 0 ? '+' : '') + (prev.actual - prev.est) + '</dd>');
+  }
 
   /* 承諾的時候標的那幾段，跟實際比較久的那幾段，對到幾個。
      兩份資料本來就都在（flags 與 overs），只是從來沒有比對過。

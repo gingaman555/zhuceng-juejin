@@ -80,14 +80,6 @@ function digTeamCard(classId) {
   if (!DRAFT.dt) return '';
   var t = teamOf(DRAFT.dt);
   if (!t) return '';
-  /* 他們留下的記號，深的在前面。石片併進記號之後這裡排的就是記號——
-     名字跟天數本來掛在石片上，現在掛在記號上。 */
-  var ks = Object.keys(t.builds || {}).map(function (bk) {
-    var d = Number(bk.slice(1));
-    var kp = null;
-    keepsOf(t.teamId).forEach(function (x) { if (x.runId === t.builds[bk].runId) kp = x; });
-    return { d: d, def: markAt(t.teamId, d), keep: kp };
-  }).filter(function (x) { return x.def; }).sort(function (a, b) { return b.d - a.d; });
   var z = strataAt(depthOf(t.teamId), t.teamId);
   var H = ['<div class="card dtcard fa ' + z.key + '">'];
   H.push('<div class="radar-head">');
@@ -98,20 +90,11 @@ function digTeamCard(classId) {
   H.push('<span class="sp"></span>');
   H.push('<span class="dim">' + esc(z.name) + '</span>');
   H.push('</div>');
-  if (ks.length) {
-    H.push('<div class="rack">');
-    ks.forEach(function (k) {
-      var kz = strataAt(k.d, t.teamId);
-      H.push('<button class="rk" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + k.d })) + '\'>');
-      H.push(pxTag(k.def.px, kz.pal, 'core'));
-      H.push('<b>' + esc((k.keep && k.keep.name) || k.def.name) + '</b>');
-      H.push('<span>' + ((k.keep && k.keep.elapsed) || 0) + ' 天</span>');
-      H.push('</button>');
-    });
-    H.push('</div>');
-  }
 
+  /* 這裡本來還有一排記號架，每一格寫「名字＋幾天」——沒取名的時候
+     名字就是「4 天」，所以那一格變成「4 天 4 天」。而且整排跟底下的
+     紀錄講的是同一批東西，只是少了任務名跟兩個數字。
+     兩個一樣的東西並排，先出現的那個就是雜訊。 */
   /* ── 他們的紀錄 ──
 
      點進一組，該看到的是這個。本來這裡只有招牌跟他們留下的東西——
@@ -138,7 +121,7 @@ function digTeamCard(classId) {
       H.push('</div>');
     });
     H.push('</div>');
-  } else if (!ks.length) {
+  } else {
     H.push('<p class="dim">還沒走完過一趟。</p>');
   }
 

@@ -170,7 +170,10 @@ function scene(t, row, st, kind) {
   }
 
   /* ── 魔物 ── */
-  if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), span));
+  /* 牠站在你說的那一天，不動。
+     本來是 max(承諾, 過了幾天)——時間過去牠跟著往後退，
+     所以你永遠追不上，也永遠不會走過牠。 */
+  if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), est, ENT));
 
   /* ── 盡頭的岩壁裡有東西 ──
 
@@ -388,10 +391,15 @@ function sceneMouth(t, next, ENT) {
 /* ---------- 魔物 ----------
    站在走廊盡頭。清楚到什麼程度跟你走了多少有關——
    剛出發的時候只看得到一團影子，走到底才看得清牠長什麼樣。 */
-function sceneMob(t, row, prog, span) {
+/* 擋在你說的那一天上。
+
+   本來牠站在 max(承諾, 過了幾天)，所以時間一過牠就往後退——
+   你永遠追不上牠，走過牠這件事不可能發生。而「走過自己說的那一天」
+   正是這個系統唯一要讓人看到的事。 */
+function sceneMob(t, row, prog, est, ENT) {
   var mob = mobOfRun(row.run);
   var pal = strataAt(depthOf(t.teamId), t.teamId).pal;
-  var x = SCN.ENT + span * SCN.TILE + 33;
+  var x = (ENT || SCN.ENT) + est * SCN.TILE + 33;
   /* 這裡本來還掛一塊寫著任務名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
      其中一遍看起來就會像壞掉的東西。 */
@@ -458,6 +466,10 @@ function scrollScene() {
 
   /* 走過的那一條停在最右邊——最右邊是現在。
      keepScroll 記得他拖到哪，所以往回看過的人回來還在原地。 */
+  /* 剖面圖也要拖得動。它比視窗寬得多，而在桌機上原生捲動容器
+     拖不動——「看不到右邊」在桌機上因此是常態。 */
+  dragBox('.xsec-wrap', 'xsec');
+
   var rs = document.querySelector('.rstrip');
   if (rs) {
     keepScroll(rs, 'rstrip', { at: rs.scrollWidth, x: rs.scrollWidth, y: 0 });
@@ -540,8 +552,15 @@ function exitScene(t) {
    一 · 拖跟點要分得開。移動超過五個像素才算拖，不然招牌與出口
         會變成點不到。
    二 · 拖完不要讓瀏覽器把它當成點擊送出去（見 click 的攔截）。 */
-function dragScene() {
-  var box = document.querySelector('.scn-scroll');
+/* 用滑鼠把一個橫向捲動的容器拖著走。
+
+   在手機上手指本來就滑得動，但在桌機上原生的捲動容器**拖不動**——
+   只能用捲軸或 shift＋滾輪。而這個作品裡比視窗寬的東西有兩個：
+   廊道與全班地下城那張剖面圖。兩個都要拖得動，而且手感要一樣。
+
+   key 是給 keepScroll 記位置用的，兩個容器各自記各自的。 */
+function dragBox(sel, key) {
+  var box = document.querySelector(sel);
   if (!box || box.dataset.drag) return;
   box.dataset.drag = '1';
 
@@ -560,7 +579,7 @@ function dragScene() {
     if (!moved) { moved = true; box.classList.add('dragging'); }
     box.scrollLeft = l0 - dx;
     /* 記住拖到哪裡，重畫之後放回去（見 keepScroll）。 */
-    var k = SEEN_AT.scn;
+    var k = SEEN_AT[key];
     if (k) k.x = box.scrollLeft;
     e.preventDefault();
   });
@@ -580,3 +599,6 @@ function dragScene() {
   box.addEventListener('pointercancel', up);
   box.addEventListener('pointerleave', up);
 }
+
+/* 廊道。每次重畫都要重掛，因為 innerHTML 被換掉了。 */
+function dragScene() { dragBox('.scn-scroll', 'scn'); }

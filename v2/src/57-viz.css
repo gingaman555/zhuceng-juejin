@@ -1309,3 +1309,9 @@ button.tk-k:hover span{color:var(--gold)}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap
 }
 .rs i{font-style:normal;font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+
+/* 帶子的名字。概念要有名字，他才知道自己在練什麼。 */
+.rs-h{
+  font-size:22px;color:var(--gold);margin:0 0 6px;
+  font-variant-numeric:tabular-nums
+}
