@@ -106,7 +106,7 @@ PAGES.roster = function () {
   H.push('<textarea id="rt" rows="6" placeholder="' +
     esc('甲：小明, 小華, 阿哲\n乙：怡君, 小柏\n丙：家豪, 品彤, 宥廷') + '">' +
     esc(draft('rt')) + '</textarea>');
-  H.push('<p class="dim">同一組再貼一次不會重建，只會補上新的名字。' +
+  H.push('<p class="dim">再貼一次只會補上新的名字。' +
          '已經被認領的名字不會被洗掉。</p>');
   H.push(btn('存進去', 'saveroster', ''));
   H.push('</div>');
@@ -140,8 +140,7 @@ PAGES.events = function () {
   var show = all.slice(0, 200);
 
   var H = [head('紀錄', all.length + ' 筆',
-    '每一個會改到資料的動作都留一筆。記的是行為的形狀——承諾幾天、哪一天推進、' +
-    '判定結果、卡在哪。系統不收作業，所以這裡看不到任何作業內容。')];
+    '承諾幾天、哪一天推進、判定、卡在哪。不收作業。')];
 
   H.push(classPicker());
 
@@ -158,7 +157,7 @@ PAGES.events = function () {
   /* 匯出 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">匯出　CSV</div>');
-  H.push('<p class="dim">貼進試算表就能算。欄位：時間、角色、組別、事件、說明。</p>');
+  H.push('<p class="dim">欄位：時間、角色、組別、事件、說明。</p>');
   H.push('<textarea id="csv" rows="4" readonly>' + esc(exportCsv(cid)) + '</textarea>');
   H.push(btn('存成檔案', 'csv', 'ghost'));
   H.push('</div>');

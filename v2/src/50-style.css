@@ -230,7 +230,9 @@ a.plain:hover{color:var(--gold)}
 }
 .stamp-card.late{border-top-color:var(--over)}
 .stamp-card.early{border-top-color:var(--ok)}
-.stamp-mark{font-size:66px;line-height:1;margin-bottom:11px}
+/* 印章從 emoji 換成點陣圖之後，尺寸由圖決定，不由字級決定。 */
+.stamp-mark{margin-bottom:11px}
+.stamp-mark .px{width:66px;height:auto;image-rendering:pixelated}
 .stamp-card h1{font-size:44px;margin:0 0 11px}
 .stamp-card .lead{margin:0 auto 22px;max-width:44ch}
 .stamp-num{display:flex;justify-content:center;gap:11px;align-items:baseline;margin:22px 0}
@@ -254,7 +256,8 @@ a.plain:hover{color:var(--gold)}
 .acc-c{
   flex:1;text-align:center;padding:14px;background:var(--sunk);border:1px solid var(--line)
 }
-.acc-c b{display:block;font-size:33px;line-height:1}
+.acc-c b{display:block;line-height:0}
+.acc-c b .px{width:33px;height:auto;image-rendering:pixelated}
 .acc-c i{display:block;font-style:normal;font-size:44px;color:var(--gold);line-height:1.2}
 .acc-c span{font-size:11px;color:var(--mute)}
 

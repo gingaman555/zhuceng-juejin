@@ -108,8 +108,7 @@ function actUncover(teamId, depth) {
 
   /* 上一輪的遺跡：這一層蓋得出來的東西裡的一種。 */
   if (b.k === 'relic') {
-    var bs = buildsIn(strataAt(depth, teamId).key);
-    if (bs.length) rec.build = bs[hash('brel|' + teamId + '|' + k) % bs.length].key;
+    rec.build = BUILDS[hash('brel|' + teamId + '|' + k) % BUILDS.length].key;
   }
 
   t.found[k] = rec;

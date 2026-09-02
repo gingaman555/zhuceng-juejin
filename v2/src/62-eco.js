@@ -212,8 +212,7 @@ function faunaCard() {
   H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
   H.push('<h2>' + esc(c.n) + '</h2>');
   H.push('<p class="lead">' + esc(c.t) + '</p>');
-  H.push('<p class="dim">牠住在這一層。你走到這一層的時候，' +
-         '擋在廊道盡頭的就是這一層的住民——同一個里程碑，每一組遇到的不是同一隻。</p>');
+  H.push('<p class="dim">同一個里程碑，每一組遇到的不是同一隻。</p>');
   H.push('</div></div></div>');
   return H.join('');
 }

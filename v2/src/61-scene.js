@@ -27,7 +27,17 @@ var SCN = {
      t     這一組
      row   現在在跑的那一個 run（可能沒有）
      st    停滯狀態 */
+/* 洞口有多寬。每留下一個記號就寬一點——那是「看得到自己的堆積」
+   最直接的做法：你的營地會變大，而首頁就是這條廊道。
+   有上限，不然走到後面整條廊道會被營地擠掉。 */
+function entOf(teamId) {
+  var t = teamOf(teamId);
+  var n = Object.keys((t && t.builds) || {}).length;
+  return SCN.ENT + Math.min(10, n) * 26;
+}
+
 function scene(t, row, st, kind) {
+  var ENT = entOf(t.teamId);
   var run = row && row.run;
   /* 還沒承諾任何事的時候給一段像樣的空廊道。
      第一次打開是印象最深的一次，本來它只有一格，看起來像壞掉的。 */
@@ -62,7 +72,7 @@ function scene(t, row, st, kind) {
   var AHEAD = 5;
   var span = Math.max(est, tide);          /* 這一趟的長度 */
   var draw = span + AHEAD;                 /* 畫到哪裡（多的在霧裡） */
-  var W = SCN.ENT + draw * SCN.TILE + SCN.END;
+  var W = ENT + draw * SCN.TILE + SCN.END;
   /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
      世界觀不寫在說明裡，寫在牆上。 */
   var zone = strataAt(depthOf(t.teamId), t.teamId);
@@ -89,18 +99,18 @@ function scene(t, row, st, kind) {
   }
 
   /* ── 洞口 ── */
-  H.push(sceneMouth(t, { kind: kind }));
+  H.push(sceneMouth(t, { kind: kind, run: run }, ENT));
 
   /* ── 地板 ── */
   H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
   if (walked > 0) {
-    H.push('<div class="floor lit" style="left:' + SCN.ENT + 'px;width:' +
+    H.push('<div class="floor lit" style="left:' + ENT + 'px;width:' +
       (walked * SCN.TILE) + 'px"></div>');
   }
 
   /* ── 一天一格 ── */
   for (var i = 0; i < span; i++) {
-    var x = SCN.ENT + i * SCN.TILE;
+    var x = ENT + i * SCN.TILE;
     var on = i < walked;
 
     /* 火把：走過的那幾格點著 */
@@ -144,9 +154,9 @@ function scene(t, row, st, kind) {
      淹到腳邊＝剛好；過去了＝會比說的久，而且好幾天前就看得到。
      它不扣任何東西，走到底一樣可以交——它只是把時間畫出來。 */
   if (run && tide > 0) {
-    H.push('<div class="tide" style="left:' + SCN.ENT + 'px;width:' +
+    H.push('<div class="tide" style="left:' + ENT + 'px;width:' +
       (tide * SCN.TILE) + 'px"></div>');
-    H.push('<div class="tide-edge" style="left:' + (SCN.ENT + tide * SCN.TILE - 4) + 'px"></div>');
+    H.push('<div class="tide-edge" style="left:' + (ENT + tide * SCN.TILE - 4) + 'px"></div>');
   }
 
   /* ── 魔物 ── */
@@ -163,7 +173,7 @@ function scene(t, row, st, kind) {
   var walking = run && st.level < 2;
   var resting = !run && st.level < 2;
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
-  var hx = resting ? 44 : SCN.ENT + walked * SCN.TILE - 11;
+  var hx = resting ? 44 : ENT + walked * SCN.TILE - 11;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
     '" style="left:' + hx + 'px">');
@@ -198,14 +208,14 @@ function scene(t, row, st, kind) {
      虛線不是終點線——別組沒有這條線，每一組的線在不同的地方，
      因為那是各自說的。 */
   if (run) {
-    H.push('<div class="vow" style="left:' + (SCN.ENT + est * SCN.TILE) +
+    H.push('<div class="vow" style="left:' + (ENT + est * SCN.TILE) +
       'px"><span>你說的</span></div>');
   }
 
   /* ── 霧 ──
      從站的地方往前蓋住。它蓋的是「還沒走的那幾天」，
      所以往前一格霧就退一格。 */
-  var fogAt = SCN.ENT + (Math.max(walked, tide) + 1) * SCN.TILE;
+  var fogAt = ENT + (Math.max(walked, tide) + 1) * SCN.TILE;
   if (fogAt < W) {
     H.push('<div class="fog" style="left:' + fogAt + 'px"></div>');
   }
@@ -267,11 +277,9 @@ function heroPack(teamId) {
    失準過，他整學期不會知道有營火這個地方；一個還沒封存過的人不會
    知道石片架是什麼。所以它們在那裡，只是沒點著——
    「看得到但還沒發生」跟「不存在」是兩件事。 */
-function sceneMouth(t, next) {
+function sceneMouth(t, next, ENT) {
   var sg = signOf(t.teamId);
-  var kind = next && next.kind;
-  var ks = keepsOf(t.teamId);
-  var H = ['<div class="mouth" style="width:' + SCN.ENT + 'px">'];
+  var H = ['<div class="mouth" style="width:' + (ENT || SCN.ENT) + 'px">'];
 
   /* 往上的光：出口。一直在，而且點得開——
      宣告專案做完是偶爾才做的事，不該在首頁佔一塊，
@@ -323,20 +331,31 @@ function sceneMouth(t, next) {
     }
   }
 
-  /* 石片架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
-  H.push('<button class="mrack" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
-    esc(ks.length ? '封存的：' + ks.length + ' 根' : '還沒封存過') + '">');
-  if (ks.length) {
-    ks.slice(-3).forEach(function (k) {
-      var kz = STRATA[0];
-      STRATA.forEach(function (x) { if (x.key === k.zone) kz = x; });
-      H.push(pxTag(k.px || coreOf(k.runId), kz.pal, 'mcore'));
-    });
-  } else {
-    H.push('<i></i><i></i><i></i>');
-  }
-  H.push('</button>');
+  /* ── 營地 ──
+
+     每走完一趟留下的那一個記號，一個一個排在洞口的地上，
+     而洞口的寬度跟著長（見 entOf）。十趟之後這裡是一個被你佈置過的
+     營地——而首頁就是這條廊道，所以每次打開都看得到。
+
+     這是「看得到自己的堆積」最直接的做法：不是散在各層一個 55px，
+     是全部在同一個地方、每次可見地多一個、而且一眼看得完。
+
+     本來這裡掛的是石片架。石片跟記號都是「一趟一個」，兩個都放就是
+     重複——石片留在任務清單裡，那裡點得開、而且有圖例。 */
+  var tm = teamOf(t.teamId);
+  var bs = (tm && tm.builds) || {};
+  var ds = Object.keys(bs).map(function (k) { return Number(k.slice(1)); })
+    .sort(function (x, y) { return x - y; });
+  ds.forEach(function (d, i) {
+    var def = buildDef(bs['d' + d].k);
+    if (!def) return;
+    var z = strataAt(d, t.teamId);
+    H.push('<button class="mmark" style="left:' + (72 + i * 26) + 'px" ' +
+      'data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + d })) + '\' ' +
+      'title="' + esc(def.name + '　' + z.name) + '">' +
+      pxTag(def.px, z.pal, '') + '</button>');
+  });
 
   H.push('</div>');
   return H.join('');

@@ -60,7 +60,7 @@ PAGES.home = function () {
       H.push(aw.left > 0 ? '<b>' + aw.left + '</b><span>天到期</span>'
         : '<em>已經超過你說的天數</em>');
     }
-    if (aw.cells) H.push('<b>' + aw.cells + '</b><span>全班新蓋的</span>');
+    if (aw.cells) H.push('<b>' + aw.cells + '</b><span>全班新留的</span>');
     if (aw.okd) H.push('<em class="ok">老師勾了 ' + aw.okd + ' 件</em>');
     H.push('</div>');
   }
@@ -389,7 +389,7 @@ PAGES.stamp = function () {
      再演一次是重複，而且那一層閃光在動畫被凍住的時候會蓋成一片白。 */
   var H = [];
   H.push('<div class="stamp-card ' + r.stamp + '">');
-  H.push('<div class="stamp-mark">' + s.mark + '</div>');
+  H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push('<dl class="rep">');
   H.push('<dt>你說</dt><dd>' + r.est + '</dd>');
@@ -510,8 +510,7 @@ PAGES.pick = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">這幾天你動過哪幾天　選填</div>');
   H.push(dayGrid(r.runId));
-  H.push('<p class="dim">點一下標起來。這不會影響判定——它決定的是' +
-         '這一趟封存起來長什麼樣子。</p>');
+  H.push('<p class="dim">不影響判定。它決定的是封存起來長什麼樣子。</p>');
   H.push('</div>');
 
   H.push('<div class="card">');
@@ -619,8 +618,7 @@ PAGES.exit = function () {
   if (!out) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">說一聲</div>');
-    H.push('<p class="dim">老師確認之後你就出去了。之後不會再收到新的里程碑，' +
-           '這幾頁還看得到。</p>');
+    H.push('<p class="dim">老師確認之後你就出去了。</p>');
     H.push('<div class="row">');
     H.push(btn(t.exitAsk ? '已經說了，在等他' : '這個專案做完了',
       t.exitAsk ? 'noop' : 'askexit', 'big'));
@@ -665,7 +663,7 @@ function logRow(m, r, t) {
   H.push('<span class="rec-w">' + (line ? esc(line) : '') + '</span>');
 
   H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">' +
-    (s ? s.mark : '·') + '</span>');
+    (s ? stampPx(s.key) : '') + '</span>');
   H.push('</div>');
 
   /* 點開才出現的細節。收起來的時候整列兩秒看得完。 */
@@ -720,7 +718,7 @@ var BEATS = [
   { k: 'prep', n: '準備', s: '說幾天' },
   { k: 'away', n: '遠征', s: '去做事' },
   { k: 'rep',  n: '戰報', s: '交出去' },
-  { k: 'camp', n: '營地', s: '封存·蓋' }
+  { k: 'camp', n: '營地', s: '封存·留記號' }
 ];
 
 function beatAt(next, t) {

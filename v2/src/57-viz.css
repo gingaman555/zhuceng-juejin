@@ -149,7 +149,9 @@ button.ac:active{transform:translateY(1px)}
 .cxi.met{opacity:1;background:rgba(0,0,0,.45)}
 .px.cx-px{width:44px;height:44px;flex:0 0 44px}
 .cxi b{display:block;font-size:22px;font-weight:400;color:var(--ink);line-height:1.3}
-.cxi em{display:block;font-style:normal;font-size:11px;color:var(--mute);line-height:1.7;margin-top:3px}
+/* 說明砍成一句「牠會做什麼」之後，字級就升得上來——
+   長什麼樣那半句刪掉了，因為旁邊就畫著牠。 */
+.cxi em{display:block;font-style:normal;font-size:22px;color:var(--mute);line-height:1.5;margin-top:5px}
 .cxi .cx-met{display:block;font-size:11px;color:var(--gold);line-height:1.7;margin-top:5px}
 @media (max-width:860px){ .cxi{width:100%} }
 
@@ -249,8 +251,11 @@ button.ac:active{transform:translateY(1px)}
     rgba(0,0,0,.72) calc(100% - 3px) 100%);
 }
 .px.hud-sign{width:33px;height:33px;flex:0 0 33px}
-.top.hud .who{font-size:22px;color:var(--ink)}
-.top.hud .hud-pj{font-size:11px;color:var(--dim)}
+/* 大的那個是專案名，不是組名。組名是固定的、你早就知道了；
+   專案名才是「我現在在做什麼」——本來它跟裝飾字一樣小。這是對調，不是放大，
+   所以頂條的高度沒有變。 */
+.top.hud .who{font-size:11px;color:var(--dim)}
+.top.hud .hud-pj{font-size:22px;color:var(--ink)}
 .top.hud .hud-z{font-size:11px;color:var(--zink,var(--gold))}
 .top.hud .hud-d{
   font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums;
@@ -926,7 +931,8 @@ button.ac:active{transform:translateY(1px)}
   grid-column:2;grid-row:3;font-size:11px;color:var(--mute);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap
 }
-.rec-s{grid-column:3;grid-row:1 / 4;font-size:22px;line-height:33px;opacity:.9}
+.rec-s{grid-column:3;grid-row:1 / 4;display:flex;align-items:center;opacity:.9}
+.rec-s .px{width:22px;height:auto;image-rendering:pixelated}
 .rec-s.none{color:var(--dim)}
 .rec:hover .rec-t{color:var(--gold)}
 .rec.open{border-bottom:0}
@@ -1139,3 +1145,13 @@ button.tk-k:hover span{color:var(--gold)}
 .bp-ground .bp-px{position:absolute;left:50%;bottom:2px;margin-left:-33px}
 .bp-p.u{top:0}
 .bp-p.dn{bottom:2px}
+
+/* ── 營地 ──
+   每走完一趟留下的那一個記號排在洞口的地上，洞口的寬度跟著長。
+   十趟之後這裡是一個被你佈置過的營地——而首頁就是這條廊道。 */
+.mouth .mmark{
+  position:absolute;bottom:44px;width:33px;height:25px;
+  padding:0;border:none;background:none;cursor:pointer;z-index:4
+}
+.mouth .mmark .px{width:33px;height:25px;image-rendering:pixelated}
+.mouth .mmark:hover{filter:brightness(1.35)}

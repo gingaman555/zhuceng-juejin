@@ -295,10 +295,10 @@ function buildPick(t) {
   var d = unbuiltDepth(t.teamId);
   if (d < 0) return '';
   var z = strataAt(d, t.teamId);
-  var set = buildsIn(z.key);
+  var set = offerAt(t.teamId, d);
   if (!set.length) { DRAFT.build = null; return ''; }
   var H = ['<div class="card bpick">'];
-  H.push('<div class="eyebrow">在這一層蓋什麼</div>');
+  H.push('<div class="eyebrow">在這一層留下什麼</div>');
 
   /* 上一層留下的向下口就是這一層的題目。畫出來就好，不用寫一句話說明——
      接得起來的那幾個上面會亮一段。 */

@@ -53,7 +53,7 @@ PAGES.codex = function () {
       H.push(pxTag(c.px, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');
-      if (met[c.n]) H.push('<span class="cx-met">你在「' + esc(met[c.n]) + '」那一趟遇過</span>');
+      if (met[c.n]) H.push('<span class="cx-met">遇過 · ' + esc(met[c.n]) + '</span>');
       H.push('</div></div>');
     });
     H.push('</div></div>');
@@ -84,7 +84,7 @@ function codexThings(t, here) {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">地上的物件</div>');
-  H.push('<p class="dim">每一層長的不一樣——那是你怎麼知道自己換了地方。</p>');
+  H.push('<p class="dim">每一層長的不一樣。</p>');
   H.push('<div class="cx">');
   [['碎石', RUBBLE.px, '往下走的時候崩下來的。'],
    ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點輪廓。'],

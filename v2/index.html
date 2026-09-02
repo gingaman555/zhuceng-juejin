@@ -240,7 +240,9 @@ a.plain:hover{color:var(--gold)}
 }
 .stamp-card.late{border-top-color:var(--over)}
 .stamp-card.early{border-top-color:var(--ok)}
-.stamp-mark{font-size:66px;line-height:1;margin-bottom:11px}
+/* 印章從 emoji 換成點陣圖之後，尺寸由圖決定，不由字級決定。 */
+.stamp-mark{margin-bottom:11px}
+.stamp-mark .px{width:66px;height:auto;image-rendering:pixelated}
 .stamp-card h1{font-size:44px;margin:0 0 11px}
 .stamp-card .lead{margin:0 auto 22px;max-width:44ch}
 .stamp-num{display:flex;justify-content:center;gap:11px;align-items:baseline;margin:22px 0}
@@ -264,7 +266,8 @@ a.plain:hover{color:var(--gold)}
 .acc-c{
   flex:1;text-align:center;padding:14px;background:var(--sunk);border:1px solid var(--line)
 }
-.acc-c b{display:block;font-size:33px;line-height:1}
+.acc-c b{display:block;line-height:0}
+.acc-c b .px{width:33px;height:auto;image-rendering:pixelated}
 .acc-c i{display:block;font-style:normal;font-size:44px;color:var(--gold);line-height:1.2}
 .acc-c span{font-size:11px;color:var(--mute)}
 
@@ -1313,7 +1316,9 @@ button.ac:active{transform:translateY(1px)}
 .cxi.met{opacity:1;background:rgba(0,0,0,.45)}
 .px.cx-px{width:44px;height:44px;flex:0 0 44px}
 .cxi b{display:block;font-size:22px;font-weight:400;color:var(--ink);line-height:1.3}
-.cxi em{display:block;font-style:normal;font-size:11px;color:var(--mute);line-height:1.7;margin-top:3px}
+/* 說明砍成一句「牠會做什麼」之後，字級就升得上來——
+   長什麼樣那半句刪掉了，因為旁邊就畫著牠。 */
+.cxi em{display:block;font-style:normal;font-size:22px;color:var(--mute);line-height:1.5;margin-top:5px}
 .cxi .cx-met{display:block;font-size:11px;color:var(--gold);line-height:1.7;margin-top:5px}
 @media (max-width:860px){ .cxi{width:100%} }
 
@@ -1413,8 +1418,11 @@ button.ac:active{transform:translateY(1px)}
     rgba(0,0,0,.72) calc(100% - 3px) 100%);
 }
 .px.hud-sign{width:33px;height:33px;flex:0 0 33px}
-.top.hud .who{font-size:22px;color:var(--ink)}
-.top.hud .hud-pj{font-size:11px;color:var(--dim)}
+/* 大的那個是專案名，不是組名。組名是固定的、你早就知道了；
+   專案名才是「我現在在做什麼」——本來它跟裝飾字一樣小。這是對調，不是放大，
+   所以頂條的高度沒有變。 */
+.top.hud .who{font-size:11px;color:var(--dim)}
+.top.hud .hud-pj{font-size:22px;color:var(--ink)}
 .top.hud .hud-z{font-size:11px;color:var(--zink,var(--gold))}
 .top.hud .hud-d{
   font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums;
@@ -2090,7 +2098,8 @@ button.ac:active{transform:translateY(1px)}
   grid-column:2;grid-row:3;font-size:11px;color:var(--mute);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap
 }
-.rec-s{grid-column:3;grid-row:1 / 4;font-size:22px;line-height:33px;opacity:.9}
+.rec-s{grid-column:3;grid-row:1 / 4;display:flex;align-items:center;opacity:.9}
+.rec-s .px{width:22px;height:auto;image-rendering:pixelated}
 .rec-s.none{color:var(--dim)}
 .rec:hover .rec-t{color:var(--gold)}
 .rec.open{border-bottom:0}
@@ -2303,6 +2312,16 @@ button.tk-k:hover span{color:var(--gold)}
 .bp-ground .bp-px{position:absolute;left:50%;bottom:2px;margin-left:-33px}
 .bp-p.u{top:0}
 .bp-p.dn{bottom:2px}
+
+/* ── 營地 ──
+   每走完一趟留下的那一個記號排在洞口的地上，洞口的寬度跟著長。
+   十趟之後這裡是一個被你佈置過的營地——而首頁就是這條廊道。 */
+.mouth .mmark{
+  position:absolute;bottom:44px;width:33px;height:25px;
+  padding:0;border:none;background:none;cursor:pointer;z-index:4
+}
+.mouth .mmark .px{width:33px;height:25px;image-rendering:pixelated}
+.mouth .mmark:hover{filter:brightness(1.35)}
 
 /* ---------- 交出去的那一場 ----------
 
@@ -2801,7 +2820,7 @@ button.tk-k:hover span{color:var(--gold)}
   h2{font-size:22px}
   .lead{font-size:22px}
   .stamp-card h1{font-size:33px}
-  .stamp-mark{font-size:44px}
+  .stamp-mark .px{width:44px}
   .big-num,.slider-read b{font-size:44px}
   .dash h1{font-size:33px}
 
@@ -3443,7 +3462,7 @@ var EXTRA_FAUNA = [
   /* ---------- 根脈層 ---------- */
   {
     r: '根脈層', n: '垂根者',
-    t: '從上面垂下來的一團，末端還在長。你走過去的時候它會縮一下。',
+    t: '你走過去的時候它會縮一下。',
     px: [
       '.........+##+...........',
       '.........+##+...........',
@@ -3465,7 +3484,7 @@ var EXTRA_FAUNA = [
   },
   {
     r: '根脈層', n: '纏行蟲',
-    t: '一節一節的，貼著牆走。走過的地方留下一條濕痕。',
+    t: '走過的地方留下一條濕痕。',
     px: [
       '........................',
       '........................',
@@ -3487,7 +3506,7 @@ var EXTRA_FAUNA = [
   },
   {
     r: '根脈層', n: '苔面',
-    t: '整片牆的一塊在呼吸。靠近才看得出邊界在哪。',
+    t: '靠近才看得出邊界在哪。',
     px: [
       '..*##*..*##*..*##*......',
       '.*####**####**####*.....',
@@ -3509,7 +3528,7 @@ var EXTRA_FAUNA = [
   },
   {
     r: '根脈層', n: '吸水囊',
-    t: '鼓起來的一顆，底下連著一條細管。滿的時候會微微發亮。',
+    t: '滿的時候會微微發亮。',
     px: [
       '........................',
       '.........+####+.........',
@@ -3531,7 +3550,7 @@ var EXTRA_FAUNA = [
   },
   {
     r: '根脈層', n: '斷根獸',
-    t: '身上的根都是斷的，斷面很舊。牠自己還在往前爬。',
+    t: '斷面很舊，牠還在往前爬。',
     px: [
       '........................',
       '...+#+..........+#+.....',
@@ -3555,7 +3574,7 @@ var EXTRA_FAUNA = [
   /* ---------- 銹層 ---------- */
   {
     r: '銹層', n: '鏽甲',
-    t: '殼是鐵做的，接縫處鏽住了。牠好像轉不太動。',
+    t: '接縫鏽住了，轉不太動。',
     px: [
       '........................',
       '.......++######++.......',
@@ -3577,7 +3596,7 @@ var EXTRA_FAUNA = [
   },
   {
     r: '銹層', n: '齒輪蟲',
-    t: '身體是一排咬合的齒。牠爬的時候會發出很規律的聲音。',
+    t: '爬起來聲音很規律。',
     px: [
       '........................',
       '....+#+....+#+....+#+...',
@@ -3599,7 +3618,7 @@ var EXTRA_FAUNA = [
   },
   {
     r: '銹層', n: '殘架',
-    t: '本來是一個架子，現在自己會動。上面該掛的位置全都空著。',
+    t: '該掛東西的位置全都空著。',
     px: [
       '.....+############+.....',
       '.....+#**######**#+.....',
@@ -3621,7 +3640,7 @@ var EXTRA_FAUNA = [
   },
   {
     r: '銹層', n: '磁滯者',
-    t: '身上黏著一堆碎鐵，甩不掉。牠經過的時候你手上的鐵件會被拉一下。',
+    t: '牠經過，你手上的鐵件被拉一下。',
     px: [
       '........................',
       '....+#+....+#+..........',
@@ -3643,7 +3662,7 @@ var EXTRA_FAUNA = [
   },
   {
     r: '銹層', n: '螺紋母',
-    t: '一圈一圈往內收，中間看不到底。旁邊散著幾個一樣紋路的小的。',
+    t: '中間看不到底。',
     px: [
       '........................',
       '......++########++......',
@@ -3994,67 +4013,86 @@ function exportCsv(classId) {
 
 var BUILD_PAL = { '#': '#171310', o: '#0B0908', '*': '#FFF3D8' };
 
-/* 六種形狀。形狀本身就是接口：
-     橋 · 門    兩端都有口
-     塔 · 柱    只有向上的口
-     堆 · 穴    只有向下的口
+/* 六種留下來的記號。形狀本身就是接口：
+     火堆 · 繩梯    上下都通
+     刻痕 · 掛燈    只朝上（指回你來的方向）
+     石堆 · 垂繩    只朝下（給更深的地方）
 
-   本來是十八個各自的剪影，12×12 畫在 44px 上根本分不出來——
-   分不出拱門跟根門，也分不出石堆跟苔丘。要學十八個形狀沒有人會學。
-   現在只要學六個，而且學會之後不用再看接口的記號。 */
+   本來這裡是「蓋建築」——那是把 PaGamO 的占地建設搬過來，
+   跟這個作品的故事相反：建設講的是定居與擁有，而這裡的前提是
+   你被困住、想離開。被困在輪迴裡的人會做的，是留記號給下一圈的
+   自己——而六層走完會回到同一層，你一定會再走到這裡。 */
 var FORMS = {
-  bridge: ['................', '..*##########+..', '..*##########+..', '..+##########+..', 
-    '..+#+......+#+..', '..+#+......+#+..', '..+#+......+#+..', '..+#+......+#+..', 
-    '..+#+......+#+..', '..+#+......+#+..', '.+###+....+###+.', '.+###+....+###+.'],
-  arch: ['................', '....*######+....', '...*##****##+...', '..*##+....+##+..', 
-    '..*#+......+#+..', '..*#+......+#+..', '..*#+......+#+..', '..*#+......+#+..', 
-    '..*#+......+#+..', '..*#+......+#+..', '.+###+....+###+.', '.+###+....+###+.'],
-  tower: ['......**........', '.....*##+.......', '.....*##+.......', '....*####+......', 
-    '....*####+......', '...*######+.....', '...*######+.....', '..*########+....', 
-    '..*########+....', '.*##########+...', '+############+..', '+############+..'],
-  mast: ['....*####+......', '....*###+.......', '....*##+........', '....*#+.........', 
-    '....*#+.........', '....*#+.........', '....*#+.........', '....*#+.........', 
-    '....*#+.........', '....*#+.........', '...+###+........', '..+#####+.......'],
-  mound: ['................', '................', '................', '.......**.......', 
-    '......*##+......', '.....*####+.....', '....*######+....', '...*########+...', 
-    '..*##########+..', '.*############+.', '+##############+', '+##############+'],
-  well: ['................', '..*+........+*..', '..*#+......+#*..', '..*##########*..', 
-    '.....+####+.....', '................', '..*##########+..', '..*##########+..', 
-    '..*#+......+#*..', '..*#+......+#*..', '..*##########+..', '.+############+.']
+  fire: ['................', '.......*........', '......*#*.......', '.....*#*#*......', 
+    '....*#*#*#*.....', '....#*###*#.....', '...*#*###*#*....', '...*#######*....', 
+    '....*#####*.....', '..++*#####*++...', '.++++++#++++++..', '..++++++++++....'],
+  ladder: ['...+#+....+#+...', '...+#+....+#+...', '...+#######+#+..', '...+#+....+#+...', 
+    '...+#+....+#+...', '...+#######+#+..', '...+#+....+#+...', '...+#+....+#+...', 
+    '...+#######+#+..', '...+#+....+#+...', '...+#+....+#+...', '...+#+....+#+...'],
+  mark: ['.......*........', '......*#*.......', '.....*#*#*......', '....*#*.*#*.....', 
+    '...*#*...*#*....', '......#.........', '......#.........', '......#.........', 
+    '......#.........', '......#.........', '.....+#+........', '....++#++.......'],
+  lamp: ['..*###+.........', '..*#+...........', '..*#+..*###+....', '..*#####*..*+...', 
+    '..*#+..*#**#+...', '..*#+..*####+...', '..*#+..*####+...', '..*#+..+####+...', 
+    '..*#+...+##+....', '..*#+...........', '..+#+...........', '..+++...........'],
+  cairn: ['................', '................', '......*##+......', '......*##+......', 
+    '.....*####+.....', '.....*####+.....', '....*######+....', '....*######+....', 
+    '...*########+...', '..*##########+..', '.+############+.', '+##############+'],
+  rope: ['..*######+......', '.......+#+......', '.......+#+......', '........+#+.....', 
+    '........+#+.....', '.......+#+......', '.......+#+......', '......+#+.......', 
+    '......+#+.......', '.......+#+......', '.......+#+......', '.......+#+......']
 };
 
-/* 名字給的是「這是哪一層的」，形狀給的是「它接得上什麼」。
-   兩件事分開，各自都好懂。 */
+/* 六筆，不是十八筆。
+
+   本來每一層各有三筆，所以 wild_fire 跟 crys_fire 是兩筆資料、同一個形狀、
+   同一個名字，差別只有 zone 欄位——而 zone 從深度就算得出來（strataAt）。
+   顏色是那一層的顏色，形狀是你挑的，兩件事本來就該分開存。 */
 var BUILDS = [
-  { key: 'wildbr', zone: 'wild', name: '石橋', form: 'bridge', port: 'ud', px: FORMS.bridge },
-  { key: 'wildto', zone: 'wild', name: '石塔', form: 'tower', port: 'u', px: FORMS.tower },
-  { key: 'wildmo', zone: 'wild', name: '石堆', form: 'mound', port: 'd', px: FORMS.mound },
-  { key: 'rootar', zone: 'root', name: '根門', form: 'arch', port: 'ud', px: FORMS.arch },
-  { key: 'rootma', zone: 'root', name: '根柱', form: 'mast', port: 'u', px: FORMS.mast },
-  { key: 'rootwe', zone: 'root', name: '根穴', form: 'well', port: 'd', px: FORMS.well },
-  { key: 'crysbr', zone: 'crys', name: '晶橋', form: 'bridge', port: 'ud', px: FORMS.bridge },
-  { key: 'crysto', zone: 'crys', name: '晶塔', form: 'tower', port: 'u', px: FORMS.tower },
-  { key: 'crysmo', zone: 'crys', name: '晶堆', form: 'mound', port: 'd', px: FORMS.mound },
-  { key: 'echoar', zone: 'echo', name: '岩門', form: 'arch', port: 'ud', px: FORMS.arch },
-  { key: 'echoma', zone: 'echo', name: '岩柱', form: 'mast', port: 'u', px: FORMS.mast },
-  { key: 'echowe', zone: 'echo', name: '岩穴', form: 'well', port: 'd', px: FORMS.well },
-  { key: 'rustbr', zone: 'rust', name: '鐵橋', form: 'bridge', port: 'ud', px: FORMS.bridge },
-  { key: 'rustto', zone: 'rust', name: '鐵塔', form: 'tower', port: 'u', px: FORMS.tower },
-  { key: 'rustmo', zone: 'rust', name: '鐵堆', form: 'mound', port: 'd', px: FORMS.mound },
-  { key: 'firear', zone: 'fire', name: '火門', form: 'arch', port: 'ud', px: FORMS.arch },
-  { key: 'firema', zone: 'fire', name: '火柱', form: 'mast', port: 'u', px: FORMS.mast },
-  { key: 'firewe', zone: 'fire', name: '火穴', form: 'well', port: 'd', px: FORMS.well }
+  { key: 'fire',   name: '火堆', port: 'ud', px: FORMS.fire },
+  { key: 'ladder', name: '繩梯', port: 'ud', px: FORMS.ladder },
+  { key: 'mark',   name: '刻痕', port: 'u',  px: FORMS.mark },
+  { key: 'lamp',   name: '掛燈', port: 'u',  px: FORMS.lamp },
+  { key: 'cairn',  name: '石堆', port: 'd',  px: FORMS.cairn },
+  { key: 'rope',   name: '垂繩', port: 'd',  px: FORMS.rope }
 ];
 
-/* 這一層蓋得出來的三種。三種就是那一層的全部——
-   選單再長就會變成城市模擬，而且會有人開始挑「哪一個看起來比較厲害」。 */
-function buildsIn(zoneKey) {
-  return BUILDS.filter(function (b) { return b.zone === zoneKey; });
+/* 這一趟可以留下的三種。一個接口一個：上下通、只朝上、只朝下——
+   所以上一層垂下來的口一定接得上，而三個之間沒有強弱。
+
+   同一個接口下有兩種形狀，給你目前留得比較少的那一個。
+   這是「循環的是環境不是內容」那條：走回同一個地層，顏色會一樣
+   （地層真的循環了），但形狀不會——營地上不會出現重複的一段。
+   計數是分層計的：只看你在「這個地層」留過什麼，不看別層。
+   平手的時候用深度決定，同一組走到同一層永遠拿到同一組選項。 */
+var PORTS = ['ud', 'u', 'd'];
+
+function offerAt(teamId, depth) {
+  var t = teamOf(teamId);
+  var here = strataAt(depth, teamId).key;
+  var have = {};
+  Object.keys((t && t.builds) || {}).forEach(function (k) {
+    var od = Number(k.slice(1));
+    if (strataAt(od, teamId).key !== here) return;
+    var d = buildDef(t.builds[k].k);
+    if (d) have[d.key] = (have[d.key] || 0) + 1;
+  });
+  return PORTS.map(function (p) {
+    var pair = BUILDS.filter(function (x) { return x.port === p; });
+    var da = have[pair[0].key] || 0;
+    var db = have[pair[1].key] || 0;
+    if (da !== db) return da < db ? pair[0] : pair[1];
+    return pair[hash('offer|' + p + '|' + teamId + '|' + depth) % 2];
+  });
 }
 
+/* 舊的存檔裡是 wild_fire 這種寫法（層＿形狀）。底線後面那一段就是形狀，
+   所以舊資料不用搬也讀得出來。 */
 function buildDef(key) {
+  var k = String(key || '');
+  if (k.indexOf('_') >= 0) k = k.split('_')[1];
   var out = null;
-  BUILDS.forEach(function (b) { if (b.key === key) out = b; });
+  BUILDS.forEach(function (b) { if (b.key === k) out = b; });
   return out;
 }
 
@@ -4256,8 +4294,7 @@ function actUncover(teamId, depth) {
 
   /* 上一輪的遺跡：這一層蓋得出來的東西裡的一種。 */
   if (b.k === 'relic') {
-    var bs = buildsIn(strataAt(depth, teamId).key);
-    if (bs.length) rec.build = bs[hash('brel|' + teamId + '|' + k) % bs.length].key;
+    rec.build = BUILDS[hash('brel|' + teamId + '|' + k) % BUILDS.length].key;
   }
 
   t.found[k] = rec;
@@ -4349,6 +4386,39 @@ var ICONS = {
 var ICON_PAL = { '#': '#8A7F6E', o: '#4A4038', '*': '#B5A992' };
 var ICON_ON = { '#': '#E9B341', o: '#7A5A18', '*': '#F5CB74' };
 
+/* ---------- 三個印章的記號 ----------
+
+   本來是 🚀 🎯 ❌。除了不屬於這個點陣世界之外，❌ 是「錯了」——
+   而這個系統比對的只是你說幾天跟實際幾天，沒有對錯。
+
+   早跟久畫成彼此的鏡像（往回兩格 / 往前兩格），準是停在中間的一個環。
+   顏色本來就分好了，記號只補「往哪邊偏了」。 */
+var STAMP_PX = {
+  early: ['................', '................', '.....*#+..*#+...', '....*#+..*#+....', 
+    '...*#+..*#+.....', '..*#+..*#+......', '..*#+..*#+......', '...+#+..+#+.....', 
+    '....+#+..+#+....', '.....+#+..+#+...', '................', '................'],
+  exact: ['................', '.....*####+.....', '...*##+..+##+...', '..*#+......+#+..', 
+    '..*#+.*##+.+#+..', '.*#+.*####+.+#+.', '.*#+.*####+.+#+.', '..*#+.+##+.+#+..', 
+    '..+#+......+#+..', '...+##+..+##+...', '.....+####+.....', '................'],
+  late: ['................', '................', '...+#*..+#*.....', '....+#*..+#*....', 
+    '.....+#*..+#*...', '......+#*..+#*..', '......+#*..+#*..', '.....+#+..+#+...', 
+    '....+#+..+#+....', '...+#+..+#+.....', '................', '................']
+};
+
+/* 印章的顏色由外面的 .stamp-card / .acc-c 決定（綠 / 金 / 紅），
+   所以這裡一律畫成同一組灰白，讓它繼承旁邊的顏色會比較好——
+   但點陣圖是寫死顏色的，所以直接給三組。 */
+var STAMP_PAL = {
+  early: { '#': '#7FC98A', o: '#3E7A47', '*': '#DFF5E4' },
+  exact: { '#': '#E8C25A', o: '#8A6E1E', '*': '#FBF0CE' },
+  late:  { '#': '#E08A6A', o: '#8A4429', '*': '#F8DDD1' }
+};
+
+function stampPx(key, cls) {
+  var p = STAMP_PX[key]; if (!p) return '';
+  return pxTag(p, STAMP_PAL[key], cls || '');
+}
+
 
 /* ===== 20-rules.js ===== */
 /* 全部的計算都在這裡，而且只在這裡。
@@ -4407,11 +4477,11 @@ RULES.band = function (est) {
    「你把它想得比實際難」——那是我在猜。提早也可能是題目本來就小、
    也可能是他們砍了範圍，系統一個都不知道。 */
 RULES.STAMPS = {
-  early: { key: 'early', mark: '🚀', name: '比承諾的早',
+  early: { key: 'early', name: '比承諾的早',
            why: '比你自己說的天數早。' },
-  exact: { key: 'exact', mark: '🎯', name: '跟承諾的一樣',
+  exact: { key: 'exact', name: '跟承諾的一樣',
            why: '你說幾天，就是幾天。' },
-  late:  { key: 'late',  mark: '❌', name: '比承諾的久',
+  late:  { key: 'late',  name: '比承諾的久',
            why: '比你自己說的天數久。這不會拿走任何權利。' }
 };
 
@@ -5583,7 +5653,7 @@ function dayText(ts) {
    長度＝這一趟過了幾天。三天是一小截，十五天是一長條——
    所以架子上一眼看得出哪一趟是硬仗。
 
-   刻意不編進去的東西：判定（🎯🚀❌）。
+   刻意不編進去的東西：判定。
    那是全班剖面圖上別人也看得到的地方，把「估不準」編進形狀等於讓它
    變成一個公開的記號。判定只出現在他自己那幾頁上。 */
 
@@ -6449,9 +6519,9 @@ var ACTS = {
     var t = myTeam();
     var p = v.split(',');
     if (!actBuild(t.teamId, Number(p[1]), p[0], lastSealed(t.teamId))) {
-      return say('那一層蓋不了。');
+      return say('那一層留不了。');
     }
-    say('蓋好了。');
+    say('留下了。');
   },
 
   /* 點誰蓋的東西：看那是哪一趟。 */
@@ -6506,7 +6576,7 @@ var ACTS = {
     var word = (document.getElementById('gr-word') || {}).value || '';
     if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
     go('radar');
-    say('回過去了。他們那邊會攤開三件裝備，自己挑一件帶走。');
+    say('回過去了。他們可以留記號了。');
   }
 };
 
@@ -6618,7 +6688,7 @@ function accBar(acc) {
   var H = ['<div class="acc">'];
   ['exact', 'early', 'late'].forEach(function (k) {
     var s = RULES.STAMPS[k];
-    H.push('<div class="acc-c ' + k + '"><b>' + s.mark + '</b><i>' + acc[k] +
+    H.push('<div class="acc-c ' + k + '"><b>' + stampPx(s.key) + '</b><i>' + acc[k] +
       '</i><span>' + esc(s.name) + '</span></div>');
   });
   H.push('</div>');
@@ -7015,7 +7085,7 @@ PAGES.home = function () {
       H.push(aw.left > 0 ? '<b>' + aw.left + '</b><span>天到期</span>'
         : '<em>已經超過你說的天數</em>');
     }
-    if (aw.cells) H.push('<b>' + aw.cells + '</b><span>全班新蓋的</span>');
+    if (aw.cells) H.push('<b>' + aw.cells + '</b><span>全班新留的</span>');
     if (aw.okd) H.push('<em class="ok">老師勾了 ' + aw.okd + ' 件</em>');
     H.push('</div>');
   }
@@ -7344,7 +7414,7 @@ PAGES.stamp = function () {
      再演一次是重複，而且那一層閃光在動畫被凍住的時候會蓋成一片白。 */
   var H = [];
   H.push('<div class="stamp-card ' + r.stamp + '">');
-  H.push('<div class="stamp-mark">' + s.mark + '</div>');
+  H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push('<dl class="rep">');
   H.push('<dt>你說</dt><dd>' + r.est + '</dd>');
@@ -7465,8 +7535,7 @@ PAGES.pick = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">這幾天你動過哪幾天　選填</div>');
   H.push(dayGrid(r.runId));
-  H.push('<p class="dim">點一下標起來。這不會影響判定——它決定的是' +
-         '這一趟封存起來長什麼樣子。</p>');
+  H.push('<p class="dim">不影響判定。它決定的是封存起來長什麼樣子。</p>');
   H.push('</div>');
 
   H.push('<div class="card">');
@@ -7574,8 +7643,7 @@ PAGES.exit = function () {
   if (!out) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">說一聲</div>');
-    H.push('<p class="dim">老師確認之後你就出去了。之後不會再收到新的里程碑，' +
-           '這幾頁還看得到。</p>');
+    H.push('<p class="dim">老師確認之後你就出去了。</p>');
     H.push('<div class="row">');
     H.push(btn(t.exitAsk ? '已經說了，在等他' : '這個專案做完了',
       t.exitAsk ? 'noop' : 'askexit', 'big'));
@@ -7620,7 +7688,7 @@ function logRow(m, r, t) {
   H.push('<span class="rec-w">' + (line ? esc(line) : '') + '</span>');
 
   H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">' +
-    (s ? s.mark : '·') + '</span>');
+    (s ? stampPx(s.key) : '') + '</span>');
   H.push('</div>');
 
   /* 點開才出現的細節。收起來的時候整列兩秒看得完。 */
@@ -7675,7 +7743,7 @@ var BEATS = [
   { k: 'prep', n: '準備', s: '說幾天' },
   { k: 'away', n: '遠征', s: '去做事' },
   { k: 'rep',  n: '戰報', s: '交出去' },
-  { k: 'camp', n: '營地', s: '封存·蓋' }
+  { k: 'camp', n: '營地', s: '封存·留記號' }
 ];
 
 function beatAt(next, t) {
@@ -7731,7 +7799,17 @@ var SCN = {
      t     這一組
      row   現在在跑的那一個 run（可能沒有）
      st    停滯狀態 */
+/* 洞口有多寬。每留下一個記號就寬一點——那是「看得到自己的堆積」
+   最直接的做法：你的營地會變大，而首頁就是這條廊道。
+   有上限，不然走到後面整條廊道會被營地擠掉。 */
+function entOf(teamId) {
+  var t = teamOf(teamId);
+  var n = Object.keys((t && t.builds) || {}).length;
+  return SCN.ENT + Math.min(10, n) * 26;
+}
+
 function scene(t, row, st, kind) {
+  var ENT = entOf(t.teamId);
   var run = row && row.run;
   /* 還沒承諾任何事的時候給一段像樣的空廊道。
      第一次打開是印象最深的一次，本來它只有一格，看起來像壞掉的。 */
@@ -7766,7 +7844,7 @@ function scene(t, row, st, kind) {
   var AHEAD = 5;
   var span = Math.max(est, tide);          /* 這一趟的長度 */
   var draw = span + AHEAD;                 /* 畫到哪裡（多的在霧裡） */
-  var W = SCN.ENT + draw * SCN.TILE + SCN.END;
+  var W = ENT + draw * SCN.TILE + SCN.END;
   /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
      世界觀不寫在說明裡，寫在牆上。 */
   var zone = strataAt(depthOf(t.teamId), t.teamId);
@@ -7793,18 +7871,18 @@ function scene(t, row, st, kind) {
   }
 
   /* ── 洞口 ── */
-  H.push(sceneMouth(t, { kind: kind }));
+  H.push(sceneMouth(t, { kind: kind, run: run }, ENT));
 
   /* ── 地板 ── */
   H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
   if (walked > 0) {
-    H.push('<div class="floor lit" style="left:' + SCN.ENT + 'px;width:' +
+    H.push('<div class="floor lit" style="left:' + ENT + 'px;width:' +
       (walked * SCN.TILE) + 'px"></div>');
   }
 
   /* ── 一天一格 ── */
   for (var i = 0; i < span; i++) {
-    var x = SCN.ENT + i * SCN.TILE;
+    var x = ENT + i * SCN.TILE;
     var on = i < walked;
 
     /* 火把：走過的那幾格點著 */
@@ -7848,9 +7926,9 @@ function scene(t, row, st, kind) {
      淹到腳邊＝剛好；過去了＝會比說的久，而且好幾天前就看得到。
      它不扣任何東西，走到底一樣可以交——它只是把時間畫出來。 */
   if (run && tide > 0) {
-    H.push('<div class="tide" style="left:' + SCN.ENT + 'px;width:' +
+    H.push('<div class="tide" style="left:' + ENT + 'px;width:' +
       (tide * SCN.TILE) + 'px"></div>');
-    H.push('<div class="tide-edge" style="left:' + (SCN.ENT + tide * SCN.TILE - 4) + 'px"></div>');
+    H.push('<div class="tide-edge" style="left:' + (ENT + tide * SCN.TILE - 4) + 'px"></div>');
   }
 
   /* ── 魔物 ── */
@@ -7867,7 +7945,7 @@ function scene(t, row, st, kind) {
   var walking = run && st.level < 2;
   var resting = !run && st.level < 2;
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
-  var hx = resting ? 44 : SCN.ENT + walked * SCN.TILE - 11;
+  var hx = resting ? 44 : ENT + walked * SCN.TILE - 11;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
     '" style="left:' + hx + 'px">');
@@ -7902,14 +7980,14 @@ function scene(t, row, st, kind) {
      虛線不是終點線——別組沒有這條線，每一組的線在不同的地方，
      因為那是各自說的。 */
   if (run) {
-    H.push('<div class="vow" style="left:' + (SCN.ENT + est * SCN.TILE) +
+    H.push('<div class="vow" style="left:' + (ENT + est * SCN.TILE) +
       'px"><span>你說的</span></div>');
   }
 
   /* ── 霧 ──
      從站的地方往前蓋住。它蓋的是「還沒走的那幾天」，
      所以往前一格霧就退一格。 */
-  var fogAt = SCN.ENT + (Math.max(walked, tide) + 1) * SCN.TILE;
+  var fogAt = ENT + (Math.max(walked, tide) + 1) * SCN.TILE;
   if (fogAt < W) {
     H.push('<div class="fog" style="left:' + fogAt + 'px"></div>');
   }
@@ -7971,11 +8049,9 @@ function heroPack(teamId) {
    失準過，他整學期不會知道有營火這個地方；一個還沒封存過的人不會
    知道石片架是什麼。所以它們在那裡，只是沒點著——
    「看得到但還沒發生」跟「不存在」是兩件事。 */
-function sceneMouth(t, next) {
+function sceneMouth(t, next, ENT) {
   var sg = signOf(t.teamId);
-  var kind = next && next.kind;
-  var ks = keepsOf(t.teamId);
-  var H = ['<div class="mouth" style="width:' + SCN.ENT + 'px">'];
+  var H = ['<div class="mouth" style="width:' + (ENT || SCN.ENT) + 'px">'];
 
   /* 往上的光：出口。一直在，而且點得開——
      宣告專案做完是偶爾才做的事，不該在首頁佔一塊，
@@ -8027,20 +8103,31 @@ function sceneMouth(t, next) {
     }
   }
 
-  /* 石片架。封存過的掛在這裡，一根都沒有的時候是空架子。 */
-  H.push('<button class="mrack" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
-    esc(ks.length ? '封存的：' + ks.length + ' 根' : '還沒封存過') + '">');
-  if (ks.length) {
-    ks.slice(-3).forEach(function (k) {
-      var kz = STRATA[0];
-      STRATA.forEach(function (x) { if (x.key === k.zone) kz = x; });
-      H.push(pxTag(k.px || coreOf(k.runId), kz.pal, 'mcore'));
-    });
-  } else {
-    H.push('<i></i><i></i><i></i>');
-  }
-  H.push('</button>');
+  /* ── 營地 ──
+
+     每走完一趟留下的那一個記號，一個一個排在洞口的地上，
+     而洞口的寬度跟著長（見 entOf）。十趟之後這裡是一個被你佈置過的
+     營地——而首頁就是這條廊道，所以每次打開都看得到。
+
+     這是「看得到自己的堆積」最直接的做法：不是散在各層一個 55px，
+     是全部在同一個地方、每次可見地多一個、而且一眼看得完。
+
+     本來這裡掛的是石片架。石片跟記號都是「一趟一個」，兩個都放就是
+     重複——石片留在任務清單裡，那裡點得開、而且有圖例。 */
+  var tm = teamOf(t.teamId);
+  var bs = (tm && tm.builds) || {};
+  var ds = Object.keys(bs).map(function (k) { return Number(k.slice(1)); })
+    .sort(function (x, y) { return x - y; });
+  ds.forEach(function (d, i) {
+    var def = buildDef(bs['d' + d].k);
+    if (!def) return;
+    var z = strataAt(d, t.teamId);
+    H.push('<button class="mmark" style="left:' + (72 + i * 26) + 'px" ' +
+      'data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + d })) + '\' ' +
+      'title="' + esc(def.name + '　' + z.name) + '">' +
+      pxTag(def.px, z.pal, '') + '</button>');
+  });
 
   H.push('</div>');
   return H.join('');
@@ -8451,8 +8538,7 @@ function faunaCard() {
   H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
   H.push('<h2>' + esc(c.n) + '</h2>');
   H.push('<p class="lead">' + esc(c.t) + '</p>');
-  H.push('<p class="dim">牠住在這一層。你走到這一層的時候，' +
-         '擋在廊道盡頭的就是這一層的住民——同一個里程碑，每一組遇到的不是同一隻。</p>');
+  H.push('<p class="dim">同一個里程碑，每一組遇到的不是同一隻。</p>');
   H.push('</div></div></div>');
   return H.join('');
 }
@@ -8756,7 +8842,7 @@ PAGES.codex = function () {
       H.push(pxTag(c.px, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');
-      if (met[c.n]) H.push('<span class="cx-met">你在「' + esc(met[c.n]) + '」那一趟遇過</span>');
+      if (met[c.n]) H.push('<span class="cx-met">遇過 · ' + esc(met[c.n]) + '</span>');
       H.push('</div></div>');
     });
     H.push('</div></div>');
@@ -8787,7 +8873,7 @@ function codexThings(t, here) {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">地上的物件</div>');
-  H.push('<p class="dim">每一層長的不一樣——那是你怎麼知道自己換了地方。</p>');
+  H.push('<p class="dim">每一層長的不一樣。</p>');
   H.push('<div class="cx">');
   [['碎石', RUBBLE.px, '往下走的時候崩下來的。'],
    ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點輪廓。'],
@@ -9244,10 +9330,10 @@ function buildPick(t) {
   var d = unbuiltDepth(t.teamId);
   if (d < 0) return '';
   var z = strataAt(d, t.teamId);
-  var set = buildsIn(z.key);
+  var set = offerAt(t.teamId, d);
   if (!set.length) { DRAFT.build = null; return ''; }
   var H = ['<div class="card bpick">'];
-  H.push('<div class="eyebrow">在這一層蓋什麼</div>');
+  H.push('<div class="eyebrow">在這一層留下什麼</div>');
 
   /* 上一層留下的向下口就是這一層的題目。畫出來就好，不用寫一句話說明——
      接得起來的那幾個上面會亮一段。 */
@@ -9875,13 +9961,12 @@ PAGES.radar = function () {
 
   H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '目前沒有等你看的',
     rows.length
-      ? '照等最久的排。看完他們交的成果，回來勾一個「可以」——挑哪一件裝備是他們的事。'
-      : '學生交出去之後會排在這裡。在那之前，你可以去發下一個里程碑。'));
+      ? '照等最久的排。看完成果，回來勾「可以」。'
+      : '學生交出去之後排在這裡。'));
 
   if (!rows.length) {
     H.push('<div class="card">');
-    H.push('<p class="dim">現在沒有人在等你。要開始的話，去發一個里程碑——' +
-           '只要寫他們要交什麼，期限他們自己會決定。</p>');
+    H.push('<p class="dim">沒有人在等你。去發一個里程碑——寫要交什麼就好。</p>');
     H.push('<div class="row">');
     H.push(btn('去發一個里程碑', 'go:ms', 'big'));
     H.push(btn('看各組進度', 'go:classeco', 'ghost'));
@@ -9894,7 +9979,7 @@ PAGES.radar = function () {
     H.push('<div class="radar-head">');
     H.push('<span class="green"></span>');
     H.push('<b>' + esc(x.team.name) + '</b>');
-    H.push('<span class="st ' + x.run.stamp + '">' + s.mark + ' ' + esc(s.name) + '</span>');
+    H.push('<span class="st ' + x.run.stamp + '">' + esc(s.name) + '</span>');
     H.push('<span class="sp"></span><span class="dim">等 ' + x.waited + ' 天</span>');
     H.push('</div>');
     H.push('<div class="radar-ms">' + esc(x.ms.title) + '</div>');
@@ -9930,11 +10015,11 @@ PAGES.review = function () {
   var acc = accuracyOf(r.teamId);
 
   var H = [head('審核', t.name + '　·　' + m.title,
-    '成果他們交在你原本收的地方。這裡要你做的只有一件事：勾一個「可以」。' +
+    '成果交在你原本收的地方。這裡只要勾一個「可以」。' +
     '想說一句話再說，不想說就直接勾。')];
 
   H.push('<div class="card">');
-  H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + s.mark + ' ' +
+  H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
          esc(s.name) + '</span></div>');
   H.push(estBar(r.est, r.actual, false));
   H.push(accBar(acc));
@@ -9948,14 +10033,12 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">說一句話　選填</div>');
-  H.push('<p class="dim">這句話會出現在他們封存那一趟的時候。' +
-         '講你看到什麼就好，不用講他們該怎麼改。</p>');
+  H.push('<p class="dim">講你看到什麼就好，不用講他們該怎麼改。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪談這種事最容易低估，你們沒有。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
-  H.push('<div class="card dim">勾完之後，他們那邊會攤開三件裝備自己挑一件。' +
-         '攤開哪三件是隨機的，跟他們做得如何無關——那是給他們自己留的一句話，不是你的評語。</div>');
+  H.push('<div class="card dim">勾完之後，他們會在那一層留一個記號。</div>');
 
   H.push('<div class="row">');
   H.push(btn('可以', 'approve:' + r.runId, 'big'));
@@ -9975,7 +10058,7 @@ PAGES.ms = function () {
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
   H.push(head('發里程碑', '你要他們交什麼',
-    '一次派一個。寫要交什麼就好——派出去之後，學生那邊會先被問「你打算花幾天」，' +
+    '一次派一個。寫要交什麼就好。' +
     '期限是他們自己訂的，不是你。'));
 
   H.push('<div class="card">');
@@ -9988,8 +10071,7 @@ PAGES.ms = function () {
     esc('訪三個人\n整理逐字稿\n收斂成一句話') + '">' + esc(draft('msSteps', '')) + '</textarea>');
   /* 這一句本來寫「學生每天可以點今天動的是哪一段」——那個機制早就拿掉了。
      現在分段真正會發生的是：交出去的時候被問哪幾段做完了、哪一段比想的久。 */
-  H.push('<p class="dim">分了段，他們交出去的時候會被問哪幾段做完了、' +
-         '哪一段比想的久。不分段一樣走得完。</p>');
+  H.push('<p class="dim">不分段一樣走得完。</p>');
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
@@ -10004,7 +10086,7 @@ PAGES.ms = function () {
   H.push('</div>');
 
   if (!list.length) {
-    H.push('<div class="card dim">還沒派過。派出去之後，這裡會列出各組各自承諾了幾天。</div>');
+    H.push('<div class="card dim">還沒派過。</div>');
   }
 
   /* 派過的每一個壓成一行：標題、幾組承諾了、幾組走完了。
@@ -10148,7 +10230,7 @@ PAGES.roster = function () {
   H.push('<textarea id="rt" rows="6" placeholder="' +
     esc('甲：小明, 小華, 阿哲\n乙：怡君, 小柏\n丙：家豪, 品彤, 宥廷') + '">' +
     esc(draft('rt')) + '</textarea>');
-  H.push('<p class="dim">同一組再貼一次不會重建，只會補上新的名字。' +
+  H.push('<p class="dim">再貼一次只會補上新的名字。' +
          '已經被認領的名字不會被洗掉。</p>');
   H.push(btn('存進去', 'saveroster', ''));
   H.push('</div>');
@@ -10182,8 +10264,7 @@ PAGES.events = function () {
   var show = all.slice(0, 200);
 
   var H = [head('紀錄', all.length + ' 筆',
-    '每一個會改到資料的動作都留一筆。記的是行為的形狀——承諾幾天、哪一天推進、' +
-    '判定結果、卡在哪。系統不收作業，所以這裡看不到任何作業內容。')];
+    '承諾幾天、哪一天推進、判定、卡在哪。不收作業。')];
 
   H.push(classPicker());
 
@@ -10200,7 +10281,7 @@ PAGES.events = function () {
   /* 匯出 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">匯出　CSV</div>');
-  H.push('<p class="dim">貼進試算表就能算。欄位：時間、角色、組別、事件、說明。</p>');
+  H.push('<p class="dim">欄位：時間、角色、組別、事件、說明。</p>');
   H.push('<textarea id="csv" rows="4" readonly>' + esc(exportCsv(cid)) + '</textarea>');
   H.push(btn('存成檔案', 'csv', 'ghost'));
   H.push('</div>');

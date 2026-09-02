@@ -104,7 +104,7 @@ function accBar(acc) {
   var H = ['<div class="acc">'];
   ['exact', 'early', 'late'].forEach(function (k) {
     var s = RULES.STAMPS[k];
-    H.push('<div class="acc-c ' + k + '"><b>' + s.mark + '</b><i>' + acc[k] +
+    H.push('<div class="acc-c ' + k + '"><b>' + stampPx(s.key) + '</b><i>' + acc[k] +
       '</i><span>' + esc(s.name) + '</span></div>');
   });
   H.push('</div>');

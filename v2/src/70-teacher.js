@@ -82,13 +82,12 @@ PAGES.radar = function () {
 
   H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '目前沒有等你看的',
     rows.length
-      ? '照等最久的排。看完他們交的成果，回來勾一個「可以」——挑哪一件裝備是他們的事。'
-      : '學生交出去之後會排在這裡。在那之前，你可以去發下一個里程碑。'));
+      ? '照等最久的排。看完成果，回來勾「可以」。'
+      : '學生交出去之後排在這裡。'));
 
   if (!rows.length) {
     H.push('<div class="card">');
-    H.push('<p class="dim">現在沒有人在等你。要開始的話，去發一個里程碑——' +
-           '只要寫他們要交什麼，期限他們自己會決定。</p>');
+    H.push('<p class="dim">沒有人在等你。去發一個里程碑——寫要交什麼就好。</p>');
     H.push('<div class="row">');
     H.push(btn('去發一個里程碑', 'go:ms', 'big'));
     H.push(btn('看各組進度', 'go:classeco', 'ghost'));
@@ -101,7 +100,7 @@ PAGES.radar = function () {
     H.push('<div class="radar-head">');
     H.push('<span class="green"></span>');
     H.push('<b>' + esc(x.team.name) + '</b>');
-    H.push('<span class="st ' + x.run.stamp + '">' + s.mark + ' ' + esc(s.name) + '</span>');
+    H.push('<span class="st ' + x.run.stamp + '">' + esc(s.name) + '</span>');
     H.push('<span class="sp"></span><span class="dim">等 ' + x.waited + ' 天</span>');
     H.push('</div>');
     H.push('<div class="radar-ms">' + esc(x.ms.title) + '</div>');
@@ -137,11 +136,11 @@ PAGES.review = function () {
   var acc = accuracyOf(r.teamId);
 
   var H = [head('審核', t.name + '　·　' + m.title,
-    '成果他們交在你原本收的地方。這裡要你做的只有一件事：勾一個「可以」。' +
+    '成果交在你原本收的地方。這裡只要勾一個「可以」。' +
     '想說一句話再說，不想說就直接勾。')];
 
   H.push('<div class="card">');
-  H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + s.mark + ' ' +
+  H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
          esc(s.name) + '</span></div>');
   H.push(estBar(r.est, r.actual, false));
   H.push(accBar(acc));
@@ -155,14 +154,12 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">說一句話　選填</div>');
-  H.push('<p class="dim">這句話會出現在他們封存那一趟的時候。' +
-         '講你看到什麼就好，不用講他們該怎麼改。</p>');
+  H.push('<p class="dim">講你看到什麼就好，不用講他們該怎麼改。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪談這種事最容易低估，你們沒有。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
-  H.push('<div class="card dim">勾完之後，他們那邊會攤開三件裝備自己挑一件。' +
-         '攤開哪三件是隨機的，跟他們做得如何無關——那是給他們自己留的一句話，不是你的評語。</div>');
+  H.push('<div class="card dim">勾完之後，他們會在那一層留一個記號。</div>');
 
   H.push('<div class="row">');
   H.push(btn('可以', 'approve:' + r.runId, 'big'));
@@ -182,7 +179,7 @@ PAGES.ms = function () {
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
   H.push(head('發里程碑', '你要他們交什麼',
-    '一次派一個。寫要交什麼就好——派出去之後，學生那邊會先被問「你打算花幾天」，' +
+    '一次派一個。寫要交什麼就好。' +
     '期限是他們自己訂的，不是你。'));
 
   H.push('<div class="card">');
@@ -195,8 +192,7 @@ PAGES.ms = function () {
     esc('訪三個人\n整理逐字稿\n收斂成一句話') + '">' + esc(draft('msSteps', '')) + '</textarea>');
   /* 這一句本來寫「學生每天可以點今天動的是哪一段」——那個機制早就拿掉了。
      現在分段真正會發生的是：交出去的時候被問哪幾段做完了、哪一段比想的久。 */
-  H.push('<p class="dim">分了段，他們交出去的時候會被問哪幾段做完了、' +
-         '哪一段比想的久。不分段一樣走得完。</p>');
+  H.push('<p class="dim">不分段一樣走得完。</p>');
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
@@ -211,7 +207,7 @@ PAGES.ms = function () {
   H.push('</div>');
 
   if (!list.length) {
-    H.push('<div class="card dim">還沒派過。派出去之後，這裡會列出各組各自承諾了幾天。</div>');
+    H.push('<div class="card dim">還沒派過。</div>');
   }
 
   /* 派過的每一個壓成一行：標題、幾組承諾了、幾組走完了。

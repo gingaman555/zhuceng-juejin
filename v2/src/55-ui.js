@@ -416,9 +416,9 @@ var ACTS = {
     var t = myTeam();
     var p = v.split(',');
     if (!actBuild(t.teamId, Number(p[1]), p[0], lastSealed(t.teamId))) {
-      return say('那一層蓋不了。');
+      return say('那一層留不了。');
     }
-    say('蓋好了。');
+    say('留下了。');
   },
 
   /* 點誰蓋的東西：看那是哪一趟。 */
@@ -473,6 +473,6 @@ var ACTS = {
     var word = (document.getElementById('gr-word') || {}).value || '';
     if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
     go('radar');
-    say('回過去了。他們那邊會攤開三件裝備，自己挑一件帶走。');
+    say('回過去了。他們可以留記號了。');
   }
 };

@@ -54,11 +54,11 @@ RULES.band = function (est) {
    「你把它想得比實際難」——那是我在猜。提早也可能是題目本來就小、
    也可能是他們砍了範圍，系統一個都不知道。 */
 RULES.STAMPS = {
-  early: { key: 'early', mark: '🚀', name: '比承諾的早',
+  early: { key: 'early', name: '比承諾的早',
            why: '比你自己說的天數早。' },
-  exact: { key: 'exact', mark: '🎯', name: '跟承諾的一樣',
+  exact: { key: 'exact', name: '跟承諾的一樣',
            why: '你說幾天，就是幾天。' },
-  late:  { key: 'late',  mark: '❌', name: '比承諾的久',
+  late:  { key: 'late',  name: '比承諾的久',
            why: '比你自己說的天數久。這不會拿走任何權利。' }
 };
 
