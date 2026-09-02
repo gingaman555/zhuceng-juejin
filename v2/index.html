@@ -517,6 +517,11 @@ a.plain:hover{color:var(--gold)}
 
 :root{
   --px:3px;
+  /* 你要寫字的地方。冷色，因為暖色都被別的意思占走了：
+     金＝可以按、綠＝過了、紅＝超過。 */
+  --write:#5FA8C7;
+  --write-bg:#0A1218;
+  --write-dim:#9DB4C0;
   --lit:rgba(255,240,214,.07);
   --lit2:rgba(255,240,214,.14);
   --shd:rgba(0,0,0,.45);
@@ -623,11 +628,32 @@ input,textarea,select,.slider,
     inset 0 calc(var(--px) * -1) 0 var(--lit),
     0 0 0 1px #000;
 }
+/* ---------- 你要寫字的地方 ----------
+
+   上面那一條把 input 跟滑桿槽、下沉的小格子放在一起——它們都是凹的，
+   但只有 input 是「等你填」。空的框跟一行暗字長得一樣，
+   使用者因此分不出哪些是說明、哪些是要他寫東西的地方。
+
+   底色換成冷的，左邊一道實心的邊。那一道就是這一格在等你。
+   select 不套：它是一個控制項，不是一格等你填的東西。 */
+input,textarea{
+  background:var(--write-bg);
+  padding-left:14px;
+  box-shadow:
+    inset var(--px) 0 0 var(--write),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+/* 提示不是內文。同一個冷色家族，讀得到但一眼知道那不是他寫的字。 */
+input::placeholder,textarea::placeholder{color:var(--write-dim)}
+
+/* 游標在哪裡要看得出來：那一道邊整個亮起來，不是換一圈細框。 */
 input:focus,textarea:focus{outline:none;box-shadow:
+  inset var(--px) 0 0 var(--write),
   inset 0 var(--px) 0 var(--shd2),
-  inset var(--px) 0 0 var(--shd2),
   inset 0 calc(var(--px) * -1) 0 var(--lit),
-  0 0 0 1px var(--gold-d)}
+  0 0 0 2px var(--write)}
 .step:last-child{border-right:none}
 
 /* 滑桿的把手是一顆鐵鉚釘 */
@@ -3650,7 +3676,7 @@ button.ac:active{transform:translateY(1px)}
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.42)
 }
 .bt-w:focus{outline:none;box-shadow:inset 0 0 0 2px var(--gold-d)}
-.bt-w::placeholder{color:var(--dim)}
+.bt-w::placeholder{color:var(--write-dim)}
 
 /* ── 登場：牠先跳出來 ──
    舊版寶可夢的野生遭遇：畫面切掉，牠從下面跳上來、彈一下才站定。
@@ -8053,10 +8079,15 @@ function sideBar() {
       '<div class="n">' + esc(u.name) + '</div>' +
       '<div class="s">' + esc(kl.name) + ' · 加入碼 ' +
       esc(kl.joinCode) + '</div></div>';
-    /* 老師只有三件事，側欄就只有三格——多一格就是多一件他要煩惱的事。 */
-    var wait = radar(u.classId).length;
+    /* 老師只有三件事，側欄就只有三格——多一格就是多一件他要煩惱的事。
+
+       出口不另外開一格：它跟審核在那一頁上切換，數字併進來。
+       那一格因此不叫「審核」——審核是頁面裡兩個切換的其中一個，
+       同一個詞當兩種範圍會讓「審核（5）」點進去變成「審核（4）」。
+       叫它頁面真正在講的事：有幾件在等你。 */
+    var wait = radar(u.classId).length + exitQueue(u.classId).length;
     nav = [
-      ['radar', '審核' + (wait ? '（' + wait + '）' : '')],
+      ['radar', '等你的' + (wait ? '（' + wait + '）' : '')],
       ['ms', '發派任務'],
       ['classeco', '各組進度']
     ];
@@ -8364,6 +8395,9 @@ var ACTS = {
 
   /* 剖面圖底下那三顆。 */
   tab: function (k) { DRAFT.tab = k; render(); },
+
+  /* 老師那一頁上的審核／出口。跟 tab 分開，不然兩邊會互相蓋掉。 */
+  tq: function (k) { DRAFT.tq = k; render(); },
 
 
   /* 這一組給哪一位老師帶。再點一次同一位就是收回來。 */
@@ -12303,23 +12337,47 @@ PAGES.radar = function () {
   var H = [];
 
 
-  /* 想出去的那幾組排在最前面。往下走不出去，出口只有這一個，
-     而且要他確認——那是這個系統裡他做的最後一件事。 */
-  exitQueue(u.classId, u.userId).forEach(function (t) {
-    var acc = accuracyOf(t.teamId);
-    H.push('<div class="card exitq">');
-    H.push('<div class="eyebrow">出口</div>');
-    H.push('<h2>' + esc(t.name) + ' 說專案做完了。</h2>');
-    H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
-      depthOf(t.teamId) + ' 個任務</p>');
-    if (acc.total) H.push(accBar(acc));
-    /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
-       走出去該是他們的動作，不是老師代勞的。 */
-    H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
-    H.push('</div>');
-  });
+  /* 出口跟審核並排，一次只看一個。
 
-  /* 說明句拿掉：清單本來就照等最久排，而那一顆鍵上寫著「看完了，去勾」。 */
+     它們是兩種完全不同的決定：審核是「這一件收不收」，一週好幾次，
+     看的是一份成果；出口是「這一組整個專案結束了沒」，一學期一次，
+     看的是一整條路。本來出口那幾張卡疊在審核佇列最上面，
+     所以他每次進來看幾件要審的東西，都要先跨過一個「要不要放他們走」。
+
+     切換一直在，不是有人排隊才出現：他要知道這個系統裡有出口這件事，
+     而不是等到有人按了才第一次看到。 */
+  var out = exitQueue(u.classId, u.userId);
+  var tq = DRAFT.tq === 'exit' ? 'exit' : 'rev';
+  H.push('<div class="segs">');
+  [['rev', '審核', rows.length], ['exit', '出口', out.length]].forEach(function (g) {
+    H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
+      '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
+  });
+  H.push('</div>');
+
+  if (tq === 'exit') {
+    H.push(head('出口', out.length ? out.length + ' 組說做完了' : '沒有人說做完了', ''));
+    if (!out.length) {
+      H.push('<div class="card"><p class="dim">' +
+        '他們自己在任務清單上說「我們做完了」，這裡才會出現。</p></div>');
+    }
+    out.forEach(function (t) {
+      var acc = accuracyOf(t.teamId);
+      H.push('<div class="card exitq">');
+      H.push('<h2>' + esc(t.name) + ' 說專案做完了。</h2>');
+      H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
+        depthOf(t.teamId) + ' 個任務</p>');
+      if (acc.total) H.push(accBar(acc));
+      /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
+         走出去該是他們的動作，不是老師代勞的。 */
+      H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
+      H.push('</div>');
+    });
+    return H.join('');
+  }
+
+  /* 說明句拿掉：清單本來就照等最久排。 */
   H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '沒有等你的', ''));
 
   if (!rows.length) {

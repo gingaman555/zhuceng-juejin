@@ -16,6 +16,11 @@
 
 :root{
   --px:3px;
+  /* 你要寫字的地方。冷色，因為暖色都被別的意思占走了：
+     金＝可以按、綠＝過了、紅＝超過。 */
+  --write:#5FA8C7;
+  --write-bg:#0A1218;
+  --write-dim:#9DB4C0;
   --lit:rgba(255,240,214,.07);
   --lit2:rgba(255,240,214,.14);
   --shd:rgba(0,0,0,.45);
@@ -122,11 +127,32 @@ input,textarea,select,.slider,
     inset 0 calc(var(--px) * -1) 0 var(--lit),
     0 0 0 1px #000;
 }
+/* ---------- 你要寫字的地方 ----------
+
+   上面那一條把 input 跟滑桿槽、下沉的小格子放在一起——它們都是凹的，
+   但只有 input 是「等你填」。空的框跟一行暗字長得一樣，
+   使用者因此分不出哪些是說明、哪些是要他寫東西的地方。
+
+   底色換成冷的，左邊一道實心的邊。那一道就是這一格在等你。
+   select 不套：它是一個控制項，不是一格等你填的東西。 */
+input,textarea{
+  background:var(--write-bg);
+  padding-left:14px;
+  box-shadow:
+    inset var(--px) 0 0 var(--write),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+/* 提示不是內文。同一個冷色家族，讀得到但一眼知道那不是他寫的字。 */
+input::placeholder,textarea::placeholder{color:var(--write-dim)}
+
+/* 游標在哪裡要看得出來：那一道邊整個亮起來，不是換一圈細框。 */
 input:focus,textarea:focus{outline:none;box-shadow:
+  inset var(--px) 0 0 var(--write),
   inset 0 var(--px) 0 var(--shd2),
-  inset var(--px) 0 0 var(--shd2),
   inset 0 calc(var(--px) * -1) 0 var(--lit),
-  0 0 0 1px var(--gold-d)}
+  0 0 0 2px var(--write)}
 .step:last-child{border-right:none}
 
 /* 滑桿的把手是一顆鐵鉚釘 */

@@ -55,23 +55,47 @@ PAGES.radar = function () {
   var H = [];
 
 
-  /* 想出去的那幾組排在最前面。往下走不出去，出口只有這一個，
-     而且要他確認——那是這個系統裡他做的最後一件事。 */
-  exitQueue(u.classId, u.userId).forEach(function (t) {
-    var acc = accuracyOf(t.teamId);
-    H.push('<div class="card exitq">');
-    H.push('<div class="eyebrow">出口</div>');
-    H.push('<h2>' + esc(t.name) + ' 說專案做完了。</h2>');
-    H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
-      depthOf(t.teamId) + ' 個任務</p>');
-    if (acc.total) H.push(accBar(acc));
-    /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
-       走出去該是他們的動作，不是老師代勞的。 */
-    H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
-    H.push('</div>');
-  });
+  /* 出口跟審核並排，一次只看一個。
 
-  /* 說明句拿掉：清單本來就照等最久排，而那一顆鍵上寫著「看完了，去勾」。 */
+     它們是兩種完全不同的決定：審核是「這一件收不收」，一週好幾次，
+     看的是一份成果；出口是「這一組整個專案結束了沒」，一學期一次，
+     看的是一整條路。本來出口那幾張卡疊在審核佇列最上面，
+     所以他每次進來看幾件要審的東西，都要先跨過一個「要不要放他們走」。
+
+     切換一直在，不是有人排隊才出現：他要知道這個系統裡有出口這件事，
+     而不是等到有人按了才第一次看到。 */
+  var out = exitQueue(u.classId, u.userId);
+  var tq = DRAFT.tq === 'exit' ? 'exit' : 'rev';
+  H.push('<div class="segs">');
+  [['rev', '審核', rows.length], ['exit', '出口', out.length]].forEach(function (g) {
+    H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
+      '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
+  });
+  H.push('</div>');
+
+  if (tq === 'exit') {
+    H.push(head('出口', out.length ? out.length + ' 組說做完了' : '沒有人說做完了', ''));
+    if (!out.length) {
+      H.push('<div class="card"><p class="dim">' +
+        '他們自己在任務清單上說「我們做完了」，這裡才會出現。</p></div>');
+    }
+    out.forEach(function (t) {
+      var acc = accuracyOf(t.teamId);
+      H.push('<div class="card exitq">');
+      H.push('<h2>' + esc(t.name) + ' 說專案做完了。</h2>');
+      H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
+        depthOf(t.teamId) + ' 個任務</p>');
+      if (acc.total) H.push(accBar(acc));
+      /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
+         走出去該是他們的動作，不是老師代勞的。 */
+      H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
+      H.push('</div>');
+    });
+    return H.join('');
+  }
+
+  /* 說明句拿掉：清單本來就照等最久排。 */
   H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '沒有等你的', ''));
 
   if (!rows.length) {

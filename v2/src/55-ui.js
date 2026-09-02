@@ -258,10 +258,15 @@ function sideBar() {
       '<div class="n">' + esc(u.name) + '</div>' +
       '<div class="s">' + esc(kl.name) + ' · 加入碼 ' +
       esc(kl.joinCode) + '</div></div>';
-    /* 老師只有三件事，側欄就只有三格——多一格就是多一件他要煩惱的事。 */
-    var wait = radar(u.classId).length;
+    /* 老師只有三件事，側欄就只有三格——多一格就是多一件他要煩惱的事。
+
+       出口不另外開一格：它跟審核在那一頁上切換，數字併進來。
+       那一格因此不叫「審核」——審核是頁面裡兩個切換的其中一個，
+       同一個詞當兩種範圍會讓「審核（5）」點進去變成「審核（4）」。
+       叫它頁面真正在講的事：有幾件在等你。 */
+    var wait = radar(u.classId).length + exitQueue(u.classId).length;
     nav = [
-      ['radar', '審核' + (wait ? '（' + wait + '）' : '')],
+      ['radar', '等你的' + (wait ? '（' + wait + '）' : '')],
       ['ms', '發派任務'],
       ['classeco', '各組進度']
     ];
@@ -569,6 +574,9 @@ var ACTS = {
 
   /* 剖面圖底下那三顆。 */
   tab: function (k) { DRAFT.tab = k; render(); },
+
+  /* 老師那一頁上的審核／出口。跟 tab 分開，不然兩邊會互相蓋掉。 */
+  tq: function (k) { DRAFT.tq = k; render(); },
 
 
   /* 這一組給哪一位老師帶。再點一次同一位就是收回來。 */

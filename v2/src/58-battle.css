@@ -323,7 +323,7 @@
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.42)
 }
 .bt-w:focus{outline:none;box-shadow:inset 0 0 0 2px var(--gold-d)}
-.bt-w::placeholder{color:var(--dim)}
+.bt-w::placeholder{color:var(--write-dim)}
 
 /* ── 登場：牠先跳出來 ──
    舊版寶可夢的野生遭遇：畫面切掉，牠從下面跳上來、彈一下才站定。
