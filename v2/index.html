@@ -11092,7 +11092,8 @@ PAGES.who = function () {
   var u = me();
   var now = heroKey(u);
 
-  var H = [head('挑一個角色', '這是你', '')];
+  var H = [head('挑一個角色開始冒險',
+    '這是你將在這場專案旅行中的化身', '')];
   H.push('<div class="pick4">');
   HERO_LIST.forEach(function (x) {
     var g = HEROES[x.k];
