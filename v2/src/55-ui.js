@@ -428,7 +428,19 @@ var ACTS = {
     var t = myTeam();
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.flags || []);
     go('home');
-    say('承諾了。');
+    /* 出發那一下：白光掃過廊道，角色從坐著變成走。
+       旗子放在 S 上（go 會清掉 DRAFT），畫完就收——
+       它是一次事件，不是一個狀態。 */
+    S.launch = 1;
+    render();
+    setTimeout(function () {
+      S.launch = 0;
+      var e = document.querySelector('.scn');
+      if (e) e.classList.remove('launch');
+      e = document.querySelector('.scn-launch');
+      if (e && e.parentNode) e.parentNode.removeChild(e);
+    }, 900);
+    say('出發。');
   },
 
   /* 「都差不多」也是一個答案，所以要記下來——

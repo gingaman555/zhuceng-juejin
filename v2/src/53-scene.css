@@ -171,9 +171,8 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   background:repeating-linear-gradient(180deg,#6E7982 0 4px, #232B31 4px 7px)
 }
 .mouth .px.sign{width:66px;height:66px;margin:0 auto}
-.mouth-txt{position:absolute;left:11px;bottom:110px;width:121px}
-.mouth-txt b{display:block;font-size:22px;line-height:1.5;color:var(--ink);font-weight:400}
-.mouth-txt span{display:block;font-size:22px;color:var(--mute)}
+/* .mouth-txt 拿掉了：它是專案名的第三份，而且會長進角色頭上那塊
+   牌子裡（見 61-scene.js）。 */
 
 /* ---------- 場景底下那一行 ---------- */
 .scn-cap{font-size:22px;color:var(--mute);margin:-11px 0 22px;line-height:1.9}
@@ -381,4 +380,82 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
     rgba(233,132,63,.20) 0 40%,
     rgba(233,132,63,.10) 40% 70%,
     transparent 70%)
+}
+
+/* ══════════ 廊道的三個狀態 ══════════
+
+   休息中    營火旁邊坐著。背景不動，火亮，遠處暗下來。
+   前進中    角色在原地走，背景一路往左循環。牠不在畫面裡。
+   走到底了  背景停住，牠浮出來。
+
+   動的是背景不是走廊：走廊是紀錄（哪一格是哪一天、那一天動的是
+   哪一段），它不能為了做動畫而滑走。所以動的是它後面那兩層，
+   角色的走路循環配上會動的背景，「一路往前」就成立了，
+   而紀錄一格都沒有動。 */
+
+/* 兩層速度不一樣，「往前」才有深度——一起動看起來是整張圖在滑。
+   位移剛好是一個磚的寬度（SCN.TILE 的兩倍），所以接得起來看不出接縫。 */
+@keyframes scnfar{ to{ background-position-x:-88px } }
+@keyframes scnrush{ to{ background-position-x:-176px } }
+
+.scn-rush{
+  position:absolute;left:0;bottom:33px;height:22px;z-index:1;
+  pointer-events:none;opacity:0;
+  background-image:repeating-linear-gradient(90deg,
+    rgba(255,240,214,.13) 0 22px, transparent 22px 88px);
+  background-size:176px 100%
+}
+.scn.walking .scn-rush{opacity:1;animation:scnrush 1.1s linear infinite}
+.scn.walking .scn-far{animation:scnfar 3.2s linear infinite}
+
+/* ── 休息中 ──
+   火是亮的，遠處退下去。那是「現在沒事做」的樣子，不是壞掉。 */
+.scn.resting .scn-far{opacity:.5}
+.scn.resting .scn-rush{opacity:0;animation:none}
+/* 火光打在地上那一圈。只有坐著的時候有——走著的時候他不在火邊。 */
+.scn.resting .mouth::after{
+  content:'';position:absolute;left:0;bottom:44px;width:198px;height:44px;
+  background:radial-gradient(ellipse at 30% 100%,
+    rgba(233,132,63,.28) 0%, rgba(233,132,63,.10) 45%, transparent 70%);
+  pointer-events:none;z-index:2;
+  animation:fireglow 1.6s steps(2,end) infinite
+}
+@keyframes fireglow{0%,49%{opacity:.85}50%,100%{opacity:1}}
+
+/* ── 出發那一下 ──
+   白光從洞口掃到底，角色同時從坐變成走。一次事件，掃過去就沒了。 */
+.scn-launch{
+  position:absolute;left:0;top:0;bottom:0;width:33%;z-index:9;
+  pointer-events:none;
+  background:linear-gradient(90deg,
+    transparent 0%, rgba(255,240,214,.50) 55%, rgba(255,240,214,.90) 72%,
+    rgba(255,240,214,.50) 85%, transparent 100%);
+  animation:launchsweep .9s steps(9,end) 1 forwards
+}
+@keyframes launchsweep{
+  0%{transform:translateX(-120%);opacity:1}
+  100%{transform:translateX(400%);opacity:0}
+}
+/* 角色在那一下被光推起來 */
+.scn.launch .scn-hero{animation:launchpop .9s steps(3,end) 1}
+@keyframes launchpop{
+  0%{transform:translateY(6px)}
+  40%{transform:translateY(-11px)}
+  100%{transform:translateY(0)}
+}
+
+/* ── 走到底了 ──
+   牠從右邊浮出來。不再是一路上愈來愈清楚的那種淡入——
+   那把「遇到」攤成了五天，而遇到是一瞬間的事。 */
+.scn-mob.meet{animation:mobmeet .5s steps(4,end) 1}
+@keyframes mobmeet{
+  0%{opacity:0;transform:translateX(22px)}
+  100%{opacity:1;transform:translateX(0)}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .scn.walking .scn-rush,.scn.walking .scn-far,
+  .scn-launch,.scn.launch .scn-hero,.scn-mob.meet,
+  .scn.resting .mouth::after{animation:none}
+  .scn-launch{display:none}
 }

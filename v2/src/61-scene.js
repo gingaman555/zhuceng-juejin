@@ -77,7 +77,24 @@ function scene(t, row, st, kind) {
      世界觀不寫在說明裡，寫在牆上。 */
   var zone = strataAt(depthOf(t.teamId), t.teamId);
 
-  var H = ['<div class="scn ' + light.key + ' z-' + zone.key + '">'];
+  /* 三個狀態掛在最外層。裡面每一層（遠牆、流線、火、角色）都靠
+     它決定要不要動——一個地方決定，不會有兩層各自算出不同答案。 */
+  /* 任務開始＝按下承諾，不是老師派下來。派了但還沒承諾的時候
+     他還坐在火邊——那正是「還沒出發」。
+
+     fresh 的那一趟 runsFor 會給一個 runId 是 null 的空殼，所以
+     判斷要看 run.runId 不是 run。 */
+  var walking = kind === 'doing' && st.level < 2;
+  var going = !!(run && run.runId);
+  var resting = st.level < 2 && !walking &&
+    (!going || kind === 'idle' || kind === 'left' || kind === 'waitexit');
+  /* 剛按下承諾那一下。go() 會清掉 DRAFT，所以旗子放在 S 上。 */
+  var launch = !!S.launch;
+  var H = ['<div class="scn ' + light.key + ' z-' + zone.key +
+    (walking ? ' walking' : '') + (resting ? ' resting' : '') +
+    (launch ? ' launch' : '') + '">'];
+  /* 出發那一道白光。掃過去就沒了，所以它只是一個空的層。 */
+  if (launch) H.push('<div class="scn-launch"></div>');
 
 
   /* 固定在角落的深度。走廊往旁邊捲，它不跟著捲——
@@ -96,6 +113,9 @@ function scene(t, row, st, kind) {
 
   /* 最後面那一層：更暗的磚與支撐柱。廊道不是一片牆，它有深處。 */
   H.push('<div class="scn-far" style="width:' + W + 'px"></div>');
+  /* 前進中才會動的兩層：遠牆慢、地面的流線快。兩層速度不一樣，
+     「往前」才有深度——一層一起動看起來是整張圖在滑。 */
+  H.push('<div class="scn-rush" style="width:' + W + 'px"></div>');
 
   /* 頭上的岩。本來天花板只有幾根鐘乳石掛在空中，沒有東西讓它們掛。 */
   H.push('<div class="scn-ceil" style="width:' + W + 'px"></div>');
@@ -109,7 +129,7 @@ function scene(t, row, st, kind) {
   }
 
   /* ── 洞口 ── */
-  H.push(sceneMouth(t, { kind: kind, run: run }, ENT));
+  H.push(sceneMouth(t, { kind: kind, run: run }, ENT, resting));
 
   /* ── 地板 ── */
   H.push('<div class="floor" style="left:0;width:' + W + 'px"></div>');
@@ -173,7 +193,13 @@ function scene(t, row, st, kind) {
   /* 牠站在你說的那一天，不動。
      本來是 max(承諾, 過了幾天)——時間過去牠跟著往後退，
      所以你永遠追不上，也永遠不會走過牠。 */
-  if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), est, ENT));
+  /* 牠只在走到底之後出現：走滿了自己說的天數，或者這一趟已經交出去。
+     還在路上的時候前面是霧——不是一隻站在那裡等你的東西。 */
+  /* fresh 的空殼 state 是 fresh，本來也被算成「已經走完」——
+     所以一個還沒承諾的任務，盡頭就站著一隻。 */
+  var arrived = going && (walked >= est || run.state === 'stamped' ||
+    run.state === 'submitted' || run.state === 'back' || run.state === 'done');
+  if (arrived) H.push(sceneMob(t, row, 1, est, ENT));
 
   /* ── 盡頭的岩壁裡有東西 ──
 
@@ -200,9 +226,7 @@ function scene(t, row, st, kind) {
        很多天沒動　　　睡著
 
      停下來不是停止：坐著跟站著都有兩幀，差在呼吸，火也一直在動。 */
-  var walking = kind === 'doing' && st.level < 2;
-  var resting = (!run || kind === 'idle' || kind === 'left' || kind === 'waitexit')
-    && st.level < 2;
+  /* walking／resting 在最上面算過了。 */
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
   var hx = resting ? 44 : ENT + walked * SCN.TILE - 11;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
@@ -305,7 +329,7 @@ function heroPack() { return ''; }
    失準過，他整學期不會知道有營火這個地方；一個還沒封存過的人不會
    知道石片架是什麼。所以它們在那裡，只是沒點著——
    「看得到但還沒發生」跟「不存在」是兩件事。 */
-function sceneMouth(t, next, ENT) {
+function sceneMouth(t, next, ENT, resting) {
   var sg = signOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + (ENT || SCN.ENT) + 'px">'];
 
@@ -325,7 +349,12 @@ function sceneMouth(t, next, ENT) {
   H.push('<div class="chain"></div>');
   H.push(pxTag(sg.px, sg.pal, 'sign'));
   H.push('</button>');
-  H.push('<div class="mouth-txt"><b>' + esc(t.project || '（還沒定）') + '</b></div>');
+  /* 洞口那一塊專案名拿掉了。
+
+     兩個理由。一 · 它是第三份：頂條上有、招牌的 title 上有，這裡再一次。
+     二 · 它會撞人。它掛在 bottom:110、寬 121，而人休息的時候就坐在
+     旁邊（left:44），頭上還有一塊牌子——專案名一長就折兩行，
+     往上長進牌子裡。招牌本來就掛在那裡，名字讓頂條說。 */
 
   /* 營火。兩趟之間點著——那時候人坐在旁邊。
 
@@ -333,7 +362,9 @@ function sceneMouth(t, next, ENT) {
      『每一次交出去之前都省思』的時候拿掉了，所以它再也不會亮，
      變成一堆死掉的內容。改成休息的時候點著，才是它本來的意思：
      營地是休息的地方，不是罰站的地方。 */
-  var lit = !next || !next.run;
+  /* 跟角色同一個判斷，而且是同一個變數傳進來的——兩邊各算一次
+     就會有一邊算錯（本來人坐著而火是冷的）。 */
+  var lit = !!resting;
   H.push('<button class="mfire' + (lit ? ' lit' : '') + '"' +
     ' data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:pack' })) + '\'' +
     ' title="' + esc(lit ? '營火：還沒接下一件事' : '營火（走著的時候是暗的）') +
@@ -392,7 +423,13 @@ function sceneMouth(t, next, ENT) {
 /* ---------- 魔物 ----------
    站在走廊盡頭。清楚到什麼程度跟你走了多少有關——
    剛出發的時候只看得到一團影子，走到底才看得清牠長什麼樣。 */
-/* 擋在你說的那一天上。
+/* 走到底才遇得到牠。
+
+   牠不畫進前進中的動畫裡：牠是那一趟盡頭擋路的那一隻，而「盡頭」
+   就是走完之後。一路上都看得到牠，等於一開始就把唯一的未知揭曉了，
+   而且走了五天牠還站在那裡不動，那不是擋路，那是布景。
+
+   擋在你說的那一天上。
 
    本來牠站在 max(承諾, 過了幾天)，所以時間一過牠就往後退——
    你永遠追不上牠，走過牠這件事不可能發生。而「走過自己說的那一天」
@@ -410,12 +447,11 @@ function sceneMob(t, row, prog, est, ENT) {
      本來牠的名字從第一天就寫在那裡——那等於一趟開始就把唯一的未知
      揭曉了。現在前半段只有一團形狀跟一排問號，走近了名字才浮出來。
      每一趟因此有一條小小的線從頭拉到尾。 */
-  var near = prog >= 0.5;
-  H.push('<div class="scn-mob" style="left:' + x + 'px;opacity:' +
-    (0.30 + 0.70 * prog).toFixed(2) + '">');
+  /* 走到底了牠才出現，而且是浮出來的（scn-mob 那一段動畫）。
+     還在路上的時候那裡什麼都沒有——前面是霧，不是一隻站著等你的東西。 */
+  H.push('<div class="scn-mob meet" style="left:' + x + 'px">');
   H.push(pxTag(mob.px, pal, 'ch'));
-  H.push('<span class="mobn' + (near ? '' : ' hid') + '">' +
-    (near ? esc(mob.n) : '？？？') + '</span>');
+  H.push('<span class="mobn">' + esc(mob.n) + '</span>');
   H.push('</div>');
   return H.join('');
 }
