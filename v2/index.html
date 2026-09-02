@@ -782,6 +782,19 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{
   [data-act]:active,[data-go]:active{transform:none;filter:brightness(.8)}
 }
 
+/* 抓住把手的時候它要沉下去。滑桿是這個系統裡唯一一個要「拖」的東西，
+   而拖到一半沒有任何回饋，手會以為自己沒抓到。 */
+.slider:active::-webkit-slider-thumb{
+  background-image:linear-gradient(180deg,
+    var(--gold) 0 var(--px),
+    var(--gold-d) var(--px) 100%);
+  box-shadow:1px 1px 0 rgba(0,0,0,.6)
+}
+.slider:active::-moz-range-thumb{background:var(--gold-d)}
+/* 滑桿本身不吃全域那條 :active 位移——把手在移動的時候整根跟著跳
+   會讓人以為自己拖歪了。 */
+input.slider:active{transform:none}
+
 /* 廊道場景的樣子。
 
    跟 52-material.css 同一套規矩：hard stop、0 模糊、斜面 3px、光從左上來。
@@ -6710,7 +6723,14 @@ var ACTS = {
   },
 
   /* 滑桿：只改草稿，不進資料表 */
-  est: function (v) { DRAFT.est = v; render(); },
+  /* 拖滑桿。
+
+     本來這裡是 render()，而 render() 會把整個 #app 換掉——包含
+     你正在拖的那一根滑桿。節點被重建，瀏覽器的拖曳捕捉跟著沒了，
+     把手就不再跟著手指走。那不是回饋不夠，是控制項在手裡被拆掉。
+
+     改成只改跟著它動的那幾塊，滑桿本身完全不碰。 */
+  est: function (v) { DRAFT.est = v; estLive(Number(v)); },
 
   /* 承諾的時候標「這一件我覺得會比想的久」 */
   flag: function (k) {
@@ -7061,6 +7081,37 @@ function spreadBar(sp, mine) {
   return H.join('');
 }
 
+
+/* 拖滑桿的時候只改這幾塊：大數字、尺上「你現在拉到哪」那一列、
+   底下走廊的格數、承諾那一顆上的天數。滑桿本身不碰。
+
+   位置的算法要跟 estAxis 裡的 at() 完全一樣，不然拖到一半會偏。 */
+function estLive(n) {
+  var lo = RULES.EST_MIN, hi = RULES.EST_MAX, span = hi - lo;
+  function at(d) {
+    return ((Math.max(lo, Math.min(hi, d)) - lo) / span * 100) + '%';
+  }
+  var b = RULES.band(n);
+  function set(sel, fn) {
+    var e = document.querySelector(sel);
+    if (e) fn(e);
+  }
+  set('.ax-head b', function (e) { e.textContent = n; });
+  set('.ax-now .ax-ok', function (e) {
+    e.style.left = at(n - b);
+    e.style.right = (100 - parseFloat(at(n + b))) + '%';
+  });
+  set('.ax-now .ax-me', function (e) { e.style.left = at(n); });
+  set('.cm-go', function (e) { e.textContent = '我承諾 ' + n + ' 天'; });
+
+  /* 底下那條走廊。整塊換掉沒關係——滑桿不在裡面。 */
+  var ew = document.querySelector('.ew');
+  if (ew && typeof myTeam === 'function') {
+    var t = myTeam();
+    var m = S.p && S.p.id ? msOf(S.p.id) : null;
+    if (t && m) ew.innerHTML = estWalkIn(t, m, n);
+  }
+}
 
 /* ---------- 承諾那一根尺 ----------
 
@@ -7702,7 +7753,7 @@ PAGES.commit = function () {
   }
 
   H.push('<div class="row">');
-  H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big'));
+  H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big cm-go'));
   H.push(btn('回廊道', 'go:home', 'ghost'));
   H.push('</div>');
   return H.join('');
@@ -7720,12 +7771,18 @@ PAGES.commit = function () {
    承諾是這個系統裡唯一有阻力的選擇，而它本來長得像填表：
    拉一個滑桿、按一個鍵。 */
 function estWalk(t, m, est) {
+  return '<div class="ew">' + estWalkIn(t, m, est) + '</div>';
+}
+
+/* 只有這一段會跟著滑桿變。拆出來是為了拖的時候只換這一塊，
+   不要動到滑桿本身——動到它，拖曳就斷了。 */
+function estWalkIn(t, m, est) {
   var z = strataAt(depthOf(t.teamId), t.teamId);
   var mob = mobFor(m.msId, t.teamId);
-  var H = ['<div class="ew"><div class="ew-in">'];
+  var H = ['<div class="ew-in">'];
   for (var i = 0; i < est; i++) H.push('<i class="ew-c"></i>');
   H.push('<span class="ew-m">' + pxTag(mob.px, z.pal, 'ew-px') + '</span>');
-  H.push('</div></div>');
+  H.push('</div>');
   return H.join('');
 }
 

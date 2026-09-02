@@ -287,3 +287,16 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{
 @media (prefers-reduced-motion: reduce){
   [data-act]:active,[data-go]:active{transform:none;filter:brightness(.8)}
 }
+
+/* 抓住把手的時候它要沉下去。滑桿是這個系統裡唯一一個要「拖」的東西，
+   而拖到一半沒有任何回饋，手會以為自己沒抓到。 */
+.slider:active::-webkit-slider-thumb{
+  background-image:linear-gradient(180deg,
+    var(--gold) 0 var(--px),
+    var(--gold-d) var(--px) 100%);
+  box-shadow:1px 1px 0 rgba(0,0,0,.6)
+}
+.slider:active::-moz-range-thumb{background:var(--gold-d)}
+/* 滑桿本身不吃全域那條 :active 位移——把手在移動的時候整根跟著跳
+   會讓人以為自己拖歪了。 */
+input.slider:active{transform:none}

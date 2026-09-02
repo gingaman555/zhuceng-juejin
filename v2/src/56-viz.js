@@ -173,6 +173,37 @@ function spreadBar(sp, mine) {
 }
 
 
+/* 拖滑桿的時候只改這幾塊：大數字、尺上「你現在拉到哪」那一列、
+   底下走廊的格數、承諾那一顆上的天數。滑桿本身不碰。
+
+   位置的算法要跟 estAxis 裡的 at() 完全一樣，不然拖到一半會偏。 */
+function estLive(n) {
+  var lo = RULES.EST_MIN, hi = RULES.EST_MAX, span = hi - lo;
+  function at(d) {
+    return ((Math.max(lo, Math.min(hi, d)) - lo) / span * 100) + '%';
+  }
+  var b = RULES.band(n);
+  function set(sel, fn) {
+    var e = document.querySelector(sel);
+    if (e) fn(e);
+  }
+  set('.ax-head b', function (e) { e.textContent = n; });
+  set('.ax-now .ax-ok', function (e) {
+    e.style.left = at(n - b);
+    e.style.right = (100 - parseFloat(at(n + b))) + '%';
+  });
+  set('.ax-now .ax-me', function (e) { e.style.left = at(n); });
+  set('.cm-go', function (e) { e.textContent = '我承諾 ' + n + ' 天'; });
+
+  /* 底下那條走廊。整塊換掉沒關係——滑桿不在裡面。 */
+  var ew = document.querySelector('.ew');
+  if (ew && typeof myTeam === 'function') {
+    var t = myTeam();
+    var m = S.p && S.p.id ? msOf(S.p.id) : null;
+    if (t && m) ew.innerHTML = estWalkIn(t, m, n);
+  }
+}
+
 /* ---------- 承諾那一根尺 ----------
 
    「你前幾趟」跟「你要說幾天」量的是同一個單位。

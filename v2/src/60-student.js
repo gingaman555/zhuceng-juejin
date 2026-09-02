@@ -363,7 +363,7 @@ PAGES.commit = function () {
   }
 
   H.push('<div class="row">');
-  H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big'));
+  H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big cm-go'));
   H.push(btn('回廊道', 'go:home', 'ghost'));
   H.push('</div>');
   return H.join('');
@@ -381,12 +381,18 @@ PAGES.commit = function () {
    承諾是這個系統裡唯一有阻力的選擇，而它本來長得像填表：
    拉一個滑桿、按一個鍵。 */
 function estWalk(t, m, est) {
+  return '<div class="ew">' + estWalkIn(t, m, est) + '</div>';
+}
+
+/* 只有這一段會跟著滑桿變。拆出來是為了拖的時候只換這一塊，
+   不要動到滑桿本身——動到它，拖曳就斷了。 */
+function estWalkIn(t, m, est) {
   var z = strataAt(depthOf(t.teamId), t.teamId);
   var mob = mobFor(m.msId, t.teamId);
-  var H = ['<div class="ew"><div class="ew-in">'];
+  var H = ['<div class="ew-in">'];
   for (var i = 0; i < est; i++) H.push('<i class="ew-c"></i>');
   H.push('<span class="ew-m">' + pxTag(mob.px, z.pal, 'ew-px') + '</span>');
-  H.push('</div></div>');
+  H.push('</div>');
   return H.join('');
 }
 

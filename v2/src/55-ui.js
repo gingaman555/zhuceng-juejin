@@ -311,7 +311,14 @@ var ACTS = {
   },
 
   /* 滑桿：只改草稿，不進資料表 */
-  est: function (v) { DRAFT.est = v; render(); },
+  /* 拖滑桿。
+
+     本來這裡是 render()，而 render() 會把整個 #app 換掉——包含
+     你正在拖的那一根滑桿。節點被重建，瀏覽器的拖曳捕捉跟著沒了，
+     把手就不再跟著手指走。那不是回饋不夠，是控制項在手裡被拆掉。
+
+     改成只改跟著它動的那幾塊，滑桿本身完全不碰。 */
+  est: function (v) { DRAFT.est = v; estLive(Number(v)); },
 
   /* 承諾的時候標「這一件我覺得會比想的久」 */
   flag: function (k) {
