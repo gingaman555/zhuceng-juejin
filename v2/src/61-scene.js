@@ -219,7 +219,6 @@ function scene(t, row, st, kind) {
     : kind === 'stamped' ? '走到底了'
     : kind === 'review' ? '在等老師'
     : kind === 'back' ? '老師退回來了'
-    : kind === 'gear' ? '可以收起來了'
     : '待命';
   H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
     '">' + esc(tag) + '</div>');

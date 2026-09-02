@@ -2906,6 +2906,13 @@ button.tk-k:hover span{color:var(--gold)}
 /* 算出來是哪一天。相對的輸入，絕對的顯示。 */
 .duewhen{font-size:22px;color:var(--ink);margin:0 0 11px}
 
+/* 老師勾了。一張通知，不是一個動作——記號已經插進那一層了。 */
+.okcard{
+  margin:0 0 11px;padding:14px;background:var(--panel);
+  box-shadow:inset 0 0 0 2px var(--gold-d)
+}
+.okcard b{display:block;font-size:22px;font-weight:400;color:var(--ink);margin:4px 0}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -5202,8 +5209,9 @@ RULES.STEPS_MAX = 12;     /* 一個任務最多分幾段 */
    走完 4 趟（＝第 5 趟）開始問困境——那時候他才累積得出那種東西。 */
 RULES.ASK = {
   flags: 2,   /* 承諾時：哪幾段會比你想的久 */
-  days:  2,   /* 收起來時：這幾天你動過哪幾天 */
   hard:  4    /* 交出去時：困境與進度，要打字 */
+  /* days 拿掉了：問它的那一頁（收起來）整個不見了。
+     留一個沒有人問的問題在規則檔裡是一句謊話。 */
 };
 
 /* 走完 n 趟的人，這一題該不該出現。
@@ -5614,8 +5622,7 @@ function nextThing(teamId) {
   if (back) return { kind: 'back', row: back };
 
   /* 3. 老師勾可以了，還沒挑裝備 */
-  var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
-  if (gear) return { kind: 'gear', row: gear };
+  /* approved 這個狀態不再出現：老師勾下去就直接 done（見 actApprove）。 */
   /* 3. 正在做的那一趟。
 
      這一條排在「還沒承諾的」前面，順序很要緊：反過來的話，老師派了
@@ -6307,15 +6314,56 @@ function actResend(teamId, runId) {
   return true;
 }
 
+/* 老師勾一個「可以」。
+
+   勾下去那一刻就是完成：記號當場插進那一層，石片當場長出來。
+
+   本來中間還有一步——學生要再走到一頁去按「收起來」。那一步
+   不產生任何東西，只是叫他確認一次自己已經做完、而且老師也已經
+   勾過的事。approved 這個狀態因此也不再出現。 */
 function actApprove(runId, word) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || (r.state !== 'submitted' && r.state !== 'back')) return null;
+  var s = runShape(runId);
   r.word = word || '';
-  r.state = 'approved';
   r.approvedAt = now();
+  r.state = 'done';
+  r.doneAt = now();
+
+  var tm = teamOf(r.teamId);
+  if (tm) tm.claims = (tm.claims || 0) + 1;
+
+  /* 插在最淺的那個還空著的層。通常就是這一趟走出來的那一層；
+     萬一中間漏掉一層（改過資料、舊存檔），也補得回來。 */
+  var d0 = unbuiltDepth(r.teamId);
+  if (d0 >= 0 && tm) {
+    tm.builds = tm.builds || {};
+    tm.builds['d' + d0] = { k: 'run', runId: runId };
+  }
+  DB.Keeps.push({
+    keepId: nid('K'), teamId: r.teamId, runId: runId,
+    name: '', at: now(),
+    /* 剛走完的那一層，不是接下來要走的那一層。 */
+    zone: strataAt(Math.max(0, depthOf(r.teamId) - 1), r.teamId).key,
+    px: coreOf(runId),
+    est: s.est, elapsed: s.elapsed, moved: s.moved,
+    rested: s.rested, blank: s.blank
+  });
   save();
   logEvent('approve', { teamId: r.teamId, runId: runId, len: String(word || '').length });
   return r;
+}
+
+/* 你不在的時候老師勾了哪幾件。
+
+   「收起來」那一步拿掉之後，老師那一句話就沒有一個落點了——而它是
+   整條流程裡唯一「別人為你做了一件事」的時刻。改成回廊道時的一張
+   通知：他不用做任何事，但那句話會在他面前。 */
+function okSince(teamId, cut) {
+  if (!cut) return [];
+  return where('Runs', function (r) {
+    return r.teamId === teamId && r.doneAt && r.doneAt > cut;
+  }).sort(function (a, b) { return b.doneAt - a.doneAt; });
 }
 
 /* 封存一根岩心。
@@ -6330,50 +6378,6 @@ function actApprove(runId, word) {
 
    存的是當下算出來的像素圖與數字，不是 runId 的一個指標：
    規則以後改了，他封存的那一根不會跟著變成別的樣子。 */
-function actSeal(runId, name) {
-  var r = find('Runs', function (x) { return x.runId === runId; });
-  if (!r || r.state !== 'approved') return null;
-  var s = runShape(runId);
-  /* 封存給的是「一格的權利」，不是直接占掉一格。
-
-     權利要拿到全班那張圖上去用：能打通的那幾格會亮起來，點下去它才
-     變成你的。那一下才是 PaGamO 真正直覺的動作——地圖本身就是介面，
-     不是一個看的頁面。
-
-     這一格不影響任何判定。它給的是「這是我們打通的」。 */
-  var tm = teamOf(r.teamId);
-  if (tm) { tm.claims = (tm.claims || 0) + 1; }
-  r.state = 'done';
-  r.doneAt = now();
-  r.coreName = String(name || '').trim().slice(0, 16);
-
-  /* 順手插進那一層。
-
-     本來這是另一個步驟：封存完回廊道，廊道上冒出一張「留一個記號」，
-     再切到全班地下城才插得進去。而收起一趟跟把它插進那一層是同一個
-     動作——中間隔一次回廊道、一張看不懂的卡、一次換頁。
-
-     插在最淺的那個還空著的層。通常就是這一趟走出來的那一層；
-     萬一中間漏掉一層（改過資料、舊存檔），也補得回來。 */
-  var d0 = unbuiltDepth(r.teamId);
-  if (d0 >= 0) {
-    tm.builds = tm.builds || {};
-    tm.builds['d' + d0] = { k: 'run', runId: runId };
-  }
-  DB.Keeps.push({
-    keepId: nid('K'), teamId: r.teamId, runId: runId,
-    name: r.coreName, at: now(),
-    /* 當時在哪一層。架子上那一排的顏色就是他走過的地層。 */
-    /* 剛走完的那一層，不是接下來要走的那一層。 */
-    zone: strataAt(Math.max(0, depthOf(r.teamId) - 1), r.teamId).key,
-    px: coreOf(runId),
-    est: s.est, elapsed: s.elapsed, moved: s.moved,
-    rested: s.rested, blank: s.blank
-  });
-  save();
-  logEvent('seal', { teamId: r.teamId, runId: runId, name: r.coreName });
-  return r;
-}
 
 /* 改寫專案名稱。這是學生自己做的——招牌上寫什麼是他們的事，
    老師不替他們命名。改名字不會動到招牌的材質（那個吃深度）。 */
@@ -7085,7 +7089,7 @@ function seen() {
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
-  pick: 'student', eco: 'student', pack: 'student',
+  eco: 'student', pack: 'student',
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student',
   claim: 'student',
@@ -7478,7 +7482,6 @@ var ACTS = {
   },
 
   /* 老師勾可以了 → 去挑裝備 */
-  gear: function (runId) { go('pick', { id: runId }); },
 
   /* 在這一層留下一個記號。
 
@@ -7529,17 +7532,6 @@ var ACTS = {
     render();
     var c = document.querySelector('.bstory');
     if (c) c.scrollIntoView({ block: 'center' });
-  },
-
-  /* 封存這一趟。名字與方向都選填。 */
-  seal: function (runId) {
-    var name = (document.getElementById('cname') || {}).value || '';
-    if (!actSeal(runId, name)) return say('這一趟已經封存了。');
-    DRAFT.cName = '';
-    /* 封存的同時已經插進那一層了。落在全班地下城——
-       剛插進去的那一根就在剖面圖上自己那一條裡。 */
-    go('eco', {});
-    say('收起來了。');
   },
 
   /* 學生改自己的招牌 */
@@ -7652,7 +7644,7 @@ var ACTS = {
     var word = (document.getElementById('gr-word') || {}).value || '';
     if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
     go('radar');
-    say('回過去了。');
+    say('勾了。');
   }
 };
 
@@ -8225,6 +8217,18 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
+  /* 老師勾了。不用按任何東西——記號已經插進那一層了。
+     這裡只把他那一句話擺在面前，因為那是整條流程裡唯一
+     「別人為你做了一件事」的時刻。 */
+  okSince(t.teamId, SEEN_CUT).forEach(function (r) {
+    var m = msOf(r.msId);
+    H.push('<div class="okcard">');
+    H.push('<div class="eyebrow lit">老師勾了</div>');
+    H.push('<b>' + esc(m ? m.title : '') + '</b>');
+    if (r.word) H.push('<p class="quote big">' + nl(r.word) + '</p>');
+    H.push('</div>');
+  });
+
   /* 這一圈走到哪。死線勇者一直讓你知道現在是專注還是休息，
      那個迴圈才會上癮。 */
   H.push(beatBar(next, t));
@@ -8325,7 +8329,7 @@ function stepRow(runId) {
 function taskTag(next) {
   return ({
     name: '第一件事', commit: '新的', doing: '正在做',
-    stamped: '結果出來了', review: '在老師那邊', back: '退回來了', gear: '老師勾了',
+    stamped: '結果出來了', review: '在老師那邊', back: '退回來了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
 }
@@ -8381,8 +8385,7 @@ function stepCard(runId) {
 /* nextThing 回的那個字，對到步驟條的第幾格。 */
 var STEP_AT = {
   commit: 0,
-  doing: 1, stamped: 1, review: 1,
-  gear: 2
+  doing: 1, stamped: 1, review: 1
 };
 
 /* 上一次自己留下的那一句 */
@@ -8429,13 +8432,6 @@ function actionCard(t, next, st) {
   } else if (next.kind === 'stamped') {
     H.push('<div class="eyebrow">交出去了</div>');
     H.push(btn('看準不準', 'go:stamp:' + row.run.runId, 'big'));
-
-  } else if (next.kind === 'gear') {
-    /* 這是整條流程裡唯一「別人為你做了一件事」的時刻，
-       而它本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
-    H.push('<div class="eyebrow lit">老師勾了</div>');
-    if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
-    H.push(btn('收起這一趟', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'back') {
     /* 老師退回來了。他的話放大——那是這一刻唯一要讀的東西，
@@ -8728,62 +8724,7 @@ PAGES.stamp = function () {
 
    這一頁真正給他的東西是「他沒見過的那個形狀」——同一份數字，
    換成一個看得到的樣子。取名選填，他不取一樣封存得下來。 */
-PAGES.pick = function () {
-  var r = find('Runs', function (x) { return x.runId === S.p.id; });
-  if (!r) return '<div class="card">找不到。</div>';
-  var t = myTeam();
-  var m = msOf(r.msId);
-  /* 剛走完的那一層。 */
-  var z = strataAt(Math.max(0, depthOf(t.teamId) - 1), t.teamId);
-  var s = runShape(r.runId);
 
-  var H = [head('收起這一趟', m.title, '')];
-
-  if (r.word) {
-    H.push('<div class="card"><div class="eyebrow">老師說</div>' +
-           '<p class="quote">' + nl(r.word) + '</p></div>');
-  }
-
-  /* 這一趟的數字。本來這裡還畫一根石片——石片跟記號一樣一趟一個，
-     兩個都放就是重複，所以石片併進記號了：那個形狀現在是點開記號
-     才看到的東西，不是另一個要學的名詞。 */
-  H.push('<div class="card fa ' + z.key + ' coreview">');
-  H.push('<div class="eyebrow">' + esc(z.name) + '</div>');
-  H.push('<div class="log-num">說 <b>' + s.est + '</b> 天　·　過了 <b>' +
-    s.elapsed + '</b> 天</div>');
-  H.push('</div>');
-
-
-  /* 這幾天你動過哪幾天。
-
-     每天要按的那一版拿掉之後，這一份資料本來就會不見。改成在這裡一次
-     補齊：一張那幾天的格子，點一下標起來。選填——不標一樣交得出去，
-     而且它不進判定（判定只看承諾幾天與行事曆過了幾天）。
-
-     它唯一影響的是那一趟長成什麼樣子的石片。 */
-  var askDay = RULES.asks('days', depthOf(t.teamId) - 1);
-  if (askDay !== 'off') {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow' + (askDay === 'new' ? ' lit' : '') +
-      '">動過的日子　選填</div>');
-    H.push(dayGrid(r.runId));
-    H.push('</div>');
-  }
-
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">給這一趟取個名字　選填</div>');
-  H.push('<div class="rn-row">');
-  H.push('<input id="cname" value="' + esc(draft('cName', '')) + '" oninput="DRAFT[\'cName\']=this.value" maxlength="16" placeholder="' +
-    esc('例：訪談那一週') + '">');
-  H.push('</div>');
-  H.push('</div>');
-
-  /* 這一頁本來還放一張「挑一個記號」。現在按下封存就順手插進去了，
-     所以那張不用出現——一個動作就是一顆鈕。 */
-
-  H.push(btn('收起來', 'seal:' + r.runId, 'big'));
-  return H.join('');
-};
 /* 選方向那張小地圖拿掉了：占地那一下改在全班那張圖上做。
    地圖是動手的地方，不是一個看的頁面。 */
 
@@ -8971,12 +8912,16 @@ var BEATS = [
   { k: 'camp', s: '完成紀錄' }
 ];
 
+/* 這一圈走到哪。
+
+   本來最後一行是「其他狀態就看 claimsOf」，而 claimsOf 是一個
+   只增不減的計數器——所以第一次完成之後，「承諾天數」那一拍
+   永遠被畫成「完成紀錄」。每一拍現在都由狀態直接決定。 */
 function beatAt(next, t) {
   var k = next.kind;
   if (k === 'doing') return 'away';
   if (k === 'submit' || k === 'stamped' || k === 'review') return 'rep';
-  if (k === 'gear' || k === 'left' || k === 'waitexit') return 'camp';
-  if (claimsOf(t.teamId) || DRAFT.build) return 'camp';
+  if (k === 'left' || k === 'waitexit') return 'camp';
   return 'prep';
 }
 
@@ -9216,7 +9161,6 @@ function scene(t, row, st, kind) {
     : kind === 'stamped' ? '走到底了'
     : kind === 'review' ? '在等老師'
     : kind === 'back' ? '老師退回來了'
-    : kind === 'gear' ? '可以收起來了'
     : '待命';
   H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
     '">' + esc(tag) + '</div>');
@@ -11683,7 +11627,7 @@ window.AUDIT = function () {
   var run = where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'running'; })[0];
   var ms = where('Milestones', function (m) { return m.classId === cls; })[0];
   var P = [['home', {}], ['commit', { id: ms.msId }], ['battle', { id: (run || done).runId, at: 'end' }],
-           ['stamp', { id: done.runId }], ['pick', { id: done.runId }],
+           ['stamp', { id: done.runId }],
            ['pack', {}], ['codex', {}],
            ['eco', {}], ['exit', {}], ['sign', {}]];
   var out = [];

@@ -134,8 +134,7 @@ function nextThing(teamId) {
   if (back) return { kind: 'back', row: back };
 
   /* 3. 老師勾可以了，還沒挑裝備 */
-  var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
-  if (gear) return { kind: 'gear', row: gear };
+  /* approved 這個狀態不再出現：老師勾下去就直接 done（見 actApprove）。 */
   /* 3. 正在做的那一趟。
 
      這一條排在「還沒承諾的」前面，順序很要緊：反過來的話，老師派了
@@ -827,15 +826,56 @@ function actResend(teamId, runId) {
   return true;
 }
 
+/* 老師勾一個「可以」。
+
+   勾下去那一刻就是完成：記號當場插進那一層，石片當場長出來。
+
+   本來中間還有一步——學生要再走到一頁去按「收起來」。那一步
+   不產生任何東西，只是叫他確認一次自己已經做完、而且老師也已經
+   勾過的事。approved 這個狀態因此也不再出現。 */
 function actApprove(runId, word) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || (r.state !== 'submitted' && r.state !== 'back')) return null;
+  var s = runShape(runId);
   r.word = word || '';
-  r.state = 'approved';
   r.approvedAt = now();
+  r.state = 'done';
+  r.doneAt = now();
+
+  var tm = teamOf(r.teamId);
+  if (tm) tm.claims = (tm.claims || 0) + 1;
+
+  /* 插在最淺的那個還空著的層。通常就是這一趟走出來的那一層；
+     萬一中間漏掉一層（改過資料、舊存檔），也補得回來。 */
+  var d0 = unbuiltDepth(r.teamId);
+  if (d0 >= 0 && tm) {
+    tm.builds = tm.builds || {};
+    tm.builds['d' + d0] = { k: 'run', runId: runId };
+  }
+  DB.Keeps.push({
+    keepId: nid('K'), teamId: r.teamId, runId: runId,
+    name: '', at: now(),
+    /* 剛走完的那一層，不是接下來要走的那一層。 */
+    zone: strataAt(Math.max(0, depthOf(r.teamId) - 1), r.teamId).key,
+    px: coreOf(runId),
+    est: s.est, elapsed: s.elapsed, moved: s.moved,
+    rested: s.rested, blank: s.blank
+  });
   save();
   logEvent('approve', { teamId: r.teamId, runId: runId, len: String(word || '').length });
   return r;
+}
+
+/* 你不在的時候老師勾了哪幾件。
+
+   「收起來」那一步拿掉之後，老師那一句話就沒有一個落點了——而它是
+   整條流程裡唯一「別人為你做了一件事」的時刻。改成回廊道時的一張
+   通知：他不用做任何事，但那句話會在他面前。 */
+function okSince(teamId, cut) {
+  if (!cut) return [];
+  return where('Runs', function (r) {
+    return r.teamId === teamId && r.doneAt && r.doneAt > cut;
+  }).sort(function (a, b) { return b.doneAt - a.doneAt; });
 }
 
 /* 封存一根岩心。
@@ -850,50 +890,6 @@ function actApprove(runId, word) {
 
    存的是當下算出來的像素圖與數字，不是 runId 的一個指標：
    規則以後改了，他封存的那一根不會跟著變成別的樣子。 */
-function actSeal(runId, name) {
-  var r = find('Runs', function (x) { return x.runId === runId; });
-  if (!r || r.state !== 'approved') return null;
-  var s = runShape(runId);
-  /* 封存給的是「一格的權利」，不是直接占掉一格。
-
-     權利要拿到全班那張圖上去用：能打通的那幾格會亮起來，點下去它才
-     變成你的。那一下才是 PaGamO 真正直覺的動作——地圖本身就是介面，
-     不是一個看的頁面。
-
-     這一格不影響任何判定。它給的是「這是我們打通的」。 */
-  var tm = teamOf(r.teamId);
-  if (tm) { tm.claims = (tm.claims || 0) + 1; }
-  r.state = 'done';
-  r.doneAt = now();
-  r.coreName = String(name || '').trim().slice(0, 16);
-
-  /* 順手插進那一層。
-
-     本來這是另一個步驟：封存完回廊道，廊道上冒出一張「留一個記號」，
-     再切到全班地下城才插得進去。而收起一趟跟把它插進那一層是同一個
-     動作——中間隔一次回廊道、一張看不懂的卡、一次換頁。
-
-     插在最淺的那個還空著的層。通常就是這一趟走出來的那一層；
-     萬一中間漏掉一層（改過資料、舊存檔），也補得回來。 */
-  var d0 = unbuiltDepth(r.teamId);
-  if (d0 >= 0) {
-    tm.builds = tm.builds || {};
-    tm.builds['d' + d0] = { k: 'run', runId: runId };
-  }
-  DB.Keeps.push({
-    keepId: nid('K'), teamId: r.teamId, runId: runId,
-    name: r.coreName, at: now(),
-    /* 當時在哪一層。架子上那一排的顏色就是他走過的地層。 */
-    /* 剛走完的那一層，不是接下來要走的那一層。 */
-    zone: strataAt(Math.max(0, depthOf(r.teamId) - 1), r.teamId).key,
-    px: coreOf(runId),
-    est: s.est, elapsed: s.elapsed, moved: s.moved,
-    rested: s.rested, blank: s.blank
-  });
-  save();
-  logEvent('seal', { teamId: r.teamId, runId: runId, name: r.coreName });
-  return r;
-}
 
 /* 改寫專案名稱。這是學生自己做的——招牌上寫什麼是他們的事，
    老師不替他們命名。改名字不會動到招牌的材質（那個吃深度）。 */

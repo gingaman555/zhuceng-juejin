@@ -52,7 +52,7 @@ function seen() {
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
-  pick: 'student', eco: 'student', pack: 'student',
+  eco: 'student', pack: 'student',
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student',
   claim: 'student',
@@ -445,7 +445,6 @@ var ACTS = {
   },
 
   /* 老師勾可以了 → 去挑裝備 */
-  gear: function (runId) { go('pick', { id: runId }); },
 
   /* 在這一層留下一個記號。
 
@@ -496,17 +495,6 @@ var ACTS = {
     render();
     var c = document.querySelector('.bstory');
     if (c) c.scrollIntoView({ block: 'center' });
-  },
-
-  /* 封存這一趟。名字與方向都選填。 */
-  seal: function (runId) {
-    var name = (document.getElementById('cname') || {}).value || '';
-    if (!actSeal(runId, name)) return say('這一趟已經封存了。');
-    DRAFT.cName = '';
-    /* 封存的同時已經插進那一層了。落在全班地下城——
-       剛插進去的那一根就在剖面圖上自己那一條裡。 */
-    go('eco', {});
-    say('收起來了。');
   },
 
   /* 學生改自己的招牌 */
@@ -619,6 +607,6 @@ var ACTS = {
     var word = (document.getElementById('gr-word') || {}).value || '';
     if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
     go('radar');
-    say('回過去了。');
+    say('勾了。');
   }
 };

@@ -65,6 +65,18 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
+  /* 老師勾了。不用按任何東西——記號已經插進那一層了。
+     這裡只把他那一句話擺在面前，因為那是整條流程裡唯一
+     「別人為你做了一件事」的時刻。 */
+  okSince(t.teamId, SEEN_CUT).forEach(function (r) {
+    var m = msOf(r.msId);
+    H.push('<div class="okcard">');
+    H.push('<div class="eyebrow lit">老師勾了</div>');
+    H.push('<b>' + esc(m ? m.title : '') + '</b>');
+    if (r.word) H.push('<p class="quote big">' + nl(r.word) + '</p>');
+    H.push('</div>');
+  });
+
   /* 這一圈走到哪。死線勇者一直讓你知道現在是專注還是休息，
      那個迴圈才會上癮。 */
   H.push(beatBar(next, t));
@@ -165,7 +177,7 @@ function stepRow(runId) {
 function taskTag(next) {
   return ({
     name: '第一件事', commit: '新的', doing: '正在做',
-    stamped: '結果出來了', review: '在老師那邊', back: '退回來了', gear: '老師勾了',
+    stamped: '結果出來了', review: '在老師那邊', back: '退回來了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
 }
@@ -221,8 +233,7 @@ function stepCard(runId) {
 /* nextThing 回的那個字，對到步驟條的第幾格。 */
 var STEP_AT = {
   commit: 0,
-  doing: 1, stamped: 1, review: 1,
-  gear: 2
+  doing: 1, stamped: 1, review: 1
 };
 
 /* 上一次自己留下的那一句 */
@@ -269,13 +280,6 @@ function actionCard(t, next, st) {
   } else if (next.kind === 'stamped') {
     H.push('<div class="eyebrow">交出去了</div>');
     H.push(btn('看準不準', 'go:stamp:' + row.run.runId, 'big'));
-
-  } else if (next.kind === 'gear') {
-    /* 這是整條流程裡唯一「別人為你做了一件事」的時刻，
-       而它本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
-    H.push('<div class="eyebrow lit">老師勾了</div>');
-    if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
-    H.push(btn('收起這一趟', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'back') {
     /* 老師退回來了。他的話放大——那是這一刻唯一要讀的東西，
@@ -568,62 +572,7 @@ PAGES.stamp = function () {
 
    這一頁真正給他的東西是「他沒見過的那個形狀」——同一份數字，
    換成一個看得到的樣子。取名選填，他不取一樣封存得下來。 */
-PAGES.pick = function () {
-  var r = find('Runs', function (x) { return x.runId === S.p.id; });
-  if (!r) return '<div class="card">找不到。</div>';
-  var t = myTeam();
-  var m = msOf(r.msId);
-  /* 剛走完的那一層。 */
-  var z = strataAt(Math.max(0, depthOf(t.teamId) - 1), t.teamId);
-  var s = runShape(r.runId);
 
-  var H = [head('收起這一趟', m.title, '')];
-
-  if (r.word) {
-    H.push('<div class="card"><div class="eyebrow">老師說</div>' +
-           '<p class="quote">' + nl(r.word) + '</p></div>');
-  }
-
-  /* 這一趟的數字。本來這裡還畫一根石片——石片跟記號一樣一趟一個，
-     兩個都放就是重複，所以石片併進記號了：那個形狀現在是點開記號
-     才看到的東西，不是另一個要學的名詞。 */
-  H.push('<div class="card fa ' + z.key + ' coreview">');
-  H.push('<div class="eyebrow">' + esc(z.name) + '</div>');
-  H.push('<div class="log-num">說 <b>' + s.est + '</b> 天　·　過了 <b>' +
-    s.elapsed + '</b> 天</div>');
-  H.push('</div>');
-
-
-  /* 這幾天你動過哪幾天。
-
-     每天要按的那一版拿掉之後，這一份資料本來就會不見。改成在這裡一次
-     補齊：一張那幾天的格子，點一下標起來。選填——不標一樣交得出去，
-     而且它不進判定（判定只看承諾幾天與行事曆過了幾天）。
-
-     它唯一影響的是那一趟長成什麼樣子的石片。 */
-  var askDay = RULES.asks('days', depthOf(t.teamId) - 1);
-  if (askDay !== 'off') {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow' + (askDay === 'new' ? ' lit' : '') +
-      '">動過的日子　選填</div>');
-    H.push(dayGrid(r.runId));
-    H.push('</div>');
-  }
-
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">給這一趟取個名字　選填</div>');
-  H.push('<div class="rn-row">');
-  H.push('<input id="cname" value="' + esc(draft('cName', '')) + '" oninput="DRAFT[\'cName\']=this.value" maxlength="16" placeholder="' +
-    esc('例：訪談那一週') + '">');
-  H.push('</div>');
-  H.push('</div>');
-
-  /* 這一頁本來還放一張「挑一個記號」。現在按下封存就順手插進去了，
-     所以那張不用出現——一個動作就是一顆鈕。 */
-
-  H.push(btn('收起來', 'seal:' + r.runId, 'big'));
-  return H.join('');
-};
 /* 選方向那張小地圖拿掉了：占地那一下改在全班那張圖上做。
    地圖是動手的地方，不是一個看的頁面。 */
 
@@ -811,12 +760,16 @@ var BEATS = [
   { k: 'camp', s: '完成紀錄' }
 ];
 
+/* 這一圈走到哪。
+
+   本來最後一行是「其他狀態就看 claimsOf」，而 claimsOf 是一個
+   只增不減的計數器——所以第一次完成之後，「承諾天數」那一拍
+   永遠被畫成「完成紀錄」。每一拍現在都由狀態直接決定。 */
 function beatAt(next, t) {
   var k = next.kind;
   if (k === 'doing') return 'away';
   if (k === 'submit' || k === 'stamped' || k === 'review') return 'rep';
-  if (k === 'gear' || k === 'left' || k === 'waitexit') return 'camp';
-  if (claimsOf(t.teamId) || DRAFT.build) return 'camp';
+  if (k === 'left' || k === 'waitexit') return 'camp';
   return 'prep';
 }
 

@@ -53,7 +53,6 @@ runsFor(TEAM).forEach(function (x) {
     actSubmit(TEAM, x.run.runId);
     actSkipCamp(x.run.runId);
     actApprove(x.run.runId, '');
-    actSeal(x.run.runId, '');
   }
 });
 
@@ -125,19 +124,16 @@ for (let n = 1; n <= ROUNDS; n++) {
     fail(label + '：復盤完了卻沒出現在老師的雷達上');
   }
 
-  /* 10. 老師只勾一個可以 */
+  /* 10. 老師勾一個可以——勾下去就是完成，學生那邊不用再按一次 */
   actApprove(r.runId, '第 ' + n + ' 輪的話');
-  nt = nextThing(TEAM);
-  if (nt.kind !== 'gear') fail(label + '：勾完可以，學生那邊應該是 gear，卻是 ' + nt.kind);
 
-  /* 11. 封存那一趟 → 這一輪結束 */
+  /* 11. 那一趟當場結束：記號插進那一層，石片長出來 */
   const core = coreOf(r.runId);
   if (!core || core.length < 6) fail(label + '：岩心沒長出來');
-  if (actSeal('nope', '')) fail(label + '：封存了一個不存在的 run');
-  actSeal(r.runId, n % 3 === 0 ? '' : '第 ' + n + ' 趟');
-  if (r.state !== 'done') fail(label + '：封存完狀態應該是 done，卻是 ' + r.state);
+  if (actApprove('nope', '')) fail(label + '：勾了一個不存在的 run');
+  if (r.state !== 'done') fail(label + '：勾完狀態應該是 done，卻是 ' + r.state);
   const kp = keepsOf(TEAM).filter(function (k) { return k.runId === r.runId; })[0];
-  if (!kp || !kp.px) fail(label + '：封存的那一根沒有存下形狀');
+  if (!kp || !kp.px) fail(label + '：那一根石片沒有存下形狀');
   /* 12. 回到乾淨狀態 */
   nt = nextThing(TEAM);
   if (nt.kind !== 'idle') fail(label + '：一輪跑完應該回到 idle，卻是 ' + nt.kind);
@@ -172,7 +168,6 @@ actReflect(TEAM, rX.runId, [0]);
 actSubmit(TEAM, rX.runId);
 actSkipCamp(rX.runId);
 actApprove(rX.runId, '');
-actSeal(rX.runId, '');
 
 console.log('\n跑完 ' + ROUNDS + ' 輪。');
 console.log('  印章分布　🎯 ' + stamps.exact + '　🚀 ' + stamps.early + '　❌ ' + stamps.late);
