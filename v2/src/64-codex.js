@@ -171,7 +171,7 @@ PAGES.crew = function () {
   });
   H.push('</div></div>');
 
-  H.push(btn('看他們被派過哪些任務', 'team:' + tm.teamId, ''));
+  H.push(btn('看他們被派過哪些任務', 'tasks:' + tm.teamId, ''));
   H.push(btn('回班級地下城', 'go:eco', 'ghost'));
   return H.join('');
 };

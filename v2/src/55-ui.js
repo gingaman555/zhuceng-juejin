@@ -541,6 +541,22 @@ var ACTS = {
   /* 點一組的名牌：那一組是誰。 */
   crew: function (id) { go('crew', { id: id }); },
 
+  /* 從一組的那一頁去看他們被派過哪些任務。
+
+     不能直接叫 team：那一支只設 DRAFT 再重畫，而攤開任務的那張卡
+     長在班級地下城上，不在組別頁——按了什麼都不會發生。
+
+     所以要先換頁。而 go() 會清掉 DRAFT，順序不能顛倒。
+     去哪一頁看有沒有自己的組，不看角色：研究者沒有組，
+     用 isTeacher() 判斷會把他丟到一頁 myTeam() 是 null 的地方。 */
+  tasks: function (id) {
+    go(myTeam() ? 'eco' : 'classeco');
+    DRAFT.dt = id; DRAFT.tab = 'team';
+    render();
+    var c = document.querySelector('.dtcard') || document.querySelector('.segs');
+    if (c) c.scrollIntoView({ block: 'start' });
+  },
+
   /* 那一組給自己的形容。只有自己改得動（擋在 PAGES.crew）。 */
   blurb: function () {
     var t = myTeam();
