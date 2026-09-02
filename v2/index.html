@@ -26,8 +26,23 @@
      那要靠另一件事收：文字量降到最低——句子少了，就不需要
      用顏色把它們壓下去。 */
   --ink:#F4F0E7; --dim:#DCD5C7; --mute:#C3BBAC;
+  /* ── 一個顏色一件事 ──
+
+       金    你可以按這裡，或你正在這裡。只有這一件事。
+       冷藍  這一格等你填（--write，見 52-material.css）。
+       綠    準：你說幾天就是幾天。這個系統唯一的靶心。
+       藍／橙 比你說的早／比你說的久。同一件事的兩個方向，
+              所以亮度與彩度配成一對——誰都不比誰難看。
+       紅    要注意：老師退回、停很久了、過了老師排的日子。
+
+     判定本來是紅綠燈（早綠、準金、晚紅），那在教「早比較好」。
+     可是規則自己寫著「比你自己說的天數久，這不會拿走任何權利」，
+     而且紅綠燈會直接製造灌水估算——估寬一點就永遠是綠的。
+
+     --warn 拿掉了：用了 0 次，而且值跟 --gold 一模一樣。 */
   --gold:#E9B341; --gold2:#F5CB74; --gold-d:#7A5A18;
-  --ok:#7CC98F; --over:#D9603F; --warn:#E9B341;
+  --ok:#7CC98F; --over:#D9603F;
+  --early:#8CA9D6; --late:#D6A86E;
   --L:#C9A227; --Ld:#9A7E22; --Ll:#F2E6C8; --Lbg:#171208; --Lline:#3A2E12;
 }
 
@@ -263,8 +278,8 @@ a.plain:hover{color:var(--gold)}
   background:var(--panel);border:1px solid var(--line);
   border-top:3px solid var(--gold);padding:44px 22px;text-align:center;margin:0 0 22px
 }
-.stamp-card.late{border-top-color:var(--over)}
-.stamp-card.early{border-top-color:var(--ok)}
+.stamp-card.late{border-top-color:var(--late)}
+.stamp-card.early{border-top-color:var(--early)}
 /* 印章從 emoji 換成點陣圖之後，尺寸由圖決定，不由字級決定。 */
 .stamp-mark{margin-bottom:11px}
 .stamp-mark .px{width:66px;height:auto;image-rendering:pixelated}
@@ -328,9 +343,11 @@ a.plain:hover{color:var(--gold)}
 .log-num{font-size:22px;color:var(--mute);margin:5px 0}
 .log-num b{font-size:22px;color:var(--gold)}
 .st{font-size:22px;padding:3px 8px;border:1px solid var(--line2);color:var(--dim)}
-.st.exact{color:var(--gold);border-color:var(--gold-d)}
-.st.early{color:var(--ok);border-color:var(--ok)}
-.st.late{color:var(--over);border-color:var(--over)}
+/* 準是靶心，所以它是唯一亮起來的那一個。早與晚是同一件事的
+   兩個方向，配成一對——本來早是綠、晚是紅，那在教「早比較好」。 */
+.st.exact{color:var(--ok);border-color:var(--ok)}
+.st.early{color:var(--early);border-color:var(--early)}
+.st.late{color:var(--late);border-color:var(--late)}
 
 .mini{display:flex;flex-direction:column;gap:5px;margin-top:11px}
 .mini-row{display:flex;gap:11px;align-items:center;font-size:22px;color:var(--mute)}
@@ -2664,7 +2681,7 @@ button.ac:active{transform:translateY(1px)}
 .tk-n span{font-size:22px;color:var(--dim)}
 .tk-n b{font-size:22px;font-weight:400;color:var(--ink);
   font-variant-numeric:tabular-nums;margin-right:11px}
-.tk-n b.late{color:var(--over)}
+.tk-n b.late{color:var(--late)}
 .tk-n .tk-u{margin-left:-8px}
 
 /* 岩心掛在它自己那一趟旁邊——它終於有出處了。 */
@@ -2991,7 +3008,7 @@ button.ac:active{transform:translateY(1px)}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .or-n{font-size:22px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
 .or-n b{color:var(--gold)}
-.or.late .or-n b:last-child{color:var(--over)}
+.or.late .or-n b:last-child{color:var(--late)}
 .or-w{grid-column:2 / 4;font-size:22px;color:var(--mute);margin-top:-5px}
 
 /* 招牌的小圖。只有剖面圖的欄頭有訂過大小，所以它在別的地方
@@ -3095,9 +3112,9 @@ button.ac:active{transform:translateY(1px)}
 .rs i u{text-decoration:none;color:var(--dim);padding:0 2px}
 /* 準度那一條 */
 .rs::after{content:"";display:block;width:100%;height:5px;background:var(--line)}
-.rs.exact::after{background:var(--gold)}
-.rs.early::after{background:var(--ok)}
-.rs.late::after{background:var(--over)}
+.rs.exact::after{background:var(--ok)}
+.rs.early::after{background:var(--early)}
+.rs.late::after{background:var(--late)}
 
 /* 帶子的名字。概念要有名字，他才知道自己在練什麼。 */
 .rs-h{
@@ -5721,13 +5738,19 @@ var STAMP_PX = {
     '....+#+..+#+....', '...+#+..+#+.....', '................', '................']
 };
 
-/* 印章的顏色由外面的 .stamp-card / .acc-c 決定（綠 / 金 / 紅），
-   所以這裡一律畫成同一組灰白，讓它繼承旁邊的顏色會比較好——
-   但點陣圖是寫死顏色的，所以直接給三組。 */
+/* 三個顏色跟 50-style.css 的 --early／--ok／--late 同一套意思。
+   點陣圖是寫死顏色的，所以這裡直接抄一份。
+
+   本來是紅綠燈：早綠、準金、晚紅。那在教學生「早比較好、晚比較糟」，
+   而規則自己寫著「比你自己說的天數久，這不會拿走任何權利」——
+   而且紅綠燈會直接製造灌水估算，估寬一點就永遠是綠的。
+
+   現在準是唯一亮起來的那一個（綠，靶心），早與晚是同一件事的
+   兩個方向，配成一對藍與橙——亮度與彩度對齊，誰都不比誰難看。 */
 var STAMP_PAL = {
-  early: { '#': '#7FC98A', o: '#3E7A47', '*': '#DFF5E4' },
-  exact: { '#': '#E8C25A', o: '#8A6E1E', '*': '#FBF0CE' },
-  late:  { '#': '#E08A6A', o: '#8A4429', '*': '#F8DDD1' }
+  early: { '#': '#8CA9D6', o: '#3F5480', '*': '#DCE6F7' },
+  exact: { '#': '#7CC98F', o: '#31674A', '*': '#DCF4E2' },
+  late:  { '#': '#D6A86E', o: '#7E5B2E', '*': '#F7E7D0' }
 };
 
 function stampPx(key, cls) {
