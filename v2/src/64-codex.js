@@ -28,18 +28,18 @@ PAGES.codex = function () {
 
   var H = [head('圖鑑', '這座地下城裡有什麼', '')];
 
-  /* 上面那一排：六層 ＋ 東西。一次只看一頁。 */
+  /* 上面那一排：六層 ＋ 石片。一次只看一頁。 */
   H.push('<div class="cxtabs">');
   STRATA.forEach(function (z) {
     H.push('<button class="cxt ' + z.key + (tab === z.key ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:' + z.key })) + '\'>' +
       esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
   });
-  H.push('<button class="cxt gear' + (tab === 'gear' ? ' on' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:gear' })) + '\'>物件</button>');
+  H.push('<button class="cxt core' + (tab === 'core' ? ' on' : '') +
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>石片</button>');
   H.push('</div>');
 
-  if (tab === 'gear') {
+  if (tab === 'core') {
     H.push(codexThings(t, here));
   } else {
     var z = here;
@@ -62,39 +62,47 @@ PAGES.codex = function () {
   return H.join('');
 };
 
-/* 東西那一頁：帶得走的一種，與地上撿得到的幾種。 */
+/* 石片那一頁。
+
+   本來這一頁還有一段「地上的物件」，六樣佈景排成一份目錄配說明文字。
+   那個版面在說「這些值得收集」，可是它們拿不到、數不了、跟任何事都
+   無關；而它旁邊的石片是真的，兩個並排會讓人以為物件也拿得到，
+   然後去找怎麼拿。找不到。
+
+   物件在廊道裡留著——那裡它有用：每一層長的不一樣，那是讓六層像
+   六個地方而不是六個顏色的東西。 */
 function codexThings(t, here) {
   var mine = keepsOf(t.teamId);
   var H = ['<div class="card">'];
-  H.push('<div class="eyebrow">帶得走的</div>');
-  H.push('<div class="cx">');
-  H.push('<div class="cxi' + (mine.length ? ' met' : '') + '">');
-  H.push(pxTag(mine.length ? (mine[mine.length - 1].px || coreOf(mine[mine.length - 1].runId))
-    : ['..++++++++++..', '.+##########+.', '.+#*######*#+.', '.+##########+.',
-       '.+#+......+#+.', '.+#+......+#+.', '.+#..+..+..#+.', '.+..+..+..+..',
-       '.+##########+.', '..++++++++++..'],
-    here.pal, 'cx-px core'));
-  H.push('<div><b>石片</b>');
-  /* 三句砍成一句。那一根長什麼樣子看得到，不用讀。 */
-  H.push('<em>一天兩列。來過實心，沒動空心。</em>');
-  if (mine.length) H.push('<span class="cx-met">你已經封存了 ' + mine.length + ' 根</span>');
-  H.push('</div></div>');
-  H.push('</div></div>');
 
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">地上的物件</div>');
-  H.push('<p class="dim">每一層長的不一樣。</p>');
-  H.push('<div class="cx">');
-  [['碎石', RUBBLE.px, '往下走的時候崩下來的。'],
-   ['水晶', CRYSTAL.px, '最暗的時候還看得到。'],
-   ['蕈菇', SHROOM.px, '走通的地方才長得出來。'],
-   ['鐵件', BOLT.px, '有人來過。鏽住了，轉不動。'],
-   ['餘燼', EMBER.px, '地上還有餘燼在燒。'],
-   ['火把', TORCH.frames[0], '你來過的每一天，牆上多一盞。']
-  ].forEach(function (p) {
-    H.push('<div class="cxi met">');
-    H.push(pxTag(p[1], here.pal, 'cx-px'));
-    H.push('<div><b>' + esc(p[0]) + '</b><em>' + esc(p[2]) + '</em></div>');
+  if (!mine.length) {
+    /* 還沒有半根。畫一根空的輪廓，寫它會怎麼來——
+       空白的一頁不會讓人知道這裡以後會長什麼。 */
+    H.push('<div class="eyebrow">石片</div>');
+    H.push('<div class="cx"><div class="cxi">');
+    H.push(pxTag(['..++++++++++..', '.+##########+.', '.+#*######*#+.',
+      '.+##########+.', '.+#+......+#+.', '.+#+......+#+.', '.+#..+..+..#+.',
+      '.+..+..+..+..', '.+##########+.', '..++++++++++..'], here.pal, 'cx-px core'));
+    H.push('<div><b>還沒有</b><em>老師收下一趟，長出一根。</em></div>');
+    H.push('</div></div></div>');
+    return H.join('');
+  }
+
+  /* 一趟一根，全部排在一起。
+
+     刻意沒有總數、進度、缺哪幾根——一趟長一根，本來就不會有缺的。
+     沒有東西需要被填滿，所以沒有人會為了填滿它多做一件事。 */
+  H.push('<div class="eyebrow">走過 ' + mine.length + ' 趟，' + mine.length + ' 根</div>');
+  H.push('<p class="dim">一趟一根。老師收下才長得出來，而且不會有兩根一樣。</p>');
+  H.push('<div class="cores">');
+  mine.forEach(function (k) {
+    var z = null;
+    STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
+    var run = find('Runs', function (x) { return x.runId === k.runId; });
+    var ms = run ? msOf(run.msId) : null;
+    H.push('<div class="core1 ' + (k.zone || here.key) + '">');
+    H.push(pxTag(k.px || coreOf(k.runId), (z || here).pal, 'cx-px core'));
+    H.push('<b>' + esc(ms ? ms.title : '（那一趟）') + '</b>');
     H.push('</div>');
   });
   H.push('</div></div>');
