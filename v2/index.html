@@ -2668,6 +2668,30 @@ button.tk-k:hover span{color:var(--gold)}
 .mouth .mmark{width:26px;height:auto;bottom:44px}
 .mouth .mmark .px{width:26px;height:auto;max-height:154px;image-rendering:pixelated}
 
+/* ── 走過的每一趟 ──
+   一趟一格，舊的在左、新的在右——跟廊道同一個方向，
+   所以「往左滑」＝「往回看」不用學。打開的時候停在最右邊。 */
+.rstrip{
+  overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+  margin:0 0 11px;padding:0 0 6px;background:var(--sunk);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06)
+}
+.rs-in{display:flex;align-items:flex-end;gap:2px;padding:11px 11px 0}
+.rs{
+  flex:0 0 110px;display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:9px 6px 11px;border:0;background:var(--panel);color:inherit;font:inherit;
+  cursor:pointer
+}
+.rs-px{display:flex;align-items:flex-end;height:88px}
+.rs-px .px{width:22px;height:auto;max-height:88px;image-rendering:pixelated}
+.rs-s{display:flex;align-items:center;height:25px}
+.rs-s .px{width:33px;height:25px;image-rendering:pixelated}
+.rs b{
+  font-size:22px;font-weight:400;color:var(--ink);max-width:99px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.rs i{font-style:normal;font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -7114,6 +7138,16 @@ var ACTS = {
     say('走過的那幾天留著。重新說一次要幾天。');
   },
 
+  /* 點帶子上的一格：打開那一趟的完整紀錄。
+     go() 會清掉 DRAFT，所以要在它之後才設 lg。 */
+  rec: function (runId) {
+    go('pack', {});
+    DRAFT.lg = runId;
+    render();
+    var e = document.querySelector('.rec.open');
+    if (e) e.scrollIntoView({ block: 'center' });
+  },
+
   /* 分段：打一句按 Enter 就多一項。
 
      重畫之後焦點會沒掉，所以自己補回去——不然切完第一段就得再點
@@ -7715,6 +7749,8 @@ PAGES.home = function () {
      只在那張圖上動八次，它沒有機會被學會。所以圖回到全班那一頁。 ── */
   H.push(scene(t, next.row, st, next.kind));
   if (r) H.push(stepRow(r.runId));
+  /* 走過的每一趟。往左滑就是往回看。 */
+  H.push(runStrip(t));
 
   /* ── 要做的那一件事，釘在畫面下面。 ── */
   H.push('<div class="dock">');
@@ -7742,6 +7778,40 @@ PAGES.home = function () {
 
   return H.join('');
 };
+
+/* ---------- 走過的每一趟 ----------
+
+   營地上那一排是「堆積」，但它擠在洞口那一小塊裡，滿了就放不下。
+   走過八趟的人真正想做的事是往回看：那一趟叫什麼、說幾天、實際幾天。
+
+   舊的在左、新的在右——跟廊道同一個方向（往右走就是往深處走），
+   所以「往左滑」＝「往回看」不用學。打開的時候停在最右邊，也就是現在。 */
+function runStrip(t) {
+  var rows = runsFor(t.teamId).filter(function (x) { return x.run.stamp; });
+  if (!rows.length) return '';
+  var H = ['<div class="rstrip"><div class="rs-in">'];
+  rows.forEach(function (x) {
+    var r = x.run;
+    var kp = null;
+    keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
+    var d = -1;
+    Object.keys(t.builds || {}).forEach(function (bk) {
+      if (t.builds[bk].runId === r.runId) d = Number(bk.slice(1));
+    });
+    var z = strataAt(d >= 0 ? d : 0, t.teamId);
+    var px = coreOf(r.runId);
+    H.push('<button class="rs" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'rec:' + r.runId })) + '\' title="' +
+      esc((x.ms ? x.ms.title : '') + '　' + z.name) + '">');
+    H.push('<span class="rs-px">' + (px ? pxTag(px, z.pal, '') : '') + '</span>');
+    H.push('<span class="rs-s">' + stampPx(r.stamp) + '</span>');
+    H.push('<b>' + esc((kp && kp.name) || (x.ms ? x.ms.title : '')) + '</b>');
+    H.push('<i>' + r.est + ' → ' + (r.actual || 0) + '</i>');
+    H.push('</button>');
+  });
+  H.push('</div></div>');
+  return H.join('');
+}
 
 /* 老師分的段，排成一列小方塊。勾得掉。
    它接在任務那一行下面，不是一張卡——段是任務的一部分，不是另一件事。 */
@@ -8884,6 +8954,13 @@ function keepScroll(box, key, centre) {
 function scrollScene() {
   /* 廊道拖得動。每次重畫都要重掛，因為 innerHTML 被換掉了。 */
   dragScene();
+
+  /* 走過的那一條停在最右邊——最右邊是現在。
+     keepScroll 記得他拖到哪，所以往回看過的人回來還在原地。 */
+  var rs = document.querySelector('.rstrip');
+  if (rs) {
+    keepScroll(rs, 'rstrip', { at: rs.scrollWidth, x: rs.scrollWidth, y: 0 });
+  }
 
   var box = document.querySelector('.scn-scroll');
   var hero = document.querySelector('.scn-hero');

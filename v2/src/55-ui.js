@@ -514,6 +514,16 @@ var ACTS = {
     say('走過的那幾天留著。重新說一次要幾天。');
   },
 
+  /* 點帶子上的一格：打開那一趟的完整紀錄。
+     go() 會清掉 DRAFT，所以要在它之後才設 lg。 */
+  rec: function (runId) {
+    go('pack', {});
+    DRAFT.lg = runId;
+    render();
+    var e = document.querySelector('.rec.open');
+    if (e) e.scrollIntoView({ block: 'center' });
+  },
+
   /* 分段：打一句按 Enter 就多一項。
 
      重畫之後焦點會沒掉，所以自己補回去——不然切完第一段就得再點

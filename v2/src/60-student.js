@@ -77,6 +77,8 @@ PAGES.home = function () {
      只在那張圖上動八次，它沒有機會被學會。所以圖回到全班那一頁。 ── */
   H.push(scene(t, next.row, st, next.kind));
   if (r) H.push(stepRow(r.runId));
+  /* 走過的每一趟。往左滑就是往回看。 */
+  H.push(runStrip(t));
 
   /* ── 要做的那一件事，釘在畫面下面。 ── */
   H.push('<div class="dock">');
@@ -104,6 +106,40 @@ PAGES.home = function () {
 
   return H.join('');
 };
+
+/* ---------- 走過的每一趟 ----------
+
+   營地上那一排是「堆積」，但它擠在洞口那一小塊裡，滿了就放不下。
+   走過八趟的人真正想做的事是往回看：那一趟叫什麼、說幾天、實際幾天。
+
+   舊的在左、新的在右——跟廊道同一個方向（往右走就是往深處走），
+   所以「往左滑」＝「往回看」不用學。打開的時候停在最右邊，也就是現在。 */
+function runStrip(t) {
+  var rows = runsFor(t.teamId).filter(function (x) { return x.run.stamp; });
+  if (!rows.length) return '';
+  var H = ['<div class="rstrip"><div class="rs-in">'];
+  rows.forEach(function (x) {
+    var r = x.run;
+    var kp = null;
+    keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
+    var d = -1;
+    Object.keys(t.builds || {}).forEach(function (bk) {
+      if (t.builds[bk].runId === r.runId) d = Number(bk.slice(1));
+    });
+    var z = strataAt(d >= 0 ? d : 0, t.teamId);
+    var px = coreOf(r.runId);
+    H.push('<button class="rs" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'rec:' + r.runId })) + '\' title="' +
+      esc((x.ms ? x.ms.title : '') + '　' + z.name) + '">');
+    H.push('<span class="rs-px">' + (px ? pxTag(px, z.pal, '') : '') + '</span>');
+    H.push('<span class="rs-s">' + stampPx(r.stamp) + '</span>');
+    H.push('<b>' + esc((kp && kp.name) || (x.ms ? x.ms.title : '')) + '</b>');
+    H.push('<i>' + r.est + ' → ' + (r.actual || 0) + '</i>');
+    H.push('</button>');
+  });
+  H.push('</div></div>');
+  return H.join('');
+}
 
 /* 老師分的段，排成一列小方塊。勾得掉。
    它接在任務那一行下面，不是一張卡——段是任務的一部分，不是另一件事。 */

@@ -456,6 +456,13 @@ function scrollScene() {
   /* 廊道拖得動。每次重畫都要重掛，因為 innerHTML 被換掉了。 */
   dragScene();
 
+  /* 走過的那一條停在最右邊——最右邊是現在。
+     keepScroll 記得他拖到哪，所以往回看過的人回來還在原地。 */
+  var rs = document.querySelector('.rstrip');
+  if (rs) {
+    keepScroll(rs, 'rstrip', { at: rs.scrollWidth, x: rs.scrollWidth, y: 0 });
+  }
+
   var box = document.querySelector('.scn-scroll');
   var hero = document.querySelector('.scn-hero');
   if (box && hero) {
