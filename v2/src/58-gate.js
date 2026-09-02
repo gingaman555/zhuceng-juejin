@@ -172,7 +172,9 @@ ACTS.reg = function () {
 ACTS.claim = function (rosterId) {
   var r = actClaim(S.who, rosterId);
   if (r.err) return say(r.err);
-  go('home');
+  /* 認完自己是誰，接著挑一個角色。這是他第一次看到這個世界，
+     而第一件事是「這是我」——不是一張已經替他決定好的臉。 */
+  go('who');
   say('對上了。');
 };
 

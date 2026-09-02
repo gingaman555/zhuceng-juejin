@@ -571,6 +571,9 @@ button.ac:active{transform:translateY(1px)}
 /* 走路：兩幀疊著，輪流出現。steps(1) 是硬切——
    淡入淡出會讓像素看起來像有殘影。 */
 .scn-hero.walking{position:absolute}
+/* 兩幀輪流播的那一張。不限定祖先的寬度——換個地方畫（挑角色那一頁）
+   就會被原圖的像素尺寸撐開，那是 check.js 第七條在擋的事。 */
+.wf{width:66px;height:66px;image-rendering:pixelated}
 .scn-hero .wf{position:absolute;left:0;top:0}
 .scn-hero .wa{animation:wkA .44s steps(1,end) infinite}
 .scn-hero .wb{animation:wkB .44s steps(1,end) infinite}
@@ -1431,3 +1434,24 @@ button.ac:active{transform:translateY(1px)}
 .pl .px-del:hover{color:var(--over)}
 /* 加起來的那個數字。不是鍵，所以沒有鍵的樣子。 */
 .es-n.sum{margin:0 auto}
+
+/* ── 挑一個角色 ──
+   四個並排，剪影自己說話——四種長得不一樣，所以不用寫一句話解釋。
+   走路那兩幀在這裡就輪流播：選的時候就看得到他會怎麼動。 */
+.pick4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:0 0 22px}
+@media (max-width:700px){ .pick4{grid-template-columns:repeat(2,1fr)} }
+.p4{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:14px 8px;border:0;cursor:pointer;font:inherit;color:inherit;
+  background:var(--panel);
+  box-shadow:inset 0 0 0 2px var(--line);
+  clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 11px,
+    100% calc(100% - 11px),calc(100% - 11px) 100%,11px 100%,0 calc(100% - 11px),0 11px)
+}
+.p4:hover{background:var(--panel2);box-shadow:inset 0 0 0 2px var(--gold-d)}
+.p4:active{transform:translateY(2px)}
+.p4.on{box-shadow:inset 0 0 0 3px var(--gold)}
+.p4-px{position:relative;display:block;width:88px;height:88px}
+.p4-px .px{position:absolute;left:0;top:0;width:88px;height:88px;image-rendering:pixelated}
+.p4 b{font-size:22px;font-weight:400;color:var(--ink)}
+.p4 i{font-style:normal;font-size:22px;color:var(--dim);text-align:center;line-height:1.5}

@@ -210,6 +210,12 @@ function deskRow(t, next) {
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
     esc('圖鑑：這座地下城裡有什麼') + '">' +
     pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i></button>');
+  /* 換角色。挑過一次之後隨時換得掉——它不進任何判定，也不影響
+     任何數字，所以換來換去不會有任何代價。門上畫的就是他現在那一個。 */
+  H.push('<button class="dk" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:who' })) + '\' title="' +
+    esc('角色：換一個') + '">' +
+    pxTag(HERO.walkA, HERO.pal, '') + '<i>角色</i></button>');
   H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
     esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +

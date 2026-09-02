@@ -54,7 +54,7 @@ var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
   eco: 'student', pack: 'student',
   battle: 'student',
-  exit: 'student', codex: 'student', sign: 'student',
+  exit: 'student', codex: 'student', sign: 'student', who: 'student',
   claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -106,6 +106,11 @@ var PAGES = {};
 
 function render() {
   var u = me();
+
+  /* 畫之前先把 HERO 指到這個人挑的那一套。二十幾個地方在讀 HERO，
+     而它們讀的時機都在畫面要畫的時候——所以一個地方指，全部跟著換。
+     （剖面圖是例外：那一頁一次畫五組，見 xsShaft。） */
+  HERO = heroOf(u);
 
   /* 沒登入：只有門口那幾頁，而且沒有側欄也沒有頂條——
      還不知道你是誰的時候，畫面上不該有任何「你的」東西。 */
@@ -511,6 +516,16 @@ var ACTS = {
   },
 
 
+
+  /* 挑一個角色。它不進任何判定、不影響任何數字——就是「這是我」。 */
+  hero: function (k) {
+    var u = me();
+    if (!u || !HEROES[k]) return;
+    u.hero = k;
+    save();
+    logEvent('hero', { teamId: u.teamId, hero: k });
+    go('home', {});
+  },
 
   /* 學生改自己的招牌 */
   rename: function () {

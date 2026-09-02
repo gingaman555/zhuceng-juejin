@@ -190,11 +190,12 @@ function xsShaft(r, i, maxD, mine) {
   /* 小人站在最深的那一格 */
   /* 走出去的那一組，人站在地表上——他不在下面了。 */
   var at = r.depth + (r.at > 0 ? 1 : 0);
-  var pose = left ? HERO.idle : (r.stall >= 2 ? HERO.sleep : HERO.idle);
+  var hr = r.hero || HERO;
+  var pose = left ? hr.idle : (r.stall >= 2 ? hr.sleep : hr.idle);
   var top = left ? (XS.SURF - 44) : (xsTop(Math.max(0, at - 1)) + 11);
   H.push('<div class="xs-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
     (left ? ' out' : '') + '" style="top:' + top + 'px">');
-  H.push(pxTag(pose, HERO.pal, 'ch-s'));
+  H.push(pxTag(pose, hr.pal, 'ch-s'));
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</div>');
 
@@ -239,6 +240,12 @@ function ecoRows(classId) {
   return ecology(classId).map(function (r) {
     var tm = teamOf(r.teamId);
     r.project = tm && tm.project;
+    /* 那一條廊道裡站的是那一組自己的人。這一頁一次畫五組，
+       不能吃全域那一個 HERO——那樣五條裡站的都是看的人自己。 */
+    var mem = where('Users', function (x) {
+      return x.teamId === r.teamId && x.role === 'student';
+    })[0];
+    r.hero = heroOf(mem);
     return r;
   });
 }

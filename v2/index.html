@@ -2239,6 +2239,9 @@ button.ac:active{transform:translateY(1px)}
 /* 走路：兩幀疊著，輪流出現。steps(1) 是硬切——
    淡入淡出會讓像素看起來像有殘影。 */
 .scn-hero.walking{position:absolute}
+/* 兩幀輪流播的那一張。不限定祖先的寬度——換個地方畫（挑角色那一頁）
+   就會被原圖的像素尺寸撐開，那是 check.js 第七條在擋的事。 */
+.wf{width:66px;height:66px;image-rendering:pixelated}
 .scn-hero .wf{position:absolute;left:0;top:0}
 .scn-hero .wa{animation:wkA .44s steps(1,end) infinite}
 .scn-hero .wb{animation:wkB .44s steps(1,end) infinite}
@@ -3099,6 +3102,27 @@ button.ac:active{transform:translateY(1px)}
 .pl .px-del:hover{color:var(--over)}
 /* 加起來的那個數字。不是鍵，所以沒有鍵的樣子。 */
 .es-n.sum{margin:0 auto}
+
+/* ── 挑一個角色 ──
+   四個並排，剪影自己說話——四種長得不一樣，所以不用寫一句話解釋。
+   走路那兩幀在這裡就輪流播：選的時候就看得到他會怎麼動。 */
+.pick4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:0 0 22px}
+@media (max-width:700px){ .pick4{grid-template-columns:repeat(2,1fr)} }
+.p4{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:14px 8px;border:0;cursor:pointer;font:inherit;color:inherit;
+  background:var(--panel);
+  box-shadow:inset 0 0 0 2px var(--line);
+  clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 11px,
+    100% calc(100% - 11px),calc(100% - 11px) 100%,11px 100%,0 calc(100% - 11px),0 11px)
+}
+.p4:hover{background:var(--panel2);box-shadow:inset 0 0 0 2px var(--gold-d)}
+.p4:active{transform:translateY(2px)}
+.p4.on{box-shadow:inset 0 0 0 3px var(--gold)}
+.p4-px{position:relative;display:block;width:88px;height:88px}
+.p4-px .px{position:absolute;left:0;top:0;width:88px;height:88px;image-rendering:pixelated}
+.p4 b{font-size:22px;font-weight:400;color:var(--ink)}
+.p4 i{font-style:normal;font-size:22px;color:var(--dim);text-align:center;line-height:1.5}
 
 /* ---------- 交出去的那一場 ----------
 
@@ -4004,6 +4028,284 @@ var GEAR_PX = PACK.trophies;
 /* 沒點著的東西。同一張圖，換一組冷掉的顏色——
    「看得到但還沒發生」跟「不存在」是兩件事。 */
 var COLD_PAL = { '#': '#4A4038', o: '#2A241E', '*': '#6B5F51', '~': '#332C25' };
+
+
+/* ===== 12-heroes.js ===== */
+/* ---------- 四種角色 ----------
+
+   使用者要學生能照自己的喜好挑一個角色，而且四種的**剪影**就要不一樣
+   ——不是換顏色。66px 的廊道上遠遠看過去，認得出來的只有輪廓：
+
+     冒險者  斗篷 ＋ 提燈 ＋ 腰間的劍。上寬下窄，手上一團光。
+     魔法師  尖帽 ＋ 法杖 ＋ 長袍。上面一個尖、下面一個喇叭口，
+             站著的時候看不到腳——袍子拖到地上。
+     忍者    頭巾只露一條眼縫 ＋ 背後短刃 ＋ 一條往後飄的圍巾。
+             四種裡最瘦的一個，橫向多出來的是那條圍巾。
+     騎士    有羽飾的頭盔 ＋ 護肩 ＋ 左手一面盾。四種裡最寬的一個，
+             盾是一整塊，遠看就是一個方形。
+
+   所以走路那兩幀不能共用，每一種都自己畫。一種十四個姿勢，
+   跟冒險者一模一樣的十四個：站兩幀、走兩幀、坐兩幀、睡、背影、
+   揮擊、衝刺、贏、喘、逃。
+
+   規矩跟原本那一個一樣：16×16、光從左上來、輪廓一律 k、
+   受光面在左上而陰影在右下。顏色分區是剪影變成角色的關鍵——
+   一個 16×16 的人要看得出是「誰」，靠的不是解析度。 */
+
+var HEROES = {};
+
+/* 冒險者就是本來那一個。 */
+HEROES.adv = HERO;
+
+/* ---------- 魔法師 ----------
+   尖帽從第 0 列開始收成一個點，第 5 列整條帽簷 —— 那個「▲ 壓在一條
+   橫線上」的形狀在遠處就認得出來。法杖立在右邊，頂端一顆會亮的珠子。 */
+HEROES.mage = {
+  pal: {
+    k: '#14100E',   /* 輪廓 */
+    s: '#E8B98A',   /* 皮膚 */
+    S: '#B07A50',   /* 皮膚的陰影 */
+    h: '#D8D2C4',   /* 鬍子 */
+    H: '#F2EDE3',   /* 鬍子受光 */
+    c: '#4A3A7A',   /* 帽子與長袍 */
+    C: '#6B54A8',   /* 長袍受光 */
+    t: '#2E2650',   /* 袍子的暗面 */
+    T: '#3E3470',
+    b: '#5A4A2E',   /* 腰帶 */
+    m: '#8A6440',   /* 法杖 */
+    M: '#B08A5A',   /* 法杖受光 */
+    g: '#F5CB74',   /* 杖頂那一顆 */
+    G: '#FFF3D8',   /* 那一顆的芯 */
+    '#': '#D9C08A', o: '#8A7346', '*': '#F7ECD2'
+  },
+  idleA: ['.......kk.......', '......kcCk......', '.....kccCk......', '....kcccCck.....',
+    '...kccccCcck....', '..kkkkkkkkkkk...', '.....ksssk..kk..', '.....ksSsk.kgGk.',
+    '....khhhhhk.kgk.', '...kccCCCck..M..', '...kccCCCck..M..', '...kcbbbbck..M..',
+    '..kcccCCcck..M..', '..kcccCCcck..M..', '.kccccCCccck.M..', '.kkkkkkkkkkkkk..'],
+  idleB: ['................', '.......kk.......', '......kcCk......', '.....kccCk......',
+    '....kcccCck.....', '...kccccCcck....', '..kkkkkkkkkkk...', '.....ksssk..kk..',
+    '.....ksSsk.kgGk.', '....khhhhhk.kgk.', '...kccCCCck..M..', '...kcbbbbck..M..',
+    '..kcccCCcck..M..', '..kcccCCcck..M..', '.kccccCCccck.M..', '.kkkkkkkkkkkkk..'],
+  walkA: ['.......kk.......', '......kcCk......', '.....kccCk......', '....kcccCck.....',
+    '...kccccCcck....', '..kkkkkkkkkkk...', '.....ksssk..kk..', '.....ksSsk.kgGk.',
+    '....khhhhhk.kgk.', '...kccCCCck..M..', '...kcbbbbck..M..', '..kcccCCcck..M..',
+    '.kcccCCcck...M..', 'kcccCk.kCcck.M..', 'kkkk.....kkkk...', '................'],
+  walkB: ['................', '.......kk.......', '......kcCk......', '.....kccCk......',
+    '....kcccCck.....', '...kccccCcck....', '..kkkkkkkkkkk...', '.....ksssk..kk..',
+    '.....ksSsk.kgGk.', '....khhhhhk.kgk.', '...kccCCCck..M..', '...kcbbbbck..M..',
+    '..kcccCCcck..M..', '.kccccCCccck.M..', '.kkkkkkkkkkkkk..', '................'],
+  sitA: ['................', '................', '......kk........', '.....kcCk.......',
+    '....kccCk.......', '...kcccCck......', '..kkkkkkkkk.....', '.....ksssk......',
+    '.....ksSsk......', '....khhhhhk.....', '...kccCCCckk....', '..kccCCCCcck....',
+    '.kcccbbbbcck....', 'kcccCCCCcck.....', 'kkkkkkkkkkk.....', '................'],
+  sitB: ['................', '................', '................', '......kk........',
+    '.....kcCk.......', '....kccCk.......', '...kcccCck......', '..kkkkkkkkk.....',
+    '.....ksssk......', '.....ksSsk......', '....khhhhhk.....', '...kccCCCckk....',
+    '..kccCCCCcck....', '.kcccbbbbcck....', 'kkkkkkkkkkkk....', '................'],
+  sleep: ['................', '..............z.', '............z...', '.........zZ.....',
+    '................', '................', '....kkkkkkkkkk..', '...kcCckhhhkcck.',
+    '...kcCckssskcck.', '...kkkkkbbbkkkk.', '....kkkkkkkkkk..', '................',
+    '................', '................', '................', '................'],
+  back: ['.......kk.......', '......kcCk......', '.....kccck......', '....kccccck.....',
+    '...kcccccck.....', '..kkkkkkkkkk....', '....kccccck.kk..', '...kcccccck.kgk.',
+    '...kcccccck..M..', '...kcbbbbck..M..', '..kcccccck...M..', '..kcccccck...M..',
+    '.kccccccck...M..', '.kccccccck...M..', 'kcccccccck...M..', 'kkkkkkkkkkk.....'],
+  swing: ['..........kGGk..', '.......kk.kGgGk.', '......kcCkkGgk..', '.....kccCkkgk...',
+    '....kcccCckMk...', '..kkkkkkkkMk....', '.....ksssk M....', '.....ksSskM.....',
+    '....khhhhhk.....', '...kccCCCck.....', '...kcbbbbck.....', '..kcccCCcck.....',
+    '..kcccCCcck.....', '.kccccCCccck....', '.kccccCCccck....', '.kkkkkkkkkkk....'],
+  dash: ['................', '..~~...kk.......', '.~~~..kcCk......', '~~~..kccCk......',
+    '.~~~.kcccCck....', '..~kkkkkkkkkk...', '.~~..ksssk..kk..', '~~...ksSsk.kgGk.',
+    '.~..khhhhhk.kgk.', '...kccCCCck..M..', '...kcbbbbck..M..', '..kcccCCcck.M...',
+    '.kcccCCcck..M...', 'kcccCk.kCck.M...', 'kkkk....kkkk....', '................'],
+  win: ['....kk.....kGk..', '...kcCk...kGgGk.', '..kccCk....kgk..', '.kcccCck....M...',
+    'kkkkkkkkkk..M...', '..ksssk.....M...', '..ksSsk.....M...', '.khhhhhk....M...',
+    'kccCCCckk...M...', 'kccCCCcck...M...', 'kcbbbbcck.......', 'kcccCCcck.......',
+    'kcccCCcck.......', 'kccccCCcck......', 'kccccCCcck......', 'kkkkkkkkkk......'],
+  pant: ['................', '................', '................', '.......kk.......',
+    '......kcCk......', '.....kccCk......', '....kcccCck.....', '..kkkkkkkkkkk...',
+    '.....ksssk......', '....khsSshk.....', '...kchhhhck..k..', '..kccCCCcck.kM..',
+    '..kcbbbbcck.kM..', '.kcccCCccck.M...', '.kcccCCccck.....', '.kkkkkkkkkkk....'],
+  flee: ['.......kk.......', '......kcCk......', '.....kcCck......', '....kcCcck......',
+    '...kcCcccck.....', '..kkkkkkkkkk....', '....ksssk.......', '....ksSsk.......',
+    '...khhhhhk......', '..kccCCCck......', '..kcbbbbck......', '.kcccCCcck......',
+    'kcccCCcck.......', 'kccCk.kCck......', 'kkk.....kkk.....', '................']
+};
+
+/* ---------- 忍者 ----------
+   最瘦的一個。頭巾只露一條眼縫（S 那一格），背後一把短刃斜插，
+   右邊一條圍巾往後飄——橫向多出來的只有那條圍巾，所以剪影是
+   「一根細的直條 ＋ 一道橫的」。 */
+HEROES.ninja = {
+  pal: {
+    k: '#100D0C',   /* 輪廓 */
+    s: '#E8B98A',   /* 露出來的那條眼縫 */
+    S: '#3A4A6A',   /* 眼睛 */
+    h: '#1E2A44',   /* 頭巾 */
+    H: '#2E3E60',   /* 頭巾受光 */
+    c: '#8C2F2F',   /* 圍巾 */
+    C: '#C04A3E',   /* 圍巾受光 */
+    t: '#232C3E',   /* 衣服 */
+    T: '#34405A',   /* 衣服受光 */
+    b: '#4A3A2A',   /* 綁腿與腰帶 */
+    m: '#C8CED6',   /* 短刃 */
+    M: '#F0F4F8',   /* 刃的反光 */
+    g: '#6B7A8C',   /* 刀鞘 */
+    G: '#8C9CAE',
+    '#': '#D9C08A', o: '#8A7346', '*': '#F7ECD2'
+  },
+  idleA: ['................', '.....kkkkk......', '....khHHHk......', '....khsssk......',
+    '....kkSkSk......', '.....khhk.......', '....kktTtkk.....', '...kcttTttk.kM..',
+    '..kccttTttkkgk..', '.kcCcbbbbkgk....', '..kcc.tTt.k.....', '...k..tTt..k....',
+    '......ktTk......', '.....kbbbbk.....', '.....kb..bk.....', '.....kk..kk.....'],
+  idleB: ['................', '................', '.....kkkkk......', '....khHHHk......',
+    '....khsssk......', '....kkSkSk......', '.....khhk.......', '....kktTtkk.kM..',
+    '...kcttTttk.kgk.', '..kccttTttkgk...', '.kcCcbbbbkk.....', '..kcc.tTt..k....',
+    '...k..tTt.......', '.....kbbbbk.....', '.....kb..bk.....', '.....kk..kk.....'],
+  walkA: ['................', '.....kkkkk......', '....khHHHk......', '....khsssk......',
+    '....kkSkSk......', '.....khhk.......', '..ckktTtkk..kM..', '.cCcktTtTtk.kgk.',
+    'cCccttTTtkkgk...', '.cCckbbbbkk.....', '..cc..tTt..k....', '...k..tTt...k...',
+    '......ktTk......', '.....kbk.kbk....', '....kbk...kbk...', '...kkk.....kkk..'],
+  walkB: ['.....kkkkk......', '....khHHHk......', '....khsssk......', '....kkSkSk......',
+    '.....khhk.......', '....kktTtkk..kM.', '...kcttTttk.kgk.', '..kccttTttkgk...',
+    '.kcCcbbbbkk.....', '..kcc.tTt..k....', '...k..tTt...k...', '......ktTk......',
+    '.....kbbbbk.....', '.....kb..bk.....', '.....kk..kk.....', '................'],
+  sitA: ['................', '................', '................', '......kkkkk.....',
+    '.....khHHHk.....', '.....khsssk.....', '.....kkSkSk.....', '....kkhtTtkk....',
+    '...kcttTTTtk....', '..kcCttTTTtk....', '..kcCtbbbbtk....', '.kbbbk.ktTk.....',
+    'kbk.....ktk.....', 'kk..kgk.kbbk....', '....kMk..kkk....', '.....k..........'],
+  sitB: ['................', '................', '................', '................',
+    '......kkkkk.....', '.....khHHHk.....', '.....khsssk.....', '.....kkSkSk.....',
+    '...kkhtTTtkk....', '..kcttTTTTtk....', '..kcCtbbbbtk....', '.kbbbk.ktTk.....',
+    'kbk.....ktk.....', 'kk..kgk.kbbk....', '....kMk..kkk....', '.....k..........'],
+  sleep: ['................', '..............z.', '............z...', '.........zZ.....',
+    '................', '................', '....kkkkkkkk....', '...khHHkcccck...',
+    '...kssskttttk...', '...kkkkkbbbbk...', '....kkkkkkkkk...', '................',
+    '................', '................', '................', '................'],
+  back: ['................', '.....kkkkk......', '....khHHHk......', '....khhhhk......',
+    '....khhhhk......', '.....kkkk.......', '...kkttttkk.....', '..kttttttk.kM...',
+    '..ktttMttkkgk...', '..kttkMkttk.....', '..ktt.kgk.tk....', '...k..ktk..k....',
+    '......ktk.......', '.....kbbbbk.....', '.....kb..bk.....', '.....kk..kk.....'],
+  swing: ['.........kMMk...', '.....kkkkkMMk...', '....khHHHkMk....', '....khssskMk....',
+    '....kkSkSkk.....', '.....khhk.......', '....kktTtkk.....', '...kcttTttk.....',
+    '..kccttTttk.....', '.kcCcbbbbkk.....', '..kcc.tTt.......', '...k..tTt...k...',
+    '.....ktTkk..k...', '....kbk.kbbk....', '...kbk....kbk...', '..kkk......kkk..'],
+  dash: ['................', '..~~..kkkkk.....', '.~~~.khHHHk.....', '~~~..khsssk.....',
+    '.~~~.kkSkSk.....', '..~~..khhk......', '.~~.kktTtkk.kM..', '~~.kcttTttk.kgk.',
+    '.~kccttTttkkgk..', '..kcCcbbbbkk....', '...kcc.tTt..k...', '....k..tTt.k....',
+    '.......ktTk.....', '.....kbk..kbk...', '...kbk......kbk.', '..kkk........kk.'],
+  win: ['.kMk.......kMk..', '.kMk..kkk..kMk..', '.kgk.khHHk.kgk..', '..k..khssk..k...',
+    '.....kkSkSk.....', '......khhk......', '...kkkctTckk....', '...kcCttTTck....',
+    '..kcCcttTTck....', '...kcbbbbbck....', '.....ctTTc......', '.....cttTc......',
+    '.....ktTk.......', '....kbbbbk......', '....kb..bk......', '....kk..kk......'],
+  pant: ['................', '................', '................', '.....kkkkk......',
+    '....khHHHk......', '....khsssk......', '....kkSkSk......', '..kkkhhtTtkk....',
+    '.kcCcttTTtk.....', '.kcCcttTTtkk....', '.kcck bbbbbkk...', '..kk.ktTk..k....',
+    '.kMk.ktTk..k....', 'kgk..kbbbbk.....', '.kk..kb..bk.....', '.....kk..kk.....'],
+  flee: ['................', '......kkkkk.....', '.....khHHHk.....', '.....ksssHk.....',
+    '.....kSkSkk.....', '......khhk......', '....kkktTtk.....', '...cCckttTtk....',
+    '..cCcckttTtk....', '.cCccckbbbkk....', '..ccc..tTt......', '...c...tTt......',
+    '.......ktTk.....', '....kbk..kbk....', '...kbk.....kbk..', '..kkk.......kkk.']
+};
+
+/* ---------- 騎士 ----------
+   最寬的一個。頭盔上一撮羽飾（c），左手一整面盾（t/T 的方塊）——
+   盾是這四種裡唯一一塊實心的方形，遠看就是它。護肩讓上半身比
+   別人寬兩格。 */
+HEROES.knight = {
+  pal: {
+    k: '#14110C',   /* 輪廓 */
+    s: '#E8B98A',   /* 面甲縫裡的臉 */
+    S: '#B07A50',
+    h: '#9AA4AE',   /* 頭盔 */
+    H: '#C8D0D8',   /* 頭盔受光 */
+    c: '#B03A3A',   /* 羽飾 */
+    C: '#D95A4A',   /* 羽飾受光 */
+    t: '#2E4A7A',   /* 盾面 */
+    T: '#4A6FA8',   /* 盾面受光 */
+    b: '#5A4A2E',   /* 皮帶 */
+    m: '#9AA4AE',   /* 鎧甲 */
+    M: '#D8E0E8',   /* 鎧甲反光 */
+    g: '#C8CED6',   /* 劍 */
+    G: '#F0F4F8',
+    '#': '#D9C08A', o: '#8A7346', '*': '#F7ECD2'
+  },
+  idleA: ['......kck.......', '.....kcCk.......', '....kkhHhkk.....', '....khHHHhk.....',
+    '....khsssHk.....', '....kkhhhkk.....', '..kkmmMMmmkk....', '.kttkmMMmkkGk...',
+    'kTTTtkmMmk.kgk..', 'kTTTtkbbbk.kgk..', 'kTTTtkmMmk.kgk..', '.kttkkmMmkk.k...',
+    '..kk..kmMk......', '.....kbbbbk.....', '.....kb..bk.....', '.....kk..kk.....'],
+  idleB: ['................', '......kck.......', '.....kcCk.......', '....kkhHhkk.....',
+    '....khHHHhk.....', '....khsssHk.....', '....kkhhhkk.....', '..kkmmMMmmkk....',
+    '.kttkmMMmkk.Gk..', 'kTTTtkmMmk.kgk..', 'kTTTtkbbbk.kgk..', 'kTTTtkmMmk..k...',
+    '.kttkkmMmkk.....', '.....kbbbbk.....', '.....kb..bk.....', '.....kk..kk.....'],
+  walkA: ['......kck.......', '.....kcCk.......', '....kkhHhkk.....', '....khHHHhk.....',
+    '....khsssHk.....', '....kkhhhkk.....', '..kkmmMMmmkk....', '.kttkmMMmkkGk...',
+    'kTTTtkmMmk.kgk..', 'kTTTtkbbbk.kgk..', 'kTTTtkmMmk.kgk..', '.kttkkmMmkk.k...',
+    '..kk..kmMk......', '.....kbk.kbk....', '....kbk...kbk...', '...kkk.....kkk..'],
+  walkB: ['......kck.......', '.....kcCk.......', '....kkhHhkk.....', '....khHHHhk.....',
+    '....khsssHk.....', '....kkhhhkk.....', '..kkmmMMmmkk.Gk.', '.kttkmMMmkk.kgk.',
+    'kTTTtkmMmk..kgk.', 'kTTTtkbbbk..kgk.', 'kTTTtkmMmk...k..', '.kttkkmMmkk.....',
+    '..kk..kmMk......', '.....kbbbbk.....', '.....kk..kk.....', '................'],
+  sitA: ['................', '................', '.......kck......', '......kcCk......',
+    '.....kkhHhkk....', '.....khHHHhk....', '.....khsssHk....', '....kkkhhhkkk...',
+    '...kttkmMMmk....', '..kTTTtmMMmk....', '..kTTTtbbbbk....', '.kbttk.kmMk.....',
+    'kbk.....kmk.....', 'kk..kgk.kbbk....', '....kGk..kkk....', '.....k..........'],
+  sitB: ['................', '................', '................', '.......kck......',
+    '......kcCk......', '.....kkhHhkk....', '.....khHHHhk....', '.....khsssHk....',
+    '...kkkkhhhkkk...', '..kttkmMMMmk....', '..kTTTtbbbbk....', '.kbttk.kmMk.....',
+    'kbk.....kmk.....', 'kk..kgk.kbbk....', '....kGk..kkk....', '.....k..........'],
+  sleep: ['................', '..............z.', '............z...', '.........zZ.....',
+    '................', '................', '...kkkkkkkkkk...', '..kchHHkmMMMmk..',
+    '..kksssKkmMmmk..', '..kkkkkkbbbbbk..', '...kkkkkkkkkkk..', '................',
+    '................', '................', '................', '................'],
+  back: ['......kck.......', '.....kcCk.......', '....kkhhhkk.....', '....khhhhhk.....',
+    '....khhhhhk.....', '....kkhhhkk.....', '..kkmmmmmmkk....', '.kttkmmmmkkGk...',
+    'kTTTtmmgmm.kgk..', 'kTTTtmkgkm.kgk..', 'kTTTtmkgkm.kgk..', '.kttkkmkmkk.k...',
+    '..kk..kmmk......', '.....kbbbbk.....', '.....kb..bk.....', '.....kk..kk.....'],
+  swing: ['.........kGGk...', '......kck.kGk...', '.....kcCkkGk....', '....kkhHhkGk....',
+    '....khHHHhk.....', '....khsssHk.....', '..kkkkhhhkk.....', '.kttkmMMmkk.....',
+    'kTTTtkmMmkk.....', 'kTTTtkbbbk......', 'kTTTtkmMmk......', '.kttkkmMmkk.k...',
+    '..kk..kmMkk.k...', '....kbk.kbbk....', '...kbk....kbk...', '..kkk......kkk..'],
+  dash: ['................', '..~~..kck.......', '.~~~.kcCk.......', '~~~.kkhHhkk.....',
+    '.~~~khHHHhk.....', '..~~khsssHk.....', '.~kkkkhhhkkk....', '~~kttkmMMmkkGk..',
+    '.kTTTtkmMmk.kgk.', '.kTTTtkbbbk.kgk.', '.kTTTtkmMmk.kgk.', '..kttkkmMmkk.k..',
+    '...kk..kmMk.....', '.....kbk..kbk...', '...kbk......kbk.', '..kkk........kk.'],
+  win: ['.kGk...kck.kGk..', '.kgk..kcCk.kgk..', '.kgk.kkhHhkkgk..', '..k..khHHHhk.k..',
+    '.....khsssHk....', '.....kkhhhkk....', '..kkkmmMMmmkk...', '.kttkmMMMMmk....',
+    'kTTTtkmMMmkk....', 'kTTTtkbbbbk.....', 'kTTTtkmMMmk.....', '.kttkkmMMmk.....',
+    '..kk..kmMmk.....', '.....kbbbbk.....', '.....kb..bk.....', '.....kk..kk.....'],
+  pant: ['................', '................', '................', '......kck.......',
+    '.....kcCk.......', '....kkhHhkk.....', '....khHHHhk.....', '....khsssHk.....',
+    '..kkkkhhhkkk....', '.kttkmMMMMmk....', '.kTTTtbbbbbkk...', '.kttk.kmMk..k...',
+    '.kGk..kmMk..k...', 'kgk..kbbbbk.....', '.kk..kb..bk.....', '.....kk..kk.....'],
+  flee: ['................', '.......kck......', '......kcCk......', '.....kkhHhkk....',
+    '.....khHHHhk....', '.....khsssHk....', '......kkhhhkk...', '....kkkmMMmk....',
+    '...cCckmMMmk....', '..cCcckbbbbk....', '...ccc.kmMk.....', '....c..kmMk.....',
+    '.......kmMk.....', '....kbk..kbk....', '...kbk.....kbk..', '..kkk.......kkk.']
+};
+
+/* 每一種都補一個 idle 別名，跟 HERO 一樣——
+   剖面圖與戰鬥那兩支讀的是 .idle。 */
+Object.keys(HEROES).forEach(function (k) {
+  HEROES[k].idle = HEROES[k].idleA;
+});
+
+/* 四個名字。挑角色那一頁與首頁的換角都讀這一份。 */
+var HERO_LIST = [
+  { k: 'adv',    n: '冒險者', t: '提著燈，腰上一把劍' },
+  { k: 'mage',   n: '魔法師', t: '尖帽、長袍，杖頂一顆亮的' },
+  { k: 'ninja',  n: '忍者',   t: '只露一條眼縫，背後短刃' },
+  { k: 'knight', n: '騎士',   t: '有羽飾的頭盔，左手一面盾' }
+];
+
+/* 現在畫的是哪一個。render 每一次開頭都會照登入的人設一次
+   （見 55-ui.js 的 useHero），所以其餘二十幾個讀 HERO 的地方
+   一個字都不用改。 */
+function heroKey(u) {
+  var k = u && u.hero;
+  return HEROES[k] ? k : 'adv';
+}
+function heroOf(u) { return HEROES[heroKey(u)]; }
 
 
 /* ===== 12-props.js ===== */
@@ -7078,7 +7380,7 @@ var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
   eco: 'student', pack: 'student',
   battle: 'student',
-  exit: 'student', codex: 'student', sign: 'student',
+  exit: 'student', codex: 'student', sign: 'student', who: 'student',
   claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -7130,6 +7432,11 @@ var PAGES = {};
 
 function render() {
   var u = me();
+
+  /* 畫之前先把 HERO 指到這個人挑的那一套。二十幾個地方在讀 HERO，
+     而它們讀的時機都在畫面要畫的時候——所以一個地方指，全部跟著換。
+     （剖面圖是例外：那一頁一次畫五組，見 xsShaft。） */
+  HERO = heroOf(u);
 
   /* 沒登入：只有門口那幾頁，而且沒有側欄也沒有頂條——
      還不知道你是誰的時候，畫面上不該有任何「你的」東西。 */
@@ -7535,6 +7842,16 @@ var ACTS = {
   },
 
 
+
+  /* 挑一個角色。它不進任何判定、不影響任何數字——就是「這是我」。 */
+  hero: function (k) {
+    var u = me();
+    if (!u || !HEROES[k]) return;
+    u.hero = k;
+    save();
+    logEvent('hero', { teamId: u.teamId, hero: k });
+    go('home', {});
+  },
 
   /* 學生改自己的招牌 */
   rename: function () {
@@ -8122,7 +8439,9 @@ ACTS.reg = function () {
 ACTS.claim = function (rosterId) {
   var r = actClaim(S.who, rosterId);
   if (r.err) return say(r.err);
-  go('home');
+  /* 認完自己是誰，接著挑一個角色。這是他第一次看到這個世界，
+     而第一件事是「這是我」——不是一張已經替他決定好的臉。 */
+  go('who');
   say('對上了。');
 };
 
@@ -8364,6 +8683,12 @@ function deskRow(t, next) {
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
     esc('圖鑑：這座地下城裡有什麼') + '">' +
     pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i></button>');
+  /* 換角色。挑過一次之後隨時換得掉——它不進任何判定，也不影響
+     任何數字，所以換來換去不會有任何代價。門上畫的就是他現在那一個。 */
+  H.push('<button class="dk" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:who' })) + '\' title="' +
+    esc('角色：換一個') + '">' +
+    pxTag(HERO.walkA, HERO.pal, '') + '<i>角色</i></button>');
   H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
     esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +
@@ -9875,11 +10200,12 @@ function xsShaft(r, i, maxD, mine) {
   /* 小人站在最深的那一格 */
   /* 走出去的那一組，人站在地表上——他不在下面了。 */
   var at = r.depth + (r.at > 0 ? 1 : 0);
-  var pose = left ? HERO.idle : (r.stall >= 2 ? HERO.sleep : HERO.idle);
+  var hr = r.hero || HERO;
+  var pose = left ? hr.idle : (r.stall >= 2 ? hr.sleep : hr.idle);
   var top = left ? (XS.SURF - 44) : (xsTop(Math.max(0, at - 1)) + 11);
   H.push('<div class="xs-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
     (left ? ' out' : '') + '" style="top:' + top + 'px">');
-  H.push(pxTag(pose, HERO.pal, 'ch-s'));
+  H.push(pxTag(pose, hr.pal, 'ch-s'));
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</div>');
 
@@ -9924,6 +10250,12 @@ function ecoRows(classId) {
   return ecology(classId).map(function (r) {
     var tm = teamOf(r.teamId);
     r.project = tm && tm.project;
+    /* 那一條廊道裡站的是那一組自己的人。這一頁一次畫五組，
+       不能吃全域那一個 HERO——那樣五條裡站的都是看的人自己。 */
+    var mem = where('Users', function (x) {
+      return x.teamId === r.teamId && x.role === 'student';
+    })[0];
+    r.hero = heroOf(mem);
     return r;
   });
 }
@@ -10247,6 +10579,37 @@ function codexThings(t, here) {
 }
 
 ACTS.cx = function (k) { DRAFT.cx = k; render(); };
+
+/* ---------- 挑一個角色 ----------
+
+   使用者：學生可以依照自己的喜好跟習慣反映在角色上。
+
+   四種的剪影就不一樣（見 12-heroes.js），所以這一頁不用寫一句話
+   解釋差別——四個站在那裡，走路那兩幀輪流播，看就知道。
+
+   它不進任何判定、不影響任何數字，也不會有人因為挑了哪一個而多拿
+   或少拿什麼。挑完就回廊道，因為那才是他要待的地方。 */
+PAGES.who = function () {
+  var u = me();
+  var now = heroKey(u);
+
+  var H = [head('挑一個角色', '這是你', '')];
+  H.push('<div class="pick4">');
+  HERO_LIST.forEach(function (x) {
+    var g = HEROES[x.k];
+    H.push('<button class="p4' + (x.k === now ? ' on' : '') +
+      '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'hero:' + x.k })) + '\'>');
+    /* 兩幀輪流播，站著跟走路各一組——選的時候就看得到他會怎麼動。 */
+    H.push('<span class="p4-px">' +
+      pxTag(g.walkA, g.pal, 'wf wa') + pxTag(g.walkB, g.pal, 'wf wb') + '</span>');
+    H.push('<b>' + esc(x.n) + '</b>');
+    H.push('<i>' + esc(x.t) + '</i>');
+    H.push('</button>');
+  });
+  H.push('</div>');
+  return H.join('');
+};
 
 
 /* ===== 65-feed.js ===== */

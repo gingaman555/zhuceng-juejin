@@ -102,3 +102,34 @@ function codexThings(t, here) {
 }
 
 ACTS.cx = function (k) { DRAFT.cx = k; render(); };
+
+/* ---------- 挑一個角色 ----------
+
+   使用者：學生可以依照自己的喜好跟習慣反映在角色上。
+
+   四種的剪影就不一樣（見 12-heroes.js），所以這一頁不用寫一句話
+   解釋差別——四個站在那裡，走路那兩幀輪流播，看就知道。
+
+   它不進任何判定、不影響任何數字，也不會有人因為挑了哪一個而多拿
+   或少拿什麼。挑完就回廊道，因為那才是他要待的地方。 */
+PAGES.who = function () {
+  var u = me();
+  var now = heroKey(u);
+
+  var H = [head('挑一個角色', '這是你', '')];
+  H.push('<div class="pick4">');
+  HERO_LIST.forEach(function (x) {
+    var g = HEROES[x.k];
+    H.push('<button class="p4' + (x.k === now ? ' on' : '') +
+      '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'hero:' + x.k })) + '\'>');
+    /* 兩幀輪流播，站著跟走路各一組——選的時候就看得到他會怎麼動。 */
+    H.push('<span class="p4-px">' +
+      pxTag(g.walkA, g.pal, 'wf wa') + pxTag(g.walkB, g.pal, 'wf wb') + '</span>');
+    H.push('<b>' + esc(x.n) + '</b>');
+    H.push('<i>' + esc(x.t) + '</i>');
+    H.push('</button>');
+  });
+  H.push('</div>');
+  return H.join('');
+};
