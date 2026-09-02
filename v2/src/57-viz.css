@@ -1581,3 +1581,93 @@ button.ac:active{transform:translateY(1px)}
 .rq-t em{font-size:22px;font-style:normal;line-height:1.3;color:var(--mute)}
 .rq-d{font-size:22px;color:var(--dim);white-space:nowrap;flex:0 0 auto}
 .rq:hover .rq-t b{color:var(--gold)}
+
+/* ---------- 故事那兩頁 ----------
+
+   圖是用這個世界自己的材料拼的，不是另外畫的插圖：六層的底色與紋理
+   讀 51-zones.css（跟廊道、跟班級地下城同一份），人與火把與生物
+   都是遊戲裡真的會出現的那幾張。看完這兩頁再進廊道，
+   廊道上每一樣東西他都見過了。 */
+.sty-art{
+  position:relative;height:308px;margin:0 0 22px;overflow:hidden;
+  background:#070605;
+  box-shadow:inset 0 0 0 3px #000,inset 0 0 0 6px var(--frame);
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),
+    calc(100% - 11px) 100%,0 100%,0 11px)
+}
+
+/* ── 第一張：一面崖 ── */
+.sty-sky{
+  position:absolute;left:0;right:0;top:0;height:44px;z-index:1;
+  background:linear-gradient(180deg,#0E1520 0 22px,#1A202B 22px 41px,#2E3A22 41px 44px)
+}
+.sty-band{
+  position:absolute;left:0;right:0;height:44px;z-index:0;
+  background-color:var(--zbg);background-image:var(--ztex)
+}
+.sty-band::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:3px;
+  background:rgba(0,0,0,.65);box-shadow:0 3px 0 rgba(255,240,214,.05)
+}
+.sty-band em{
+  position:absolute;right:14px;top:8px;font-style:normal;line-height:1;
+  font-size:22px;color:var(--zink);opacity:.85;white-space:nowrap
+}
+/* 洞口那一堆火。三格硬邊，不是漸層——火在這個作品裡一直是這樣畫的。 */
+.sty-fire{
+  position:absolute;left:88px;top:14px;width:22px;height:30px;z-index:3;
+  background:
+    linear-gradient(180deg,transparent 0 6px,#F5CB74 6px 12px,transparent 12px),
+    linear-gradient(180deg,transparent 0 12px,#E9B341 12px 22px,transparent 22px),
+    linear-gradient(180deg,transparent 0 22px,#A8452F 22px 30px,transparent 30px);
+  animation:styfire .44s steps(1,end) infinite
+}
+@keyframes styfire{0%,49%{transform:none}50%,100%{transform:translateY(-2px)}}
+.sty-who{
+  position:absolute;left:22px;top:0;width:44px;height:44px;z-index:3
+}
+.sty-who .wf{position:absolute;left:0;top:0;width:44px;height:44px}
+.sty-who .wa{animation:wkA 1.6s steps(1,end) infinite}
+.sty-who .wb{animation:wkB 1.6s steps(1,end) infinite}
+
+/* ── 第二張：一條廊道的橫剖 ── */
+.sty-road{background-color:var(--zbg);background-image:var(--ztex)}
+.sty-floor{
+  position:absolute;left:0;right:0;bottom:0;height:66px;z-index:0;
+  background:linear-gradient(180deg,var(--zfl2,#3B2D11) 0 3px,var(--zfl,#241B0C) 3px 100%)
+}
+/* 一格＝一天。走過的那幾格亮著。 */
+.sty-tile{
+  position:absolute;bottom:66px;width:44px;height:6px;z-index:1;
+  background:rgba(255,240,214,.07)
+}
+.sty-tile.on{background:var(--zink);opacity:.55}
+.sty-hero{position:absolute;left:110px;bottom:66px;width:66px;height:66px;z-index:3}
+.sty-hero .wf{position:absolute;left:0;top:0;width:66px;height:66px}
+.sty-hero .wa{animation:wkA .44s steps(1,end) infinite}
+.sty-hero .wb{animation:wkB .44s steps(1,end) infinite}
+/* 你說的那一天：一條實線加一句話。廊道上那條虛線拿掉之後，
+   它只在這裡出現一次——因為這一頁在解釋它。 */
+.sty-day{position:absolute;left:286px;top:22px;bottom:66px;z-index:2}
+.sty-day i{
+  position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:repeating-linear-gradient(180deg,
+    var(--gold) 0 6px, transparent 6px 12px)
+}
+.sty-day b{
+  position:absolute;left:11px;top:0;font-size:22px;font-weight:400;
+  color:var(--gold);white-space:nowrap;line-height:1
+}
+.sty-mob{position:absolute;left:297px;bottom:66px;width:66px;height:66px;z-index:3}
+.sty-mob .px{width:66px;height:66px}
+
+/* 兩頁的字。一句一行，行與行之間留白——這兩頁是唯一一個
+   刻意讓人讀完的地方。 */
+.sty-t p{margin:0 0 14px;line-height:1.9}
+.sty-t p:last-child{margin:0}
+
+@media (prefers-reduced-motion: reduce){
+  .sty-fire{animation:none}
+  .sty-who .wa,.sty-hero .wa{animation:none;opacity:1}
+  .sty-who .wb,.sty-hero .wb{animation:none;opacity:0}
+}

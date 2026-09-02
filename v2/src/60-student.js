@@ -225,6 +225,15 @@ function deskRow(t, next) {
     esc(cn ? '圖鑑：多了 ' + cn + ' 隻' : '圖鑑：這座地下城裡有什麼') + '">' +
     pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i>' +
     (cn ? '<em class="nb">' + cn + '</em>' : '') + '</button>');
+  /* 故事。第一次進來看過一次，之後從這裡回來看。
+
+     放在圖鑑旁邊是因為它們是同一種東西：都不是「要你做的事」，
+     都是「這個世界是什麼」。而它一直在——沒觸發過的東西等於不存在，
+     一個看過就消失的開場，等於他忘了之後再也找不回來。 */
+  H.push('<button class="dk" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'story:0' })) + '\' title="' +
+    esc('故事：這是什麼地方，這裡怎麼走') + '">' +
+    pxTag(ICONS.pack, ICON_PAL, '') + '<i>故事</i></button>');
   /* 換角色。挑過一次之後隨時換得掉——它不進任何判定，也不影響
      任何數字，所以換來換去不會有任何代價。門上畫的就是他現在那一個。 */
   H.push('<button class="dk" data-act="run" data-p=\'' +
