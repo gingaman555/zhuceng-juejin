@@ -3558,21 +3558,42 @@ button.ac:active{transform:translateY(1px)}
 .bt-arrow{display:none}
 
 /* 他自言自語的那一句。借的是同一塊牌子（見 61-scene.js 的 osTick），
-   所以只換樣子不換位置：金邊拿掉、字色轉白、多一個小尾巴指向他。 */
+   所以只換樣子不換位置：金邊拿掉、字色轉白、多一個小尾巴指向他。
+
+   兩件事跟那塊牌子不一樣：
+
+   一 · 會折行。牌子上是「前進中」三個字，一句話是十七個——
+        nowrap 的話一行三百七十幾，比廊道還寬。
+
+   二 · 從他的左邊長出去，不置中。置中的話，坐在洞口的那個人
+        （x=44）頭上那一塊會有一半落在畫面外，而 .scn 是
+        overflow:hidden——落在外面的字不是跑版，是被切掉。
+        尾巴因此挪到他頭頂正上方那一點。 */
 .hero-tag.os{
+  left:0;transform:none;
+  /* width:max-content 是必要的：這一塊是絕對定位掛在角色那個 66px 的
+     框上，寬度 auto 會收縮到那個框的寬——十七個字就變成一行一個字，
+     291px 高，整條頂出畫面。max-content 讓它照字算，再用 max-width 收。 */
+  width:max-content;max-width:264px;
+  white-space:normal;text-align:center;line-height:1.45;
   color:var(--ink);background:rgba(6,5,4,.88);
   box-shadow:inset 0 0 0 2px var(--line2);
   animation:osin .18s steps(2,end) 1
 }
 .hero-tag.os::after{
-  content:'';position:absolute;left:50%;top:100%;margin-left:-4px;
+  content:'';position:absolute;left:29px;top:100%;
   width:8px;height:6px;background:rgba(6,5,4,.88)
 }
 @keyframes osin{
-  0%{transform:translateX(-50%) translateY(4px);opacity:0}
-  100%{transform:translateX(-50%) translateY(0);opacity:1}
+  0%{transform:translateY(4px);opacity:0}
+  100%{transform:translateY(0);opacity:1}
 }
 @media (prefers-reduced-motion: reduce){ .hero-tag.os{animation:none} }
+
+/* 他站在窗的右半邊：泡泡改成往左長，尾巴跟著換到右邊指他。
+   哪一邊是量出來的（見 61-scene.js 的 say），不是猜的。 */
+.hero-tag.os.os-l{left:auto;right:0}
+.hero-tag.os.os-l::after{left:auto;right:29px}
 
 /* ---------- 排行榜 ----------
    刻意加進來、而且準備好隨時拿掉的（見 68-rank.js 的說明）。
@@ -4362,28 +4383,28 @@ function heroOf(u) { return HEROES[heroKey(u)]; }
    走跟坐分開寫：走的時候他在看路，坐的時候他在想事情。 */
 var HERO_OS = {
   adv: {
-    walk: ['這一段沒走過。', '前面有東西。', '再深一點看看。',
-           '牆上有刻痕。', '這裡的風是暖的。', '好像有路。'],
-    rest: ['火還夠。', '大秘寶總在最深的地方。', '地圖上沒有這一段。',
-           '等一下往哪走呢。', '這裡的石頭我沒看過。']
+    rest: ['一大場冒險後好好休息真是舒服。'],
+    walk: ['每次的冒險都令人感到興奮!',
+           '各種困難都難不了我!',
+           '又是沒看過的新風景!']
   },
   mage: {
-    walk: ['這一層的石頭偏鹼。', '風向不對。', '記下來。',
-           '這種光我讀過。', '照順序來。', '第七頁講過這個。'],
-    rest: ['先把順序想清楚。', '筆記寫到第七頁了。', '魔力還夠。',
-           '一件一件來。', '這一段值得畫成圖。']
+    rest: ['即使正在休息也是可以學習的好機會。'],
+    walk: ['好多未曾接觸的新知識。',
+           '我思，故我在。',
+           '看來我還有很多可以去學習的呢…']
   },
   ninja: {
-    walk: ['走。', '這邊比較快。', '腳步放輕。', '有影子。',
-           '不用想那麼多。', '那邊繞得過去。'],
-    rest: ['歇一下。', '等一個時機。', '隨時可以動。',
-           '聽得到水聲。', '風停了。']
+    rest: ['正在充分休息，是也。'],
+    walk: ['全力衝刺中，是也。',
+           '忍術，想到的事情就立刻做之術!',
+           '忍術，事情不嫌麻煩之術!']
   },
   knight: {
-    walk: ['一步一步來。', '守住陣型。', '該做的先做。',
-           '盾還在。', '這條路我認得。', '不急。'],
-    rest: ['把盾擦一擦。', '該站哪裡就站哪裡。', '守夜。',
-           '規矩是自己訂的。', '磨一下劍。']
+    rest: ['旅程中保持健康也是很重要的。'],
+    walk: ['所謂的規矩是自己訂的。',
+           '我的誓約便是任何挑戰都不臨陣脫逃。',
+           '一步一步來才不會出錯。']
   }
 };
 
@@ -10137,6 +10158,25 @@ function osTick() {
     if (!line) return stopOS();
     t.textContent = line;
     t.className = cls + ' os';
+    /* 放得下才放得進去。
+
+       泡泡從角色身上長出去，而廊道是一個會捲的窗——他站在窗的哪裡，
+       左右各剩多少，每一次都不一樣。而 .scn 是 overflow:hidden，
+       落在窗外的字是被切掉，不是跑版。
+
+       所以量兩邊剩多少，往寬的那一邊長，寬度收到那一邊放得下為止。
+       這件事只有量得到位置的時候算得出來，所以它在這裡不在 CSS 裡。 */
+    var box = document.querySelector('.scn');
+    if (box) {
+      var br = box.getBoundingClientRect();
+      var hr = t.parentNode.getBoundingClientRect();
+      var roomR = br.right - hr.left - 11;
+      var roomL = hr.right - br.left - 11;
+      var left = roomL > roomR;
+      var room = Math.max(roomL, roomR);
+      t.style.maxWidth = Math.max(132, Math.min(264, room)) + 'px';
+      t.className = cls + ' os' + (left ? ' os-l' : '');
+    }
     OS_T = setTimeout(function () {
       var u = document.querySelector('.scn .hero-tag');
       if (!u) return stopOS();

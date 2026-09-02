@@ -716,6 +716,25 @@ function osTick() {
     if (!line) return stopOS();
     t.textContent = line;
     t.className = cls + ' os';
+    /* 放得下才放得進去。
+
+       泡泡從角色身上長出去，而廊道是一個會捲的窗——他站在窗的哪裡，
+       左右各剩多少，每一次都不一樣。而 .scn 是 overflow:hidden，
+       落在窗外的字是被切掉，不是跑版。
+
+       所以量兩邊剩多少，往寬的那一邊長，寬度收到那一邊放得下為止。
+       這件事只有量得到位置的時候算得出來，所以它在這裡不在 CSS 裡。 */
+    var box = document.querySelector('.scn');
+    if (box) {
+      var br = box.getBoundingClientRect();
+      var hr = t.parentNode.getBoundingClientRect();
+      var roomR = br.right - hr.left - 11;
+      var roomL = hr.right - br.left - 11;
+      var left = roomL > roomR;
+      var room = Math.max(roomL, roomR);
+      t.style.maxWidth = Math.max(132, Math.min(264, room)) + 'px';
+      t.className = cls + ' os' + (left ? ' os-l' : '');
+    }
     OS_T = setTimeout(function () {
       var u = document.querySelector('.scn .hero-tag');
       if (!u) return stopOS();

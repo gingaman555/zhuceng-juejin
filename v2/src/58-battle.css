@@ -422,18 +422,39 @@
 .bt-arrow{display:none}
 
 /* 他自言自語的那一句。借的是同一塊牌子（見 61-scene.js 的 osTick），
-   所以只換樣子不換位置：金邊拿掉、字色轉白、多一個小尾巴指向他。 */
+   所以只換樣子不換位置：金邊拿掉、字色轉白、多一個小尾巴指向他。
+
+   兩件事跟那塊牌子不一樣：
+
+   一 · 會折行。牌子上是「前進中」三個字，一句話是十七個——
+        nowrap 的話一行三百七十幾，比廊道還寬。
+
+   二 · 從他的左邊長出去，不置中。置中的話，坐在洞口的那個人
+        （x=44）頭上那一塊會有一半落在畫面外，而 .scn 是
+        overflow:hidden——落在外面的字不是跑版，是被切掉。
+        尾巴因此挪到他頭頂正上方那一點。 */
 .hero-tag.os{
+  left:0;transform:none;
+  /* width:max-content 是必要的：這一塊是絕對定位掛在角色那個 66px 的
+     框上，寬度 auto 會收縮到那個框的寬——十七個字就變成一行一個字，
+     291px 高，整條頂出畫面。max-content 讓它照字算，再用 max-width 收。 */
+  width:max-content;max-width:264px;
+  white-space:normal;text-align:center;line-height:1.45;
   color:var(--ink);background:rgba(6,5,4,.88);
   box-shadow:inset 0 0 0 2px var(--line2);
   animation:osin .18s steps(2,end) 1
 }
 .hero-tag.os::after{
-  content:'';position:absolute;left:50%;top:100%;margin-left:-4px;
+  content:'';position:absolute;left:29px;top:100%;
   width:8px;height:6px;background:rgba(6,5,4,.88)
 }
 @keyframes osin{
-  0%{transform:translateX(-50%) translateY(4px);opacity:0}
-  100%{transform:translateX(-50%) translateY(0);opacity:1}
+  0%{transform:translateY(4px);opacity:0}
+  100%{transform:translateY(0);opacity:1}
 }
 @media (prefers-reduced-motion: reduce){ .hero-tag.os{animation:none} }
+
+/* 他站在窗的右半邊：泡泡改成往左長，尾巴跟著換到右邊指他。
+   哪一邊是量出來的（見 61-scene.js 的 say），不是猜的。 */
+.hero-tag.os.os-l{left:auto;right:0}
+.hero-tag.os.os-l::after{left:auto;right:29px}
