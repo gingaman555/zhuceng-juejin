@@ -1096,11 +1096,18 @@ button.tk-k:hover span{color:var(--gold)}
    畫成點不畫成長條——長條會讀成「量」，而這裡是次數。 */
 .rk-dots{flex:1;display:flex;gap:9px;align-items:center;min-width:44px}
 /* .rk-r b 那一條把整列的 b 都設成 flex:0 0 66px，所以點會被撐開。 */
-/* 點放大：一眼要看得出幾顆是實心的。 */
-.rk-dots b{flex:0 0 22px;width:22px;height:22px;background:var(--sunk);
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.5), inset 2px 2px 0 rgba(255,255,255,.06)}
-.rk-dots b.on{background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold2)}
-.rk-r.mine .rk-dots b.on{background:var(--gold2)}
+/* 三個判定記號，一趟一個，照時間排。
+   本來是三顆點（實心＝準的），讀得出「幾次」，但把「往哪一邊偏」丟掉了。
+   全部朝右的那一列，是「他每一趟都比自己說的久」——那是舊的點看不出來的。 */
+.rk-m{flex:0 0 33px;display:flex;align-items:center;justify-content:center;height:33px}
+/* 記號是 16×12，兩邊都釘住——固定尺寸的點陣圖不該用 auto，
+   那樣圖還沒解碼完的時候那一格是 0 高，整列會跳一下。 */
+.rk-m .px{width:33px;height:25px;image-rendering:pixelated}
+/* 還沒走到第三趟的那幾格：一個空的位子，不是一個空心的點——
+   空心的點看起來像「沒準」，而它其實是「還沒有」。 */
+.rk-m.none{position:relative}
+.rk-m.none::after{content:'';position:absolute;left:50%;bottom:9px;
+  width:11px;height:2px;margin-left:-5px;background:var(--line2)}
 
 /* ── 老師：派過的每一個壓成一行 ──
    本來一個一張卡，還帶著注意事項與每一組承諾幾天的標籤——

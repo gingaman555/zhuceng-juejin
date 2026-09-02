@@ -2439,11 +2439,18 @@ button.tk-k:hover span{color:var(--gold)}
    畫成點不畫成長條——長條會讀成「量」，而這裡是次數。 */
 .rk-dots{flex:1;display:flex;gap:9px;align-items:center;min-width:44px}
 /* .rk-r b 那一條把整列的 b 都設成 flex:0 0 66px，所以點會被撐開。 */
-/* 點放大：一眼要看得出幾顆是實心的。 */
-.rk-dots b{flex:0 0 22px;width:22px;height:22px;background:var(--sunk);
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.5), inset 2px 2px 0 rgba(255,255,255,.06)}
-.rk-dots b.on{background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold2)}
-.rk-r.mine .rk-dots b.on{background:var(--gold2)}
+/* 三個判定記號，一趟一個，照時間排。
+   本來是三顆點（實心＝準的），讀得出「幾次」，但把「往哪一邊偏」丟掉了。
+   全部朝右的那一列，是「他每一趟都比自己說的久」——那是舊的點看不出來的。 */
+.rk-m{flex:0 0 33px;display:flex;align-items:center;justify-content:center;height:33px}
+/* 記號是 16×12，兩邊都釘住——固定尺寸的點陣圖不該用 auto，
+   那樣圖還沒解碼完的時候那一格是 0 高，整列會跳一下。 */
+.rk-m .px{width:33px;height:25px;image-rendering:pixelated}
+/* 還沒走到第三趟的那幾格：一個空的位子，不是一個空心的點——
+   空心的點看起來像「沒準」，而它其實是「還沒有」。 */
+.rk-m.none{position:relative}
+.rk-m.none::after{content:'';position:absolute;left:50%;bottom:9px;
+  width:11px;height:2px;margin-left:-5px;background:var(--line2)}
 
 /* ── 老師：派過的每一個壓成一行 ──
    本來一個一張卡，還帶著注意事項與每一組承諾幾天的標籤——
@@ -6878,15 +6885,56 @@ var ACTS = {
     var title = (document.getElementById('ms-title') || {}).value || '';
     var note = (document.getElementById('ms-note') || {}).value || '';
     if (!title.trim()) return say('先寫這一個任務要交什麼。');
-    var steps = ((document.getElementById('ms-steps') || {}).value || '')
-      .split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    /* 本來是把一整串字在這裡 split，所以「幾段」在按下派出去之前
+       不存在。現在它從第一下 Enter 就是一個陣列。
+       還沒按 Enter 的那一句也一起收——不然打完最後一段直接按
+       派出去，那一段會不見。 */
+    var steps = (DRAFT.steps || []).slice();
+    var last = ((document.getElementById('ms-step') || {}).value || '').trim();
+    if (last) steps.push(last.slice(0, 24));
     actPublish(me().classId, { title: title.trim(), note: note.trim(),
       steps: steps, teams: DRAFT.to || [] });
     /* 草稿清掉，不然下一個會帶著上一個的字。
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
-    DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.msSteps = ''; DRAFT.to = [];
+    DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
     go('ms');
     say('派出去了。學生那邊會先被問「你打算花幾天」。');
+  },
+
+  /* 改一次承諾。
+
+     那一趟留成紀錄（說幾天、走了幾天），沒有判定也沒有印章，
+     所以不會進準度那根尺——改承諾不是失準，是兩件事。
+     然後直接把他帶到「說幾天」，因為那就是他想做的事。 */
+  redo: function (runId) {
+    var t = myTeam();
+    var r = find('Runs', function (x) { return x.runId === runId; });
+    if (!r || !actRethink(t.teamId, runId)) return say('這一趟改不了。');
+    go('commit', { id: r.msId });
+    say('走過的那幾天留著。重新說一次要幾天。');
+  },
+
+  /* 分段：打一句按 Enter 就多一項。
+
+     重畫之後焦點會沒掉，所以自己補回去——不然切完第一段就得再點
+     一次那個框才切得了第二段，那比原本的多行框還糟。 */
+  stepadd: function (v) {
+    var x = String(v || '').trim();
+    if (!x) return;
+    DRAFT.steps = (DRAFT.steps || []).concat([x.slice(0, 24)]);
+    if (DRAFT.steps.length > RULES.STEPS_MAX) DRAFT.steps.length = RULES.STEPS_MAX;
+    render();
+    var el = document.getElementById('ms-step');
+    if (el) { el.value = ''; el.focus(); }
+  },
+
+  stepdel: function (i) {
+    var a = (DRAFT.steps || []).slice();
+    a.splice(Number(i), 1);
+    DRAFT.steps = a;
+    render();
+    var el = document.getElementById('ms-step');
+    if (el) el.focus();
   },
 
   to: function (teamId) {
@@ -7655,6 +7703,14 @@ function doingCard(t, row, st) {
   H.push('<div class="eyebrow">' + esc(row.ms.title) +
     (st && st.level ? '　·　' + esc(RULES.stallSay(st.level, st.days)) : '') + '</div>');
   H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
+  /* 做到一半發現自己說少了，可以改。
+
+     這條路本來只從戰鬥裡進得去，而且語氣是逃跑——一個學生在第三天
+     發現說少了，得先按「做完了」進戰鬥再逃出來，那不是他會想做的動作。
+
+     代價不用另外設計：走過的那幾天留在紀錄上（說 5、走了 3、重新想過），
+     看得見，但不扣任何東西。改承諾不是失準，那是兩件事。 */
+  H.push(btn('改一次承諾', 'redo:' + r.runId, 'ghost'));
   return H.join('');
 }
 
@@ -8349,15 +8405,23 @@ function scene(t, row, st, kind) {
   }
 
   /* ── 角色 ── */
-  /* 接了任務就往前走，沒有任務就在營火旁邊坐下來。
+  /* ── 他在做什麼，就長成什麼樣子 ──
 
-     停下來不是停止：坐著那兩幀差在呼吸，火也一直在動。
-     而且營地是休息的地方，不是罰站的地方——
-     沒有任務的時候本來就該是這個樣子。
+     本來寫的是 `run && st.level < 2`，而 run 這個物件在四個完全不同的
+     處境下都存在：派了還沒說幾天、正在做、交出去了在等、老師勾了。
+     所以四個狀態長成同一個走路的樣子，而其中只有一個真的在走。
+     姿勢因此不帶任何訊息——那就等於沒有姿勢。
 
-     睡著是另一回事：那是有任務但很多天沒有動。 */
-  var walking = run && st.level < 2;
-  var resting = !run && st.level < 2;
+       正在做　　　　　走路
+       還沒說幾天　　　站著　他還在洞口，沒出發
+       交出去了、等老師 站著　走到底了，腳沒有在動
+       沒有任務　　　　坐著　營火旁邊。那是休息，不是罰站
+       很多天沒動　　　睡著
+
+     停下來不是停止：坐著跟站著都有兩幀，差在呼吸，火也一直在動。 */
+  var walking = kind === 'doing' && st.level < 2;
+  var resting = (!run || kind === 'idle' || kind === 'left' || kind === 'waitexit')
+    && st.level < 2;
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
   var hx = resting ? 44 : ENT + walked * SCN.TILE - 11;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
@@ -8365,9 +8429,18 @@ function scene(t, row, st, kind) {
     '" style="left:' + hx + 'px">');
   /* 頭上寫他在幹嘛。本來只靠姿勢，而姿勢在 66px 上看不太出來——
      寫出來最快，而且它同時說明了「現在沒事做」是一個正常狀態。 */
+  /* 牌子跟著姿勢走。「待命」本來蓋掉三個很不一樣的處境——
+     還沒出發、在等老師、老師勾了。分開講。 */
+  var tag = walking ? '前進中'
+    : resting ? '休息中'
+    : st.level >= 2 ? '停很久了'
+    : kind === 'commit' ? '還沒出發'
+    : kind === 'stamped' ? '走到底了'
+    : kind === 'review' ? '在等老師'
+    : kind === 'gear' ? '可以收起來了'
+    : '待命';
   H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
-    '">' + (walking ? '前進中' : resting ? '休息中' :
-      st.level >= 2 ? '停很久了' : '待命') + '</div>');
+    '">' + esc(tag) + '</div>');
   if (walking) {
     H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
     H.push(pxTag(HERO.walkB, HERO.pal, 'ch wf wb'));
@@ -9932,12 +10005,14 @@ function battleRun() {
   /* 逃跑：角色往回跑出畫面，跑完才真的退出去。 */
   if (S.p.flee) {
     box.classList.add('flee');
-    say('你退回去了。');
+    say('走過的那幾天留著。');
     btAt(850, function () {
       var t = myTeam();
       actRethink(t.teamId, r.runId);
+      var ms = r.msId;
       S.p = {};
-      go('home', {});
+      /* 跟廊道上那一顆走到同一個地方——它們是同一件事。 */
+      go('commit', { id: ms });
     });
     return;
   }
@@ -10057,15 +10132,18 @@ function rankDev(teamId) {
   }).sort(function (a, b) { return (a.submittedAt || 0) - (b.submittedAt || 0); });
   if (!rs.length) return null;
   var use = rs.slice(-RANK_N);
-  var sum = 0, hit = 0;
+  var sum = 0, hit = 0, marks = [];
   use.forEach(function (r) {
     sum += Math.abs(r.actual - r.est) / r.est;
     if (r.stamp !== 'late') hit++;
+    /* 每一趟往哪一邊偏。三顆空心的點看不出「他每次都比說的久」，
+       而那是這張榜上最值得看到的一件事。 */
+    marks.push(r.stamp);
   });
   /* hit 是寫出來給人看的：準了幾次。加法的講法——
      「你拿到了什麼」，不是「你錯了多少」。
      dev 只留著當平手時分先後，不寫出來。 */
-  return { hit: hit, dev: sum / use.length, n: use.length };
+  return { hit: hit, dev: sum / use.length, n: use.length, marks: marks };
 }
 
 /* 一個班的榜。沒有資料的排在最後，選擇不上榜的整個不出現。 */
@@ -10075,7 +10153,7 @@ function rankRows(classId) {
     if (t.noRank) return;
     var d = rankDev(t.teamId);
     out.push({ teamId: t.teamId, name: t.name, dev: d ? d.dev : null,
-      hit: d ? d.hit : 0, n: d ? d.n : 0 });
+      hit: d ? d.hit : 0, n: d ? d.n : 0, marks: d ? d.marks : [] });
   });
   /* 先比準了幾次（多的在上面），平手才用偏差率分先後。
      平手會很多，那是好事——它讓這張榜比較不像一條隊伍。 */
@@ -10126,11 +10204,19 @@ function rankCard(classId, meId) {
     if (r.dev === null) {
       H.push('<span class="rk-d">還沒交過</span>');
     } else {
-      /* 三顆點：準了幾次。實心是準的，空心是還沒。
-         畫成點不畫成長條，因為長條會讀成「量」，而這裡是次數。 */
+      /* 三個記號，一趟一個，照時間排。
+
+         本來是三顆點（實心＝準的），讀得出「幾次」，但把「往哪一邊偏」
+         丟掉了——說 5 走 6 跟說 5 走 15 都只是一顆空心的點。
+
+         換成判定用的那三個記號之後，一列變成一條看得到形狀的三趟史：
+         全部朝右的那一列，是「他每一趟都比自己說的久」。
+         那三個記號在判定頁與任務清單上都已經在用，不用學新東西。 */
       H.push('<div class="rk-dots">');
       for (var k = 0; k < RANK_N; k++) {
-        H.push('<b class="' + (k < r.hit ? 'on' : '') + '"></b>');
+        var mk = r.marks[k];
+        H.push('<span class="rk-m ' + (mk || 'none') + '">' +
+          (mk ? stampPx(mk) : '') + '</span>');
       }
       H.push('</div>');
       H.push('<span class="rk-d">' + (r.hit ? '準 ' + r.hit + ' 次' : '還沒準過') + '</span>');
@@ -10341,12 +10427,31 @@ PAGES.ms = function () {
   H.push('<input id="ms-title" value="' + esc(draft('msTitle', '')) + '" oninput="DRAFT[\'msTitle\']=this.value" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
   H.push('<textarea id="ms-note" oninput="DRAFT[\'msNote\']=this.value" rows="2" placeholder="' +
     esc('要注意的地方。選填。') + '">' + esc(draft('msNote', '')) + '</textarea>');
-  H.push('<div class="eyebrow" style="margin-top:14px">分段　選填　一行一段</div>');
-  H.push('<textarea id="ms-steps" oninput="DRAFT[\'msSteps\']=this.value" rows="4" placeholder="' +
-    esc('訪三個人\n整理逐字稿\n收斂成一句話') + '">' + esc(draft('msSteps', '')) + '</textarea>');
-  /* 這一句本來寫「學生每天可以點今天動的是哪一段」——那個機制早就拿掉了。
-     現在分段真正會發生的是：交出去的時候被問哪幾段做完了、哪一段比想的久。 */
-  H.push('<p class="dim">不分段一樣走得完。</p>');
+  /* ── 分段 ──
+
+     本來是一個空白的多行框，標籤寫「一行一段」。那是資料格式，
+     不是介面：老師看到的是一個空框，按 Enter 只是換行，
+     要到學生那邊才知道自己切對了沒有。
+
+     現在打一句按 Enter 就變成底下的一項，有編號、有叉。
+     切的那一下就看得到結果。 */
+  H.push('<div class="eyebrow" style="margin-top:14px">分段　選填</div>');
+  var sp = DRAFT.steps || [];
+  if (sp.length) {
+    H.push('<div class="sped">');
+    sp.forEach(function (x, i) {
+      H.push('<div class="spr"><i>' + (i + 1) + '</i><b>' + esc(x) + '</b>' +
+        '<button class="spx" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'stepdel:' + i })) + '\' title="' +
+        esc('拿掉這一段') + '">×</button></div>');
+    });
+    H.push('</div>');
+  }
+  H.push('<input id="ms-step" placeholder="' +
+    esc(sp.length ? '再切一段，按 Enter' : '例：訪三個人　→ 按 Enter') +
+    '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
+  H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段。' : '') +
+    '不分段一樣走得完。</p>');
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +

@@ -217,12 +217,14 @@ function battleRun() {
   /* 逃跑：角色往回跑出畫面，跑完才真的退出去。 */
   if (S.p.flee) {
     box.classList.add('flee');
-    say('你退回去了。');
+    say('走過的那幾天留著。');
     btAt(850, function () {
       var t = myTeam();
       actRethink(t.teamId, r.runId);
+      var ms = r.msId;
       S.p = {};
-      go('home', {});
+      /* 跟廊道上那一顆走到同一個地方——它們是同一件事。 */
+      go('commit', { id: ms });
     });
     return;
   }

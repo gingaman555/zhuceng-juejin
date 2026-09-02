@@ -466,15 +466,56 @@ var ACTS = {
     var title = (document.getElementById('ms-title') || {}).value || '';
     var note = (document.getElementById('ms-note') || {}).value || '';
     if (!title.trim()) return say('先寫這一個任務要交什麼。');
-    var steps = ((document.getElementById('ms-steps') || {}).value || '')
-      .split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    /* 本來是把一整串字在這裡 split，所以「幾段」在按下派出去之前
+       不存在。現在它從第一下 Enter 就是一個陣列。
+       還沒按 Enter 的那一句也一起收——不然打完最後一段直接按
+       派出去，那一段會不見。 */
+    var steps = (DRAFT.steps || []).slice();
+    var last = ((document.getElementById('ms-step') || {}).value || '').trim();
+    if (last) steps.push(last.slice(0, 24));
     actPublish(me().classId, { title: title.trim(), note: note.trim(),
       steps: steps, teams: DRAFT.to || [] });
     /* 草稿清掉，不然下一個會帶著上一個的字。
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
-    DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.msSteps = ''; DRAFT.to = [];
+    DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
     go('ms');
     say('派出去了。學生那邊會先被問「你打算花幾天」。');
+  },
+
+  /* 改一次承諾。
+
+     那一趟留成紀錄（說幾天、走了幾天），沒有判定也沒有印章，
+     所以不會進準度那根尺——改承諾不是失準，是兩件事。
+     然後直接把他帶到「說幾天」，因為那就是他想做的事。 */
+  redo: function (runId) {
+    var t = myTeam();
+    var r = find('Runs', function (x) { return x.runId === runId; });
+    if (!r || !actRethink(t.teamId, runId)) return say('這一趟改不了。');
+    go('commit', { id: r.msId });
+    say('走過的那幾天留著。重新說一次要幾天。');
+  },
+
+  /* 分段：打一句按 Enter 就多一項。
+
+     重畫之後焦點會沒掉，所以自己補回去——不然切完第一段就得再點
+     一次那個框才切得了第二段，那比原本的多行框還糟。 */
+  stepadd: function (v) {
+    var x = String(v || '').trim();
+    if (!x) return;
+    DRAFT.steps = (DRAFT.steps || []).concat([x.slice(0, 24)]);
+    if (DRAFT.steps.length > RULES.STEPS_MAX) DRAFT.steps.length = RULES.STEPS_MAX;
+    render();
+    var el = document.getElementById('ms-step');
+    if (el) { el.value = ''; el.focus(); }
+  },
+
+  stepdel: function (i) {
+    var a = (DRAFT.steps || []).slice();
+    a.splice(Number(i), 1);
+    DRAFT.steps = a;
+    render();
+    var el = document.getElementById('ms-step');
+    if (el) el.focus();
   },
 
   to: function (teamId) {

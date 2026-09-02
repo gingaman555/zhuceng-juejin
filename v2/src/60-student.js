@@ -265,6 +265,14 @@ function doingCard(t, row, st) {
   H.push('<div class="eyebrow">' + esc(row.ms.title) +
     (st && st.level ? '　·　' + esc(RULES.stallSay(st.level, st.days)) : '') + '</div>');
   H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
+  /* 做到一半發現自己說少了，可以改。
+
+     這條路本來只從戰鬥裡進得去，而且語氣是逃跑——一個學生在第三天
+     發現說少了，得先按「做完了」進戰鬥再逃出來，那不是他會想做的動作。
+
+     代價不用另外設計：走過的那幾天留在紀錄上（說 5、走了 3、重新想過），
+     看得見，但不扣任何東西。改承諾不是失準，那是兩件事。 */
+  H.push(btn('改一次承諾', 'redo:' + r.runId, 'ghost'));
   return H.join('');
 }
 

@@ -188,12 +188,31 @@ PAGES.ms = function () {
   H.push('<input id="ms-title" value="' + esc(draft('msTitle', '')) + '" oninput="DRAFT[\'msTitle\']=this.value" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
   H.push('<textarea id="ms-note" oninput="DRAFT[\'msNote\']=this.value" rows="2" placeholder="' +
     esc('要注意的地方。選填。') + '">' + esc(draft('msNote', '')) + '</textarea>');
-  H.push('<div class="eyebrow" style="margin-top:14px">分段　選填　一行一段</div>');
-  H.push('<textarea id="ms-steps" oninput="DRAFT[\'msSteps\']=this.value" rows="4" placeholder="' +
-    esc('訪三個人\n整理逐字稿\n收斂成一句話') + '">' + esc(draft('msSteps', '')) + '</textarea>');
-  /* 這一句本來寫「學生每天可以點今天動的是哪一段」——那個機制早就拿掉了。
-     現在分段真正會發生的是：交出去的時候被問哪幾段做完了、哪一段比想的久。 */
-  H.push('<p class="dim">不分段一樣走得完。</p>');
+  /* ── 分段 ──
+
+     本來是一個空白的多行框，標籤寫「一行一段」。那是資料格式，
+     不是介面：老師看到的是一個空框，按 Enter 只是換行，
+     要到學生那邊才知道自己切對了沒有。
+
+     現在打一句按 Enter 就變成底下的一項，有編號、有叉。
+     切的那一下就看得到結果。 */
+  H.push('<div class="eyebrow" style="margin-top:14px">分段　選填</div>');
+  var sp = DRAFT.steps || [];
+  if (sp.length) {
+    H.push('<div class="sped">');
+    sp.forEach(function (x, i) {
+      H.push('<div class="spr"><i>' + (i + 1) + '</i><b>' + esc(x) + '</b>' +
+        '<button class="spx" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'stepdel:' + i })) + '\' title="' +
+        esc('拿掉這一段') + '">×</button></div>');
+    });
+    H.push('</div>');
+  }
+  H.push('<input id="ms-step" placeholder="' +
+    esc(sp.length ? '再切一段，按 Enter' : '例：訪三個人　→ 按 Enter') +
+    '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
+  H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段。' : '') +
+    '不分段一樣走得完。</p>');
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +

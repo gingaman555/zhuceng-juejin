@@ -41,15 +41,18 @@ function rankDev(teamId) {
   }).sort(function (a, b) { return (a.submittedAt || 0) - (b.submittedAt || 0); });
   if (!rs.length) return null;
   var use = rs.slice(-RANK_N);
-  var sum = 0, hit = 0;
+  var sum = 0, hit = 0, marks = [];
   use.forEach(function (r) {
     sum += Math.abs(r.actual - r.est) / r.est;
     if (r.stamp !== 'late') hit++;
+    /* 每一趟往哪一邊偏。三顆空心的點看不出「他每次都比說的久」，
+       而那是這張榜上最值得看到的一件事。 */
+    marks.push(r.stamp);
   });
   /* hit 是寫出來給人看的：準了幾次。加法的講法——
      「你拿到了什麼」，不是「你錯了多少」。
      dev 只留著當平手時分先後，不寫出來。 */
-  return { hit: hit, dev: sum / use.length, n: use.length };
+  return { hit: hit, dev: sum / use.length, n: use.length, marks: marks };
 }
 
 /* 一個班的榜。沒有資料的排在最後，選擇不上榜的整個不出現。 */
@@ -59,7 +62,7 @@ function rankRows(classId) {
     if (t.noRank) return;
     var d = rankDev(t.teamId);
     out.push({ teamId: t.teamId, name: t.name, dev: d ? d.dev : null,
-      hit: d ? d.hit : 0, n: d ? d.n : 0 });
+      hit: d ? d.hit : 0, n: d ? d.n : 0, marks: d ? d.marks : [] });
   });
   /* 先比準了幾次（多的在上面），平手才用偏差率分先後。
      平手會很多，那是好事——它讓這張榜比較不像一條隊伍。 */
@@ -110,11 +113,19 @@ function rankCard(classId, meId) {
     if (r.dev === null) {
       H.push('<span class="rk-d">還沒交過</span>');
     } else {
-      /* 三顆點：準了幾次。實心是準的，空心是還沒。
-         畫成點不畫成長條，因為長條會讀成「量」，而這裡是次數。 */
+      /* 三個記號，一趟一個，照時間排。
+
+         本來是三顆點（實心＝準的），讀得出「幾次」，但把「往哪一邊偏」
+         丟掉了——說 5 走 6 跟說 5 走 15 都只是一顆空心的點。
+
+         換成判定用的那三個記號之後，一列變成一條看得到形狀的三趟史：
+         全部朝右的那一列，是「他每一趟都比自己說的久」。
+         那三個記號在判定頁與任務清單上都已經在用，不用學新東西。 */
       H.push('<div class="rk-dots">');
       for (var k = 0; k < RANK_N; k++) {
-        H.push('<b class="' + (k < r.hit ? 'on' : '') + '"></b>');
+        var mk = r.marks[k];
+        H.push('<span class="rk-m ' + (mk || 'none') + '">' +
+          (mk ? stampPx(mk) : '') + '</span>');
       }
       H.push('</div>');
       H.push('<span class="rk-d">' + (r.hit ? '準 ' + r.hit + ' 次' : '還沒準過') + '</span>');

@@ -183,15 +183,23 @@ function scene(t, row, st, kind) {
   }
 
   /* ── 角色 ── */
-  /* 接了任務就往前走，沒有任務就在營火旁邊坐下來。
+  /* ── 他在做什麼，就長成什麼樣子 ──
 
-     停下來不是停止：坐著那兩幀差在呼吸，火也一直在動。
-     而且營地是休息的地方，不是罰站的地方——
-     沒有任務的時候本來就該是這個樣子。
+     本來寫的是 `run && st.level < 2`，而 run 這個物件在四個完全不同的
+     處境下都存在：派了還沒說幾天、正在做、交出去了在等、老師勾了。
+     所以四個狀態長成同一個走路的樣子，而其中只有一個真的在走。
+     姿勢因此不帶任何訊息——那就等於沒有姿勢。
 
-     睡著是另一回事：那是有任務但很多天沒有動。 */
-  var walking = run && st.level < 2;
-  var resting = !run && st.level < 2;
+       正在做　　　　　走路
+       還沒說幾天　　　站著　他還在洞口，沒出發
+       交出去了、等老師 站著　走到底了，腳沒有在動
+       沒有任務　　　　坐著　營火旁邊。那是休息，不是罰站
+       很多天沒動　　　睡著
+
+     停下來不是停止：坐著跟站著都有兩幀，差在呼吸，火也一直在動。 */
+  var walking = kind === 'doing' && st.level < 2;
+  var resting = (!run || kind === 'idle' || kind === 'left' || kind === 'waitexit')
+    && st.level < 2;
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
   var hx = resting ? 44 : ENT + walked * SCN.TILE - 11;
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
@@ -199,9 +207,18 @@ function scene(t, row, st, kind) {
     '" style="left:' + hx + 'px">');
   /* 頭上寫他在幹嘛。本來只靠姿勢，而姿勢在 66px 上看不太出來——
      寫出來最快，而且它同時說明了「現在沒事做」是一個正常狀態。 */
+  /* 牌子跟著姿勢走。「待命」本來蓋掉三個很不一樣的處境——
+     還沒出發、在等老師、老師勾了。分開講。 */
+  var tag = walking ? '前進中'
+    : resting ? '休息中'
+    : st.level >= 2 ? '停很久了'
+    : kind === 'commit' ? '還沒出發'
+    : kind === 'stamped' ? '走到底了'
+    : kind === 'review' ? '在等老師'
+    : kind === 'gear' ? '可以收起來了'
+    : '待命';
   H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
-    '">' + (walking ? '前進中' : resting ? '休息中' :
-      st.level >= 2 ? '停很久了' : '待命') + '</div>');
+    '">' + esc(tag) + '</div>');
   if (walking) {
     H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
     H.push(pxTag(HERO.walkB, HERO.pal, 'ch wf wb'));
