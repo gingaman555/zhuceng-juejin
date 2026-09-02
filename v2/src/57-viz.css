@@ -872,18 +872,7 @@ button.ac:active{transform:translateY(1px)}
    原始設計裡就有的一條虛線，一直沒做。它讓「我承諾了幾天」在畫面上
    有一個實體：線在前面，水從後面追上來。
    它不是終點線——每一組的線在不同的地方，因為那是各自說的。 */
-.vow{
-  position:absolute;top:0;bottom:0;width:3px;z-index:4;pointer-events:none;
-  background:repeating-linear-gradient(180deg,
-    var(--gold) 0 6px, transparent 6px 14px)
-}
-/* 掛在虛線的下端。本來在上端，而角落那一塊（地層名、深度）也在上面
-   而且釘住不捲——只要把廊道拖到虛線落在右上角，兩段字就疊在一起。
-   虛線從天花板拉到地板，下面那一半本來就是空的。 */
-.vow span{
-  position:absolute;bottom:77px;left:6px;font-size:22px;color:var(--gold);
-  white-space:nowrap;background:rgba(0,0,0,.72);padding:2px 5px
-}
+/* .vow 拿掉了：那條虛線是把「你說幾天」拉成一條線壓在走廊上。 */
 
 /* ── 任務清單 ──
    老師派過的每一件事，各自走到哪。數字靠右對齊，因為「你說幾天」跟
