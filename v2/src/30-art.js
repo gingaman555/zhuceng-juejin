@@ -19,7 +19,11 @@ var ART_CACHE = {};
    換配色就是換同一張圖的意思——魔物越深越冷，招牌越好越亮。 */
 function pxSvg(px, pal, dim) {
   if (!px || !px.length) return '';
-  var key = px.join('') + '|' + pal['#'] + '|' + (dim ? 1 : 0);
+  /* 整組調色盤都要進 key。本來只取 pal['#']——兩組 '#' 相同、
+     其餘不同的調色盤會互相拿到對方的圖。 */
+  var pk = '';
+  Object.keys(pal).sort().forEach(function (c) { pk += c + pal[c]; });
+  var key = px.join('') + '|' + pk + '|' + (dim ? 1 : 0);
   if (ART_CACHE[key]) return ART_CACHE[key];
 
   var W = px[0].length;
@@ -30,12 +34,18 @@ function pxSvg(px, pal, dim) {
     for (var x = 0; x < row.length; x++) {
       var ch = row[x];
       if (ch === '.' || ch === ' ') continue;
-      var fill =
-        ch === '*' ? pal['*'] :
-        (ch === '+' || ch === 'o') ? pal.o :
-        ch === '~' ? (pal['~'] || pal.o) :
-        ch === 'z' || ch === 'Z' ? (pal['*'] || pal['#']) :
-        pal['#'];
+      /* 先查調色盤。查得到就用那一個顏色——一個角色因此可以有
+         頭髮、皮膚、衣服、金屬各自的顏色，不是只有本體加陰影。
+         查不到才走舊的別名（+ 與 o 是陰影、* 與 z 是反光）。 */
+      var fill = pal[ch];
+      if (fill === undefined) {
+        fill =
+          ch === '*' ? pal['*'] :
+          (ch === '+' || ch === 'o') ? pal.o :
+          ch === '~' ? (pal['~'] || pal.o) :
+          ch === 'z' || ch === 'Z' ? (pal['*'] || pal['#']) :
+          pal['#'];
+      }
       out.push('<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + fill + '"' +
         (dim ? ' opacity=".26"' : '') + '/>');
     }

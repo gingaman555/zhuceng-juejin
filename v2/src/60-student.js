@@ -405,6 +405,10 @@ PAGES.stamp = function () {
      再演一次是重複，而且那一層閃光在動畫被凍住的時候會蓋成一片白。 */
   var H = [];
   H.push('<div class="stamp-card ' + r.stamp + '">');
+  /* 他怎麼樣了。準的時候舉起手，比說的久的時候撐著膝蓋喘——
+     那不是懲罰的表情，他只是走得比自己想的遠。 */
+  H.push('<div class="stamp-who">' +
+    pxTag(r.stamp === 'late' ? HERO.pant : HERO.win, HERO.pal, 'sw-px') + '</div>');
   H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push('<dl class="rep">');

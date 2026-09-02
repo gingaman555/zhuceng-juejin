@@ -208,8 +208,13 @@ function scene(t, row, st, kind) {
   } else if (resting) {
     H.push(pxTag(HERO.sitA, HERO.pal, 'ch wf wa'));
     H.push(pxTag(HERO.sitB, HERO.pal, 'ch wf wb'));
+  } else if (st.level >= 2) {
+    H.push(pxTag(HERO.sleep, HERO.pal, 'ch'));
   } else {
-    H.push(pxTag(st.level >= 2 ? HERO.sleep : HERO.idle, HERO.pal, 'ch'));
+    /* 站著也要兩幀。一張不動的圖在一條會漲水、會閃火的走廊上
+       看起來像壞掉——呼吸那一格差別很小，但「他還在那裡」靠的就是它。 */
+    H.push(pxTag(HERO.idleA, HERO.pal, 'ch wf wa'));
+    H.push(pxTag(HERO.idleB, HERO.pal, 'ch wf wb'));
   }
   H.push(heroPack(t.teamId));
   if (st.level === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine'));

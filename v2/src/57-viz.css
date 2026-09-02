@@ -1252,3 +1252,8 @@ button.tk-k:hover span{color:var(--gold)}
 }
 .ew-m{flex:0 0 auto;margin-left:9px;display:flex;align-items:flex-end}
 .px.ew-px{width:44px;height:44px;image-rendering:pixelated}
+
+/* 判定那一頁上的他。準了舉手，比說的久就撐著膝蓋喘。 */
+.stamp-who{margin:0 0 11px}
+.px.sw-px{width:88px;height:88px;image-rendering:pixelated}
+@media (max-width:520px){ .px.sw-px{width:66px;height:66px} }
