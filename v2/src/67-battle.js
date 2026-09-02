@@ -124,7 +124,10 @@ PAGES.battle = function () {
     H.push('<div class="bt-q">');
     H.push(ph === 'q1' ? btSteps(r.runId) : btAsk(r));
     H.push('<div class="bt-menu wide">');
-    H.push(btChoice('bt' + ph + ':' + r.runId, '打過去', 'go'));
+    /* 兩問各自一句，不共用「打過去」——第一下是他先出手，
+       第二下是接著再一下。同一句話用兩次，那兩下就變成同一下。 */
+    H.push(btChoice('bt' + ph + ':' + r.runId,
+      ph === 'q1' ? '吃我一擊！' : '再來一擊！', 'go'));
     H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
     H.push('</div></div>');
   }
