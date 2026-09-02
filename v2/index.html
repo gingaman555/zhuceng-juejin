@@ -7612,6 +7612,28 @@ function seed() {
   });
   var ALL = TEAMS.map(function (t) { return t.id; });
 
+  /* ---------- 完全沒開過的那一個 ----------
+
+     帳號在、名冊上有一格、其餘什麼都沒有。登入之後會照順序走過
+     三件第一次才會發生的事：認領自己、挑角色、給專案取名字。
+
+     不放進上面那個迴圈，是因為那個迴圈用序號配 userId——
+     多一組會生出 U6，而 U6 是老師·薛。 */
+  DB.Teams.push({
+    teamId: 'G6', classId: cid, name: '第六組 · 己', mentorId: 'U7',
+    project: '', joinedAt: ago(0)
+  });
+  /* 沒有 teamId：render 會把他送到認領那一頁（見 55-ui.js）。
+     也沒有 hero：挑角色那一頁四個都不會打勾。 */
+  DB.Users.push(seedPw({
+    userId: 'U8', account: 'stu06', name: '學生6',
+    role: 'student', classId: cid, createdAt: ago(0)
+  }));
+  DB.Roster.push({
+    rosterId: 'RS6', classId: cid, teamId: 'G6', teamName: '第六組 · 己',
+    memberName: '學生6', claimedBy: null, claimedAt: 0
+  });
+
 
   /* 老師分的段寫在任務上（見下面的 M1／M2）。第三個刻意不分——
      沒分段一樣走得完，那一個任務就是在證明這件事。 */
@@ -8849,7 +8871,7 @@ PAGES.login = function () {
   H.push(btn('進去', 'login', 'big'));
   H.push(btn('還沒有帳號', 'go:reg', 'ghost'));
   H.push('</div>');
-  H.push('<p class="dim">試用的帳號：學生 stu01 到 stu05、老師 tea01、研究者 lab01，' +
+  H.push('<p class="dim">試用的帳號：學生 stu01 到 stu06、老師 tea01、研究者 lab01，' +
          '密碼都是 ' + DEMO_PW + '。</p>');
   H.push('</div></div>');
   return H.join('');

@@ -81,7 +81,7 @@ PAGES.login = function () {
   H.push(btn('進去', 'login', 'big'));
   H.push(btn('還沒有帳號', 'go:reg', 'ghost'));
   H.push('</div>');
-  H.push('<p class="dim">試用的帳號：學生 stu01 到 stu05、老師 tea01、研究者 lab01，' +
+  H.push('<p class="dim">試用的帳號：學生 stu01 到 stu06、老師 tea01、研究者 lab01，' +
          '密碼都是 ' + DEMO_PW + '。</p>');
   H.push('</div></div>');
   return H.join('');
