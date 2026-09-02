@@ -348,6 +348,9 @@ PAGES.commit = function () {
      在腦袋裡把它們疊起來。 */
   var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
   H.push(estAxis(est, past.reverse(), estSpread(m.msId, t.teamId)));
+  /* 拉到幾就亮幾格，擋路的那一隻站在盡頭。
+     承諾是這裡唯一有阻力的選擇，它不該長得像填表。 */
+  H.push(estWalk(t, m, est));
   H.push('</div>');
 
   /* 老師分的段。點起來標「這一段會比想的久」——
@@ -369,6 +372,23 @@ PAGES.commit = function () {
 /* ---------- 交出去 ---------- */
 /* 交出去那一頁退休了：兩問搬進戰鬥（見 67-battle.js），
    那張選填的日子表搬到封存——它決定的是石片長什麼樣子。 */
+
+/* 你說要走多遠。
+
+   一格一天，亮到你拉到的那一格，擋路的那一隻站在盡頭。
+   它不是另一個資訊——它是同一個數字換成你等一下真的會看到的樣子。
+
+   承諾是這個系統裡唯一有阻力的選擇，而它本來長得像填表：
+   拉一個滑桿、按一個鍵。 */
+function estWalk(t, m, est) {
+  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var mob = mobFor(m.msId, t.teamId);
+  var H = ['<div class="ew"><div class="ew-in">'];
+  for (var i = 0; i < est; i++) H.push('<i class="ew-c"></i>');
+  H.push('<span class="ew-m">' + pxTag(mob.px, z.pal, 'ew-px') + '</span>');
+  H.push('</div></div>');
+  return H.join('');
+}
 
 /* ---------- 判定結果 ---------- */
 PAGES.stamp = function () {

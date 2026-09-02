@@ -2511,6 +2511,19 @@ button.tk-k:hover span{color:var(--gold)}
 }
 @media (max-width:520px){ .gate .tagline{font-size:22px} }
 
+/* ── 你說要走多遠 ──
+   一格一天，亮到你拉到的那一格，擋路的那一隻站在盡頭。
+   它不是另一個資訊——是同一個數字換成你等一下真的會看到的樣子。 */
+.ew{margin:14px 0 0;overflow-x:auto;overscroll-behavior-x:contain}
+.ew-in{display:flex;align-items:flex-end;gap:3px;min-height:44px;padding-bottom:3px}
+.ew-c{
+  flex:0 0 14px;width:14px;height:22px;
+  background:var(--gold-d);
+  box-shadow:inset 0 3px 0 var(--gold), inset 0 -3px 0 rgba(0,0,0,.45)
+}
+.ew-m{flex:0 0 auto;margin-left:9px;display:flex;align-items:flex-end}
+.px.ew-px{width:44px;height:44px;image-rendering:pixelated}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -3552,7 +3565,10 @@ var STRATA = [
 
    代價是全班那張剖面圖不再有共通的地層帶。那是對的——同樣 160 公尺，
    兩組看到的東西不一樣，就沒得比。 */
-var ZONE_SPAN = 2;                    /* 一層待幾個任務 */
+/* 一層待幾個任務。本來是 2——六層一圈就要 12 趟，而一學期大約 8 趟，
+   所以「走完六層回到第一層」那件事沒有人遇得到。改成 1：六趟一圈，
+   第 7 趟回到第一層，那時候他會走進自己第 1 趟留下的記號旁邊。 */
+var ZONE_SPAN = 1;
 var CYCLE = ZONE_SPAN * STRATA.length;
 
 /* 順序是一個班洗一次，班內共用。
@@ -3591,11 +3607,7 @@ function cycleAt(depth) {
   return Math.floor((Number(depth) || 0) / CYCLE);
 }
 
-/* 這一層還要待幾個任務才換 */
-function untilNextZone(depth) {
-  var d = Number(depth) || 0;
-  return ZONE_SPAN - (d % ZONE_SPAN);
-}
+/* untilNextZone 拿掉了：一層一趟之後它永遠回 1，而且沒有人用它。 */
 
 /* 一層裡住著哪些東西。
 
@@ -7633,6 +7645,9 @@ PAGES.commit = function () {
      在腦袋裡把它們疊起來。 */
   var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
   H.push(estAxis(est, past.reverse(), estSpread(m.msId, t.teamId)));
+  /* 拉到幾就亮幾格，擋路的那一隻站在盡頭。
+     承諾是這裡唯一有阻力的選擇，它不該長得像填表。 */
+  H.push(estWalk(t, m, est));
   H.push('</div>');
 
   /* 老師分的段。點起來標「這一段會比想的久」——
@@ -7654,6 +7669,23 @@ PAGES.commit = function () {
 /* ---------- 交出去 ---------- */
 /* 交出去那一頁退休了：兩問搬進戰鬥（見 67-battle.js），
    那張選填的日子表搬到封存——它決定的是石片長什麼樣子。 */
+
+/* 你說要走多遠。
+
+   一格一天，亮到你拉到的那一格，擋路的那一隻站在盡頭。
+   它不是另一個資訊——它是同一個數字換成你等一下真的會看到的樣子。
+
+   承諾是這個系統裡唯一有阻力的選擇，而它本來長得像填表：
+   拉一個滑桿、按一個鍵。 */
+function estWalk(t, m, est) {
+  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var mob = mobFor(m.msId, t.teamId);
+  var H = ['<div class="ew"><div class="ew-in">'];
+  for (var i = 0; i < est; i++) H.push('<i class="ew-c"></i>');
+  H.push('<span class="ew-m">' + pxTag(mob.px, z.pal, 'ew-px') + '</span>');
+  H.push('</div></div>');
+  return H.join('');
+}
 
 /* ---------- 判定結果 ---------- */
 PAGES.stamp = function () {
@@ -8202,6 +8234,16 @@ function scene(t, row, st, kind) {
 
   /* ── 魔物 ── */
   if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), span));
+
+  /* ── 盡頭的岩壁裡有東西 ──
+
+     這一趟走完、把記號插進去的那一下會敲開這一層的石頭。
+     有東西的時候先讓那塊岩壁看起來不一樣——只給「那裡有東西」，
+     不給「那裡有什麼」。揭曉留給敲開的那一下。 */
+  if (buriedAt(t.classId, t.teamId, depthOf(t.teamId))) {
+    H.push('<div class="ahead" style="left:' +
+      (ENT + (span + 2) * SCN.TILE) + 'px"><i></i></div>');
+  }
 
   /* ── 角色 ── */
   /* 接了任務就往前走，沒有任務就在營火旁邊坐下來。

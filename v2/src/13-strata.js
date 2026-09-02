@@ -79,7 +79,10 @@ var STRATA = [
 
    代價是全班那張剖面圖不再有共通的地層帶。那是對的——同樣 160 公尺，
    兩組看到的東西不一樣，就沒得比。 */
-var ZONE_SPAN = 2;                    /* 一層待幾個任務 */
+/* 一層待幾個任務。本來是 2——六層一圈就要 12 趟，而一學期大約 8 趟，
+   所以「走完六層回到第一層」那件事沒有人遇得到。改成 1：六趟一圈，
+   第 7 趟回到第一層，那時候他會走進自己第 1 趟留下的記號旁邊。 */
+var ZONE_SPAN = 1;
 var CYCLE = ZONE_SPAN * STRATA.length;
 
 /* 順序是一個班洗一次，班內共用。
@@ -118,11 +121,7 @@ function cycleAt(depth) {
   return Math.floor((Number(depth) || 0) / CYCLE);
 }
 
-/* 這一層還要待幾個任務才換 */
-function untilNextZone(depth) {
-  var d = Number(depth) || 0;
-  return ZONE_SPAN - (d % ZONE_SPAN);
-}
+/* untilNextZone 拿掉了：一層一趟之後它永遠回 1，而且沒有人用它。 */
 
 /* 一層裡住著哪些東西。
 

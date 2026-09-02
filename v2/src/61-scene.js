@@ -172,6 +172,16 @@ function scene(t, row, st, kind) {
   /* ── 魔物 ── */
   if (run) H.push(sceneMob(t, row, Math.min(1, walked / est), span));
 
+  /* ── 盡頭的岩壁裡有東西 ──
+
+     這一趟走完、把記號插進去的那一下會敲開這一層的石頭。
+     有東西的時候先讓那塊岩壁看起來不一樣——只給「那裡有東西」，
+     不給「那裡有什麼」。揭曉留給敲開的那一下。 */
+  if (buriedAt(t.classId, t.teamId, depthOf(t.teamId))) {
+    H.push('<div class="ahead" style="left:' +
+      (ENT + (span + 2) * SCN.TILE) + 'px"><i></i></div>');
+  }
+
   /* ── 角色 ── */
   /* 接了任務就往前走，沒有任務就在營火旁邊坐下來。
 
