@@ -582,9 +582,12 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
      .floor     地面     44px ／ 1.4s
      .scn-rush  流線    176px ／ 1.1s   最快
 
+     .scn-lamps 牆上的燭 176px ／ 3.2s   跟遠牆同速，它們釘在那面牆上
+
    只有前進中才捲。休息的時候整個世界是靜的——那正是休息的樣子。
-   走廊上的紀錄（腳印、火把、第幾天、那一天做了什麼）一格都不動：
-   會動的是他經過的地方，不是他走過的地方。 */
+
+   地上的紀錄（腳印、那一天做了什麼、撿到的東西）一格都不動：
+   那是他走過的地方。牆上的東西會動，因為牆會退。 */
 .scn-bg{
   position:absolute;left:0;top:0;bottom:44px;z-index:0;pointer-events:none;
   background-image:
@@ -603,6 +606,13 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 @keyframes bg88 { to{ background-position-x:-88px  } }
 @keyframes bg44 { to{ background-position-x:-44px  } }
 
+/* 牆上那一排燭。整層裁在洞口，捲過去的不會蓋到營火。 */
+.scn-lamps{position:absolute;top:0;bottom:0;overflow:hidden;z-index:2;
+  pointer-events:none}
+.lamps-in{position:absolute;top:0;bottom:0;left:0;right:0}
+@keyframes lamp176{ to{ transform:translateX(-176px) } }
+.scn.walking .lamps-in{ animation:lamp176 3.2s linear infinite }
+
 .scn.walking .scn-bg  { animation:bg176 5.5s linear infinite }
 .scn.walking .scn-ceil{ animation:bg88  2.2s linear infinite }
 .scn.walking .floor   { animation:bg44  1.4s linear infinite }
@@ -615,7 +625,8 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 }
 
 @media (prefers-reduced-motion: reduce){
-  .scn.walking .scn-bg,.scn.walking .scn-ceil,.scn.walking .floor{animation:none}
+  .scn.walking .scn-bg,.scn.walking .scn-ceil,.scn.walking .floor,
+  .scn.walking .lamps-in{animation:none}
 }
 
 /* ── 廊道底下那三句 ──

@@ -81,10 +81,16 @@ function scene(t, row, st, kind) {
 
      fresh 的那一趟 runsFor 會給一個 runId 是 null 的空殼，所以
      判斷要看 run.runId 不是 run。 */
-  var walking = kind === 'doing' && st.level < 2;
+  /* 打完那一隻，這一趟就結束了——回報交出去的那一刻牠倒下，
+     之後不管是等判定還是等老師，都是在等，而等的姿勢是坐著。
+     本來這兩個處境是站著的，那看起來像還沒走完。
+
+     退回是唯一一個把他叫回路上的狀態：牠站起來，他也站起來。 */
+  var walking = st.level < 2 && (kind === 'doing' || kind === 'back');
   var going = !!(run && run.runId);
   var resting = st.level < 2 && !walking &&
-    (!going || kind === 'idle' || kind === 'left' || kind === 'waitexit');
+    (!going || kind === 'idle' || kind === 'left' || kind === 'waitexit' ||
+      kind === 'stamped' || kind === 'review');
   /* 剛按下承諾那一下。go() 會清掉 DRAFT，所以旗子放在 S 上。 */
   var launch = !!S.launch;
   var H = ['<div class="scn ' + light.key + ' z-' + zone.key +
@@ -154,12 +160,14 @@ function scene(t, row, st, kind) {
   }
 
   /* ── 一天一格 ── */
+  /* 火把不跟著這個迴圈直接吐出去——它們要進自己那一層（見下面）。 */
+  var TOR = [];
   for (var i = 0; i < span; i++) {
     var x = ENT + i * SCN.TILE;
     var on = i < walked;
 
-    /* 火把：走過的那幾格點著 */
-    H.push(torchAt(x + 6, on, i));
+    /* 火把：走過的那幾格點著。座標從洞口算起，因為那一層的原點在洞口。 */
+    TOR.push(torchAt(i * SCN.TILE + 6, on, i));
 
     /* 腳印 */
     if (on) H.push('<img class="px foot" style="left:' + (x + 11) + 'px" src="' +
@@ -194,6 +202,19 @@ function scene(t, row, st, kind) {
     }
   }
 
+  /* ── 牆上那一排燭火 ──
+
+     它們釘在牆上，牆會往後退，所以它們也要往後退——本來整排是釘死的，
+     背景在動而牆上的東西不動，那看起來不是走廊在移動，是背景破圖。
+
+     位移一格是 176px（四格），跟遠牆同一個週期，所以接縫接得上。
+     右邊多畫四盞填補捲走的那一段，整層裁在洞口，捲過去的不會跑到
+     營火上面。 */
+  for (var iX = span; iX < span + 4; iX++) TOR.push(torchAt(iX * SCN.TILE + 6, false, iX));
+  H.push('<div class="scn-lamps" style="left:' + ENT + 'px;width:' + (W - ENT) +
+    'px"><div class="lamps-in">' + TOR.join('') + '</div></div>');
+
+
   /* 蓋在走廊上的兩條天數標記都拿掉了：
 
        .vow   一條金色虛線，天花板拉到地板，畫在「你說的那一天」
@@ -219,7 +240,13 @@ function scene(t, row, st, kind) {
      'stamped' 根本不是一個 state（那是 nextThing 回的字），
      真正的是 'judged'——所以那一條永遠不成立，靠 walked>=est 撐著。 */
   var arrived = metRun(run);
-  if (arrived) H.push(sceneMob(t, row, 1, est, ENT));
+  /* 打完了牠就不在那裡了。老師退回來的那一趟，牠站回去。
+
+     這個判斷不能寫進 metRun：圖鑑算的是「遇到」，遇到過就是遇到過，
+     牠站不站得起來是另一件事。 */
+  var beaten = !!(run && (run.state === 'judged' || run.state === 'submitted' ||
+    run.state === 'done'));
+  if (arrived && !beaten) H.push(sceneMob(t, row, 1, est, ENT));
 
   /* ── 盡頭的岩壁裡有東西 ──
 
@@ -241,7 +268,8 @@ function scene(t, row, st, kind) {
 
        正在做　　　　　走路
        還沒說幾天　　　站著　他還在洞口，沒出發
-       交出去了、等老師 站著　走到底了，腳沒有在動
+       打完了、等老師　坐著　牠倒了，這一趟結束，回火邊
+       老師退回來了　　走路　牠站起來了，路還沒走完
        沒有任務　　　　坐著　營火旁邊。那是休息，不是罰站
        很多天沒動　　　睡著
 
@@ -256,13 +284,16 @@ function scene(t, row, st, kind) {
      寫出來最快，而且它同時說明了「現在沒事做」是一個正常狀態。 */
   /* 牌子跟著姿勢走。「待命」本來蓋掉三個很不一樣的處境——
      還沒出發、在等老師、老師勾了。分開講。 */
-  var tag = walking ? '前進中'
-    : resting ? '休息中'
-    : st.level >= 2 ? '停很久了'
+  /* 講得出來的那幾個處境排在前面，前進中／休息中是兜底的那一句。
+     反過來的話「打完了」跟「沒有任務」會共用「休息中」——
+     姿勢一樣不代表發生的事一樣。 */
+  var tag = st.level >= 2 ? '停很久了'
     : kind === 'commit' ? '還沒出發'
-    : kind === 'stamped' ? '走到底了'
+    : kind === 'stamped' ? '打完了'
     : kind === 'review' ? '在等老師'
-    : kind === 'back' ? '老師退回來了'
+    : kind === 'back' ? '再走一次'
+    : walking ? '前進中'
+    : resting ? '休息中'
     : '待命';
   H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
     '">' + esc(tag) + '</div>');
