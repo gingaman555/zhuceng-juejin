@@ -86,7 +86,7 @@ function digTeamCard(classId) {
     var d = Number(bk.slice(1));
     var kp = null;
     keepsOf(t.teamId).forEach(function (x) { if (x.runId === t.builds[bk].runId) kp = x; });
-    return { d: d, def: buildDef(t.builds[bk].k), keep: kp };
+    return { d: d, def: markAt(t.teamId, d), keep: kp };
   }).filter(function (x) { return x.def; }).sort(function (a, b) { return b.d - a.d; });
   var z = strataAt(depthOf(t.teamId), t.teamId);
   var H = ['<div class="card dtcard fa ' + z.key + '">'];
@@ -146,58 +146,38 @@ function digTeamCard(classId) {
   return H.join('');
 }
 
-/* ---------- 挑要蓋什麼 ----------
+/* ---------- 把這一趟插進這一層 ----------
 
-   打通完那一格之後跳出來的三選一。這是本來的「三選一裝備」搬過來的位置，
-   但東西換了：裝備沒有地方去，蓋的東西有——它就站在你剛打通的那一格上，
-   而且全班都看得到。
+   本來這裡是三選一。三個選項只差長相，而長相現在由那一趟決定——
+   一個純裝飾的選擇不值得佔掉走完一趟之後那個時刻。
 
-   三個選項是那一層的全部，沒有強弱，只差在長相。 */
+   所以這裡只剩一件事：看一眼那一趟長成什麼樣子，然後把它插下去。
+   旁邊放上「說幾天／走了幾天」，因為那兩個數字就是這根柱子的高度。 */
 function buildPick(t) {
   var d = unbuiltDepth(t.teamId);
   if (d < 0) return '';
   var z = strataAt(d, t.teamId);
-  var set = offerAt(t.teamId, d);
-  if (!set.length) { DRAFT.build = null; return ''; }
+  /* 這一層要插的是最近封存的那一趟。 */
+  var runId = lastSealed(t.teamId);
+  var px = runId ? coreOf(runId) : null;
+  if (!px) return '';
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  var kp = null;
+  keepsOf(t.teamId).forEach(function (x) { if (x.runId === runId) kp = x; });
+
   var H = ['<div class="card bpick fa ' + z.key + '">'];
-  H.push('<h2 class="bp-h">在這一層留下什麼</h2>');
-  /* 這一句是新接上的機制，不是氣氛：接口決定誰找得到你留的東西。 */
-  H.push('<p class="bp-sub">插下去會敲開石頭。</p>');
-
-  /* 上一層留下的向下口就是這一層的題目。畫出來就好，不用寫一句話說明——
-     接得起來的那幾個上面會亮一段。 */
-  var above = portAbove(t.teamId, d);
-  if (above) {
-    H.push('<div class="bp-above">');
-    H.push(pxTag(above.px, BUILD_PAL, 'bp-ax'));
-    H.push('<span class="bp-drop"></span>');
-    H.push('</div>');
+  H.push('<h2 class="bp-h">這一趟長成這樣</h2>');
+  H.push('<div class="bp-one">');
+  H.push('<div class="bp-ground">' + pxTag(px, z.pal, 'bp-px') + '</div>');
+  H.push('<div class="bp-say">');
+  H.push('<b>' + esc((kp && kp.name) || '（沒取名）') + '</b>');
+  if (r) {
+    H.push('<span>說 ' + r.est + ' 天　·　走了 ' +
+      ((kp && kp.elapsed) || r.actual || 0) + ' 天</span>');
   }
-
-  H.push('<div class="bp-row">');
-  set.forEach(function (b) {
-    var fit = above && b.port.indexOf('u') >= 0;
-    H.push('<button class="bp' + (fit ? ' fit' : '') + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'bld:' + b.key + ',' + d })) + '\'>');
-    /* 兩個口畫在上下兩緣。有就是一段亮的，沒有就是空的。 */
-    /* 深色剪影要有亮的地面才看得見，而那塊地面剛好就是它蓋好之後
-       在剖面圖上站的地方——所以這張卡同時是預覽。 */
-    H.push('<span class="bp-ground">');
-    H.push('<i class="bp-p u' + (b.port.indexOf('u') >= 0 ? ' on' : '') + '"></i>');
-    H.push(pxTag(b.px, BUILD_PAL, 'bp-px'));
-    H.push('<i class="bp-p dn' + (b.port.indexOf('d') >= 0 ? ' on' : '') + '"></i>');
-    H.push('</span>');
-    H.push('<b>' + esc(b.name) + '</b>');
-    /* 接口指的是你自己那條鏈：上一層垂下來的口決定這一層接不接得上，
-       接起來的那幾個在剖面圖上會連成一段（見 linkedAt 與 .xs-link）。
-
-       本來這裡寫的是「上面的人找得到／下面的人找得到」——那是靠
-       岩壁裡的遺跡成立的，而遺跡拿掉了（別組的天數不構成參考）。 */
-    H.push('<i>' + (b.port === 'ud' ? '上下都接得起來'
-      : b.port === 'u' ? '只接得上上面那個' : '只往下留一個口') + '</i>');
-    H.push('</button>');
-  });
-  H.push('</div>');
+  H.push('<i>它有多高，就是那一趟過了幾天。</i>');
+  H.push('</div></div>');
+  H.push(btn('插進' + z.name, 'bld:run,' + d, 'big'));
   H.push('</div>');
   return H.join('');
 }

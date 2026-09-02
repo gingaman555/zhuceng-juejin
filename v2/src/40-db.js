@@ -114,7 +114,16 @@ function nextThing(teamId) {
      每一個人都想過一次，不是只有失準的人。 */
   var judged = rows.filter(function (x) { return x.run.state === 'judged'; })[0];
   if (judged) return { kind: 'stamped', row: judged };
-  /* 2. 老師勾可以了，還沒挑裝備 */
+  /* 2. 老師退回來了。
+     排在這裡不是排在後面：它跟「老師勾了」同一類——有人為你做了一件事，
+     而且在等你回應。放到 fresh 後面的話，手上同時有新任務的時候，
+     退回會被一個還沒開始的任務蓋掉。
+
+     判定沒變、深度沒動，只是那份成果還沒被收下。 */
+  var back = rows.filter(function (x) { return x.run.state === 'back'; })[0];
+  if (back) return { kind: 'back', row: back };
+
+  /* 3. 老師勾可以了，還沒挑裝備 */
   var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
   if (gear) return { kind: 'gear', row: gear };
   /* 3. 正在做的那一趟。
@@ -631,9 +640,40 @@ function radar(classId) {
 
 /* 老師勾「可以」。他不選裝備——選哪一件是學生的事。
    他能加一句話，那句話才是他的回饋。 */
-function actApprove(runId, word) {
+/* 退回：還沒收下。
+
+   判定完全不動——那一趟的兩個數字在他交出去的當下就定了，
+   重做不會讓他當初說的話變成別的話。深度也不動，他確實走過那幾天。
+   不動的東西這麼多，是因為退回講的只有一件事：那份成果還沒被收下。
+
+   必須帶一句話。不寫理由的退回等於「再做一次，但我不告訴你為什麼」。 */
+function actReject(runId, word) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'submitted') return null;
+  if (!String(word || '').trim()) return null;
+  r.word = word;
+  r.state = 'back';
+  r.backAt = now();
+  r.backs = (r.backs || 0) + 1;
+  save();
+  logEvent('reject', { teamId: r.teamId, runId: runId, len: String(word).length });
+  return r;
+}
+
+/* 改好了再交一次。回到老師那一排，判定還是原來那一個。 */
+function actResend(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.teamId !== teamId || r.state !== 'back') return false;
+  r.state = 'submitted';
+  r.submittedAt = r.submittedAt || now();
+  save();
+  logEvent('resend', { teamId: teamId, runId: runId, backs: r.backs || 1 });
+  return true;
+}
+
+function actApprove(runId, word) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || (r.state !== 'submitted' && r.state !== 'back')) return null;
   r.word = word || '';
   r.state = 'approved';
   r.approvedAt = now();

@@ -215,6 +215,7 @@ function scene(t, row, st, kind) {
     : kind === 'commit' ? '還沒出發'
     : kind === 'stamped' ? '走到底了'
     : kind === 'review' ? '在等老師'
+    : kind === 'back' ? '老師退回來了'
     : kind === 'gear' ? '可以收起來了'
     : '待命';
   H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
@@ -370,14 +371,14 @@ function sceneMouth(t, next, ENT) {
   var ds = Object.keys(bs).map(function (k) { return Number(k.slice(1)); })
     .sort(function (x, y) { return x - y; });
   ds.forEach(function (d, i) {
-    var def = buildDef(bs['d' + d].k);
-    if (!def) return;
+    var mk = markAt(t.teamId, d);
+    if (!mk) return;
     var z = strataAt(d, t.teamId);
-    H.push('<button class="mmark" style="left:' + (72 + i * 26) + 'px" ' +
+    H.push('<button class="mmark" style="left:' + (72 + i * 30) + 'px" ' +
       'data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + d })) + '\' ' +
-      'title="' + esc(def.name + '　' + z.name) + '">' +
-      pxTag(def.px, z.pal, '') + '</button>');
+      'title="' + esc(mk.name + '　' + z.name) + '">' +
+      pxTag(mk.px, z.pal, '') + '</button>');
   });
 
   H.push('</div>');

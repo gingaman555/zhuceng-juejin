@@ -161,15 +161,12 @@ function xsShaft(r, i, maxD, mine) {
     if (here) H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
     /* 那一趟蓋的東西站在那一層裡。這是這張圖上唯一屬於「那一組自己選的」
        東西——深度是走出來的，蓋什麼是挑的。 */
-    var bl = dug && buildAt(r.teamId, d);
-    var bg = bl && buildDef(bl.k);
+    var bg = dug && markAt(r.teamId, d);
     if (bg) {
       H.push('<button class="xs-bld" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'seeb:' + r.teamId + ',' + d })) + '\' title="' +
-        esc(bg.name) + '">' + pxTag(bg.px, BUILD_PAL, '') + '</button>');
-      /* 跟下一層接起來了就畫一段。十座接起來是一條街，
-         不是十個各自立著的圖示。 */
-      if (linkedAt(r.teamId, d)) H.push('<div class="xs-link"></div>');
+        esc(bg.name) + '">' + pxTag(bg.px, strataAt(d, r.teamId).pal, '') + '</button>');
+      /* 接起來那一段拿掉了：形狀由那一趟長出來，沒有接口這件事。 */
     }
     H.push('</div>');
   }

@@ -92,15 +92,13 @@ function taskRow(m, r, t) {
   Object.keys(t.builds || {}).forEach(function (bk) {
     if (t.builds[bk].runId === r.runId) { bd = t.builds[bk]; bdD = Number(bk.slice(1)); }
   });
-  var def = bd && buildDef(bd.k);
+  var def = bd && markAt(t.teamId, bdD);
   if (def) {
     var z = strataAt(bdD, t.teamId);
-    var kp = null;
-    keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
     H.push('<button class="tk-k" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + bdD })) + '\'>');
     H.push(pxTag(def.px, z.pal, 'core'));
-    H.push('<span>' + esc((kp && kp.name) || def.name) + '</span>');
+    H.push('<span>' + esc(def.name) + '</span>');
     H.push('</button>');
   }
 
@@ -114,6 +112,7 @@ var TASK_STATE = {
   running:   { k: 'go',   n: '正在做' },
   judged:    { k: 'go',   n: '交出去了' },
   submitted: { k: 'go',   n: '在老師那邊' },
+  back:      { k: 'wait', n: '老師退回來了' },
   approved:  { k: 'ok',   n: '老師勾了' },
   done:      { k: 'ok',   n: '走完了' },
   rethought: { k: 'wait', n: '重新想過' }

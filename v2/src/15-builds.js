@@ -124,17 +124,39 @@ function buildAt(teamId, depth) {
   return (t && t.builds && t.builds['d' + depth]) || null;
 }
 
-/* 蓋下去。一層只蓋一次——蓋錯了也留著，那也是那一趟的一部分。 */
+/* 把這一趟插進那一層。一層只插一次。
+
+   key 不再有意義（本來是六種形狀的代號）。形狀現在由 runId 長出來，
+   所以只要記住是哪一趟就夠了。舊的存檔留著 k，讀得出來。 */
 function actBuild(teamId, depth, key, runId) {
   var t = teamOf(teamId);
   if (!t) return false;
-  if (!buildDef(key)) return false;
   if (depth < 0 || depth >= sealedDepth(teamId)) return false;
   t.builds = t.builds || {};
   if (t.builds['d' + depth]) return false;
-  t.builds['d' + depth] = { k: key, runId: runId || '' };
+  t.builds['d' + depth] = { k: 'run', runId: runId || '' };
   save();
   return true;
+}
+
+/* 那一層插的是哪一趟，長成什麼樣子。
+
+   回傳 { px, name }：px 是那一趟長出來的柱子（見 43-core.js 的 coreOf），
+   name 是他自己取的名字。沒有取名就用天數——「6 天」也是一個名字。
+
+   舊的存檔裡 k 是六種形狀之一，那時候八個記號只有六種長相。
+   現在每一趟都不一樣，而不一樣的原因是他自己走出來的。 */
+function markAt(teamId, depth) {
+  var b = buildAt(teamId, depth);
+  if (!b) return null;
+  var px = b.runId ? coreOf(b.runId) : null;
+  if (!px) return null;
+  var kp = null;
+  keepsOf(teamId).forEach(function (x) { if (x.runId === b.runId) kp = x; });
+  var days = kp ? (kp.elapsed || 0) : 0;
+  return { px: px, runId: b.runId,
+    name: (kp && kp.name) || (days ? days + ' 天' : '這一趟'),
+    days: days, keep: kp };
 }
 
 /* 還沒蓋東西的那一層。沒有就回 -1。
@@ -165,7 +187,7 @@ function buildStory(teamId, depth) {
   var k = null;
   keepsOf(teamId).forEach(function (x) { if (x.runId === b.runId) k = x; });
   var r = b.runId ? find('Runs', function (x) { return x.runId === b.runId; }) : null;
-  return { def: buildDef(b.k), keep: k, run: r };
+  return { def: markAt(teamId, depth), keep: k, run: r };
 }
 
 /* ---------- 接口 ----------

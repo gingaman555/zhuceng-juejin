@@ -2604,6 +2604,31 @@ button.tk-k:hover span{color:var(--gold)}
 .px.sw-px{width:88px;height:88px;image-rendering:pixelated}
 @media (max-width:520px){ .px.sw-px{width:66px;height:66px} }
 
+/* ── 記號就是那一趟 ──
+   一天兩列的柱子。它有多高，就是那一趟過了幾天——
+   營地上一排高矮不同的東西，而高矮的原因是他自己走出來的。 */
+.bpick .bp-one{display:flex;gap:22px;align-items:flex-end;margin:0 0 22px}
+.bpick .bp-ground{
+  flex:0 0 110px;width:110px;min-height:110px;
+  display:flex;align-items:flex-end;justify-content:center;padding-bottom:9px;
+  background:var(--gold);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.30), inset 0 -3px 0 rgba(0,0,0,.45)
+}
+.bpick .px.bp-px{width:55px;height:auto;max-height:242px;image-rendering:pixelated}
+.bpick .bp-say{flex:1;min-width:0}
+.bpick .bp-say b{display:block;font-size:33px;font-weight:400;line-height:1.3}
+.bpick .bp-say span{display:block;font-size:22px;color:var(--gold);
+  font-variant-numeric:tabular-nums;margin-top:5px}
+.bpick .bp-say i{display:block;font-style:normal;font-size:22px;color:var(--dim);margin-top:11px}
+@media (max-width:520px){
+  .bpick .bp-one{flex-direction:column;align-items:stretch;gap:14px}
+  .bpick .bp-ground{flex:none;width:100%;min-height:132px}
+}
+
+/* 營地上那一排。站在地上，高矮不齊——那正是重點。 */
+.mouth .mmark{width:26px;height:auto;bottom:44px}
+.mouth .mmark .px{width:26px;height:auto;max-height:154px;image-rendering:pixelated}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -3100,14 +3125,15 @@ button.tk-k:hover span{color:var(--gold)}
   .nav{display:flex;flex-direction:row;padding:0;width:100%}
   .nav a{
     flex:1;min-width:0;flex-direction:column;justify-content:center;
-    gap:3px;padding:9px 3px;font-size:22px;text-align:center;line-height:1.3;
+    gap:5px;padding:11px 6px;font-size:22px;text-align:center;line-height:1.3;
     border-left:none;border-top:3px solid transparent
   }
   .nav a.on{border-top-color:var(--gold);background:var(--panel2)}
   .nav a .dot{width:8px;height:8px;flex:0 0 8px}
 
   /* 底下那一列會蓋住內容，把位置留出來 */
-  .wrap{padding:22px 14px 121px}
+  /* 22px 的字貼螢幕邊要留 22px，不然每一行都像被切到。 */
+  .wrap{padding:22px 22px 121px}
   .gate .gate-box{padding-bottom:0}
 
   /* ---------- 字級 ---------- */
@@ -3133,9 +3159,16 @@ button.tk-k:hover span{color:var(--gold)}
   .rn-row .btn{width:100%}
 
   /* ---------- 頂條與試用列 ---------- */
-  .top{padding:8px 14px;gap:8px}
+  .top{padding:11px 18px;gap:14px}
   .top .who{font-size:22px}
-  .demo{padding:8px 14px;gap:8px}
+  .demo{padding:11px 18px;gap:14px}
+
+  /* ---------- 四拍：兩個一排 ----------
+     22px 的字四格排一列是 452px，手機只有 353px，所以本來是橫向捲的
+     ——而捲出去的那兩拍等於不存在。折成兩排，四拍一眼看得完。 */
+  .cyc{flex-wrap:wrap;gap:9px}
+  .cy{flex:1 1 calc(50% - 22px);padding:9px 11px;justify-content:center}
+  .cyd{display:none}
 
   /* ---------- 步驟條：兩個一排 ---------- */
   .step{min-width:calc(50% - 1px);border-right:1px solid var(--line)}
@@ -3143,7 +3176,7 @@ button.tk-k:hover span{color:var(--gold)}
 
   /* ---------- 廊道 ---------- */
   .scn,.scn-in{height:319px}
-  .scn-hud{padding:4px 7px}
+  .scn-hud{padding:9px 11px}
   .scn-hud em{font-size:22px}
   .scn-hud b{font-size:22px}
   .scn-hud .zn-note{display:none}
@@ -3157,10 +3190,12 @@ button.tk-k:hover span{color:var(--gold)}
   .ac{font-size:22px;padding:11px 13px}
 
   /* ---------- 卡片與清單類 ---------- */
-  .card,.act-card{padding:14px}
+  /* 桌機是 22px。手機的字一樣大，沒有理由把內距收小——
+     本來收成 14px 是字還 11px 的時候訂的。 */
+  .card,.act-card{padding:22px}
   .gcard,.slot{width:100%}
   .zn{min-width:calc(50% - 6px)}
-  .acc-c{padding:9px}
+  .acc-c{padding:14px}
   .acc-c i{font-size:33px}
 
   /* ---------- 全班地下城 ---------- */
@@ -3170,12 +3205,17 @@ button.tk-k:hover span{color:var(--gold)}
   .lg{gap:8px 14px}
 }
 
-/* 很窄的手機（375 以下）再收一階 */
+/* 很窄的手機（400 以下）。
+
+   本來這一段是「再收一階」：邊距收到 11px、分頁的左右內距收到 1px、
+   h1 收到 22px。那三個都是字還 11px 的時候訂的——現在字一樣大，
+   收下去只會更擠，而 h1 跟內文一樣大就等於沒有階層。
+
+   窄螢幕該收的是「一排放幾個」，不是「留多少空氣」。 */
 @media (max-width: 400px) {
-  h1{font-size:22px}
-  .wrap{padding:14px 11px 121px}
+  .wrap{padding:22px 18px 121px}
   .step{min-width:100%;border-right:1px solid var(--line)}
-  .nav a{font-size:22px;padding:8px 1px}
+  .nav a{padding:11px 4px}
   .zn{min-width:100%}
 }
 
@@ -4443,17 +4483,39 @@ function buildAt(teamId, depth) {
   return (t && t.builds && t.builds['d' + depth]) || null;
 }
 
-/* 蓋下去。一層只蓋一次——蓋錯了也留著，那也是那一趟的一部分。 */
+/* 把這一趟插進那一層。一層只插一次。
+
+   key 不再有意義（本來是六種形狀的代號）。形狀現在由 runId 長出來，
+   所以只要記住是哪一趟就夠了。舊的存檔留著 k，讀得出來。 */
 function actBuild(teamId, depth, key, runId) {
   var t = teamOf(teamId);
   if (!t) return false;
-  if (!buildDef(key)) return false;
   if (depth < 0 || depth >= sealedDepth(teamId)) return false;
   t.builds = t.builds || {};
   if (t.builds['d' + depth]) return false;
-  t.builds['d' + depth] = { k: key, runId: runId || '' };
+  t.builds['d' + depth] = { k: 'run', runId: runId || '' };
   save();
   return true;
+}
+
+/* 那一層插的是哪一趟，長成什麼樣子。
+
+   回傳 { px, name }：px 是那一趟長出來的柱子（見 43-core.js 的 coreOf），
+   name 是他自己取的名字。沒有取名就用天數——「6 天」也是一個名字。
+
+   舊的存檔裡 k 是六種形狀之一，那時候八個記號只有六種長相。
+   現在每一趟都不一樣，而不一樣的原因是他自己走出來的。 */
+function markAt(teamId, depth) {
+  var b = buildAt(teamId, depth);
+  if (!b) return null;
+  var px = b.runId ? coreOf(b.runId) : null;
+  if (!px) return null;
+  var kp = null;
+  keepsOf(teamId).forEach(function (x) { if (x.runId === b.runId) kp = x; });
+  var days = kp ? (kp.elapsed || 0) : 0;
+  return { px: px, runId: b.runId,
+    name: (kp && kp.name) || (days ? days + ' 天' : '這一趟'),
+    days: days, keep: kp };
 }
 
 /* 還沒蓋東西的那一層。沒有就回 -1。
@@ -4484,7 +4546,7 @@ function buildStory(teamId, depth) {
   var k = null;
   keepsOf(teamId).forEach(function (x) { if (x.runId === b.runId) k = x; });
   var r = b.runId ? find('Runs', function (x) { return x.runId === b.runId; }) : null;
-  return { def: buildDef(b.k), keep: k, run: r };
+  return { def: markAt(teamId, depth), keep: k, run: r };
 }
 
 /* ---------- 接口 ----------
@@ -4677,7 +4739,7 @@ var ICONS = {
           '...+####+...', '....+##+....', '....+##+....', '..++####++..',
           '.+########+.', '.+#*####*#+.', '.++++++++++.', '............'],
 
-  /* 發任務：一支插著的旗 */
+  /* 發派任務：一支插著的旗 */
   ms: ['..+#........', '..+#####+...', '..+#*###*+..', '..+#####*+..',
        '..+####*+...', '..+##*+.....', '..+#........', '..+#........',
        '..+#........', '..+#........', '.+++++......', '............'],
@@ -5216,7 +5278,16 @@ function nextThing(teamId) {
      每一個人都想過一次，不是只有失準的人。 */
   var judged = rows.filter(function (x) { return x.run.state === 'judged'; })[0];
   if (judged) return { kind: 'stamped', row: judged };
-  /* 2. 老師勾可以了，還沒挑裝備 */
+  /* 2. 老師退回來了。
+     排在這裡不是排在後面：它跟「老師勾了」同一類——有人為你做了一件事，
+     而且在等你回應。放到 fresh 後面的話，手上同時有新任務的時候，
+     退回會被一個還沒開始的任務蓋掉。
+
+     判定沒變、深度沒動，只是那份成果還沒被收下。 */
+  var back = rows.filter(function (x) { return x.run.state === 'back'; })[0];
+  if (back) return { kind: 'back', row: back };
+
+  /* 3. 老師勾可以了，還沒挑裝備 */
   var gear = rows.filter(function (x) { return x.run.state === 'approved'; })[0];
   if (gear) return { kind: 'gear', row: gear };
   /* 3. 正在做的那一趟。
@@ -5733,9 +5804,40 @@ function radar(classId) {
 
 /* 老師勾「可以」。他不選裝備——選哪一件是學生的事。
    他能加一句話，那句話才是他的回饋。 */
-function actApprove(runId, word) {
+/* 退回：還沒收下。
+
+   判定完全不動——那一趟的兩個數字在他交出去的當下就定了，
+   重做不會讓他當初說的話變成別的話。深度也不動，他確實走過那幾天。
+   不動的東西這麼多，是因為退回講的只有一件事：那份成果還沒被收下。
+
+   必須帶一句話。不寫理由的退回等於「再做一次，但我不告訴你為什麼」。 */
+function actReject(runId, word) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'submitted') return null;
+  if (!String(word || '').trim()) return null;
+  r.word = word;
+  r.state = 'back';
+  r.backAt = now();
+  r.backs = (r.backs || 0) + 1;
+  save();
+  logEvent('reject', { teamId: r.teamId, runId: runId, len: String(word).length });
+  return r;
+}
+
+/* 改好了再交一次。回到老師那一排，判定還是原來那一個。 */
+function actResend(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.teamId !== teamId || r.state !== 'back') return false;
+  r.state = 'submitted';
+  r.submittedAt = r.submittedAt || now();
+  save();
+  logEvent('resend', { teamId: teamId, runId: runId, backs: r.backs || 1 });
+  return true;
+}
+
+function actApprove(runId, word) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || (r.state !== 'submitted' && r.state !== 'back')) return null;
   r.word = word || '';
   r.state = 'approved';
   r.approvedAt = now();
@@ -6653,7 +6755,7 @@ function sideBar() {
     var wait = radar(u.classId).length;
     nav = [
       ['radar', '審核' + (wait ? '（' + wait + '）' : '')],
-      ['ms', '發任務'],
+      ['ms', '發派任務'],
       ['classeco', '各組進度']
     ];
   } else {
@@ -6899,6 +7001,25 @@ var ACTS = {
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
     go('ms');
     say('派出去了。學生那邊會先被問「你打算花幾天」。');
+  },
+
+  /* 退回去改。一定要寫一句話——不寫理由的退回等於
+     「再做一次，但我不告訴你為什麼」。 */
+  reject: function (runId) {
+    var w = (document.getElementById('gr-word') || {}).value || '';
+    if (!w.trim()) return say('退回去改要寫一句話，讓他們知道要改什麼。');
+    if (!actReject(runId, w.trim())) return say('這一件退不回去。');
+    go('radar');
+    say('退回去了。他們那邊會看到你寫的話。');
+  },
+
+  /* 改好了再交一次。判定還是原來那一個——重做不會讓他當初
+     說的話變成別的話。 */
+  resend: function (runId) {
+    var t = myTeam();
+    if (!actResend(t.teamId, runId)) return say('這一趟交不出去。');
+    go('home');
+    say('再交出去了。');
   },
 
   /* 改一次承諾。
@@ -7568,7 +7689,7 @@ function stepRow(runId) {
 function taskTag(next) {
   return ({
     name: '第一件事', commit: '新的', doing: '正在做',
-    stamped: '結果出來了', review: '在老師那邊', gear: '老師勾了',
+    stamped: '結果出來了', review: '在老師那邊', back: '退回來了', gear: '老師勾了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
 }
@@ -7675,6 +7796,13 @@ function actionCard(t, next, st) {
     H.push('<div class="eyebrow lit">老師勾了</div>');
     if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
     H.push(btn('收起這一趟', 'gear:' + row.run.runId, 'big'));
+
+  } else if (next.kind === 'back') {
+    /* 老師退回來了。他的話放大——那是這一刻唯一要讀的東西，
+       而且退回一定帶著話（沒寫理由的退回擋在資料層）。 */
+    H.push('<div class="eyebrow warnx">老師退回來了</div>');
+    if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
+    H.push(btn('改好了，再交一次', 'resend:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {
     H.push('<div class="eyebrow">在老師那邊</div>');
@@ -8437,6 +8565,7 @@ function scene(t, row, st, kind) {
     : kind === 'commit' ? '還沒出發'
     : kind === 'stamped' ? '走到底了'
     : kind === 'review' ? '在等老師'
+    : kind === 'back' ? '老師退回來了'
     : kind === 'gear' ? '可以收起來了'
     : '待命';
   H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
@@ -8592,14 +8721,14 @@ function sceneMouth(t, next, ENT) {
   var ds = Object.keys(bs).map(function (k) { return Number(k.slice(1)); })
     .sort(function (x, y) { return x - y; });
   ds.forEach(function (d, i) {
-    var def = buildDef(bs['d' + d].k);
-    if (!def) return;
+    var mk = markAt(t.teamId, d);
+    if (!mk) return;
     var z = strataAt(d, t.teamId);
-    H.push('<button class="mmark" style="left:' + (72 + i * 26) + 'px" ' +
+    H.push('<button class="mmark" style="left:' + (72 + i * 30) + 'px" ' +
       'data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + d })) + '\' ' +
-      'title="' + esc(def.name + '　' + z.name) + '">' +
-      pxTag(def.px, z.pal, '') + '</button>');
+      'title="' + esc(mk.name + '　' + z.name) + '">' +
+      pxTag(mk.px, z.pal, '') + '</button>');
   });
 
   H.push('</div>');
@@ -8960,15 +9089,12 @@ function xsShaft(r, i, maxD, mine) {
     if (here) H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
     /* 那一趟蓋的東西站在那一層裡。這是這張圖上唯一屬於「那一組自己選的」
        東西——深度是走出來的，蓋什麼是挑的。 */
-    var bl = dug && buildAt(r.teamId, d);
-    var bg = bl && buildDef(bl.k);
+    var bg = dug && markAt(r.teamId, d);
     if (bg) {
       H.push('<button class="xs-bld" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'seeb:' + r.teamId + ',' + d })) + '\' title="' +
-        esc(bg.name) + '">' + pxTag(bg.px, BUILD_PAL, '') + '</button>');
-      /* 跟下一層接起來了就畫一段。十座接起來是一條街，
-         不是十個各自立著的圖示。 */
-      if (linkedAt(r.teamId, d)) H.push('<div class="xs-link"></div>');
+        esc(bg.name) + '">' + pxTag(bg.px, strataAt(d, r.teamId).pal, '') + '</button>');
+      /* 接起來那一段拿掉了：形狀由那一趟長出來，沒有接口這件事。 */
     }
     H.push('</div>');
   }
@@ -9226,15 +9352,13 @@ function taskRow(m, r, t) {
   Object.keys(t.builds || {}).forEach(function (bk) {
     if (t.builds[bk].runId === r.runId) { bd = t.builds[bk]; bdD = Number(bk.slice(1)); }
   });
-  var def = bd && buildDef(bd.k);
+  var def = bd && markAt(t.teamId, bdD);
   if (def) {
     var z = strataAt(bdD, t.teamId);
-    var kp = null;
-    keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
     H.push('<button class="tk-k" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + bdD })) + '\'>');
     H.push(pxTag(def.px, z.pal, 'core'));
-    H.push('<span>' + esc((kp && kp.name) || def.name) + '</span>');
+    H.push('<span>' + esc(def.name) + '</span>');
     H.push('</button>');
   }
 
@@ -9248,6 +9372,7 @@ var TASK_STATE = {
   running:   { k: 'go',   n: '正在做' },
   judged:    { k: 'go',   n: '交出去了' },
   submitted: { k: 'go',   n: '在老師那邊' },
+  back:      { k: 'wait', n: '老師退回來了' },
   approved:  { k: 'ok',   n: '老師勾了' },
   done:      { k: 'ok',   n: '走完了' },
   rethought: { k: 'wait', n: '重新想過' }
@@ -9589,7 +9714,7 @@ function digTeamCard(classId) {
     var d = Number(bk.slice(1));
     var kp = null;
     keepsOf(t.teamId).forEach(function (x) { if (x.runId === t.builds[bk].runId) kp = x; });
-    return { d: d, def: buildDef(t.builds[bk].k), keep: kp };
+    return { d: d, def: markAt(t.teamId, d), keep: kp };
   }).filter(function (x) { return x.def; }).sort(function (a, b) { return b.d - a.d; });
   var z = strataAt(depthOf(t.teamId), t.teamId);
   var H = ['<div class="card dtcard fa ' + z.key + '">'];
@@ -9649,58 +9774,38 @@ function digTeamCard(classId) {
   return H.join('');
 }
 
-/* ---------- 挑要蓋什麼 ----------
+/* ---------- 把這一趟插進這一層 ----------
 
-   打通完那一格之後跳出來的三選一。這是本來的「三選一裝備」搬過來的位置，
-   但東西換了：裝備沒有地方去，蓋的東西有——它就站在你剛打通的那一格上，
-   而且全班都看得到。
+   本來這裡是三選一。三個選項只差長相，而長相現在由那一趟決定——
+   一個純裝飾的選擇不值得佔掉走完一趟之後那個時刻。
 
-   三個選項是那一層的全部，沒有強弱，只差在長相。 */
+   所以這裡只剩一件事：看一眼那一趟長成什麼樣子，然後把它插下去。
+   旁邊放上「說幾天／走了幾天」，因為那兩個數字就是這根柱子的高度。 */
 function buildPick(t) {
   var d = unbuiltDepth(t.teamId);
   if (d < 0) return '';
   var z = strataAt(d, t.teamId);
-  var set = offerAt(t.teamId, d);
-  if (!set.length) { DRAFT.build = null; return ''; }
+  /* 這一層要插的是最近封存的那一趟。 */
+  var runId = lastSealed(t.teamId);
+  var px = runId ? coreOf(runId) : null;
+  if (!px) return '';
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  var kp = null;
+  keepsOf(t.teamId).forEach(function (x) { if (x.runId === runId) kp = x; });
+
   var H = ['<div class="card bpick fa ' + z.key + '">'];
-  H.push('<h2 class="bp-h">在這一層留下什麼</h2>');
-  /* 這一句是新接上的機制，不是氣氛：接口決定誰找得到你留的東西。 */
-  H.push('<p class="bp-sub">插下去會敲開石頭。</p>');
-
-  /* 上一層留下的向下口就是這一層的題目。畫出來就好，不用寫一句話說明——
-     接得起來的那幾個上面會亮一段。 */
-  var above = portAbove(t.teamId, d);
-  if (above) {
-    H.push('<div class="bp-above">');
-    H.push(pxTag(above.px, BUILD_PAL, 'bp-ax'));
-    H.push('<span class="bp-drop"></span>');
-    H.push('</div>');
+  H.push('<h2 class="bp-h">這一趟長成這樣</h2>');
+  H.push('<div class="bp-one">');
+  H.push('<div class="bp-ground">' + pxTag(px, z.pal, 'bp-px') + '</div>');
+  H.push('<div class="bp-say">');
+  H.push('<b>' + esc((kp && kp.name) || '（沒取名）') + '</b>');
+  if (r) {
+    H.push('<span>說 ' + r.est + ' 天　·　走了 ' +
+      ((kp && kp.elapsed) || r.actual || 0) + ' 天</span>');
   }
-
-  H.push('<div class="bp-row">');
-  set.forEach(function (b) {
-    var fit = above && b.port.indexOf('u') >= 0;
-    H.push('<button class="bp' + (fit ? ' fit' : '') + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'bld:' + b.key + ',' + d })) + '\'>');
-    /* 兩個口畫在上下兩緣。有就是一段亮的，沒有就是空的。 */
-    /* 深色剪影要有亮的地面才看得見，而那塊地面剛好就是它蓋好之後
-       在剖面圖上站的地方——所以這張卡同時是預覽。 */
-    H.push('<span class="bp-ground">');
-    H.push('<i class="bp-p u' + (b.port.indexOf('u') >= 0 ? ' on' : '') + '"></i>');
-    H.push(pxTag(b.px, BUILD_PAL, 'bp-px'));
-    H.push('<i class="bp-p dn' + (b.port.indexOf('d') >= 0 ? ' on' : '') + '"></i>');
-    H.push('</span>');
-    H.push('<b>' + esc(b.name) + '</b>');
-    /* 接口指的是你自己那條鏈：上一層垂下來的口決定這一層接不接得上，
-       接起來的那幾個在剖面圖上會連成一段（見 linkedAt 與 .xs-link）。
-
-       本來這裡寫的是「上面的人找得到／下面的人找得到」——那是靠
-       岩壁裡的遺跡成立的，而遺跡拿掉了（別組的天數不構成參考）。 */
-    H.push('<i>' + (b.port === 'ud' ? '上下都接得起來'
-      : b.port === 'u' ? '只接得上上面那個' : '只往下留一個口') + '</i>');
-    H.push('</button>');
-  });
-  H.push('</div>');
+  H.push('<i>它有多高，就是那一趟過了幾天。</i>');
+  H.push('</div></div>');
+  H.push(btn('插進' + z.name, 'bld:run,' + d, 'big'));
   H.push('</div>');
   return H.join('');
 }
@@ -10289,7 +10394,7 @@ function stepTags(run) {
 }
 
 var TEACHER_STEPS = [
-  ['發任務', '寫要交什麼'],
+  ['發派任務', '寫要交什麼'],
   ['他們承諾天數', '這一段你不用管'],
   ['審核', '看完勾一個可以']
 ];
@@ -10394,7 +10499,7 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你的想法　選填</div>');
-  H.push('<p class="dim">覺得不行就說清楚，要讓他們聽得懂。</p>');
+  H.push('<p class="dim">覺得不行就說清楚，要讓他們聽得懂。退回去改一定要寫。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
@@ -10403,12 +10508,16 @@ PAGES.review = function () {
 
   H.push('<div class="row">');
   H.push(btn('可以', 'approve:' + r.runId, 'big'));
+  /* 退回。它不動判定也不動深度——那一趟的兩個數字在他交出去的
+     當下就定了，重做不會讓他當初說的話變成別的話。
+     退回講的只有一件事：那份成果還沒被收下。 */
+  H.push(btn('退回去改', 'reject:' + r.runId, 'ghost'));
   H.push(btn('回審核清單', 'go:radar', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
 
-/* ---------- 發任務 ---------- */
+/* ---------- 發派任務 ---------- */
 PAGES.ms = function () {
   var u = me();
   var list = where('Milestones', function (m) { return m.classId === u.classId; })
@@ -10418,7 +10527,7 @@ PAGES.ms = function () {
 
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
-  H.push(head('發任務', '你要他們交什麼',
+  H.push(head('發派任務', '你要他們交什麼',
     '一次派一個。寫要交什麼就好。' +
     '期限是他們自己訂的，不是你。'));
 

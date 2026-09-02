@@ -234,7 +234,7 @@ function sideBar() {
     var wait = radar(u.classId).length;
     nav = [
       ['radar', '審核' + (wait ? '（' + wait + '）' : '')],
-      ['ms', '發任務'],
+      ['ms', '發派任務'],
       ['classeco', '各組進度']
     ];
   } else {
@@ -480,6 +480,25 @@ var ACTS = {
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
     go('ms');
     say('派出去了。學生那邊會先被問「你打算花幾天」。');
+  },
+
+  /* 退回去改。一定要寫一句話——不寫理由的退回等於
+     「再做一次，但我不告訴你為什麼」。 */
+  reject: function (runId) {
+    var w = (document.getElementById('gr-word') || {}).value || '';
+    if (!w.trim()) return say('退回去改要寫一句話，讓他們知道要改什麼。');
+    if (!actReject(runId, w.trim())) return say('這一件退不回去。');
+    go('radar');
+    say('退回去了。他們那邊會看到你寫的話。');
+  },
+
+  /* 改好了再交一次。判定還是原來那一個——重做不會讓他當初
+     說的話變成別的話。 */
+  resend: function (runId) {
+    var t = myTeam();
+    if (!actResend(t.teamId, runId)) return say('這一趟交不出去。');
+    go('home');
+    say('再交出去了。');
   },
 
   /* 改一次承諾。

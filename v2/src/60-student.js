@@ -130,7 +130,7 @@ function stepRow(runId) {
 function taskTag(next) {
   return ({
     name: '第一件事', commit: '新的', doing: '正在做',
-    stamped: '結果出來了', review: '在老師那邊', gear: '老師勾了',
+    stamped: '結果出來了', review: '在老師那邊', back: '退回來了', gear: '老師勾了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
 }
@@ -237,6 +237,13 @@ function actionCard(t, next, st) {
     H.push('<div class="eyebrow lit">老師勾了</div>');
     if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
     H.push(btn('收起這一趟', 'gear:' + row.run.runId, 'big'));
+
+  } else if (next.kind === 'back') {
+    /* 老師退回來了。他的話放大——那是這一刻唯一要讀的東西，
+       而且退回一定帶著話（沒寫理由的退回擋在資料層）。 */
+    H.push('<div class="eyebrow warnx">老師退回來了</div>');
+    if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
+    H.push(btn('改好了，再交一次', 'resend:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {
     H.push('<div class="eyebrow">在老師那邊</div>');

@@ -50,7 +50,7 @@ function stepTags(run) {
 }
 
 var TEACHER_STEPS = [
-  ['發任務', '寫要交什麼'],
+  ['發派任務', '寫要交什麼'],
   ['他們承諾天數', '這一段你不用管'],
   ['審核', '看完勾一個可以']
 ];
@@ -155,7 +155,7 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你的想法　選填</div>');
-  H.push('<p class="dim">覺得不行就說清楚，要讓他們聽得懂。</p>');
+  H.push('<p class="dim">覺得不行就說清楚，要讓他們聽得懂。退回去改一定要寫。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
@@ -164,12 +164,16 @@ PAGES.review = function () {
 
   H.push('<div class="row">');
   H.push(btn('可以', 'approve:' + r.runId, 'big'));
+  /* 退回。它不動判定也不動深度——那一趟的兩個數字在他交出去的
+     當下就定了，重做不會讓他當初說的話變成別的話。
+     退回講的只有一件事：那份成果還沒被收下。 */
+  H.push(btn('退回去改', 'reject:' + r.runId, 'ghost'));
   H.push(btn('回審核清單', 'go:radar', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
 
-/* ---------- 發任務 ---------- */
+/* ---------- 發派任務 ---------- */
 PAGES.ms = function () {
   var u = me();
   var list = where('Milestones', function (m) { return m.classId === u.classId; })
@@ -179,7 +183,7 @@ PAGES.ms = function () {
 
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
-  H.push(head('發任務', '你要他們交什麼',
+  H.push(head('發派任務', '你要他們交什麼',
     '一次派一個。寫要交什麼就好。' +
     '期限是他們自己訂的，不是你。'));
 
