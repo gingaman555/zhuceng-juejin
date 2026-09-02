@@ -82,12 +82,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   margin-left:11px;z-index:3;pointer-events:none;
   box-shadow:0 0 0 1px rgba(0,0,0,.8), inset 0 2px 0 rgba(255,255,255,.25)
 }
-.dayn{
-  position:absolute;bottom:11px;width:44px;text-align:center;
-  font-size:22px;color:#3E362C
-}
-.dayn.past{color:var(--gold-d)}
-.dayn.here{color:var(--gold)}
+/* .dayn 拿掉了：走廊上不再有任何數字。 */
 
 .prop{position:absolute;bottom:66px}
 .prop.rubble{width:33px;height:22px}
@@ -221,7 +216,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
    水面用硬階，不用漸層：漸層一出現它就變成現代特效。 */
 /* .tide 與 .vow 都拿掉了：蓋在走廊上的天數標記交給走路的動畫（見 61-scene.js）。 */
 
-/* 廊道底下那一行數字拿掉了：那三個數字廊道本身都在說（見 61-scene.js）。 */
+
 
 /* 說了「今天沒動」的那一格：熄的托架加一個記號，
    跟「沒有紀錄」看得出差別——一個是他說了，一個是他沒說。 */
@@ -621,4 +616,27 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
 @media (prefers-reduced-motion: reduce){
   .scn.walking .scn-bg,.scn.walking .scn-ceil,.scn.walking .floor{animation:none}
+}
+
+/* ── 廊道底下那三句 ──
+   本來是「2 你來過」這種半句話——數字在前，label 在後，要自己補完
+   才知道在講什麼。現在數字夾在句子中間，一句就是一句：
+   你說要 5 天／已經過了 5 天／你來了 2 天。 */
+.scn-foot{
+  display:flex;flex-wrap:wrap;gap:6px 22px;margin:-11px 0 22px;padding:11px 14px;
+  background:var(--sunk);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06), 0 0 0 1px #000
+}
+.sf{display:flex;align-items:baseline;gap:5px;font-size:22px;color:var(--dim)}
+.sf i{font-style:normal}
+.sf b{font-size:33px;line-height:1;font-weight:400;font-variant-numeric:tabular-nums}
+.sf.est b{color:var(--ink)}
+.sf.days b{color:#5FA8C7}
+.sf.you b{color:var(--gold)}
+/* 窄畫面：數字從 33 收到 22（字級下限就是 22，不能再小），
+   三句才擠得進兩行。 */
+@media (max-width:480px){
+  .scn-foot{gap:4px 11px;padding:8px 11px}
+  .sf b{font-size:22px}
+  .sf{gap:4px}
 }
