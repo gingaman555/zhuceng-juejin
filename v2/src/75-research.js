@@ -140,7 +140,7 @@ PAGES.events = function () {
   var show = all.slice(0, 200);
 
   var H = [head('紀錄', all.length + ' 筆',
-    '承諾幾天、哪一天推進、判定、卡在哪。不收作業。')];
+    '承諾幾天、哪一天推進、準不準、卡在哪。不收作業。')];
 
   H.push(classPicker());
 

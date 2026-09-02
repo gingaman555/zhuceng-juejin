@@ -68,7 +68,7 @@ function feedRow(f, meId) {
     var z = STRATA[0];
     STRATA.forEach(function (x) { if (x.key === f.keep.zone) z = x; });
     ic = pxTag(f.keep.px || coreOf(f.keep.runId), z.pal, 'core sm');
-    act = '封存';
+    act = '收起';
   } else if (f.kind === 'sent') {
     ic = pxTag(ICONS.log, ICON_PAL, 'nic');
     act = '交出去';

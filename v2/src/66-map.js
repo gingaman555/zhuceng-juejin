@@ -162,7 +162,7 @@ function buildPick(t) {
   var H = ['<div class="card bpick fa ' + z.key + '">'];
   H.push('<h2 class="bp-h">在這一層留下什麼</h2>');
   /* 這一句是新接上的機制，不是氣氛：接口決定誰找得到你留的東西。 */
-  H.push('<p class="bp-sub">插下去會敲開石頭。接口決定誰找得到它。</p>');
+  H.push('<p class="bp-sub">插下去會敲開石頭。</p>');
 
   /* 上一層留下的向下口就是這一層的題目。畫出來就好，不用寫一句話說明——
      接得起來的那幾個上面會亮一段。 */

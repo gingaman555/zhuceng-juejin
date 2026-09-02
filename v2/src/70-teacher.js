@@ -119,7 +119,7 @@ PAGES.radar = function () {
     H.push('<div class="mini-row"><b>' + esc(e.name) + '</b>' +
       '<span class="s-' + e.status.key + '">' + esc(e.status.label) +
       (e.status.days ? ' ' + e.status.days + ' 天' : '') + '</span>' +
-      '<span class="dim">深度 ' + e.depth + '</span></div>');
+      '<span class="dim">走完 ' + e.depth + ' 個</span></div>');
   });
   H.push('</div>');
   H.push(btn('看各組進度', 'go:classeco', 'ghost'));

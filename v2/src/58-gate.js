@@ -20,6 +20,8 @@ PAGES.gate = function () {
   H.push('<div class="gate-box">');
   H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
   H.push('<h1>專案地下城</h1>');
+  /* 一句話說完這是什麼。不是說明，是招牌上那一行。 */
+  H.push('<p class="tagline">化身勇者，進行規劃，突破專案地下城！！</p>');
 
   /* 進去那兩顆放在第一屏，不要捲。 */
   H.push('<div class="row">');
@@ -31,7 +33,7 @@ PAGES.gate = function () {
   H.push('<div class="four">');
   [
     [ICONS.home, '說幾天'], [ICONS.pack, '去做事'],
-    [ICONS.radar, '交出去看判定'], [ICONS.eco, '看全班在哪']
+    [ICONS.radar, '交出去看結果'], [ICONS.eco, '看全班在哪']
   ].forEach(function (x, i) {
     if (i) H.push('<i class="fr-a"></i>');
     H.push('<div class="fr">' + pxTag(x[0], ICON_ON, 'fr-px') +

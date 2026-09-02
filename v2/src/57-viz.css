@@ -1231,3 +1231,10 @@ button.tk-k:hover span{color:var(--gold)}
 .px.vine-s{width:36px;height:36px}
 .px.ff{width:44px;height:44px}
 .px.bs-core{width:66px;height:auto;flex:0 0 66px}
+
+/* 副標題。一句話說完這是什麼——在名字底下，在那兩顆鈕上面。 */
+.gate .tagline{
+  font-size:33px;line-height:1.35;color:var(--gold);
+  margin:11px 0 33px;text-wrap:balance
+}
+@media (max-width:520px){ .gate .tagline{font-size:22px} }

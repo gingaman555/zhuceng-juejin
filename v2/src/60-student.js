@@ -130,7 +130,7 @@ function stepRow(runId) {
 function taskTag(next) {
   return ({
     name: '第一件事', commit: '新的', doing: '正在做',
-    stamped: '判定', review: '在老師那邊', gear: '老師勾了',
+    stamped: '結果出來了', review: '在老師那邊', gear: '老師勾了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
 }
@@ -229,14 +229,14 @@ function actionCard(t, next, st) {
 
   } else if (next.kind === 'stamped') {
     H.push('<div class="eyebrow">交出去了</div>');
-    H.push(btn('看判定', 'go:stamp:' + row.run.runId, 'big'));
+    H.push(btn('看準不準', 'go:stamp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'gear') {
     /* 這是整條流程裡唯一「別人為你做了一件事」的時刻，
        而它本來長得跟其他狀態一模一樣。給它一個到達的樣子。 */
     H.push('<div class="eyebrow lit">老師勾了</div>');
     if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
-    H.push(btn('封存這一趟', 'gear:' + row.run.runId, 'big'));
+    H.push(btn('收起這一趟', 'gear:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {
     H.push('<div class="eyebrow">在老師那邊</div>');
@@ -277,7 +277,7 @@ function sceneCap(t, next, st) { return ''; }
 PAGES.sign = function () {
   var t = myTeam();
   var sg = signOf(t.teamId);
-  var H = [head('招牌', '廊道口掛的是誰', '')];
+  var H = [head('專案名', '這個專案叫什麼', '')];
   H.push('<div class="card"><div class="fa-in">');
   H.push(pxTag(sg.px, sg.pal, 'fa-px'));
   H.push('<div>');
@@ -475,7 +475,7 @@ PAGES.pick = function () {
   var z = strataAt(Math.max(0, depthOf(t.teamId) - 1), t.teamId);
   var s = runShape(r.runId);
 
-  var H = [head('封存', m.title, '這一趟長成這個樣子。')];
+  var H = [head('收起這一趟', m.title, '')];
 
   if (r.word) {
     H.push('<div class="card"><div class="eyebrow">老師說</div>' +
@@ -502,7 +502,7 @@ PAGES.pick = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">這幾天你動過哪幾天　選填</div>');
   H.push(dayGrid(r.runId));
-  H.push('<p class="dim">不影響判定。它決定的是封存起來長什麼樣子。</p>');
+  H.push('<p class="dim">不影響準不準。它決定的是收起來之後長什麼樣子。</p>');
   H.push('</div>');
 
   H.push('<div class="card">');
@@ -519,7 +519,7 @@ PAGES.pick = function () {
   H.push(uncoverCard(t));
   H.push(buildPick(t));
 
-  H.push(btn('封存', 'seal:' + r.runId, 'big'));
+  H.push(btn('收起來', 'seal:' + r.runId, 'big'));
   return H.join('');
 };
 /* 選方向那張小地圖拿掉了：占地那一下改在全班那張圖上做。
@@ -706,16 +706,18 @@ ACTS.lgopen = function (id) {
 /* ---------- 這一圈走到哪 ----------
 
    死線勇者的迴圈是四拍，而且它一直讓你知道現在是哪一拍。
-   這裡四拍是：準備（說幾天）→ 遠征（去做事，不用開）→ 戰報（交出去、
-   看判定）→ 營地（封存、打通、蓋一座）。
+   這裡四拍就是那四件事：說幾天 → 去做事 → 交出去 → 收起來。
+
+   本來每一拍上面還掛一個世界觀的詞（準備／遠征／戰報／營地），
+   底下再寫一次白話。同一件事講兩次，而先講的那一次是聽不懂的那一次。
 
    畫成環不是條：這座地下城是無盡輪迴的，四拍走完回到第一拍。
    所以它沒有百分比、沒有終點，也不可以有。 */
 var BEATS = [
-  { k: 'prep', n: '準備', s: '說幾天' },
-  { k: 'away', n: '遠征', s: '去做事' },
-  { k: 'rep',  n: '戰報', s: '交出去' },
-  { k: 'camp', n: '營地', s: '封存·留記號' }
+  { k: 'prep', s: '說幾天' },
+  { k: 'away', s: '去做事' },
+  { k: 'rep',  s: '交出去' },
+  { k: 'camp', s: '收起來' }
 ];
 
 function beatAt(next, t) {
@@ -732,7 +734,7 @@ function beatBar(next, t) {
   var H = ['<div class="cyc">'];
   BEATS.forEach(function (s, i) {
     H.push('<span class="cy' + (s.k === at ? ' on' : '') + '">' +
-      '<b>' + esc(s.n) + '</b><i>' + esc(s.s) + '</i></span>');
+      '<b>' + esc(s.s) + '</b></span>');
     if (i < BEATS.length - 1) H.push('<span class="cyd"></span>');
   });
   /* 最後接回第一拍。走完不是結束，是再一圈。 */
