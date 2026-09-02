@@ -188,9 +188,13 @@ function buildPick(t) {
     H.push('<i class="bp-p dn' + (b.port.indexOf('d') >= 0 ? ' on' : '') + '"></i>');
     H.push('</span>');
     H.push('<b>' + esc(b.name) + '</b>');
-    /* 誰找得到。三個都會被碰到，差的只是被誰——沒有強弱。 */
-    H.push('<i>' + (b.port === 'ud' ? '兩邊都找得到'
-      : b.port === 'u' ? '上面的人找得到' : '下面的人找得到') + '</i>');
+    /* 接口指的是你自己那條鏈：上一層垂下來的口決定這一層接不接得上，
+       接起來的那幾個在剖面圖上會連成一段（見 linkedAt 與 .xs-link）。
+
+       本來這裡寫的是「上面的人找得到／下面的人找得到」——那是靠
+       岩壁裡的遺跡成立的，而遺跡拿掉了（別組的天數不構成參考）。 */
+    H.push('<i>' + (b.port === 'ud' ? '上下都接得起來'
+      : b.port === 'u' ? '只接得上上面那個' : '只往下留一個口') + '</i>');
     H.push('</button>');
   });
   H.push('</div>');
@@ -264,26 +268,15 @@ function uncoverCard(t) {
     allFauna().forEach(function (f) { if (f.n === r.mob) mo = f; });
     if (mo) H.push('<span class="pxwrap">' + pxTag(mo.px, z.pal, 'unc-px' + (r.early ? '' : ' gone')) +
       pxFlash(mo.px) + '</span>');
-  } else if (r.build) {
-    var bd = buildDef(r.build);
-    if (bd) H.push('<span class="pxwrap">' + pxTag(bd.px, BUILD_PAL, 'unc-px' + (r.early ? '' : ' gone')) +
-      pxFlash(bd.px) + '</span>');
   } else {
     H.push('<div class="unc-px ' + z.key + ' blank"></div>');
   }
 
   H.push('<div>');
   H.push('<div class="eyebrow">' + esc(z.name) + '　·　這一格裡</div>');
-  H.push('<h2>' + esc(r.mob || (r.build && buildDef(r.build).name) || d.n) + '</h2>');
+  H.push('<h2>' + esc(r.mob || d.n) + '</h2>');
   H.push('<p class="lead">' + esc(r.early ? d.here : d.late) + '</p>');
-  /* 是誰留的、哪一趟、走了幾天。系統不編故事——
-     這幾個字全部是別組自己打的。 */
-  if (r.by) {
-    H.push('<p class="unc-by">' + esc(r.by) +
-      (r.trip ? '　·　' + esc(r.trip) : '') +
-      (r.days ? '　·　' + r.days + ' 天' : '') + '</p>');
-  }
-  if (r.say) H.push('<p class="quote">' + esc(r.say) + '</p>');
+
   H.push('</div></div></div>');
   return H.join('');
 }

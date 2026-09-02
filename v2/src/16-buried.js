@@ -37,13 +37,11 @@ var BURIED = [
   { k: 'mob',    n: '還在睡的東西',
     here: '牠還在這裡，被你走到這裡的動靜吵醒。',
     late: '牠已經走了。留下一層蛻下來的殼。' },
-  { k: 'relic',  n: '上一輪的遺跡',
-    here: '有人在這裡立過一座，還撐著。',
-    late: '有人在這裡立過一座，只剩地基。' },
-  { k: 'mark',   n: '牆上刻的字',
-    here: '有人在這面牆上刻了一句話。',
-    late: '有人在這面牆上刻過字，水沖掉一半。' },
-  /* 「空腔：什麼都沒有」拿掉了。一學期大概敲到三次的東西，
+  /* 「上一輪的遺跡」與「牆上刻的字」拿掉了。
+     那兩樣挖出來的是別組某一趟的名字與天數，而每一組的專案不一樣
+     ——別人「六天」對你不構成任何參考，它只是看起來像內容。
+
+     「空腔：什麼都沒有」也拿掉了。一學期大概敲到三次的東西，
      不能有一次是空的。 */
   { k: 'spring', n: '地下水',
     here: '一道還在流的水。',
@@ -87,18 +85,6 @@ function actUncover(teamId, depth) {
 
   var rec = { k: b.k, early: early ? 1 : 0 };
 
-  /* 牆上刻的字：刻的是真的東西——別的組封存過的某一趟叫什麼名字。
-     系統不編故事，它只是把別人留下來的東西放在你會走到的地方。 */
-  if (b.k === 'mark') {
-    var pool = [];
-    where('Teams', function (o) {
-      return o.classId === t.classId && o.teamId !== teamId;
-    }).forEach(function (o) {
-      keepsOf(o.teamId).forEach(function (kp) { if (kp.name) pool.push(kp.name); });
-    });
-    if (pool.length) rec.say = pool[hash('mark|' + t.classId + '|' + k) % pool.length];
-  }
-
   /* 蟄伏的東西：那一層住的那幾隻裡的一隻。進圖鑑，標「你遇過」。 */
   if (b.k === 'mob') {
     var f = faunaOf(strataAt(depth, teamId).key);
@@ -106,39 +92,6 @@ function actUncover(teamId, depth) {
     if (f.length) rec.mob = f[hash('bmob|' + teamId + '|' + k) % f.length].n;
   }
 
-  /* 上一輪的遺跡：同班別組真的留下的一個記號。
-
-     哪幾個構得到這一層，由他們留下的時候選的接口決定——
-     朝上的往上構、朝下的往下構、都通的兩邊都構得到。
-     這是三個形狀真正分開的地方：不是哪一個比較強，
-     是你要把自己留給走得比你快的人，還是走得比你慢的人。 */
-  if (b.k === 'relic') {
-    var pool = [];
-    where('Teams', function (o) {
-      return o.classId === t.classId && o.teamId !== teamId;
-    }).forEach(function (o) {
-      Object.keys(o.builds || {}).forEach(function (bk) {
-        var od = Number(bk.slice(1));
-        var def = buildDef(o.builds[bk].k);
-        if (!def) return;
-        var reach = od > depth ? hasPort(def.key, 'u')
-          : od < depth ? hasPort(def.key, 'd') : true;
-        if (!reach) return;
-        pool.push({ team: o.teamId, name: o.name, k: def.key, run: o.builds[bk].runId });
-      });
-    });
-    if (pool.length) {
-      var pk = pool[hash('brel|' + teamId + '|' + k) % pool.length];
-      rec.build = pk.k; rec.by = pk.name;
-      var kp = null;
-      keepsOf(pk.team).forEach(function (x) { if (x.runId === pk.run) kp = x; });
-      if (kp) { rec.trip = kp.name || ''; rec.days = kp.elapsed || 0; }
-    }
-  }
-
-  /* 遺跡但是全班都還沒留過東西——那就什麼都沒碰到，不要開一張空卡。 */
-  if (b.k === 'relic' && !rec.build) return null;
-  if (b.k === 'mark' && !rec.say) return null;
 
   t.found[k] = rec;
   save();
