@@ -1465,3 +1465,11 @@ button.ac:active{transform:translateY(1px)}
 .p4-t{display:flex;flex-direction:column;gap:4px;min-width:0}
 .p4 b{font-size:22px;font-weight:400;color:var(--ink)}
 .p4 i{font-style:normal;font-size:22px;color:var(--dim);line-height:1.5;overflow-wrap:anywhere}
+
+/* 鎖著的那一扇。不是一顆按下去會跳「還不行」的鍵——它根本按不下去，
+   而且看得出來按不下去。點得動卻沒有反應是最糟的那一種。 */
+.dk.shut{
+  cursor:default;opacity:.42;
+  box-shadow:inset 0 0 0 2px var(--line)
+}
+.dk.shut:hover{background:none;filter:none}

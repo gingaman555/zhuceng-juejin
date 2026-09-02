@@ -51,6 +51,23 @@ PAGES.pack = function () {
   rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
   H.push('</div></div>');
 
+  /* 「我們做完了」在這裡說。
+
+     看完這一頁才知道自己是不是真的做完了——老師派過的每一件事，
+     各自走到哪，全部在上面。廊道上那扇出口是老師開的，不是他推的。 */
+  if (!t.leftAt && !t.exitOk) {
+    H.push('<div class="card">');
+    if (t.exitAsk) {
+      H.push('<div class="eyebrow lit">說了</div>');
+      H.push('<p class="dim">在等老師開門。</p>');
+      H.push(btn('先不要', 'unexit', 'ghost'));
+    } else {
+      H.push('<div class="eyebrow">這個專案做完了嗎</div>');
+      H.push(btn('我們做完了', 'askexit', 'big'));
+    }
+    H.push('</div>');
+  }
+
   H.push(btn('回廊道', 'go:home', 'ghost'));
   return H.join('');
 };

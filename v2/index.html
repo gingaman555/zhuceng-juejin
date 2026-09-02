@@ -3193,6 +3193,14 @@ button.ac:active{transform:translateY(1px)}
 .p4 b{font-size:22px;font-weight:400;color:var(--ink)}
 .p4 i{font-style:normal;font-size:22px;color:var(--dim);line-height:1.5;overflow-wrap:anywhere}
 
+/* 鎖著的那一扇。不是一顆按下去會跳「還不行」的鍵——它根本按不下去，
+   而且看得出來按不下去。點得動卻沒有反應是最糟的那一種。 */
+.dk.shut{
+  cursor:default;opacity:.42;
+  box-shadow:inset 0 0 0 2px var(--line)
+}
+.dk.shut:hover{background:none;filter:none}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -6082,6 +6090,8 @@ function nextThing(teamId) {
      那是最糟的第一印象：第一個動作是「等」。取名字三十秒做得完，
      而且它完全屬於他們自己（那塊牌子掛在洞口上，別組也看得到）。 */
   if (tm && !tm.project) return { kind: 'name' };
+  /* 門開了——那是這個系統裡最後一件事。 */
+  if (tm && tm.exitOk) return { kind: 'exitopen' };
   if (tm && tm.exitAsk) return { kind: 'waitexit' };
 
   var rows = runsFor(teamId);
@@ -6987,7 +6997,9 @@ function actCancelExit(teamId) {
 /* 老師確認。他寫的那一句會留在出口那一頁上。 */
 function actLetGo(teamId, word) {
   var t = teamOf(teamId);
-  if (!t || !t.exitAsk || t.leftAt) return null;
+  /* 門開著才走得出去。本來只看他自己說過要走——
+     那樣「老師允許」就不存在了。 */
+  if (!t || !t.exitOk || t.leftAt) return null;
   t.leftAt = now();
   t.exitWord = word || '';
   t.exitAsk = 0;
@@ -7010,6 +7022,17 @@ function exitRecord(teamId) {
     keeps: keepsOf(teamId),
     days: where('Pushes', function (p) { return p.teamId === teamId; }).length
   };
+}
+
+/* 老師開門。開了學生才點得動廊道上那扇出口。
+   收回來也可以——他還沒走出去之前，那扇門一直是老師的。 */
+function actOpenExit(teamId, on) {
+  var t = teamOf(teamId);
+  if (!t || t.leftAt) return null;
+  t.exitOk = on ? now() : 0;
+  save();
+  logEvent(on ? 'exitopen' : 'exitshut', { teamId: teamId });
+  return t;
 }
 
 /* 等著老師確認出口的那幾組。跟 radar 一樣只看自己帶的。 */
@@ -8022,11 +8045,32 @@ var ACTS = {
     say('收回來了。');
   },
 
-  letgo: function (teamId) {
-    var word = (document.getElementById('gr-word') || {}).value || '';
-    if (!actLetGo(teamId, word.trim())) return say('這一組沒有在等出口。');
-    go('radar');
-    say('他們出去了。');
+  /* 學生說「我們做完了」。它不開門——門是老師開的。 */
+  askexit: function () {
+    var t = myTeam();
+    if (!actAskExit(t.teamId)) return;
+    render(); say('說出去了。');
+  },
+  unexit: function () {
+    var t = myTeam();
+    actCancelExit(t.teamId);
+    render(); say('收回來了。');
+  },
+
+  /* 老師開門／關門。開了學生才點得動廊道上那扇出口。 */
+  openexit: function (v) {
+    var p = String(v).split(',');
+    actOpenExit(p[0], p[1] === '1');
+    render();
+    say(p[1] === '1' ? '門開了。' : '門關回來了。');
+  },
+
+  /* 走出去。老師開了門，這一下是他們自己按的。 */
+  leave: function () {
+    var t = myTeam();
+    if (!actLetGo(t.teamId, '')) return say('門還沒開。');
+    go('exit', {});
+    say('上來了。');
   },
 
   commit: function (msId) {
@@ -8811,6 +8855,11 @@ PAGES.home = function () {
     H.push('</div>');
   });
 
+  /* 三扇門。本來在整頁最底下、在走過的那一條帶子後面——它們是
+     「這個世界裡有什麼」，不是「我剛剛做了什麼」，放在最後等於
+     要滑到底才看得到。 */
+  H.push(deskRow(t, next));
+
   /* 這一圈走到哪。死線勇者一直讓你知道現在是專注還是休息，
      那個迴圈才會上癮。 */
   H.push(beatBar(next, t));
@@ -8857,8 +8906,6 @@ PAGES.home = function () {
      連寫這個系統的人看到都要問「那是什麼」。 */
 
 
-  /* ── 副功能：小圖示 ── */
-  H.push(deskRow(t, next));
 
   return H.join('');
 };
@@ -8950,11 +8997,21 @@ function deskRow(t, next) {
     esc(JSON.stringify({ a: 'go:who' })) + '\' title="' +
     esc('角色：換一個') + '">' +
     pxTag(HERO.walkA, HERO.pal, '') + '<i>角色</i></button>');
-  H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
-    esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +
-    pxTag(ICONS.log, t.exitAsk ? ICON_ON : ICON_PAL, '') +
-    '<i>出口</i></button>');
+  /* 出口。老師開了才點得動——沒開的時候它是一扇鎖著的門，不是一顆
+     按下去會跳「還不行」的鍵。點得動卻沒有反應是最糟的那一種。
+
+     「我們做完了」那一句話搬到任務清單去說：看完那一頁才知道自己是不是
+     真的做完了，說出口的地方就該在那裡。 */
+  if (t.exitOk) {
+    H.push('<button class="dk lit" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
+      esc('出口：老師開了，從這裡上去') + '">' +
+      pxTag(ICONS.log, ICON_ON, '') + '<i>出口</i></button>');
+  } else {
+    H.push('<div class="dk shut" title="' +
+      esc(t.exitAsk ? '出口：說了，在等老師開' : '出口：鎖著') + '">' +
+      pxTag(ICONS.log, ICON_PAL, '') + '<i>出口</i></div>');
+  }
   H.push('</div>');
   return H.join('');
 }
@@ -9454,8 +9511,10 @@ PAGES.exit = function () {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">說一聲</div>');
     H.push('<div class="row">');
-    H.push(btn(t.exitAsk ? '已經說了，在等他' : '這個專案做完了',
-      t.exitAsk ? 'noop' : 'askexit', 'big'));
+    /* 這一頁只有在門開了之後進得來（廊道上那一扇鎖著），
+       所以這裡就是最後那一下：上去。按的人是他們自己——
+       走出去該是他們的動作，不是老師代勞的。 */
+    H.push(btn('上去', 'leave', 'big'));
     H.push(btn('回廊道', 'go:home', 'ghost'));
     H.push('</div></div>');
   } else {
@@ -10762,6 +10821,23 @@ PAGES.pack = function () {
   rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
   H.push('</div></div>');
 
+  /* 「我們做完了」在這裡說。
+
+     看完這一頁才知道自己是不是真的做完了——老師派過的每一件事，
+     各自走到哪，全部在上面。廊道上那扇出口是老師開的，不是他推的。 */
+  if (!t.leftAt && !t.exitOk) {
+    H.push('<div class="card">');
+    if (t.exitAsk) {
+      H.push('<div class="eyebrow lit">說了</div>');
+      H.push('<p class="dim">在等老師開門。</p>');
+      H.push(btn('先不要', 'unexit', 'ghost'));
+    } else {
+      H.push('<div class="eyebrow">這個專案做完了嗎</div>');
+      H.push(btn('我們做完了', 'askexit', 'big'));
+    }
+    H.push('</div>');
+  }
+
   H.push(btn('回廊道', 'go:home', 'ghost'));
   return H.join('');
 };
@@ -11849,9 +11925,9 @@ PAGES.radar = function () {
     H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
       depthOf(t.teamId) + ' 個任務</p>');
     if (acc.total) H.push(accBar(acc));
-    H.push('<div class="eyebrow" style="margin-top:14px">你的想法　選填</div>');
-    H.push('<textarea id="gr-word" rows="2"></textarea>');
-    H.push(btn('讓他們出去', 'letgo:' + t.teamId, 'big'));
+    /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
+       走出去該是他們的動作，不是老師代勞的。 */
+    H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
     H.push('</div>');
   });
 

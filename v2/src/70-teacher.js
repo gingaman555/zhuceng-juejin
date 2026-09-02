@@ -85,9 +85,9 @@ PAGES.radar = function () {
     H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
       depthOf(t.teamId) + ' 個任務</p>');
     if (acc.total) H.push(accBar(acc));
-    H.push('<div class="eyebrow" style="margin-top:14px">你的想法　選填</div>');
-    H.push('<textarea id="gr-word" rows="2"></textarea>');
-    H.push(btn('讓他們出去', 'letgo:' + t.teamId, 'big'));
+    /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
+       走出去該是他們的動作，不是老師代勞的。 */
+    H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
     H.push('</div>');
   });
 

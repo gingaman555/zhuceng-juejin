@@ -453,11 +453,32 @@ var ACTS = {
     say('收回來了。');
   },
 
-  letgo: function (teamId) {
-    var word = (document.getElementById('gr-word') || {}).value || '';
-    if (!actLetGo(teamId, word.trim())) return say('這一組沒有在等出口。');
-    go('radar');
-    say('他們出去了。');
+  /* 學生說「我們做完了」。它不開門——門是老師開的。 */
+  askexit: function () {
+    var t = myTeam();
+    if (!actAskExit(t.teamId)) return;
+    render(); say('說出去了。');
+  },
+  unexit: function () {
+    var t = myTeam();
+    actCancelExit(t.teamId);
+    render(); say('收回來了。');
+  },
+
+  /* 老師開門／關門。開了學生才點得動廊道上那扇出口。 */
+  openexit: function (v) {
+    var p = String(v).split(',');
+    actOpenExit(p[0], p[1] === '1');
+    render();
+    say(p[1] === '1' ? '門開了。' : '門關回來了。');
+  },
+
+  /* 走出去。老師開了門，這一下是他們自己按的。 */
+  leave: function () {
+    var t = myTeam();
+    if (!actLetGo(t.teamId, '')) return say('門還沒開。');
+    go('exit', {});
+    say('上來了。');
   },
 
   commit: function (msId) {

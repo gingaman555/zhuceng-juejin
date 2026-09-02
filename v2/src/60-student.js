@@ -77,6 +77,11 @@ PAGES.home = function () {
     H.push('</div>');
   });
 
+  /* 三扇門。本來在整頁最底下、在走過的那一條帶子後面——它們是
+     「這個世界裡有什麼」，不是「我剛剛做了什麼」，放在最後等於
+     要滑到底才看得到。 */
+  H.push(deskRow(t, next));
+
   /* 這一圈走到哪。死線勇者一直讓你知道現在是專注還是休息，
      那個迴圈才會上癮。 */
   H.push(beatBar(next, t));
@@ -123,8 +128,6 @@ PAGES.home = function () {
      連寫這個系統的人看到都要問「那是什麼」。 */
 
 
-  /* ── 副功能：小圖示 ── */
-  H.push(deskRow(t, next));
 
   return H.join('');
 };
@@ -216,11 +219,21 @@ function deskRow(t, next) {
     esc(JSON.stringify({ a: 'go:who' })) + '\' title="' +
     esc('角色：換一個') + '">' +
     pxTag(HERO.walkA, HERO.pal, '') + '<i>角色</i></button>');
-  H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
-    esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +
-    pxTag(ICONS.log, t.exitAsk ? ICON_ON : ICON_PAL, '') +
-    '<i>出口</i></button>');
+  /* 出口。老師開了才點得動——沒開的時候它是一扇鎖著的門，不是一顆
+     按下去會跳「還不行」的鍵。點得動卻沒有反應是最糟的那一種。
+
+     「我們做完了」那一句話搬到任務清單去說：看完那一頁才知道自己是不是
+     真的做完了，說出口的地方就該在那裡。 */
+  if (t.exitOk) {
+    H.push('<button class="dk lit" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
+      esc('出口：老師開了，從這裡上去') + '">' +
+      pxTag(ICONS.log, ICON_ON, '') + '<i>出口</i></button>');
+  } else {
+    H.push('<div class="dk shut" title="' +
+      esc(t.exitAsk ? '出口：說了，在等老師開' : '出口：鎖著') + '">' +
+      pxTag(ICONS.log, ICON_PAL, '') + '<i>出口</i></div>');
+  }
   H.push('</div>');
   return H.join('');
 }
@@ -720,8 +733,10 @@ PAGES.exit = function () {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">說一聲</div>');
     H.push('<div class="row">');
-    H.push(btn(t.exitAsk ? '已經說了，在等他' : '這個專案做完了',
-      t.exitAsk ? 'noop' : 'askexit', 'big'));
+    /* 這一頁只有在門開了之後進得來（廊道上那一扇鎖著），
+       所以這裡就是最後那一下：上去。按的人是他們自己——
+       走出去該是他們的動作，不是老師代勞的。 */
+    H.push(btn('上去', 'leave', 'big'));
     H.push(btn('回廊道', 'go:home', 'ghost'));
     H.push('</div></div>');
   } else {

@@ -116,6 +116,8 @@ function nextThing(teamId) {
      那是最糟的第一印象：第一個動作是「等」。取名字三十秒做得完，
      而且它完全屬於他們自己（那塊牌子掛在洞口上，別組也看得到）。 */
   if (tm && !tm.project) return { kind: 'name' };
+  /* 門開了——那是這個系統裡最後一件事。 */
+  if (tm && tm.exitOk) return { kind: 'exitopen' };
   if (tm && tm.exitAsk) return { kind: 'waitexit' };
 
   var rows = runsFor(teamId);
@@ -1021,7 +1023,9 @@ function actCancelExit(teamId) {
 /* 老師確認。他寫的那一句會留在出口那一頁上。 */
 function actLetGo(teamId, word) {
   var t = teamOf(teamId);
-  if (!t || !t.exitAsk || t.leftAt) return null;
+  /* 門開著才走得出去。本來只看他自己說過要走——
+     那樣「老師允許」就不存在了。 */
+  if (!t || !t.exitOk || t.leftAt) return null;
   t.leftAt = now();
   t.exitWord = word || '';
   t.exitAsk = 0;
@@ -1044,6 +1048,17 @@ function exitRecord(teamId) {
     keeps: keepsOf(teamId),
     days: where('Pushes', function (p) { return p.teamId === teamId; }).length
   };
+}
+
+/* 老師開門。開了學生才點得動廊道上那扇出口。
+   收回來也可以——他還沒走出去之前，那扇門一直是老師的。 */
+function actOpenExit(teamId, on) {
+  var t = teamOf(teamId);
+  if (!t || t.leftAt) return null;
+  t.exitOk = on ? now() : 0;
+  save();
+  logEvent(on ? 'exitopen' : 'exitshut', { teamId: teamId });
+  return t;
 }
 
 /* 等著老師確認出口的那幾組。跟 radar 一樣只看自己帶的。 */
