@@ -214,10 +214,11 @@ function scene(t, row, st, kind) {
      所以你永遠追不上，也永遠不會走過牠。 */
   /* 牠只在走到底之後出現：走滿了自己說的天數，或者這一趟已經交出去。
      還在路上的時候前面是霧——不是一隻站在那裡等你的東西。 */
-  /* fresh 的空殼 state 是 fresh，本來也被算成「已經走完」——
-     所以一個還沒承諾的任務，盡頭就站著一隻。 */
-  var arrived = going && (walked >= est || run.state === 'stamped' ||
-    run.state === 'submitted' || run.state === 'back' || run.state === 'done');
+  /* 用 metRun：畫面上看得到牠的那一刻，就是圖鑑記下的那一刻
+     （見 40-db.js）。本來這裡自己列狀態，而列的那幾個裡面
+     'stamped' 根本不是一個 state（那是 nextThing 回的字），
+     真正的是 'judged'——所以那一條永遠不成立，靠 walked>=est 撐著。 */
+  var arrived = metRun(run);
   if (arrived) H.push(sceneMob(t, row, 1, est, ENT));
 
   /* ── 盡頭的岩壁裡有東西 ──

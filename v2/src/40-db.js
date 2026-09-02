@@ -559,15 +559,31 @@ function runDepth(run) {
 }
 
 /* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
-/* 打敗過的那幾隻。
+/* 這一趟遇到牠了沒有。
 
-   本來只要 est 有值就算——那是「承諾了」不是「打敗了」，所以一個
-   還在走的任務，牠已經進圖鑑了。改成看 stamp：判定出來那一刻，
-   牠才算被打敗。 */
+   遇到就算，不用打敗——走到自己說的那一天，牠就站在那裡了。
+   交出去之後一定遇過（那一趟已經結束）。
+
+   這一支同時是廊道上「要不要畫出牠」的判斷（見 61-scene.js），
+   一個定義兩個地方用：畫面上看得到牠的那一刻，就是圖鑑記下的那一刻。
+
+   本來 metMobs 只要 est 有值就算——那是「承諾了」，那時候他還在
+   洞口，根本還沒走到。 */
+function metRun(r) {
+  if (!r || !r.runId) return false;
+  if (r.state !== 'running') return true;
+  var log = dayLog(r.runId), moved = 0;
+  for (var i = 0; i < log.length; i++) {
+    if (log[i] && log[i].kind === 'move') moved++;
+  }
+  return moved >= (r.est || 1);
+}
+
+/* 遇過的那幾隻。 */
 function metMobs(teamId) {
   var seen = {};
   runsFor(teamId).forEach(function (x) {
-    if (!x.run.stamp) return;
+    if (!metRun(x.run)) return;
     var m = mobOfRun(x.run);
     if (m) seen[m.n] = x.ms.title;
   });
