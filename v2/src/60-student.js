@@ -307,7 +307,7 @@ function overRow(r) {
   return H.join('');
 }
 
-/* 承諾那一頁還沒有 run，所以直接從里程碑上讀老師分的那幾段。
+/* 承諾那一頁還沒有 run，所以直接從任務上讀老師分的那幾段。
    那一排同時是兩件事：這一趟有哪幾段（範圍），
    以及點起來標「這一段會比想的久」。 */
 function previewSteps(m) { return (m && m.steps) || []; }
@@ -330,7 +330,7 @@ function msStepLegend(m, sel, act) {
 PAGES.commit = function () {
   var t = myTeam();
   var m = msOf(S.p.id);
-  if (!m) return '<div class="card">找不到這一個里程碑。</div>';
+  if (!m) return '<div class="card">找不到這一個任務。</div>';
   var est = Number(draft('est', RULES.EST_DEFAULT));
   var flags = DRAFT.flags || [];
 
@@ -563,7 +563,7 @@ PAGES.exit = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你帶出來的</div>');
   H.push('<div class="outnum">');
-  H.push('<div><b>' + e.runs.length + '</b><span>走完的里程碑</span></div>');
+  H.push('<div><b>' + e.runs.length + '</b><span>走完的任務</span></div>');
   H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
   H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
   H.push('<div><b>' + e.keeps.length + '</b><span>留下的記號</span></div>');

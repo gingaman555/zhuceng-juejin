@@ -3168,8 +3168,8 @@ var PACK = {"creatures":[{"r":"微光荒原","n":"霧潛母","m":"霧","a":"潛"
 var WORLD = {
   name: '地下城',
   surface: '地表',
-  /* 廊道往下走，深度＝這一組完成過幾個里程碑。沒有終點，也沒有「走完」。 */
-  depthPerMilestone: 40,   /* 每完成一個里程碑往下 40 公尺（只是說法，不是門檻） */
+  /* 廊道往下走，深度＝這一組完成過幾個任務。沒有終點，也沒有「走完」。 */
+  depthPerMilestone: 40,   /* 每完成一個任務往下 40 公尺（只是說法，不是門檻） */
 
   /* 一天的光。停滯越久越暗——不是懲罰，是狀態本身看得見。 */
   light: [
@@ -3307,8 +3307,8 @@ var CAMPFIRE = {
 };
 
 /* ---------- 魔物 ----------
-   里程碑的具象化。用上一版那 40 隻的像素圖，但這裡不分區、不分層——
-   哪一組遇到哪一隻，是任務 id ＋ 組 id 算出來的，全班同一個里程碑
+   任務的具象化。用上一版那 40 隻的像素圖，但這裡不分區、不分層——
+   哪一組遇到哪一隻，是任務 id ＋ 組 id 算出來的，全班同一個任務
    遇到的不是同一隻。那讓「打贏了」是自己的事，不是跟別人比。 */
 var MOBS = PACK.creatures;
 
@@ -3425,7 +3425,7 @@ var EMBER = {
 
 /* 哪一格放什麼東西。
 
-   一 · 用組別與里程碑算，不擲骰子——同一條廊道每次打開，石頭都在同一個
+   一 · 用組別與任務算，不擲骰子——同一條廊道每次打開，石頭都在同一個
         地方。畫面每重畫一次石頭就跳一次的話，那條廊道就不是一個地方了。
    二 · 每一層長的東西不一樣。表土是碎石，根脈層長蕈菇，水晶迴廊到處是
         晶體，銹層卡著鐵件，熔火深淵地上還有餘燼。
@@ -3533,7 +3533,7 @@ var STRATA = [
 
    代價是全班那張剖面圖不再有共通的地層帶。那是對的——同樣 160 公尺，
    兩組看到的東西不一樣，就沒得比。 */
-var ZONE_SPAN = 2;                    /* 一層待幾個里程碑 */
+var ZONE_SPAN = 2;                    /* 一層待幾個任務 */
 var CYCLE = ZONE_SPAN * STRATA.length;
 
 /* 順序是一個班洗一次，班內共用。
@@ -3572,7 +3572,7 @@ function cycleAt(depth) {
   return Math.floor((Number(depth) || 0) / CYCLE);
 }
 
-/* 這一層還要待幾個里程碑才換 */
+/* 這一層還要待幾個任務才換 */
 function untilNextZone(depth) {
   var d = Number(depth) || 0;
   return ZONE_SPAN - (d % ZONE_SPAN);
@@ -3616,7 +3616,7 @@ function faunaByName(n) {
    迴廊的東西。生物跟系統的連接就是這一條，而且是雙向的——
    你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
 
-   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個里程碑不是同一隻。 */
+   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個任務不是同一隻。 */
 function mobFor(msId, teamId) {
   var f = faunaOf(strataAt(depthOf(teamId), teamId).key);
   if (!f.length) f = allFauna();
@@ -3896,7 +3896,7 @@ function newSalt() {
 
 /* ---------- 事件流（研究紀錄） ----------
    每一個會改到資料的動作都記一筆。這就是研究資料本身：
-   誰、在哪一個里程碑上、做了什麼、什麼時候。
+   誰、在哪一個任務上、做了什麼、什麼時候。
 
    刻意不記「內容」——系統本來就不收作業。記的是行為的形狀：
    承諾幾天、推進的節奏、判定結果、卡在哪。 */
@@ -3933,7 +3933,7 @@ var EV_SAY = {
   register: function (e) { return '註冊了帳號 ' + e.account; },
   claim:    function (e) { return '認領身分：' + e.who + '（' + e.team + '）'; },
   login:    function () { return '登入'; },
-  publish:  function (e) { return '派了里程碑「' + e.title + '」'; },
+  publish:  function (e) { return '派了任務「' + e.title + '」'; },
   commit:   function (e) { return '承諾 ' + e.est + ' 天' + (e.flags ? '，標了「' + e.flags + '」' : ''); },
   push:     function (e) { return '第 ' + e.n + ' 天' + (e.seg ? '：' + e.seg : '') + (e.back ? '（補登）' : ''); },
   submit:   function (e) { return '交出去：承諾 ' + e.est + ' 天，實際 ' + e.actual + ' 天 → ' + e.stamp; },
@@ -4566,7 +4566,7 @@ var ICONS = {
           '...+####+...', '....+##+....', '....+##+....', '..++####++..',
           '.+########+.', '.+#*####*#+.', '.++++++++++.', '............'],
 
-  /* 發里程碑：一支插著的旗 */
+  /* 發任務：一支插著的旗 */
   ms: ['..+#........', '..+#####+...', '..+#*###*+..', '..+#####*+..',
        '..+####*+...', '..+##*+.....', '..+#........', '..+#........',
        '..+#........', '..+#........', '.+++++......', '............'],
@@ -4726,7 +4726,7 @@ RULES.judgeWhy = function (est, actual) {
 
    零輸入框那條原則沒有破：清單只寫一次，之後每天都是一下點擊。
    沒寫的組也走得完——那一顆鍵就退回「我今天來過了」。 */
-RULES.STEPS_MAX = 12;     /* 一個里程碑最多分幾段 */
+RULES.STEPS_MAX = 12;     /* 一個任務最多分幾段 */
 
 /* ---------- 這一趟留下哪一件 ----------
 
@@ -5014,9 +5014,9 @@ function blank() {
   return {
     Config: { seq: 1 },
     Users: [], Classes: [], Roster: [], Teams: [],
-    /* 里程碑：老師派的。同一個里程碑可以只發給某幾組。 */
+    /* 任務：老師派的。同一個任務可以只發給某幾組。 */
     Milestones: [],
-    /* 一組在一個里程碑上的狀態。這張表是整個系統的心臟。 */
+    /* 一組在一個任務上的狀態。這張表是整個系統的心臟。 */
     Runs: [],
     /* 每一次推進打卡。一天一筆。 */
     Pushes: [],
@@ -5042,9 +5042,9 @@ function where(tbl, fn) { return DB[tbl].filter(fn); }
 function teamOf(id) { return find('Teams', function (t) { return t.teamId === id; }); }
 function userOf(id) { return find('Users', function (u) { return u.userId === id; }); }
 function msOf(id) { return find('Milestones', function (m) { return m.msId === id; }); }
-/* 這一組在這個里程碑上的那一趟。
+/* 這一組在這個任務上的那一趟。
 
-   「重新想過」的那幾趟要跳過：它們留在資料庫裡當紀錄，但那個里程碑
+   「重新想過」的那幾趟要跳過：它們留在資料庫裡當紀錄，但那個任務
    對這一組來說是重新開始的，所以要讓畫面回到「還沒承諾」。 */
 function runOf(teamId, msId) {
   return find('Runs', function (r) {
@@ -5052,7 +5052,7 @@ function runOf(teamId, msId) {
   });
 }
 
-/* ---------- 一組看得到哪些里程碑 ---------- */
+/* ---------- 一組看得到哪些任務 ---------- */
 function msFor(teamId) {
   var t = teamOf(teamId);
   if (!t) return [];
@@ -5101,7 +5101,7 @@ function nextThing(teamId) {
   /* 3. 正在做的那一趟。
 
      這一條排在「還沒承諾的」前面，順序很要緊：反過來的話，老師派了
-     三個里程碑，學生會被連問三次要花幾天，而且從頭到尾看不到自己
+     三個任務，學生會被連問三次要花幾天，而且從頭到尾看不到自己
      正在走的那一趟。手上有事的時候，系統不該再遞一件事過來。
 
      這裡本來還有三個狀態：叫醒、今天還沒按、今天按過了。那三個都在
@@ -5158,7 +5158,7 @@ function stallOf(teamId) {
   return { level: 0, days: 0 };
 }
 
-/* 深度＝完成過幾個里程碑。沒有終點。 */
+/* 深度＝完成過幾個任務。沒有終點。 */
 /* 走到第幾層。判定出來就算走完——那一趟的兩個數字已經定了，
    不需要誰批准。所以廊道往前、深度 +1、地層換，都在判定當下發生。
 
@@ -5310,7 +5310,7 @@ function actTickStep(teamId, runId, i) {
   return r;
 }
 
-/* 這一趟勾了幾段。沒有分段的里程碑回 null——
+/* 這一趟勾了幾段。沒有分段的任務回 null——
    沒有的東西不要畫成 0/0，那看起來像什麼都沒做。 */
 function stepsOf(runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
@@ -5565,8 +5565,8 @@ function actSkipCamp(runId) {
 
 /* ================= 老師的動作 ================= */
 
-/* 派一個里程碑。teams 空陣列＝全班。 */
-/* 老師派一個里程碑。steps 是他自己分的段，選填。
+/* 派一個任務。teams 空陣列＝全班。 */
+/* 老師派一個任務。steps 是他自己分的段，選填。
 
    分段是老師寫的，不是系統列的——這跟「系統不定義他們在做什麼」
    不衝突：老師是人，而且那是他出的題目。系統只負責記住哪幾段被勾了。
@@ -5589,9 +5589,9 @@ function actPublish(classId, o) {
   return m;
 }
 
-/* ---------- 全班怎麼看這一個里程碑 ----------
+/* ---------- 全班怎麼看這一個任務 ----------
 
-   同一個里程碑，別人說要花幾天。匿名，只回天數，不回是誰——
+   同一個任務，別人說要花幾天。匿名，只回天數，不回是誰——
    要的是「我是不是低估了」，不是「誰比較快」。
 
    兩組以下不給看：三組的時候剩下那兩個數字誰是誰，猜得出來。 */
@@ -6206,10 +6206,10 @@ function seed() {
   var ALL = TEAMS.map(function (t) { return t.id; });
 
 
-  /* 老師分的段寫在里程碑上（見下面的 M1／M2）。第三個刻意不分——
-     沒分段一樣走得完，那一個里程碑就是在證明這件事。 */
+  /* 老師分的段寫在任務上（見下面的 M1／M2）。第三個刻意不分——
+     沒分段一樣走得完，那一個任務就是在證明這件事。 */
 
-  /* ---------- 三個里程碑 ---------- */
+  /* ---------- 三個任務 ---------- */
   var M1 = { msId: 'M1', classId: cid, teams: [], at: ago(24),
     title: '訪三個人，記下他們怎麼講',
     steps: ['找到人', '約時間', '訪談', '整理逐字稿'],
@@ -6228,10 +6228,10 @@ function seed() {
 
   /* 幫忙塞推進紀錄。
 
-     每一天動的是哪一段也一起塞，取自那一個里程碑的分段——不然試用資料的
+     每一天動的是哪一段也一起塞，取自那一個任務的分段——不然試用資料的
      廊道每一格都長一樣，看不出「這一趟大半在訪談」跟「這一趟一直在修改」
      的差別，而那正是這個機制要讓人看見的東西。
-     沒分段的里程碑塞 -1，那也是一種樣子。 */
+     沒分段的任務塞 -1，那也是一種樣子。 */
   function pushes(teamId, runId, days, from) {
     var a = (msOf((find('Runs', function (x) { return x.runId === runId; }) || {}).msId) || {}).steps || [];
     for (var i = 0; i < days; i++) {
@@ -6295,7 +6295,7 @@ function seed() {
   pushes('G4', 'R9', 6, 13);
 
   /* ---------- G5 戊：什麼都還沒承諾 ---------- */
-  /* 刻意留白：三個里程碑都派了，一個都沒拉滑桿。
+  /* 刻意留白：三個任務都派了，一個都沒拉滑桿。
      系統要看得出這一組跟「在動但卡住」的不一樣。 */
 
   /* 每一組已經打通的那幾格。往下打通，數量跟走完幾趟一樣。 */
@@ -6562,7 +6562,7 @@ function sideBar() {
     var wait = radar(u.classId).length;
     nav = [
       ['radar', '審核' + (wait ? '（' + wait + '）' : '')],
-      ['ms', '發里程碑'],
+      ['ms', '發任務'],
       ['classeco', '各組進度']
     ];
   } else {
@@ -6786,7 +6786,7 @@ var ACTS = {
   publish: function () {
     var title = (document.getElementById('ms-title') || {}).value || '';
     var note = (document.getElementById('ms-note') || {}).value || '';
-    if (!title.trim()) return say('先寫這一個里程碑要交什麼。');
+    if (!title.trim()) return say('先寫這一個任務要交什麼。');
     var steps = ((document.getElementById('ms-steps') || {}).value || '')
       .split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
     actPublish(me().classId, { title: title.trim(), note: note.trim(),
@@ -6974,7 +6974,7 @@ function dayGrid(runId) {
   return H.join('');
 }
 
-/* 全班怎麼看這一個里程碑。匿名——只有天數，沒有誰是誰。
+/* 全班怎麼看這一個任務。匿名——只有天數，沒有誰是誰。
    要的是「我是不是低估了」，不是「誰比較快」。 */
 function spreadBar(sp, mine) {
   var hi = Math.max(sp.hi, Number(mine) || 0, RULES.EST_MIN);
@@ -7571,7 +7571,7 @@ function overRow(r) {
   return H.join('');
 }
 
-/* 承諾那一頁還沒有 run，所以直接從里程碑上讀老師分的那幾段。
+/* 承諾那一頁還沒有 run，所以直接從任務上讀老師分的那幾段。
    那一排同時是兩件事：這一趟有哪幾段（範圍），
    以及點起來標「這一段會比想的久」。 */
 function previewSteps(m) { return (m && m.steps) || []; }
@@ -7594,7 +7594,7 @@ function msStepLegend(m, sel, act) {
 PAGES.commit = function () {
   var t = myTeam();
   var m = msOf(S.p.id);
-  if (!m) return '<div class="card">找不到這一個里程碑。</div>';
+  if (!m) return '<div class="card">找不到這一個任務。</div>';
   var est = Number(draft('est', RULES.EST_DEFAULT));
   var flags = DRAFT.flags || [];
 
@@ -7827,7 +7827,7 @@ PAGES.exit = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你帶出來的</div>');
   H.push('<div class="outnum">');
-  H.push('<div><b>' + e.runs.length + '</b><span>走完的里程碑</span></div>');
+  H.push('<div><b>' + e.runs.length + '</b><span>走完的任務</span></div>');
   H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
   H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
   H.push('<div><b>' + e.keeps.length + '</b><span>留下的記號</span></div>');
@@ -8093,7 +8093,7 @@ function scene(t, row, st, kind) {
   H.push('<div class="scn-hud">' +
     '<em>' + esc(zone.name) + '</em>' +
     '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
-    '<span>走完 ' + depthOf(t.teamId) + ' 個里程碑</span>' +
+    '<span>走完 ' + depthOf(t.teamId) + ' 個任務</span>' +
     '<span class="zn-note">' + esc(zone.note) + '</span></div>');
 
   /* 釘在框上、不跟著捲的兩層：近景的岩石與暗角。
@@ -8367,7 +8367,7 @@ function sceneMob(t, row, prog, span) {
   var mob = mobOfRun(row.run);
   var pal = strataAt(depthOf(t.teamId), t.teamId).pal;
   var x = SCN.ENT + span * SCN.TILE + 33;
-  /* 這裡本來還掛一塊寫著里程碑名字的木牌。拿掉了：它浮在半空、會壓到
+  /* 這裡本來還掛一塊寫著任務名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
      其中一遍看起來就會像壞掉的東西。 */
   var H = [];
@@ -8760,7 +8760,7 @@ function faunaCard() {
   H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
   H.push('<h2>' + esc(c.n) + '</h2>');
   H.push('<p class="lead">' + esc(c.t) + '</p>');
-  H.push('<p class="dim">同一個里程碑，每一組遇到的不是同一隻。</p>');
+  H.push('<p class="dim">同一個任務，每一組遇到的不是同一隻。</p>');
   H.push('</div></div></div>');
   return H.join('');
 }
@@ -10033,7 +10033,7 @@ function stepTags(run) {
 }
 
 var TEACHER_STEPS = [
-  ['發里程碑', '寫要交什麼'],
+  ['發任務', '寫要交什麼'],
   ['他們承諾天數', '這一段你不用管'],
   ['審核', '看完勾一個可以']
 ];
@@ -10055,9 +10055,9 @@ PAGES.radar = function () {
     H.push('<div class="eyebrow">出口</div>');
     H.push('<h2>' + esc(t.name) + ' 說專案做完了。</h2>');
     H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
-      depthOf(t.teamId) + ' 個里程碑</p>');
+      depthOf(t.teamId) + ' 個任務</p>');
     if (acc.total) H.push(accBar(acc));
-    H.push('<div class="eyebrow" style="margin-top:14px">說一句話　選填</div>');
+    H.push('<div class="eyebrow" style="margin-top:14px">你的想法　選填</div>');
     H.push('<textarea id="gr-word" rows="2"></textarea>');
     H.push(btn('讓他們出去', 'letgo:' + t.teamId, 'big'));
     H.push('</div>');
@@ -10070,9 +10070,9 @@ PAGES.radar = function () {
 
   if (!rows.length) {
     H.push('<div class="card">');
-    H.push('<p class="dim">沒有人在等你。去發一個里程碑——寫要交什麼就好。</p>');
+    H.push('<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
     H.push('<div class="row">');
-    H.push(btn('去發一個里程碑', 'go:ms', 'big'));
+    H.push(btn('去發一個任務', 'go:ms', 'big'));
     H.push(btn('看各組進度', 'go:classeco', 'ghost'));
     H.push('</div></div>');
   }
@@ -10119,7 +10119,7 @@ PAGES.review = function () {
 
   var H = [head('審核', t.name + '　·　' + m.title,
     '成果交在你原本收的地方。這裡只要勾一個「可以」。' +
-    '想說一句話再說，不想說就直接勾。')];
+    '想說什麼再說，不想說就直接勾。')];
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
@@ -10137,10 +10137,10 @@ PAGES.review = function () {
   H.push('</div>');
 
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">說一句話　選填</div>');
-  H.push('<p class="dim">講你看到什麼就好，不用講他們該怎麼改。</p>');
+  H.push('<div class="eyebrow">你的想法　選填</div>');
+  H.push('<p class="dim">覺得不行就說清楚，要讓他們聽得懂。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
-    esc('例：訪談這種事最容易低估，你們沒有。') + '">' + esc(draft('gr-word')) + '</textarea>');
+    esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
   H.push('<div class="card dim">勾完之後，他們會在那一層留一個記號。</div>');
@@ -10152,7 +10152,7 @@ PAGES.review = function () {
   return H.join('');
 };
 
-/* ---------- 發里程碑 ---------- */
+/* ---------- 發任務 ---------- */
 PAGES.ms = function () {
   var u = me();
   var list = where('Milestones', function (m) { return m.classId === u.classId; })
@@ -10162,7 +10162,7 @@ PAGES.ms = function () {
 
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
-  H.push(head('發里程碑', '你要他們交什麼',
+  H.push(head('發任務', '你要他們交什麼',
     '一次派一個。寫要交什麼就好。' +
     '期限是他們自己訂的，不是你。'));
 

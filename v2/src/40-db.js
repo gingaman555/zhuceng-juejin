@@ -33,9 +33,9 @@ function blank() {
   return {
     Config: { seq: 1 },
     Users: [], Classes: [], Roster: [], Teams: [],
-    /* 里程碑：老師派的。同一個里程碑可以只發給某幾組。 */
+    /* 任務：老師派的。同一個任務可以只發給某幾組。 */
     Milestones: [],
-    /* 一組在一個里程碑上的狀態。這張表是整個系統的心臟。 */
+    /* 一組在一個任務上的狀態。這張表是整個系統的心臟。 */
     Runs: [],
     /* 每一次推進打卡。一天一筆。 */
     Pushes: [],
@@ -61,9 +61,9 @@ function where(tbl, fn) { return DB[tbl].filter(fn); }
 function teamOf(id) { return find('Teams', function (t) { return t.teamId === id; }); }
 function userOf(id) { return find('Users', function (u) { return u.userId === id; }); }
 function msOf(id) { return find('Milestones', function (m) { return m.msId === id; }); }
-/* 這一組在這個里程碑上的那一趟。
+/* 這一組在這個任務上的那一趟。
 
-   「重新想過」的那幾趟要跳過：它們留在資料庫裡當紀錄，但那個里程碑
+   「重新想過」的那幾趟要跳過：它們留在資料庫裡當紀錄，但那個任務
    對這一組來說是重新開始的，所以要讓畫面回到「還沒承諾」。 */
 function runOf(teamId, msId) {
   return find('Runs', function (r) {
@@ -71,7 +71,7 @@ function runOf(teamId, msId) {
   });
 }
 
-/* ---------- 一組看得到哪些里程碑 ---------- */
+/* ---------- 一組看得到哪些任務 ---------- */
 function msFor(teamId) {
   var t = teamOf(teamId);
   if (!t) return [];
@@ -120,7 +120,7 @@ function nextThing(teamId) {
   /* 3. 正在做的那一趟。
 
      這一條排在「還沒承諾的」前面，順序很要緊：反過來的話，老師派了
-     三個里程碑，學生會被連問三次要花幾天，而且從頭到尾看不到自己
+     三個任務，學生會被連問三次要花幾天，而且從頭到尾看不到自己
      正在走的那一趟。手上有事的時候，系統不該再遞一件事過來。
 
      這裡本來還有三個狀態：叫醒、今天還沒按、今天按過了。那三個都在
@@ -177,7 +177,7 @@ function stallOf(teamId) {
   return { level: 0, days: 0 };
 }
 
-/* 深度＝完成過幾個里程碑。沒有終點。 */
+/* 深度＝完成過幾個任務。沒有終點。 */
 /* 走到第幾層。判定出來就算走完——那一趟的兩個數字已經定了，
    不需要誰批准。所以廊道往前、深度 +1、地層換，都在判定當下發生。
 
@@ -329,7 +329,7 @@ function actTickStep(teamId, runId, i) {
   return r;
 }
 
-/* 這一趟勾了幾段。沒有分段的里程碑回 null——
+/* 這一趟勾了幾段。沒有分段的任務回 null——
    沒有的東西不要畫成 0/0，那看起來像什麼都沒做。 */
 function stepsOf(runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
@@ -584,8 +584,8 @@ function actSkipCamp(runId) {
 
 /* ================= 老師的動作 ================= */
 
-/* 派一個里程碑。teams 空陣列＝全班。 */
-/* 老師派一個里程碑。steps 是他自己分的段，選填。
+/* 派一個任務。teams 空陣列＝全班。 */
+/* 老師派一個任務。steps 是他自己分的段，選填。
 
    分段是老師寫的，不是系統列的——這跟「系統不定義他們在做什麼」
    不衝突：老師是人，而且那是他出的題目。系統只負責記住哪幾段被勾了。
@@ -608,9 +608,9 @@ function actPublish(classId, o) {
   return m;
 }
 
-/* ---------- 全班怎麼看這一個里程碑 ----------
+/* ---------- 全班怎麼看這一個任務 ----------
 
-   同一個里程碑，別人說要花幾天。匿名，只回天數，不回是誰——
+   同一個任務，別人說要花幾天。匿名，只回天數，不回是誰——
    要的是「我是不是低估了」，不是「誰比較快」。
 
    兩組以下不給看：三組的時候剩下那兩個數字誰是誰，猜得出來。 */

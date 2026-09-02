@@ -85,7 +85,7 @@ function scene(t, row, st, kind) {
   H.push('<div class="scn-hud">' +
     '<em>' + esc(zone.name) + '</em>' +
     '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
-    '<span>走完 ' + depthOf(t.teamId) + ' 個里程碑</span>' +
+    '<span>走完 ' + depthOf(t.teamId) + ' 個任務</span>' +
     '<span class="zn-note">' + esc(zone.note) + '</span></div>');
 
   /* 釘在框上、不跟著捲的兩層：近景的岩石與暗角。
@@ -359,7 +359,7 @@ function sceneMob(t, row, prog, span) {
   var mob = mobOfRun(row.run);
   var pal = strataAt(depthOf(t.teamId), t.teamId).pal;
   var x = SCN.ENT + span * SCN.TILE + 33;
-  /* 這裡本來還掛一塊寫著里程碑名字的木牌。拿掉了：它浮在半空、會壓到
+  /* 這裡本來還掛一塊寫著任務名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
      其中一遍看起來就會像壞掉的東西。 */
   var H = [];

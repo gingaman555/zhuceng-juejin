@@ -234,7 +234,7 @@ function sideBar() {
     var wait = radar(u.classId).length;
     nav = [
       ['radar', '審核' + (wait ? '（' + wait + '）' : '')],
-      ['ms', '發里程碑'],
+      ['ms', '發任務'],
       ['classeco', '各組進度']
     ];
   } else {
@@ -458,7 +458,7 @@ var ACTS = {
   publish: function () {
     var title = (document.getElementById('ms-title') || {}).value || '';
     var note = (document.getElementById('ms-note') || {}).value || '';
-    if (!title.trim()) return say('先寫這一個里程碑要交什麼。');
+    if (!title.trim()) return say('先寫這一個任務要交什麼。');
     var steps = ((document.getElementById('ms-steps') || {}).value || '')
       .split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
     actPublish(me().classId, { title: title.trim(), note: note.trim(),

@@ -50,7 +50,7 @@ function stepTags(run) {
 }
 
 var TEACHER_STEPS = [
-  ['發里程碑', '寫要交什麼'],
+  ['發任務', '寫要交什麼'],
   ['他們承諾天數', '這一段你不用管'],
   ['審核', '看完勾一個可以']
 ];
@@ -72,9 +72,9 @@ PAGES.radar = function () {
     H.push('<div class="eyebrow">出口</div>');
     H.push('<h2>' + esc(t.name) + ' 說專案做完了。</h2>');
     H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
-      depthOf(t.teamId) + ' 個里程碑</p>');
+      depthOf(t.teamId) + ' 個任務</p>');
     if (acc.total) H.push(accBar(acc));
-    H.push('<div class="eyebrow" style="margin-top:14px">說一句話　選填</div>');
+    H.push('<div class="eyebrow" style="margin-top:14px">你的想法　選填</div>');
     H.push('<textarea id="gr-word" rows="2"></textarea>');
     H.push(btn('讓他們出去', 'letgo:' + t.teamId, 'big'));
     H.push('</div>');
@@ -87,9 +87,9 @@ PAGES.radar = function () {
 
   if (!rows.length) {
     H.push('<div class="card">');
-    H.push('<p class="dim">沒有人在等你。去發一個里程碑——寫要交什麼就好。</p>');
+    H.push('<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
     H.push('<div class="row">');
-    H.push(btn('去發一個里程碑', 'go:ms', 'big'));
+    H.push(btn('去發一個任務', 'go:ms', 'big'));
     H.push(btn('看各組進度', 'go:classeco', 'ghost'));
     H.push('</div></div>');
   }
@@ -136,7 +136,7 @@ PAGES.review = function () {
 
   var H = [head('審核', t.name + '　·　' + m.title,
     '成果交在你原本收的地方。這裡只要勾一個「可以」。' +
-    '想說一句話再說，不想說就直接勾。')];
+    '想說什麼再說，不想說就直接勾。')];
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
@@ -154,10 +154,10 @@ PAGES.review = function () {
   H.push('</div>');
 
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">說一句話　選填</div>');
-  H.push('<p class="dim">講你看到什麼就好，不用講他們該怎麼改。</p>');
+  H.push('<div class="eyebrow">你的想法　選填</div>');
+  H.push('<p class="dim">覺得不行就說清楚，要讓他們聽得懂。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
-    esc('例：訪談這種事最容易低估，你們沒有。') + '">' + esc(draft('gr-word')) + '</textarea>');
+    esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
   H.push('<div class="card dim">勾完之後，他們會在那一層留一個記號。</div>');
@@ -169,7 +169,7 @@ PAGES.review = function () {
   return H.join('');
 };
 
-/* ---------- 發里程碑 ---------- */
+/* ---------- 發任務 ---------- */
 PAGES.ms = function () {
   var u = me();
   var list = where('Milestones', function (m) { return m.classId === u.classId; })
@@ -179,7 +179,7 @@ PAGES.ms = function () {
 
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
-  H.push(head('發里程碑', '你要他們交什麼',
+  H.push(head('發任務', '你要他們交什麼',
     '一次派一個。寫要交什麼就好。' +
     '期限是他們自己訂的，不是你。'));
 

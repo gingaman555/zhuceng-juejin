@@ -156,7 +156,7 @@ function dayGrid(runId) {
   return H.join('');
 }
 
-/* 全班怎麼看這一個里程碑。匿名——只有天數，沒有誰是誰。
+/* 全班怎麼看這一個任務。匿名——只有天數，沒有誰是誰。
    要的是「我是不是低估了」，不是「誰比較快」。 */
 function spreadBar(sp, mine) {
   var hi = Math.max(sp.hi, Number(mine) || 0, RULES.EST_MIN);

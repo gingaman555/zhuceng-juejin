@@ -79,7 +79,7 @@ var STRATA = [
 
    代價是全班那張剖面圖不再有共通的地層帶。那是對的——同樣 160 公尺，
    兩組看到的東西不一樣，就沒得比。 */
-var ZONE_SPAN = 2;                    /* 一層待幾個里程碑 */
+var ZONE_SPAN = 2;                    /* 一層待幾個任務 */
 var CYCLE = ZONE_SPAN * STRATA.length;
 
 /* 順序是一個班洗一次，班內共用。
@@ -118,7 +118,7 @@ function cycleAt(depth) {
   return Math.floor((Number(depth) || 0) / CYCLE);
 }
 
-/* 這一層還要待幾個里程碑才換 */
+/* 這一層還要待幾個任務才換 */
 function untilNextZone(depth) {
   var d = Number(depth) || 0;
   return ZONE_SPAN - (d % ZONE_SPAN);
@@ -162,7 +162,7 @@ function faunaByName(n) {
    迴廊的東西。生物跟系統的連接就是這一條，而且是雙向的——
    你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
 
-   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個里程碑不是同一隻。 */
+   哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個任務不是同一隻。 */
 function mobFor(msId, teamId) {
   var f = faunaOf(strataAt(depthOf(teamId), teamId).key);
   if (!f.length) f = allFauna();

@@ -28,7 +28,7 @@ function newSalt() {
 
 /* ---------- 事件流（研究紀錄） ----------
    每一個會改到資料的動作都記一筆。這就是研究資料本身：
-   誰、在哪一個里程碑上、做了什麼、什麼時候。
+   誰、在哪一個任務上、做了什麼、什麼時候。
 
    刻意不記「內容」——系統本來就不收作業。記的是行為的形狀：
    承諾幾天、推進的節奏、判定結果、卡在哪。 */
@@ -65,7 +65,7 @@ var EV_SAY = {
   register: function (e) { return '註冊了帳號 ' + e.account; },
   claim:    function (e) { return '認領身分：' + e.who + '（' + e.team + '）'; },
   login:    function () { return '登入'; },
-  publish:  function (e) { return '派了里程碑「' + e.title + '」'; },
+  publish:  function (e) { return '派了任務「' + e.title + '」'; },
   commit:   function (e) { return '承諾 ' + e.est + ' 天' + (e.flags ? '，標了「' + e.flags + '」' : ''); },
   push:     function (e) { return '第 ' + e.n + ' 天' + (e.seg ? '：' + e.seg : '') + (e.back ? '（補登）' : ''); },
   submit:   function (e) { return '交出去：承諾 ' + e.est + ' 天，實際 ' + e.actual + ' 天 → ' + e.stamp; },
