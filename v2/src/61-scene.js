@@ -530,6 +530,9 @@ function keepScroll(box, key, centre) {
 }
 
 function scrollScene() {
+  /* 他偶爾說一句。每次重畫都要重掛——innerHTML 整個換掉了。 */
+  osTick();
+
   /* 廊道拖得動。每次重畫都要重掛，因為 innerHTML 被換掉了。 */
   dragScene();
 
@@ -680,3 +683,47 @@ function dragBox(sel, key) {
 
 /* 廊道。每次重畫都要重掛，因為 innerHTML 被換掉了。 */
 function dragScene() { dragBox('.scn-scroll', 'scn'); }
+
+/* ---------- 他偶爾說一句 ----------
+
+   借的是角色頭上那一塊牌子：本來寫「前進中」，說話的時候換成那一句，
+   說完換回來。一個位置兩種內容——所以它在結構上不可能跟別的字疊到，
+   不是靠位置算得剛好。
+
+   只有走著或坐著的時候才說。停很久、在等老師、退回來了那幾種狀態，
+   畫面上已經有一句更要緊的話，他不該在旁邊插嘴。
+
+   每一次重畫都要重掛，因為 innerHTML 整個換掉了。 */
+var OS_T = null;
+function stopOS() { if (OS_T) { clearTimeout(OS_T); OS_T = null; } }
+
+function osTick() {
+  stopOS();
+  var tag = document.querySelector('.scn .hero-tag');
+  if (!tag) return;
+  var scn = document.querySelector('.scn');
+  var walking = scn.className.indexOf('walking') >= 0;
+  var resting = scn.className.indexOf('resting') >= 0;
+  if (!walking && !resting) return;
+
+  var back = tag.textContent;
+  var cls = tag.className;
+
+  function say() {
+    var t = document.querySelector('.scn .hero-tag');
+    if (!t) return stopOS();
+    var line = heroLine(me(), walking);
+    if (!line) return stopOS();
+    t.textContent = line;
+    t.className = cls + ' os';
+    OS_T = setTimeout(function () {
+      var u = document.querySelector('.scn .hero-tag');
+      if (!u) return stopOS();
+      u.textContent = back;
+      u.className = cls;
+      OS_T = setTimeout(say, 12000 + Math.random() * 11000);
+    }, 4200);
+  }
+  /* 第一句別在打開的同一秒冒出來——那看起來像通知，不像自言自語。 */
+  OS_T = setTimeout(say, 6000 + Math.random() * 7000);
+}

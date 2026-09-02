@@ -21,6 +21,7 @@ function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback 
 
 function go(page, p) {
   if (typeof stopAnim === 'function') stopAnim();
+  if (typeof stopOS === 'function') stopOS();
   S.page = page; S.p = p || {}; S.flash = null; DRAFT = {};
   window.scrollTo(0, 0);
   render();
