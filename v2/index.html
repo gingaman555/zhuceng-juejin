@@ -3201,6 +3201,22 @@ button.ac:active{transform:translateY(1px)}
 }
 .dk.shut:hover{background:none;filter:none}
 
+/* 門上那一個通知。上次翻開圖鑑之後多遇到幾隻，就掛幾。
+
+   不用小紅點：字級下限是 22px，而這一排門本來就是 22px 的字，
+   所以一個數字接在名字後面剛好——而且數字比一個點多說一件事。 */
+.dk .nb{
+  font-style:normal;font-size:22px;line-height:1;
+  color:#1A1408;background:var(--gold);
+  padding:2px 8px;margin-left:2px;
+  animation:nbin .22s steps(3,end) 1
+}
+@keyframes nbin{
+  0%{transform:scale(1.8);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
+@media (prefers-reduced-motion: reduce){ .dk .nb{animation:none} }
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -6534,6 +6550,23 @@ function runDepth(run) {
   return 0;
 }
 
+/* 圖鑑上次翻開之後，多遇到了幾隻。
+
+   存的是「上次翻的時候有幾隻」而不是時間戳：遇到的順序不重要，
+   重要的是他上次看完之後又多了幾個。0 就不掛通知。 */
+function codexNew(u) {
+  if (!u || !u.teamId) return 0;
+  var now = Object.keys(metMobs(u.teamId)).length;
+  return Math.max(0, now - (u.codexN || 0));
+}
+function markCodex(u) {
+  if (!u || !u.teamId) return;
+  var n = Object.keys(metMobs(u.teamId)).length;
+  if (u.codexN === n) return;
+  u.codexN = n;
+  save();
+}
+
 /* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
 /* 這一趟遇到牠了沒有。
 
@@ -7630,6 +7663,9 @@ function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
    走過首頁再切過去，圖上就一個新的都沒有了。 */
 var SEEN_CUT = null;
 function seen() {
+  /* 翻開圖鑑就把「上次有幾隻」記下來。記在畫完之後，所以這一次
+     翻開還看得到那幾隻新的標記。 */
+  if (S.page === 'codex' && S.who) markCodex(me());
   if (S.page !== 'home' || !S.who) return;
   if (SEEN_CUT === null) {
     var u = userOf(S.who);
@@ -8987,10 +9023,13 @@ function deskRow(t, next) {
      圖鑑留著。它不在四件事的哪一步上，但它在終點上：
      它記著「你在哪一趟遇過哪一隻」，而那是一學期走完之後
      才看得出形狀的東西。 */
+  /* 上次翻開之後多遇到幾隻，就在門上掛幾。翻開就消掉。 */
+  var cn = codexNew(me());
   H.push('<button class="dk lit" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
-    esc('圖鑑：這座地下城裡有什麼') + '">' +
-    pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i></button>');
+    esc(cn ? '圖鑑：多了 ' + cn + ' 隻' : '圖鑑：這座地下城裡有什麼') + '">' +
+    pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i>' +
+    (cn ? '<em class="nb">' + cn + '</em>' : '') + '</button>');
   /* 換角色。挑過一次之後隨時換得掉——它不進任何判定，也不影響
      任何數字，所以換來換去不會有任何代價。門上畫的就是他現在那一個。 */
   H.push('<button class="dk" data-act="run" data-p=\'' +

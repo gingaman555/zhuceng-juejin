@@ -38,6 +38,9 @@ function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
    走過首頁再切過去，圖上就一個新的都沒有了。 */
 var SEEN_CUT = null;
 function seen() {
+  /* 翻開圖鑑就把「上次有幾隻」記下來。記在畫完之後，所以這一次
+     翻開還看得到那幾隻新的標記。 */
+  if (S.page === 'codex' && S.who) markCodex(me());
   if (S.page !== 'home' || !S.who) return;
   if (SEEN_CUT === null) {
     var u = userOf(S.who);

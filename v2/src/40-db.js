@@ -560,6 +560,23 @@ function runDepth(run) {
   return 0;
 }
 
+/* 圖鑑上次翻開之後，多遇到了幾隻。
+
+   存的是「上次翻的時候有幾隻」而不是時間戳：遇到的順序不重要，
+   重要的是他上次看完之後又多了幾個。0 就不掛通知。 */
+function codexNew(u) {
+  if (!u || !u.teamId) return 0;
+  var now = Object.keys(metMobs(u.teamId)).length;
+  return Math.max(0, now - (u.codexN || 0));
+}
+function markCodex(u) {
+  if (!u || !u.teamId) return;
+  var n = Object.keys(metMobs(u.teamId)).length;
+  if (u.codexN === n) return;
+  u.codexN = n;
+  save();
+}
+
 /* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
 /* 這一趟遇到牠了沒有。
 

@@ -1473,3 +1473,19 @@ button.ac:active{transform:translateY(1px)}
   box-shadow:inset 0 0 0 2px var(--line)
 }
 .dk.shut:hover{background:none;filter:none}
+
+/* 門上那一個通知。上次翻開圖鑑之後多遇到幾隻，就掛幾。
+
+   不用小紅點：字級下限是 22px，而這一排門本來就是 22px 的字，
+   所以一個數字接在名字後面剛好——而且數字比一個點多說一件事。 */
+.dk .nb{
+  font-style:normal;font-size:22px;line-height:1;
+  color:#1A1408;background:var(--gold);
+  padding:2px 8px;margin-left:2px;
+  animation:nbin .22s steps(3,end) 1
+}
+@keyframes nbin{
+  0%{transform:scale(1.8);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
+@media (prefers-reduced-motion: reduce){ .dk .nb{animation:none} }

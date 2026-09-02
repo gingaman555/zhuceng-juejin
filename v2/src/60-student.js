@@ -209,10 +209,13 @@ function deskRow(t, next) {
      圖鑑留著。它不在四件事的哪一步上，但它在終點上：
      它記著「你在哪一趟遇過哪一隻」，而那是一學期走完之後
      才看得出形狀的東西。 */
+  /* 上次翻開之後多遇到幾隻，就在門上掛幾。翻開就消掉。 */
+  var cn = codexNew(me());
   H.push('<button class="dk lit" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
-    esc('圖鑑：這座地下城裡有什麼') + '">' +
-    pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i></button>');
+    esc(cn ? '圖鑑：多了 ' + cn + ' 隻' : '圖鑑：這座地下城裡有什麼') + '">' +
+    pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i>' +
+    (cn ? '<em class="nb">' + cn + '</em>' : '') + '</button>');
   /* 換角色。挑過一次之後隨時換得掉——它不進任何判定，也不影響
      任何數字，所以換來換去不會有任何代價。門上畫的就是他現在那一個。 */
   H.push('<button class="dk" data-act="run" data-p=\'' +
