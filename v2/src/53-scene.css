@@ -221,19 +221,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
    水面用硬階，不用漸層：漸層一出現它就變成現代特效。 */
 /* .tide 與 .vow 都拿掉了：蓋在走廊上的天數標記交給走路的動畫（見 61-scene.js）。 */
 
-/* ---------- 廊道底下那一行 ----------
-   三個數字就是整個處境：你來過幾天、過了幾天、你說幾天。不用一句話解釋。 */
-.scn-foot{
-  display:flex;flex-wrap:wrap;gap:22px;margin:-11px 0 22px;padding:11px 14px;
-  background:var(--sunk);
-  box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06), 0 0 0 1px #000
-}
-.sf{font-size:22px;color:var(--mute);display:flex;align-items:baseline;gap:6px}
-.sf b{font-size:33px;line-height:1;font-weight:400}
-.sf.you b{color:var(--gold)}
-.sf.days b{color:#5FA8C7}
-.sf.est b{color:var(--ink)}
-.sf.rest b{color:var(--mute)}
+/* 廊道底下那一行數字拿掉了：那三個數字廊道本身都在說（見 61-scene.js）。 */
 
 /* 說了「今天沒動」的那一格：熄的托架加一個記號，
    跟「沒有紀錄」看得出差別——一個是他說了，一個是他沒說。 */

@@ -194,12 +194,5 @@
 .dock .tline{margin:0}
 .dock .act-card{margin:0}
 
-/* 廊道底下那排數字：手機上本來 gap 22 加大字，四項折成三行 119px，
-   把「要做的那一件事」整個推到摺線以下。
 
-   接在廊道下面的是動作，不是讀數——所以這一排在窄畫面收緊：
-   一行放得下四項，數字仍然是 33px（字級不縮，那是規矩）。 */
-@media (max-width: 480px){
-  .scn-foot{gap:6px 11px;padding:8px 11px;justify-content:space-between}
-  .sf{gap:4px}
 }

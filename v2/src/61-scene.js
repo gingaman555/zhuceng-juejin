@@ -314,16 +314,13 @@ function scene(t, row, st, kind) {
 
   H.push('</div>');         /* scn */
 
-  /* 底下那一行掛在廊道外面。它的負邊界是為了往上貼住廊道，
-     寫在 .scn 裡面的話會被 overflow:hidden 吸到頂上去。 */
-  if (run) {
-    H.push('<div class="scn-foot">');
-    H.push('<span class="sf you"><b>' + moved + '</b>你來過</span>');
-    H.push('<span class="sf days"><b>' + tide + '</b>過了幾天</span>');
-    H.push('<span class="sf est"><b>' + est + '</b>你說的</span>');
-    if (rests) H.push('<span class="sf rest"><b>' + rests + '</b>說沒動</span>');
-    H.push('</div>');
-  }
+  /* 廊道底下那一行數字拿掉了（你來過／過了幾天／你說的／說沒動）。
+
+     那三個數字廊道本身都在說：點著的火把是他來過幾天，走廊有多長是
+     過了幾天，牠站的地方是他說的那一天。把同一件事再用數字寫一次，
+     等於在一張圖旁邊附一張表。
+
+     首頁現在只有兩樣東西：那個地方，跟他要做的那一件事。 */
   return H.join('');
 }
 
