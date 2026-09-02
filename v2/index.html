@@ -1238,7 +1238,9 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   background-size:176px 100%
 }
 .scn.walking .scn-rush{opacity:1;animation:scnrush 1.1s linear infinite}
-.scn.walking .scn-far{animation:scnfar 3.2s linear infinite}
+/* 位移改成 176：花紋每 176px 一根柱子，本來只移 88（半個週期），
+   所以每一圈接縫都會跳一下。 */
+.scn.walking .scn-far{animation:bg176 3.2s linear infinite}
 
 /* ── 休息中 ──
    火是亮的，遠處退下去。那是「現在沒事做」的樣子，不是壞掉。 */
@@ -1424,6 +1426,57 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 }
 
 @media (prefers-reduced-motion: reduce){ .ap{animation:none;opacity:.3} }
+
+/* ══════════ 背景整個往前捲 ══════════
+
+   一條規矩決定了這一段怎麼寫：**位移一定要剛好等於花紋的週期**，
+   不然接縫會看得出來。所以每一層的花紋週期是我自己定的，
+   不吃 --ztex——每一層的地質週期都不一樣（18／22／31／33／55），
+   而且水晶迴廊那一組是斜的，斜的 gradient 橫移一個週期接不起來。
+
+   由遠到近，速度差開，「往前」才有深度：
+
+     .scn-bg    底      176px ／ 5.5s   最慢
+     .scn-far   遠牆    176px ／ 3.2s
+     .scn-ceil  頭上的岩 88px ／ 2.2s
+     .floor     地面     44px ／ 1.4s
+     .scn-rush  流線    176px ／ 1.1s   最快
+
+   只有前進中才捲。休息的時候整個世界是靜的——那正是休息的樣子。
+   走廊上的紀錄（腳印、火把、第幾天、那一天做了什麼）一格都不動：
+   會動的是他經過的地方，不是他走過的地方。 */
+.scn-bg{
+  position:absolute;left:0;top:0;bottom:44px;z-index:0;pointer-events:none;
+  background-image:
+    /* 一道一道的岩理，週期 176。 */
+    repeating-linear-gradient(90deg,
+      rgba(255,244,222,.030) 0 2px, transparent 2px 44px,
+      rgba(0,0,0,.30) 44px 47px, transparent 47px 88px,
+      rgba(255,244,222,.020) 88px 89px, transparent 89px 132px,
+      rgba(0,0,0,.22) 132px 134px, transparent 134px 176px),
+    /* 橫向的層理，不動的那一維。 */
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,.20) 0 1px, transparent 1px 33px);
+  opacity:.9
+}
+@keyframes bg176{ to{ background-position-x:-176px } }
+@keyframes bg88 { to{ background-position-x:-88px  } }
+@keyframes bg44 { to{ background-position-x:-44px  } }
+
+.scn.walking .scn-bg  { animation:bg176 5.5s linear infinite }
+.scn.walking .scn-ceil{ animation:bg88  2.2s linear infinite }
+.scn.walking .floor   { animation:bg44  1.4s linear infinite }
+
+/* 頭上那塊岩本來是一片純色，捲起來看不出在動。給它一排方齒。 */
+.scn-ceil{
+  background-image:repeating-linear-gradient(90deg,
+    rgba(0,0,0,.55) 0 6px, transparent 6px 44px,
+    rgba(255,244,222,.04) 44px 46px, transparent 46px 88px)
+}
+
+@media (prefers-reduced-motion: reduce){
+  .scn.walking .scn-bg,.scn.walking .scn-ceil,.scn.walking .floor{animation:none}
+}
 
 /* 全班地下城的樣子。
 
@@ -9561,6 +9614,9 @@ function scene(t, row, st, kind) {
   H.push('<div class="scn-scroll"><div class="scn-in" style="width:' + W + 'px">');
 
   /* 最後面那一層：更暗的磚與支撐柱。廊道不是一片牆，它有深處。 */
+  /* 會往前捲的那幾層。由遠到近：底、遠牆、頭上的岩、地面的流線。
+     速度差開才有深度——一起動看起來是整張圖在滑。 */
+  H.push('<div class="scn-bg" style="width:' + W + 'px"></div>');
   H.push('<div class="scn-far" style="width:' + W + 'px"></div>');
   /* 前進中才會動的兩層：遠牆慢、地面的流線快。兩層速度不一樣，
      「往前」才有深度——一層一起動看起來是整張圖在滑。 */

@@ -119,6 +119,9 @@ function scene(t, row, st, kind) {
   H.push('<div class="scn-scroll"><div class="scn-in" style="width:' + W + 'px">');
 
   /* 最後面那一層：更暗的磚與支撐柱。廊道不是一片牆，它有深處。 */
+  /* 會往前捲的那幾層。由遠到近：底、遠牆、頭上的岩、地面的流線。
+     速度差開才有深度——一起動看起來是整張圖在滑。 */
+  H.push('<div class="scn-bg" style="width:' + W + 'px"></div>');
   H.push('<div class="scn-far" style="width:' + W + 'px"></div>');
   /* 前進中才會動的兩層：遠牆慢、地面的流線快。兩層速度不一樣，
      「往前」才有深度——一層一起動看起來是整張圖在滑。 */
