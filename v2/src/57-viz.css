@@ -854,9 +854,12 @@ button.ac:active{transform:translateY(1px)}
   background:repeating-linear-gradient(180deg,
     var(--gold) 0 6px, transparent 6px 14px)
 }
+/* 掛在虛線的下端。本來在上端，而角落那一塊（地層名、深度）也在上面
+   而且釘住不捲——只要把廊道拖到虛線落在右上角，兩段字就疊在一起。
+   虛線從天花板拉到地板，下面那一半本來就是空的。 */
 .vow span{
-  position:absolute;top:11px;left:6px;font-size:22px;color:var(--gold);
-  white-space:nowrap;background:rgba(0,0,0,.55);padding:2px 5px
+  position:absolute;bottom:77px;left:6px;font-size:22px;color:var(--gold);
+  white-space:nowrap;background:rgba(0,0,0,.72);padding:2px 5px
 }
 
 /* ── 任務清單 ──

@@ -54,8 +54,16 @@
   position:absolute;left:0;z-index:2;pointer-events:none;
   border-top:1px dashed rgba(255,240,214,.09)
 }
+/* 一條線上寫兩件事：多深、從這裡開始是哪一層。
+   兩段都要 line-height:1——22px 的字乘上繼承的 1.7 是 37px，
+   比排開的間距還大，兩段會疊在一起。 */
 .xs-rule span{
-  position:absolute;left:6px;top:-14px;font-size:22px;color:var(--mute);opacity:.65
+  position:absolute;left:6px;top:-26px;line-height:1;
+  font-size:22px;color:var(--mute);opacity:.65
+}
+.xs-rule i{
+  position:absolute;left:6px;top:4px;line-height:1;font-style:normal;
+  font-size:22px;color:var(--zink,var(--dim));opacity:.8;white-space:nowrap
 }
 
 /* ---------- 岩壁裡的生態 ----------

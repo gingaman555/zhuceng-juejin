@@ -254,8 +254,10 @@ function scene(t, row, st, kind) {
      虛線不是終點線——別組沒有這條線，每一組的線在不同的地方，
      因為那是各自說的。 */
   if (run) {
-    H.push('<div class="vow" style="left:' + (ENT + est * SCN.TILE) +
-      'px"><span>你說的</span></div>');
+    /* 只有線，沒有字。牠現在就站在這一格上——
+       牠站在那裡本身就是「你說的那一天」，再寫一次是同一件事說兩遍，
+       而且那兩段字永遠會擠在一起。 */
+    H.push('<div class="vow" style="left:' + (ENT + est * SCN.TILE) + 'px"></div>');
   }
 
   /* ── 霧 ──

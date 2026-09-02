@@ -1261,8 +1261,16 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   position:absolute;left:0;z-index:2;pointer-events:none;
   border-top:1px dashed rgba(255,240,214,.09)
 }
+/* 一條線上寫兩件事：多深、從這裡開始是哪一層。
+   兩段都要 line-height:1——22px 的字乘上繼承的 1.7 是 37px，
+   比排開的間距還大，兩段會疊在一起。 */
 .xs-rule span{
-  position:absolute;left:6px;top:-14px;font-size:22px;color:var(--mute);opacity:.65
+  position:absolute;left:6px;top:-26px;line-height:1;
+  font-size:22px;color:var(--mute);opacity:.65
+}
+.xs-rule i{
+  position:absolute;left:6px;top:4px;line-height:1;font-style:normal;
+  font-size:22px;color:var(--zink,var(--dim));opacity:.8;white-space:nowrap
 }
 
 /* ---------- 岩壁裡的生態 ----------
@@ -2236,9 +2244,12 @@ button.ac:active{transform:translateY(1px)}
   background:repeating-linear-gradient(180deg,
     var(--gold) 0 6px, transparent 6px 14px)
 }
+/* 掛在虛線的下端。本來在上端，而角落那一塊（地層名、深度）也在上面
+   而且釘住不捲——只要把廊道拖到虛線落在右上角，兩段字就疊在一起。
+   虛線從天花板拉到地板，下面那一半本來就是空的。 */
 .vow span{
-  position:absolute;top:11px;left:6px;font-size:22px;color:var(--gold);
-  white-space:nowrap;background:rgba(0,0,0,.55);padding:2px 5px
+  position:absolute;bottom:77px;left:6px;font-size:22px;color:var(--gold);
+  white-space:nowrap;background:rgba(0,0,0,.72);padding:2px 5px
 }
 
 /* ── 任務清單 ──
@@ -8775,8 +8786,10 @@ function scene(t, row, st, kind) {
      虛線不是終點線——別組沒有這條線，每一組的線在不同的地方，
      因為那是各自說的。 */
   if (run) {
-    H.push('<div class="vow" style="left:' + (ENT + est * SCN.TILE) +
-      'px"><span>你說的</span></div>');
+    /* 只有線，沒有字。牠現在就站在這一格上——
+       牠站在那裡本身就是「你說的那一天」，再寫一次是同一件事說兩遍，
+       而且那兩段字永遠會擠在一起。 */
+    H.push('<div class="vow" style="left:' + (ENT + est * SCN.TILE) + 'px"></div>');
   }
 
   /* ── 霧 ──
@@ -9180,8 +9193,9 @@ function xsScene(rows, meId, classId) {
     var bot = xsTop(Math.min((bd + 1) * ZONE_SPAN, maxD));
     out.push('<div class="xs-band ' + zs.key + '" style="top:' + top +
       'px;height:' + (bot - top) + 'px;width:' + W + 'px"></div>');
-    out.push('<div class="xs-bandn ' + zs.key + '" style="top:' + (top + 6) + 'px">' +
-      '<b>' + esc(zs.name) + '</b></div>');
+    /* 帶名那一層拿掉了：一層一趟之後，帶名跟深度尺講的是同一條線
+       （40 公尺那一條就是迴聲迷宮的開始），而它們都貼在左邊 6px，
+       所以每一條尺上都壓著一個帶名。併進尺裡（見下面）。 */
   }
 
   /* ── 岩壁裡的東西 ── */
@@ -9192,9 +9206,13 @@ function xsScene(rows, meId, classId) {
   out.push('<div class="xs-surf" style="width:' + W + 'px"></div>');
 
   /* ── 深度尺。只標數字，不標「應該到哪」 ── */
+  /* 深度尺。一條線上寫兩件事：多深、以及從這裡開始是哪一層。
+     本來那兩個是分開的兩層，而且都貼在左邊——每一條尺上都壓著一個帶名。 */
   for (var d = 1; d <= maxD; d++) {
+    var rz = strataAt(d, classId);
     out.push('<div class="xs-rule" style="top:' + xsTop(d) + 'px;width:' + W + 'px">' +
-      '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
+      '<span>' + (d * WORLD.depthPerMilestone) + ' m</span>' +
+      '<i class="' + rz.key + '">' + esc(rz.name) + '</i></div>');
   }
 
   /* ── 每一組一條廊道 ── */

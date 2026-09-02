@@ -52,8 +52,9 @@ function xsScene(rows, meId, classId) {
     var bot = xsTop(Math.min((bd + 1) * ZONE_SPAN, maxD));
     out.push('<div class="xs-band ' + zs.key + '" style="top:' + top +
       'px;height:' + (bot - top) + 'px;width:' + W + 'px"></div>');
-    out.push('<div class="xs-bandn ' + zs.key + '" style="top:' + (top + 6) + 'px">' +
-      '<b>' + esc(zs.name) + '</b></div>');
+    /* 帶名那一層拿掉了：一層一趟之後，帶名跟深度尺講的是同一條線
+       （40 公尺那一條就是迴聲迷宮的開始），而它們都貼在左邊 6px，
+       所以每一條尺上都壓著一個帶名。併進尺裡（見下面）。 */
   }
 
   /* ── 岩壁裡的東西 ── */
@@ -64,9 +65,13 @@ function xsScene(rows, meId, classId) {
   out.push('<div class="xs-surf" style="width:' + W + 'px"></div>');
 
   /* ── 深度尺。只標數字，不標「應該到哪」 ── */
+  /* 深度尺。一條線上寫兩件事：多深、以及從這裡開始是哪一層。
+     本來那兩個是分開的兩層，而且都貼在左邊——每一條尺上都壓著一個帶名。 */
   for (var d = 1; d <= maxD; d++) {
+    var rz = strataAt(d, classId);
     out.push('<div class="xs-rule" style="top:' + xsTop(d) + 'px;width:' + W + 'px">' +
-      '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
+      '<span>' + (d * WORLD.depthPerMilestone) + ' m</span>' +
+      '<i class="' + rz.key + '">' + esc(rz.name) + '</i></div>');
   }
 
   /* ── 每一組一條廊道 ── */
