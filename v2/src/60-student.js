@@ -411,8 +411,10 @@ PAGES.commit = function () {
   var askFlag = RULES.asks('flags', depthOf(t.teamId));
   if (previewSteps(m).length && askFlag !== 'off') {
     H.push('<div class="card">');
-    H.push('<div class="eyebrow' + (askFlag === 'new' ? ' lit' : '') + '">' +
-      (askFlag === 'new' ? '新的一題　·　' : '') + '哪幾段會比你想的久　選填</div>');
+    /* 第一次出現的時候眉標是金色的（.lit）。那就是標記——
+       在視覺標記上面再加一句「新的一題」是同一件事說兩次。 */
+    H.push('<div class="eyebrow' + (askFlag === 'new' ? ' lit' : '') +
+      '">哪幾段會比你想的久　選填</div>');
     H.push(msStepLegend(m, flags, 'flag'));
     H.push('</div>');
   }
@@ -602,8 +604,8 @@ PAGES.pick = function () {
   var askDay = RULES.asks('days', depthOf(t.teamId) - 1);
   if (askDay !== 'off') {
     H.push('<div class="card">');
-    H.push('<div class="eyebrow' + (askDay === 'new' ? ' lit' : '') + '">' +
-      (askDay === 'new' ? '新的一題　·　' : '') + '這幾天你動過哪幾天　選填</div>');
+    H.push('<div class="eyebrow' + (askDay === 'new' ? ' lit' : '') +
+      '">動過的日子　選填</div>');
     H.push(dayGrid(r.runId));
     H.push('<p class="dim">不影響準不準。它決定的是收起來之後長什麼樣子。</p>');
     H.push('</div>');
