@@ -732,7 +732,7 @@ input:focus,textarea:focus{outline:none;box-shadow:
 /* 顏色與紋理全部讀 51-zones.css 的變數——自己的廊道跟全班那張剖面圖，
    同一個深度必須長得一模一樣，所以兩邊只能有一個來源。 */
 .scn{
-  position:relative;height:286px;overflow:hidden;margin:0 0 22px;
+  position:relative;height:396px;overflow:hidden;margin:0 0 22px;
   background-color:var(--zbg,#0C0A08);
   background-image:var(--ztex,
     repeating-linear-gradient(0deg,  rgba(255,244,222,.028) 0 1px, transparent 1px 44px));
@@ -745,7 +745,7 @@ input:focus,textarea:focus{outline:none;box-shadow:
     0 0 0 1px #000;
 }
 .scn-scroll{position:absolute;inset:0;overflow-x:auto;overflow-y:hidden}
-.scn-in{position:relative;height:286px;min-width:100%}
+.scn-in{position:relative;height:396px;min-width:100%}
 
 /* 火把全滅之後整條走廊暗下來。這不是懲罰，是狀態本身。 */
 .scn.dim  .scn-in{filter:brightness(.72)}
@@ -771,12 +771,14 @@ input:focus,textarea:focus{outline:none;box-shadow:
 .floor.lit{background-color:var(--zfl2,#2A2318)}
 
 /* ---------- 天花板 ---------- */
-.drip{position:absolute;top:0;width:33px;height:33px;opacity:.9}
+/* 從頭上那塊岩的下緣垂下來，不是浮在空中。 */
+.drip{position:absolute;top:44px;width:33px;height:33px;opacity:.9;z-index:2}
 .drip .px{width:33px;height:33px}
 
 /* ---------- 火把 ----------
    三張圖輪流顯示，每一盞的節奏差一點——一整排同步眨眼看起來像壞掉的燈管。 */
-.tor{position:absolute;top:44px;width:33px;height:44px;display:block;z-index:2}
+/* 從地板往上算 132px。場景長高的時候，火把跟地板的關係不該跟著變。 */
+.tor{position:absolute;bottom:198px;width:33px;height:44px;display:block;z-index:2}
 .tor .f{position:absolute;left:0;top:0;width:33px;height:44px;opacity:0;
   animation:flk var(--fd,360ms) steps(1,end) infinite}
 .tor .f1{animation-delay:calc(var(--fd,360ms) / 3)}
@@ -790,8 +792,8 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   content:'';position:absolute;left:-33px;top:-11px;width:99px;height:110px;
   pointer-events:none;
   background:radial-gradient(circle at 50% 30%,
-    rgba(233,132,63,.11) 0 22px, rgba(233,132,63,.055) 22px 44px,
-    rgba(233,132,63,.02) 44px 55px, transparent 55px);
+    rgba(233,132,63,.22) 0 22px, rgba(233,132,63,.12) 22px 44px,
+    rgba(233,132,63,.05) 44px 66px, transparent 66px);
 }
 
 /* ---------- 走過的痕跡 ---------- */
@@ -829,11 +831,11 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .halo{
   position:absolute;bottom:44px;width:308px;height:242px;z-index:2;pointer-events:none;
   background:radial-gradient(circle at 50% 62%,
-    rgba(233,179,65,.20) 0 44px,
-    rgba(233,179,65,.11) 44px 88px,
-    rgba(233,179,65,.05) 88px 121px,
-    rgba(233,179,65,.02) 121px 143px,
-    transparent 143px);
+    rgba(233,179,65,.30) 0 44px,
+    rgba(233,179,65,.17) 44px 88px,
+    rgba(233,179,65,.08) 88px 121px,
+    rgba(233,179,65,.03) 121px 154px,
+    transparent 154px);
 }
 
 /* ---------- 霧 ----------
@@ -862,7 +864,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .mouth{position:absolute;left:0;top:0;bottom:0;z-index:3}
 /* 從上面落下來的光。你是從那裡進來的。 */
 .mouth .shaft{
-  position:absolute;left:22px;top:0;width:99px;bottom:44px;
+  position:absolute;left:22px;top:44px;width:99px;bottom:44px;
   clip-path:polygon(24% 0,76% 0,100% 100%,0 100%);
   background:linear-gradient(180deg,
     rgba(233,179,65,.17) 0 33px,
@@ -897,7 +899,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 }
 
 @media (max-width:860px){
-  .scn,.scn-in{height:242px}
+  .scn,.scn-in{height:352px}
   .scn-hud b{font-size:22px}
 }
 
@@ -999,6 +1001,98 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   pointer-events:none}
 .px.hp{position:absolute;width:14px;height:auto;max-height:38px;
   filter:drop-shadow(1px 1px 0 rgba(0,0,0,.6))}
+
+/* ══════════ 景深 ══════════
+
+   本來整條廊道是一個平面：牆、地板、人、魔物全部貼在同一層上，
+   所以它看起來像一張長條圖，不像一個你正在往裡面看的地方。
+
+   三層：遠景（更暗、藏在後面）、廊道（原本那層、會捲）、
+   近景（釘在框上、不捲）。拖動廊道的時候近景不動，那一下就有視差。 */
+
+/* ── 最後面：深處的磚與支撐柱 ── */
+.scn-far{
+  position:absolute;left:0;top:0;bottom:44px;z-index:0;pointer-events:none;
+  background-image:
+    /* 每 176px 一根柱子。深處還有結構，不是一片空牆。 */
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,.42) 0 6px, rgba(255,244,222,.020) 6px 9px,
+      transparent 9px 22px, rgba(0,0,0,.42) 22px 28px,
+      transparent 28px 176px),
+    /* 岩層的接縫。這個世界的核心設定是「你在第幾層」，
+       所以牆上要看得到地層——顏色用這一層的顏色，很淡。 */
+    linear-gradient(180deg,
+      transparent 0 77px,
+      var(--zink,#C9A227) 77px 79px,
+      transparent 79px 88px,
+      rgba(0,0,0,.30) 88px 91px,
+      transparent 91px 176px,
+      rgba(0,0,0,.24) 176px 178px,
+      transparent 178px 253px,
+      rgba(0,0,0,.18) 253px 255px,
+      transparent 255px),
+    /* 深處的磚。比前景那一層小一半，而且更暗——遠的東西對比要低。 */
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,.26) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,.26) 0 1px, transparent 1px 44px)
+}
+/* 那一條地層線只留一點點顏色。它是提示，不是裝飾。 */
+.scn-far{opacity:.85}
+
+/* ── 頭上的岩 ──
+   本來鐘乳石掛在空中，沒有東西讓它們掛。方齒不用圓的：
+   這一份的每一個邊都是 11 的倍數，圓角會立刻看起來不屬於這裡。 */
+.scn-ceil{
+  position:absolute;left:0;top:0;height:66px;z-index:1;pointer-events:none;
+  background:#0A0806;
+  box-shadow:inset 0 -3px 0 rgba(255,244,222,.05)
+}
+.scn-ceil::after{
+  content:'';position:absolute;left:0;right:0;top:100%;height:22px;
+  background:repeating-linear-gradient(90deg,
+    #0A0806 0 22px, transparent 22px 55px,
+    #0A0806 55px 66px, transparent 66px 110px)
+}
+
+/* ── 最前面：近景的岩與暗角 ──
+   釘在框上，不跟著捲。廊道往旁邊拉的時候它不動——那一下就是視差。 */
+.scn-frame{
+  position:absolute;inset:0;z-index:8;pointer-events:none;
+  background:radial-gradient(ellipse 110% 88% at 46% 58%,
+    transparent 0 52%,
+    rgba(0,0,0,.30) 52% 74%,
+    rgba(0,0,0,.58) 74% 88%,
+    rgba(0,0,0,.78) 88% 100%)
+}
+/* 上緣壓下來的岩 */
+.scn-frame::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:44px;
+  background:
+    linear-gradient(180deg, #050403 0 22px, transparent 22px),
+    repeating-linear-gradient(90deg,
+      #050403 0 33px, transparent 33px 88px,
+      #050403 88px 110px, transparent 110px 187px)
+}
+/* 下緣頂上來的岩 */
+.scn-frame::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:33px;
+  background:
+    linear-gradient(0deg, #050403 0 11px, transparent 11px),
+    repeating-linear-gradient(90deg,
+      transparent 0 44px, #050403 44px 77px,
+      transparent 77px 143px, #050403 143px 165px)
+}
+
+/* 火把在地板上也要有一攤光。牆上亮、地上不亮，那就不是火。 */
+.tor::before{
+  content:'';position:absolute;left:-44px;bottom:-88px;
+  width:121px;height:44px;pointer-events:none;
+  background:radial-gradient(ellipse 50% 50% at 50% 100%,
+    rgba(233,132,63,.20) 0 40%,
+    rgba(233,132,63,.10) 40% 70%,
+    transparent 70%)
+}
 
 /* 全班地下城的樣子。
 
@@ -2943,7 +3037,7 @@ button.tk-k:hover span{color:var(--gold)}
   .step i{font-size:22px}
 
   /* ---------- 廊道 ---------- */
-  .scn,.scn-in{height:231px}
+  .scn,.scn-in{height:319px}
   .scn-hud{padding:4px 7px}
   .scn-hud em{font-size:22px}
   .scn-hud b{font-size:22px}
@@ -3034,8 +3128,8 @@ button.tk-k:hover span{color:var(--gold)}
   .wrap > .btn{flex:0 0 auto}
 
   /* 廊道與地圖越寬越好——那是它們本來就想要的 */
-  .scn{height:330px}
-  .scn-in{height:330px}
+  .scn{height:462px}
+  .scn-in{height:462px}
 }
 
 @media (min-width: 1700px) {
@@ -8021,7 +8115,17 @@ function scene(t, row, st, kind) {
     '<span>走完 ' + depthOf(t.teamId) + ' 個里程碑</span>' +
     '<span class="zn-note">' + esc(zone.note) + '</span></div>');
 
+  /* 釘在框上、不跟著捲的兩層：近景的岩石與暗角。
+     拖動廊道的時候它們不動——那一下就有視差。 */
+  H.push('<div class="scn-frame"></div>');
+
   H.push('<div class="scn-scroll"><div class="scn-in" style="width:' + W + 'px">');
+
+  /* 最後面那一層：更暗的磚與支撐柱。廊道不是一片牆，它有深處。 */
+  H.push('<div class="scn-far" style="width:' + W + 'px"></div>');
+
+  /* 頭上的岩。本來天花板只有幾根鐘乳石掛在空中，沒有東西讓它們掛。 */
+  H.push('<div class="scn-ceil" style="width:' + W + 'px"></div>');
 
   /* ── 天花板：鐘乳石 ── */
   for (var d = 0; d < Math.ceil(W / 44); d++) {

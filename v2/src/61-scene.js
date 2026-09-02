@@ -88,7 +88,17 @@ function scene(t, row, st, kind) {
     '<span>走完 ' + depthOf(t.teamId) + ' 個里程碑</span>' +
     '<span class="zn-note">' + esc(zone.note) + '</span></div>');
 
+  /* 釘在框上、不跟著捲的兩層：近景的岩石與暗角。
+     拖動廊道的時候它們不動——那一下就有視差。 */
+  H.push('<div class="scn-frame"></div>');
+
   H.push('<div class="scn-scroll"><div class="scn-in" style="width:' + W + 'px">');
+
+  /* 最後面那一層：更暗的磚與支撐柱。廊道不是一片牆，它有深處。 */
+  H.push('<div class="scn-far" style="width:' + W + 'px"></div>');
+
+  /* 頭上的岩。本來天花板只有幾根鐘乳石掛在空中，沒有東西讓它們掛。 */
+  H.push('<div class="scn-ceil" style="width:' + W + 'px"></div>');
 
   /* ── 天花板：鐘乳石 ── */
   for (var d = 0; d < Math.ceil(W / 44); d++) {

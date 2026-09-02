@@ -64,7 +64,7 @@
   .step i{font-size:22px}
 
   /* ---------- 廊道 ---------- */
-  .scn,.scn-in{height:231px}
+  .scn,.scn-in{height:319px}
   .scn-hud{padding:4px 7px}
   .scn-hud em{font-size:22px}
   .scn-hud b{font-size:22px}
@@ -155,8 +155,8 @@
   .wrap > .btn{flex:0 0 auto}
 
   /* 廊道與地圖越寬越好——那是它們本來就想要的 */
-  .scn{height:330px}
-  .scn-in{height:330px}
+  .scn{height:462px}
+  .scn-in{height:462px}
 }
 
 @media (min-width: 1700px) {
