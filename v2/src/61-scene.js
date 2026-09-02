@@ -130,6 +130,11 @@ function scene(t, row, st, kind) {
   /* 頭上的岩。本來天花板只有幾根鐘乳石掛在空中，沒有東西讓它們掛。 */
   H.push('<div class="scn-ceil" style="width:' + W + 'px"></div>');
 
+
+  /* 這一層的空氣。不帶任何資訊——哪一層已經由牆、地板、石頭的顏色
+     說了；空氣只是讓那個地方看起來真的有空氣。 */
+  H.push(sceneAir(seed, zone, W));
+
   /* ── 天花板：鐘乳石 ── */
   for (var d = 0; d < Math.ceil(W / 44); d++) {
     var dp = dripFor(seed, d);
@@ -189,15 +194,14 @@ function scene(t, row, st, kind) {
     }
   }
 
-  /* ── 時間漲上來的水 ──
-     一天一格，你按不按它都會漲。水在你後面＝走在自己承諾的前面；
-     淹到腳邊＝剛好；過去了＝會比說的久，而且好幾天前就看得到。
-     它不扣任何東西，走到底一樣可以交——它只是把時間畫出來。 */
-  if (run && tide > 0) {
-    H.push('<div class="tide" style="left:' + ENT + 'px;width:' +
-      (tide * SCN.TILE) + 'px"></div>');
-    H.push('<div class="tide-edge" style="left:' + (ENT + tide * SCN.TILE - 4) + 'px"></div>');
-  }
+  /* 那一片漲上來的水拿掉了。
+
+     它是「過了幾天」畫成一條橫著漲過去的長條，而同一個數字在廊道
+     底下那一行本來就有：「N 過了幾天」。同一件事講兩次，其中一次
+     還是一條半透明的藍色長條，蓋住地板、腳印、跟那一天做了什麼。
+
+     tide 這個數字留著——廊道畫多長、霧從哪裡開始，都還是看它。
+     拿掉的只是畫出來的那一層水。 */
 
   /* ── 魔物 ── */
   /* 牠站在你說的那一天，不動。
@@ -462,6 +466,46 @@ function sceneMob(t, row, prog, est, ENT) {
   H.push('<div class="scn-mob meet" style="left:' + x + 'px">');
   H.push(pxTag(mob.px, pal, 'ch'));
   H.push('<span class="mobn">' + esc(mob.n) + '</span>');
+  H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 這一層的空氣 ----------
+
+   每一層有自己的：荒原飄塵、根脈層飄孢子、水晶迴廊閃、迴聲迷宮有東西
+   掠過、銹層落銹屑、深淵冒火星。天花板一律會滴水，因為每一層都是
+   地底下。
+
+   位置全部用 hash 算——同一趟每次打開，每一顆都在同一個地方。
+   會亂跳的東西不是環境，是特效。節奏各自不同，不然一整片會一起眨。
+
+   它們不帶任何資訊，也不能帶：這一層是哪一層，牆、地板、石頭的顏色
+   已經說了。空氣只是讓那個地方看起來真的有空氣。 */
+var AIR = {
+  wild: { n: 14, k: 'dust' },
+  root: { n: 12, k: 'spore' },
+  crys: { n: 16, k: 'glint' },
+  echo: { n: 10, k: 'mote' },
+  rust: { n: 12, k: 'flake' },
+  fire: { n: 16, k: 'ember' }
+};
+function sceneAir(seed, zone, W) {
+  var a = AIR[zone.key] || AIR.wild;
+  var H = ['<div class="air" style="width:' + W + 'px">'];
+  var i, span = Math.max(1, W - 22);
+  for (i = 0; i < a.n; i++) {
+    var h = hash(seed + '|air|' + i);
+    var d = 2600 + ((h >>> 13) % 3400);
+    H.push('<i class="ap ' + a.k + '" style="left:' + (h % span) +
+      'px;bottom:' + (44 + ((h >>> 7) % 220)) + 'px;--ad:' + d +
+      'ms;--ag:-' + ((h >>> 19) % d) + 'ms"></i>');
+  }
+  for (i = 0; i < 5; i++) {
+    var q = hash(seed + '|drop|' + i);
+    var dd = 3200 + ((q >>> 9) % 2600);
+    H.push('<i class="ap drop" style="left:' + (q % span) +
+      'px;--ad:' + dd + 'ms;--ag:-' + ((q >>> 5) % dd) + 'ms"></i>');
+  }
   H.push('</div>');
   return H.join('');
 }

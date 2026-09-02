@@ -219,18 +219,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 /* ---------- 時間漲上來的水 ----------
    一天一格，你按不按它都會漲。它不扣任何東西——它只是把時間畫出來。
    水面用硬階，不用漸層：漸層一出現它就變成現代特效。 */
-.tide{
-  position:absolute;bottom:44px;height:99px;z-index:4;pointer-events:none;
-  background:
-    linear-gradient(180deg, rgba(95,168,199,.28) 0 3px, transparent 3px 6px,
-                            rgba(95,168,199,.16) 6px 100%);
-  box-shadow:inset 0 3px 0 rgba(216,242,250,.30)
-}
-.tide-edge{
-  position:absolute;bottom:44px;width:8px;height:110px;z-index:5;pointer-events:none;
-  background:repeating-linear-gradient(180deg,
-    rgba(216,242,250,.55) 0 3px, transparent 3px 8px)
-}
+/* .tide 拿掉了：那個數字底下那一行本來就有（見 61-scene.js）。 */
 
 /* ---------- 廊道底下那一行 ----------
    三個數字就是整個處境：你來過幾天、過了幾天、你說幾天。不用一句話解釋。 */
@@ -504,3 +493,91 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   .scn-go,.scn-go b{animation:none}
   .scn-go{opacity:0}
 }
+
+/* ══════════ 這一層的空氣 ══════════
+
+   每一層有自己的：荒原飄塵、根脈層飄孢子、水晶迴廊閃、迴聲迷宮有東西
+   掠過、銹層落銹屑、深淵冒火星。天花板一律會滴水。
+
+   全部 steps()，全部硬邊，全部 3px 見方——這個世界裡沒有會發光的
+   小圓點。位置由 hash 算好寫在 style 上，節奏各自不同（--ad 週期、
+   --ag 起始偏移），所以不會一整片一起眨。
+
+   它們不擋任何東西：pointer-events 全關，z-index 壓在角色與魔物之下。 */
+.air{position:absolute;left:0;top:0;bottom:44px;z-index:2;pointer-events:none;overflow:hidden}
+.ap{
+  position:absolute;width:3px;height:3px;display:block;
+  animation-duration:var(--ad,3s);animation-delay:var(--ag,0s);
+  animation-iteration-count:infinite;animation-timing-function:steps(6,end)
+}
+
+/* 荒原：塵。慢慢往右飄，飄過去又回來。 */
+.ap.dust{background:rgba(255,244,222,.34);animation-name:apdrift}
+@keyframes apdrift{
+  0%  {transform:translate(0,0);opacity:0}
+  20% {opacity:.9}
+  80% {opacity:.9}
+  100%{transform:translate(66px,-11px);opacity:0}
+}
+
+/* 根脈層：孢子。往上浮，比塵大一點。 */
+.ap.spore{width:5px;height:5px;background:rgba(127,168,102,.52);animation-name:aprise}
+@keyframes aprise{
+  0%  {transform:translateY(0);opacity:0}
+  25% {opacity:1}
+  100%{transform:translateY(-88px);opacity:0}
+}
+
+/* 水晶迴廊：閃。不移動，只是亮起來又暗掉。 */
+.ap.glint{
+  width:5px;height:5px;background:rgba(216,242,250,.85);
+  animation-name:apblink;animation-timing-function:steps(1,end)
+}
+@keyframes apblink{0%,88%{opacity:0}89%,96%{opacity:1}97%,100%{opacity:0}}
+
+/* 迴聲迷宮：有東西掠過。快，而且只掠過一次。 */
+.ap.mote{
+  width:22px;height:2px;background:rgba(140,123,199,.42);
+  animation-name:apdash;animation-timing-function:steps(8,end)
+}
+@keyframes apdash{
+  0%,60%{transform:translateX(0);opacity:0}
+  62%{opacity:.8}
+  100%{transform:translateX(154px);opacity:0}
+}
+
+/* 銹層：銹屑。往下落。 */
+.ap.flake{background:rgba(176,122,74,.62);animation-name:apfall}
+@keyframes apfall{
+  0%  {transform:translateY(0);opacity:0}
+  15% {opacity:1}
+  100%{transform:translateY(-121px) translateX(11px);opacity:0}
+}
+
+/* 深淵：火星。往上竄，會偏。 */
+.ap.ember{
+  background:rgba(233,132,63,.9);
+  box-shadow:0 0 0 1px rgba(217,96,63,.35);
+  animation-name:apember
+}
+@keyframes apember{
+  0%  {transform:translate(0,0);opacity:0}
+  18% {opacity:1}
+  60% {transform:translate(-8px,-55px);opacity:1}
+  100%{transform:translate(6px,-110px);opacity:0}
+}
+
+/* 每一層都會滴水。從天花板掉到地上，落點濺一下。 */
+.ap.drop{
+  top:44px;bottom:auto;width:2px;height:8px;
+  background:rgba(216,242,250,.55);
+  animation-name:apdrop;animation-timing-function:steps(10,end)
+}
+@keyframes apdrop{
+  0%,55%{transform:translateY(0);opacity:0}
+  57%{opacity:.85}
+  92%{transform:translateY(198px);opacity:.85}
+  93%,100%{transform:translateY(198px) scaleY(.2);opacity:0}
+}
+
+@media (prefers-reduced-motion: reduce){ .ap{animation:none;opacity:.3} }
