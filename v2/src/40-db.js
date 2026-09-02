@@ -927,7 +927,7 @@ function actResend(teamId, runId) {
 
 /* 老師勾一個「可以」。
 
-   勾下去那一刻就是完成：記號當場插進那一層，石片當場長出來。
+   勾下去那一刻就是完成：任務之證當場發下去。
 
    本來中間還有一步——學生要再走到一頁去按「收起來」。那一步
    不產生任何東西，只是叫他確認一次自己已經做完、而且老師也已經
@@ -944,11 +944,14 @@ function actApprove(runId, word) {
   var tm = teamOf(r.teamId);
   if (tm) tm.claims = (tm.claims || 0) + 1;
 
-  /* 記號系統拿掉了。一趟走完留下什麼，由 Keeps（下面那一筆）、
-     帶子上多的那一格、圖鑑裡的「遇過」、以及走廊變長來說。 */
+  /* 任務之證。一趟一張，老師收下才有。
+
+     名字在這一刻就定下來，不是每次顯示才去查任務名——老師之後改了
+     任務名，他手上那一張不會跟著變成別的東西。 */
+  var mz = msOf(r.msId);
   DB.Keeps.push({
     keepId: nid('K'), teamId: r.teamId, runId: runId,
-    name: '', at: now(),
+    name: (mz && mz.title) || '', at: now(),
     /* 剛走完的那一層，不是接下來要走的那一層。 */
     zone: strataAt(Math.max(0, depthOf(r.teamId) - 1), r.teamId).key,
     px: coreOf(runId),

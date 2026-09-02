@@ -1225,7 +1225,7 @@ button.ac:active{transform:translateY(1px)}
    （點進一組那張卡）會被 flex 撐成 565px 見方——一整塊招牌蓋住整張卡。 */
 .px.sign-s{width:33px;height:33px;flex:0 0 33px;image-rendering:pixelated}
 
-/* 記號點開來看到的那一趟：一天兩列的柱狀圖。石片併進記號之後它住在這裡。 */
+/* 記號點開來看到的那一趟：一天兩列的柱狀圖。任務之證併進來之後它住在這裡。 */
 .bstory .bs-core{width:66px;height:auto;image-rendering:pixelated;flex:0 0 66px}
 
 /* ── 每一張點陣圖自己知道自己多大 ──
@@ -1417,6 +1417,10 @@ button.ac:active{transform:translateY(1px)}
 .okcard .ok-ms{
   display:block;font-size:22px;color:var(--mute);margin:11px 0 0
 }
+/* 拿到的那一張。金色，因為它是這一刻唯一「你多了一個東西」的話。 */
+.okcard .ok-cert{
+  display:block;font-size:22px;line-height:1.4;color:var(--gold);margin:6px 0 0
+}
 
 /* ── 你要做哪幾件 ──
    一件一行：顏色、名字、幾天、拿掉。顏色跟廊道上那一格頭上的
@@ -1527,7 +1531,7 @@ button.ac:active{transform:translateY(1px)}
   .gate-walk .wb{animation:none;opacity:0}
 }
 
-/* ---------- 一整排石片 ----------
+/* ---------- 一整排任務之證 ----------
 
    一根一格，由左到右照封存的順序。它們要並排而且要一樣高——
    排在一起才看得出「沒有兩根一樣」，那是這一頁的全部內容。

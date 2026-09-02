@@ -221,7 +221,7 @@ function faunaCard() {
 ACTS.fauna = function (name) { DRAFT.fa = name; render(); };
 
 
-/* 點開的那一根石片。別組的也點得開——那是這張圖上唯一會一直
+/* 點開的那一張任務之證。別組的也點得開——那是這張圖上唯一會一直
    長出新東西的地方，而且長出新東西的是別人。 */
 
 
@@ -324,7 +324,7 @@ PAGES.classeco = function () {
      這一頁本來在底下又用文字卡把同樣的事一組一張再列一遍——
      五組五張，整頁 3424px，是全系統最高的一頁。刪掉了。
 
-     要細節就點那一組（digTeamCard 會攤開他們封存過的每一根石片）；
+     要細節就點那一組（digTeamCard 會攤開他們走過的每一趟）；
      要去勾就在審核那一頁，那才是它該在的地方。 */
   H.push(xsScene(rows, mine, u.classId));
   H.push(digTeamCard(u.classId));

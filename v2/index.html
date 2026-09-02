@@ -690,7 +690,7 @@ input:focus,textarea:focus{outline:none;box-shadow:
   box-shadow:0 1px 0 #000;
 }
 
-/* ---------- 小石片 ---------- */
+/* ---------- 小的那一張 ---------- */
 .tag,.st,.badge{
   box-shadow:inset 0 1px 0 var(--lit), inset 0 -1px 0 var(--shd2);
 }
@@ -2972,7 +2972,7 @@ button.ac:active{transform:translateY(1px)}
    （點進一組那張卡）會被 flex 撐成 565px 見方——一整塊招牌蓋住整張卡。 */
 .px.sign-s{width:33px;height:33px;flex:0 0 33px;image-rendering:pixelated}
 
-/* 記號點開來看到的那一趟：一天兩列的柱狀圖。石片併進記號之後它住在這裡。 */
+/* 記號點開來看到的那一趟：一天兩列的柱狀圖。任務之證併進來之後它住在這裡。 */
 .bstory .bs-core{width:66px;height:auto;image-rendering:pixelated;flex:0 0 66px}
 
 /* ── 每一張點陣圖自己知道自己多大 ──
@@ -3164,6 +3164,10 @@ button.ac:active{transform:translateY(1px)}
 .okcard .ok-ms{
   display:block;font-size:22px;color:var(--mute);margin:11px 0 0
 }
+/* 拿到的那一張。金色，因為它是這一刻唯一「你多了一個東西」的話。 */
+.okcard .ok-cert{
+  display:block;font-size:22px;line-height:1.4;color:var(--gold);margin:6px 0 0
+}
 
 /* ── 你要做哪幾件 ──
    一件一行：顏色、名字、幾天、拿掉。顏色跟廊道上那一格頭上的
@@ -3274,7 +3278,7 @@ button.ac:active{transform:translateY(1px)}
   .gate-walk .wb{animation:none;opacity:0}
 }
 
-/* ---------- 一整排石片 ----------
+/* ---------- 一整排任務之證 ----------
 
    一根一格，由左到右照封存的順序。它們要並排而且要一樣高——
    排在一起才看得出「沒有兩根一樣」，那是這一頁的全部內容。
@@ -6995,7 +6999,7 @@ function actResend(teamId, runId) {
 
 /* 老師勾一個「可以」。
 
-   勾下去那一刻就是完成：記號當場插進那一層，石片當場長出來。
+   勾下去那一刻就是完成：任務之證當場發下去。
 
    本來中間還有一步——學生要再走到一頁去按「收起來」。那一步
    不產生任何東西，只是叫他確認一次自己已經做完、而且老師也已經
@@ -7012,11 +7016,14 @@ function actApprove(runId, word) {
   var tm = teamOf(r.teamId);
   if (tm) tm.claims = (tm.claims || 0) + 1;
 
-  /* 記號系統拿掉了。一趟走完留下什麼，由 Keeps（下面那一筆）、
-     帶子上多的那一格、圖鑑裡的「遇過」、以及走廊變長來說。 */
+  /* 任務之證。一趟一張，老師收下才有。
+
+     名字在這一刻就定下來，不是每次顯示才去查任務名——老師之後改了
+     任務名，他手上那一張不會跟著變成別的東西。 */
+  var mz = msOf(r.msId);
   DB.Keeps.push({
     keepId: nid('K'), teamId: r.teamId, runId: runId,
-    name: '', at: now(),
+    name: (mz && mz.title) || '', at: now(),
     /* 剛走完的那一層，不是接下來要走的那一層。 */
     zone: strataAt(Math.max(0, depthOf(r.teamId) - 1), r.teamId).key,
     px: coreOf(runId),
@@ -9049,7 +9056,13 @@ PAGES.home = function () {
     H.push('<div class="eyebrow lit">老師勾了</div>');
     H.push('<b class="ok-big">確認已完成任務，你的專案又在前進了一頁</b>');
     H.push('<em class="ok-sub">完成進度已疊加至班級地下城內</em>');
-    H.push('<span class="ok-ms">' + esc(m ? m.title : '') + '</span>');
+    /* 拿到的那一張。它就是這一刻本身變成的東西——老師審核過了的證明，
+       名字是那一件任務，圖鑑裡收著。
+
+       任務名本來上面還單獨寫一行，拿掉了：這一句已經帶著它，
+       同一個名字在同一張卡上出現兩次，其中一次就是雜訊。 */
+    H.push('<span class="ok-cert">獲得「' + esc(m ? m.title : '') +
+      '」的任務之證</span>');
     /* 他那一句話擺在最下面，而且是這一整張上唯一的人話。 */
     if (r.word) H.push('<p class="quote big">' + nl(r.word) + '</p>');
     H.push('</div>');
@@ -9513,7 +9526,7 @@ PAGES.commit = function () {
 
 /* ---------- 交出去 ---------- */
 /* 交出去那一頁退休了：兩問搬進戰鬥（見 67-battle.js），
-   那張選填的日子表搬到封存——它決定的是石片長什麼樣子。 */
+   那張選填的日子表搬到封存——它決定的是那一張證長什麼樣子。 */
 
 /* 你說要走多遠。
 
@@ -9625,7 +9638,7 @@ PAGES.stamp = function () {
 
 /* ---------- 封存 ----------
 
-   走完一趟，那一趟的紀錄長成一根石片。形狀完全由那一趟決定：
+   走完一趟，那一趟的紀錄長成一張任務之證。形狀完全由那一趟決定：
    一天兩列，來過是實心、說了沒動是空心、沒有紀錄是斷的，
    長度就是這一趟過了幾天。
 
@@ -10217,8 +10230,7 @@ function scene(t, row, st, kind) {
   return H.join('');
 }
 
-/* 背上本來背著封存過的石片。石片併進記號之後，
-   「走著走著身上的東西變多了」改由洞口的營地講——
+/* 背上本來背著拿到的那幾張證。那件事改由洞口的營地講——
    那裡一趟多一個，而且首頁就是那條廊道，每次打開都看得到。 */
 /* 照面那一頁上的自己。跟廊道裡走的是同一個人、同一身裝備——
    不然那一下就不是「我上去」，只是一張圖。 */
@@ -10232,12 +10244,11 @@ function heroPack() { return ''; }
 /* ---------- 洞口 ----------
    左邊是你進來的地方：拱門、從上面落下來的光、掛著的招牌。
    招牌就在這裡，不在標題列——它是廊道入口的看板，不是頁首。 */
-/* 洞口。招牌、營火、石片架、往上的光——全部在這裡，而且一直在。
+/* 洞口。招牌、營火、往上的光——全部在這裡，而且一直在。
 
    為什麼要一直在：沒觸發過的東西等於不存在。一個學生如果從來沒有
-   失準過，他整學期不會知道有營火這個地方；一個還沒封存過的人不會
-   知道石片架是什麼。所以它們在那裡，只是沒點著——
-   「看得到但還沒發生」跟「不存在」是兩件事。 */
+   失準過，他整學期不會知道有營火這個地方。所以它們在那裡，
+   只是沒點著——「看得到但還沒發生」跟「不存在」是兩件事。 */
 function sceneMouth(t, next, ENT, resting) {
   var sg = signOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + (ENT || SCN.ENT) + 'px">'];
@@ -10866,7 +10877,7 @@ function faunaCard() {
 ACTS.fauna = function (name) { DRAFT.fa = name; render(); };
 
 
-/* 點開的那一根石片。別組的也點得開——那是這張圖上唯一會一直
+/* 點開的那一張任務之證。別組的也點得開——那是這張圖上唯一會一直
    長出新東西的地方，而且長出新東西的是別人。 */
 
 
@@ -10969,7 +10980,7 @@ PAGES.classeco = function () {
      這一頁本來在底下又用文字卡把同樣的事一組一張再列一遍——
      五組五張，整頁 3424px，是全系統最高的一頁。刪掉了。
 
-     要細節就點那一組（digTeamCard 會攤開他們封存過的每一根石片）；
+     要細節就點那一組（digTeamCard 會攤開他們走過的每一趟）；
      要去勾就在審核那一頁，那才是它該在的地方。 */
   H.push(xsScene(rows, mine, u.classId));
   H.push(digTeamCard(u.classId));
@@ -10987,9 +10998,10 @@ PAGES.classeco = function () {
 
 
 /* ===== 63-pack.js ===== */
-/* 石片架。
+/* 任務清單。
 
-   走完一趟會長出一根石片（見 43-core.js）。這一頁是它們排在一起的地方。
+   老師派過的每一件事，各自走到哪。走完並且被收下的那幾件，
+   各自有一張任務之證（見 43-core.js 與圖鑑）。
 
    這一頁前後改過三次，方向差很多：老師發裝備 → 隨機三件挑一件 →
    三張事實挑一張 → 現在。前三次都失敗在同一件事上——那個「東西」是我
@@ -11007,7 +11019,7 @@ PAGES.classeco = function () {
    所以也沒有人會為了填滿它多做一件事。
 
    遊戲化在這裡的位置是「吸引他打開」，不是「換到好處」。
-   一根石片不加速、不擋失準、不換任何東西。 */
+   一張任務之證不加速、不擋失準、不換任何東西。 */
 
 PAGES.pack = function () {
   var t = myTeam();
@@ -11142,7 +11154,7 @@ PAGES.codex = function () {
 
   var H = [head('圖鑑', '這座地下城裡有什麼', '')];
 
-  /* 上面那一排：六層 ＋ 石片。一次只看一頁。 */
+  /* 上面那一排：六層 ＋ 任務之證。一次只看一頁。 */
   H.push('<div class="cxtabs">');
   STRATA.forEach(function (z) {
     H.push('<button class="cxt ' + z.key + (tab === z.key ? ' on' : '') +
@@ -11150,7 +11162,7 @@ PAGES.codex = function () {
       esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
   });
   H.push('<button class="cxt core' + (tab === 'core' ? ' on' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>石片</button>');
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>任務之證</button>');
   H.push('</div>');
 
   if (tab === 'core') {
@@ -11176,11 +11188,11 @@ PAGES.codex = function () {
   return H.join('');
 };
 
-/* 石片那一頁。
+/* 任務之證那一頁。
 
    本來這一頁還有一段「地上的物件」，六樣佈景排成一份目錄配說明文字。
    那個版面在說「這些值得收集」，可是它們拿不到、數不了、跟任何事都
-   無關；而它旁邊的石片是真的，兩個並排會讓人以為物件也拿得到，
+   無關；而它旁邊的任務之證是真的，兩個並排會讓人以為物件也拿得到，
    然後去找怎麼拿。找不到。
 
    物件在廊道裡留著——那裡它有用：每一層長的不一樣，那是讓六層像
@@ -11192,12 +11204,12 @@ function codexThings(t, here) {
   if (!mine.length) {
     /* 還沒有半根。畫一根空的輪廓，寫它會怎麼來——
        空白的一頁不會讓人知道這裡以後會長什麼。 */
-    H.push('<div class="eyebrow">石片</div>');
+    H.push('<div class="eyebrow">任務之證</div>');
     H.push('<div class="cx"><div class="cxi">');
     H.push(pxTag(['..++++++++++..', '.+##########+.', '.+#*######*#+.',
       '.+##########+.', '.+#+......+#+.', '.+#+......+#+.', '.+#..+..+..#+.',
       '.+..+..+..+..', '.+##########+.', '..++++++++++..'], here.pal, 'cx-px core'));
-    H.push('<div><b>還沒有</b><em>老師收下一趟，長出一根。</em></div>');
+    H.push('<div><b>還沒有</b><em>老師審核過了，就發一張。</em></div>');
     H.push('</div></div></div>');
     return H.join('');
   }
@@ -11206,17 +11218,19 @@ function codexThings(t, here) {
 
      刻意沒有總數、進度、缺哪幾根——一趟長一根，本來就不會有缺的。
      沒有東西需要被填滿，所以沒有人會為了填滿它多做一件事。 */
-  H.push('<div class="eyebrow">走過 ' + mine.length + ' 趟，' + mine.length + ' 根</div>');
-  H.push('<p class="dim">一趟一根。老師收下才長得出來，而且不會有兩根一樣。</p>');
+  H.push('<div class="eyebrow">' + mine.length + ' 張</div>');
+  H.push('<p class="dim">一件任務一張，老師審核過了才有。名字就是那一件任務，' +
+    '而且不會有兩張一樣。</p>');
   H.push('<div class="cores">');
   mine.forEach(function (k) {
     var z = null;
     STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
-    var run = find('Runs', function (x) { return x.runId === k.runId; });
+    /* 名字讀發下去那一刻記的那一個。舊資料沒有，才回頭查任務名。 */
+    var run = k.name ? null : find('Runs', function (x) { return x.runId === k.runId; });
     var ms = run ? msOf(run.msId) : null;
     H.push('<div class="core1 ' + (k.zone || here.key) + '">');
     H.push(pxTag(k.px || coreOf(k.runId), (z || here).pal, 'cx-px core'));
-    H.push('<b>' + esc(ms ? ms.title : '（那一趟）') + '</b>');
+    H.push('<b>' + esc(k.name || (ms ? ms.title : '（那一趟）')) + '</b>');
     H.push('</div>');
   });
   H.push('</div></div>');
@@ -11343,7 +11357,12 @@ PAGES.person = function () {
 
 PAGES.who = function () {
   var u = me();
-  var now = heroKey(u);
+  /* 還沒挑過的人，四個都不要打勾。
+
+     本來這裡讀 heroKey，而 heroKey 沒設過就回 adv——所以第一次進來
+     的人看到冒險者已經亮著金框，等於系統先替他決定了一張臉。
+     而這一頁存在的理由正好相反（見 58-gate.js 的 ACTS.claim）。 */
+  var now = (u && u.hero && HEROES[u.hero]) ? u.hero : '';
 
   var H = [head('挑一個角色開始冒險',
     '這是你在這場專案旅行中的化身', '')];

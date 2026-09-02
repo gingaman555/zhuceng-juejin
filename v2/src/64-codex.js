@@ -28,7 +28,7 @@ PAGES.codex = function () {
 
   var H = [head('圖鑑', '這座地下城裡有什麼', '')];
 
-  /* 上面那一排：六層 ＋ 石片。一次只看一頁。 */
+  /* 上面那一排：六層 ＋ 任務之證。一次只看一頁。 */
   H.push('<div class="cxtabs">');
   STRATA.forEach(function (z) {
     H.push('<button class="cxt ' + z.key + (tab === z.key ? ' on' : '') +
@@ -36,7 +36,7 @@ PAGES.codex = function () {
       esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
   });
   H.push('<button class="cxt core' + (tab === 'core' ? ' on' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>石片</button>');
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>任務之證</button>');
   H.push('</div>');
 
   if (tab === 'core') {
@@ -62,11 +62,11 @@ PAGES.codex = function () {
   return H.join('');
 };
 
-/* 石片那一頁。
+/* 任務之證那一頁。
 
    本來這一頁還有一段「地上的物件」，六樣佈景排成一份目錄配說明文字。
    那個版面在說「這些值得收集」，可是它們拿不到、數不了、跟任何事都
-   無關；而它旁邊的石片是真的，兩個並排會讓人以為物件也拿得到，
+   無關；而它旁邊的任務之證是真的，兩個並排會讓人以為物件也拿得到，
    然後去找怎麼拿。找不到。
 
    物件在廊道裡留著——那裡它有用：每一層長的不一樣，那是讓六層像
@@ -78,12 +78,12 @@ function codexThings(t, here) {
   if (!mine.length) {
     /* 還沒有半根。畫一根空的輪廓，寫它會怎麼來——
        空白的一頁不會讓人知道這裡以後會長什麼。 */
-    H.push('<div class="eyebrow">石片</div>');
+    H.push('<div class="eyebrow">任務之證</div>');
     H.push('<div class="cx"><div class="cxi">');
     H.push(pxTag(['..++++++++++..', '.+##########+.', '.+#*######*#+.',
       '.+##########+.', '.+#+......+#+.', '.+#+......+#+.', '.+#..+..+..#+.',
       '.+..+..+..+..', '.+##########+.', '..++++++++++..'], here.pal, 'cx-px core'));
-    H.push('<div><b>還沒有</b><em>老師收下一趟，長出一根。</em></div>');
+    H.push('<div><b>還沒有</b><em>老師審核過了，就發一張。</em></div>');
     H.push('</div></div></div>');
     return H.join('');
   }
@@ -92,17 +92,19 @@ function codexThings(t, here) {
 
      刻意沒有總數、進度、缺哪幾根——一趟長一根，本來就不會有缺的。
      沒有東西需要被填滿，所以沒有人會為了填滿它多做一件事。 */
-  H.push('<div class="eyebrow">走過 ' + mine.length + ' 趟，' + mine.length + ' 根</div>');
-  H.push('<p class="dim">一趟一根。老師收下才長得出來，而且不會有兩根一樣。</p>');
+  H.push('<div class="eyebrow">' + mine.length + ' 張</div>');
+  H.push('<p class="dim">一件任務一張，老師審核過了才有。名字就是那一件任務，' +
+    '而且不會有兩張一樣。</p>');
   H.push('<div class="cores">');
   mine.forEach(function (k) {
     var z = null;
     STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
-    var run = find('Runs', function (x) { return x.runId === k.runId; });
+    /* 名字讀發下去那一刻記的那一個。舊資料沒有，才回頭查任務名。 */
+    var run = k.name ? null : find('Runs', function (x) { return x.runId === k.runId; });
     var ms = run ? msOf(run.msId) : null;
     H.push('<div class="core1 ' + (k.zone || here.key) + '">');
     H.push(pxTag(k.px || coreOf(k.runId), (z || here).pal, 'cx-px core'));
-    H.push('<b>' + esc(ms ? ms.title : '（那一趟）') + '</b>');
+    H.push('<b>' + esc(k.name || (ms ? ms.title : '（那一趟）')) + '</b>');
     H.push('</div>');
   });
   H.push('</div></div>');
@@ -229,7 +231,12 @@ PAGES.person = function () {
 
 PAGES.who = function () {
   var u = me();
-  var now = heroKey(u);
+  /* 還沒挑過的人，四個都不要打勾。
+
+     本來這裡讀 heroKey，而 heroKey 沒設過就回 adv——所以第一次進來
+     的人看到冒險者已經亮著金框，等於系統先替他決定了一張臉。
+     而這一頁存在的理由正好相反（見 58-gate.js 的 ACTS.claim）。 */
+  var now = (u && u.hero && HEROES[u.hero]) ? u.hero : '';
 
   var H = [head('挑一個角色開始冒險',
     '這是你在這場專案旅行中的化身', '')];
