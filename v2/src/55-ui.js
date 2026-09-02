@@ -423,10 +423,13 @@ var ACTS = {
   /* 點一組的欄頭：打開他們那張卡，並且捲到它。
      沒有這一支，還沒留下東西的那幾組整條廊道點不動。 */
   team: function (id) {
-    DRAFT.dt = id; DRAFT.sb = null; render();
-    var c = document.querySelector('.dtcard');
-    if (c) c.scrollIntoView({ block: 'center' });
+    DRAFT.dt = id; DRAFT.sb = null; DRAFT.tab = 'team'; render();
+    var c = document.querySelector('.segs');
+    if (c) c.scrollIntoView({ block: 'start' });
   },
+
+  /* 剖面圖底下那三顆。 */
+  tab: function (k) { DRAFT.tab = k; render(); },
 
   seeb: function (v) { var p = v.split(','); DRAFT.sb = p; DRAFT.dt = p[0]; render(); },
 

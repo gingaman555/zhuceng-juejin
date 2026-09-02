@@ -110,9 +110,38 @@ function digTeamCard(classId) {
       H.push('</button>');
     });
     H.push('</div>');
-  } else {
-    H.push('<p class="dim">還沒留下過東西。</p>');
   }
+
+  /* ── 他們的紀錄 ──
+
+     點進一組，該看到的是這個。本來這裡只有招牌跟他們留下的東西——
+     那是他們的裝飾，不是他們的紀錄。
+
+     一列＝一趟：任務、說幾天、實際幾天、準不準。
+     不放老師回的話，也不放他們寫的困境——那兩樣是他們跟老師之間的事。
+     放的是兩個數字跟一個他們自己取的名字，跟你自己那一頁一樣的東西。 */
+  var mine = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).reverse();
+  if (mine.length) {
+    H.push('<div class="eyebrow" style="margin-top:14px">走過 ' + mine.length + ' 趟</div>');
+    H.push('<div class="orec">');
+    mine.forEach(function (x) {
+      var r = x.run;
+      var s = RULES.STAMPS[r.stamp];
+      var kp = null;
+      keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
+      H.push('<div class="or ' + r.stamp + '">');
+      H.push('<span class="or-s">' + (s ? stampPx(s.key) : '') + '</span>');
+      H.push('<b>' + esc(x.ms ? x.ms.title : '') + '</b>');
+      H.push('<span class="or-n">說 <b>' + r.est + '</b>　實際 <b>' +
+        (r.actual || 0) + '</b></span>');
+      if (kp && kp.name) H.push('<span class="or-w">「' + esc(kp.name) + '」</span>');
+      H.push('</div>');
+    });
+    H.push('</div>');
+  } else if (!ks.length) {
+    H.push('<p class="dim">還沒走完過一趟。</p>');
+  }
+
   H.push('</div>');
   return H.join('');
 }

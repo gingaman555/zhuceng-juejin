@@ -245,9 +245,8 @@ PAGES.eco = function () {
   /* 點岩壁裡那一隻會設 DRAFT.fa，但顯示那一張卡的 faunaCard
      沒有人呼叫——所以點下去一直是沒有反應的。 */
   H.push(faunaCard());
-  /* 排行榜。刻意加進來、準備好隨時拿掉的——見 68-rank.js。
-     要拿掉就刪掉這一行跟那兩個檔案，沒有別的地方依賴它。 */
-  H.push(rankCard(t.classId, t.teamId));
+  /* 排行榜搬到底下「估得準」那一段。刻意加進來、準備好隨時拿掉的
+     ——見 68-rank.js。要拿掉就刪掉那一段跟那兩個檔案。 */
   /* 跨進新的一層的時候石頭會變。這一張本來在「大躍進」那一頁上，
      但那一頁只有這一張是內容，其餘是「去看看那一層」——
      而去看看到的就是這裡。所以它直接長在這裡。 */
@@ -263,18 +262,42 @@ PAGES.eco = function () {
     }
   }
 
+  /* 留記號是一件在等你做的事，不是一段可以切走的內容，
+     所以它跟圖一起留在上面。 */
   H.push(uncoverCard(t));
   H.push(buildPick(t));
-  H.push(buildCard(t));
-  H.push(digTeamCard(t.classId));
 
-  var fd = feedOf(t.classId, 20);
-  if (fd.length) {
-    H.push('<div class="eyebrow feed-h">全班最近</div>');
-    H.push('<div class="feed">');
-    fd.forEach(function (f) { H.push(feedRow(f, t.teamId)); });
-    H.push('</div>');
+  /* ── 底下分成三段，一次只看一段 ──
+     本來是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
+  var dt = DRAFT.dt && teamOf(DRAFT.dt);
+  var tab = DRAFT.tab || (dt ? 'team' : 'feed');
+  if (tab === 'team' && !dt) tab = 'feed';
+
+  var segs = [['feed', '最近'], ['rank', '估得準']];
+  if (dt) segs.push(['team', shortName(dt.name)]);
+  H.push('<div class="segs">');
+  segs.forEach(function (sg) {
+    H.push('<button class="seg' + (tab === sg[0] ? ' on' : '') +
+      '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'tab:' + sg[0] })) + '\'>' + esc(sg[1]) + '</button>');
+  });
+  H.push('</div>');
+
+  if (tab === 'rank') {
+    H.push(rankCard(t.classId, t.teamId));
+  } else if (tab === 'team') {
+    H.push(digTeamCard(t.classId));
+  } else {
+    var fd = feedOf(t.classId, 20);
+    if (fd.length) {
+      H.push('<div class="feed">');
+      fd.forEach(function (f) { H.push(feedRow(f, t.teamId)); });
+      H.push('</div>');
+    } else {
+      H.push('<p class="dim">還沒有人做過什麼。</p>');
+    }
   }
+
   H.push(btn('回自己的廊道', 'go:home', 'ghost'));
   return H.join('');
 };

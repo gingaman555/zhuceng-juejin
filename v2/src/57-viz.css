@@ -1200,3 +1200,52 @@ button.tk-k:hover span{color:var(--gold)}
   .four{gap:5px}
   .fr{min-width:55px}
 }
+
+/* ── 剖面圖底下那三顆 ──
+   本來這幾段是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
+.segs{
+  display:flex;gap:5px;margin:22px 0 14px;
+  border-bottom:1px solid var(--line2);padding-bottom:0
+}
+.seg{
+  padding:9px 14px;border:0;background:none;cursor:pointer;
+  font:inherit;font-size:11px;color:var(--dim);
+  border-bottom:3px solid transparent;margin-bottom:-1px
+}
+.seg:hover{color:var(--ink)}
+.seg.on{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── 別組的紀錄 ──
+   一列＝一趟。兩個數字跟一個他們自己取的名字，沒有評語。 */
+.orec{display:flex;flex-direction:column}
+.or{
+  display:grid;grid-template-columns:22px 1fr auto;gap:9px;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--line)
+}
+.or:last-child{border-bottom:0}
+.or-s{display:flex;align-items:center}
+.or-s .px{width:22px;height:auto;image-rendering:pixelated}
+.or b{font-size:11px;font-weight:400;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.or-n{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.or-n b{color:var(--gold)}
+.or.late .or-n b:last-child{color:var(--over)}
+.or-w{grid-column:2 / 4;font-size:11px;color:var(--mute);margin-top:-5px}
+
+/* 招牌的小圖。只有剖面圖的欄頭有訂過大小，所以它在別的地方
+   （點進一組那張卡）會被 flex 撐成 565px 見方——一整塊招牌蓋住整張卡。 */
+.px.sign-s{width:33px;height:33px;flex:0 0 33px;image-rendering:pixelated}
+
+/* 記號點開來看到的那一趟：一天兩列的柱狀圖。石片併進記號之後它住在這裡。 */
+.bstory .bs-core{width:66px;height:auto;image-rendering:pixelated;flex:0 0 66px}
+
+/* ── 每一張點陣圖自己知道自己多大 ──
+   本來這幾張只有「在某個容器裡」才有寬度（.xs-hero .ch-s、.zn .zn-px…），
+   所以換一個地方畫就會被 flex 撐開——招牌那一張在「點進一組」那張卡上
+   長成 565px 見方，蓋住整張卡。畫在哪裡都對的那一條寫在這裡，
+   容器裡要不一樣的照樣蓋得掉。 */
+.px.zn-px{width:44px;height:44px}
+.px.ch-s{width:36px;height:36px}
+.px.vine-s{width:36px;height:36px}
+.px.ff{width:44px;height:44px}
+.px.bs-core{width:66px;height:auto;flex:0 0 66px}

@@ -269,9 +269,29 @@ Object.keys(miss).forEach(function (k) {
   console.error('畫面按得到 ' + k + '，但是 ACTS 裡沒有這一支');
 });
 
+/* ---------- 七 · 每一張點陣圖都要有寬度 ----------
+
+   pxTag 畫出來的 <img> 沒有內建尺寸。少一條 width，它就會被 flex 撐開
+   ——招牌那一張在「點進一組」那張卡上長成 565px 見方，蓋住整張卡。
+   只看第一個 class（那是訂大小的那一個），後面的是修飾用的。 */
+const pxc = {};
+let pm;
+const rePx = /pxTag\([^,]+,[^,]+,\s*['"]([a-z][a-z0-9-]*)/g;
+while ((pm = rePx.exec(scan))) pxc[pm[1]] = 1;
+/* 要的是「不被祖先限定」的那一條規則。.xs-head .px.sign-s{width:33px}
+   只在剖面圖的欄頭裡有效——招牌畫在別的地方就沒有寬度，
+   而那正是它長成 565px 的原因。所以選擇器裡不可以有空格。 */
+Object.keys(pxc).forEach(function (c) {
+  var re = new RegExp('(^|[,}])\\s*[^,{}\\s]*\\.' + c + '[^,{}\\s]*\\s*\\{[^}]*width', 'i');
+  if (!re.test(scan)) {
+    bad++;
+    console.error('點陣圖 .' + c + ' 沒有一條不限定祖先的寬度——換個地方畫就會被撐開');
+  }
+});
+
 if (bad) {
   console.error('\n' + bad + ' 項殘留。');
   process.exit(1);
 }
 console.log('殘留檢查通過：' + BANNED.length + ' 個禁用詞、畫面代號、寫死的規則句、' +
-  '判定的純度、生態圖不排序、一天一格、按得到的都接得上，都守住了。');
+  '判定的純度、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度，都守住了。');
