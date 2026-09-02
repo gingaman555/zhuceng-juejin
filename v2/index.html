@@ -7066,6 +7066,15 @@ function actRename(teamId, name) {
   return t;
 }
 
+/* 還沒寫過的那幾組先掛這一句。
+
+   它不描述任何一組，所以系統沒有替誰下形容詞——它只是一句
+   每一組都成立的話。要變成他們自己的，改掉就是。
+
+   存在顯示那一層，不寫進資料：沒改過的組，Team.blurb 還是空的。
+   先幫他們寫一筆再說那是他們寫的，那是假的。 */
+var BLURB0 = '我要完成我的專案!';
+
 /* 給自己的形容。這一組自己寫，別組看得到、改不動。
 
    跟專案名是兩件事：專案名是「我們在做什麼」，形容是「我們是什麼樣的組」。
@@ -11224,18 +11233,20 @@ PAGES.crew = function () {
   var H = [head(tm.project || '（還沒定）', tm.name, '')];
 
   /* 給自己的形容。自己的組改得動，別組只看得到。
-     系統不替任何一組下形容詞——招牌上寫什麼是他們的事。 */
+
+     標題不寫出來：那一句本來就是一句話，上面再壓一行
+     「他們給自己的形容」等於幫他們的話加旁白，而整張卡就在
+     他們的名字底下，讀的人看得出來是誰在說話。
+
+     沒寫過的先掛 BLURB0，不留白——「他們還沒寫」會讓沒寫的那幾組
+     看起來缺了什麼，而寫不寫本來就不該有壓力。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">他們給自己的形容</div>');
   if (mine) {
-    H.push('<textarea id="cr-b" rows="2" maxlength="60" placeholder="' +
-      esc('例：三個人，一個做訪談、兩個做設計。') + '">' +
-      esc(tm.blurb || '') + '</textarea>');
+    H.push('<textarea id="cr-b" rows="2" maxlength="60">' +
+      esc(tm.blurb || BLURB0) + '</textarea>');
     H.push(btn('寫好了', 'blurb', ''));
-  } else if (tm.blurb) {
-    H.push('<p class="quote big">' + nl(tm.blurb) + '</p>');
   } else {
-    H.push('<p class="dim">他們還沒寫。</p>');
+    H.push('<p class="quote big">' + nl(tm.blurb || BLURB0) + '</p>');
   }
   H.push('</div>');
 

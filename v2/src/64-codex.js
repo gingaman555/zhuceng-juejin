@@ -135,18 +135,20 @@ PAGES.crew = function () {
   var H = [head(tm.project || '（還沒定）', tm.name, '')];
 
   /* 給自己的形容。自己的組改得動，別組只看得到。
-     系統不替任何一組下形容詞——招牌上寫什麼是他們的事。 */
+
+     標題不寫出來：那一句本來就是一句話，上面再壓一行
+     「他們給自己的形容」等於幫他們的話加旁白，而整張卡就在
+     他們的名字底下，讀的人看得出來是誰在說話。
+
+     沒寫過的先掛 BLURB0，不留白——「他們還沒寫」會讓沒寫的那幾組
+     看起來缺了什麼，而寫不寫本來就不該有壓力。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">他們給自己的形容</div>');
   if (mine) {
-    H.push('<textarea id="cr-b" rows="2" maxlength="60" placeholder="' +
-      esc('例：三個人，一個做訪談、兩個做設計。') + '">' +
-      esc(tm.blurb || '') + '</textarea>');
+    H.push('<textarea id="cr-b" rows="2" maxlength="60">' +
+      esc(tm.blurb || BLURB0) + '</textarea>');
     H.push(btn('寫好了', 'blurb', ''));
-  } else if (tm.blurb) {
-    H.push('<p class="quote big">' + nl(tm.blurb) + '</p>');
   } else {
-    H.push('<p class="dim">他們還沒寫。</p>');
+    H.push('<p class="quote big">' + nl(tm.blurb || BLURB0) + '</p>');
   }
   H.push('</div>');
 
