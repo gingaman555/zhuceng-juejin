@@ -1363,3 +1363,40 @@ button.tk-k:hover span{color:var(--gold)}
 }
 .exsum .ex-big b{font-size:44px;color:var(--gold);font-weight:400;
   font-variant-numeric:tabular-nums}
+
+/* ── 老師排到哪一天 ──
+
+   老師對專案制定有自主權，排程是那個自主權最具體的一半。但它
+   **不進判定**——所以它不能長得像警告：沒有紅色、沒有驚嘆號、
+   過了也只是換一個字。它是一個事實，不是一個判決。 */
+.dueline{
+  display:flex;align-items:baseline;gap:8px;margin:0 0 11px;
+  padding:8px 11px;background:var(--sunk);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.5), inset 0 -2px 0 rgba(255,240,214,.05)
+}
+.dueline span{font-size:22px;color:var(--dim)}
+.dueline b{font-size:33px;font-weight:400;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.dueline em{font-style:normal;font-size:22px;color:var(--dim);margin-left:auto}
+/* 過了就換一個字。顏色不換——換顏色就變成在說他做錯了。 */
+.dueline.past em{color:var(--mute)}
+
+/* 走廊上那一條線。老師排的那一天落在第幾格。
+   虛線，因為它不是牆——走得過去。 */
+.ew-due{
+  flex:0 0 3px;align-self:stretch;margin:0 4px;
+  background:linear-gradient(180deg,
+    var(--dim) 0 6px, transparent 6px 11px);
+  background-size:100% 11px
+}
+/* 承諾之外的那幾格：還沒有人走的地方。 */
+.ew-c.off{opacity:.28}
+
+/* 派過的那一行上，我排到哪一天。 */
+.msr-d{font-size:22px;color:var(--dim);font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.msr-d.past{color:var(--mute)}
+
+/* 任務清單上，老師排到哪一天。接在日期那一格裡換行。 */
+.rec-due{display:block;font-style:normal;font-size:22px;color:var(--dim);
+  white-space:nowrap}

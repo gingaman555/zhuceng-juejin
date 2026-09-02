@@ -651,6 +651,9 @@ function actPublish(classId, o) {
     title: o.title, note: o.note || '',
     steps: (o.steps || []).slice(0, 12),
     teams: o.teams || [],
+    /* 老師排的日期。0＝沒排。
+       它不進判定——判定只讀學生說幾天與實際幾天（見 RULES.judge）。 */
+    due: Number(o.due) || 0,
     at: now()
   };
   DB.Milestones.push(m);
@@ -658,6 +661,23 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
+}
+
+/* 老師排的日期還有幾天。沒排回 null。
+
+   回的是天數不是日期，因為學生那一邊整個系統都在用天數——
+   換成同一個單位他才不用在腦袋裡做一次換算。 */
+function dueIn(m) {
+  if (!m || !m.due) return null;
+  var d = Math.ceil((m.due - now()) / DAY);
+  return { days: d, past: d < 0 };
+}
+
+/* 排的那一天，寫成人看的樣子。 */
+function dueSay(m) {
+  if (!m || !m.due) return '';
+  var d = new Date(m.due);
+  return (d.getMonth() + 1) + '/' + d.getDate();
 }
 
 /* 這一組給哪一位老師帶。空字串＝收回來，變成大家都看得到。 */

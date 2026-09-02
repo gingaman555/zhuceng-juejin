@@ -2826,6 +2826,43 @@ button.tk-k:hover span{color:var(--gold)}
 .exsum .ex-big b{font-size:44px;color:var(--gold);font-weight:400;
   font-variant-numeric:tabular-nums}
 
+/* ── 老師排到哪一天 ──
+
+   老師對專案制定有自主權，排程是那個自主權最具體的一半。但它
+   **不進判定**——所以它不能長得像警告：沒有紅色、沒有驚嘆號、
+   過了也只是換一個字。它是一個事實，不是一個判決。 */
+.dueline{
+  display:flex;align-items:baseline;gap:8px;margin:0 0 11px;
+  padding:8px 11px;background:var(--sunk);
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.5), inset 0 -2px 0 rgba(255,240,214,.05)
+}
+.dueline span{font-size:22px;color:var(--dim)}
+.dueline b{font-size:33px;font-weight:400;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.dueline em{font-style:normal;font-size:22px;color:var(--dim);margin-left:auto}
+/* 過了就換一個字。顏色不換——換顏色就變成在說他做錯了。 */
+.dueline.past em{color:var(--mute)}
+
+/* 走廊上那一條線。老師排的那一天落在第幾格。
+   虛線，因為它不是牆——走得過去。 */
+.ew-due{
+  flex:0 0 3px;align-self:stretch;margin:0 4px;
+  background:linear-gradient(180deg,
+    var(--dim) 0 6px, transparent 6px 11px);
+  background-size:100% 11px
+}
+/* 承諾之外的那幾格：還沒有人走的地方。 */
+.ew-c.off{opacity:.28}
+
+/* 派過的那一行上，我排到哪一天。 */
+.msr-d{font-size:22px;color:var(--dim);font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.msr-d.past{color:var(--mute)}
+
+/* 任務清單上，老師排到哪一天。接在日期那一格裡換行。 */
+.rec-due{display:block;font-style:normal;font-size:22px;color:var(--dim);
+  white-space:nowrap}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -6044,6 +6081,9 @@ function actPublish(classId, o) {
     title: o.title, note: o.note || '',
     steps: (o.steps || []).slice(0, 12),
     teams: o.teams || [],
+    /* 老師排的日期。0＝沒排。
+       它不進判定——判定只讀學生說幾天與實際幾天（見 RULES.judge）。 */
+    due: Number(o.due) || 0,
     at: now()
   };
   DB.Milestones.push(m);
@@ -6051,6 +6091,23 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
+}
+
+/* 老師排的日期還有幾天。沒排回 null。
+
+   回的是天數不是日期，因為學生那一邊整個系統都在用天數——
+   換成同一個單位他才不用在腦袋裡做一次換算。 */
+function dueIn(m) {
+  if (!m || !m.due) return null;
+  var d = Math.ceil((m.due - now()) / DAY);
+  return { days: d, past: d < 0 };
+}
+
+/* 排的那一天，寫成人看的樣子。 */
+function dueSay(m) {
+  if (!m || !m.due) return '';
+  var d = new Date(m.due);
+  return (d.getMonth() + 1) + '/' + d.getDate();
 }
 
 /* 這一組給哪一位老師帶。空字串＝收回來，變成大家都看得到。 */
@@ -6727,7 +6784,7 @@ function seed() {
     steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
     steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
     note: '不要寫題目，寫問題。' };
-  var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3),
+  var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3), due: T0 + 6 * DAY,
     title: '畫一張現在的流程圖',
     note: '猜的那幾步用虛線。' };
   /* 上面三個不掛 mentorId＝整個課程都收得到。它們底下掛著全部九趟
@@ -6735,7 +6792,7 @@ function seed() {
 
      M4 才是在示範「每位老師規劃自己的任務與步調」：薛老師自己派的，
      只有他帶的那兩組收得到，而且比別人晚了十天才開始。 */
-  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: [], at: ago(1),
+  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: [], at: ago(1), due: T0 + 12 * DAY,
     title: '找兩個人試用紙原型',
     steps: ['畫紙原型', '約人', '坐在旁邊看他點'],
     note: '不要跟他解釋。他卡住的地方就是答案。' };
@@ -6869,6 +6926,15 @@ var S = { who: null, page: 'gate', p: {}, flash: null };
 /* 沒按送出的東西不會進資料表，但重畫的時候要留著。 */
 var DRAFT = {};
 function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback || ''); }
+
+/* <input type="date"> 給的是 2026-03-15。轉成那一天的最後一刻——
+   排到三月十五，意思是三月十五那一天還算數。 */
+function dueStamp(v) {
+  var p = String(v || '').split('-');
+  if (p.length !== 3) return 0;
+  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 23, 59, 59);
+  return isNaN(d.getTime()) ? 0 : d.getTime();
+}
 
 function go(page, p) {
   if (typeof stopAnim === 'function') stopAnim();
@@ -7368,10 +7434,12 @@ var ACTS = {
     var last = ((document.getElementById('ms-step') || {}).value || '').trim();
     if (last) steps.push(last.slice(0, 24));
     actPublish(me().classId, { title: title.trim(), note: note.trim(),
-      steps: steps, teams: DRAFT.to || [], mentorId: me().userId });
+      steps: steps, teams: DRAFT.to || [], mentorId: me().userId,
+      due: dueStamp(DRAFT.msDue) });
     /* 草稿清掉，不然下一個會帶著上一個的字。
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
+    DRAFT.msDue = '';
     go('ms');
     say('派出去了。');
   },
@@ -8353,6 +8421,15 @@ PAGES.commit = function () {
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
   H.push('<div class="card">');
+  /* 老師排到哪一天。他排的是課程的排程，不是判定——所以這裡只寫
+     事實，不寫「你來不及了」那種話。走廊上那條線畫的是同一件事。 */
+  var di = dueIn(m);
+  if (di) {
+    H.push('<div class="dueline' + (di.past ? ' past' : '') + '">' +
+      '<span>老師排到</span><b>' + esc(dueSay(m)) + '</b>' +
+      (di.past ? '<em>過了 ' + (-di.days) + ' 天</em>'
+        : '<em>還有 ' + di.days + ' 天</em>') + '</div>');
+  }
   H.push(estStep(est));
 
   /* 決定的時候要看的東西全部畫在同一根尺上：你前幾趟說了幾天、
@@ -8409,9 +8486,23 @@ function estWalk(t, m, est) {
 function estWalkIn(t, m, est) {
   var z = strataAt(depthOf(t.teamId), t.teamId);
   var mob = mobFor(m.msId, t.teamId);
+  /* 老師排的那一天，換算成還有幾天，落在第幾格。
+
+     換成同一個單位是重點：他按出來的格數跟老師排的那條線用的是
+     同一把尺，所以「我排的比老師的長」不用讀，看一眼就知道。
+
+     它不擋、不警告、不進判定。走廊畫到兩者之中比較遠的那一個，
+     超出他承諾的那幾格是暗的——那是還沒有人走的地方。 */
+  var di = dueIn(m);
+  var mark = di && di.days > 0 ? Math.min(di.days, RULES.EST_MAX) : 0;
+  var span = Math.max(est, mark);
   var H = ['<div class="ew-in">'];
-  for (var i = 0; i < est; i++) H.push('<i class="ew-c"></i>');
-  H.push('<span class="ew-m">' + pxTag(mob.px, z.pal, 'ew-px') + '</span>');
+  for (var i = 0; i < span; i++) {
+    H.push('<i class="ew-c' + (i >= est ? ' off' : '') + '"></i>');
+    if (mark && i + 1 === mark) H.push('<i class="ew-due"></i>');
+  }
+  H.push('<span class="ew-m"' + (est < span ? ' style="order:' + est + '"' : '') +
+    '>' + pxTag(mob.px, z.pal, 'ew-px') + '</span>');
   H.push('</div>');
   return H.join('');
 }
@@ -8671,8 +8762,12 @@ function logRow(m, r, t) {
      第一個子元素會被收縮成內容寬（標題變成一個字一行）。 */
   H.push('<span class="rec-px">' + pxTag(mob.px, z.pal, '') + '</span>');
   H.push('<b class="rec-t">' + esc(m.title) + '</b>');
+  /* 走的那幾天，以及老師排到哪一天。清單是他確認「還有哪幾件、
+     哪一件先做」的地方，而老師排的那一天正是他排順序時要用的事實。 */
   H.push('<span class="rec-d">' + esc(dayText(r.committedAt)) +
-    (r.submittedAt ? ' – ' + esc(dayText(r.submittedAt)) : '') + '</span>');
+    (r.submittedAt ? ' – ' + esc(dayText(r.submittedAt)) : '') +
+    (m.due ? '<i class="rec-due">老師排到 ' + esc(dueSay(m)) + '</i>' : '') +
+    '</span>');
 
   H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">' +
     (s ? stampPx(s.key) : '') + '</span>');
@@ -10799,13 +10894,17 @@ function rankCard(classId, meId) {
 
    他只做三件事，側欄就只有三格：
 
-     發里程碑   要他們交什麼
-     審核       他們交了，你看完勾一個「可以」
+     發派任務   要他們交什麼、分幾段、排到哪一天、發給哪幾組
+     審核       他們交了，你看完勾一個「可以」（或退回去改）
      各組進度   誰在哪、誰慢下來了
 
-   他不決定期限（那是學生拉滑桿承諾的），不打分，也不挑裝備——
-   勾完可以之後，學生自己從三件裡挑一件。少一件他要煩惱的事，
-   就少一次「老師替我決定」的機會。 */
+   他對專案制定有自主權：派什麼、分幾段、排在什麼時候、發給自己
+   帶的哪幾組，都是他的。
+
+   但他排的那一天**不進判定**。判定只讀兩個數字：學生說幾天、
+   實際幾天（RULES.judge，check.js 第三條擋著）。那條軌是整個
+   作品的地基——一旦系統拿老師的日期去評分，被評價的對象就
+   換回作業了。他也不打分、不挑裝備。 */
 
 /* 老師走到哪一步了。有人等你看就是第三步，其餘看自己帶的組有沒有人在走。
    本來那個 running 沒有篩班也沒有篩老師——全系統只要有人在走就算，
@@ -10944,7 +11043,14 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
-         esc(s.name) + '</span></div>');
+         esc(s.name) + '</span>');
+  /* 我排到哪一天。判定跟它無關（判定只看他說幾天、實際幾天），
+     但他有沒有走進我排的那一段，是我要寫那一句話時真的需要知道的。 */
+  if (m.due) {
+    H.push('<span class="sp"></span><span class="dim">我排到 ' +
+      esc(dueSay(m)) + '</span>');
+  }
+  H.push('</div>');
   /* 他們自己寫的兩段放最上面。他在這一頁要做的事是寫一句話，
      而最有用的輸入就是這兩段——本來排在整張卡的最後面。
      系統不解讀、不歸類，原話放上去就好。 */
@@ -10991,8 +11097,8 @@ PAGES.ms = function () {
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
   H.push(head('發派任務', '你要他們交什麼',
-    '一次派一個。寫要交什麼就好。' +
-    '期限是他們自己訂的，不是你。'));
+    '你排的日期是課程的排程，不是判定。' +
+    '系統只量他說幾天、實際幾天。'));
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">派一個新的</div>');
@@ -11024,6 +11130,16 @@ PAGES.ms = function () {
     '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
   H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段。' : '') +
     '不分段一樣走得完。</p>');
+  /* ── 排到哪一天 ──
+
+     老師對專案制定要有自主權，而排程是那個自主權最具體的一半。
+     它不進判定：判定只讀學生說幾天與實際幾天。學生那邊會看到
+     這一天換算成的天數，畫在他按承諾的那條走廊上。 */
+  H.push('<div class="eyebrow" style="margin-top:14px">排到哪一天　選填</div>');
+  H.push('<input type="date" id="ms-due" value="' + esc(draft('msDue', '')) +
+    '" oninput="DRAFT[\'msDue\']=this.value">');
+  H.push('<p class="dim">這是你的排程。他們說幾天還是他們自己決定。</p>');
+
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
@@ -11055,6 +11171,12 @@ PAGES.ms = function () {
        不掛自己的任務（期中發表那一種），那時候全課程都收得到。 */
     H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組'
       : (m.mentorId ? '我帶的' : '課程共用')) + '</span>');
+    /* 我排到哪一天。過了就寫過了——不是警告，是事實。 */
+    var di = dueIn(m);
+    if (di) {
+      H.push('<span class="msr-d' + (di.past ? ' past' : '') + '">' +
+        esc(dueSay(m)) + (di.past ? '　過了' : '') + '</span>');
+    }
     H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
     /* 各組承諾了幾天。這是老師唯一看得到的「他們怎麼想這件事」，
        所以留著——但不用標籤的樣子，壓成一行小字。 */

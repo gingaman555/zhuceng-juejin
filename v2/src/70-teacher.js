@@ -2,13 +2,17 @@
 
    他只做三件事，側欄就只有三格：
 
-     發里程碑   要他們交什麼
-     審核       他們交了，你看完勾一個「可以」
+     發派任務   要他們交什麼、分幾段、排到哪一天、發給哪幾組
+     審核       他們交了，你看完勾一個「可以」（或退回去改）
      各組進度   誰在哪、誰慢下來了
 
-   他不決定期限（那是學生拉滑桿承諾的），不打分，也不挑裝備——
-   勾完可以之後，學生自己從三件裡挑一件。少一件他要煩惱的事，
-   就少一次「老師替我決定」的機會。 */
+   他對專案制定有自主權：派什麼、分幾段、排在什麼時候、發給自己
+   帶的哪幾組，都是他的。
+
+   但他排的那一天**不進判定**。判定只讀兩個數字：學生說幾天、
+   實際幾天（RULES.judge，check.js 第三條擋著）。那條軌是整個
+   作品的地基——一旦系統拿老師的日期去評分，被評價的對象就
+   換回作業了。他也不打分、不挑裝備。 */
 
 /* 老師走到哪一步了。有人等你看就是第三步，其餘看自己帶的組有沒有人在走。
    本來那個 running 沒有篩班也沒有篩老師——全系統只要有人在走就算，
@@ -147,7 +151,14 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
-         esc(s.name) + '</span></div>');
+         esc(s.name) + '</span>');
+  /* 我排到哪一天。判定跟它無關（判定只看他說幾天、實際幾天），
+     但他有沒有走進我排的那一段，是我要寫那一句話時真的需要知道的。 */
+  if (m.due) {
+    H.push('<span class="sp"></span><span class="dim">我排到 ' +
+      esc(dueSay(m)) + '</span>');
+  }
+  H.push('</div>');
   /* 他們自己寫的兩段放最上面。他在這一頁要做的事是寫一句話，
      而最有用的輸入就是這兩段——本來排在整張卡的最後面。
      系統不解讀、不歸類，原話放上去就好。 */
@@ -194,8 +205,8 @@ PAGES.ms = function () {
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
   H.push(head('發派任務', '你要他們交什麼',
-    '一次派一個。寫要交什麼就好。' +
-    '期限是他們自己訂的，不是你。'));
+    '你排的日期是課程的排程，不是判定。' +
+    '系統只量他說幾天、實際幾天。'));
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">派一個新的</div>');
@@ -227,6 +238,16 @@ PAGES.ms = function () {
     '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
   H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段。' : '') +
     '不分段一樣走得完。</p>');
+  /* ── 排到哪一天 ──
+
+     老師對專案制定要有自主權，而排程是那個自主權最具體的一半。
+     它不進判定：判定只讀學生說幾天與實際幾天。學生那邊會看到
+     這一天換算成的天數，畫在他按承諾的那條走廊上。 */
+  H.push('<div class="eyebrow" style="margin-top:14px">排到哪一天　選填</div>');
+  H.push('<input type="date" id="ms-due" value="' + esc(draft('msDue', '')) +
+    '" oninput="DRAFT[\'msDue\']=this.value">');
+  H.push('<p class="dim">這是你的排程。他們說幾天還是他們自己決定。</p>');
+
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
@@ -258,6 +279,12 @@ PAGES.ms = function () {
        不掛自己的任務（期中發表那一種），那時候全課程都收得到。 */
     H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組'
       : (m.mentorId ? '我帶的' : '課程共用')) + '</span>');
+    /* 我排到哪一天。過了就寫過了——不是警告，是事實。 */
+    var di = dueIn(m);
+    if (di) {
+      H.push('<span class="msr-d' + (di.past ? ' past' : '') + '">' +
+        esc(dueSay(m)) + (di.past ? '　過了' : '') + '</span>');
+    }
     H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
     /* 各組承諾了幾天。這是老師唯一看得到的「他們怎麼想這件事」，
        所以留著——但不用標籤的樣子，壓成一行小字。 */

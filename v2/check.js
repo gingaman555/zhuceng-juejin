@@ -152,7 +152,10 @@ if (!judgeFn) {
   bad++;
   console.error('找不到 RULES.judge——判定邏輯不見了');
 } else {
-  ['quality', 'score', 'grade', 'rank', 'gear', 'word', 'snag']
+  /* due 是老師排的日期。老師對專案制定有自主權，但那條日期一旦
+     進得了判定，被評價的對象就從「他自己的預估」換回「他有沒有
+     照老師的表走」——整個作品的軸就沒了。 */
+  ['quality', 'score', 'grade', 'rank', 'gear', 'word', 'snag', 'due']
     .forEach(function (w) {
       if (new RegExp('\\b' + w + '\\b').test(judgeFn[0])) {
         bad++;

@@ -392,6 +392,15 @@ PAGES.commit = function () {
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
   H.push('<div class="card">');
+  /* 老師排到哪一天。他排的是課程的排程，不是判定——所以這裡只寫
+     事實，不寫「你來不及了」那種話。走廊上那條線畫的是同一件事。 */
+  var di = dueIn(m);
+  if (di) {
+    H.push('<div class="dueline' + (di.past ? ' past' : '') + '">' +
+      '<span>老師排到</span><b>' + esc(dueSay(m)) + '</b>' +
+      (di.past ? '<em>過了 ' + (-di.days) + ' 天</em>'
+        : '<em>還有 ' + di.days + ' 天</em>') + '</div>');
+  }
   H.push(estStep(est));
 
   /* 決定的時候要看的東西全部畫在同一根尺上：你前幾趟說了幾天、
@@ -448,9 +457,23 @@ function estWalk(t, m, est) {
 function estWalkIn(t, m, est) {
   var z = strataAt(depthOf(t.teamId), t.teamId);
   var mob = mobFor(m.msId, t.teamId);
+  /* 老師排的那一天，換算成還有幾天，落在第幾格。
+
+     換成同一個單位是重點：他按出來的格數跟老師排的那條線用的是
+     同一把尺，所以「我排的比老師的長」不用讀，看一眼就知道。
+
+     它不擋、不警告、不進判定。走廊畫到兩者之中比較遠的那一個，
+     超出他承諾的那幾格是暗的——那是還沒有人走的地方。 */
+  var di = dueIn(m);
+  var mark = di && di.days > 0 ? Math.min(di.days, RULES.EST_MAX) : 0;
+  var span = Math.max(est, mark);
   var H = ['<div class="ew-in">'];
-  for (var i = 0; i < est; i++) H.push('<i class="ew-c"></i>');
-  H.push('<span class="ew-m">' + pxTag(mob.px, z.pal, 'ew-px') + '</span>');
+  for (var i = 0; i < span; i++) {
+    H.push('<i class="ew-c' + (i >= est ? ' off' : '') + '"></i>');
+    if (mark && i + 1 === mark) H.push('<i class="ew-due"></i>');
+  }
+  H.push('<span class="ew-m"' + (est < span ? ' style="order:' + est + '"' : '') +
+    '>' + pxTag(mob.px, z.pal, 'ew-px') + '</span>');
   H.push('</div>');
   return H.join('');
 }
@@ -710,8 +733,12 @@ function logRow(m, r, t) {
      第一個子元素會被收縮成內容寬（標題變成一個字一行）。 */
   H.push('<span class="rec-px">' + pxTag(mob.px, z.pal, '') + '</span>');
   H.push('<b class="rec-t">' + esc(m.title) + '</b>');
+  /* 走的那幾天，以及老師排到哪一天。清單是他確認「還有哪幾件、
+     哪一件先做」的地方，而老師排的那一天正是他排順序時要用的事實。 */
   H.push('<span class="rec-d">' + esc(dayText(r.committedAt)) +
-    (r.submittedAt ? ' – ' + esc(dayText(r.submittedAt)) : '') + '</span>');
+    (r.submittedAt ? ' – ' + esc(dayText(r.submittedAt)) : '') +
+    (m.due ? '<i class="rec-due">老師排到 ' + esc(dueSay(m)) + '</i>' : '') +
+    '</span>');
 
   H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">' +
     (s ? stampPx(s.key) : '') + '</span>');

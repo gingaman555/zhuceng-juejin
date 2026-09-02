@@ -17,6 +17,15 @@ var S = { who: null, page: 'gate', p: {}, flash: null };
 var DRAFT = {};
 function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback || ''); }
 
+/* <input type="date"> 給的是 2026-03-15。轉成那一天的最後一刻——
+   排到三月十五，意思是三月十五那一天還算數。 */
+function dueStamp(v) {
+  var p = String(v || '').split('-');
+  if (p.length !== 3) return 0;
+  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 23, 59, 59);
+  return isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
 function go(page, p) {
   if (typeof stopAnim === 'function') stopAnim();
   S.page = page; S.p = p || {}; S.flash = null; DRAFT = {};
@@ -515,10 +524,12 @@ var ACTS = {
     var last = ((document.getElementById('ms-step') || {}).value || '').trim();
     if (last) steps.push(last.slice(0, 24));
     actPublish(me().classId, { title: title.trim(), note: note.trim(),
-      steps: steps, teams: DRAFT.to || [], mentorId: me().userId });
+      steps: steps, teams: DRAFT.to || [], mentorId: me().userId,
+      due: dueStamp(DRAFT.msDue) });
     /* 草稿清掉，不然下一個會帶著上一個的字。
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
+    DRAFT.msDue = '';
     go('ms');
     say('派出去了。');
   },

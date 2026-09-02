@@ -78,7 +78,7 @@ function seed() {
     steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
     steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
     note: '不要寫題目，寫問題。' };
-  var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3),
+  var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3), due: T0 + 6 * DAY,
     title: '畫一張現在的流程圖',
     note: '猜的那幾步用虛線。' };
   /* 上面三個不掛 mentorId＝整個課程都收得到。它們底下掛著全部九趟
@@ -86,7 +86,7 @@ function seed() {
 
      M4 才是在示範「每位老師規劃自己的任務與步調」：薛老師自己派的，
      只有他帶的那兩組收得到，而且比別人晚了十天才開始。 */
-  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: [], at: ago(1),
+  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: [], at: ago(1), due: T0 + 12 * DAY,
     title: '找兩個人試用紙原型',
     steps: ['畫紙原型', '約人', '坐在旁邊看他點'],
     note: '不要跟他解釋。他卡住的地方就是答案。' };
