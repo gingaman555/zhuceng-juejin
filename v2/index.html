@@ -2698,6 +2698,13 @@ button.tk-k:hover span{color:var(--gold)}
   font-variant-numeric:tabular-nums
 }
 
+/* 結算那一頁的主角：一整個學期在量的唯一一件事。 */
+.exsum .ex-big{
+  font-size:33px;line-height:1.4;margin:5px 0 18px;color:var(--dim)
+}
+.exsum .ex-big b{font-size:44px;color:var(--gold);font-weight:400;
+  font-variant-numeric:tabular-nums}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -7792,12 +7799,14 @@ PAGES.home = function () {
 
    舊的在左、新的在右——跟廊道同一個方向（往右走就是往深處走），
    所以「往左滑」＝「往回看」不用學。打開的時候停在最右邊，也就是現在。 */
-function runStrip(t) {
+function runStrip(t, bare) {
   var rows = runsFor(t.teamId).filter(function (x) { return x.run.stamp; });
   if (!rows.length) return '';
   /* 名字。系統從頭到尾沒在學生面前說過「估算」兩個字——
-     概念沒有被命名，他就不知道自己在練的是什麼。 */
-  var H = ['<div class="rs-h">你的估算　·　走過 ' + rows.length + ' 趟</div>'];
+     概念沒有被命名，他就不知道自己在練的是什麼。
+     結算那一頁上面那張卡已經講過一次，所以那裡傳 bare。 */
+  var H = [];
+  if (!bare) H.push('<div class="rs-h">你的估算　·　走過 ' + rows.length + ' 趟</div>');
   H.push('<div class="rstrip"><div class="rs-in">');
   rows.forEach(function (x) {
     var r = x.run;
@@ -8317,6 +8326,7 @@ PAGES.exit = function () {
   var t = myTeam();
   var e = exitRecord(t.teamId);
   var out = !!t.leftAt;
+  var hit = (e.acc.exact || 0) + (e.acc.early || 0);
 
   var H = [head(out ? '地面' : '出口',
     out ? '你出去了' : '這個專案做完了？',
@@ -8336,24 +8346,35 @@ PAGES.exit = function () {
       '<p class="quote">' + nl(t.exitWord) + '</p></div>');
   }
 
-  /* 帶出來的東西。全部是他自己的紀錄。 */
+  /* ── 一 · 你的估算 ──
+
+     這一頁的主角。本來「準了幾次」埋在第一張卡的中段，而它是
+     這個系統一整個學期在量的唯一一件事。 */
+  if (e.acc.total) {
+    H.push('<div class="card exsum">');
+    H.push('<div class="eyebrow">你的估算</div>');
+    H.push('<p class="ex-big"><b>' + e.acc.total + '</b> 趟裡，準了 <b>' +
+      hit + '</b> 次</p>');
+    H.push(accBar(e.acc));
+    H.push('</div>');
+  }
+
+  /* 一個學期的形狀。一趟一個，說幾天 → 實際幾天。
+     本來這裡有兩張卡在做同一件事：一張逐條畫尺，一張排記號架。 */
+  H.push(runStrip(t, 1));
+
+  /* ── 二 · 你走過的地方 ── */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">你帶出來的</div>');
+  H.push('<div class="eyebrow">你走過的地方</div>');
   H.push('<div class="outnum">');
-  H.push('<div><b>' + e.runs.length + '</b><span>走完的任務</span></div>');
   H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
-  H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
-  H.push('<div><b>' + e.keeps.length + '</b><span>留下的記號</span></div>');
-  /* 走了幾圈。exitRecord 一直算著它，但那一頁從來沒畫出來——
+  H.push('<div><b>' + e.depth + '</b><span>走到第幾層</span></div>');
+  /* 走了幾圈。六層一圈，第七趟回到第一層——
      無盡輪迴的設定在終點最該被說一次。 */
   if (e.cycles) H.push('<div><b>' + e.cycles + '</b><span>走過的輪迴</span></div>');
   H.push('</div>');
-  if (e.acc.total) H.push(accBar(e.acc));
-  H.push('</div>');
-
-  /* 走過的地層 */
   if (e.zones.length) {
-    H.push('<div class="card"><div class="eyebrow">你走過的</div><div class="zones">');
+    H.push('<div class="zones">');
     e.zones.forEach(function (z) {
       var c = faunaOf(z.key)[0];
       H.push('<div class="zn ' + z.key + '">');
@@ -8361,36 +8382,11 @@ PAGES.exit = function () {
       H.push('<b>' + esc(z.name) + '</b>');
       H.push('</div>');
     });
-    H.push('</div></div>');
-  }
-
-  /* 每一趟說幾天、走幾天 */
-  if (e.runs.length) {
-    H.push('<div class="card"><div class="eyebrow">每一趟</div>');
-    e.runs.forEach(function (x) {
-      H.push('<div class="outrun"><span>' + esc(x.ms.title) + '</span>');
-      H.push(estBar(x.run.est, x.run.actual, false));
-      H.push('</div>');
-    });
     H.push('</div>');
   }
+  H.push('</div>');
 
-  /* 帶出去的那一排石片。二十根排在一起，就是一個學期的形狀。 */
-  if (e.keeps.length) {
-    H.push('<div class="card"><div class="eyebrow">你帶出去的</div>');
-    H.push('<div class="rack">');
-    e.keeps.slice().reverse().forEach(function (k) {
-      var kz = STRATA[0];
-      STRATA.forEach(function (x) { if (x.key === k.zone) kz = x; });
-      H.push('<div class="rk">');
-      H.push(pxTag(k.px || coreOf(k.runId), kz.pal, 'core'));
-      H.push('<b>' + esc(k.name || '') + '</b>');
-      H.push('<span>' + (k.elapsed || 0) + ' 天</span>');
-      H.push('</div>');
-    });
-    H.push('</div></div>');
-  }
-
+  /* ── 三 · 說一聲 ── */
   if (!out) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">說一聲</div>');

@@ -1315,3 +1315,10 @@ button.tk-k:hover span{color:var(--gold)}
   font-size:22px;color:var(--gold);margin:0 0 6px;
   font-variant-numeric:tabular-nums
 }
+
+/* 結算那一頁的主角：一整個學期在量的唯一一件事。 */
+.exsum .ex-big{
+  font-size:33px;line-height:1.4;margin:5px 0 18px;color:var(--dim)
+}
+.exsum .ex-big b{font-size:44px;color:var(--gold);font-weight:400;
+  font-variant-numeric:tabular-nums}
