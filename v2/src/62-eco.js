@@ -18,10 +18,10 @@
 
 var XS = {
   RULER: 154,    /* 左邊：深度尺與層的名字 */
-  W: 110,        /* 一條廊道的寬 */
-  GAP: 66,       /* 廊道之間的牆 */
+  W: 176,        /* 一條廊道的寬。要放得下 22px 的專案名，一行六個字 */
+  GAP: 44,       /* 廊道之間的牆 */
   SEG: 55,       /* 一個里程碑的深度 */
-  SURF: 88,      /* 地表那一段 */
+  SURF: 132,     /* 地表那一段。欄頭有三行，最上面是 22px 的專案名 */
   ROCK: 264      /* 最右邊留一大塊沒有人走過的岩壁，給生態用 */
 };
 
@@ -131,15 +131,25 @@ function xsShaft(r, i, maxD, mine) {
     H.push('<div class="xs-out" style="height:' + (xsTop(maxD) + 44) + 'px"></div>');
   }
 
-  /* 入口。招牌立在地表上，不是埋在土裡。 */
+  /* 入口。招牌立在地表上，不是埋在土裡。
+
+     本來這裡疊四行，而且亮的那一行是組名。「第一組 · 甲」是座號，
+     「畢製分工失衡」才是他們在做的事——大的要是後者。
+     組名縮成一個字，跟狀態併成一行。
+
+     整塊是一顆鈕：本來這裡沒有任何 data-act，所以還沒留下東西的
+     那幾組整條廊道是死的，點不動。 */
   var sg = SIGNS[r.sign] || SIGNS.wood;
-  H.push('<div class="xs-head">');
+  H.push('<button class="xs-head" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'team:' + r.teamId })) + '\' title="' +
+    esc(r.name) + '">');
   H.push(pxTag(sg.px, sg.pal, 'sign-s'));
-  H.push('<b>' + esc(r.name) + '</b>');
-  H.push('<span>' + esc(r.project || '（還沒定）') + '</span>');
-  H.push('<i class="s-' + r.status.key + '">' + esc(r.status.label) +
-    (r.status.days ? ' ' + r.status.days + ' 天' : '') + '</i>');
-  H.push('</div>');
+  H.push('<b>' + esc(r.project || '（還沒定）') + '</b>');
+  /* 誰＋現在怎麼樣，一行，釘在欄頭底部——名字一行跟兩行的組要齊。 */
+  H.push('<em class="xs-st"><span>' + esc(shortName(r.name)) + '</span>' +
+    '<i class="s-' + r.status.key + '">' + esc(r.status.label) +
+    (r.status.days ? ' ' + r.status.days + ' 天' : '') + '</i></em>');
+  H.push('</button>');
 
   /* 打通的每一格 */
   for (var d = 0; d < maxD; d++) {

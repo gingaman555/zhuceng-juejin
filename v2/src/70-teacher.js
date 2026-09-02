@@ -133,7 +133,6 @@ PAGES.review = function () {
   if (!r) return '<div class="card">找不到。</div>';
   var m = msOf(r.msId), t = teamOf(r.teamId);
   var s = RULES.STAMPS[r.stamp];
-  var acc = accuracyOf(r.teamId);
 
   var H = [head('審核', t.name + '　·　' + m.title,
     '成果交在你原本收的地方。這裡只要勾一個「可以」。' +
@@ -142,14 +141,16 @@ PAGES.review = function () {
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
          esc(s.name) + '</span></div>');
-  H.push(estBar(r.est, r.actual, false));
-  H.push(accBar(acc));
-  H.push(dayStrip(r.teamId, r.runId));
-  H.push(overTags(r.teamId, r));
-  /* 他們自己寫的兩段。老師只有在這裡才知道他們卡在哪——
+  /* 他們自己寫的兩段放最上面。他在這一頁要做的事是寫一句話，
+     而最有用的輸入就是這兩段——本來排在整張卡的最後面。
      系統不解讀、不歸類，原話放上去就好。 */
   if (r.hard) H.push('<p class="quote"><b>他們說卡在哪裡</b>' + nl(r.hard) + '</p>');
   if (r.pace) H.push('<p class="quote"><b>他們覺得的進度</b>' + nl(r.pace) + '</p>');
+  H.push(estBar(r.est, r.actual, false));
+  H.push(dayStrip(r.teamId, r.runId));
+  H.push(overTags(r.teamId, r));
+  /* 歷史準度分布拿掉了：那是「他們這學期怎麼樣」，屬於各組進度，
+     不屬於這一筆審核。這一頁只看眼前這一趟。 */
   H.push('</div>');
 
   H.push('<div class="card">');

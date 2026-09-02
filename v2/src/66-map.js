@@ -257,11 +257,12 @@ function digTeamCard(classId) {
   if (!t) return '';
   var ks = keepsOf(t.teamId).slice().reverse();
   var z = strataAt(depthOf(t.teamId), t.teamId);
-  var H = ['<div class="card fa ' + z.key + '">'];
+  var H = ['<div class="card dtcard fa ' + z.key + '">'];
   H.push('<div class="radar-head">');
   H.push(pxTag(signOf(t.teamId).px, signOf(t.teamId).pal, 'sign-s'));
-  H.push('<b>' + esc(t.name) + '</b>');
-  H.push('<span class="dim">' + esc(t.project || '（還沒定）') + '</span>');
+  /* 大的是專案名，不是組名——跟剖面圖上的欄頭同一個層級。 */
+  H.push('<b>' + esc(t.project || '（還沒定）') + '</b>');
+  H.push('<span class="dim">' + esc(t.name) + '</span>');
   H.push('<span class="sp"></span>');
   H.push('<span class="dim">' + esc(z.name) + '</span>');
   H.push('</div>');
@@ -297,8 +298,10 @@ function buildPick(t) {
   var z = strataAt(d, t.teamId);
   var set = offerAt(t.teamId, d);
   if (!set.length) { DRAFT.build = null; return ''; }
-  var H = ['<div class="card bpick">'];
-  H.push('<div class="eyebrow">在這一層留下什麼</div>');
+  var H = ['<div class="card bpick fa ' + z.key + '">'];
+  H.push('<h2 class="bp-h">在這一層留下什麼</h2>');
+  /* 這一句是新接上的機制，不是氣氛：接口決定誰找得到你留的東西。 */
+  H.push('<p class="bp-sub">插下去會敲開石頭。接口決定誰找得到它。</p>');
 
   /* 上一層留下的向下口就是這一層的題目。畫出來就好，不用寫一句話說明——
      接得起來的那幾個上面會亮一段。 */
@@ -324,6 +327,9 @@ function buildPick(t) {
     H.push('<i class="bp-p dn' + (b.port.indexOf('d') >= 0 ? ' on' : '') + '"></i>');
     H.push('</span>');
     H.push('<b>' + esc(b.name) + '</b>');
+    /* 誰找得到。三個都會被碰到，差的只是被誰——沒有強弱。 */
+    H.push('<i>' + (b.port === 'ud' ? '兩邊都找得到'
+      : b.port === 'u' ? '上面的人找得到' : '下面的人找得到') + '</i>');
     H.push('</button>');
   });
   H.push('</div>');
@@ -375,8 +381,8 @@ function uncoverCard(t) {
   if (!r) return '';
   var d = buriedDef(r.k);
   if (!d) return '';
-  var c = DRAFT.build || [0, 0];
-  var z = strataAt(c[1], t.classId);
+  /* DRAFT.build 是那一層的深度。本來是格子地圖的 [x, y]。 */
+  var z = strataAt(Number(DRAFT.build) || 0, t.teamId);
 
   var H = ['<div class="card unc ' + z.key + (r.early ? '' : ' late') + '">'];
   H.push('<div class="unc-in">');
@@ -399,6 +405,13 @@ function uncoverCard(t) {
   H.push('<div class="eyebrow">' + esc(z.name) + '　·　這一格裡</div>');
   H.push('<h2>' + esc(r.mob || (r.build && buildDef(r.build).name) || d.n) + '</h2>');
   H.push('<p class="lead">' + esc(r.early ? d.here : d.late) + '</p>');
+  /* 是誰留的、哪一趟、走了幾天。系統不編故事——
+     這幾個字全部是別組自己打的。 */
+  if (r.by) {
+    H.push('<p class="unc-by">' + esc(r.by) +
+      (r.trip ? '　·　' + esc(r.trip) : '') +
+      (r.days ? '　·　' + r.days + ' 天' : '') + '</p>');
+  }
   if (r.say) H.push('<p class="quote">' + esc(r.say) + '</p>');
   H.push('</div></div></div>');
   return H.join('');

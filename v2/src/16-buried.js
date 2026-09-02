@@ -26,11 +26,12 @@
    埋的東西是用班級與座標算出來的，不是擲骰子——同一個班的同一格
    永遠是同一樣東西。會亂跳的話那就不是一片地，是特效。 */
 
-/* 大約七分之一的格子裡有東西。
+/* 留下記號的時候敲開岩壁，五次裡大概兩次會敲到東西。
 
-   一開始放四分之一，畫出來滿地都是痕跡，反而看不出「這裡有東西」——
-   太密就不值錢，太疏就不會有人想去找。 */
-var BURIED_ODDS = 14;
+   本來是 14%，因為那時候是一格一擲、一張地圖上上百格，太密就不值錢。
+   現在一趟才擲一次，一學期八趟——14% 等於整學期遇到一次，
+   那個機制等於不存在。 */
+var BURIED_ODDS = 40;
 
 var BURIED = [
   { k: 'mob',    n: '還在睡的東西',
@@ -42,12 +43,11 @@ var BURIED = [
   { k: 'mark',   n: '牆上刻的字',
     here: '有人在這面牆上刻了一句話。',
     late: '有人在這面牆上刻過字，水沖掉一半。' },
+  /* 「空腔：什麼都沒有」拿掉了。一學期大概敲到三次的東西，
+     不能有一次是空的。 */
   { k: 'spring', n: '地下水',
     here: '一道還在流的水。',
-    late: '一道乾掉的水痕。' },
-  { k: 'hollow', n: '空腔',
-    here: '一個空的洞，什麼都沒有。',
-    late: '一個空的洞，什麼都沒有。' }
+    late: '一道乾掉的水痕。' }
 ];
 
 function buriedDef(k) {
@@ -106,10 +106,39 @@ function actUncover(teamId, depth) {
     if (f.length) rec.mob = f[hash('bmob|' + teamId + '|' + k) % f.length].n;
   }
 
-  /* 上一輪的遺跡：這一層蓋得出來的東西裡的一種。 */
+  /* 上一輪的遺跡：同班別組真的留下的一個記號。
+
+     哪幾個構得到這一層，由他們留下的時候選的接口決定——
+     朝上的往上構、朝下的往下構、都通的兩邊都構得到。
+     這是三個形狀真正分開的地方：不是哪一個比較強，
+     是你要把自己留給走得比你快的人，還是走得比你慢的人。 */
   if (b.k === 'relic') {
-    rec.build = BUILDS[hash('brel|' + teamId + '|' + k) % BUILDS.length].key;
+    var pool = [];
+    where('Teams', function (o) {
+      return o.classId === t.classId && o.teamId !== teamId;
+    }).forEach(function (o) {
+      Object.keys(o.builds || {}).forEach(function (bk) {
+        var od = Number(bk.slice(1));
+        var def = buildDef(o.builds[bk].k);
+        if (!def) return;
+        var reach = od > depth ? hasPort(def.key, 'u')
+          : od < depth ? hasPort(def.key, 'd') : true;
+        if (!reach) return;
+        pool.push({ team: o.teamId, name: o.name, k: def.key, run: o.builds[bk].runId });
+      });
+    });
+    if (pool.length) {
+      var pk = pool[hash('brel|' + teamId + '|' + k) % pool.length];
+      rec.build = pk.k; rec.by = pk.name;
+      var kp = null;
+      keepsOf(pk.team).forEach(function (x) { if (x.runId === pk.run) kp = x; });
+      if (kp) { rec.trip = kp.name || ''; rec.days = kp.elapsed || 0; }
+    }
   }
+
+  /* 遺跡但是全班都還沒留過東西——那就什麼都沒碰到，不要開一張空卡。 */
+  if (b.k === 'relic' && !rec.build) return null;
+  if (b.k === 'mark' && !rec.say) return null;
 
   t.found[k] = rec;
   save();

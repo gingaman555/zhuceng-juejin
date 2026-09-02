@@ -188,7 +188,11 @@ function topBar() {
   return '<div class="top hud z-' + z.key + '">' +
     pxTag(signOf(t.teamId).px, signOf(t.teamId).pal, 'hud-sign') +
     '<span class="who">' + esc(t.name) + '</span>' +
-    '<span class="hud-pj">' + esc(t.project || '（還沒定）') + '</span>' +
+    /* 專案名點得進招牌。名字最大的地方就是改名字的入口——
+   本來只有廊道最底下那個小圖示能進去。 */
+'<a class="hud-pj" data-act="run" data-p=\'' +
+  esc(JSON.stringify({ a: 'go:sign' })) + '\'>' +
+  esc(t.project || '（還沒定）') + '</a>' +
     '<span class="sp"></span>' +
     '<span class="hud-z">' + esc(z.name) + '</span>' +
     '<span class="hud-d' + (st.level ? ' warnx' : '') + '">' +
@@ -394,32 +398,6 @@ var ACTS = {
 
   /* 老師勾可以了 → 去挑裝備 */
   gear: function (runId) { go('pick', { id: runId }); },
-
-  /* 往哪裡挖 */
-  /* 格子地圖退休了（看不懂），這一支留著只是為了舊的存檔不會炸。 */
-  dig: function (v) {
-    var t = myTeam();
-    var p = v.split(',');
-    if (!actClaimCell(t.classId, t.teamId, Number(p[0]), Number(p[1]))) {
-      return say('那一格點不動。');
-    }
-    /* 打通完先看那一格裡有什麼，再挑要蓋什麼。
-       這一下是這個系統唯一「你不知道會遇到什麼」的地方。 */
-    DRAFT.uncover = actUncover(t.teamId, Number(p[0]), Number(p[1]));
-    DRAFT.build = [Number(p[0]), Number(p[1])];
-    render();
-  },
-
-  /* 蓋下去。三個選項沒有強弱，只差在長相——
-     只要有一個比較好，人就會為了那個蓋，而不是為了專案做事。 */
-  bld: function (v) {
-    var t = myTeam();
-    var p = v.split(',');
-    if (!actBuild(t.teamId, Number(p[1]), p[0], lastSealed(t.teamId))) {
-      return say('那一層留不了。');
-    }
-    say('留下了。');
-  },
 
   /* 點誰蓋的東西：看那是哪一趟。 */
   seeb: function (v) { var p = v.split(','); DRAFT.sb = p; DRAFT.dt = p[0]; render(); },

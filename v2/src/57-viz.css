@@ -1155,3 +1155,23 @@ button.tk-k:hover span{color:var(--gold)}
 }
 .mouth .mmark .px{width:33px;height:25px;image-rendering:pixelated}
 .mouth .mmark:hover{filter:brightness(1.35)}
+
+/* 碰到的是誰留的。系統不編故事——這幾個字全部是別組自己打的。 */
+.unc-by{
+  font-size:11px;color:var(--gold);margin-top:5px;
+  font-variant-numeric:tabular-nums
+}
+
+/* ── 留記號那一張 ──
+   這是走完一整趟的收尾，本來只有一行 11px 的眉標。 */
+.bpick .bp-h{font-size:33px;margin:0 0 5px}
+.bpick .bp-sub{font-size:11px;color:var(--dim);margin:0 0 14px}
+.bpick .bp-ground{height:88px}
+.bpick .bp-px{width:99px;height:75px;margin-left:-49px}
+.bpick .bp b{font-size:22px}
+.bpick .bp i{font-style:normal;font-size:11px;color:var(--dim)}
+.bpick .bp{flex:1 1 132px;gap:2px}
+@media (max-width:520px){
+  .bpick .bp-h{font-size:22px}
+  .bpick .bp{flex:1 1 100%}
+}

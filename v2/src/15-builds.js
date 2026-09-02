@@ -129,7 +129,7 @@ function actBuild(teamId, depth, key, runId) {
   var t = teamOf(teamId);
   if (!t) return false;
   if (!buildDef(key)) return false;
-  if (depth < 0 || depth >= depthOf(teamId)) return false;
+  if (depth < 0 || depth >= sealedDepth(teamId)) return false;
   t.builds = t.builds || {};
   if (t.builds['d' + depth]) return false;
   t.builds['d' + depth] = { k: key, runId: runId || '' };
@@ -145,7 +145,8 @@ function unbuiltDepth(teamId) {
   var t = teamOf(teamId);
   if (!t) return -1;
   var bs = t.builds || {};
-  var n = depthOf(teamId);
+  /* 用 sealedDepth 不用 depthOf：走完就往前，但要老師勾過才留得下。 */
+  var n = sealedDepth(teamId);
   for (var d = 0; d < n; d++) if (!bs['d' + d]) return d;
   return -1;
 }

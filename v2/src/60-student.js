@@ -378,7 +378,8 @@ PAGES.stamp = function () {
   var s = RULES.STAMPS[r.stamp];
 
   var t = myTeam();
-  var zone = strataAt(depthOf(t.teamId), t.teamId);
+  /* 剛走完的那一層。判定當下深度就 +1 了，所以要退一格。 */
+  var zone = strataAt(Math.max(0, depthOf(t.teamId) - 1), t.teamId);
   var mob = mobOfRun(r);
 
   /* 戲在戰鬥那一頁演完了，這裡只留報告。
@@ -471,7 +472,8 @@ PAGES.pick = function () {
   if (!r) return '<div class="card">找不到。</div>';
   var t = myTeam();
   var m = msOf(r.msId);
-  var z = strataAt(depthOf(t.teamId), t.teamId);
+  /* 剛走完的那一層。 */
+  var z = strataAt(Math.max(0, depthOf(t.teamId) - 1), t.teamId);
   var s = runShape(r.runId);
 
   var H = [head('封存', m.title, '這一趟長成這個樣子。')];
@@ -515,8 +517,15 @@ PAGES.pick = function () {
   H.push('<input id="cname" value="' + esc(draft('cName', '')) + '" oninput="DRAFT[\'cName\']=this.value" maxlength="16" placeholder="' +
     esc('例：訪談那一週') + '">');
   H.push('</div>');
-  H.push(btn('封存', 'seal:' + r.runId, 'big'));
   H.push('</div>');
+
+  /* 留記號本來在全班地下城那一頁，要切分頁才做得到——
+     那是同一個時刻被切成兩半。收進來，這一頁就是一次完整的儀式。 */
+  /* 插下去那一下敲開的東西就出現在下面。 */
+  H.push(uncoverCard(t));
+  H.push(buildPick(t));
+
+  H.push(btn('封存', 'seal:' + r.runId, 'big'));
   return H.join('');
 };
 /* 選方向那張小地圖拿掉了：占地那一下改在全班那張圖上做。

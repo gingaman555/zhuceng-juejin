@@ -178,9 +178,23 @@ function stallOf(teamId) {
 }
 
 /* 深度＝完成過幾個里程碑。沒有終點。 */
+/* 走到第幾層。判定出來就算走完——那一趟的兩個數字已經定了，
+   不需要誰批准。所以廊道往前、深度 +1、地層換，都在判定當下發生。
+
+   本來這裡算的是 state==="done"，而 done 要等老師勾完、學生再封存。
+   老師三天不看，整條廊道就凍在原地——系統判的是預估準度，
+   卻擋在作業品質的閘門後面。 */
 function depthOf(teamId) {
   return where('Runs', function (r) {
-    return r.teamId === teamId && r.state === 'done';
+    return r.teamId === teamId && !!r.stamp;
+  }).length;
+}
+
+/* 留得下記號的層數。這一支才要等老師——有人看過，那一趟才成立。
+   走是他自己的事，留下來是要有人看過的事。 */
+function sealedDepth(teamId) {
+  return where('Runs', function (r) {
+    return r.teamId === teamId && (r.state === 'approved' || r.state === 'done');
   }).length;
 }
 
@@ -690,7 +704,8 @@ function actSeal(runId, name) {
     keepId: nid('K'), teamId: r.teamId, runId: runId,
     name: r.coreName, at: now(),
     /* 當時在哪一層。架子上那一排的顏色就是他走過的地層。 */
-    zone: strataAt(depthOf(r.teamId), r.teamId).key,
+    /* 剛走完的那一層，不是接下來要走的那一層。 */
+    zone: strataAt(Math.max(0, depthOf(r.teamId) - 1), r.teamId).key,
     px: coreOf(runId),
     est: s.est, elapsed: s.elapsed, moved: s.moved,
     rested: s.rested, blank: s.blank
