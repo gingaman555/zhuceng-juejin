@@ -131,9 +131,23 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 }
 @keyframes bob2{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-3px)}}
 .scn-mob .px{width:66px;height:66px;margin:0 auto}
+/* 名字掛在牠頭上，而且要掛得比角色頭上那塊牌子還高。
+
+   這一塊擠在三樣東西中間，量出來的位置是：
+     角色頭上的牌子（.hero-tag）  一塊 33px，掛在角色框的上緣加 9px
+     牠自己                        66px
+     腳下那一格的號碼（.dayn）     一行 37px，貼在底
+
+   牠跟角色之間只有 18px 的空隙，放不下 22px 的字（而字級不能縮，
+   那是這個作品的規矩）。所以只剩往上一條路。
+
+   用 bottom:100% 跟 .hero-tag 同一種掛法，兩塊就會照同一個規則
+   往上疊——角色走到牠面前的時候，一塊在上一塊在下，不會互相壓到。 */
 .scn-mob .mobn{
-  position:absolute;left:50%;transform:translateX(-50%);bottom:-22px;
-  font-size:22px;color:var(--dim);white-space:nowrap
+  position:absolute;left:50%;bottom:100%;margin-bottom:48px;
+  transform:translateX(-50%);
+  font-size:22px;color:var(--dim);white-space:nowrap;
+  background:rgba(0,0,0,.62);padding:1px 5px
 }
 /* ---------- 洞口 ---------- */
 .mouth{position:absolute;left:0;top:0;bottom:0;z-index:3}

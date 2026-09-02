@@ -286,7 +286,17 @@ function actionCard(t, next, st) {
 
   } else if (next.kind === 'review') {
     H.push('<div class="eyebrow">在老師那邊</div>');
-    H.push('<h2>等他看。</h2>');
+    /* 等待本來是一片空白：只寫「等他看」，不知道幾天、
+       不知道有沒有被看見。三個數字全部都在，給他就好。 */
+    var wa = row && row.run ? waitAt(row.run.runId) : null;
+    if (wa) {
+      H.push('<div class="waitq">');
+      H.push('<span>交出去</span><b>' + wa.days + '</b><span>天</span>');
+      if (wa.of > 1) H.push('<em>他手上 ' + wa.of + ' 件，你第 ' + wa.at + '</em>');
+      H.push('</div>');
+    } else {
+      H.push('<h2>等他看。</h2>');
+    }
 
   } else {
     H.push('<div class="eyebrow">廊道很安靜</div>');

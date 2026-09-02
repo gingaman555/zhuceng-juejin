@@ -185,7 +185,7 @@ PAGES.events = function () {
   /* 匯出 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">匯出　CSV</div>');
-  H.push('<p class="dim">欄位：時間、角色、組別、事件、說明。</p>');
+  H.push('<p class="dim">欄位：時間、角色、組別、指導老師、事件、說明。</p>');
   H.push('<textarea id="csv" rows="4" readonly>' + esc(exportCsv(cid)) + '</textarea>');
   H.push(btn('存成檔案', 'csv', 'ghost'));
   H.push('</div>');

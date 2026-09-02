@@ -680,6 +680,28 @@ function dueSay(m) {
   return (d.getMonth() + 1) + '/' + d.getDate();
 }
 
+/* 交出去之後排在哪裡。
+
+   老師那一頁照「等最久」排，所以他的位置是算得出來的。回 null
+   代表這一趟不在等——沒有東西要說的時候就不要說。
+
+   給學生看的是位置與天數，不是「老師很慢」。被催的應該是老師，
+   而催老師這件事不該由學生端的畫面來做。 */
+function waitAt(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'submitted') return null;
+  var t = teamOf(r.teamId);
+  if (!t) return null;
+  var q = radar(t.classId, t.mentorId);
+  for (var i = 0; i < q.length; i++) {
+    if (q[i].run.runId === runId) {
+      return { at: i + 1, of: q.length,
+        days: daysBetween(r.submittedAt, now()) };
+    }
+  }
+  return null;
+}
+
 /* 這一組給哪一位老師帶。空字串＝收回來，變成大家都看得到。 */
 function actMentor(teamId, mentorId) {
   var t = teamOf(teamId);

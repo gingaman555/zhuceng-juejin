@@ -268,15 +268,22 @@ function actCreateClass(name, teacherId) {
 /* ---------- 匯出 ----------
    研究資料。CSV，因為那是最容易進統計軟體的東西。 */
 function exportCsv(classId) {
-  var teamName = {};
+  var teamName = {}, teamTea = {};
   where('Teams', function (t) { return t.classId === classId; })
-    .forEach(function (t) { teamName[t.teamId] = t.name; });
-  var head = ['時間', '角色', '組別', '事件', '說明'];
+    .forEach(function (t) {
+      teamName[t.teamId] = t.name;
+      /* 哪一位老師帶的。實驗是一個課程三位老師，那三位就是變項——
+         沒有這一欄，匯出的資料沒辦法照老師分組。 */
+      var te = t.mentorId ? userOf(t.mentorId) : null;
+      teamTea[t.teamId] = te ? te.name : '';
+    });
+  var head = ['時間', '角色', '組別', '指導老師', '事件', '說明'];
   var rows = eventsOf(classId).map(function (e) {
     return [
       new Date(e.at).toISOString(),
       e.role || '',
       teamName[e.teamId] || '',
+      teamTea[e.teamId] || '',
       e.kind,
       evSay(e)
     ];

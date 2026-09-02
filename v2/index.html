@@ -967,9 +967,23 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 }
 @keyframes bob2{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-3px)}}
 .scn-mob .px{width:66px;height:66px;margin:0 auto}
+/* 名字掛在牠頭上，而且要掛得比角色頭上那塊牌子還高。
+
+   這一塊擠在三樣東西中間，量出來的位置是：
+     角色頭上的牌子（.hero-tag）  一塊 33px，掛在角色框的上緣加 9px
+     牠自己                        66px
+     腳下那一格的號碼（.dayn）     一行 37px，貼在底
+
+   牠跟角色之間只有 18px 的空隙，放不下 22px 的字（而字級不能縮，
+   那是這個作品的規矩）。所以只剩往上一條路。
+
+   用 bottom:100% 跟 .hero-tag 同一種掛法，兩塊就會照同一個規則
+   往上疊——角色走到牠面前的時候，一塊在上一塊在下，不會互相壓到。 */
 .scn-mob .mobn{
-  position:absolute;left:50%;transform:translateX(-50%);bottom:-22px;
-  font-size:22px;color:var(--dim);white-space:nowrap
+  position:absolute;left:50%;bottom:100%;margin-bottom:48px;
+  transform:translateX(-50%);
+  font-size:22px;color:var(--dim);white-space:nowrap;
+  background:rgba(0,0,0,.62);padding:1px 5px
 }
 /* ---------- 洞口 ---------- */
 .mouth{position:absolute;left:0;top:0;bottom:0;z-index:3}
@@ -2863,6 +2877,19 @@ button.tk-k:hover span{color:var(--gold)}
 .rec-due{display:block;font-style:normal;font-size:22px;color:var(--dim);
   white-space:nowrap}
 
+/* ── 交出去之後在等 ──
+   本來只有一句「等他看」。三個數字全部都在，給他就好：
+   交出去幾天、他手上幾件、你第幾。這不是催促——被催的是老師，
+   而催老師不該由學生端的畫面來做，所以這裡一個評價的字都沒有。 */
+.waitq{
+  display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+  padding:11px 0 0
+}
+.waitq span{font-size:22px;color:var(--dim)}
+.waitq b{font-size:44px;line-height:1;font-weight:400;color:var(--gold);
+  font-variant-numeric:tabular-nums}
+.waitq em{font-style:normal;font-size:22px;color:var(--dim);width:100%}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -4574,15 +4601,22 @@ function actCreateClass(name, teacherId) {
 /* ---------- 匯出 ----------
    研究資料。CSV，因為那是最容易進統計軟體的東西。 */
 function exportCsv(classId) {
-  var teamName = {};
+  var teamName = {}, teamTea = {};
   where('Teams', function (t) { return t.classId === classId; })
-    .forEach(function (t) { teamName[t.teamId] = t.name; });
-  var head = ['時間', '角色', '組別', '事件', '說明'];
+    .forEach(function (t) {
+      teamName[t.teamId] = t.name;
+      /* 哪一位老師帶的。實驗是一個課程三位老師，那三位就是變項——
+         沒有這一欄，匯出的資料沒辦法照老師分組。 */
+      var te = t.mentorId ? userOf(t.mentorId) : null;
+      teamTea[t.teamId] = te ? te.name : '';
+    });
+  var head = ['時間', '角色', '組別', '指導老師', '事件', '說明'];
   var rows = eventsOf(classId).map(function (e) {
     return [
       new Date(e.at).toISOString(),
       e.role || '',
       teamName[e.teamId] || '',
+      teamTea[e.teamId] || '',
       e.kind,
       evSay(e)
     ];
@@ -6108,6 +6142,28 @@ function dueSay(m) {
   if (!m || !m.due) return '';
   var d = new Date(m.due);
   return (d.getMonth() + 1) + '/' + d.getDate();
+}
+
+/* 交出去之後排在哪裡。
+
+   老師那一頁照「等最久」排，所以他的位置是算得出來的。回 null
+   代表這一趟不在等——沒有東西要說的時候就不要說。
+
+   給學生看的是位置與天數，不是「老師很慢」。被催的應該是老師，
+   而催老師這件事不該由學生端的畫面來做。 */
+function waitAt(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'submitted') return null;
+  var t = teamOf(r.teamId);
+  if (!t) return null;
+  var q = radar(t.classId, t.mentorId);
+  for (var i = 0; i < q.length; i++) {
+    if (q[i].run.runId === runId) {
+      return { at: i + 1, of: q.length,
+        days: daysBetween(r.submittedAt, now()) };
+    }
+  }
+  return null;
 }
 
 /* 這一組給哪一位老師帶。空字串＝收回來，變成大家都看得到。 */
@@ -8315,7 +8371,17 @@ function actionCard(t, next, st) {
 
   } else if (next.kind === 'review') {
     H.push('<div class="eyebrow">在老師那邊</div>');
-    H.push('<h2>等他看。</h2>');
+    /* 等待本來是一片空白：只寫「等他看」，不知道幾天、
+       不知道有沒有被看見。三個數字全部都在，給他就好。 */
+    var wa = row && row.run ? waitAt(row.run.runId) : null;
+    if (wa) {
+      H.push('<div class="waitq">');
+      H.push('<span>交出去</span><b>' + wa.days + '</b><span>天</span>');
+      if (wa.of > 1) H.push('<em>他手上 ' + wa.of + ' 件，你第 ' + wa.at + '</em>');
+      H.push('</div>');
+    } else {
+      H.push('<h2>等他看。</h2>');
+    }
 
   } else {
     H.push('<div class="eyebrow">廊道很安靜</div>');
@@ -11386,7 +11452,7 @@ PAGES.events = function () {
   /* 匯出 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">匯出　CSV</div>');
-  H.push('<p class="dim">欄位：時間、角色、組別、事件、說明。</p>');
+  H.push('<p class="dim">欄位：時間、角色、組別、指導老師、事件、說明。</p>');
   H.push('<textarea id="csv" rows="4" readonly>' + esc(exportCsv(cid)) + '</textarea>');
   H.push(btn('存成檔案', 'csv', 'ghost'));
   H.push('</div>');
