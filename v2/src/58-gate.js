@@ -21,15 +21,6 @@ PAGES.gate = function () {
   H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
   H.push('<h1>專案地下城</h1>');
 
-  /* 第一句要是「為什麼用這個」，不是「這是什麼世界」。
-     沒有一個專案工具敢說第一行——它們全部在量產出、量完成度、量誰落後。 */
-  H.push('<p class="promise">這裡不看你做得好不好。</p>');
-  H.push('<p class="promise2">只有你說幾天，跟你實際走了幾天。</p>');
-
-  /* 整個系統就是這一張圖：一條尺、你說的那一點、你實際走到的那一段。
-     沒有第二個規則。所以它放在最前面，而且不配一句說明。 */
-  H.push('<div class="gate-bar">' + estBar(5, 6, false) + '</div>');
-
   /* 進去那兩顆放在第一屏，不要捲。 */
   H.push('<div class="row">');
   H.push(btn('登入', 'go:login', 'big'));
