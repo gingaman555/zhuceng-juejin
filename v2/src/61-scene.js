@@ -27,13 +27,10 @@ var SCN = {
      t     這一組
      row   現在在跑的那一個 run（可能沒有）
      st    停滯狀態 */
-/* 洞口有多寬。每留下一個記號就寬一點——那是「看得到自己的堆積」
-   最直接的做法：你的營地會變大，而首頁就是這條廊道。
-   有上限，不然走到後面整條廊道會被營地擠掉。 */
+/* 洞口有多寬。本來每留下一個記號就寬一點，記號系統拿掉之後它是一個
+   固定的數字。這一支留著是因為場景裡到處拿它算位置。 */
 function entOf(teamId) {
-  var t = teamOf(teamId);
-  var n = Object.keys((t && t.builds) || {}).length;
-  return SCN.ENT + Math.min(10, n) * 26;
+  return SCN.ENT;
 }
 
 function scene(t, row, st, kind) {
@@ -408,29 +405,8 @@ function sceneMouth(t, next, ENT, resting) {
     }
   }
 
-  /* ── 營地 ──
-
-     每走完一趟留下的那一個記號，一個一個排在洞口的地上，
-     而洞口的寬度跟著長（見 entOf）。十趟之後這裡是一個被你佈置過的
-     營地——而首頁就是這條廊道，所以每次打開都看得到。
-
-     這是「看得到自己的堆積」最直接的做法：不是散在各層一個 55px，
-     是全部在同一個地方、每次可見地多一個、而且一眼看得完。
-
-     本來這裡掛的是石片架。石片跟記號都是「一趟一個」，兩個都放就是
-     重複——石片留在任務清單裡，那裡點得開、而且有圖例。 */
-  var tm = teamOf(t.teamId);
-  var bs = (tm && tm.builds) || {};
-  var ds = Object.keys(bs).map(function (k) { return Number(k.slice(1)); })
-    .sort(function (x, y) { return x - y; });
-  ds.forEach(function (d, i) {
-    var mk = markAt(t.teamId, d);
-    if (!mk) return;
-    var z = strataAt(d, t.teamId);
-    H.push('<div class="mmark" style="left:' + (72 + i * 30) + 'px" ' +
-      'title="' + esc(mk.name + '　' + z.name) + '">' +
-      pxTag(mk.px, z.pal, '') + '</div>');
-  });
+  /* 營地那一排記號拿掉了：記號系統整個收掉（見 40-db.js actApprove）。
+     一趟走完留下什麼，由帶子、圖鑑、以及走廊變長來說。 */
 
   H.push('</div>');
   return H.join('');

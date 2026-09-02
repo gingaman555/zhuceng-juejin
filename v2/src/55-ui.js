@@ -493,26 +493,6 @@ var ACTS = {
 
   /* 在這一層留下一個記號。
 
-     插下去那一下會敲開那一層的石頭：有沒有東西是算出來的，
-     而遇到的是牠本人還是牠留下的痕跡，看這一趟準不準。
-     兩邊拿到的東西一樣多——差的只是遇到什麼。 */
-  bld: function (v) {
-    var t = myTeam();
-    var p = v.split(',');
-    var d = Number(p[1]);
-    if (!actBuild(t.teamId, d, p[0], lastSealed(t.teamId))) {
-      return say('那一層留不了。');
-    }
-    /* 插記號那一下敲開這一層的石頭。碰到的那幾隻會標進圖鑑的
-       「遇過」——那一條線是它接回終點的方式。 */
-    DRAFT.build = d;
-    DRAFT.uncover = actUncover(t.teamId, d);
-    say('留下了。');
-  },
-
-  /* 點誰蓋的東西：看那是哪一趟。 */
-  /* 點一組的欄頭：打開他們那張卡，並且捲到它。
-     沒有這一支，還沒留下東西的那幾組整條廊道點不動。 */
   team: function (id) {
     DRAFT.dt = id; DRAFT.tab = 'team'; render();
     var c = document.querySelector('.segs');
@@ -529,6 +509,7 @@ var ACTS = {
     actMentor(p[0], p[1] || '');
     render();
   },
+
 
 
   /* 學生改自己的招牌 */

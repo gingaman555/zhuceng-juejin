@@ -1655,18 +1655,9 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 /* 記號不再是鈕：點開跳出來的那張卡是別組的預估細節，而
    「每組的東西會有所不同不能當參考」。它現在是看得到的東西——
    壁龕留著，因為那個壁龕本身就是「有人在這裡放了東西」。 */
-.xs-bld{
-  position:absolute;bottom:6px;padding:3px;pointer-events:none;
-  background:rgba(0,0,0,.55);
-  box-shadow:inset 0 0 0 1px var(--gold-d), 0 0 0 1px rgba(0,0,0,.8)
-}
 /* 你上次來之後才插進去的。本來是會閃的金框——但它不再是鈕了，
    一個會閃的金框就是在說「按我」。改成靜的、亮一階：那是「新的」，
    不是「可以點」。 */
-.xs-bld.fresh{
-  box-shadow:inset 0 0 0 2px var(--gold2), 0 0 0 1px rgba(0,0,0,.8),
-    0 0 0 4px rgba(233,179,65,.20)
-}
 .xs-core{
   position:absolute;right:-8px;width:22px;height:44px;z-index:7;
   padding:0;border:none;background:none;cursor:pointer;opacity:1
@@ -2538,12 +2529,6 @@ button.ac:active{transform:translateY(1px)}
 
 /* 剖面圖上，那一趟蓋的東西站在那一層裡。
    深度是走出來的，蓋什麼是挑的——這是圖上唯一屬於「他們自己選的」東西。 */
-.xs-bld{
-  position:absolute;left:50%;bottom:3px;width:33px;height:33px;margin-left:-17px;
-  padding:0;border:none;background:none;cursor:pointer;z-index:3
-}
-.xs-bld .px{width:33px;height:33px;image-rendering:pixelated}
-.xs-bld:hover{filter:brightness(1.3)}
 
 /* ── 你說的那一天 ──
    原始設計裡就有的一條虛線，一直沒做。它讓「我承諾了幾天」在畫面上
@@ -2780,8 +2765,6 @@ button.ac:active{transform:translateY(1px)}
 
 /* 建築本身放大：那條廊道要讀起來像一條街，不是一排小圖示。 */
 /* 六種形狀要看得出輪廓，44px 還是太小。放到 55px，貼齊地面。 */
-.xs-bld{width:55px;height:41px;margin-left:-27px;bottom:2px}
-.xs-bld .px{width:55px;height:41px}
 
 /* 排行榜改成三顆點：實心是準的，空心是還沒。
    畫成點不畫成長條——長條會讀成「量」，而這裡是次數。 */
@@ -2836,11 +2819,6 @@ button.ac:active{transform:translateY(1px)}
 /* ── 營地 ──
    每走完一趟留下的那一個記號排在洞口的地上，洞口的寬度跟著長。
    十趟之後這裡是一個被你佈置過的營地——而首頁就是這條廊道。 */
-.mouth .mmark{
-  position:absolute;bottom:44px;width:33px;height:25px;
-  padding:0;border:none;background:none;cursor:pointer;z-index:4
-}
-.mouth .mmark .px{width:33px;height:25px;image-rendering:pixelated}
 
 /* 碰到的是誰留的。系統不編故事——這幾個字全部是別組自己打的。 */
 .unc-by{
@@ -2973,8 +2951,6 @@ button.ac:active{transform:translateY(1px)}
 }
 
 /* 營地上那一排。站在地上，高矮不齊——那正是重點。 */
-.mouth .mmark{width:26px;height:auto;bottom:44px}
-.mouth .mmark .px{width:26px;height:auto;max-height:154px;image-rendering:pixelated}
 
 /* ── 走過的每一趟 ──
    一趟一格，舊的在左、新的在右——跟廊道同一個方向，
@@ -4874,234 +4850,6 @@ function exportCsv(classId) {
 }
 
 
-/* ===== 15-builds.js ===== */
-/* ---------- 蓋在自己那塊地上的東西 ----------
-
-   本來這一步是三選一的裝備。裝備的問題是它沒有地方去：拿到了放在背包裡，
-   沒有人看得到，也不改變任何事——所以「道具的意義在哪裡」問了兩次都答不好。
-
-   改成蓋東西，那個問題就消失了：它有一個地方（你打通的那一格），
-   而且全班都看得到。
-
-   三條規則，缺一條這件事就會反過來咬整個作品：
-
-   一 · 建築是那一趟的紀念碑，不是獎品。
-        一趟封存蓋一座，就蓋在那一趟打通的那一格上。點下去看到的是
-        那一趟他們自己取的名、幾天、他們說幾天。所以整片領土就是
-        他們的預估史被畫成一個地方——那才是這個系統要教的東西。
-
-   二 · 三個選項完全沒有強弱。沒有產出、沒有加速、不擋任何事。
-        只要有一個「比較好」，人就會為了那個蓋，而不是為了專案做事。
-        那是受控動機，正好推翻這個作品要證的自發性。
-        它們只差在長相。
-
-   三 · 選項由岩層決定，而路線是隨機給的（見 13-strata.js 的 routeOf）。
-        所以你的地長什麼樣，記錄的是「你剛好在哪一層」，
-        不是「你做得多好」。兩組同樣五格可以完全不像——
-        這是平行陪伴的保險：那張圖讀不出高下。
-
-   還有一條是為了陪伴：兩組的建築貼在一起會長出一條連通的路
-   （見 66-map.js 的 linkPath）。別人在旁邊是好事，不是威脅。
-
-   畫法跟全作一致：'.' 透空、'#' 本體、'+' 陰影、'*' 高光，光從左上來。
-   顏色不用組別的顏色——地是組別的顏色，建築一律深色剪影加高光，
-   所以每一組的建築讀起來一樣重，差別只在形狀。 */
-
-var BUILD_PAL = { '#': '#171310', o: '#0B0908', '*': '#FFF3D8' };
-
-/* 六種留下來的記號。形狀本身就是接口：
-     火堆 · 繩梯    上下都通
-     刻痕 · 掛燈    只朝上（指回你來的方向）
-     石堆 · 垂繩    只朝下（給更深的地方）
-
-   本來這裡是「蓋建築」——那是把 PaGamO 的占地建設搬過來，
-   跟這個作品的故事相反：建設講的是定居與擁有，而這裡的前提是
-   你被困住、想離開。被困在輪迴裡的人會做的，是留記號給下一圈的
-   自己——而六層走完會回到同一層，你一定會再走到這裡。 */
-var FORMS = {
-  fire: ['................', '.......*........', '......*#*.......', '.....*#*#*......', 
-    '....*#*#*#*.....', '....#*###*#.....', '...*#*###*#*....', '...*#######*....', 
-    '....*#####*.....', '..++*#####*++...', '.++++++#++++++..', '..++++++++++....'],
-  ladder: ['...+#+....+#+...', '...+#+....+#+...', '...+#######+#+..', '...+#+....+#+...', 
-    '...+#+....+#+...', '...+#######+#+..', '...+#+....+#+...', '...+#+....+#+...', 
-    '...+#######+#+..', '...+#+....+#+...', '...+#+....+#+...', '...+#+....+#+...'],
-  mark: ['.......*........', '......*#*.......', '.....*#*#*......', '....*#*.*#*.....', 
-    '...*#*...*#*....', '......#.........', '......#.........', '......#.........', 
-    '......#.........', '......#.........', '.....+#+........', '....++#++.......'],
-  lamp: ['..*###+.........', '..*#+...........', '..*#+..*###+....', '..*#####*..*+...', 
-    '..*#+..*#**#+...', '..*#+..*####+...', '..*#+..*####+...', '..*#+..+####+...', 
-    '..*#+...+##+....', '..*#+...........', '..+#+...........', '..+++...........'],
-  cairn: ['................', '................', '......*##+......', '......*##+......', 
-    '.....*####+.....', '.....*####+.....', '....*######+....', '....*######+....', 
-    '...*########+...', '..*##########+..', '.+############+.', '+##############+'],
-  rope: ['..*######+......', '.......+#+......', '.......+#+......', '........+#+.....', 
-    '........+#+.....', '.......+#+......', '.......+#+......', '......+#+.......', 
-    '......+#+.......', '.......+#+......', '.......+#+......', '.......+#+......']
-};
-
-/* 六筆，不是十八筆。
-
-   本來每一層各有三筆，所以 wild_fire 跟 crys_fire 是兩筆資料、同一個形狀、
-   同一個名字，差別只有 zone 欄位——而 zone 從深度就算得出來（strataAt）。
-   顏色是那一層的顏色，形狀是你挑的，兩件事本來就該分開存。 */
-var BUILDS = [
-  { key: 'fire',   name: '火堆', port: 'ud', px: FORMS.fire },
-  { key: 'ladder', name: '繩梯', port: 'ud', px: FORMS.ladder },
-  { key: 'mark',   name: '刻痕', port: 'u',  px: FORMS.mark },
-  { key: 'lamp',   name: '掛燈', port: 'u',  px: FORMS.lamp },
-  { key: 'cairn',  name: '石堆', port: 'd',  px: FORMS.cairn },
-  { key: 'rope',   name: '垂繩', port: 'd',  px: FORMS.rope }
-];
-
-/* 這一趟可以留下的三種。一個接口一個：上下通、只朝上、只朝下——
-   所以上一層垂下來的口一定接得上，而三個之間沒有強弱。
-
-   同一個接口下有兩種形狀，給你目前留得比較少的那一個。
-   這是「循環的是環境不是內容」那條：走回同一個地層，顏色會一樣
-   （地層真的循環了），但形狀不會——營地上不會出現重複的一段。
-   計數是分層計的：只看你在「這個地層」留過什麼，不看別層。
-   平手的時候用深度決定，同一組走到同一層永遠拿到同一組選項。 */
-var PORTS = ['ud', 'u', 'd'];
-
-function offerAt(teamId, depth) {
-  var t = teamOf(teamId);
-  var here = strataAt(depth, teamId).key;
-  var have = {};
-  Object.keys((t && t.builds) || {}).forEach(function (k) {
-    var od = Number(k.slice(1));
-    if (strataAt(od, teamId).key !== here) return;
-    var d = buildDef(t.builds[k].k);
-    if (d) have[d.key] = (have[d.key] || 0) + 1;
-  });
-  return PORTS.map(function (p) {
-    var pair = BUILDS.filter(function (x) { return x.port === p; });
-    var da = have[pair[0].key] || 0;
-    var db = have[pair[1].key] || 0;
-    if (da !== db) return da < db ? pair[0] : pair[1];
-    return pair[hash('offer|' + p + '|' + teamId + '|' + depth) % 2];
-  });
-}
-
-/* 舊的存檔裡是 wild_fire 這種寫法（層＿形狀）。底線後面那一段就是形狀，
-   所以舊資料不用搬也讀得出來。 */
-function buildDef(key) {
-  var k = String(key || '');
-  if (k.indexOf('_') >= 0) k = k.split('_')[1];
-  var out = null;
-  BUILDS.forEach(function (b) { if (b.key === k) out = b; });
-  return out;
-}
-
-/* 這一層蓋了什麼。回傳 { k, runId } 或 null。
-
-   本來是掛在格子的座標上。格子地圖退休之後改掛在深度上——
-   一趟走完深度加一，那一層就是那一趟的位置。 */
-function buildAt(teamId, depth) {
-  var t = teamOf(teamId);
-  return (t && t.builds && t.builds['d' + depth]) || null;
-}
-
-/* 把這一趟插進那一層。一層只插一次。
-
-   key 不再有意義（本來是六種形狀的代號）。形狀現在由 runId 長出來，
-   所以只要記住是哪一趟就夠了。舊的存檔留著 k，讀得出來。 */
-function actBuild(teamId, depth, key, runId) {
-  var t = teamOf(teamId);
-  if (!t) return false;
-  if (depth < 0 || depth >= sealedDepth(teamId)) return false;
-  t.builds = t.builds || {};
-  if (t.builds['d' + depth]) return false;
-  t.builds['d' + depth] = { k: 'run', runId: runId || '' };
-  save();
-  return true;
-}
-
-/* 那一層插的是哪一趟，長成什麼樣子。
-
-   回傳 { px, name }：px 是那一趟長出來的柱子（見 43-core.js 的 coreOf），
-   name 是他自己取的名字。沒有取名就用天數——「6 天」也是一個名字。
-
-   舊的存檔裡 k 是六種形狀之一，那時候八個記號只有六種長相。
-   現在每一趟都不一樣，而不一樣的原因是他自己走出來的。 */
-function markAt(teamId, depth) {
-  var b = buildAt(teamId, depth);
-  if (!b) return null;
-  var px = b.runId ? coreOf(b.runId) : null;
-  if (!px) return null;
-  var kp = null;
-  keepsOf(teamId).forEach(function (x) { if (x.runId === b.runId) kp = x; });
-  var days = kp ? (kp.elapsed || 0) : 0;
-  return { px: px, runId: b.runId,
-    name: (kp && kp.name) || (days ? days + ' 天' : '這一趟'),
-    days: days, keep: kp };
-}
-
-/* 還沒蓋東西的那一層。沒有就回 -1。
-
-   通常只會有一層——走完一趟才多一層。回最淺的那一層，
-   萬一中間漏掉一層（改過資料、或是舊的存檔）也補得回來。 */
-function unbuiltDepth(teamId) {
-  var t = teamOf(teamId);
-  if (!t) return -1;
-  var bs = t.builds || {};
-  /* 用 sealedDepth 不用 depthOf：走完就往前，但要老師勾過才留得下。 */
-  var n = sealedDepth(teamId);
-  for (var d = 0; d < n; d++) if (!bs['d' + d]) return d;
-  return -1;
-}
-
-/* 最近封存的那一趟。蓋下去的東西要記得它是哪一趟的紀念碑——
-   沒有這一條，建築就只是裝飾。 */
-function lastSealed(teamId) {
-  var ks = keepsOf(teamId);
-  return ks.length ? ks[ks.length - 1].runId : '';
-}
-
-/* 這一層上站的是哪一趟。點下去看得到的就是這個。 */
-function buildStory(teamId, depth) {
-  var b = buildAt(teamId, depth);
-  if (!b) return null;
-  var k = null;
-  keepsOf(teamId).forEach(function (x) { if (x.runId === b.runId) k = x; });
-  var r = b.runId ? find('Runs', function (x) { return x.runId === b.runId; }) : null;
-  return { def: markAt(teamId, depth), keep: k, run: r };
-}
-
-/* ---------- 接口 ----------
-
-   每一座有「上接」與「下接」兩個口。往下走的時候，上一層留下的
-   向下口就是這一層的題目：選一座有向上口的就接起來。
-
-   接得上不會比較好，只是形狀不同——一旦它有好處，人就會為了接而蓋。 */
-function hasPort(key, dir) {
-  var d = buildDef(key);
-  return !!(d && d.port && d.port.indexOf(dir) >= 0);
-}
-
-/* 這一層跟上一層接得起來嗎。 */
-function linksUp(teamId, depth, key) {
-  if (depth <= 0) return false;
-  var up = buildAt(teamId, depth - 1);
-  if (!up) return false;
-  return hasPort(up.k, 'd') && hasPort(key, 'u');
-}
-
-/* 上一層留了向下的口嗎——那就是這一層的題目。 */
-function portAbove(teamId, depth) {
-  if (depth <= 0) return null;
-  var up = buildAt(teamId, depth - 1);
-  if (!up || !hasPort(up.k, 'd')) return null;
-  return buildDef(up.k);
-}
-
-/* 已經接起來的那幾段。剖面圖要畫連接。 */
-function linkedAt(teamId, depth) {
-  var a = buildAt(teamId, depth), b = buildAt(teamId, depth + 1);
-  if (!a || !b) return false;
-  return hasPort(a.k, 'd') && hasPort(b.k, 'u');
-}
-
-
 /* ===== 16-buried.js ===== */
 /* ---------- 地底下本來就埋著東西 ----------
 
@@ -6583,13 +6331,8 @@ function actApprove(runId, word) {
   var tm = teamOf(r.teamId);
   if (tm) tm.claims = (tm.claims || 0) + 1;
 
-  /* 插在最淺的那個還空著的層。通常就是這一趟走出來的那一層；
-     萬一中間漏掉一層（改過資料、舊存檔），也補得回來。 */
-  var d0 = unbuiltDepth(r.teamId);
-  if (d0 >= 0 && tm) {
-    tm.builds = tm.builds || {};
-    tm.builds['d' + d0] = { k: 'run', runId: runId };
-  }
+  /* 記號系統拿掉了。一趟走完留下什麼，由 Keeps（下面那一筆）、
+     帶子上多的那一格、圖鑑裡的「遇過」、以及走廊變長來說。 */
   DB.Keeps.push({
     keepId: nid('K'), teamId: r.teamId, runId: runId,
     name: '', at: now(),
@@ -7272,12 +7015,6 @@ function seed() {
       px: coreOf(k[1]),
       est: sh.est, elapsed: sh.elapsed, moved: sh.moved,
       rested: sh.rested, blank: sh.blank });
-    /* 把它插進那一層。真的走完是 actSeal 做這件事，而種子是直接
-       把那幾趟寫成 done 的——所以示範資料裡一個記號都沒有，
-       而記號是這張圖上唯一「別人做出來的東西」。 */
-    var tm = teamOf(k[0]);
-    if (tm) { tm.builds = tm.builds || {};
-      tm.builds['d' + kd] = { k: 'run', runId: k[1] }; }
   });
   DB.Config.seq = 100;
   save();
@@ -7780,26 +7517,6 @@ var ACTS = {
 
   /* 在這一層留下一個記號。
 
-     插下去那一下會敲開那一層的石頭：有沒有東西是算出來的，
-     而遇到的是牠本人還是牠留下的痕跡，看這一趟準不準。
-     兩邊拿到的東西一樣多——差的只是遇到什麼。 */
-  bld: function (v) {
-    var t = myTeam();
-    var p = v.split(',');
-    var d = Number(p[1]);
-    if (!actBuild(t.teamId, d, p[0], lastSealed(t.teamId))) {
-      return say('那一層留不了。');
-    }
-    /* 插記號那一下敲開這一層的石頭。碰到的那幾隻會標進圖鑑的
-       「遇過」——那一條線是它接回終點的方式。 */
-    DRAFT.build = d;
-    DRAFT.uncover = actUncover(t.teamId, d);
-    say('留下了。');
-  },
-
-  /* 點誰蓋的東西：看那是哪一趟。 */
-  /* 點一組的欄頭：打開他們那張卡，並且捲到它。
-     沒有這一支，還沒留下東西的那幾組整條廊道點不動。 */
   team: function (id) {
     DRAFT.dt = id; DRAFT.tab = 'team'; render();
     var c = document.querySelector('.segs');
@@ -7816,6 +7533,7 @@ var ACTS = {
     actMentor(p[0], p[1] || '');
     render();
   },
+
 
 
   /* 學生改自己的招牌 */
@@ -9309,13 +9027,10 @@ var SCN = {
      t     這一組
      row   現在在跑的那一個 run（可能沒有）
      st    停滯狀態 */
-/* 洞口有多寬。每留下一個記號就寬一點——那是「看得到自己的堆積」
-   最直接的做法：你的營地會變大，而首頁就是這條廊道。
-   有上限，不然走到後面整條廊道會被營地擠掉。 */
+/* 洞口有多寬。本來每留下一個記號就寬一點，記號系統拿掉之後它是一個
+   固定的數字。這一支留著是因為場景裡到處拿它算位置。 */
 function entOf(teamId) {
-  var t = teamOf(teamId);
-  var n = Object.keys((t && t.builds) || {}).length;
-  return SCN.ENT + Math.min(10, n) * 26;
+  return SCN.ENT;
 }
 
 function scene(t, row, st, kind) {
@@ -9690,29 +9405,8 @@ function sceneMouth(t, next, ENT, resting) {
     }
   }
 
-  /* ── 營地 ──
-
-     每走完一趟留下的那一個記號，一個一個排在洞口的地上，
-     而洞口的寬度跟著長（見 entOf）。十趟之後這裡是一個被你佈置過的
-     營地——而首頁就是這條廊道，所以每次打開都看得到。
-
-     這是「看得到自己的堆積」最直接的做法：不是散在各層一個 55px，
-     是全部在同一個地方、每次可見地多一個、而且一眼看得完。
-
-     本來這裡掛的是石片架。石片跟記號都是「一趟一個」，兩個都放就是
-     重複——石片留在任務清單裡，那裡點得開、而且有圖例。 */
-  var tm = teamOf(t.teamId);
-  var bs = (tm && tm.builds) || {};
-  var ds = Object.keys(bs).map(function (k) { return Number(k.slice(1)); })
-    .sort(function (x, y) { return x - y; });
-  ds.forEach(function (d, i) {
-    var mk = markAt(t.teamId, d);
-    if (!mk) return;
-    var z = strataAt(d, t.teamId);
-    H.push('<div class="mmark" style="left:' + (72 + i * 30) + 'px" ' +
-      'title="' + esc(mk.name + '　' + z.name) + '">' +
-      pxTag(mk.px, z.pal, '') + '</div>');
-  });
+  /* 營地那一排記號拿掉了：記號系統整個收掉（見 40-db.js actApprove）。
+     一趟走完留下什麼，由帶子、圖鑑、以及走廊變長來說。 */
 
   H.push('</div>');
   return H.join('');
@@ -10003,8 +9697,10 @@ function dragScene() { dragBox('.scn-scroll', 'scn'); }
 
    岩壁裡住著東西。牠們跟任何一組的進度都無關，就只是住在那裡——
    擋在你走廊盡頭的那一隻，只是其中一隻。牠們不是鈕：要查一隻
-   去圖鑑，那裡有全部二十四隻。這張圖上可以點的只有一句話：
-   **別組的東西可以點**——那一組（欄頭），那一組留下的（記號）。
+   去圖鑑，那裡有全部二十四隻。
+
+   記號系統拿掉之後，這張圖上可以點的只剩一種：欄頭，那一組是誰。
+   一種東西一句話。
 
    立體感來自每一塊右邊的側面（見 54-eco.css），不是把整條廊道斜著推——
    正交的長條看起來像進度表，有側面的廊道看起來像地下城。 */
@@ -10170,20 +9866,9 @@ function xsShaft(r, i, maxD, mine) {
     H.push('<div class="xs-seg ' + band.key + (dug ? ' dug' : '') + (here ? ' here' : '') +
       '" style="top:' + xsTop(d) + 'px">');
     if (here) H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
-    /* 那一趟蓋的東西站在那一層裡。這是這張圖上唯一屬於「那一組自己選的」
-       東西——深度是走出來的，蓋什麼是挑的。 */
-    var bg = dug && markAt(r.teamId, d);
-    if (bg) {
-      /* 放在一個有燈的壁龕裡。石頭上挖出來的那一格跟旁邊不一樣，
-         那就是「有人在這裡放了東西」——不用寫一句話說它可以點。
-
-         你上次來之後才插進去的那幾個鑲著金邊。首頁那一條說了
-         「全班新留了幾個」，但數字只說有事發生，圖說發生在哪裡。 */
-      var fresh = SEEN_CUT && bg.keep && bg.keep.at > SEEN_CUT;
-      H.push('<div class="xs-bld' + (fresh ? ' fresh' : '') + '" title="' +
-        esc(bg.name) + '">' + pxTag(bg.px, strataAt(d, r.teamId).pal, '') + '</div>');
-      /* 接起來那一段拿掉了：形狀由那一趟長出來，沒有接口這件事。 */
-    }
+    /* 記號系統整個拿掉了，所以這一格裡不再放東西。這張圖上剩下的是
+       每一組打通到哪、正在走哪一格、還有誰在裡面——那三件事本來
+       就是這一頁在回答的。 */
     H.push('</div>');
   }
 
@@ -10261,7 +9946,8 @@ PAGES.eco = function () {
   /* 跨進新的一層的時候石頭會變。這一張本來在「大躍進」那一頁上，
      但那一頁只有這一張是內容，其餘是「去看看那一層」——
      而去看看到的就是這裡。所以它直接長在這裡。 */
-  var nd = unbuiltDepth(t.teamId);
+  /* 本來是看「哪一層還沒插記號」。記號拿掉之後直接看走到多深。 */
+  var nd = depthOf(t.teamId);
   if (nd > 0) {
     var zn = strataAt(nd, t.teamId), zw = strataAt(nd - 1, t.teamId);
     if (zn.key !== zw.key) {
@@ -10435,22 +10121,8 @@ function taskRow(m, r, t) {
     H.push('</div>');
   }
 
-  /* 封存過的那一趟：名字跟那一根石片。
-     石片終於有出處了——它掛在它自己那一趟旁邊。 */
-  /* 這一趟留下的那個記號，掛在它自己那一趟旁邊。
-     點下去打開記號的卡片——那一趟長成什麼樣子在裡面。 */
-  var bd = null, bdD = -1;
-  Object.keys(t.builds || {}).forEach(function (bk) {
-    if (t.builds[bk].runId === r.runId) { bd = t.builds[bk]; bdD = Number(bk.slice(1)); }
-  });
-  var def = bd && markAt(t.teamId, bdD);
-  if (def) {
-    var z = strataAt(bdD, t.teamId);
-    H.push('<div class="tk-k">');
-    H.push(pxTag(def.px, z.pal, 'core'));
-    H.push('<span>' + esc(def.name) + '</span>');
-    H.push('</div>');
-  }
+  /* 那一趟插在哪一層的記號拿掉了：記號系統整個收掉。
+     這一列剩下的是任務、說幾天、實際幾天、準不準——那一趟本身。 */
 
   H.push('</div>');
   return H.join('');

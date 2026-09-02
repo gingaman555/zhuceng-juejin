@@ -84,22 +84,8 @@ function taskRow(m, r, t) {
     H.push('</div>');
   }
 
-  /* 封存過的那一趟：名字跟那一根石片。
-     石片終於有出處了——它掛在它自己那一趟旁邊。 */
-  /* 這一趟留下的那個記號，掛在它自己那一趟旁邊。
-     點下去打開記號的卡片——那一趟長成什麼樣子在裡面。 */
-  var bd = null, bdD = -1;
-  Object.keys(t.builds || {}).forEach(function (bk) {
-    if (t.builds[bk].runId === r.runId) { bd = t.builds[bk]; bdD = Number(bk.slice(1)); }
-  });
-  var def = bd && markAt(t.teamId, bdD);
-  if (def) {
-    var z = strataAt(bdD, t.teamId);
-    H.push('<div class="tk-k">');
-    H.push(pxTag(def.px, z.pal, 'core'));
-    H.push('<span>' + esc(def.name) + '</span>');
-    H.push('</div>');
-  }
+  /* 那一趟插在哪一層的記號拿掉了：記號系統整個收掉。
+     這一列剩下的是任務、說幾天、實際幾天、準不準——那一趟本身。 */
 
   H.push('</div>');
   return H.join('');

@@ -189,12 +189,6 @@ function seed() {
       px: coreOf(k[1]),
       est: sh.est, elapsed: sh.elapsed, moved: sh.moved,
       rested: sh.rested, blank: sh.blank });
-    /* 把它插進那一層。真的走完是 actSeal 做這件事，而種子是直接
-       把那幾趟寫成 done 的——所以示範資料裡一個記號都沒有，
-       而記號是這張圖上唯一「別人做出來的東西」。 */
-    var tm = teamOf(k[0]);
-    if (tm) { tm.builds = tm.builds || {};
-      tm.builds['d' + kd] = { k: 'run', runId: k[1] }; }
   });
   DB.Config.seq = 100;
   save();

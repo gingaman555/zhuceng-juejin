@@ -861,12 +861,6 @@ button.ac:active{transform:translateY(1px)}
 
 /* 剖面圖上，那一趟蓋的東西站在那一層裡。
    深度是走出來的，蓋什麼是挑的——這是圖上唯一屬於「他們自己選的」東西。 */
-.xs-bld{
-  position:absolute;left:50%;bottom:3px;width:33px;height:33px;margin-left:-17px;
-  padding:0;border:none;background:none;cursor:pointer;z-index:3
-}
-.xs-bld .px{width:33px;height:33px;image-rendering:pixelated}
-.xs-bld:hover{filter:brightness(1.3)}
 
 /* ── 你說的那一天 ──
    原始設計裡就有的一條虛線，一直沒做。它讓「我承諾了幾天」在畫面上
@@ -1103,8 +1097,6 @@ button.ac:active{transform:translateY(1px)}
 
 /* 建築本身放大：那條廊道要讀起來像一條街，不是一排小圖示。 */
 /* 六種形狀要看得出輪廓，44px 還是太小。放到 55px，貼齊地面。 */
-.xs-bld{width:55px;height:41px;margin-left:-27px;bottom:2px}
-.xs-bld .px{width:55px;height:41px}
 
 /* 排行榜改成三顆點：實心是準的，空心是還沒。
    畫成點不畫成長條——長條會讀成「量」，而這裡是次數。 */
@@ -1159,11 +1151,6 @@ button.ac:active{transform:translateY(1px)}
 /* ── 營地 ──
    每走完一趟留下的那一個記號排在洞口的地上，洞口的寬度跟著長。
    十趟之後這裡是一個被你佈置過的營地——而首頁就是這條廊道。 */
-.mouth .mmark{
-  position:absolute;bottom:44px;width:33px;height:25px;
-  padding:0;border:none;background:none;cursor:pointer;z-index:4
-}
-.mouth .mmark .px{width:33px;height:25px;image-rendering:pixelated}
 
 /* 碰到的是誰留的。系統不編故事——這幾個字全部是別組自己打的。 */
 .unc-by{
@@ -1296,8 +1283,6 @@ button.ac:active{transform:translateY(1px)}
 }
 
 /* 營地上那一排。站在地上，高矮不齊——那正是重點。 */
-.mouth .mmark{width:26px;height:auto;bottom:44px}
-.mouth .mmark .px{width:26px;height:auto;max-height:154px;image-rendering:pixelated}
 
 /* ── 走過的每一趟 ──
    一趟一格，舊的在左、新的在右——跟廊道同一個方向，

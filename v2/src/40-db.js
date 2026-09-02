@@ -874,13 +874,8 @@ function actApprove(runId, word) {
   var tm = teamOf(r.teamId);
   if (tm) tm.claims = (tm.claims || 0) + 1;
 
-  /* 插在最淺的那個還空著的層。通常就是這一趟走出來的那一層；
-     萬一中間漏掉一層（改過資料、舊存檔），也補得回來。 */
-  var d0 = unbuiltDepth(r.teamId);
-  if (d0 >= 0 && tm) {
-    tm.builds = tm.builds || {};
-    tm.builds['d' + d0] = { k: 'run', runId: runId };
-  }
+  /* 記號系統拿掉了。一趟走完留下什麼，由 Keeps（下面那一筆）、
+     帶子上多的那一格、圖鑑裡的「遇過」、以及走廊變長來說。 */
   DB.Keeps.push({
     keepId: nid('K'), teamId: r.teamId, runId: runId,
     name: '', at: now(),
