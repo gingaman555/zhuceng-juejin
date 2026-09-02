@@ -160,6 +160,35 @@ PAGES.review = function () {
   /* 他們自己寫的兩段放最上面。他在這一頁要做的事是寫一句話，
      而最有用的輸入就是這兩段——本來排在整張卡的最後面。
      系統不解讀、不歸類，原話放上去就好。 */
+  /* ── 他們回報了什麼 ──
+
+     這一頁是「在系統確認學生時間與回報狀況」的地方，所以那三樣要
+     擺在最上面：每一件說幾天／實際幾天、順不順、為什麼。
+
+     兩欄並排是重點——這個作品在練的就是那兩個數字之間的距離，
+     而老師要寫那一句話的時候，看的就是這張表。 */
+  var pl = r.plan || [], sp = r.spent || [];
+  if (pl.length) {
+    H.push('<div class="eyebrow">他們拆的那幾件　說／實際</div>');
+    H.push('<div class="splist">');
+    pl.forEach(function (x, i) {
+      var got = sp[i] == null ? null : sp[i];
+      H.push('<div class="sp2">');
+      H.push('<b style="background:' + stepHue(i) + '"></b>');
+      H.push('<i>' + esc(x.n) + '</i>');
+      H.push('<u class="said">說 ' + x.d + '</u>');
+      H.push('<u class="got' + (got != null && got > x.d ? ' over' : '') + '">' +
+        (got == null ? '—' : got) + '</u>');
+      H.push('</div>');
+    });
+    H.push('</div>');
+  }
+  if (r.feel) {
+    var fn = ({ good: '順', ok: '普通', bad: '不順' })[r.feel] || '';
+    H.push('<div class="eyebrow">他們覺得進展</div>');
+    H.push('<div class="feels one"><span class="fl on">' + esc(fn) + '</span></div>');
+  }
+  if (r.why) H.push('<p class="quote"><b>為什麼</b>' + nl(r.why) + '</p>');
   if (r.hard) H.push('<p class="quote"><b>他們說卡在哪裡</b>' + nl(r.hard) + '</p>');
   if (r.pace) H.push('<p class="quote"><b>他們覺得的進度</b>' + nl(r.pace) + '</p>');
   H.push(estBar(r.est, r.actual, false));

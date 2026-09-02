@@ -298,6 +298,9 @@ function actionCard(t, next, st) {
     H.push(btn('看準不準', 'go:stamp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'back') {
+    /* 老師退回來了——牠站起來了。那不是懲罰：那一趟的兩個數字在他
+       交出去的當下就定了，退回不動判定也不動深度。站起來講的只有
+       一件事：那份成果還沒被收下。 */
     /* 老師退回來了。他的話放大——那是這一刻唯一要讀的東西，
        而且退回一定帶著話（沒寫理由的退回擋在資料層）。 */
     H.push('<div class="eyebrow warnx">老師退回來了</div>');

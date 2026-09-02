@@ -559,10 +559,15 @@ function runDepth(run) {
 }
 
 /* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
+/* 打敗過的那幾隻。
+
+   本來只要 est 有值就算——那是「承諾了」不是「打敗了」，所以一個
+   還在走的任務，牠已經進圖鑑了。改成看 stamp：判定出來那一刻，
+   牠才算被打敗。 */
 function metMobs(teamId) {
   var seen = {};
   runsFor(teamId).forEach(function (x) {
-    if (!x.run.est) return;
+    if (!x.run.stamp) return;
     var m = mobOfRun(x.run);
     if (m) seen[m.n] = x.ms.title;
   });
@@ -634,9 +639,24 @@ function actSubmit(teamId, runId, link) {
 
    自己當學生走一次才發現的。loop.js 抓不到，因為它直接呼叫 DB 的
    函式，不走介面——所以下面補了一條斷言。 */
-function actReflect(teamId, runId, overs, hard, pace) {
+/* 回報。三樣東西，都不進判定——判定只讀承諾幾天與實際幾天。
+
+     spent  每一件實際花幾天。他承諾的時候一件一件估過，
+            現在一件一件回報實際；兩欄擺在一起就是他的估算練習。
+     feel   順／普通／不順。
+     why    為什麼。全系統唯一的自由書寫。 */
+function actReflect(teamId, runId, overs, hard, pace, o) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return null;
+  o = o || {};
+  var pl = r.plan || [];
+  if (o.spent) {
+    r.spent = pl.map(function (x, i) {
+      return clamp(0, RULES.EST_MAX, Number(o.spent[i]) || 0);
+    });
+  }
+  if (o.feel) r.feel = ({ good: 1, ok: 1, bad: 1 })[o.feel] ? o.feel : '';
+  if (o.why != null) r.why = String(o.why).slice(0, 300);
   r.overs = overs || [];
   /* 他們自己寫的兩段。系統沒有給選項，也不解讀——
      這是全系統唯一的自由書寫，而那正好是「不替他們定義」的極致。 */

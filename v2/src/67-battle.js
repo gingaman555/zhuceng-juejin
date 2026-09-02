@@ -60,7 +60,9 @@ function btPhase(r) {
   if (r.state !== 'running') return 'play';
   var ph = S.p.ph;
   if (!ph) return 'menu';
-  if (ph === 'q1' && !stepsOf(r.runId)) return btAskHard(r.teamId) ? 'q2' : 'q1';
+  /* 沒拆件就沒有第一問可問，直接跳第二問。 */
+  /* 沒拆件就沒有第一問可問，直接跳第二問。 */
+  if (ph === 'q1' && !((r.plan || []).length)) return 'q2';
   return ph;
 }
 
@@ -142,15 +144,30 @@ function btChoice(act, label, cls) {
 }
 
 /* 第一問：老師分的段，勾掉做完的。 */
+/* 第一問：前面開的這些細項，實際花了多少時間。
+
+   承諾的時候他一件一件估過，現在一件一件回報實際。預設帶入他當初
+   估的那個數字——「沒改」本身就是一個答案，而且他不用從零開始按。
+
+   本來這一問是「勾掉哪幾段做完了」。勾掉不帶任何數字，而這個作品
+   在量的東西是數字。 */
 function btSteps(runId) {
-  var sp = stepsOf(runId);
-  if (!sp) return '';
-  var H = ['<div class="steps-list">'];
-  sp.all.forEach(function (x, i) {
-    var on = sp.on.indexOf(i) >= 0;
-    H.push('<button class="stp' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'tick:' + runId + '|' + i })) + '\'>' +
-      '<b></b><i>' + esc(x) + '</i></button>');
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  var pl = (r && r.plan) || [];
+  if (!pl.length) return '';
+  if (!DRAFT.spent) DRAFT.spent = pl.map(function (x) { return x.d; });
+  var H = ['<div class="splist">'];
+  pl.forEach(function (x, i) {
+    H.push('<div class="sp2">');
+    H.push('<b style="background:' + stepHue(i) + '"></b>');
+    H.push('<i>' + esc(x.n) + '</i>');
+    H.push('<u class="said">說 ' + x.d + '</u>');
+    H.push('<button class="pd" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'spent:' + i + ',-1' })) + '\'>−</button>');
+    H.push('<u class="got">' + DRAFT.spent[i] + '</u>');
+    H.push('<button class="pd" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'spent:' + i + ',1' })) + '\'>＋</button>');
+    H.push('</div>');
   });
   H.push('</div>');
   return H.join('');
@@ -163,20 +180,30 @@ function btSteps(runId) {
 
    輸入框跟 DRAFT 綁著、而且不重畫：重畫會把 innerHTML 換掉，
    打到一半的字會不見，游標也會跳掉。 */
+/* 第二問：順不順，跟為什麼。
+
+   「進度如何」本來是一個空白的多行框，而那是一個要人自己想格式的
+   問題——三選一之後它答得掉，而「為什麼」才是真正有內容的那一格。 */
+var FEELS = [['good', '順'], ['ok', '普通'], ['bad', '不順']];
 function btAsk(r) {
   var H = [];
-  if (stepNames(r.runId).length) {
-    H.push('<div class="bt-qh">哪一段比你想的久</div>');
-    H.push(overRow(r));
+  H.push('<div class="bt-qh">目前專案進展的狀況你覺得如何</div>');
+  H.push('<div class="feels">');
+  FEELS.forEach(function (f) {
+    H.push('<button class="fl' + (DRAFT.feel === f[0] ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'feel:' + f[0] })) +
+      '\'>' + esc(f[1]) + '</button>');
+  });
+  H.push('</div>');
+  /* 「為什麼」要打字，所以照深度問：走完四趟才開始。
+     他還沒走過幾趟的時候，那個問題答不出來，逼出來的字是為了交差的字，
+     而那一刻資料就開始說謊。 */
+  if (btAskHard(r.teamId)) {
+    H.push('<div class="bt-qh">為什麼</div>');
+    H.push('<textarea class="bt-w" rows="3" maxlength="300" ' +
+      'oninput="DRAFT.why=this.value" placeholder="' +
+      esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>');
   }
-  H.push('<div class="bt-qh">做的時候卡在哪裡嗎</div>');
-  H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
-    'oninput="DRAFT.hard=this.value" placeholder="' +
-    esc('選填。沒有就空著。') + '">' + esc(draft('hard', '')) + '</textarea>');
-  H.push('<div class="bt-qh">你覺得現在的進度如何</div>');
-  H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
-    'oninput="DRAFT.pace=this.value" placeholder="' +
-    esc('選填。沒有就空著。') + '">' + esc(draft('pace', '')) + '</textarea>');
   return H.join('');
 }
 
@@ -282,9 +309,9 @@ ACTS.btgo = function (id) {
 /* 第一問答完：打牠一下，進第二問。 */
 ACTS.btq1 = function (id) {
   battleStop();
-  var t = myTeam();
-  /* 還沒走完四趟：第一問答完就直接交，不問困境。 */
-  if (!btAskHard(t.teamId)) return ACTS.btq2(id);
+  /* 一律進第二問。「順／普通／不順」是一下，不是一段文章——
+     漸進的是「系統要求他說明自己的深度」，而那個深度在「為什麼」
+     那一格上（見 btAsk），不在這一個三選一上。 */
   S.p = { id: id, ph: 'q2', hurt: 1 };
   render();
 };
@@ -294,9 +321,11 @@ ACTS.btq1 = function (id) {
 ACTS.btq2 = function (id) {
   var t = myTeam();
   battleStop();
-  actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace);
+  actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
+    { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why });
   if (!actSubmit(t.teamId, id, '')) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
+  DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', hurt: 1 };
   render();
 };

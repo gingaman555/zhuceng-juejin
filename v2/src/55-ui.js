@@ -518,6 +518,23 @@ var ACTS = {
 
 
 
+  /* 回報：某一件實際花幾天。到頭就停在那裡。 */
+  spent: function (v) {
+    var q = String(v).split(',');
+    var i = Number(q[0]);
+    var a = (DRAFT.spent || []).slice();
+    if (a[i] == null) return;
+    a[i] = clamp(0, RULES.EST_MAX, a[i] + Number(q[1]));
+    DRAFT.spent = a;
+    render();
+  },
+
+  /* 順／普通／不順。再點一次同一個就收回來——「我不想說」也是一個答案。 */
+  feel: function (k) {
+    DRAFT.feel = (DRAFT.feel === k) ? '' : k;
+    render();
+  },
+
   /* 挑一個角色。它不進任何判定、不影響任何數字——就是「這是我」。 */
   hero: function (k) {
     var u = me();

@@ -458,3 +458,42 @@
    哪一邊是量出來的（見 61-scene.js 的 say），不是猜的。 */
 .hero-tag.os.os-l{left:auto;right:0}
 .hero-tag.os.os-l::after{left:auto;right:29px}
+
+/* ── 回報第一問：每一件實際花了幾天 ──
+   兩個數字並排：他當初說的（灰、不能動）跟他現在報的（金、加減鍵）。
+   並排是重點——這個作品在練的就是那兩個數字之間的距離。 */
+.splist{display:flex;flex-direction:column;gap:5px;margin:0 0 14px}
+.sp2{
+  display:flex;align-items:center;gap:8px;padding:6px 8px;
+  background:rgba(0,0,0,.34);box-shadow:inset 0 2px 0 rgba(0,0,0,.4)
+}
+.sp2 b{flex:0 0 11px;height:22px;display:block}
+.sp2 i{flex:1;font-style:normal;font-size:22px;color:var(--ink);
+  overflow-wrap:anywhere;min-width:0}
+.sp2 u{text-decoration:none;font-size:22px;font-variant-numeric:tabular-nums}
+.sp2 u.said{flex:0 0 66px;text-align:right;color:var(--mute)}
+.sp2 u.got{flex:0 0 44px;text-align:center;color:var(--gold)}
+.sp2 .pd{
+  flex:0 0 44px;height:44px;border:0;cursor:pointer;font:inherit;
+  font-size:22px;line-height:1;color:#1A1408;background:var(--gold);
+  box-shadow:2px 2px 0 rgba(0,0,0,.6)
+}
+.sp2 .pd:hover{background:var(--gold2)}
+.sp2 .pd:active{transform:translate(2px,2px);box-shadow:none}
+
+/* ── 回報第二問：順／普通／不順 ──
+   三顆一樣大。沒有一顆長得比較「對」——選不順不會有任何後果。 */
+.feels{display:flex;gap:8px;margin:0 0 14px}
+.fl{
+  flex:1;height:66px;border:0;cursor:pointer;font:inherit;font-size:22px;
+  color:var(--ink);background:var(--sunk);
+  box-shadow:inset 0 0 0 2px var(--line)
+}
+.fl:hover{background:var(--panel2)}
+.fl:active{transform:translateY(2px)}
+.fl.on{color:#1A1408;background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold2)}
+
+/* 老師那一頁上，那三樣是唯讀的：不能按，只是看。 */
+.feels.one{max-width:132px}
+.feels.one .fl{cursor:default}
+.sp2 u.got.over{color:var(--over)}
