@@ -20,21 +20,37 @@ PAGES.gate = function () {
   H.push('<div class="gate-box">');
   H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
   H.push('<h1>專案地下城</h1>');
-  H.push('<p class="lead">你被困在一座沒有底的地下城裡。' +
-         '六層走完會回到第一層，順序是隨機的——往下走，走不出去。</p>');
-  H.push('<p class="lead">唯一的出口是把手上這個專案做完。' +
-         '要花幾天，是你自己說了算。</p>');
 
-  /* 進去那兩顆放在第一屏，不要捲。世界觀擺在它們底下——
-     想看的人往下捲，要進去的人不用。 */
+  /* 第一句要是「為什麼用這個」，不是「這是什麼世界」。
+     沒有一個專案工具敢說第一行——它們全部在量產出、量完成度、量誰落後。 */
+  H.push('<p class="promise">這裡不看你做得好不好。</p>');
+  H.push('<p class="promise2">只有你說幾天，跟你實際走了幾天。</p>');
+
+  /* 整個系統就是這一張圖：一條尺、你說的那一點、你實際走到的那一段。
+     沒有第二個規則。所以它放在最前面，而且不配一句說明。 */
+  H.push('<div class="gate-bar">' + estBar(5, 6, false) + '</div>');
+
+  /* 進去那兩顆放在第一屏，不要捲。 */
   H.push('<div class="row">');
   H.push(btn('登入', 'go:login', 'big'));
   H.push(btn('我是新的', 'go:reg', 'ghost'));
   H.push('</div>');
 
+  /* 一趟就這四件事。四個圖示一排，不寫成一段話。 */
+  H.push('<div class="four">');
+  [
+    [ICONS.home, '說幾天'], [ICONS.pack, '去做事'],
+    [ICONS.radar, '交出去看判定'], [ICONS.eco, '看全班在哪']
+  ].forEach(function (x, i) {
+    if (i) H.push('<i class="fr-a"></i>');
+    H.push('<div class="fr">' + pxTag(x[0], ICON_ON, 'fr-px') +
+      '<b>' + esc(x[1]) + '</b></div>');
+  });
+  H.push('</div>');
+
   /* 六層。進去之前就知道下面有什麼，那是世界，不是說明。
      刻意不寫「地下幾公尺起」——層沒有先後，順序是每一個班隨機洗出來的。 */
-  H.push('<div class="eyebrow" style="margin-top:33px">下面有這六層</div>');
+  H.push('<div class="eyebrow" style="margin-top:44px">你會走過的地方</div>');
   H.push('<div class="zones">');
   STRATA.forEach(function (s) {
     var c = faunaOf(s.key)[0];
@@ -45,9 +61,7 @@ PAGES.gate = function () {
     H.push('</div>');
   });
   H.push('</div>');
-  H.push('<p class="dim">六層沒有先後，你們班會拿到哪一個順序是隨機的。' +
-         '走完六層回到第一層，一直循環。' +
-         '你能帶出去的，是這一路上你說了幾天、實際走了幾天。</p>');
+  H.push('<p class="dim">順序每一個班隨機洗一次。走完六層回到第一層。</p>');
   H.push('</div></div>');
   return H.join('');
 };

@@ -1175,3 +1175,28 @@ button.tk-k:hover span{color:var(--gold)}
   .bpick .bp-h{font-size:22px}
   .bpick .bp{flex:1 1 100%}
 }
+
+/* ── 開頭 ──
+   第一句是「為什麼用這個」，不是「這是什麼世界」。
+   底下那張尺是整個系統，所以它不配說明。 */
+.gate .promise{
+  font-size:44px;line-height:1.25;color:var(--ink);
+  margin:11px 0 0;text-wrap:balance
+}
+.gate .promise2{font-size:22px;color:var(--gold);margin:5px 0 22px}
+.gate-bar{max-width:440px;margin:0 0 22px}
+
+/* 一趟就這四件事。 */
+.four{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  margin:33px 0 0;padding:14px 0;border-top:1px solid var(--line2)
+}
+.fr{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:66px}
+.fr-px{width:22px;height:22px;image-rendering:pixelated}
+.fr b{font-size:11px;font-weight:400;color:var(--dim);white-space:nowrap}
+.fr-a{width:14px;height:2px;background:var(--line2);flex:0 0 14px}
+@media (max-width:520px){
+  .gate .promise{font-size:33px}
+  .four{gap:5px}
+  .fr{min-width:55px}
+}

@@ -135,26 +135,28 @@ function taskTag(next) {
   })[next.kind] || '';
 }
 
-/* 底下那三樣：營火、出口、招牌。都是偶爾才用的，但都不能藏起來——
-   沒觸發過的東西等於不存在。 */
+/* 廊道底下那一排門。都是偶爾才用的，但都不能藏起來——
+   沒觸發過的東西等於不存在。
+
+   本來這裡是營火、出口、招牌。營火拿掉了：它問的「哪一段比你想的久」
+   已經是戰鬥的第二題，而且它的 lit 條件永遠是 false，從來沒亮過。
+   招牌也拿掉了：專案名在頂條上，而且點得進去改。
+   換上來的是任務清單與圖鑑——它們本來各佔一個分頁，但它們不是步驟。 */
 function deskRow(t, next) {
-  /* 營火在兩趟之間點著，跟廊道裡那一堆是同一件事——
-     本來寫的是 camp，而那個分岔已經拿掉了，所以它永遠不會亮。 */
-  var lit = !next.row || !next.row.run;
   var H = ['<div class="desk">'];
-  H.push('<button class="dk' + (lit ? ' lit' : '') + '" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'peek:camp' })) + '\' title="' +
-    esc(lit ? '營火：說一下哪一段比想的久' : '營火（還沒點著）') + '">' +
-    pxTag(CAMPFIRE.px, lit ? CAMPFIRE.pal : COLD_PAL, '') + '<i>營火</i></button>');
+  H.push('<button class="dk lit" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
+    esc('任務清單：老師派過的每一件事') + '">' +
+    pxTag(ICONS.pack, ICON_ON, '') + '<i>任務清單</i></button>');
+  H.push('<button class="dk lit" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
+    esc('圖鑑：這座地下城裡有什麼') + '">' +
+    pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i></button>');
   H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
     esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +
-    pxTag(ICONS.codex, t.exitAsk ? ICON_ON : ICON_PAL, '') + '<i>出口</i></button>');
-  var sg = signOf(t.teamId);
-  H.push('<button class="dk lit" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:sign' })) + '\' title="' +
-    esc('招牌：' + (t.project || '（還沒定）')) + '">' +
-    pxTag(sg.px, sg.pal, '') + '<i>' + esc(t.project || '（還沒定）') + '</i></button>');
+    pxTag(ICONS.log, t.exitAsk ? ICON_ON : ICON_PAL, '') +
+    '<i>出口</i></button>');
   H.push('</div>');
   return H.join('');
 }
@@ -483,19 +485,14 @@ PAGES.pick = function () {
            '<p class="quote">' + nl(r.word) + '</p></div>');
   }
 
+  /* 這一趟的數字。本來這裡還畫一根石片——石片跟記號一樣一趟一個，
+     兩個都放就是重複，所以石片併進記號了：那個形狀現在是點開記號
+     才看到的東西，不是另一個要學的名詞。 */
   H.push('<div class="card fa ' + z.key + ' coreview">');
-  H.push('<div class="cv-in">');
-  H.push(pxTag(coreOf(r.runId), z.pal, 'core big'));
-  H.push('<div>');
   H.push('<div class="eyebrow">' + esc(z.name) + '</div>');
-  H.push('<div class="corekey">');
-  H.push('<span><b class="c1"></b>來過 ' + s.moved + ' 天</span>');
-  if (s.rested) H.push('<span><b class="c2"></b>你說沒動 ' + s.rested + ' 天</span>');
-  if (s.blank) H.push('<span><b class="c3"></b>沒有紀錄 ' + s.blank + ' 天</span>');
-  H.push('</div>');
   H.push('<div class="log-num">說 <b>' + s.est + '</b> 天　·　過了 <b>' +
     s.elapsed + '</b> 天</div>');
-  H.push('</div></div></div>');
+  H.push('</div>');
 
 
   /* 這幾天你動過哪幾天。
@@ -572,7 +569,7 @@ PAGES.exit = function () {
   H.push('<div><b>' + e.runs.length + '</b><span>走完的里程碑</span></div>');
   H.push('<div><b>' + e.days + '</b><span>來過的天數</span></div>');
   H.push('<div><b>' + e.zones.length + '</b><span>走過的地層</span></div>');
-  H.push('<div><b>' + e.keeps.length + '</b><span>封存的石片</span></div>');
+  H.push('<div><b>' + e.keeps.length + '</b><span>留下的記號</span></div>');
   /* 走了幾圈。exitRecord 一直算著它，但那一頁從來沒畫出來——
      無盡輪迴的設定在終點最該被說一次。 */
   if (e.cycles) H.push('<div><b>' + e.cycles + '</b><span>走過的輪迴</span></div>');

@@ -46,7 +46,6 @@ PAGES.pack = function () {
     H.push('</div>');
   }
 
-  H.push(coreCard());
 
   H.push('<div class="card"><div class="rec-list">');
   rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
@@ -87,17 +86,21 @@ function taskRow(m, r, t) {
 
   /* 封存過的那一趟：名字跟那一根石片。
      石片終於有出處了——它掛在它自己那一趟旁邊。 */
-  var kp = null;
-  keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
-  if (kp) {
-    var z = STRATA[0];
-    STRATA.forEach(function (x) { if (x.key === kp.zone) z = x; });
-    /* 點得開：那一根怎麼讀（一天兩格、實心＝來過、空心＝說沒動、
-       破的＝沒有紀錄）在 coreCard 裡面。 */
+  /* 這一趟留下的那個記號，掛在它自己那一趟旁邊。
+     點下去打開記號的卡片——那一趟長成什麼樣子在裡面。 */
+  var bd = null, bdD = -1;
+  Object.keys(t.builds || {}).forEach(function (bk) {
+    if (t.builds[bk].runId === r.runId) { bd = t.builds[bk]; bdD = Number(bk.slice(1)); }
+  });
+  var def = bd && buildDef(bd.k);
+  if (def) {
+    var z = strataAt(bdD, t.teamId);
+    var kp = null;
+    keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
     H.push('<button class="tk-k" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'core:' + kp.keepId })) + '\'>');
-    H.push(pxTag(kp.px || coreOf(kp.runId), z.pal, 'core'));
-    H.push('<span>' + esc(kp.name || '（沒取名）') + '</span>');
+      esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + bdD })) + '\'>');
+    H.push(pxTag(def.px, z.pal, 'core'));
+    H.push('<span>' + esc((kp && kp.name) || def.name) + '</span>');
     H.push('</button>');
   }
 

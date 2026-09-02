@@ -174,21 +174,6 @@ function xsShaft(r, i, maxD, mine) {
     H.push('</div>');
   }
 
-  /* 封存過的石片掛在它們被封存的那個深度。
-
-     這是這張圖上唯一會一直長出新東西的地方，而且長出新東西的是別人。
-     內容一定會用完（六層走完一圈就沒有新的石頭了），同學不會。
-     點得開——好奇「他們那一週長什麼樣」比任何名次都有用。 */
-  keepsOf(r.teamId).forEach(function (k, n) {
-    if (n >= maxD) return;
-    var kz = STRATA[0];
-    STRATA.forEach(function (z) { if (z.key === k.zone) kz = z; });
-    H.push('<button class="xs-core" style="top:' + (xsTop(n) + 6) + 'px" ' +
-      'data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'core:' + k.keepId })) +
-      '\' title="' + esc(k.name || '（沒取名）') + '">' +
-      pxTag(k.px || coreOf(k.runId), kz.pal, 'mcore') + '</button>');
-  });
-
   /* 小人站在最深的那一格 */
   /* 走出去的那一組，人站在地表上——他不在下面了。 */
   var at = r.depth + (r.at > 0 ? 1 : 0);
@@ -227,101 +212,12 @@ function faunaCard() {
   return H.join('');
 }
 
-ACTS.fauna = function (name) { DRAFT.fa = name; DRAFT.ck = null; render(); };
-ACTS.core = function (id) { DRAFT.ck = id; DRAFT.fa = null; render(); };
+ACTS.fauna = function (name) { DRAFT.fa = name; render(); };
+
 
 /* 點開的那一根石片。別組的也點得開——那是這張圖上唯一會一直
    長出新東西的地方，而且長出新東西的是別人。 */
-function coreCard() {
-  if (!DRAFT.ck) return '';
-  var k = null;
-  DB.Keeps.forEach(function (x) { if (x.keepId === DRAFT.ck) k = x; });
-  if (!k) return '';
-  var z = STRATA[0];
-  STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
-  var tm = teamOf(k.teamId);
-  var r = find('Runs', function (x) { return x.runId === k.runId; });
-  var m = r ? msOf(r.msId) : null;
 
-  var H = ['<div class="card fa ' + z.key + '"><div class="fa-in">'];
-  H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'core big'));
-  H.push('<div>');
-  H.push('<div class="eyebrow">' + esc(tm ? tm.name : '') + '　·　' + esc(z.name) + '</div>');
-  H.push('<h2>' + esc(k.name || '（沒取名）') + '</h2>');
-  if (m) H.push('<p class="lead">' + esc(m.title) + '</p>');
-  H.push('<div class="corekey">');
-  H.push('<span><b class="c1"></b>來過 ' + (k.moved || 0) + ' 天</span>');
-  if (k.rested) H.push('<span><b class="c2"></b>說沒動 ' + k.rested + ' 天</span>');
-  if (k.blank) H.push('<span><b class="c3"></b>沒有紀錄 ' + k.blank + ' 天</span>');
-  H.push('</div>');
-  H.push('<div class="log-num">說 <b>' + (k.est || 0) + '</b> 天　·　過了 <b>' +
-    (k.elapsed || 0) + '</b> 天</div>');
-  H.push('</div></div></div>');
-  return H.join('');
-}
-
-/* 圖例拿掉了。一張要配對照表才看得懂的圖，是那張圖沒畫好——
-   顏色對到地層、實心對到走過、小人對到人在哪，這幾件事看一次就會了。
-   點得開的那幾樣（生物、別組的石片）自己會說明自己。 */
-
-function ecoRows(classId) {
-  return ecology(classId).map(function (r) {
-    var tm = teamOf(r.teamId);
-    r.project = tm && tm.project;
-    return r;
-  });
-}
-
-/* ---------- 學生看到的 ---------- */
-PAGES.eco = function () {
-  var t = myTeam();
-  var rows = ecoRows(t.classId);
-  /* 地圖回到這一頁。首頁要的是「不用學就懂」，那是廊道；
-     這張圖要學三條規則（一格＝一趟、顏色＝哪一組、亮的可以點），
-     所以它屬於一個你特地過來看的地方。
-
-     打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
-  var H = [head('全班地下城', '大家都在下面', '')];
-  H.push(xsScene(rows, t.teamId, t.classId));
-  /* 點岩壁裡那一隻會設 DRAFT.fa，但顯示那一張卡的 faunaCard
-     沒有人呼叫——所以點下去一直是沒有反應的。 */
-  H.push(faunaCard());
-  /* 排行榜。刻意加進來、準備好隨時拿掉的——見 68-rank.js。
-     要拿掉就刪掉這一行跟那兩個檔案，沒有別的地方依賴它。 */
-  H.push(rankCard(t.classId, t.teamId));
-  /* 跨進新的一層的時候石頭會變。這一張本來在「大躍進」那一頁上，
-     但那一頁只有這一張是內容，其餘是「去看看那一層」——
-     而去看看到的就是這裡。所以它直接長在這裡。 */
-  var nd = unbuiltDepth(t.teamId);
-  if (nd > 0) {
-    var zn = strataAt(nd, t.teamId), zw = strataAt(nd - 1, t.teamId);
-    if (zn.key !== zw.key) {
-      H.push('<div class="card fa ' + zn.key + ' zone-in">');
-      H.push('<div class="eyebrow">石頭變了</div>');
-      H.push('<h2>' + esc(zn.name) + '</h2>');
-      H.push('<p class="lead">' + esc(zn.note) + '</p>');
-      H.push('</div>');
-    }
-  }
-
-  H.push(uncoverCard(t));
-  H.push(buildPick(t));
-  H.push(buildCard(t));
-  H.push(digTeamCard(t.classId));
-  H.push(coreCard());
-
-  var fd = feedOf(t.classId, 20);
-  if (fd.length) {
-    H.push('<div class="eyebrow feed-h">全班最近</div>');
-    H.push('<div class="feed">');
-    fd.forEach(function (f) { H.push(feedRow(f, t.teamId)); });
-    H.push('</div>');
-  }
-  H.push(btn('回自己的廊道', 'go:home', 'ghost'));
-  return H.join('');
-};
-
-/* ---------- 老師看到的：同一張圖，底下多一段細節 ---------- */
 PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
@@ -335,7 +231,6 @@ PAGES.classeco = function () {
      要去勾就在審核那一頁，那才是它該在的地方。 */
   H.push(xsScene(rows, null, u.classId));
   H.push(digTeamCard(u.classId));
-  H.push(coreCard());
 
   /* 只留一句：現在有幾組在等你。等你看的那幾件在審核那一頁。 */
   var waiting = radar(u.classId).length;

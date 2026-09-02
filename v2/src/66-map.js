@@ -74,13 +74,20 @@ function shortName(n) {
 }
 
 /* 點一組：看他們走到哪一層、封存過哪幾根。 */
-ACTS.digteam = function (id) { DRAFT.dt = id; DRAFT.ck = null; render(); };
+ACTS.digteam = function (id) { DRAFT.dt = id; render(); };
 
 function digTeamCard(classId) {
   if (!DRAFT.dt) return '';
   var t = teamOf(DRAFT.dt);
   if (!t) return '';
-  var ks = keepsOf(t.teamId).slice().reverse();
+  /* 他們留下的記號，深的在前面。石片併進記號之後這裡排的就是記號——
+     名字跟天數本來掛在石片上，現在掛在記號上。 */
+  var ks = Object.keys(t.builds || {}).map(function (bk) {
+    var d = Number(bk.slice(1));
+    var kp = null;
+    keepsOf(t.teamId).forEach(function (x) { if (x.runId === t.builds[bk].runId) kp = x; });
+    return { d: d, def: buildDef(t.builds[bk].k), keep: kp };
+  }).filter(function (x) { return x.def; }).sort(function (a, b) { return b.d - a.d; });
   var z = strataAt(depthOf(t.teamId), t.teamId);
   var H = ['<div class="card dtcard fa ' + z.key + '">'];
   H.push('<div class="radar-head">');
@@ -94,17 +101,17 @@ function digTeamCard(classId) {
   if (ks.length) {
     H.push('<div class="rack">');
     ks.forEach(function (k) {
-      var kz = STRATA[0];
-      STRATA.forEach(function (x) { if (x.key === k.zone) kz = x; });
-      H.push('<div class="rk">');
-      H.push(pxTag(k.px || coreOf(k.runId), kz.pal, 'core'));
-      H.push('<b>' + esc(k.name || '') + '</b>');
-      H.push('<span>' + (k.elapsed || 0) + ' 天</span>');
-      H.push('</div>');
+      var kz = strataAt(k.d, t.teamId);
+      H.push('<button class="rk" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + k.d })) + '\'>');
+      H.push(pxTag(k.def.px, kz.pal, 'core'));
+      H.push('<b>' + esc((k.keep && k.keep.name) || k.def.name) + '</b>');
+      H.push('<span>' + ((k.keep && k.keep.elapsed) || 0) + ' 天</span>');
+      H.push('</button>');
     });
     H.push('</div>');
   } else {
-    H.push('<p class="dim">還沒有封存過的岩心。</p>');
+    H.push('<p class="dim">還沒留下過東西。</p>');
   }
   H.push('</div>');
   return H.join('');
@@ -174,19 +181,29 @@ function buildCard(t) {
   if (!st || !st.def) return '';
   var tm = teamOf(p[0]);
   var z = strataAt(Number(p[1]), p[0]);
+  var k = st.keep;
   var H = ['<div class="card bstory ' + z.key + '">'];
   H.push('<div class="bs-in">');
-  H.push(pxTag(st.def.px, BUILD_PAL, 'bs-px'));
+  /* 點開來看到的是那一趟長成的樣子：一天兩列，來過是實心、
+     說了沒動是空心、沒有紀錄是斷的。這一份本來是另一個東西（石片），
+     跟記號一樣一趟一個——併進來了。 */
+  if (k) H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'bs-core'));
+  else H.push(pxTag(st.def.px, BUILD_PAL, 'bs-px'));
   H.push('<div>');
   H.push('<div class="eyebrow">' + esc(tm ? tm.name : '') + '　·　' + esc(st.def.name) + '</div>');
-  if (st.keep && st.keep.name) {
-    H.push('<h2>' + esc(st.keep.name) + '</h2>');
-  }
+  if (k && k.name) H.push('<h2>' + esc(k.name) + '</h2>');
   if (st.run) {
     H.push('<dl class="rep">');
     H.push('<dt>他們說</dt><dd>' + st.run.est + '</dd>');
-    H.push('<dt>實際</dt><dd>' + (st.run.actual || st.keep && st.keep.elapsed || 0) + '</dd>');
+    H.push('<dt>實際</dt><dd>' + (st.run.actual || (k && k.elapsed) || 0) + '</dd>');
     H.push('</dl>');
+  }
+  if (k && k.moved) {
+    H.push('<div class="corekey">');
+    H.push('<span><b class="c1"></b>來過 ' + k.moved + ' 天</span>');
+    if (k.rested) H.push('<span><b class="c2"></b>說沒動 ' + k.rested + ' 天</span>');
+    if (k.blank) H.push('<span><b class="c3"></b>沒有紀錄 ' + k.blank + ' 天</span>');
+    H.push('</div>');
   }
   H.push('</div></div></div>');
   return H.join('');

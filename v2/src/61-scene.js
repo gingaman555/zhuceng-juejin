@@ -237,15 +237,9 @@ function scene(t, row, st, kind) {
   return H.join('');
 }
 
-/* 角色背上背著的東西。
-
-   這個系統裡拿得到的東西只有一種：封存過的石片。所以背上背的就是它們——
-   一趟一根，學期越後面背得越滿。那不是裝飾，那是「你帶著什麼在走」。
-
-   它不加速、不擋失準、不換任何東西（一旦能換到好處，人就為好處做事）。
-   它只有一個作用：走著走著，你身上的東西變多了。
-
-   最多畫四根。再多背上就是一團色塊，看不出那是幾根樣本。 */
+/* 背上本來背著封存過的石片。石片併進記號之後，
+   「走著走著身上的東西變多了」改由洞口的營地講——
+   那裡一趟多一個，而且首頁就是那條廊道，每次打開都看得到。 */
 /* 照面那一頁上的自己。跟廊道裡走的是同一個人、同一身裝備——
    不然那一下就不是「我上去」，只是一張圖。 */
 function heroTag(teamId) {
@@ -253,20 +247,7 @@ function heroTag(teamId) {
     heroPack(teamId) + '</div>';
 }
 
-function heroPack(teamId) {
-  var ks = keepsOf(teamId);
-  if (!ks.length) return '';
-  var show = ks.slice(-4);
-  var H = ['<div class="hpack" title="' + esc('背上的石片 ' + ks.length + ' 根') + '">'];
-  show.forEach(function (k, i) {
-    var z = STRATA[0];
-    STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
-    H.push('<img class="px hp" style="left:' + (i * 5) + 'px;bottom:' + (i * 3) +
-      'px" src="' + pxSvg(k.px || coreOf(k.runId), z.pal, false) + '" alt="">');
-  });
-  H.push('</div>');
-  return H.join('');
-}
+function heroPack() { return ''; }
 
 /* ---------- 洞口 ----------
    左邊是你進來的地方：拱門、從上面落下來的光、掛著的招牌。

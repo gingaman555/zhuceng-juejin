@@ -242,9 +242,11 @@ function sideBar() {
     headBlock = '<div class="side-head"><div class="k">TUNNEL</div>' +
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
+    /* 兩個。四件事是流程，不是分頁——說幾天、去做事、看判定都在廊道，
+       第四件是看全班在哪。任務清單與圖鑑不是步驟，是地方，
+       它們在廊道底下那一排小門。 */
     nav = [
-      ['home', '廊道'], ['pack', '任務清單'], ['codex', '圖鑑'],
-      ['eco', '全班地下城']
+      ['home', '廊道'], ['eco', '全班地下城']
     ];
   }
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
