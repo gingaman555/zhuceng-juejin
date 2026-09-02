@@ -248,9 +248,30 @@ if (!/function pushedToday/.test(src)) {
   console.error('找不到 pushedToday——「一天一格」的守門不見了');
 }
 
+/* ---------- 六 · 按得到的東西底下要真的有那一支 ----------
+
+   砍一段死碼的時候順手把 bld: 砍掉了，而三個測試全部通過——
+   畫面照樣畫得出那三張卡，只是按下去什麼都不會發生。
+   把每一個 a: 'xxx' 對回 ACTS，對不上就擋。 */
+const acts = {};
+/* 兩種寫法：ACTS 那個物件裡的 xxx: function，跟後面補掛的 ACTS.xxx = */
+let am;
+const reLit = /([a-z][a-zA-Z]*):\s*function/g;
+while ((am = reLit.exec(src))) acts[am[1]] = 1;
+const reSet = /ACTS\.([a-z][a-zA-Z]*)\s*=/g;
+while ((am = reSet.exec(src))) acts[am[1]] = 1;
+
+const miss = {};
+const reUse = /a: '([a-z][a-zA-Z]*)/g;
+while ((am = reUse.exec(src))) { if (!acts[am[1]]) miss[am[1]] = 1; }
+Object.keys(miss).forEach(function (k) {
+  bad++;
+  console.error('畫面按得到 ' + k + '，但是 ACTS 裡沒有這一支');
+});
+
 if (bad) {
   console.error('\n' + bad + ' 項殘留。');
   process.exit(1);
 }
 console.log('殘留檢查通過：' + BANNED.length + ' 個禁用詞、畫面代號、寫死的規則句、' +
-  '判定的純度、生態圖不排序、一天一格，都守住了。');
+  '判定的純度、生態圖不排序、一天一格、按得到的都接得上，都守住了。');

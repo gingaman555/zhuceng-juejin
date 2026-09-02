@@ -399,7 +399,32 @@ var ACTS = {
   /* 老師勾可以了 → 去挑裝備 */
   gear: function (runId) { go('pick', { id: runId }); },
 
+  /* 在這一層留下一個記號。
+
+     插下去那一下會敲開那一層的石頭：有沒有東西是算出來的，
+     而遇到的是牠本人還是牠留下的痕跡，看這一趟準不準。
+     兩邊拿到的東西一樣多——差的只是遇到什麼。 */
+  bld: function (v) {
+    var t = myTeam();
+    var p = v.split(',');
+    var d = Number(p[1]);
+    if (!actBuild(t.teamId, d, p[0], lastSealed(t.teamId))) {
+      return say('那一層留不了。');
+    }
+    DRAFT.build = d;
+    DRAFT.uncover = actUncover(t.teamId, d);
+    say('留下了。');
+  },
+
   /* 點誰蓋的東西：看那是哪一趟。 */
+  /* 點一組的欄頭：打開他們那張卡，並且捲到它。
+     沒有這一支，還沒留下東西的那幾組整條廊道點不動。 */
+  team: function (id) {
+    DRAFT.dt = id; DRAFT.sb = null; render();
+    var c = document.querySelector('.dtcard');
+    if (c) c.scrollIntoView({ block: 'center' });
+  },
+
   seeb: function (v) { var p = v.split(','); DRAFT.sb = p; DRAFT.dt = p[0]; render(); },
 
   /* 封存這一趟。名字與方向都選填。 */

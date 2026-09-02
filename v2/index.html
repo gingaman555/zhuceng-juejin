@@ -6578,7 +6578,32 @@ var ACTS = {
   /* 老師勾可以了 → 去挑裝備 */
   gear: function (runId) { go('pick', { id: runId }); },
 
+  /* 在這一層留下一個記號。
+
+     插下去那一下會敲開那一層的石頭：有沒有東西是算出來的，
+     而遇到的是牠本人還是牠留下的痕跡，看這一趟準不準。
+     兩邊拿到的東西一樣多——差的只是遇到什麼。 */
+  bld: function (v) {
+    var t = myTeam();
+    var p = v.split(',');
+    var d = Number(p[1]);
+    if (!actBuild(t.teamId, d, p[0], lastSealed(t.teamId))) {
+      return say('那一層留不了。');
+    }
+    DRAFT.build = d;
+    DRAFT.uncover = actUncover(t.teamId, d);
+    say('留下了。');
+  },
+
   /* 點誰蓋的東西：看那是哪一趟。 */
+  /* 點一組的欄頭：打開他們那張卡，並且捲到它。
+     沒有這一支，還沒留下東西的那幾組整條廊道點不動。 */
+  team: function (id) {
+    DRAFT.dt = id; DRAFT.sb = null; render();
+    var c = document.querySelector('.dtcard');
+    if (c) c.scrollIntoView({ block: 'center' });
+  },
+
   seeb: function (v) { var p = v.split(','); DRAFT.sb = p; DRAFT.dt = p[0]; render(); },
 
   /* 封存這一趟。名字與方向都選填。 */
@@ -9124,181 +9149,6 @@ var MAP_PX = {
   rubble: RUBBLE, crystal: CRYSTAL, shroom: SHROOM, bolt: BOLT, ember: EMBER
 };
 
-/* 一塊地的輪廓：只有對外的那幾邊要描。內部的接縫不描，
-   五格連在一起才會讀成一塊地而不是五個方塊。
-   光還是從左上來，但現在照的是整塊地。 */
-function edgeShadow(own, x, y, who) {
-  var s = [];
-  var up = own[x + ',' + (y - 1)] === who;
-  var dn = own[x + ',' + (y + 1)] === who;
-  var lf = own[(x - 1) + ',' + y] === who;
-  var rt = own[(x + 1) + ',' + y] === who;
-  if (!up) s.push('inset 0 3px 0 rgba(255,255,255,.38)');
-  if (!lf) s.push('inset 3px 0 0 rgba(255,255,255,.20)');
-  if (!dn) s.push('inset 0 -3px 0 rgba(0,0,0,.55)');
-  if (!rt) s.push('inset -3px 0 0 rgba(0,0,0,.42)');
-  return s.join(',');
-}
-
-function digMap(classId, meId) {
-  var teams = where('Teams', function (t) { return t.classId === classId; });
-  /* 列數是固定的。會跟著最深的人長的話，那張圖就會變成
-     「誰把地圖撐得比較長」——那又是一條長條。 */
-  var rows = DIG.H;
-  var W = MAP_L + DIG.W * DIG.CELL;
-  var H = MAP_T + rows * DIG.CELL;
-
-  /* 自己有幾格可以打通。有的話，能打通的那幾格會亮起來、點得動。 */
-  var canClaim = meId ? claimsOf(meId) : 0;
-  var open = {};
-  if (canClaim) {
-    openCells(classId, meId).forEach(function (c) { open[c[0] + ',' + c[1]] = 1; });
-  }
-  /* 兩組都構得到的那幾格。誰先點誰拿走——最軟的一種競爭：
-     沒有名次，也不會失去任何已經有的東西。 */
-  var hot = contestedCells(classId);
-
-  /* 誰在哪一格，先攤成一張表，不然每一格都要掃一次全班。 */
-  var own = {}, hue = {};
-  teams.forEach(function (t) {
-    hue[t.teamId] = teamHue(classId, t.teamId);
-    (t.cells || []).forEach(function (c) { own[c[0] + ',' + c[1]] = t.teamId; });
-  });
-
-  var out = ['<div class="dig-wrap"><div class="dig" style="width:' + W +
-    'px;height:' + H + 'px">'];
-
-  out.push(mapSurface(classId, teams, hue, meId));
-
-  /* 每一組醒來的地方。散在整片地上，不是排在最上面那一排——
-     排在同一排就等於發給每一組一條車道，而車道就是長條圖。 */
-  teams.forEach(function (t) {
-    var sc = startCell(classId, t.teamId);
-    out.push('<div class="dig-shaft' + (t.teamId === meId ? ' mine' : '') +
-      '" style="left:' + (MAP_L + sc[0] * DIG.CELL) + 'px;top:' +
-      (MAP_T + sc[1] * DIG.CELL - 5) + 'px"></div>');
-    out.push('<div class="dig-n' + (t.teamId === meId ? ' mine' : '') +
-      '" style="left:' + (MAP_L + sc[0] * DIG.CELL - 11) + 'px;top:' +
-      (MAP_T + sc[1] * DIG.CELL - 22) + 'px;color:' + hue[t.teamId] + '">' +
-      esc(shortName(t.name)) + '</div>');
-  });
-
-  for (var y = 0; y < rows; y++) {
-    var z = strataAt(y, classId);
-    var cy = MAP_T + y * DIG.CELL;
-    for (var x = 0; x < DIG.W; x++) {
-      var o = own[x + ',' + y];
-      var st = 'left:' + (MAP_L + x * DIG.CELL) + 'px;top:' + cy + 'px';
-      if (o) {
-        /* 打通了的地。只描對外的那幾邊。 */
-        /* 上面站著那一趟蓋的東西。地是空的沒有意義，
-           上面站著東西才是「這是我們的」。 */
-        var bd = buildAt(o, x, y);
-        var bg = bd && buildDef(bd.k);
-        out.push('<button class="dg-c dug' + (o === meId ? ' mine' : '') +
-          '" style="' + st + ';background:' + hue[o] + ';box-shadow:' +
-          edgeShadow(own, x, y, o) + '" ' +
-          'data-act="run" data-p=\'' +
-          esc(JSON.stringify({ a: bd ? 'seeb:' + o + ',' + x + ',' + y : 'digteam:' + o })) +
-          '\' title="' + esc(teamOf(o).name + (bg ? '　' + bg.name : '')) + '">' +
-          (bg ? pxTag(bg.px, BUILD_PAL, 'bld') : '') + '</button>');
-      } else if (open[x + ',' + y]) {
-        var h = hot[x + ',' + y];
-        out.push('<button class="dg-c rock can' + (h ? ' hot' : '') +
-          (buriedHint(classId, x, y) ? ' has' : '') + ' ' + z.key +
-          '" style="' + st + '" data-act="run" data-p=\'' +
-          esc(JSON.stringify({ a: 'dig:' + x + ',' + y })) + '\' title="' +
-          esc(h ? '這一格另一組也構得到——誰先點誰拿走' : '打通這一格') + '"></button>');
-      } else {
-        /* 還沒打通的岩層。裡面有東西——同一層長的跟廊道裡一樣。 */
-        /* 有東西的那幾格看得出來，但看不出是什麼。
-           看得出來，「往哪裡打通」才是一個真的選擇；
-           看不出是什麼，那一格才值得去。 */
-        out.push('<div class="dg-c rock v' + (hash(classId + '~' + x + ',' + y) % 3) +
-          (hot[x + ',' + y] ? ' hot2' : '') +
-          (buriedHint(classId, x, y) ? ' has' : '') +
-          ' ' + z.key + '" style="' + st + '">' +
-          mapProp(classId, x, y, z) + '</div>');
-      }
-    }
-    /* 岩層交界不是一條直線。每一欄的高度用座標算，所以它犬牙交錯，
-       看起來像地質不像表格。 */
-    if (y > 0 && y % ZONE_SPAN === 0) {
-      out.push(zoneSeam(classId, y, cy, strataAt(y - 1, classId)));
-    }
-    /* 層的名字放在左邊那一條裡，一層只標一次。 */
-    if (y % ZONE_SPAN === 0) {
-      out.push('<div class="dig-z ' + z.key + '" style="top:' + (cy + 6) + 'px">' +
-        esc(z.name) + '</div>');
-    }
-  }
-
-  /* 角色站在自己最前緣那一格上——下一步會從那裡打通出去。
-     有一趟在走的時候他就在那裡走。 */
-  if (meId) {
-    var mine = cellsOf(meId);
-    if (mine.length) {
-      var f = mine[mine.length - 1];
-      var run = where('Runs', function (r) {
-        return r.teamId === meId && r.state === 'running';
-      })[0];
-      out.push('<div class="dig-hero' + (run ? ' walking' : '') + '" style="left:' +
-        (MAP_L + f[0] * DIG.CELL + 4) + 'px;top:' + (MAP_T + f[1] * DIG.CELL - 16) + 'px">');
-      if (run) {
-        out.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
-        out.push(pxTag(HERO.walkB, HERO.pal, 'ch wf wb'));
-      } else {
-        out.push(pxTag(HERO.idle, HERO.pal, 'ch'));
-      }
-      out.push('</div>');
-    }
-  }
-
-  /* 兩組的地貼在一起的地方長出一條路。別人在旁邊是好事，不是威脅——
-     這是這張圖上唯一會因為別人靠近而多出來的東西。 */
-  Object.keys(own).forEach(function (k) {
-    var p = k.split(','), x = Number(p[0]), y = Number(p[1]);
-    if (own[(x + 1) + ',' + y] && own[(x + 1) + ',' + y] !== own[k]) {
-      out.push('<div class="dig-link v" style="left:' +
-        (MAP_L + (x + 1) * DIG.CELL - 3) + 'px;top:' +
-        (MAP_T + y * DIG.CELL + 11) + 'px"></div>');
-    }
-    if (own[x + ',' + (y + 1)] && own[x + ',' + (y + 1)] !== own[k]) {
-      out.push('<div class="dig-link h" style="left:' +
-        (MAP_L + x * DIG.CELL + 11) + 'px;top:' +
-        (MAP_T + (y + 1) * DIG.CELL - 3) + 'px"></div>');
-    }
-  });
-
-  out.push('</div></div>');
-
-  /* 有權利的時候說一聲。會亮的那幾格就在畫面上，所以一句就夠。 */
-  if (canClaim) {
-    out.push('<div class="dig-can">你有 ' + canClaim + ' 格可以打通。點亮起來的那幾格。</div>');
-  }
-
-  /* 打通到碰在一起的那幾對。這是這張圖上最好的一件事：
-     「甲組跟丙組打通了」是一個會真的發生的教室事件，而且它不是比較。 */
-  var nb = neighbours(classId);
-  if (nb.length) {
-    out.push('<div class="dig-nb">');
-    nb.forEach(function (p) {
-      if (!p[0] || !p[1]) return;
-      out.push('<span>' + esc(p[0].name) + ' ✕ ' + esc(p[1].name) + ' 打通了</span>');
-    });
-    out.push('</div>');
-  }
-  return out.join('');
-}
-
-/* ---------- 地表 ----------
-
-   本來這裡只有一條 6px 的綠線。有了天空與林子之後，整張圖才有「上面」——
-   而「上面」是這個作品唯一的方向感：往下沒有出口，出口在你來的地方。
-
-   根脈層那一句寫「上面那片林子的根穿下來」，現在圖上看得到那片林子。
-
-   每一組的井口畫在他們的起點那一欄：那是他們下來的地方。 */
 function mapSurface(classId, teams, hue, meId) {
   var W = DIG.W * DIG.CELL;
   var H = ['<div class="dig-sky" style="left:0;width:' + (MAP_L + W) + 'px;height:' +
