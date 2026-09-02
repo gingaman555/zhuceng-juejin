@@ -6446,11 +6446,12 @@ function sideBar() {
     headBlock = '<div class="side-head"><div class="k">TUNNEL</div>' +
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
-    /* 兩個。四件事是流程，不是分頁——說幾天、去做事、看判定都在廊道，
-       第四件是看全班在哪。任務清單與圖鑑不是步驟，是地方，
-       它們在廊道底下那一排小門。 */
+    /* 三個。四件事是流程，不是分頁——說幾天、去做事、看判定都在廊道，
+       第四件是看全班在哪。任務清單不是步驟，但它是「老師派過的每一件事
+       各自走到哪」，那是隨時會想確認的東西，所以它在側欄。
+       圖鑑是想逛才逛的，在廊道底下那一排門。 */
     nav = [
-      ['home', '廊道'], ['eco', '全班地下城']
+      ['home', '廊道'], ['pack', '任務清單'], ['eco', '全班地下城']
     ];
   }
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
@@ -7289,10 +7290,7 @@ function taskTag(next) {
    換上來的是任務清單與圖鑑——它們本來各佔一個分頁，但它們不是步驟。 */
 function deskRow(t, next) {
   var H = ['<div class="desk">'];
-  H.push('<button class="dk lit" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
-    esc('任務清單：老師派過的每一件事') + '">' +
-    pxTag(ICONS.pack, ICON_ON, '') + '<i>任務清單</i></button>');
+  /* 任務清單在側欄，這裡不再放一次——兩個地方都放就是重複。 */
   H.push('<button class="dk lit" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
     esc('圖鑑：這座地下城裡有什麼') + '">' +
@@ -8646,6 +8644,69 @@ ACTS.fauna = function (name) { DRAFT.fa = name; render(); };
 
 /* 點開的那一根石片。別組的也點得開——那是這張圖上唯一會一直
    長出新東西的地方，而且長出新東西的是別人。 */
+
+
+/* 圖例拿掉了。一張要配對照表才看得懂的圖，是那張圖沒畫好——
+   顏色對到地層、實心對到走過、小人對到人在哪，這幾件事看一次就會了。
+   點得開的那幾樣（生物、別組留下的記號）自己會說明自己。 */
+
+function ecoRows(classId) {
+  return ecology(classId).map(function (r) {
+    var tm = teamOf(r.teamId);
+    r.project = tm && tm.project;
+    return r;
+  });
+}
+
+/* ---------- 學生看到的 ---------- */
+PAGES.eco = function () {
+  var t = myTeam();
+  var rows = ecoRows(t.classId);
+  /* 地圖回到這一頁。首頁要的是「不用學就懂」，那是廊道；
+     這張圖要學三條規則（一格＝一趟、顏色＝哪一組、亮的可以點），
+     所以它屬於一個你特地過來看的地方。
+
+     打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
+  var H = [head('全班地下城', '大家都在下面', '')];
+  H.push(xsScene(rows, t.teamId, t.classId));
+  /* 點岩壁裡那一隻會設 DRAFT.fa，但顯示那一張卡的 faunaCard
+     沒有人呼叫——所以點下去一直是沒有反應的。 */
+  H.push(faunaCard());
+  /* 排行榜。刻意加進來、準備好隨時拿掉的——見 68-rank.js。
+     要拿掉就刪掉這一行跟那兩個檔案，沒有別的地方依賴它。 */
+  H.push(rankCard(t.classId, t.teamId));
+  /* 跨進新的一層的時候石頭會變。這一張本來在「大躍進」那一頁上，
+     但那一頁只有這一張是內容，其餘是「去看看那一層」——
+     而去看看到的就是這裡。所以它直接長在這裡。 */
+  var nd = unbuiltDepth(t.teamId);
+  if (nd > 0) {
+    var zn = strataAt(nd, t.teamId), zw = strataAt(nd - 1, t.teamId);
+    if (zn.key !== zw.key) {
+      H.push('<div class="card fa ' + zn.key + ' zone-in">');
+      H.push('<div class="eyebrow">石頭變了</div>');
+      H.push('<h2>' + esc(zn.name) + '</h2>');
+      H.push('<p class="lead">' + esc(zn.note) + '</p>');
+      H.push('</div>');
+    }
+  }
+
+  H.push(uncoverCard(t));
+  H.push(buildPick(t));
+  H.push(buildCard(t));
+  H.push(digTeamCard(t.classId));
+
+  var fd = feedOf(t.classId, 20);
+  if (fd.length) {
+    H.push('<div class="eyebrow feed-h">全班最近</div>');
+    H.push('<div class="feed">');
+    fd.forEach(function (f) { H.push(feedRow(f, t.teamId)); });
+    H.push('</div>');
+  }
+  H.push(btn('回自己的廊道', 'go:home', 'ghost'));
+  return H.join('');
+};
+
+/* ---------- 老師看到的：同一張圖，底下多一段細節 ---------- */
 
 PAGES.classeco = function () {
   var u = me();

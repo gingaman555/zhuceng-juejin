@@ -144,10 +144,7 @@ function taskTag(next) {
    換上來的是任務清單與圖鑑——它們本來各佔一個分頁，但它們不是步驟。 */
 function deskRow(t, next) {
   var H = ['<div class="desk">'];
-  H.push('<button class="dk lit" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:pack' })) + '\' title="' +
-    esc('任務清單：老師派過的每一件事') + '">' +
-    pxTag(ICONS.pack, ICON_ON, '') + '<i>任務清單</i></button>');
+  /* 任務清單在側欄，這裡不再放一次——兩個地方都放就是重複。 */
   H.push('<button class="dk lit" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
     esc('圖鑑：這座地下城裡有什麼') + '">' +
