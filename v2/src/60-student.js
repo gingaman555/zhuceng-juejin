@@ -99,7 +99,7 @@ PAGES.home = function () {
   if (unbuiltDepth(t.teamId) >= 0) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow lit">新的一層</div>');
-    H.push(btn('去看看那一層', 'go:eco', 'big'));
+    H.push(btn('留一個記號', 'go:eco', 'big'));
     H.push('</div>');
   }
 
