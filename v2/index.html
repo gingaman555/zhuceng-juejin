@@ -3106,11 +3106,20 @@ button.ac:active{transform:translateY(1px)}
 /* ── 挑一個角色 ──
    四個並排，剪影自己說話——四種長得不一樣，所以不用寫一句話解釋。
    走路那兩幀在這裡就輪流播：選的時候就看得到他會怎麼動。 */
-.pick4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:0 0 22px}
-@media (max-width:700px){ .pick4{grid-template-columns:repeat(2,1fr)} }
+/* 一欄，四列。
+
+   那一句從標籤變成一句話之後，欄位就不能再切窄了：四欄一格只有
+   159px，22px 的字一行放七個，一句話折成五行，最後一行剩一個字；
+   兩欄也還要四行。一欄的話圖在左、話在右，一句話一到兩行讀得完。
+
+   而且四個並排讀起來像在比較，一列一個讀起來像在認人——他挑的
+   是「我是怎麼做事的人」，不是在四個規格之間挑一個。 */
+.pick4{display:flex;flex-direction:column;gap:11px;margin:0 0 22px}
+/* 一格變寬之後改成橫的：圖在左，名字與那一句在右。
+   直的排法在寬格子裡會讓那一句被擠在中間一條窄柱裡。 */
 .p4{
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  padding:14px 8px;border:0;cursor:pointer;font:inherit;color:inherit;
+  display:flex;align-items:center;gap:14px;text-align:left;
+  padding:14px;border:0;cursor:pointer;font:inherit;color:inherit;
   background:var(--panel);
   box-shadow:inset 0 0 0 2px var(--line);
   clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 11px,
@@ -3119,10 +3128,11 @@ button.ac:active{transform:translateY(1px)}
 .p4:hover{background:var(--panel2);box-shadow:inset 0 0 0 2px var(--gold-d)}
 .p4:active{transform:translateY(2px)}
 .p4.on{box-shadow:inset 0 0 0 3px var(--gold)}
-.p4-px{position:relative;display:block;width:88px;height:88px}
+.p4-px{position:relative;display:block;flex:0 0 88px;width:88px;height:88px}
 .p4-px .px{position:absolute;left:0;top:0;width:88px;height:88px;image-rendering:pixelated}
+.p4-t{display:flex;flex-direction:column;gap:4px;min-width:0}
 .p4 b{font-size:22px;font-weight:400;color:var(--ink)}
-.p4 i{font-style:normal;font-size:22px;color:var(--dim);text-align:center;line-height:1.5}
+.p4 i{font-style:normal;font-size:22px;color:var(--dim);line-height:1.5;overflow-wrap:anywhere}
 
 /* ---------- 交出去的那一場 ----------
 
@@ -4290,12 +4300,20 @@ Object.keys(HEROES).forEach(function (k) {
   HEROES[k].idle = HEROES[k].idleA;
 });
 
-/* 四個名字。挑角色那一頁與首頁的換角都讀這一份。 */
+/* 四個名字。挑角色那一頁與首頁的換角都讀這一份。
+
+   那一句寫的是脾氣，不是外表。外表已經在圖上了——四種的剪影本來
+   就不一樣，再用字描述一次是同一件事說兩遍。而他挑的其實不是一件
+   斗篷，是一種「我是怎麼做事的人」。 */
 var HERO_LIST = [
-  { k: 'adv',    n: '冒險者', t: '提著燈，腰上一把劍' },
-  { k: 'mage',   n: '魔法師', t: '尖帽、長袍，杖頂一顆亮的' },
-  { k: 'ninja',  n: '忍者',   t: '只露一條眼縫，背後短刃' },
-  { k: 'knight', n: '騎士',   t: '有羽飾的頭盔，左手一面盾' }
+  { k: 'adv',    n: '冒險者',
+    t: '對處處充滿好奇，期望在這場冒險找到前所未見的大秘寶' },
+  { k: 'mage',   n: '魔法師',
+    t: '有著無窮知識擅長詠唱魔法，將事情處理的有條理' },
+  { k: 'ninja',  n: '忍者',
+    t: '行動迅速，往往決定行動只是一瞬間的念頭' },
+  { k: 'knight', n: '騎士',
+    t: '對自己充滿戒律，對事情怎麼處理有一套自己的堅持' }
 ];
 
 /* 現在畫的是哪一個。render 每一次開頭都會照登入的人設一次
@@ -10603,8 +10621,10 @@ PAGES.who = function () {
     /* 兩幀輪流播，站著跟走路各一組——選的時候就看得到他會怎麼動。 */
     H.push('<span class="p4-px">' +
       pxTag(g.walkA, g.pal, 'wf wa') + pxTag(g.walkB, g.pal, 'wf wb') + '</span>');
+    H.push('<span class="p4-t">');
     H.push('<b>' + esc(x.n) + '</b>');
     H.push('<i>' + esc(x.t) + '</i>');
+    H.push('</span>');
     H.push('</button>');
   });
   H.push('</div>');

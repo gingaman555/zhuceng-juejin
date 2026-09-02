@@ -1438,11 +1438,20 @@ button.ac:active{transform:translateY(1px)}
 /* ── 挑一個角色 ──
    四個並排，剪影自己說話——四種長得不一樣，所以不用寫一句話解釋。
    走路那兩幀在這裡就輪流播：選的時候就看得到他會怎麼動。 */
-.pick4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:0 0 22px}
-@media (max-width:700px){ .pick4{grid-template-columns:repeat(2,1fr)} }
+/* 一欄，四列。
+
+   那一句從標籤變成一句話之後，欄位就不能再切窄了：四欄一格只有
+   159px，22px 的字一行放七個，一句話折成五行，最後一行剩一個字；
+   兩欄也還要四行。一欄的話圖在左、話在右，一句話一到兩行讀得完。
+
+   而且四個並排讀起來像在比較，一列一個讀起來像在認人——他挑的
+   是「我是怎麼做事的人」，不是在四個規格之間挑一個。 */
+.pick4{display:flex;flex-direction:column;gap:11px;margin:0 0 22px}
+/* 一格變寬之後改成橫的：圖在左，名字與那一句在右。
+   直的排法在寬格子裡會讓那一句被擠在中間一條窄柱裡。 */
 .p4{
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  padding:14px 8px;border:0;cursor:pointer;font:inherit;color:inherit;
+  display:flex;align-items:center;gap:14px;text-align:left;
+  padding:14px;border:0;cursor:pointer;font:inherit;color:inherit;
   background:var(--panel);
   box-shadow:inset 0 0 0 2px var(--line);
   clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 11px,
@@ -1451,7 +1460,8 @@ button.ac:active{transform:translateY(1px)}
 .p4:hover{background:var(--panel2);box-shadow:inset 0 0 0 2px var(--gold-d)}
 .p4:active{transform:translateY(2px)}
 .p4.on{box-shadow:inset 0 0 0 3px var(--gold)}
-.p4-px{position:relative;display:block;width:88px;height:88px}
+.p4-px{position:relative;display:block;flex:0 0 88px;width:88px;height:88px}
 .p4-px .px{position:absolute;left:0;top:0;width:88px;height:88px;image-rendering:pixelated}
+.p4-t{display:flex;flex-direction:column;gap:4px;min-width:0}
 .p4 b{font-size:22px;font-weight:400;color:var(--ink)}
-.p4 i{font-style:normal;font-size:22px;color:var(--dim);text-align:center;line-height:1.5}
+.p4 i{font-style:normal;font-size:22px;color:var(--dim);line-height:1.5;overflow-wrap:anywhere}

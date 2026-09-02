@@ -126,8 +126,10 @@ PAGES.who = function () {
     /* 兩幀輪流播，站著跟走路各一組——選的時候就看得到他會怎麼動。 */
     H.push('<span class="p4-px">' +
       pxTag(g.walkA, g.pal, 'wf wa') + pxTag(g.walkB, g.pal, 'wf wb') + '</span>');
+    H.push('<span class="p4-t">');
     H.push('<b>' + esc(x.n) + '</b>');
     H.push('<i>' + esc(x.t) + '</i>');
+    H.push('</span>');
     H.push('</button>');
   });
   H.push('</div>');
