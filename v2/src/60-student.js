@@ -347,7 +347,7 @@ PAGES.commit = function () {
      本來是三張卡——三張卡量的是同一個單位，等於叫使用者自己
      在腦袋裡把它們疊起來。 */
   var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
-  H.push(estAxis(est, past.reverse(), estSpread(m.msId, t.teamId)));
+  H.push(estAxis(est, past.reverse()));
   /* 拉到幾就亮幾格，擋路的那一隻站在盡頭。
      承諾是這裡唯一有阻力的選擇，它不該長得像填表。 */
   H.push(estWalk(t, m, est));

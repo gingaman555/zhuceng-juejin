@@ -501,19 +501,10 @@ function runShape(runId) {
   };
 }
 
-/* 今天班上有幾條廊道今天也有人在走。
-   這不是名次——它不排序、不比大小，只回答「今天只有我一個人在下面嗎」。 */
-function todayMovers(classId, exceptTeam) {
-  var day = dayOf(now());
-  var seen = {};
-  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
-    if (t.teamId === exceptTeam) return;
-    if (find('Pushes', function (p) { return p.teamId === t.teamId && p.day === day; })) {
-      seen[t.teamId] = 1;
-    }
-  });
-  return Object.keys(seen).length;
-}
+/* estSpread（別組在同一個任務上說了幾天）與 todayMovers（今天班上
+   還有幾條廊道在走）都拿掉了。前者會在按下承諾之前錨定他的預估，
+   後者沒有任何人呼叫。跨組的數字只留在剖面圖與排行榜上——
+   那兩處是位置與次數，不是「你應該幾天」。 */
 
 /* 上傳：走到終點之後交出去。判定就在這一刻。 */
 /* 還沒好，退出來重新想。
@@ -606,27 +597,6 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
-}
-
-/* ---------- 全班怎麼看這一個任務 ----------
-
-   同一個任務，別人說要花幾天。匿名，只回天數，不回是誰——
-   要的是「我是不是低估了」，不是「誰比較快」。
-
-   兩組以下不給看：三組的時候剩下那兩個數字誰是誰，猜得出來。 */
-function estSpread(msId, exceptTeam) {
-  var days = where('Runs', function (r) {
-    return r.msId === msId && r.est && r.teamId !== exceptTeam;
-  }).map(function (r) { return r.est; });
-  if (days.length < 2) return null;
-  days.sort(function (a, b) { return a - b; });
-  return {
-    n: days.length,
-    lo: days[0],
-    hi: days[days.length - 1],
-    mid: days[Math.floor(days.length / 2)],
-    all: days
-  };
 }
 
 /* 這一個班有沒有開排行榜。預設關。 */

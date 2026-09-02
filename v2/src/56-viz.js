@@ -175,15 +175,26 @@ function spreadBar(sp, mine) {
 
 /* ---------- 承諾那一根尺 ----------
 
-   「你前三趟」「別組怎麼看」「你要說幾天」量的都是天數。
-   本來畫在三張卡上，使用者得自己在腦袋裡疊起來——
-   那正是資訊圖像化應該替他做掉的事。全部畫在同一根尺上。
+   「你前幾趟」跟「你要說幾天」量的是同一個單位。
+   本來畫在兩張卡上，使用者得自己在腦袋裡疊起來——
+   那正是資訊圖像化應該替他做掉的事。畫在同一根尺上。
+
+   這裡本來還有第三條：別組在同一個任務上說了幾天。拿掉了。
+   兩個理由，第二個比較重要：
+
+     一 · 每一組的專案不一樣。「訪三個人」對兩組可能差三倍，
+          別人的天數不構成參考。
+
+     二 · 它會污染這個系統唯一在量的東西。那條帶子出現在按下承諾
+          之前、就在滑桿正下方——看到「別組落在 4 到 8」再去拉自己
+          那一根，拉出來的已經不是你的預估，是被錨定過的預估。
+          整個作品的軸是「把被評價的對象換成自己的預估」；
+          如果那個預估是抄來的，軸就空了。
 
    看得出來的東西沒有一句話在解釋：
      你前幾趟的空心點是說的、實心點是實際的，線往右＝低估
-     別組那一條帶子是他們說的範圍
      亮的那一條是你現在拉到的地方，淺色那一塊是準的範圍 */
-function estAxis(est, past, sp) {
+function estAxis(est, past) {
   var lo = RULES.EST_MIN, hi = RULES.EST_MAX, span = hi - lo;
   function at(d) {
     return ((Math.max(lo, Math.min(hi, d)) - lo) / span * 100) + '%';
@@ -198,15 +209,6 @@ function estAxis(est, past, sp) {
     '" oninput="ACTS.est(this.value)">');
   H.push('<div class="ax-in">');
 
-  /* 別組說的範圍。匿名，只有天數。 */
-  if (sp) {
-    H.push('<div class="ax-row ax-sp">');
-    H.push('<div class="ax-band" style="left:' + at(sp.lo) + ';right:' +
-      (100 - parseFloat(at(sp.hi))) + '%"></div>');
-    H.push('<i class="ax-tag" style="left:' + at(sp.lo) + '">別組 ' +
-      sp.n + ' 組</i>');
-    H.push('</div>');
-  }
 
   /* 你前幾趟：空心＝說的，實心＝實際的。線往右就是低估。 */
   (past || []).forEach(function (x) {

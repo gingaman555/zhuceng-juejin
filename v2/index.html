@@ -1934,17 +1934,13 @@ button.ac:active{transform:translateY(1px)}
 .cyd.loop{background:repeating-linear-gradient(90deg,var(--line) 0 3px,transparent 3px 6px)}
 
 /* ── 承諾那一根尺 ──
-   「你前幾趟」「別組怎麼看」「你要說幾天」量的都是天數。
-   本來三張卡，等於叫使用者自己在腦袋裡疊起來。畫在同一根尺上就不用了。 */
+   「你前幾趟」跟「你要說幾天」量的是同一個單位，所以畫在同一根尺上。
+   本來還有第三條「別組怎麼看」——拿掉了，那條帶子會在按下承諾之前
+   錨定他的預估，而預估正是這個系統唯一在量的東西。 */
 .axis{position:relative;margin:14px 0 0;padding:0 3px}
 .ax-row{position:relative;height:14px;margin-bottom:3px}
-.ax-band,.ax-ok,.ax-link{position:absolute;top:5px;height:4px}
+.ax-ok,.ax-link{position:absolute;top:5px;height:4px}
 
-/* 別組說的範圍。匿名，只有天數。 */
-.ax-band{background:rgba(95,168,199,.34)}
-.ax-sp{height:18px}
-.ax-tag{position:absolute;top:-2px;font-size:22px;font-style:normal;
-  color:#5FA8C7;transform:translateX(-2px);white-space:nowrap}
 
 /* 你前幾趟：空心＝說的，實心＝實際的。線往右就是低估。 */
 .ax-link{background:rgba(255,240,214,.16)}
@@ -5528,19 +5524,10 @@ function runShape(runId) {
   };
 }
 
-/* 今天班上有幾條廊道今天也有人在走。
-   這不是名次——它不排序、不比大小，只回答「今天只有我一個人在下面嗎」。 */
-function todayMovers(classId, exceptTeam) {
-  var day = dayOf(now());
-  var seen = {};
-  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
-    if (t.teamId === exceptTeam) return;
-    if (find('Pushes', function (p) { return p.teamId === t.teamId && p.day === day; })) {
-      seen[t.teamId] = 1;
-    }
-  });
-  return Object.keys(seen).length;
-}
+/* estSpread（別組在同一個任務上說了幾天）與 todayMovers（今天班上
+   還有幾條廊道在走）都拿掉了。前者會在按下承諾之前錨定他的預估，
+   後者沒有任何人呼叫。跨組的數字只留在剖面圖與排行榜上——
+   那兩處是位置與次數，不是「你應該幾天」。 */
 
 /* 上傳：走到終點之後交出去。判定就在這一刻。 */
 /* 還沒好，退出來重新想。
@@ -5633,27 +5620,6 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
-}
-
-/* ---------- 全班怎麼看這一個任務 ----------
-
-   同一個任務，別人說要花幾天。匿名，只回天數，不回是誰——
-   要的是「我是不是低估了」，不是「誰比較快」。
-
-   兩組以下不給看：三組的時候剩下那兩個數字誰是誰，猜得出來。 */
-function estSpread(msId, exceptTeam) {
-  var days = where('Runs', function (r) {
-    return r.msId === msId && r.est && r.teamId !== exceptTeam;
-  }).map(function (r) { return r.est; });
-  if (days.length < 2) return null;
-  days.sort(function (a, b) { return a - b; });
-  return {
-    n: days.length,
-    lo: days[0],
-    hi: days[days.length - 1],
-    mid: days[Math.floor(days.length / 2)],
-    all: days
-  };
 }
 
 /* 這一個班有沒有開排行榜。預設關。 */
@@ -7039,15 +7005,26 @@ function spreadBar(sp, mine) {
 
 /* ---------- 承諾那一根尺 ----------
 
-   「你前三趟」「別組怎麼看」「你要說幾天」量的都是天數。
-   本來畫在三張卡上，使用者得自己在腦袋裡疊起來——
-   那正是資訊圖像化應該替他做掉的事。全部畫在同一根尺上。
+   「你前幾趟」跟「你要說幾天」量的是同一個單位。
+   本來畫在兩張卡上，使用者得自己在腦袋裡疊起來——
+   那正是資訊圖像化應該替他做掉的事。畫在同一根尺上。
+
+   這裡本來還有第三條：別組在同一個任務上說了幾天。拿掉了。
+   兩個理由，第二個比較重要：
+
+     一 · 每一組的專案不一樣。「訪三個人」對兩組可能差三倍，
+          別人的天數不構成參考。
+
+     二 · 它會污染這個系統唯一在量的東西。那條帶子出現在按下承諾
+          之前、就在滑桿正下方——看到「別組落在 4 到 8」再去拉自己
+          那一根，拉出來的已經不是你的預估，是被錨定過的預估。
+          整個作品的軸是「把被評價的對象換成自己的預估」；
+          如果那個預估是抄來的，軸就空了。
 
    看得出來的東西沒有一句話在解釋：
      你前幾趟的空心點是說的、實心點是實際的，線往右＝低估
-     別組那一條帶子是他們說的範圍
      亮的那一條是你現在拉到的地方，淺色那一塊是準的範圍 */
-function estAxis(est, past, sp) {
+function estAxis(est, past) {
   var lo = RULES.EST_MIN, hi = RULES.EST_MAX, span = hi - lo;
   function at(d) {
     return ((Math.max(lo, Math.min(hi, d)) - lo) / span * 100) + '%';
@@ -7062,15 +7039,6 @@ function estAxis(est, past, sp) {
     '" oninput="ACTS.est(this.value)">');
   H.push('<div class="ax-in">');
 
-  /* 別組說的範圍。匿名，只有天數。 */
-  if (sp) {
-    H.push('<div class="ax-row ax-sp">');
-    H.push('<div class="ax-band" style="left:' + at(sp.lo) + ';right:' +
-      (100 - parseFloat(at(sp.hi))) + '%"></div>');
-    H.push('<i class="ax-tag" style="left:' + at(sp.lo) + '">別組 ' +
-      sp.n + ' 組</i>');
-    H.push('</div>');
-  }
 
   /* 你前幾趟：空心＝說的，實心＝實際的。線往右就是低估。 */
   (past || []).forEach(function (x) {
@@ -7659,7 +7627,7 @@ PAGES.commit = function () {
      本來是三張卡——三張卡量的是同一個單位，等於叫使用者自己
      在腦袋裡把它們疊起來。 */
   var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
-  H.push(estAxis(est, past.reverse(), estSpread(m.msId, t.teamId)));
+  H.push(estAxis(est, past.reverse()));
   /* 拉到幾就亮幾格，擋路的那一隻站在盡頭。
      承諾是這裡唯一有阻力的選擇，它不該長得像填表。 */
   H.push(estWalk(t, m, est));

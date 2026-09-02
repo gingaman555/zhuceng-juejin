@@ -663,17 +663,13 @@ button.ac:active{transform:translateY(1px)}
 .cyd.loop{background:repeating-linear-gradient(90deg,var(--line) 0 3px,transparent 3px 6px)}
 
 /* ── 承諾那一根尺 ──
-   「你前幾趟」「別組怎麼看」「你要說幾天」量的都是天數。
-   本來三張卡，等於叫使用者自己在腦袋裡疊起來。畫在同一根尺上就不用了。 */
+   「你前幾趟」跟「你要說幾天」量的是同一個單位，所以畫在同一根尺上。
+   本來還有第三條「別組怎麼看」——拿掉了，那條帶子會在按下承諾之前
+   錨定他的預估，而預估正是這個系統唯一在量的東西。 */
 .axis{position:relative;margin:14px 0 0;padding:0 3px}
 .ax-row{position:relative;height:14px;margin-bottom:3px}
-.ax-band,.ax-ok,.ax-link{position:absolute;top:5px;height:4px}
+.ax-ok,.ax-link{position:absolute;top:5px;height:4px}
 
-/* 別組說的範圍。匿名，只有天數。 */
-.ax-band{background:rgba(95,168,199,.34)}
-.ax-sp{height:18px}
-.ax-tag{position:absolute;top:-2px;font-size:22px;font-style:normal;
-  color:#5FA8C7;transform:translateX(-2px);white-space:nowrap}
 
 /* 你前幾趟：空心＝說的，實心＝實際的。線往右就是低估。 */
 .ax-link{background:rgba(255,240,214,.16)}
