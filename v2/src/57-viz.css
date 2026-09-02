@@ -9,7 +9,7 @@
 .ebar{margin:11px 0}
 .eb-r{display:flex;align-items:center;gap:11px;margin:3px 0}
 .eb-r b{
-  flex:0 0 44px;font-size:11px;font-weight:400;color:var(--mute);text-align:right
+  flex:0 0 44px;font-size:22px;font-weight:400;color:var(--mute);text-align:right
 }
 .eb-r i{
   flex:0 0 33px;font-style:normal;font-size:22px;color:var(--gold);
@@ -56,18 +56,18 @@ button.ac:active{transform:translateY(1px)}
 .sgline{display:flex;gap:22px;margin:11px 0;align-items:flex-end}
 .sg{display:flex;flex-direction:column;align-items:center;gap:3px;opacity:.3}
 .sg.on{opacity:1}
-.sg i{font-style:normal;font-size:11px;color:var(--mute)}
+.sg i{font-style:normal;font-size:22px;color:var(--mute)}
 .sg.on i{color:var(--gold)}
 
 /* ---------- 留下的 ---------- */
 .px.kp-px{width:66px;height:66px;flex:0 0 66px}
 .px.kp-px.sm{width:44px;height:44px;flex:0 0 44px}
-.ke{display:block;font-size:11px;color:var(--mute);letter-spacing:.1em}
+.ke{display:block;font-size:22px;color:var(--mute);letter-spacing:.1em}
 .keeps{display:flex;flex-direction:column;gap:11px;margin-top:11px}
 .kp{display:flex;gap:14px;align-items:flex-start;padding:11px 0;
   border-top:1px solid var(--line)}
 .kp i{display:block;font-style:normal;font-size:22px;color:var(--ink);line-height:1.6}
-.kp .km{display:block;font-size:11px;color:var(--gold-d);margin-top:3px}
+.kp .km{display:block;font-size:22px;color:var(--gold-d);margin-top:3px}
 .carry-in em{line-height:1.7}
 
 /* 挑一張留下：三張並排 */
@@ -103,13 +103,13 @@ button.ac:active{transform:translateY(1px)}
 .outnum{display:flex;flex-wrap:wrap;gap:22px;margin:11px 0 22px}
 .outnum div{min-width:88px}
 .outnum b{display:block;font-size:44px;line-height:1;color:var(--gold);font-weight:400}
-.outnum span{font-size:11px;color:var(--mute)}
+.outnum span{font-size:22px;color:var(--mute)}
 .outrun{margin:0 0 14px;padding-bottom:11px;border-bottom:1px solid var(--line)}
-.outrun > span{font-size:11px;color:var(--dim)}
+.outrun > span{font-size:22px;color:var(--dim)}
 
 /* 兩條尺的圖例 */
 .bkey{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0 0 55px}
-.bkey span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute)}
+.bkey span{display:flex;align-items:center;gap:6px;font-size:22px;color:var(--mute)}
 .bkey b{width:18px;height:11px;display:block}
 .bkey .k1{background:rgba(233,179,65,.10);box-shadow:inset 0 0 0 1px var(--gold-d)}
 .bkey .k2{background:var(--gold-d)}
@@ -117,7 +117,7 @@ button.ac:active{transform:translateY(1px)}
 
 /* 這一趟的形狀：全部是數字，一句判斷都沒有 */
 .shape{display:flex;flex-wrap:wrap;gap:18px;margin:14px 0 0}
-.shape span{display:flex;align-items:baseline;gap:5px;font-size:11px;color:var(--mute)}
+.shape span{display:flex;align-items:baseline;gap:5px;font-size:22px;color:var(--mute)}
 .shape b{font-size:22px;line-height:1;color:var(--ink);font-weight:400}
 .shape .blank b{color:var(--mute)}
 
@@ -152,7 +152,7 @@ button.ac:active{transform:translateY(1px)}
 /* 說明砍成一句「牠會做什麼」之後，字級就升得上來——
    長什麼樣那半句刪掉了，因為旁邊就畫著牠。 */
 .cxi em{display:block;font-style:normal;font-size:22px;color:var(--mute);line-height:1.5;margin-top:5px}
-.cxi .cx-met{display:block;font-size:11px;color:var(--gold);line-height:1.7;margin-top:5px}
+.cxi .cx-met{display:block;font-size:22px;color:var(--gold);line-height:1.7;margin-top:5px}
 @media (max-width:860px){ .cxi{width:100%} }
 
 /* 狀態。系統只陳述——「沒有消息」講的是紀錄，不是那一組的人。 */
@@ -170,15 +170,15 @@ button.ac:active{transform:translateY(1px)}
 .rack{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;margin-top:14px}
 .rk{width:110px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
 .rk .px.core{margin:0 auto}
-.rk b{font-size:11px;font-weight:400;color:var(--gold);line-height:1.5;
+.rk b{font-size:22px;font-weight:400;color:var(--gold);line-height:1.5;
   overflow:hidden;text-overflow:ellipsis;width:100%}
-.rk span{font-size:11px;color:var(--mute)}
-.rk em{font-style:normal;font-size:11px;color:var(--gold-d)}
+.rk span{font-size:22px;color:var(--mute)}
+.rk em{font-style:normal;font-size:22px;color:var(--gold-d)}
 .rk.row-rk{flex-direction:row;width:auto;text-align:left;align-items:center;gap:14px}
 .rk.row-rk b{font-size:22px}
 
 .corekey{display:flex;flex-wrap:wrap;gap:14px;margin:11px 0}
-.corekey span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute)}
+.corekey span{display:flex;align-items:center;gap:6px;font-size:22px;color:var(--mute)}
 .corekey b{width:18px;height:11px;display:block}
 .corekey .c1{background:var(--gold)}
 .corekey .c2{background:transparent;box-shadow:inset 0 0 0 2px var(--gold-d)}
@@ -195,7 +195,7 @@ button.ac:active{transform:translateY(1px)}
   background:var(--sunk);color:var(--mute);
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06), 0 0 0 1px #000
 }
-.dg b{font-size:11px;font-weight:400}
+.dg b{font-size:22px;font-weight:400}
 .dg:hover{color:var(--dim)}
 .dg:active{transform:translateY(1px)}
 .dg.on{background:var(--gold-d);color:var(--ink)}
@@ -206,7 +206,7 @@ button.ac:active{transform:translateY(1px)}
 .spread{display:flex;align-items:flex-end;gap:3px;margin:11px 0;min-height:66px}
 .sp-c{flex:1;min-width:11px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .sp-c b{display:block;width:100%;background:var(--line2)}
-.sp-c i{font-style:normal;font-size:11px;color:var(--mute)}
+.sp-c i{font-style:normal;font-size:22px;color:var(--mute)}
 .sp-c.me b{background:var(--gold)}
 .sp-c.me i{color:var(--gold)}
 
@@ -219,7 +219,7 @@ button.ac:active{transform:translateY(1px)}
   background:var(--sunk);color:var(--mute);
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06), 0 0 0 1px #000
 }
-.cxt i{font-style:normal;font-size:11px;color:var(--gold-d);margin-left:8px}
+.cxt i{font-style:normal;font-size:22px;color:var(--gold-d);margin-left:8px}
 .cxt:hover{color:var(--dim)}
 .cxt:active{transform:translateY(1px)}
 .cxt.on{background:var(--zbg);color:var(--zink);box-shadow:0 0 0 1px #000,
@@ -227,10 +227,8 @@ button.ac:active{transform:translateY(1px)}
 .cxt.gear.on{--zbg:#1A1611;--zink:var(--gold)}
 
 /* 一層裡的那幾隻：兩到三欄，描述收成兩行，一屏塞得下 */
-.cxi em{
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden
-}
+/* 本來夾成兩行、第三行切掉——切掉的字等於沒寫。
+   說明已經砍到只剩一句「牠會做什麼」，所以讓它整句都在。 */
 @media (min-width:1200px){ .cxi{width:calc(33.33% - 8px)} }
 
 /* ---------- 選單：背包裡的幾樣東西 ---------- */
@@ -254,9 +252,9 @@ button.ac:active{transform:translateY(1px)}
 /* 大的那個是專案名，不是組名。組名是固定的、你早就知道了；
    專案名才是「我現在在做什麼」——本來它跟裝飾字一樣小。這是對調，不是放大，
    所以頂條的高度沒有變。 */
-.top.hud .who{font-size:11px;color:var(--dim)}
+.top.hud .who{font-size:22px;color:var(--dim)}
 .top.hud .hud-pj{font-size:22px;color:var(--ink)}
-.top.hud .hud-z{font-size:11px;color:var(--zink,var(--gold))}
+.top.hud .hud-z{font-size:22px;color:var(--zink,var(--gold))}
 .top.hud .hud-d{
   font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums;
   padding:0 9px;background:rgba(0,0,0,.45)
@@ -296,7 +294,7 @@ button.ac:active{transform:translateY(1px)}
 .task h1{font-size:33px;line-height:1.35;margin:0}
 .task .lead{margin:11px 0 0}
 .task-z{text-align:right}
-.task-z em{display:block;font-style:normal;font-size:11px;color:var(--zink,var(--gold))}
+.task-z em{display:block;font-style:normal;font-size:22px;color:var(--zink,var(--gold))}
 .task-z b{display:block;font-size:22px;color:var(--gold);font-weight:400;
   font-variant-numeric:tabular-nums}
 .task .act-card{background:none;box-shadow:none;padding:14px 0 0;margin:0}
@@ -309,7 +307,7 @@ button.ac:active{transform:translateY(1px)}
 .dk{
   display:flex;align-items:center;gap:8px;padding:8px 11px;
   background:rgba(0,0,0,.30);border:none;cursor:pointer;color:var(--mute);
-  font-size:11px;opacity:.6
+  font-size:22px;opacity:.6
 }
 .dk .px{width:22px;height:22px}
 .dk i{font-style:normal;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -323,14 +321,14 @@ button.ac:active{transform:translateY(1px)}
 .feed{display:flex;flex-direction:column;gap:1px;background:#000}
 .fd{
   display:flex;align-items:center;gap:14px;padding:11px 14px;background:var(--panel);
-  font-size:11px;color:var(--dim)
+  font-size:22px;color:var(--dim)
 }
 .fd.mine{background:var(--panel2)}
 .fd > div{flex:1;min-width:0}
 .fd b{font-size:22px;color:var(--ink);font-weight:400;margin-right:8px}
-.fd span{display:block;font-size:11px;color:var(--mute);margin-top:3px;
+.fd span{display:block;font-size:22px;color:var(--mute);margin-top:3px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fd > i{font-style:normal;font-size:11px;color:var(--mute);flex:0 0 auto}
+.fd > i{font-style:normal;font-size:22px;color:var(--mute);flex:0 0 auto}
 .fd-ic{flex:0 0 44px;display:flex;align-items:center;justify-content:center;
   padding:0;border:none;background:none;cursor:pointer}
 .px.core.sm{width:22px;max-height:66px}
@@ -343,10 +341,10 @@ button.ac:active{transform:translateY(1px)}
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), 0 0 0 1px #000
 }
 .tline b{font-size:22px;font-weight:400;color:var(--ink)}
-.tline i{font-style:normal;font-size:11px}
+.tline i{font-style:normal;font-size:22px}
 .srow{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 11px}
 .sq{
-  display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:11px;
+  display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:22px;
   background:var(--sunk);color:var(--mute);border:none;cursor:pointer;
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), 0 0 0 1px #000
 }
@@ -376,11 +374,11 @@ button.ac:active{transform:translateY(1px)}
 .dg-c.dug:hover{filter:brightness(1.25)}
 .dg-c.dug.mine{box-shadow:inset 0 3px 0 rgba(255,255,255,.35),
   inset 0 -3px 0 rgba(0,0,0,.45), 0 0 0 2px var(--ink)}
-.dig-z{position:absolute;left:3px;font-size:11px;color:var(--zink);opacity:.7;z-index:2}
-.dig-n{position:absolute;font-size:11px;white-space:nowrap;z-index:4}
+.dig-z{position:absolute;left:3px;font-size:22px;color:var(--zink);opacity:.7;z-index:2}
+.dig-n{position:absolute;font-size:22px;white-space:nowrap;z-index:4}
 .dig-n.mine{font-weight:500}
 .dig-nb{display:flex;flex-wrap:wrap;gap:11px;margin:-11px 0 22px}
-.dig-nb span{font-size:11px;color:var(--gold);padding:5px 9px;background:var(--sunk)}
+.dig-nb span{font-size:22px;color:var(--gold);padding:5px 9px;background:var(--sunk)}
 
 /* 封存那一頁的小地圖：往哪裡打通 */
 .pickmap{position:relative;margin:11px 0}
@@ -459,7 +457,7 @@ button.ac:active{transform:translateY(1px)}
 .duel-gap span:nth-child(3){animation:dpt 1.2s steps(1,end) .8s infinite}
 @keyframes dpt{0%,60%{opacity:.15}61%,100%{opacity:1}}
 
-.duel-t{margin:11px 0 0;color:var(--dim);font-size:11px;line-height:22px}
+.duel-t{margin:11px 0 0;color:var(--dim);font-size:22px;line-height:22px}
 
 /* 打完了。牠退開，自己往前站一格。演一次，不循環。 */
 .duel.done .duel-me{animation:dstep .5s steps(3,end) 1 forwards}
@@ -484,8 +482,8 @@ button.ac:active{transform:translateY(1px)}
   clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
 }
 .away b{font-size:22px;line-height:22px;color:var(--ink);font-variant-numeric:tabular-nums}
-.away span{font-size:11px;color:var(--dim);margin-left:-16px}
-.away em{font-size:11px;font-style:normal;color:var(--over)}
+.away span{font-size:22px;color:var(--dim);margin-left:-16px}
+.away em{font-size:22px;font-style:normal;color:var(--over)}
 
 /* ── 面板 ──
    參考死線勇者：它整個畫面是一組有框的面板，不是一頁網頁。框、鉚釘、
@@ -516,14 +514,14 @@ button.ac:active{transform:translateY(1px)}
    是那一趟的幾行數字。數字對齊，因為它們是要被互相比較的。 */
 .rep{margin:0;display:grid;grid-template-columns:auto 1fr;gap:0 22px}
 .rep dt{
-  font-size:11px;color:var(--dim);line-height:33px;
+  font-size:22px;color:var(--dim);line-height:33px;
   border-bottom:2px solid rgba(0,0,0,.14)
 }
 .rep dd{
   margin:0;font-size:22px;line-height:33px;color:var(--ink);text-align:right;
   font-variant-numeric:tabular-nums;border-bottom:2px solid rgba(0,0,0,.14)
 }
-.rep dd.s{font-size:11px;text-align:left;color:var(--dim)}
+.rep dd.s{font-size:22px;text-align:left;color:var(--dim)}
 .rep dt:last-of-type,.rep dd:last-of-type{border-bottom:0}
 
 /* ── 地圖的環境 ──
@@ -619,7 +617,7 @@ button.ac:active{transform:translateY(1px)}
 }
 .bp:hover{box-shadow:inset 0 0 0 2px var(--gold), inset 2px 2px 0 rgba(255,255,255,.12)}
 .bp-px{width:66px;height:50px;image-rendering:pixelated}
-.bp b{font-size:11px;font-weight:400}
+.bp b{font-size:22px;font-weight:400}
 
 /* 點一座建築：那是哪一趟。建築不是獎品，是那一趟的紀念碑。 */
 .bstory .bs-in{display:flex;gap:14px;align-items:flex-start}
@@ -652,8 +650,8 @@ button.ac:active{transform:translateY(1px)}
 .cyc::-webkit-scrollbar{display:none}
 .cy{display:flex;flex-direction:column;gap:1px;padding:3px 9px;white-space:nowrap;
   opacity:.42}
-.cy b{font-size:11px;font-weight:400;color:var(--mute)}
-.cy i{font-size:11px;font-style:normal;color:var(--dim)}
+.cy b{font-size:22px;font-weight:400;color:var(--mute)}
+.cy i{font-size:22px;font-style:normal;color:var(--dim)}
 .cy.on{
   opacity:1;background:rgba(233,179,65,.12);
   box-shadow:inset 0 0 0 2px var(--gold-d)
@@ -674,7 +672,7 @@ button.ac:active{transform:translateY(1px)}
 /* 別組說的範圍。匿名，只有天數。 */
 .ax-band{background:rgba(95,168,199,.34)}
 .ax-sp{height:18px}
-.ax-tag{position:absolute;top:-2px;font-size:11px;font-style:normal;
+.ax-tag{position:absolute;top:-2px;font-size:22px;font-style:normal;
   color:#5FA8C7;transform:translateX(-2px);white-space:nowrap}
 
 /* 你前幾趟：空心＝說的，實心＝實際的。線往右就是低估。 */
@@ -694,7 +692,7 @@ button.ac:active{transform:translateY(1px)}
 /* 尺。只標三個數字，多了就變成一張表。 */
 .ax-ruler{position:relative;height:16px;margin-top:3px;
   border-top:2px solid var(--line)}
-.ax-ruler i{position:absolute;top:3px;font-size:11px;font-style:normal;
+.ax-ruler i{position:absolute;top:3px;font-size:22px;font-style:normal;
   color:var(--dim);transform:translateX(-50%)}
 .ax-ruler i:first-child{transform:none}
 .ax-ruler i:last-child{transform:translateX(-100%)}
@@ -705,7 +703,7 @@ button.ac:active{transform:translateY(1px)}
   margin-bottom:6px}
 .ax-head b{font-size:44px;line-height:1;color:var(--gold);font-weight:400;
   font-variant-numeric:tabular-nums}
-.ax-head span{font-size:11px;color:var(--dim)}
+.ax-head span{font-size:22px;color:var(--dim)}
 .ax-slider{display:block;width:100%;margin:0 0 11px}
 .ax-in{position:relative;margin:0 11px}
 
@@ -739,7 +737,7 @@ button.ac:active{transform:translateY(1px)}
 @keyframes arrive{0%,49%{color:var(--gold)}50%,100%{color:var(--gold2)}}
 .quote.big{font-size:22px;line-height:33px;color:var(--ink);
   padding:11px 0 11px 14px;box-shadow:inset 3px 0 0 var(--gold)}
-.away em.ok{font-size:11px;font-style:normal;color:var(--gold)}
+.away em.ok{font-size:22px;font-style:normal;color:var(--gold)}
 
 /* 「上」那一下的撞擊。整條流程最有份量的一按，本來按下去直接換頁。
    一次，不循環——它報的是結果不是過程。 */
@@ -861,7 +859,7 @@ button.ac:active{transform:translateY(1px)}
     var(--gold) 0 6px, transparent 6px 14px)
 }
 .vow span{
-  position:absolute;top:11px;left:6px;font-size:11px;color:var(--gold);
+  position:absolute;top:11px;left:6px;font-size:22px;color:var(--gold);
   white-space:nowrap;background:rgba(0,0,0,.55);padding:2px 5px
 }
 
@@ -874,7 +872,7 @@ button.ac:active{transform:translateY(1px)}
 .tk-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .tk-h b{font-size:22px;font-weight:400;line-height:33px;color:var(--ink)}
 .tk-s{
-  flex:0 0 auto;font-size:11px;font-style:normal;padding:2px 8px;
+  flex:0 0 auto;font-size:22px;font-style:normal;padding:2px 8px;
   color:var(--mute);background:var(--sunk);
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.28)
 }
@@ -882,7 +880,7 @@ button.ac:active{transform:translateY(1px)}
 .tk-s.ok{color:#7FA866;box-shadow:inset 0 0 0 2px rgba(127,168,102,.5)}
 
 .tk-n{display:flex;align-items:baseline;gap:6px;margin-top:6px}
-.tk-n span{font-size:11px;color:var(--dim)}
+.tk-n span{font-size:22px;color:var(--dim)}
 .tk-n b{font-size:22px;font-weight:400;color:var(--ink);
   font-variant-numeric:tabular-nums;margin-right:11px}
 .tk-n b.late{color:var(--over)}
@@ -891,7 +889,7 @@ button.ac:active{transform:translateY(1px)}
 /* 岩心掛在它自己那一趟旁邊——它終於有出處了。 */
 .tk-k{display:flex;align-items:center;gap:9px;margin-top:9px}
 .tk-k .core{height:22px;width:auto;image-rendering:pixelated}
-.tk-k span{font-size:11px;color:var(--dim)}
+.tk-k span{font-size:22px;color:var(--dim)}
 
 /* ── 那一閃 ──
    同一張圖用全白的配色再畫一次疊在上面，然後淡出。
@@ -923,14 +921,11 @@ button.ac:active{transform:translateY(1px)}
 .rec-px .px{width:55px;height:auto;image-rendering:pixelated}
 .rec-t{
   grid-column:2;grid-row:1;font-size:22px;font-weight:400;line-height:33px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+  /* 折行，不要截斷：22px 之下截斷只剩八個字。 */
+  overflow-wrap:anywhere
 }
-.rec-d{grid-column:2;grid-row:2;font-size:11px;color:var(--dim);
+.rec-d{grid-column:2;grid-row:2;font-size:22px;color:var(--dim);
   font-variant-numeric:tabular-nums}
-.rec-w{
-  grid-column:2;grid-row:3;font-size:11px;color:var(--mute);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
-}
 .rec-s{grid-column:3;grid-row:1 / 4;display:flex;align-items:center;opacity:.9}
 .rec-s .px{width:22px;height:auto;image-rendering:pixelated}
 .rec-s.none{color:var(--dim)}
@@ -1005,7 +1000,7 @@ button.ac:active{transform:translateY(1px)}
 
 /* 他們自己寫的那兩段：小標在上、原話在下。
    系統不解讀、不歸類——原話放上去就好。 */
-.quote b{display:block;font-size:11px;font-weight:400;color:var(--gold2);
+.quote b{display:block;font-size:22px;font-weight:400;color:var(--gold2);
   margin-bottom:3px}
 
 /* 廊道抓得住。桌機上本來只能靠捲軸，等於不能前後看。 */
@@ -1014,26 +1009,23 @@ button.ac:active{transform:translateY(1px)}
 .scn-scroll.dragging .scn-in{pointer-events:none}
 
 /* 排行榜的單位。只說一次，每一列就只剩數字。 */
-.rk-u{margin:-6px 0 11px;font-size:11px;color:var(--dim)}
+.rk-u{margin:-6px 0 11px;font-size:22px;color:var(--dim)}
 
 /* ── 全班最近：一則一行 ──
    本來一則兩行，十則就是二十行長得很像的字，整段讀起來是一面牆。
    壓成一行之後掃過去就知道最近誰動了。 */
 .fd{
-  display:grid;grid-template-columns:22px auto auto 1fr auto;
+  /* 少一欄：任務名拿掉了（字放大之後那一欄只剩幾個字）。 */
+  display:grid;grid-template-columns:22px auto auto 1fr;
   align-items:center;gap:9px;padding:6px 0;
   border-bottom:2px solid rgba(0,0,0,.14)
 }
 .fd:last-child{border-bottom:0}
 .fd-ic{display:flex;align-items:center;justify-content:center}
 .fd-ic .px{width:22px;height:auto;image-rendering:pixelated}
-.fd b{font-size:11px;font-weight:400;color:var(--ink);white-space:nowrap}
-.fd em{font-size:11px;font-style:normal;color:var(--gold2);white-space:nowrap}
-.fd-t{
-  font-size:11px;color:var(--dim);min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
-}
-.fd i{font-size:11px;font-style:normal;color:var(--mute);white-space:nowrap}
+.fd b{font-size:22px;font-weight:400;color:var(--ink);white-space:nowrap}
+.fd em{font-size:22px;font-style:normal;color:var(--gold2);white-space:nowrap}
+.fd i{font-size:22px;font-style:normal;color:var(--mute);white-space:nowrap}
 .fd.mine b{color:var(--gold)}
 
 /* ── 承諾與實際：一條，不是兩排 ──
@@ -1057,12 +1049,12 @@ button.ac:active{transform:translateY(1px)}
 .eb-n{display:flex;align-items:baseline;gap:14px;margin-top:6px}
 .eb-n b{font-size:22px;line-height:22px;font-weight:400;
   font-variant-numeric:tabular-nums}
-.eb-say-n{font-size:11px;color:var(--dim)}
+.eb-say-n{font-size:22px;color:var(--dim)}
 .eb-say-n b{color:var(--gold2)}
-.eb-go-n{font-size:11px;color:var(--dim)}
+.eb-go-n{font-size:22px;color:var(--dim)}
 .eb-go-n b{color:var(--gold)}
 .ebar.over .eb-go-n b{color:var(--over)}
-.eb-u{font-size:11px;color:var(--dim);margin-left:-8px}
+.eb-u{font-size:22px;color:var(--dim);margin-left:-8px}
 
 /* 任務清單裡那一根點得開——那一根怎麼讀，全系統只有那一張卡說得出來。 */
 button.tk-k{border:none;background:none;font:inherit;cursor:pointer;padding:0;
@@ -1122,14 +1114,14 @@ button.tk-k:hover span{color:var(--gold)}
   border-bottom:2px solid rgba(0,0,0,.16)
 }
 .msr:last-child{border-bottom:0}
-.msr > b{font-size:22px;font-weight:400;line-height:33px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.msr-w{font-size:11px;color:var(--gold2);white-space:nowrap}
-.msr-n{font-size:11px;color:var(--dim);white-space:nowrap;
+/* 折行，不要截斷——任務名是那一列的身分。 */
+.msr > b{font-size:22px;font-weight:400;line-height:33px;overflow-wrap:anywhere}
+.msr-w{font-size:22px;color:var(--gold2);white-space:nowrap}
+.msr-n{font-size:22px;color:var(--dim);white-space:nowrap;
   font-variant-numeric:tabular-nums}
 /* 各組承諾了幾天。老師唯一看得到的「他們怎麼想這件事」。 */
 .msr-e{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:4px 14px}
-.msr-e i{font-size:11px;font-style:normal;color:var(--dim);
+.msr-e i{font-size:22px;font-style:normal;color:var(--dim);
   font-variant-numeric:tabular-nums}
 .msr-e b{color:var(--ink);font-weight:400}
 
@@ -1158,18 +1150,18 @@ button.tk-k:hover span{color:var(--gold)}
 
 /* 碰到的是誰留的。系統不編故事——這幾個字全部是別組自己打的。 */
 .unc-by{
-  font-size:11px;color:var(--gold);margin-top:5px;
+  font-size:22px;color:var(--gold);margin-top:5px;
   font-variant-numeric:tabular-nums
 }
 
 /* ── 留記號那一張 ──
    這是走完一整趟的收尾，本來只有一行 11px 的眉標。 */
 .bpick .bp-h{font-size:33px;margin:0 0 5px}
-.bpick .bp-sub{font-size:11px;color:var(--dim);margin:0 0 14px}
+.bpick .bp-sub{font-size:22px;color:var(--dim);margin:0 0 14px}
 .bpick .bp-ground{height:88px}
 .bpick .bp-px{width:99px;height:75px;margin-left:-49px}
 .bpick .bp b{font-size:22px}
-.bpick .bp i{font-style:normal;font-size:11px;color:var(--dim)}
+.bpick .bp i{font-style:normal;font-size:22px;color:var(--dim)}
 .bpick .bp{flex:1 1 132px;gap:2px}
 @media (max-width:520px){
   .bpick .bp-h{font-size:22px}
@@ -1193,7 +1185,7 @@ button.tk-k:hover span{color:var(--gold)}
 }
 .fr{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:66px}
 .fr-px{width:22px;height:22px;image-rendering:pixelated}
-.fr b{font-size:11px;font-weight:400;color:var(--dim);white-space:nowrap}
+.fr b{font-size:22px;font-weight:400;color:var(--dim);white-space:nowrap}
 .fr-a{width:14px;height:2px;background:var(--line2);flex:0 0 14px}
 @media (max-width:520px){
   .gate .promise{font-size:33px}
@@ -1209,7 +1201,7 @@ button.tk-k:hover span{color:var(--gold)}
 }
 .seg{
   padding:9px 14px;border:0;background:none;cursor:pointer;
-  font:inherit;font-size:11px;color:var(--dim);
+  font:inherit;font-size:22px;color:var(--dim);
   border-bottom:3px solid transparent;margin-bottom:-1px
 }
 .seg:hover{color:var(--ink)}
@@ -1225,12 +1217,12 @@ button.tk-k:hover span{color:var(--gold)}
 .or:last-child{border-bottom:0}
 .or-s{display:flex;align-items:center}
 .or-s .px{width:22px;height:auto;image-rendering:pixelated}
-.or b{font-size:11px;font-weight:400;color:var(--ink);
+.or b{font-size:22px;font-weight:400;color:var(--ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.or-n{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.or-n{font-size:22px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
 .or-n b{color:var(--gold)}
 .or.late .or-n b:last-child{color:var(--over)}
-.or-w{grid-column:2 / 4;font-size:11px;color:var(--mute);margin-top:-5px}
+.or-w{grid-column:2 / 4;font-size:22px;color:var(--mute);margin-top:-5px}
 
 /* 招牌的小圖。只有剖面圖的欄頭有訂過大小，所以它在別的地方
    （點進一組那張卡）會被 flex 撐成 565px 見方——一整塊招牌蓋住整張卡。 */

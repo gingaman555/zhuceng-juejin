@@ -26,8 +26,8 @@
 }
 .bt-side.foe .bt-plate{left:16px;top:16px}
 .bt-side.me .bt-plate{right:16px;bottom:16px}
-.bt-plate b{display:block;font-size:11px;font-weight:400;color:var(--ink)}
-.bt-num{display:block;font-size:11px;color:var(--dim);text-align:right;
+.bt-plate b{display:block;font-size:22px;font-weight:400;color:var(--ink)}
+.bt-num{display:block;font-size:22px;color:var(--dim);text-align:right;
   font-variant-numeric:tabular-nums}
 
 .bt-bar{height:9px;margin:5px 0 2px;background:var(--sunk);
@@ -114,7 +114,7 @@
    使用者：現在的呈現看不出他在幹嘛。寫出來最快。 */
 .hero-tag{
   position:absolute;left:50%;top:-22px;transform:translateX(-50%);
-  padding:2px 9px;font-size:11px;white-space:nowrap;z-index:5;
+  padding:2px 9px;font-size:22px;white-space:nowrap;z-index:5;
   color:var(--mute);background:rgba(0,0,0,.62);
   box-shadow:inset 0 0 0 2px rgba(255,240,214,.14)
 }
@@ -165,7 +165,7 @@
 .bt-side.me .bt-plate::after{right:0;width:calc(100% + 33px)}
 
 .bt-row{display:flex;align-items:center;gap:6px}
-.bt-row em{font-size:11px;font-style:normal;color:var(--gold2)}
+.bt-row em{font-size:22px;font-style:normal;color:var(--gold2)}
 .bt-row .bt-bar{flex:1;margin:5px 0 2px}
 
 /* 字幕框右下角那個閃動的三角。 */
@@ -207,7 +207,7 @@
 
 /* ── 血條拿掉之後的名牌 ──
    上面只有名字；報完那一趟才長出「說了幾天／走了幾天」。 */
-.bt-plate .bt-num{display:block;margin-top:5px;font-size:11px;color:var(--gold2);
+.bt-plate .bt-num{display:block;margin-top:5px;font-size:22px;color:var(--gold2);
   text-align:left;font-variant-numeric:tabular-nums}
 .bt-plate{width:auto;min-width:110px}
 
@@ -312,10 +312,10 @@
 }
 
 /* 第二問那三塊。小標在上、東西在下，跟字幕框同一種框。 */
-.bt-qh{font-size:11px;color:var(--gold2);margin:11px 0 6px}
+.bt-qh{font-size:22px;color:var(--gold2);margin:11px 0 6px}
 .bt-qh:first-child{margin-top:0}
 .bt-w{
-  width:100%;margin:0;padding:9px 11px;font:inherit;font-size:11px;line-height:22px;
+  width:100%;margin:0;padding:9px 11px;font:inherit;font-size:22px;line-height:22px;
   color:var(--ink);background:var(--sunk);border:none;resize:vertical;
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.42)
 }

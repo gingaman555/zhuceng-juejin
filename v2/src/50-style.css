@@ -36,9 +36,8 @@ img{display:block}
   position:sticky;top:0;height:100vh;overflow:auto
 }
 .side-head{padding:22px;border-bottom:1px solid var(--line)}
-.side-head .k{font-size:11px;color:var(--mute);letter-spacing:.2em}
 .side-head .n{font-size:22px;margin-top:5px}
-.side-head .s{font-size:11px;color:var(--dim);margin-top:5px}
+.side-head .s{font-size:22px;color:var(--dim);margin-top:5px}
 
 .nav{padding:11px 0;flex:1}
 .nav a{
@@ -59,12 +58,12 @@ img{display:block}
 .top{
   display:flex;align-items:center;gap:11px;padding:11px 22px;
   background:var(--panel);border-bottom:1px solid var(--line);
-  position:sticky;top:0;z-index:20;font-size:11px;color:var(--dim);flex-wrap:wrap
+  position:sticky;top:0;z-index:20;font-size:22px;color:var(--dim);flex-wrap:wrap
 }
 .top .who{font-size:22px;color:var(--ink)}
 .top .sp{flex:1}
 .badge{
-  display:inline-block;padding:2px 8px;font-size:11px;
+  display:inline-block;padding:2px 8px;font-size:22px;
   background:var(--gold);color:#1A1408
 }
 .badge.t{background:#7C6BC7;color:#F0ECFF}
@@ -72,20 +71,20 @@ img{display:block}
 /* 試用列：只有原型有。真的上線沒有這一條。 */
 .demo{
   display:flex;align-items:center;gap:11px;padding:11px 22px;flex-wrap:wrap;
-  background:#100D0A;border-bottom:1px solid var(--line);font-size:11px;color:var(--mute)
+  background:#100D0A;border-bottom:1px solid var(--line);font-size:22px;color:var(--mute)
 }
 .demo b{color:var(--dim);font-weight:400}
 
 /* ---------- 元件 ---------- */
 
-.eyebrow{font-size:11px;color:var(--mute);letter-spacing:.2em;margin-bottom:5px}
+.eyebrow{font-size:22px;color:var(--mute);letter-spacing:.2em;margin-bottom:5px}
 h1{font-size:44px;line-height:1.35;margin:0 0 11px;font-weight:400}
 h2{font-size:33px;line-height:1.45;margin:0 0 11px;font-weight:400}
 h3{font-size:22px;line-height:1.6;margin:22px 0 11px;font-weight:400}
 p{margin:0 0 11px}
 .lead{font-size:22px;color:var(--dim);max-width:63ch}
-.dim{font-size:11px;color:var(--mute);line-height:1.9;max-width:70ch}
-.ok{font-size:11px;color:var(--ok);line-height:1.9}
+.dim{font-size:22px;color:var(--mute);line-height:1.9;max-width:70ch}
+.ok{font-size:22px;color:var(--ok);line-height:1.9}
 .warnx{color:var(--over)}
 .quote{
   font-size:22px;color:var(--ink);line-height:1.8;
@@ -116,13 +115,13 @@ input,textarea,select{
   width:100%;background:var(--sunk);border:1px solid var(--line);
   color:var(--ink);padding:11px;margin:5px 0 11px;font-size:22px
 }
-select{width:auto;padding:2px 8px;font-size:11px}
+select{width:auto;padding:2px 8px;font-size:22px}
 textarea{resize:vertical;line-height:1.7}
 ::placeholder{color:var(--mute)}
 
 .flash{
   background:var(--panel2);border-left:3px solid var(--gold);
-  padding:11px 14px;margin:0 0 22px;font-size:11px;color:var(--dim);line-height:1.9
+  padding:11px 14px;margin:0 0 22px;font-size:22px;color:var(--dim);line-height:1.9
 }
 a.plain{color:var(--dim);cursor:pointer;text-decoration:none}
 a.plain:hover{color:var(--gold)}
@@ -143,8 +142,8 @@ a.plain:hover{color:var(--gold)}
 .px.sign{width:66px;height:66px;flex:0 0 66px}
 .sign-txt{flex:1;min-width:160px}
 .sign-txt b{display:block;font-size:33px;font-weight:400;color:var(--ink)}
-.sign-txt span{display:block;font-size:11px;color:var(--mute);margin-top:5px;line-height:1.8}
-.depth{text-align:right;font-size:11px;color:var(--mute)}
+.sign-txt span{display:block;font-size:22px;color:var(--mute);margin-top:5px;line-height:1.8}
+.depth{text-align:right;font-size:22px;color:var(--mute)}
 .depth b{display:block;font-size:33px;color:var(--gold);font-weight:400;margin:3px 0}
 
 /* 迷霧走廊：角色 → 格子 → 魔物 */
@@ -153,7 +152,7 @@ a.plain:hover{color:var(--gold)}
   position:relative;z-index:2;flex-wrap:nowrap;overflow-x:auto
 }
 .corr.empty{
-  display:block;font-size:11px;color:var(--mute);line-height:1.9;
+  display:block;font-size:22px;color:var(--mute);line-height:1.9;
   border:1px dashed var(--Lline);padding:22px;text-align:center
 }
 .hero{position:relative;flex:0 0 66px}
@@ -170,8 +169,8 @@ a.plain:hover{color:var(--gold)}
 .cell.here{box-shadow:0 0 0 2px var(--gold) inset}
 
 .mob{flex:0 0 66px;text-align:center}
-.mob span{display:block;font-size:11px;color:var(--dim);margin-top:3px}
-.corr-note{font-size:11px;color:var(--mute);position:relative;z-index:2}
+.mob span{display:block;font-size:22px;color:var(--dim);margin-top:3px}
+.corr-note{font-size:22px;color:var(--mute);position:relative;z-index:2}
 
 /* 唯一的動作 */
 .act-card{
@@ -194,7 +193,7 @@ a.plain:hover{color:var(--gold)}
 .slider::-moz-range-thumb{width:22px;height:22px;background:var(--gold);border:none;cursor:pointer}
 .slider-read{flex:0 0 auto;text-align:center}
 .slider-read b{display:block;font-size:66px;line-height:1;color:var(--gold);font-weight:400}
-.slider-read span{font-size:11px;color:var(--mute)}
+.slider-read span{font-size:22px;color:var(--mute)}
 
 .big-num{font-size:66px;line-height:1;color:var(--gold);font-weight:400}
 .big-num span{font-size:22px;color:var(--mute)}
@@ -202,16 +201,16 @@ a.plain:hover{color:var(--gold)}
 /* ---------- 標籤 ---------- */
 
 .tags{display:flex;gap:11px;flex-wrap:wrap;margin:11px 0}
-.tags .k{font-size:11px;color:var(--mute);align-self:center;margin-right:5px}
+.tags .k{font-size:22px;color:var(--mute);align-self:center;margin-right:5px}
 .tag{
   font-size:22px;padding:9px 13px;cursor:pointer;white-space:nowrap;
   background:none;color:var(--dim);border:1px solid var(--line)
 }
 .tag:hover{color:var(--ink);border-color:var(--line2)}
 .tag.on{background:rgba(233,179,65,.14);color:var(--gold);border-color:var(--gold)}
-.tag.static{cursor:default;font-size:11px;padding:5px 9px}
+.tag.static{cursor:default;font-size:22px;padding:5px 9px}
 .tag.static.hit{color:var(--gold);border-color:var(--gold-d)}
-.tags.small .tag{font-size:11px;padding:5px 9px}
+.tags.small .tag{font-size:22px;padding:5px 9px}
 .tags.big{gap:11px}
 .tags.big .tag{
   display:flex;flex-direction:column;align-items:flex-start;gap:3px;
@@ -219,7 +218,7 @@ a.plain:hover{color:var(--gold)}
 }
 .tags.big .tag b{font-size:33px;line-height:1}
 .tags.big .tag i{font-style:normal;font-size:22px;color:var(--ink)}
-.tags.big .tag em{font-style:normal;font-size:11px;color:var(--mute);line-height:1.7}
+.tags.big .tag em{font-style:normal;font-size:22px;color:var(--mute);line-height:1.7}
 .tag.static em{display:block;font-style:normal;color:var(--mute);margin-top:3px}
 
 /* ---------- 判定印章 ---------- */
@@ -237,7 +236,7 @@ a.plain:hover{color:var(--gold)}
 .stamp-card .lead{margin:0 auto 22px;max-width:44ch}
 .stamp-num{display:flex;justify-content:center;gap:11px;align-items:baseline;margin:22px 0}
 .stamp-num b{font-size:44px;color:var(--gold);font-weight:400}
-.stamp-num span{font-size:11px;color:var(--mute);margin-right:22px}
+.stamp-num span{font-size:22px;color:var(--mute);margin-right:22px}
 
 /* ---------- 營火 ---------- */
 
@@ -259,14 +258,14 @@ a.plain:hover{color:var(--gold)}
 .acc-c b{display:block;line-height:0}
 .acc-c b .px{width:33px;height:auto;image-rendering:pixelated}
 .acc-c i{display:block;font-style:normal;font-size:44px;color:var(--gold);line-height:1.2}
-.acc-c span{font-size:11px;color:var(--mute)}
+.acc-c span{font-size:22px;color:var(--mute)}
 
 .gear-row{display:flex;gap:11px;flex-wrap:wrap;margin-top:11px}
 .gear{
   display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:11px 14px;background:var(--sunk);border:1px solid var(--line);font-size:33px
 }
-.gear i{font-style:normal;font-size:11px;color:var(--dim)}
+.gear i{font-style:normal;font-size:22px;color:var(--dim)}
 
 .gear-pick{display:flex;gap:11px;flex-wrap:wrap;margin-top:11px}
 .gcard{
@@ -278,7 +277,7 @@ a.plain:hover{color:var(--gold)}
 .gcard.on{background:rgba(233,179,65,.12);border-color:var(--gold)}
 .gcard b{font-size:33px;line-height:1}
 .gcard i{font-style:normal;font-size:22px;color:var(--ink)}
-.gcard em{font-style:normal;font-size:11px;color:var(--mute);line-height:1.7}
+.gcard em{font-style:normal;font-size:22px;color:var(--mute);line-height:1.7}
 
 /* 全班地下城的剖面樣式搬到 54-eco.css——那是一整張地質圖，值得自己一個檔。 */
 
@@ -290,15 +289,15 @@ a.plain:hover{color:var(--gold)}
 .radar-head .sp{flex:1}
 .green{width:11px;height:11px;background:var(--ok);flex:0 0 11px}
 .radar-ms{font-size:22px;color:var(--ink);margin-bottom:5px}
-.log-num{font-size:11px;color:var(--mute);margin:5px 0}
+.log-num{font-size:22px;color:var(--mute);margin:5px 0}
 .log-num b{font-size:22px;color:var(--gold)}
-.st{font-size:11px;padding:3px 8px;border:1px solid var(--line2);color:var(--dim)}
+.st{font-size:22px;padding:3px 8px;border:1px solid var(--line2);color:var(--dim)}
 .st.exact{color:var(--gold);border-color:var(--gold-d)}
 .st.early{color:var(--ok);border-color:var(--ok)}
 .st.late{color:var(--over);border-color:var(--over)}
 
 .mini{display:flex;flex-direction:column;gap:5px;margin-top:11px}
-.mini-row{display:flex;gap:11px;align-items:center;font-size:11px;color:var(--mute)}
+.mini-row{display:flex;gap:11px;align-items:center;font-size:22px;color:var(--mute)}
 .mini-row b{flex:0 0 132px;font-size:22px;color:var(--dim);font-weight:400}
 .mini-row .ok{color:var(--ok)}
 
@@ -308,7 +307,7 @@ a.plain:hover{color:var(--gold)}
   border-top:1px solid var(--line)}
 .rn-row b{flex:0 0 110px;font-size:22px;font-weight:400;color:var(--dim)}
 .rn-row input{flex:1;min-width:176px;margin:0}
-.sg-tier{font-size:11px;color:var(--mute);flex:0 0 44px}
+.sg-tier{font-size:22px;color:var(--mute);flex:0 0 44px}
 .sg-tier.top{color:var(--gold)}
 
 /* 窄螢幕的排法全部在 59-mobile.css。這裡不再藏側欄——藏了導覽就沒了。 */
@@ -325,10 +324,10 @@ a.plain:hover{color:var(--gold)}
 .step:last-child{border-right:1px solid var(--line)}
 .step b{
   flex:0 0 22px;width:22px;height:22px;line-height:22px;text-align:center;
-  font-size:11px;font-weight:400;background:var(--line);color:var(--bg)
+  font-size:22px;font-weight:400;background:var(--line);color:var(--bg)
 }
 .step i{display:block;font-style:normal;font-size:22px;line-height:1.4}
-.step em{display:block;font-style:normal;font-size:11px;line-height:1.7;margin-top:3px}
+.step em{display:block;font-style:normal;font-size:22px;line-height:1.7;margin-top:3px}
 .step.past{color:var(--dim)}
 .step.past b{background:var(--gold-d);color:var(--Ll)}
 .step.on{background:var(--Lbg);border-color:var(--gold-d);color:var(--ink)}
@@ -353,8 +352,8 @@ a.plain:hover{color:var(--gold)}
 .side-foot{padding:11px 22px 22px;border-top:1px solid var(--line)}
 
 /* 研究者那幾頁的一排：名字、說明、幾顆小鍵 */
-.rn-row .btn.ghost{padding:5px 11px;font-size:11px}
-.rn-row span{font-size:11px}
+.rn-row .btn.ghost{padding:5px 11px;font-size:22px}
+.rn-row span{font-size:22px}
 .rn-row input{min-width:132px}
 
 /* ---------- 裝備架 ----------
@@ -363,7 +362,7 @@ a.plain:hover{color:var(--gold)}
 .carry-in{display:flex;align-items:flex-start;gap:14px;margin:11px 0}
 .carry-in b{font-size:44px;line-height:1}
 .carry-in i{display:block;font-style:normal;font-size:22px;color:var(--ink)}
-.carry-in em{display:block;font-style:normal;font-size:11px;color:var(--dim);line-height:1.9;margin-top:3px}
+.carry-in em{display:block;font-style:normal;font-size:22px;color:var(--dim);line-height:1.9;margin-top:3px}
 
 .shelf{display:flex;flex-wrap:wrap;gap:11px;margin-top:11px}
 .slot{
@@ -373,8 +372,8 @@ a.plain:hover{color:var(--gold)}
 .slot.on{background:#2E2210}
 .slot b{display:block;font-size:33px;line-height:1;margin-bottom:5px}
 .slot i{display:block;font-style:normal;font-size:22px;color:var(--ink)}
-.slot em{display:block;font-style:normal;font-size:11px;color:var(--mute);line-height:1.8;margin:3px 0}
-.slot .from{display:block;font-size:11px;color:var(--gold-d);line-height:1.7;margin-top:5px}
+.slot em{display:block;font-style:normal;font-size:22px;color:var(--mute);line-height:1.8;margin:3px 0}
+.slot .from{display:block;font-size:22px;color:var(--gold-d);line-height:1.7;margin-top:5px}
 
 /* ---------- 門口的四個區域 ----------
    還沒登入就先看到下面有什麼。這不是說明，是世界。 */
@@ -385,7 +384,7 @@ a.plain:hover{color:var(--gold)}
 }
 .zn .px.zn-px{width:44px;height:44px;margin:0 auto 8px;opacity:.9}
 .zn b{display:block;font-size:22px;font-weight:400;line-height:1.3}
-.zn span{display:block;font-size:11px;color:var(--mute);line-height:1.7;margin-top:5px}
-.zn i{display:block;font-style:normal;font-size:11px;color:var(--gold-d);margin-top:5px}
+.zn span{display:block;font-size:22px;color:var(--mute);line-height:1.7;margin-top:5px}
+.zn i{display:block;font-style:normal;font-size:22px;color:var(--gold-d);margin-top:5px}
 .zn{background:var(--zbg)}
 .zn b{color:var(--zink)}

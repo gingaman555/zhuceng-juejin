@@ -22,7 +22,7 @@
   .nav{display:flex;flex-direction:row;padding:0;width:100%}
   .nav a{
     flex:1;min-width:0;flex-direction:column;justify-content:center;
-    gap:3px;padding:9px 3px;font-size:11px;text-align:center;line-height:1.3;
+    gap:3px;padding:9px 3px;font-size:22px;text-align:center;line-height:1.3;
     border-left:none;border-top:3px solid transparent
   }
   .nav a.on{border-top-color:var(--gold);background:var(--panel2)}
@@ -61,12 +61,12 @@
 
   /* ---------- 步驟條：兩個一排 ---------- */
   .step{min-width:calc(50% - 1px);border-right:1px solid var(--line)}
-  .step i{font-size:11px}
+  .step i{font-size:22px}
 
   /* ---------- 廊道 ---------- */
   .scn,.scn-in{height:231px}
   .scn-hud{padding:4px 7px}
-  .scn-hud em{font-size:11px}
+  .scn-hud em{font-size:22px}
   .scn-hud b{font-size:22px}
   .scn-hud .zn-note{display:none}
   .scn-cap{margin-top:0}
@@ -97,7 +97,7 @@
   h1{font-size:22px}
   .wrap{padding:14px 11px 121px}
   .step{min-width:100%;border-right:1px solid var(--line)}
-  .nav a{font-size:11px;padding:8px 1px}
+  .nav a{font-size:22px;padding:8px 1px}
   .zn{min-width:100%}
 }
 
@@ -113,7 +113,7 @@
 @media (max-width: 860px) {
   .side{display:flex !important}
   /* 試用列在手機會排到三行，收成一行 */
-  .demo{font-size:11px;flex-wrap:nowrap;overflow-x:auto}
+  .demo{font-size:22px;flex-wrap:nowrap;overflow-x:auto}
   .demo select{max-width:132px}
 }
 

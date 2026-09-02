@@ -239,7 +239,7 @@ function sideBar() {
     ];
   } else {
     var t = myTeam();
-    headBlock = '<div class="side-head"><div class="k">TUNNEL</div>' +
+    headBlock = '<div class="side-head">' +
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
     /* 三個。四件事是流程，不是分頁——說幾天、去做事、看判定都在廊道，

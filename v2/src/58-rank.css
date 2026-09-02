@@ -14,11 +14,11 @@
   flex:0 0 22px;font-size:22px;font-style:normal;line-height:22px;
   color:var(--mute);text-align:center;font-variant-numeric:tabular-nums
 }
-.rk-r b{flex:0 0 66px;font-size:11px;font-weight:400;color:var(--ink)}
+.rk-r b{flex:0 0 66px;font-size:22px;font-weight:400;color:var(--ink)}
 .rk-bar{flex:1;height:11px;background:var(--sunk);
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.4);min-width:44px}
 .rk-bar u{display:block;height:100%;background:var(--gold);text-decoration:none}
-.rk-d{flex:0 0 auto;font-size:11px;color:var(--dim);
+.rk-d{flex:0 0 auto;font-size:22px;color:var(--dim);
   font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
 
 /* 自己那一列標出來，但不放大——放大就變成「看我」。 */
@@ -30,7 +30,7 @@
 
 /* 出口一直在。自主性優先於排名。 */
 .rk-out{
-  margin-top:14px;padding:5px 11px;font:inherit;font-size:11px;cursor:pointer;
+  margin-top:14px;padding:5px 11px;font:inherit;font-size:22px;cursor:pointer;
   color:var(--dim);background:none;border:none;
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.28)
 }

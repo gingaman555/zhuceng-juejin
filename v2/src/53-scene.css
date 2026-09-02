@@ -32,7 +32,7 @@
   padding:5px 9px;background:rgba(6,5,4,.82)
 }
 .scn-hud b{display:block;font-size:33px;line-height:1;color:var(--gold);font-weight:400}
-.scn-hud span{font-size:11px;color:var(--mute)}
+.scn-hud span{font-size:22px;color:var(--mute)}
 
 /* ---------- 地板 ---------- */
 .floor{
@@ -82,7 +82,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 }
 .dayn{
   position:absolute;bottom:11px;width:44px;text-align:center;
-  font-size:11px;color:#3E362C
+  font-size:22px;color:#3E362C
 }
 .dayn.past{color:var(--gold-d)}
 .dayn.here{color:var(--gold)}
@@ -131,7 +131,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .scn-mob .px{width:66px;height:66px;margin:0 auto}
 .scn-mob .mobn{
   position:absolute;left:50%;transform:translateX(-50%);bottom:-22px;
-  font-size:11px;color:var(--dim);white-space:nowrap
+  font-size:22px;color:var(--dim);white-space:nowrap
 }
 /* ---------- 洞口 ---------- */
 .mouth{position:absolute;left:0;top:0;bottom:0;z-index:3}
@@ -156,11 +156,11 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 }
 .mouth .px.sign{width:66px;height:66px;margin:0 auto}
 .mouth-txt{position:absolute;left:11px;bottom:110px;width:121px}
-.mouth-txt b{display:block;font-size:11px;line-height:1.5;color:var(--ink);font-weight:400}
-.mouth-txt span{display:block;font-size:11px;color:var(--mute)}
+.mouth-txt b{display:block;font-size:22px;line-height:1.5;color:var(--ink);font-weight:400}
+.mouth-txt span{display:block;font-size:22px;color:var(--mute)}
 
 /* ---------- 場景底下那一行 ---------- */
-.scn-cap{font-size:11px;color:var(--mute);margin:-11px 0 22px;line-height:1.9}
+.scn-cap{font-size:22px;color:var(--mute);margin:-11px 0 22px;line-height:1.9}
 .scn-cap b{font-size:22px;color:var(--gold);font-weight:400}
 
 /* ---------- 關掉動畫的人 ----------
@@ -224,7 +224,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   background:var(--sunk);
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06), 0 0 0 1px #000
 }
-.sf{font-size:11px;color:var(--mute);display:flex;align-items:baseline;gap:6px}
+.sf{font-size:22px;color:var(--mute);display:flex;align-items:baseline;gap:6px}
 .sf b{font-size:33px;line-height:1;font-weight:400}
 .sf.you b{color:var(--gold)}
 .sf.days b{color:#5FA8C7}

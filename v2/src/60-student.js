@@ -643,9 +643,8 @@ function logRow(m, r, t) {
   var kp = null;
   keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
 
-  /* 老師回的話優先；沒有的話放自己封存時取的名字。
-     兩個都沒有就不放——不要用一句系統寫的話把位置填滿。 */
-  var line = r.word ? r.word : (kp && kp.name ? '「' + kp.name + '」' : '');
+  /* 收起來的那一列本來還有一行「老師回的話」。字放大之後那一行只剩
+     八個字加刪節號，而完整的那一句點開就在下面——所以不放了。 */
 
   /* 用 div 不用 button：<button> 上的 grid／flex 在 Chromium 不完整生效
      ——內容會被包進一個匿名區塊，第一個子元素因此被收縮成內容寬，
@@ -659,7 +658,6 @@ function logRow(m, r, t) {
   H.push('<b class="rec-t">' + esc(m.title) + '</b>');
   H.push('<span class="rec-d">' + esc(dayText(r.committedAt)) +
     (r.submittedAt ? ' – ' + esc(dayText(r.submittedAt)) : '') + '</span>');
-  H.push('<span class="rec-w">' + (line ? esc(line) : '') + '</span>');
 
   H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">' +
     (s ? stampPx(s.key) : '') + '</span>');

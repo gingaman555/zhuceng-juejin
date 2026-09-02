@@ -289,9 +289,22 @@ Object.keys(pxc).forEach(function (c) {
   }
 });
 
+/* ---------- 八 · 沒有小字 ----------
+
+   字級只有 22 / 33 / 44 / 66。11px 是這套點陣字的原生尺寸，畫得清楚，
+   但讀不清楚——而且它一直是一個出口：句子太長就縮成 11px 塞進去。
+   出口關掉之後，句子太長只有一條路，就是把句子砍短。 */
+const small = (src.match(/font-size:(d+)px/g) || [])
+  .map(function (x) { return Number(x.match(/d+/)[0]); })
+  .filter(function (n) { return n < 22; });
+if (small.length) {
+  bad++;
+  console.error('還有 ' + small.length + ' 條小於 22px 的字級　——沒有小字了，太長就砍短');
+}
+
 if (bad) {
   console.error('\n' + bad + ' 項殘留。');
   process.exit(1);
 }
 console.log('殘留檢查通過：' + BANNED.length + ' 個禁用詞、畫面代號、寫死的規則句、' +
-  '判定的純度、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度，都守住了。');
+  '判定的純度、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度、沒有小字，都守住了。');

@@ -62,28 +62,27 @@ function feedRow(f, meId) {
   var mine = f.team && f.team.teamId === meId;
   var H = ['<div class="fd' + (mine ? ' mine' : '') + '">'];
   var who = f.team ? shortName(f.team.name) : '老師';
-  var act = '', det = '', ic = '';
+  var act = '', ic = '';
 
   if (f.kind === 'seal') {
     var z = STRATA[0];
     STRATA.forEach(function (x) { if (x.key === f.keep.zone) z = x; });
     ic = pxTag(f.keep.px || coreOf(f.keep.runId), z.pal, 'core sm');
-    act = '封存'; det = f.keep.name || '（沒取名）';
+    act = '封存';
   } else if (f.kind === 'sent') {
     ic = pxTag(ICONS.log, ICON_PAL, 'nic');
-    act = '交出去'; det = f.ms ? f.ms.title : '';
+    act = '交出去';
   } else if (f.kind === 'left') {
     ic = pxTag(ICONS.home, ICON_ON, 'nic');
-    act = '走出去了'; det = f.team.project || '';
+    act = '走出去了';
   } else {
     ic = pxTag(ICONS.ms, ICON_PAL, 'nic');
-    act = '派了新的'; det = f.ms.title;
+    act = '派了新的';
   }
 
   H.push('<span class="fd-ic">' + ic + '</span>');
   H.push('<b>' + esc(who) + '</b>');
   H.push('<em>' + esc(act) + '</em>');
-  H.push('<span class="fd-t">' + esc(det) + '</span>');
   H.push('<i>' + feedWhen(f.at) + '</i>');
   H.push('</div>');
   return H.join('');
