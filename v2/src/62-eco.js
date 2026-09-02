@@ -1,4 +1,4 @@
-/* 全班地下城：一張地質剖面。
+/* 班級地下城：一張地質剖面。
 
    這是「關聯性」那根柱子的全部，而且它只做一件事：
    讓你看得到別人也在下面——不比較、不排名、不知道誰比較好。
@@ -20,184 +20,172 @@
    立體感來自每一塊右邊的側面（見 54-eco.css），不是把整條廊道斜著推——
    正交的長條看起來像進度表，有側面的廊道看起來像地下城。 */
 
-var XS = {
-  RULER: 154,    /* 左邊：深度尺與層的名字 */
-  W: 176,        /* 一條廊道的寬。要放得下 22px 的專案名，一行六個字 */
-  GAP: 44,       /* 廊道之間的牆 */
-  SEG: 55,       /* 一個里程碑的深度 */
-  SURF: 132,     /* 地表那一段。欄頭有三行，最上面是 22px 的專案名 */
-  ROCK: 264      /* 最右邊留一大塊沒有人走過的岩壁，給生態用 */
+/* ---------- 版面 ----------
+
+   橫的，由左至右——跟首頁那一條廊道同一套文法。每一組一條，上下排開，
+   全部從同一條左邊界起算，所以長度直接比得出來，不用讀任何數字。
+
+   本來是直的剖面：每一組往下挖一口井，格子畫的是「挖空的洞」。
+   橫過來之後格子的意思也跟著換：
+
+     一塊 ＝ 老師收下的一趟。實心的，疊上去的。
+     虛的一塊 ＝ 交出去了，還在老師那邊。
+     右邊的暗岩 ＝ 還沒挖到的地方，每一條都留著。
+
+   為什麼是「老師收下的」而不是「走完的」——走是他自己的事，
+   留下來是要有人看過的事（見 40-db.js 的 sealedDepth）。
+   走完但還沒被收下的那一趟看得到，但它是虛的：那一塊還沒站住。
+
+   石頭的顏色只跟「第幾塊」有關，跟哪一組無關（strataAt 吃 classId）。
+   一旦讓某一組有自己的顏色，這張圖就開始比誰的比較漂亮。
+   六層沒有先後、順序一個班洗一次，所以顏色不帶任何「你該到哪」。 */
+var XL = {
+  NAME: 176,   /* 左邊：這是哪一組 */
+  BLK: 55,     /* 一塊的寬 */
+  BH: 66,      /* 一塊的高 */
+  HEAD: 44,    /* 條的上面留給角色站的那一條 */
+  LANE: 121,   /* 一條佔的高：44 站的 ＋ 66 條 ＋ 11 間隔 */
+  AHEAD: 4,    /* 每一條右邊都要留著的、還沒挖到的那幾格 */
+  TOP: 55      /* 最上面那條尺 */
 };
 
-function xsTop(d) { return XS.SURF + d * XS.SEG; }
-function xsX(i) { return XS.RULER + i * (XS.W + XS.GAP); }
+function xlX(n) { return XL.NAME + n * XL.BLK; }
+function xlY(i) { return XL.TOP + i * XL.LANE; }
+
+/* 這一組疊到第幾塊。實心幾塊、後面掛不掛一塊虛的。 */
+function xlCount(r) { return r.sealed + (r.pending ? 1 : 0); }
 
 /* ---------- 整張圖 ---------- */
 function xsScene(rows, meId, classId) {
-  /* 畫多深：最深的那一組再往下兩格，讓底下永遠還有沒有人走過的岩石。
-     這很重要——底部如果切齊最深的人，那條線就變成終點線了。 */
-  var deep = rows.reduce(function (a, r) {
-    return Math.max(a, r.depth + (r.at > 0 ? 1 : 0));
-  }, 0);
-  var maxD = Math.max(5, deep + 2);
-  var W = xsX(rows.length) + XS.ROCK;
-  var H = xsTop(maxD) + 44;
+  /* 畫多長：最長的那一條再往右幾格。右邊永遠還有沒挖過的岩石——
+     切齊最長的那一組，那條邊就變成終點線了。 */
+  var most = rows.reduce(function (a, r) { return Math.max(a, xlCount(r)); }, 0);
+  var cols = Math.max(6, most + XL.AHEAD);
+  var W = xlX(cols) + 22;
+  var H = xlY(rows.length) + 22;
 
   var out = ['<div class="xsec-wrap"><div class="xsec" style="width:' + W +
     'px;height:' + H + 'px">'];
 
-  /* ── 地層 ──
-     層沒有固定深度：順序是一個班洗一次，六層走完回到第一層。
-     所以帶子從班級的路線算，每 ZONE_SPAN 格一帶，一直排到底。
-     同一個班的每一組看到的是同一片地質——那是「我們在同一個地方」。 */
-  for (var bd = 0; bd * ZONE_SPAN < maxD; bd++) {
-    var zs = strataAt(bd * ZONE_SPAN, classId);
-    var top = xsTop(bd * ZONE_SPAN);
-    var bot = xsTop(Math.min((bd + 1) * ZONE_SPAN, maxD));
-    out.push('<div class="xs-band ' + zs.key + '" style="top:' + top +
-      'px;height:' + (bot - top) + 'px;width:' + W + 'px"></div>');
-    /* 帶名那一層拿掉了：一層一趟之後，帶名跟深度尺講的是同一條線
-       （40 公尺那一條就是迴聲迷宮的開始），而它們都貼在左邊 6px，
-       所以每一條尺上都壓著一個帶名。併進尺裡（見下面）。 */
+  /* ── 每一直行的石頭 ──
+     整張圖的底。同一行不管哪一組，石頭都一樣，因為那是同一片地質。 */
+  for (var n = 0; n < cols; n++) {
+    var zn = strataAt(n, classId);
+    out.push('<div class="xl-col ' + zn.key + '" style="left:' + xlX(n) +
+      'px;width:' + XL.BLK + 'px;height:' + H + 'px"></div>');
   }
 
-  /* ── 岩壁裡的東西 ── */
-  out.push(xsFauna(rows.length, maxD, classId));
-
-  /* ── 地表 ── */
-  out.push('<div class="xs-sky" style="width:' + W + 'px"></div>');
-  out.push('<div class="xs-surf" style="width:' + W + 'px"></div>');
-
-  /* ── 深度尺。只標數字，不標「應該到哪」 ── */
-  /* 深度尺。一條線上寫兩件事：多深、以及從這裡開始是哪一層。
-     本來那兩個是分開的兩層，而且都貼在左邊——每一條尺上都壓著一個帶名。 */
-  /* 從 0 標起。本來從 1 開始，所以最上面那一層——新來的人所在的
-     那一層——整張圖上沒有名字。地表那一條不寫 0 m，寫層名就好。 */
-  out.push('<div class="xs-rule surf" style="top:' + xsTop(0) + 'px;width:' + W + 'px">' +
-    '<i class="' + strataAt(0, classId).key + '">' +
-    esc(strataAt(0, classId).name) + '</i></div>');
-  for (var d = 1; d <= maxD; d++) {
-    var rz = strataAt(d, classId);
-    out.push('<div class="xs-rule" style="top:' + xsTop(d) + 'px;width:' + W + 'px">' +
-      '<span>' + (d * WORLD.depthPerMilestone) + ' m</span>' +
-      '<i class="' + rz.key + '">' + esc(rz.name) + '</i></div>');
+  /* ── 最上面那條尺 ──
+     只寫多深，不寫「應該到哪」。兩塊一個刻度，一塊一個會太密。 */
+  out.push('<div class="xl-rule" style="width:' + W + 'px"></div>');
+  for (var d = 2; d <= cols; d += 2) {
+    out.push('<div class="xl-tick" style="left:' + xlX(d) + 'px;height:' + H + 'px">' +
+      '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
   }
 
-  /* ── 每一組一條廊道 ── */
+  /* ── 沒挖到的岩石裡住著東西 ── */
+  out.push(xlFauna(rows, cols, classId));
+
+  /* ── 每一組一條 ── */
   /* meId 可以是一個組（學生）或一串組（老師帶的那幾組）。 */
   var mineSet = {};
   if (typeof meId === 'string' && meId) mineSet[meId] = 1;
   else if (meId && meId.length) meId.forEach(function (x) { mineSet[x] = 1; });
   rows.forEach(function (r, i) {
-    out.push(xsShaft(r, i, maxD, !!mineSet[r.teamId]));
+    out.push(xlLane(r, i, cols, classId, !!mineSet[r.teamId]));
   });
 
   out.push('</div></div>');
   return out.join('');
 }
 
-/* ---------- 岩壁裡的生態 ----------
-   位置用層與槽算，不擲骰子。每次打開，同一隻都在同一個地方——
-   會亂跳的東西不是生態，是特效。 */
-function xsFauna(nTeams, maxD, classId) {
-  var out = [];
-  /* 放得下的地方：每一條廊道右邊那道牆，加上最右邊那一大塊 */
-  var slots = [];
-  for (var i = 0; i < nTeams; i++) slots.push(xsX(i) + XS.W + 14);
-  slots.push(xsX(nTeams) + 33);
-  slots.push(xsX(nTeams) + 154);
-  slots.push(xsX(nTeams) + 88);
+/* ---------- 還沒挖到的地方住著什麼 ----------
 
-  for (var bd = 0; bd * ZONE_SPAN < maxD; bd++) {
-    var s = strataAt(bd * ZONE_SPAN, classId);
-    var lo = xsTop(bd * ZONE_SPAN);
-    var hi = xsTop(Math.min((bd + 1) * ZONE_SPAN, maxD));
-    if (hi - lo < 55) continue;
-    /* 用「第幾帶」而不是層的 key 當種子——同一層在不同深度再出現一次的
-       時候，住在裡面的不該是同一隻站在同一個位置。 */
-    xsPlace(out, slots, s, bd, lo, hi);
-  }
+   位置用行與列算，不擲骰子——每次打開同一隻都在同一個地方。
+   會亂跳的東西不是生態，是特效。
+
+   只長在沒有人挖到的那一段：牠們跟任何一組的進度無關，
+   就只是住在那裡，而且前面還有。 */
+function xlFauna(rows, cols, classId) {
+  var out = [];
+  rows.forEach(function (r, i) {
+    var from = xlCount(r) + 1;
+    for (var n = from; n < cols; n++) {
+      var h = hash('f/' + classId + '/' + i + '/' + n);
+      if (h % 100 < 68) continue;
+      var z = strataAt(n, classId);
+      var c = faunaAt(z.key, i * 7 + n);
+      if (!c) continue;
+      /* 不是鈕。牠是岩石裡的東西——要查牠去圖鑑，那裡有全部二十四隻。 */
+      out.push('<div class="xl-fauna" style="left:' + (xlX(n) + 6) + 'px;top:' +
+        (xlY(i) + 11 + (h >>> 5) % 22) + 'px" title="' + esc(c.n) + '">' +
+        pxTag(c.px, z.pal, '') + '</div>');
+    }
+  });
   return out.join('');
 }
 
-function xsPlace(out, slots, s, bd, lo, hi) {
-  slots.forEach(function (x, n) {
-    var h = hash(s.key + '/' + bd + '/' + n);
-    if (h % 100 < 42) return;
-    var c = faunaAt(s.key, bd * 7 + n);
-    if (!c) return;
-    var y = lo + 11 + ((h >>> 5) % Math.max(1, hi - lo - 55));
-    /* 不是鈕。牠是牆上的東西——要查牠去圖鑑。
-       本來是鈕，於是這張圖上有二十四個看起來像壁紙的目標。 */
-    out.push('<div class="xs-fauna" style="left:' + x + 'px;top:' + y + 'px" ' +
-      'title="' + esc(c.n) + '">' + pxTag(c.px, s.pal, '') + '</div>');
-  });
-}
-
-/* ---------- 一條廊道 ---------- */
-/* mine 是「這一條要不要標成自己的」。學生只有一條（自己那一組），
-   老師有好幾條（他帶的那幾組）——所以判斷放在呼叫端，這裡只收
-   一個布林。 */
-function xsShaft(r, i, maxD, mine) {
-  var x = xsX(i);
+/* ---------- 一組一條 ---------- */
+/* mine 是「這一條要不要標成自己的」。學生只有一條，老師有好幾條，
+   所以判斷放在呼叫端，這裡只收一個布林。 */
+function xlLane(r, i, cols, classId, mine) {
+  var y = xlY(i);
   var tm = teamOf(r.teamId);
   var left = !!(tm && tm.leftAt);
-  var H = [];
-  H.push('<div class="xs-shaft' + (mine ? ' mine' : '') + (left ? ' left' : '') +
-    '" style="left:' + x + 'px;width:' + XS.W + 'px">');
+  var n = xlCount(r);
+  var H = ['<div class="xl-lane' + (mine ? ' mine' : '') + (left ? ' out' : '') +
+    '" style="top:' + y + 'px;height:' + XL.LANE + 'px">'];
 
-  /* 走出去的那一組，廊道整條亮著一道光通到地表。
-     別人看得到「他們走出去了」——這是這張圖上關聯性最強的一件事，
-     而且它不是名次：走不走得出去跟估得準不準無關。 */
-  if (left) {
-    H.push('<div class="xs-out" style="height:' + (xsTop(maxD) + 44) + 'px"></div>');
-  }
+  /* 左邊那一格：他們在做什麼，跟他們是誰。
 
-  /* 入口。招牌立在地表上，不是埋在土裡。
+     大的是專案名不是組名——「第一組 · 甲」是座號，
+     「畢製分工失衡」才是他們在做的事。
 
-     本來這裡疊四行，而且亮的那一行是組名。「第一組 · 甲」是座號，
-     「畢製分工失衡」才是他們在做的事——大的要是後者。
-     組名縮成一個字，跟狀態併成一行。
-
-     整塊是一顆鈕：本來這裡沒有任何 data-act，所以還沒留下東西的
-     那幾組整條廊道是死的，點不動。 */
-  var sg = SIGNS[r.sign] || SIGNS.wood;
-  H.push('<button class="xs-head" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'team:' + r.teamId })) + '\' title="' +
-    esc(r.name) + '">');
-  H.push(pxTag(sg.px, sg.pal, 'sign-s'));
+     整格是一顆鈕，點進去是「他們是誰」；中間那一疊是另一顆，
+     點進去是「他們做了什麼」。一條上兩個問題，各自一顆鈕。 */
+  H.push('<button class="xl-name" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'crew:' + r.teamId })) + '\' title="' +
+    esc(r.name) + '" style="top:' + XL.HEAD + 'px;width:' + XL.NAME +
+    'px;height:' + XL.BH + 'px">');
   H.push('<b>' + esc(r.project || '（還沒定）') + '</b>');
-  /* 誰＋現在怎麼樣，一行，釘在欄頭底部——名字一行跟兩行的組要齊。 */
-  H.push('<em class="xs-st"><span>' + esc(shortName(r.name)) + '</span>' +
-    '<i class="s-' + r.status.key + '">' + esc(r.status.label) +
-    (r.status.days ? ' ' + r.status.days + ' 天' : '') + '</i></em>');
+  H.push('<em>' + esc(shortName(r.name)) + '</em>');
   H.push('</button>');
 
-  /* 打通的每一格 */
-  for (var d = 0; d < maxD; d++) {
-    var dug = d < r.depth;
-    var here = d === r.depth && r.at > 0;
-    var band = strataAt(d, r.teamId);
-    H.push('<div class="xs-seg ' + band.key + (dug ? ' dug' : '') + (here ? ' here' : '') +
-      '" style="top:' + xsTop(d) + 'px">');
-    if (here) H.push('<i style="height:' + Math.round(r.at * 100) + '%"></i>');
-    /* 記號系統整個拿掉了，所以這一格裡不再放東西。這張圖上剩下的是
-       每一組打通到哪、正在走哪一格、還有誰在裡面——那三件事本來
-       就是這一頁在回答的。 */
-    H.push('</div>');
-  }
+  /* 疊起來的那幾塊。整排是一顆鈕：點下去看他們被派過哪些任務。
 
-  /* 小人站在最深的那一格 */
-  /* 走出去的那一組，人站在地表上——他不在下面了。 */
-  var at = r.depth + (r.at > 0 ? 1 : 0);
+     空的那幾組也點得到——鈕蓋滿整條，不然還沒被收下任何一趟的組
+     整條是死的，而那正是最需要被點開看一眼的那一組。 */
+  H.push('<button class="xl-stack" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'team:' + r.teamId })) + '\' ' +
+    'style="left:' + xlX(0) + 'px;top:' + XL.HEAD + 'px;width:' +
+    (cols * XL.BLK) + 'px;height:' + XL.BH + 'px">');
+  for (var k = 0; k < n; k++) {
+    var z = strataAt(k, classId);
+    var wait = (k === n - 1) && r.pending;
+    H.push('<i class="xl-b ' + z.key + (wait ? ' wait' : ' on') +
+      '" style="left:' + (k * XL.BLK) + 'px;width:' + XL.BLK + 'px"></i>');
+  }
+  H.push('</button>');
+
+  /* 角色站在自己那一條的最後一塊上面，腳踩在條的上緣。點他看那一個人。
+
+     本來人站在最深的那一格裡。搬到條上面來，是因為一整排人的左右
+     就是一整排的長短——誰疊得多，不用讀任何數字。
+     還沒疊到任何一塊的那一組站在起點上，不是站在空中。 */
   var hr = r.hero || HERO;
-  var pose = left ? hr.idle : (r.stall >= 2 ? hr.sleep : hr.idle);
-  var top = left ? (XS.SURF - 44) : (xsTop(Math.max(0, at - 1)) + 11);
-  H.push('<div class="xs-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
-    (left ? ' out' : '') + '" style="top:' + top + 'px">');
+  var pose = left ? hr.win : (r.stall >= 2 ? hr.sleep : hr.idle);
+  H.push('<button class="xl-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
+    '" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'person:' + r.teamId })) + '\' title="' +
+    esc(shortName(r.name)) + '" style="left:' + (xlX(Math.max(0, n - 1)) + 6) + 'px">');
   H.push(pxTag(pose, hr.pal, 'ch-s'));
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
-  H.push('</div>');
+  H.push('</button>');
+
+  /* 走出去的那一組，那一條的盡頭是一道光。
+     別人看得到「他們走出去了」——而那跟估得準不準無關。 */
+  if (left) H.push('<span class="xl-exit" style="top:' + XL.HEAD +
+    'px;left:' + xlX(n) + 'px"></span>');
 
   H.push('</div>');
   return H.join('');
@@ -259,7 +247,7 @@ PAGES.eco = function () {
      所以它屬於一個你特地過來看的地方。
 
      打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
-  var H = [head('全班地下城', '大家都在下面', '')];
+  var H = [head('班級地下城', '大家都在下面', '')];
   H.push(xsScene(rows, t.teamId, t.classId));
   /* 岩壁裡那幾隻不再是鈕（見 xsPlace），所以這裡也不再有那張卡。
      要查一隻去圖鑑。 */

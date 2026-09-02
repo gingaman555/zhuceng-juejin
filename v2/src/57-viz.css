@@ -1404,6 +1404,19 @@ button.ac:active{transform:translateY(1px)}
   box-shadow:inset 0 0 0 2px var(--gold-d)
 }
 .okcard b{display:block;font-size:22px;font-weight:400;color:var(--ink);margin:4px 0}
+/* 大的那一句。33px 是這個作品裡標題的字級——它就是一個標題。 */
+.okcard b.ok-big{
+  font-size:33px;line-height:1.35;color:var(--gold);margin:6px 0 0;
+  text-wrap:balance
+}
+/* 小的那一句。22px 是下限，不是「小字」——這裡沒有小字。 */
+.okcard .ok-sub{
+  display:block;font-size:22px;font-style:normal;line-height:1.4;
+  color:var(--dim);margin:8px 0 0
+}
+.okcard .ok-ms{
+  display:block;font-size:22px;color:var(--mute);margin:11px 0 0
+}
 
 /* ── 你要做哪幾件 ──
    一件一行：顏色、名字、幾天、拿掉。顏色跟廊道上那一格頭上的
@@ -1489,3 +1502,27 @@ button.ac:active{transform:translateY(1px)}
   100%{transform:scale(1);opacity:1}
 }
 @media (prefers-reduced-motion: reduce){ .dk .nb{animation:none} }
+
+/* ---------- 登入那一頁旁邊走過去的那一位 ----------
+
+   兩幀輪播是原地走，再加一段橫move才是「前進」——原地踏步的角色
+   放在一道門旁邊看起來像卡住了。走到底就從左邊再進來，
+   跟廊道那一條一樣：這個世界一直在往前，你還沒進來而已。 */
+.gate-hd{position:relative;overflow:hidden}
+.gate-walk{
+  position:absolute;right:0;bottom:0;display:block;width:66px;height:66px;
+  pointer-events:none;
+  animation:gatewalk 9s linear infinite
+}
+.gate-walk .px{position:absolute;left:0;top:0;width:66px;height:66px}
+.gate-walk .wa{animation:wkA .44s steps(1,end) infinite}
+.gate-walk .wb{animation:wkB .44s steps(1,end) infinite}
+@keyframes gatewalk{
+  0%{transform:translateX(-264px)}
+  100%{transform:translateX(66px)}
+}
+@media (prefers-reduced-motion: reduce){
+  .gate-walk{animation:none;transform:translateX(0)}
+  .gate-walk .wa{animation:none;opacity:1}
+  .gate-walk .wb{animation:none;opacity:0}
+}

@@ -61,7 +61,15 @@ PAGES.gate = function () {
 /* ---------- 登入 ---------- */
 PAGES.login = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
+  /* 隨機一位在旁邊走。挑好的那一個記在 S 上——打字會重畫，
+     每敲一個字換一個職業會像壞掉。 */
+  if (!S.gw) S.gw = HERO_LIST[Math.floor(Math.random() * HERO_LIST.length)].k;
+  var gw = HEROES[S.gw] || HERO;
+  H.push('<div class="gate-hd">');
   H.push(head('登入', '你是誰', ''));
+  H.push('<span class="gate-walk">' +
+    pxTag(gw.walkA, gw.pal, 'wf wa') + pxTag(gw.walkB, gw.pal, 'wf wb') + '</span>');
+  H.push('</div>');
   H.push('<div class="card">');
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="lg-acc" value="' + esc(draft('lg-acc')) + '" placeholder="' +

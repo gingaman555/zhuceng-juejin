@@ -112,6 +112,111 @@ ACTS.cx = function (k) { DRAFT.cx = k; render(); };
 
    它不進任何判定、不影響任何數字，也不會有人因為挑了哪一個而多拿
    或少拿什麼。挑完就回廊道，因為那才是他要待的地方。 */
+/* ---------- 一組 ----------
+
+   班級地下城上點那個名牌到這裡。四樣東西：他們在做什麼、
+   他們給自己的形容、有誰、每個人挑了什麼角色。
+
+   一個數字都沒有。走了幾趟、準不準、疊了幾塊，那些是「他們做了什麼」，
+   點那一疊才是問那個——這一頁只回答「他們是誰」。 */
+PAGES.crew = function () {
+  var tm = teamOf(S.p.id);
+  if (!tm) return '<div class="card">找不到。</div>';
+  var mine = !!(myTeam() && myTeam().teamId === tm.teamId);
+
+  var H = [head(tm.project || '（還沒定）', tm.name, '')];
+
+  /* 給自己的形容。自己的組改得動，別組只看得到。
+     系統不替任何一組下形容詞——招牌上寫什麼是他們的事。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">他們給自己的形容</div>');
+  if (mine) {
+    H.push('<textarea id="cr-b" rows="2" maxlength="60" placeholder="' +
+      esc('例：三個人，一個做訪談、兩個做設計。') + '">' +
+      esc(tm.blurb || '') + '</textarea>');
+    H.push(btn('寫好了', 'blurb', ''));
+  } else if (tm.blurb) {
+    H.push('<p class="quote big">' + nl(tm.blurb) + '</p>');
+  } else {
+    H.push('<p class="dim">他們還沒寫。</p>');
+  }
+  H.push('</div>');
+
+  /* 有誰，跟每一個人挑了什麼角色。 */
+  var crew = where('Roster', function (x) { return x.teamId === tm.teamId; });
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">' + crew.length + ' 個人</div>');
+  H.push('<div class="crew">');
+  crew.forEach(function (rs) {
+    var u = rs.claimedBy ? userOf(rs.claimedBy) : null;
+    var k = heroKey(u);
+    var g = HEROES[k];
+    var meta = null;
+    HERO_LIST.forEach(function (x) { if (x.k === k) meta = x; });
+    H.push('<div class="crw' + (u ? '' : ' none') + '">');
+    H.push('<span class="crw-px">' + pxTag(g.idle, g.pal, 'ch-s') + '</span>');
+    H.push('<span class="crw-t"><b>' + esc(rs.memberName) + '</b>');
+    H.push('<i>' + (u ? esc(meta ? meta.n : '') : '還沒有人認領') + '</i></span>');
+    H.push('</div>');
+  });
+  H.push('</div></div>');
+
+  H.push(btn('看他們被派過哪些任務', 'team:' + tm.teamId, ''));
+  H.push(btn('回班級地下城', 'go:eco', 'ghost'));
+  return H.join('');
+};
+
+/* ---------- 一個人 ----------
+
+   班級地下城上每一條的角色都點得開，點到的是這一頁。
+
+   它刻意只有一件事：他是誰。沒有分數、沒有名次、沒有走了幾趟、
+   沒有準不準——那些是「他們做了什麼」，點那一疊才是問那個。
+
+   兩件事分開問，是因為這個系統唯一在評的東西是預估，而一個人
+   不該被他的預估定義。他選了哪一個角色是他自己的事，
+   而那件事在這裡佔一整頁。
+
+   別人的也看得到。看得到的是他挑了什麼、他的角色會說什麼——
+   一個一個字都不能拿來比。 */
+PAGES.person = function () {
+  var tm = teamOf(S.p.id);
+  if (!tm) return '<div class="card">找不到。</div>';
+  var mem = where('Users', function (x) {
+    return x.teamId === tm.teamId && x.role === 'student';
+  })[0];
+  var k = heroKey(mem);
+  var g = HEROES[k];
+  var meta = null;
+  HERO_LIST.forEach(function (x) { if (x.k === k) meta = x; });
+  var mine = !!(myTeam() && myTeam().teamId === tm.teamId);
+
+  var H = [head(meta ? meta.n : '角色',
+    mine ? '這是你在這場專案旅行中的化身' : esc(tm.project || tm.name), '')];
+
+  /* 大的那一張。走路兩幀輪播——站著不動的一張圖看起來像沒做完。 */
+  H.push('<div class="card pcard">');
+  H.push('<span class="pcard-px">' +
+    pxTag(g.walkA, g.pal, 'wf wa') + pxTag(g.walkB, g.pal, 'wf wb') + '</span>');
+  H.push('<div class="pcard-t">');
+  H.push('<b>' + esc(meta ? meta.n : '') + '</b>');
+  H.push('<p class="lead">' + esc(meta ? meta.t : '') + '</p>');
+  /* 他休息的時候會說的那一句。這是這一頁上唯一一句「他自己的話」。 */
+  var rest = (HERO_OS[k] || HERO_OS.adv).rest || [];
+  if (rest.length) H.push('<p class="quote">' + esc(rest[0]) + '</p>');
+  H.push('</div></div>');
+
+  /* 他在哪一組。組名小、專案名大——座號不是資料。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">' + esc(shortName(tm.name)) + '</div>');
+  H.push('<b class="ptitle">' + esc(tm.project || '（還沒定）') + '</b>');
+  H.push('</div>');
+
+  if (mine) H.push(btn('換一個角色', 'go:who', ''));
+  H.push(btn('回班級地下城', 'go:eco', 'ghost'));
+  return H.join('');
+};
+
 PAGES.who = function () {
   var u = me();
   var now = heroKey(u);

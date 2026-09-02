@@ -107,7 +107,7 @@ function runsFor(teamId) {
    一次只回答一件事。首頁只給一個動作，其餘都是資訊。 */
 function nextThing(teamId) {
   /* 已經走出去的組不再有下一件事。這不是鎖住畫面——
-     他們還看得到留下的、全班地下城、紀錄，只是不再被派任務。 */
+     他們還看得到留下的、班級地下城、紀錄，只是不再被派任務。 */
   var tm = teamOf(teamId);
   if (tm && tm.leftAt) return { kind: 'left' };
   /* 第一件事：先給這個專案取個名字。
@@ -218,6 +218,14 @@ function sealedDepth(teamId) {
   }).length;
 }
 
+/* 走到多深，跟站得住多深。
+
+   前面那個數字是系統給的（判定出來就變深），後面那個要老師收下。
+   兩個並排就是這一套的兩種回饋，而且一個評價的字都不用寫。 */
+function depthSay(teamId) {
+  return { walked: depthOf(teamId), sealed: sealedDepth(teamId) };
+}
+
 /* 廊道口掛的那塊牌子。
 
    本來它有三階材質，走得越深牌子越好。拿掉了——深度已經不是進度
@@ -268,6 +276,13 @@ function ecology(classId, mentorId) {
     return {
       teamId: t.teamId, name: t.name,
       depth: depthOf(t.teamId),
+      /* 疊起來的那幾塊。sealed 是老師收下的，pending 是交出去了還在他那邊。
+         走完但沒被收下的那一趟看得到，但它是虛的——那一塊還沒站住。 */
+      sealed: sealedDepth(t.teamId),
+      pending: where('Runs', function (r) {
+        return r.teamId === t.teamId &&
+          (r.state === 'submitted' || r.state === 'back' || r.state === 'judged');
+      }).length,
       stall: st.level,
       status: statusOf(t.teamId),
       /* 正在打的那一隻，跟走到哪 */
@@ -980,6 +995,19 @@ function actRename(teamId, name) {
   t.project = name;
   save();
   logEvent('rename', { teamId: teamId, name: name, from: old });
+  return t;
+}
+
+/* 給自己的形容。這一組自己寫，別組看得到、改不動。
+
+   跟專案名是兩件事：專案名是「我們在做什麼」，形容是「我們是什麼樣的組」。
+   系統一個字都不寫——它不對任何一組下形容詞。 */
+function actBlurb(teamId, text) {
+  var t = teamOf(teamId);
+  if (!t) return null;
+  t.blurb = String(text || '').slice(0, 60);
+  save();
+  logEvent('blurb', { teamId: teamId, len: t.blurb.length });
   return t;
 }
 

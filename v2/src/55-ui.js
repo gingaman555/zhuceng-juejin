@@ -23,6 +23,9 @@ function go(page, p) {
   if (typeof stopAnim === 'function') stopAnim();
   if (typeof stopOS === 'function') stopOS();
   S.page = page; S.p = p || {}; S.flash = null; DRAFT = {};
+  /* 登入那一頁旁邊走過去的那一位，換頁就忘掉——下次進來重挑一個。
+     不清的話它會跟著整個工作階段，「每次」就變成「開一次網頁一次」。 */
+  S.gw = null;
   window.scrollTo(0, 0);
   render();
 }
@@ -34,7 +37,7 @@ function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
    記在畫完之後，所以這一次還看得到。
 
    蓋掉之前先接住上一次的時間，整個連線都留著（SEEN_CUT）。
-   全班地下城拿它來標「你不在的時候別人留下的」——不接住的話，
+   班級地下城拿它來標「你不在的時候別人留下的」——不接住的話，
    走過首頁再切過去，圖上就一個新的都沒有了。 */
 var SEEN_CUT = null;
 function seen() {
@@ -272,7 +275,7 @@ function sideBar() {
        各自走到哪」，那是隨時會想確認的東西，所以它在側欄。
        圖鑑是想逛才逛的，在廊道底下那一排門。 */
     nav = [
-      ['home', '廊道'], ['pack', '任務清單'], ['eco', '全班地下城']
+      ['home', '廊道'], ['pack', '任務清單'], ['eco', '班級地下城']
     ];
   }
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
@@ -521,12 +524,31 @@ var ACTS = {
 
   /* 老師勾可以了 → 去挑裝備 */
 
-  /* 在這一層留下一個記號。
-
+  /* 點一組：攤開他們被派過哪些任務。班級地下城上點名牌或點那一疊，
+     都是這一支——那兩個地方問的是同一個問題。 */
   team: function (id) {
     DRAFT.dt = id; DRAFT.tab = 'team'; render();
     var c = document.querySelector('.segs');
     if (c) c.scrollIntoView({ block: 'start' });
+  },
+
+  /* 點一個角色：看那一個人。
+
+     跟 team 分開是因為它們回答的是兩件事——那一疊是「他們做了什麼」，
+     那個人是「他是誰」。而這個作品裡「他是誰」不含任何數字。 */
+  person: function (id) { go('person', { id: id }); },
+
+  /* 點一組的名牌：那一組是誰。 */
+  crew: function (id) { go('crew', { id: id }); },
+
+  /* 那一組給自己的形容。只有自己改得動（擋在 PAGES.crew）。 */
+  blurb: function () {
+    var t = myTeam();
+    var el = document.getElementById('cr-b');
+    if (!t || !el) return;
+    actBlurb(t.teamId, el.value);
+    say('寫好了。');
+    render();
   },
 
   /* 剖面圖底下那三顆。 */

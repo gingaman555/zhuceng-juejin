@@ -311,7 +311,9 @@ input.slider:active{transform:none}
    給它們一個共同的靜止狀態：右下角一道硬邊的影子。
    那是這一份材質語言裡「墊在上面的東西」的意思——
    墊在上面的東西才按得下去。 */
-[data-act]:not(.btn):not(.tag):not(.seg):not(.nav a):not(input):not(select),
+/* 班級地下城那三顆（名牌、那一疊、角色）自己訂位置——這一條的 relative
+   會把它們的 absolute 蓋掉，而且它的 :not() 鏈權重比一個 class 高得多。 */
+[data-act]:not(.btn):not(.tag):not(.seg):not(.nav a):not(input):not(select):not(.xl-name):not(.xl-stack):not(.xl-hero),
 [data-go]:not(.nav a){
   position:relative
 }
