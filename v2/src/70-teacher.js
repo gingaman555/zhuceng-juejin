@@ -155,7 +155,7 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你的想法　選填</div>');
-  H.push('<p class="dim">覺得不行就說清楚，要讓他們聽得懂。退回去改一定要寫。</p>');
+  H.push('<p class="dim">退回去改一定要寫。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');

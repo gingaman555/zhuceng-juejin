@@ -54,7 +54,6 @@ PAGES.gate = function () {
     H.push('</div>');
   });
   H.push('</div>');
-  H.push('<p class="dim">順序每一個班隨機洗一次。走完六層回到第一層。</p>');
   H.push('</div></div>');
   return H.join('');
 };
@@ -167,14 +166,14 @@ ACTS.reg = function () {
     return say(r.err);
   }
   signIn(r.user);
-  say('帳號好了。接下來從名冊上點自己是誰。');
+  say('帳號好了。');
 };
 
 ACTS.claim = function (rosterId) {
   var r = actClaim(S.who, rosterId);
   if (r.err) return say(r.err);
   go('home');
-  say('對上了。這一條廊道從現在起是你們的。');
+  say('對上了。');
 };
 
 ACTS.logout = function () {

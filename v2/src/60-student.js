@@ -183,11 +183,10 @@ function taskTag(next) {
    換上來的是任務清單與圖鑑——它們本來各佔一個分頁，但它們不是步驟。 */
 function deskRow(t, next) {
   var H = ['<div class="desk">'];
-  /* 任務清單在側欄，這裡不再放一次——兩個地方都放就是重複。 */
-  H.push('<button class="dk lit" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
-    esc('圖鑑：這座地下城裡有什麼') + '">' +
-    pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i></button>');
+  /* 任務清單在側欄，這裡不再放一次——兩個地方都放就是重複。
+     圖鑑那一扇拿掉了：它不在主流程的任何一步上，而且它的規模
+     （二十四隻）是為了一個沒有發生的使用頻率訂的。
+     生物留著——牠們還是每一趟盡頭擋路的那一隻。 */
   H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
     esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +
@@ -519,49 +518,13 @@ PAGES.stamp = function () {
 
   H.push('<p class="duel-t">' + esc(mob.n) + '讓開了。</p>');
 
-  /* 圖鑑接回主流程。它是全系統內容量最大的一塊，而主流程從來沒提過它——
-     打敗一隻之後這裡說一句，是唯一一個「剛好會想去看」的時刻。 */
-  H.push('<p class="dim">' + esc(mob.n) + ' 在圖鑑裡。' +
-    '<a class="plain" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:codex' })) + '\'>去看看</a></p>');
+  /* 「去圖鑑看看」那一句拿掉了——圖鑑那一頁不在主流程上，整個拿掉了。 */
   H.push(btn('好', 'skipcamp:' + r.runId, 'big'));
   return H.join('');
 };
 
 /* ---------- 營火 ----------
    問的是他們自己清單上的哪一件比想的久。系統不列「卡關的原因」。 */
-PAGES.camp = function () {
-  var r = find('Runs', function (x) { return x.runId === S.p.id; });
-  if (!r) return '<div class="card">找不到。</div>';
-  var t = myTeam();
-  var picked = DRAFT.overs || [];
-  var flags = r.flags || [];
-
-  var H = ['<div class="camp">'];
-  H.push(pxTag(CAMPFIRE.px, CAMPFIRE.pal, 'fire'));
-  H.push('<div>');
-  H.push('<div class="eyebrow">營火</div>');
-  H.push('<h2>哪一件比你想的久？</h2>');
-  H.push('</div></div>');
-
-  H.push('<div class="card">');
-  H.push(estBar(r.est, r.actual, false));
-  H.push('</div>');
-
-  if (stepNames(r.runId).length) {
-    H.push('<div class="card">');
-    if (flags.length) {
-      H.push('<div class="eyebrow">承諾時你標的</div>');
-      H.push(stepLegend(r.runId, flags, null));
-    }
-    H.push('<div class="eyebrow">哪一段真的比想的久</div>');
-    H.push(stepLegend(r.runId, picked, 'over'));
-    H.push('</div>');
-  }
-
-  H.push(btn('說完了', 'reflect:' + r.runId, 'big'));
-  return H.join('');
-};
 
 /* ---------- 封存 ----------
 
@@ -610,7 +573,6 @@ PAGES.pick = function () {
     H.push('<div class="eyebrow' + (askDay === 'new' ? ' lit' : '') +
       '">動過的日子　選填</div>');
     H.push(dayGrid(r.runId));
-    H.push('<p class="dim">不影響準不準。它決定的是收起來之後長什麼樣子。</p>');
     H.push('</div>');
   }
 
@@ -710,7 +672,6 @@ PAGES.exit = function () {
   if (!out) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">說一聲</div>');
-    H.push('<p class="dim">老師確認之後你就出去了。</p>');
     H.push('<div class="row">');
     H.push(btn(t.exitAsk ? '已經說了，在等他' : '這個專案做完了',
       t.exitAsk ? 'noop' : 'askexit', 'big'));

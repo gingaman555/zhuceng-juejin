@@ -106,7 +106,7 @@ PAGES.roster = function () {
   H.push('<textarea id="rt" rows="6" placeholder="' +
     esc('甲：小明, 小華, 阿哲\n乙：怡君, 小柏\n丙：家豪, 品彤, 宥廷') + '">' +
     esc(draft('rt')) + '</textarea>');
-  H.push('<p class="dim">再貼一次只會補上新的名字。' +
+  H.push('<p class="dim">' +
          '已經被認領的名字不會被洗掉。</p>');
   H.push(btn('存進去', 'saveroster', ''));
   H.push('</div>');
@@ -210,7 +210,7 @@ ACTS.newuser = function (role) {
 
 ACTS.respw = function (userId) {
   var pw = (document.getElementById('nu-pw') || {}).value || '';
-  if (!pw.trim()) return say('先在上面那格「先給一個密碼」寫一個新的，再按重設。');
+  if (!pw.trim()) return say('先在上面寫一個新密碼。');
   var r = actResetPw(userId, pw.trim());
   if (r.err) return say(r.err);
   say(userOf(userId).name + ' 的密碼換成你寫的那一個了。');
@@ -243,7 +243,7 @@ ACTS.unclaim = function (rosterId) {
   var r = actUnclaim(rosterId);
   if (r.err) return say(r.err);
   render();
-  say('解開了。那個人重新登入之後可以再點一次。');
+  say('解開了。');
 };
 
 ACTS.csv = function () {

@@ -6690,9 +6690,9 @@ function seen() { if (S.page === 'home' && S.who) markSeen(S.who); }
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
-  camp: 'student', pick: 'student', eco: 'student', pack: 'student',
+  pick: 'student', eco: 'student', pack: 'student',
   battle: 'student',
-  exit: 'student', codex: 'student', sign: 'student',
+  exit: 'student', sign: 'student',
   claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -6995,7 +6995,7 @@ var ACTS = {
       var t = myTeam();
       var n = nextThing(t.teamId);
       if (n.kind === 'camp') return go('camp', { id: n.row.run.runId });
-      return say('營火。比你自己說的天數久的時候，會在這裡坐下來說一句哪一段比想的久。這不會拿走任何權利。');
+      return say('營火。');
     }
   },
 
@@ -7022,7 +7022,7 @@ var ACTS = {
   askexit: function () {
     actAskExit(myTeam().teamId);
     go('exit');
-    say('說出去了。老師確認之後你就出去了。');
+    say('說出去了。');
   },
 
   cancelexit: function () {
@@ -7042,7 +7042,7 @@ var ACTS = {
     var t = myTeam();
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.flags || []);
     go('home');
-    say('承諾了。做完再回來交。');
+    say('承諾了。');
   },
 
   /* 「都差不多」也是一個答案，所以要記下來——
@@ -7055,7 +7055,7 @@ var ACTS = {
     var t = myTeam();
     actReflect(t.teamId, runId, DRAFT.overs || []);
     go('home');
-    say('說出來了。老師看得到，而且這不會拿走任何權利。');
+    say('說出來了。');
   },
 
   /* 老師勾可以了 → 去挑裝備 */
@@ -7073,8 +7073,10 @@ var ACTS = {
     if (!actBuild(t.teamId, d, p[0], lastSealed(t.teamId))) {
       return say('那一層留不了。');
     }
+    /* 敲開岩壁那一下拿掉了。它本來有一個真的作用——碰到的是別組
+       留下的記號——而那個因為「每組不同不能當參考」拿掉了。
+       剩下的兩種是系統自己編的，碰到跟沒碰到不構成任何差別。 */
     DRAFT.build = d;
-    DRAFT.uncover = actUncover(t.teamId, d);
     say('留下了。');
   },
 
@@ -7100,7 +7102,7 @@ var ACTS = {
     /* 封存的同時已經插進那一層了。落在全班地下城——
        剛插進去的那一根就在剖面圖上自己那一條裡。 */
     go('eco', {});
-    say('收起來了。它站在你自己那一條上。');
+    say('收起來了。');
   },
 
   /* 學生改自己的招牌 */
@@ -7110,7 +7112,7 @@ var ACTS = {
     if (!v.trim()) return say('招牌上總要寫點什麼。');
     if (!actRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
     go('home');
-    say('招牌換字了。材質是走出來的，那個急不得。');
+    say('改好了。');
   },
 
   /* ---- 老師 ---- */
@@ -7131,17 +7133,17 @@ var ACTS = {
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
     go('ms');
-    say('派出去了。學生那邊會先被問「你打算花幾天」。');
+    say('派出去了。');
   },
 
   /* 退回去改。一定要寫一句話——不寫理由的退回等於
      「再做一次，但我不告訴你為什麼」。 */
   reject: function (runId) {
     var w = (document.getElementById('gr-word') || {}).value || '';
-    if (!w.trim()) return say('退回去改要寫一句話，讓他們知道要改什麼。');
+    if (!w.trim()) return say('退回去改要寫一句話。');
     if (!actReject(runId, w.trim())) return say('這一件退不回去。');
     go('radar');
-    say('退回去了。他們那邊會看到你寫的話。');
+    say('退回去了。');
   },
 
   /* 改好了再交一次。判定還是原來那一個——重做不會讓他當初
@@ -7163,7 +7165,7 @@ var ACTS = {
     var r = find('Runs', function (x) { return x.runId === runId; });
     if (!r || !actRethink(t.teamId, runId)) return say('這一趟改不了。');
     go('commit', { id: r.msId });
-    say('走過的那幾天留著。重新說一次要幾天。');
+    say('走過的那幾天留著。');
   },
 
   /* 點帶子上的一格：打開那一趟的完整紀錄。
@@ -7211,7 +7213,7 @@ var ACTS = {
     var word = (document.getElementById('gr-word') || {}).value || '';
     if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
     go('radar');
-    say('回過去了。他們可以留記號了。');
+    say('回過去了。');
   }
 };
 
@@ -7549,7 +7551,6 @@ PAGES.gate = function () {
     H.push('</div>');
   });
   H.push('</div>');
-  H.push('<p class="dim">順序每一個班隨機洗一次。走完六層回到第一層。</p>');
   H.push('</div></div>');
   return H.join('');
 };
@@ -7662,14 +7663,14 @@ ACTS.reg = function () {
     return say(r.err);
   }
   signIn(r.user);
-  say('帳號好了。接下來從名冊上點自己是誰。');
+  say('帳號好了。');
 };
 
 ACTS.claim = function (rosterId) {
   var r = actClaim(S.who, rosterId);
   if (r.err) return say(r.err);
   go('home');
-  say('對上了。這一條廊道從現在起是你們的。');
+  say('對上了。');
 };
 
 ACTS.logout = function () {
@@ -7883,11 +7884,10 @@ function taskTag(next) {
    換上來的是任務清單與圖鑑——它們本來各佔一個分頁，但它們不是步驟。 */
 function deskRow(t, next) {
   var H = ['<div class="desk">'];
-  /* 任務清單在側欄，這裡不再放一次——兩個地方都放就是重複。 */
-  H.push('<button class="dk lit" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
-    esc('圖鑑：這座地下城裡有什麼') + '">' +
-    pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i></button>');
+  /* 任務清單在側欄，這裡不再放一次——兩個地方都放就是重複。
+     圖鑑那一扇拿掉了：它不在主流程的任何一步上，而且它的規模
+     （二十四隻）是為了一個沒有發生的使用頻率訂的。
+     生物留著——牠們還是每一趟盡頭擋路的那一隻。 */
   H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
     esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +
@@ -8219,49 +8219,13 @@ PAGES.stamp = function () {
 
   H.push('<p class="duel-t">' + esc(mob.n) + '讓開了。</p>');
 
-  /* 圖鑑接回主流程。它是全系統內容量最大的一塊，而主流程從來沒提過它——
-     打敗一隻之後這裡說一句，是唯一一個「剛好會想去看」的時刻。 */
-  H.push('<p class="dim">' + esc(mob.n) + ' 在圖鑑裡。' +
-    '<a class="plain" data-act="run" data-p=\'' +
-    esc(JSON.stringify({ a: 'go:codex' })) + '\'>去看看</a></p>');
+  /* 「去圖鑑看看」那一句拿掉了——圖鑑那一頁不在主流程上，整個拿掉了。 */
   H.push(btn('好', 'skipcamp:' + r.runId, 'big'));
   return H.join('');
 };
 
 /* ---------- 營火 ----------
    問的是他們自己清單上的哪一件比想的久。系統不列「卡關的原因」。 */
-PAGES.camp = function () {
-  var r = find('Runs', function (x) { return x.runId === S.p.id; });
-  if (!r) return '<div class="card">找不到。</div>';
-  var t = myTeam();
-  var picked = DRAFT.overs || [];
-  var flags = r.flags || [];
-
-  var H = ['<div class="camp">'];
-  H.push(pxTag(CAMPFIRE.px, CAMPFIRE.pal, 'fire'));
-  H.push('<div>');
-  H.push('<div class="eyebrow">營火</div>');
-  H.push('<h2>哪一件比你想的久？</h2>');
-  H.push('</div></div>');
-
-  H.push('<div class="card">');
-  H.push(estBar(r.est, r.actual, false));
-  H.push('</div>');
-
-  if (stepNames(r.runId).length) {
-    H.push('<div class="card">');
-    if (flags.length) {
-      H.push('<div class="eyebrow">承諾時你標的</div>');
-      H.push(stepLegend(r.runId, flags, null));
-    }
-    H.push('<div class="eyebrow">哪一段真的比想的久</div>');
-    H.push(stepLegend(r.runId, picked, 'over'));
-    H.push('</div>');
-  }
-
-  H.push(btn('說完了', 'reflect:' + r.runId, 'big'));
-  return H.join('');
-};
 
 /* ---------- 封存 ----------
 
@@ -8310,7 +8274,6 @@ PAGES.pick = function () {
     H.push('<div class="eyebrow' + (askDay === 'new' ? ' lit' : '') +
       '">動過的日子　選填</div>');
     H.push(dayGrid(r.runId));
-    H.push('<p class="dim">不影響準不準。它決定的是收起來之後長什麼樣子。</p>');
     H.push('</div>');
   }
 
@@ -8410,7 +8373,6 @@ PAGES.exit = function () {
   if (!out) {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">說一聲</div>');
-    H.push('<p class="dim">老師確認之後你就出去了。</p>');
     H.push('<div class="row">');
     H.push(btn(t.exitAsk ? '已經說了，在等他' : '這個專案做完了',
       t.exitAsk ? 'noop' : 'askexit', 'big'));
@@ -9357,7 +9319,6 @@ function faunaCard() {
   H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
   H.push('<h2>' + esc(c.n) + '</h2>');
   H.push('<p class="lead">' + esc(c.t) + '</p>');
-  H.push('<p class="dim">同一個任務，每一組遇到的不是同一隻。</p>');
   H.push('</div></div></div>');
   return H.join('');
 }
@@ -9414,7 +9375,6 @@ PAGES.eco = function () {
 
   /* 留記號是一件在等你做的事，不是一段可以切走的內容，
      所以它跟圖一起留在上面。 */
-  H.push(uncoverCard(t));
 
   /* ── 底下分成三段，一次只看一段 ──
      本來是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
@@ -9623,51 +9583,6 @@ var TASK_STATE = {
    那是一份清單。改成切頁：上面一排是層，點一層看一層，一屏剛好一層。
    預設停在他現在所在的那一層。 */
 
-PAGES.codex = function () {
-  var t = myTeam();
-  var here = strataAt(depthOf(t.teamId), t.teamId);
-  var tab = DRAFT.cx || here.key;
-  var met = metMobs(t.teamId);
-  /* 在地底下掀開遇到的那幾隻也算遇過。foundMobs 寫好了但一直沒接上，
-     所以掀開遇到的生物從來沒進過圖鑑。 */
-  var found = foundMobs(t.teamId);
-  Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
-
-  var H = [head('圖鑑', '這座地下城裡有什麼', '')];
-
-  /* 上面那一排：六層 ＋ 東西。一次只看一頁。 */
-  H.push('<div class="cxtabs">');
-  STRATA.forEach(function (z) {
-    H.push('<button class="cxt ' + z.key + (tab === z.key ? ' on' : '') +
-      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:' + z.key })) + '\'>' +
-      esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
-  });
-  H.push('<button class="cxt gear' + (tab === 'gear' ? ' on' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:gear' })) + '\'>物件</button>');
-  H.push('</div>');
-
-  if (tab === 'gear') {
-    H.push(codexThings(t, here));
-  } else {
-    var z = here;
-    STRATA.forEach(function (x) { if (x.key === tab) z = x; });
-    H.push('<div class="card fa ' + z.key + '">');
-    H.push('<div class="eyebrow">' + (z.key === here.key ? '你現在在這一層' : '地層') + '</div>');
-    H.push('<p class="lead">' + esc(z.note) + '</p>');
-    H.push('<div class="cx">');
-    faunaOf(z.key).forEach(function (c) {
-      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + '">');
-      H.push(pxTag(c.px, z.pal, 'cx-px'));
-      H.push('<div><b>' + esc(c.n) + '</b>');
-      H.push('<em>' + esc(c.t) + '</em>');
-      if (met[c.n]) H.push('<span class="cx-met">遇過 · ' + esc(met[c.n]) + '</span>');
-      H.push('</div></div>');
-    });
-    H.push('</div></div>');
-  }
-
-  return H.join('');
-};
 
 /* 東西那一頁：帶得走的一種，與地上撿得到的幾種。 */
 function codexThings(t, here) {
@@ -9691,7 +9606,6 @@ function codexThings(t, here) {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">地上的物件</div>');
-  H.push('<p class="dim">每一層長的不一樣。</p>');
   H.push('<div class="cx">');
   [['碎石', RUBBLE.px, '往下走的時候崩下來的。'],
    ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點輪廓。'],
@@ -10685,7 +10599,7 @@ PAGES.review = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你的想法　選填</div>');
-  H.push('<p class="dim">覺得不行就說清楚，要讓他們聽得懂。退回去改一定要寫。</p>');
+  H.push('<p class="dim">退回去改一定要寫。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
     esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
@@ -10905,7 +10819,7 @@ PAGES.roster = function () {
   H.push('<textarea id="rt" rows="6" placeholder="' +
     esc('甲：小明, 小華, 阿哲\n乙：怡君, 小柏\n丙：家豪, 品彤, 宥廷') + '">' +
     esc(draft('rt')) + '</textarea>');
-  H.push('<p class="dim">再貼一次只會補上新的名字。' +
+  H.push('<p class="dim">' +
          '已經被認領的名字不會被洗掉。</p>');
   H.push(btn('存進去', 'saveroster', ''));
   H.push('</div>');
@@ -11009,7 +10923,7 @@ ACTS.newuser = function (role) {
 
 ACTS.respw = function (userId) {
   var pw = (document.getElementById('nu-pw') || {}).value || '';
-  if (!pw.trim()) return say('先在上面那格「先給一個密碼」寫一個新的，再按重設。');
+  if (!pw.trim()) return say('先在上面寫一個新密碼。');
   var r = actResetPw(userId, pw.trim());
   if (r.err) return say(r.err);
   say(userOf(userId).name + ' 的密碼換成你寫的那一個了。');
@@ -11042,7 +10956,7 @@ ACTS.unclaim = function (rosterId) {
   var r = actUnclaim(rosterId);
   if (r.err) return say(r.err);
   render();
-  say('解開了。那個人重新登入之後可以再點一次。');
+  say('解開了。');
 };
 
 ACTS.csv = function () {

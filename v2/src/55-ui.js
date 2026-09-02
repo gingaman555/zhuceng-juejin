@@ -38,9 +38,9 @@ function seen() { if (S.page === 'home' && S.who) markSeen(S.who); }
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
 var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
-  camp: 'student', pick: 'student', eco: 'student', pack: 'student',
+  pick: 'student', eco: 'student', pack: 'student',
   battle: 'student',
-  exit: 'student', codex: 'student', sign: 'student',
+  exit: 'student', sign: 'student',
   claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -343,7 +343,7 @@ var ACTS = {
       var t = myTeam();
       var n = nextThing(t.teamId);
       if (n.kind === 'camp') return go('camp', { id: n.row.run.runId });
-      return say('營火。比你自己說的天數久的時候，會在這裡坐下來說一句哪一段比想的久。這不會拿走任何權利。');
+      return say('營火。');
     }
   },
 
@@ -370,7 +370,7 @@ var ACTS = {
   askexit: function () {
     actAskExit(myTeam().teamId);
     go('exit');
-    say('說出去了。老師確認之後你就出去了。');
+    say('說出去了。');
   },
 
   cancelexit: function () {
@@ -390,7 +390,7 @@ var ACTS = {
     var t = myTeam();
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT), DRAFT.flags || []);
     go('home');
-    say('承諾了。做完再回來交。');
+    say('承諾了。');
   },
 
   /* 「都差不多」也是一個答案，所以要記下來——
@@ -403,7 +403,7 @@ var ACTS = {
     var t = myTeam();
     actReflect(t.teamId, runId, DRAFT.overs || []);
     go('home');
-    say('說出來了。老師看得到，而且這不會拿走任何權利。');
+    say('說出來了。');
   },
 
   /* 老師勾可以了 → 去挑裝備 */
@@ -421,8 +421,10 @@ var ACTS = {
     if (!actBuild(t.teamId, d, p[0], lastSealed(t.teamId))) {
       return say('那一層留不了。');
     }
+    /* 敲開岩壁那一下拿掉了。它本來有一個真的作用——碰到的是別組
+       留下的記號——而那個因為「每組不同不能當參考」拿掉了。
+       剩下的兩種是系統自己編的，碰到跟沒碰到不構成任何差別。 */
     DRAFT.build = d;
-    DRAFT.uncover = actUncover(t.teamId, d);
     say('留下了。');
   },
 
@@ -448,7 +450,7 @@ var ACTS = {
     /* 封存的同時已經插進那一層了。落在全班地下城——
        剛插進去的那一根就在剖面圖上自己那一條裡。 */
     go('eco', {});
-    say('收起來了。它站在你自己那一條上。');
+    say('收起來了。');
   },
 
   /* 學生改自己的招牌 */
@@ -458,7 +460,7 @@ var ACTS = {
     if (!v.trim()) return say('招牌上總要寫點什麼。');
     if (!actRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
     go('home');
-    say('招牌換字了。材質是走出來的，那個急不得。');
+    say('改好了。');
   },
 
   /* ---- 老師 ---- */
@@ -479,17 +481,17 @@ var ACTS = {
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
     go('ms');
-    say('派出去了。學生那邊會先被問「你打算花幾天」。');
+    say('派出去了。');
   },
 
   /* 退回去改。一定要寫一句話——不寫理由的退回等於
      「再做一次，但我不告訴你為什麼」。 */
   reject: function (runId) {
     var w = (document.getElementById('gr-word') || {}).value || '';
-    if (!w.trim()) return say('退回去改要寫一句話，讓他們知道要改什麼。');
+    if (!w.trim()) return say('退回去改要寫一句話。');
     if (!actReject(runId, w.trim())) return say('這一件退不回去。');
     go('radar');
-    say('退回去了。他們那邊會看到你寫的話。');
+    say('退回去了。');
   },
 
   /* 改好了再交一次。判定還是原來那一個——重做不會讓他當初
@@ -511,7 +513,7 @@ var ACTS = {
     var r = find('Runs', function (x) { return x.runId === runId; });
     if (!r || !actRethink(t.teamId, runId)) return say('這一趟改不了。');
     go('commit', { id: r.msId });
-    say('走過的那幾天留著。重新說一次要幾天。');
+    say('走過的那幾天留著。');
   },
 
   /* 點帶子上的一格：打開那一趟的完整紀錄。
@@ -559,6 +561,6 @@ var ACTS = {
     var word = (document.getElementById('gr-word') || {}).value || '';
     if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
     go('radar');
-    say('回過去了。他們可以留記號了。');
+    say('回過去了。');
   }
 };

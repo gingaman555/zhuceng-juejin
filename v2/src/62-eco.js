@@ -209,7 +209,6 @@ function faunaCard() {
   H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
   H.push('<h2>' + esc(c.n) + '</h2>');
   H.push('<p class="lead">' + esc(c.t) + '</p>');
-  H.push('<p class="dim">同一個任務，每一組遇到的不是同一隻。</p>');
   H.push('</div></div></div>');
   return H.join('');
 }
@@ -266,7 +265,6 @@ PAGES.eco = function () {
 
   /* 留記號是一件在等你做的事，不是一段可以切走的內容，
      所以它跟圖一起留在上面。 */
-  H.push(uncoverCard(t));
 
   /* ── 底下分成三段，一次只看一段 ──
      本來是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */

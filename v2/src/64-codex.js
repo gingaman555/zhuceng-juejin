@@ -16,51 +16,6 @@
    那是一份清單。改成切頁：上面一排是層，點一層看一層，一屏剛好一層。
    預設停在他現在所在的那一層。 */
 
-PAGES.codex = function () {
-  var t = myTeam();
-  var here = strataAt(depthOf(t.teamId), t.teamId);
-  var tab = DRAFT.cx || here.key;
-  var met = metMobs(t.teamId);
-  /* 在地底下掀開遇到的那幾隻也算遇過。foundMobs 寫好了但一直沒接上，
-     所以掀開遇到的生物從來沒進過圖鑑。 */
-  var found = foundMobs(t.teamId);
-  Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
-
-  var H = [head('圖鑑', '這座地下城裡有什麼', '')];
-
-  /* 上面那一排：六層 ＋ 東西。一次只看一頁。 */
-  H.push('<div class="cxtabs">');
-  STRATA.forEach(function (z) {
-    H.push('<button class="cxt ' + z.key + (tab === z.key ? ' on' : '') +
-      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:' + z.key })) + '\'>' +
-      esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
-  });
-  H.push('<button class="cxt gear' + (tab === 'gear' ? ' on' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:gear' })) + '\'>物件</button>');
-  H.push('</div>');
-
-  if (tab === 'gear') {
-    H.push(codexThings(t, here));
-  } else {
-    var z = here;
-    STRATA.forEach(function (x) { if (x.key === tab) z = x; });
-    H.push('<div class="card fa ' + z.key + '">');
-    H.push('<div class="eyebrow">' + (z.key === here.key ? '你現在在這一層' : '地層') + '</div>');
-    H.push('<p class="lead">' + esc(z.note) + '</p>');
-    H.push('<div class="cx">');
-    faunaOf(z.key).forEach(function (c) {
-      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + '">');
-      H.push(pxTag(c.px, z.pal, 'cx-px'));
-      H.push('<div><b>' + esc(c.n) + '</b>');
-      H.push('<em>' + esc(c.t) + '</em>');
-      if (met[c.n]) H.push('<span class="cx-met">遇過 · ' + esc(met[c.n]) + '</span>');
-      H.push('</div></div>');
-    });
-    H.push('</div></div>');
-  }
-
-  return H.join('');
-};
 
 /* 東西那一頁：帶得走的一種，與地上撿得到的幾種。 */
 function codexThings(t, here) {
@@ -84,7 +39,6 @@ function codexThings(t, here) {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">地上的物件</div>');
-  H.push('<p class="dim">每一層長的不一樣。</p>');
   H.push('<div class="cx">');
   [['碎石', RUBBLE.px, '往下走的時候崩下來的。'],
    ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點輪廓。'],
