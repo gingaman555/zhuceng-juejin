@@ -279,7 +279,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{
 
 /* 絕對定位的那幾個不可以用 transform 位移——它們的位置就是資訊
    （記號在第幾層、人在第幾格），移了就不對了。改成壓暗。 */
-.mmark:active,.xs-head:active,.xs-bld:active,.xs-core:active,
+.xs-head:active,.xs-core:active,
 .xs-fauna:active,.mouth .hang:active,.mouth .mfire:active{
   transform:none;filter:brightness(.7)
 }
@@ -319,17 +319,17 @@ input.slider:active{transform:none}
 .rec,.rk,.bp,.dk,.or,.spr,.tk-k,.msr{
   box-shadow:2px 2px 0 rgba(0,0,0,.45), inset 1px 1px 0 rgba(255,240,214,.06)
 }
-.rec:hover,.rk:hover,.bp:hover,.dk:hover,.tk-k:hover{
+.rec:hover,.rk:hover,.bp:hover,.dk:hover{
   box-shadow:2px 2px 0 rgba(0,0,0,.45), inset 0 0 0 2px var(--gold-d)
 }
-.rec:active,.rk:active,.bp:active,.dk:active,.tk-k:active{
+.rec:active,.rk:active,.bp:active,.dk:active{
   box-shadow:1px 1px 0 rgba(0,0,0,.45), inset 0 0 0 2px var(--gold)
 }
 
 /* 貼在場景上的（記號、欄頭、生物）不能加影子——它們是畫的一部分，
    加了會變成貼紙。改成一直微微亮著，滑過去更亮。 */
-.mmark,.xs-head,.xs-bld,.xs-core,.xs-fauna{filter:brightness(1.06)}
-.mmark:hover,.xs-head:hover,.xs-bld:hover,.xs-core:hover,.xs-fauna:hover{
+.xs-head,.xs-core{filter:brightness(1.06)}
+.xs-head:hover,.xs-core:hover{
   filter:brightness(1.35)
 }
 

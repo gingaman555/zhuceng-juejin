@@ -427,11 +427,9 @@ function sceneMouth(t, next, ENT, resting) {
     var mk = markAt(t.teamId, d);
     if (!mk) return;
     var z = strataAt(d, t.teamId);
-    H.push('<button class="mmark" style="left:' + (72 + i * 30) + 'px" ' +
-      'data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + d })) + '\' ' +
+    H.push('<div class="mmark" style="left:' + (72 + i * 30) + 'px" ' +
       'title="' + esc(mk.name + '　' + z.name) + '">' +
-      pxTag(mk.px, z.pal, '') + '</button>');
+      pxTag(mk.px, z.pal, '') + '</div>');
   });
 
   H.push('</div>');

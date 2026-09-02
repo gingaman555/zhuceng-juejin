@@ -514,7 +514,7 @@ var ACTS = {
   /* 點一組的欄頭：打開他們那張卡，並且捲到它。
      沒有這一支，還沒留下東西的那幾組整條廊道點不動。 */
   team: function (id) {
-    DRAFT.dt = id; DRAFT.sb = null; DRAFT.tab = 'team'; render();
+    DRAFT.dt = id; DRAFT.tab = 'team'; render();
     var c = document.querySelector('.segs');
     if (c) c.scrollIntoView({ block: 'start' });
   },
@@ -522,12 +522,7 @@ var ACTS = {
   /* 剖面圖底下那三顆。 */
   tab: function (k) { DRAFT.tab = k; render(); },
 
-  /* 圖上某一個記號：那是別組某一趟的紀念碑。
 
-     本來還順手設 DRAFT.dt（把那一整組的面板也打開）。拿掉了——
-     一個可以點的東西回答一個問題：記號回答「這一趟是什麼」，
-     欄頭回答「那一組是誰」。兩顆鈕做同一件事，就沒有人分得清
-     哪一顆是做什麼的。 */
   /* 這一組給哪一位老師帶。再點一次同一位就是收回來。 */
   mentor: function (v) {
     var p = String(v).split(',');
@@ -535,12 +530,6 @@ var ACTS = {
     render();
   },
 
-  seeb: function (v) {
-    DRAFT.sb = v.split(',');
-    render();
-    var c = document.querySelector('.bstory');
-    if (c) c.scrollIntoView({ block: 'center' });
-  },
 
   /* 學生改自己的招牌 */
   rename: function () {

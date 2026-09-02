@@ -95,11 +95,10 @@ function taskRow(m, r, t) {
   var def = bd && markAt(t.teamId, bdD);
   if (def) {
     var z = strataAt(bdD, t.teamId);
-    H.push('<button class="tk-k" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + bdD })) + '\'>');
+    H.push('<div class="tk-k">');
     H.push(pxTag(def.px, z.pal, 'core'));
     H.push('<span>' + esc(def.name) + '</span>');
-    H.push('</button>');
+    H.push('</div>');
   }
 
   H.push('</div>');

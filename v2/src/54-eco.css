@@ -225,25 +225,20 @@
 
    放在一個有燈的壁龕裡：石頭上挖出來的那一格跟旁邊的石頭不一樣，
    而那個不一樣就是「有人在這裡放了東西」——不用寫一句話說它可以點。 */
+/* 記號不再是鈕：點開跳出來的那張卡是別組的預估細節，而
+   「每組的東西會有所不同不能當參考」。它現在是看得到的東西——
+   壁龕留著，因為那個壁龕本身就是「有人在這裡放了東西」。 */
 .xs-bld{
-  position:absolute;bottom:6px;cursor:pointer;padding:3px;border:0;
+  position:absolute;bottom:6px;padding:3px;pointer-events:none;
   background:rgba(0,0,0,.55);
   box-shadow:inset 0 0 0 1px var(--gold-d), 0 0 0 1px rgba(0,0,0,.8)
 }
-.xs-bld:hover{background:rgba(233,179,65,.16);
-  box-shadow:inset 0 0 0 1px var(--gold), 0 0 0 1px rgba(0,0,0,.8)}
-.xs-bld:active{transform:translateY(2px)}
-.xs-bld:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-/* 你上次來之後才插進去的。閃是 steps(1)——這個世界裡沒有漸變。 */
-.xs-bld.fresh{animation:newbld 1.4s steps(1,end) infinite}
-@keyframes newbld{
-  0%,49%{box-shadow:inset 0 0 0 2px var(--gold), 0 0 0 1px rgba(0,0,0,.8)}
-  50%,100%{box-shadow:inset 0 0 0 2px var(--gold2),
-    0 0 0 1px rgba(0,0,0,.8), 0 0 0 5px rgba(233,179,65,.22)}
-}
-@media (prefers-reduced-motion: reduce){
-  .xs-bld.fresh{animation:none;
-    box-shadow:inset 0 0 0 2px var(--gold2), 0 0 0 5px rgba(233,179,65,.22)}
+/* 你上次來之後才插進去的。本來是會閃的金框——但它不再是鈕了，
+   一個會閃的金框就是在說「按我」。改成靜的、亮一階：那是「新的」，
+   不是「可以點」。 */
+.xs-bld.fresh{
+  box-shadow:inset 0 0 0 2px var(--gold2), 0 0 0 1px rgba(0,0,0,.8),
+    0 0 0 4px rgba(233,179,65,.20)
 }
 .xs-core{
   position:absolute;right:-8px;width:22px;height:44px;z-index:7;

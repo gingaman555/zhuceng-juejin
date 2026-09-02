@@ -189,10 +189,8 @@ function xsShaft(r, i, maxD, mine) {
          你上次來之後才插進去的那幾個鑲著金邊。首頁那一條說了
          「全班新留了幾個」，但數字只說有事發生，圖說發生在哪裡。 */
       var fresh = SEEN_CUT && bg.keep && bg.keep.at > SEEN_CUT;
-      H.push('<button class="xs-bld' + (fresh ? ' fresh' : '') +
-        '" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'seeb:' + r.teamId + ',' + d })) + '\' title="' +
-        esc(bg.name) + '">' + pxTag(bg.px, strataAt(d, r.teamId).pal, '') + '</button>');
+      H.push('<div class="xs-bld' + (fresh ? ' fresh' : '') + '" title="' +
+        esc(bg.name) + '">' + pxTag(bg.px, strataAt(d, r.teamId).pal, '') + '</div>');
       /* 接起來那一段拿掉了：形狀由那一趟長出來，沒有接口這件事。 */
     }
     H.push('</div>');
@@ -265,11 +263,6 @@ PAGES.eco = function () {
      打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
   var H = [head('全班地下城', '大家都在下面', '')];
   H.push(xsScene(rows, t.teamId, t.classId));
-  /* 點了圖上某一個記號，答案就出現在圖的正下方。
-
-     這張卡（buildCard）寫好了四十行，但一直沒有任何地方呼叫它——
-     所以點記號一直是沒有反應的。跟 faunaCard 同一種錯，同一頁。 */
-  H.push(buildCard(t));
   /* 岩壁裡那幾隻不再是鈕（見 xsPlace），所以這裡也不再有那張卡。
      要查一隻去圖鑑。 */
   /* 排行榜搬到底下「估得準」那一段。刻意加進來、準備好隨時拿掉的
@@ -350,8 +343,6 @@ PAGES.classeco = function () {
      要細節就點那一組（digTeamCard 會攤開他們封存過的每一根石片）；
      要去勾就在審核那一頁，那才是它該在的地方。 */
   H.push(xsScene(rows, mine, u.classId));
-  /* 老師點圖上某一個記號，看到的也是那一趟。 */
-  H.push(buildCard(null));
   H.push(digTeamCard(u.classId));
 
   /* 只留一句：現在有幾組在等你。等你看的那幾件在審核那一頁。 */

@@ -135,48 +135,6 @@ function digTeamCard(classId) {
    「插進水晶迴廊」——沒有一件說得清楚它要你做什麼。
    一條只在資料出錯時出現、出現了又講不清楚的路，不值得留。 */
 
-/* 點地圖上一座建築：那是哪一趟。
-
-   這是整件事的重點。建築不是獎品，是那一趟的紀念碑——
-   點下去看到的是他們自己取的名、幾天、他們說幾天。
-   所以整片領土就是他們的預估史被畫成一個地方。 */
-function buildCard(t) {
-  if (!DRAFT.sb) return '';
-  var p = DRAFT.sb;
-  var st = buildStory(p[0], Number(p[1]));
-  if (!st || !st.def) return '';
-  var tm = teamOf(p[0]);
-  var z = strataAt(Number(p[1]), p[0]);
-  var k = st.keep;
-  var H = ['<div class="card bstory ' + z.key + '">'];
-  H.push('<div class="bs-in">');
-  /* 點開來看到的是那一趟長成的樣子：一天兩列，來過是實心、
-     說了沒動是空心、沒有紀錄是斷的。這一份本來是另一個東西（石片），
-     跟記號一樣一趟一個——併進來了。 */
-  if (k) H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'bs-core'));
-  else H.push(pxTag(st.def.px, BUILD_PAL, 'bs-px'));
-  H.push('<div>');
-  /* 眉標寫「誰、在哪一層」，標題寫他們自己取的名字。
-     本來眉標的第二半是 st.def.name——記號變成那一趟本身之後，
-     那個就等於下面那個標題，同一句話印了兩次。 */
-  H.push('<div class="eyebrow">' + esc(tm ? tm.name : '') + '　·　' + esc(z.name) + '</div>');
-  H.push('<h2>' + esc((k && k.name) || st.def.name) + '</h2>');
-  if (st.run) {
-    H.push('<dl class="rep">');
-    H.push('<dt>他們說</dt><dd>' + st.run.est + '</dd>');
-    H.push('<dt>實際</dt><dd>' + (st.run.actual || (k && k.elapsed) || 0) + '</dd>');
-    H.push('</dl>');
-  }
-  if (k && k.moved) {
-    H.push('<div class="corekey">');
-    H.push('<span><b class="c1"></b>來過 ' + k.moved + ' 天</span>');
-    if (k.rested) H.push('<span><b class="c2"></b>說沒動 ' + k.rested + ' 天</span>');
-    if (k.blank) H.push('<span><b class="c3"></b>沒有紀錄 ' + k.blank + ' 天</span>');
-    H.push('</div>');
-  }
-  H.push('</div></div></div>');
-  return H.join('');
-}
 
 /* ---------- 這一格裡有什麼 ----------
 

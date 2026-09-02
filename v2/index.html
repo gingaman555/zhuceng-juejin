@@ -780,7 +780,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{
 
 /* 絕對定位的那幾個不可以用 transform 位移——它們的位置就是資訊
    （記號在第幾層、人在第幾格），移了就不對了。改成壓暗。 */
-.mmark:active,.xs-head:active,.xs-bld:active,.xs-core:active,
+.xs-head:active,.xs-core:active,
 .xs-fauna:active,.mouth .hang:active,.mouth .mfire:active{
   transform:none;filter:brightness(.7)
 }
@@ -820,17 +820,17 @@ input.slider:active{transform:none}
 .rec,.rk,.bp,.dk,.or,.spr,.tk-k,.msr{
   box-shadow:2px 2px 0 rgba(0,0,0,.45), inset 1px 1px 0 rgba(255,240,214,.06)
 }
-.rec:hover,.rk:hover,.bp:hover,.dk:hover,.tk-k:hover{
+.rec:hover,.rk:hover,.bp:hover,.dk:hover{
   box-shadow:2px 2px 0 rgba(0,0,0,.45), inset 0 0 0 2px var(--gold-d)
 }
-.rec:active,.rk:active,.bp:active,.dk:active,.tk-k:active{
+.rec:active,.rk:active,.bp:active,.dk:active{
   box-shadow:1px 1px 0 rgba(0,0,0,.45), inset 0 0 0 2px var(--gold)
 }
 
 /* 貼在場景上的（記號、欄頭、生物）不能加影子——它們是畫的一部分，
    加了會變成貼紙。改成一直微微亮著，滑過去更亮。 */
-.mmark,.xs-head,.xs-bld,.xs-core,.xs-fauna{filter:brightness(1.06)}
-.mmark:hover,.xs-head:hover,.xs-bld:hover,.xs-core:hover,.xs-fauna:hover{
+.xs-head,.xs-core{filter:brightness(1.06)}
+.xs-head:hover,.xs-core:hover{
   filter:brightness(1.35)
 }
 
@@ -1652,25 +1652,20 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
    放在一個有燈的壁龕裡：石頭上挖出來的那一格跟旁邊的石頭不一樣，
    而那個不一樣就是「有人在這裡放了東西」——不用寫一句話說它可以點。 */
+/* 記號不再是鈕：點開跳出來的那張卡是別組的預估細節，而
+   「每組的東西會有所不同不能當參考」。它現在是看得到的東西——
+   壁龕留著，因為那個壁龕本身就是「有人在這裡放了東西」。 */
 .xs-bld{
-  position:absolute;bottom:6px;cursor:pointer;padding:3px;border:0;
+  position:absolute;bottom:6px;padding:3px;pointer-events:none;
   background:rgba(0,0,0,.55);
   box-shadow:inset 0 0 0 1px var(--gold-d), 0 0 0 1px rgba(0,0,0,.8)
 }
-.xs-bld:hover{background:rgba(233,179,65,.16);
-  box-shadow:inset 0 0 0 1px var(--gold), 0 0 0 1px rgba(0,0,0,.8)}
-.xs-bld:active{transform:translateY(2px)}
-.xs-bld:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-/* 你上次來之後才插進去的。閃是 steps(1)——這個世界裡沒有漸變。 */
-.xs-bld.fresh{animation:newbld 1.4s steps(1,end) infinite}
-@keyframes newbld{
-  0%,49%{box-shadow:inset 0 0 0 2px var(--gold), 0 0 0 1px rgba(0,0,0,.8)}
-  50%,100%{box-shadow:inset 0 0 0 2px var(--gold2),
-    0 0 0 1px rgba(0,0,0,.8), 0 0 0 5px rgba(233,179,65,.22)}
-}
-@media (prefers-reduced-motion: reduce){
-  .xs-bld.fresh{animation:none;
-    box-shadow:inset 0 0 0 2px var(--gold2), 0 0 0 5px rgba(233,179,65,.22)}
+/* 你上次來之後才插進去的。本來是會閃的金框——但它不再是鈕了，
+   一個會閃的金框就是在說「按我」。改成靜的、亮一階：那是「新的」，
+   不是「可以點」。 */
+.xs-bld.fresh{
+  box-shadow:inset 0 0 0 2px var(--gold2), 0 0 0 1px rgba(0,0,0,.8),
+    0 0 0 4px rgba(233,179,65,.20)
 }
 .xs-core{
   position:absolute;right:-8px;width:22px;height:44px;z-index:7;
@@ -2750,9 +2745,8 @@ button.ac:active{transform:translateY(1px)}
 .eb-u{font-size:22px;color:var(--dim);margin-left:-8px}
 
 /* 任務清單裡那一根點得開——那一根怎麼讀，全系統只有那一張卡說得出來。 */
-button.tk-k{border:none;background:none;font:inherit;cursor:pointer;padding:0;
+.tk-k{border:none;background:none;font:inherit;padding:0;
   text-align:left}
-button.tk-k:hover span{color:var(--gold)}
 
 /* ── 接口 ──
    介面只給最少：兩段亮的短邊，一個從上面垂下來的口。
@@ -2847,7 +2841,6 @@ button.tk-k:hover span{color:var(--gold)}
   padding:0;border:none;background:none;cursor:pointer;z-index:4
 }
 .mouth .mmark .px{width:33px;height:25px;image-rendering:pixelated}
-.mouth .mmark:hover{filter:brightness(1.35)}
 
 /* 碰到的是誰留的。系統不編故事——這幾個字全部是別組自己打的。 */
 .unc-by{
@@ -7808,7 +7801,7 @@ var ACTS = {
   /* 點一組的欄頭：打開他們那張卡，並且捲到它。
      沒有這一支，還沒留下東西的那幾組整條廊道點不動。 */
   team: function (id) {
-    DRAFT.dt = id; DRAFT.sb = null; DRAFT.tab = 'team'; render();
+    DRAFT.dt = id; DRAFT.tab = 'team'; render();
     var c = document.querySelector('.segs');
     if (c) c.scrollIntoView({ block: 'start' });
   },
@@ -7816,12 +7809,7 @@ var ACTS = {
   /* 剖面圖底下那三顆。 */
   tab: function (k) { DRAFT.tab = k; render(); },
 
-  /* 圖上某一個記號：那是別組某一趟的紀念碑。
 
-     本來還順手設 DRAFT.dt（把那一整組的面板也打開）。拿掉了——
-     一個可以點的東西回答一個問題：記號回答「這一趟是什麼」，
-     欄頭回答「那一組是誰」。兩顆鈕做同一件事，就沒有人分得清
-     哪一顆是做什麼的。 */
   /* 這一組給哪一位老師帶。再點一次同一位就是收回來。 */
   mentor: function (v) {
     var p = String(v).split(',');
@@ -7829,12 +7817,6 @@ var ACTS = {
     render();
   },
 
-  seeb: function (v) {
-    DRAFT.sb = v.split(',');
-    render();
-    var c = document.querySelector('.bstory');
-    if (c) c.scrollIntoView({ block: 'center' });
-  },
 
   /* 學生改自己的招牌 */
   rename: function () {
@@ -9727,11 +9709,9 @@ function sceneMouth(t, next, ENT, resting) {
     var mk = markAt(t.teamId, d);
     if (!mk) return;
     var z = strataAt(d, t.teamId);
-    H.push('<button class="mmark" style="left:' + (72 + i * 30) + 'px" ' +
-      'data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + d })) + '\' ' +
+    H.push('<div class="mmark" style="left:' + (72 + i * 30) + 'px" ' +
       'title="' + esc(mk.name + '　' + z.name) + '">' +
-      pxTag(mk.px, z.pal, '') + '</button>');
+      pxTag(mk.px, z.pal, '') + '</div>');
   });
 
   H.push('</div>');
@@ -10200,10 +10180,8 @@ function xsShaft(r, i, maxD, mine) {
          你上次來之後才插進去的那幾個鑲著金邊。首頁那一條說了
          「全班新留了幾個」，但數字只說有事發生，圖說發生在哪裡。 */
       var fresh = SEEN_CUT && bg.keep && bg.keep.at > SEEN_CUT;
-      H.push('<button class="xs-bld' + (fresh ? ' fresh' : '') +
-        '" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'seeb:' + r.teamId + ',' + d })) + '\' title="' +
-        esc(bg.name) + '">' + pxTag(bg.px, strataAt(d, r.teamId).pal, '') + '</button>');
+      H.push('<div class="xs-bld' + (fresh ? ' fresh' : '') + '" title="' +
+        esc(bg.name) + '">' + pxTag(bg.px, strataAt(d, r.teamId).pal, '') + '</div>');
       /* 接起來那一段拿掉了：形狀由那一趟長出來，沒有接口這件事。 */
     }
     H.push('</div>');
@@ -10276,11 +10254,6 @@ PAGES.eco = function () {
      打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
   var H = [head('全班地下城', '大家都在下面', '')];
   H.push(xsScene(rows, t.teamId, t.classId));
-  /* 點了圖上某一個記號，答案就出現在圖的正下方。
-
-     這張卡（buildCard）寫好了四十行，但一直沒有任何地方呼叫它——
-     所以點記號一直是沒有反應的。跟 faunaCard 同一種錯，同一頁。 */
-  H.push(buildCard(t));
   /* 岩壁裡那幾隻不再是鈕（見 xsPlace），所以這裡也不再有那張卡。
      要查一隻去圖鑑。 */
   /* 排行榜搬到底下「估得準」那一段。刻意加進來、準備好隨時拿掉的
@@ -10361,8 +10334,6 @@ PAGES.classeco = function () {
      要細節就點那一組（digTeamCard 會攤開他們封存過的每一根石片）；
      要去勾就在審核那一頁，那才是它該在的地方。 */
   H.push(xsScene(rows, mine, u.classId));
-  /* 老師點圖上某一個記號，看到的也是那一趟。 */
-  H.push(buildCard(null));
   H.push(digTeamCard(u.classId));
 
   /* 只留一句：現在有幾組在等你。等你看的那幾件在審核那一頁。 */
@@ -10475,11 +10446,10 @@ function taskRow(m, r, t) {
   var def = bd && markAt(t.teamId, bdD);
   if (def) {
     var z = strataAt(bdD, t.teamId);
-    H.push('<button class="tk-k" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'seeb:' + t.teamId + ',' + bdD })) + '\'>');
+    H.push('<div class="tk-k">');
     H.push(pxTag(def.px, z.pal, 'core'));
     H.push('<span>' + esc(def.name) + '</span>');
-    H.push('</button>');
+    H.push('</div>');
   }
 
   H.push('</div>');
@@ -10882,48 +10852,6 @@ function digTeamCard(classId) {
    「插進水晶迴廊」——沒有一件說得清楚它要你做什麼。
    一條只在資料出錯時出現、出現了又講不清楚的路，不值得留。 */
 
-/* 點地圖上一座建築：那是哪一趟。
-
-   這是整件事的重點。建築不是獎品，是那一趟的紀念碑——
-   點下去看到的是他們自己取的名、幾天、他們說幾天。
-   所以整片領土就是他們的預估史被畫成一個地方。 */
-function buildCard(t) {
-  if (!DRAFT.sb) return '';
-  var p = DRAFT.sb;
-  var st = buildStory(p[0], Number(p[1]));
-  if (!st || !st.def) return '';
-  var tm = teamOf(p[0]);
-  var z = strataAt(Number(p[1]), p[0]);
-  var k = st.keep;
-  var H = ['<div class="card bstory ' + z.key + '">'];
-  H.push('<div class="bs-in">');
-  /* 點開來看到的是那一趟長成的樣子：一天兩列，來過是實心、
-     說了沒動是空心、沒有紀錄是斷的。這一份本來是另一個東西（石片），
-     跟記號一樣一趟一個——併進來了。 */
-  if (k) H.push(pxTag(k.px || coreOf(k.runId), z.pal, 'bs-core'));
-  else H.push(pxTag(st.def.px, BUILD_PAL, 'bs-px'));
-  H.push('<div>');
-  /* 眉標寫「誰、在哪一層」，標題寫他們自己取的名字。
-     本來眉標的第二半是 st.def.name——記號變成那一趟本身之後，
-     那個就等於下面那個標題，同一句話印了兩次。 */
-  H.push('<div class="eyebrow">' + esc(tm ? tm.name : '') + '　·　' + esc(z.name) + '</div>');
-  H.push('<h2>' + esc((k && k.name) || st.def.name) + '</h2>');
-  if (st.run) {
-    H.push('<dl class="rep">');
-    H.push('<dt>他們說</dt><dd>' + st.run.est + '</dd>');
-    H.push('<dt>實際</dt><dd>' + (st.run.actual || (k && k.elapsed) || 0) + '</dd>');
-    H.push('</dl>');
-  }
-  if (k && k.moved) {
-    H.push('<div class="corekey">');
-    H.push('<span><b class="c1"></b>來過 ' + k.moved + ' 天</span>');
-    if (k.rested) H.push('<span><b class="c2"></b>說沒動 ' + k.rested + ' 天</span>');
-    if (k.blank) H.push('<span><b class="c3"></b>沒有紀錄 ' + k.blank + ' 天</span>');
-    H.push('</div>');
-  }
-  H.push('</div></div></div>');
-  return H.join('');
-}
 
 /* ---------- 這一格裡有什麼 ----------
 
