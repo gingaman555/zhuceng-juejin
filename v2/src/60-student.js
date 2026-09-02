@@ -370,9 +370,13 @@ PAGES.commit = function () {
 
   /* 老師分的段。點起來標「這一段會比想的久」——
      那一排同時就是這一趟的範圍，所以下面不用再列一次清單。 */
-  if (previewSteps(m).length) {
+  /* 預測哪一段會拖，走完兩趟才開始問——手上有兩趟的紀錄，
+     這個問題才答得出來，而且下一頁的「標對的段」會驗證它。 */
+  var askFlag = RULES.asks('flags', depthOf(t.teamId));
+  if (previewSteps(m).length && askFlag !== 'off') {
     H.push('<div class="card">');
-    H.push('<div class="eyebrow">哪幾段會比你想的久　選填</div>');
+    H.push('<div class="eyebrow' + (askFlag === 'new' ? ' lit' : '') + '">' +
+      (askFlag === 'new' ? '新的一題　·　' : '') + '哪幾段會比你想的久　選填</div>');
     H.push(msStepLegend(m, flags, 'flag'));
     H.push('</div>');
   }
@@ -544,11 +548,15 @@ PAGES.pick = function () {
      而且它不進判定（判定只看承諾幾天與行事曆過了幾天）。
 
      它唯一影響的是那一趟長成什麼樣子的石片。 */
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">這幾天你動過哪幾天　選填</div>');
-  H.push(dayGrid(r.runId));
-  H.push('<p class="dim">不影響準不準。它決定的是收起來之後長什麼樣子。</p>');
-  H.push('</div>');
+  var askDay = RULES.asks('days', depthOf(t.teamId) - 1);
+  if (askDay !== 'off') {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow' + (askDay === 'new' ? ' lit' : '') + '">' +
+      (askDay === 'new' ? '新的一題　·　' : '') + '這幾天你動過哪幾天　選填</div>');
+    H.push(dayGrid(r.runId));
+    H.push('<p class="dim">不影響準不準。它決定的是收起來之後長什麼樣子。</p>');
+    H.push('</div>');
+  }
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">給這一趟取個名字　選填</div>');

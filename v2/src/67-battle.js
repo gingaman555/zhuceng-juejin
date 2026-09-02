@@ -50,11 +50,17 @@ function btAt(ms, fn) { BT.timers.push(setTimeout(fn, ms)); }
 
 /* 這一趟走到第幾段。'menu' → 'q1' → 'q2' → 'play'。
    老師沒分段就跳過第一問。 */
+/* 第二問（困境與進度，要打字）走完四趟才問。
+   第一趟就要他寫困境，是在問一個他還沒有的東西。 */
+function btAskHard(teamId) {
+  return RULES.asks('hard', depthOf(teamId)) !== 'off';
+}
+
 function btPhase(r) {
   if (r.state !== 'running') return 'play';
   var ph = S.p.ph;
   if (!ph) return 'menu';
-  if (ph === 'q1' && !stepsOf(r.runId)) return 'q2';
+  if (ph === 'q1' && !stepsOf(r.runId)) return btAskHard(r.teamId) ? 'q2' : 'q1';
   return ph;
 }
 
@@ -276,6 +282,9 @@ ACTS.btgo = function (id) {
 /* 第一問答完：打牠一下，進第二問。 */
 ACTS.btq1 = function (id) {
   battleStop();
+  var t = myTeam();
+  /* 還沒走完四趟：第一問答完就直接交，不問困境。 */
+  if (!btAskHard(t.teamId)) return ACTS.btq2(id);
   S.p = { id: id, ph: 'q2', hurt: 1 };
   render();
 };
