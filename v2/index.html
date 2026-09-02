@@ -11499,8 +11499,11 @@ PAGES.battle = function () {
 
   if (ph === 'menu') {
     H.push('<div class="bt-menu">');
-    H.push(btChoice('btgo:' + r.runId, '上', 'go'));
-    H.push(btChoice('btback:' + r.runId, '還沒好', ''));
+    /* 兩個選項寫成他真的要做的事：戰鬥就是回報進度，那不是比喻，
+       那一頁問的就是「實際花了幾天」跟「順不順」。括號裡那一句
+       讓第一次進來的人不用猜「上」是什麼意思。 */
+    H.push(btChoice('btgo:' + r.runId, '戰鬥（回報進度）', 'go'));
+    H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
     H.push('</div>');
   }
   H.push('</div>');
@@ -11512,7 +11515,7 @@ PAGES.battle = function () {
     H.push(ph === 'q1' ? btSteps(r.runId) : btAsk(r));
     H.push('<div class="bt-menu wide">');
     H.push(btChoice('bt' + ph + ':' + r.runId, '打過去', 'go'));
-    H.push(btChoice('btback:' + r.runId, '還沒好', ''));
+    H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
     H.push('</div></div>');
   }
 
@@ -11521,7 +11524,7 @@ PAGES.battle = function () {
 
 /* 字幕框那一句。 */
 function btLine(r, mob, ph) {
-  if (ph === 'menu') return mob.n + ' 出現了！';
+  if (ph === 'menu') return mob.n + ' 突然出現了！';
   if (ph === 'q1') return '這一趟做完了哪幾段？';
   if (ph === 'q2') return '這一趟走得怎麼樣？';
   return '你上前。';
