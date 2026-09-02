@@ -1671,3 +1671,10 @@ button.ac:active{transform:translateY(1px)}
   .sty-who .wa,.sty-hero .wa{animation:none;opacity:1}
   .sty-who .wb,.sty-hero .wb{animation:none;opacity:0}
 }
+
+/* 故事第二頁最後那一句。它是整套系統唯一的一條規則，所以它自己一行、
+   大一階、上面一道線。層級靠字級分不靠顏色——金色已經是「可以按」。 */
+.sty-key{
+  font-size:33px;line-height:1.5;margin:22px 0 0;padding:22px 0 0;
+  border-top:3px solid var(--frame);text-wrap:balance
+}
