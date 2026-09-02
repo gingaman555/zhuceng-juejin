@@ -121,28 +121,24 @@ function runStrip(t, bare) {
      概念沒有被命名，他就不知道自己在練的是什麼。
      結算那一頁上面那張卡已經講過一次，所以那裡傳 bare。 */
   var H = [];
-  if (!bare) H.push('<div class="rs-h">你的估算　·　走過 ' + rows.length + ' 趟</div>');
+  if (!bare) H.push('<div class="rs-h">你的估算　' + rows.length + ' 趟</div>');
   H.push('<div class="rstrip"><div class="rs-in">');
   rows.forEach(function (x) {
     var r = x.run;
-    var kp = null;
-    keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
-    var d = -1;
-    Object.keys(t.builds || {}).forEach(function (bk) {
-      if (t.builds[bk].runId === r.runId) d = Number(bk.slice(1));
-    });
-    var z = strataAt(d >= 0 ? d : 0, t.teamId);
-    var sm = RULES.STAMPS[r.stamp];
-    H.push('<button class="rs" data-act="run" data-p=\'' +
+    /* 牠的顏色是那一趟當時那一層的顏色。本來去 builds 裡翻，
+       翻不到就當第 0 層——還沒收起來的那一趟就被畫成最上層的顏色。 */
+    var z = strataAt(runDepth(r), t.teamId);
+    var mob = mobOfRun(r);
+    /* 一格一隻牠。牠是那一趟盡頭擋路的那一隻，也是圖鑑裡會標成
+       「遇過」的那一隻——所以牠是那一趟最好的名字：不用讀，
+       看一眼就想得起來是哪一趟。其餘的點進去看。 */
+    H.push('<button class="rs ' + r.stamp + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'rec:' + r.runId })) + '\' title="' +
-      esc((x.ms ? x.ms.title : '') + '　' + z.name) + '">');
-    /* 記號旁邊要有那個詞。在判定頁它旁邊寫著「比承諾的久」所以學得起來，
-       一格裡只放記號的話它是裸的。 */
+      esc((x.ms ? x.ms.title : '') + '　' + (mob ? mob.n : '') +
+        '　說 ' + r.est + '　實際 ' + (r.actual || 0) + ' 天') + '">');
+    H.push(pxTag(mob ? mob.px : [], z.pal, 'rs-px'));
     H.push('<span class="rs-s">' + stampPx(r.stamp) +
-      '<em class="' + r.stamp + '">' + esc(sm ? sm.name : '') + '</em></span>');
-    H.push('<b>' + esc(x.ms ? x.ms.title : '') + '</b>');
-    H.push('<i>說 <u>' + r.est + '</u>　實際 <u>' + (r.actual || 0) + '</u> 天</i>');
-    if (kp && kp.name) H.push('<span class="rs-n">「' + esc(kp.name) + '」</span>');
+      '<i>' + r.est + '<u>→</u>' + (r.actual || 0) + '</i></span>');
     H.push('</button>');
   });
   H.push('</div></div>');
@@ -184,9 +180,14 @@ function taskTag(next) {
 function deskRow(t, next) {
   var H = ['<div class="desk">'];
   /* 任務清單在側欄，這裡不再放一次——兩個地方都放就是重複。
-     圖鑑那一扇拿掉了：它不在主流程的任何一步上，而且它的規模
-     （二十四隻）是為了一個沒有發生的使用頻率訂的。
-     生物留著——牠們還是每一趟盡頭擋路的那一隻。 */
+
+     圖鑑留著。它不在四件事的哪一步上，但它在終點上：
+     它記著「你在哪一趟遇過哪一隻」，而那是一學期走完之後
+     才看得出形狀的東西。 */
+  H.push('<button class="dk lit" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
+    esc('圖鑑：這座地下城裡有什麼') + '">' +
+    pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i></button>');
   H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
     esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +
@@ -389,10 +390,9 @@ PAGES.commit = function () {
 
   var H = [head('自我承諾', m.title, m.note)];
 
-  /* 滑桿先，而且它跟下面那根尺是同一根——同寬、同起點。
-     不同寬的話「拉到哪裡就看到自己落在別人哪裡」就不成立。 */
+  /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
   H.push('<div class="card">');
-  H.push('<div class="ax-head"><b>' + est + '</b><span>天</span></div>');
+  H.push(estStep(est));
 
   /* 決定的時候要看的東西全部畫在同一根尺上：你前幾趟說了幾天、
      實際幾天，別組這一件事說的範圍，還有準的範圍。

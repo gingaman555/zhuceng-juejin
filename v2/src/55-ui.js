@@ -40,7 +40,7 @@ var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
   pick: 'student', eco: 'student', pack: 'student',
   battle: 'student',
-  exit: 'student', sign: 'student',
+  exit: 'student', codex: 'student', sign: 'student',
   claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -318,7 +318,14 @@ var ACTS = {
      把手就不再跟著手指走。那不是回饋不夠，是控制項在手裡被拆掉。
 
      改成只改跟著它動的那幾塊，滑桿本身完全不碰。 */
-  est: function (v) { DRAFT.est = v; estLive(Number(v)); },
+  /* 說幾天：一按一天。到頭就停在那裡，不會繞回去——
+     繞回去會讓「按到底」變成一件要小心的事。 */
+  estep: function (d) {
+    var n = clamp(RULES.EST_MIN, RULES.EST_MAX,
+      Number(draft('est', RULES.EST_DEFAULT)) + Number(d));
+    DRAFT.est = n;
+    estLive(n);
+  },
 
   /* 承諾的時候標「這一件我覺得會比想的久」 */
   flag: function (k) {
@@ -421,10 +428,10 @@ var ACTS = {
     if (!actBuild(t.teamId, d, p[0], lastSealed(t.teamId))) {
       return say('那一層留不了。');
     }
-    /* 敲開岩壁那一下拿掉了。它本來有一個真的作用——碰到的是別組
-       留下的記號——而那個因為「每組不同不能當參考」拿掉了。
-       剩下的兩種是系統自己編的，碰到跟沒碰到不構成任何差別。 */
+    /* 插記號那一下敲開這一層的石頭。碰到的那幾隻會標進圖鑑的
+       「遇過」——那一條線是它接回終點的方式。 */
     DRAFT.build = d;
+    DRAFT.uncover = actUncover(t.teamId, d);
     say('留下了。');
   },
 

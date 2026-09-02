@@ -472,13 +472,33 @@ function statusOf(teamId) {
     : { key: 'slow', label: '慢下來了', days: st.days };
 }
 
-/* 這一趟擋路的是哪一隻。舊資料沒存就當場算一次。 */
+/* 這一趟擋路的是哪一隻。戰鬥的時候存下來了就用存的——
+   那才是他真的打過的那一隻。舊資料沒存就當場算一次。 */
 function mobOfRun(run) {
-  if (run && run.mob) {
+  if (!run) return null;
+  if (run.mob) {
     var c = faunaByName(run.mob);
     if (c) return c;
   }
-  return mobFor(run.msId, run.teamId);
+  return mobFor(run.msId, run.teamId, runDepth(run));
+}
+
+/* 這一趟當時站在第幾層。
+
+   depthOf 數的是「有判定的趟數」，所以在第 k 趟被判定之前，
+   深度就是 k——也就是第 k 趟（從 0 起算）當時站的那一層。
+   照判定的時間排，沒判定的就是現在這一層。 */
+function runDepth(run) {
+  if (!run || !run.stamp) return depthOf(run ? run.teamId : null);
+  var mine = where('Runs', function (x) {
+    return x.teamId === run.teamId && !!x.stamp;
+  }).sort(function (a, b) {
+    return (a.submittedAt || a.committedAt || 0) - (b.submittedAt || b.committedAt || 0);
+  });
+  for (var i = 0; i < mine.length; i++) {
+    if (mine[i].runId === run.runId) return i;
+  }
+  return 0;
 }
 
 /* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */

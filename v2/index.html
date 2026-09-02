@@ -2083,14 +2083,37 @@ button.ac:active{transform:translateY(1px)}
 .ax-ruler i:first-child{transform:none}
 .ax-ruler i:last-child{transform:translateX(-100%)}
 
-/* 滑桿跟尺是同一根：同寬、同起點。
-   range 的滑塊圓心從半個滑塊寬開始走，所以尺往內縮同樣的距離。 */
-.ax-head{display:flex;align-items:baseline;gap:6px;justify-content:flex-end;
-  margin-bottom:6px}
-.ax-head b{font-size:44px;line-height:1;color:var(--gold);font-weight:400;
+/* ── 說幾天：兩顆鍵 ──
+
+   一按一天。數字在正中間，是這一頁最大的一個字——這一頁只有
+   這一件事。兩顆鍵各佔一邊，77px 見方，手指不用瞄。
+
+   到頭的那一顆暗下去。不擋（按下去也只是停在原地），
+   擋住會讓人以為是壞了。 */
+.estep{display:flex;align-items:center;justify-content:space-between;
+  gap:11px;margin:0 0 11px}
+.es-b{
+  flex:0 0 77px;height:77px;border:none;cursor:pointer;
+  font:inherit;font-size:44px;line-height:1;color:#1A1408;
+  clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 11px,
+    100% calc(100% - 11px),calc(100% - 11px) 100%,11px 100%,0 calc(100% - 11px),0 11px);
+  background-image:linear-gradient(180deg,
+    var(--gold2) 0 3px, var(--gold) 3px calc(100% - 3px),
+    var(--gold-d) calc(100% - 3px) 100%);
+  filter:drop-shadow(4px 4px 0 rgba(0,0,0,.75))
+}
+.es-b:hover{background-image:linear-gradient(180deg,
+  #FFE29A 0 3px, var(--gold2) 3px calc(100% - 3px),
+  var(--gold) calc(100% - 3px) 100%)}
+.es-b:active{transform:translate(2px,2px);
+  filter:drop-shadow(2px 2px 0 rgba(0,0,0,.75))}
+/* 到頭了。看得出來，但按得下去。 */
+.es-b.off{background-image:none;background:var(--panel2);color:var(--dim);
+  filter:none;box-shadow:inset 0 0 0 2px var(--line)}
+.es-n{display:flex;align-items:baseline;gap:6px}
+.es-n b{font-size:88px;line-height:1;color:var(--gold);font-weight:400;
   font-variant-numeric:tabular-nums}
-.ax-head span{font-size:22px;color:var(--dim)}
-.ax-slider{display:block;width:100%;margin:0 0 11px}
+.es-n span{font-size:33px;color:var(--dim)}
 .ax-in{position:relative;margin:0 11px}
 
 /* 岩層表面看得出哪幾格裡有東西——但看不出是什麼。
@@ -2687,25 +2710,36 @@ button.tk-k:hover span{color:var(--gold)}
   margin:0 0 11px;padding:0 0 6px;background:var(--sunk);
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06)
 }
-.rs-in{display:flex;align-items:flex-end;gap:2px;padding:11px 11px 0}
-/* 一格三行，全部白話：記號＋那個詞、任務名（折行不截斷）、兩個數字。
-   本來還有一根柱子——9 天跟 11 天畫出來差 7px，而且沒有共同的基線
-   可以比。它在營地上成立（一整排站在同一條地上），在這裡不成立。 */
+.rs-in{display:flex;align-items:stretch;gap:2px;padding:11px 11px 0}
+/* 一格一隻牠。
+
+   本來一格四行（記號的詞、任務名、說幾天實際幾天、留下的那句話），
+   八趟排開來就不是一條帶子，是一張表攤平了放在首頁。
+
+   現在格子裡只有兩樣：牠，跟兩個數字。牠是那一趟盡頭擋路的那一隻，
+   所以牠就是那一趟的名字——不用讀。詳細的點進去看。
+
+   底下那一條是準度：金＝說中、綠＝比說的快、紅＝比說的久。
+   一整排掃過去看得出自己有沒有在變準，那是一句話講不出來的。 */
 .rs{
-  flex:0 0 198px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;
-  padding:14px 14px 16px;border:0;background:var(--panel);color:inherit;font:inherit;
-  cursor:pointer;text-align:left
+  flex:0 0 110px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:11px 6px 0;border:0;background:var(--panel);color:inherit;font:inherit;
+  cursor:pointer;text-align:center
 }
-.rs-s{display:flex;align-items:center;gap:8px}
+.rs:hover{background:var(--panel2)}
+.rs:active{transform:translateY(2px)}
+.rs-px{width:66px;height:auto;image-rendering:pixelated}
+.rs-s{display:flex;flex-direction:column;align-items:center;gap:2px;
+  width:100%;padding:0 0 8px}
 .rs-s .px{width:33px;height:25px;image-rendering:pixelated}
-.rs-s em{font-style:normal;font-size:22px;color:var(--dim)}
-.rs-s em.early{color:var(--ok)}
-.rs-s em.exact{color:var(--gold)}
-.rs-s em.late{color:var(--over)}
-.rs b{font-size:22px;font-weight:400;color:var(--ink);line-height:1.35;overflow-wrap:anywhere}
-.rs i{font-style:normal;font-size:22px;color:var(--dim);font-variant-numeric:tabular-nums}
-.rs i u{text-decoration:none;color:var(--gold)}
-.rs-n{font-size:22px;color:var(--mute)}
+.rs i{font-style:normal;font-size:22px;color:var(--ink);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.rs i u{text-decoration:none;color:var(--dim);padding:0 2px}
+/* 準度那一條 */
+.rs::after{content:"";display:block;width:100%;height:5px;background:var(--line)}
+.rs.exact::after{background:var(--gold)}
+.rs.early::after{background:var(--ok)}
+.rs.late::after{background:var(--over)}
 
 /* 帶子的名字。概念要有名字，他才知道自己在練什麼。 */
 .rs-h{
@@ -3906,8 +3940,14 @@ function faunaByName(n) {
    你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
 
    哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個任務不是同一隻。 */
-function mobFor(msId, teamId) {
-  var f = faunaOf(strataAt(depthOf(teamId), teamId).key);
+/* 第三個參數是「那一趟在哪一層」。不給就是現在這一層（還在走的那一趟）。
+
+   本來沒有這個參數，於是每一趟都在**現在**這一層裡挑：一條帶子上
+   八格全部從同四隻裡挑，撞在一起是常態；而且一趟走完之後牠還會
+   跟著你變深而改變——那一趟盡頭擋路的那一隻不該在事後被換掉。 */
+function mobFor(msId, teamId, depth) {
+  var d = depth == null ? depthOf(teamId) : depth;
+  var f = faunaOf(strataAt(d, teamId).key);
   if (!f.length) f = allFauna();
   return f[hash(msId + '|' + teamId) % f.length];
 }
@@ -5753,13 +5793,33 @@ function statusOf(teamId) {
     : { key: 'slow', label: '慢下來了', days: st.days };
 }
 
-/* 這一趟擋路的是哪一隻。舊資料沒存就當場算一次。 */
+/* 這一趟擋路的是哪一隻。戰鬥的時候存下來了就用存的——
+   那才是他真的打過的那一隻。舊資料沒存就當場算一次。 */
 function mobOfRun(run) {
-  if (run && run.mob) {
+  if (!run) return null;
+  if (run.mob) {
     var c = faunaByName(run.mob);
     if (c) return c;
   }
-  return mobFor(run.msId, run.teamId);
+  return mobFor(run.msId, run.teamId, runDepth(run));
+}
+
+/* 這一趟當時站在第幾層。
+
+   depthOf 數的是「有判定的趟數」，所以在第 k 趟被判定之前，
+   深度就是 k——也就是第 k 趟（從 0 起算）當時站的那一層。
+   照判定的時間排，沒判定的就是現在這一層。 */
+function runDepth(run) {
+  if (!run || !run.stamp) return depthOf(run ? run.teamId : null);
+  var mine = where('Runs', function (x) {
+    return x.teamId === run.teamId && !!x.stamp;
+  }).sort(function (a, b) {
+    return (a.submittedAt || a.committedAt || 0) - (b.submittedAt || b.committedAt || 0);
+  });
+  for (var i = 0; i < mine.length; i++) {
+    if (mine[i].runId === run.runId) return i;
+  }
+  return 0;
 }
 
 /* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
@@ -6692,7 +6752,7 @@ var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
   pick: 'student', eco: 'student', pack: 'student',
   battle: 'student',
-  exit: 'student', sign: 'student',
+  exit: 'student', codex: 'student', sign: 'student',
   claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', roster: 'researcher', events: 'researcher'
@@ -6970,7 +7030,14 @@ var ACTS = {
      把手就不再跟著手指走。那不是回饋不夠，是控制項在手裡被拆掉。
 
      改成只改跟著它動的那幾塊，滑桿本身完全不碰。 */
-  est: function (v) { DRAFT.est = v; estLive(Number(v)); },
+  /* 說幾天：一按一天。到頭就停在那裡，不會繞回去——
+     繞回去會讓「按到底」變成一件要小心的事。 */
+  estep: function (d) {
+    var n = clamp(RULES.EST_MIN, RULES.EST_MAX,
+      Number(draft('est', RULES.EST_DEFAULT)) + Number(d));
+    DRAFT.est = n;
+    estLive(n);
+  },
 
   /* 承諾的時候標「這一件我覺得會比想的久」 */
   flag: function (k) {
@@ -7073,10 +7140,10 @@ var ACTS = {
     if (!actBuild(t.teamId, d, p[0], lastSealed(t.teamId))) {
       return say('那一層留不了。');
     }
-    /* 敲開岩壁那一下拿掉了。它本來有一個真的作用——碰到的是別組
-       留下的記號——而那個因為「每組不同不能當參考」拿掉了。
-       剩下的兩種是系統自己編的，碰到跟沒碰到不構成任何差別。 */
+    /* 插記號那一下敲開這一層的石頭。碰到的那幾隻會標進圖鑑的
+       「遇過」——那一條線是它接回終點的方式。 */
     DRAFT.build = d;
+    DRAFT.uncover = actUncover(t.teamId, d);
     say('留下了。');
   },
 
@@ -7394,10 +7461,29 @@ function spreadBar(sp, mine) {
 }
 
 
-/* 拖滑桿的時候只改這幾塊：大數字、尺上「你現在拉到哪」那一列、
-   底下走廊的格數、承諾那一顆上的天數。滑桿本身不碰。
+/* 按一下之後只改這幾塊：大數字、兩顆鍵的明暗、尺上「你現在說的」
+   那一列、底下走廊的格數、承諾那一顆上的天數。
 
-   位置的算法要跟 estAxis 裡的 at() 完全一樣，不然拖到一半會偏。 */
+   位置的算法要跟 estAxis 裡的 at() 完全一樣，不然按到一半會偏。
+   不整頁重畫，是因為重畫會把焦點從那一顆鍵上拿走——連按第二下
+   就得再瞄準一次。 */
+/* ---------- 說幾天：兩顆鍵 ----------
+
+   一按一天。到頭了那一顆就暗下去——不擋，只是讓他知道到頭了。
+   數字在中間，是這一頁最大的一個字，因為它是這一頁唯一的內容。 */
+function estStep(est) {
+  function k(d, s, cls, off) {
+    return '<button class="es-b ' + cls + (off ? ' off' : '') +
+      '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'estep:' + d })) + '\'>' + s + '</button>';
+  }
+  return '<div class="estep">' +
+    k(-1, '−', 'es-m', est <= RULES.EST_MIN) +
+    '<div class="es-n"><b>' + est + '</b><span>天</span></div>' +
+    k(1, '＋', 'es-p', est >= RULES.EST_MAX) +
+    '</div>';
+}
+
 function estLive(n) {
   var lo = RULES.EST_MIN, hi = RULES.EST_MAX, span = hi - lo;
   function at(d) {
@@ -7408,7 +7494,11 @@ function estLive(n) {
     var e = document.querySelector(sel);
     if (e) fn(e);
   }
-  set('.ax-head b', function (e) { e.textContent = n; });
+  set('.es-n b', function (e) { e.textContent = n; });
+  set('.es-m', function (e) {
+    e.className = 'es-b es-m' + (n <= RULES.EST_MIN ? ' off' : ''); });
+  set('.es-p', function (e) {
+    e.className = 'es-b es-p' + (n >= RULES.EST_MAX ? ' off' : ''); });
   set('.ax-now .ax-ok', function (e) {
     e.style.left = at(n - b);
     e.style.right = (100 - parseFloat(at(n + b))) + '%';
@@ -7454,11 +7544,8 @@ function estAxis(est, past) {
   var b = RULES.band(est);
   var H = ['<div class="axis">'];
 
-  /* 滑桿。它跟下面每一列同寬、同起點——range 的滑塊圓心是從
-     半個滑塊寬開始走的，所以下面那幾列一起往內縮同樣的距離。 */
-  H.push('<input type="range" class="slider ax-slider" id="est" min="' +
-    RULES.EST_MIN + '" max="' + RULES.EST_MAX + '" value="' + est +
-    '" oninput="ACTS.est(this.value)">');
+  /* 滑桿拿掉了，換成上面那兩顆加減鍵（見 estStep）。
+     這裡只剩看的部分：你前幾趟、你現在說的、準的範圍。 */
   H.push('<div class="ax-in">');
 
 
@@ -7822,28 +7909,24 @@ function runStrip(t, bare) {
      概念沒有被命名，他就不知道自己在練的是什麼。
      結算那一頁上面那張卡已經講過一次，所以那裡傳 bare。 */
   var H = [];
-  if (!bare) H.push('<div class="rs-h">你的估算　·　走過 ' + rows.length + ' 趟</div>');
+  if (!bare) H.push('<div class="rs-h">你的估算　' + rows.length + ' 趟</div>');
   H.push('<div class="rstrip"><div class="rs-in">');
   rows.forEach(function (x) {
     var r = x.run;
-    var kp = null;
-    keepsOf(t.teamId).forEach(function (k) { if (k.runId === r.runId) kp = k; });
-    var d = -1;
-    Object.keys(t.builds || {}).forEach(function (bk) {
-      if (t.builds[bk].runId === r.runId) d = Number(bk.slice(1));
-    });
-    var z = strataAt(d >= 0 ? d : 0, t.teamId);
-    var sm = RULES.STAMPS[r.stamp];
-    H.push('<button class="rs" data-act="run" data-p=\'' +
+    /* 牠的顏色是那一趟當時那一層的顏色。本來去 builds 裡翻，
+       翻不到就當第 0 層——還沒收起來的那一趟就被畫成最上層的顏色。 */
+    var z = strataAt(runDepth(r), t.teamId);
+    var mob = mobOfRun(r);
+    /* 一格一隻牠。牠是那一趟盡頭擋路的那一隻，也是圖鑑裡會標成
+       「遇過」的那一隻——所以牠是那一趟最好的名字：不用讀，
+       看一眼就想得起來是哪一趟。其餘的點進去看。 */
+    H.push('<button class="rs ' + r.stamp + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'rec:' + r.runId })) + '\' title="' +
-      esc((x.ms ? x.ms.title : '') + '　' + z.name) + '">');
-    /* 記號旁邊要有那個詞。在判定頁它旁邊寫著「比承諾的久」所以學得起來，
-       一格裡只放記號的話它是裸的。 */
+      esc((x.ms ? x.ms.title : '') + '　' + (mob ? mob.n : '') +
+        '　說 ' + r.est + '　實際 ' + (r.actual || 0) + ' 天') + '">');
+    H.push(pxTag(mob ? mob.px : [], z.pal, 'rs-px'));
     H.push('<span class="rs-s">' + stampPx(r.stamp) +
-      '<em class="' + r.stamp + '">' + esc(sm ? sm.name : '') + '</em></span>');
-    H.push('<b>' + esc(x.ms ? x.ms.title : '') + '</b>');
-    H.push('<i>說 <u>' + r.est + '</u>　實際 <u>' + (r.actual || 0) + '</u> 天</i>');
-    if (kp && kp.name) H.push('<span class="rs-n">「' + esc(kp.name) + '」</span>');
+      '<i>' + r.est + '<u>→</u>' + (r.actual || 0) + '</i></span>');
     H.push('</button>');
   });
   H.push('</div></div>');
@@ -7885,9 +7968,14 @@ function taskTag(next) {
 function deskRow(t, next) {
   var H = ['<div class="desk">'];
   /* 任務清單在側欄，這裡不再放一次——兩個地方都放就是重複。
-     圖鑑那一扇拿掉了：它不在主流程的任何一步上，而且它的規模
-     （二十四隻）是為了一個沒有發生的使用頻率訂的。
-     生物留著——牠們還是每一趟盡頭擋路的那一隻。 */
+
+     圖鑑留著。它不在四件事的哪一步上，但它在終點上：
+     它記著「你在哪一趟遇過哪一隻」，而那是一學期走完之後
+     才看得出形狀的東西。 */
+  H.push('<button class="dk lit" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
+    esc('圖鑑：這座地下城裡有什麼') + '">' +
+    pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i></button>');
   H.push('<button class="dk' + (t.exitAsk ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
     esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') + '">' +
@@ -8090,10 +8178,9 @@ PAGES.commit = function () {
 
   var H = [head('自我承諾', m.title, m.note)];
 
-  /* 滑桿先，而且它跟下面那根尺是同一根——同寬、同起點。
-     不同寬的話「拉到哪裡就看到自己落在別人哪裡」就不成立。 */
+  /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
   H.push('<div class="card">');
-  H.push('<div class="ax-head"><b>' + est + '</b><span>天</span></div>');
+  H.push(estStep(est));
 
   /* 決定的時候要看的東西全部畫在同一根尺上：你前幾趟說了幾天、
      實際幾天，別組這一件事說的範圍，還有準的範圍。
@@ -9583,6 +9670,51 @@ var TASK_STATE = {
    那是一份清單。改成切頁：上面一排是層，點一層看一層，一屏剛好一層。
    預設停在他現在所在的那一層。 */
 
+PAGES.codex = function () {
+  var t = myTeam();
+  var here = strataAt(depthOf(t.teamId), t.teamId);
+  var tab = DRAFT.cx || here.key;
+  var met = metMobs(t.teamId);
+  /* 在地底下掀開遇到的那幾隻也算遇過。foundMobs 寫好了但一直沒接上，
+     所以掀開遇到的生物從來沒進過圖鑑。 */
+  var found = foundMobs(t.teamId);
+  Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
+
+  var H = [head('圖鑑', '這座地下城裡有什麼', '')];
+
+  /* 上面那一排：六層 ＋ 東西。一次只看一頁。 */
+  H.push('<div class="cxtabs">');
+  STRATA.forEach(function (z) {
+    H.push('<button class="cxt ' + z.key + (tab === z.key ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:' + z.key })) + '\'>' +
+      esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
+  });
+  H.push('<button class="cxt gear' + (tab === 'gear' ? ' on' : '') +
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:gear' })) + '\'>物件</button>');
+  H.push('</div>');
+
+  if (tab === 'gear') {
+    H.push(codexThings(t, here));
+  } else {
+    var z = here;
+    STRATA.forEach(function (x) { if (x.key === tab) z = x; });
+    H.push('<div class="card fa ' + z.key + '">');
+    H.push('<div class="eyebrow">' + (z.key === here.key ? '你現在在這一層' : '地層') + '</div>');
+    H.push('<p class="lead">' + esc(z.note) + '</p>');
+    H.push('<div class="cx">');
+    faunaOf(z.key).forEach(function (c) {
+      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + '">');
+      H.push(pxTag(c.px, z.pal, 'cx-px'));
+      H.push('<div><b>' + esc(c.n) + '</b>');
+      H.push('<em>' + esc(c.t) + '</em>');
+      if (met[c.n]) H.push('<span class="cx-met">遇過 · ' + esc(met[c.n]) + '</span>');
+      H.push('</div></div>');
+    });
+    H.push('</div></div>');
+  }
+
+  return H.join('');
+};
 
 /* 東西那一頁：帶得走的一種，與地上撿得到的幾種。 */
 function codexThings(t, here) {
@@ -9606,6 +9738,7 @@ function codexThings(t, here) {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">地上的物件</div>');
+  H.push('<p class="dim">每一層長的不一樣。</p>');
   H.push('<div class="cx">');
   [['碎石', RUBBLE.px, '往下走的時候崩下來的。'],
    ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點輪廓。'],

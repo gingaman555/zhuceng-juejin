@@ -162,8 +162,14 @@ function faunaByName(n) {
    你在剖面圖的岩壁上看到的那幾隻，就是你下一趟可能遇到的那幾隻。
 
    哪一隻仍然是任務 ＋ 組算出來的，所以全班同一個任務不是同一隻。 */
-function mobFor(msId, teamId) {
-  var f = faunaOf(strataAt(depthOf(teamId), teamId).key);
+/* 第三個參數是「那一趟在哪一層」。不給就是現在這一層（還在走的那一趟）。
+
+   本來沒有這個參數，於是每一趟都在**現在**這一層裡挑：一條帶子上
+   八格全部從同四隻裡挑，撞在一起是常態；而且一趟走完之後牠還會
+   跟著你變深而改變——那一趟盡頭擋路的那一隻不該在事後被換掉。 */
+function mobFor(msId, teamId, depth) {
+  var d = depth == null ? depthOf(teamId) : depth;
+  var f = faunaOf(strataAt(d, teamId).key);
   if (!f.length) f = allFauna();
   return f[hash(msId + '|' + teamId) % f.length];
 }

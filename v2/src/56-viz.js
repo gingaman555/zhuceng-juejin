@@ -173,10 +173,29 @@ function spreadBar(sp, mine) {
 }
 
 
-/* 拖滑桿的時候只改這幾塊：大數字、尺上「你現在拉到哪」那一列、
-   底下走廊的格數、承諾那一顆上的天數。滑桿本身不碰。
+/* 按一下之後只改這幾塊：大數字、兩顆鍵的明暗、尺上「你現在說的」
+   那一列、底下走廊的格數、承諾那一顆上的天數。
 
-   位置的算法要跟 estAxis 裡的 at() 完全一樣，不然拖到一半會偏。 */
+   位置的算法要跟 estAxis 裡的 at() 完全一樣，不然按到一半會偏。
+   不整頁重畫，是因為重畫會把焦點從那一顆鍵上拿走——連按第二下
+   就得再瞄準一次。 */
+/* ---------- 說幾天：兩顆鍵 ----------
+
+   一按一天。到頭了那一顆就暗下去——不擋，只是讓他知道到頭了。
+   數字在中間，是這一頁最大的一個字，因為它是這一頁唯一的內容。 */
+function estStep(est) {
+  function k(d, s, cls, off) {
+    return '<button class="es-b ' + cls + (off ? ' off' : '') +
+      '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'estep:' + d })) + '\'>' + s + '</button>';
+  }
+  return '<div class="estep">' +
+    k(-1, '−', 'es-m', est <= RULES.EST_MIN) +
+    '<div class="es-n"><b>' + est + '</b><span>天</span></div>' +
+    k(1, '＋', 'es-p', est >= RULES.EST_MAX) +
+    '</div>';
+}
+
 function estLive(n) {
   var lo = RULES.EST_MIN, hi = RULES.EST_MAX, span = hi - lo;
   function at(d) {
@@ -187,7 +206,11 @@ function estLive(n) {
     var e = document.querySelector(sel);
     if (e) fn(e);
   }
-  set('.ax-head b', function (e) { e.textContent = n; });
+  set('.es-n b', function (e) { e.textContent = n; });
+  set('.es-m', function (e) {
+    e.className = 'es-b es-m' + (n <= RULES.EST_MIN ? ' off' : ''); });
+  set('.es-p', function (e) {
+    e.className = 'es-b es-p' + (n >= RULES.EST_MAX ? ' off' : ''); });
   set('.ax-now .ax-ok', function (e) {
     e.style.left = at(n - b);
     e.style.right = (100 - parseFloat(at(n + b))) + '%';
@@ -233,11 +256,8 @@ function estAxis(est, past) {
   var b = RULES.band(est);
   var H = ['<div class="axis">'];
 
-  /* 滑桿。它跟下面每一列同寬、同起點——range 的滑塊圓心是從
-     半個滑塊寬開始走的，所以下面那幾列一起往內縮同樣的距離。 */
-  H.push('<input type="range" class="slider ax-slider" id="est" min="' +
-    RULES.EST_MIN + '" max="' + RULES.EST_MAX + '" value="' + est +
-    '" oninput="ACTS.est(this.value)">');
+  /* 滑桿拿掉了，換成上面那兩顆加減鍵（見 estStep）。
+     這裡只剩看的部分：你前幾趟、你現在說的、準的範圍。 */
   H.push('<div class="ax-in">');
 
 

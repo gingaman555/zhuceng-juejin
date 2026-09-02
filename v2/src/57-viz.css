@@ -693,14 +693,37 @@ button.ac:active{transform:translateY(1px)}
 .ax-ruler i:first-child{transform:none}
 .ax-ruler i:last-child{transform:translateX(-100%)}
 
-/* 滑桿跟尺是同一根：同寬、同起點。
-   range 的滑塊圓心從半個滑塊寬開始走，所以尺往內縮同樣的距離。 */
-.ax-head{display:flex;align-items:baseline;gap:6px;justify-content:flex-end;
-  margin-bottom:6px}
-.ax-head b{font-size:44px;line-height:1;color:var(--gold);font-weight:400;
+/* ── 說幾天：兩顆鍵 ──
+
+   一按一天。數字在正中間，是這一頁最大的一個字——這一頁只有
+   這一件事。兩顆鍵各佔一邊，77px 見方，手指不用瞄。
+
+   到頭的那一顆暗下去。不擋（按下去也只是停在原地），
+   擋住會讓人以為是壞了。 */
+.estep{display:flex;align-items:center;justify-content:space-between;
+  gap:11px;margin:0 0 11px}
+.es-b{
+  flex:0 0 77px;height:77px;border:none;cursor:pointer;
+  font:inherit;font-size:44px;line-height:1;color:#1A1408;
+  clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 11px,
+    100% calc(100% - 11px),calc(100% - 11px) 100%,11px 100%,0 calc(100% - 11px),0 11px);
+  background-image:linear-gradient(180deg,
+    var(--gold2) 0 3px, var(--gold) 3px calc(100% - 3px),
+    var(--gold-d) calc(100% - 3px) 100%);
+  filter:drop-shadow(4px 4px 0 rgba(0,0,0,.75))
+}
+.es-b:hover{background-image:linear-gradient(180deg,
+  #FFE29A 0 3px, var(--gold2) 3px calc(100% - 3px),
+  var(--gold) calc(100% - 3px) 100%)}
+.es-b:active{transform:translate(2px,2px);
+  filter:drop-shadow(2px 2px 0 rgba(0,0,0,.75))}
+/* 到頭了。看得出來，但按得下去。 */
+.es-b.off{background-image:none;background:var(--panel2);color:var(--dim);
+  filter:none;box-shadow:inset 0 0 0 2px var(--line)}
+.es-n{display:flex;align-items:baseline;gap:6px}
+.es-n b{font-size:88px;line-height:1;color:var(--gold);font-weight:400;
   font-variant-numeric:tabular-nums}
-.ax-head span{font-size:22px;color:var(--dim)}
-.ax-slider{display:block;width:100%;margin:0 0 11px}
+.es-n span{font-size:33px;color:var(--dim)}
 .ax-in{position:relative;margin:0 11px}
 
 /* 岩層表面看得出哪幾格裡有東西——但看不出是什麼。
@@ -1297,25 +1320,36 @@ button.tk-k:hover span{color:var(--gold)}
   margin:0 0 11px;padding:0 0 6px;background:var(--sunk);
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06)
 }
-.rs-in{display:flex;align-items:flex-end;gap:2px;padding:11px 11px 0}
-/* 一格三行，全部白話：記號＋那個詞、任務名（折行不截斷）、兩個數字。
-   本來還有一根柱子——9 天跟 11 天畫出來差 7px，而且沒有共同的基線
-   可以比。它在營地上成立（一整排站在同一條地上），在這裡不成立。 */
+.rs-in{display:flex;align-items:stretch;gap:2px;padding:11px 11px 0}
+/* 一格一隻牠。
+
+   本來一格四行（記號的詞、任務名、說幾天實際幾天、留下的那句話），
+   八趟排開來就不是一條帶子，是一張表攤平了放在首頁。
+
+   現在格子裡只有兩樣：牠，跟兩個數字。牠是那一趟盡頭擋路的那一隻，
+   所以牠就是那一趟的名字——不用讀。詳細的點進去看。
+
+   底下那一條是準度：金＝說中、綠＝比說的快、紅＝比說的久。
+   一整排掃過去看得出自己有沒有在變準，那是一句話講不出來的。 */
 .rs{
-  flex:0 0 198px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;
-  padding:14px 14px 16px;border:0;background:var(--panel);color:inherit;font:inherit;
-  cursor:pointer;text-align:left
+  flex:0 0 110px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:11px 6px 0;border:0;background:var(--panel);color:inherit;font:inherit;
+  cursor:pointer;text-align:center
 }
-.rs-s{display:flex;align-items:center;gap:8px}
+.rs:hover{background:var(--panel2)}
+.rs:active{transform:translateY(2px)}
+.rs-px{width:66px;height:auto;image-rendering:pixelated}
+.rs-s{display:flex;flex-direction:column;align-items:center;gap:2px;
+  width:100%;padding:0 0 8px}
 .rs-s .px{width:33px;height:25px;image-rendering:pixelated}
-.rs-s em{font-style:normal;font-size:22px;color:var(--dim)}
-.rs-s em.early{color:var(--ok)}
-.rs-s em.exact{color:var(--gold)}
-.rs-s em.late{color:var(--over)}
-.rs b{font-size:22px;font-weight:400;color:var(--ink);line-height:1.35;overflow-wrap:anywhere}
-.rs i{font-style:normal;font-size:22px;color:var(--dim);font-variant-numeric:tabular-nums}
-.rs i u{text-decoration:none;color:var(--gold)}
-.rs-n{font-size:22px;color:var(--mute)}
+.rs i{font-style:normal;font-size:22px;color:var(--ink);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.rs i u{text-decoration:none;color:var(--dim);padding:0 2px}
+/* 準度那一條 */
+.rs::after{content:"";display:block;width:100%;height:5px;background:var(--line)}
+.rs.exact::after{background:var(--gold)}
+.rs.early::after{background:var(--ok)}
+.rs.late::after{background:var(--over)}
 
 /* 帶子的名字。概念要有名字，他才知道自己在練什麼。 */
 .rs-h{
