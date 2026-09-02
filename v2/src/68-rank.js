@@ -87,11 +87,13 @@ function rankCard(classId, meId) {
   var has = rows.some(function (r) { return r.dev !== null; });
 
   var H = ['<div class="card rank">'];
-  H.push('<div class="eyebrow">估得準　·　最近 ' + RANK_N + ' 趟</div>');
-  /* 單位只在這裡說一次。
-     本來每一列寫的是偏差率（13%、100%），沒有人那樣想事情——
-     而且 100% 看起來像世界末日，其實只是「說 5 天走了 10 天」。 */
-  H.push('<p class="rk-u">最近三趟，準了幾次</p>');
+  /* 一行說完。本來眉標寫「估得準 · 最近 3 趟」，底下再寫一次
+     「最近三趟，準了幾次」——同一句話講兩次。
+
+     單位只在這裡說一次。本來每一列寫的是偏差率（13%、100%），
+     沒有人那樣想事情——而且 100% 看起來像世界末日，
+     其實只是「說 5 天走了 10 天」。 */
+  H.push('<h2 class="rk-h">最近 ' + RANK_N + ' 趟，準了幾次</h2>');
 
   if (!has) {
     H.push('<p class="dim">還沒有人交過。</p>');

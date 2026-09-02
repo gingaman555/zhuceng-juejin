@@ -2371,8 +2371,9 @@ button.tk-k:hover span{color:var(--gold)}
    畫成點不畫成長條——長條會讀成「量」，而這裡是次數。 */
 .rk-dots{flex:1;display:flex;gap:9px;align-items:center;min-width:44px}
 /* .rk-r b 那一條把整列的 b 都設成 flex:0 0 66px，所以點會被撐開。 */
-.rk-dots b{flex:0 0 14px;width:14px;height:14px;background:var(--sunk);
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.5)}
+/* 點放大：一眼要看得出幾顆是實心的。 */
+.rk-dots b{flex:0 0 22px;width:22px;height:22px;background:var(--sunk);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.5), inset 2px 2px 0 rgba(255,255,255,.06)}
 .rk-dots b.on{background:var(--gold);box-shadow:inset 0 0 0 2px var(--gold2)}
 .rk-r.mine .rk-dots b.on{background:var(--gold2)}
 
@@ -2967,6 +2968,17 @@ button.tk-k:hover span{color:var(--gold)}
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.28)
 }
 .rk-out:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--gold-d)}
+
+/* 一行標題，不是眉標加一句。 */
+.rk-h{font-size:33px;margin:0 0 14px}
+
+/* 自己那一列整條墊底色。本來只換文字顏色——在一排一樣的列裡認不出來，
+   而「我在哪一列」是這張榜上唯一非看不可的事。 */
+.rk-r.mine{
+  background:rgba(233,179,65,.10);
+  box-shadow:inset 3px 0 0 var(--gold);
+  padding-left:9px;margin-left:-9px
+}
 
 /* 手機。
 
@@ -8834,10 +8846,12 @@ PAGES.eco = function () {
   /* ── 底下分成三段，一次只看一段 ──
      本來是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
   var dt = DRAFT.dt && teamOf(DRAFT.dt);
-  var tab = DRAFT.tab || (dt ? 'team' : 'feed');
+  /* 預設打開排行榜。藏起來的東西不會發生任何事——而這一版做它的方法
+     是「放進去用，看實際發生什麼」。 */
+  var tab = DRAFT.tab || (dt ? 'team' : 'rank');
   if (tab === 'team' && !dt) tab = 'feed';
 
-  var segs = [['feed', '最近'], ['rank', '估得準']];
+  var segs = [['rank', '估得準'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -9946,11 +9960,13 @@ function rankCard(classId, meId) {
   var has = rows.some(function (r) { return r.dev !== null; });
 
   var H = ['<div class="card rank">'];
-  H.push('<div class="eyebrow">估得準　·　最近 ' + RANK_N + ' 趟</div>');
-  /* 單位只在這裡說一次。
-     本來每一列寫的是偏差率（13%、100%），沒有人那樣想事情——
-     而且 100% 看起來像世界末日，其實只是「說 5 天走了 10 天」。 */
-  H.push('<p class="rk-u">最近三趟，準了幾次</p>');
+  /* 一行說完。本來眉標寫「估得準 · 最近 3 趟」，底下再寫一次
+     「最近三趟，準了幾次」——同一句話講兩次。
+
+     單位只在這裡說一次。本來每一列寫的是偏差率（13%、100%），
+     沒有人那樣想事情——而且 100% 看起來像世界末日，
+     其實只是「說 5 天走了 10 天」。 */
+  H.push('<h2 class="rk-h">最近 ' + RANK_N + ' 趟，準了幾次</h2>');
 
   if (!has) {
     H.push('<p class="dim">還沒有人交過。</p>');

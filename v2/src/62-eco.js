@@ -270,10 +270,12 @@ PAGES.eco = function () {
   /* ── 底下分成三段，一次只看一段 ──
      本來是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
   var dt = DRAFT.dt && teamOf(DRAFT.dt);
-  var tab = DRAFT.tab || (dt ? 'team' : 'feed');
+  /* 預設打開排行榜。藏起來的東西不會發生任何事——而這一版做它的方法
+     是「放進去用，看實際發生什麼」。 */
+  var tab = DRAFT.tab || (dt ? 'team' : 'rank');
   if (tab === 'team' && !dt) tab = 'feed';
 
-  var segs = [['feed', '最近'], ['rank', '估得準']];
+  var segs = [['rank', '估得準'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
