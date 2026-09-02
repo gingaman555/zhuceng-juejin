@@ -710,6 +710,20 @@ function actSeal(runId, name) {
   r.state = 'done';
   r.doneAt = now();
   r.coreName = String(name || '').trim().slice(0, 16);
+
+  /* 順手插進那一層。
+
+     本來這是另一個步驟：封存完回廊道，廊道上冒出一張「留一個記號」，
+     再切到全班地下城才插得進去。而收起一趟跟把它插進那一層是同一個
+     動作——中間隔一次回廊道、一張看不懂的卡、一次換頁。
+
+     插在最淺的那個還空著的層。通常就是這一趟走出來的那一層；
+     萬一中間漏掉一層（改過資料、舊存檔），也補得回來。 */
+  var d0 = unbuiltDepth(r.teamId);
+  if (d0 >= 0) {
+    tm.builds = tm.builds || {};
+    tm.builds['d' + d0] = { k: 'run', runId: runId };
+  }
   DB.Keeps.push({
     keepId: nid('K'), teamId: r.teamId, runId: runId,
     name: r.coreName, at: now(),

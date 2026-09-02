@@ -300,3 +300,42 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{
 /* 滑桿本身不吃全域那條 :active 位移——把手在移動的時候整根跟著跳
    會讓人以為自己拖歪了。 */
 input.slider:active{transform:none}
+
+/* ══════════ 按得到的地方要看起來按得到 ══════════
+
+   :active 解決的是「按下去有沒有反應」。但在按下去之前，
+   使用者要先知道**那裡可以按**——而現在很多可以按的東西
+   （紀錄的每一列、剖面圖的欄頭、營地上的記號、別組那一排）
+   長得跟旁邊不能按的資訊一模一樣。
+
+   給它們一個共同的靜止狀態：右下角一道硬邊的影子。
+   那是這一份材質語言裡「墊在上面的東西」的意思——
+   墊在上面的東西才按得下去。 */
+[data-act]:not(.btn):not(.tag):not(.seg):not(.nav a):not(input):not(select),
+[data-go]:not(.nav a){
+  position:relative
+}
+/* 一整塊的（卡片、列、欄頭）：右下一道影子 ＋ 左上一道光 */
+.rec,.rk,.bp,.dk,.or,.spr,.tk-k,.msr{
+  box-shadow:2px 2px 0 rgba(0,0,0,.45), inset 1px 1px 0 rgba(255,240,214,.06)
+}
+.rec:hover,.rk:hover,.bp:hover,.dk:hover,.tk-k:hover{
+  box-shadow:2px 2px 0 rgba(0,0,0,.45), inset 0 0 0 2px var(--gold-d)
+}
+.rec:active,.rk:active,.bp:active,.dk:active,.tk-k:active{
+  box-shadow:1px 1px 0 rgba(0,0,0,.45), inset 0 0 0 2px var(--gold)
+}
+
+/* 貼在場景上的（記號、欄頭、生物）不能加影子——它們是畫的一部分，
+   加了會變成貼紙。改成一直微微亮著，滑過去更亮。 */
+.mmark,.xs-head,.xs-bld,.xs-core,.xs-fauna{filter:brightness(1.06)}
+.mmark:hover,.xs-head:hover,.xs-bld:hover,.xs-core:hover,.xs-fauna:hover{
+  filter:brightness(1.35)
+}
+
+/* 觸控裝置沒有 hover，所以靜止狀態必須自己說得清楚。 */
+@media (hover: none){
+  .rec,.rk,.bp,.dk,.tk-k{
+    box-shadow:2px 2px 0 rgba(0,0,0,.45), inset 0 0 0 1px var(--line2)
+  }
+}
