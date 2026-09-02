@@ -85,7 +85,7 @@ PAGES.login = function () {
 PAGES.reg = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
   H.push(head('建立帳號', '先報上你在哪一班',
-    '加入碼跟老師拿。老師與研究者的帳號不從這裡開——請研究者幫你建。'));
+    '加入碼跟老師拿。老師與研究者找研究者開。'));
   H.push('<div class="card">');
   H.push('<div class="eyebrow">班級加入碼</div>');
   H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
@@ -112,7 +112,7 @@ PAGES.claim = function () {
   var free = freeRoster(u.classId);
   var H = ['<div class="gate"><div class="gate-box">'];
   H.push(head('你是誰', '從名冊上點自己',
-    '點一下就好，不用打字。點錯了找研究者解開，再點一次。'));
+    '點錯了找研究者解開。'));
 
   if (!free.length) {
     H.push('<div class="card dim">這個班的名冊還沒貼，或是名字都被認領完了。' +

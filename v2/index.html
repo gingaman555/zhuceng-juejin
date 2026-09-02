@@ -18,7 +18,14 @@
 :root{
   --bg:#0B0A09; --panel:#14110D; --panel2:#1A1611; --sunk:#0E0C0A;
   --line:#2E2822; --line2:#443B31;
-  --ink:#E8E0D2; --dim:#9A8F7D; --mute:#857A69;
+  /* 三級字色本來是白、淺灰、更淺灰——而淺灰在這個底色上讀起來
+     就是「看不清楚」。使用者：字都盡量作白，不要做淺灰。
+
+     所以三級全部拉到白附近，層級改由字級與位置來分（字級只有
+     11 的倍數，那把尺夠用了）。代價是次要的字不再自動退後，
+     那要靠另一件事收：文字量降到最低——句子少了，就不需要
+     用顏色把它們壓下去。 */
+  --ink:#F4F0E7; --dim:#DCD5C7; --mute:#C3BBAC;
   --gold:#E9B341; --gold2:#F5CB74; --gold-d:#7A5A18;
   --ok:#7CC98F; --over:#D9603F; --warn:#E9B341;
   --L:#C9A227; --Ld:#9A7E22; --Ll:#F2E6C8; --Lbg:#171208; --Lline:#3A2E12;
@@ -2889,6 +2896,15 @@ button.tk-k:hover span{color:var(--gold)}
 .waitq b{font-size:44px;line-height:1;font-weight:400;color:var(--gold);
   font-variant-numeric:tabular-nums}
 .waitq em{font-style:normal;font-size:22px;color:var(--dim);width:100%}
+
+/* 排到什麼時候：加減鍵比承諾那一對小一號——這是老師的工具，
+   不是這一頁的主角。 */
+.duestep{margin:0 0 6px}
+.duestep .es-b{flex:0 0 55px;height:55px;font-size:33px}
+.duestep .es-n b{font-size:55px}
+.duestep .es-n span{font-size:22px}
+/* 算出來是哪一天。相對的輸入，絕對的顯示。 */
+.duewhen{font-size:22px;color:var(--ink);margin:0 0 11px}
 
 /* ---------- 交出去的那一場 ----------
 
@@ -6115,9 +6131,11 @@ function actPublish(classId, o) {
     title: o.title, note: o.note || '',
     steps: (o.steps || []).slice(0, 12),
     teams: o.teams || [],
-    /* 老師排的日期。0＝沒排。
+    /* 老師排的那一刻。0＝沒排。dueU 是他當初用的單位
+       （小時／天／週），只用來決定要不要寫出幾點。
        它不進判定——判定只讀學生說幾天與實際幾天（見 RULES.judge）。 */
     due: Number(o.due) || 0,
+    dueU: o.dueU || '',
     at: now()
   };
   DB.Milestones.push(m);
@@ -6131,17 +6149,66 @@ function actPublish(classId, o) {
 
    回的是天數不是日期，因為學生那一邊整個系統都在用天數——
    換成同一個單位他才不用在腦袋裡做一次換算。 */
-function dueIn(m) {
-  if (!m || !m.due) return null;
-  var d = Math.ceil((m.due - now()) / DAY);
-  return { days: d, past: d < 0 };
+/* 三個單位。老師排任務的時候腦袋裡的話是「兩週後」，不是日期。 */
+var DUE_UNITS = [
+  { k: 'h', name: '小時', ms: 3600000, def: 8,  max: 72 },
+  { k: 'd', name: '天',   ms: DAY,     def: 7,  max: 90 },
+  { k: 'w', name: '週',   ms: DAY * 7, def: 2,  max: 26 }
+];
+function dueUnit(k) {
+  for (var i = 0; i < DUE_UNITS.length; i++) {
+    if (DUE_UNITS[i].k === k) return DUE_UNITS[i];
+  }
+  return null;
 }
 
-/* 排的那一天，寫成人看的樣子。 */
+/* 幾小時／幾天／幾週後，算成一個時刻。
+
+   天與週落在那一天的最後一刻——排到 9/5，9/5 那一天還算數。
+   小時是準確的時刻，因為「今天下午五點」就是那個意思。 */
+function dueFrom(n, k) {
+  var u = dueUnit(k);
+  var q = Number(n) || 0;
+  if (!u || q <= 0) return 0;
+  q = Math.min(q, u.max);
+  if (k === 'h') return now() + q * u.ms;
+  var d = new Date(now() + q * u.ms);
+  d.setHours(23, 59, 59, 0);
+  return d.getTime();
+}
+
+/* 還有多久。剩不到一天就改用小時報——那時候「還有 1 天」是假的。 */
+function dueIn(m) {
+  if (!m || !m.due) return null;
+  var left = m.due - now();
+  if (left < 0) {
+    return { days: Math.ceil(left / DAY), past: true, hours: 0 };
+  }
+  if (left < DAY) {
+    return { days: 1, hours: Math.max(1, Math.round(left / 3600000)),
+      past: false };
+  }
+  return { days: Math.ceil(left / DAY), hours: 0, past: false };
+}
+
+/* 還有多久，寫成一句。 */
+function dueLeftSay(m) {
+  var d = dueIn(m);
+  if (!d) return '';
+  if (d.past) return '過了 ' + (-d.days) + ' 天';
+  if (d.hours) return '還有 ' + d.hours + ' 小時';
+  return '還有 ' + d.days + ' 天';
+}
+
+/* 排的那一刻，寫成人看的樣子。用小時排的才寫幾點——
+   天與週落在那一天的最後一刻，寫 23:59 只會讓人以為那是個規定。 */
 function dueSay(m) {
   if (!m || !m.due) return '';
   var d = new Date(m.due);
-  return (d.getMonth() + 1) + '/' + d.getDate();
+  var s = (d.getMonth() + 1) + '/' + d.getDate();
+  if (m.dueU !== 'h') return s;
+  var mm = d.getMinutes();
+  return s + ' ' + d.getHours() + ':' + (mm < 10 ? '0' + mm : mm);
 }
 
 /* 交出去之後排在哪裡。
@@ -6983,14 +7050,7 @@ var S = { who: null, page: 'gate', p: {}, flash: null };
 var DRAFT = {};
 function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback || ''); }
 
-/* <input type="date"> 給的是 2026-03-15。轉成那一天的最後一刻——
-   排到三月十五，意思是三月十五那一天還算數。 */
-function dueStamp(v) {
-  var p = String(v || '').split('-');
-  if (p.length !== 3) return 0;
-  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 23, 59, 59);
-  return isNaN(d.getTime()) ? 0 : d.getTime();
-}
+
 
 function go(page, p) {
   if (typeof stopAnim === 'function') stopAnim();
@@ -7307,6 +7367,21 @@ var ACTS = {
      把手就不再跟著手指走。那不是回饋不夠，是控制項在手裡被拆掉。
 
      改成只改跟著它動的那幾塊，滑桿本身完全不碰。 */
+  /* 老師排到什麼時候。選一個單位就等於「有排」，再選一次同一個
+     或按「不排」就收回來。 */
+  dueu: function (k) {
+    var u = dueUnit(k);
+    if (!u || DRAFT.dueU === k) { DRAFT.dueU = ''; DRAFT.dueN = 0; }
+    else { DRAFT.dueU = k; DRAFT.dueN = u.def; }
+    render();
+  },
+  duen: function (d) {
+    var u = dueUnit(DRAFT.dueU);
+    if (!u) return;
+    DRAFT.dueN = clamp(1, u.max, (Number(DRAFT.dueN) || 0) + Number(d));
+    render();
+  },
+
   /* 說幾天：一按一天。到頭就停在那裡，不會繞回去——
      繞回去會讓「按到底」變成一件要小心的事。 */
   estep: function (d) {
@@ -7491,11 +7566,11 @@ var ACTS = {
     if (last) steps.push(last.slice(0, 24));
     actPublish(me().classId, { title: title.trim(), note: note.trim(),
       steps: steps, teams: DRAFT.to || [], mentorId: me().userId,
-      due: dueStamp(DRAFT.msDue) });
+      due: dueFrom(DRAFT.dueN, DRAFT.dueU), dueU: DRAFT.dueU || '' });
     /* 草稿清掉，不然下一個會帶著上一個的字。
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
-    DRAFT.msDue = '';
+    DRAFT.dueU = ''; DRAFT.dueN = 0;
     go('ms');
     say('派出去了。');
   },
@@ -7966,7 +8041,7 @@ PAGES.login = function () {
 PAGES.reg = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
   H.push(head('建立帳號', '先報上你在哪一班',
-    '加入碼跟老師拿。老師與研究者的帳號不從這裡開——請研究者幫你建。'));
+    '加入碼跟老師拿。老師與研究者找研究者開。'));
   H.push('<div class="card">');
   H.push('<div class="eyebrow">班級加入碼</div>');
   H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
@@ -7993,7 +8068,7 @@ PAGES.claim = function () {
   var free = freeRoster(u.classId);
   var H = ['<div class="gate"><div class="gate-box">'];
   H.push(head('你是誰', '從名冊上點自己',
-    '點一下就好，不用打字。點錯了找研究者解開，再點一次。'));
+    '點錯了找研究者解開。'));
 
   if (!free.length) {
     H.push('<div class="card dim">這個班的名冊還沒貼，或是名字都被認領完了。' +
@@ -8491,10 +8566,11 @@ PAGES.commit = function () {
      事實，不寫「你來不及了」那種話。走廊上那條線畫的是同一件事。 */
   var di = dueIn(m);
   if (di) {
+    /* 剩不到一天要報小時，不然「還有 1 天」是假的——那句話是
+       dueLeftSay 在算的，這裡本來自己又算了一次，而且算錯。 */
     H.push('<div class="dueline' + (di.past ? ' past' : '') + '">' +
       '<span>老師排到</span><b>' + esc(dueSay(m)) + '</b>' +
-      (di.past ? '<em>過了 ' + (-di.days) + ' 天</em>'
-        : '<em>還有 ' + di.days + ' 天</em>') + '</div>');
+      '<em>' + esc(dueLeftSay(m)) + '</em></div>');
   }
   H.push(estStep(est));
 
@@ -8730,8 +8806,7 @@ PAGES.exit = function () {
 
   var H = [head(out ? '地面' : '出口',
     out ? '你出去了' : '這個專案做完了？',
-    out ? '' : '往下走不出去——六層會一直重來。出去的方式只有一個：' +
-          '把手上這個專案做完，然後說一聲。')];
+    out ? '' : '把專案做完，說一聲。')];
 
   /* 離場的演出。角色沿著那道光往上走出畫面。
 
@@ -10107,9 +10182,8 @@ function codexThings(t, here) {
        '.+##########+.', '..++++++++++..'],
     here.pal, 'cx-px core'));
   H.push('<div><b>石片</b>');
-  H.push('<em>走完一趟、老師勾了可以之後，那一趟自己長成的一根樣本。' +
-         '一天兩列：來過是實心、你說沒動是空心、沒有紀錄是斷的。' +
-         '長度就是那一趟過了幾天，顏色是你當時在哪一層。</em>');
+  /* 三句砍成一句。那一根長什麼樣子看得到，不用讀。 */
+  H.push('<em>一天兩列。來過實心，沒動空心。</em>');
   if (mine.length) H.push('<span class="cx-met">你已經封存了 ' + mine.length + ' 根</span>');
   H.push('</div></div>');
   H.push('</div></div>');
@@ -10119,7 +10193,7 @@ function codexThings(t, here) {
   H.push('<p class="dim">每一層長的不一樣。</p>');
   H.push('<div class="cx">');
   [['碎石', RUBBLE.px, '往下走的時候崩下來的。'],
-   ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點輪廓。'],
+   ['水晶', CRYSTAL.px, '最暗的時候還看得到。'],
    ['蕈菇', SHROOM.px, '走通的地方才長得出來。'],
    ['鐵件', BOLT.px, '有人來過。鏽住了，轉不動。'],
    ['餘燼', EMBER.px, '地上還有餘燼在燒。'],
@@ -11049,10 +11123,8 @@ PAGES.radar = function () {
     H.push('</div>');
   });
 
-  H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '目前沒有等你看的',
-    rows.length
-      ? '照等最久的排。看完成果，回來勾「可以」。'
-      : '學生交出去之後排在這裡。'));
+  /* 說明句拿掉：清單本來就照等最久排，而那一顆鍵上寫著「看完了，去勾」。 */
+  H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '沒有等你的', ''));
 
   if (!rows.length) {
     H.push('<div class="card">');
@@ -11103,9 +11175,9 @@ PAGES.review = function () {
   var m = msOf(r.msId), t = teamOf(r.teamId);
   var s = RULES.STAMPS[r.stamp];
 
+  /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
   var H = [head('審核', t.name + '　·　' + m.title,
-    '成果交在你原本收的地方。這裡只要勾一個「可以」。' +
-    '想說什麼再說，不想說就直接勾。')];
+    '成果交在你原本收的地方。')];
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
@@ -11136,7 +11208,6 @@ PAGES.review = function () {
     esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
-  H.push('<div class="card dim">勾完之後，他們會在那一層留一個記號。</div>');
 
   H.push('<div class="row">');
   H.push(btn('可以', 'approve:' + r.runId, 'big'));
@@ -11162,9 +11233,7 @@ PAGES.ms = function () {
 
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
-  H.push(head('發派任務', '你要他們交什麼',
-    '你排的日期是課程的排程，不是判定。' +
-    '系統只量他說幾天、實際幾天。'));
+  H.push(head('發派任務', '你要他們交什麼', ''));
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">派一個新的</div>');
@@ -11194,17 +11263,41 @@ PAGES.ms = function () {
   H.push('<input id="ms-step" placeholder="' +
     esc(sp.length ? '再切一段，按 Enter' : '例：訪三個人　→ 按 Enter') +
     '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
-  H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段。' : '') +
-    '不分段一樣走得完。</p>');
+  H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段' : '選填') + '</p>');
   /* ── 排到哪一天 ──
 
      老師對專案制定要有自主權，而排程是那個自主權最具體的一半。
      它不進判定：判定只讀學生說幾天與實際幾天。學生那邊會看到
      這一天換算成的天數，畫在他按承諾的那條走廊上。 */
-  H.push('<div class="eyebrow" style="margin-top:14px">排到哪一天　選填</div>');
-  H.push('<input type="date" id="ms-due" value="' + esc(draft('msDue', '')) +
-    '" oninput="DRAFT[\'msDue\']=this.value">');
-  H.push('<p class="dim">這是你的排程。他們說幾天還是他們自己決定。</p>');
+  H.push('<div class="eyebrow" style="margin-top:14px">排到什麼時候　選填</div>');
+  /* 選了單位才等於「有排」，所以不用另外做一個開關。 */
+  var du = DRAFT.dueU, dn = Number(DRAFT.dueN) || 0;
+  H.push('<div class="tags">');
+  DUE_UNITS.forEach(function (x) {
+    H.push('<button class="tag' + (du === x.k ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'dueu:' + x.k })) +
+      '\'>' + esc(x.name) + '後</button>');
+  });
+  if (du) {
+    H.push('<button class="tag" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'dueu:' })) + '\'>不排</button>');
+  }
+  H.push('</div>');
+  if (du) {
+    var uu = dueUnit(du);
+    /* 相對的輸入，絕對的顯示。「兩週後」是哪一天永遠看得到，
+       兩邊都不用在腦袋裡換算。 */
+    H.push('<div class="estep duestep">');
+    H.push('<button class="es-b es-m' + (dn <= 1 ? ' off' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'duen:-1' })) + '\'>−</button>');
+    H.push('<div class="es-n"><b>' + dn + '</b><span>' + esc(uu.name) + '後</span></div>');
+    H.push('<button class="es-b es-p' + (dn >= uu.max ? ' off' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'duen:1' })) + '\'>＋</button>');
+    H.push('</div>');
+    H.push('<p class="duewhen">' + esc(dueSay({ due: dueFrom(dn, du), dueU: du })) + '</p>');
+    /* 六個字。他要知道的只有「這不是系統會拿去罰他們的東西」。 */
+    H.push('<p class="dim">排程，不是期限。</p>');
+  }
 
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');
@@ -11302,7 +11395,7 @@ var ROLE_SAY = { student: '學生', teacher: '老師', researcher: '研究者' }
 PAGES.rs = function () {
   var cid = rsClassId();
   var H = [head('帳號', '誰在這個系統裡',
-    '學生自己用加入碼註冊。老師與研究者的帳號從這裡開——那兩種身分看得到別人的資料，' +
+    '老師與研究者的帳號從這裡開。' +
     '所以不開放自己註冊。')];
 
   H.push(classPicker());
@@ -11363,7 +11456,7 @@ PAGES.roster = function () {
   var cid = rsClassId();
   var rows = where('Roster', function (r) { return r.classId === cid; });
   var H = [head('名冊', '誰在這個班',
-    '一行一組，像「甲：小明, 小華」。貼上去之後，學生註冊完就從裡面點自己是誰——' +
+    '一行一組，像「甲：小明, 小華」。' +
     '不用他們自己打組名，資料才對得起來。')];
 
   H.push(classPicker());

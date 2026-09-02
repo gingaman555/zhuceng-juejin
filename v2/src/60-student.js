@@ -406,10 +406,11 @@ PAGES.commit = function () {
      事實，不寫「你來不及了」那種話。走廊上那條線畫的是同一件事。 */
   var di = dueIn(m);
   if (di) {
+    /* 剩不到一天要報小時，不然「還有 1 天」是假的——那句話是
+       dueLeftSay 在算的，這裡本來自己又算了一次，而且算錯。 */
     H.push('<div class="dueline' + (di.past ? ' past' : '') + '">' +
       '<span>老師排到</span><b>' + esc(dueSay(m)) + '</b>' +
-      (di.past ? '<em>過了 ' + (-di.days) + ' 天</em>'
-        : '<em>還有 ' + di.days + ' 天</em>') + '</div>');
+      '<em>' + esc(dueLeftSay(m)) + '</em></div>');
   }
   H.push(estStep(est));
 
@@ -645,8 +646,7 @@ PAGES.exit = function () {
 
   var H = [head(out ? '地面' : '出口',
     out ? '你出去了' : '這個專案做完了？',
-    out ? '' : '往下走不出去——六層會一直重來。出去的方式只有一個：' +
-          '把手上這個專案做完，然後說一聲。')];
+    out ? '' : '把專案做完，說一聲。')];
 
   /* 離場的演出。角色沿著那道光往上走出畫面。
 

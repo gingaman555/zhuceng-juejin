@@ -35,7 +35,7 @@ var ROLE_SAY = { student: '學生', teacher: '老師', researcher: '研究者' }
 PAGES.rs = function () {
   var cid = rsClassId();
   var H = [head('帳號', '誰在這個系統裡',
-    '學生自己用加入碼註冊。老師與研究者的帳號從這裡開——那兩種身分看得到別人的資料，' +
+    '老師與研究者的帳號從這裡開。' +
     '所以不開放自己註冊。')];
 
   H.push(classPicker());
@@ -96,7 +96,7 @@ PAGES.roster = function () {
   var cid = rsClassId();
   var rows = where('Roster', function (r) { return r.classId === cid; });
   var H = [head('名冊', '誰在這個班',
-    '一行一組，像「甲：小明, 小華」。貼上去之後，學生註冊完就從裡面點自己是誰——' +
+    '一行一組，像「甲：小明, 小華」。' +
     '不用他們自己打組名，資料才對得起來。')];
 
   H.push(classPicker());

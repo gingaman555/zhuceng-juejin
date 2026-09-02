@@ -651,9 +651,11 @@ function actPublish(classId, o) {
     title: o.title, note: o.note || '',
     steps: (o.steps || []).slice(0, 12),
     teams: o.teams || [],
-    /* 老師排的日期。0＝沒排。
+    /* 老師排的那一刻。0＝沒排。dueU 是他當初用的單位
+       （小時／天／週），只用來決定要不要寫出幾點。
        它不進判定——判定只讀學生說幾天與實際幾天（見 RULES.judge）。 */
     due: Number(o.due) || 0,
+    dueU: o.dueU || '',
     at: now()
   };
   DB.Milestones.push(m);
@@ -667,17 +669,66 @@ function actPublish(classId, o) {
 
    回的是天數不是日期，因為學生那一邊整個系統都在用天數——
    換成同一個單位他才不用在腦袋裡做一次換算。 */
-function dueIn(m) {
-  if (!m || !m.due) return null;
-  var d = Math.ceil((m.due - now()) / DAY);
-  return { days: d, past: d < 0 };
+/* 三個單位。老師排任務的時候腦袋裡的話是「兩週後」，不是日期。 */
+var DUE_UNITS = [
+  { k: 'h', name: '小時', ms: 3600000, def: 8,  max: 72 },
+  { k: 'd', name: '天',   ms: DAY,     def: 7,  max: 90 },
+  { k: 'w', name: '週',   ms: DAY * 7, def: 2,  max: 26 }
+];
+function dueUnit(k) {
+  for (var i = 0; i < DUE_UNITS.length; i++) {
+    if (DUE_UNITS[i].k === k) return DUE_UNITS[i];
+  }
+  return null;
 }
 
-/* 排的那一天，寫成人看的樣子。 */
+/* 幾小時／幾天／幾週後，算成一個時刻。
+
+   天與週落在那一天的最後一刻——排到 9/5，9/5 那一天還算數。
+   小時是準確的時刻，因為「今天下午五點」就是那個意思。 */
+function dueFrom(n, k) {
+  var u = dueUnit(k);
+  var q = Number(n) || 0;
+  if (!u || q <= 0) return 0;
+  q = Math.min(q, u.max);
+  if (k === 'h') return now() + q * u.ms;
+  var d = new Date(now() + q * u.ms);
+  d.setHours(23, 59, 59, 0);
+  return d.getTime();
+}
+
+/* 還有多久。剩不到一天就改用小時報——那時候「還有 1 天」是假的。 */
+function dueIn(m) {
+  if (!m || !m.due) return null;
+  var left = m.due - now();
+  if (left < 0) {
+    return { days: Math.ceil(left / DAY), past: true, hours: 0 };
+  }
+  if (left < DAY) {
+    return { days: 1, hours: Math.max(1, Math.round(left / 3600000)),
+      past: false };
+  }
+  return { days: Math.ceil(left / DAY), hours: 0, past: false };
+}
+
+/* 還有多久，寫成一句。 */
+function dueLeftSay(m) {
+  var d = dueIn(m);
+  if (!d) return '';
+  if (d.past) return '過了 ' + (-d.days) + ' 天';
+  if (d.hours) return '還有 ' + d.hours + ' 小時';
+  return '還有 ' + d.days + ' 天';
+}
+
+/* 排的那一刻，寫成人看的樣子。用小時排的才寫幾點——
+   天與週落在那一天的最後一刻，寫 23:59 只會讓人以為那是個規定。 */
 function dueSay(m) {
   if (!m || !m.due) return '';
   var d = new Date(m.due);
-  return (d.getMonth() + 1) + '/' + d.getDate();
+  var s = (d.getMonth() + 1) + '/' + d.getDate();
+  if (m.dueU !== 'h') return s;
+  var mm = d.getMinutes();
+  return s + ' ' + d.getHours() + ':' + (mm < 10 ? '0' + mm : mm);
 }
 
 /* 交出去之後排在哪裡。

@@ -1413,3 +1413,12 @@ button.tk-k:hover span{color:var(--gold)}
 .waitq b{font-size:44px;line-height:1;font-weight:400;color:var(--gold);
   font-variant-numeric:tabular-nums}
 .waitq em{font-style:normal;font-size:22px;color:var(--dim);width:100%}
+
+/* 排到什麼時候：加減鍵比承諾那一對小一號——這是老師的工具，
+   不是這一頁的主角。 */
+.duestep{margin:0 0 6px}
+.duestep .es-b{flex:0 0 55px;height:55px;font-size:33px}
+.duestep .es-n b{font-size:55px}
+.duestep .es-n span{font-size:22px}
+/* 算出來是哪一天。相對的輸入，絕對的顯示。 */
+.duewhen{font-size:22px;color:var(--ink);margin:0 0 11px}

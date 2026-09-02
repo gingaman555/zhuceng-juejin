@@ -91,10 +91,8 @@ PAGES.radar = function () {
     H.push('</div>');
   });
 
-  H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '目前沒有等你看的',
-    rows.length
-      ? '照等最久的排。看完成果，回來勾「可以」。'
-      : '學生交出去之後排在這裡。'));
+  /* 說明句拿掉：清單本來就照等最久排，而那一顆鍵上寫著「看完了，去勾」。 */
+  H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '沒有等你的', ''));
 
   if (!rows.length) {
     H.push('<div class="card">');
@@ -145,9 +143,9 @@ PAGES.review = function () {
   var m = msOf(r.msId), t = teamOf(r.teamId);
   var s = RULES.STAMPS[r.stamp];
 
+  /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
   var H = [head('審核', t.name + '　·　' + m.title,
-    '成果交在你原本收的地方。這裡只要勾一個「可以」。' +
-    '想說什麼再說，不想說就直接勾。')];
+    '成果交在你原本收的地方。')];
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
@@ -178,7 +176,6 @@ PAGES.review = function () {
     esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
-  H.push('<div class="card dim">勾完之後，他們會在那一層留一個記號。</div>');
 
   H.push('<div class="row">');
   H.push(btn('可以', 'approve:' + r.runId, 'big'));
@@ -204,9 +201,7 @@ PAGES.ms = function () {
 
   var H = [];
   H.push(stepBar(TEACHER_STEPS, 0));
-  H.push(head('發派任務', '你要他們交什麼',
-    '你排的日期是課程的排程，不是判定。' +
-    '系統只量他說幾天、實際幾天。'));
+  H.push(head('發派任務', '你要他們交什麼', ''));
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">派一個新的</div>');
@@ -236,17 +231,41 @@ PAGES.ms = function () {
   H.push('<input id="ms-step" placeholder="' +
     esc(sp.length ? '再切一段，按 Enter' : '例：訪三個人　→ 按 Enter') +
     '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
-  H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段。' : '') +
-    '不分段一樣走得完。</p>');
+  H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段' : '選填') + '</p>');
   /* ── 排到哪一天 ──
 
      老師對專案制定要有自主權，而排程是那個自主權最具體的一半。
      它不進判定：判定只讀學生說幾天與實際幾天。學生那邊會看到
      這一天換算成的天數，畫在他按承諾的那條走廊上。 */
-  H.push('<div class="eyebrow" style="margin-top:14px">排到哪一天　選填</div>');
-  H.push('<input type="date" id="ms-due" value="' + esc(draft('msDue', '')) +
-    '" oninput="DRAFT[\'msDue\']=this.value">');
-  H.push('<p class="dim">這是你的排程。他們說幾天還是他們自己決定。</p>');
+  H.push('<div class="eyebrow" style="margin-top:14px">排到什麼時候　選填</div>');
+  /* 選了單位才等於「有排」，所以不用另外做一個開關。 */
+  var du = DRAFT.dueU, dn = Number(DRAFT.dueN) || 0;
+  H.push('<div class="tags">');
+  DUE_UNITS.forEach(function (x) {
+    H.push('<button class="tag' + (du === x.k ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'dueu:' + x.k })) +
+      '\'>' + esc(x.name) + '後</button>');
+  });
+  if (du) {
+    H.push('<button class="tag" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'dueu:' })) + '\'>不排</button>');
+  }
+  H.push('</div>');
+  if (du) {
+    var uu = dueUnit(du);
+    /* 相對的輸入，絕對的顯示。「兩週後」是哪一天永遠看得到，
+       兩邊都不用在腦袋裡換算。 */
+    H.push('<div class="estep duestep">');
+    H.push('<button class="es-b es-m' + (dn <= 1 ? ' off' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'duen:-1' })) + '\'>−</button>');
+    H.push('<div class="es-n"><b>' + dn + '</b><span>' + esc(uu.name) + '後</span></div>');
+    H.push('<button class="es-b es-p' + (dn >= uu.max ? ' off' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'duen:1' })) + '\'>＋</button>');
+    H.push('</div>');
+    H.push('<p class="duewhen">' + esc(dueSay({ due: dueFrom(dn, du), dueU: du })) + '</p>');
+    /* 六個字。他要知道的只有「這不是系統會拿去罰他們的東西」。 */
+    H.push('<p class="dim">排程，不是期限。</p>');
+  }
 
   H.push('<div class="eyebrow" style="margin-top:14px">發給誰</div>');
   H.push('<div class="tags">');

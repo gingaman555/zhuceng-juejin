@@ -75,9 +75,8 @@ function codexThings(t, here) {
        '.+##########+.', '..++++++++++..'],
     here.pal, 'cx-px core'));
   H.push('<div><b>石片</b>');
-  H.push('<em>走完一趟、老師勾了可以之後，那一趟自己長成的一根樣本。' +
-         '一天兩列：來過是實心、你說沒動是空心、沒有紀錄是斷的。' +
-         '長度就是那一趟過了幾天，顏色是你當時在哪一層。</em>');
+  /* 三句砍成一句。那一根長什麼樣子看得到，不用讀。 */
+  H.push('<em>一天兩列。來過實心，沒動空心。</em>');
   if (mine.length) H.push('<span class="cx-met">你已經封存了 ' + mine.length + ' 根</span>');
   H.push('</div></div>');
   H.push('</div></div>');
@@ -87,7 +86,7 @@ function codexThings(t, here) {
   H.push('<p class="dim">每一層長的不一樣。</p>');
   H.push('<div class="cx">');
   [['碎石', RUBBLE.px, '往下走的時候崩下來的。'],
-   ['水晶', CRYSTAL.px, '自己會微微發亮，所以最暗的時候還看得到一點輪廓。'],
+   ['水晶', CRYSTAL.px, '最暗的時候還看得到。'],
    ['蕈菇', SHROOM.px, '走通的地方才長得出來。'],
    ['鐵件', BOLT.px, '有人來過。鏽住了，轉不動。'],
    ['餘燼', EMBER.px, '地上還有餘燼在燒。'],
