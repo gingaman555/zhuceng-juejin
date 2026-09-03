@@ -792,7 +792,8 @@ PAGES.exit = function () {
   var t = myTeam();
   var e = exitRecord(t.teamId);
   var out = !!t.leftAt;
-  var hit = (e.acc.exact || 0) + (e.acc.early || 0);
+  /* 早不算準（跟排行榜同一條規矩，見 68-rank.js）。 */
+  var hit = e.acc.exact || 0;
 
   var H = [head(out ? '地面' : '出口',
     out ? '你出去了' : '這個專案做完了？',

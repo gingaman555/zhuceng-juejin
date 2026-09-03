@@ -44,7 +44,9 @@ function rankDev(teamId) {
   var sum = 0, hit = 0, marks = [];
   use.forEach(function (r) {
     sum += Math.abs(r.actual - r.est) / r.est;
-    if (r.stamp !== 'late') hit++;
+    /* 只有「跟承諾的一樣」算準。早跟晚都是不準——
+       說 5 天做了 1 天是差了 80%，跟做了 9 天一樣。 */
+    if (r.stamp === 'exact') hit++;
     /* 每一趟往哪一邊偏。三顆空心的點看不出「他每次都比說的久」，
        而那是這張榜上最值得看到的一件事。 */
     marks.push(r.stamp);

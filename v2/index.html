@@ -10910,7 +10910,8 @@ PAGES.exit = function () {
   var t = myTeam();
   var e = exitRecord(t.teamId);
   var out = !!t.leftAt;
-  var hit = (e.acc.exact || 0) + (e.acc.early || 0);
+  /* 早不算準（跟排行榜同一條規矩，見 68-rank.js）。 */
+  var hit = e.acc.exact || 0;
 
   var H = [head(out ? '地面' : '出口',
     out ? '你出去了' : '這個專案做完了？',
@@ -13512,7 +13513,9 @@ function rankDev(teamId) {
   var sum = 0, hit = 0, marks = [];
   use.forEach(function (r) {
     sum += Math.abs(r.actual - r.est) / r.est;
-    if (r.stamp !== 'late') hit++;
+    /* 只有「跟承諾的一樣」算準。早跟晚都是不準——
+       說 5 天做了 1 天是差了 80%，跟做了 9 天一樣。 */
+    if (r.stamp === 'exact') hit++;
     /* 每一趟往哪一邊偏。三顆空心的點看不出「他每次都比說的久」，
        而那是這張榜上最值得看到的一件事。 */
     marks.push(r.stamp);
