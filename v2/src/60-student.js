@@ -346,7 +346,10 @@ function actionCard(t, next, st) {
     /* 眉標拿掉了：上面那一行已經寫著「退回來了」。
        這裡剩下的是他的那一句話——那才是這一刻唯一要讀的東西。 */
     if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
-    H.push(btn('改好了，再交一次', 'resend:' + row.run.runId, 'big'));
+    /* 本來這裡直接再交一次，不用重答。但牠在廊道上站起來了，
+       而「牠站著」跟「按一顆鍵就過去」是兩件互相矛盾的事。
+       改成走同一條路：再打一次，答完再交。 */
+    H.push(btn('再打一次', 'go:battle:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {
     /* 等待本來是一片空白：只寫「等他看」，不知道幾天、
@@ -668,9 +671,9 @@ PAGES.stamp = function () {
   H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push('<dl class="rep">');
-  H.push('<dt>你說</dt><dd>' + r.est + '</dd>');
+  H.push('<dt>你的規劃</dt><dd>' + r.est + '</dd>');
   H.push('<dt>實際</dt><dd>' + r.actual + '</dd>');
-  H.push('<dt>差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
+  H.push('<dt>相差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
     (r.actual - r.est) + '</dd>');
 
   /* 上一趟差幾天。「我在變好」這件事本來沒有任何地方說得出口，
@@ -684,7 +687,7 @@ PAGES.stamp = function () {
     if (!prev || (x.run.submittedAt || 0) > (prev.submittedAt || 0)) prev = x.run;
   });
   if (prev) {
-    H.push('<dt>上一趟差</dt><dd class="dim">' +
+    H.push('<dt>上一趟相差</dt><dd class="dim">' +
       (prev.actual - prev.est > 0 ? '+' : '') + (prev.actual - prev.est) + '</dd>');
   }
 
@@ -699,8 +702,13 @@ PAGES.stamp = function () {
   }
   var ov = (r.overs || []).map(function (i) { return stepName(r.runId, i); })
     .filter(Boolean);
-  H.push('<dt>上之前你說</dt><dd class="s">' +
-    (ov.length ? esc(ov.join('、')) + ' 比想的久' : '都差不多') + '</dd>');
+  /* 本來是「上之前你說：訪談 比想的久」。「上之前」是舊的營火流程
+     留下來的詞（上傳之前），沒用過的人看不懂；而「比想的久」擠在
+     值後面，等於問題跟答案黏成一句。
+
+     改成標籤問、值答：哪幾段比想的久 → 訪談、整理逐字稿。 */
+  H.push('<dt>哪幾段比想的久</dt><dd class="s">' +
+    (ov.length ? esc(ov.join('、')) : '都差不多') + '</dd>');
   if (r.hard) H.push('<dt>卡在哪裡</dt><dd class="s">' + esc(r.hard) + '</dd>');
   if (r.pace) H.push('<dt>你覺得的進度</dt><dd class="s">' + esc(r.pace) + '</dd>');
   H.push('</dl>');

@@ -54,7 +54,9 @@ PAGES.codex = function () {
       H.push(pxTag(c.px, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');
-      if (met[c.n]) H.push('<span class="cx-met">遇過 · ' + esc(met[c.n]) + '</span>');
+      /* 「遇過 · 某某任務」那一行拿掉了：那是一句把兩件不相干的事
+         接在一起的話（一隻生物 · 一個任務名），而遇沒遇過那一格自己
+         就看得出來——沒遇過的整格是暗的。 */
       H.push('</div></div>');
     });
     H.push('</div></div>');

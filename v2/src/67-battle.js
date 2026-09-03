@@ -57,7 +57,10 @@ function btAskHard(teamId) {
 }
 
 function btPhase(r) {
-  if (r.state !== 'running') return 'play';
+  /* back 也要能打：老師退回＝牠站起來了，這一場要重來一次。
+     本來只認 running，所以退回之後整場掉進「回看舊的一場」，
+     畫面上什麼都不能按。 */
+  if (r.state !== 'running' && r.state !== 'back') return 'play';
   var ph = S.p.ph;
   if (!ph) return 'menu';
   /* 沒拆件就沒有第一問可問，直接跳第二問。 */
@@ -139,7 +142,10 @@ PAGES.battle = function () {
 
 /* 字幕框那一句。 */
 function btLine(r, mob, ph) {
-  if (ph === 'menu') return mob.n + ' 突然出現了！';
+  /* 退回那一場牠不是突然出現的——牠本來倒著，現在站起來了。 */
+  if (ph === 'menu') {
+    return r.state === 'back' ? mob.n + ' 又站起來了！' : mob.n + ' 突然出現了！';
+  }
   if (ph === 'q1') return '這一趟做完了哪幾段？';
   if (ph === 'q2') return '這一趟走得怎麼樣？';
   return '你上前。';
@@ -329,9 +335,17 @@ ACTS.btq1 = function (id) {
 ACTS.btq2 = function (id) {
   var t = myTeam();
   battleStop();
+  var run = find('Runs', function (x) { return x.runId === id; });
+  var again = !!(run && run.state === 'back');
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why });
-  if (!actSubmit(t.teamId, id, '')) return say('這一趟已經交過了。');
+  /* 退回那一場走 actResend 不走 actSubmit：答案更新，判定不動。
+
+     actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
+     數字在他第一次交出去的當下就定了，重做不會讓他當初說的話
+     變成別的話。 */
+  var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, '');
+  if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', hurt: 1 };

@@ -2001,7 +2001,10 @@ button.ac:active{transform:translateY(1px)}
   display:flex;gap:11px;align-items:flex-start;width:264px;padding:11px;
   background:rgba(0,0,0,.30);opacity:.55
 }
-.cxi.met{opacity:1;background:rgba(0,0,0,.45)}
+/* 遇沒遇過現在只靠這一格自己講（那一行字拿掉了），
+   所以差別要拉開：沒遇過的暗一階，遇過的多一道邊。 */
+.cxi.met{opacity:1;background:rgba(0,0,0,.45);
+  box-shadow:inset 2px 0 0 var(--zink,var(--frame))}
 .px.cx-px{width:44px;height:44px;flex:0 0 44px}
 .cxi b{display:block;font-size:22px;font-weight:400;color:var(--ink);line-height:1.3}
 /* 說明砍成一句「牠會做什麼」之後，字級就升得上來——
@@ -9834,7 +9837,10 @@ function actionCard(t, next, st) {
     /* 眉標拿掉了：上面那一行已經寫著「退回來了」。
        這裡剩下的是他的那一句話——那才是這一刻唯一要讀的東西。 */
     if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
-    H.push(btn('改好了，再交一次', 'resend:' + row.run.runId, 'big'));
+    /* 本來這裡直接再交一次，不用重答。但牠在廊道上站起來了，
+       而「牠站著」跟「按一顆鍵就過去」是兩件互相矛盾的事。
+       改成走同一條路：再打一次，答完再交。 */
+    H.push(btn('再打一次', 'go:battle:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {
     /* 等待本來是一片空白：只寫「等他看」，不知道幾天、
@@ -10156,9 +10162,9 @@ PAGES.stamp = function () {
   H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push('<dl class="rep">');
-  H.push('<dt>你說</dt><dd>' + r.est + '</dd>');
+  H.push('<dt>你的規劃</dt><dd>' + r.est + '</dd>');
   H.push('<dt>實際</dt><dd>' + r.actual + '</dd>');
-  H.push('<dt>差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
+  H.push('<dt>相差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
     (r.actual - r.est) + '</dd>');
 
   /* 上一趟差幾天。「我在變好」這件事本來沒有任何地方說得出口，
@@ -10172,7 +10178,7 @@ PAGES.stamp = function () {
     if (!prev || (x.run.submittedAt || 0) > (prev.submittedAt || 0)) prev = x.run;
   });
   if (prev) {
-    H.push('<dt>上一趟差</dt><dd class="dim">' +
+    H.push('<dt>上一趟相差</dt><dd class="dim">' +
       (prev.actual - prev.est > 0 ? '+' : '') + (prev.actual - prev.est) + '</dd>');
   }
 
@@ -10187,8 +10193,13 @@ PAGES.stamp = function () {
   }
   var ov = (r.overs || []).map(function (i) { return stepName(r.runId, i); })
     .filter(Boolean);
-  H.push('<dt>上之前你說</dt><dd class="s">' +
-    (ov.length ? esc(ov.join('、')) + ' 比想的久' : '都差不多') + '</dd>');
+  /* 本來是「上之前你說：訪談 比想的久」。「上之前」是舊的營火流程
+     留下來的詞（上傳之前），沒用過的人看不懂；而「比想的久」擠在
+     值後面，等於問題跟答案黏成一句。
+
+     改成標籤問、值答：哪幾段比想的久 → 訪談、整理逐字稿。 */
+  H.push('<dt>哪幾段比想的久</dt><dd class="s">' +
+    (ov.length ? esc(ov.join('、')) : '都差不多') + '</dd>');
   if (r.hard) H.push('<dt>卡在哪裡</dt><dd class="s">' + esc(r.hard) + '</dd>');
   if (r.pace) H.push('<dt>你覺得的進度</dt><dd class="s">' + esc(r.pace) + '</dd>');
   H.push('</dl>');
@@ -11834,7 +11845,9 @@ PAGES.codex = function () {
       H.push(pxTag(c.px, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');
-      if (met[c.n]) H.push('<span class="cx-met">遇過 · ' + esc(met[c.n]) + '</span>');
+      /* 「遇過 · 某某任務」那一行拿掉了：那是一句把兩件不相干的事
+         接在一起的話（一隻生物 · 一個任務名），而遇沒遇過那一格自己
+         就看得出來——沒遇過的整格是暗的。 */
       H.push('</div></div>');
     });
     H.push('</div></div>');
@@ -12432,7 +12445,10 @@ function btAskHard(teamId) {
 }
 
 function btPhase(r) {
-  if (r.state !== 'running') return 'play';
+  /* back 也要能打：老師退回＝牠站起來了，這一場要重來一次。
+     本來只認 running，所以退回之後整場掉進「回看舊的一場」，
+     畫面上什麼都不能按。 */
+  if (r.state !== 'running' && r.state !== 'back') return 'play';
   var ph = S.p.ph;
   if (!ph) return 'menu';
   /* 沒拆件就沒有第一問可問，直接跳第二問。 */
@@ -12514,7 +12530,10 @@ PAGES.battle = function () {
 
 /* 字幕框那一句。 */
 function btLine(r, mob, ph) {
-  if (ph === 'menu') return mob.n + ' 突然出現了！';
+  /* 退回那一場牠不是突然出現的——牠本來倒著，現在站起來了。 */
+  if (ph === 'menu') {
+    return r.state === 'back' ? mob.n + ' 又站起來了！' : mob.n + ' 突然出現了！';
+  }
   if (ph === 'q1') return '這一趟做完了哪幾段？';
   if (ph === 'q2') return '這一趟走得怎麼樣？';
   return '你上前。';
@@ -12704,9 +12723,17 @@ ACTS.btq1 = function (id) {
 ACTS.btq2 = function (id) {
   var t = myTeam();
   battleStop();
+  var run = find('Runs', function (x) { return x.runId === id; });
+  var again = !!(run && run.state === 'back');
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why });
-  if (!actSubmit(t.teamId, id, '')) return say('這一趟已經交過了。');
+  /* 退回那一場走 actResend 不走 actSubmit：答案更新，判定不動。
+
+     actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
+     數字在他第一次交出去的當下就定了，重做不會讓他當初說的話
+     變成別的話。 */
+  var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, '');
+  if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', hurt: 1 };
@@ -13051,11 +13078,14 @@ var STORY = [
        然後第一次就估寬——而那正好毀掉這個作品要測的行為。
 
        所以兩個都留：上面四句是他要做的事，最後那一句是他該知道的事。 */
-    title: '怎麼打贏牠',
+    /* 標題直接把牠說出來：每一趟的盡頭都有一隻，這是一個規律不是
+       一次意外。本來寫「怎麼打贏牠」，而牠是誰、為什麼會有，
+       看的人還不知道——這一頁是他第二次看到這個世界。 */
+    title: '每一趟的盡頭都有一隻魔物',
     lines: [
       '老師派一件事下來，你把它拆成幾件，各說要幾天。',
       '挑一個地方，出發。',
-      '走到你說的那一天，回來報告，就打贏牠了。',
+      '牠就站在你說的那一天。走到了，回來報告，牠就倒了。',
       '系統只比兩個數字：你說的，跟實際的。做得好不好，老師說。'
     ],
     key: '所以估寬，不會比較好看。'
