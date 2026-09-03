@@ -222,7 +222,7 @@ function deskRow(t, next) {
   var cn = codexNew(me());
   H.push('<button class="dk lit" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
-    esc(cn ? '圖鑑：多了 ' + cn + ' 隻魔物' : '圖鑑：這座地下城裡有哪些魔物') + '">' +
+    esc(cn ? '圖鑑：多了 ' + cn + ' 隻魔物' : '圖鑑：遇過的魔物，跟拿到的任務之證') + '">' +
     pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i>' +
     (cn ? '<em class="nb">' + cn + '</em>' : '') + '</button>');
   /* 故事。第一次進來看過一次，之後從這裡回來看。
