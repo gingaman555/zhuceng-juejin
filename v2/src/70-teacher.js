@@ -88,8 +88,15 @@ PAGES.radar = function () {
         depthOf(t.teamId) + ' 個任務</p>');
       if (acc.total) H.push(accBar(acc));
       /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
-         走出去該是他們的動作，不是老師代勞的。 */
+         走出去該是他們的動作，不是老師代勞的。
+
+         旁邊那一顆是「還不到」。本來只有開門一顆，所以他覺得還不到的時候
+         唯一能做的事是不按——那個請求就一直掛在他的清單上，
+         而學生那邊永遠停在「在等老師開門」。兩邊都卡住。 */
+      H.push('<div class="row">');
       H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
+      H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
+      H.push('</div>');
       H.push('</div>');
     });
     return H.join('');

@@ -29,7 +29,7 @@ var STORY = [
     eyebrow: '第一頁',
     title: '你在一座地下城裡',
     lines: [
-      '這是一個專案。有多深，沒有人先知道。',
+      '這是一個專案。要走多久，沒有人先知道。',
       '六個地方一直都在。每一趟你自己挑要去哪裡，去過的也可以再去。',
       '你可以一直穿梭，但出不去——門只有一扇，而且要老師開。'
     ]
@@ -49,26 +49,37 @@ var STORY = [
 
 /* ---------- 圖 ----------
 
-   兩張都用世界自己的材料拼。第一張是一面崖：六層照 routeOf 的順序
-   由上往下疊，每一層自己的底色與紋理，最上面站一個人跟一堆火。
+   兩張都用世界自己的材料拼。
+
+   第一張本來是一面崖：六層由上往下疊，一個人坐在最上面。那張圖畫的是
+   「一路往下」——而設定改了：地方是每一趟自己挑的，六個一直都在，
+   去過的也可以再去。往下疊的圖跟那段話互相矛盾。
+
+   改成一張地圖：六個地方並排，中間有通道連著，你在其中一個。
+   旁邊一扇關著的門——你可以一直穿梭，但出不去。
+
    第二張是一條廊道的橫剖：你、你走過的那幾格、你說的那一天，
    跟站在那一天上的那一隻。 */
 
-function storyCliff(t) {
+function storyMap(t) {
   var seed = t ? t.classId : 'C1';
-  var H = ['<div class="sty-art sty-cliff">'];
-  /* 地表那一條，跟廊道的洞口同一個語彙 */
-  H.push('<div class="sty-sky"></div>');
-  for (var i = 0; i < 6; i++) {
-    var z = strataAt(i, seed);
-    H.push('<div class="sty-band ' + z.key + '" style="top:' + (44 + i * 44) +
-      'px"><em>' + esc(z.name) + '</em></div>');
-  }
-  /* 洞口那一堆火，跟站在旁邊的人 */
-  H.push('<div class="sty-fire"></div>');
-  H.push('<div class="sty-who">' +
-    pxTag(HERO.sitA, HERO.pal, 'wf wa') + pxTag(HERO.sitB, HERO.pal, 'wf wb') +
-    '</div>');
+  var here = t ? zoneNow(t.teamId) : STRATA[0];
+  var H = ['<div class="sty-art sty-map">'];
+  H.push('<div class="sty-rooms">');
+  STRATA.forEach(function (z) {
+    /* 你現在在的那一個標出來——這張圖上唯一跟「你」有關的資訊。 */
+    H.push('<div class="sty-room ' + z.key + (z.key === here.key ? ' here' : '') + '">');
+    H.push('<em>' + esc(z.name) + '</em>');
+    if (z.key === here.key) {
+      H.push('<span class="sty-me">' +
+        pxTag(HERO.idleA, HERO.pal, 'wf wa') + pxTag(HERO.idleB, HERO.pal, 'wf wb') +
+        '</span>');
+    }
+    H.push('</div>');
+  });
+  H.push('</div>');
+  /* 關著的那一扇。它不是第七個地方——它是唯一的出去。 */
+  H.push('<div class="sty-door"><i></i><b>出口</b></div>');
   H.push('</div>');
   return H.join('');
 }
@@ -102,7 +113,7 @@ PAGES.story = function () {
   var s = STORY[n];
 
   var H = [head(s.eyebrow, s.title, '')];
-  H.push(n === 0 ? storyCliff(t) : storyRoad(t));
+  H.push(n === 0 ? storyMap(t) : storyRoad(t));
 
   /* 一句一行，能砍的都砍掉了。八段散文改成五句——這個作品自己的
      規矩是文字量到最小，而開場那兩頁本來是全站文字最多的地方。

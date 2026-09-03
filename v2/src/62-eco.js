@@ -198,12 +198,21 @@ function xlLane(r, i, cols, classId, mine) {
      就是一整排的長短——誰疊得多，不用讀任何數字。
      還沒疊到任何一塊的那一組站在起點上，不是站在空中。 */
   var hr = r.hero || HERO;
-  var pose = left ? hr.win : (r.stall >= 2 ? hr.sleep : hr.idle);
   H.push('<button class="xl-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
     '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'person:' + r.teamId })) + '\' title="' +
     esc(shortName(r.name)) + '" style="--k:' + Math.max(0, n - 1) + '">');
-  H.push(pxTag(pose, hr.pal, 'ch-s'));
+  /* 兩幀，會呼吸。本來這裡只畫一張 hr.idle——廊道裡的人在呼吸，
+     這一頁上的六個人是凍住的，所以那一頁讀起來像圖表不像有人住在裡面。
+     停很久的那一組睡著（睡著只有一張圖），走出去的那一組舉手。 */
+  if (left) {
+    H.push(pxTag(hr.win, hr.pal, 'ch-s'));
+  } else if (r.stall >= 2) {
+    H.push(pxTag(hr.sleep, hr.pal, 'ch-s'));
+  } else {
+    H.push(pxTag(hr.idleA, hr.pal, 'ch-s wf wa'));
+    H.push(pxTag(hr.idleB, hr.pal, 'ch-s wf wb'));
+  }
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</button>');
 
@@ -297,7 +306,7 @@ PAGES.eco = function () {
   var tab = DRAFT.tab || (dt ? 'team' : 'rank');
   if (tab === 'team' && !dt) tab = 'feed';
 
-  var segs = [['rank', '估得準'], ['feed', '最近']];
+  var segs = [['rank', '估得準'], ['dex', '圖鑑'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -309,6 +318,13 @@ PAGES.eco = function () {
 
   if (tab === 'rank') {
     H.push(rankCard(t.classId, t.teamId));
+  } else if (tab === 'dex') {
+    /* 圖鑑收集榜。刻意加進來、準備好隨時拿掉的第二張——
+       要拿掉就刪掉 68b-dexrank.js，再把這一段跟 segs 裡的 'dex' 拿走。
+
+       分母只活在這裡，不進圖鑑那一頁：圖鑑還是他自己的回憶，
+       翻開來沒有百分比。比較的事情留在比較的地方。 */
+    H.push(dexCard(t.classId, t.teamId));
   } else if (tab === 'team') {
     H.push(digTeamCard(t.classId));
   } else {

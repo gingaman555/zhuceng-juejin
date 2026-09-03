@@ -463,7 +463,7 @@ a.plain:hover{color:var(--gold)}
      rust 橫的     鏽掉的鐵板是一層一層疊的
      fire 流的     底下有東西在動 */
 
-.z-wild, .xs-band.wild, .xl-col.wild, .sty-band.wild, .wz.wild, .card.fa.wild, .zn.wild, .core1.wild {
+.z-wild, .xs-band.wild, .xl-col.wild, .sty-room.wild, .wz.wild, .card.fa.wild, .zn.wild, .core1.wild {
   --zbg:#171208; --zln:#3A2E12;
   --zfl:#241B0C; --zfl2:#3B2D11;
   --zink:#C9A227;
@@ -472,7 +472,7 @@ a.plain:hover{color:var(--gold)}
     repeating-linear-gradient(0deg,  rgba(242,230,200,.030) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.45)        0 2px, transparent 2px 55px);
 }
-.z-root, .xs-band.root, .xl-col.root, .sty-band.root, .wz.root, .card.fa.root, .zn.root, .core1.root {
+.z-root, .xs-band.root, .xl-col.root, .sty-room.root, .wz.root, .card.fa.root, .zn.root, .core1.root {
   --zbg:#0F1A0C; --zln:#26381D;
   --zfl:#16250F; --zfl2:#254019;
   --zink:#7FA866;
@@ -481,7 +481,7 @@ a.plain:hover{color:var(--gold)}
     repeating-linear-gradient(90deg, rgba(216,240,192,.055) 0 2px, transparent 2px 18px),
     repeating-linear-gradient(84deg, rgba(0,0,0,.40)        0 1px, transparent 1px 31px);
 }
-.z-crys, .xs-band.crys, .xl-col.crys, .sty-band.crys, .wz.crys, .card.fa.crys, .zn.crys, .core1.crys {
+.z-crys, .xs-band.crys, .xl-col.crys, .sty-room.crys, .wz.crys, .card.fa.crys, .zn.crys, .core1.crys {
   --zbg:#0C1720; --zln:#173445;
   --zfl:#12222E; --zfl2:#1D3A4C;
   --zink:#5FA8C7;
@@ -490,7 +490,7 @@ a.plain:hover{color:var(--gold)}
     repeating-linear-gradient(58deg,  rgba(216,242,250,.045) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(-58deg, rgba(0,0,0,.40)        0 1px, transparent 1px 33px);
 }
-.z-echo, .xs-band.echo, .xl-col.echo, .sty-band.echo, .wz.echo, .card.fa.echo, .zn.echo, .core1.echo {
+.z-echo, .xs-band.echo, .xl-col.echo, .sty-room.echo, .wz.echo, .card.fa.echo, .zn.echo, .core1.echo {
   --zbg:#131024; --zln:#2E2750;
   --zfl:#1B1733; --zfl2:#2A2450;
   --zink:#8C7BC7;
@@ -499,7 +499,7 @@ a.plain:hover{color:var(--gold)}
     repeating-linear-gradient(0deg,  rgba(228,220,250,.035) 0 2px, transparent 2px 33px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.50)        0 2px, transparent 2px 33px);
 }
-.z-rust, .xs-band.rust, .xl-col.rust, .sty-band.rust, .wz.rust, .card.fa.rust, .zn.rust, .core1.rust {
+.z-rust, .xs-band.rust, .xl-col.rust, .sty-room.rust, .wz.rust, .card.fa.rust, .zn.rust, .core1.rust {
   --zbg:#1A1310; --zln:#3E2A1C;
   --zfl:#251A14; --zfl2:#3E2A1C;
   --zink:#B07A4A;
@@ -509,7 +509,7 @@ a.plain:hover{color:var(--gold)}
                                      rgba(0,0,0,.42)       13px 15px, transparent 15px 26px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.30)        0 2px, transparent 2px 44px);
 }
-.z-fire, .xs-band.fire, .xl-col.fire, .sty-band.fire, .wz.fire, .card.fa.fire, .zn.fire, .core1.fire {
+.z-fire, .xs-band.fire, .xl-col.fire, .sty-room.fire, .wz.fire, .card.fa.fire, .zn.fire, .core1.fire {
   --zbg:#1C0E09; --zln:#4A2013;
   --zfl:#2A1510; --zfl2:#43201A;
   --zink:#D9603F;
@@ -1711,6 +1711,12 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   padding:0;border:0;background:none;cursor:pointer
 }
 .xl-hero .px.ch-s{width:44px;height:44px}
+/* 兩幀要疊在一起才會變成呼吸，不然就是上下兩個人。
+   .wf 的絕對定位本來只寫在 .scn-hero 底下（見 57-viz.css），
+   所以這裡要自己補一份。 */
+.xl-hero .wf{position:absolute;left:0;top:0}
+.xl-hero .wa{animation:wkA 1.6s steps(1,end) infinite}
+.xl-hero .wb{animation:wkB 1.6s steps(1,end) infinite}
 /* 腳下一道暗。沒有的話他看起來是浮在那一塊上面，不是站著。 */
 .xl-hero::after{
   content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;
@@ -1808,6 +1814,11 @@ b.ptitle{display:block;font-size:33px;font-weight:400;color:var(--ink);line-heig
 .crw-t b{font-size:22px;font-weight:400;color:var(--ink)}
 .crw-t i{font-size:22px;font-style:normal;color:var(--mute)}
 .crw.none{opacity:.5}
+
+@media (prefers-reduced-motion: reduce){
+  .xl-hero .wa{animation:none;opacity:1}
+  .xl-hero .wb{animation:none;opacity:0}
+}
 
 /* 把數字畫出來的那幾個東西。
 
@@ -3407,39 +3418,54 @@ button.ac:active{transform:translateY(1px)}
     calc(100% - 11px) 100%,0 100%,0 11px)
 }
 
-/* ── 第一張：一面崖 ── */
-.sty-sky{
-  position:absolute;left:0;right:0;top:0;height:44px;z-index:1;
-  background:linear-gradient(180deg,#0E1520 0 22px,#1A202B 22px 41px,#2E3A22 41px 44px)
+/* ── 第一張：一張地圖 ──
+
+   六個地方並排，中間有通道連著，你在其中一個。旁邊一扇關著的門。
+
+   本來這裡是一面往下疊的崖。設定改了：地方是每一趟自己挑的，
+   往下疊的圖跟那段話互相矛盾。 */
+.sty-map{display:flex;align-items:stretch;gap:0}
+.sty-rooms{
+  flex:1;display:grid;grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(2,1fr);gap:11px;padding:14px
 }
-.sty-band{
-  position:absolute;left:0;right:0;height:44px;z-index:0;
-  background-color:var(--zbg);background-image:var(--ztex)
+.sty-room{
+  position:relative;
+  background-color:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.7), inset 0 0 0 4px var(--zln,#2E2822)
 }
-.sty-band::before{
-  content:'';position:absolute;left:0;right:0;top:0;height:3px;
-  background:rgba(0,0,0,.65);box-shadow:0 3px 0 rgba(255,240,214,.05)
+/* 通道：一個地方通到右邊那一個。最右邊那一欄不畫。 */
+.sty-room::after{
+  content:'';position:absolute;right:-11px;top:50%;width:11px;height:6px;
+  transform:translateY(-50%);background:rgba(255,240,214,.16)
 }
-.sty-band em{
-  position:absolute;right:14px;top:8px;font-style:normal;line-height:1;
-  font-size:22px;color:var(--zink);opacity:.85;white-space:nowrap
+.sty-room:nth-child(3n)::after{display:none}
+.sty-room em{
+  position:absolute;left:8px;right:8px;top:6px;font-style:normal;line-height:1.2;
+  font-size:22px;color:var(--zink)
 }
-/* 洞口那一堆火。三格硬邊，不是漸層——火在這個作品裡一直是這樣畫的。 */
-.sty-fire{
-  position:absolute;left:88px;top:14px;width:22px;height:30px;z-index:3;
+.sty-room.here{box-shadow:inset 0 0 0 2px #000, inset 0 0 0 5px var(--zink)}
+.sty-me{
+  position:absolute;right:8px;bottom:6px;display:block;width:44px;height:44px
+}
+.sty-me .wf{position:absolute;left:0;top:0;width:44px;height:44px}
+.sty-me .wa{animation:wkA 1.6s steps(1,end) infinite}
+.sty-me .wb{animation:wkB 1.6s steps(1,end) infinite}
+
+/* 關著的那一扇。不是第七個地方——是唯一的出去。 */
+.sty-door{
+  flex:0 0 88px;position:relative;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+  background:#0A0908;box-shadow:inset 3px 0 0 #000
+}
+.sty-door i{
+  display:block;width:44px;height:66px;
   background:
-    linear-gradient(180deg,transparent 0 6px,#F5CB74 6px 12px,transparent 12px),
-    linear-gradient(180deg,transparent 0 12px,#E9B341 12px 22px,transparent 22px),
-    linear-gradient(180deg,transparent 0 22px,#A8452F 22px 30px,transparent 30px);
-  animation:styfire .44s steps(1,end) infinite
+    linear-gradient(180deg,transparent 0 30px,var(--frame) 30px 36px,transparent 36px),
+    linear-gradient(90deg,#2A241C 0 100%);
+  box-shadow:inset 0 0 0 3px #000
 }
-@keyframes styfire{0%,49%{transform:none}50%,100%{transform:translateY(-2px)}}
-.sty-who{
-  position:absolute;left:22px;top:0;width:44px;height:44px;z-index:3
-}
-.sty-who .wf{position:absolute;left:0;top:0;width:44px;height:44px}
-.sty-who .wa{animation:wkA 1.6s steps(1,end) infinite}
-.sty-who .wb{animation:wkB 1.6s steps(1,end) infinite}
+.sty-door b{font-size:22px;font-weight:400;color:var(--mute)}
 
 /* ── 第二張：一條廊道的橫剖 ── */
 .sty-road{background-color:var(--zbg);background-image:var(--ztex)}
@@ -3513,6 +3539,68 @@ button.ac:active{transform:translateY(1px)}
 .wz-t em{font-size:22px;font-style:normal;color:var(--dim);line-height:1.5}
 .wz-f{display:flex;gap:5px;flex:0 0 auto;align-self:flex-start;opacity:.8}
 .wz-f .px{width:33px;height:33px}
+
+/* ---------- 換場 ----------
+
+   一道橫向的擦除，180ms，steps(9)——跟整套一樣不用平滑補間。
+   本來換頁是瞬間換掉 innerHTML，那是網頁的手感。 */
+/* 掃過去的是一道覆蓋層，不是把內容裁掉。
+
+   本來是對 .wrap 動 clip-path——那會讓整頁在那 180ms 內是半空的，
+   而且只要有什麼在那個窗口內再重畫一次，擦除就從頭來。
+   內容不該為了轉場消失。
+
+   一道實心的橫條從左掃到右，掃完就沒了。pointer-events:none，
+   所以它不會擋到任何一次點擊。 */
+.wrap.wipe{position:relative}
+.wrap.wipe::before{
+  content:'';position:fixed;left:0;top:0;right:0;bottom:0;z-index:80;
+  pointer-events:none;background:var(--bg);
+  animation:pgwipe .2s steps(10,end) 1 forwards
+}
+@keyframes pgwipe{
+  from{clip-path:inset(0 0 0 0)}
+  to{clip-path:inset(0 0 0 100%)}
+}
+@media (prefers-reduced-motion: reduce){ .wrap.wipe::before{display:none} }
+
+/* ---------- 圖鑑收集榜上那一排地方 ----------
+
+   一個地方一顆，去過的亮起來。那一排就是他們的路線，
+   而它同時解釋了名次——去得散，收得多。 */
+.dx-z{display:flex;gap:4px;flex:0 0 auto}
+.dx-p{
+  display:block;width:11px;height:22px;
+  background:rgba(255,240,214,.09);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.6)
+}
+.dx-p.on{background:var(--zink)}
+
+/* 動態上那一句。其餘幾則壓成一行（掃過去就知道誰動了），
+   只有「老師收下」那一則寫成完整的一句——它是唯一一件完整發生過的事。
+
+   .fd 是 grid 不是 flex（見上面），所以那一句要用 grid 的話講：
+   它自己一列、跨滿所有欄。用 flex 那一套寫的話它會被塞進一個
+   不會縮的欄位裡，把整頁撐寬。 */
+.fd:has(.fd-say){grid-template-columns:22px auto 1fr}
+/* em.fd-say 不是 .fd-say：.fd em{white-space:nowrap} 的權重跟一個
+   class 一樣，同分的時候後面那一條贏——所以那一句其實沒有換行，
+   整條 grid 的 min-content 被撐成一整句，頁面因此橫向溢出 19px，
+   而畫面上看不出來（沒有任何一個元素的右緣超出視窗）。 */
+.fd em.fd-say{
+  grid-column:1 / -1;min-width:0;white-space:normal;line-height:1.7;
+  overflow-wrap:anywhere;color:var(--dim)
+}
+
+/* 窄螢幕：三欄放不下四個字的地名，兩兩相撞。改成兩欄三列，
+   通道跟著換成每兩個一組。門也收窄。 */
+@media (max-width:600px){
+  .sty-rooms{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,1fr)}
+  .sty-room:nth-child(3n)::after{display:block}
+  .sty-room:nth-child(2n)::after{display:none}
+  .sty-door{flex:0 0 66px}
+  .sty-door i{width:33px;height:55px}
+}
 
 /* ---------- 交出去的那一場 ----------
 
@@ -7398,6 +7486,8 @@ function actAskExit(teamId) {
   var t = teamOf(teamId);
   if (!t || t.leftAt) return null;
   t.exitAsk = now();
+  /* 再說一次就把上次那個答案收起來——那句話是回上一次的，不是回這一次。 */
+  t.exitNo = 0;
   save();
   logEvent('askexit', { teamId: teamId });
   return t;
@@ -7408,6 +7498,20 @@ function actCancelExit(teamId) {
   if (!t || t.leftAt) return null;
   t.exitAsk = 0;
   save();
+  return t;
+}
+
+/* 老師說「現在還不是時候」。
+
+   不動判定、不動深度、不動任何一張任務之證——它只說一件事：
+   這個專案還沒結束。學生那邊看得到這個答案，而且隨時可以再說一次。 */
+function actDenyExit(teamId) {
+  var t = teamOf(teamId);
+  if (!t || !t.exitAsk || t.leftAt) return null;
+  t.exitAsk = 0;
+  t.exitNo = now();
+  save();
+  logEvent('denyexit', { teamId: teamId });
   return t;
 }
 
@@ -8053,7 +8157,18 @@ function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback 
 function go(page, p) {
   if (typeof stopAnim === 'function') stopAnim();
   if (typeof stopOS === 'function') stopOS();
+  /* 換場。render 是直接換掉 innerHTML，所以本來換頁是瞬間的——
+     瞬間切換是網頁的手感，遊戲換場一定有東西掃過去。
+
+     旗子放在 S 上，畫完就收；一次事件，不是一個狀態。
+     只有 go 才掃，render 不掃——不然打一個字就掃一次。 */
+  S.wipe = 1;
   S.page = page; S.p = p || {}; S.flash = null; DRAFT = {};
+  setTimeout(function () {
+    S.wipe = 0;
+    var w = document.querySelector('.wrap');
+    if (w) w.classList.remove('wipe');
+  }, 200);
   /* 登入那一頁旁邊走過去的那一位，換頁就忘掉——下次進來重挑一個。
      不清的話它會跟著整個工作階段，「每次」就變成「開一次網頁一次」。 */
   S.gw = null;
@@ -8155,7 +8270,7 @@ function render() {
   if (!u) {
     if (!GATE_PAGES[S.page]) S.page = 'gate';
     document.getElementById('app').innerHTML =
-      '<div class="main"><div class="wrap">' +
+      '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES[S.page]() + '</div></div>';
     return;
   }
@@ -8165,7 +8280,7 @@ function render() {
      它們每一格都在講「你的組」，這時候還沒有那個東西。 */
   if (u.role === 'student' && !u.teamId) {
     document.getElementById('app').innerHTML =
-      '<div class="main"><div class="wrap">' +
+      '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES.claim() + '</div></div>';
     S.page = 'claim';
     return;
@@ -8179,7 +8294,7 @@ function render() {
   seen();
   document.getElementById('app').innerHTML =
     sideBar() + '<div class="main">' + topBar() + demoBar() +
-    '<div class="wrap">' + (S.flash ? flashBar() : '') + body + '</div></div>';
+    '<div class="wrap' + (S.wipe ? ' wipe' : '') + '">' + (S.flash ? flashBar() : '') + body + '</div></div>';
 
   /* 走廊比視窗長的時候，重畫預設回到最左邊——那樣按完推進會看到
      走廊變了卻看不到自己動。鏡頭跟著人走。 */
@@ -8581,6 +8696,14 @@ var ACTS = {
      跟 team 分開是因為它們回答的是兩件事——那一疊是「他們做了什麼」，
      那個人是「他是誰」。而這個作品裡「他是誰」不含任何數字。 */
   person: function (id) { go('person', { id: id }); },
+
+  /* 老師說「現在還不是時候」。不動判定、不動深度，
+     只說「這個專案還沒結束」。 */
+  denyexit: function (id) {
+    if (!actDenyExit(id)) return;
+    say('跟他們說了：現在還不是時候。');
+    render();
+  },
 
   /* 點一組的名牌：那一組是誰。 */
   crew: function (id) { go('crew', { id: id }); },
@@ -11223,12 +11346,21 @@ function xlLane(r, i, cols, classId, mine) {
      就是一整排的長短——誰疊得多，不用讀任何數字。
      還沒疊到任何一塊的那一組站在起點上，不是站在空中。 */
   var hr = r.hero || HERO;
-  var pose = left ? hr.win : (r.stall >= 2 ? hr.sleep : hr.idle);
   H.push('<button class="xl-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
     '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'person:' + r.teamId })) + '\' title="' +
     esc(shortName(r.name)) + '" style="--k:' + Math.max(0, n - 1) + '">');
-  H.push(pxTag(pose, hr.pal, 'ch-s'));
+  /* 兩幀，會呼吸。本來這裡只畫一張 hr.idle——廊道裡的人在呼吸，
+     這一頁上的六個人是凍住的，所以那一頁讀起來像圖表不像有人住在裡面。
+     停很久的那一組睡著（睡著只有一張圖），走出去的那一組舉手。 */
+  if (left) {
+    H.push(pxTag(hr.win, hr.pal, 'ch-s'));
+  } else if (r.stall >= 2) {
+    H.push(pxTag(hr.sleep, hr.pal, 'ch-s'));
+  } else {
+    H.push(pxTag(hr.idleA, hr.pal, 'ch-s wf wa'));
+    H.push(pxTag(hr.idleB, hr.pal, 'ch-s wf wb'));
+  }
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</button>');
 
@@ -11322,7 +11454,7 @@ PAGES.eco = function () {
   var tab = DRAFT.tab || (dt ? 'team' : 'rank');
   if (tab === 'team' && !dt) tab = 'feed';
 
-  var segs = [['rank', '估得準'], ['feed', '最近']];
+  var segs = [['rank', '估得準'], ['dex', '圖鑑'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -11334,6 +11466,13 @@ PAGES.eco = function () {
 
   if (tab === 'rank') {
     H.push(rankCard(t.classId, t.teamId));
+  } else if (tab === 'dex') {
+    /* 圖鑑收集榜。刻意加進來、準備好隨時拿掉的第二張——
+       要拿掉就刪掉 68b-dexrank.js，再把這一段跟 segs 裡的 'dex' 拿走。
+
+       分母只活在這裡，不進圖鑑那一頁：圖鑑還是他自己的回憶，
+       翻開來沒有百分比。比較的事情留在比較的地方。 */
+    H.push(dexCard(t.classId, t.teamId));
   } else if (tab === 'team') {
     H.push(digTeamCard(t.classId));
   } else {
@@ -11451,6 +11590,15 @@ PAGES.pack = function () {
       H.push('<div class="eyebrow lit">說了</div>');
       H.push('<p class="dim">在等老師開門。</p>');
       H.push(btn('先不要', 'unexit', 'ghost'));
+    } else if (t.exitNo) {
+      /* 老師回了。答案要看得到——不然那個請求只是悄悄消失，
+         而「我按了但什麼都沒發生」是最糟的那一種。
+
+         再說一次不需要任何條件：做完了沒有是他們自己判斷的，
+         老師只是還沒收。 */
+      H.push('<div class="eyebrow warnx">老師說</div>');
+      H.push('<p class="quote big">現在還不是時候。</p>');
+      H.push(btn('我們真的做完了', 'askexit', 'big'));
     } else {
       H.push('<div class="eyebrow">這個專案做完了嗎</div>');
       H.push(btn('我們做完了', 'askexit', 'big'));
@@ -11842,12 +11990,27 @@ function feedRow(f, meId) {
   var who = f.team ? shortName(f.team.name) : '老師';
   var act = '', ic = '';
 
+  /* 老師收下的那一趟。整條動態上唯一一件「完整發生過」的事，
+     所以它是唯一一則寫成一句話的——其餘幾種還是壓成一行。
+
+     圖示是那一隻：牠是那一趟真正發生過的東西，而一根石片的形狀
+     在 22px 上看不出來，那一隻看得出來。 */
   if (f.kind === 'seal') {
-    var z = STRATA[0];
-    STRATA.forEach(function (x) { if (x.key === f.keep.zone) z = x; });
-    ic = pxTag(f.keep.px || coreOf(f.keep.runId), z.pal, 'core sm');
-    act = '收起';
-  } else if (f.kind === 'sent') {
+    var run = find('Runs', function (x) { return x.runId === f.keep.runId; });
+    var mob = run ? mobOfRun(run) : null;
+    var ms = run ? msOf(run.msId) : null;
+    var z = run ? zoneOfRun(run, f.team && f.team.teamId) : STRATA[0];
+    ic = mob ? pxTag(mob.px, z.pal, 'nic') : pxTag(ICONS.log, ICON_ON, 'nic');
+    H.push('<span class="fd-ic">' + ic + '</span>');
+    H.push('<b>' + esc(who) + '</b>');
+    H.push('<em class="fd-say">完成了「' + esc(ms ? ms.title : '一件事') + '」，' +
+      (mob ? '並且遇到了 ' + esc(mob.n) + ' 且將其打敗了！' : '') + '</em>');
+    H.push('<i>' + feedWhen(f.at) + '</i>');
+    H.push('</div>');
+    return H.join('');
+  }
+
+  if (f.kind === 'sent') {
     ic = pxTag(ICONS.log, ICON_PAL, 'nic');
     act = '交出去';
   } else if (f.kind === 'left') {
@@ -12588,6 +12751,130 @@ function rankCard(classId, meId) {
 }
 
 
+/* ===== 68b-dexrank.js ===== */
+/* ---------- 圖鑑收集榜 ----------
+
+   跟 68-rank.js 一樣：刻意加進來、而且準備好隨時拿掉的。
+
+   要拿掉的話：刪掉這個檔案，再把 62-eco.js 裡那一行 dexCard(...) 與
+   segs 裡的 'dex' 拿掉就好。沒有別的地方依賴它。
+
+   ── 這一張跟作品的立場正面衝突，而且是明知故犯 ──
+
+   圖鑑的檔頭自己寫著：「全部看得到。沒有鎖、沒有問號、沒有『收集了
+   幾件』。」理由是上一個作品的圖鑑是一條收集進度條，而那種進度條把
+   「做更多任務」變成「填更多格子」——外在誘因就是這樣裝回來的。
+
+   完成度排行榜正好是它拒絕的那兩樣：一個總數，加一個名次。
+
+   所以做，但用最不傷的方式做，四條：
+
+   一 · 總數不進圖鑑那一頁。圖鑑還是他自己的回憶，翻開來沒有分母、
+        沒有百分比。分母只活在班級地下城底下這一張榜上——
+        比較的事情留在比較的地方。
+
+   二 · 排的是「去過幾種地方」，不是「做了幾件事」。
+
+        擋路的那一隻由（任務 × 那一組 × 那一趟去的地方）決定，
+        所以同一個地方走十趟，遇到的種類不會比走三趟多多少。
+        要收得多，只有一個辦法：往沒去過的地方走。
+
+        而去哪裡不影響任何判定、不花任何東西——這一榜因此獎勵的是
+        「你敢不敢換一個地方」，不是「你做得多不多」。
+
+   三 · 沒有分數、沒有獎勵、不影響任何判定，而且可以不上榜——
+        跟估得準那一張共用同一個開關（Team.noRank）。
+
+   四 · 名次會平手，而且平手很多。那是好事：它讓這張榜比較不像
+        一條隊伍，比較像一張地圖上誰去過哪裡。 */
+
+/* 這一組遇過幾種，跟牠們散在哪幾個地方。 */
+function dexOf(teamId) {
+  var met = metMobs(teamId);
+  var names = Object.keys(met);
+  /* 去過的地方：從遇過的那幾隻反推。牠們住在哪一層寫在生物表上。 */
+  var zs = {};
+  names.forEach(function (n) {
+    var c = faunaByName(n);
+    if (!c) return;
+    STRATA.forEach(function (z) { if (z.name === c.r) zs[z.key] = 1; });
+  });
+  return { n: names.length, zones: Object.keys(zs) };
+}
+
+/* 全部有幾種。分母算出來，不寫死——生物表加一隻，這裡跟著變。 */
+function dexAll() { return allFauna().length; }
+
+function dexRows(classId) {
+  var out = [];
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    if (t.noRank) return;
+    var d = dexOf(t.teamId);
+    out.push({ teamId: t.teamId, name: t.name, n: d.n, zones: d.zones });
+  });
+  /* 先比遇過幾種，平手再比去過幾個地方。兩個都平手就並列——
+     不再往下分，因為再往下分就只剩「誰做得多」了。 */
+  out.sort(function (a, b) {
+    if (a.n !== b.n) return b.n - a.n;
+    return b.zones.length - a.zones.length;
+  });
+  return out;
+}
+
+function dexCard(classId, meId) {
+  var rows = dexRows(classId);
+  var all = dexAll();
+  var me = meId ? teamOf(meId) : null;
+  var has = rows.some(function (r) { return r.n > 0; });
+
+  var H = ['<div class="card rank">'];
+  H.push('<h2 class="rk-h">遇過幾種，共 ' + all + ' 種</h2>');
+  /* 一句話說清楚這一榜在獎勵什麼。沒有這一句，它會被讀成
+     「誰做得多」——而那正是它最不該變成的東西。 */
+  H.push('<p class="dim">同一個地方走幾趟都是同一隻。要收得多，' +
+    '就往沒去過的地方走——而去哪裡不影響判定。</p>');
+
+  if (!has) {
+    H.push('<p class="dim">還沒有人遇過任何一隻。</p>');
+    H.push('</div>');
+    return H.join('');
+  }
+
+  H.push('<div class="rk-list">');
+  var last = null, place = 0;
+  rows.forEach(function (r, i) {
+    /* 並列同名次。平手很多是這一榜的特色，不是要修的東西。 */
+    if (last === null || r.n !== last) { place = i + 1; last = r.n; }
+    var mine = r.teamId === meId;
+    H.push('<div class="rk-r' + (mine ? ' mine' : '') + (r.n ? '' : ' none') + '">');
+    H.push('<i class="rk-i">' + (r.n ? place : '·') + '</i>');
+    H.push('<b>' + esc(shortName(r.name)) + '</b>');
+    /* 去過哪幾個地方，一個地方一顆。那一排就是他們的路線，
+       而它同時解釋了名次——去得散，收得多。 */
+    H.push('<div class="dx-z">');
+    STRATA.forEach(function (z) {
+      H.push('<span class="dx-p ' + z.key +
+        (r.zones.indexOf(z.key) >= 0 ? ' on' : '') + '" title="' +
+        esc(z.name) + '"></span>');
+    });
+    H.push('</div>');
+    H.push('<span class="rk-d">' + (r.n ? r.n + ' 種' : '還沒遇過') + '</span>');
+    H.push('</div>');
+  });
+  H.push('</div>');
+
+  /* 跟估得準那一張共用同一個開關：不上榜就是兩張都不上。
+     兩個開關會讓「我不想被比較」變成一件要做兩次的事。 */
+  if (me) {
+    H.push('<button class="rk-out" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'norank' })) + '\'>' +
+      (me.noRank ? '回到榜上' : '不要上榜') + '</button>');
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
+
 /* ===== 69-story.js ===== */
 /* 故事。兩頁，第一次進來看一次，之後隨時從廊道上那扇門回來看。
 
@@ -12620,7 +12907,7 @@ var STORY = [
     eyebrow: '第一頁',
     title: '你在一座地下城裡',
     lines: [
-      '這是一個專案。有多深，沒有人先知道。',
+      '這是一個專案。要走多久，沒有人先知道。',
       '六個地方一直都在。每一趟你自己挑要去哪裡，去過的也可以再去。',
       '你可以一直穿梭，但出不去——門只有一扇，而且要老師開。'
     ]
@@ -12640,26 +12927,37 @@ var STORY = [
 
 /* ---------- 圖 ----------
 
-   兩張都用世界自己的材料拼。第一張是一面崖：六層照 routeOf 的順序
-   由上往下疊，每一層自己的底色與紋理，最上面站一個人跟一堆火。
+   兩張都用世界自己的材料拼。
+
+   第一張本來是一面崖：六層由上往下疊，一個人坐在最上面。那張圖畫的是
+   「一路往下」——而設定改了：地方是每一趟自己挑的，六個一直都在，
+   去過的也可以再去。往下疊的圖跟那段話互相矛盾。
+
+   改成一張地圖：六個地方並排，中間有通道連著，你在其中一個。
+   旁邊一扇關著的門——你可以一直穿梭，但出不去。
+
    第二張是一條廊道的橫剖：你、你走過的那幾格、你說的那一天，
    跟站在那一天上的那一隻。 */
 
-function storyCliff(t) {
+function storyMap(t) {
   var seed = t ? t.classId : 'C1';
-  var H = ['<div class="sty-art sty-cliff">'];
-  /* 地表那一條，跟廊道的洞口同一個語彙 */
-  H.push('<div class="sty-sky"></div>');
-  for (var i = 0; i < 6; i++) {
-    var z = strataAt(i, seed);
-    H.push('<div class="sty-band ' + z.key + '" style="top:' + (44 + i * 44) +
-      'px"><em>' + esc(z.name) + '</em></div>');
-  }
-  /* 洞口那一堆火，跟站在旁邊的人 */
-  H.push('<div class="sty-fire"></div>');
-  H.push('<div class="sty-who">' +
-    pxTag(HERO.sitA, HERO.pal, 'wf wa') + pxTag(HERO.sitB, HERO.pal, 'wf wb') +
-    '</div>');
+  var here = t ? zoneNow(t.teamId) : STRATA[0];
+  var H = ['<div class="sty-art sty-map">'];
+  H.push('<div class="sty-rooms">');
+  STRATA.forEach(function (z) {
+    /* 你現在在的那一個標出來——這張圖上唯一跟「你」有關的資訊。 */
+    H.push('<div class="sty-room ' + z.key + (z.key === here.key ? ' here' : '') + '">');
+    H.push('<em>' + esc(z.name) + '</em>');
+    if (z.key === here.key) {
+      H.push('<span class="sty-me">' +
+        pxTag(HERO.idleA, HERO.pal, 'wf wa') + pxTag(HERO.idleB, HERO.pal, 'wf wb') +
+        '</span>');
+    }
+    H.push('</div>');
+  });
+  H.push('</div>');
+  /* 關著的那一扇。它不是第七個地方——它是唯一的出去。 */
+  H.push('<div class="sty-door"><i></i><b>出口</b></div>');
   H.push('</div>');
   return H.join('');
 }
@@ -12693,7 +12991,7 @@ PAGES.story = function () {
   var s = STORY[n];
 
   var H = [head(s.eyebrow, s.title, '')];
-  H.push(n === 0 ? storyCliff(t) : storyRoad(t));
+  H.push(n === 0 ? storyMap(t) : storyRoad(t));
 
   /* 一句一行，能砍的都砍掉了。八段散文改成五句——這個作品自己的
      規矩是文字量到最小，而開場那兩頁本來是全站文字最多的地方。
@@ -12819,8 +13117,15 @@ PAGES.radar = function () {
         depthOf(t.teamId) + ' 個任務</p>');
       if (acc.total) H.push(accBar(acc));
       /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
-         走出去該是他們的動作，不是老師代勞的。 */
+         走出去該是他們的動作，不是老師代勞的。
+
+         旁邊那一顆是「還不到」。本來只有開門一顆，所以他覺得還不到的時候
+         唯一能做的事是不按——那個請求就一直掛在他的清單上，
+         而學生那邊永遠停在「在等老師開門」。兩邊都卡住。 */
+      H.push('<div class="row">');
       H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
+      H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
+      H.push('</div>');
       H.push('</div>');
     });
     return H.join('');

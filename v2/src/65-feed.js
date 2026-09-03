@@ -64,12 +64,27 @@ function feedRow(f, meId) {
   var who = f.team ? shortName(f.team.name) : '老師';
   var act = '', ic = '';
 
+  /* 老師收下的那一趟。整條動態上唯一一件「完整發生過」的事，
+     所以它是唯一一則寫成一句話的——其餘幾種還是壓成一行。
+
+     圖示是那一隻：牠是那一趟真正發生過的東西，而一根石片的形狀
+     在 22px 上看不出來，那一隻看得出來。 */
   if (f.kind === 'seal') {
-    var z = STRATA[0];
-    STRATA.forEach(function (x) { if (x.key === f.keep.zone) z = x; });
-    ic = pxTag(f.keep.px || coreOf(f.keep.runId), z.pal, 'core sm');
-    act = '收起';
-  } else if (f.kind === 'sent') {
+    var run = find('Runs', function (x) { return x.runId === f.keep.runId; });
+    var mob = run ? mobOfRun(run) : null;
+    var ms = run ? msOf(run.msId) : null;
+    var z = run ? zoneOfRun(run, f.team && f.team.teamId) : STRATA[0];
+    ic = mob ? pxTag(mob.px, z.pal, 'nic') : pxTag(ICONS.log, ICON_ON, 'nic');
+    H.push('<span class="fd-ic">' + ic + '</span>');
+    H.push('<b>' + esc(who) + '</b>');
+    H.push('<em class="fd-say">完成了「' + esc(ms ? ms.title : '一件事') + '」，' +
+      (mob ? '並且遇到了 ' + esc(mob.n) + ' 且將其打敗了！' : '') + '</em>');
+    H.push('<i>' + feedWhen(f.at) + '</i>');
+    H.push('</div>');
+    return H.join('');
+  }
+
+  if (f.kind === 'sent') {
     ic = pxTag(ICONS.log, ICON_PAL, 'nic');
     act = '交出去';
   } else if (f.kind === 'left') {

@@ -62,6 +62,15 @@ PAGES.pack = function () {
       H.push('<div class="eyebrow lit">說了</div>');
       H.push('<p class="dim">在等老師開門。</p>');
       H.push(btn('先不要', 'unexit', 'ghost'));
+    } else if (t.exitNo) {
+      /* 老師回了。答案要看得到——不然那個請求只是悄悄消失，
+         而「我按了但什麼都沒發生」是最糟的那一種。
+
+         再說一次不需要任何條件：做完了沒有是他們自己判斷的，
+         老師只是還沒收。 */
+      H.push('<div class="eyebrow warnx">老師說</div>');
+      H.push('<p class="quote big">現在還不是時候。</p>');
+      H.push(btn('我們真的做完了', 'askexit', 'big'));
     } else {
       H.push('<div class="eyebrow">這個專案做完了嗎</div>');
       H.push(btn('我們做完了', 'askexit', 'big'));

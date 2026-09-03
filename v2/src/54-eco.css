@@ -151,6 +151,12 @@
   padding:0;border:0;background:none;cursor:pointer
 }
 .xl-hero .px.ch-s{width:44px;height:44px}
+/* 兩幀要疊在一起才會變成呼吸，不然就是上下兩個人。
+   .wf 的絕對定位本來只寫在 .scn-hero 底下（見 57-viz.css），
+   所以這裡要自己補一份。 */
+.xl-hero .wf{position:absolute;left:0;top:0}
+.xl-hero .wa{animation:wkA 1.6s steps(1,end) infinite}
+.xl-hero .wb{animation:wkB 1.6s steps(1,end) infinite}
 /* 腳下一道暗。沒有的話他看起來是浮在那一塊上面，不是站著。 */
 .xl-hero::after{
   content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;
@@ -248,3 +254,8 @@ b.ptitle{display:block;font-size:33px;font-weight:400;color:var(--ink);line-heig
 .crw-t b{font-size:22px;font-weight:400;color:var(--ink)}
 .crw-t i{font-size:22px;font-style:normal;color:var(--mute)}
 .crw.none{opacity:.5}
+
+@media (prefers-reduced-motion: reduce){
+  .xl-hero .wa{animation:none;opacity:1}
+  .xl-hero .wb{animation:none;opacity:0}
+}

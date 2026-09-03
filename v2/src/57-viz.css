@@ -1596,39 +1596,54 @@ button.ac:active{transform:translateY(1px)}
     calc(100% - 11px) 100%,0 100%,0 11px)
 }
 
-/* ── 第一張：一面崖 ── */
-.sty-sky{
-  position:absolute;left:0;right:0;top:0;height:44px;z-index:1;
-  background:linear-gradient(180deg,#0E1520 0 22px,#1A202B 22px 41px,#2E3A22 41px 44px)
+/* ── 第一張：一張地圖 ──
+
+   六個地方並排，中間有通道連著，你在其中一個。旁邊一扇關著的門。
+
+   本來這裡是一面往下疊的崖。設定改了：地方是每一趟自己挑的，
+   往下疊的圖跟那段話互相矛盾。 */
+.sty-map{display:flex;align-items:stretch;gap:0}
+.sty-rooms{
+  flex:1;display:grid;grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(2,1fr);gap:11px;padding:14px
 }
-.sty-band{
-  position:absolute;left:0;right:0;height:44px;z-index:0;
-  background-color:var(--zbg);background-image:var(--ztex)
+.sty-room{
+  position:relative;
+  background-color:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.7), inset 0 0 0 4px var(--zln,#2E2822)
 }
-.sty-band::before{
-  content:'';position:absolute;left:0;right:0;top:0;height:3px;
-  background:rgba(0,0,0,.65);box-shadow:0 3px 0 rgba(255,240,214,.05)
+/* 通道：一個地方通到右邊那一個。最右邊那一欄不畫。 */
+.sty-room::after{
+  content:'';position:absolute;right:-11px;top:50%;width:11px;height:6px;
+  transform:translateY(-50%);background:rgba(255,240,214,.16)
 }
-.sty-band em{
-  position:absolute;right:14px;top:8px;font-style:normal;line-height:1;
-  font-size:22px;color:var(--zink);opacity:.85;white-space:nowrap
+.sty-room:nth-child(3n)::after{display:none}
+.sty-room em{
+  position:absolute;left:8px;right:8px;top:6px;font-style:normal;line-height:1.2;
+  font-size:22px;color:var(--zink)
 }
-/* 洞口那一堆火。三格硬邊，不是漸層——火在這個作品裡一直是這樣畫的。 */
-.sty-fire{
-  position:absolute;left:88px;top:14px;width:22px;height:30px;z-index:3;
+.sty-room.here{box-shadow:inset 0 0 0 2px #000, inset 0 0 0 5px var(--zink)}
+.sty-me{
+  position:absolute;right:8px;bottom:6px;display:block;width:44px;height:44px
+}
+.sty-me .wf{position:absolute;left:0;top:0;width:44px;height:44px}
+.sty-me .wa{animation:wkA 1.6s steps(1,end) infinite}
+.sty-me .wb{animation:wkB 1.6s steps(1,end) infinite}
+
+/* 關著的那一扇。不是第七個地方——是唯一的出去。 */
+.sty-door{
+  flex:0 0 88px;position:relative;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+  background:#0A0908;box-shadow:inset 3px 0 0 #000
+}
+.sty-door i{
+  display:block;width:44px;height:66px;
   background:
-    linear-gradient(180deg,transparent 0 6px,#F5CB74 6px 12px,transparent 12px),
-    linear-gradient(180deg,transparent 0 12px,#E9B341 12px 22px,transparent 22px),
-    linear-gradient(180deg,transparent 0 22px,#A8452F 22px 30px,transparent 30px);
-  animation:styfire .44s steps(1,end) infinite
+    linear-gradient(180deg,transparent 0 30px,var(--frame) 30px 36px,transparent 36px),
+    linear-gradient(90deg,#2A241C 0 100%);
+  box-shadow:inset 0 0 0 3px #000
 }
-@keyframes styfire{0%,49%{transform:none}50%,100%{transform:translateY(-2px)}}
-.sty-who{
-  position:absolute;left:22px;top:0;width:44px;height:44px;z-index:3
-}
-.sty-who .wf{position:absolute;left:0;top:0;width:44px;height:44px}
-.sty-who .wa{animation:wkA 1.6s steps(1,end) infinite}
-.sty-who .wb{animation:wkB 1.6s steps(1,end) infinite}
+.sty-door b{font-size:22px;font-weight:400;color:var(--mute)}
 
 /* ── 第二張：一條廊道的橫剖 ── */
 .sty-road{background-color:var(--zbg);background-image:var(--ztex)}
@@ -1702,3 +1717,65 @@ button.ac:active{transform:translateY(1px)}
 .wz-t em{font-size:22px;font-style:normal;color:var(--dim);line-height:1.5}
 .wz-f{display:flex;gap:5px;flex:0 0 auto;align-self:flex-start;opacity:.8}
 .wz-f .px{width:33px;height:33px}
+
+/* ---------- 換場 ----------
+
+   一道橫向的擦除，180ms，steps(9)——跟整套一樣不用平滑補間。
+   本來換頁是瞬間換掉 innerHTML，那是網頁的手感。 */
+/* 掃過去的是一道覆蓋層，不是把內容裁掉。
+
+   本來是對 .wrap 動 clip-path——那會讓整頁在那 180ms 內是半空的，
+   而且只要有什麼在那個窗口內再重畫一次，擦除就從頭來。
+   內容不該為了轉場消失。
+
+   一道實心的橫條從左掃到右，掃完就沒了。pointer-events:none，
+   所以它不會擋到任何一次點擊。 */
+.wrap.wipe{position:relative}
+.wrap.wipe::before{
+  content:'';position:fixed;left:0;top:0;right:0;bottom:0;z-index:80;
+  pointer-events:none;background:var(--bg);
+  animation:pgwipe .2s steps(10,end) 1 forwards
+}
+@keyframes pgwipe{
+  from{clip-path:inset(0 0 0 0)}
+  to{clip-path:inset(0 0 0 100%)}
+}
+@media (prefers-reduced-motion: reduce){ .wrap.wipe::before{display:none} }
+
+/* ---------- 圖鑑收集榜上那一排地方 ----------
+
+   一個地方一顆，去過的亮起來。那一排就是他們的路線，
+   而它同時解釋了名次——去得散，收得多。 */
+.dx-z{display:flex;gap:4px;flex:0 0 auto}
+.dx-p{
+  display:block;width:11px;height:22px;
+  background:rgba(255,240,214,.09);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.6)
+}
+.dx-p.on{background:var(--zink)}
+
+/* 動態上那一句。其餘幾則壓成一行（掃過去就知道誰動了），
+   只有「老師收下」那一則寫成完整的一句——它是唯一一件完整發生過的事。
+
+   .fd 是 grid 不是 flex（見上面），所以那一句要用 grid 的話講：
+   它自己一列、跨滿所有欄。用 flex 那一套寫的話它會被塞進一個
+   不會縮的欄位裡，把整頁撐寬。 */
+.fd:has(.fd-say){grid-template-columns:22px auto 1fr}
+/* em.fd-say 不是 .fd-say：.fd em{white-space:nowrap} 的權重跟一個
+   class 一樣，同分的時候後面那一條贏——所以那一句其實沒有換行，
+   整條 grid 的 min-content 被撐成一整句，頁面因此橫向溢出 19px，
+   而畫面上看不出來（沒有任何一個元素的右緣超出視窗）。 */
+.fd em.fd-say{
+  grid-column:1 / -1;min-width:0;white-space:normal;line-height:1.7;
+  overflow-wrap:anywhere;color:var(--dim)
+}
+
+/* 窄螢幕：三欄放不下四個字的地名，兩兩相撞。改成兩欄三列，
+   通道跟著換成每兩個一組。門也收窄。 */
+@media (max-width:600px){
+  .sty-rooms{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,1fr)}
+  .sty-room:nth-child(3n)::after{display:block}
+  .sty-room:nth-child(2n)::after{display:none}
+  .sty-door{flex:0 0 66px}
+  .sty-door i{width:33px;height:55px}
+}

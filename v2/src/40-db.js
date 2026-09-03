@@ -1099,6 +1099,8 @@ function actAskExit(teamId) {
   var t = teamOf(teamId);
   if (!t || t.leftAt) return null;
   t.exitAsk = now();
+  /* 再說一次就把上次那個答案收起來——那句話是回上一次的，不是回這一次。 */
+  t.exitNo = 0;
   save();
   logEvent('askexit', { teamId: teamId });
   return t;
@@ -1109,6 +1111,20 @@ function actCancelExit(teamId) {
   if (!t || t.leftAt) return null;
   t.exitAsk = 0;
   save();
+  return t;
+}
+
+/* 老師說「現在還不是時候」。
+
+   不動判定、不動深度、不動任何一張任務之證——它只說一件事：
+   這個專案還沒結束。學生那邊看得到這個答案，而且隨時可以再說一次。 */
+function actDenyExit(teamId) {
+  var t = teamOf(teamId);
+  if (!t || !t.exitAsk || t.leftAt) return null;
+  t.exitAsk = 0;
+  t.exitNo = now();
+  save();
+  logEvent('denyexit', { teamId: teamId });
   return t;
 }
 

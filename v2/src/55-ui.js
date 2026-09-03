@@ -22,7 +22,18 @@ function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback 
 function go(page, p) {
   if (typeof stopAnim === 'function') stopAnim();
   if (typeof stopOS === 'function') stopOS();
+  /* 換場。render 是直接換掉 innerHTML，所以本來換頁是瞬間的——
+     瞬間切換是網頁的手感，遊戲換場一定有東西掃過去。
+
+     旗子放在 S 上，畫完就收；一次事件，不是一個狀態。
+     只有 go 才掃，render 不掃——不然打一個字就掃一次。 */
+  S.wipe = 1;
   S.page = page; S.p = p || {}; S.flash = null; DRAFT = {};
+  setTimeout(function () {
+    S.wipe = 0;
+    var w = document.querySelector('.wrap');
+    if (w) w.classList.remove('wipe');
+  }, 200);
   /* 登入那一頁旁邊走過去的那一位，換頁就忘掉——下次進來重挑一個。
      不清的話它會跟著整個工作階段，「每次」就變成「開一次網頁一次」。 */
   S.gw = null;
@@ -124,7 +135,7 @@ function render() {
   if (!u) {
     if (!GATE_PAGES[S.page]) S.page = 'gate';
     document.getElementById('app').innerHTML =
-      '<div class="main"><div class="wrap">' +
+      '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES[S.page]() + '</div></div>';
     return;
   }
@@ -134,7 +145,7 @@ function render() {
      它們每一格都在講「你的組」，這時候還沒有那個東西。 */
   if (u.role === 'student' && !u.teamId) {
     document.getElementById('app').innerHTML =
-      '<div class="main"><div class="wrap">' +
+      '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES.claim() + '</div></div>';
     S.page = 'claim';
     return;
@@ -148,7 +159,7 @@ function render() {
   seen();
   document.getElementById('app').innerHTML =
     sideBar() + '<div class="main">' + topBar() + demoBar() +
-    '<div class="wrap">' + (S.flash ? flashBar() : '') + body + '</div></div>';
+    '<div class="wrap' + (S.wipe ? ' wipe' : '') + '">' + (S.flash ? flashBar() : '') + body + '</div></div>';
 
   /* 走廊比視窗長的時候，重畫預設回到最左邊——那樣按完推進會看到
      走廊變了卻看不到自己動。鏡頭跟著人走。 */
@@ -550,6 +561,14 @@ var ACTS = {
      跟 team 分開是因為它們回答的是兩件事——那一疊是「他們做了什麼」，
      那個人是「他是誰」。而這個作品裡「他是誰」不含任何數字。 */
   person: function (id) { go('person', { id: id }); },
+
+  /* 老師說「現在還不是時候」。不動判定、不動深度，
+     只說「這個專案還沒結束」。 */
+  denyexit: function (id) {
+    if (!actDenyExit(id)) return;
+    say('跟他們說了：現在還不是時候。');
+    render();
+  },
 
   /* 點一組的名牌：那一組是誰。 */
   crew: function (id) { go('crew', { id: id }); },
