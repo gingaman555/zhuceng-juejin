@@ -9713,7 +9713,7 @@ function deskRow(t, next) {
   var cn = codexNew(me());
   H.push('<button class="dk lit" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
-    esc(cn ? '圖鑑：多了 ' + cn + ' 隻' : '圖鑑：這座地下城裡有什麼') + '">' +
+    esc(cn ? '圖鑑：多了 ' + cn + ' 隻魔物' : '圖鑑：這座地下城裡有哪些魔物') + '">' +
     pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i>' +
     (cn ? '<em class="nb">' + cn + '</em>' : '') + '</button>');
   /* 故事。第一次進來看過一次，之後從這裡回來看。
@@ -11817,7 +11817,10 @@ PAGES.codex = function () {
   var found = foundMobs(t.teamId);
   Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
 
-  var H = [head('圖鑑', '這座地下城裡有什麼', '')];
+  /* 介面上這一類東西一律叫魔物。本來它沒有名字——畫面上講的是
+     「一隻」「東西」「幾種」，只有故事那一頁叫牠魔物，
+     所以同一個東西在不同頁上是不同的詞。 */
+  var H = [head('圖鑑', '這座地下城裡有哪些魔物', '')];
 
   /* 上面那一排：六層 ＋ 任務之證。一次只看一頁。 */
   H.push('<div class="cxtabs">');
@@ -12973,14 +12976,14 @@ function dexCard(classId, meId) {
   var has = rows.some(function (r) { return r.n > 0; });
 
   var H = ['<div class="card rank">'];
-  H.push('<h2 class="rk-h">遇過幾種，共 ' + all + ' 種</h2>');
+  H.push('<h2 class="rk-h">遇過幾種魔物，共 ' + all + ' 種</h2>');
   /* 一句話說清楚這一榜在獎勵什麼。沒有這一句，它會被讀成
      「誰做得多」——而那正是它最不該變成的東西。 */
-  H.push('<p class="dim">同一個地方走幾趟都是同一隻。要收得多，' +
+  H.push('<p class="dim">同一個地方走幾趟遇到的都是同一隻魔物。要收得多，' +
     '就往沒去過的地方走——而去哪裡不影響判定。</p>');
 
   if (!has) {
-    H.push('<p class="dim">還沒有人遇過任何一隻。</p>');
+    H.push('<p class="dim">還沒有人遇過任何一隻魔物。</p>');
     H.push('</div>');
     return H.join('');
   }
@@ -13078,13 +13081,12 @@ var STORY = [
        然後第一次就估寬——而那正好毀掉這個作品要測的行為。
 
        所以兩個都留：上面四句是他要做的事，最後那一句是他該知道的事。 */
-    /* 標題直接把牠說出來：每一趟的盡頭都有一隻，這是一個規律不是
-       一次意外。本來寫「怎麼打贏牠」，而牠是誰、為什麼會有，
-       看的人還不知道——這一頁是他第二次看到這個世界。 */
-    title: '每一趟的盡頭都有一隻魔物',
+    /* 「每一趟的盡頭都有一隻魔物」搬進內文了——它是這一頁在講的
+       四件事之一，不是這一頁的抬頭。標題退回去只說這一頁是什麼。 */
+    title: '一趟是這樣走的',
     lines: [
       '老師派一件事下來，你把它拆成幾件，各說要幾天。',
-      '挑一個地方，出發。',
+      '挑一個地方，出發。每一趟的盡頭都有一隻魔物。',
       '牠就站在你說的那一天。走到了，回來報告，牠就倒了。',
       '系統只比兩個數字：你說的，跟實際的。做得好不好，老師說。'
     ],

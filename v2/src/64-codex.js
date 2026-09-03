@@ -26,7 +26,10 @@ PAGES.codex = function () {
   var found = foundMobs(t.teamId);
   Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
 
-  var H = [head('圖鑑', '這座地下城裡有什麼', '')];
+  /* 介面上這一類東西一律叫魔物。本來它沒有名字——畫面上講的是
+     「一隻」「東西」「幾種」，只有故事那一頁叫牠魔物，
+     所以同一個東西在不同頁上是不同的詞。 */
+  var H = [head('圖鑑', '這座地下城裡有哪些魔物', '')];
 
   /* 上面那一排：六層 ＋ 任務之證。一次只看一頁。 */
   H.push('<div class="cxtabs">');
