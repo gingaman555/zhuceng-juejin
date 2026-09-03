@@ -1926,3 +1926,38 @@ button.ac:active{transform:translateY(1px)}
   100%{transform:scale(1);opacity:1}
 }
 @media (prefers-reduced-motion: reduce){ .reg-in{animation:none} }
+
+/* ---------- 老師勾了：蓋住畫面的那一張 ----------
+
+   本來是排在首頁裡的一張卡。它是一件剛剛發生的事，不是首頁的內容——
+   那種東西該閃一下就走。
+
+   蓋住整個畫面（連底下那一列導覽一起），所以那一刻只有這一件事；
+   點「回廊道」就沒了。 */
+.okwrap{
+  position:fixed;inset:0;z-index:60;
+  display:flex;flex-direction:column;align-items:center;
+  /* 不用 justify-content:center。內容比畫面高的時候，置中會把上緣推到
+     捲動範圍外面——量到卡片頂端在 -151px，而且捲不回去（360x640、
+     老師寫了一段長評語）。改用 auto margin：塞得下就置中，塞不下
+     就從頂端開始。 */
+  justify-content:flex-start;
+  gap:14px;padding:22px;overflow:auto;
+  background:rgba(6,8,11,.94);cursor:pointer;
+  animation:okin .3s steps(3,end) 1 both
+}
+.okwrap .okcard{
+  margin:0;max-width:620px;width:100%;
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d)
+}
+.okwrap .btn{flex:0 0 auto}
+/* 閃一下。跟出發、跟收進圖鑑那一下同一個手法：steps()、不淡入。 */
+@keyframes okin{
+  0%  {opacity:0}
+  34% {opacity:1}
+  100%{opacity:1}
+}
+@media (prefers-reduced-motion: reduce){ .okwrap{animation:none} }
+
+.okwrap > :first-child{margin-top:auto}
+.okwrap > :last-child{margin-bottom:auto}

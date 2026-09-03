@@ -58,6 +58,12 @@ var SEEN_CUT = null;
    而分頁上那顆點正好是在叫他換分頁。 */
 var FRESH = null;
 
+/* 老師勾了那一張，按掉的記在這裡。
+
+   跟 SEEN_CUT 一樣是一次使用的範圍，不寫進資料庫——它要回答的是
+   「這一次進來看過了沒」，而不是「這件事發生過沒」。 */
+var OKGOT = {};
+
 function seen() {
   /* 翻開圖鑑就把「上次有幾隻」記下來。記在畫完之後，所以這一次
      翻開還看得到那幾隻新的標記。 */
@@ -558,6 +564,13 @@ var ACTS = {
       });
     }, 1320);
     say('出發。');
+  },
+
+  /* 老師勾了那一張，點掉。看過就是看過了，不用留在首頁上。 */
+  okgot: function () {
+    var t = myTeam();
+    if (t) okSince(t.teamId, SEEN_CUT).forEach(function (r) { OKGOT[r.runId] = 1; });
+    render();
   },
 
   /* 「都差不多」也是一個答案，所以要記下來——

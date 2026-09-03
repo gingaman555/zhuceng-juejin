@@ -3805,6 +3805,41 @@ button.ac:active{transform:translateY(1px)}
 }
 @media (prefers-reduced-motion: reduce){ .reg-in{animation:none} }
 
+/* ---------- 老師勾了：蓋住畫面的那一張 ----------
+
+   本來是排在首頁裡的一張卡。它是一件剛剛發生的事，不是首頁的內容——
+   那種東西該閃一下就走。
+
+   蓋住整個畫面（連底下那一列導覽一起），所以那一刻只有這一件事；
+   點「回廊道」就沒了。 */
+.okwrap{
+  position:fixed;inset:0;z-index:60;
+  display:flex;flex-direction:column;align-items:center;
+  /* 不用 justify-content:center。內容比畫面高的時候，置中會把上緣推到
+     捲動範圍外面——量到卡片頂端在 -151px，而且捲不回去（360x640、
+     老師寫了一段長評語）。改用 auto margin：塞得下就置中，塞不下
+     就從頂端開始。 */
+  justify-content:flex-start;
+  gap:14px;padding:22px;overflow:auto;
+  background:rgba(6,8,11,.94);cursor:pointer;
+  animation:okin .3s steps(3,end) 1 both
+}
+.okwrap .okcard{
+  margin:0;max-width:620px;width:100%;
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d)
+}
+.okwrap .btn{flex:0 0 auto}
+/* 閃一下。跟出發、跟收進圖鑑那一下同一個手法：steps()、不淡入。 */
+@keyframes okin{
+  0%  {opacity:0}
+  34% {opacity:1}
+  100%{opacity:1}
+}
+@media (prefers-reduced-motion: reduce){ .okwrap{animation:none} }
+
+.okwrap > :first-child{margin-top:auto}
+.okwrap > :last-child{margin-bottom:auto}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -8813,6 +8848,12 @@ var SEEN_CUT = null;
    而分頁上那顆點正好是在叫他換分頁。 */
 var FRESH = null;
 
+/* 老師勾了那一張，按掉的記在這裡。
+
+   跟 SEEN_CUT 一樣是一次使用的範圍，不寫進資料庫——它要回答的是
+   「這一次進來看過了沒」，而不是「這件事發生過沒」。 */
+var OKGOT = {};
+
 function seen() {
   /* 翻開圖鑑就把「上次有幾隻」記下來。記在畫完之後，所以這一次
      翻開還看得到那幾隻新的標記。 */
@@ -9313,6 +9354,13 @@ var ACTS = {
       });
     }, 1320);
     say('出發。');
+  },
+
+  /* 老師勾了那一張，點掉。看過就是看過了，不用留在首頁上。 */
+  okgot: function () {
+    var t = myTeam();
+    if (t) okSince(t.teamId, SEEN_CUT).forEach(function (r) { OKGOT[r.runId] = 1; });
+    render();
   },
 
   /* 「都差不多」也是一個答案，所以要記下來——
@@ -10127,10 +10175,25 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
-  /* 老師勾了。不用按任何東西——記號已經插進那一層了。
+  /* 老師勾了。
+
+     這是一件剛剛發生的事，不是首頁的一塊內容——所以它蓋住畫面閃一下，
+     點一下回廊道。本來它排在廊道上面，而且這一整次使用每回到首頁都會
+     再看到一次（SEEN_CUT 是進站時抓的，不會在同一次使用中往前走）。
+
+     按掉不會弄丟東西：老師那一句話在出口那一頁完整留著、任務之證在圖鑑裡、
+     疊上去的那一塊在班級地下城上。
+
      這裡只把他那一句話擺在面前，因為那是整條流程裡唯一
      「別人為你做了一件事」的時刻。 */
-  okSince(t.teamId, SEEN_CUT).forEach(function (r) {
+  var okPend = okSince(t.teamId, SEEN_CUT).filter(function (r) { return !OKGOT[r.runId]; });
+  if (okPend.length) {
+    /* 整片都點得掉：內容比畫面高的時候，底下那顆鍵要捲下去才按得到，
+       而這是一則通知不是一張表單——碰哪裡都該讓它走。 */
+    H.push('<div class="okwrap" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'okgot' })) + '\'>');
+  }
+  okPend.forEach(function (r) {
     var m = msOf(r.msId);
     H.push('<div class="okcard">');
     H.push('<div class="eyebrow lit">老師勾了</div>');
@@ -10155,6 +10218,10 @@ PAGES.home = function () {
     if (r.word) H.push('<p class="quote big">' + nl(r.word) + '</p>');
     H.push('</div>');
   });
+  if (okPend.length) {
+    H.push(btn('回廊道', 'okgot', 'big'));
+    H.push('</div>');
+  }
 
   /* 三扇門。本來在整頁最底下、在走過的那一條帶子後面——它們是
      「這個世界裡有什麼」，不是「我剛剛做了什麼」，放在最後等於

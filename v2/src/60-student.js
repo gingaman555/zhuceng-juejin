@@ -65,10 +65,25 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
-  /* 老師勾了。不用按任何東西——記號已經插進那一層了。
+  /* 老師勾了。
+
+     這是一件剛剛發生的事，不是首頁的一塊內容——所以它蓋住畫面閃一下，
+     點一下回廊道。本來它排在廊道上面，而且這一整次使用每回到首頁都會
+     再看到一次（SEEN_CUT 是進站時抓的，不會在同一次使用中往前走）。
+
+     按掉不會弄丟東西：老師那一句話在出口那一頁完整留著、任務之證在圖鑑裡、
+     疊上去的那一塊在班級地下城上。
+
      這裡只把他那一句話擺在面前，因為那是整條流程裡唯一
      「別人為你做了一件事」的時刻。 */
-  okSince(t.teamId, SEEN_CUT).forEach(function (r) {
+  var okPend = okSince(t.teamId, SEEN_CUT).filter(function (r) { return !OKGOT[r.runId]; });
+  if (okPend.length) {
+    /* 整片都點得掉：內容比畫面高的時候，底下那顆鍵要捲下去才按得到，
+       而這是一則通知不是一張表單——碰哪裡都該讓它走。 */
+    H.push('<div class="okwrap" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'okgot' })) + '\'>');
+  }
+  okPend.forEach(function (r) {
     var m = msOf(r.msId);
     H.push('<div class="okcard">');
     H.push('<div class="eyebrow lit">老師勾了</div>');
@@ -93,6 +108,10 @@ PAGES.home = function () {
     if (r.word) H.push('<p class="quote big">' + nl(r.word) + '</p>');
     H.push('</div>');
   });
+  if (okPend.length) {
+    H.push(btn('回廊道', 'okgot', 'big'));
+    H.push('</div>');
+  }
 
   /* 三扇門。本來在整頁最底下、在走過的那一條帶子後面——它們是
      「這個世界裡有什麼」，不是「我剛剛做了什麼」，放在最後等於
