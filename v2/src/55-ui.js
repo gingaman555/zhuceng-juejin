@@ -82,6 +82,7 @@ function seen() {
    這不是裝飾。研究者看得到全班的紀錄、老師看得到別組的進度——
    路由如果不擋，改一下網址就變成別人。 */
 var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
+/* 這兩頁不在側欄上，是路由自己插進來的（見 render）。 */
 var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
   eco: 'student', pack: 'student',
@@ -157,11 +158,25 @@ function render() {
   /* 學生還沒對上名冊：先認領，別的哪裡都去不了。
      沒有組別的話，不知道要畫哪一條廊道——側欄跟頂條也一樣，
      它們每一格都在講「你的組」，這時候還沒有那個東西。 */
-  if (u.role === 'student' && !u.teamId) {
+  /* 老師還沒有班：先開一個。他是發碼的人，不該卡在別人身上。 */
+  if (u.role === 'teacher' && !u.classId) {
     document.getElementById('app').innerHTML =
       '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
-      (S.flash ? flashBar() : '') + PAGES.claim() + '</div></div>';
-    S.page = 'claim';
+      (S.flash ? flashBar() : '') + PAGES.mkclass() + '</div></div>';
+    S.page = 'mkclass';
+    return;
+  }
+  /* 學生還沒有隊：建一隊或用代碼加入。
+
+     班上如果貼過名冊，還是走認領那一條（那條路留著）；
+     沒有名冊的班就自己組隊。 */
+  if (u.role === 'student' && !u.teamId) {
+    var hasRoster = where('Roster', function (x) { return x.classId === u.classId; }).length;
+    document.getElementById('app').innerHTML =
+      '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
+      (S.flash ? flashBar() : '') +
+      (hasRoster ? PAGES.claim() : PAGES.myteam()) + '</div></div>';
+    S.page = hasRoster ? 'claim' : 'myteam';
     return;
   }
   if (S.page === 'claim' || GATE_PAGES[S.page]) S.page = homeFor(u);

@@ -92,12 +92,23 @@ PAGES.login = function () {
    看得到別人的資料——能自己註冊的話，任何人貼一個加入碼就變成老師了。 */
 PAGES.reg = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
-  H.push(head('建立帳號', '先報上你在哪一班',
-    '加入碼跟老師拿。老師與研究者找研究者開。'));
+  var role = DRAFT.rgRole || 'student';
+  H.push(head('建立帳號', role === 'teacher' ? '開一個班，把碼唸給學生' : '先報上你在哪一班', ''));
+  /* 身分自己選。本來只開得了學生帳號，老師要找研究者——
+     那等於課還沒開始就卡在一個不在現場的人身上。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">班級加入碼</div>');
-  H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
-         esc('六個英數字，跟老師拿') + '">');
+  H.push('<div class="eyebrow">你是</div>');
+  H.push('<div class="row sure-row">');
+  [['student', '學生'], ['teacher', '老師']].forEach(function (r) {
+    H.push(btn(r[1], 'rgrole:' + r[0], 'sure' + (role === r[0] ? ' on' : '')));
+  });
+  H.push('</div></div>');
+  H.push('<div class="card">');
+  if (role === 'student') {
+    H.push('<div class="eyebrow">班級加入碼</div>');
+    H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
+           esc('六個英數字，跟老師拿') + '">');
+  }
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="rg-acc" value="' + esc(draft('rg-acc')) + '" placeholder="' +
          esc('至少三個字，登入用') + '">');
@@ -109,6 +120,53 @@ PAGES.reg = function () {
   H.push(btn('我有帳號了', 'go:login', 'ghost'));
   H.push('</div>');
   H.push('<p class="dim">' + esc(AUTH_NOTE) + '</p>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* ---------- 老師開班 ----------
+   他是那個發碼的人，所以他不跟任何人要碼——他自己開一個，然後唸出去。 */
+PAGES.mkclass = function () {
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('開一個班', '取個名字就好', ''));
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">班名</div>');
+  H.push('<input id="mk-name" value="" placeholder="' + esc('例：114-1 專題') + '">');
+  H.push('</div>');
+  H.push('<p class="dim">開好之後會給你一組六碼。學生用那組碼建自己的帳號。</p>');
+  H.push('<div class="row">');
+  H.push(btn('開班', 'mkclass', 'big'));
+  H.push(btn('登出', 'logout', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* ---------- 學生組隊 ----------
+   建一隊拿代碼，或用代碼進別人建好的那一隊。
+
+   組好了就不能換：任務派給組、紀錄掛在組上，中途換組會讓歷史說謊。
+   這一頁因此把話講在前面。 */
+PAGES.myteam = function () {
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('你的隊伍', '建一隊，或用代碼加入', ''));
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">建一隊</div>');
+  H.push('<input id="mk-team" value="" placeholder="' + esc('隊名，例：第三組') + '">');
+  H.push('<p class="dim">建好會給你一組六碼，唸給隊友。</p>');
+  H.push(btn('建立', 'mkteam', 'big'));
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">用代碼加入</div>');
+  H.push('<input id="jn-code" value="' + esc(draft('jn-code')) + '" placeholder="' +
+    esc('六個英數字，跟隊友拿') + '">');
+  H.push(btn('加入', 'jointeam', 'big'));
+  H.push('</div>');
+
+  H.push('<p class="dim">組好了就不能換——之後每一趟的紀錄都掛在這一隊上。</p>');
+  H.push(btn('登出', 'logout', 'ghost'));
   H.push('</div></div>');
   return H.join('');
 };
@@ -166,7 +224,7 @@ ACTS.reg = function () {
     code: (document.getElementById('rg-code') || {}).value || '',
     account: (document.getElementById('rg-acc') || {}).value || '',
     password: (document.getElementById('rg-pw') || {}).value || '',
-    role: 'student'
+    role: DRAFT.rgRole === 'teacher' ? 'teacher' : 'student'
   };
   var r = actRegister(o);
   if (r.err) {
@@ -175,6 +233,35 @@ ACTS.reg = function () {
   }
   signIn(r.user);
   say('帳號好了。');
+};
+
+ACTS.rgrole = function (r) { DRAFT.rgRole = r; render(); };
+
+/* 老師開班。開完就在這個班裡，碼唸給學生。 */
+ACTS.mkclass = function () {
+  var n = (document.getElementById('mk-name') || {}).value || '';
+  var r = actNewClass(n, S.who);
+  if (r.err) return say(r.err);
+  go('home');
+  say('開好了。把加入碼唸給學生。');
+};
+
+/* 學生建一隊。 */
+ACTS.mkteam = function () {
+  var n = (document.getElementById('mk-team') || {}).value || '';
+  var r = actNewTeam(n, S.who);
+  if (r.err) return say(r.err);
+  go('who');
+  say('隊伍建好了。把代碼唸給隊友。');
+};
+
+/* 學生用代碼加入。 */
+ACTS.jointeam = function () {
+  var c = (document.getElementById('jn-code') || {}).value || '';
+  var r = actJoinTeam(c, S.who);
+  if (r.err) { DRAFT['jn-code'] = c; return say(r.err); }
+  go('who');
+  say('進來了。');
 };
 
 ACTS.claim = function (rosterId) {

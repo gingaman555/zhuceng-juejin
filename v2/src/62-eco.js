@@ -347,6 +347,9 @@ PAGES.eco = function () {
 PAGES.classeco = function () {
   var u = me();
   var rows = ecoRows(u.classId);
+  /* 班級加入碼要一直看得到——學生用那一串建帳號，而老師是唸它的人。
+     不放在這裡的話，他得去一個不存在的地方找。 */
+  var kls = classOf(u);
   /* 整個課程都畫，自己帶的那幾條鑲金邊。
 
      不切成「只有我帶的」，是因為這張圖跟學生看到的是同一張——
@@ -355,6 +358,14 @@ PAGES.classeco = function () {
   var mine = teamsUnder(u.classId, u.userId).map(function (t) { return t.teamId; });
   var H = [head('各組進度', '整個課程　·　金邊的是你帶的 ' +
     mine.length + ' 組', '')];
+
+  /* 那一串是唸出去的：學生用它建帳號。放在最上面，因為開學前兩週
+     他每次進來都要唸一次。 */
+  if (kls && kls.joinCode) {
+    H.push('<div class="card quiet"><div class="eyebrow">班級加入碼</div>' +
+      '<b class="joincode">' + esc(kls.joinCode) + '</b>' +
+      '<p class="dim">學生用這組碼建自己的帳號。</p></div>');
+  }
 
   /* 剖面圖已經畫出每一組走到哪、正在走哪一趟、誰在等你看。
      這一頁本來在底下又用文字卡把同樣的事一組一張再列一遍——

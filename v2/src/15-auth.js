@@ -104,10 +104,15 @@ function actRegister(o) {
   if (pw.length < 4) return { err: '密碼至少四個字。' };
   if (accountTaken(acc)) return { err: '這個帳號有人用了。' };
 
+  /* 學生一定要有班級加入碼（老師唸給他們）。
+     老師可以先開帳號、進來再開班——他是那個發碼的人，不該先跟人要碼。 */
   var kl = null;
-  if (o.role !== 'researcher') {
+  if (o.role === 'student') {
     kl = classByCode(o.code);
     if (!kl) return { err: '找不到這個加入碼。跟老師確認一次。' };
+  } else if (o.code) {
+    kl = classByCode(o.code);
+    if (!kl) return { err: '找不到這個加入碼。' };
   }
 
   var salt = newSalt();
@@ -252,10 +257,60 @@ function actDeleteUser(userId) {
   return { ok: true };
 }
 
-function actCreateClass(name, teacherId) {
+/* 六個英數字。去掉會看錯的 I O 0 1——這串要用唸的。 */
+function newCode() {
   var code = '';
-  var CH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   /* 去掉會看錯的 I O 0 1 */
+  var CH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (var i = 0; i < 6; i++) code += CH[Math.floor(Math.random() * CH.length)];
+  return code;
+}
+
+/* 老師自己開班。開完他就在這個班裡，而那六碼是他唸給學生的東西。 */
+function actNewClass(name, teacherId) {
+  var u = userOf(teacherId);
+  if (!u) return { err: '找不到這個人。' };
+  var c = actCreateClass(name, teacherId).klass;
+  u.classId = c.classId;
+  save();
+  return { klass: c };
+}
+
+/* 學生自己建一隊。建的人直接進去，代碼唸給組員。 */
+function actNewTeam(name, userId) {
+  var u = userOf(userId);
+  if (!u || !u.classId) return { err: '你還沒有班級。' };
+  if (u.teamId) return { err: '你已經有隊了。' };
+  var t = {
+    teamId: nid('G'), classId: u.classId,
+    name: String(name || '').trim().slice(0, 20) || '一支隊伍',
+    joinCode: newCode(), project: '', joinedAt: now()
+  };
+  DB.Teams.push(t);
+  u.teamId = t.teamId;
+  save();
+  logEvent('newteam', { teamId: t.teamId, name: t.name });
+  return { team: t };
+}
+
+/* 用代碼加入。組建好就不能換——任務派給組、紀錄掛在組上，
+   中途換組會讓歷史說謊。所以已經有隊的人擋在這裡。 */
+function actJoinTeam(code, userId) {
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個人。' };
+  if (u.teamId) return { err: '你已經在一隊裡了。組好了就不能換。' };
+  var t = find('Teams', function (x) {
+    return x.classId === u.classId &&
+      String(x.joinCode || '').toUpperCase() === String(code || '').toUpperCase();
+  });
+  if (!t) return { err: '找不到這個隊伍代碼。跟隊友確認一次。' };
+  u.teamId = t.teamId;
+  save();
+  logEvent('jointeam', { teamId: t.teamId });
+  return { team: t };
+}
+
+function actCreateClass(name, teacherId) {
+  var code = newCode();
   var c = {
     classId: nid('C'), name: String(name || '未命名的班').trim(),
     joinCode: code, teacherId: teacherId || '', startedAt: now()
