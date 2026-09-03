@@ -3758,6 +3758,53 @@ button.ac:active{transform:translateY(1px)}
   .core1.fresh, .core1.fresh::before{animation:none}
 }
 
+/* ---------- 收進圖鑑的那一下 ----------
+
+   打贏了、或老師勾了，圖鑑就多一個。那件事本來只在圖鑑那一頁才看得到，
+   而他不一定會去翻——一個要自己去找的獎勵，在拿到的那一刻等於沒有發生。
+
+   兩個地方共用這一張：戰鬥打完（蓋在場上，.over）、
+   老師勾完的首頁（排在卡片裡）。 */
+/* overflow 要關。regslam 從 scale(2.4) 開始，而 transform 不佔版面——
+   放大的那一幀會把整頁撐寬（量到 368px）。關掉之後那一幀被裁在
+   卡自己的框裡，砸下來的感覺還在。 */
+.reg{display:block;overflow:hidden}
+.reg-in{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:18px 22px;background:#0B0E13;
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d);
+  animation:regslam .42s steps(3,end) 1 both
+}
+.reg-eye{
+  font-style:normal;font-size:22px;letter-spacing:.12em;color:var(--gold);
+  line-height:1.2
+}
+/* 寬度不綁祖先——這張圖換個地方畫也不能被撐開（check.js 守著）。 */
+.px.reg-px{width:88px;height:88px;image-rendering:pixelated}
+/* 那一張證是直的，比魔物高。 */
+.px.reg-px.core{width:66px;height:auto;max-height:110px}
+.reg-n{
+  font-size:33px;font-weight:400;line-height:1.3;color:var(--ink);
+  text-align:center;text-wrap:balance;overflow-wrap:anywhere
+}
+.reg-s{font-style:normal;font-size:22px;line-height:1.4;color:var(--dim)}
+
+/* 戰鬥打完那一次蓋在場上。 */
+.reg.over{
+  position:absolute;inset:0;z-index:8;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(6,8,11,.86);pointer-events:none
+}
+.reg.over .reg-in{max-width:80%}
+
+/* 砸下來，不淡入——跟出發那一下同一個手法（53-scene.css 的 goslam）。 */
+@keyframes regslam{
+  0%  {transform:scale(2.4);opacity:0}
+  34% {transform:scale(1.12);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+@media (prefers-reduced-motion: reduce){ .reg-in{animation:none} }
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -7577,6 +7624,26 @@ function metRun(r) {
   return daysBetween(r.committedAt, now()) >= (r.est || 1);
 }
 
+/* 這一趟盡頭那一隻，是不是第一次進這一組的圖鑑。
+
+   判斷的是「這一趟是不是這一組最早遇到牠的那一趟」，不是「圖鑑翻過了沒」——
+   翻不翻圖鑑是他自己的事，而「第一次遇到」是一件已經發生的事實。
+   同一隻再遇到不會再喊一次。 */
+function mobDebut(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return false;
+  var m = mobOfRun(r);
+  if (!m || !m.n) return false;
+  var first = null;
+  where('Runs', function (x) { return x.teamId === teamId; }).forEach(function (x) {
+    if (!metRun(x)) return;
+    var mm = mobOfRun(x);
+    if (!mm || mm.n !== m.n) return;
+    if (!first || (x.committedAt || 0) < (first.committedAt || 0)) first = x;
+  });
+  return !!first && first.runId === runId;
+}
+
 /* 遇過的那幾隻。 */
 function metMobs(teamId) {
   var seen = {};
@@ -8868,6 +8935,25 @@ function flashBar() {
    而且那是一種只有測試才抓得到的錯。讓它自己負責。 */
 function say(m) { S.flash = m; render(); }
 
+/* ---------- 收進圖鑑的那一下 ----------
+
+   打贏了、或老師勾了，圖鑑就多一個。但那件事本來只在圖鑑那一頁才看得到，
+   而他不一定會去翻——一個要自己去找的獎勵，在拿到的那一刻等於沒有發生。
+
+   所以在拿到的當下先喊一次。一張卡，三行：哪一種、叫什麼名字、收到哪去了。
+   兩個地方共用同一張（打完的戰鬥、老師勾完的首頁），因為它們是同一件事。
+
+   砸下來的手法跟出發那一下一樣（見 53-scene.css 的 goslam）：
+   steps()、由大縮到定位、不做淡入。 */
+function regCard(eye, name, note, art, over) {
+  return '<div class="reg' + (over ? ' over' : '') + '"><div class="reg-in">' +
+    '<i class="reg-eye">' + esc(eye) + '</i>' +
+    (art || '') +
+    '<b class="reg-n">' + esc(name) + '</b>' +
+    '<em class="reg-s">' + esc(note) + '</em>' +
+    '</div></div>';
+}
+
 /* 頂條右邊那一段。三種角色共用——登出在哪裡不該因為身分而不同，
    而且側欄在手機會變成底下那一列，放在那裡會被擠掉。 */
 function topEnd() {
@@ -10042,10 +10128,18 @@ PAGES.home = function () {
     /* 拿到的那一張。它就是這一刻本身變成的東西——老師審核過了的證明，
        名字是那一件任務，圖鑑裡收著。
 
-       任務名本來上面還單獨寫一行，拿掉了：這一句已經帶著它，
-       同一個名字在同一張卡上出現兩次，其中一次就是雜訊。 */
-    H.push('<span class="ok-cert">獲得「' + esc(m ? m.title : '') +
-      '」的任務之證</span>');
+       本來這裡只有一行字。換成跟打贏那一下同一張卡（見 55-ui.js 的
+       regCard）：多一個魔物跟多一張證是同一件事的兩種，
+       所以「你多了一個東西」的長相也該是同一個。
+
+       任務名不另外寫一行——卡上那一行就是它，同一個名字在同一張卡上
+       出現兩次，其中一次就是雜訊。 */
+    var kz = null;
+    var kk = keepsOf(t.teamId).filter(function (x) { return x.runId === r.runId; })[0];
+    STRATA.forEach(function (x) { if (kk && x.key === kk.zone) kz = x; });
+    H.push(regCard('新拿到', (m ? m.title : '那一趟'), '任務之證已收錄在圖鑑',
+      pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
+      false));
     /* 他那一句話擺在最下面，而且是這一整張上唯一的人話。 */
     if (r.word) H.push('<p class="quote big">' + nl(r.word) + '</p>');
     H.push('</div>');
@@ -13219,8 +13313,23 @@ function battleRun() {
     box.classList.add('foe-out');
   });
 
-  /* 三 · 演完直接換頁。不用再按一次。 */
-  btAt(3200, function () { go('stamp', { id: r.runId }); });
+  /* 三 · 第一次遇到的那一隻，收進圖鑑——在這裡喊一次。
+
+     牠倒下的下一拍就是「牠被記下來了」，那是這個作品裡少數幾個
+     「你多了一個東西」的時刻。不喊的話它只在圖鑑那一頁看得到，
+     而他不一定會去翻。同一隻再遇到不會再喊（見 mobDebut）。 */
+  var debut = mobDebut(r.teamId, r.runId);
+  if (debut) {
+    btAt(2700, function () {
+      var m = mobOfRun(r);
+      var z = zoneOfRun(r, r.teamId);
+      box.insertAdjacentHTML('beforeend',
+        regCard('新登場', m.n, '已收錄在圖鑑',
+          pxTag(m.px, (z || STRATA[0]).pal, 'reg-px'), true));
+    });
+  }
+  /* 四 · 演完直接換頁。不用再按一次。 */
+  btAt(debut ? 5000 : 3200, function () { go('stamp', { id: r.runId }); });
 }
 
 /* 上：進第一問。老師沒分段就直接到第二問（見 btPhase）。 */

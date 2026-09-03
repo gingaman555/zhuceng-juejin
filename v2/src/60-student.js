@@ -77,10 +77,18 @@ PAGES.home = function () {
     /* 拿到的那一張。它就是這一刻本身變成的東西——老師審核過了的證明，
        名字是那一件任務，圖鑑裡收著。
 
-       任務名本來上面還單獨寫一行，拿掉了：這一句已經帶著它，
-       同一個名字在同一張卡上出現兩次，其中一次就是雜訊。 */
-    H.push('<span class="ok-cert">獲得「' + esc(m ? m.title : '') +
-      '」的任務之證</span>');
+       本來這裡只有一行字。換成跟打贏那一下同一張卡（見 55-ui.js 的
+       regCard）：多一個魔物跟多一張證是同一件事的兩種，
+       所以「你多了一個東西」的長相也該是同一個。
+
+       任務名不另外寫一行——卡上那一行就是它，同一個名字在同一張卡上
+       出現兩次，其中一次就是雜訊。 */
+    var kz = null;
+    var kk = keepsOf(t.teamId).filter(function (x) { return x.runId === r.runId; })[0];
+    STRATA.forEach(function (x) { if (kk && x.key === kk.zone) kz = x; });
+    H.push(regCard('新拿到', (m ? m.title : '那一趟'), '任務之證已收錄在圖鑑',
+      pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
+      false));
     /* 他那一句話擺在最下面，而且是這一整張上唯一的人話。 */
     if (r.word) H.push('<p class="quote big">' + nl(r.word) + '</p>');
     H.push('</div>');

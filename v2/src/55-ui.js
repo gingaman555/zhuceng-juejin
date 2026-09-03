@@ -191,6 +191,25 @@ function flashBar() {
    而且那是一種只有測試才抓得到的錯。讓它自己負責。 */
 function say(m) { S.flash = m; render(); }
 
+/* ---------- 收進圖鑑的那一下 ----------
+
+   打贏了、或老師勾了，圖鑑就多一個。但那件事本來只在圖鑑那一頁才看得到，
+   而他不一定會去翻——一個要自己去找的獎勵，在拿到的那一刻等於沒有發生。
+
+   所以在拿到的當下先喊一次。一張卡，三行：哪一種、叫什麼名字、收到哪去了。
+   兩個地方共用同一張（打完的戰鬥、老師勾完的首頁），因為它們是同一件事。
+
+   砸下來的手法跟出發那一下一樣（見 53-scene.css 的 goslam）：
+   steps()、由大縮到定位、不做淡入。 */
+function regCard(eye, name, note, art, over) {
+  return '<div class="reg' + (over ? ' over' : '') + '"><div class="reg-in">' +
+    '<i class="reg-eye">' + esc(eye) + '</i>' +
+    (art || '') +
+    '<b class="reg-n">' + esc(name) + '</b>' +
+    '<em class="reg-s">' + esc(note) + '</em>' +
+    '</div></div>';
+}
+
 /* 頂條右邊那一段。三種角色共用——登出在哪裡不該因為身分而不同，
    而且側欄在手機會變成底下那一列，放在那裡會被擠掉。 */
 function topEnd() {

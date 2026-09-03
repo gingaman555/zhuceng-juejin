@@ -307,8 +307,23 @@ function battleRun() {
     box.classList.add('foe-out');
   });
 
-  /* 三 · 演完直接換頁。不用再按一次。 */
-  btAt(3200, function () { go('stamp', { id: r.runId }); });
+  /* 三 · 第一次遇到的那一隻，收進圖鑑——在這裡喊一次。
+
+     牠倒下的下一拍就是「牠被記下來了」，那是這個作品裡少數幾個
+     「你多了一個東西」的時刻。不喊的話它只在圖鑑那一頁看得到，
+     而他不一定會去翻。同一隻再遇到不會再喊（見 mobDebut）。 */
+  var debut = mobDebut(r.teamId, r.runId);
+  if (debut) {
+    btAt(2700, function () {
+      var m = mobOfRun(r);
+      var z = zoneOfRun(r, r.teamId);
+      box.insertAdjacentHTML('beforeend',
+        regCard('新登場', m.n, '已收錄在圖鑑',
+          pxTag(m.px, (z || STRATA[0]).pal, 'reg-px'), true));
+    });
+  }
+  /* 四 · 演完直接換頁。不用再按一次。 */
+  btAt(debut ? 5000 : 3200, function () { go('stamp', { id: r.runId }); });
 }
 
 /* 上：進第一問。老師沒分段就直接到第二問（見 btPhase）。 */

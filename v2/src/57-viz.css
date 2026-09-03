@@ -1879,3 +1879,50 @@ button.ac:active{transform:translateY(1px)}
 @media (prefers-reduced-motion: reduce){
   .core1.fresh, .core1.fresh::before{animation:none}
 }
+
+/* ---------- 收進圖鑑的那一下 ----------
+
+   打贏了、或老師勾了，圖鑑就多一個。那件事本來只在圖鑑那一頁才看得到，
+   而他不一定會去翻——一個要自己去找的獎勵，在拿到的那一刻等於沒有發生。
+
+   兩個地方共用這一張：戰鬥打完（蓋在場上，.over）、
+   老師勾完的首頁（排在卡片裡）。 */
+/* overflow 要關。regslam 從 scale(2.4) 開始，而 transform 不佔版面——
+   放大的那一幀會把整頁撐寬（量到 368px）。關掉之後那一幀被裁在
+   卡自己的框裡，砸下來的感覺還在。 */
+.reg{display:block;overflow:hidden}
+.reg-in{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:18px 22px;background:#0B0E13;
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d);
+  animation:regslam .42s steps(3,end) 1 both
+}
+.reg-eye{
+  font-style:normal;font-size:22px;letter-spacing:.12em;color:var(--gold);
+  line-height:1.2
+}
+/* 寬度不綁祖先——這張圖換個地方畫也不能被撐開（check.js 守著）。 */
+.px.reg-px{width:88px;height:88px;image-rendering:pixelated}
+/* 那一張證是直的，比魔物高。 */
+.px.reg-px.core{width:66px;height:auto;max-height:110px}
+.reg-n{
+  font-size:33px;font-weight:400;line-height:1.3;color:var(--ink);
+  text-align:center;text-wrap:balance;overflow-wrap:anywhere
+}
+.reg-s{font-style:normal;font-size:22px;line-height:1.4;color:var(--dim)}
+
+/* 戰鬥打完那一次蓋在場上。 */
+.reg.over{
+  position:absolute;inset:0;z-index:8;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(6,8,11,.86);pointer-events:none
+}
+.reg.over .reg-in{max-width:80%}
+
+/* 砸下來，不淡入——跟出發那一下同一個手法（53-scene.css 的 goslam）。 */
+@keyframes regslam{
+  0%  {transform:scale(2.4);opacity:0}
+  34% {transform:scale(1.12);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+@media (prefers-reduced-motion: reduce){ .reg-in{animation:none} }

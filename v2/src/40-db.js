@@ -691,6 +691,26 @@ function metRun(r) {
   return daysBetween(r.committedAt, now()) >= (r.est || 1);
 }
 
+/* 這一趟盡頭那一隻，是不是第一次進這一組的圖鑑。
+
+   判斷的是「這一趟是不是這一組最早遇到牠的那一趟」，不是「圖鑑翻過了沒」——
+   翻不翻圖鑑是他自己的事，而「第一次遇到」是一件已經發生的事實。
+   同一隻再遇到不會再喊一次。 */
+function mobDebut(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return false;
+  var m = mobOfRun(r);
+  if (!m || !m.n) return false;
+  var first = null;
+  where('Runs', function (x) { return x.teamId === teamId; }).forEach(function (x) {
+    if (!metRun(x)) return;
+    var mm = mobOfRun(x);
+    if (!mm || mm.n !== m.n) return;
+    if (!first || (x.committedAt || 0) < (first.committedAt || 0)) first = x;
+  });
+  return !!first && first.runId === runId;
+}
+
 /* 遇過的那幾隻。 */
 function metMobs(teamId) {
   var seen = {};
