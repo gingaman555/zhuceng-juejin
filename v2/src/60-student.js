@@ -463,6 +463,10 @@ PAGES.commit = function () {
     : Number(draft('est', RULES.EST_DEFAULT));
   var flags = DRAFT.flags || [];
 
+  /* 兩個階段共用這一頁：先說幾天，再選去哪裡。
+     分岔放在這裡，前面那幾行（plan／est）兩邊都要用。 */
+  if (DRAFT.at === 'where') return wherePanel(t, m, est);
+
   var H = [head('自我承諾', m.title, m.note)];
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
@@ -545,11 +549,51 @@ PAGES.commit = function () {
   }
 
   H.push('<div class="row">');
-  H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big cm-go'));
+  H.push(btn('我承諾 ' + est + ' 天', 'towhere', 'big cm-go'));
   H.push(btn('回廊道', 'go:home', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
+
+/* ---------- 這一趟要去哪裡 ----------
+
+   承諾完天數，出發之前。同一頁的第二個階段，不是另一頁——go() 會清掉
+   DRAFT，而他剛拆完的細項與天數都在上面。
+
+   六個地方一直都在，誰都去得了，去過的也可以再去。選哪裡不影響任何
+   數字（判定只讀承諾幾天與實際幾天），所以這一步沒有好壞——
+   它是這個流程裡第二個純粹屬於他的決定。
+
+   每個地方住著不同的東西，所以他其實同時在選這一趟要遇到誰。 */
+function wherePanel(t, m, est) {
+  var H = [head('這一趟去哪裡', m.title, '')];
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你說了 ' + est + ' 天</div>');
+  H.push('<p class="dim">六個地方都去得了，去過的也可以再去。選哪裡不會影響判定——' +
+    '判定只看你說幾天、實際幾天。</p>');
+  H.push('</div>');
+
+  H.push('<div class="wsix">');
+  STRATA.forEach(function (z) {
+    var f = faunaOf(z.key);
+    H.push('<button class="wz ' + z.key + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'commit:' + m.msId + '|' + z.key })) + '\'>');
+    H.push('<span class="wz-t"><b>' + esc(z.name) + '</b>');
+    H.push('<em>' + esc(z.note) + '</em></span>');
+    /* 住在這裡的那幾隻。他在選地方，也是在選這一趟要遇到誰。 */
+    if (f.length) {
+      H.push('<span class="wz-f">');
+      f.slice(0, 4).forEach(function (c) { H.push(pxTag(c.px, z.pal, '')); });
+      H.push('</span>');
+    }
+    H.push('</button>');
+  });
+  H.push('</div>');
+
+  H.push(btn('回去改天數', 'toplan', 'ghost'));
+  return H.join('');
+}
 
 /* ---------- 交出去 ---------- */
 /* 交出去那一頁退休了：兩問搬進戰鬥（見 67-battle.js），
@@ -569,7 +613,9 @@ function estWalk(t, m, est) {
 /* 只有這一段會跟著滑桿變。拆出來是為了拖的時候只換這一塊，
    不要動到滑桿本身——動到它，拖曳就斷了。 */
 function estWalkIn(t, m, est) {
-  var z = strataAt(depthOf(t.teamId), t.teamId);
+  /* 這一條是承諾頁上的預覽，那時候還沒選地方——用現在的。
+     選完之後真正的廊道會換成他挑的那一個。 */
+  var z = zoneNow(t.teamId);
   var mob = mobFor(m.msId, t.teamId);
   /* 老師排的那一天，換算成還有幾天，落在第幾格。
 

@@ -18,7 +18,7 @@
 
 PAGES.codex = function () {
   var t = myTeam();
-  var here = strataAt(depthOf(t.teamId), t.teamId);
+  var here = zoneNow(t.teamId);
   var tab = DRAFT.cx || here.key;
   var met = metMobs(t.teamId);
   /* 在地底下掀開遇到的那幾隻也算遇過。foundMobs 寫好了但一直沒接上，

@@ -1678,3 +1678,27 @@ button.ac:active{transform:translateY(1px)}
   font-size:33px;line-height:1.5;margin:22px 0 0;padding:22px 0 0;
   border-top:3px solid var(--frame);text-wrap:balance
 }
+
+/* ---------- 這一趟去哪裡 ----------
+
+   六個地方，一格一個，用那個地方自己的底色與紋理——他挑的是一個
+   地方，不是一個選項，所以那一格要長得像那個地方。
+
+   右邊那幾隻是住在裡面的。他在選地方，也是在選這一趟要遇到誰。 */
+.wsix{display:grid;gap:11px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));margin:0 0 22px}
+.wz{
+  display:flex;align-items:center;gap:14px;padding:18px;
+  border:0;cursor:pointer;font:inherit;color:inherit;text-align:left;
+  background-color:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--frame);
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),
+    calc(100% - 11px) 100%,0 100%,0 11px)
+}
+.wz:hover{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink)}
+.wz:active{transform:translate(2px,2px)}
+.wz:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wz-t{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.wz-t b{font-size:22px;font-weight:400;color:var(--zink);line-height:1.3}
+.wz-t em{font-size:22px;font-style:normal;color:var(--dim);line-height:1.5}
+.wz-f{display:flex;gap:5px;flex:0 0 auto;align-self:flex-start;opacity:.8}
+.wz-f .px{width:33px;height:33px}

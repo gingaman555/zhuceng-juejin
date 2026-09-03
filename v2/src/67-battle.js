@@ -71,7 +71,9 @@ PAGES.battle = function () {
   if (!r) return '<div class="card">找不到。</div>';
   var t = myTeam();
   var mob = mobOfRun(r);
-  var zone = strataAt(depthOf(t.teamId), t.teamId);
+  /* 那一場打在那一趟去的地方，不是「現在」在哪——回頭看一場舊的，
+     背景要是當時那個地方。 */
+  var zone = zoneOfRun(r, t.teamId);
   var est = r.est || 1;
   var ph = btPhase(r);
 

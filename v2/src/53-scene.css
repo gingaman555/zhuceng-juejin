@@ -204,6 +204,10 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .scn-hud em{
   display:block;font-style:normal;font-size:22px;line-height:1.2;margin-bottom:2px
 }
+/* 角落那一塊裡的每一段各自一行。本來 span 是 inline，所以 zn-note 掛的
+   max-width 與 margin-left:auto 兩個都不生效——「走完 4 個任務」後面
+   直接接著地層的說明，接成一句話。說明短的時候看不出來。 */
+.scn-hud span{display:block}
 .scn-hud .zn-note{max-width:198px;margin-left:auto;line-height:1.7;margin-top:3px}
 .scn .scn-hud em{color:var(--zink,#E9B341)}
 

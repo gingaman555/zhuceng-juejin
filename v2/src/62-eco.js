@@ -36,9 +36,14 @@
    留下來是要有人看過的事（見 40-db.js 的 sealedDepth）。
    走完但還沒被收下的那一趟看得到，但它是虛的：那一塊還沒站住。
 
-   石頭的顏色只跟「第幾塊」有關，跟哪一組無關（strataAt 吃 classId）。
-   一旦讓某一組有自己的顏色，這張圖就開始比誰的比較漂亮。
-   六層沒有先後、順序一個班洗一次，所以顏色不帶任何「你該到哪」。 */
+   一塊的顏色是「那一趟他們去了哪裡」。
+
+   本來一整行同一個顏色，因為那時候第幾層是算出來的——同一個深度
+   全班一定在同一層，所以顏色屬於欄位不屬於哪一組。地方改成他們
+   自己選之後那條規則不成立了：一條看下來是那一組走過的路線。
+
+   顏色因此變成他們的了，但它還是不能比較誰漂亮——六個地方沒有先後、
+   沒有難易，去哪裡不影響任何判定。它是決定的痕跡，不是成績。 */
 var XL = {
   NAME: 176,   /* 左邊：這是哪一組 */
   MIN: 55,     /* 一塊最窄。窄到這裡就不再收，改成橫著捲 */
@@ -71,10 +76,14 @@ function xsScene(rows, meId, classId) {
     'px;max-width:' + (XL.NAME + cols * XL.MAX) + 'px;height:' + H + 'px">'];
 
   /* ── 每一直行的石頭 ──
-     整張圖的底。同一行不管哪一組，石頭都一樣，因為那是同一片地質。 */
+
+     整張圖的底，一片中性的岩壁。本來每一直行是一個地層——那是
+     「第幾層由深度算出來」那一版留下的：同一個深度全班一定同一層。
+
+     地方改成他們自己選之後，「第幾行＝哪一層」就不成立了。
+     顏色全部留給疊上去的那幾塊——那才是有人做過決定的地方。 */
   for (var n = 0; n < cols; n++) {
-    var zn = strataAt(n, classId);
-    out.push('<div class="xl-col ' + zn.key + '" style="--i:' + n + '"></div>');
+    out.push('<div class="xl-col" style="--i:' + n + '"></div>');
   }
 
   /* ── 最上面那條尺 ──
@@ -86,7 +95,7 @@ function xsScene(rows, meId, classId) {
       '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
   }
 
-  /* ── 沒挖到的岩石裡住著東西 ── */
+  /* ── 還沒去過的地方住著東西 ── */
   out.push(xlFauna(rows, cols, classId));
 
   /* ── 每一組一條 ── */
@@ -116,6 +125,8 @@ function xlFauna(rows, cols, classId) {
     for (var n = from; n < cols; n++) {
       var h = hash('f/' + classId + '/' + i + '/' + n);
       if (h % 100 < 68) continue;
+      /* 前面那幾隻用班級的路線挑——它不是「那裡是哪一層」，
+         只是讓每一格住的東西固定不亂跳。 */
       var z = strataAt(n, classId);
       var c = faunaAt(z.key, i * 7 + n);
       if (!c) continue;
@@ -164,10 +175,19 @@ function xlLane(r, i, cols, classId, mine) {
   H.push('<button class="xl-stack" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'team:' + r.teamId })) + '\' ' +
     'style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
+  /* 顏色是「那一趟他們去了哪裡」，不是「第幾行」。
+
+     本來一整行同一個顏色，因為那時候第幾層是算出來的——同一個深度
+     全班一定在同一層。地方改成他們自己選之後那條規則就不成立了：
+     一條看下來是那一組走過的路線。
+
+     還在老師那邊的那一塊還沒有路線可讀（route 只收被收下的），
+     所以它用最後一個去過的地方，沒有就用第一個地層。 */
+  var route = r.route || [];
   for (var k = 0; k < n; k++) {
-    var z = strataAt(k, classId);
     var wait = (k === n - 1) && r.pending;
-    H.push('<i class="xl-b ' + z.key + (wait ? ' wait' : ' on') +
+    var zk = route[k] || route[route.length - 1] || strataAt(0, classId).key;
+    H.push('<i class="xl-b ' + zk + (wait ? ' wait' : ' on') +
       '" style="--k:' + k + '"></i>');
   }
   H.push('</button>');

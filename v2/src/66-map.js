@@ -80,7 +80,7 @@ function digTeamCard(classId) {
   if (!DRAFT.dt) return '';
   var t = teamOf(DRAFT.dt);
   if (!t) return '';
-  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var z = zoneNow(t.teamId);
   var H = ['<div class="card dtcard fa ' + z.key + '">'];
   H.push('<div class="radar-head">');
   H.push(pxTag(signOf(t.teamId).px, signOf(t.teamId).pal, 'sign-s'));

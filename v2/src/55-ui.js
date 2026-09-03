@@ -212,7 +212,7 @@ function topBar() {
      它讀起來是角色身上的東西。 */
   var t = myTeam();
   var st = stallOf(t.teamId);
-  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var z = zoneNow(t.teamId);
   return '<div class="top hud z-' + z.key + '">' +
     pxTag(signOf(t.teamId).px, signOf(t.teamId).pal, 'hud-sign') +
     '<span class="who">' + esc(t.name) + '</span>' +
@@ -492,10 +492,18 @@ var ACTS = {
     say('上來了。');
   },
 
-  commit: function (msId) {
+  /* 說完幾天，去選地方。同一頁的第二個階段——不能用 go()，
+     它會清掉 DRAFT，而他剛拆完的細項就在上面。 */
+  towhere: function () { DRAFT.at = 'where'; window.scrollTo(0, 0); render(); },
+  toplan: function () { DRAFT.at = ''; window.scrollTo(0, 0); render(); },
+
+  /* 出發。參數是「任務|地方」。 */
+  commit: function (arg) {
     var t = myTeam();
+    var p = String(arg).split('|');
+    var msId = p[0], zone = p[1] || '';
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT),
-      DRAFT.flags || [], DRAFT.plan || []);
+      DRAFT.flags || [], DRAFT.plan || [], zone);
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——

@@ -463,7 +463,7 @@ a.plain:hover{color:var(--gold)}
      rust 橫的     鏽掉的鐵板是一層一層疊的
      fire 流的     底下有東西在動 */
 
-.z-wild, .xs-band.wild, .xl-col.wild, .sty-band.wild, .card.fa.wild, .zn.wild, .core1.wild {
+.z-wild, .xs-band.wild, .xl-col.wild, .sty-band.wild, .wz.wild, .card.fa.wild, .zn.wild, .core1.wild {
   --zbg:#171208; --zln:#3A2E12;
   --zfl:#241B0C; --zfl2:#3B2D11;
   --zink:#C9A227;
@@ -472,7 +472,7 @@ a.plain:hover{color:var(--gold)}
     repeating-linear-gradient(0deg,  rgba(242,230,200,.030) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.45)        0 2px, transparent 2px 55px);
 }
-.z-root, .xs-band.root, .xl-col.root, .sty-band.root, .card.fa.root, .zn.root, .core1.root {
+.z-root, .xs-band.root, .xl-col.root, .sty-band.root, .wz.root, .card.fa.root, .zn.root, .core1.root {
   --zbg:#0F1A0C; --zln:#26381D;
   --zfl:#16250F; --zfl2:#254019;
   --zink:#7FA866;
@@ -481,7 +481,7 @@ a.plain:hover{color:var(--gold)}
     repeating-linear-gradient(90deg, rgba(216,240,192,.055) 0 2px, transparent 2px 18px),
     repeating-linear-gradient(84deg, rgba(0,0,0,.40)        0 1px, transparent 1px 31px);
 }
-.z-crys, .xs-band.crys, .xl-col.crys, .sty-band.crys, .card.fa.crys, .zn.crys, .core1.crys {
+.z-crys, .xs-band.crys, .xl-col.crys, .sty-band.crys, .wz.crys, .card.fa.crys, .zn.crys, .core1.crys {
   --zbg:#0C1720; --zln:#173445;
   --zfl:#12222E; --zfl2:#1D3A4C;
   --zink:#5FA8C7;
@@ -490,7 +490,7 @@ a.plain:hover{color:var(--gold)}
     repeating-linear-gradient(58deg,  rgba(216,242,250,.045) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(-58deg, rgba(0,0,0,.40)        0 1px, transparent 1px 33px);
 }
-.z-echo, .xs-band.echo, .xl-col.echo, .sty-band.echo, .card.fa.echo, .zn.echo, .core1.echo {
+.z-echo, .xs-band.echo, .xl-col.echo, .sty-band.echo, .wz.echo, .card.fa.echo, .zn.echo, .core1.echo {
   --zbg:#131024; --zln:#2E2750;
   --zfl:#1B1733; --zfl2:#2A2450;
   --zink:#8C7BC7;
@@ -499,7 +499,7 @@ a.plain:hover{color:var(--gold)}
     repeating-linear-gradient(0deg,  rgba(228,220,250,.035) 0 2px, transparent 2px 33px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.50)        0 2px, transparent 2px 33px);
 }
-.z-rust, .xs-band.rust, .xl-col.rust, .sty-band.rust, .card.fa.rust, .zn.rust, .core1.rust {
+.z-rust, .xs-band.rust, .xl-col.rust, .sty-band.rust, .wz.rust, .card.fa.rust, .zn.rust, .core1.rust {
   --zbg:#1A1310; --zln:#3E2A1C;
   --zfl:#251A14; --zfl2:#3E2A1C;
   --zink:#B07A4A;
@@ -509,7 +509,7 @@ a.plain:hover{color:var(--gold)}
                                      rgba(0,0,0,.42)       13px 15px, transparent 15px 26px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.30)        0 2px, transparent 2px 44px);
 }
-.z-fire, .xs-band.fire, .xl-col.fire, .sty-band.fire, .card.fa.fire, .zn.fire, .core1.fire {
+.z-fire, .xs-band.fire, .xl-col.fire, .sty-band.fire, .wz.fire, .card.fa.fire, .zn.fire, .core1.fire {
   --zbg:#1C0E09; --zln:#4A2013;
   --zfl:#2A1510; --zfl2:#43201A;
   --zink:#D9603F;
@@ -1100,6 +1100,10 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .scn-hud em{
   display:block;font-style:normal;font-size:22px;line-height:1.2;margin-bottom:2px
 }
+/* 角落那一塊裡的每一段各自一行。本來 span 是 inline，所以 zn-note 掛的
+   max-width 與 margin-left:auto 兩個都不生效——「走完 4 個任務」後面
+   直接接著地層的說明，接成一句話。說明短的時候看不出來。 */
+.scn-hud span{display:block}
 .scn-hud .zn-note{max-width:198px;margin-left:auto;line-height:1.7;margin-top:3px}
 .scn .scn-hud em{color:var(--zink,#E9B341)}
 
@@ -1586,8 +1590,11 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   position:absolute;top:0;bottom:0;z-index:0;
   left:calc(var(--nm) + var(--i) * var(--cw));
   width:var(--cw);
-  background-color:var(--zbg);background-image:var(--ztex);
-  opacity:.34
+  background-color:#100D0B;
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(242,230,200,.022) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.40)        0 2px, transparent 2px 55px);
+  opacity:.9
 }
 /* 行與行之間有一道界線。地質圖上那條線就是這樣畫的。 */
 .xl-col::before{
@@ -3483,6 +3490,30 @@ button.ac:active{transform:translateY(1px)}
   border-top:3px solid var(--frame);text-wrap:balance
 }
 
+/* ---------- 這一趟去哪裡 ----------
+
+   六個地方，一格一個，用那個地方自己的底色與紋理——他挑的是一個
+   地方，不是一個選項，所以那一格要長得像那個地方。
+
+   右邊那幾隻是住在裡面的。他在選地方，也是在選這一趟要遇到誰。 */
+.wsix{display:grid;gap:11px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));margin:0 0 22px}
+.wz{
+  display:flex;align-items:center;gap:14px;padding:18px;
+  border:0;cursor:pointer;font:inherit;color:inherit;text-align:left;
+  background-color:var(--zbg);background-image:var(--ztex);
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--frame);
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),
+    calc(100% - 11px) 100%,0 100%,0 11px)
+}
+.wz:hover{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink)}
+.wz:active{transform:translate(2px,2px)}
+.wz:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wz-t{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.wz-t b{font-size:22px;font-weight:400;color:var(--zink);line-height:1.3}
+.wz-t em{font-size:22px;font-style:normal;color:var(--dim);line-height:1.5}
+.wz-f{display:flex;gap:5px;flex:0 0 auto;align-self:flex-start;opacity:.8}
+.wz-f .px{width:33px;height:33px}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -5100,9 +5131,15 @@ function faunaByName(n) {
    本來沒有這個參數，於是每一趟都在**現在**這一層裡挑：一條帶子上
    八格全部從同四隻裡挑，撞在一起是常態；而且一趟走完之後牠還會
    跟著你變深而改變——那一趟盡頭擋路的那一隻不該在事後被換掉。 */
-function mobFor(msId, teamId, depth) {
-  var d = depth == null ? depthOf(teamId) : depth;
-  var f = faunaOf(strataAt(d, teamId).key);
+/* 擋在盡頭的那一隻。從那一趟的地方來——他選了地方，
+   就等於選了這一趟要遇到誰，而圖鑑記的就是遇過誰。 */
+function mobFor(msId, teamId, depth, zone) {
+  var zk = zone;
+  if (!zk) {
+    var d = depth == null ? depthOf(teamId) : depth;
+    zk = strataAt(d, teamId).key;
+  }
+  var f = faunaOf(zk);
   if (!f.length) f = allFauna();
   return f[hash(msId + '|' + teamId) % f.length];
 }
@@ -6541,6 +6578,11 @@ function ecology(classId, mentorId) {
       /* 疊起來的那幾塊。sealed 是老師收下的，pending 是交出去了還在他那邊。
          走完但沒被收下的那一趟看得到，但它是虛的——那一塊還沒站住。 */
       sealed: sealedDepth(t.teamId),
+      /* 他們走過的路線：一趟一個地方，照被收下的順序。
+         班級地下城上每一塊的顏色讀這一份——那是他們的決定留下的痕跡。 */
+      route: where('Runs', function (r) {
+        return r.teamId === t.teamId && (r.state === 'approved' || r.state === 'done');
+      }).map(function (r) { return zoneOfRun(r, t.teamId).key; }),
       pending: where('Runs', function (r) {
         return r.teamId === t.teamId &&
           (r.state === 'submitted' || r.state === 'back' || r.state === 'judged');
@@ -6569,7 +6611,7 @@ function planDays(plan) {
   return n;
 }
 
-function actCommit(teamId, msId, est, flags, plan) {
+function actCommit(teamId, msId, est, flags, plan, zone) {
   var r = runOf(teamId, msId);
   if (r) return r;
   var pl = (plan || []).filter(function (x) { return x && x.n; })
@@ -6586,17 +6628,21 @@ function actCommit(teamId, msId, est, flags, plan) {
     est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
     plan: pl,
     flags: flags || [],
+    /* 這一趟他選的地方。不進判定——判定只讀承諾幾天與實際幾天。
+       它決定的是：廊道長什麼樣、擋路的是誰、班級地下城上那一塊什麼顏色。 */
+    zone: (STRATA.filter(function (z) { return z.key === zone; })[0] || {}).key || '',
     committedAt: now(),
     pushes: 0, overs: [], steps: [], keep: null, stamp: null,
     /* 擋在廊道盡頭的是哪一隻，承諾那一刻就決定並存下來。
        本來是每次要用再算一次，而算的時候看的是「現在」的深度——
        所以走深了之後回頭看，過去每一趟遇到的那一隻會跟著變。
        那是假的紀錄。 */
-    mob: mobFor(msId, teamId).n
+    mob: mobFor(msId, teamId, null, zone).n
   };
   DB.Runs.push(r);
   save();
   logEvent('commit', { teamId: teamId, runId: r.runId, msId: msId, est: r.est,
+    zone: r.zone,
     flags: (r.flags || []).map(function (i) { return stepName(r.runId, i); }).join('、') });
   return r;
 }
@@ -6810,6 +6856,32 @@ function statusOf(teamId) {
 
 /* 這一趟擋路的是哪一隻。戰鬥的時候存下來了就用存的——
    那才是他真的打過的那一隻。舊資料沒存就當場算一次。 */
+/* 這一趟在哪一個地方。
+
+   他自己選的那一個；舊資料沒有選過，就退回原本的算法（第幾趟＝第幾層）。
+   全站只有這一支決定「這一趟是什麼顏色」，所以廊道、班級地下城、
+   圖鑑三個地方永遠說同一件事。 */
+function zoneOfRun(r, teamId) {
+  if (r && r.zone) {
+    var z = STRATA.filter(function (x) { return x.key === r.zone; })[0];
+    if (z) return z;
+  }
+  return strataAt(r ? runDepth(r) : depthOf(teamId), teamId || (r && r.teamId));
+}
+
+/* 現在在哪一個地方。
+
+   有正在跑的那一趟，就是他為那一趟選的地方；沒有的話（還沒承諾、
+   剛交完、在等老師）用現在的深度算，那是「還沒出發」的畫面。
+
+   全站問「現在在哪」都走這一支，不然廊道說熔火深淵、右上角說水晶迴廊。 */
+function zoneNow(teamId) {
+  var r = where('Runs', function (x) {
+    return x.teamId === teamId && x.state === 'running';
+  })[0];
+  return r ? zoneOfRun(r, teamId) : strataAt(depthOf(teamId), teamId);
+}
+
 function mobOfRun(run) {
   if (!run) return null;
   if (run.mob) {
@@ -8171,7 +8243,7 @@ function topBar() {
      它讀起來是角色身上的東西。 */
   var t = myTeam();
   var st = stallOf(t.teamId);
-  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var z = zoneNow(t.teamId);
   return '<div class="top hud z-' + z.key + '">' +
     pxTag(signOf(t.teamId).px, signOf(t.teamId).pal, 'hud-sign') +
     '<span class="who">' + esc(t.name) + '</span>' +
@@ -8451,10 +8523,18 @@ var ACTS = {
     say('上來了。');
   },
 
-  commit: function (msId) {
+  /* 說完幾天，去選地方。同一頁的第二個階段——不能用 go()，
+     它會清掉 DRAFT，而他剛拆完的細項就在上面。 */
+  towhere: function () { DRAFT.at = 'where'; window.scrollTo(0, 0); render(); },
+  toplan: function () { DRAFT.at = ''; window.scrollTo(0, 0); render(); },
+
+  /* 出發。參數是「任務|地方」。 */
+  commit: function (arg) {
     var t = myTeam();
+    var p = String(arg).split('|');
+    var msId = p[0], zone = p[1] || '';
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT),
-      DRAFT.flags || [], DRAFT.plan || []);
+      DRAFT.flags || [], DRAFT.plan || [], zone);
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——
@@ -9675,6 +9755,10 @@ PAGES.commit = function () {
     : Number(draft('est', RULES.EST_DEFAULT));
   var flags = DRAFT.flags || [];
 
+  /* 兩個階段共用這一頁：先說幾天，再選去哪裡。
+     分岔放在這裡，前面那幾行（plan／est）兩邊都要用。 */
+  if (DRAFT.at === 'where') return wherePanel(t, m, est);
+
   var H = [head('自我承諾', m.title, m.note)];
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
@@ -9757,11 +9841,51 @@ PAGES.commit = function () {
   }
 
   H.push('<div class="row">');
-  H.push(btn('我承諾 ' + est + ' 天', 'commit:' + m.msId, 'big cm-go'));
+  H.push(btn('我承諾 ' + est + ' 天', 'towhere', 'big cm-go'));
   H.push(btn('回廊道', 'go:home', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
+
+/* ---------- 這一趟要去哪裡 ----------
+
+   承諾完天數，出發之前。同一頁的第二個階段，不是另一頁——go() 會清掉
+   DRAFT，而他剛拆完的細項與天數都在上面。
+
+   六個地方一直都在，誰都去得了，去過的也可以再去。選哪裡不影響任何
+   數字（判定只讀承諾幾天與實際幾天），所以這一步沒有好壞——
+   它是這個流程裡第二個純粹屬於他的決定。
+
+   每個地方住著不同的東西，所以他其實同時在選這一趟要遇到誰。 */
+function wherePanel(t, m, est) {
+  var H = [head('這一趟去哪裡', m.title, '')];
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你說了 ' + est + ' 天</div>');
+  H.push('<p class="dim">六個地方都去得了，去過的也可以再去。選哪裡不會影響判定——' +
+    '判定只看你說幾天、實際幾天。</p>');
+  H.push('</div>');
+
+  H.push('<div class="wsix">');
+  STRATA.forEach(function (z) {
+    var f = faunaOf(z.key);
+    H.push('<button class="wz ' + z.key + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'commit:' + m.msId + '|' + z.key })) + '\'>');
+    H.push('<span class="wz-t"><b>' + esc(z.name) + '</b>');
+    H.push('<em>' + esc(z.note) + '</em></span>');
+    /* 住在這裡的那幾隻。他在選地方，也是在選這一趟要遇到誰。 */
+    if (f.length) {
+      H.push('<span class="wz-f">');
+      f.slice(0, 4).forEach(function (c) { H.push(pxTag(c.px, z.pal, '')); });
+      H.push('</span>');
+    }
+    H.push('</button>');
+  });
+  H.push('</div>');
+
+  H.push(btn('回去改天數', 'toplan', 'ghost'));
+  return H.join('');
+}
 
 /* ---------- 交出去 ---------- */
 /* 交出去那一頁退休了：兩問搬進戰鬥（見 67-battle.js），
@@ -9781,7 +9905,9 @@ function estWalk(t, m, est) {
 /* 只有這一段會跟著滑桿變。拆出來是為了拖的時候只換這一塊，
    不要動到滑桿本身——動到它，拖曳就斷了。 */
 function estWalkIn(t, m, est) {
-  var z = strataAt(depthOf(t.teamId), t.teamId);
+  /* 這一條是承諾頁上的預覽，那時候還沒選地方——用現在的。
+     選完之後真正的廊道會換成他挑的那一個。 */
+  var z = zoneNow(t.teamId);
   var mob = mobFor(m.msId, t.teamId);
   /* 老師排的那一天，換算成還有幾天，落在第幾格。
 
@@ -10175,7 +10301,10 @@ function scene(t, row, st, kind) {
   var W = ENT + draw * SCN.TILE + SCN.END;
   /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
      世界觀不寫在說明裡，寫在牆上。 */
-  var zone = strataAt(depthOf(t.teamId), t.teamId);
+  /* 這一趟他自己選的地方。沒有正在跑的那一趟就用現在的深度算，
+     那是「還沒出發」的畫面。 */
+  var zone = run && run.runId ? zoneOfRun(run, t.teamId)
+    : strataAt(depthOf(t.teamId), t.teamId);
 
   /* 三個狀態掛在最外層。裡面每一層（遠牆、流線、火、角色）都靠
      它決定要不要動——一個地方決定，不會有兩層各自算出不同答案。 */
@@ -10572,7 +10701,8 @@ function sceneMouth(t, next, ENT, resting) {
    正是這個系統唯一要讓人看到的事。 */
 function sceneMob(t, row, prog, est, ENT) {
   var mob = mobOfRun(row.run);
-  var pal = strataAt(depthOf(t.teamId), t.teamId).pal;
+  /* 牠的配色跟那一趟的地方一致——牠本來就是從那裡來的。 */
+  var pal = zoneOfRun(row.run, t.teamId).pal;
   var x = (ENT || SCN.ENT) + est * SCN.TILE + 33;
   /* 這裡本來還掛一塊寫著任務名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
@@ -10931,9 +11061,14 @@ function osTick() {
    留下來是要有人看過的事（見 40-db.js 的 sealedDepth）。
    走完但還沒被收下的那一趟看得到，但它是虛的：那一塊還沒站住。
 
-   石頭的顏色只跟「第幾塊」有關，跟哪一組無關（strataAt 吃 classId）。
-   一旦讓某一組有自己的顏色，這張圖就開始比誰的比較漂亮。
-   六層沒有先後、順序一個班洗一次，所以顏色不帶任何「你該到哪」。 */
+   一塊的顏色是「那一趟他們去了哪裡」。
+
+   本來一整行同一個顏色，因為那時候第幾層是算出來的——同一個深度
+   全班一定在同一層，所以顏色屬於欄位不屬於哪一組。地方改成他們
+   自己選之後那條規則不成立了：一條看下來是那一組走過的路線。
+
+   顏色因此變成他們的了，但它還是不能比較誰漂亮——六個地方沒有先後、
+   沒有難易，去哪裡不影響任何判定。它是決定的痕跡，不是成績。 */
 var XL = {
   NAME: 176,   /* 左邊：這是哪一組 */
   MIN: 55,     /* 一塊最窄。窄到這裡就不再收，改成橫著捲 */
@@ -10966,10 +11101,14 @@ function xsScene(rows, meId, classId) {
     'px;max-width:' + (XL.NAME + cols * XL.MAX) + 'px;height:' + H + 'px">'];
 
   /* ── 每一直行的石頭 ──
-     整張圖的底。同一行不管哪一組，石頭都一樣，因為那是同一片地質。 */
+
+     整張圖的底，一片中性的岩壁。本來每一直行是一個地層——那是
+     「第幾層由深度算出來」那一版留下的：同一個深度全班一定同一層。
+
+     地方改成他們自己選之後，「第幾行＝哪一層」就不成立了。
+     顏色全部留給疊上去的那幾塊——那才是有人做過決定的地方。 */
   for (var n = 0; n < cols; n++) {
-    var zn = strataAt(n, classId);
-    out.push('<div class="xl-col ' + zn.key + '" style="--i:' + n + '"></div>');
+    out.push('<div class="xl-col" style="--i:' + n + '"></div>');
   }
 
   /* ── 最上面那條尺 ──
@@ -10981,7 +11120,7 @@ function xsScene(rows, meId, classId) {
       '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
   }
 
-  /* ── 沒挖到的岩石裡住著東西 ── */
+  /* ── 還沒去過的地方住著東西 ── */
   out.push(xlFauna(rows, cols, classId));
 
   /* ── 每一組一條 ── */
@@ -11011,6 +11150,8 @@ function xlFauna(rows, cols, classId) {
     for (var n = from; n < cols; n++) {
       var h = hash('f/' + classId + '/' + i + '/' + n);
       if (h % 100 < 68) continue;
+      /* 前面那幾隻用班級的路線挑——它不是「那裡是哪一層」，
+         只是讓每一格住的東西固定不亂跳。 */
       var z = strataAt(n, classId);
       var c = faunaAt(z.key, i * 7 + n);
       if (!c) continue;
@@ -11059,10 +11200,19 @@ function xlLane(r, i, cols, classId, mine) {
   H.push('<button class="xl-stack" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'team:' + r.teamId })) + '\' ' +
     'style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
+  /* 顏色是「那一趟他們去了哪裡」，不是「第幾行」。
+
+     本來一整行同一個顏色，因為那時候第幾層是算出來的——同一個深度
+     全班一定在同一層。地方改成他們自己選之後那條規則就不成立了：
+     一條看下來是那一組走過的路線。
+
+     還在老師那邊的那一塊還沒有路線可讀（route 只收被收下的），
+     所以它用最後一個去過的地方，沒有就用第一個地層。 */
+  var route = r.route || [];
   for (var k = 0; k < n; k++) {
-    var z = strataAt(k, classId);
     var wait = (k === n - 1) && r.pending;
-    H.push('<i class="xl-b ' + z.key + (wait ? ' wait' : ' on') +
+    var zk = route[k] || route[route.length - 1] || strataAt(0, classId).key;
+    H.push('<i class="xl-b ' + zk + (wait ? ' wait' : ' on') +
       '" style="--k:' + k + '"></i>');
   }
   H.push('</button>');
@@ -11383,7 +11533,7 @@ var TASK_STATE = {
 
 PAGES.codex = function () {
   var t = myTeam();
-  var here = strataAt(depthOf(t.teamId), t.teamId);
+  var here = zoneNow(t.teamId);
   var tab = DRAFT.cx || here.key;
   var met = metMobs(t.teamId);
   /* 在地底下掀開遇到的那幾隻也算遇過。foundMobs 寫好了但一直沒接上，
@@ -11845,7 +11995,7 @@ function digTeamCard(classId) {
   if (!DRAFT.dt) return '';
   var t = teamOf(DRAFT.dt);
   if (!t) return '';
-  var z = strataAt(depthOf(t.teamId), t.teamId);
+  var z = zoneNow(t.teamId);
   var H = ['<div class="card dtcard fa ' + z.key + '">'];
   H.push('<div class="radar-head">');
   H.push(pxTag(signOf(t.teamId).px, signOf(t.teamId).pal, 'sign-s'));
@@ -12015,7 +12165,9 @@ PAGES.battle = function () {
   if (!r) return '<div class="card">找不到。</div>';
   var t = myTeam();
   var mob = mobOfRun(r);
-  var zone = strataAt(depthOf(t.teamId), t.teamId);
+  /* 那一場打在那一趟去的地方，不是「現在」在哪——回頭看一場舊的，
+     背景要是當時那個地方。 */
+  var zone = zoneOfRun(r, t.teamId);
   var est = r.est || 1;
   var ph = btPhase(r);
 
@@ -12469,7 +12621,8 @@ var STORY = [
     title: '你在一座地下城裡',
     lines: [
       '這是一個專案。有多深，沒有人先知道。',
-      '六層是地質，不是關卡——全班在同一片岩層底下。'
+      '六個地方一直都在。每一趟你自己挑要去哪裡，去過的也可以再去。',
+      '你可以一直穿梭，但出不去——門只有一扇，而且要老師開。'
     ]
   },
   {
@@ -12477,7 +12630,7 @@ var STORY = [
     eyebrow: '第二頁',
     title: '這裡只問你一件事',
     lines: [
-      '出發前先說：這件事你要走幾天。',
+      '出發前先說：這件事你要走幾天，然後挑一個地方。',
       '回來的時候只比兩個數字——你說的，跟實際的。',
       '做得好不好由老師說。'
     ],

@@ -72,7 +72,10 @@ function scene(t, row, st, kind) {
   var W = ENT + draw * SCN.TILE + SCN.END;
   /* 走到多深，牆、地板、天花板、地上的東西、擋路的那一隻，全部跟著換。
      世界觀不寫在說明裡，寫在牆上。 */
-  var zone = strataAt(depthOf(t.teamId), t.teamId);
+  /* 這一趟他自己選的地方。沒有正在跑的那一趟就用現在的深度算，
+     那是「還沒出發」的畫面。 */
+  var zone = run && run.runId ? zoneOfRun(run, t.teamId)
+    : strataAt(depthOf(t.teamId), t.teamId);
 
   /* 三個狀態掛在最外層。裡面每一層（遠牆、流線、火、角色）都靠
      它決定要不要動——一個地方決定，不會有兩層各自算出不同答案。 */
@@ -469,7 +472,8 @@ function sceneMouth(t, next, ENT, resting) {
    正是這個系統唯一要讓人看到的事。 */
 function sceneMob(t, row, prog, est, ENT) {
   var mob = mobOfRun(row.run);
-  var pal = strataAt(depthOf(t.teamId), t.teamId).pal;
+  /* 牠的配色跟那一趟的地方一致——牠本來就是從那裡來的。 */
+  var pal = zoneOfRun(row.run, t.teamId).pal;
   var x = (ENT || SCN.ENT) + est * SCN.TILE + 33;
   /* 這裡本來還掛一塊寫著任務名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，

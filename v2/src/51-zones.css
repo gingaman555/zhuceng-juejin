@@ -16,7 +16,7 @@
      rust 橫的     鏽掉的鐵板是一層一層疊的
      fire 流的     底下有東西在動 */
 
-.z-wild, .xs-band.wild, .xl-col.wild, .sty-band.wild, .card.fa.wild, .zn.wild, .core1.wild {
+.z-wild, .xs-band.wild, .xl-col.wild, .sty-band.wild, .wz.wild, .card.fa.wild, .zn.wild, .core1.wild {
   --zbg:#171208; --zln:#3A2E12;
   --zfl:#241B0C; --zfl2:#3B2D11;
   --zink:#C9A227;
@@ -25,7 +25,7 @@
     repeating-linear-gradient(0deg,  rgba(242,230,200,.030) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.45)        0 2px, transparent 2px 55px);
 }
-.z-root, .xs-band.root, .xl-col.root, .sty-band.root, .card.fa.root, .zn.root, .core1.root {
+.z-root, .xs-band.root, .xl-col.root, .sty-band.root, .wz.root, .card.fa.root, .zn.root, .core1.root {
   --zbg:#0F1A0C; --zln:#26381D;
   --zfl:#16250F; --zfl2:#254019;
   --zink:#7FA866;
@@ -34,7 +34,7 @@
     repeating-linear-gradient(90deg, rgba(216,240,192,.055) 0 2px, transparent 2px 18px),
     repeating-linear-gradient(84deg, rgba(0,0,0,.40)        0 1px, transparent 1px 31px);
 }
-.z-crys, .xs-band.crys, .xl-col.crys, .sty-band.crys, .card.fa.crys, .zn.crys, .core1.crys {
+.z-crys, .xs-band.crys, .xl-col.crys, .sty-band.crys, .wz.crys, .card.fa.crys, .zn.crys, .core1.crys {
   --zbg:#0C1720; --zln:#173445;
   --zfl:#12222E; --zfl2:#1D3A4C;
   --zink:#5FA8C7;
@@ -43,7 +43,7 @@
     repeating-linear-gradient(58deg,  rgba(216,242,250,.045) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(-58deg, rgba(0,0,0,.40)        0 1px, transparent 1px 33px);
 }
-.z-echo, .xs-band.echo, .xl-col.echo, .sty-band.echo, .card.fa.echo, .zn.echo, .core1.echo {
+.z-echo, .xs-band.echo, .xl-col.echo, .sty-band.echo, .wz.echo, .card.fa.echo, .zn.echo, .core1.echo {
   --zbg:#131024; --zln:#2E2750;
   --zfl:#1B1733; --zfl2:#2A2450;
   --zink:#8C7BC7;
@@ -52,7 +52,7 @@
     repeating-linear-gradient(0deg,  rgba(228,220,250,.035) 0 2px, transparent 2px 33px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.50)        0 2px, transparent 2px 33px);
 }
-.z-rust, .xs-band.rust, .xl-col.rust, .sty-band.rust, .card.fa.rust, .zn.rust, .core1.rust {
+.z-rust, .xs-band.rust, .xl-col.rust, .sty-band.rust, .wz.rust, .card.fa.rust, .zn.rust, .core1.rust {
   --zbg:#1A1310; --zln:#3E2A1C;
   --zfl:#251A14; --zfl2:#3E2A1C;
   --zink:#B07A4A;
@@ -62,7 +62,7 @@
                                      rgba(0,0,0,.42)       13px 15px, transparent 15px 26px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.30)        0 2px, transparent 2px 44px);
 }
-.z-fire, .xs-band.fire, .xl-col.fire, .sty-band.fire, .card.fa.fire, .zn.fire, .core1.fire {
+.z-fire, .xs-band.fire, .xl-col.fire, .sty-band.fire, .wz.fire, .card.fa.fire, .zn.fire, .core1.fire {
   --zbg:#1C0E09; --zln:#4A2013;
   --zfl:#2A1510; --zfl2:#43201A;
   --zink:#D9603F;

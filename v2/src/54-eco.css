@@ -30,8 +30,11 @@
   position:absolute;top:0;bottom:0;z-index:0;
   left:calc(var(--nm) + var(--i) * var(--cw));
   width:var(--cw);
-  background-color:var(--zbg);background-image:var(--ztex);
-  opacity:.34
+  background-color:#100D0B;
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(242,230,200,.022) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.40)        0 2px, transparent 2px 55px);
+  opacity:.9
 }
 /* 行與行之間有一道界線。地質圖上那條線就是這樣畫的。 */
 .xl-col::before{

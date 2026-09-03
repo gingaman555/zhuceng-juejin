@@ -167,9 +167,15 @@ function faunaByName(n) {
    本來沒有這個參數，於是每一趟都在**現在**這一層裡挑：一條帶子上
    八格全部從同四隻裡挑，撞在一起是常態；而且一趟走完之後牠還會
    跟著你變深而改變——那一趟盡頭擋路的那一隻不該在事後被換掉。 */
-function mobFor(msId, teamId, depth) {
-  var d = depth == null ? depthOf(teamId) : depth;
-  var f = faunaOf(strataAt(d, teamId).key);
+/* 擋在盡頭的那一隻。從那一趟的地方來——他選了地方，
+   就等於選了這一趟要遇到誰，而圖鑑記的就是遇過誰。 */
+function mobFor(msId, teamId, depth, zone) {
+  var zk = zone;
+  if (!zk) {
+    var d = depth == null ? depthOf(teamId) : depth;
+    zk = strataAt(d, teamId).key;
+  }
+  var f = faunaOf(zk);
   if (!f.length) f = allFauna();
   return f[hash(msId + '|' + teamId) % f.length];
 }

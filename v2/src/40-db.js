@@ -279,6 +279,11 @@ function ecology(classId, mentorId) {
       /* 疊起來的那幾塊。sealed 是老師收下的，pending 是交出去了還在他那邊。
          走完但沒被收下的那一趟看得到，但它是虛的——那一塊還沒站住。 */
       sealed: sealedDepth(t.teamId),
+      /* 他們走過的路線：一趟一個地方，照被收下的順序。
+         班級地下城上每一塊的顏色讀這一份——那是他們的決定留下的痕跡。 */
+      route: where('Runs', function (r) {
+        return r.teamId === t.teamId && (r.state === 'approved' || r.state === 'done');
+      }).map(function (r) { return zoneOfRun(r, t.teamId).key; }),
       pending: where('Runs', function (r) {
         return r.teamId === t.teamId &&
           (r.state === 'submitted' || r.state === 'back' || r.state === 'judged');
@@ -307,7 +312,7 @@ function planDays(plan) {
   return n;
 }
 
-function actCommit(teamId, msId, est, flags, plan) {
+function actCommit(teamId, msId, est, flags, plan, zone) {
   var r = runOf(teamId, msId);
   if (r) return r;
   var pl = (plan || []).filter(function (x) { return x && x.n; })
@@ -324,17 +329,21 @@ function actCommit(teamId, msId, est, flags, plan) {
     est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
     plan: pl,
     flags: flags || [],
+    /* 這一趟他選的地方。不進判定——判定只讀承諾幾天與實際幾天。
+       它決定的是：廊道長什麼樣、擋路的是誰、班級地下城上那一塊什麼顏色。 */
+    zone: (STRATA.filter(function (z) { return z.key === zone; })[0] || {}).key || '',
     committedAt: now(),
     pushes: 0, overs: [], steps: [], keep: null, stamp: null,
     /* 擋在廊道盡頭的是哪一隻，承諾那一刻就決定並存下來。
        本來是每次要用再算一次，而算的時候看的是「現在」的深度——
        所以走深了之後回頭看，過去每一趟遇到的那一隻會跟著變。
        那是假的紀錄。 */
-    mob: mobFor(msId, teamId).n
+    mob: mobFor(msId, teamId, null, zone).n
   };
   DB.Runs.push(r);
   save();
   logEvent('commit', { teamId: teamId, runId: r.runId, msId: msId, est: r.est,
+    zone: r.zone,
     flags: (r.flags || []).map(function (i) { return stepName(r.runId, i); }).join('、') });
   return r;
 }
@@ -548,6 +557,32 @@ function statusOf(teamId) {
 
 /* 這一趟擋路的是哪一隻。戰鬥的時候存下來了就用存的——
    那才是他真的打過的那一隻。舊資料沒存就當場算一次。 */
+/* 這一趟在哪一個地方。
+
+   他自己選的那一個；舊資料沒有選過，就退回原本的算法（第幾趟＝第幾層）。
+   全站只有這一支決定「這一趟是什麼顏色」，所以廊道、班級地下城、
+   圖鑑三個地方永遠說同一件事。 */
+function zoneOfRun(r, teamId) {
+  if (r && r.zone) {
+    var z = STRATA.filter(function (x) { return x.key === r.zone; })[0];
+    if (z) return z;
+  }
+  return strataAt(r ? runDepth(r) : depthOf(teamId), teamId || (r && r.teamId));
+}
+
+/* 現在在哪一個地方。
+
+   有正在跑的那一趟，就是他為那一趟選的地方；沒有的話（還沒承諾、
+   剛交完、在等老師）用現在的深度算，那是「還沒出發」的畫面。
+
+   全站問「現在在哪」都走這一支，不然廊道說熔火深淵、右上角說水晶迴廊。 */
+function zoneNow(teamId) {
+  var r = where('Runs', function (x) {
+    return x.teamId === teamId && x.state === 'running';
+  })[0];
+  return r ? zoneOfRun(r, teamId) : strataAt(depthOf(teamId), teamId);
+}
+
 function mobOfRun(run) {
   if (!run) return null;
   if (run.mob) {
