@@ -10041,7 +10041,7 @@ function stepRow(runId) {
 /* 這一趟現在是什麼狀態。一個短標籤，不是一句解釋。 */
 function taskTag(next) {
   return ({
-    name: '第一件事', commit: '新的', doing: '正在做',
+    name: '第一件事', commit: '新的任務', doing: '正在做',
     stamped: '結果出來了', review: '在老師那邊', back: '退回來了',
     waitexit: '出口', left: '地面', idle: '等老師派'
   })[next.kind] || '';
