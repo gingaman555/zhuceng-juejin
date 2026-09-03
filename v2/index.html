@@ -16,8 +16,16 @@
    所以整份只有 11 / 22 / 33 / 44 / 55 / 66 六級，沒有中間值。 */
 
 :root{
-  --bg:#0B0A09; --panel:#14110D; --panel2:#1A1611; --sunk:#0E0C0A;
-  --line:#2E2822; --line2:#443B31;
+  /* 石頭是冷的，光是暖的。
+
+     本來整套中性色都是暖黑（#0B0A09 那一族），配上羊皮紙色的字跟金色，
+     整體讀起來是「深色主題的文件」不是地下城——因為畫面上沒有任何冷色，
+     所以也就沒有「冷的地方裡有一團暖光」那件事，而那正是地下城的情緒。
+
+     底、面、凹槽、線全部換成冷的藍灰（亮度不動，只移色相）。
+     暖色留給真正發光的東西：字、金色、框、火把、地層裡的暖色那幾層。 */
+  --bg:#090B0F; --panel:#101319; --panel2:#161B23; --sunk:#0B0E13;
+  --line:#27303B; --line2:#3A4552;
   /* 視窗的框。--line2 在 --panel 上只有 2:1，畫出來的框讀不到——
      而框要讀得到才算框。這一階是「看得見但不搶字」。 */
   --frame:#7A6A55;
@@ -108,7 +116,7 @@ img{display:block}
 /* 試用列：只有原型有。真的上線沒有這一條。 */
 .demo{
   display:flex;align-items:center;gap:11px;padding:11px 22px;flex-wrap:wrap;
-  background:#100D0A;border-bottom:1px solid var(--line);font-size:22px;color:var(--mute)
+  background:#0E1116;border-bottom:1px solid var(--line);font-size:22px;color:var(--mute)
 }
 .demo b{color:var(--dim);font-weight:400}
 
@@ -537,11 +545,17 @@ a.plain:hover{color:var(--gold)}
 
 :root{
   --px:3px;
-  /* 你要寫字的地方。冷色，因為暖色都被別的意思占走了：
-     金＝可以按、綠＝過了、紅＝超過。 */
-  --write:#5FA8C7;
-  --write-bg:#0A1218;
-  --write-dim:#9DB4C0;
+  /* 你要寫字的地方。
+
+     整套中性色從暖黑換成冷石之後，這一組本來的做法失效了——它靠的是
+     「冷的框放在暖的面上」，而現在面也是冷的，那個框就融回去了。
+
+     改成靠深淺跟亮度分：凹槽壓到比任何一塊面都深（幾乎是黑的），
+     左邊那一道邊拉亮成一條會發光的線。深的洞加一道亮邊，
+     那是「這裡是空的，等你填」最直接的畫法。 */
+  --write:#7EC8E8;
+  --write-bg:#05080C;
+  --write-dim:#8FA8B6;
   --lit:rgba(255,240,214,.07);
   --lit2:rgba(255,240,214,.14);
   --shd:rgba(0,0,0,.45);
@@ -863,9 +877,16 @@ input.slider:active{transform:none}
    給它們一個共同的靜止狀態：右下角一道硬邊的影子。
    那是這一份材質語言裡「墊在上面的東西」的意思——
    墊在上面的東西才按得下去。 */
-/* 班級地下城那三顆（名牌、那一疊、角色）自己訂位置——這一條的 relative
+/* 自己訂位置的那幾顆，這一條不要碰：班級地下城的名牌／那一疊／角色，
+   跟洞口的營火／石片架／出口的光／招牌。
+
+   洞口那四顆是被這一條咬到才發現的：它們都是 [data-act]，所以
+   position:absolute 被蓋成 relative，於是照文件流排在洞口頂端——
+   營火因此一直浮在角色頭上 95px 的半空中，而它本來該在他旁邊的地上。
+
+   這一條的 relative
    會把它們的 absolute 蓋掉，而且它的 :not() 鏈權重比一個 class 高得多。 */
-[data-act]:not(.btn):not(.tag):not(.seg):not(.nav a):not(input):not(select):not(.xl-name):not(.xl-stack):not(.xl-hero),
+[data-act]:not(.btn):not(.tag):not(.seg):not(.nav a):not(input):not(select):not(.xl-name):not(.xl-stack):not(.xl-hero):not(.mfire):not(.mrack):not(.shaft):not(.hang),
 [data-go]:not(.nav a){
   position:relative
 }
@@ -1137,8 +1158,10 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
 /* ---------- 洞口那幾樣一直在的東西 ----------
    沒觸發過的東西等於不存在。所以營火與岩心架一直在那裡，只是沒點著。 */
+/* 站在地板上，不是埋進去。地板高 66，所以 bottom 也是 66——
+   本來是 44，火的下緣因此沉在地板裡 22px。 */
 .mouth .mfire{
-  position:absolute;left:11px;bottom:44px;width:44px;height:44px;
+  position:absolute;left:11px;bottom:66px;width:44px;height:44px;
   padding:0;border:none;background:none;cursor:pointer;opacity:.45
 }
 .mouth .mfire .px{width:44px;height:44px}
@@ -1362,7 +1385,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   letter-spacing:.08em;white-space:nowrap;
   /* 硬邊的黑框，不是模糊的陰影。四個方向各一格。 */
   text-shadow:
-    4px 0 0 #0B0A09, -4px 0 0 #0B0A09, 0 4px 0 #0B0A09, 0 -4px 0 #0B0A09,
+    4px 0 0 #090B0F, -4px 0 0 #090B0F, 0 4px 0 #090B0F, 0 -4px 0 #090B0F,
     8px 8px 0 rgba(0,0,0,.75);
   animation:goslam 1.32s steps(3,end) 1 forwards
 }
@@ -1577,7 +1600,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
 .xsec-wrap{
   overflow-x:auto;overflow-y:hidden;margin:0 0 22px;
-  background:#070605;
+  background:#06080B;
   box-shadow:
     inset 0 3px 0 rgba(0,0,0,.7), inset 3px 0 0 rgba(0,0,0,.7),
     inset 0 -3px 0 rgba(255,240,214,.05), 0 0 0 1px #000;
@@ -1600,7 +1623,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   position:absolute;top:0;bottom:0;z-index:0;
   left:calc(var(--nm) + var(--i) * var(--cw));
   width:var(--cw);
-  background-color:#100D0B;
+  background-color:#0F1218;
   background-image:
     repeating-linear-gradient(0deg,  rgba(242,230,200,.022) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.40)        0 2px, transparent 2px 55px);
@@ -1642,7 +1665,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   position:absolute;left:0;top:0;width:var(--nm);z-index:5;
   display:flex;flex-direction:column;justify-content:center;
   padding:4px 11px;border:0;cursor:pointer;text-align:left;
-  background:#12100C;font-family:inherit;
+  background:#0F1218;font-family:inherit;
   box-shadow:inset 0 0 0 1px rgba(255,240,214,.10),3px 3px 0 rgba(0,0,0,.65)
 }
 .xl-name b{
@@ -1959,7 +1982,7 @@ button.ac:active{transform:translateY(1px)}
 .ac.rest:hover{color:var(--dim)}
 
 /* 安靜的卡：今天要做的那一張以外，其他都退一階 */
-.card.quiet{background-color:#100D0A}
+.card.quiet{background-color:#0E1116}
 .card.quiet .eyebrow{color:#4A4038}
 
 /* 唯一可以按的那一個。它接在廊道底下，讀起來是同一塊東西的一部分，
@@ -2056,7 +2079,7 @@ button.ac:active{transform:translateY(1px)}
 .cxt:active{transform:translateY(1px)}
 .cxt.on{background:var(--zbg);color:var(--zink);box-shadow:0 0 0 1px #000,
   inset 0 3px 0 var(--zink)}
-.cxt.core.on{--zbg:#1A1611;--zink:var(--gold)}
+.cxt.core.on{--zbg:#161B23;--zink:var(--gold)}
 
 /* 一層裡的那幾隻：兩到三欄，描述收成兩行，一屏塞得下 */
 /* 本來夾成兩行、第三行切掉——切掉的字等於沒寫。
@@ -2188,7 +2211,7 @@ button.ac:active{transform:translateY(1px)}
 /* ---------- 全班：一片被打通的岩層 ----------
    一格一格，往哪裡打通是自己選的。沒有名次、沒有計數、沒有排序。 */
 .dig-wrap{
-  overflow:auto;max-height:70vh;margin:0 0 22px;background:#070605;
+  overflow:auto;max-height:70vh;margin:0 0 22px;background:#06080B;
   box-shadow:inset 0 3px 0 rgba(0,0,0,.7), inset 3px 0 0 rgba(0,0,0,.7),
     inset 0 -3px 0 rgba(255,240,214,.05), 0 0 0 1px #000
 }
@@ -3422,7 +3445,7 @@ button.ac:active{transform:translateY(1px)}
    廊道上每一樣東西他都見過了。 */
 .sty-art{
   position:relative;height:308px;margin:0 0 22px;overflow:hidden;
-  background:#070605;
+  background:#06080B;
   box-shadow:inset 0 0 0 3px #000,inset 0 0 0 6px var(--frame);
   clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),
     calc(100% - 11px) 100%,0 100%,0 11px)
@@ -3442,7 +3465,7 @@ button.ac:active{transform:translateY(1px)}
 .sty-room{
   position:relative;
   background-color:var(--zbg);background-image:var(--ztex);
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.7), inset 0 0 0 4px var(--zln,#2E2822)
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.7), inset 0 0 0 4px var(--zln,#27303B)
 }
 /* 通道：一個地方通到右邊那一個。最右邊那一欄不畫。 */
 .sty-room::after{
@@ -3466,7 +3489,7 @@ button.ac:active{transform:translateY(1px)}
 .sty-door{
   flex:0 0 88px;position:relative;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:8px;
-  background:#0A0908;box-shadow:inset 3px 0 0 #000
+  background:#080A0E;box-shadow:inset 3px 0 0 #000
 }
 .sty-door i{
   display:block;width:44px;height:66px;
@@ -4543,28 +4566,47 @@ var VINE = {
 };
 
 /* ---------- 營火 ----------
-   判定失準之後角色退到這裡。溫暖、不刺眼——這是安全網，不是罰站。 */
+
+   休息的時候他坐在旁邊。三層，由下往上：石圈、交錯的兩根木頭、火焰。
+
+   本來這裡只有一團火加一條扁平的棕色橫槓，沒有柴也沒有石頭——
+   所以它讀起來是「一坨火」不是一個營火。
+
+   石頭是冷灰的，火是暖的。那個對比就是這整座地下城的顏色規則：
+   石頭沒有溫度，溫度只來自你點起來的東西。
+
+   只有火在動（三幀）。柴跟石頭不動——會跟著抖的柴是特效，不是火。 */
 var CAMPFIRE = {
-  pal: { '#': '#E9843F', o: '#8A4520', '*': '#FFD9A0', '~': '#5C4423' },
-  px: ['................', '.......*........', '......*#*.......', '.....*#*#*......',
-       '....*#*#*#*.....', '....#*###*#.....', '...*#*###*#*....', '...*#######*....',
-       '....*#####*.....', '..~~~*###*~~~...', '.~~~~~~#~~~~~~..', '..~~~~~~~~~~~...',
-       '................', '................', '................', '................'],
+  pal: {
+    '#': '#E9843F',   /* 火 */
+    '*': '#FFD9A0',   /* 火的亮心與尖端 */
+    o: '#B14A18',     /* 火的暗邊 */
+    '~': '#7A5433',   /* 木頭 */
+    W: '#A97848',     /* 木頭受光的那一面（左上） */
+    w: '#4A3018',     /* 木頭的陰影面 */
+    s: '#3E444C',     /* 石頭的暗面 */
+    S: '#6E7680',     /* 石頭受光的那一面 */
+    e: '#FFC24A'      /* 兩根木頭中間的餘燼 */
+  },
+  px: ['................', '.......*........', '......*#*.......', '......#o#.......',
+       '.....*#o#*......', '....*#o*o#*.....', '...*#oo*oo#*....', '...#o*###*o#....',
+       '...*#o***o#*....', '....o#***#o.....', '...WW~~~~WW.....', '..w~~ewe~~w.....',
+       '.Ss~~~ww~~~sS...', 'sSSs......sSSs..', '................', '................'],
   /* 火要動。三幀輪流，跟火把同一套做法——
      用 CSS 拉伸做火焰的話，那一下就會看起來像貼在像素圖上的特效。 */
   frames: [
-    ['................', '.......*........', '......*#*.......', '.....*#*#*......',
-     '....*#*#*#*.....', '....#*###*#.....', '...*#*###*#*....', '...*#######*....',
-     '....*#####*.....', '..~~~*###*~~~...', '.~~~~~~#~~~~~~..', '..~~~~~~~~~~~...',
-     '................', '................', '................', '................'],
-    ['................', '......*.........', '......*#*.......', '.....*#*#*......',
-     '.....*#*#*......', '....*#*###*.....', '....#*###*#.....', '...*#######*....',
-     '....*#####*.....', '..~~~*###*~~~...', '.~~~~~~#~~~~~~..', '..~~~~~~~~~~~...',
-     '................', '................', '................', '................'],
-    ['................', '........*.......', '.......*#*......', '......*#*#*.....',
-     '....*#*#*#*.....', '....#*###*#.....', '...*#*###*#*....', '....*#####*.....',
-     '....*#####*.....', '..~~~*###*~~~...', '.~~~~~~#~~~~~~..', '..~~~~~~~~~~~...',
-     '................', '................', '................', '................']
+    ['................', '.......*........', '......*#*.......', '......#o#.......',
+       '.....*#o#*......', '....*#o*o#*.....', '...*#oo*oo#*....', '...#o*###*o#....',
+       '...*#o***o#*....', '....o#***#o.....', '...WW~~~~WW.....', '..w~~ewe~~w.....',
+       '.Ss~~~ww~~~sS...', 'sSSs......sSSs..', '................', '................'],
+    ['................', '......*.........', '.....*#*........', '.....#o#........',
+     '....*#o#*.......', '....*#o*o#*.....', '...*#oo*oo#*....', '...#o*###*o#....',
+     '...*#o***o#*....', '....o#***#o.....', '...WW~~~~WW.....', '..w~~ewe~~w.....',
+     '.Ss~~~ww~~~sS...', 'sSSs......sSSs..', '................', '................'],
+    ['.......*........', '......*#*.......', '......#o#.......', '.......#o#......',
+     '......*#o#*.....', '....*#o*o#*.....', '...*#oo*oo#*....', '...#o*###*o#....',
+     '...*#o***o#*....', '....o#***#o.....', '...WW~~~~WW.....', '..w~~ewe~~w.....',
+     '.Ss~~~ww~~~sS...', 'sSSs......sSSs..', '................', '................']
   ]
 };
 

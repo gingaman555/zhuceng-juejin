@@ -127,7 +127,7 @@ button.ac:active{transform:translateY(1px)}
 .ac.rest:hover{color:var(--dim)}
 
 /* 安靜的卡：今天要做的那一張以外，其他都退一階 */
-.card.quiet{background-color:#100D0A}
+.card.quiet{background-color:#0E1116}
 .card.quiet .eyebrow{color:#4A4038}
 
 /* 唯一可以按的那一個。它接在廊道底下，讀起來是同一塊東西的一部分，
@@ -224,7 +224,7 @@ button.ac:active{transform:translateY(1px)}
 .cxt:active{transform:translateY(1px)}
 .cxt.on{background:var(--zbg);color:var(--zink);box-shadow:0 0 0 1px #000,
   inset 0 3px 0 var(--zink)}
-.cxt.core.on{--zbg:#1A1611;--zink:var(--gold)}
+.cxt.core.on{--zbg:#161B23;--zink:var(--gold)}
 
 /* 一層裡的那幾隻：兩到三欄，描述收成兩行，一屏塞得下 */
 /* 本來夾成兩行、第三行切掉——切掉的字等於沒寫。
@@ -356,7 +356,7 @@ button.ac:active{transform:translateY(1px)}
 /* ---------- 全班：一片被打通的岩層 ----------
    一格一格，往哪裡打通是自己選的。沒有名次、沒有計數、沒有排序。 */
 .dig-wrap{
-  overflow:auto;max-height:70vh;margin:0 0 22px;background:#070605;
+  overflow:auto;max-height:70vh;margin:0 0 22px;background:#06080B;
   box-shadow:inset 0 3px 0 rgba(0,0,0,.7), inset 3px 0 0 rgba(0,0,0,.7),
     inset 0 -3px 0 rgba(255,240,214,.05), 0 0 0 1px #000
 }
@@ -1590,7 +1590,7 @@ button.ac:active{transform:translateY(1px)}
    廊道上每一樣東西他都見過了。 */
 .sty-art{
   position:relative;height:308px;margin:0 0 22px;overflow:hidden;
-  background:#070605;
+  background:#06080B;
   box-shadow:inset 0 0 0 3px #000,inset 0 0 0 6px var(--frame);
   clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),
     calc(100% - 11px) 100%,0 100%,0 11px)
@@ -1610,7 +1610,7 @@ button.ac:active{transform:translateY(1px)}
 .sty-room{
   position:relative;
   background-color:var(--zbg);background-image:var(--ztex);
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.7), inset 0 0 0 4px var(--zln,#2E2822)
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.7), inset 0 0 0 4px var(--zln,#27303B)
 }
 /* 通道：一個地方通到右邊那一個。最右邊那一欄不畫。 */
 .sty-room::after{
@@ -1634,7 +1634,7 @@ button.ac:active{transform:translateY(1px)}
 .sty-door{
   flex:0 0 88px;position:relative;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:8px;
-  background:#0A0908;box-shadow:inset 3px 0 0 #000
+  background:#080A0E;box-shadow:inset 3px 0 0 #000
 }
 .sty-door i{
   display:block;width:44px;height:66px;

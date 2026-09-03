@@ -241,8 +241,10 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
 /* ---------- 洞口那幾樣一直在的東西 ----------
    沒觸發過的東西等於不存在。所以營火與岩心架一直在那裡，只是沒點著。 */
+/* 站在地板上，不是埋進去。地板高 66，所以 bottom 也是 66——
+   本來是 44，火的下緣因此沉在地板裡 22px。 */
 .mouth .mfire{
-  position:absolute;left:11px;bottom:44px;width:44px;height:44px;
+  position:absolute;left:11px;bottom:66px;width:44px;height:44px;
   padding:0;border:none;background:none;cursor:pointer;opacity:.45
 }
 .mouth .mfire .px{width:44px;height:44px}
@@ -466,7 +468,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   letter-spacing:.08em;white-space:nowrap;
   /* 硬邊的黑框，不是模糊的陰影。四個方向各一格。 */
   text-shadow:
-    4px 0 0 #0B0A09, -4px 0 0 #0B0A09, 0 4px 0 #0B0A09, 0 -4px 0 #0B0A09,
+    4px 0 0 #090B0F, -4px 0 0 #090B0F, 0 4px 0 #090B0F, 0 -4px 0 #090B0F,
     8px 8px 0 rgba(0,0,0,.75);
   animation:goslam 1.32s steps(3,end) 1 forwards
 }

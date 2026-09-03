@@ -16,11 +16,17 @@
 
 :root{
   --px:3px;
-  /* 你要寫字的地方。冷色，因為暖色都被別的意思占走了：
-     金＝可以按、綠＝過了、紅＝超過。 */
-  --write:#5FA8C7;
-  --write-bg:#0A1218;
-  --write-dim:#9DB4C0;
+  /* 你要寫字的地方。
+
+     整套中性色從暖黑換成冷石之後，這一組本來的做法失效了——它靠的是
+     「冷的框放在暖的面上」，而現在面也是冷的，那個框就融回去了。
+
+     改成靠深淺跟亮度分：凹槽壓到比任何一塊面都深（幾乎是黑的），
+     左邊那一道邊拉亮成一條會發光的線。深的洞加一道亮邊，
+     那是「這裡是空的，等你填」最直接的畫法。 */
+  --write:#7EC8E8;
+  --write-bg:#05080C;
+  --write-dim:#8FA8B6;
   --lit:rgba(255,240,214,.07);
   --lit2:rgba(255,240,214,.14);
   --shd:rgba(0,0,0,.45);
@@ -342,9 +348,16 @@ input.slider:active{transform:none}
    給它們一個共同的靜止狀態：右下角一道硬邊的影子。
    那是這一份材質語言裡「墊在上面的東西」的意思——
    墊在上面的東西才按得下去。 */
-/* 班級地下城那三顆（名牌、那一疊、角色）自己訂位置——這一條的 relative
+/* 自己訂位置的那幾顆，這一條不要碰：班級地下城的名牌／那一疊／角色，
+   跟洞口的營火／石片架／出口的光／招牌。
+
+   洞口那四顆是被這一條咬到才發現的：它們都是 [data-act]，所以
+   position:absolute 被蓋成 relative，於是照文件流排在洞口頂端——
+   營火因此一直浮在角色頭上 95px 的半空中，而它本來該在他旁邊的地上。
+
+   這一條的 relative
    會把它們的 absolute 蓋掉，而且它的 :not() 鏈權重比一個 class 高得多。 */
-[data-act]:not(.btn):not(.tag):not(.seg):not(.nav a):not(input):not(select):not(.xl-name):not(.xl-stack):not(.xl-hero),
+[data-act]:not(.btn):not(.tag):not(.seg):not(.nav a):not(input):not(select):not(.xl-name):not(.xl-stack):not(.xl-hero):not(.mfire):not(.mrack):not(.shaft):not(.hang),
 [data-go]:not(.nav a){
   position:relative
 }

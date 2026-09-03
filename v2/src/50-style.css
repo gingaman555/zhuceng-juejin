@@ -4,8 +4,16 @@
    所以整份只有 11 / 22 / 33 / 44 / 55 / 66 六級，沒有中間值。 */
 
 :root{
-  --bg:#0B0A09; --panel:#14110D; --panel2:#1A1611; --sunk:#0E0C0A;
-  --line:#2E2822; --line2:#443B31;
+  /* 石頭是冷的，光是暖的。
+
+     本來整套中性色都是暖黑（#0B0A09 那一族），配上羊皮紙色的字跟金色，
+     整體讀起來是「深色主題的文件」不是地下城——因為畫面上沒有任何冷色，
+     所以也就沒有「冷的地方裡有一團暖光」那件事，而那正是地下城的情緒。
+
+     底、面、凹槽、線全部換成冷的藍灰（亮度不動，只移色相）。
+     暖色留給真正發光的東西：字、金色、框、火把、地層裡的暖色那幾層。 */
+  --bg:#090B0F; --panel:#101319; --panel2:#161B23; --sunk:#0B0E13;
+  --line:#27303B; --line2:#3A4552;
   /* 視窗的框。--line2 在 --panel 上只有 2:1，畫出來的框讀不到——
      而框要讀得到才算框。這一階是「看得見但不搶字」。 */
   --frame:#7A6A55;
@@ -96,7 +104,7 @@ img{display:block}
 /* 試用列：只有原型有。真的上線沒有這一條。 */
 .demo{
   display:flex;align-items:center;gap:11px;padding:11px 22px;flex-wrap:wrap;
-  background:#100D0A;border-bottom:1px solid var(--line);font-size:22px;color:var(--mute)
+  background:#0E1116;border-bottom:1px solid var(--line);font-size:22px;color:var(--mute)
 }
 .demo b{color:var(--dim);font-weight:400}
 
