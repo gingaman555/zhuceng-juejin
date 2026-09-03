@@ -50,8 +50,8 @@ function btAt(ms, fn) { BT.timers.push(setTimeout(fn, ms)); }
 
 /* 這一趟走到第幾段。'menu' → 'q1' → 'q2' → 'play'。
    老師沒分段就跳過第一問。 */
-/* 第二問（困境與進度，要打字）走完四趟才問。
-   第一趟就要他寫困境，是在問一個他還沒有的東西。 */
+/* 「為什麼」那一格。門檻寫在 RULES.ASK.hard，現在是 0——第一趟就問。
+   留著這一支是因為門檻是一個會被調的數字，不是一個永遠的答案。 */
 function btAskHard(teamId) {
   return RULES.asks('hard', depthOf(teamId)) !== 'off';
 }
@@ -63,7 +63,6 @@ function btPhase(r) {
   if (r.state !== 'running' && r.state !== 'back') return 'play';
   var ph = S.p.ph;
   if (!ph) return 'menu';
-  /* 沒拆件就沒有第一問可問，直接跳第二問。 */
   /* 沒拆件就沒有第一問可問，直接跳第二問。 */
   if (ph === 'q1' && !((r.plan || []).length)) return 'q2';
   return ph;
@@ -209,9 +208,8 @@ function btAsk(r) {
       '\'>' + esc(f[1]) + '</button>');
   });
   H.push('</div>');
-  /* 「為什麼」要打字，所以照深度問：走完四趟才開始。
-     他還沒走過幾趟的時候，那個問題答不出來，逼出來的字是為了交差的字，
-     而那一刻資料就開始說謊。 */
+  /* 「為什麼」要打字。選填——逼出來的字是為了交差的字，
+     而那一刻資料就開始說謊；他想寫才寫，寫的才是真的。 */
   if (btAskHard(r.teamId)) {
     H.push('<div class="bt-qh">為什麼</div>');
     H.push('<textarea class="bt-w" rows="3" maxlength="300" ' +
