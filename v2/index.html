@@ -3683,6 +3683,59 @@ button.ac:active{transform:translateY(1px)}
    它是一個訊號不是一道關卡——老師本來就開得了任何一組。 */
 .card.exitq.said{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d)}
 
+/* ---------- 剛遇到的那一隻 ----------
+
+   門上本來就有「多了 N 隻」，但翻開之後看不出是哪一隻——一頁十幾格，
+   通知說多了一隻，然後要他自己找。這一道光補的是那半件事。
+
+   它亮一下就停在亮著的狀態，不做無限閃。班級地下城那一格已經下過
+   同一個判斷：一個會閃的框就是在說「按我」，而圖鑑這一格按不下去。
+   所以光講的是「牠來了」，不是「按我」。
+
+   閃法照整份的規矩：steps()、硬邊、零模糊。--d 由 64-codex.js 給，
+   一隻錯開 180ms——同時全亮就數不出有幾隻。 */
+.cxi.fresh{
+  position:relative;opacity:1;background:rgba(0,0,0,.45);
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink,var(--frame));
+  animation:cxlit 1.26s steps(1,end) var(--d,0ms) 1 both
+}
+/* 光本身。壓在那一隻身上，收在牠那一格裡（左上 11px 起、44 見方）。 */
+.cxi.fresh::before{
+  content:'';position:absolute;left:11px;top:11px;width:44px;height:44px;
+  pointer-events:none;opacity:.30;
+  background:radial-gradient(circle at 50% 50%,
+    rgba(255,243,216,.60) 0 11px,
+    rgba(255,243,216,.30) 11px 22px,
+    rgba(255,243,216,.11) 22px 33px,
+    transparent 33px);
+  animation:cxglow 1.26s steps(1,end) var(--d,0ms) 1 both
+}
+@keyframes cxlit{
+  0%,13%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px transparent}
+  14%,32%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px #FFF3D8}
+  33%,55%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink,var(--frame))}
+  56%,73%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px #FFF3D8}
+  74%,100%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink,var(--frame))}
+}
+@keyframes cxglow{
+  0%,13%{opacity:0;transform:scale(.5)}
+  14%,32%{opacity:1;transform:scale(1.3)}
+  33%,55%{opacity:.45;transform:scale(1)}
+  56%,73%{opacity:.9;transform:scale(1.15)}
+  74%,100%{opacity:.30;transform:scale(1)}
+}
+
+/* 那一層有剛遇到的。分頁上一顆點，靜的——它已經是一顆按鈕了，
+   再讓它閃，閃的意思會蓋掉「這一層有新的」。 */
+.cxt .nw{
+  display:inline-block;width:11px;height:11px;margin-left:8px;
+  background:var(--gold);vertical-align:middle
+}
+
+@media (prefers-reduced-motion: reduce){
+  .cxi.fresh, .cxi.fresh::before{animation:none}
+}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -7432,10 +7485,30 @@ function codexNew(u) {
 }
 function markCodex(u) {
   if (!u || !u.teamId) return;
-  var n = Object.keys(metMobs(u.teamId)).length;
-  if (u.codexN === n) return;
-  u.codexN = n;
+  var names = Object.keys(metMobs(u.teamId));
+  if (u.codexN === names.length &&
+      (u.codexSeen || []).join('|') === names.join('|')) return;
+  u.codexN = names.length;
+  /* 名字也記下來。數量只夠在門上掛一個「多了 N 隻」，
+     要在頁面上標出「是哪幾隻」就得知道名字。 */
+  u.codexSeen = names;
   save();
+}
+
+/* 上次翻開之後新遇到的那幾隻。回一個 {名字: 1}。
+
+   這一支跟 codexNew 是同一件事的兩種粒度：門上要數量，頁面上要名字。
+   兩邊都從 metMobs 減掉 codexSeen 算出來，所以不會各自算出不同的答案。 */
+function codexFresh(u, teamId) {
+  if (!u || !teamId) return {};
+  /* 翻過圖鑑、但還沒記過名字的舊帳號：把現在遇過的全部當成看過的，
+     不然改版之後第一次翻開會整頁一起亮。從來沒翻過的則全部都是新的。 */
+  if (!u.codexSeen && u.codexN) return {};
+  var seen = {};
+  (u.codexSeen || []).forEach(function (n) { seen[n] = 1; });
+  var out = {};
+  Object.keys(metMobs(teamId)).forEach(function (n) { if (!seen[n]) out[n] = 1; });
+  return out;
 }
 
 /* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
@@ -12181,6 +12254,9 @@ PAGES.codex = function () {
      所以掀開遇到的生物從來沒進過圖鑑。 */
   var found = foundMobs(t.teamId);
   Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
+  /* 上次翻開之後才遇到的那幾隻。畫完之後 seen() 會把名單記起來
+     （見 55-ui.js），所以這一次翻開還看得到，下一次就不亮了。 */
+  var fresh = codexFresh(me(), t.teamId);
 
   /* 副題要蓋住這一頁的兩種東西：六個地層裡的魔物，跟老師發的任務之證。
      本來寫「這座地下城裡有哪些魔物」——那漏掉了第七個分頁。
@@ -12194,7 +12270,11 @@ PAGES.codex = function () {
   STRATA.forEach(function (z) {
     H.push('<button class="cxt ' + z.key + (tab === z.key ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:' + z.key })) + '\'>' +
-      esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
+      esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') +
+      /* 新遇到的那一隻不一定住在他打開時看到的那一層，所以分頁上要標——
+         沒有這一顆，那道光只有剛好翻對頁的人看得到。 */
+      (faunaOf(z.key).some(function (c) { return fresh[c.n]; }) ? '<i class="nw"></i>' : '') +
+      '</button>');
   });
   H.push('<button class="cxt core' + (tab === 'core' ? ' on' : '') +
     '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>任務之證</button>');
@@ -12210,8 +12290,12 @@ PAGES.codex = function () {
        其餘幾層也不用寫「地層」——那一排分頁本來就是地層。 */
     H.push('<p class="lead">' + esc(z.note) + '</p>');
     H.push('<div class="cx">');
+    /* 亮起來的順序錯開，一隻接一隻——同時全亮認不出有幾隻。 */
+    var nth = 0;
     faunaOf(z.key).forEach(function (c) {
-      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + '">');
+      var isNew = !!fresh[c.n];
+      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (isNew ? ' fresh' : '') +
+        '"' + (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') + '>');
       H.push(pxTag(c.px, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');

@@ -25,6 +25,9 @@ PAGES.codex = function () {
      所以掀開遇到的生物從來沒進過圖鑑。 */
   var found = foundMobs(t.teamId);
   Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
+  /* 上次翻開之後才遇到的那幾隻。畫完之後 seen() 會把名單記起來
+     （見 55-ui.js），所以這一次翻開還看得到，下一次就不亮了。 */
+  var fresh = codexFresh(me(), t.teamId);
 
   /* 副題要蓋住這一頁的兩種東西：六個地層裡的魔物，跟老師發的任務之證。
      本來寫「這座地下城裡有哪些魔物」——那漏掉了第七個分頁。
@@ -38,7 +41,11 @@ PAGES.codex = function () {
   STRATA.forEach(function (z) {
     H.push('<button class="cxt ' + z.key + (tab === z.key ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:' + z.key })) + '\'>' +
-      esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') + '</button>');
+      esc(z.name) + (z.key === here.key ? '<i>你在這</i>' : '') +
+      /* 新遇到的那一隻不一定住在他打開時看到的那一層，所以分頁上要標——
+         沒有這一顆，那道光只有剛好翻對頁的人看得到。 */
+      (faunaOf(z.key).some(function (c) { return fresh[c.n]; }) ? '<i class="nw"></i>' : '') +
+      '</button>');
   });
   H.push('<button class="cxt core' + (tab === 'core' ? ' on' : '') +
     '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>任務之證</button>');
@@ -54,8 +61,12 @@ PAGES.codex = function () {
        其餘幾層也不用寫「地層」——那一排分頁本來就是地層。 */
     H.push('<p class="lead">' + esc(z.note) + '</p>');
     H.push('<div class="cx">');
+    /* 亮起來的順序錯開，一隻接一隻——同時全亮認不出有幾隻。 */
+    var nth = 0;
     faunaOf(z.key).forEach(function (c) {
-      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + '">');
+      var isNew = !!fresh[c.n];
+      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (isNew ? ' fresh' : '') +
+        '"' + (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') + '>');
       H.push(pxTag(c.px, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');

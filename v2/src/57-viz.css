@@ -1804,3 +1804,56 @@ button.ac:active{transform:translateY(1px)}
 /* 說過「我們做完了」的那一組，在出口那一頁上標一階。
    它是一個訊號不是一道關卡——老師本來就開得了任何一組。 */
 .card.exitq.said{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d)}
+
+/* ---------- 剛遇到的那一隻 ----------
+
+   門上本來就有「多了 N 隻」，但翻開之後看不出是哪一隻——一頁十幾格，
+   通知說多了一隻，然後要他自己找。這一道光補的是那半件事。
+
+   它亮一下就停在亮著的狀態，不做無限閃。班級地下城那一格已經下過
+   同一個判斷：一個會閃的框就是在說「按我」，而圖鑑這一格按不下去。
+   所以光講的是「牠來了」，不是「按我」。
+
+   閃法照整份的規矩：steps()、硬邊、零模糊。--d 由 64-codex.js 給，
+   一隻錯開 180ms——同時全亮就數不出有幾隻。 */
+.cxi.fresh{
+  position:relative;opacity:1;background:rgba(0,0,0,.45);
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink,var(--frame));
+  animation:cxlit 1.26s steps(1,end) var(--d,0ms) 1 both
+}
+/* 光本身。壓在那一隻身上，收在牠那一格裡（左上 11px 起、44 見方）。 */
+.cxi.fresh::before{
+  content:'';position:absolute;left:11px;top:11px;width:44px;height:44px;
+  pointer-events:none;opacity:.30;
+  background:radial-gradient(circle at 50% 50%,
+    rgba(255,243,216,.60) 0 11px,
+    rgba(255,243,216,.30) 11px 22px,
+    rgba(255,243,216,.11) 22px 33px,
+    transparent 33px);
+  animation:cxglow 1.26s steps(1,end) var(--d,0ms) 1 both
+}
+@keyframes cxlit{
+  0%,13%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px transparent}
+  14%,32%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px #FFF3D8}
+  33%,55%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink,var(--frame))}
+  56%,73%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px #FFF3D8}
+  74%,100%{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink,var(--frame))}
+}
+@keyframes cxglow{
+  0%,13%{opacity:0;transform:scale(.5)}
+  14%,32%{opacity:1;transform:scale(1.3)}
+  33%,55%{opacity:.45;transform:scale(1)}
+  56%,73%{opacity:.9;transform:scale(1.15)}
+  74%,100%{opacity:.30;transform:scale(1)}
+}
+
+/* 那一層有剛遇到的。分頁上一顆點，靜的——它已經是一顆按鈕了，
+   再讓它閃，閃的意思會蓋掉「這一層有新的」。 */
+.cxt .nw{
+  display:inline-block;width:11px;height:11px;margin-left:8px;
+  background:var(--gold);vertical-align:middle
+}
+
+@media (prefers-reduced-motion: reduce){
+  .cxi.fresh, .cxi.fresh::before{animation:none}
+}

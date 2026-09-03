@@ -621,10 +621,30 @@ function codexNew(u) {
 }
 function markCodex(u) {
   if (!u || !u.teamId) return;
-  var n = Object.keys(metMobs(u.teamId)).length;
-  if (u.codexN === n) return;
-  u.codexN = n;
+  var names = Object.keys(metMobs(u.teamId));
+  if (u.codexN === names.length &&
+      (u.codexSeen || []).join('|') === names.join('|')) return;
+  u.codexN = names.length;
+  /* 名字也記下來。數量只夠在門上掛一個「多了 N 隻」，
+     要在頁面上標出「是哪幾隻」就得知道名字。 */
+  u.codexSeen = names;
   save();
+}
+
+/* 上次翻開之後新遇到的那幾隻。回一個 {名字: 1}。
+
+   這一支跟 codexNew 是同一件事的兩種粒度：門上要數量，頁面上要名字。
+   兩邊都從 metMobs 減掉 codexSeen 算出來，所以不會各自算出不同的答案。 */
+function codexFresh(u, teamId) {
+  if (!u || !teamId) return {};
+  /* 翻過圖鑑、但還沒記過名字的舊帳號：把現在遇過的全部當成看過的，
+     不然改版之後第一次翻開會整頁一起亮。從來沒翻過的則全部都是新的。 */
+  if (!u.codexSeen && u.codexN) return {};
+  var seen = {};
+  (u.codexSeen || []).forEach(function (n) { seen[n] = 1; });
+  var out = {};
+  Object.keys(metMobs(teamId)).forEach(function (n) { if (!seen[n]) out[n] = 1; });
+  return out;
 }
 
 /* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
