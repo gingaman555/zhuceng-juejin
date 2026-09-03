@@ -1779,3 +1779,7 @@ button.ac:active{transform:translateY(1px)}
   .sty-door{flex:0 0 66px}
   .sty-door i{width:33px;height:55px}
 }
+
+/* 說過「我們做完了」的那一組，在出口那一頁上標一階。
+   它是一個訊號不是一道關卡——老師本來就開得了任何一組。 */
+.card.exitq.said{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d)}

@@ -3635,6 +3635,10 @@ button.ac:active{transform:translateY(1px)}
   .sty-door i{width:33px;height:55px}
 }
 
+/* 說過「我們做完了」的那一組，在出口那一頁上標一階。
+   它是一個訊號不是一道關卡——老師本來就開得了任何一組。 */
+.card.exitq.said{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d)}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -10814,13 +10818,21 @@ function sceneMouth(t, next, ENT, resting) {
   var sg = signOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + (ENT || SCN.ENT) + 'px">'];
 
-  /* 往上的光：出口。一直在，而且點得開——
-     宣告專案做完是偶爾才做的事，不該在首頁佔一塊，
-     但它也不能藏起來（沒觸發過的東西等於不存在）。 */
-  H.push('<button class="shaft' + (t.exitAsk || t.leftAt ? ' open' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:exit' })) +
-    '\' title="' + esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') +
-    '"></button>');
+  /* 往上的光：出口。一直看得見，但門是老師開的——沒開的時候
+     它就只是一道光，不是一顆按得動的鈕。
+
+     「看得到但還沒發生」跟「不存在」是兩件事，所以光一直在；
+     而廊道上那一排已經有一扇看得見的、鎖著的門在講同一件事，
+     兩個入口兩套規則反而更難懂。 */
+  if (t.exitOk || t.leftAt) {
+    H.push('<button class="shaft open" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:exit' })) +
+      '\' title="' + esc('出口：老師開了，從這裡上去') + '"></button>');
+  } else {
+    H.push('<span class="shaft' + (t.exitAsk ? ' said' : '') + '" title="' +
+      esc(t.exitAsk ? '出口：在等老師開門' : '出口：要老師開才走得出去') +
+      '"></span>');
+  }
   H.push('<div class="arch"></div>');
 
   /* 招牌。點得開——改名字是偶爾才做的事，不該在首頁佔一塊。 */
@@ -13175,28 +13187,38 @@ PAGES.radar = function () {
   H.push('</div>');
 
   if (tq === 'exit') {
-    H.push(head('出口', out.length ? out.length + ' 組說做完了' : '沒有人說做完了', ''));
-    if (!out.length) {
-      H.push('<div class="card"><p class="dim">' +
-        '他們自己在任務清單上說「我們做完了」，這裡才會出現。</p></div>');
-    }
-    out.forEach(function (t) {
+    /* 他帶的每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
+       所以他要能主動開，不是只能回應。
+
+       有說的排在前面：那是一個訊號，不是一道關卡。 */
+    var mine = teamsUnder(u.classId, u.userId).slice().sort(function (a, b) {
+      return (b.exitAsk || 0) - (a.exitAsk || 0);
+    });
+    H.push(head('出口', '門開了他們才走得出去', ''));
+    mine.forEach(function (t) {
       var acc = accuracyOf(t.teamId);
-      H.push('<div class="card exitq">');
-      H.push('<h2>' + esc(t.name) + ' 說專案做完了。</h2>');
-      H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
+      H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
+      if (t.exitAsk) H.push('<div class="eyebrow lit">他們說做完了</div>');
+      H.push('<h2>' + esc(t.project || '（還沒定）') + '</h2>');
+      H.push('<p class="dim">' + esc(t.name) + '　·　走完 ' +
         depthOf(t.teamId) + ' 個任務</p>');
       if (acc.total) H.push(accBar(acc));
-      /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
-         走出去該是他們的動作，不是老師代勞的。
 
-         旁邊那一顆是「還不到」。本來只有開門一顆，所以他覺得還不到的時候
-         唯一能做的事是不按——那個請求就一直掛在他的清單上，
-         而學生那邊永遠停在「在等老師開門」。兩邊都卡住。 */
-      H.push('<div class="row">');
-      H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
-      H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
-      H.push('</div>');
+      if (t.leftAt) {
+        H.push('<p class="dim">他們走出去了。</p>');
+      } else if (t.exitOk) {
+        /* 開了但還沒走。走出去那一下是他們自己按的——
+           走出去該是他們的動作，不是老師代勞的。 */
+        H.push('<p class="dim">門開著，等他們自己走上去。</p>');
+        H.push(btn('把門關回去', 'openexit:' + t.teamId + ',0', 'ghost'));
+      } else {
+        H.push('<div class="row">');
+        H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
+        /* 「現在還不是時候」只對有說過的那幾組出現——沒說過的組
+           沒有東西要回。 */
+        if (t.exitAsk) H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
+        H.push('</div>');
+      }
       H.push('</div>');
     });
     return H.join('');

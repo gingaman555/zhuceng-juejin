@@ -75,28 +75,38 @@ PAGES.radar = function () {
   H.push('</div>');
 
   if (tq === 'exit') {
-    H.push(head('出口', out.length ? out.length + ' 組說做完了' : '沒有人說做完了', ''));
-    if (!out.length) {
-      H.push('<div class="card"><p class="dim">' +
-        '他們自己在任務清單上說「我們做完了」，這裡才會出現。</p></div>');
-    }
-    out.forEach(function (t) {
+    /* 他帶的每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
+       所以他要能主動開，不是只能回應。
+
+       有說的排在前面：那是一個訊號，不是一道關卡。 */
+    var mine = teamsUnder(u.classId, u.userId).slice().sort(function (a, b) {
+      return (b.exitAsk || 0) - (a.exitAsk || 0);
+    });
+    H.push(head('出口', '門開了他們才走得出去', ''));
+    mine.forEach(function (t) {
       var acc = accuracyOf(t.teamId);
-      H.push('<div class="card exitq">');
-      H.push('<h2>' + esc(t.name) + ' 說專案做完了。</h2>');
-      H.push('<p class="dim">' + esc(t.project || '（還沒定）') + '　·　走完 ' +
+      H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
+      if (t.exitAsk) H.push('<div class="eyebrow lit">他們說做完了</div>');
+      H.push('<h2>' + esc(t.project || '（還沒定）') + '</h2>');
+      H.push('<p class="dim">' + esc(t.name) + '　·　走完 ' +
         depthOf(t.teamId) + ' 個任務</p>');
       if (acc.total) H.push(accBar(acc));
-      /* 開門，不是替他們走出去。門開了之後那一下是他們自己按的——
-         走出去該是他們的動作，不是老師代勞的。
 
-         旁邊那一顆是「還不到」。本來只有開門一顆，所以他覺得還不到的時候
-         唯一能做的事是不按——那個請求就一直掛在他的清單上，
-         而學生那邊永遠停在「在等老師開門」。兩邊都卡住。 */
-      H.push('<div class="row">');
-      H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
-      H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
-      H.push('</div>');
+      if (t.leftAt) {
+        H.push('<p class="dim">他們走出去了。</p>');
+      } else if (t.exitOk) {
+        /* 開了但還沒走。走出去那一下是他們自己按的——
+           走出去該是他們的動作，不是老師代勞的。 */
+        H.push('<p class="dim">門開著，等他們自己走上去。</p>');
+        H.push(btn('把門關回去', 'openexit:' + t.teamId + ',0', 'ghost'));
+      } else {
+        H.push('<div class="row">');
+        H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
+        /* 「現在還不是時候」只對有說過的那幾組出現——沒說過的組
+           沒有東西要回。 */
+        if (t.exitAsk) H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
+        H.push('</div>');
+      }
       H.push('</div>');
     });
     return H.join('');

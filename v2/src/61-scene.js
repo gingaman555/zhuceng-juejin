@@ -402,13 +402,21 @@ function sceneMouth(t, next, ENT, resting) {
   var sg = signOf(t.teamId);
   var H = ['<div class="mouth" style="width:' + (ENT || SCN.ENT) + 'px">'];
 
-  /* 往上的光：出口。一直在，而且點得開——
-     宣告專案做完是偶爾才做的事，不該在首頁佔一塊，
-     但它也不能藏起來（沒觸發過的東西等於不存在）。 */
-  H.push('<button class="shaft' + (t.exitAsk || t.leftAt ? ' open' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:exit' })) +
-    '\' title="' + esc(t.exitAsk ? '出口：在等老師確認' : '出口：專案做完的時候從這裡上去') +
-    '"></button>');
+  /* 往上的光：出口。一直看得見，但門是老師開的——沒開的時候
+     它就只是一道光，不是一顆按得動的鈕。
+
+     「看得到但還沒發生」跟「不存在」是兩件事，所以光一直在；
+     而廊道上那一排已經有一扇看得見的、鎖著的門在講同一件事，
+     兩個入口兩套規則反而更難懂。 */
+  if (t.exitOk || t.leftAt) {
+    H.push('<button class="shaft open" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:exit' })) +
+      '\' title="' + esc('出口：老師開了，從這裡上去') + '"></button>');
+  } else {
+    H.push('<span class="shaft' + (t.exitAsk ? ' said' : '') + '" title="' +
+      esc(t.exitAsk ? '出口：在等老師開門' : '出口：要老師開才走得出去') +
+      '"></span>');
+  }
   H.push('<div class="arch"></div>');
 
   /* 招牌。點得開——改名字是偶爾才做的事，不該在首頁佔一塊。 */
