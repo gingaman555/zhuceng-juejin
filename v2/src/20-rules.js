@@ -95,6 +95,21 @@ RULES.judgeWhy = function (est, actual) {
    沒寫的組也走得完——那一顆鍵就退回「我今天來過了」。 */
 RULES.STEPS_MAX = 12;     /* 一個任務最多分幾段 */
 
+/* ---------- 你有多確定 ----------
+   三階。不進判定，只決定廊道上看得到多遠（light 對到 WORLD.light）。
+   看得遠不是獎賞——說「很確定」的人，之後也會被那句話對照。 */
+RULES.SURE = [
+  { key: 'high', name: '很確定',   light: 0 },
+  { key: 'mid',  name: '大概吧',   light: 1 },
+  { key: 'low',  name: '不太確定', light: 2 }
+];
+RULES.sureOf = function (key) {
+  for (var i = 0; i < RULES.SURE.length; i++) {
+    if (RULES.SURE[i].key === key) return RULES.SURE[i];
+  }
+  return null;
+};
+
 /* ---------- 系統問得多深，跟著走過幾趟走 ----------
 
    漸進的不是難度（那是老師派的任務），是系統要求他說明自己的深度。

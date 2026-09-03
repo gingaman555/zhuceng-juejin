@@ -3853,6 +3853,26 @@ button.ac:active{transform:translateY(1px)}
   display:block;font-size:22px;line-height:1.4;color:var(--gold-d);margin-top:5px
 }
 
+/* 你有多確定：三顆。選中的亮起來，沒選中的是安靜的。
+   三顆等重——沒有哪一個是「比較好的答案」。 */
+.sure-row{gap:8px;flex-wrap:wrap}
+.btn.sure{flex:1 1 auto;min-width:150px}
+.btn.sure.on{
+  color:var(--gold);
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d)
+}
+
+/* 你說的把握，跟後來。一階一行，三欄：說了什麼、幾次、準了幾次。
+   不畫成長條——那會變成一個比較的圖。它只是三行事實。 */
+.sure-list{display:flex;flex-direction:column;gap:5px;margin-top:11px}
+.sure-r{
+  display:grid;grid-template-columns:1fr auto auto;gap:0 14px;align-items:baseline;
+  padding:9px 11px;background:var(--sunk)
+}
+.sure-r b{font-size:22px;font-weight:400;color:var(--ink)}
+.sure-r span{font-size:22px;color:var(--mute);font-variant-numeric:tabular-nums}
+.sure-r i{font-style:normal;font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -6684,6 +6704,21 @@ RULES.judgeWhy = function (est, actual) {
    沒寫的組也走得完——那一顆鍵就退回「我今天來過了」。 */
 RULES.STEPS_MAX = 12;     /* 一個任務最多分幾段 */
 
+/* ---------- 你有多確定 ----------
+   三階。不進判定，只決定廊道上看得到多遠（light 對到 WORLD.light）。
+   看得遠不是獎賞——說「很確定」的人，之後也會被那句話對照。 */
+RULES.SURE = [
+  { key: 'high', name: '很確定',   light: 0 },
+  { key: 'mid',  name: '大概吧',   light: 1 },
+  { key: 'low',  name: '不太確定', light: 2 }
+];
+RULES.sureOf = function (key) {
+  for (var i = 0; i < RULES.SURE.length; i++) {
+    if (RULES.SURE[i].key === key) return RULES.SURE[i];
+  }
+  return null;
+};
+
 /* ---------- 系統問得多深，跟著走過幾趟走 ----------
 
    漸進的不是難度（那是老師派的任務），是系統要求他說明自己的深度。
@@ -7304,7 +7339,7 @@ function planDays(plan) {
   return n;
 }
 
-function actCommit(teamId, msId, est, flags, plan, zone) {
+function actCommit(teamId, msId, est, flags, plan, zone, sure) {
   var r = runOf(teamId, msId);
   if (r) return r;
   var pl = (plan || []).filter(function (x) { return x && x.n; })
@@ -7324,6 +7359,9 @@ function actCommit(teamId, msId, est, flags, plan, zone) {
     /* 這一趟他選的地方。不進判定——判定只讀承諾幾天與實際幾天。
        它決定的是：廊道長什麼樣、擋路的是誰、班級地下城上那一塊什麼顏色。 */
     zone: (STRATA.filter(function (z) { return z.key === zone; })[0] || {}).key || '',
+    /* 他對這個天數有多少把握。不進判定——它決定的是廊道上看得到多遠，
+       以及之後那句「你說『很確定』的 N 次裡準了 M 次」。 */
+    sure: (RULES.sureOf(sure) || RULES.SURE[1]).key,
     committedAt: now(),
     pushes: 0, overs: [], steps: [], keep: null, stamp: null,
     /* 擋在廊道盡頭的是哪一隻，承諾那一刻就決定並存下來。
@@ -7335,7 +7373,7 @@ function actCommit(teamId, msId, est, flags, plan, zone) {
   DB.Runs.push(r);
   save();
   logEvent('commit', { teamId: teamId, runId: r.runId, msId: msId, est: r.est,
-    zone: r.zone,
+    zone: r.zone, sure: r.sure,
     flags: (r.flags || []).map(function (i) { return stepName(r.runId, i); }).join('、') });
   return r;
 }
@@ -7720,6 +7758,27 @@ function metMobs(teamId) {
     if (m) seen[m.n] = x.ms.title;
   });
   return seen;
+}
+
+/* 校準：他說「很確定」的那幾次，實際準了幾次。
+
+   這是這套系統唯一一句他自己不知道的話。它不評價任何東西——
+   只是把他當初說的把握，跟後來發生的事擺在一起。
+
+   只算老師收下的那幾趟（跟排行榜同一條規矩）。 */
+function sureOf(teamId) {
+  var out = {};
+  RULES.SURE.forEach(function (s) { out[s.key] = { n: 0, hit: 0 }; });
+  where('Runs', function (r) {
+    return r.teamId === teamId && r.stamp &&
+      (r.state === 'done' || r.state === 'approved');
+  }).forEach(function (r) {
+    var k = r.sure || 'mid';
+    if (!out[k]) return;
+    out[k].n++;
+    if (r.stamp === 'exact') out[k].hit++;
+  });
+  return out;
 }
 
 /* 已經進館藏的那幾隻：老師收下那一趟，牠才算存檔。
@@ -9362,7 +9421,13 @@ var ACTS = {
 
   /* 說完幾天，去選地方。同一頁的第二個階段——不能用 go()，
      它會清掉 DRAFT，而他剛拆完的細項就在上面。 */
-  towhere: function () { DRAFT.at = 'where'; window.scrollTo(0, 0); render(); },
+  sure: function (k) { DRAFT.sure = k; render(); },
+  towhere: function () {
+    /* 沒說有多確定就過不去。這是這一頁唯一擋人的地方——
+       擋的是「你有沒有講」，不是「你講得對不對」。 */
+    if (!DRAFT.sure) return say('先說你有多確定。');
+    DRAFT.at = 'where'; window.scrollTo(0, 0); render();
+  },
   toplan: function () { DRAFT.at = ''; window.scrollTo(0, 0); render(); },
 
   /* 出發。參數是「任務|地方」。 */
@@ -9371,7 +9436,7 @@ var ACTS = {
     var p = String(arg).split('|');
     var msId = p[0], zone = p[1] || '';
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT),
-      DRAFT.flags || [], DRAFT.plan || [], zone);
+      DRAFT.flags || [], DRAFT.plan || [], zone, DRAFT.sure);
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——
@@ -10738,6 +10803,23 @@ PAGES.commit = function () {
     H.push('</div>');
   }
 
+  /* 你有多確定。
+
+     不是選填——這一格是這套系統唯一在教的東西：不是估得準，
+     是知不知道自己什麼時候估不準（見 20-rules.js 的 RULES.SURE）。
+
+     它不進判定。它決定的是廊道上你看得到多遠，以及之後那一句
+     「你說『很確定』的 N 次裡，準了 M 次」。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow' + (DRAFT.sure ? '' : ' lit') + '">對這個天數，你有多確定</div>');
+  H.push('<div class="row sure-row">');
+  RULES.SURE.forEach(function (s) {
+    H.push(btn(s.name, 'sure:' + s.key, 'sure' + (DRAFT.sure === s.key ? ' on' : '')));
+  });
+  H.push('</div>');
+  H.push('<p class="dim">它不影響判定。它決定這一趟你看得到多遠。</p>');
+  H.push('</div>');
+
   H.push('<div class="row">');
   H.push(btn('我承諾 ' + est + ' 天', 'towhere', 'big cm-go'));
   H.push(btn('回廊道', 'go:home', 'ghost'));
@@ -11212,7 +11294,13 @@ function scene(t, row, st, kind) {
   for (i0 = 0; i0 < log.length; i0++) if (log[i0] && log[i0].kind === 'rest') rests++;
 
   var seed = t.teamId + (run ? '|' + run.runId : '');
-  var light = WORLD.light[st.level];
+  /* 光有兩個來源，取比較暗的那一個：
+       把握    他說「不太確定」，本來就看不遠
+       停滯    過了自己說的天數，火會滅
+
+     所以說「很確定」也不會讓停滯看起來沒事——它只決定起點。 */
+  var sureLv = run ? ((RULES.sureOf(run.sure) || {}).light || 0) : 0;
+  var light = WORLD.light[Math.max(st.level, sureLv)];
   /* 往前多畫幾格。本來只畫到承諾與過了幾天的較大者，所以拖到底就
      沒東西了。多出來的那幾格在霧裡，看不出有什麼——
      那才是還沒走到的地方該有的樣子。 */
@@ -12405,6 +12493,27 @@ PAGES.pack = function () {
     H.push('<div class="card quiet"><div class="eyebrow">走過 ' + acc.total + ' 趟</div>');
     H.push(accBar(acc));
     H.push('</div>');
+  }
+
+  /* 校準：他說「很確定」的那幾次，準了幾次。
+
+     這是整套系統唯一一句他自己不知道的話。系統不解讀、不下結論——
+     它只是把他當初說的把握，跟後來發生的事擺在一起（見 40-db.js 的 sureOf）。
+
+     只算老師收下的那幾趟，所以沒有人收就不會出現。 */
+  var sr = sureOf(t.teamId);
+  var any = RULES.SURE.some(function (x) { return sr[x.key].n > 0; });
+  if (any) {
+    H.push('<div class="card quiet"><div class="eyebrow">你說的把握，跟後來</div>');
+    H.push('<div class="sure-list">');
+    RULES.SURE.forEach(function (x) {
+      var d = sr[x.key];
+      if (!d.n) return;
+      H.push('<div class="sure-r"><b>' + esc(x.name) + '</b>' +
+        '<span>' + d.n + ' 次</span>' +
+        '<i>準了 ' + d.hit + ' 次</i></div>');
+    });
+    H.push('</div></div>');
   }
 
 

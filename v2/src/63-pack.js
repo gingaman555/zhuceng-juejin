@@ -47,6 +47,27 @@ PAGES.pack = function () {
     H.push('</div>');
   }
 
+  /* 校準：他說「很確定」的那幾次，準了幾次。
+
+     這是整套系統唯一一句他自己不知道的話。系統不解讀、不下結論——
+     它只是把他當初說的把握，跟後來發生的事擺在一起（見 40-db.js 的 sureOf）。
+
+     只算老師收下的那幾趟，所以沒有人收就不會出現。 */
+  var sr = sureOf(t.teamId);
+  var any = RULES.SURE.some(function (x) { return sr[x.key].n > 0; });
+  if (any) {
+    H.push('<div class="card quiet"><div class="eyebrow">你說的把握，跟後來</div>');
+    H.push('<div class="sure-list">');
+    RULES.SURE.forEach(function (x) {
+      var d = sr[x.key];
+      if (!d.n) return;
+      H.push('<div class="sure-r"><b>' + esc(x.name) + '</b>' +
+        '<span>' + d.n + ' 次</span>' +
+        '<i>準了 ' + d.hit + ' 次</i></div>');
+    });
+    H.push('</div></div>');
+  }
+
 
   H.push('<div class="card"><div class="rec-list">');
   rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });

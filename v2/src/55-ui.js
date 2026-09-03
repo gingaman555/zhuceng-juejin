@@ -538,7 +538,13 @@ var ACTS = {
 
   /* 說完幾天，去選地方。同一頁的第二個階段——不能用 go()，
      它會清掉 DRAFT，而他剛拆完的細項就在上面。 */
-  towhere: function () { DRAFT.at = 'where'; window.scrollTo(0, 0); render(); },
+  sure: function (k) { DRAFT.sure = k; render(); },
+  towhere: function () {
+    /* 沒說有多確定就過不去。這是這一頁唯一擋人的地方——
+       擋的是「你有沒有講」，不是「你講得對不對」。 */
+    if (!DRAFT.sure) return say('先說你有多確定。');
+    DRAFT.at = 'where'; window.scrollTo(0, 0); render();
+  },
   toplan: function () { DRAFT.at = ''; window.scrollTo(0, 0); render(); },
 
   /* 出發。參數是「任務|地方」。 */
@@ -547,7 +553,7 @@ var ACTS = {
     var p = String(arg).split('|');
     var msId = p[0], zone = p[1] || '';
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT),
-      DRAFT.flags || [], DRAFT.plan || [], zone);
+      DRAFT.flags || [], DRAFT.plan || [], zone, DRAFT.sure);
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——

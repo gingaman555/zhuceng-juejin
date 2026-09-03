@@ -312,7 +312,7 @@ function planDays(plan) {
   return n;
 }
 
-function actCommit(teamId, msId, est, flags, plan, zone) {
+function actCommit(teamId, msId, est, flags, plan, zone, sure) {
   var r = runOf(teamId, msId);
   if (r) return r;
   var pl = (plan || []).filter(function (x) { return x && x.n; })
@@ -332,6 +332,9 @@ function actCommit(teamId, msId, est, flags, plan, zone) {
     /* 這一趟他選的地方。不進判定——判定只讀承諾幾天與實際幾天。
        它決定的是：廊道長什麼樣、擋路的是誰、班級地下城上那一塊什麼顏色。 */
     zone: (STRATA.filter(function (z) { return z.key === zone; })[0] || {}).key || '',
+    /* 他對這個天數有多少把握。不進判定——它決定的是廊道上看得到多遠，
+       以及之後那句「你說『很確定』的 N 次裡準了 M 次」。 */
+    sure: (RULES.sureOf(sure) || RULES.SURE[1]).key,
     committedAt: now(),
     pushes: 0, overs: [], steps: [], keep: null, stamp: null,
     /* 擋在廊道盡頭的是哪一隻，承諾那一刻就決定並存下來。
@@ -343,7 +346,7 @@ function actCommit(teamId, msId, est, flags, plan, zone) {
   DB.Runs.push(r);
   save();
   logEvent('commit', { teamId: teamId, runId: r.runId, msId: msId, est: r.est,
-    zone: r.zone,
+    zone: r.zone, sure: r.sure,
     flags: (r.flags || []).map(function (i) { return stepName(r.runId, i); }).join('、') });
   return r;
 }
@@ -728,6 +731,27 @@ function metMobs(teamId) {
     if (m) seen[m.n] = x.ms.title;
   });
   return seen;
+}
+
+/* 校準：他說「很確定」的那幾次，實際準了幾次。
+
+   這是這套系統唯一一句他自己不知道的話。它不評價任何東西——
+   只是把他當初說的把握，跟後來發生的事擺在一起。
+
+   只算老師收下的那幾趟（跟排行榜同一條規矩）。 */
+function sureOf(teamId) {
+  var out = {};
+  RULES.SURE.forEach(function (s) { out[s.key] = { n: 0, hit: 0 }; });
+  where('Runs', function (r) {
+    return r.teamId === teamId && r.stamp &&
+      (r.state === 'done' || r.state === 'approved');
+  }).forEach(function (r) {
+    var k = r.sure || 'mid';
+    if (!out[k]) return;
+    out[k].n++;
+    if (r.stamp === 'exact') out[k].hit++;
+  });
+  return out;
 }
 
 /* 已經進館藏的那幾隻：老師收下那一趟，牠才算存檔。

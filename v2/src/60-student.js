@@ -594,6 +594,23 @@ PAGES.commit = function () {
     H.push('</div>');
   }
 
+  /* 你有多確定。
+
+     不是選填——這一格是這套系統唯一在教的東西：不是估得準，
+     是知不知道自己什麼時候估不準（見 20-rules.js 的 RULES.SURE）。
+
+     它不進判定。它決定的是廊道上你看得到多遠，以及之後那一句
+     「你說『很確定』的 N 次裡，準了 M 次」。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow' + (DRAFT.sure ? '' : ' lit') + '">對這個天數，你有多確定</div>');
+  H.push('<div class="row sure-row">');
+  RULES.SURE.forEach(function (s) {
+    H.push(btn(s.name, 'sure:' + s.key, 'sure' + (DRAFT.sure === s.key ? ' on' : '')));
+  });
+  H.push('</div>');
+  H.push('<p class="dim">它不影響判定。它決定這一趟你看得到多遠。</p>');
+  H.push('</div>');
+
   H.push('<div class="row">');
   H.push(btn('我承諾 ' + est + ' 天', 'towhere', 'big cm-go'));
   H.push(btn('回廊道', 'go:home', 'ghost'));

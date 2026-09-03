@@ -74,7 +74,13 @@ function scene(t, row, st, kind) {
   for (i0 = 0; i0 < log.length; i0++) if (log[i0] && log[i0].kind === 'rest') rests++;
 
   var seed = t.teamId + (run ? '|' + run.runId : '');
-  var light = WORLD.light[st.level];
+  /* 光有兩個來源，取比較暗的那一個：
+       把握    他說「不太確定」，本來就看不遠
+       停滯    過了自己說的天數，火會滅
+
+     所以說「很確定」也不會讓停滯看起來沒事——它只決定起點。 */
+  var sureLv = run ? ((RULES.sureOf(run.sure) || {}).light || 0) : 0;
+  var light = WORLD.light[Math.max(st.level, sureLv)];
   /* 往前多畫幾格。本來只畫到承諾與過了幾天的較大者，所以拖到底就
      沒東西了。多出來的那幾格在霧裡，看不出有什麼——
      那才是還沒走到的地方該有的樣子。 */
