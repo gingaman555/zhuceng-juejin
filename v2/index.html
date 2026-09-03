@@ -4546,7 +4546,6 @@ button.ac:active{transform:translateY(1px)}
   .wrap > .card.quiet{flex:1 1 480px}
 }
 
-}
 
 /* ── 要做的那一件事，釘在畫面下面 ──
    地圖變成首頁之後它本來被推到整頁最底下，那樣就得先捲過整張圖才按得到。
@@ -4562,6 +4561,18 @@ button.ac:active{transform:translateY(1px)}
 .dock .act-card{margin:0}
 
 
+
+/* 老師那一頁的任務列，窄螢幕會被撐出去。
+
+   .msr 是三欄（1fr auto auto），而 .msr-n（「4 承諾　1 走完」）是 nowrap
+   而且自動排在第一欄——所以它把第一欄撐到 160px。三欄加起來 315px，
+   硬塞進 240px 的列裡，整頁被撐寬 35px（320 寬量到的）。
+
+   窄的時候讓任務名跟那一行數字各自佔滿一整列，剩下兩小格併排。 */
+@media (max-width: 700px){
+  .msr{grid-template-columns:auto auto 1fr}
+  .msr > b{grid-column:1 / -1}
+  .msr-n{grid-column:1 / -1}
 }
 
 </style>
