@@ -1857,3 +1857,25 @@ button.ac:active{transform:translateY(1px)}
 @media (prefers-reduced-motion: reduce){
   .cxi.fresh, .cxi.fresh::before{animation:none}
 }
+
+/* 剛拿到的那一張任務之證。跟剛遇到的那一隻共用同一組動畫——
+   一頁上兩種東西用兩種亮法，那會變成兩件事。 */
+.core1.fresh{
+  position:relative;
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink,var(--frame));
+  animation:cxlit 1.26s steps(1,end) var(--d,0ms) 1 both
+}
+/* 光壓在那一張上（那一格是直的：圖在上、名字在下）。 */
+.core1.fresh::before{
+  content:'';position:absolute;left:calc(50% - 66px);top:11px;
+  width:132px;height:143px;pointer-events:none;opacity:.30;
+  background:radial-gradient(circle at 50% 45%,
+    rgba(255,243,216,.55) 0 33px,
+    rgba(255,243,216,.28) 33px 55px,
+    rgba(255,243,216,.10) 55px 77px,
+    transparent 77px);
+  animation:cxglow 1.26s steps(1,end) var(--d,0ms) 1 both
+}
+@media (prefers-reduced-motion: reduce){
+  .core1.fresh, .core1.fresh::before{animation:none}
+}

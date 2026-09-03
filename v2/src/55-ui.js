@@ -51,10 +51,18 @@ function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
    班級地下城拿它來標「你不在的時候別人留下的」——不接住的話，
    走過首頁再切過去，圖上就一個新的都沒有了。 */
 var SEEN_CUT = null;
+/* 這一趟翻開圖鑑要亮哪幾個。
+
+   算一次就存著，離開圖鑑才放掉。不存的話換一個分頁就沒了——
+   markCodex 在第一次畫完就把名單記起來，第二次畫就算不出新的了，
+   而分頁上那顆點正好是在叫他換分頁。 */
+var FRESH = null;
+
 function seen() {
   /* 翻開圖鑑就把「上次有幾隻」記下來。記在畫完之後，所以這一次
      翻開還看得到那幾隻新的標記。 */
   if (S.page === 'codex' && S.who) markCodex(me());
+  else FRESH = null;
   if (S.page !== 'home' || !S.who) return;
   if (SEEN_CUT === null) {
     var u = userOf(S.who);

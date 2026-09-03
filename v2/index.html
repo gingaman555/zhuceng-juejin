@@ -3736,6 +3736,28 @@ button.ac:active{transform:translateY(1px)}
   .cxi.fresh, .cxi.fresh::before{animation:none}
 }
 
+/* 剛拿到的那一張任務之證。跟剛遇到的那一隻共用同一組動畫——
+   一頁上兩種東西用兩種亮法，那會變成兩件事。 */
+.core1.fresh{
+  position:relative;
+  box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink,var(--frame));
+  animation:cxlit 1.26s steps(1,end) var(--d,0ms) 1 both
+}
+/* 光壓在那一張上（那一格是直的：圖在上、名字在下）。 */
+.core1.fresh::before{
+  content:'';position:absolute;left:calc(50% - 66px);top:11px;
+  width:132px;height:143px;pointer-events:none;opacity:.30;
+  background:radial-gradient(circle at 50% 45%,
+    rgba(255,243,216,.55) 0 33px,
+    rgba(255,243,216,.28) 33px 55px,
+    rgba(255,243,216,.10) 55px 77px,
+    transparent 77px);
+  animation:cxglow 1.26s steps(1,end) var(--d,0ms) 1 both
+}
+@media (prefers-reduced-motion: reduce){
+  .core1.fresh, .core1.fresh::before{animation:none}
+}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -7486,14 +7508,33 @@ function codexNew(u) {
 function markCodex(u) {
   if (!u || !u.teamId) return;
   var names = Object.keys(metMobs(u.teamId));
+  var keeps = keepsOf(u.teamId).map(function (k) { return k.keepId; });
   if (u.codexN === names.length &&
-      (u.codexSeen || []).join('|') === names.join('|')) return;
+      (u.codexSeen || []).join('|') === names.join('|') &&
+      (u.keepSeen || []).join('|') === keeps.join('|')) return;
   u.codexN = names.length;
   /* 名字也記下來。數量只夠在門上掛一個「多了 N 隻」，
      要在頁面上標出「是哪幾隻」就得知道名字。 */
   u.codexSeen = names;
+  /* 任務之證同一套。它跟魔物是這一頁的兩種東西，
+     所以「新的」也要有兩份名單，不然翻開只有一半會亮。 */
+  u.keepSeen = keeps;
   save();
 }
+
+/* 上次翻開之後新拿到的那幾張。回一個 {keepId: 1}。 */
+function keepFresh(u, teamId) {
+  if (!u || !teamId) return {};
+  /* 跟 codexFresh 同一條退路：翻過圖鑑、但還沒記過名單的舊帳號，
+     把現在有的全部當成看過的。 */
+  if (!u.keepSeen && u.codexN) return {};
+  var seen = {};
+  (u.keepSeen || []).forEach(function (k) { seen[k] = 1; });
+  var out = {};
+  keepsOf(teamId).forEach(function (k) { if (!seen[k.keepId]) out[k.keepId] = 1; });
+  return out;
+}
+function keepNew(u, teamId) { return Object.keys(keepFresh(u, teamId)).length; }
 
 /* 上次翻開之後新遇到的那幾隻。回一個 {名字: 1}。
 
@@ -8687,10 +8728,18 @@ function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
    班級地下城拿它來標「你不在的時候別人留下的」——不接住的話，
    走過首頁再切過去，圖上就一個新的都沒有了。 */
 var SEEN_CUT = null;
+/* 這一趟翻開圖鑑要亮哪幾個。
+
+   算一次就存著，離開圖鑑才放掉。不存的話換一個分頁就沒了——
+   markCodex 在第一次畫完就把名單記起來，第二次畫就算不出新的了，
+   而分頁上那顆點正好是在叫他換分頁。 */
+var FRESH = null;
+
 function seen() {
   /* 翻開圖鑑就把「上次有幾隻」記下來。記在畫完之後，所以這一次
      翻開還看得到那幾隻新的標記。 */
   if (S.page === 'codex' && S.who) markCodex(me());
+  else FRESH = null;
   if (S.page !== 'home' || !S.who) return;
   if (SEEN_CUT === null) {
     var u = userOf(S.who);
@@ -10135,10 +10184,18 @@ function deskRow(t, next) {
      它記著「你在哪一趟遇過哪一隻」，而那是一學期走完之後
      才看得出形狀的東西。 */
   /* 上次翻開之後多遇到幾隻，就在門上掛幾。翻開就消掉。 */
-  var cn = codexNew(me());
+  var cnM = codexNew(me());
+  var cnK = keepNew(me(), t.teamId);
+  var cn = cnM + cnK;
+  /* 門上一個數字，但講清楚是哪一種——這一頁裝著兩種東西，
+     「多了 1」不說是哪一種的話，翻開還是要自己找。 */
+  var cnSay = cn
+    ? '圖鑑：多了 ' + [cnM ? cnM + ' 隻魔物' : '', cnK ? cnK + ' 張任務之證' : '']
+        .filter(function (x) { return x; }).join('、')
+    : '圖鑑：遇過的魔物，跟拿到的任務之證';
   H.push('<button class="dk lit" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
-    esc(cn ? '圖鑑：多了 ' + cn + ' 隻魔物' : '圖鑑：遇過的魔物，跟拿到的任務之證') + '">' +
+    esc(cnSay) + '">' +
     pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i>' +
     (cn ? '<em class="nb">' + cn + '</em>' : '') + '</button>');
   /* 故事。第一次進來看過一次，之後從這裡回來看。
@@ -12254,9 +12311,15 @@ PAGES.codex = function () {
      所以掀開遇到的生物從來沒進過圖鑑。 */
   var found = foundMobs(t.teamId);
   Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
-  /* 上次翻開之後才遇到的那幾隻。畫完之後 seen() 會把名單記起來
-     （見 55-ui.js），所以這一次翻開還看得到，下一次就不亮了。 */
-  var fresh = codexFresh(me(), t.teamId);
+  /* 上次翻開之後才遇到的那幾隻，跟才拿到的那幾張。
+
+     整趟只算一次（FRESH 存在 55-ui.js）：畫完之後 seen() 會把名單
+     記起來，所以第二次畫就算不出新的了——而分頁上那顆點正好是在
+     叫他換分頁。存著，離開圖鑑才放掉。 */
+  if (!FRESH) {
+    FRESH = { mob: codexFresh(me(), t.teamId), keep: keepFresh(me(), t.teamId) };
+  }
+  var fresh = FRESH.mob, freshK = FRESH.keep;
 
   /* 副題要蓋住這一頁的兩種東西：六個地層裡的魔物，跟老師發的任務之證。
      本來寫「這座地下城裡有哪些魔物」——那漏掉了第七個分頁。
@@ -12277,11 +12340,14 @@ PAGES.codex = function () {
       '</button>');
   });
   H.push('<button class="cxt core' + (tab === 'core' ? ' on' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>任務之證</button>');
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>任務之證' +
+    /* 這一頁有兩種東西，所以分頁上這一顆也要有——沒有它，
+       新拿到的那一張只有剛好翻到這一頁的人看得到。 */
+    (Object.keys(freshK).length ? '<i class="nw"></i>' : '') + '</button>');
   H.push('</div>');
 
   if (tab === 'core') {
-    H.push(codexThings(t, here));
+    H.push(codexThings(t, here, freshK));
   } else {
     var z = here;
     STRATA.forEach(function (x) { if (x.key === tab) z = x; });
@@ -12319,7 +12385,7 @@ PAGES.codex = function () {
 
    物件在廊道裡留著——那裡它有用：每一層長的不一樣，那是讓六層像
    六個地方而不是六個顏色的東西。 */
-function codexThings(t, here) {
+function codexThings(t, here, freshK) {
   var mine = keepsOf(t.teamId);
   var H = ['<div class="card">'];
 
@@ -12344,13 +12410,17 @@ function codexThings(t, here) {
   H.push('<p class="dim">一件任務一張，老師審核過了才有。名字就是那一件任務，' +
     '而且不會有兩張一樣。</p>');
   H.push('<div class="cores">');
+  /* 亮起來的順序錯開，一張接一張——同時全亮認不出有幾張。 */
+  var nth = 0;
   mine.forEach(function (k) {
+    var isNew = !!(freshK && freshK[k.keepId]);
     var z = null;
     STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
     /* 名字讀發下去那一刻記的那一個。舊資料沒有，才回頭查任務名。 */
     var run = k.name ? null : find('Runs', function (x) { return x.runId === k.runId; });
     var ms = run ? msOf(run.msId) : null;
-    H.push('<div class="core1 ' + (k.zone || here.key) + '">');
+    H.push('<div class="core1 ' + (k.zone || here.key) + (isNew ? ' fresh' : '') +
+      '"' + (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') + '>');
     H.push(pxTag(k.px || coreOf(k.runId), (z || here).pal, 'cx-px core'));
     H.push('<b>' + esc(k.name || (ms ? ms.title : '（那一趟）')) + '</b>');
     H.push('</div>');

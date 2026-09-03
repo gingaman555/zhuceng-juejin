@@ -219,10 +219,18 @@ function deskRow(t, next) {
      它記著「你在哪一趟遇過哪一隻」，而那是一學期走完之後
      才看得出形狀的東西。 */
   /* 上次翻開之後多遇到幾隻，就在門上掛幾。翻開就消掉。 */
-  var cn = codexNew(me());
+  var cnM = codexNew(me());
+  var cnK = keepNew(me(), t.teamId);
+  var cn = cnM + cnK;
+  /* 門上一個數字，但講清楚是哪一種——這一頁裝著兩種東西，
+     「多了 1」不說是哪一種的話，翻開還是要自己找。 */
+  var cnSay = cn
+    ? '圖鑑：多了 ' + [cnM ? cnM + ' 隻魔物' : '', cnK ? cnK + ' 張任務之證' : '']
+        .filter(function (x) { return x; }).join('、')
+    : '圖鑑：遇過的魔物，跟拿到的任務之證';
   H.push('<button class="dk lit" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
-    esc(cn ? '圖鑑：多了 ' + cn + ' 隻魔物' : '圖鑑：遇過的魔物，跟拿到的任務之證') + '">' +
+    esc(cnSay) + '">' +
     pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i>' +
     (cn ? '<em class="nb">' + cn + '</em>' : '') + '</button>');
   /* 故事。第一次進來看過一次，之後從這裡回來看。

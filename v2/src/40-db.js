@@ -622,14 +622,33 @@ function codexNew(u) {
 function markCodex(u) {
   if (!u || !u.teamId) return;
   var names = Object.keys(metMobs(u.teamId));
+  var keeps = keepsOf(u.teamId).map(function (k) { return k.keepId; });
   if (u.codexN === names.length &&
-      (u.codexSeen || []).join('|') === names.join('|')) return;
+      (u.codexSeen || []).join('|') === names.join('|') &&
+      (u.keepSeen || []).join('|') === keeps.join('|')) return;
   u.codexN = names.length;
   /* 名字也記下來。數量只夠在門上掛一個「多了 N 隻」，
      要在頁面上標出「是哪幾隻」就得知道名字。 */
   u.codexSeen = names;
+  /* 任務之證同一套。它跟魔物是這一頁的兩種東西，
+     所以「新的」也要有兩份名單，不然翻開只有一半會亮。 */
+  u.keepSeen = keeps;
   save();
 }
+
+/* 上次翻開之後新拿到的那幾張。回一個 {keepId: 1}。 */
+function keepFresh(u, teamId) {
+  if (!u || !teamId) return {};
+  /* 跟 codexFresh 同一條退路：翻過圖鑑、但還沒記過名單的舊帳號，
+     把現在有的全部當成看過的。 */
+  if (!u.keepSeen && u.codexN) return {};
+  var seen = {};
+  (u.keepSeen || []).forEach(function (k) { seen[k] = 1; });
+  var out = {};
+  keepsOf(teamId).forEach(function (k) { if (!seen[k.keepId]) out[k.keepId] = 1; });
+  return out;
+}
+function keepNew(u, teamId) { return Object.keys(keepFresh(u, teamId)).length; }
 
 /* 上次翻開之後新遇到的那幾隻。回一個 {名字: 1}。
 

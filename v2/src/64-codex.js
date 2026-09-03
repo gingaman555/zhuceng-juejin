@@ -25,9 +25,15 @@ PAGES.codex = function () {
      所以掀開遇到的生物從來沒進過圖鑑。 */
   var found = foundMobs(t.teamId);
   Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
-  /* 上次翻開之後才遇到的那幾隻。畫完之後 seen() 會把名單記起來
-     （見 55-ui.js），所以這一次翻開還看得到，下一次就不亮了。 */
-  var fresh = codexFresh(me(), t.teamId);
+  /* 上次翻開之後才遇到的那幾隻，跟才拿到的那幾張。
+
+     整趟只算一次（FRESH 存在 55-ui.js）：畫完之後 seen() 會把名單
+     記起來，所以第二次畫就算不出新的了——而分頁上那顆點正好是在
+     叫他換分頁。存著，離開圖鑑才放掉。 */
+  if (!FRESH) {
+    FRESH = { mob: codexFresh(me(), t.teamId), keep: keepFresh(me(), t.teamId) };
+  }
+  var fresh = FRESH.mob, freshK = FRESH.keep;
 
   /* 副題要蓋住這一頁的兩種東西：六個地層裡的魔物，跟老師發的任務之證。
      本來寫「這座地下城裡有哪些魔物」——那漏掉了第七個分頁。
@@ -48,11 +54,14 @@ PAGES.codex = function () {
       '</button>');
   });
   H.push('<button class="cxt core' + (tab === 'core' ? ' on' : '') +
-    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>任務之證</button>');
+    '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'cx:core' })) + '\'>任務之證' +
+    /* 這一頁有兩種東西，所以分頁上這一顆也要有——沒有它，
+       新拿到的那一張只有剛好翻到這一頁的人看得到。 */
+    (Object.keys(freshK).length ? '<i class="nw"></i>' : '') + '</button>');
   H.push('</div>');
 
   if (tab === 'core') {
-    H.push(codexThings(t, here));
+    H.push(codexThings(t, here, freshK));
   } else {
     var z = here;
     STRATA.forEach(function (x) { if (x.key === tab) z = x; });
@@ -90,7 +99,7 @@ PAGES.codex = function () {
 
    物件在廊道裡留著——那裡它有用：每一層長的不一樣，那是讓六層像
    六個地方而不是六個顏色的東西。 */
-function codexThings(t, here) {
+function codexThings(t, here, freshK) {
   var mine = keepsOf(t.teamId);
   var H = ['<div class="card">'];
 
@@ -115,13 +124,17 @@ function codexThings(t, here) {
   H.push('<p class="dim">一件任務一張，老師審核過了才有。名字就是那一件任務，' +
     '而且不會有兩張一樣。</p>');
   H.push('<div class="cores">');
+  /* 亮起來的順序錯開，一張接一張——同時全亮認不出有幾張。 */
+  var nth = 0;
   mine.forEach(function (k) {
+    var isNew = !!(freshK && freshK[k.keepId]);
     var z = null;
     STRATA.forEach(function (x) { if (x.key === k.zone) z = x; });
     /* 名字讀發下去那一刻記的那一個。舊資料沒有，才回頭查任務名。 */
     var run = k.name ? null : find('Runs', function (x) { return x.runId === k.runId; });
     var ms = run ? msOf(run.msId) : null;
-    H.push('<div class="core1 ' + (k.zone || here.key) + '">');
+    H.push('<div class="core1 ' + (k.zone || here.key) + (isNew ? ' fresh' : '') +
+      '"' + (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') + '>');
     H.push(pxTag(k.px || coreOf(k.runId), (z || here).pal, 'cx-px core'));
     H.push('<b>' + esc(k.name || (ms ? ms.title : '（那一趟）')) + '</b>');
     H.push('</div>');
