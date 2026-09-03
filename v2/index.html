@@ -1614,6 +1614,10 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 /* 火快滅了：只剩他附近。牆還看得到——暗的是燈，不是整個世界。 */
 .scn.dark .veil{ --v1:132px; --v2:220px; --v3:330px }
 
+/* 站得住的那一行。比「走到」淡一階——它不是另一個成績，
+   是同一件事的第二個階段。 */
+.scn-hud .hud-seal{color:var(--gold-d)}
+
 /* 班級地下城的樣子。
 
    跟 52 / 53 同一套規矩：hard stop、0 模糊、光從左上來。
@@ -3839,6 +3843,15 @@ button.ac:active{transform:translateY(1px)}
 
 .okwrap > :first-child{margin-top:auto}
 .okwrap > :last-child{margin-bottom:auto}
+
+/* 遇到了但還沒進館藏。比遇過的暗一階，但比沒遇過的亮——
+   三階：沒遇過 .55 ／ 遇過還沒存檔 .78 ／ 存檔 1。 */
+.cxi.met{opacity:.78}
+.cxi.met.filed{opacity:1}
+.cxi.met.filed{box-shadow:inset 3px 0 0 var(--zink,var(--frame))}
+.cxi .cx-wait{
+  display:block;font-size:22px;line-height:1.4;color:var(--gold-d);margin-top:5px
+}
 
 /* ---------- 交出去的那一場 ----------
 
@@ -7709,6 +7722,19 @@ function metMobs(teamId) {
   return seen;
 }
 
+/* 已經進館藏的那幾隻：老師收下那一趟，牠才算存檔。
+   遇到是系統記的，存檔是人給的——同一份收集，兩個來源。 */
+function sealedMobs(teamId) {
+  var seen = {};
+  runsFor(teamId).forEach(function (x) {
+    var r = x.run;
+    if (r.state !== 'done' && r.state !== 'approved') return;
+    var m = mobOfRun(r);
+    if (m) seen[m.n] = x.ms.title;
+  });
+  return seen;
+}
+
 /* 這一趟的形狀：承諾幾天、過了幾天、來過幾天、說沒動幾天、勾了幾段。
    老師看得到這個。系統不說任何一句判斷——它只把數字擺出來。 */
 function runShape(runId) {
@@ -11242,7 +11268,9 @@ function scene(t, row, st, kind) {
   H.push('<div class="scn-hud">' +
     '<em>' + esc(zone.name) + '</em>' +
     '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
-    '<span>走完 ' + depthOf(t.teamId) + ' 個任務</span>' +
+    '<span>走到 ' + depthOf(t.teamId) + ' 個任務</span>' +
+    /* 站得住的：老師收下才算。走是他自己的事，留下來是要有人看過的事。 */
+    '<span class="hud-seal">站得住 ' + sealedDepth(t.teamId) + ' 個</span>' +
     '<span class="zn-note">' + esc(zone.note) + '</span></div>');
 
   /* 釘在框上、不跟著捲的兩層：近景的岩石與暗角。
@@ -12501,6 +12529,9 @@ PAGES.codex = function () {
     FRESH = { mob: codexFresh(me(), t.teamId), keep: keepFresh(me(), t.teamId) };
   }
   var fresh = FRESH.mob, freshK = FRESH.keep;
+  /* 已經進館藏的那幾隻。遇到是系統記的，存檔要老師收下——
+     所以同一格有兩階（見 40-db.js 的 sealedMobs）。 */
+  var filed = sealedMobs(t.teamId);
 
   /* 副題要蓋住這一頁的兩種東西：六個地層裡的魔物，跟老師發的任務之證。
      本來寫「這座地下城裡有哪些魔物」——那漏掉了第七個分頁。
@@ -12541,11 +12572,17 @@ PAGES.codex = function () {
     var nth = 0;
     faunaOf(z.key).forEach(function (c) {
       var isNew = !!fresh[c.n];
-      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (isNew ? ' fresh' : '') +
+      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') +
+        (filed[c.n] ? ' filed' : '') + (isNew ? ' fresh' : '') +
         '"' + (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') + '>');
       H.push(pxTag(c.px, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');
+      /* 遇到了但還沒進館藏——那一趟老師還沒收下。
+         不寫「等老師」，寫這一格自己的狀態。 */
+      if (met[c.n] && !filed[c.n]) {
+        H.push('<span class="cx-wait">遇過了，還沒進館藏</span>');
+      }
       /* 「遇過 · 某某任務」那一行拿掉了：那是一句把兩件不相干的事
          接在一起的話（一隻生物 · 一個任務名），而遇沒遇過那一格自己
          就看得出來——沒遇過的整格是暗的。 */
@@ -13506,7 +13543,10 @@ var RANK_N = 3;   /* 只算最近三趟 */
 /* 一組的平均偏差率。沒有判定過的趟就回 null。 */
 function rankDev(teamId) {
   var rs = where('Runs', function (r) {
-    return r.teamId === teamId && r.stamp && r.est > 0 && r.actual > 0;
+    /* 只算老師收下的。排行榜是這一套裡唯一還留著的「獎賞」，
+       而獎賞不該由系統自己發——交出去就上榜的話，老師是可選的。 */
+    return r.teamId === teamId && r.stamp && r.est > 0 && r.actual > 0 &&
+      (r.state === 'done' || r.state === 'approved');
   }).sort(function (a, b) { return (a.submittedAt || 0) - (b.submittedAt || 0); });
   if (!rs.length) return null;
   var use = rs.slice(-RANK_N);
@@ -13655,7 +13695,8 @@ function rankCard(classId, meId) {
 
 /* 這一組遇過幾種，跟牠們散在哪幾個地方。 */
 function dexOf(teamId) {
-  var met = metMobs(teamId);
+  /* 只算存檔的。這是一張榜，而榜是獎賞——獎賞不該由系統自己發。 */
+  var met = sealedMobs(teamId);
   var names = Object.keys(met);
   /* 去過的地方：從遇過的那幾隻反推。牠們住在哪一層寫在生物表上。 */
   var zs = {};

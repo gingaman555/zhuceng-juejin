@@ -37,7 +37,10 @@ var RANK_N = 3;   /* 只算最近三趟 */
 /* 一組的平均偏差率。沒有判定過的趟就回 null。 */
 function rankDev(teamId) {
   var rs = where('Runs', function (r) {
-    return r.teamId === teamId && r.stamp && r.est > 0 && r.actual > 0;
+    /* 只算老師收下的。排行榜是這一套裡唯一還留著的「獎賞」，
+       而獎賞不該由系統自己發——交出去就上榜的話，老師是可選的。 */
+    return r.teamId === teamId && r.stamp && r.est > 0 && r.actual > 0 &&
+      (r.state === 'done' || r.state === 'approved');
   }).sort(function (a, b) { return (a.submittedAt || 0) - (b.submittedAt || 0); });
   if (!rs.length) return null;
   var use = rs.slice(-RANK_N);

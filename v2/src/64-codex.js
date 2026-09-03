@@ -34,6 +34,9 @@ PAGES.codex = function () {
     FRESH = { mob: codexFresh(me(), t.teamId), keep: keepFresh(me(), t.teamId) };
   }
   var fresh = FRESH.mob, freshK = FRESH.keep;
+  /* 已經進館藏的那幾隻。遇到是系統記的，存檔要老師收下——
+     所以同一格有兩階（見 40-db.js 的 sealedMobs）。 */
+  var filed = sealedMobs(t.teamId);
 
   /* 副題要蓋住這一頁的兩種東西：六個地層裡的魔物，跟老師發的任務之證。
      本來寫「這座地下城裡有哪些魔物」——那漏掉了第七個分頁。
@@ -74,11 +77,17 @@ PAGES.codex = function () {
     var nth = 0;
     faunaOf(z.key).forEach(function (c) {
       var isNew = !!fresh[c.n];
-      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (isNew ? ' fresh' : '') +
+      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') +
+        (filed[c.n] ? ' filed' : '') + (isNew ? ' fresh' : '') +
         '"' + (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') + '>');
       H.push(pxTag(c.px, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');
+      /* 遇到了但還沒進館藏——那一趟老師還沒收下。
+         不寫「等老師」，寫這一格自己的狀態。 */
+      if (met[c.n] && !filed[c.n]) {
+        H.push('<span class="cx-wait">遇過了，還沒進館藏</span>');
+      }
       /* 「遇過 · 某某任務」那一行拿掉了：那是一句把兩件不相干的事
          接在一起的話（一隻生物 · 一個任務名），而遇沒遇過那一格自己
          就看得出來——沒遇過的整格是暗的。 */

@@ -130,7 +130,9 @@ function scene(t, row, st, kind) {
   H.push('<div class="scn-hud">' +
     '<em>' + esc(zone.name) + '</em>' +
     '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
-    '<span>走完 ' + depthOf(t.teamId) + ' 個任務</span>' +
+    '<span>走到 ' + depthOf(t.teamId) + ' 個任務</span>' +
+    /* 站得住的：老師收下才算。走是他自己的事，留下來是要有人看過的事。 */
+    '<span class="hud-seal">站得住 ' + sealedDepth(t.teamId) + ' 個</span>' +
     '<span class="zn-note">' + esc(zone.note) + '</span></div>');
 
   /* 釘在框上、不跟著捲的兩層：近景的岩石與暗角。

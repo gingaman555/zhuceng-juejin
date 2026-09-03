@@ -696,3 +696,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .scn.dim  .veil{ --v1:165px; --v2:275px; --v3:407px }
 /* 火快滅了：只剩他附近。牆還看得到——暗的是燈，不是整個世界。 */
 .scn.dark .veil{ --v1:132px; --v2:220px; --v3:330px }
+
+/* 站得住的那一行。比「走到」淡一階——它不是另一個成績，
+   是同一件事的第二個階段。 */
+.scn-hud .hud-seal{color:var(--gold-d)}
