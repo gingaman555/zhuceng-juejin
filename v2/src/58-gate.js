@@ -32,7 +32,7 @@ PAGES.gate = function () {
   /* 一趟就這四件事。四個圖示一排，不寫成一段話。 */
   H.push('<div class="four">');
   [
-    [ICONS.home, '承諾天數'], [ICONS.pack, '進行任務'],
+    [ICONS.home, '規劃天數'], [ICONS.pack, '進行任務'],
     [ICONS.radar, '回報進度'], [ICONS.eco, '查看全班']
   ].forEach(function (x, i) {
     if (i) H.push('<i class="fr-a"></i>');
