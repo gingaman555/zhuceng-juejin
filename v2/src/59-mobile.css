@@ -100,6 +100,17 @@
   .px.fa-px{width:66px;height:66px;flex:0 0 66px}
   .fa-in > div{min-width:0}
   .lg{gap:8px 14px}
+
+  /* ---------- 故事那一張地圖 ---------- */
+  .sty-map{flex-direction:column}
+  .sty-rooms{grid-template-columns:repeat(2,1fr);grid-template-rows:auto}
+  .sty-room:nth-child(3n)::after{display:block}
+  .sty-room:nth-child(2n)::after{display:none}
+  .sty-door{
+    flex:none;flex-direction:row;gap:14px;padding:11px;
+    box-shadow:inset 0 3px 0 #000
+  }
+  .sty-door i{width:66px;height:44px}
 }
 
 /* 很窄的手機（400 以下）。
