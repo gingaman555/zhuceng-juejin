@@ -252,9 +252,9 @@ function deskRow(t, next) {
   /* 門上一個數字，但講清楚是哪一種——這一頁裝著兩種東西，
      「多了 1」不說是哪一種的話，翻開還是要自己找。 */
   var cnSay = cn
-    ? '圖鑑：多了 ' + [cnM ? cnM + ' 隻魔物' : '', cnK ? cnK + ' 張任務之證' : '']
+    ? '圖鑑：多了 ' + [cnM ? cnM + ' 位委託人' : '', cnK ? cnK + ' 張任務之證' : '']
         .filter(function (x) { return x; }).join('、')
-    : '圖鑑：遇過的魔物，跟拿到的任務之證';
+    : '圖鑑：遇過的委託人，跟拿到的任務之證';
   H.push('<button class="dk lit" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
     esc(cnSay) + '">' +

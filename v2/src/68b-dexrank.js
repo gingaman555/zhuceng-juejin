@@ -75,14 +75,14 @@ function dexCard(classId, meId) {
   var has = rows.some(function (r) { return r.n > 0; });
 
   var H = ['<div class="card rank">'];
-  H.push('<h2 class="rk-h">遇過幾種魔物，共 ' + all + ' 種</h2>');
+  H.push('<h2 class="rk-h">遇過幾位委託人，共 ' + all + ' 位</h2>');
   /* 一句話說清楚這一榜在獎勵什麼。沒有這一句，它會被讀成
      「誰做得多」——而那正是它最不該變成的東西。 */
-  H.push('<p class="dim">同一個地方走幾趟遇到的都是同一隻魔物。要收得多，' +
+  H.push('<p class="dim">同一個地方走幾趟遇到的都是同一位委託人。要遇得多，' +
     '就往沒去過的地方走——而去哪裡不影響判定。</p>');
 
   if (!has) {
-    H.push('<p class="dim">還沒有人遇過任何一隻魔物。</p>');
+    H.push('<p class="dim">還沒有人遇過任何一位委託人。</p>');
     H.push('</div>');
     return H.join('');
   }

@@ -78,7 +78,7 @@ function feedRow(f, meId) {
     H.push('<span class="fd-ic">' + ic + '</span>');
     H.push('<b>' + esc(who) + '</b>');
     H.push('<em class="fd-say">完成了「' + esc(ms ? ms.title : '一件事') + '」，' +
-      (mob ? '並且遇到了 ' + esc(mob.n) + ' 且將其打敗了！' : '') + '</em>');
+      (mob ? '，把東西交給了 ' + esc(mob.n) + '！' : '') + '</em>');
     H.push('<i>' + feedWhen(f.at) + '</i>');
     H.push('</div>');
     return H.join('');

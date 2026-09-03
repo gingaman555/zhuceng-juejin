@@ -116,7 +116,7 @@ PAGES.battle = function () {
     /* 兩個選項寫成他真的要做的事：戰鬥就是回報進度，那不是比喻，
        那一頁問的就是「實際花了幾天」跟「順不順」。括號裡那一句
        讓第一次進來的人不用猜「上」是什麼意思。 */
-    H.push(btChoice('btgo:' + r.runId, '戰鬥（回報進度）', 'go'));
+    H.push(btChoice('btgo:' + r.runId, '交東西給他', 'go'));
     H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
     H.push('</div>');
   }
@@ -131,7 +131,7 @@ PAGES.battle = function () {
     /* 兩問各自一句，不共用「打過去」——第一下是他先出手，
        第二下是接著再一下。同一句話用兩次，那兩下就變成同一下。 */
     H.push(btChoice('bt' + ph + ':' + r.runId,
-      ph === 'q1' ? '吃我一擊！' : '再來一擊！', 'go'));
+      ph === 'q1' ? '接著說' : '交出去', 'go'));
     H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
     H.push('</div></div>');
   }
@@ -143,11 +143,14 @@ PAGES.battle = function () {
 function btLine(r, mob, ph) {
   /* 退回那一場牠不是突然出現的——牠本來倒著，現在站起來了。 */
   if (ph === 'menu') {
-    return r.state === 'back' ? mob.n + ' 又站起來了！' : mob.n + ' 突然出現了！';
+    /* 退回＝他把東西退回來了，不是他復活。 */
+    return r.state === 'back'
+      ? mob.n + ' 把東西退回來了。'
+      : '你走到了。' + mob.n + ' 在這裡。';
   }
   if (ph === 'q1') return '這一趟做完了哪幾段？';
   if (ph === 'q2') return '這一趟走得怎麼樣？';
-  return '你上前。';
+  return '你把東西遞過去。';
 }
 
 /* 選單上的一行。舊版寶可夢的游標長在前面（見 58-battle.css）。 */
@@ -233,10 +236,10 @@ function btVerdict(r) {
   var est = r.est || 1;
   var act = r.actual || est;
   if (act < est) {
-    return { key: 'early', line: '打敗了。你還有 ' + (est - act) + ' 天沒用完。' };
+    return { key: 'early', line: '他收下了。你還有 ' + (est - act) + ' 天沒用完。' };
   }
-  if (act === est) return { key: 'exact', line: '剛好打敗了。' };
-  return { key: 'late', line: '打敗了，不過多花了 ' + (act - est) + ' 天。' };
+  if (act === est) return { key: 'exact', line: '他收下了。剛好是你說的天數。' };
+  return { key: 'late', line: '他收下了，不過多花了 ' + (act - est) + ' 天。' };
 }
 
 /* ---------- 演一次 ----------
@@ -303,7 +306,7 @@ function battleRun() {
   /* 二 · 牠被打敗。閃四下，然後往下滑出畫面——
      舊版寶可夢就是這樣做的：沒有爆炸，沒有粒子，就是滑下去。 */
   btAt(1900, function () {
-    say(mobOfRun(r).n + ' 被打敗了！');
+    say(mobOfRun(r).n + ' 收下了。');
     box.classList.add('foe-out');
   });
 
