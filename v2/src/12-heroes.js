@@ -305,33 +305,42 @@ var HERO_OS = {
     rest: ['一大場冒險後好好休息真是舒服。'],
     walk: ['每次的冒險都令人感到興奮!',
            '各種困難都難不了我!',
-           '又是沒看過的新風景!']
+           '又是沒看過的新風景!'],
+         over: ['這條路比我想的長，不過風景也更多了。', '看來這一趟沒那麼簡單啊!']
   },
   mage: {
     rest: ['即使正在休息也是可以學習的好機會。'],
     walk: ['好多未曾接觸的新知識。',
            '我思，故我在。',
-           '看來我還有很多可以去學習的呢…']
+           '看來我還有很多可以去學習的呢…'],
+         over: ['看來我的估算需要修正。', '時間比我預期的走得快一些。']
   },
   ninja: {
     rest: ['正在充分休息，是也。'],
     walk: ['全力衝刺中，是也。',
            '忍術，想到的事情就立刻做之術!',
-           '忍術，事情不嫌麻煩之術!']
+           '忍術，事情不嫌麻煩之術!'],
+         over: ['比預定的久了，是也。', '再快一點，是也!']
   },
   knight: {
     rest: ['旅程中保持健康也是很重要的。'],
     walk: ['所謂的規矩是自己訂的。',
            '我的誓約便是任何挑戰都不臨陣脫逃。',
-           '一步一步來才不會出錯。']
+           '一步一步來才不會出錯。'],
+         over: ['說出口的日子過了。我會走完。', '慢，但不會停。']
   }
 };
 
 /* 挑一句。不重複上一句——同一句連著出現兩次，那個角色就像壞掉的錄音。 */
 var OS_LAST = '';
-function heroLine(u, walking) {
+/* mode：'walk' 前進、'rest' 休息、'over' 過了自己說的那幾天。
+   收布林是舊的呼叫方式，留著。 */
+function heroLine(u, mode) {
   var k = heroKey(u);
-  var a = (HERO_OS[k] || HERO_OS.adv)[walking ? 'walk' : 'rest'] || [];
+  if (mode === true) mode = 'walk';
+  else if (mode === false || !mode) mode = 'rest';
+  var box = HERO_OS[k] || HERO_OS.adv;
+  var a = box[mode] || box.walk || [];
   if (a.length < 2) return a[0] || '';
   var s = '';
   for (var i = 0; i < 8; i++) {

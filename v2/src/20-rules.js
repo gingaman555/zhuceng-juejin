@@ -167,9 +167,13 @@ RULES.stallOf = function (lastPushAt, nowTs) {
 
 /* 停滯的說法。不講「你逾期了」，講畫面上發生了什麼。
    而且講的是他自己說的那個數字，不是我規定的期限。 */
+/* 本來是「水漫過來了／水淹過頭了」——那講的是 .tide，橫著漫過來的
+   那片藍色水。它拿掉了，所以那兩句在描述畫面上沒有的東西。
+
+   照現在真的畫出來的東西講：第一階他身上爬藤蔓，第二階他睡著了。 */
 RULES.stallSay = function (level, days) {
-  if (level === 2) return '水淹過頭了。比你自己說的多 ' + days + ' 天。';
-  if (level === 1) return '水漫過來了。比你自己說的多 ' + days + ' 天。';
+  if (level === 2) return '他睡著了。比你自己說的多 ' + days + ' 天。';
+  if (level === 1) return '藤蔓爬上來了。比你自己說的多 ' + days + ' 天。';
   return '';
 };
 

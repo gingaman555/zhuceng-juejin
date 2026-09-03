@@ -638,14 +638,18 @@ function markCodex(u) {
 
    本來 metMobs 只要 est 有值就算——那是「承諾了」，那時候他還在
    洞口，根本還沒走到。 */
+/* 走到你說的那一天了沒有。
+
+   看日曆，不看他按了幾次。這個系統不要求每天登入——本來這裡數的是
+   「按過幾次往前一天」，所以不每天開的人永遠走不到盡頭、永遠遇不到
+   那一隻，圖鑑因此也永遠收不到。那等於用收集品獎勵每天登入。
+
+   停滯那一支（stallOf）本來就是看日曆的：「他不開，它也在走。」
+   這裡跟它對齊。 */
 function metRun(r) {
   if (!r || !r.runId) return false;
   if (r.state !== 'running') return true;
-  var log = dayLog(r.runId), moved = 0;
-  for (var i = 0; i < log.length; i++) {
-    if (log[i] && log[i].kind === 'move') moved++;
-  }
-  return moved >= (r.est || 1);
+  return daysBetween(r.committedAt, now()) >= (r.est || 1);
 }
 
 /* 遇過的那幾隻。 */

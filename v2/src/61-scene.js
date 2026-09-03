@@ -56,7 +56,12 @@ function scene(t, row, st, kind) {
      那是走廊的格數被當成日子講。 */
   var gone = run && run.committedAt
     ? daysBetween(run.committedAt, run.submittedAt || now()) : 0;
-  var walked = Math.min(moved, est);
+  /* 角色走到哪，看日曆不看他按了幾次——不每天開的人，角色本來會
+     永遠站在洞口，看起來像壞掉。
+
+     按一下留下的是痕跡（那一格的火把、腳印、那天動的是哪一件），
+     不是位置。來過有記號，沒來也不會被擋住。 */
+  var walked = Math.min(gone, est);
 
   /* 每一格頭上掛的是那一天動的是哪一段。廊道因此讀得出形狀——
      七格同一個顏色跟七格五顏六色，是完全不同的一趟。 */
@@ -373,7 +378,12 @@ function scene(t, row, st, kind) {
     H.push('<div class="scn-foot">');
     H.push('<span class="sf est"><i>你說要</i><b>' + est + '</b><i>天</i></span>');
     H.push('<span class="sf days"><i>已經過了</i><b>' + gone + '</b><i>天</i></span>');
-    H.push('<span class="sf you"><i>你來了</i><b>' + moved + '</b><i>天</i></span>');
+    /* 「你來了 N 天」拿掉了：那是一個每天登入的計數，而這個系統
+       不要求每天登入。判定只讀兩個數字，第三個數字擺在它們旁邊，
+       看起來就像也會被算進去。
+
+       來過的痕跡還在廊道上（走過的那幾格點著火把），
+       但它不再被寫成一個分數。 */
     H.push('</div>');
   }
   return H.join('');
@@ -768,6 +778,14 @@ function osTick() {
   var walking = scn.className.indexOf('walking') >= 0;
   var resting = scn.className.indexOf('resting') >= 0;
   if (!walking && !resting) return;
+  /* 過了自己說的那幾天：光暗一階（WORLD.light[1].key === 'dim'），
+     他身上開始爬藤蔓。那個時候還在走，但講「又是沒看過的新風景」
+     就很怪——所以換一組話。
+
+     睡著的那一階（dark）連走都不走了，上面那一行已經 return，
+     所以睡著的人不說話。 */
+  var mode = scn.className.indexOf('dim') >= 0 ? 'over'
+    : (walking ? 'walk' : 'rest');
 
   var back = tag.textContent;
   var cls = tag.className;
@@ -775,7 +793,7 @@ function osTick() {
   function say() {
     var t = document.querySelector('.scn .hero-tag');
     if (!t) return stopOS();
-    var line = heroLine(me(), walking);
+    var line = heroLine(me(), mode);
     if (!line) return stopOS();
     t.textContent = line;
     t.className = cls + ' os';
