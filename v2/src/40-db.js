@@ -401,6 +401,14 @@ function actTickStep(teamId, runId, i) {
   r.steps = r.steps || [];
   var k = r.steps.indexOf(i);
   if (k < 0) r.steps.push(i); else r.steps.splice(k, 1);
+  /* 勾起來的那一下，同時記成「今天來過，動的是這一段」。
+
+     這是那根岩心唯一的資料來源（見 43-core.js）。沒有這一行，
+     每一趟的日誌都是空的，每一張任務之證都長成同一根斷柱。
+
+     取消勾選不收回那一天——那天他確實來過，勾錯不改變這件事。
+     logDay 一天只收一筆，所以一天勾五段還是一格。 */
+  if (k < 0) logDay(teamId, runId, 'move', i, 0);
   save();
   var m = msOf(r.msId);
   logEvent('tick', {
