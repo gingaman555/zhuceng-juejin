@@ -157,8 +157,18 @@ PAGES.review = function () {
   var s = RULES.STAMPS[r.stamp];
 
   /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
-  var H = [head('審核', t.name + '　·　' + m.title,
-    '成果交在你原本收的地方。')];
+  var H = [head('審核', t.name + '　·　' + m.title, '')];
+
+  /* 他們說東西在哪，排在最上面——他打開這一頁的第一件事就是去看東西。
+
+     本來這裡只有一句「成果交在你原本收的地方」，然後叫他自己去找。
+     那三步（離開系統、翻、回來）會殺掉審核這件事，而審核不發生的話，
+     後面每一個設計都沒有觸發點。 */
+  if (r.link) {
+    H.push('<div class="card"><div class="eyebrow">他們說東西在這裡</div>');
+    H.push(whereLine(r.link));
+    H.push('</div>');
+  }
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 

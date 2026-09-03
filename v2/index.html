@@ -3886,6 +3886,14 @@ button.ac:active{transform:translateY(1px)}
 .sure-r span{font-size:22px;color:var(--mute);font-variant-numeric:tabular-nums}
 .sure-r i{font-style:normal;font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
 
+/* 他們說東西在這裡。老師打開審核頁的第一件事。 */
+.wh-link,.wh-txt{
+  display:block;font-size:22px;line-height:1.5;margin:6px 0 0;overflow-wrap:anywhere
+}
+.wh-link{color:var(--gold);text-decoration:none;border-bottom:2px solid var(--gold-d)}
+.wh-link:hover{border-bottom-color:var(--gold)}
+.wh-txt{color:var(--ink)}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -7849,6 +7857,15 @@ function sureOf(teamId) {
   return out;
 }
 
+/* 上一次他們寫的「老師要去哪裡看」。同一門課通常交在同一個地方，
+   所以下一趟預先帶進來，改幾個字就好——摩擦一低，這一格才不會
+   變成隨便打兩個字過關。 */
+function lastWhere(teamId) {
+  var rs = where('Runs', function (r) { return r.teamId === teamId && r.link; })
+    .sort(function (a, b) { return (b.submittedAt || 0) - (a.submittedAt || 0); });
+  return rs.length ? rs[0].link : '';
+}
+
 /* 已經進館藏的那幾隻：老師收下那一趟，牠才算存檔。
    遇到是系統記的，存檔是人給的——同一份收集，兩個來源。 */
 function sealedMobs(teamId) {
@@ -10072,6 +10089,23 @@ function estAxis(est, past) {
 
   H.push('</div></div>');
   return H.join('');
+}
+
+/* 「老師要去哪裡看」那一行怎麼畫。
+
+   看起來像網址就畫成可以點的，其餘就是一行字。
+
+   這是畫法，不是判斷——系統沒有因為它是不是網址而做任何不同的事，
+   只是省老師一次複製貼上。這一行的內容對系統來說跟一段亂碼沒有差別
+   （check.js 第九道守著這件事）。 */
+function whereLine(v) {
+  var t = String(v || '').trim();
+  if (!t) return '';
+  if (/^https?:[/][/][^\s]+$/.test(t)) {
+    return '<a class="wh-link" href="' + esc(t) + '" target="_blank" rel="noopener">' +
+      esc(t) + '</a>';
+  }
+  return '<p class="wh-txt">' + esc(t) + '</p>';
 }
 
 
@@ -13667,6 +13701,13 @@ function btAsk(r) {
       'oninput="DRAFT.why=this.value" placeholder="' +
       esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>');
   }
+  /* 老師要去哪裡看。必填，但系統只檢查有沒有字——
+     擋的是「你有沒有告訴他」，不是「你寫得對不對」。 */
+  H.push('<div class="bt-qh">老師要去哪裡看</div>');
+  H.push('<input class="bt-w" id="bt-where" ' +
+    'oninput="DRAFT.where=this.value" placeholder="' +
+    esc('例：TronClass 第三次作業 · 印出來放你桌上 · 週三帶去給你看') +
+    '" value="' + esc(draft('where', lastWhere(r.teamId))) + '">');
   return H.join('');
 }
 
@@ -13808,7 +13849,10 @@ ACTS.btq2 = function (id) {
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
      數字在他第一次交出去的當下就定了，重做不會讓他當初說的話
      變成別的話。 */
-  var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, '');
+  /* 沒寫「老師要去哪裡看」就交不出去。 */
+  var wh = String(DRAFT.where == null ? lastWhere(t.teamId) : DRAFT.where).trim();
+  if (!wh) return say('先寫老師要去哪裡看。');
+  var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
@@ -14442,8 +14486,18 @@ PAGES.review = function () {
   var s = RULES.STAMPS[r.stamp];
 
   /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
-  var H = [head('審核', t.name + '　·　' + m.title,
-    '成果交在你原本收的地方。')];
+  var H = [head('審核', t.name + '　·　' + m.title, '')];
+
+  /* 他們說東西在哪，排在最上面——他打開這一頁的第一件事就是去看東西。
+
+     本來這裡只有一句「成果交在你原本收的地方」，然後叫他自己去找。
+     那三步（離開系統、翻、回來）會殺掉審核這件事，而審核不發生的話，
+     後面每一個設計都沒有觸發點。 */
+  if (r.link) {
+    H.push('<div class="card"><div class="eyebrow">他們說東西在這裡</div>');
+    H.push(whereLine(r.link));
+    H.push('</div>');
+  }
 
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 

@@ -219,6 +219,13 @@ function btAsk(r) {
       'oninput="DRAFT.why=this.value" placeholder="' +
       esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>');
   }
+  /* 老師要去哪裡看。必填，但系統只檢查有沒有字——
+     擋的是「你有沒有告訴他」，不是「你寫得對不對」。 */
+  H.push('<div class="bt-qh">老師要去哪裡看</div>');
+  H.push('<input class="bt-w" id="bt-where" ' +
+    'oninput="DRAFT.where=this.value" placeholder="' +
+    esc('例：TronClass 第三次作業 · 印出來放你桌上 · 週三帶去給你看') +
+    '" value="' + esc(draft('where', lastWhere(r.teamId))) + '">');
   return H.join('');
 }
 
@@ -360,7 +367,10 @@ ACTS.btq2 = function (id) {
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
      數字在他第一次交出去的當下就定了，重做不會讓他當初說的話
      變成別的話。 */
-  var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, '');
+  /* 沒寫「老師要去哪裡看」就交不出去。 */
+  var wh = String(DRAFT.where == null ? lastWhere(t.teamId) : DRAFT.where).trim();
+  if (!wh) return say('先寫老師要去哪裡看。');
+  var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';

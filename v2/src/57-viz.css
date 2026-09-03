@@ -1990,3 +1990,11 @@ button.ac:active{transform:translateY(1px)}
 .sure-r b{font-size:22px;font-weight:400;color:var(--ink)}
 .sure-r span{font-size:22px;color:var(--mute);font-variant-numeric:tabular-nums}
 .sure-r i{font-style:normal;font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+
+/* 他們說東西在這裡。老師打開審核頁的第一件事。 */
+.wh-link,.wh-txt{
+  display:block;font-size:22px;line-height:1.5;margin:6px 0 0;overflow-wrap:anywhere
+}
+.wh-link{color:var(--gold);text-decoration:none;border-bottom:2px solid var(--gold-d)}
+.wh-link:hover{border-bottom-color:var(--gold)}
+.wh-txt{color:var(--ink)}

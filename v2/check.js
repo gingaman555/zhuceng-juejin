@@ -311,3 +311,27 @@ if (bad) {
 }
 console.log('殘留檢查通過：' + BANNED.length + ' 個禁用詞、畫面代號、寫死的規則句、' +
   '判定的純度、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度、沒有小字，都守住了。');
+
+/* ---------- 九 · 這不是一個交作業的平台 ----------
+
+   「老師要去哪裡看」那一行是自由文字，而且它對系統來說跟一段亂碼
+   沒有差別：只被印出來給老師看，沒有任何一支函式讀它的內容做決定。
+
+   界線寫成測試，不是寫成承諾——不然它會在某一次「順手加個功能」
+   的時候悄悄破掉。 */
+const NOFILE = ['FileReader', 'new File(', 'new FormData(', 'type="file"'];
+NOFILE.forEach(function (w) {
+  if (src.indexOf(w) < 0) return;
+  bad++;
+  console.error('系統開始收檔案了　' + w + '　——作業交在老師原本收的地方，這裡只記一行字');
+});
+/* r.link 只能被寫進去、被畫出來。出現在判斷式裡就是它開始有意義了。 */
+src.split('\n').forEach(function (line, i) {
+  if (line.indexOf('.link') < 0) return;
+  if (/\.link\s*(===|!==|\.indexOf|\.match|\.test|\.slice)/.test(line) &&
+      line.indexOf('whereLine') < 0) {
+    bad++;
+    console.error('「老師要去哪裡看」被拿去做判斷了　第 ' + (i + 1) + ' 行');
+    console.error('　　' + line.trim());
+  }
+});

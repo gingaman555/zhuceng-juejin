@@ -754,6 +754,15 @@ function sureOf(teamId) {
   return out;
 }
 
+/* 上一次他們寫的「老師要去哪裡看」。同一門課通常交在同一個地方，
+   所以下一趟預先帶進來，改幾個字就好——摩擦一低，這一格才不會
+   變成隨便打兩個字過關。 */
+function lastWhere(teamId) {
+  var rs = where('Runs', function (r) { return r.teamId === teamId && r.link; })
+    .sort(function (a, b) { return (b.submittedAt || 0) - (a.submittedAt || 0); });
+  return rs.length ? rs[0].link : '';
+}
+
 /* 已經進館藏的那幾隻：老師收下那一趟，牠才算存檔。
    遇到是系統記的，存檔是人給的——同一份收集，兩個來源。 */
 function sealedMobs(teamId) {

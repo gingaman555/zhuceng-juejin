@@ -291,3 +291,20 @@ function estAxis(est, past) {
   H.push('</div></div>');
   return H.join('');
 }
+
+/* 「老師要去哪裡看」那一行怎麼畫。
+
+   看起來像網址就畫成可以點的，其餘就是一行字。
+
+   這是畫法，不是判斷——系統沒有因為它是不是網址而做任何不同的事，
+   只是省老師一次複製貼上。這一行的內容對系統來說跟一段亂碼沒有差別
+   （check.js 第九道守著這件事）。 */
+function whereLine(v) {
+  var t = String(v || '').trim();
+  if (!t) return '';
+  if (/^https?:[/][/][^\s]+$/.test(t)) {
+    return '<a class="wh-link" href="' + esc(t) + '" target="_blank" rel="noopener">' +
+      esc(t) + '</a>';
+  }
+  return '<p class="wh-txt">' + esc(t) + '</p>';
+}
