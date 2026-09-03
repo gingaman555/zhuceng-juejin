@@ -1605,15 +1605,23 @@ button.ac:active{transform:translateY(1px)}
 
    本來這裡是一面往下疊的崖。設定改了：地方是每一趟自己挑的，
    往下疊的圖跟那段話互相矛盾。 */
-.sty-map{display:flex;align-items:stretch;gap:0}
+.sty-map{display:flex;align-items:stretch;gap:0;height:auto}
 .sty-rooms{
   flex:1;display:grid;grid-template-columns:repeat(3,1fr);
   grid-template-rows:repeat(2,1fr);gap:11px;padding:14px
 }
+/* 一個地方＝一張畫，不是一塊色。長寬鎖成 2:1，跟那張圖一樣——
+   放大只有整體縮放，不會被拉扁。 */
 .sty-room{
-  position:relative;
-  background-color:var(--zbg);background-image:var(--ztex);
+  position:relative;display:flex;flex-direction:column;
+  background-color:var(--zbg);
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.7), inset 0 0 0 4px var(--zln,#27303B)
+}
+/* 圖鎖成 2:1，跟那張點陣圖一樣——放大只有整體縮放，不會被拉扁。 */
+.sty-pic{position:relative;display:block;aspect-ratio:2/1;overflow:hidden}
+.sty-room .pl{
+  position:absolute;inset:0;width:100%;height:100%;display:block;
+  image-rendering:pixelated
 }
 /* 通道：一個地方通到右邊那一個。最右邊那一欄不畫。 */
 .sty-room::after{
@@ -1621,13 +1629,16 @@ button.ac:active{transform:translateY(1px)}
   transform:translateY(-50%);background:rgba(255,240,214,.16)
 }
 .sty-room:nth-child(3n)::after{display:none}
+/* 名字釘在底下的實心條上。壓在圖上會兩邊都看不清楚。 */
 .sty-room em{
-  position:absolute;left:8px;right:8px;top:6px;font-style:normal;line-height:1.2;
-  font-size:22px;color:var(--zink)
+  display:block;padding:5px 8px;
+  font-style:normal;line-height:1.2;font-size:22px;color:var(--zink)
 }
 .sty-room.here{box-shadow:inset 0 0 0 2px #000, inset 0 0 0 5px var(--zink)}
+/* 他站在那個地方的地板上。地板在圖高度的 27% 處（見 18-places.js：
+   22 排裡地面在第 16 排）。 */
 .sty-me{
-  position:absolute;right:8px;bottom:6px;display:block;width:44px;height:44px
+  position:absolute;right:11px;bottom:25%;display:block;width:44px;height:44px
 }
 .sty-me .wf{position:absolute;left:0;top:0;width:44px;height:44px}
 .sty-me .wa{animation:wkA 1.6s steps(1,end) infinite}
@@ -1704,21 +1715,28 @@ button.ac:active{transform:translateY(1px)}
 
    右邊那幾隻是住在裡面的。他在選地方，也是在選這一趟要遇到誰。 */
 .wsix{display:grid;gap:11px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));margin:0 0 22px}
+/* 一張卡＝先看到那個地方，再看到它叫什麼。
+   圖是整張卡的上半，字在底下——字不壓圖，圖不擠字。 */
 .wz{
-  display:flex;align-items:center;gap:14px;padding:18px;
+  display:block;padding:0;
   border:0;cursor:pointer;font:inherit;color:inherit;text-align:left;
-  background-color:var(--zbg);background-image:var(--ztex);
+  background-color:var(--zbg);
   box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--frame);
   clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),
     calc(100% - 11px) 100%,0 100%,0 11px)
 }
+.wz-p{display:block;line-height:0;padding:6px 6px 0}
+.wz-p .pl{width:100%;height:auto;display:block;image-rendering:pixelated}
+.wz-b{display:block;padding:14px 18px 18px}
 .wz:hover{box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--zink)}
 .wz:active{transform:translate(2px,2px)}
 .wz:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .wz-t{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
 .wz-t b{font-size:22px;font-weight:400;color:var(--zink);line-height:1.3}
 .wz-t em{font-size:22px;font-style:normal;color:var(--dim);line-height:1.5}
-.wz-f{display:flex;gap:5px;flex:0 0 auto;align-self:flex-start;opacity:.8}
+/* 住在這裡的那幾隻，自己一排。本來擠在名字旁邊，把說明壓成三行——
+   而說明才是他在讀的東西。 */
+.wz-f{display:flex;gap:8px;margin:11px 0 0;opacity:.85}
 .wz-f .px{width:33px;height:33px}
 
 /* ---------- 換場 ----------

@@ -30,24 +30,33 @@ function pxSvg(px, pal, dim) {
   var out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' +
     W + ' ' + px.length + '" shape-rendering="crispEdges">'];
 
+  /* 先查調色盤。查得到就用那一個顏色——一個角色因此可以有
+     頭髮、皮膚、衣服、金屬各自的顏色，不是只有本體加陰影。
+     查不到才走舊的別名（+ 與 o 是陰影、* 與 z 是反光）。 */
+  function fillOf(ch) {
+    var f = pal[ch];
+    if (f !== undefined) return f;
+    return ch === '*' ? pal['*'] :
+      (ch === '+' || ch === 'o') ? pal.o :
+      ch === '~' ? (pal['~'] || pal.o) :
+      ch === 'z' || ch === 'Z' ? (pal['*'] || pal['#']) :
+      pal['#'];
+  }
+  var op = dim ? ' opacity=".26"' : '';
+
   px.forEach(function (row, y) {
-    for (var x = 0; x < row.length; x++) {
+    /* 一橫排連著同色的併成一個 rect。牆跟地板那幾條大色帶因此
+       從一排 44 個變成 1 個——地方那六張圖少掉九成的 rect。 */
+    var x = 0;
+    while (x < row.length) {
       var ch = row[x];
-      if (ch === '.' || ch === ' ') continue;
-      /* 先查調色盤。查得到就用那一個顏色——一個角色因此可以有
-         頭髮、皮膚、衣服、金屬各自的顏色，不是只有本體加陰影。
-         查不到才走舊的別名（+ 與 o 是陰影、* 與 z 是反光）。 */
-      var fill = pal[ch];
-      if (fill === undefined) {
-        fill =
-          ch === '*' ? pal['*'] :
-          (ch === '+' || ch === 'o') ? pal.o :
-          ch === '~' ? (pal['~'] || pal.o) :
-          ch === 'z' || ch === 'Z' ? (pal['*'] || pal['#']) :
-          pal['#'];
-      }
-      out.push('<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + fill + '"' +
-        (dim ? ' opacity=".26"' : '') + '/>');
+      if (ch === '.' || ch === ' ') { x++; continue; }
+      var f = fillOf(ch), n = 1;
+      while (x + n < row.length && row[x + n] !== '.' && row[x + n] !== ' ' &&
+             fillOf(row[x + n]) === f) n++;
+      out.push('<rect x="' + x + '" y="' + y + '" width="' + n + '" height="1" fill="' +
+        f + '"' + op + '/>');
+      x += n;
     }
   });
 

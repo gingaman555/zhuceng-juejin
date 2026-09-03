@@ -90,12 +90,20 @@ function storyMap(t) {
   STRATA.forEach(function (z) {
     /* 你現在在的那一個標出來——這張圖上唯一跟「你」有關的資訊。 */
     H.push('<div class="sty-room ' + z.key + (z.key === here.key ? ' here' : '') + '">');
-    H.push('<em>' + esc(z.name) + '</em>');
+    /* 那個地方真的長什麼樣（見 18-places.js）。本來這裡是一塊換了顏色的
+       方塊，圖上沒有名字沒講過的任何東西——「水晶迴廊」四個字旁邊
+       一顆水晶都沒有。 */
+    /* 圖歸圖，名字歸名字。名字壓在圖上會把每個地方最下面那一段
+       （碎石、水、軌道、熱源）吃掉，而那一段正是它們各自的樣子。 */
+    H.push('<span class="sty-pic">');
+    H.push(placeArt(z, ''));
     if (z.key === here.key) {
       H.push('<span class="sty-me">' +
         pxTag(HERO.idleA, HERO.pal, 'wf wa') + pxTag(HERO.idleB, HERO.pal, 'wf wb') +
         '</span>');
     }
+    H.push('</span>');
+    H.push('<em>' + esc(z.name) + '</em>');
     H.push('</div>');
   });
   H.push('</div>');

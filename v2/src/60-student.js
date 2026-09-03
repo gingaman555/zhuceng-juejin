@@ -590,6 +590,10 @@ function wherePanel(t, m, est) {
     var f = faunaOf(z.key);
     H.push('<button class="wz ' + z.key + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'commit:' + m.msId + '|' + z.key })) + '\'>');
+    /* 先看到那個地方，才看到它叫什麼。選地方是這個流程裡第二個純粹
+       屬於他的決定，而本來六張卡只差一個顏色——那樣他其實是在選名字。 */
+    H.push('<span class="wz-p">' + placeArt(z, '') + '</span>');
+    H.push('<span class="wz-b">');
     H.push('<span class="wz-t"><b>' + esc(z.name) + '</b>');
     H.push('<em>' + esc(z.note) + '</em></span>');
     /* 住在這裡的那幾隻。他在選地方，也是在選這一趟要遇到誰。 */
@@ -598,6 +602,7 @@ function wherePanel(t, m, est) {
       f.slice(0, 4).forEach(function (c) { H.push(pxTag(c.px, z.pal, '')); });
       H.push('</span>');
     }
+    H.push('</span>');
     H.push('</button>');
   });
   H.push('</div>');
