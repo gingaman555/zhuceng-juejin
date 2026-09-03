@@ -300,6 +300,34 @@ function scene(t, row, st, kind) {
   /* walking／resting 在最上面算過了。 */
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
   var hx = resting ? 44 : ENT + walked * SCN.TILE - 11;
+  /* ── 同一組的其他人 ──
+     排在你前面畫，所以你在最上層。他們沒有牌子也沒有燈。 */
+  var mates = where('Users', function (u) {
+    return u.teamId === t.teamId && u.userId !== S.who;
+  }).slice(0, 3);
+  mates.forEach(function (mu, i) {
+    var mh = heroOf(mu);
+    /* 走的時候排成一列跟在後面；休息的時候圍在火邊。 */
+    var mx = resting ? (hx + 40 * (i + 1)) : Math.max(6, hx - 40 * (i + 1));
+    H.push('<div class="hero scn-mate' + (st.level >= 2 ? ' asleep' : '') +
+      (walking ? ' walking' : '') + (resting ? ' resting' : '') +
+      '" style="left:' + mx + 'px;--md:' + ((i + 1) * 170) + 'ms" title="' +
+      esc(mu.name || '') + '">');
+    if (walking) {
+      H.push(pxTag(mh.walkA, mh.pal, 'ch wf wa'));
+      H.push(pxTag(mh.walkB, mh.pal, 'ch wf wb'));
+    } else if (resting) {
+      H.push(pxTag(mh.sitA, mh.pal, 'ch wf wa'));
+      H.push(pxTag(mh.sitB, mh.pal, 'ch wf wb'));
+    } else if (st.level >= 2) {
+      H.push(pxTag(mh.sleep, mh.pal, 'ch'));
+    } else {
+      H.push(pxTag(mh.idleA, mh.pal, 'ch wf wa'));
+      H.push(pxTag(mh.idleB, mh.pal, 'ch wf wb'));
+    }
+    H.push('</div>');
+  });
+
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
     '" style="left:' + hx + 'px">');

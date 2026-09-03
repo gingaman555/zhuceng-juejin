@@ -700,3 +700,16 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 /* 站得住的那一行。比「走到」淡一階——它不是另一個成績，
    是同一件事的第二個階段。 */
 .scn-hud .hud-seal{color:var(--gold-d)}
+
+/* 同一組的其他人。跟你一樣大、一樣實在——他們不是背景。
+   低你一層（z-index 5 是暗那一層，所以用 6 但畫在你前面），
+   而且沒有牌子、沒有燈：那些是「你」的東西。
+
+   呼吸與踏步各自錯開 --md，不然四個人會像同一張圖複製四份。 */
+.scn-mate{
+  position:absolute;bottom:66px;width:66px;height:66px;z-index:6;
+  animation:bob 1.4s steps(1,end) infinite;
+  animation-delay:var(--md,0ms)
+}
+.scn-mate.asleep{animation:none;opacity:.75}
+.scn-mate .wf{animation-delay:var(--md,0ms)}
