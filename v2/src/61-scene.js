@@ -332,7 +332,7 @@ function scene(t, row, st, kind) {
 
   /* 角色手上那一盞的光。一圈一圈地暗下去，不是模糊的漸層——
      模糊的話它會立刻看起來像貼在像素圖上面的現代特效。 */
-  H.push('<div class="halo" style="left:' + (hx - 121) + 'px"></div>');
+  H.push('<div class="halo" style="left:' + (hx - 165) + 'px"></div>');
 
   /* ── 你說的那一天 ──
 
@@ -348,13 +348,21 @@ function scene(t, row, st, kind) {
        而且那兩段字永遠會擠在一起。 */
   }
 
-  /* ── 霧 ──
-     從站的地方往前蓋住。它蓋的是「還沒走的那幾天」，
-     所以往前一格霧就退一格。 */
-  var fogAt = ENT + (Math.max(walked, tide) + 1) * SCN.TILE;
-  if (fogAt < W) {
-    H.push('<div class="fog" style="left:' + fogAt + 'px"></div>');
-  }
+  /* ── 暗 ──
+
+     一層暗蓋住整條走廊，在他手上那盞燈的位置挖一個洞。
+
+     本來這裡是 .fog：從站的地方往右蓋住「還沒走的那幾天」。
+     那是同一件事的一半——真正的理由不是「那幾天還沒到」，
+     是「那裡沒有光」。所以改成從燈往四面暗下去，
+     而還沒走到的地方自然就在暗裡。
+
+     洞有多大由 WORLD.light 那三階決定（.scn.lit／.dim／.dark），
+     所以超過自己說的天數，你看得到的範圍真的會縮。
+
+     z-index 5：壓在魔物（4）上面、角色（6）下面——牠被暗吃掉，
+     走到了才浮出來；而他自己一直在洞裡。 */
+  H.push('<div class="veil" style="--lx:' + (hx + 33) + 'px"></div>');
 
   H.push('</div></div>');   /* scn-in / scn-scroll */
 

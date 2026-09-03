@@ -23,8 +23,8 @@
 .scn-in{position:relative;height:396px;min-width:100%}
 
 /* 火把全滅之後整條走廊暗下來。這不是懲罰，是狀態本身。 */
-.scn.dim  .scn-in{filter:brightness(.72)}
-.scn.dark .scn-in{filter:brightness(.45)}
+.scn.dim  .scn-in{filter:brightness(.92)}
+.scn.dark .scn-in{filter:brightness(.82)}
 
 /* 角落的深度。走廊往旁邊捲，它不跟著捲。 */
 .scn-hud{
@@ -102,13 +102,13 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
 /* 手上那一盞的光圈。一圈一圈地暗，不是模糊的漸層。 */
 .halo{
-  position:absolute;bottom:44px;width:308px;height:242px;z-index:2;pointer-events:none;
+  position:absolute;bottom:44px;width:396px;height:308px;z-index:2;pointer-events:none;
   background:radial-gradient(circle at 50% 62%,
-    rgba(233,179,65,.30) 0 44px,
-    rgba(233,179,65,.17) 44px 88px,
-    rgba(233,179,65,.08) 88px 121px,
-    rgba(233,179,65,.03) 121px 154px,
-    transparent 154px);
+    rgba(233,179,65,.44) 0 55px,
+    rgba(233,179,65,.28) 55px 110px,
+    rgba(233,179,65,.16) 110px 165px,
+    rgba(233,179,65,.07) 165px 198px,
+    transparent 198px);
 }
 
 /* ---------- 霧 ----------
@@ -673,3 +673,26 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   .sf b{font-size:22px}
   .sf{gap:4px}
 }
+
+/* ---------- 暗 ----------
+
+   一層暗蓋住整條走廊，在燈的位置挖一個洞（--lx 由 61-scene.js 給）。
+   本來走廊是全亮的，.halo 只是疊在上面的一圈暖色——那樣光是裝飾，
+   不是光源。
+
+   洞有多大由那三階光決定：超過自己說的天數，看得到的範圍真的會縮。
+   硬邊、零模糊，跟整份一樣——漸層只用 hard stop 疊出來。 */
+.veil{
+  position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:radial-gradient(circle at var(--lx,110px) 62%,
+    transparent 0 var(--v1,176px),
+    rgba(6,8,12,.10) var(--v1,176px) var(--v2,297px),
+    rgba(6,8,12,.26) var(--v2,297px) var(--v3,440px),
+    rgba(6,8,12,.40) var(--v3,440px));
+}
+/* 火把亮著：暖色照得遠。 */
+.scn.lit  .veil{ --v1:198px; --v2:330px; --v3:484px }
+/* 火要滅了：照到的範圍收一階。 */
+.scn.dim  .veil{ --v1:165px; --v2:275px; --v3:407px }
+/* 火快滅了：只剩他附近。牆還看得到——暗的是燈，不是整個世界。 */
+.scn.dark .veil{ --v1:132px; --v2:220px; --v3:330px }
