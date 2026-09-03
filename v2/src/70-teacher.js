@@ -234,8 +234,9 @@ PAGES.ms = function () {
   var H = [];
   H.push(head('發派任務', '你要他們交什麼', ''));
 
+  /* 「派一個新的」拿掉了：這一頁的標題就是「發派任務／你要他們交什麼」，
+     而底下第一個框就是題目——同一件事說三次。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">派一個新的</div>');
   H.push('<input id="ms-title" value="' + esc(draft('msTitle', '')) + '" oninput="DRAFT[\'msTitle\']=this.value" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
   H.push('<textarea id="ms-note" oninput="DRAFT[\'msNote\']=this.value" rows="2" placeholder="' +
     esc('要注意的地方。選填。') + '">' + esc(draft('msNote', '')) + '</textarea>');

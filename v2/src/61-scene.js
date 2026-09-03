@@ -42,13 +42,20 @@ function scene(t, row, st, kind) {
 
   /* 一條軌道，兩個東西在上面：
        moved   你來過幾天——按一下才往前一格
-       tide    實際過了幾天——你按不按它都會漲 */
+       tide    走廊要畫幾格。它不是「過了幾天」——dayLog 至少會排滿他
+               承諾的天數（走廊要有長度），所以剛承諾的那一趟 log 就有
+               四格，而過了零天。
+       gone    真的過了幾天。從承諾那一天算到現在（交出去的話算到那天）。*/
   var log = run ? dayLog(run.runId) : [];
   var moved = 0, i0;
   for (i0 = 0; i0 < log.length; i0++) if (log[i0] && log[i0].kind === 'move') moved++;
   var done = run && run.state !== 'running';
   if (done) moved = Math.max(moved, run.pushes || 0);
   var tide = Math.min(log.length, est + 2);
+  /* 本來底下那一行印的是 tide，所以今天剛承諾就寫「已經過了 4 天」。
+     那是走廊的格數被當成日子講。 */
+  var gone = run && run.committedAt
+    ? daysBetween(run.committedAt, run.submittedAt || now()) : 0;
   var walked = Math.min(moved, est);
 
   /* 每一格頭上掛的是那一天動的是哪一段。廊道因此讀得出形狀——
@@ -359,10 +366,13 @@ function scene(t, row, st, kind) {
 
      它掛在廊道外面。負邊界是為了往上貼住廊道，寫在 .scn 裡面的話
      會被 overflow:hidden 吸到頂上去。 */
-  if (run) {
+  /* 承諾過才有數字。fresh 的那一趟 runsFor 會給一個 runId 是 null 的
+     空殼，所以這裡本來會印出「你說要 1 天／已經過了 0 天／你來了 0 天」——
+     三個都是假的，而且它出現在他還沒決定要走幾天的那個畫面上。 */
+  if (run && run.runId) {
     H.push('<div class="scn-foot">');
     H.push('<span class="sf est"><i>你說要</i><b>' + est + '</b><i>天</i></span>');
-    H.push('<span class="sf days"><i>已經過了</i><b>' + tide + '</b><i>天</i></span>');
+    H.push('<span class="sf days"><i>已經過了</i><b>' + gone + '</b><i>天</i></span>');
     H.push('<span class="sf you"><i>你來了</i><b>' + moved + '</b><i>天</i></span>');
     H.push('</div>');
   }

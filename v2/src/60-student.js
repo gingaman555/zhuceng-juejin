@@ -122,9 +122,9 @@ PAGES.home = function () {
   H.push('</div>');
   H.push(actionCard(t, next, st));
   H.push('</div>');
-  if (next.more) {
-    H.push('<p class="dim">還有 ' + next.more + ' 個在等。</p>');
-  }
+  /* 「還有 N 個在等」拿掉了：正在做的那一張卡裡已經寫著
+     「老師又派了 N 個。做完這一趟才輪到。」——同一件事，前後兩行。
+     留下的是說得比較清楚的那一句。 */
 
   /* 走過的每一趟。往左滑就是往回看——它在這一頁上最不重要，
      所以排在動作後面。 */
@@ -298,26 +298,33 @@ function lastKeep(teamId) {
 
    一個標籤（現在是什麼）＋ 一顆鍵（要做什麼）。沒有解釋句。
    狀態由廊道底下那排數字說，不由這裡用一句話說一次。 */
+/* 只放「要按的那一顆」。
+
+   上面那一行（.tline）已經印了現在是什麼狀態、哪一件任務——本來這裡
+   每一個分支又把同一件事印一次，八個分支八次：tline 說「新的 · 訪三個人」，
+   卡片再說一次「新的 · 訪三個人」；tline 說「在老師那邊」，
+   卡片再說一次「在老師那邊」。
+
+   留下來的只有兩種東西：別人說的話（老師退回那一句、走出去那一句），
+   跟看不出來的數字（在他那邊排第幾）。狀態誰在說，上面那一行已經負責了。 */
 function actionCard(t, next, st) {
   var H = ['<div class="act-card">'];
   var row = next.row;
 
   if (next.kind === 'name') {
     /* 第一個動作不可以是「等」。 */
-    H.push('<div class="eyebrow lit">先取個名字</div>');
     H.push(btn('這個專案叫什麼', 'go:sign', 'big'));
 
   } else if (next.kind === 'left') {
-    H.push('<div class="eyebrow">地面</div>');
     if (t.exitWord) H.push('<p class="quote">' + nl(t.exitWord) + '</p>');
     H.push(btn('看你帶出來的', 'go:exit', 'big'));
 
   } else if (next.kind === 'waitexit') {
-    H.push('<div class="eyebrow">出口　·　等老師確認</div>');
+    /* 「出口」上面那一行說過了，這裡只留新的那一半。 */
+    H.push('<div class="eyebrow">等老師確認</div>');
     H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
 
   } else if (next.kind === 'commit') {
-    H.push('<div class="eyebrow">新的　·　' + esc(row.ms.title) + '</div>');
     H.push(btn('要花幾天', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'doing') {
@@ -328,7 +335,6 @@ function actionCard(t, next, st) {
     }
 
   } else if (next.kind === 'stamped') {
-    H.push('<div class="eyebrow">交出去了</div>');
     H.push(btn('看準不準', 'go:stamp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'back') {
@@ -337,12 +343,12 @@ function actionCard(t, next, st) {
        一件事：那份成果還沒被收下。 */
     /* 老師退回來了。他的話放大——那是這一刻唯一要讀的東西，
        而且退回一定帶著話（沒寫理由的退回擋在資料層）。 */
-    H.push('<div class="eyebrow warnx">老師退回來了</div>');
+    /* 眉標拿掉了：上面那一行已經寫著「退回來了」。
+       這裡剩下的是他的那一句話——那才是這一刻唯一要讀的東西。 */
     if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
     H.push(btn('改好了，再交一次', 'resend:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {
-    H.push('<div class="eyebrow">在老師那邊</div>');
     /* 等待本來是一片空白：只寫「等他看」，不知道幾天、
        不知道有沒有被看見。三個數字全部都在，給他就好。 */
     var wa = row && row.run ? waitAt(row.run.runId) : null;
@@ -351,12 +357,11 @@ function actionCard(t, next, st) {
       H.push('<span>交出去</span><b>' + wa.days + '</b><span>天</span>');
       if (wa.of > 1) H.push('<em>他手上 ' + wa.of + ' 件，你第 ' + wa.at + '</em>');
       H.push('</div>');
-    } else {
-      H.push('<h2>等他看。</h2>');
     }
 
   } else {
-    H.push('<div class="eyebrow">廊道很安靜</div>');
+    /* 沒事做也只說一次。本來這裡是「廊道很安靜」加「等老師派下一個。」，
+       而上面那一行已經寫著「等老師派 · 還沒有任務」——同一件事三遍。 */
     H.push('<h2>等老師派下一個。</h2>');
   }
 
@@ -375,8 +380,11 @@ function actionCard(t, next, st) {
 function doingCard(t, row, st) {
   var r = row.run;
   var H = [];
-  H.push('<div class="eyebrow">' + esc(row.ms.title) +
-    (st && st.level ? '　·　' + esc(RULES.stallSay(st.level, st.days)) : '') + '</div>');
+  /* 任務名上面那一行（.tline）已經印了。這裡只留停很久那一句——
+     它是新的，而且它只在真的停很久的時候才出現。 */
+  if (st && st.level) {
+    H.push('<div class="eyebrow warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</div>');
+  }
   H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
   /* 做到一半發現自己說少了，可以改。
 

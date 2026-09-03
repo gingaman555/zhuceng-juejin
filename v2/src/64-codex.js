@@ -45,7 +45,8 @@ PAGES.codex = function () {
     var z = here;
     STRATA.forEach(function (x) { if (x.key === tab) z = x; });
     H.push('<div class="card fa ' + z.key + '">');
-    H.push('<div class="eyebrow">' + (z.key === here.key ? '你現在在這一層' : '地層') + '</div>');
+    /* 「你在這」那一格分頁上已經標了，這裡不再說一次。
+       其餘幾層也不用寫「地層」——那一排分頁本來就是地層。 */
     H.push('<p class="lead">' + esc(z.note) + '</p>');
     H.push('<div class="cx">');
     faunaOf(z.key).forEach(function (c) {
@@ -78,7 +79,7 @@ function codexThings(t, here) {
   if (!mine.length) {
     /* 還沒有半根。畫一根空的輪廓，寫它會怎麼來——
        空白的一頁不會讓人知道這裡以後會長什麼。 */
-    H.push('<div class="eyebrow">任務之證</div>');
+    /* 分頁上已經寫著「任務之證」。 */
     H.push('<div class="cx"><div class="cxi">');
     H.push(pxTag(['..++++++++++..', '.+##########+.', '.+#*######*#+.',
       '.+##########+.', '.+#+......+#+.', '.+#+......+#+.', '.+#..+..+..#+.',

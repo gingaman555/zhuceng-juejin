@@ -925,7 +925,10 @@ input.slider:active{transform:none}
 /* 角落的深度。走廊往旁邊捲，它不跟著捲。 */
 .scn-hud{
   position:absolute;top:11px;right:11px;z-index:9;text-align:right;pointer-events:none;
-  padding:5px 9px;background:rgba(6,5,4,.82)
+  padding:5px 9px;
+  /* 不透明。它是釘在角落的面板，世界從它底下捲過去——
+     半透明的時候底下的字會透上來跟它混在一起。 */
+  background:#060504;box-shadow:0 0 0 1px #000
 }
 .scn-hud b{display:block;font-size:33px;line-height:1;color:var(--gold);font-weight:400}
 .scn-hud span{font-size:22px;color:var(--mute)}
@@ -1035,8 +1038,15 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
    用 bottom:100% 跟 .hero-tag 同一種掛法，兩塊就會照同一個規則
    往上疊——角色走到牠面前的時候，一塊在上一塊在下，不會互相壓到。 */
 .scn-mob .mobn{
-  position:absolute;left:50%;bottom:100%;margin-bottom:48px;
-  transform:translateX(-50%);
+  /* 掛在牠的右上角，不是正上方。
+
+     垂直方向沒有空間：廊道高 319，右上角那塊面板佔到 117，
+     角色頭上的牌子在 145——中間剩 25px，放不下一個 39px 的標籤。
+     本來離牠 48px 會撞到面板，降到 6px 又會撞到牌子。
+
+     所以改成橫向錯開：牠的名字在牠右邊，而角色永遠在牠左邊。
+     右邊一定有位置——廊道盡頭後面還留著幾格沒走到的。 */
+  position:absolute;left:100%;margin-left:6px;bottom:100%;margin-bottom:6px;
   font-size:22px;color:var(--dim);white-space:nowrap;
   background:rgba(0,0,0,.62);padding:1px 5px
 }
@@ -9537,9 +9547,9 @@ PAGES.home = function () {
   H.push('</div>');
   H.push(actionCard(t, next, st));
   H.push('</div>');
-  if (next.more) {
-    H.push('<p class="dim">還有 ' + next.more + ' 個在等。</p>');
-  }
+  /* 「還有 N 個在等」拿掉了：正在做的那一張卡裡已經寫著
+     「老師又派了 N 個。做完這一趟才輪到。」——同一件事，前後兩行。
+     留下的是說得比較清楚的那一句。 */
 
   /* 走過的每一趟。往左滑就是往回看——它在這一頁上最不重要，
      所以排在動作後面。 */
@@ -9713,26 +9723,33 @@ function lastKeep(teamId) {
 
    一個標籤（現在是什麼）＋ 一顆鍵（要做什麼）。沒有解釋句。
    狀態由廊道底下那排數字說，不由這裡用一句話說一次。 */
+/* 只放「要按的那一顆」。
+
+   上面那一行（.tline）已經印了現在是什麼狀態、哪一件任務——本來這裡
+   每一個分支又把同一件事印一次，八個分支八次：tline 說「新的 · 訪三個人」，
+   卡片再說一次「新的 · 訪三個人」；tline 說「在老師那邊」，
+   卡片再說一次「在老師那邊」。
+
+   留下來的只有兩種東西：別人說的話（老師退回那一句、走出去那一句），
+   跟看不出來的數字（在他那邊排第幾）。狀態誰在說，上面那一行已經負責了。 */
 function actionCard(t, next, st) {
   var H = ['<div class="act-card">'];
   var row = next.row;
 
   if (next.kind === 'name') {
     /* 第一個動作不可以是「等」。 */
-    H.push('<div class="eyebrow lit">先取個名字</div>');
     H.push(btn('這個專案叫什麼', 'go:sign', 'big'));
 
   } else if (next.kind === 'left') {
-    H.push('<div class="eyebrow">地面</div>');
     if (t.exitWord) H.push('<p class="quote">' + nl(t.exitWord) + '</p>');
     H.push(btn('看你帶出來的', 'go:exit', 'big'));
 
   } else if (next.kind === 'waitexit') {
-    H.push('<div class="eyebrow">出口　·　等老師確認</div>');
+    /* 「出口」上面那一行說過了，這裡只留新的那一半。 */
+    H.push('<div class="eyebrow">等老師確認</div>');
     H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
 
   } else if (next.kind === 'commit') {
-    H.push('<div class="eyebrow">新的　·　' + esc(row.ms.title) + '</div>');
     H.push(btn('要花幾天', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'doing') {
@@ -9743,7 +9760,6 @@ function actionCard(t, next, st) {
     }
 
   } else if (next.kind === 'stamped') {
-    H.push('<div class="eyebrow">交出去了</div>');
     H.push(btn('看準不準', 'go:stamp:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'back') {
@@ -9752,12 +9768,12 @@ function actionCard(t, next, st) {
        一件事：那份成果還沒被收下。 */
     /* 老師退回來了。他的話放大——那是這一刻唯一要讀的東西，
        而且退回一定帶著話（沒寫理由的退回擋在資料層）。 */
-    H.push('<div class="eyebrow warnx">老師退回來了</div>');
+    /* 眉標拿掉了：上面那一行已經寫著「退回來了」。
+       這裡剩下的是他的那一句話——那才是這一刻唯一要讀的東西。 */
     if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
     H.push(btn('改好了，再交一次', 'resend:' + row.run.runId, 'big'));
 
   } else if (next.kind === 'review') {
-    H.push('<div class="eyebrow">在老師那邊</div>');
     /* 等待本來是一片空白：只寫「等他看」，不知道幾天、
        不知道有沒有被看見。三個數字全部都在，給他就好。 */
     var wa = row && row.run ? waitAt(row.run.runId) : null;
@@ -9766,12 +9782,11 @@ function actionCard(t, next, st) {
       H.push('<span>交出去</span><b>' + wa.days + '</b><span>天</span>');
       if (wa.of > 1) H.push('<em>他手上 ' + wa.of + ' 件，你第 ' + wa.at + '</em>');
       H.push('</div>');
-    } else {
-      H.push('<h2>等他看。</h2>');
     }
 
   } else {
-    H.push('<div class="eyebrow">廊道很安靜</div>');
+    /* 沒事做也只說一次。本來這裡是「廊道很安靜」加「等老師派下一個。」，
+       而上面那一行已經寫著「等老師派 · 還沒有任務」——同一件事三遍。 */
     H.push('<h2>等老師派下一個。</h2>');
   }
 
@@ -9790,8 +9805,11 @@ function actionCard(t, next, st) {
 function doingCard(t, row, st) {
   var r = row.run;
   var H = [];
-  H.push('<div class="eyebrow">' + esc(row.ms.title) +
-    (st && st.level ? '　·　' + esc(RULES.stallSay(st.level, st.days)) : '') + '</div>');
+  /* 任務名上面那一行（.tline）已經印了。這裡只留停很久那一句——
+     它是新的，而且它只在真的停很久的時候才出現。 */
+  if (st && st.level) {
+    H.push('<div class="eyebrow warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</div>');
+  }
   H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
   /* 做到一半發現自己說少了，可以改。
 
@@ -10394,13 +10412,20 @@ function scene(t, row, st, kind) {
 
   /* 一條軌道，兩個東西在上面：
        moved   你來過幾天——按一下才往前一格
-       tide    實際過了幾天——你按不按它都會漲 */
+       tide    走廊要畫幾格。它不是「過了幾天」——dayLog 至少會排滿他
+               承諾的天數（走廊要有長度），所以剛承諾的那一趟 log 就有
+               四格，而過了零天。
+       gone    真的過了幾天。從承諾那一天算到現在（交出去的話算到那天）。*/
   var log = run ? dayLog(run.runId) : [];
   var moved = 0, i0;
   for (i0 = 0; i0 < log.length; i0++) if (log[i0] && log[i0].kind === 'move') moved++;
   var done = run && run.state !== 'running';
   if (done) moved = Math.max(moved, run.pushes || 0);
   var tide = Math.min(log.length, est + 2);
+  /* 本來底下那一行印的是 tide，所以今天剛承諾就寫「已經過了 4 天」。
+     那是走廊的格數被當成日子講。 */
+  var gone = run && run.committedAt
+    ? daysBetween(run.committedAt, run.submittedAt || now()) : 0;
   var walked = Math.min(moved, est);
 
   /* 每一格頭上掛的是那一天動的是哪一段。廊道因此讀得出形狀——
@@ -10711,10 +10736,13 @@ function scene(t, row, st, kind) {
 
      它掛在廊道外面。負邊界是為了往上貼住廊道，寫在 .scn 裡面的話
      會被 overflow:hidden 吸到頂上去。 */
-  if (run) {
+  /* 承諾過才有數字。fresh 的那一趟 runsFor 會給一個 runId 是 null 的
+     空殼，所以這裡本來會印出「你說要 1 天／已經過了 0 天／你來了 0 天」——
+     三個都是假的，而且它出現在他還沒決定要走幾天的那個畫面上。 */
+  if (run && run.runId) {
     H.push('<div class="scn-foot">');
     H.push('<span class="sf est"><i>你說要</i><b>' + est + '</b><i>天</i></span>');
-    H.push('<span class="sf days"><i>已經過了</i><b>' + tide + '</b><i>天</i></span>');
+    H.push('<span class="sf days"><i>已經過了</i><b>' + gone + '</b><i>天</i></span>');
     H.push('<span class="sf you"><i>你來了</i><b>' + moved + '</b><i>天</i></span>');
     H.push('</div>');
   }
@@ -11708,7 +11736,8 @@ PAGES.codex = function () {
     var z = here;
     STRATA.forEach(function (x) { if (x.key === tab) z = x; });
     H.push('<div class="card fa ' + z.key + '">');
-    H.push('<div class="eyebrow">' + (z.key === here.key ? '你現在在這一層' : '地層') + '</div>');
+    /* 「你在這」那一格分頁上已經標了，這裡不再說一次。
+       其餘幾層也不用寫「地層」——那一排分頁本來就是地層。 */
     H.push('<p class="lead">' + esc(z.note) + '</p>');
     H.push('<div class="cx">');
     faunaOf(z.key).forEach(function (c) {
@@ -11741,7 +11770,7 @@ function codexThings(t, here) {
   if (!mine.length) {
     /* 還沒有半根。畫一根空的輪廓，寫它會怎麼來——
        空白的一頁不會讓人知道這裡以後會長什麼。 */
-    H.push('<div class="eyebrow">任務之證</div>');
+    /* 分頁上已經寫著「任務之證」。 */
     H.push('<div class="cx"><div class="cxi">');
     H.push(pxTag(['..++++++++++..', '.+##########+.', '.+#*######*#+.',
       '.+##########+.', '.+#+......+#+.', '.+#+......+#+.', '.+#..+..+..#+.',
@@ -13263,8 +13292,9 @@ PAGES.ms = function () {
   var H = [];
   H.push(head('發派任務', '你要他們交什麼', ''));
 
+  /* 「派一個新的」拿掉了：這一頁的標題就是「發派任務／你要他們交什麼」，
+     而底下第一個框就是題目——同一件事說三次。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">派一個新的</div>');
   H.push('<input id="ms-title" value="' + esc(draft('msTitle', '')) + '" oninput="DRAFT[\'msTitle\']=this.value" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
   H.push('<textarea id="ms-note" oninput="DRAFT[\'msNote\']=this.value" rows="2" placeholder="' +
     esc('要注意的地方。選填。') + '">' + esc(draft('msNote', '')) + '</textarea>');

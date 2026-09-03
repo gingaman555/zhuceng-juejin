@@ -29,7 +29,10 @@
 /* 角落的深度。走廊往旁邊捲，它不跟著捲。 */
 .scn-hud{
   position:absolute;top:11px;right:11px;z-index:9;text-align:right;pointer-events:none;
-  padding:5px 9px;background:rgba(6,5,4,.82)
+  padding:5px 9px;
+  /* 不透明。它是釘在角落的面板，世界從它底下捲過去——
+     半透明的時候底下的字會透上來跟它混在一起。 */
+  background:#060504;box-shadow:0 0 0 1px #000
 }
 .scn-hud b{display:block;font-size:33px;line-height:1;color:var(--gold);font-weight:400}
 .scn-hud span{font-size:22px;color:var(--mute)}
@@ -139,8 +142,15 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
    用 bottom:100% 跟 .hero-tag 同一種掛法，兩塊就會照同一個規則
    往上疊——角色走到牠面前的時候，一塊在上一塊在下，不會互相壓到。 */
 .scn-mob .mobn{
-  position:absolute;left:50%;bottom:100%;margin-bottom:48px;
-  transform:translateX(-50%);
+  /* 掛在牠的右上角，不是正上方。
+
+     垂直方向沒有空間：廊道高 319，右上角那塊面板佔到 117，
+     角色頭上的牌子在 145——中間剩 25px，放不下一個 39px 的標籤。
+     本來離牠 48px 會撞到面板，降到 6px 又會撞到牌子。
+
+     所以改成橫向錯開：牠的名字在牠右邊，而角色永遠在牠左邊。
+     右邊一定有位置——廊道盡頭後面還留著幾格沒走到的。 */
+  position:absolute;left:100%;margin-left:6px;bottom:100%;margin-bottom:6px;
   font-size:22px;color:var(--dim);white-space:nowrap;
   background:rgba(0,0,0,.62);padding:1px 5px
 }
