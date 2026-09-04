@@ -803,19 +803,6 @@ function lastWhere(teamId) {
   return rs.length ? rs[0].link : '';
 }
 
-/* 已經進館藏的那幾隻：老師收下那一趟，牠才算存檔。
-   遇到是系統記的，存檔是人給的——同一份收集，兩個來源。 */
-function sealedMobs(teamId) {
-  var seen = {};
-  runsFor(teamId).forEach(function (x) {
-    var r = x.run;
-    if (r.state !== 'done' && r.state !== 'approved') return;
-    var m = mobOfRun(r);
-    if (m) seen[m.n] = x.ms.title;
-  });
-  return seen;
-}
-
 /* 這一趟的形狀：承諾幾天、過了幾天、來過幾天、說沒動幾天、勾了幾段。
    老師看得到這個。系統不說任何一句判斷——它只把數字擺出來。 */
 function runShape(runId) {

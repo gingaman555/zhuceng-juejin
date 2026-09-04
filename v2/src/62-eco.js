@@ -306,7 +306,7 @@ PAGES.eco = function () {
   var tab = DRAFT.tab || (dt ? 'team' : 'coin');
   if (tab === 'team' && !dt) tab = 'feed';
 
-  var segs = [['coin', '金幣'], ['rank', '估得準'], ['dex', '圖鑑'], ['feed', '最近']];
+  var segs = [['coin', '金幣'], ['rank', '估得準'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -324,13 +324,6 @@ PAGES.eco = function () {
     H.push(coinCard(t.classId, t.teamId));
   } else if (tab === 'rank') {
     H.push(rankCard(t.classId, t.teamId));
-  } else if (tab === 'dex') {
-    /* 圖鑑收集榜。刻意加進來、準備好隨時拿掉的第二張——
-       要拿掉就刪掉 68b-dexrank.js，再把這一段跟 segs 裡的 'dex' 拿走。
-
-       分母只活在這裡，不進圖鑑那一頁：圖鑑還是他自己的回憶，
-       翻開來沒有百分比。比較的事情留在比較的地方。 */
-    H.push(dexCard(t.classId, t.teamId));
   } else if (tab === 'team') {
     H.push(digTeamCard(t.classId));
   } else {
