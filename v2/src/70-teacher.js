@@ -66,14 +66,44 @@ PAGES.radar = function () {
      切換一直在，不是有人排隊才出現：他要知道這個系統裡有出口這件事，
      而不是等到有人按了才第一次看到。 */
   var out = exitQueue(u.classId, u.userId);
-  var tq = DRAFT.tq === 'exit' ? 'exit' : 'rev';
+  /* 剛說了幾天、還沒有人回一句的那幾趟（見 40-db.js 的 askQueue）。 */
+  var asks = askQueue(u.classId);
+  var tq = DRAFT.tq === 'exit' ? 'exit' : (DRAFT.tq === 'ask' ? 'ask' : 'rev');
   H.push('<div class="segs">');
-  [['rev', '審核', rows.length], ['exit', '出口', out.length]].forEach(function (g) {
+  [['rev', '審核', rows.length], ['ask', '剛承諾', asks.length],
+   ['exit', '出口', out.length]].forEach(function (g) {
     H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
       '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
   });
   H.push('</div>');
+
+  if (tq === 'ask') {
+    /* 他們剛說要花幾天。
+
+       這一格是這個系統裡唯一「老師可以在事情發生之前說話」的地方。
+       其餘每一個接觸點都是事後的：收下、退回，都是對著已經做完的東西。
+
+       回一句是選項不是義務——沒有話要說就按過去，學生那邊什麼都不會
+       收到（「我看過但沒意見」對他沒有資訊，只會多一則通知）。 */
+    H.push(head('剛承諾', asks.length ? asks.length + ' 組剛說了天數' : '沒有剛承諾的',
+      ''));
+    if (!asks.length) {
+      H.push('<div class="card"><p class="dim">' +
+        '他們一說要花幾天，這裡就會出現。你可以回一句，也可以不回。' +
+        '</p></div>');
+    }
+    asks.forEach(function (x) {
+      H.push('<button class="rq" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'go:askest:' + x.run.runId })) + '\'>');
+      H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b>');
+      H.push('<em>' + esc(x.team.name) + '　·　他們說 ' + x.run.est + ' 天</em></span>');
+      H.push('<span class="rq-d">' + (x.days ? '第 ' + (x.days + 1) + ' 天' : '今天') +
+        '</span>');
+      H.push('</button>');
+    });
+    return H.join('');
+  }
 
   if (tq === 'exit') {
     /* 全班每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
@@ -217,6 +247,8 @@ PAGES.review = function () {
       esc(rvBy.name) + ' 派的</span>');
   }
   H.push('</div>');
+  /* 這一趟談過的話。判定的那兩個數字有來歷，而來歷就在這裡。 */
+  H.push(negoLine(r, false));
   /* 他們自己寫的兩段放最上面。他在這一頁要做的事是寫一句話，
      而最有用的輸入就是這兩段——本來排在整張卡的最後面。
      系統不解讀、不歸類，原話放上去就好。 */
@@ -322,6 +354,45 @@ PAGES.review = function () {
      退回講的只有一件事：那份成果還沒被收下。 */
   H.push(btn('退回去改', 'reject:' + r.runId, 'ghost'));
   H.push(btn('回審核清單', 'go:radar', 'ghost'));
+  H.push('</div>');
+  return H.join('');
+};
+
+/* ---------- 回一句：我覺得會是幾天 ----------
+
+   一句話是必填的（actAskEst 擋在資料層）。理由跟退回一樣：一個沒有
+   說法的數字就是一道命令，而命令不會被內化成他自己的判斷。
+
+   這一頁上寫著「最後幾天，他說了算」——那不是客套，那是事實：
+   這一支只寫 askEst，判定讀的永遠是 run.est，而 run.est 只有學生改得動。 */
+PAGES.askest = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId), t = teamOf(r.teamId);
+  var n = Number(draft('est', r.est));
+
+  var H = [head('回一句', t.name + '　·　' + m.title, '')];
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">他們說</div>');
+  H.push('<p class="quote big">' + r.est + ' 天</p>');
+  /* 我自己排到哪一天。它不進判定，但它是我會有意見的原因。 */
+  if (m.due) H.push('<p class="dim">排到 ' + esc(dueSay(m)) + '。</p>');
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你覺得會是幾天</div>');
+  H.push(estStep(n));
+  H.push('<div class="eyebrow" style="margin-top:14px">為什麼</div>');
+  H.push('<textarea id="ask-w" rows="2" oninput="DRAFT[\'askw\']=this.value" placeholder="' +
+    esc('例：同樣的東西我看過，通常卡在找人。') + '">' + esc(draft('askw', '')) + '</textarea>');
+  H.push('<p class="dim">最後幾天他說了算。你給的是理由，不是期限。</p>');
+  H.push('</div>');
+
+  H.push('<div class="row">');
+  H.push(btn('送出去', 'asksend:' + r.runId, 'big'));
+  H.push(btn('沒有話要說', 'askskip:' + r.runId, 'ghost'));
+  H.push(btn('回清單', 'go:radar', 'ghost'));
   H.push('</div>');
   return H.join('');
 };

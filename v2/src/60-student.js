@@ -121,6 +121,22 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
+  /* 老師回了一句。
+
+     不搶 nextThing：他手上正在走的那一趟沒有變，這只是有人說了一句話。
+     擋著他不讓他做別的事，那句話就變成一道關卡——而它是一個提議。 */
+  var asking = askPending(t.teamId);
+  if (asking) {
+    var am = msOf(asking.run.msId);
+    var au = asking.run.askBy ? userOf(asking.run.askBy) : null;
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow lit">' + esc(au ? au.name + ' 回了一句' : '老師回了一句') +
+      '</div>');
+    H.push('<b class="ok-big">' + esc(am ? am.title : '那一趟') + '</b>');
+    H.push(btn('去看看', 'go:ask:' + asking.run.runId, 'big'));
+    H.push('</div>');
+  }
+
   /* 交出去了，但這個人還沒說他做了什麼。
 
      每個人是獨立帳號，交出去的那一下只有一個人在場——其他人本來
@@ -889,6 +905,40 @@ function estWalkIn(t, m, est) {
   return H.join('');
 }
 
+/* ---------- 老師回了一句：最後幾天 ----------
+
+   這一頁只有一個動作，而那個動作是他的。
+
+   兩個數字都攤在上面，因為這是一次協商不是一道通知：他要看得到
+   自己說了什麼、對方說了什麼，然後自己按一次。維持原本那個數字
+   也是一個答案——按下去那一下就是他的決定，不是他沒看到。 */
+PAGES.ask = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r || !r.askAt) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId);
+  var u = r.askBy ? userOf(r.askBy) : null;
+  var n = Number(draft('est', r.est));
+
+  var H = [head('最後幾天', m ? m.title : '那一趟', '')];
+
+  H.push('<div class="card">');
+  H.push('<p class="quote big"><b>' + esc(u ? u.name : '老師') + '</b>' +
+    nl(r.askWord || '') + '</p>');
+  H.push('<p class="dim">他覺得會是 ' + r.askEst + ' 天。</p>');
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你說的是 ' + r.est + ' 天</div>');
+  H.push(estStep(n));
+  /* 這一句是這一頁最重要的一句。它不是客套：判定讀的是 run.est，
+     而 run.est 只有這一顆鍵改得動（見 40-db.js 的 actAnswerAsk）。 */
+  H.push('<p class="dim">最後幾天，你說了算。維持也是一個答案。</p>');
+  H.push('</div>');
+
+  H.push(btn('就這樣', 'asktake:' + r.runId, 'big'));
+  return H.join('');
+};
+
 /* ---------- 判定結果 ---------- */
 PAGES.stamp = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
@@ -1151,6 +1201,9 @@ function logRow(m, r, t) {
       ov.forEach(function (l) { H.push('<span class="tag static hit">' + esc(l) + '</span>'); });
       H.push('</div>');
     }
+    /* 那一趟談過的話。他自己回頭看的時候，「我一個人說幾天」跟
+       「談過之後訂幾天」是兩個不同的數字——而那個差距就是他在學的東西。 */
+    H.push(negoLine(r, true));
     if (r.hard) H.push('<p class="quote"><b>卡在哪裡</b>' + nl(r.hard) + '</p>');
     if (r.pace) H.push('<p class="quote"><b>你覺得的進度</b>' + nl(r.pace) + '</p>');
     if (r.word) H.push(wordBlock(r, 'tw'));

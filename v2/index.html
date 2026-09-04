@@ -6609,7 +6609,12 @@ var EV_SAY = {
   resend:   function (e) { return '改好再交一次（第 ' + e.backs + ' 次被退）'; },
   rethink:  function (e) { return '重新想過：本來說 ' + e.est + ' 天，走到第 ' + e.went + ' 天'; },
   denyexit: function () { return '說現在還不是時候'; },
-  rank:     function (e) { return (e.on ? '打開' : '關掉') + '排行榜'; }
+  rank:     function (e) { return (e.on ? '打開' : '關掉') + '排行榜'; },
+  askest:   function (e) { return '回了一句：他們說 ' + e.est + ' 天，我覺得 ' + e.ask + ' 天'; },
+  askans:   function (e) {
+    return e.was === e.now ? '談過之後維持 ' + e.now + ' 天（老師說 ' + e.ask + '）'
+      : '談過之後從 ' + e.was + ' 天改成 ' + e.now + ' 天（老師說 ' + e.ask + '）';
+  }
 };
 function evSay(e) {
   var f = EV_SAY[e.kind];
@@ -10084,6 +10089,99 @@ function actRethink(teamId, runId) {
   return true;
 }
 
+/* ---------- 協商：老師回一句「我覺得會是幾天」 ----------
+
+   本來兩邊各握著一樣對方碰不到的東西：學生握承諾的天數，老師握排程
+   （而排程明文不進判定，等於沒有牙齒）。那不是自主支持，是互相迴避。
+
+   承諾走廊上其實已經把分歧畫出來了——老師排的那一天跟他按出來的格數
+   並排在同一把尺上（見 60-student.js 的 estWalkIn）——然後兩邊都沒有
+   動作。呈現不等於協商。
+
+   自主不是「不受干涉」，是「出於自己的意願」。一個人可以完全自主地
+   接受一個他沒訂的數字，條件是他聽得到理由、而且最後那一下是他按的。
+   有審查就代表雙方都要讓一點，而讓了什麼要看得見。所以：
+
+     · 老師可以回一次，一次而已，而且**一定要帶一句話**——
+       跟退回同一條原則：沒有理由的數字就是命令
+     · 學生看到之後自己決定最後幾天。維持原本那個數字也是一個答案
+     · 判定一行都沒有改：判的還是最後那個數字，而那個數字是他的
+     · 兩邊的數字都留在紀錄上（estFirst／askEst／est），那是
+       「雙方都有妥協」的證據——這個研究本來完全沒有這一種資料
+
+   老師讓掉的是決定權，學生讓掉的是不被質疑。
+   不擋人：老師沒回，那一趟照走。 */
+
+/* 等著老師回一句的那幾趟。全班的，跟審核同一個佇列邏輯。 */
+function askQueue(classId) {
+  var out = [];
+  teamsUnder(classId).forEach(function (t) {
+    runsFor(t.teamId).forEach(function (x) {
+      if (x.run.state !== 'running') return;
+      if (x.run.askAt || x.run.askSkip) return;
+      out.push({ team: t, run: x.run, ms: x.ms,
+        days: daysBetween(x.run.committedAt, now()) });
+    });
+  });
+  /* 剛說的排前面。這一句話越早回越有用——走完了才說等於沒說。 */
+  return out.sort(function (a, b) { return a.days - b.days; });
+}
+
+/* 老師回一句。那一句話是必要的，不是選填。 */
+function actAskEst(runId, est, word) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'running' || r.askAt) return null;
+  if (!String(word || '').trim()) return null;
+  r.askEst = clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || r.est);
+  r.askWord = String(word).trim();
+  r.askBy = (typeof S !== 'undefined' && S.who) || '';
+  r.askAt = now();
+  save();
+  logEvent('askest', { teamId: r.teamId, runId: runId, est: r.est, ask: r.askEst });
+  return r;
+}
+
+/* 看過了，沒有話要說。不留下任何東西給學生看——
+   「我看過但沒意見」對他沒有資訊，只會多一則通知。 */
+function actAskSkip(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'running' || r.askAt || r.askSkip) return false;
+  r.askSkip = 1;
+  save();
+  return true;
+}
+
+/* 學生回答：最後幾天。
+
+   改了不算「重新想過」：那一趟還是同一趟，committedAt 不動——他已經
+   走了那幾天。重新想過是打掉重來，這是同一趟上換一個數字。
+   也因此不吃 redo 的額度：那個額度是給他自己反悔用的，
+   不是拿來罰他聽了一句話。 */
+function actAnswerAsk(teamId, runId, est) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.teamId !== teamId || r.state !== 'running') return null;
+  if (!r.askAt || r.askAns) return null;
+  var n = clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || r.est);
+  var was = r.est;
+  if (n !== r.est) {
+    /* 他一個人的時候說的那個數字。有這一欄就代表這一趟談過而且動了。 */
+    r.estFirst = r.est;
+    r.est = n;
+  }
+  r.askAns = now();
+  save();
+  logEvent('askans', { teamId: teamId, runId: runId,
+    was: was, ask: r.askEst, now: r.est });
+  return r;
+}
+
+/* 有沒有一句話在等他回。 */
+function askPending(teamId) {
+  return runsFor(teamId).filter(function (x) {
+    return x.run.state === 'running' && x.run.askAt && !x.run.askAns;
+  })[0] || null;
+}
+
 function actSubmit(teamId, runId, link) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return null;
@@ -11733,6 +11831,23 @@ function wordBlock(run, cls) {
     (who ? '<b>' + esc(who) + '</b>' : '') + nl(run.word) + '</p>';
 }
 
+/* 那一趟談過什麼。
+
+   兩邊的數字都留著：他一個人的時候說幾天、老師說幾天、最後訂幾天。
+   這是「雙方都有妥協」唯一看得到的地方，也是判定那兩個數字的來歷——
+   少了它，談過跟沒談過的兩趟在畫面上長得一模一樣。
+
+   沒談過就回空字串。 */
+function negoLine(r, you) {
+  if (!r || !r.askAt) return '';
+  var u = r.askBy ? userOf(r.askBy) : null;
+  var first = r.estFirst == null ? r.est : r.estFirst;
+  return '<p class="dim nego">' + (you ? '你說 ' : '他們說 ') + first + ' 天' +
+    '　·　' + esc(u ? u.name : '老師') + ' 說 ' + r.askEst + ' 天' +
+    (r.askAns ? '　·　最後 ' + r.est + ' 天' + (r.estFirst == null ? '（維持）' : '')
+      : '　·　還沒回') + '</p>';
+}
+
 /* ---------- 路由 ---------- */
 
 var PAGES = {};
@@ -12065,6 +12180,38 @@ var ACTS = {
     p[i] = { n: p[i].n, d: clamp(1, RULES.EST_MAX, p[i].d + Number(q[1])) };
     DRAFT.plan = p;
     render();
+  },
+
+  /* ── 協商那三顆 ──
+     老師回一句、老師跳過、學生按下最後那個數字。
+     見 40-db.js「協商」那一段。 */
+
+  asksend: function (runId) {
+    var n = Number(draft('est', 0));
+    var w = (document.getElementById('ask-w') || {}).value || '';
+    if (!String(w).trim()) return say('要帶一句話。沒有說法的數字是命令。');
+    if (!actAskEst(runId, n, w)) return say('這一趟已經回過了。');
+    go('radar');
+    say('說出去了。最後幾天還是他們決定。');
+  },
+
+  askskip: function (runId) {
+    actAskSkip(runId);
+    go('radar');
+    say('跳過了。他們那邊不會收到通知。');
+  },
+
+  /* 學生按下最後那個數字。維持原本那個也走這一條——
+     按下去那一下就是他的決定。 */
+  asktake: function (runId) {
+    var r0 = find('Runs', function (x) { return x.runId === runId; });
+    if (!r0) return say('找不到。');
+    var was = r0.est;
+    var n = Number(draft('est', r0.est));
+    if (!actAnswerAsk(myTeam().teamId, runId, n)) return say('這一件已經回過了。');
+    var r1 = find('Runs', function (x) { return x.runId === runId; });
+    go('home');
+    say(r1.est === was ? '維持 ' + r1.est + ' 天。' : '改成 ' + r1.est + ' 天了。');
   },
 
   /* 說幾天：一按一天。到頭就停在那裡，不會繞回去——
@@ -13282,6 +13429,22 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
+  /* 老師回了一句。
+
+     不搶 nextThing：他手上正在走的那一趟沒有變，這只是有人說了一句話。
+     擋著他不讓他做別的事，那句話就變成一道關卡——而它是一個提議。 */
+  var asking = askPending(t.teamId);
+  if (asking) {
+    var am = msOf(asking.run.msId);
+    var au = asking.run.askBy ? userOf(asking.run.askBy) : null;
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow lit">' + esc(au ? au.name + ' 回了一句' : '老師回了一句') +
+      '</div>');
+    H.push('<b class="ok-big">' + esc(am ? am.title : '那一趟') + '</b>');
+    H.push(btn('去看看', 'go:ask:' + asking.run.runId, 'big'));
+    H.push('</div>');
+  }
+
   /* 交出去了，但這個人還沒說他做了什麼。
 
      每個人是獨立帳號，交出去的那一下只有一個人在場——其他人本來
@@ -14050,6 +14213,40 @@ function estWalkIn(t, m, est) {
   return H.join('');
 }
 
+/* ---------- 老師回了一句：最後幾天 ----------
+
+   這一頁只有一個動作，而那個動作是他的。
+
+   兩個數字都攤在上面，因為這是一次協商不是一道通知：他要看得到
+   自己說了什麼、對方說了什麼，然後自己按一次。維持原本那個數字
+   也是一個答案——按下去那一下就是他的決定，不是他沒看到。 */
+PAGES.ask = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r || !r.askAt) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId);
+  var u = r.askBy ? userOf(r.askBy) : null;
+  var n = Number(draft('est', r.est));
+
+  var H = [head('最後幾天', m ? m.title : '那一趟', '')];
+
+  H.push('<div class="card">');
+  H.push('<p class="quote big"><b>' + esc(u ? u.name : '老師') + '</b>' +
+    nl(r.askWord || '') + '</p>');
+  H.push('<p class="dim">他覺得會是 ' + r.askEst + ' 天。</p>');
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你說的是 ' + r.est + ' 天</div>');
+  H.push(estStep(n));
+  /* 這一句是這一頁最重要的一句。它不是客套：判定讀的是 run.est，
+     而 run.est 只有這一顆鍵改得動（見 40-db.js 的 actAnswerAsk）。 */
+  H.push('<p class="dim">最後幾天，你說了算。維持也是一個答案。</p>');
+  H.push('</div>');
+
+  H.push(btn('就這樣', 'asktake:' + r.runId, 'big'));
+  return H.join('');
+};
+
 /* ---------- 判定結果 ---------- */
 PAGES.stamp = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
@@ -14312,6 +14509,9 @@ function logRow(m, r, t) {
       ov.forEach(function (l) { H.push('<span class="tag static hit">' + esc(l) + '</span>'); });
       H.push('</div>');
     }
+    /* 那一趟談過的話。他自己回頭看的時候，「我一個人說幾天」跟
+       「談過之後訂幾天」是兩個不同的數字——而那個差距就是他在學的東西。 */
+    H.push(negoLine(r, true));
     if (r.hard) H.push('<p class="quote"><b>卡在哪裡</b>' + nl(r.hard) + '</p>');
     if (r.pace) H.push('<p class="quote"><b>你覺得的進度</b>' + nl(r.pace) + '</p>');
     if (r.word) H.push(wordBlock(r, 'tw'));
@@ -17776,14 +17976,44 @@ PAGES.radar = function () {
      切換一直在，不是有人排隊才出現：他要知道這個系統裡有出口這件事，
      而不是等到有人按了才第一次看到。 */
   var out = exitQueue(u.classId, u.userId);
-  var tq = DRAFT.tq === 'exit' ? 'exit' : 'rev';
+  /* 剛說了幾天、還沒有人回一句的那幾趟（見 40-db.js 的 askQueue）。 */
+  var asks = askQueue(u.classId);
+  var tq = DRAFT.tq === 'exit' ? 'exit' : (DRAFT.tq === 'ask' ? 'ask' : 'rev');
   H.push('<div class="segs">');
-  [['rev', '審核', rows.length], ['exit', '出口', out.length]].forEach(function (g) {
+  [['rev', '審核', rows.length], ['ask', '剛承諾', asks.length],
+   ['exit', '出口', out.length]].forEach(function (g) {
     H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
       '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
   });
   H.push('</div>');
+
+  if (tq === 'ask') {
+    /* 他們剛說要花幾天。
+
+       這一格是這個系統裡唯一「老師可以在事情發生之前說話」的地方。
+       其餘每一個接觸點都是事後的：收下、退回，都是對著已經做完的東西。
+
+       回一句是選項不是義務——沒有話要說就按過去，學生那邊什麼都不會
+       收到（「我看過但沒意見」對他沒有資訊，只會多一則通知）。 */
+    H.push(head('剛承諾', asks.length ? asks.length + ' 組剛說了天數' : '沒有剛承諾的',
+      ''));
+    if (!asks.length) {
+      H.push('<div class="card"><p class="dim">' +
+        '他們一說要花幾天，這裡就會出現。你可以回一句，也可以不回。' +
+        '</p></div>');
+    }
+    asks.forEach(function (x) {
+      H.push('<button class="rq" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'go:askest:' + x.run.runId })) + '\'>');
+      H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b>');
+      H.push('<em>' + esc(x.team.name) + '　·　他們說 ' + x.run.est + ' 天</em></span>');
+      H.push('<span class="rq-d">' + (x.days ? '第 ' + (x.days + 1) + ' 天' : '今天') +
+        '</span>');
+      H.push('</button>');
+    });
+    return H.join('');
+  }
 
   if (tq === 'exit') {
     /* 全班每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
@@ -17927,6 +18157,8 @@ PAGES.review = function () {
       esc(rvBy.name) + ' 派的</span>');
   }
   H.push('</div>');
+  /* 這一趟談過的話。判定的那兩個數字有來歷，而來歷就在這裡。 */
+  H.push(negoLine(r, false));
   /* 他們自己寫的兩段放最上面。他在這一頁要做的事是寫一句話，
      而最有用的輸入就是這兩段——本來排在整張卡的最後面。
      系統不解讀、不歸類，原話放上去就好。 */
@@ -18032,6 +18264,45 @@ PAGES.review = function () {
      退回講的只有一件事：那份成果還沒被收下。 */
   H.push(btn('退回去改', 'reject:' + r.runId, 'ghost'));
   H.push(btn('回審核清單', 'go:radar', 'ghost'));
+  H.push('</div>');
+  return H.join('');
+};
+
+/* ---------- 回一句：我覺得會是幾天 ----------
+
+   一句話是必填的（actAskEst 擋在資料層）。理由跟退回一樣：一個沒有
+   說法的數字就是一道命令，而命令不會被內化成他自己的判斷。
+
+   這一頁上寫著「最後幾天，他說了算」——那不是客套，那是事實：
+   這一支只寫 askEst，判定讀的永遠是 run.est，而 run.est 只有學生改得動。 */
+PAGES.askest = function () {
+  var r = find('Runs', function (x) { return x.runId === S.p.id; });
+  if (!r) return '<div class="card">找不到。</div>';
+  var m = msOf(r.msId), t = teamOf(r.teamId);
+  var n = Number(draft('est', r.est));
+
+  var H = [head('回一句', t.name + '　·　' + m.title, '')];
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">他們說</div>');
+  H.push('<p class="quote big">' + r.est + ' 天</p>');
+  /* 我自己排到哪一天。它不進判定，但它是我會有意見的原因。 */
+  if (m.due) H.push('<p class="dim">排到 ' + esc(dueSay(m)) + '。</p>');
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你覺得會是幾天</div>');
+  H.push(estStep(n));
+  H.push('<div class="eyebrow" style="margin-top:14px">為什麼</div>');
+  H.push('<textarea id="ask-w" rows="2" oninput="DRAFT[\'askw\']=this.value" placeholder="' +
+    esc('例：同樣的東西我看過，通常卡在找人。') + '">' + esc(draft('askw', '')) + '</textarea>');
+  H.push('<p class="dim">最後幾天他說了算。你給的是理由，不是期限。</p>');
+  H.push('</div>');
+
+  H.push('<div class="row">');
+  H.push(btn('送出去', 'asksend:' + r.runId, 'big'));
+  H.push(btn('沒有話要說', 'askskip:' + r.runId, 'ghost'));
+  H.push(btn('回清單', 'go:radar', 'ghost'));
   H.push('</div>');
   return H.join('');
 };

@@ -87,7 +87,12 @@ var EV_SAY = {
   resend:   function (e) { return '改好再交一次（第 ' + e.backs + ' 次被退）'; },
   rethink:  function (e) { return '重新想過：本來說 ' + e.est + ' 天，走到第 ' + e.went + ' 天'; },
   denyexit: function () { return '說現在還不是時候'; },
-  rank:     function (e) { return (e.on ? '打開' : '關掉') + '排行榜'; }
+  rank:     function (e) { return (e.on ? '打開' : '關掉') + '排行榜'; },
+  askest:   function (e) { return '回了一句：他們說 ' + e.est + ' 天，我覺得 ' + e.ask + ' 天'; },
+  askans:   function (e) {
+    return e.was === e.now ? '談過之後維持 ' + e.now + ' 天（老師說 ' + e.ask + '）'
+      : '談過之後從 ' + e.was + ' 天改成 ' + e.now + ' 天（老師說 ' + e.ask + '）';
+  }
 };
 function evSay(e) {
   var f = EV_SAY[e.kind];

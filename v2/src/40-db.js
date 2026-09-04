@@ -894,6 +894,99 @@ function actRethink(teamId, runId) {
   return true;
 }
 
+/* ---------- 協商：老師回一句「我覺得會是幾天」 ----------
+
+   本來兩邊各握著一樣對方碰不到的東西：學生握承諾的天數，老師握排程
+   （而排程明文不進判定，等於沒有牙齒）。那不是自主支持，是互相迴避。
+
+   承諾走廊上其實已經把分歧畫出來了——老師排的那一天跟他按出來的格數
+   並排在同一把尺上（見 60-student.js 的 estWalkIn）——然後兩邊都沒有
+   動作。呈現不等於協商。
+
+   自主不是「不受干涉」，是「出於自己的意願」。一個人可以完全自主地
+   接受一個他沒訂的數字，條件是他聽得到理由、而且最後那一下是他按的。
+   有審查就代表雙方都要讓一點，而讓了什麼要看得見。所以：
+
+     · 老師可以回一次，一次而已，而且**一定要帶一句話**——
+       跟退回同一條原則：沒有理由的數字就是命令
+     · 學生看到之後自己決定最後幾天。維持原本那個數字也是一個答案
+     · 判定一行都沒有改：判的還是最後那個數字，而那個數字是他的
+     · 兩邊的數字都留在紀錄上（estFirst／askEst／est），那是
+       「雙方都有妥協」的證據——這個研究本來完全沒有這一種資料
+
+   老師讓掉的是決定權，學生讓掉的是不被質疑。
+   不擋人：老師沒回，那一趟照走。 */
+
+/* 等著老師回一句的那幾趟。全班的，跟審核同一個佇列邏輯。 */
+function askQueue(classId) {
+  var out = [];
+  teamsUnder(classId).forEach(function (t) {
+    runsFor(t.teamId).forEach(function (x) {
+      if (x.run.state !== 'running') return;
+      if (x.run.askAt || x.run.askSkip) return;
+      out.push({ team: t, run: x.run, ms: x.ms,
+        days: daysBetween(x.run.committedAt, now()) });
+    });
+  });
+  /* 剛說的排前面。這一句話越早回越有用——走完了才說等於沒說。 */
+  return out.sort(function (a, b) { return a.days - b.days; });
+}
+
+/* 老師回一句。那一句話是必要的，不是選填。 */
+function actAskEst(runId, est, word) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'running' || r.askAt) return null;
+  if (!String(word || '').trim()) return null;
+  r.askEst = clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || r.est);
+  r.askWord = String(word).trim();
+  r.askBy = (typeof S !== 'undefined' && S.who) || '';
+  r.askAt = now();
+  save();
+  logEvent('askest', { teamId: r.teamId, runId: runId, est: r.est, ask: r.askEst });
+  return r;
+}
+
+/* 看過了，沒有話要說。不留下任何東西給學生看——
+   「我看過但沒意見」對他沒有資訊，只會多一則通知。 */
+function actAskSkip(runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.state !== 'running' || r.askAt || r.askSkip) return false;
+  r.askSkip = 1;
+  save();
+  return true;
+}
+
+/* 學生回答：最後幾天。
+
+   改了不算「重新想過」：那一趟還是同一趟，committedAt 不動——他已經
+   走了那幾天。重新想過是打掉重來，這是同一趟上換一個數字。
+   也因此不吃 redo 的額度：那個額度是給他自己反悔用的，
+   不是拿來罰他聽了一句話。 */
+function actAnswerAsk(teamId, runId, est) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.teamId !== teamId || r.state !== 'running') return null;
+  if (!r.askAt || r.askAns) return null;
+  var n = clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || r.est);
+  var was = r.est;
+  if (n !== r.est) {
+    /* 他一個人的時候說的那個數字。有這一欄就代表這一趟談過而且動了。 */
+    r.estFirst = r.est;
+    r.est = n;
+  }
+  r.askAns = now();
+  save();
+  logEvent('askans', { teamId: teamId, runId: runId,
+    was: was, ask: r.askEst, now: r.est });
+  return r;
+}
+
+/* 有沒有一句話在等他回。 */
+function askPending(teamId) {
+  return runsFor(teamId).filter(function (x) {
+    return x.run.state === 'running' && x.run.askAt && !x.run.askAns;
+  })[0] || null;
+}
+
 function actSubmit(teamId, runId, link) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return null;

@@ -205,6 +205,23 @@ function wordBlock(run, cls) {
     (who ? '<b>' + esc(who) + '</b>' : '') + nl(run.word) + '</p>';
 }
 
+/* 那一趟談過什麼。
+
+   兩邊的數字都留著：他一個人的時候說幾天、老師說幾天、最後訂幾天。
+   這是「雙方都有妥協」唯一看得到的地方，也是判定那兩個數字的來歷——
+   少了它，談過跟沒談過的兩趟在畫面上長得一模一樣。
+
+   沒談過就回空字串。 */
+function negoLine(r, you) {
+  if (!r || !r.askAt) return '';
+  var u = r.askBy ? userOf(r.askBy) : null;
+  var first = r.estFirst == null ? r.est : r.estFirst;
+  return '<p class="dim nego">' + (you ? '你說 ' : '他們說 ') + first + ' 天' +
+    '　·　' + esc(u ? u.name : '老師') + ' 說 ' + r.askEst + ' 天' +
+    (r.askAns ? '　·　最後 ' + r.est + ' 天' + (r.estFirst == null ? '（維持）' : '')
+      : '　·　還沒回') + '</p>';
+}
+
 /* ---------- 路由 ---------- */
 
 var PAGES = {};
@@ -537,6 +554,38 @@ var ACTS = {
     p[i] = { n: p[i].n, d: clamp(1, RULES.EST_MAX, p[i].d + Number(q[1])) };
     DRAFT.plan = p;
     render();
+  },
+
+  /* ── 協商那三顆 ──
+     老師回一句、老師跳過、學生按下最後那個數字。
+     見 40-db.js「協商」那一段。 */
+
+  asksend: function (runId) {
+    var n = Number(draft('est', 0));
+    var w = (document.getElementById('ask-w') || {}).value || '';
+    if (!String(w).trim()) return say('要帶一句話。沒有說法的數字是命令。');
+    if (!actAskEst(runId, n, w)) return say('這一趟已經回過了。');
+    go('radar');
+    say('說出去了。最後幾天還是他們決定。');
+  },
+
+  askskip: function (runId) {
+    actAskSkip(runId);
+    go('radar');
+    say('跳過了。他們那邊不會收到通知。');
+  },
+
+  /* 學生按下最後那個數字。維持原本那個也走這一條——
+     按下去那一下就是他的決定。 */
+  asktake: function (runId) {
+    var r0 = find('Runs', function (x) { return x.runId === runId; });
+    if (!r0) return say('找不到。');
+    var was = r0.est;
+    var n = Number(draft('est', r0.est));
+    if (!actAnswerAsk(myTeam().teamId, runId, n)) return say('這一件已經回過了。');
+    var r1 = find('Runs', function (x) { return x.runId === runId; });
+    go('home');
+    say(r1.est === was ? '維持 ' + r1.est + ' 天。' : '改成 ' + r1.est + ' 天了。');
   },
 
   /* 說幾天：一按一天。到頭就停在那裡，不會繞回去——

@@ -164,6 +164,29 @@ if (!judgeFn) {
     });
 }
 
+/* ---------- 三之一 · 老師改不動那個數字 ----------
+
+   老師現在可以回一句「我覺得會是幾天」（actAskEst）。那是一個提議，
+   不是一個決定：他寫的是 askEst，而判定讀的是 est，est 只有學生
+   按得動（actAnswerAsk）。
+
+   這條界線是整個協商機制唯一撐得住的理由。它一旦破掉，「最後幾天
+   你說了算」就變成一句假話，而那比根本不做這個機制更糟。 */
+const askFn = src.match(/function actAskEst\([\s\S]*?\n\}/);
+if (!askFn) {
+  bad++;
+  console.error('找不到 actAskEst——老師回一句那一支不見了');
+} else if (/\br\.est\s*=[^=]/.test(askFn[0])) {
+  bad++;
+  console.error('actAskEst 改了 r.est　——老師給的是提議，不是決定');
+}
+/* 反過來也要守：學生那一支不准去改老師說過的那個數字。 */
+const ansFn = src.match(/function actAnswerAsk\([\s\S]*?\n\}/);
+if (ansFn && /\br\.askEst\s*=[^=]/.test(ansFn[0])) {
+  bad++;
+  console.error('actAnswerAsk 改了 r.askEst　——老師說過的話不能被改寫');
+}
+
 /* ---------- 三之一半 · 一個作品只能有一個比喻 ----------
    上一個作品是往地心挖礦，所以講坑道、講挖、講豎坑。
    這一個是地下城：你走的是廊道，你不是在挖，你是往下探。
@@ -310,7 +333,7 @@ if (bad) {
   process.exit(1);
 }
 console.log('殘留檢查通過：' + BANNED.length + ' 個禁用詞、畫面代號、寫死的規則句、' +
-  '判定的純度、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度、沒有小字，都守住了。');
+  '判定的純度、老師改不動那個數字、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度、沒有小字，都守住了。');
 
 /* ---------- 九 · 這不是一個交作業的平台 ----------
 
