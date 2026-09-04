@@ -20,7 +20,10 @@ PAGES.gate = function () {
   H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
   H.push('<h1>專案地下城</h1>');
   /* 一句話說完這是什麼。不是說明，是招牌上那一行。 */
-  H.push('<p class="tagline">化身勇者，進行規劃，突破專案地下城！！</p>');
+  /* 招牌上那一行。本來是「化身勇者」——勇者是一個身分，
+     而這個世界裡你的身分是「接委託的人」，三拍剛好就是那一圈：
+     接下來、說幾天、走完它。 */
+  H.push('<p class="tagline">接下委託，規劃天數，走完專案地下城！！</p>');
 
   /* 進去那兩顆放在第一屏，不要捲。 */
   H.push('<div class="row">');
@@ -31,8 +34,11 @@ PAGES.gate = function () {
   /* 一趟就這四件事。四個圖示一排，不寫成一段話。 */
   H.push('<div class="four">');
   [
-    [ICONS.home, '規劃天數'], [ICONS.pack, '進行任務'],
-    [ICONS.radar, '回報進度'], [ICONS.eco, '查看全班']
+    /* 四個字說完一圈：接下來、說幾天、交出去、拿到錢。
+       本來是「規劃天數／進行任務／回報進度／查看全班」——
+       四個功能名，四件不連起來的事。 */
+    [ICONS.home, '接下委託'], [ICONS.pack, '規劃天數'],
+    [ICONS.radar, '交件回報'], [ICONS.eco, '拿到金幣']
   ].forEach(function (x, i) {
     if (i) H.push('<i class="fr-a"></i>');
     H.push('<div class="fr">' + pxTag(x[0], ICON_ON, 'fr-px') +

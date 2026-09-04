@@ -306,13 +306,14 @@ function scene(t, row, st, kind) {
      'stamped' 根本不是一個 state（那是 nextThing 回的字），
      真正的是 'judged'——所以那一條永遠不成立，靠 walked>=est 撐著。 */
   var arrived = metRun(run);
-  /* 打完了牠就不在那裡了。老師退回來的那一趟，牠站回去。
+  /* 東西交出去了他就不在那裡了——他要的拿到了，人就走了。
+     老師退回來的那一趟，他站回去：那份東西還沒真的送到。
 
      這個判斷不能寫進 metRun：圖鑑算的是「遇到」，遇到過就是遇到過，
-     牠站不站得起來是另一件事。 */
-  var beaten = !!(run && (run.state === 'judged' || run.state === 'submitted' ||
+     他還在不在路上是另一件事。 */
+  var handed = !!(run && (run.state === 'judged' || run.state === 'submitted' ||
     run.state === 'done'));
-  if (arrived && !beaten) H.push(sceneMob(t, row, 1, est, ENT));
+  if (arrived && !handed) H.push(sceneMob(t, row, 1, est, ENT));
 
   /* ── 盡頭的岩壁裡有東西 ──
 
@@ -334,7 +335,7 @@ function scene(t, row, st, kind) {
 
        正在做　　　　　走路
        還沒說幾天　　　站著　他還在洞口，沒出發
-       打完了、等老師　坐著　牠倒了，這一趟結束，回火邊
+       交出去、等老師　坐著　東西送到了，這一趟結束，回火邊
        老師退回來了　　走路　牠站起來了，路還沒走完
        沒有任務　　　　坐著　營火旁邊。那是休息，不是罰站
        很多天沒動　　　睡著
@@ -426,11 +427,11 @@ function scene(t, row, st, kind) {
   /* 牌子跟著姿勢走。「待命」本來蓋掉三個很不一樣的處境——
      還沒出發、在等老師、老師勾了。分開講。 */
   /* 講得出來的那幾個處境排在前面，前進中／休息中是兜底的那一句。
-     反過來的話「打完了」跟「沒有任務」會共用「休息中」——
+     反過來的話「委託完成」跟「沒有任務」會共用「休息中」——
      姿勢一樣不代表發生的事一樣。 */
   var tag = st.level >= 2 ? '停很久了'
     : kind === 'commit' ? '還沒出發'
-    : kind === 'stamped' ? '打完了'
+    : kind === 'stamped' ? '委託完成'
     : kind === 'review' ? '在等老師'
     : kind === 'back' ? '再走一次'
     : walking ? '前進中'
