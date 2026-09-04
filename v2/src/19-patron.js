@@ -26,209 +26,447 @@
 
 var PAT_W = 24, PAT_H = 16;
 
-/* 十二種體型。差的是形狀，不是配件。 */
+/* ── 顏色分區 ──
+
+   跟角色同一套規矩（見 12-heroes.js）：光從左上來，輪廓一律 k，
+   受光面在左上、陰影在右下。字母是這一層的色階，換一層就換一種顏色：
+
+     k  輪廓，最暗的那一階
+     c  凹處：兜帽裡面、眼窩、縫
+     f  最暗的暗面（右下角）
+     g  暗面
+     h  身體
+     i  受光面（左上）
+     j  一點光：眼睛、晶體、火
+
+   本來只有三個：# 身體、+ 陰影、* 反光。三階畫不出一個角色——
+   委託人因此只是一團有邊的色塊。 */
+
+/* 十八種體型。差的是形狀，不是配件。 */
 var PAT_BODY = {
 
   /* 很高很瘦。頭小、脖子長，站著的時候比別人高出一截。 */
   tall: [
-    '.+##+.',
-    '+#**#+',
-    '+####+',
-    '.+##+.',
-    '..##..',
-    '..##..',
-    '.+##+.',
-    '+####+',
-    '+####+',
-    '+####+',
-    '.+##+.',
-    '.+##+.',
-    '.#..#.',
-    '.#..#.',
-    '+#..#+'
+    '..kkk..',
+    '.kiihk.',
+    '.kihgk.',
+    '.kihgk.',
+    '..kkk..',
+    '..kik..',
+    '..kik..',
+    '.kiihk.',
+    'kiihhgk',
+    'kihhhgk',
+    'kihhggk',
+    'kihhggk',
+    '.kihgk.',
+    '.kh.gk.',
+    '.kk.kk.'
   ],
 
   /* 很矮很寬。沒有脖子，整個人像一塊。 */
   squat: [
-    '..+####+..',
-    '.+#*##*#+.',
-    '.+######+.',
-    '+########+',
-    '##########',
-    '##########',
-    '+########+',
-    '.+######+.',
-    '.+#+..+#+.',
-    '+##+..+##+'
+    '..kkkkkk..',
+    '.kiiihhgk.',
+    'kiihhhhggk',
+    'kiihcchggk',
+    'kihhhhhggk',
+    'kihhhhhggk',
+    'kihhhggffk',
+    '.kihhggfk.',
+    '..kk..kk..'
   ],
 
   /* 一堆布。看不到腿，只有頂上一顆小頭。 */
   drape: [
-    '...+##+...',
-    '...#**+...',
-    '..+####+..',
-    '.+######+.',
-    '+########+',
-    '+########+',
-    '##########',
-    '##########',
-    '##########',
-    '+########+',
-    '++++++++++'
+    '...kkkk...',
+    '..kiihgk..',
+    '..kihhgk..',
+    '...kkkk...',
+    '..kiihgk..',
+    '.kiihhggk.',
+    '.kihhhggk.',
+    'kiihhhgggk',
+    'kihhhhgggk',
+    'kihhchgggk',
+    'kihhhhgggk',
+    'kihhhggffk',
+    'kihhggfffk',
+    'kkkkkkkkkk'
   ],
 
   /* 兩個頭。同一個身體上面兩顆，一顆看著你、一顆看別的地方。 */
   twin: [
-    '+##+..+##+',
-    '#*#+..+#*#',
-    '+##+..+##+',
-    '.+##++##+.',
-    '..+######+',
-    '.+########',
-    '+#########',
-    '+#########',
-    '.+######+.',
-    '..+#..#+..',
-    '..+#..#+..',
-    '.+##..##+.'
+    '.kkk..kkk..',
+    'kiihkkiihk.',
+    'kihgkkihgk.',
+    '.kkk..kkk..',
+    '..kikkik...',
+    '.kiihhhgk..',
+    'kiihhhhggk.',
+    'kihhhhhggk.',
+    'kihhhhhggk.',
+    'kihhhggffk.',
+    '.kihhggfk..',
+    '.kh....gk..',
+    '.kk....kk..'
   ],
 
   /* 浮著。底下什麼都沒有，只有一截漸漸散掉的東西。 */
   float: [
-    '..+##+..',
-    '.+#**#+.',
-    '.+####+.',
-    '+######+',
-    '+######+',
-    '+######+',
-    '.+####+.',
-    '..+##+..',
-    '...+#...',
-    '..+..+..',
-    '...+....',
-    '..+.....'
+    '..kkkkk..',
+    '.kiihhgk.',
+    'kiihhhggk',
+    'kihhcchgk',
+    'kihhhhhgk',
+    'kiihhhggk',
+    '.kihhggk.',
+    '.kihhggk.',
+    '..kihgk..',
+    '..kf.gk..',
+    '...k.k...',
+    '...f.f...',
+    '....f....'
   ],
 
   /* 背著比自己還大的東西。人被壓得往前傾。 */
   haul: [
-    '..+######+',
-    '.+########',
-    '+#########',
-    '+#########',
-    '+####+##+.',
-    '.+###+##..',
-    '+##+.+##+.',
-    '#*#+.+##+.',
-    '+##+.+##+.',
-    '.##+.+##+.',
-    '.##+..##..',
-    '+##+..##..',
-    '+#+..+##+.'
+    '.....kkkkkk.',
+    '....kiihhggk',
+    '...kkiihhggk',
+    '..kihkihhggk',
+    '.kiihkihhggk',
+    '.kihgkihhggk',
+    '..kkkkihhggk',
+    '.kiihkihhggk',
+    'kiihhkihhggk',
+    'kihhhkiggffk',
+    'kihhggkkkkkk',
+    'kihhggk.....',
+    '.kh.gk......',
+    '.kk.kk......'
   ],
 
   /* 一團兜帽，只有兩點光。 */
   hood: [
-    '..+####+..',
-    '.+######+.',
-    '+###**###+',
-    '+#*####*#+',
-    '+########+',
-    '.+######+.',
-    '.+######+.',
-    '+########+',
-    '+########+',
-    '+########+',
-    '.++++++++.'
+    '...kkkk...',
+    '..kiihgk..',
+    '.kiicchgk.',
+    '.kihcjchgk',
+    'kiihcccjgk',
+    'kihhhcchgk',
+    'kihhhhhhgk',
+    'kihhhhhggk',
+    'kihhhhhggk',
+    'kihhhggffk',
+    'kihhggfffk',
+    '.kihggffk.',
+    '.kkkkkkkk.'
   ],
 
   /* 有殼。一個硬的外框，裡面一小個。 */
   shell: [
-    '+++####+++',
-    '+########+',
-    '#+#*##*#+#',
-    '#+######+#',
-    '#+#+..+#+#',
-    '#+#....#+#',
-    '#+######+#',
-    '+########+',
-    '+++####+++',
-    '..+#..#+..',
-    '.+##..##+.'
+    '.kkkkkkkk.',
+    'kiiihhhggk',
+    'kikkkkkkgk',
+    'kikccccjgk',
+    'kikchhckgk',
+    'kikchhckgk',
+    'kikcccckgk',
+    'kikkkkkkgk',
+    'kihhhhhggk',
+    'kihhhggffk',
+    '.kkkkkkkk.',
+    '..k....k..',
+    '..k....k..'
   ],
 
   /* 一節一節疊起來的，像一疊東西長了一顆頭。 */
   stack: [
-    '..+##+..',
-    '..#**+..',
-    '.+####+.',
-    '+######+',
-    '++++++++',
-    '+######+',
-    '++++++++',
-    '+######+',
-    '++++++++',
-    '+######+',
-    '++++++++',
-    '.+####+.'
+    '..kkkk..',
+    '.kiihgk.',
+    '.kihhgk.',
+    '.kkkkkk.',
+    'kiihhhgk',
+    'kihhhggk',
+    'kkkkkkkk',
+    'kiihhhgk',
+    'kihhhggk',
+    'kkkkkkkk',
+    'kiihhhgk',
+    'kihhhggk',
+    'kihhggfk',
+    'kkkkkkkk'
   ],
 
   /* 頭比身體大很多。 */
   bighead: [
-    '.+######+.',
-    '+########+',
-    '#*##**##*#',
-    '##########',
-    '+########+',
-    '.+######+.',
-    '..+####+..',
-    '...+##+...',
-    '..+####+..',
-    '..#....#..',
-    '.+#+..+#+.'
+    '..kkkkkkk..',
+    '.kiiihhhgk.',
+    'kiihhhhhggk',
+    'kiihcchcggk',
+    'kihhhhhhhgk',
+    'kihhhhhhggk',
+    'kihhhggfffk',
+    '.kkkkkkkkk.',
+    '...kihgk...',
+    '..kiihggk..',
+    '..kihhggk..',
+    '..kihggfk..',
+    '..kk...kk..'
   ],
 
   /* 很長，貼著地拖過來的。 */
   long: [
-    '+##+..............',
-    '#*#+..............',
-    '+##+..............',
-    '.####+++++++++....',
-    '.###############+.',
-    '.###############+.',
-    '.+#############+..',
-    '..+++++++++++++...'
+    '.......kkkk',
+    '......kiihk',
+    '.....kiihgk',
+    '.kkkkkihhgk',
+    'kiihhhhhhgk',
+    'kihhhhhhggk',
+    'kihcchhhggk',
+    'kihhhhhggfk',
+    'kihhhggfffk',
+    'kkkkkkkkkkk'
   ],
 
   /* 分成好幾小塊，一起動的那種。 */
   swarm: [
-    '.+#+....+#+.',
-    '+#*#+..+#*#+',
-    '+###+..+###+',
-    '.+#+....+#+.',
+    '.kkk....kkk.',
+    'kiihk..kiihk',
+    'kihgk..kihgk',
+    '.kkk....kkk.',
     '............',
-    '...+#+..+#+.',
-    '..+#*#++#*#+',
-    '..+###++###+',
-    '...+#+..+#+.',
+    '...kkk.kkk..',
+    '..kiihkiihk.',
+    '..kihgkihgk.',
+    '...kkk.kkk..',
     '............',
-    '.+#+........',
-    '+#*#+.......',
-    '+###+.......',
-    '.+#+........'
+    '.kkk........',
+    'kiihk.......',
+    'kihgk.......',
+    '.kkk........'
+  ],
+
+  /* 蹲著，背弓起來。矮，但看得出是一個人的姿勢。 */
+  kneel: [
+    '....kkkk...',
+    '...kiihgk..',
+    '...kihcgk..',
+    '..kkkkkkk..',
+    '.kiihhhggk.',
+    'kiihhhhhggk',
+    'kihhhhhhggk',
+    'kihhhhhgffk',
+    'kihhhggfffk',
+    'kkhhggffffk',
+    '.kkkkkkkkkk'
+  ],
+
+  /* 一個環立在那裡，中間是空的。看得穿。 */
+  ring: [
+    '...kkkkk...',
+    '..kiihhgk..',
+    '.kiihkkhgk.',
+    'kiihkcckhgk',
+    'kihhkcckhgk',
+    'kihhkcckhgk',
+    'kihhkcckhgk',
+    'kihgkcckhgk',
+    '.kihkkkhgk.',
+    '..kihhggk..',
+    '...kkkkk...',
+    '....k.k....',
+    '....k.k....'
+  ],
+
+  /* 很多節從中間伸出去。放射狀，不是左右對稱的人形。 */
+  many: [
+    'k....k....k',
+    '.k...k...k.',
+    '..kkkkkkk..',
+    '.kiihhhggk.',
+    'kiihhjhhggk',
+    'kihhhjhhggk',
+    'kiihhhhhggk',
+    '.kihhhhggk.',
+    '..kkkkkkk..',
+    '.k..k.k..k.',
+    'k...k.k...k',
+    '....k.k....'
+  ],
+
+  /* 一條很細的東西，頂端一個結。幾乎只有一根線。 */
+  thread: [
+    '.kkk.',
+    'kijhk',
+    'kihgk',
+    '.kkk.',
+    '.kik.',
+    '.khk.',
+    '.kik.',
+    '.khk.',
+    '.kik.',
+    '.khk.',
+    '.kik.',
+    '.khk.',
+    'kkkkk'
+  ],
+
+  /* 上半身裂成兩半，往兩邊開。下面還是連著的。 */
+  split: [
+    'kkk....kkk',
+    'kihk..kihk',
+    'kihk..kihk',
+    'kihhkkhhgk',
+    'kiihhhhhgk',
+    '.kihhhhgk.',
+    '.kihcchgk.',
+    'kiihhhhggk',
+    'kihhhhhggk',
+    'kihhhggffk',
+    'kihhggfffk',
+    '.kk....kk.'
+  ],
+
+  /* 一個罩子，裡面亮著。腳看不見，光從下緣漏出來。 */
+  bell: [
+    '....kk....',
+    '...kiik...',
+    '..kkkkkk..',
+    '.kiihhhgk.',
+    'kiihjjhggk',
+    'kihhjjhhgk',
+    'kihhjjhhgk',
+    'kiihjjhggk',
+    'kihhhhhggk',
+    'kihhhggffk',
+    'kjjjjjjjjk',
+    'kkkkkkkkkk',
+    '.j.j..j.j.'
   ]
 };
 
-/* 一點小差別：頭上、手邊、身上。體型已經拉開了，這一層只是讓
-   同一種體型的幾個人不完全一樣。 */
+/* ── 隨身的那一樣東西 ──
+
+   體型已經把人拉開了，這一層讓同一種體型的幾個人不一樣。
+
+   位置不寫死座標。本來每個記號有一組 x／y，而體型從 5 格寬到 13 格寬
+   都有——同一個 x 對細的那幾位落在身體外面，對寬的那幾位埋在身體裡。
+   改成貼著身體放：
+
+     top    壓在頭頂，跟身體同一個中線
+     left   掛在左邊，身體的中間高度
+     right  掛在右邊
+
+   sink 是往身體裡壓幾格：角在頭上要壓進去一格才長在頭上，
+   提著的東西壓 0 格才是提著。 */
 var PAT_MARK = {
   none: null,
-  lamp: { px: ['+*+', '###', '+#+'], x: 1, y: 7 },
-  staff: { px: ['*', '#', '#', '#', '#', '#', '#'], x: 21, y: 4 },
-  horn: { px: ['*....*', '+#..#+'], x: 9, y: 0 },
-  bag: { px: ['+###+', '#####', '+###+'], x: 18, y: 8 },
-  /* 一點光。放在左邊緣，不然它會落在身體的反光上、等於沒畫。 */
-  eye: { px: ['*', '.', '*'], x: 5, y: 6 },
-  drip: { px: ['+', '#', '+'], x: 4, y: 11 }
+
+  /* 頭上兩隻角。 */
+  horn: { at: 'top', sink: 1, px: [
+    '.k..k.',
+    'ki..ik',
+    'kh..hk'
+  ] },
+
+  /* 一頂小的。三個尖，中間那個亮。 */
+  crown: { at: 'top', sink: 1, px: [
+    '.j.j.j.',
+    'kjkjkjk',
+    'kiihhgk',
+    'kkkkkkk'
+  ] },
+
+  /* 一點光跟在旁邊。不是他的眼睛——是另外一個東西。 */
+  eye: { at: 'left', sink: -1, px: [
+    '.kk.',
+    'kjjk',
+    'kjhk',
+    '.kk.'
+  ] },
+
+  /* 一盞掛著的燈。 */
+  lamp: { at: 'left', sink: 0, px: [
+    '..k..',
+    '..k..',
+    '.kkk.',
+    'kjjjk',
+    'kjhjk',
+    'kjjjk',
+    '.kkk.'
+  ] },
+
+  /* 一根杖，頂端亮著。 */
+  staff: { at: 'right', sink: 0, px: [
+    '.kjk.',
+    'kjjjk',
+    '.kjk.',
+    '..k..',
+    '..k..',
+    '..k..',
+    '..k..',
+    '..k..',
+    '..k..'
+  ] },
+
+  /* 一把鎖掛在身上。
+
+     他要的東西鎖著，而你交出去的那一份是鑰匙——整個作品的那一句話
+     （見 10-pack.js）。所以這個記號不是裝飾，它是這件事的樣子。 */
+  lock: { at: 'right', sink: 1, px: [
+    '.kkk.',
+    'kh.hk',
+    'kh.hk',
+    'kkkkk',
+    'kiihk',
+    'kicik',
+    'kihgk',
+    'kkkkk'
+  ] },
+
+  /* 一個袋子。 */
+  bag: { at: 'right', sink: 1, px: [
+    '..k..',
+    '.kkk.',
+    'kiihk',
+    'kihgk',
+    'kihgk',
+    'kkkkk'
+  ] },
+
+  /* 一圈一圈捲起來的東西。 */
+  coil: { at: 'left', sink: 1, px: [
+    'kkkk.',
+    'kiihk',
+    '.kkkk',
+    'kkkk.',
+    'kiihk',
+    '.kkkk'
+  ] },
+
+  /* 一塊板子，平平地端在前面。 */
+  plate: { at: 'right', sink: 0, px: [
+    'kkkkkk',
+    'kiiihk',
+    'kihhgk',
+    'kihhgk',
+    'kkkkkk'
+  ] },
+
+  /* 有東西一直在滴。 */
+  drip: { at: 'left', sink: 0, px: [
+    '.k.',
+    'kjk',
+    '.k.',
+    '...',
+    '.k.',
+    'kjk',
+    '.k.',
+    '...',
+    '.k.'
+  ] }
 };
 
 function patNew() {
@@ -246,16 +484,42 @@ function patPut(g, art, x0, y0) {
     }
   });
 }
+function patWide(a) {
+  var w = 0;
+  a.forEach(function (r) { if (r.length > w) w = r.length; });
+  return w;
+}
 
-/* 一個委託人。體型置中、貼著地面那一列，所以誰都不會浮著或站歪。 */
+/* 一個委託人。體型置中、貼著地面那一列，所以誰都不會浮著或站歪。
+   記號再貼著體型放（見 PAT_MARK），所以細的粗的高的矮的都掛得對。 */
 function patPx(body, mark) {
   var b = PAT_BODY[body] || PAT_BODY.tall;
-  var w = 0;
-  b.forEach(function (r) { if (r.length > w) w = r.length; });
+  var w = patWide(b);
+  var bx = Math.max(0, Math.round((PAT_W - w) / 2));
+  var by = Math.max(0, PAT_H - b.length);
   var g = patNew();
-  patPut(g, b, Math.max(0, Math.round((PAT_W - w) / 2)), Math.max(0, PAT_H - b.length));
+  patPut(g, b, bx, by);
+
   var m = PAT_MARK[mark || 'none'];
-  if (m) patPut(g, m.px, m.x, m.y);
+  if (m) {
+    var mw = patWide(m.px);
+    var sink = m.sink || 0;
+    var mx, my;
+    if (m.at === 'top') {
+      mx = bx + Math.round((w - mw) / 2);
+      my = by - m.px.length + sink;
+    } else if (m.at === 'left') {
+      mx = bx - mw + sink;
+      my = by + Math.round((b.length - m.px.length) / 2);
+    } else {
+      mx = bx + w - sink;
+      my = by + Math.round((b.length - m.px.length) / 2);
+    }
+    /* 掛出框外就往回收。寧可貼著身體，也不要被切掉一半。 */
+    mx = Math.max(0, Math.min(PAT_W - mw, mx));
+    my = Math.max(0, Math.min(PAT_H - m.px.length, my));
+    patPut(g, m.px, mx, my);
+  }
   return g.map(function (r) { return r.join(''); });
 }
 
@@ -284,28 +548,55 @@ var PATRON_LOOK = {
    這些名字本來就有規律，照它配剪影就跟名字對得上——
    群是一堆、母是大的、者是人形的、獸是矮壯的、面是有殼的。
    一個字給兩三種，用雜湊在裡面挑，同一個字尾的幾位才不會長一樣。 */
+/* 每一組給的選擇要比人多，不然一定有人撞在一起：
+   者有 8 位、母 7 位、獸 7 位、群 6 位——本來每組只給兩三種，
+   所以 bighead 出現七次、swarm 六次，而新畫的六種一次都沒用到。 */
 var PAT_TAIL = {
-  '群': ['swarm', 'stack'],
-  '母': ['drape', 'bighead', 'hood'],
-  '者': ['tall', 'hood', 'float'],
-  '獸': ['squat', 'haul', 'bighead'],
+  /* 一堆的 */
+  '群': ['swarm', 'stack', 'many', 'ring'],
+  /* 大的 */
+  '母': ['drape', 'bighead', 'hood', 'bell', 'kneel'],
+  /* 人形的 */
+  '者': ['tall', 'hood', 'float', 'thread', 'split', 'ring'],
+  /* 矮壯的 */
+  '獸': ['squat', 'haul', 'bighead', 'kneel', 'many'],
+  /* 有殼的 */
   '面': ['shell', 'bighead'],
-  '蟲': ['stack', 'long'],
-  '甲': ['shell'],
-  '架': ['tall', 'stack'],
-  '囊': ['drape', 'squat']
+  '蟲': ['stack', 'long', 'many'],
+  '甲': ['shell', 'ring'],
+  '架': ['tall', 'stack', 'split'],
+  '囊': ['drape', 'squat', 'bell']
 };
 var PAT_KEYS = Object.keys(PAT_BODY);
 var PAT_MKEYS = Object.keys(PAT_MARK);
 
 function dressPatrons() {
-  /* 先決定每一位的體型。 */
+  /* 先決定每一位的體型。
+
+     指名的那幾位先佔，其餘的在自己那一組裡挑**目前用得最少**的那一種。
+
+     本來是 tail[hash(名字) % 幾種]——雜湊撞在一起沒有人管，所以
+     bighead 出現七次而 kneel 一次都沒有。同一個剪影連著看到七次，
+     「這次的委託人竟然長這樣」就沒有了。
+
+     一樣少的時候用雜湊決定誰先，所以同一個名字每次都長同一個樣子。 */
   var body = {};
+  var used = {};
+  PAT_KEYS.forEach(function (k) { used[k] = 0; });
   allFauna().forEach(function (c) {
     var look = PATRON_LOOK[c.n];
-    if (look) { body[c.n] = look[0]; return; }
+    if (look) { body[c.n] = look[0]; used[look[0]] = (used[look[0]] || 0) + 1; }
+  });
+  allFauna().forEach(function (c) {
+    if (body[c.n]) return;
     var tail = PAT_TAIL[String(c.n).slice(-1)] || PAT_KEYS;
-    body[c.n] = tail[hash(c.n) % tail.length];
+    var best = tail[0];
+    tail.forEach(function (k) {
+      var a = used[k] || 0, b = used[best] || 0;
+      if (a < b || (a === b && hash(c.n + k) > hash(c.n + best))) best = k;
+    });
+    body[c.n] = best;
+    used[best] = (used[best] || 0) + 1;
   });
   /* 再在同一種體型裡把記號輪流發下去。
 
@@ -326,10 +617,18 @@ function dressPatrons() {
     if (f) {
       mk = f[1];
     } else {
-      /* 這個體型還沒被用掉的第一個記號。12 種體型 × 7 種記號 = 84 種，
-         34 位一定放得下。 */
-      for (var i = 0; i < PAT_MKEYS.length; i++) {
-        if (!taken[bd + '|' + PAT_MKEYS[i]]) { mk = PAT_MKEYS[i]; break; }
+      /* 從他自己那個數字開始找，找到還沒被用掉的第一個。
+
+         本來從 0 開始找，而 PAT_MKEYS 的第一個是 none——體型變成
+         十八種之後大部分體型只有一兩位，於是幾乎每個人都拿到 none，
+         那一層變化等於沒有。從自己的雜湊起跳就散得開。
+
+         18 種體型 × 11 種記號 = 198 種，34 位一定放得下。 */
+      var n = PAT_MKEYS.length;
+      var s0 = hash(c.n + 'm') % n;
+      for (var i = 0; i < n; i++) {
+        var t = PAT_MKEYS[(s0 + i) % n];
+        if (!taken[bd + '|' + t]) { mk = t; break; }
       }
       if (!mk) mk = PAT_MKEYS[hash(c.n) % PAT_MKEYS.length];
       taken[bd + '|' + mk] = 1;
