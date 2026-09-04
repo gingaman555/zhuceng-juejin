@@ -241,11 +241,48 @@ function runStrip(t, bare) {
       esc((x.ms ? x.ms.title : '') + '　' + (mob ? mob.n : '') +
         '　說 ' + r.est + '　實際 ' + (r.actual || 0) + ' 天') + '">');
     H.push(pxTag(mob ? mob.px : [], z.pal, 'rs-px'));
+    H.push(runTiles(r.runId));
     H.push('<span class="rs-s">' + stampPx(r.stamp) +
       '<i>' + r.est + '<u>→</u>' + (r.actual || 0) + '</i></span>');
     H.push('</button>');
   });
   H.push('</div></div>');
+  return H.join('');
+}
+
+/* ---------- 那一趟長什麼形狀 ----------
+
+   叫 runTiles 不叫 runShape：40-db.js 已經有一支 runShape，
+   回的是那一趟的統計（幾天、動了幾天、休了幾天）。同名的兩支後面
+   會蓋掉前面，而畫面上只會看起來怪怪的——check.js 擋下來了。
+
+   廊道每一格本來就記著那天動的是哪一件（見 61-scene.js 的 byTile），
+   而**七格同一個顏色跟七格五顏六色是完全不同的一趟**：一個是一件事
+   做了一個禮拜，一個是每天換一件。
+
+   那個形狀一直存在，但從來沒有被拿出來看過——它只活在那一趟正在跑
+   的時候，交出去就沒了。
+
+   現在把它畫進「走過的每一趟」那幾格裡。不是新的一塊、不是新的一行字，
+   是那幾格裡面本來就空著的一條。他不用讀任何東西：五顏六色跟一整條
+   同色，看一眼就是兩種不同的禮拜。
+
+   為什麼要給他自己看：這一套唯一在教的是校準，而校準的材料現在
+   只有兩個數字（說幾天、實際幾天）。形狀是第三樣，而且它是唯一
+   說得出「那幾天你是怎麼過的」的東西。 */
+function runTiles(runId) {
+  var log = dayLog(runId);
+  var cells = [];
+  log.forEach(function (d) {
+    if (d && d.kind === 'move') cells.push(d.step);
+  });
+  if (cells.length < 2) return '';
+  /* 太長就收在一條裡：一格最小 3px，超過就不再加寬。 */
+  var H = ['<span class="rs-sh">'];
+  cells.slice(0, 14).forEach(function (i) {
+    H.push('<i style="background:' + stepHue(i == null ? -1 : i) + '"></i>');
+  });
+  H.push('</span>');
   return H.join('');
 }
 
@@ -512,7 +549,13 @@ function doingCard(t, row, st) {
 
      代價不用另外設計：走過的那幾天留在紀錄上（說 5、走了 3、重新想過），
      看得見，但不扣任何東西。改承諾不是失準，那是兩件事。 */
-  H.push(btn('改一次承諾', 'redo:' + r.runId, 'ghost'));
+  /* 還能改幾次，寫在鍵上。額度用完就不畫這一顆——
+     一顆按下去只會被拒絕的鍵，比沒有那一顆更吵。 */
+  var left = redoLeft(r);
+  if (left > 0) {
+    H.push(btn(left > 1 ? '改承諾（還能改 ' + left + ' 次）' : '改承諾（最後一次）',
+      'redo:' + r.runId, 'ghost'));
+  }
   return H.join('');
 }
 
@@ -743,7 +786,12 @@ PAGES.commit = function () {
     H.push(btn(s.name, 'sure:' + s.key, 'sure' + (DRAFT.sure === s.key ? ' on' : '')));
   });
   H.push('</div>');
-  H.push('<p class="dim">它不影響判定。它決定這一趟你看得到多遠。</p>');
+  /* 這一句是換掉的，不是加上去的——原本那一句只講「看得多遠」，
+     而看得多遠不是一個他會拿來做決定的東西。現在同一行講的是
+     他按下去會失去什麼：說得越死，退路越少。
+
+     不多一行字，多的是那一行字的重量。 */
+  H.push('<p class="dim">說得越有把握，之後越不能改。它不影響判定。</p>');
   H.push('</div>');
 
   H.push('<div class="row">');

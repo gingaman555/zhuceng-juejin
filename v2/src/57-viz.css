@@ -2236,3 +2236,9 @@ button.ac:active{transform:translateY(1px)}
   .pmt.enter .pmt-ch,.pmt.enter .bt-plate,
   .bt-say.pmt-say.enter,.pmt-coin.enter{animation:none}
 }
+
+/* 那一趟長什麼形狀。走過的每一格裡面本來就空著的一條——
+   五顏六色跟一整條同色，看一眼就是兩種不同的禮拜。
+   不用讀，所以沒有文字、沒有圖例。 */
+.rs-sh{display:flex;gap:1px;width:100%;height:5px;margin:5px 0 0}
+.rs-sh i{flex:1 1 auto;min-width:3px;height:5px;display:block}

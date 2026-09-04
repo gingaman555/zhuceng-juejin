@@ -103,11 +103,45 @@ RULES.COIN = { base: 100, bonusMin: 1, bonusMax: 5 };
 /* ---------- 你有多確定 ----------
    三階。不進判定，只決定廊道上看得到多遠（light 對到 WORLD.light）。
    看得遠不是獎賞——說「很確定」的人，之後也會被那句話對照。 */
+/* redo 是這一階能改幾次承諾。
+
+   本來說「很確定」是免費的：三階只差廊道上看得多遠，其餘什麼都不變。
+   免費的宣告不帶任何資訊——沒有理由不說很確定，所以那一格的資料
+   也就不代表任何事。
+
+   現在它是一個下注，而賭注是退路：
+     很確定    不能改        你把話說死了
+     大概吧    可以改一次
+     不太確定  可以改兩次    但委託人會多問你一題
+
+   方向是反的，而且是故意的：**說沒把握換到更多幫助**，不是被罰。
+   這一格教的是後設認知——知不知道自己什麼時候估不準——
+   而懲罰誠實會讓每個人都學會說很確定。 */
 RULES.SURE = [
-  { key: 'high', name: '很確定',   light: 0 },
-  { key: 'mid',  name: '大概吧',   light: 1 },
-  { key: 'low',  name: '不太確定', light: 2 }
+  { key: 'high', name: '很確定',   light: 0, redo: 0 },
+  { key: 'mid',  name: '大概吧',   light: 1, redo: 1 },
+  { key: 'low',  name: '不太確定', light: 2, redo: 2 }
 ];
+/* 這一趟還能改幾次承諾。
+
+   額度不能記在 run 身上：改承諾會把那一趟標成 rethought，而 runOf
+   會跳過 rethought——所以下一次承諾生的是一筆**新的** run，
+   記在舊那一筆上的次數等於歸零，機制形同不存在。
+
+   改成數「這一組在這一件委託上已經改過幾次」：rethought 的那幾筆
+   本來就留著（走過的那幾天要看得見），數它們就好。
+
+   額度由**這一次**說的把握決定：第一次說不太確定（2 次）、改完之後
+   說很確定（0 次），那就不能再改了——他這一次把話說死了。 */
+function redoLeft(r) {
+  if (!r) return 0;
+  var s = RULES.sureOf(r.sure) || RULES.SURE[1];
+  var used = where('Runs', function (x) {
+    return x.teamId === r.teamId && x.msId === r.msId && x.state === 'rethought';
+  }).length;
+  return Math.max(0, (s.redo || 0) - used);
+}
+
 RULES.sureOf = function (key) {
   for (var i = 0; i < RULES.SURE.length; i++) {
     if (RULES.SURE[i].key === key) return RULES.SURE[i];

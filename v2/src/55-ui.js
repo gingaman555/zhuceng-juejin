@@ -838,7 +838,16 @@ var ACTS = {
   redo: function (runId) {
     var t = myTeam();
     var r = find('Runs', function (x) { return x.runId === runId; });
-    if (!r || !actRethink(t.teamId, runId)) return say('這一趟改不了。');
+    if (!r) return say('這一趟改不了。');
+    /* 能改幾次是他自己在承諾那一刻決定的（見 20-rules.js 的 RULES.SURE）。
+       說「很確定」的人把話說死了，那一趟就不能改。 */
+    var q = redoLeft(r);
+    if (q <= 0) {
+      return say((RULES.sureOf(r.sure) || {}).name === '很確定'
+        ? '你說了很確定，這一趟改不了。'
+        : '這一趟改過了，不能再改。');
+    }
+    if (!actRethink(t.teamId, runId)) return say('這一趟改不了。');
     go('commit', { id: r.msId });
     say('走過的那幾天留著。');
   },
