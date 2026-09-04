@@ -2057,24 +2057,35 @@ button.ac:active{transform:translateY(1px)}
 
 /* 你們這一組。放在三扇門上面——它不是「你現在要做的事」，
    是「你在誰旁邊」。 */
-.card.tmc{margin:0 0 11px}
-.tmc-h{display:flex;align-items:baseline;justify-content:space-between;gap:14px}
-.tmc-coin{font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
-.tmc-n{display:block;font-size:33px;font-weight:400;line-height:1.3;color:var(--ink)}
-.tmc-p{display:block;font-size:22px;font-style:normal;color:var(--dim);margin-top:4px}
-.tmc-l{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+/* 你們這一組。排在最上面，所以它必須矮——上一版五段疊成 281px，
+   把廊道推到畫面外。現在三行：名字那一行、人那一行（代碼接在同一列
+   後面），padding 也收一階。 */
+.card.tmc{margin:0 0 11px;padding:14px 16px}
+/* 會換行。不換的話窄螢幕上隊名會被代碼跟金幣（兩個都 flex:none）
+   擠成寬度 0——量到 0×396，一個字一行，整張卡 526px 高。 */
+.tmc-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:5px 14px}
+.tmc-coin{font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums;flex:none}
+/* 擠不下就自己佔一行，不要被壓扁。132px 是四個字的寬度——
+   比這個窄就換行。 */
+.tmc-n{font-size:22px;font-weight:400;line-height:33px;color:var(--ink);flex:1 1 132px}
+/* 專案接在隊名後面，同一行。中點是分隔，不是標點。 */
+.tmc-n i{font-style:normal;color:var(--dim)}
+.tmc-n i::before{content:"　·　";color:var(--line2)}
+/* 代碼跟金幣同一行。本來排在人那一列後面，而 margin-left:auto
+   會把整列撐開換行——四個人加一個代碼在 560px 裡排不下，
+   於是那一列變成兩行、卡高 161px。 */
+.tmc-l{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0}
 .tmc-m{
-  display:flex;align-items:center;gap:8px;padding:5px 11px 5px 5px;
-  border:0;cursor:pointer;font:inherit;background:var(--sunk);
+  display:flex;align-items:center;gap:6px;padding:2px 9px 2px 2px;
+  background:var(--sunk);
   box-shadow:inset 0 0 0 2px var(--line2)
 }
 .tmc-m.me{box-shadow:inset 0 0 0 2px var(--gold-d)}
-.tmc-m:hover{box-shadow:inset 0 0 0 2px var(--gold)}
 .tmc-m span{font-size:22px;color:var(--dim);white-space:nowrap}
 .tmc-m.me span{color:var(--ink)}
 /* 寬度不綁祖先——換個地方畫也不能被撐開（check.js 守著）。 */
-.px.tmc-px{width:33px;height:33px;flex:0 0 33px;image-rendering:pixelated}
-.tmc-c{font-size:22px;color:var(--mute);margin:11px 0 0}
+.px.tmc-px{width:22px;height:22px;flex:0 0 22px;image-rendering:pixelated}
+.tmc-c{font-size:22px;color:var(--mute);white-space:nowrap;margin-left:auto;flex:none}
 .tmc-c b{color:var(--gold);font-weight:400;letter-spacing:.1em}
 
 /* 登入頁上的試用資料。照組排，點名字直接進去那個人。

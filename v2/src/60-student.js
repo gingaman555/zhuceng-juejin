@@ -136,6 +136,16 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
+  /* ── 你們這一組 ──
+
+     排在最上面：打開來第一件事是「我在誰旁邊」。
+
+     上一版它也在最上面，而那時候它高 281px——廊道被推到 y=675，
+     要滑過半個畫面才看得到環境。所以問題從來不是它排在哪，
+     是它太高。壓扁到三行（名字那一行、人那一行、代碼那一行），
+     它就站得住，而環境還是第一眼看得到的東西。 */
+  H.push(teamCard(t));
+
   /* ── 自己那條廊道 ──
 
      打開來第一眼要是不用學就懂的東西。廊道不用學：一條走廊、
@@ -177,14 +187,6 @@ PAGES.home = function () {
      那個迴圈才會上癮。接在動作下面：它講的是你剛剛按的那一顆
      在整圈裡的哪個位置。 */
   H.push(beatBar(next, t));
-
-  /* ── 你們這一組 ──
-
-     廊道上那幾個人走著，但走路的角色說不出名字。每個人是獨立帳號、
-     細項各有主人之後，「我們這一組是誰」變成每天都要用到的資訊。
-
-     點一個人進去看他挑了什麼、他說過什麼。 */
-  H.push(teamCard(t));
 
   /* 三扇門。它們是「這個世界裡有什麼」，不是「我剛剛做了什麼」。
 
@@ -308,25 +310,39 @@ function stepRow(runId) {
 function teamCard(t) {
   var mem = where('Users', function (u) { return u.teamId === t.teamId; });
   var c = coinsOf(t.teamId);
+  /* 三行。本來五段（眉標、隊名、專案、人、代碼）疊成 281px，
+     而它排在最上面，於是廊道被推到畫面外。
+
+     哪些合併得起來：
+       眉標「你們這一組」拿掉——底下就是四個人的臉，那一行在說
+       已經看得出來的事。
+       隊名跟專案接成一行（中點分隔），跟金幣同一列。
+       代碼那一句從「隊伍代碼 X　要加進來的人用這一串。」縮成
+       「代碼 X」——那一句解釋只有第一天有用，而代碼本身就是動作。 */
   var H = ['<div class="card tmc">'];
-  H.push('<div class="tmc-h"><div class="eyebrow">你們這一組</div>');
+  H.push('<div class="tmc-h">');
+  H.push('<b class="tmc-n">' + esc(t.name) +
+    (t.project ? '<i>' + esc(t.project) + '</i>' : '') + '</b>');
+  if (t.joinCode) {
+    H.push('<span class="tmc-c">代碼 <b>' + esc(t.joinCode) + '</b></span>');
+  }
   H.push('<span class="tmc-coin">' + c.all + ' 枚</span></div>');
-  H.push('<b class="tmc-n">' + esc(t.name) + '</b>');
-  if (t.project) H.push('<em class="tmc-p">' + esc(t.project) + '</em>');
   H.push('<div class="tmc-l">');
   mem.forEach(function (u) {
     var g = heroOf(u);
-    H.push('<button class="tmc-m' + (u.userId === S.who ? ' me' : '') +
-      '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'go:person:' + u.userId })) + '\'>');
+    /* 不是按鈕。學生之間不用互相點進去看。
+
+       而且本來那一條是壞的：它傳的是使用者 id，而 PAGES.person 收的是
+       組別 id（班級地下城那一條傳組別，那個才是對的），所以從這裡
+       點進去只會看到「找不到」。
+
+       自己那一格還是有金框——那是資訊，不是「可以按」。 */
+    H.push('<span class="tmc-m' + (u.userId === S.who ? ' me' : '') + '">');
     H.push(pxTag(g.idleA, g.pal, 'tmc-px'));
     H.push('<span>' + esc(u.name || '') + '</span>');
-    H.push('</button>');
+    H.push('</span>');
   });
   H.push('</div>');
-  if (t.joinCode) {
-    H.push('<p class="tmc-c">隊伍代碼 <b>' + esc(t.joinCode) + '</b>　要加進來的人用這一串。</p>');
-  }
   H.push('</div>');
   return H.join('');
 }
