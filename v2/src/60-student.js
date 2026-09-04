@@ -132,6 +132,14 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
+  /* ── 你們這一組 ──
+
+     廊道上那幾個人走著，但走路的角色說不出名字。每個人是獨立帳號、
+     細項各有主人之後，「我們這一組是誰」變成每天都要用到的資訊。
+
+     點一個人進去看他挑了什麼、他說過什麼。 */
+  H.push(teamCard(t));
+
   /* 三扇門。本來在整頁最底下、在走過的那一條帶子後面——它們是
      「這個世界裡有什麼」，不是「我剛剛做了什麼」，放在最後等於
      要滑到底才看得到。 */
@@ -237,6 +245,35 @@ function stepRow(runId) {
       esc(JSON.stringify({ a: 'tick:' + runId + '|' + i })) + '\'>' +
       '<b></b>' + esc(x) + '</button>');
   });
+  H.push('</div>');
+  return H.join('');
+}
+
+/* 你們這一組。組名、專案、幾個人、隊伍代碼、金幣。
+
+   隊伍代碼一直在：新的人要加進來就是靠那一串，而它會被唸出來。 */
+function teamCard(t) {
+  var mem = where('Users', function (u) { return u.teamId === t.teamId; });
+  var c = coinsOf(t.teamId);
+  var H = ['<div class="card tmc">'];
+  H.push('<div class="tmc-h"><div class="eyebrow">你們這一組</div>');
+  H.push('<span class="tmc-coin">' + c.all + ' 枚</span></div>');
+  H.push('<b class="tmc-n">' + esc(t.name) + '</b>');
+  if (t.project) H.push('<em class="tmc-p">' + esc(t.project) + '</em>');
+  H.push('<div class="tmc-l">');
+  mem.forEach(function (u) {
+    var g = heroOf(u);
+    H.push('<button class="tmc-m' + (u.userId === S.who ? ' me' : '') +
+      '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:person:' + u.userId })) + '\'>');
+    H.push(pxTag(g.idleA, g.pal, 'tmc-px'));
+    H.push('<span>' + esc(u.name || '') + '</span>');
+    H.push('</button>');
+  });
+  H.push('</div>');
+  if (t.joinCode) {
+    H.push('<p class="tmc-c">隊伍代碼 <b>' + esc(t.joinCode) + '</b>　要加進來的人用這一串。</p>');
+  }
   H.push('</div>');
   return H.join('');
 }

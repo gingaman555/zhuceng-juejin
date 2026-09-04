@@ -2054,3 +2054,25 @@ button.ac:active{transform:translateY(1px)}
 .sp2 .who{
   font-size:22px;color:var(--gold-d);white-space:nowrap;text-decoration:none
 }
+
+/* 你們這一組。放在三扇門上面——它不是「你現在要做的事」，
+   是「你在誰旁邊」。 */
+.card.tmc{margin:0 0 11px}
+.tmc-h{display:flex;align-items:baseline;justify-content:space-between;gap:14px}
+.tmc-coin{font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+.tmc-n{display:block;font-size:33px;font-weight:400;line-height:1.3;color:var(--ink)}
+.tmc-p{display:block;font-size:22px;font-style:normal;color:var(--dim);margin-top:4px}
+.tmc-l{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.tmc-m{
+  display:flex;align-items:center;gap:8px;padding:5px 11px 5px 5px;
+  border:0;cursor:pointer;font:inherit;background:var(--sunk);
+  box-shadow:inset 0 0 0 2px var(--line2)
+}
+.tmc-m.me{box-shadow:inset 0 0 0 2px var(--gold-d)}
+.tmc-m:hover{box-shadow:inset 0 0 0 2px var(--gold)}
+.tmc-m span{font-size:22px;color:var(--dim);white-space:nowrap}
+.tmc-m.me span{color:var(--ink)}
+/* 寬度不綁祖先——換個地方畫也不能被撐開（check.js 守著）。 */
+.px.tmc-px{width:33px;height:33px;flex:0 0 33px;image-rendering:pixelated}
+.tmc-c{font-size:22px;color:var(--mute);margin:11px 0 0}
+.tmc-c b{color:var(--gold);font-weight:400;letter-spacing:.1em}
