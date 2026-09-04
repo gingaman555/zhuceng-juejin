@@ -52,7 +52,12 @@
 .bt-side.foe .bt-ch{right:66px;bottom:14px}
 .bt-side.me .bt-ch{left:66px;bottom:47px}
 .bt-px{width:88px;height:88px;image-rendering:pixelated}
-.bt-side.foe .bt-px{transform:scaleX(-1)}
+/* 委託人那一邊本來鏡射過來面對你。小圖是剪影，翻過來還是剪影；
+   換成大隻的之後那是一張臉——臉翻過來，光就從右上打，而這個世界
+   的光一律從左上來（見 12-heroes.js）。
+
+   而且他本來就是正面朝著你畫的：對話裡的一張畫像不需要轉身。 */
+.bt-side.foe .bt-px{transform:none}
 
 /* 呼吸。兩邊反相，畫面才不會像一張靜止圖。 */
 .bt-side.foe .bt-ch{animation:btbob 1.2s steps(2,end) infinite}

@@ -90,8 +90,14 @@ PAGES.battle = function () {
   H.push('<div class="bt-side foe">');
   H.push(btPlate(esc(mob.n), 'foe', ''));
   H.push('<div class="bt-pad"></div>');
-  H.push('<div class="bt-ch foe">' + pxTag(mob.px, zone.pal, 'bt-px') +
-    pxFlash(mob.px) + '</div>');
+  /* 大隻的那一張（36×24，見 19-patron.js 的 PAT_BIG）。
+
+     這一格本來畫 24×16 的那張——那是廊道上遠遠看一眼的尺寸，
+     而這裡是整條流程最近的一次照面，他就在你對面。
+     兩張都是 3:2，所以同一個框，多 2.3 倍的格子：眼睛有瞳孔、
+     手有指節、他在呼吸。 */
+  H.push('<div class="bt-ch foe">' + patTag(mob, zone.pal, 'bt-px', 1) +
+    pxFlash(mob.big || mob.px) + '</div>');
   H.push('</div>');
 
   /* ── 你 ──

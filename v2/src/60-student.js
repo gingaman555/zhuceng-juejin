@@ -40,6 +40,10 @@
 
    YouTube 的首頁放的是別人的影片，主流程卻是把影片放上去——
    那句話講的是層級，不是「拿掉自己的東西」。 */
+/* 哪幾件的委託人已經走進來過了。只活在這一次使用裡——
+   演出只有第一次是演出，第二次是雜訊。 */
+var PAT_IN = {};
+
 PAGES.home = function () {
   var t = myTeam();
   var next = nextThing(t.teamId);
@@ -416,7 +420,16 @@ function actionCard(t, next, st) {
     H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
 
   } else if (next.kind === 'commit') {
-    H.push(btn('要花幾天', 'go:commit:' + row.ms.msId, 'big'));
+    /* 有人在等你——但這裡不給臉。
+
+       他走進來那一下留在 commit 頁上：先知道有人在等，再看到是誰，
+       那一下才有東西可以演。臉先在首頁出現的話，進去就只剩一張
+       已經看過的圖。
+
+       按鈕也從「要花幾天」換成「去見他」——你進去是去見一個人，
+       說幾天是見到之後的事。 */
+    H.push('<p class="waiting">有人在等這一件。</p>');
+    H.push(btn('去見他', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'doing') {
     H.push(doingCard(t, row, st));
@@ -582,17 +595,43 @@ PAGES.commit = function () {
 
      「這次的委託人竟然長這樣」是這一頁最該發生的事。 */
   var pat = mobFor(m.msId, t.teamId);
+  /* 第一次打開這一件的時候他才走進來。
+
+     只記在這一次使用裡（跟圖鑑那道光同一種做法，見 markCodex）——
+     每次重畫都演一次會變成雜訊，而演出只有第一次是演出。 */
+  var firstLook = pat && !PAT_IN[m.msId];
+  if (pat) PAT_IN[m.msId] = 1;
   if (pat) {
     var pz = mobZone(pat);
-    /* 整張卡點得下去——這是你第一次看到這次是誰的地方，
-       而「他長這樣」值得看清楚。 */
-    H.push('<div class="card patron can ' + pz.key + '" data-act="run" data-p=\'' +
+    /* ── 一場戲，不是一張卡 ──
+
+       一趟有兩次見到他：接下委託的時候，跟走到底交東西的時候。
+       第二次早就是一場戲了（見 67-battle.js：閃一次進場、名牌、
+       字幕框、他在對面呼吸）。第一次本來只是一張卡片，圖已經
+       貼在上面——他沒有登場，他只是在那裡。
+
+       所以這裡用同一套零件：.bt-wipe 閃場、.bt-plate 名牌、
+       .bt-say 字幕框，全部是照面那一場的（那三個 class 沒有綁在
+       .bt 底下）。兩端長得一樣，因為那是同一個人的兩次見面。
+
+       畫的是大隻的那一張（36×24）——那張本來就是為了這種近的
+       場面畫的，眼睛有瞳孔、手有指節，而且他在呼吸。 */
+    H.push('<div class="pmt ' + pz.key + (firstLook ? ' enter' : '') +
+      '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:patron:' + pat.n })) + '\'>');
-    H.push(patTag(pat, pz.pal, 'pat-px'));
-    H.push('<div class="pat-t"><b>' + esc(pat.n) + '</b>');
-    H.push('<em>' + esc(pat.t) + '</em>');
-    H.push('<u>' + RULES.COIN.base + ' 枚金幣</u></div>');
+    if (firstLook) H.push('<div class="bt-wipe"></div>');
+    H.push(btPlate(esc(pat.n), 'foe', ''));
+    H.push('<div class="pmt-ch">' + patTag(pat, pz.pal, 'bt-px', 1) + '</div>');
     H.push('</div>');
+    /* 字幕框。第一句是遇到，第二句是他這個人——跟照面那一場
+       同一種語氣（「你走到了。X 在這裡。」）。 */
+    H.push('<div class="bt-say pmt-say' + (firstLook ? ' enter' : '') + '">');
+    H.push('<i class="bt-arrow"></i>');
+    H.push('<b>' + esc(pat.n + ' 在等這一件。') + '</b>');
+    H.push('<em>' + esc(pat.t) + '</em>');
+    H.push('</div>');
+    H.push('<p class="pmt-coin' + (firstLook ? ' enter' : '') + '">' +
+      RULES.COIN.base + ' 枚金幣</p>');
   }
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */

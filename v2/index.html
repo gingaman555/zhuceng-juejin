@@ -4144,6 +4144,102 @@ button.ac:active{transform:translateY(1px)}
    在門口它是招牌的一部分，在這裡它是標題的答案，所以貼著標題。 */
 .sty-loop{margin:0 0 22px}
 
+/* ══════════ 委託人登場 ══════════
+
+   收到委託那一下他走進來。本來他只是「已經在卡片上」——
+   而「這次的委託人竟然長這樣啊」是一個瞬間，瞬間要有東西發生。
+
+   從右邊進來，跟走到底那一下同一個方向（見 53-scene.css 的 mobmeet）。
+   這個世界裡委託人一律從右邊出現：路的另一端在右邊，他就從那裡來。
+
+   四拍，一拍接一拍：
+
+     人   0.48s   從右邊走進來
+     名字 0.42s 後  砸下來
+     那句話 0.62s 後 亮起來
+     金幣 0.82s 後  彈一下
+
+   全部 steps()，沒有漸變。backwards 是必要的：沒有它，delay 還沒到
+   的那幾樣會先用最終狀態畫出來，等於先劇透再演。 */
+.card.patron.enter .pat{
+  animation:patin .48s steps(4,end) 1 backwards
+}
+@keyframes patin{
+  0%{opacity:0;transform:translateX(22px)}
+  100%{opacity:1;transform:translateX(0)}
+}
+.card.patron.enter .pat-t b{
+  animation:patname .3s steps(2,end) .42s 1 backwards
+}
+@keyframes patname{
+  0%{opacity:0;transform:translateY(-6px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+.card.patron.enter .pat-t em{
+  animation:patline .3s steps(2,end) .62s 1 backwards
+}
+@keyframes patline{ 0%{opacity:0} 100%{opacity:1} }
+.card.patron.enter .pat-t u{
+  animation:patcoin .36s steps(3,end) .82s 1 backwards
+}
+@keyframes patcoin{
+  0%{opacity:0;transform:translateY(0)}
+  50%{opacity:1;transform:translateY(-5px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+
+/* 首頁上那一句。有人在等，但還沒看到是誰。 */
+.waiting{font-size:22px;color:var(--gold-d);margin:0 0 11px}
+
+@media (prefers-reduced-motion: reduce){
+  .card.patron.enter .pat,
+  .card.patron.enter .pat-t b,
+  .card.patron.enter .pat-t em,
+  .card.patron.enter .pat-t u{animation:none}
+}
+
+/* ══════════ 接下委託那一場 ══════════
+
+   一趟有兩次見到他。第二次（走到底交東西）早就是一場戲；第一次本來
+   只是一張卡片。現在兩端用同一套零件——.bt-wipe 閃場、.bt-plate 名牌、
+   .bt-say 字幕框，都是照面那一場的（見 58-battle.css，那三個沒有
+   綁在 .bt 底下）。
+
+   畫的是大隻的那一張，比照面那一格再大一點：那裡是對峙，這裡是登場。 */
+.pmt{
+  position:relative; overflow:hidden; cursor:pointer;
+  min-height:198px; display:flex; align-items:flex-end; justify-content:center;
+  padding:44px 0 0; margin:0 0 11px;
+  background-color:var(--zbg);
+  box-shadow:inset 0 0 0 2px var(--line2);
+  clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)
+}
+.pmt .bt-plate{left:16px;top:16px}
+.pmt:hover{box-shadow:inset 0 0 0 2px var(--gold)}
+.pmt-ch{position:relative;z-index:2;line-height:0}
+.pmt .bt-px{width:176px;height:117px;image-rendering:pixelated}
+@media (max-width:520px){ .pmt .bt-px{width:132px;height:88px} .pmt{min-height:154px} }
+
+.pmt-say{position:relative}
+.pmt-say em{
+  display:block;font-size:22px;font-style:normal;line-height:33px;color:var(--dim)
+}
+.pmt-coin{font-size:22px;color:var(--gold);margin:0 0 22px}
+
+/* ── 登場 ──
+   閃場 → 他走進來 → 名牌 → 字幕 → 金幣。一拍接一拍，全部 steps()。
+   backwards 是必要的：沒有它，delay 還沒到的那幾樣會先用最終狀態
+   畫出來，等於先劇透再演。 */
+.pmt.enter .pmt-ch{ animation:patin .48s steps(4,end) .30s 1 backwards }
+.pmt.enter .bt-plate{ animation:patname .3s steps(2,end) .74s 1 backwards }
+.bt-say.pmt-say.enter{ animation:patline .3s steps(2,end) .96s 1 backwards }
+.pmt-coin.enter{ animation:patcoin .36s steps(3,end) 1.18s 1 backwards }
+
+@media (prefers-reduced-motion: reduce){
+  .pmt.enter .pmt-ch,.pmt.enter .bt-plate,
+  .bt-say.pmt-say.enter,.pmt-coin.enter{animation:none}
+}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -4198,7 +4294,12 @@ button.ac:active{transform:translateY(1px)}
 .bt-side.foe .bt-ch{right:66px;bottom:14px}
 .bt-side.me .bt-ch{left:66px;bottom:47px}
 .bt-px{width:88px;height:88px;image-rendering:pixelated}
-.bt-side.foe .bt-px{transform:scaleX(-1)}
+/* 委託人那一邊本來鏡射過來面對你。小圖是剪影，翻過來還是剪影；
+   換成大隻的之後那是一張臉——臉翻過來，光就從右上打，而這個世界
+   的光一律從左上來（見 12-heroes.js）。
+
+   而且他本來就是正面朝著你畫的：對話裡的一張畫像不需要轉身。 */
+.bt-side.foe .bt-px{transform:none}
 
 /* 呼吸。兩邊反相，畫面才不會像一張靜止圖。 */
 .bt-side.foe .bt-ch{animation:btbob 1.2s steps(2,end) infinite}
@@ -12364,6 +12465,10 @@ function homeFor(u) {
 
    YouTube 的首頁放的是別人的影片，主流程卻是把影片放上去——
    那句話講的是層級，不是「拿掉自己的東西」。 */
+/* 哪幾件的委託人已經走進來過了。只活在這一次使用裡——
+   演出只有第一次是演出，第二次是雜訊。 */
+var PAT_IN = {};
+
 PAGES.home = function () {
   var t = myTeam();
   var next = nextThing(t.teamId);
@@ -12740,7 +12845,16 @@ function actionCard(t, next, st) {
     H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
 
   } else if (next.kind === 'commit') {
-    H.push(btn('要花幾天', 'go:commit:' + row.ms.msId, 'big'));
+    /* 有人在等你——但這裡不給臉。
+
+       他走進來那一下留在 commit 頁上：先知道有人在等，再看到是誰，
+       那一下才有東西可以演。臉先在首頁出現的話，進去就只剩一張
+       已經看過的圖。
+
+       按鈕也從「要花幾天」換成「去見他」——你進去是去見一個人，
+       說幾天是見到之後的事。 */
+    H.push('<p class="waiting">有人在等這一件。</p>');
+    H.push(btn('去見他', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'doing') {
     H.push(doingCard(t, row, st));
@@ -12906,17 +13020,43 @@ PAGES.commit = function () {
 
      「這次的委託人竟然長這樣」是這一頁最該發生的事。 */
   var pat = mobFor(m.msId, t.teamId);
+  /* 第一次打開這一件的時候他才走進來。
+
+     只記在這一次使用裡（跟圖鑑那道光同一種做法，見 markCodex）——
+     每次重畫都演一次會變成雜訊，而演出只有第一次是演出。 */
+  var firstLook = pat && !PAT_IN[m.msId];
+  if (pat) PAT_IN[m.msId] = 1;
   if (pat) {
     var pz = mobZone(pat);
-    /* 整張卡點得下去——這是你第一次看到這次是誰的地方，
-       而「他長這樣」值得看清楚。 */
-    H.push('<div class="card patron can ' + pz.key + '" data-act="run" data-p=\'' +
+    /* ── 一場戲，不是一張卡 ──
+
+       一趟有兩次見到他：接下委託的時候，跟走到底交東西的時候。
+       第二次早就是一場戲了（見 67-battle.js：閃一次進場、名牌、
+       字幕框、他在對面呼吸）。第一次本來只是一張卡片，圖已經
+       貼在上面——他沒有登場，他只是在那裡。
+
+       所以這裡用同一套零件：.bt-wipe 閃場、.bt-plate 名牌、
+       .bt-say 字幕框，全部是照面那一場的（那三個 class 沒有綁在
+       .bt 底下）。兩端長得一樣，因為那是同一個人的兩次見面。
+
+       畫的是大隻的那一張（36×24）——那張本來就是為了這種近的
+       場面畫的，眼睛有瞳孔、手有指節，而且他在呼吸。 */
+    H.push('<div class="pmt ' + pz.key + (firstLook ? ' enter' : '') +
+      '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:patron:' + pat.n })) + '\'>');
-    H.push(patTag(pat, pz.pal, 'pat-px'));
-    H.push('<div class="pat-t"><b>' + esc(pat.n) + '</b>');
-    H.push('<em>' + esc(pat.t) + '</em>');
-    H.push('<u>' + RULES.COIN.base + ' 枚金幣</u></div>');
+    if (firstLook) H.push('<div class="bt-wipe"></div>');
+    H.push(btPlate(esc(pat.n), 'foe', ''));
+    H.push('<div class="pmt-ch">' + patTag(pat, pz.pal, 'bt-px', 1) + '</div>');
     H.push('</div>');
+    /* 字幕框。第一句是遇到，第二句是他這個人——跟照面那一場
+       同一種語氣（「你走到了。X 在這裡。」）。 */
+    H.push('<div class="bt-say pmt-say' + (firstLook ? ' enter' : '') + '">');
+    H.push('<i class="bt-arrow"></i>');
+    H.push('<b>' + esc(pat.n + ' 在等這一件。') + '</b>');
+    H.push('<em>' + esc(pat.t) + '</em>');
+    H.push('</div>');
+    H.push('<p class="pmt-coin' + (firstLook ? ' enter' : '') + '">' +
+      RULES.COIN.base + ' 枚金幣</p>');
   }
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
@@ -15774,8 +15914,14 @@ PAGES.battle = function () {
   H.push('<div class="bt-side foe">');
   H.push(btPlate(esc(mob.n), 'foe', ''));
   H.push('<div class="bt-pad"></div>');
-  H.push('<div class="bt-ch foe">' + pxTag(mob.px, zone.pal, 'bt-px') +
-    pxFlash(mob.px) + '</div>');
+  /* 大隻的那一張（36×24，見 19-patron.js 的 PAT_BIG）。
+
+     這一格本來畫 24×16 的那張——那是廊道上遠遠看一眼的尺寸，
+     而這裡是整條流程最近的一次照面，他就在你對面。
+     兩張都是 3:2，所以同一個框，多 2.3 倍的格子：眼睛有瞳孔、
+     手有指節、他在呼吸。 */
+  H.push('<div class="bt-ch foe">' + patTag(mob, zone.pal, 'bt-px', 1) +
+    pxFlash(mob.big || mob.px) + '</div>');
   H.push('</div>');
 
   /* ── 你 ──
