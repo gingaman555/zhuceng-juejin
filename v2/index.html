@@ -3894,6 +3894,19 @@ button.ac:active{transform:translateY(1px)}
 .wh-link:hover{border-bottom-color:var(--gold)}
 .wh-txt{color:var(--ink)}
 
+/* 拿到幾枚。金色，因為它是「你多了一個東西」——
+   但它排在任務之證上面，不是取代它。 */
+.coingot{
+  display:block;font-size:33px;line-height:1.3;color:var(--gold);
+  margin:11px 0 0
+}
+.coingot span{
+  display:block;font-size:22px;line-height:1.4;color:var(--dim);margin-top:5px
+}
+/* 金幣榜。那一排錢幣就是他們完成的件數——加成只佔 5%，
+   所以這一張榜幾乎完全由「做完幾件」決定。 */
+.ck-c{font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -6780,6 +6793,11 @@ RULES.judgeWhy = function (est, actual) {
    沒寫的組也走得完——那一顆鍵就退回「我今天來過了」。 */
 RULES.STEPS_MAX = 12;     /* 一個任務最多分幾段 */
 
+/* ---------- 金幣 ----------
+   一件委託 100 枚，做完就有。老師收下時另外給 1–5 枚。
+   上限刻意壓在基本的 5%：它是老師的一句話，不是經濟誘因。 */
+RULES.COIN = { base: 100, bonusMin: 1, bonusMax: 5 };
+
 /* ---------- 你有多確定 ----------
    三階。不進判定，只決定廊道上看得到多遠（light 對到 WORLD.light）。
    看得遠不是獎賞——說「很確定」的人，之後也會被那句話對照。 */
@@ -8187,11 +8205,32 @@ function actResend(teamId, runId) {
    本來中間還有一步——學生要再走到一頁去按「收起來」。那一步
    不產生任何東西，只是叫他確認一次自己已經做完、而且老師也已經
    勾過的事。approved 這個狀態因此也不再出現。 */
-function actApprove(runId, word) {
+/* 這一組的金幣。不存起來，每次算——存起來就會有兩份真相。
+
+     基本   一件收下的委託 100 枚
+     加成   老師收下時給的 1–5 枚
+
+   加成最多佔 5%，所以這個數字幾乎就是「他們完成了幾件」。 */
+function coinsOf(teamId) {
+  var base = 0, bonus = 0;
+  where('Runs', function (r) {
+    return r.teamId === teamId && (r.state === 'done' || r.state === 'approved');
+  }).forEach(function (r) {
+    base += RULES.COIN.base;
+    bonus += Math.max(0, Math.min(RULES.COIN.bonusMax, Number(r.bonus) || 0));
+  });
+  return { base: base, bonus: bonus, all: base + bonus };
+}
+
+function actApprove(runId, word, bonus) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || (r.state !== 'submitted' && r.state !== 'back')) return null;
   var s = runShape(runId);
   r.word = word || '';
+  /* 老師給的那幾枚。收下就一定有，最少 1——0 會被讀成負評，
+     而「他沒有特別想說什麼」跟「他覺得這份差」是兩件事。 */
+  r.bonus = Math.max(RULES.COIN.bonusMin,
+    Math.min(RULES.COIN.bonusMax, Number(bonus) || RULES.COIN.bonusMin));
   r.approvedAt = now();
   r.state = 'done';
   r.doneAt = now();
@@ -9787,11 +9826,15 @@ var ACTS = {
   },
 
   /* 老師只勾一個「可以」。挑哪一件是學生的事。 */
+  /* 收下的時候順手給幾枚。沒選就是最少的那一枚——
+     「他沒有特別想說什麼」是一個正常的答案。 */
+  bonus: function (n) { DRAFT.bonus = Number(n) || RULES.COIN.bonusMin; render(); },
   approve: function (runId) {
     var word = (document.getElementById('gr-word') || {}).value || '';
-    if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
+    var b = DRAFT.bonus || RULES.COIN.bonusMin;
+    if (!actApprove(runId, word.trim(), b)) return say('這一件已經看過了。');
     go('radar');
-    say('勾了。');
+    say('收下了。給了 ' + b + ' 枚。');
   }
 };
 
@@ -10514,6 +10557,10 @@ PAGES.home = function () {
     var kz = null;
     var kk = keepsOf(t.teamId).filter(function (x) { return x.runId === r.runId; })[0];
     STRATA.forEach(function (x) { if (kk && x.key === kk.zone) kz = x; });
+    /* 拿到幾枚。基本的做完就有，後面那幾枚是老師多說的。 */
+    var cb = Math.max(RULES.COIN.bonusMin, Number(r.bonus) || RULES.COIN.bonusMin);
+    H.push('<div class="coingot">＋' + (RULES.COIN.base + cb) + ' 枚金幣' +
+      '<span>' + RULES.COIN.base + ' 是完成的，' + cb + ' 是他多給的</span></div>');
     H.push(regCard('新拿到', (m ? m.title : '那一趟'), '任務之證已收錄在圖鑑',
       pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
       false));
@@ -12603,10 +12650,10 @@ PAGES.eco = function () {
   var dt = DRAFT.dt && teamOf(DRAFT.dt);
   /* 預設打開排行榜。藏起來的東西不會發生任何事——而這一版做它的方法
      是「放進去用，看實際發生什麼」。 */
-  var tab = DRAFT.tab || (dt ? 'team' : 'rank');
+  var tab = DRAFT.tab || (dt ? 'team' : 'coin');
   if (tab === 'team' && !dt) tab = 'feed';
 
-  var segs = [['rank', '估得準'], ['dex', '圖鑑'], ['feed', '最近']];
+  var segs = [['coin', '金幣'], ['rank', '估得準'], ['dex', '圖鑑'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -12616,7 +12663,13 @@ PAGES.eco = function () {
   });
   H.push('</div>');
 
-  if (tab === 'rank') {
+  if (tab === 'coin') {
+    /* 金幣榜。第三張刻意加進來、準備好隨時拿掉的——
+       要拿掉就刪掉 68c-coinrank.js，再把這一段跟 segs 裡的 'coin' 拿走。
+
+       它排的其實是「收下幾件」：加成最多佔 5%，只在同分的時候拉開。 */
+    H.push(coinCard(t.classId, t.teamId));
+  } else if (tab === 'rank') {
     H.push(rankCard(t.classId, t.teamId));
   } else if (tab === 'dex') {
     /* 圖鑑收集榜。刻意加進來、準備好隨時拿掉的第二張——
@@ -14146,6 +14199,88 @@ function dexCard(classId, meId) {
 }
 
 
+/* ===== 68c-coinrank.js ===== */
+/* ---------- 金幣榜 ----------
+
+   跟另外兩張榜一樣：刻意加進來、而且準備好隨時拿掉的。
+
+   要拿掉的話：刪掉這個檔案，再把 62-eco.js 裡那一行 coinCard(...) 與
+   segs 裡的 'coin' 拿掉就好。沒有別的地方依賴它。
+
+   ── 這一張排的是什麼 ──
+
+   一件收下的委託 100 枚，老師收下時另外給 1–5 枚。所以總額幾乎完全
+   由「他們完成了幾件」決定——加成最多佔 5%，只在同分的時候拉開一點。
+
+   這是刻意的。排「完成幾件」是安全的：加法、人人可增、不涉及品質判斷。
+   而那 5% 讓老師的回應在榜上留得下一點痕跡，但留不下一條路。
+
+   ── 這一張跟原本的立場相反，而且是明知故犯 ──
+
+   這個作品拿掉過分數、等級、經驗值，理由都是同一個：一個會漲的數值
+   會把「做這件事」換成「拿到那個數字」。金幣是一個會漲的數值。
+
+   加它是因為老師需要一個比「可以／退回」更有層次的回應方式，而二選一
+   確實太粗。壓在 5%、而且基本額不看品質，是為了讓它一直是一句話。
+
+   要是觀察到學生開始為那幾枚做事，就拿掉——而拿掉本身也是一個發現。 */
+
+function coinRows(classId) {
+  var out = [];
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    if (t.noRank) return;
+    var c = coinsOf(t.teamId);
+    out.push({ teamId: t.teamId, name: t.name, coins: c, done: c.base / RULES.COIN.base });
+  });
+  /* 先比總額。總額幾乎就是完成件數，所以這一榜排的其實是
+     「你們做完幾件」——那是加法，人人可增。 */
+  out.sort(function (a, b) { return b.coins.all - a.coins.all; });
+  return out;
+}
+
+function coinCard(classId, meId) {
+  var rows = coinRows(classId);
+  var me = meId ? teamOf(meId) : null;
+  var has = rows.some(function (r) { return r.coins.all > 0; });
+
+  var H = ['<div class="card rank">'];
+  H.push('<h2 class="rk-h">金幣</h2>');
+  H.push('<p class="dim">一件收下的委託 ' + RULES.COIN.base +
+    ' 枚，做完就有。老師收下的時候另外給 ' + RULES.COIN.bonusMin + '–' +
+    RULES.COIN.bonusMax + ' 枚——那幾枚是他想多說的部分。</p>');
+
+  if (!has) {
+    H.push('<p class="dim">還沒有人拿到金幣。老師收下之後才有。</p>');
+    H.push('</div>');
+    return H.join('');
+  }
+
+  H.push('<div class="rk-list">');
+  var last = null, place = 0;
+  rows.forEach(function (r, i) {
+    if (last === null || r.coins.all !== last) { place = i + 1; last = r.coins.all; }
+    var mine = r.teamId === meId;
+    H.push('<div class="rk-r' + (mine ? ' mine' : '') + (r.coins.all ? '' : ' none') + '">');
+    H.push('<i class="rk-i">' + (r.coins.all ? place : '·') + '</i>');
+    H.push('<b>' + esc(shortName(r.name)) + '</b>');
+    /* 完成幾件寫出來，因為那才是這個數字真正在說的事。 */
+    H.push('<span class="rk-d">收下 ' + r.done + ' 件</span>');
+    H.push('<span class="ck-c">' + r.coins.all + ' 枚</span>');
+    H.push('</div>');
+  });
+  H.push('</div>');
+
+  /* 跟另外兩張榜共用同一個開關：不上榜就是三張都不上。 */
+  if (me) {
+    H.push('<button class="rk-out" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'norank' })) + '\'>' +
+      (me.noRank ? '回到榜上' : '不要上榜') + '</button>');
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
+
 /* ===== 69-story.js ===== */
 /* 故事。兩頁，第一次進來看一次，之後隨時從廊道上那扇門回來看。
 
@@ -14558,8 +14693,25 @@ PAGES.review = function () {
   H.push('</div>');
 
 
+  /* 收下的時候給幾枚。這是他比「可以／退回」更有層次的那一個回應——
+     一件委託本來就有 100 枚（做完就有），這幾枚是他想多說的部分。
+
+     最少 1，不是 0：沒有特別想說什麼是一個正常的答案，
+     不該被讀成負評。 */
+  var bn = DRAFT.bonus || RULES.COIN.bonusMin;
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">收下的時候多給幾枚　選填</div>');
+  H.push('<div class="row sure-row">');
+  for (var bi = RULES.COIN.bonusMin; bi <= RULES.COIN.bonusMax; bi++) {
+    H.push(btn(String(bi), 'bonus:' + bi, 'sure' + (bn === bi ? ' on' : '')));
+  }
+  H.push('</div>');
+  H.push('<p class="dim">這一件本來就有 ' + RULES.COIN.base +
+    ' 枚。這幾枚是你想多說的部分。</p>');
+  H.push('</div>');
+
   H.push('<div class="row">');
-  H.push(btn('可以', 'approve:' + r.runId, 'big'));
+  H.push(btn('收下', 'approve:' + r.runId, 'big'));
   /* 退回。它不動判定也不動深度——那一趟的兩個數字在他交出去的
      當下就定了，重做不會讓他當初說的話變成別的話。
      退回講的只有一件事：那份成果還沒被收下。 */

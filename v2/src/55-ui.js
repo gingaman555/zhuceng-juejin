@@ -819,10 +819,14 @@ var ACTS = {
   },
 
   /* 老師只勾一個「可以」。挑哪一件是學生的事。 */
+  /* 收下的時候順手給幾枚。沒選就是最少的那一枚——
+     「他沒有特別想說什麼」是一個正常的答案。 */
+  bonus: function (n) { DRAFT.bonus = Number(n) || RULES.COIN.bonusMin; render(); },
   approve: function (runId) {
     var word = (document.getElementById('gr-word') || {}).value || '';
-    if (!actApprove(runId, word.trim())) return say('這一件已經看過了。');
+    var b = DRAFT.bonus || RULES.COIN.bonusMin;
+    if (!actApprove(runId, word.trim(), b)) return say('這一件已經看過了。');
     go('radar');
-    say('勾了。');
+    say('收下了。給了 ' + b + ' 枚。');
   }
 };

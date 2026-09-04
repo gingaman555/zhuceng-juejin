@@ -101,6 +101,10 @@ PAGES.home = function () {
     var kz = null;
     var kk = keepsOf(t.teamId).filter(function (x) { return x.runId === r.runId; })[0];
     STRATA.forEach(function (x) { if (kk && x.key === kk.zone) kz = x; });
+    /* 拿到幾枚。基本的做完就有，後面那幾枚是老師多說的。 */
+    var cb = Math.max(RULES.COIN.bonusMin, Number(r.bonus) || RULES.COIN.bonusMin);
+    H.push('<div class="coingot">＋' + (RULES.COIN.base + cb) + ' 枚金幣' +
+      '<span>' + RULES.COIN.base + ' 是完成的，' + cb + ' 是他多給的</span></div>');
     H.push(regCard('新拿到', (m ? m.title : '那一趟'), '任務之證已收錄在圖鑑',
       pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
       false));

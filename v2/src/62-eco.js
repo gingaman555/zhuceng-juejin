@@ -303,10 +303,10 @@ PAGES.eco = function () {
   var dt = DRAFT.dt && teamOf(DRAFT.dt);
   /* 預設打開排行榜。藏起來的東西不會發生任何事——而這一版做它的方法
      是「放進去用，看實際發生什麼」。 */
-  var tab = DRAFT.tab || (dt ? 'team' : 'rank');
+  var tab = DRAFT.tab || (dt ? 'team' : 'coin');
   if (tab === 'team' && !dt) tab = 'feed';
 
-  var segs = [['rank', '估得準'], ['dex', '圖鑑'], ['feed', '最近']];
+  var segs = [['coin', '金幣'], ['rank', '估得準'], ['dex', '圖鑑'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -316,7 +316,13 @@ PAGES.eco = function () {
   });
   H.push('</div>');
 
-  if (tab === 'rank') {
+  if (tab === 'coin') {
+    /* 金幣榜。第三張刻意加進來、準備好隨時拿掉的——
+       要拿掉就刪掉 68c-coinrank.js，再把這一段跟 segs 裡的 'coin' 拿走。
+
+       它排的其實是「收下幾件」：加成最多佔 5%，只在同分的時候拉開。 */
+    H.push(coinCard(t.classId, t.teamId));
+  } else if (tab === 'rank') {
     H.push(rankCard(t.classId, t.teamId));
   } else if (tab === 'dex') {
     /* 圖鑑收集榜。刻意加進來、準備好隨時拿掉的第二張——

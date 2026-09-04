@@ -1998,3 +1998,16 @@ button.ac:active{transform:translateY(1px)}
 .wh-link{color:var(--gold);text-decoration:none;border-bottom:2px solid var(--gold-d)}
 .wh-link:hover{border-bottom-color:var(--gold)}
 .wh-txt{color:var(--ink)}
+
+/* 拿到幾枚。金色，因為它是「你多了一個東西」——
+   但它排在任務之證上面，不是取代它。 */
+.coingot{
+  display:block;font-size:33px;line-height:1.3;color:var(--gold);
+  margin:11px 0 0
+}
+.coingot span{
+  display:block;font-size:22px;line-height:1.4;color:var(--dim);margin-top:5px
+}
+/* 金幣榜。那一排錢幣就是他們完成的件數——加成只佔 5%，
+   所以這一張榜幾乎完全由「做完幾件」決定。 */
+.ck-c{font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}

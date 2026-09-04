@@ -1084,11 +1084,32 @@ function actResend(teamId, runId) {
    本來中間還有一步——學生要再走到一頁去按「收起來」。那一步
    不產生任何東西，只是叫他確認一次自己已經做完、而且老師也已經
    勾過的事。approved 這個狀態因此也不再出現。 */
-function actApprove(runId, word) {
+/* 這一組的金幣。不存起來，每次算——存起來就會有兩份真相。
+
+     基本   一件收下的委託 100 枚
+     加成   老師收下時給的 1–5 枚
+
+   加成最多佔 5%，所以這個數字幾乎就是「他們完成了幾件」。 */
+function coinsOf(teamId) {
+  var base = 0, bonus = 0;
+  where('Runs', function (r) {
+    return r.teamId === teamId && (r.state === 'done' || r.state === 'approved');
+  }).forEach(function (r) {
+    base += RULES.COIN.base;
+    bonus += Math.max(0, Math.min(RULES.COIN.bonusMax, Number(r.bonus) || 0));
+  });
+  return { base: base, bonus: bonus, all: base + bonus };
+}
+
+function actApprove(runId, word, bonus) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || (r.state !== 'submitted' && r.state !== 'back')) return null;
   var s = runShape(runId);
   r.word = word || '';
+  /* 老師給的那幾枚。收下就一定有，最少 1——0 會被讀成負評，
+     而「他沒有特別想說什麼」跟「他覺得這份差」是兩件事。 */
+  r.bonus = Math.max(RULES.COIN.bonusMin,
+    Math.min(RULES.COIN.bonusMax, Number(bonus) || RULES.COIN.bonusMin));
   r.approvedAt = now();
   r.state = 'done';
   r.doneAt = now();

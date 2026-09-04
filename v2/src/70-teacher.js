@@ -229,8 +229,25 @@ PAGES.review = function () {
   H.push('</div>');
 
 
+  /* 收下的時候給幾枚。這是他比「可以／退回」更有層次的那一個回應——
+     一件委託本來就有 100 枚（做完就有），這幾枚是他想多說的部分。
+
+     最少 1，不是 0：沒有特別想說什麼是一個正常的答案，
+     不該被讀成負評。 */
+  var bn = DRAFT.bonus || RULES.COIN.bonusMin;
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">收下的時候多給幾枚　選填</div>');
+  H.push('<div class="row sure-row">');
+  for (var bi = RULES.COIN.bonusMin; bi <= RULES.COIN.bonusMax; bi++) {
+    H.push(btn(String(bi), 'bonus:' + bi, 'sure' + (bn === bi ? ' on' : '')));
+  }
+  H.push('</div>');
+  H.push('<p class="dim">這一件本來就有 ' + RULES.COIN.base +
+    ' 枚。這幾枚是你想多說的部分。</p>');
+  H.push('</div>');
+
   H.push('<div class="row">');
-  H.push(btn('可以', 'approve:' + r.runId, 'big'));
+  H.push(btn('收下', 'approve:' + r.runId, 'big'));
   /* 退回。它不動判定也不動深度——那一趟的兩個數字在他交出去的
      當下就定了，重做不會讓他當初說的話變成別的話。
      退回講的只有一件事：那份成果還沒被收下。 */
