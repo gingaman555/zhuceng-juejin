@@ -618,22 +618,20 @@ var ACTS = {
     say('上來了。');
   },
 
-  /* 說完幾天，去選地方。同一頁的第二個階段——不能用 go()，
-     它會清掉 DRAFT，而他剛拆完的細項就在上面。 */
   sure: function (k) { DRAFT.sure = k; render(); },
-  towhere: function () {
-    /* 沒說有多確定就過不去。這是這一頁唯一擋人的地方——
-       擋的是「你有沒有講」，不是「你講得對不對」。 */
-    if (!DRAFT.sure) return say('先說你有多確定。');
-    DRAFT.at = 'where'; window.scrollTo(0, 0); render();
-  },
-  toplan: function () { DRAFT.at = ''; window.scrollTo(0, 0); render(); },
 
-  /* 出發。參數是「任務|地方」。 */
+  /* 出發。參數就是任務。
+
+     本來還帶著一個「地方」，那是他在上一頁挑的。現在地方跟著
+     委託人走——他住哪裡，這一趟就走到哪裡。 */
   commit: function (arg) {
     var t = myTeam();
-    var p = String(arg).split('|');
-    var msId = p[0], zone = p[1] || '';
+    /* 沒說有多確定就過不去。這道守門本來在 towhere 上，那一步
+       拿掉了就得搬過來——擋的是「你有沒有講」，不是「你講得對不對」。 */
+    if (!DRAFT.sure) return say('先說你有多確定。');
+    var msId = String(arg).split('|')[0];
+    var pat = mobFor(msId, t.teamId);
+    var zone = pat ? mobZone(pat).key : '';
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT),
       DRAFT.flags || [], DRAFT.plan || [], zone, DRAFT.sure);
     go('home');

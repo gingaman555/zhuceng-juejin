@@ -4823,6 +4823,10 @@ button.ac:active{transform:translateY(1px)}
 /* 接委託那一場用同一個名牌（見 57-viz.css 的 .pmt）。 */
 .pmt-say{margin-top:33px}
 
+/* 他不收的時候，那一句是紅的一階（--over 是這個作品裡「超過了」
+   的顏色，不是錯誤的顏色）。他在陳述少了什麼，不是在罵人。 */
+.bt-say.no b{color:var(--over)}
+
 /* ---------- 排行榜 ----------
    刻意加進來、而且準備好隨時拿掉的（見 68-rank.js 的說明）。
 
@@ -11583,22 +11587,20 @@ var ACTS = {
     say('上來了。');
   },
 
-  /* 說完幾天，去選地方。同一頁的第二個階段——不能用 go()，
-     它會清掉 DRAFT，而他剛拆完的細項就在上面。 */
   sure: function (k) { DRAFT.sure = k; render(); },
-  towhere: function () {
-    /* 沒說有多確定就過不去。這是這一頁唯一擋人的地方——
-       擋的是「你有沒有講」，不是「你講得對不對」。 */
-    if (!DRAFT.sure) return say('先說你有多確定。');
-    DRAFT.at = 'where'; window.scrollTo(0, 0); render();
-  },
-  toplan: function () { DRAFT.at = ''; window.scrollTo(0, 0); render(); },
 
-  /* 出發。參數是「任務|地方」。 */
+  /* 出發。參數就是任務。
+
+     本來還帶著一個「地方」，那是他在上一頁挑的。現在地方跟著
+     委託人走——他住哪裡，這一趟就走到哪裡。 */
   commit: function (arg) {
     var t = myTeam();
-    var p = String(arg).split('|');
-    var msId = p[0], zone = p[1] || '';
+    /* 沒說有多確定就過不去。這道守門本來在 towhere 上，那一步
+       拿掉了就得搬過來——擋的是「你有沒有講」，不是「你講得對不對」。 */
+    if (!DRAFT.sure) return say('先說你有多確定。');
+    var msId = String(arg).split('|')[0];
+    var pat = mobFor(msId, t.teamId);
+    var zone = pat ? mobZone(pat).key : '';
     actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT),
       DRAFT.flags || [], DRAFT.plan || [], zone, DRAFT.sure);
     go('home');
@@ -13087,7 +13089,7 @@ PAGES.commit = function () {
 
   /* 兩個階段共用這一頁：先說幾天，再選去哪裡。
      分岔放在這裡，前面那幾行（plan／est）兩邊都要用。 */
-  if (DRAFT.at === 'where') return wherePanel(t, m, est);
+
 
   var H = [head('這一件的委託人', m.title, m.note)];
 
@@ -13238,56 +13240,40 @@ PAGES.commit = function () {
   H.push('</div>');
 
   H.push('<div class="row">');
-  H.push(btn('我承諾 ' + est + ' 天', 'towhere', 'big cm-go'));
+  /* 承諾完就出發，中間不再問「去哪裡」——地方是委託人帶來的，
+     不是他挑的（見底下 wherePanel 那一段拿掉的理由）。 */
+  H.push(btn('我承諾 ' + est + ' 天，出發', 'commit:' + m.msId, 'big cm-go'));
   H.push(btn('回廊道', 'go:home', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
 
-/* ---------- 這一趟要去哪裡 ----------
+/* ---------- 這一趟要去哪裡：拿掉了 ----------
 
-   承諾完天數，出發之前。同一頁的第二個階段，不是另一頁——go() 會清掉
-   DRAFT，而他剛拆完的細項與天數都在上面。
+   本來承諾完天數之後有一頁「選一個地方」，六張地方卡，每張底下印著
+   住在那裡的幾位。那一頁的說法是：「他在選地方，也是在選這一趟要
+   遇到誰。」
 
-   六個地方一直都在，誰都去得了，去過的也可以再去。選哪裡不影響任何
-   數字（判定只讀承諾幾天與實際幾天），所以這一步沒有好壞——
-   它是這個流程裡第二個純粹屬於他的決定。
+   那句話已經不成立了。委託人由**任務**決定，不由地方決定
+   （見 13-strata.js 的 mobFor）——任務一派下來他就定了，
+   而選地方排在那之後。所以那一頁在請他做一個決定不了任何事的選擇：
 
-   每個地方住著不同的東西，所以他其實同時在選這一趟要遇到誰。 */
-function wherePanel(t, m, est) {
-  var H = [head('這一趟去哪裡', m.title, '')];
+     選之前   委託人已經定了
+     選之後   委託人還是同一位
 
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">你說了 ' + est + ' 天</div>');
-  H.push('<p class="dim">六個地方都去得了，去過的也可以再去。選哪裡不會影響判定——' +
-    '判定只看你說幾天、實際幾天。</p>');
-  H.push('</div>');
+   而且因果反了。正確的鏈是：老師派委託 → 委託帶著委託人來 →
+   委託人帶著他住的地方來。不是挑一個地方然後看看那裡有誰，
+   是有人來找你，你去他那裡。
 
-  H.push('<div class="wsix">');
-  STRATA.forEach(function (z) {
-    var f = faunaOf(z.key);
-    H.push('<button class="wz ' + z.key + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'commit:' + m.msId + '|' + z.key })) + '\'>');
-    /* 先看到那個地方，才看到它叫什麼。選地方是這個流程裡第二個純粹
-       屬於他的決定，而本來六張卡只差一個顏色——那樣他其實是在選名字。 */
-    H.push('<span class="wz-p">' + placeArt(z, '') + '</span>');
-    H.push('<span class="wz-b">');
-    H.push('<span class="wz-t"><b>' + esc(z.name) + '</b>');
-    H.push('<em>' + esc(z.note) + '</em></span>');
-    /* 住在這裡的那幾隻。他在選地方，也是在選這一趟要遇到誰。 */
-    if (f.length) {
-      H.push('<span class="wz-f">');
-      f.slice(0, 4).forEach(function (c) { H.push(pxTag(c.px, z.pal, '')); });
-      H.push('</span>');
-    }
-    H.push('</span>');
-    H.push('</button>');
-  });
-  H.push('</div>');
+   ── 自主性少了一塊嗎 ──
 
-  H.push(btn('回去改天數', 'toplan', 'ghost'));
-  return H.join('');
-}
+   沒有。自主性住在拆成哪幾件、各要幾天、有多確定、誰做哪一件、
+   什麼時候交——那幾個每一個都改變後面發生的事。選地方不改變任何事，
+   那是裝飾性的自主，而 SDT 講的自主支持指的是有意義的選擇。
+   拿掉它，真正重要的那幾個反而更清楚。
+
+   附帶一個好處：會挑的人本來永遠挑同一個地方；由委託人決定之後，
+   一學期六個地方會被走遍。 */
 
 /* ---------- 交出去 ---------- */
 /* 交出去那一頁退休了：兩問搬進戰鬥（見 67-battle.js），
@@ -15965,8 +15951,17 @@ function btPhase(r) {
   if (r.state !== 'running' && r.state !== 'back') return 'play';
   var ph = S.p.ph;
   if (!ph) return 'menu';
-  /* 沒拆件就沒有第一問可問，直接跳第二問。 */
-  if (ph === 'q1' && !((r.plan || []).length)) return 'q2';
+  /* 本來這裡有一條：沒拆件就跳過第一問，直接進第二問。
+
+     那條寫在第一問只問「這幾件各花幾天」的年代——沒有細項，那一問
+     確實沒東西可問。但第一問現在還收兩樣跟細項無關的東西：
+     老師要去哪裡看、你自己做了什麼。而他不收的那兩道關卡就架在
+     那兩樣上（見 handoverGap）。
+
+     跳過去的話，沒拆件的那一趟會卡死：關卡在第二問擋下來，叫他去
+     第一問補，而第一問又被跳掉——他看得到那句話，但沒有地方可以打字。
+
+     所以不跳了。btSteps 本來就會判斷有沒有細項（沒有就不畫那一段）。 */
   return ph;
 }
 
@@ -16025,7 +16020,8 @@ PAGES.battle = function () {
      名牌長在框的左上角。整段對話都掛他的名字：你站在他面前，
      這個框裡的每一句都是這一場的話。 */
   H.push('<div class="bt-bottom talk">');
-  H.push('<div class="bt-say"><span class="bt-name">' + esc(mob.n) + '</span>' +
+  H.push('<div class="bt-say' + (S.p && S.p.no ? ' no' : '') +
+    '"><span class="bt-name">' + esc(mob.n) + '</span>' +
     '<i class="bt-arrow"></i><b id="btline">' +
     esc(btLine(r, mob, ph)) + '</b></div>');
 
@@ -16057,18 +16053,53 @@ PAGES.battle = function () {
   return H.join('');
 };
 
-/* 字幕框那一句。 */
+/* ── 這個框裡的每一句 ──
+
+   名牌上是他的名字，那框裡的話就該是他的話。本來三句裡有兩句是
+   系統的口氣（「這一趟做完了哪幾段？」），那讓整個框變成一張
+   表單的標題列。
+
+   他不收的時候也在這裡講。本來那幾道關卡是 say() 彈一下的提示，
+   而提示是系統在說話——同一條規則從他嘴裡講出來，那一步就從
+   「表單驗證沒過」變成「他不收」。 */
 function btLine(r, mob, ph) {
-  /* 退回那一場牠不是突然出現的——牠本來倒著，現在站起來了。 */
+  /* 他不收。那一句直接蓋掉這一格本來要說的話。 */
+  if (S.p && S.p.no) return S.p.no;
+
   if (ph === 'menu') {
     /* 退回＝他把東西退回來了，不是他復活。 */
-    return r.state === 'back'
-      ? mob.n + ' 把東西退回來了。'
-      : '你走到了。' + mob.n + ' 在這裡。';
+    if (r.state === 'back') return mob.n + ' 把東西退回來了。';
+    /* 他認得你。
+
+       第二次遇到同一位還講「你走到了。X 在這裡。」是錯的——
+       那句話把每一次都當成第一次。mobDebut 算的正是「這一趟是不是
+       這一組最早遇到他的那一趟」，資料本來就在。 */
+    if (r.runId && !mobDebut(r.teamId, r.runId)) return '又是你。這次帶了什麼來？';
+    return '你走到了。' + mob.n + ' 在這裡。';
   }
-  if (ph === 'q1') return '這一趟做完了哪幾段？';
-  if (ph === 'q2') return '這一趟走得怎麼樣？';
-  return '你把東西遞過去。';
+  if (ph === 'q1') return '你帶了什麼來？';
+  if (ph === 'q2') return '路上怎麼樣？';
+  return '他伸手接過去。';
+}
+
+/* ── 他自己的那一道關卡 ──
+
+   他收的是東西，老師收的是好不好。所以他只擋一件事：**你有沒有
+   交代完**。那是事實，不是評價——他數得出來少了什麼，而他不需要
+   有意見。
+
+   兩樣：老師要去哪裡看、你自己那一行做了什麼。
+
+   只擋你自己那一行，不擋隊友的——你寫不了別人的那一行，拿別人
+   沒寫來擋你，那是連坐。隊友的空著看得見（同一張畫面上誰寫了誰
+   沒寫），而且老師收下之前都補得進去。 */
+function handoverGap(r, t) {
+  var wh = String(DRAFT.where == null ? (t ? lastWhere(t.teamId) : '') : DRAFT.where).trim();
+  if (!wh) return '你還沒說老師要去哪裡看。';
+  var said = (r && r.said) || {};
+  var mine = String(DRAFT.said1 == null ? (said[S.who] || '') : DRAFT.said1).trim();
+  if (!mine) return '你還沒說你做了什麼。';
+  return '';
 }
 
 /* 選單上的一行。舊版寶可夢的游標長在前面（見 58-battle.css）。 */
@@ -16313,9 +16344,20 @@ ACTS.btgo = function (id) {
   render();
 };
 
+/* 他不收的時候留在原地，那一句換成他說的（見 btLine）。 */
+function btNo(id, ph, msg) {
+  S.p = { id: id, ph: ph, no: msg };
+  render();
+}
+
 /* 第一問答完：打牠一下，進第二問。 */
 ACTS.btq1 = function (id) {
   battleStop();
+  /* 他先看你有沒有交代完。少一樣他不收——這道關卡本來是 say()
+     彈一下，那是系統在講話；現在是他不收。 */
+  var r0 = find('Runs', function (x) { return x.runId === id; });
+  var gap = handoverGap(r0, myTeam());
+  if (gap) return btNo(id, 'q1', gap);
   /* 一律進第二問。「順／普通／不順」是一下，不是一段文章——
      漸進的是「系統要求他說明自己的深度」，而那個深度在「為什麼」
      那一格上（見 btAsk），不在這一個三選一上。 */
@@ -16332,7 +16374,9 @@ ACTS.btq2 = function (id) {
   var again = !!(run && run.state === 'back');
   /* 沒寫「再給兩天會做什麼」就交不出去。跟「為什麼」一樣，
      系統只檢查有沒有字。 */
-  if (!String(DRAFT.next || '').trim()) return say('先寫再給兩天你們會做什麼。');
+  if (!String(DRAFT.next || '').trim()) {
+    return btNo(id, 'q2', '再給你兩天，你們會做什麼？');
+  }
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why,
       scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1 });
@@ -16343,7 +16387,7 @@ ACTS.btq2 = function (id) {
      變成別的話。 */
   /* 沒寫「老師要去哪裡看」就交不出去。 */
   var wh = String(DRAFT.where == null ? lastWhere(t.teamId) : DRAFT.where).trim();
-  if (!wh) return say('先寫老師要去哪裡看。');
+  if (!wh) return btNo(id, 'q1', '你還沒說老師要去哪裡看。');
   var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';

@@ -63,8 +63,17 @@ function btPhase(r) {
   if (r.state !== 'running' && r.state !== 'back') return 'play';
   var ph = S.p.ph;
   if (!ph) return 'menu';
-  /* 沒拆件就沒有第一問可問，直接跳第二問。 */
-  if (ph === 'q1' && !((r.plan || []).length)) return 'q2';
+  /* 本來這裡有一條：沒拆件就跳過第一問，直接進第二問。
+
+     那條寫在第一問只問「這幾件各花幾天」的年代——沒有細項，那一問
+     確實沒東西可問。但第一問現在還收兩樣跟細項無關的東西：
+     老師要去哪裡看、你自己做了什麼。而他不收的那兩道關卡就架在
+     那兩樣上（見 handoverGap）。
+
+     跳過去的話，沒拆件的那一趟會卡死：關卡在第二問擋下來，叫他去
+     第一問補，而第一問又被跳掉——他看得到那句話，但沒有地方可以打字。
+
+     所以不跳了。btSteps 本來就會判斷有沒有細項（沒有就不畫那一段）。 */
   return ph;
 }
 
@@ -123,7 +132,8 @@ PAGES.battle = function () {
      名牌長在框的左上角。整段對話都掛他的名字：你站在他面前，
      這個框裡的每一句都是這一場的話。 */
   H.push('<div class="bt-bottom talk">');
-  H.push('<div class="bt-say"><span class="bt-name">' + esc(mob.n) + '</span>' +
+  H.push('<div class="bt-say' + (S.p && S.p.no ? ' no' : '') +
+    '"><span class="bt-name">' + esc(mob.n) + '</span>' +
     '<i class="bt-arrow"></i><b id="btline">' +
     esc(btLine(r, mob, ph)) + '</b></div>');
 
@@ -155,18 +165,53 @@ PAGES.battle = function () {
   return H.join('');
 };
 
-/* 字幕框那一句。 */
+/* ── 這個框裡的每一句 ──
+
+   名牌上是他的名字，那框裡的話就該是他的話。本來三句裡有兩句是
+   系統的口氣（「這一趟做完了哪幾段？」），那讓整個框變成一張
+   表單的標題列。
+
+   他不收的時候也在這裡講。本來那幾道關卡是 say() 彈一下的提示，
+   而提示是系統在說話——同一條規則從他嘴裡講出來，那一步就從
+   「表單驗證沒過」變成「他不收」。 */
 function btLine(r, mob, ph) {
-  /* 退回那一場牠不是突然出現的——牠本來倒著，現在站起來了。 */
+  /* 他不收。那一句直接蓋掉這一格本來要說的話。 */
+  if (S.p && S.p.no) return S.p.no;
+
   if (ph === 'menu') {
     /* 退回＝他把東西退回來了，不是他復活。 */
-    return r.state === 'back'
-      ? mob.n + ' 把東西退回來了。'
-      : '你走到了。' + mob.n + ' 在這裡。';
+    if (r.state === 'back') return mob.n + ' 把東西退回來了。';
+    /* 他認得你。
+
+       第二次遇到同一位還講「你走到了。X 在這裡。」是錯的——
+       那句話把每一次都當成第一次。mobDebut 算的正是「這一趟是不是
+       這一組最早遇到他的那一趟」，資料本來就在。 */
+    if (r.runId && !mobDebut(r.teamId, r.runId)) return '又是你。這次帶了什麼來？';
+    return '你走到了。' + mob.n + ' 在這裡。';
   }
-  if (ph === 'q1') return '這一趟做完了哪幾段？';
-  if (ph === 'q2') return '這一趟走得怎麼樣？';
-  return '你把東西遞過去。';
+  if (ph === 'q1') return '你帶了什麼來？';
+  if (ph === 'q2') return '路上怎麼樣？';
+  return '他伸手接過去。';
+}
+
+/* ── 他自己的那一道關卡 ──
+
+   他收的是東西，老師收的是好不好。所以他只擋一件事：**你有沒有
+   交代完**。那是事實，不是評價——他數得出來少了什麼，而他不需要
+   有意見。
+
+   兩樣：老師要去哪裡看、你自己那一行做了什麼。
+
+   只擋你自己那一行，不擋隊友的——你寫不了別人的那一行，拿別人
+   沒寫來擋你，那是連坐。隊友的空著看得見（同一張畫面上誰寫了誰
+   沒寫），而且老師收下之前都補得進去。 */
+function handoverGap(r, t) {
+  var wh = String(DRAFT.where == null ? (t ? lastWhere(t.teamId) : '') : DRAFT.where).trim();
+  if (!wh) return '你還沒說老師要去哪裡看。';
+  var said = (r && r.said) || {};
+  var mine = String(DRAFT.said1 == null ? (said[S.who] || '') : DRAFT.said1).trim();
+  if (!mine) return '你還沒說你做了什麼。';
+  return '';
 }
 
 /* 選單上的一行。舊版寶可夢的游標長在前面（見 58-battle.css）。 */
@@ -411,9 +456,20 @@ ACTS.btgo = function (id) {
   render();
 };
 
+/* 他不收的時候留在原地，那一句換成他說的（見 btLine）。 */
+function btNo(id, ph, msg) {
+  S.p = { id: id, ph: ph, no: msg };
+  render();
+}
+
 /* 第一問答完：打牠一下，進第二問。 */
 ACTS.btq1 = function (id) {
   battleStop();
+  /* 他先看你有沒有交代完。少一樣他不收——這道關卡本來是 say()
+     彈一下，那是系統在講話；現在是他不收。 */
+  var r0 = find('Runs', function (x) { return x.runId === id; });
+  var gap = handoverGap(r0, myTeam());
+  if (gap) return btNo(id, 'q1', gap);
   /* 一律進第二問。「順／普通／不順」是一下，不是一段文章——
      漸進的是「系統要求他說明自己的深度」，而那個深度在「為什麼」
      那一格上（見 btAsk），不在這一個三選一上。 */
@@ -430,7 +486,9 @@ ACTS.btq2 = function (id) {
   var again = !!(run && run.state === 'back');
   /* 沒寫「再給兩天會做什麼」就交不出去。跟「為什麼」一樣，
      系統只檢查有沒有字。 */
-  if (!String(DRAFT.next || '').trim()) return say('先寫再給兩天你們會做什麼。');
+  if (!String(DRAFT.next || '').trim()) {
+    return btNo(id, 'q2', '再給你兩天，你們會做什麼？');
+  }
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why,
       scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1 });
@@ -441,7 +499,7 @@ ACTS.btq2 = function (id) {
      變成別的話。 */
   /* 沒寫「老師要去哪裡看」就交不出去。 */
   var wh = String(DRAFT.where == null ? lastWhere(t.teamId) : DRAFT.where).trim();
-  if (!wh) return say('先寫老師要去哪裡看。');
+  if (!wh) return btNo(id, 'q1', '你還沒說老師要去哪裡看。');
   var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';

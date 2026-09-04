@@ -584,7 +584,7 @@ PAGES.commit = function () {
 
   /* 兩個階段共用這一頁：先說幾天，再選去哪裡。
      分岔放在這裡，前面那幾行（plan／est）兩邊都要用。 */
-  if (DRAFT.at === 'where') return wherePanel(t, m, est);
+
 
   var H = [head('這一件的委託人', m.title, m.note)];
 
@@ -735,56 +735,40 @@ PAGES.commit = function () {
   H.push('</div>');
 
   H.push('<div class="row">');
-  H.push(btn('我承諾 ' + est + ' 天', 'towhere', 'big cm-go'));
+  /* 承諾完就出發，中間不再問「去哪裡」——地方是委託人帶來的，
+     不是他挑的（見底下 wherePanel 那一段拿掉的理由）。 */
+  H.push(btn('我承諾 ' + est + ' 天，出發', 'commit:' + m.msId, 'big cm-go'));
   H.push(btn('回廊道', 'go:home', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
 
-/* ---------- 這一趟要去哪裡 ----------
+/* ---------- 這一趟要去哪裡：拿掉了 ----------
 
-   承諾完天數，出發之前。同一頁的第二個階段，不是另一頁——go() 會清掉
-   DRAFT，而他剛拆完的細項與天數都在上面。
+   本來承諾完天數之後有一頁「選一個地方」，六張地方卡，每張底下印著
+   住在那裡的幾位。那一頁的說法是：「他在選地方，也是在選這一趟要
+   遇到誰。」
 
-   六個地方一直都在，誰都去得了，去過的也可以再去。選哪裡不影響任何
-   數字（判定只讀承諾幾天與實際幾天），所以這一步沒有好壞——
-   它是這個流程裡第二個純粹屬於他的決定。
+   那句話已經不成立了。委託人由**任務**決定，不由地方決定
+   （見 13-strata.js 的 mobFor）——任務一派下來他就定了，
+   而選地方排在那之後。所以那一頁在請他做一個決定不了任何事的選擇：
 
-   每個地方住著不同的東西，所以他其實同時在選這一趟要遇到誰。 */
-function wherePanel(t, m, est) {
-  var H = [head('這一趟去哪裡', m.title, '')];
+     選之前   委託人已經定了
+     選之後   委託人還是同一位
 
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">你說了 ' + est + ' 天</div>');
-  H.push('<p class="dim">六個地方都去得了，去過的也可以再去。選哪裡不會影響判定——' +
-    '判定只看你說幾天、實際幾天。</p>');
-  H.push('</div>');
+   而且因果反了。正確的鏈是：老師派委託 → 委託帶著委託人來 →
+   委託人帶著他住的地方來。不是挑一個地方然後看看那裡有誰，
+   是有人來找你，你去他那裡。
 
-  H.push('<div class="wsix">');
-  STRATA.forEach(function (z) {
-    var f = faunaOf(z.key);
-    H.push('<button class="wz ' + z.key + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'commit:' + m.msId + '|' + z.key })) + '\'>');
-    /* 先看到那個地方，才看到它叫什麼。選地方是這個流程裡第二個純粹
-       屬於他的決定，而本來六張卡只差一個顏色——那樣他其實是在選名字。 */
-    H.push('<span class="wz-p">' + placeArt(z, '') + '</span>');
-    H.push('<span class="wz-b">');
-    H.push('<span class="wz-t"><b>' + esc(z.name) + '</b>');
-    H.push('<em>' + esc(z.note) + '</em></span>');
-    /* 住在這裡的那幾隻。他在選地方，也是在選這一趟要遇到誰。 */
-    if (f.length) {
-      H.push('<span class="wz-f">');
-      f.slice(0, 4).forEach(function (c) { H.push(pxTag(c.px, z.pal, '')); });
-      H.push('</span>');
-    }
-    H.push('</span>');
-    H.push('</button>');
-  });
-  H.push('</div>');
+   ── 自主性少了一塊嗎 ──
 
-  H.push(btn('回去改天數', 'toplan', 'ghost'));
-  return H.join('');
-}
+   沒有。自主性住在拆成哪幾件、各要幾天、有多確定、誰做哪一件、
+   什麼時候交——那幾個每一個都改變後面發生的事。選地方不改變任何事，
+   那是裝飾性的自主，而 SDT 講的自主支持指的是有意義的選擇。
+   拿掉它，真正重要的那幾個反而更清楚。
+
+   附帶一個好處：會挑的人本來永遠挑同一個地方；由委託人決定之後，
+   一學期六個地方會被走遍。 */
 
 /* ---------- 交出去 ---------- */
 /* 交出去那一頁退休了：兩問搬進戰鬥（見 67-battle.js），
