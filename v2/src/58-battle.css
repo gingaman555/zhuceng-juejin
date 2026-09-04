@@ -522,16 +522,22 @@
 .bt.talk{height:286px}
 /* 你不在場上了——你是鏡頭。 */
 .bt.talk .bt-side.me{display:none}
-/* 他一個人站中間。用 flex 置中，不用 transform：
-   .bt-ch 身上有 btbob 在動 transform，兩個會打架。 */
-.bt.talk .bt-side.foe{
-  top:0;height:100%;
-  display:flex;align-items:flex-end;justify-content:center;
-  padding-bottom:33px
+/* 他一個人站中間。
+
+   本來用 flex 靠底置中，而那樣他的腳會伸出場景 33px 被切掉
+   （.bt 是 overflow:hidden）。兩件事疊在一起：.bt-ch 是 block、
+   裡面那張圖是 inline-block，行框比圖高 13px；而 .bt-side 是
+   絕對定位又寫死高度，padding 等於又吃掉一次。
+
+   改成直接釘在底部，高度自己說了算。置中用 margin-left 不用
+   transform：.bt-ch 身上有 btbob 在動 transform，兩個會打架。 */
+.bt.talk .bt-side.foe{top:0;height:100%;padding:0}
+.bt.talk .bt-side.foe .bt-ch{
+  position:absolute;left:50%;margin-left:-132px;right:auto;bottom:44px;
+  line-height:0
 }
-.bt.talk .bt-side.foe .bt-ch{position:relative;right:auto;bottom:auto}
 .bt.talk .bt-side.foe .bt-pad{
-  left:50%;right:auto;margin-left:-110px;bottom:29px;width:220px
+  left:50%;right:auto;margin-left:-110px;bottom:36px;width:220px
 }
 /* 講話的時候他是這一格的主角，所以比對峙的時候大一階。 */
 .bt.talk .bt-px{width:264px;height:176px}
@@ -570,12 +576,14 @@
 @media (max-width:899px){
   .bt.talk{height:242px}
   .bt.talk .bt-px{width:198px;height:132px}
-  .bt.talk .bt-side.foe .bt-pad{margin-left:-83px;width:165px}
+  .bt.talk .bt-side.foe .bt-ch{margin-left:-99px;bottom:36px}
+  .bt.talk .bt-side.foe .bt-pad{margin-left:-83px;width:165px;bottom:28px}
 }
 @media (max-width:520px){
   .bt.talk{height:198px}
   .bt.talk .bt-px{width:154px;height:103px}
-  .bt.talk .bt-side.foe .bt-pad{margin-left:-66px;width:132px}
+  .bt.talk .bt-side.foe .bt-ch{margin-left:-77px;bottom:29px}
+  .bt.talk .bt-side.foe .bt-pad{margin-left:-66px;width:132px;bottom:21px}
 }
 
 /* 接委託那一場用同一個名牌（見 57-viz.css 的 .pmt）。 */
