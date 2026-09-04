@@ -5,7 +5,6 @@
      gate   這是什麼、你要登入還是建帳號
      login  帳號密碼
      reg    加入碼 → 帳號密碼（學生自己開；老師與研究者的帳號由研究者開）
-     claim  你是名冊上的誰
 
    為什麼認領要獨立一頁：如果讓學生自己打組名，五個人會打出五種寫法，
    資料就對不起來了。老師先貼名冊，學生從裡面點自己——一次點擊，
@@ -171,108 +170,6 @@ PAGES.myteam = function () {
   return H.join('');
 };
 
-/* ---------- 認領身分 ----------
-   登入了但還沒對上名冊。這一頁不能跳過——沒有組別，就不知道要畫哪一條廊道。 */
-PAGES.claim = function () {
-  var u = me();
-  var free = freeRoster(u.classId);
-  var H = ['<div class="gate"><div class="gate-box">'];
-  H.push(head('你是誰', '從名冊上點自己',
-    '點錯了找研究者解開。'));
-
-  if (!free.length) {
-    H.push('<div class="card dim">這個班的名冊還沒貼，或是名字都被認領完了。' +
-           '找老師或研究者確認一次。</div>');
-    H.push(btn('登出', 'logout', 'ghost'));
-    H.push('</div></div>');
-    return H.join('');
-  }
-
-  /* 照組別分堆。同一組的名字排在一起，找自己比較快。 */
-  var byTeam = {};
-  free.forEach(function (r) {
-    (byTeam[r.teamName] = byTeam[r.teamName] || []).push(r);
-  });
-  Object.keys(byTeam).forEach(function (name) {
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">' + esc(name) + '</div>');
-    H.push('<div class="tags">');
-    byTeam[name].forEach(function (r) {
-      H.push('<button class="tag" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'claim:' + r.rosterId })) + '\'>' +
-        esc(r.memberName) + '</button>');
-    });
-    H.push('</div></div>');
-  });
-  H.push(btn('登出', 'logout', 'ghost'));
-  H.push('</div></div>');
-  return H.join('');
-};
-
-/* ---------- 門口的動作 ---------- */
-
-ACTS.login = function () {
-  var acc = (document.getElementById('lg-acc') || {}).value || '';
-  var pw = (document.getElementById('lg-pw') || {}).value || '';
-  var r = actLogin(acc, pw);
-  if (r.err) { DRAFT['lg-acc'] = acc; return say(r.err); }
-  signIn(r.user);
-};
-
-ACTS.reg = function () {
-  var o = {
-    code: (document.getElementById('rg-code') || {}).value || '',
-    account: (document.getElementById('rg-acc') || {}).value || '',
-    password: (document.getElementById('rg-pw') || {}).value || '',
-    role: DRAFT.rgRole === 'teacher' ? 'teacher' : 'student'
-  };
-  var r = actRegister(o);
-  if (r.err) {
-    DRAFT['rg-code'] = o.code; DRAFT['rg-acc'] = o.account;
-    return say(r.err);
-  }
-  signIn(r.user);
-  say('帳號好了。');
-};
-
-ACTS.rgrole = function (r) { DRAFT.rgRole = r; render(); };
-
-/* 老師開班。開完就在這個班裡，碼唸給學生。 */
-ACTS.mkclass = function () {
-  var n = (document.getElementById('mk-name') || {}).value || '';
-  var r = actNewClass(n, S.who);
-  if (r.err) return say(r.err);
-  go('home');
-  say('開好了。把加入碼唸給學生。');
-};
-
-/* 學生建一隊。 */
-ACTS.mkteam = function () {
-  var n = (document.getElementById('mk-team') || {}).value || '';
-  var r = actNewTeam(n, S.who);
-  if (r.err) return say(r.err);
-  go('who');
-  say('隊伍建好了。把代碼唸給隊友。');
-};
-
-/* 學生用代碼加入。 */
-ACTS.jointeam = function () {
-  var c = (document.getElementById('jn-code') || {}).value || '';
-  var r = actJoinTeam(c, S.who);
-  if (r.err) { DRAFT['jn-code'] = c; return say(r.err); }
-  go('who');
-  say('進來了。');
-};
-
-ACTS.claim = function (rosterId) {
-  var r = actClaim(S.who, rosterId);
-  if (r.err) return say(r.err);
-  /* 認完自己是誰，接著挑一個角色。這是他第一次看到這個世界，
-     而第一件事是「這是我」——不是一張已經替他決定好的臉。 */
-  go('who');
-  say('對上了。');
-};
-
 ACTS.logout = function () {
   DB.Session = null;
   save();
@@ -280,7 +177,7 @@ ACTS.logout = function () {
   go('gate');
 };
 
-/* 登入成功之後要去哪。學生還沒認領就先去認領——這件事沒做完，
+/* 登入成功之後要去哪。學生還沒有隊就先去建隊——這件事沒做完，
    後面每一頁都不知道要畫哪一組。 */
 function signIn(u) {
   S.who = u.userId;
@@ -293,6 +190,6 @@ function signIn(u) {
 function homeFor(u) {
   if (u.role === 'researcher') return 'rs';
   if (u.role === 'teacher') return 'radar';
-  if (!u.teamId) return 'claim';
+  if (!u.teamId) return 'myteam';
   return 'home';
 }

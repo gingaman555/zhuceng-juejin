@@ -91,76 +91,6 @@ PAGES.rs = function () {
   return H.join('');
 };
 
-/* ---------- 名冊 ---------- */
-PAGES.roster = function () {
-  var cid = rsClassId();
-  var rows = where('Roster', function (r) { return r.classId === cid; });
-  var H = [head('名冊', '誰在這個班',
-    '一行一組，像「甲：小明, 小華」。' +
-    '不用他們自己打組名，資料才對得起來。')];
-
-  H.push(classPicker());
-
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">貼上名冊</div>');
-  H.push('<textarea id="rt" rows="6" placeholder="' +
-    esc('甲：小明, 小華, 阿哲\n乙：怡君, 小柏\n丙：家豪, 品彤, 宥廷') + '">' +
-    esc(draft('rt')) + '</textarea>');
-  H.push('<p class="dim">' +
-         '已經被認領的名字不會被洗掉。</p>');
-  H.push(btn('存進去', 'saveroster', ''));
-  H.push('</div>');
-
-  /* 誰帶哪一組。一個課程可以有好幾位老師，每位帶不同的組——
-     老師對任務規劃與步調有自己的自主性，所以他派的東西只會落到
-     他帶的那幾組（見 msFor）。
-
-     只有一位老師的時候整段不畫：沒有東西要分。 */
-  var teas = teachersOf(cid);
-  if (teas.length > 1) {
-    var tms = where('Teams', function (t) { return t.classId === cid; });
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">誰帶哪一組　' + teas.length + ' 位老師</div>');
-    tms.forEach(function (t) {
-      H.push('<div class="rn-row">');
-      H.push('<b>' + esc(t.name) + '</b>');
-      H.push('<span class="sp" style="flex:1"></span>');
-      H.push('<span class="tags">');
-      teas.forEach(function (te) {
-        var on = t.mentorId === te.userId;
-        H.push('<button class="tag' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
-          esc(JSON.stringify({ a: 'mentor:' + t.teamId + ',' + (on ? '' : te.userId) })) +
-          '\'>' + esc(te.name) + '</button>');
-      });
-      H.push('</span>');
-      H.push('</div>');
-    });
-    H.push('<p class="dim">沒選的組每位老師都看得到。</p>');
-    H.push('</div>');
-  }
-
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">現在的名冊　' + rows.length + ' 人</div>');
-  if (!rows.length) H.push('<p class="dim">還沒有人。貼一份上去。</p>');
-  rows.forEach(function (r) {
-    var u = r.claimedBy ? userOf(r.claimedBy) : null;
-    H.push('<div class="rn-row">');
-    H.push('<b>' + esc(r.teamName) + '</b>');
-    H.push('<span>' + esc(r.memberName) + '</span>');
-    H.push('<span class="sp" style="flex:1"></span>');
-    if (u) {
-      H.push('<span class="dim">' + esc(u.account) + ' 認領了</span>');
-      H.push(btn('解除', 'unclaim:' + r.rosterId, 'ghost'));
-    } else {
-      H.push('<span class="dim">還沒有人認領</span>');
-    }
-    H.push('</div>');
-  });
-  H.push('</div>');
-  return H.join('');
-};
-
-/* ---------- 紀錄 ---------- */
 PAGES.events = function () {
   var cid = rsClassId();
   var only = DRAFT.evTeam || '';
@@ -256,22 +186,6 @@ ACTS.deluser = function (userId) {
   if (userId === S.who) return ACTS.logout();
   render();
   say(name + ' 的帳號刪掉了。他認領過的名字放回名冊上了。');
-};
-
-ACTS.saveroster = function () {
-  var v = (document.getElementById('rt') || {}).value || '';
-  var r = actSaveRoster(rsClassId(), v);
-  if (r.err) { DRAFT.rt = v; return say(r.err); }
-  DRAFT.rt = '';
-  render();
-  say('存好了，補上 ' + r.added + ' 個名字。');
-};
-
-ACTS.unclaim = function (rosterId) {
-  var r = actUnclaim(rosterId);
-  if (r.err) return say(r.err);
-  render();
-  say('解開了。');
 };
 
 ACTS.csv = function () {

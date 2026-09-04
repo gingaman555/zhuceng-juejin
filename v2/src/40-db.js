@@ -32,7 +32,7 @@ function daysBetween(a, b) {
 function blank() {
   return {
     Config: { seq: 1 },
-    Users: [], Classes: [], Roster: [], Teams: [],
+    Users: [], Classes: [], Teams: [],
     /* 任務：老師派的。同一個任務可以只發給某幾組。 */
     Milestones: [],
     /* 一組在一個任務上的狀態。這張表是整個系統的心臟。 */
@@ -55,7 +55,7 @@ function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 4;
+var SEED_V = 5;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }

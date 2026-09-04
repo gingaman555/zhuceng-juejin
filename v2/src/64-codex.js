@@ -193,21 +193,23 @@ PAGES.crew = function () {
   }
   H.push('</div>');
 
-  /* 有誰，跟每一個人挑了什麼角色。 */
-  var crew = where('Roster', function (x) { return x.teamId === tm.teamId; });
+  /* 有誰，跟每一個人挑了什麼角色。
+
+     從帳號來，不從名冊來——名冊那一條路拿掉了，現在一支隊伍就是
+     「teamId 指到這裡的那幾個帳號」。 */
+  var crew = where('Users', function (x) { return x.teamId === tm.teamId; });
   H.push('<div class="card">');
   H.push('<div class="eyebrow">' + crew.length + ' 個人</div>');
   H.push('<div class="crew">');
-  crew.forEach(function (rs) {
-    var u = rs.claimedBy ? userOf(rs.claimedBy) : null;
+  crew.forEach(function (u) {
     var k = heroKey(u);
     var g = HEROES[k];
     var meta = null;
     HERO_LIST.forEach(function (x) { if (x.k === k) meta = x; });
-    H.push('<div class="crw' + (u ? '' : ' none') + '">');
+    H.push('<div class="crw">');
     H.push('<span class="crw-px">' + pxTag(g.idle, g.pal, 'ch-s') + '</span>');
-    H.push('<span class="crw-t"><b>' + esc(rs.memberName) + '</b>');
-    H.push('<i>' + (u ? esc(meta ? meta.n : '') : '還沒有人認領') + '</i></span>');
+    H.push('<span class="crw-t"><b>' + esc(u.name || '') + '</b>');
+    H.push('<i>' + esc(meta ? meta.n : '') + '</i></span>');
     H.push('</div>');
   });
   H.push('</div></div>');

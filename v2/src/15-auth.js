@@ -63,7 +63,6 @@ function eventsOf(classId, filter) {
 /* 事件的中文說法。同一份資料，人看得懂的那一面。 */
 var EV_SAY = {
   register: function (e) { return '註冊了帳號 ' + e.account; },
-  claim:    function (e) { return '認領身分：' + e.who + '（' + e.team + '）'; },
   login:    function () { return '登入'; },
   publish:  function (e) { return '派了任務「' + e.title + '」'; },
   commit:   function (e) { return '承諾 ' + e.est + ' 天' + (e.flags ? '，標了「' + e.flags + '」' : ''); },
@@ -151,87 +150,10 @@ function actLogin(account, pw) {
    老師先把名冊貼進來（一行一組），學生註冊之後從裡面挑自己是誰。
    這樣系統知道「這個帳號是哪一組的誰」，而且不用學生自己打組名。 */
 
-/* 「甲：小明, 小華」一行一組 */
-function parseRoster(text) {
-  var out = [];
-  String(text || '').split('\n').forEach(function (line) {
-    line = line.trim();
-    if (!line) return;
-    var i = line.search(/[:：]/);
-    if (i < 0) return;
-    var team = line.slice(0, i).trim();
-    var members = line.slice(i + 1).split(/[,，、]/)
-      .map(function (x) { return x.trim(); }).filter(Boolean);
-    if (team && members.length) out.push({ team: team, members: members });
-  });
-  return out;
-}
 
-/* 存名冊。已經存在的組不重建，才不會把認領過的身分洗掉。 */
-function actSaveRoster(classId, text) {
-  var rows = parseRoster(text);
-  if (!rows.length) return { err: '看不懂這份名冊。一行一組，像「甲：小明, 小華」。' };
-  var added = 0;
-  rows.forEach(function (r) {
-    var name = '第' + (where('Teams', function (t) {
-      return t.classId === classId;
-    }).length + 1) + '組 · ' + r.team;
-    var exist = find('Teams', function (t) {
-      return t.classId === classId && t.name.indexOf('· ' + r.team) >= 0;
-    });
-    var team = exist;
-    if (!team) {
-      team = {
-        teamId: nid('G'), classId: classId, name: name,
-        project: '（還沒定）', signTier: 0, joinedAt: now()
-      };
-      DB.Teams.push(team);
-    }
-    r.members.forEach(function (m) {
-      if (find('Roster', function (x) {
-        return x.classId === classId && x.teamId === team.teamId && x.memberName === m;
-      })) return;
-      DB.Roster.push({
-        rosterId: nid('R'), classId: classId, teamId: team.teamId,
-        teamName: team.name, memberName: m, claimedBy: ''
-      });
-      added++;
-    });
-  });
-  save();
-  return { added: added };
-}
 
-/* 一個班還沒被認領的名字 */
-function freeRoster(classId) {
-  return where('Roster', function (r) { return r.classId === classId && !r.claimedBy; });
-}
 
-/* 認領：把帳號綁到名冊上的某一個人 */
-function actClaim(userId, rosterId) {
-  var u = userOf(userId);
-  var r = find('Roster', function (x) { return x.rosterId === rosterId; });
-  if (!u || !r) return { err: '找不到。' };
-  if (r.claimedBy) return { err: '這個名字已經有人認領了。' };
-  r.claimedBy = u.userId;
-  r.claimedAt = now();
-  u.teamId = r.teamId;
-  u.name = r.memberName;
-  save();
-  logEvent('claim', { by: u.userId, teamId: r.teamId, who: r.memberName, team: r.teamName });
-  return { user: u };
-}
 
-/* 認錯人了：研究者解開，學生可以重認 */
-function actUnclaim(rosterId) {
-  var r = find('Roster', function (x) { return x.rosterId === rosterId; });
-  if (!r || !r.claimedBy) return { err: '這個名字沒有人認領。' };
-  var u = userOf(r.claimedBy);
-  if (u) { u.teamId = ''; }
-  r.claimedBy = ''; r.claimedAt = 0;
-  save();
-  return { ok: true };
-}
 
 /* ---------- 研究者的帳號處理 ---------- */
 
@@ -253,8 +175,6 @@ function actDeleteUser(userId) {
     return { err: '這是最後一個研究者帳號，刪掉就沒有人管得了系統。' };
   }
   /* 認領過的名字要放回去，不然那個位子永遠卡著 */
-  where('Roster', function (r) { return r.claimedBy === userId; })
-    .forEach(function (r) { r.claimedBy = ''; r.claimedAt = 0; });
   DB.Users = DB.Users.filter(function (x) { return x.userId !== userId; });
   save();
   return { ok: true };

@@ -97,9 +97,8 @@ var PAGE_ROLE = {
   eco: 'student', pack: 'student',
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
-  claim: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
-  rs: 'researcher', roster: 'researcher', events: 'researcher'
+  rs: 'researcher', events: 'researcher'
 };
 function allowed(u, page) {
   var need = PAGE_ROLE[page];
@@ -175,20 +174,18 @@ function render() {
     S.page = 'mkclass';
     return;
   }
-  /* 學生還沒有隊：建一隊或用代碼加入。
+  /* 學生還沒有隊：建一隊，或用代碼加入。只有這一條路。
 
-     班上如果貼過名冊，還是走認領那一條（那條路留著）；
-     沒有名冊的班就自己組隊。 */
+     名冊那一條拿掉了——兩條路並存的時候舊的優先，所以只要有人
+     貼了名冊，新的建隊頁就再也不會出現。 */
   if (u.role === 'student' && !u.teamId) {
-    var hasRoster = where('Roster', function (x) { return x.classId === u.classId; }).length;
     document.getElementById('app').innerHTML =
       '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
-      (S.flash ? flashBar() : '') +
-      (hasRoster ? PAGES.claim() : PAGES.myteam()) + '</div></div>';
-    S.page = hasRoster ? 'claim' : 'myteam';
+      (S.flash ? flashBar() : '') + PAGES.myteam() + '</div></div>';
+    S.page = 'myteam';
     return;
   }
-  if (S.page === 'claim' || GATE_PAGES[S.page]) S.page = homeFor(u);
+  if (GATE_PAGES[S.page]) S.page = homeFor(u);
 
   if (!PAGES[S.page] || !allowed(u, S.page)) S.page = homeFor(u);
 
@@ -319,7 +316,7 @@ function sideBar() {
     headBlock = '<div class="side-head"><div class="k">LAB</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
       '<div class="s">帳號與紀錄</div></div>';
-    nav = [['rs', '帳號'], ['roster', '名冊'], ['events', '紀錄']];
+    nav = [['rs', '帳號'], ['events', '紀錄']];
   } else if (u.role === 'teacher') {
     var kl = classOf(u);
     headBlock = '<div class="side-head"><div class="k">TEACHER</div>' +
