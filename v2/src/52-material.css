@@ -356,8 +356,15 @@ input.slider:active{transform:none}
    營火因此一直浮在角色頭上 95px 的半空中，而它本來該在他旁邊的地上。
 
    這一條的 relative
-   會把它們的 absolute 蓋掉，而且它的 :not() 鏈權重比一個 class 高得多。 */
-[data-act]:not(.btn):not(.tag):not(.seg):not(.nav a):not(input):not(select):not(.xl-name):not(.xl-stack):not(.xl-hero):not(.mfire):not(.mrack):not(.shaft):not(.hang),
+   會把它們的 absolute 蓋掉，而且它的 :not() 鏈權重比一個 class 高得多。
+
+   2026-09-04 又咬了一次：委託人在廊道上變成點得進去的（加了 data-act），
+   於是他的 position:absolute 被蓋掉，整個人往上跑到場景外面被切掉，
+   他頭上的名牌完全看不到。加進 .scn-mob。
+
+   每次有東西「變成按得下去的」，就要回來看這一條——
+   那個清單不是裝飾，是這條規則的副作用清單。 */
+[data-act]:not(.btn):not(.tag):not(.seg):not(.nav a):not(input):not(select):not(.xl-name):not(.xl-stack):not(.xl-hero):not(.mfire):not(.mrack):not(.shaft):not(.hang):not(.scn-mob),
 [data-go]:not(.nav a){
   position:relative
 }

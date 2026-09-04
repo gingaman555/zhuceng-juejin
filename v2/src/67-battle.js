@@ -156,7 +156,10 @@ PAGES.battle = function () {
     var qs = btAsks(r);
     var qi = Math.max(0, Math.min(qs.length - 1, Number(S.p.q) || 0));
     var last = qi === qs.length - 1;
-    H.push('<div class="bt-q">');
+    /* 這一題他一定要，而且還空著——那一格左邊那條會是全亮的
+       （見 57-viz.css）。他在等這一格，不用按下去被退才知道。 */
+    var need = qs[qi].need ? ' need' : '';
+    H.push('<div class="bt-q' + need + '">');
     /* 第幾題。一排點，不是文字——「3 / 7」是一個要讀的東西，
        而這裡只需要知道「還有幾個」。 */
     H.push('<div class="bt-dots">');
