@@ -175,13 +175,20 @@ function faunaByName(n) {
    跟著你變深而改變——那一趟盡頭擋路的那一隻不該在事後被換掉。 */
 /* 擋在盡頭的那一隻。從那一趟的地方來——他選了地方，
    就等於選了這一趟要遇到誰，而圖鑑記的就是遇過誰。 */
-function mobFor(msId, teamId, depth, zone) {
-  var zk = zone;
-  if (!zk) {
-    var d = depth == null ? depthOf(teamId) : depth;
-    zk = strataAt(d, teamId).key;
-  }
-  var f = faunaOf(zk);
-  if (!f.length) f = allFauna();
+function mobFor(msId, teamId) {
+  /* 由任務決定，不由地方決定——委託人是要這件事的人，
+     任務出現的那一刻他就存在了，不是走到那一天才長出來。
+
+     所以從全部的人裡面挑，不限那一區。他自己屬於哪一區
+     （c.r）只決定他長什麼顏色、跟他排在圖鑑的哪一頁。 */
+  var f = allFauna();
   return f[hash(msId + '|' + teamId) % f.length];
+}
+
+/* 委託人自己是哪一區的人。他的顏色照這個走，不照學生走到哪裡——
+   換一個地方遇到他，他還是他。 */
+function mobZone(c) {
+  if (!c) return STRATA[0];
+  for (var i = 0; i < STRATA.length; i++) if (STRATA[i].name === c.r) return STRATA[i];
+  return STRATA[0];
 }

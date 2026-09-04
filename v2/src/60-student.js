@@ -517,7 +517,24 @@ PAGES.commit = function () {
      分岔放在這裡，前面那幾行（plan／est）兩邊都要用。 */
   if (DRAFT.at === 'where') return wherePanel(t, m, est);
 
-  var H = [head('自我承諾', m.title, m.note)];
+  var H = [head('這一件的委託人', m.title, m.note)];
+
+  /* ── 委託人 ──
+
+     他在這裡就出現，不是走到那一天才看到——他是要這件事的人，
+     任務出現的那一刻他就存在了。
+
+     「這次的委託人竟然長這樣」是這一頁最該發生的事。 */
+  var pat = mobFor(m.msId, t.teamId);
+  if (pat) {
+    var pz = mobZone(pat);
+    H.push('<div class="card patron ' + pz.key + '">');
+    H.push(pxTag(pat.px, pz.pal, 'pat-px'));
+    H.push('<div class="pat-t"><b>' + esc(pat.n) + '</b>');
+    H.push('<em>' + esc(pat.t) + '</em>');
+    H.push('<u>' + RULES.COIN.base + ' 枚金幣</u></div>');
+    H.push('</div>');
+  }
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
   H.push('<div class="card">');

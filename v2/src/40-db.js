@@ -341,7 +341,7 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
        本來是每次要用再算一次，而算的時候看的是「現在」的深度——
        所以走深了之後回頭看，過去每一趟遇到的那一隻會跟著變。
        那是假的紀錄。 */
-    mob: mobFor(msId, teamId, null, zone).n
+    mob: mobFor(msId, teamId).n
   };
   DB.Runs.push(r);
   save();
@@ -600,7 +600,7 @@ function mobOfRun(run) {
     var c = faunaByName(run.mob);
     if (c) return c;
   }
-  return mobFor(run.msId, run.teamId, runDepth(run));
+  return mobFor(run.msId, run.teamId);
 }
 
 /* 這一趟當時站在第幾層。

@@ -544,8 +544,12 @@ function sceneMouth(t, next, ENT, resting) {
    正是這個系統唯一要讓人看到的事。 */
 function sceneMob(t, row, prog, est, ENT) {
   var mob = mobOfRun(row.run);
-  /* 牠的配色跟那一趟的地方一致——牠本來就是從那裡來的。 */
-  var pal = zoneOfRun(row.run, t.teamId).pal;
+  /* 他照自己那一區的顏色，不照學生走到哪一區。
+
+     本來是跟著那一趟的地方走（他是那裡的東西）。現在他是委託人——
+     一個人不會因為你走哪一條路過去就換一種顏色。換一個地方遇到他，
+     他還是他。 */
+  var pal = mobZone(mob).pal;
   var x = (ENT || SCN.ENT) + est * SCN.TILE + 33;
   /* 這裡本來還掛一塊寫著任務名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，

@@ -2011,3 +2011,21 @@ button.ac:active{transform:translateY(1px)}
 /* 金幣榜。那一排錢幣就是他們完成的件數——加成只佔 5%，
    所以這一張榜幾乎完全由「做完幾件」決定。 */
 .ck-c{font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+
+/* 委託人。收到委託的那一頁上，他站在最上面——
+   這一頁最該發生的事是「這次的委託人竟然長這樣」。 */
+.card.patron{
+  display:flex;align-items:flex-start;gap:18px;
+  background-color:var(--zbg)
+}
+.px.pat-px{width:110px;height:110px;flex:0 0 110px;image-rendering:pixelated}
+.pat-t{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pat-t b{font-size:33px;font-weight:400;line-height:1.25;color:var(--zink,var(--ink))}
+.pat-t em{font-size:22px;font-style:normal;line-height:1.6;color:var(--dim)}
+.pat-t u{
+  text-decoration:none;font-size:22px;color:var(--gold);margin-top:5px
+}
+@media (max-width:520px){
+  .card.patron{flex-direction:column;align-items:center;text-align:center}
+  .pat-t{align-items:center}
+}

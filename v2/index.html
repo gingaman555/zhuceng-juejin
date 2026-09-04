@@ -3907,6 +3907,24 @@ button.ac:active{transform:translateY(1px)}
    所以這一張榜幾乎完全由「做完幾件」決定。 */
 .ck-c{font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
 
+/* 委託人。收到委託的那一頁上，他站在最上面——
+   這一頁最該發生的事是「這次的委託人竟然長這樣」。 */
+.card.patron{
+  display:flex;align-items:flex-start;gap:18px;
+  background-color:var(--zbg)
+}
+.px.pat-px{width:110px;height:110px;flex:0 0 110px;image-rendering:pixelated}
+.pat-t{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pat-t b{font-size:33px;font-weight:400;line-height:1.25;color:var(--zink,var(--ink))}
+.pat-t em{font-size:22px;font-style:normal;line-height:1.6;color:var(--dim)}
+.pat-t u{
+  text-decoration:none;font-size:22px;color:var(--gold);margin-top:5px
+}
+@media (max-width:520px){
+  .card.patron{flex-direction:column;align-items:center;text-align:center}
+  .pat-t{align-items:center}
+}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -5585,15 +5603,22 @@ function faunaByName(n) {
    跟著你變深而改變——那一趟盡頭擋路的那一隻不該在事後被換掉。 */
 /* 擋在盡頭的那一隻。從那一趟的地方來——他選了地方，
    就等於選了這一趟要遇到誰，而圖鑑記的就是遇過誰。 */
-function mobFor(msId, teamId, depth, zone) {
-  var zk = zone;
-  if (!zk) {
-    var d = depth == null ? depthOf(teamId) : depth;
-    zk = strataAt(d, teamId).key;
-  }
-  var f = faunaOf(zk);
-  if (!f.length) f = allFauna();
+function mobFor(msId, teamId) {
+  /* 由任務決定，不由地方決定——委託人是要這件事的人，
+     任務出現的那一刻他就存在了，不是走到那一天才長出來。
+
+     所以從全部的人裡面挑，不限那一區。他自己屬於哪一區
+     （c.r）只決定他長什麼顏色、跟他排在圖鑑的哪一頁。 */
+  var f = allFauna();
   return f[hash(msId + '|' + teamId) % f.length];
+}
+
+/* 委託人自己是哪一區的人。他的顏色照這個走，不照學生走到哪裡——
+   換一個地方遇到他，他還是他。 */
+function mobZone(c) {
+  if (!c) return STRATA[0];
+  for (var i = 0; i < STRATA.length; i++) if (STRATA[i].name === c.r) return STRATA[i];
+  return STRATA[0];
 }
 
 
@@ -5615,7 +5640,7 @@ var EXTRA_FAUNA = [
   /* ---------- 根脈層 ---------- */
   {
     r: '根脈層', n: '垂根者',
-    t: '你走過去的時候它會縮一下。',
+    t: '你走過去的時候他會縮一下。',
     px: [
       '.........+##+...........',
       '.........+##+...........',
@@ -7462,7 +7487,7 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
        本來是每次要用再算一次，而算的時候看的是「現在」的深度——
        所以走深了之後回頭看，過去每一趟遇到的那一隻會跟著變。
        那是假的紀錄。 */
-    mob: mobFor(msId, teamId, null, zone).n
+    mob: mobFor(msId, teamId).n
   };
   DB.Runs.push(r);
   save();
@@ -7721,7 +7746,7 @@ function mobOfRun(run) {
     var c = faunaByName(run.mob);
     if (c) return c;
   }
-  return mobFor(run.msId, run.teamId, runDepth(run));
+  return mobFor(run.msId, run.teamId);
 }
 
 /* 這一趟當時站在第幾層。
@@ -10973,7 +10998,24 @@ PAGES.commit = function () {
      分岔放在這裡，前面那幾行（plan／est）兩邊都要用。 */
   if (DRAFT.at === 'where') return wherePanel(t, m, est);
 
-  var H = [head('自我承諾', m.title, m.note)];
+  var H = [head('這一件的委託人', m.title, m.note)];
+
+  /* ── 委託人 ──
+
+     他在這裡就出現，不是走到那一天才看到——他是要這件事的人，
+     任務出現的那一刻他就存在了。
+
+     「這次的委託人竟然長這樣」是這一頁最該發生的事。 */
+  var pat = mobFor(m.msId, t.teamId);
+  if (pat) {
+    var pz = mobZone(pat);
+    H.push('<div class="card patron ' + pz.key + '">');
+    H.push(pxTag(pat.px, pz.pal, 'pat-px'));
+    H.push('<div class="pat-t"><b>' + esc(pat.n) + '</b>');
+    H.push('<em>' + esc(pat.t) + '</em>');
+    H.push('<u>' + RULES.COIN.base + ' 枚金幣</u></div>');
+    H.push('</div>');
+  }
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
   H.push('<div class="card">');
@@ -12015,8 +12057,12 @@ function sceneMouth(t, next, ENT, resting) {
    正是這個系統唯一要讓人看到的事。 */
 function sceneMob(t, row, prog, est, ENT) {
   var mob = mobOfRun(row.run);
-  /* 牠的配色跟那一趟的地方一致——牠本來就是從那裡來的。 */
-  var pal = zoneOfRun(row.run, t.teamId).pal;
+  /* 他照自己那一區的顏色，不照學生走到哪一區。
+
+     本來是跟著那一趟的地方走（他是那裡的東西）。現在他是委託人——
+     一個人不會因為你走哪一條路過去就換一種顏色。換一個地方遇到他，
+     他還是他。 */
+  var pal = mobZone(mob).pal;
   var x = (ENT || SCN.ENT) + est * SCN.TILE + 33;
   /* 這裡本來還掛一塊寫著任務名字的木牌。拿掉了：它浮在半空、會壓到
      角落那一塊，而且那個名字底下那張卡已經有一次——同一件事說兩遍，
