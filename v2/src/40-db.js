@@ -49,8 +49,31 @@ function blank() {
   };
 }
 
-function nid(p) { return p + (DB.Config.seq++); }
-function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {} }
+/* 這台機器的記號。
+
+   nid 本來只是一個全域計數器（Config.seq），一台機器用完全沒問題。
+   三台機器同時用的時候，三邊各自數到 42，於是三個不同的東西都叫
+   R42——推到雲端之後後寫的把先寫的蓋掉，而且畫面上看不出來。
+
+   加一段這台機器自己的記號就不會撞。記在 localStorage 裡，
+   關掉分頁再開不會變成另一台機器。 */
+var DEV_TAG = '';
+function devTag() {
+  if (DEV_TAG) return DEV_TAG;
+  try { DEV_TAG = localStorage.getItem('dungeon.dev') || ''; } catch (e) {}
+  if (!DEV_TAG) {
+    DEV_TAG = Math.random().toString(36).slice(2, 6);
+    try { localStorage.setItem('dungeon.dev', DEV_TAG); } catch (e) {}
+  }
+  return DEV_TAG;
+}
+function nid(p) { return p + (DB.Config.seq++) + devTag(); }
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {}
+  /* 接得上雲端就把變過的那幾筆推上去（見 41-sync.js）。node 裡跑
+     檢查、或用 file:// 點開的時候接不上，這一行安靜地什麼都不做。 */
+  if (typeof syncPush === 'function') syncPush();
+}
 /* 示範資料的版本。改了種子就把這個數字加一——
    已經開過的瀏覽器會自己換成新的那一份。
 

@@ -91,6 +91,17 @@ PAGES.rs = function () {
   return H.join('');
 };
 
+/* 把全班的紀錄拉下來。拉完才匯得出全班的 CSV。 */
+ACTS.pullev = function () {
+  if (typeof syncPullEvents !== 'function') return say('沒有接上雲端。');
+  say('拉下來中……');
+  syncPullEvents(function (n) {
+    DRAFT.evPull = n;
+    render();
+    say(n < 0 ? '拉不下來。' : (n ? '多了 ' + n + ' 筆。' : '已經是最新的了。'));
+  });
+};
+
 PAGES.events = function () {
   var cid = rsClassId();
   var only = DRAFT.evTeam || '';
@@ -112,10 +123,29 @@ PAGES.events = function () {
   });
   H.push('</div>');
 
+  /* ── 先把全班的紀錄拉下來 ──
+
+     紀錄跟別張表不一樣：它只往上推，不訂閱（見 41-sync.js 的檔頭——
+     一學期幾千筆，每台機器每次開網頁都讀一遍會把免費額度吃光）。
+     所以這一頁預設只看得到這台機器自己產生的那幾筆。
+
+     要匯出的是全班的。按一下拉一次，一學期按幾次，不是每個人
+     每次開網頁都拉一遍。 */
+  if (typeof SYNC !== 'undefined' && SYNC.on) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">全班的紀錄</div>');
+    H.push('<p class="dim">' + (DRAFT.evPull == null
+      ? '這一頁現在只有這台電腦上發生的事。要匯出全班的，先拉一次。'
+      : (DRAFT.evPull < 0 ? '拉不下來：' + esc(SYNC.err || '網路')
+        : '拉下來了，多了 ' + DRAFT.evPull + ' 筆。')) + '</p>');
+    H.push(btn('拉全班的紀錄', 'pullev', 'ghost'));
+    H.push('</div>');
+  }
+
   /* 匯出 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">匯出　CSV</div>');
-  H.push('<p class="dim">欄位：時間、角色、組別、指導老師、事件、說明。</p>');
+  H.push('<p class="dim">欄位：時間、誰做的、角色、組別、事件、說明。</p>');
   H.push('<textarea id="csv" rows="4" readonly>' + esc(exportCsv(cid)) + '</textarea>');
   H.push(btn('存成檔案', 'csv', 'ghost'));
   H.push('</div>');

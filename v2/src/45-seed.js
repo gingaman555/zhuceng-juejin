@@ -264,6 +264,17 @@ function seed() {
      （見 40-db.js 的 load）。 */
   DB.Config.demo = 1;
   DB.Config.seedV = SEED_V;
+  /* 示範資料的記號。帶著 _d 的那幾筆永遠不會被推到雲端上
+     （見 41-sync.js）——不然第一個打開網頁的人會把整個示範班
+     推上去給所有人看。
+
+     反過來也成立：雲端已經有真的班了，這台機器的示範班還是在，
+     兩邊並存。拿去給人看的那一份不會被別人的實驗資料弄亂。 */
+  Object.keys(DB).forEach(function (c) {
+    if (Object.prototype.toString.call(DB[c]) === '[object Array]') {
+      DB[c].forEach(function (r) { if (r) r._d = 1; });
+    }
+  });
   save();
 }
 

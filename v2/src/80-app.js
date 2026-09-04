@@ -9,5 +9,9 @@
   var u = DB.Session ? userOf(DB.Session) : null;
   if (u) { S.who = u.userId; S.page = homeFor(u); }
   else { S.who = null; S.page = 'gate'; }
+  /* 接上雲端。在 render 之前叫：它自己是非同步的，第一批資料回來
+     的時候會再畫一次，所以這裡先拿本機這一份把畫面立起來，
+     不要讓人對著白畫面等網路。 */
+  if (typeof syncStart === 'function') syncStart();
   render();
 })();

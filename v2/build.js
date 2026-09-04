@@ -33,6 +33,13 @@ ${css}
 </head>
 <body>
 <div id="app"></div>
+<!-- Firebase。這三支是 Hosting 自己就會發的路徑（/__/firebase/…），
+     所以原始碼裡不用貼任何金鑰，init.js 會自己帶這個專案的設定。
+     用 file:// 點開的時候這三支會 404，那時候 41-sync.js 整層
+     自動關掉，單機那條路一步都沒有變。 -->
+<script src="/__/firebase/10.14.1/firebase-app-compat.js"></script>
+<script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
+<script src="/__/firebase/init.js"></script>
 <script>
 ${js}
 </` + `script>
