@@ -302,13 +302,21 @@ function scene(t, row, st, kind) {
   var hx = resting ? 44 : ENT + walked * SCN.TILE - 11;
   /* ── 同一組的其他人 ──
      排在你前面畫，所以你在最上層。他們沒有牌子也沒有燈。 */
+  /* 全部的人，不砍。本來 slice(0,3)——四個人以上的組會有人
+     憑空不見，而組別卡上他明明在。同一組人在兩個地方數目不一樣，
+     是這個系統最不該出現的錯。
+
+     人多就站近一點，不是趕人走。 */
   var mates = where('Users', function (u) {
     return u.teamId === t.teamId && u.userId !== S.who;
-  }).slice(0, 3);
+  });
+  var gap = mates.length > 3 ? 30 : 40;
   mates.forEach(function (mu, i) {
     var mh = heroOf(mu);
-    /* 走的時候排成一列跟在後面；休息的時候圍在火邊。 */
-    var mx = resting ? (hx + 40 * (i + 1)) : Math.max(6, hx - 40 * (i + 1));
+    /* 走的時候排成一列跟在後面；休息的時候圍在火邊。
+       剛出發的時候後面的人還在洞口，靠左牆排開——不疊在同一點上。 */
+    var mx = resting ? (hx + gap * (i + 1))
+      : Math.max(6 + i * 5, hx - gap * (i + 1));
     H.push('<div class="hero scn-mate' + (st.level >= 2 ? ' asleep' : '') +
       (walking ? ' walking' : '') + (resting ? ' resting' : '') +
       '" style="left:' + mx + 'px;--md:' + ((i + 1) * 170) + 'ms" title="' +
