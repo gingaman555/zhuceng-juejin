@@ -311,7 +311,8 @@ var BT_STEPS = [
     body: function () {
       return '<textarea class="bt-w" rows="2" maxlength="200" ' +
         'oninput="DRAFT.next=this.value" placeholder="' +
-        esc('例：再訪一個人，第三份的資料太薄') + '">' + esc(draft('next', '')) + '</textarea>';
+        esc('例：把第三件收尾，那一件只做了一半') + '">' +
+        esc(draft('next', '')) + '</textarea>';
     },
     need: function () { return !!String(DRAFT.next || '').trim(); } }
 ];

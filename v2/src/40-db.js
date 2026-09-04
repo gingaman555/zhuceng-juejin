@@ -55,7 +55,7 @@ function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 7;
+var SEED_V = 8;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -151,7 +151,14 @@ function nextThing(teamId) {
   /* 1. 交了、判定出來了、還沒按「好」。
      省思那一題搬到交出去之前了，所以這裡不再分岔——
      每一個人都想過一次，不是只有失準的人。 */
-  var judged = rows.filter(function (x) { return x.run.state === 'judged'; })[0];
+  /* 交了、還沒看過那兩個數字。
+
+     本來這一條看的是 state === 'judged'，而那個狀態同時代表「還沒送到
+     老師手上」——所以「他有沒有看過結算」跟「老師有沒有收到」被綁成
+     同一件事。現在分開：送到是 actSubmit 的事，看過是 sawStamp。 */
+  var judged = rows.filter(function (x) {
+    return x.run.state === 'submitted' && !x.run.sawStamp;
+  })[0];
   if (judged) return { kind: 'stamped', row: judged };
   /* 2. 老師退回來了。
      排在這裡不是排在後面：它跟「老師勾了」同一類——有人為你做了一件事，
@@ -869,7 +876,18 @@ function actSubmit(teamId, runId, link) {
   r.stamp = RULES.judge(r.est, r.actual).key;
   r.link = link || '';
   r.submittedAt = now();
-  r.state = 'judged';
+  /* 直接進老師的清單。
+
+     本來這裡設的是 'judged'，而老師的清單只收 'submitted'（見 radar）——
+     中間卡著結算那一頁：學生要再打開「看準不準」、再按一顆叫「好」的鍵，
+     東西才真的送到。那顆鍵的函式叫 actSkipCamp，是舊營火流程的殘留。
+
+     量出來的樣子：學生按完「交出去」，老師的清單還是空的。他關掉、
+     以為交了；老師打開什麼都沒有。
+
+     交出去就是交出去。看不看結算是他自己的事，不該由它決定
+     東西有沒有送到。 */
+  r.state = 'submitted';
   save();
   logEvent('submit', { teamId: teamId, runId: runId, est: r.est, actual: r.actual, stamp: r.stamp });
   return r;
@@ -927,11 +945,17 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
   return r;
 }
 
-/* 準時的直接排進老師的雷達，不用復盤 */
-function actSkipCamp(runId) {
+/* 看過那兩個數字了。
+
+   本來這一支叫 actSkipCamp，做的事是把 state 從 judged 推成 submitted——
+   也就是「按了這一顆，老師才收得到」。那是舊營火流程的殘留，
+   而它變成整條主流程唯一真正的送出鍵，卻長得像「我知道了」。
+
+   現在送出在 actSubmit 就做完了，這一支只記「他看過了」。 */
+function actSawStamp(runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return null;
-  r.state = 'submitted';
+  r.sawStamp = now();
   save();
   return r;
 }

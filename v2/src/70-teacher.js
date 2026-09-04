@@ -159,6 +159,25 @@ PAGES.review = function () {
   /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
   var H = [head('審核', t.name + '　·　' + m.title, '')];
 
+  /* ── 要這件事的那一位 ──
+
+     學生從頭到尾在跟一個人打交道：他來委託、他在路的另一端等、
+     他收下東西。而老師這一頁上他完全不在——老師看到的是一份表單，
+     學生看到的是一場戲。同一件事的兩端，長得像兩個不同的系統。
+
+     放他一張臉跟一個名字。這一頁不加登場動畫——老師打開它是要做事，
+     一段演出會擋在他跟他要判斷的東西中間。學生那一邊要動機，
+     老師這一邊要看得清楚。 */
+  var pat = mobOfRun(r);
+  if (pat) {
+    var pz = mobZone(pat);
+    H.push('<div class="card rvw-pat ' + pz.key + '">');
+    H.push(patTag(pat, pz.pal, 'rvw-px'));
+    H.push('<div class="rvw-t"><b>' + esc(pat.n) + '</b>');
+    H.push('<em>' + esc(pat.t) + '</em></div>');
+    H.push('</div>');
+  }
+
   /* 他們說東西在哪，排在最上面——他打開這一頁的第一件事就是去看東西。
 
      本來這裡只有一句「成果交在你原本收的地方」，然後叫他自己去找。
@@ -256,7 +275,8 @@ PAGES.review = function () {
   H.push('<div class="eyebrow">你的想法　選填</div>');
   H.push('<p class="dim">退回去改一定要寫。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
-    esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
+    esc('例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
+    '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
 
@@ -305,7 +325,7 @@ PAGES.ms = function () {
   /* 「派一個新的」拿掉了：這一頁的標題就是「發派任務／你要他們交什麼」，
      而底下第一個框就是題目——同一件事說三次。 */
   H.push('<div class="card">');
-  H.push('<input id="ms-title" value="' + esc(draft('msTitle', '')) + '" oninput="DRAFT[\'msTitle\']=this.value" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
+  H.push('<input id="ms-title" value="' + esc(draft('msTitle', '')) + '" oninput="DRAFT[\'msTitle\']=this.value" placeholder="' + esc('一句話說清楚要做完什麼') + '">');
   H.push('<textarea id="ms-note" oninput="DRAFT[\'msNote\']=this.value" rows="2" placeholder="' +
     esc('要注意的地方。選填。') + '">' + esc(draft('msNote', '')) + '</textarea>');
   /* ── 分段 ──
@@ -329,7 +349,7 @@ PAGES.ms = function () {
     H.push('</div>');
   }
   H.push('<input id="ms-step" placeholder="' +
-    esc(sp.length ? '再切一段，按 Enter' : '例：訪三個人　→ 按 Enter') +
+    esc(sp.length ? '再切一段，按 Enter' : '切一段，按 Enter') +
     '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
   H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段' :
     '不寫的話他們自己拆。') + '</p>');

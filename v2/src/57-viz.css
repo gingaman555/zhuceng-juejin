@@ -2253,3 +2253,31 @@ button.ac:active{transform:translateY(1px)}
    不用讀，所以沒有文字、沒有圖例。 */
 .rs-sh{display:flex;gap:1px;width:100%;height:5px;margin:5px 0 0}
 .rs-sh i{flex:1 1 auto;min-width:3px;height:5px;display:block}
+
+/* 結算那一格：一行一行進來。
+
+   演出不落在揭曉上（那一下在照面那一頁演過了），落在最後那一行——
+   「上一趟相差」是這一頁唯一照面沒有的東西，也是整套系統裡唯一
+   說得出「我在變好」的地方。它慢一拍到，所以他讀完自己這一趟，
+   才看到上一次的自己站在旁邊。
+
+   steps(2)、往上推 6px，跟這個世界其他的登場同一種手感。 */
+.rep.stage dt,.rep.stage dd{
+  animation:repline .28s steps(2,end) var(--d,0ms) 1 backwards
+}
+@keyframes repline{
+  0%{opacity:0;transform:translateY(6px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@media (prefers-reduced-motion: reduce){
+  .rep.stage dt,.rep.stage dd{animation:none}
+}
+
+/* 老師這一頁上的委託人。學生跟他打了一整趟交道，而老師本來看不到他。
+
+   小、橫排、不動——老師這一頁的工作是讀，不是看戲。 */
+.card.rvw-pat{display:flex;align-items:flex-start;gap:14px;background-color:var(--zbg)}
+.px.rvw-px{width:66px;height:44px;flex:0 0 66px;image-rendering:pixelated}
+.rvw-t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.rvw-t b{font-size:22px;font-weight:400;color:var(--zink,var(--ink))}
+.rvw-t em{font-size:22px;font-style:normal;line-height:1.6;color:var(--dim)}

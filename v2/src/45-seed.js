@@ -41,7 +41,7 @@ function seed() {
 
   var TEAMS = [
     /* mentor 留著沒有用了——老師看整個班（見 40-db.js 的 teamsUnder）。 */
-    { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30, mentor: 'U0' },
+    { id: 'G1', name: '第一組 · 甲', project: '校內共享單車調度', tier: 2, joined: 30, mentor: 'U0' },
     { id: 'G2', name: '第二組 · 乙', project: '課表 App',     tier: 0, joined: 30, mentor: 'U0' },
     { id: 'G3', name: '第三組 · 丙', project: '宿舍回收動線', tier: 1, joined: 30, mentor: 'U6' },
     { id: 'G4', name: '第四組 · 丁', project: '系上導覽',     tier: 1, joined: 30, mentor: 'U6' },
@@ -113,14 +113,14 @@ function seed() {
 
   /* ---------- 三個任務 ---------- */
   var M1 = { msId: 'M1', classId: cid, teams: [], at: ago(24),
-    title: '訪三個人，記下他們怎麼講',
-    steps: ['找到人', '約時間', '訪談', '整理逐字稿'],
-    steps: ['找到人', '約時間', '訪談', '整理逐字稿'],
+    title: '找三份資料，記下各自在講什麼',
+    steps: ['找來源', '讀過一次', '摘重點', '整理成表'],
+    steps: ['找來源', '讀過一次', '摘重點', '整理成表'],
     note: '不要問「你覺得好不好」。問他上一次遇到這件事是什麼時候。' };
   var M2 = { msId: 'M2', classId: cid, teams: [], at: ago(14),
-    title: '把痛點收斂成一句話',
-    steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
-    steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
+    title: '把問題收斂成一句話',
+    steps: ['把重點分類', '挑出一直出現的', '寫成一句'],
+    steps: ['把重點分類', '挑出一直出現的', '寫成一句'],
     note: '不要寫題目，寫問題。' };
   var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3), due: T0 + 6 * DAY,
     title: '畫一張現在的流程圖',
@@ -131,8 +131,8 @@ function seed() {
      M4 才是在示範「每位老師規劃自己的任務與步調」：薛老師自己派的，
      只有他帶的那兩組收得到，而且比別人晚了十天才開始。 */
   var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: [], at: ago(1), due: T0 + 12 * DAY,
-    title: '找兩個人試用紙原型',
-    steps: ['畫紙原型', '約人', '坐在旁邊看他點'],
+    title: '找兩個人試一次，記下卡在哪',
+    steps: ['做出可以試的版本', '約人', '在旁邊看他用'],
     note: '不要跟他解釋。他卡住的地方就是答案。' };
   DB.Milestones.push(M1, M2, M3, M4);
   DB.Config.seq = 10;
@@ -140,7 +140,7 @@ function seed() {
   /* 幫忙塞推進紀錄。
 
      每一天動的是哪一段也一起塞，取自那一個任務的分段——不然試用資料的
-     廊道每一格都長一樣，看不出「這一趟大半在訪談」跟「這一趟一直在修改」
+     廊道每一格都長一樣，看不出「這一趟大半在找資料」跟「這一趟一直在修改」
      的差別，而那正是這個機制要讓人看見的東西。
      沒分段的任務塞 -1，那也是一種樣子。 */
   function pushes(teamId, runId, days, from) {
@@ -157,7 +157,7 @@ function seed() {
   DB.Runs.push({ runId: 'R1', teamId: 'G1', msId: 'M1', state: 'done',
     est: 6, actual: 6, stamp: 'exact', flags: [0], overs: [], pushes: 6,
     committedAt: ago(24), submittedAt: ago(18), doneAt: ago(17),
-    word: '你說六天就是六天。訪談那幾天沒有拖。' });
+    word: '你說六天就是六天。中間那幾天沒有拖。' });
   pushes('G1', 'R1', 6, 23);
 
   DB.Runs.push({ runId: 'R2', teamId: 'G1', msId: 'M2', state: 'done',
@@ -174,7 +174,7 @@ function seed() {
   DB.Runs.push({ runId: 'R4', teamId: 'G2', msId: 'M1', state: 'done',
     est: 3, actual: 9, stamp: 'late', flags: [], overs: [1, 2], pushes: 5,
     committedAt: ago(24), submittedAt: ago(15), doneAt: ago(14),
-    word: '你們說做原型跟測試比想的久，這兩件我看到了。' });
+    word: '你們說做出來跟找人試比想的久，這兩件我看到了。' });
   pushes('G2', 'R4', 5, 22);
 
   DB.Runs.push({ runId: 'R5', teamId: 'G2', msId: 'M2', state: 'judged',

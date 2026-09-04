@@ -51,7 +51,8 @@ runsFor(TEAM).forEach(function (x) {
     /* 省思在「上」之前，而且每一次都問。 */
     actReflect(TEAM, x.run.runId, [0]);
     actSubmit(TEAM, x.run.runId);
-    actSkipCamp(x.run.runId);
+    /* actSkipCamp 拿掉了：交出去現在直接進老師的清單，
+       那一支改成只記「他看過結算」（actSawStamp），不影響流程。 */
     actApprove(x.run.runId, '');
   }
 });
@@ -109,19 +110,26 @@ for (let n = 1; n <= ROUNDS; n++) {
   const expect = RULES.judge(r.est, r.actual).key;
   if (r.stamp !== expect) fail(label + '：判定不一致 ' + r.stamp + ' vs ' + expect);
 
-  /* 8. 交完一定先看判定，看完按「好」才進老師的雷達。
-     這裡本來會分岔（失準才復盤），省思搬到「上」之前之後不再分岔——
-     每一個人都想過一次，不是只有失準的人。 */
-  nt = nextThing(TEAM);
-  if (nt.kind !== 'stamped') fail(label + '：交完之後應該看判定，卻是 ' + nt.kind);
-  if (radar(CID).some(function (x) { return x.run.runId === r.runId; })) {
-    fail(label + '：還沒看判定就出現在老師的雷達上');
-  }
-  actSkipCamp(r.runId);
+  /* 8. 交完就該在老師的雷達上。
 
-  /* 9. 現在才該出現在雷達上 */
+     這一條翻過來了。本來的不變式是「還沒看判定就不該在雷達上」——
+     那守的是舊流程：交出去只是 judged，學生要再打開結算頁、再按一顆
+     叫「好」的鍵，東西才真的送到。量出來的樣子是學生按完「交出去」、
+     關掉、以為交了，而老師的清單是空的。
+
+     現在：交出去就是交出去。看不看結算是他自己的事。 */
   if (!radar(CID).some(function (x) { return x.run.runId === r.runId; })) {
-    fail(label + '：復盤完了卻沒出現在老師的雷達上');
+    fail(label + '：交出去了，老師的雷達上卻沒有');
+  }
+
+  /* 9. 而且首頁還是會叫他去看那兩個數字（看過就不叫了）。 */
+  nt = nextThing(TEAM);
+  if (nt.kind !== 'stamped') fail(label + '：交完之後應該叫他看判定，卻是 ' + nt.kind);
+  actSawStamp(r.runId);
+  nt = nextThing(TEAM);
+  if (nt.kind === 'stamped') fail(label + '：看過判定了還在叫他看');
+  if (!radar(CID).some(function (x) { return x.run.runId === r.runId; })) {
+    fail(label + '：看完判定之後從老師的雷達上消失了');
   }
 
   /* 10. 老師勾一個可以——勾下去就是完成，學生那邊不用再按一次 */
@@ -166,7 +174,7 @@ var g2 = 0;
 while (RULES.progress(rX.pushes, rX.est) < 1 && g2++ < 30) { actPush(TEAM, rX.runId, -1, 0); tick(); }
 actReflect(TEAM, rX.runId, [0]);
 actSubmit(TEAM, rX.runId);
-actSkipCamp(rX.runId);
+actSawStamp(rX.runId);
 actApprove(rX.runId, '');
 
 console.log('\n跑完 ' + ROUNDS + ' 輪。');

@@ -165,7 +165,8 @@ PAGES.mkclass = function () {
   H.push(head('開一個班', '取個名字就好', ''));
   H.push('<div class="card">');
   H.push('<div class="eyebrow">班名</div>');
-  H.push('<input id="mk-name" value="" placeholder="' + esc('例：114-1 專題') + '">');
+  H.push('<input id="mk-name" value="" placeholder="' +
+    esc('例：114-1 畢業專題') + '">');
   H.push('</div>');
   H.push('<p class="dim">開好之後會給你一組六碼。學生用那組碼建自己的帳號。</p>');
   H.push('<div class="row">');

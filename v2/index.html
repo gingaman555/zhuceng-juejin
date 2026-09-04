@@ -4324,6 +4324,34 @@ button.ac:active{transform:translateY(1px)}
 .rs-sh{display:flex;gap:1px;width:100%;height:5px;margin:5px 0 0}
 .rs-sh i{flex:1 1 auto;min-width:3px;height:5px;display:block}
 
+/* 結算那一格：一行一行進來。
+
+   演出不落在揭曉上（那一下在照面那一頁演過了），落在最後那一行——
+   「上一趟相差」是這一頁唯一照面沒有的東西，也是整套系統裡唯一
+   說得出「我在變好」的地方。它慢一拍到，所以他讀完自己這一趟，
+   才看到上一次的自己站在旁邊。
+
+   steps(2)、往上推 6px，跟這個世界其他的登場同一種手感。 */
+.rep.stage dt,.rep.stage dd{
+  animation:repline .28s steps(2,end) var(--d,0ms) 1 backwards
+}
+@keyframes repline{
+  0%{opacity:0;transform:translateY(6px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@media (prefers-reduced-motion: reduce){
+  .rep.stage dt,.rep.stage dd{animation:none}
+}
+
+/* 老師這一頁上的委託人。學生跟他打了一整趟交道，而老師本來看不到他。
+
+   小、橫排、不動——老師這一頁的工作是讀，不是看戲。 */
+.card.rvw-pat{display:flex;align-items:flex-start;gap:14px;background-color:var(--zbg)}
+.px.rvw-px{width:66px;height:44px;flex:0 0 66px;image-rendering:pixelated}
+.rvw-t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.rvw-t b{font-size:22px;font-weight:400;color:var(--zink,var(--ink))}
+.rvw-t em{font-size:22px;font-style:normal;line-height:1.6;color:var(--dim)}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -9123,7 +9151,7 @@ function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 7;
+var SEED_V = 8;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -9219,7 +9247,14 @@ function nextThing(teamId) {
   /* 1. 交了、判定出來了、還沒按「好」。
      省思那一題搬到交出去之前了，所以這裡不再分岔——
      每一個人都想過一次，不是只有失準的人。 */
-  var judged = rows.filter(function (x) { return x.run.state === 'judged'; })[0];
+  /* 交了、還沒看過那兩個數字。
+
+     本來這一條看的是 state === 'judged'，而那個狀態同時代表「還沒送到
+     老師手上」——所以「他有沒有看過結算」跟「老師有沒有收到」被綁成
+     同一件事。現在分開：送到是 actSubmit 的事，看過是 sawStamp。 */
+  var judged = rows.filter(function (x) {
+    return x.run.state === 'submitted' && !x.run.sawStamp;
+  })[0];
   if (judged) return { kind: 'stamped', row: judged };
   /* 2. 老師退回來了。
      排在這裡不是排在後面：它跟「老師勾了」同一類——有人為你做了一件事，
@@ -9937,7 +9972,18 @@ function actSubmit(teamId, runId, link) {
   r.stamp = RULES.judge(r.est, r.actual).key;
   r.link = link || '';
   r.submittedAt = now();
-  r.state = 'judged';
+  /* 直接進老師的清單。
+
+     本來這裡設的是 'judged'，而老師的清單只收 'submitted'（見 radar）——
+     中間卡著結算那一頁：學生要再打開「看準不準」、再按一顆叫「好」的鍵，
+     東西才真的送到。那顆鍵的函式叫 actSkipCamp，是舊營火流程的殘留。
+
+     量出來的樣子：學生按完「交出去」，老師的清單還是空的。他關掉、
+     以為交了；老師打開什麼都沒有。
+
+     交出去就是交出去。看不看結算是他自己的事，不該由它決定
+     東西有沒有送到。 */
+  r.state = 'submitted';
   save();
   logEvent('submit', { teamId: teamId, runId: runId, est: r.est, actual: r.actual, stamp: r.stamp });
   return r;
@@ -9995,11 +10041,17 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
   return r;
 }
 
-/* 準時的直接排進老師的雷達，不用復盤 */
-function actSkipCamp(runId) {
+/* 看過那兩個數字了。
+
+   本來這一支叫 actSkipCamp，做的事是把 state 從 judged 推成 submitted——
+   也就是「按了這一顆，老師才收得到」。那是舊營火流程的殘留，
+   而它變成整條主流程唯一真正的送出鍵，卻長得像「我知道了」。
+
+   現在送出在 actSubmit 就做完了，這一支只記「他看過了」。 */
+function actSawStamp(runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return null;
-  r.state = 'submitted';
+  r.sawStamp = now();
   save();
   return r;
 }
@@ -10832,7 +10884,7 @@ function seed() {
 
   var TEAMS = [
     /* mentor 留著沒有用了——老師看整個班（見 40-db.js 的 teamsUnder）。 */
-    { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30, mentor: 'U0' },
+    { id: 'G1', name: '第一組 · 甲', project: '校內共享單車調度', tier: 2, joined: 30, mentor: 'U0' },
     { id: 'G2', name: '第二組 · 乙', project: '課表 App',     tier: 0, joined: 30, mentor: 'U0' },
     { id: 'G3', name: '第三組 · 丙', project: '宿舍回收動線', tier: 1, joined: 30, mentor: 'U6' },
     { id: 'G4', name: '第四組 · 丁', project: '系上導覽',     tier: 1, joined: 30, mentor: 'U6' },
@@ -10904,14 +10956,14 @@ function seed() {
 
   /* ---------- 三個任務 ---------- */
   var M1 = { msId: 'M1', classId: cid, teams: [], at: ago(24),
-    title: '訪三個人，記下他們怎麼講',
-    steps: ['找到人', '約時間', '訪談', '整理逐字稿'],
-    steps: ['找到人', '約時間', '訪談', '整理逐字稿'],
+    title: '找三份資料，記下各自在講什麼',
+    steps: ['找來源', '讀過一次', '摘重點', '整理成表'],
+    steps: ['找來源', '讀過一次', '摘重點', '整理成表'],
     note: '不要問「你覺得好不好」。問他上一次遇到這件事是什麼時候。' };
   var M2 = { msId: 'M2', classId: cid, teams: [], at: ago(14),
-    title: '把痛點收斂成一句話',
-    steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
-    steps: ['把逐字稿分類', '挑出重複出現的', '寫成一句'],
+    title: '把問題收斂成一句話',
+    steps: ['把重點分類', '挑出一直出現的', '寫成一句'],
+    steps: ['把重點分類', '挑出一直出現的', '寫成一句'],
     note: '不要寫題目，寫問題。' };
   var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3), due: T0 + 6 * DAY,
     title: '畫一張現在的流程圖',
@@ -10922,8 +10974,8 @@ function seed() {
      M4 才是在示範「每位老師規劃自己的任務與步調」：薛老師自己派的，
      只有他帶的那兩組收得到，而且比別人晚了十天才開始。 */
   var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: [], at: ago(1), due: T0 + 12 * DAY,
-    title: '找兩個人試用紙原型',
-    steps: ['畫紙原型', '約人', '坐在旁邊看他點'],
+    title: '找兩個人試一次，記下卡在哪',
+    steps: ['做出可以試的版本', '約人', '在旁邊看他用'],
     note: '不要跟他解釋。他卡住的地方就是答案。' };
   DB.Milestones.push(M1, M2, M3, M4);
   DB.Config.seq = 10;
@@ -10931,7 +10983,7 @@ function seed() {
   /* 幫忙塞推進紀錄。
 
      每一天動的是哪一段也一起塞，取自那一個任務的分段——不然試用資料的
-     廊道每一格都長一樣，看不出「這一趟大半在訪談」跟「這一趟一直在修改」
+     廊道每一格都長一樣，看不出「這一趟大半在找資料」跟「這一趟一直在修改」
      的差別，而那正是這個機制要讓人看見的東西。
      沒分段的任務塞 -1，那也是一種樣子。 */
   function pushes(teamId, runId, days, from) {
@@ -10948,7 +11000,7 @@ function seed() {
   DB.Runs.push({ runId: 'R1', teamId: 'G1', msId: 'M1', state: 'done',
     est: 6, actual: 6, stamp: 'exact', flags: [0], overs: [], pushes: 6,
     committedAt: ago(24), submittedAt: ago(18), doneAt: ago(17),
-    word: '你說六天就是六天。訪談那幾天沒有拖。' });
+    word: '你說六天就是六天。中間那幾天沒有拖。' });
   pushes('G1', 'R1', 6, 23);
 
   DB.Runs.push({ runId: 'R2', teamId: 'G1', msId: 'M2', state: 'done',
@@ -10965,7 +11017,7 @@ function seed() {
   DB.Runs.push({ runId: 'R4', teamId: 'G2', msId: 'M1', state: 'done',
     est: 3, actual: 9, stamp: 'late', flags: [], overs: [1, 2], pushes: 5,
     committedAt: ago(24), submittedAt: ago(15), doneAt: ago(14),
-    word: '你們說做原型跟測試比想的久，這兩件我看到了。' });
+    word: '你們說做出來跟找人試比想的久，這兩件我看到了。' });
   pushes('G2', 'R4', 5, 22);
 
   DB.Runs.push({ runId: 'R5', teamId: 'G2', msId: 'M2', state: 'judged',
@@ -11789,7 +11841,7 @@ var ACTS = {
      它跟「沒有回答」不一樣。 */
   oversame: function () { DRAFT.overs = []; DRAFT.said = 1; render(); },
 
-  skipcamp: function (runId) { actSkipCamp(runId); go('home'); },
+  sawstamp: function (runId) { actSawStamp(runId); go('home'); },
 
   reflect: function (runId) {
     var t = myTeam();
@@ -12051,9 +12103,15 @@ var ACTS = {
   approve: function (runId) {
     var word = (document.getElementById('gr-word') || {}).value || '';
     var b = DRAFT.bonus || RULES.COIN.bonusMin;
+    var r0 = find('Runs', function (x) { return x.runId === runId; });
+    var pat0 = r0 ? mobOfRun(r0) : null;
     if (!actApprove(runId, word.trim(), b)) return say('這一件已經看過了。');
     go('radar');
-    say('收下了。給了 ' + b + ' 枚。');
+    /* 誰收下的。本來只說「收下了」——而收下這件事在學生那一邊是
+       一場戲（委託人伸手接過去），在老師這一邊只有兩個字。
+       把那一位的名字放進去，兩端講的才是同一件事。 */
+    say((pat0 ? pat0.n + ' 收下了。' : '收下了。') +
+      '你多給了 ' + b + ' 枚。');
   }
 };
 
@@ -12539,7 +12597,8 @@ PAGES.mkclass = function () {
   H.push(head('開一個班', '取個名字就好', ''));
   H.push('<div class="card">');
   H.push('<div class="eyebrow">班名</div>');
-  H.push('<input id="mk-name" value="" placeholder="' + esc('例：114-1 專題') + '">');
+  H.push('<input id="mk-name" value="" placeholder="' +
+    esc('例：114-1 畢業專題') + '">');
   H.push('</div>');
   H.push('<p class="dim">開好之後會給你一組六碼。學生用那組碼建自己的帳號。</p>');
   H.push('<div class="row">');
@@ -13583,8 +13642,15 @@ PAGES.stamp = function () {
   var zone = strataAt(Math.max(0, depthOf(t.teamId) - 1), t.teamId);
   var mob = mobOfRun(r);
 
-  /* 戲在戰鬥那一頁演完了，這裡只留報告。
-     再演一次是重複，而且那一層閃光在動畫被凍住的時候會蓋成一片白。 */
+  /* 戲在照面那一頁演完了，這裡只留報告——再把那一下重演一次是重複，
+     而且那一層閃光在動畫被凍住的時候會蓋成一片白。
+
+     但這一頁有一樣東西是照面沒有的：**跟上一趟比**。那是整套系統裡
+     唯一說得出「我在變好」的地方，而它本來只是清單上的又一行。
+
+     所以演出不落在揭曉上，落在那一行上：三行一行一行進來，
+     上一趟那一行最後到，而且慢一拍。他讀完自己這一趟，
+     才看到上一次的自己站在旁邊。 */
   var H = [];
   H.push('<div class="stamp-card ' + r.stamp + '">');
   /* 他怎麼樣了。準的時候舉起手，比說的久的時候撐著膝蓋喘——
@@ -13593,11 +13659,11 @@ PAGES.stamp = function () {
     pxTag(r.stamp === 'late' ? HERO.pant : HERO.win, HERO.pal, 'sw-px') + '</div>');
   H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
-  H.push('<dl class="rep">');
-  H.push('<dt>你的規劃</dt><dd>' + r.est + '</dd>');
-  H.push('<dt>實際</dt><dd>' + r.actual + '</dd>');
-  H.push('<dt>相差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
-    (r.actual - r.est) + '</dd>');
+  H.push('<dl class="rep stage">');
+  H.push('<dt style="--d:0ms">你的規劃</dt><dd style="--d:0ms">' + r.est + '</dd>');
+  H.push('<dt style="--d:260ms">實際</dt><dd style="--d:260ms">' + r.actual + '</dd>');
+  H.push('<dt style="--d:520ms">相差</dt><dd style="--d:520ms">' +
+    (r.actual - r.est > 0 ? '+' : '') + (r.actual - r.est) + '</dd>');
 
   /* 上一趟差幾天。「我在變好」這件事本來沒有任何地方說得出口，
      而它只需要兩個數字。不寫「比上一趟準」那種結論——
@@ -13610,13 +13676,24 @@ PAGES.stamp = function () {
     if (!prev || (x.run.submittedAt || 0) > (prev.submittedAt || 0)) prev = x.run;
   });
   if (prev) {
-    H.push('<dt>上一趟相差</dt><dd class="dim">' +
+    /* 慢一拍。他讀完自己這一趟，才看到上一次的自己站在旁邊。 */
+    H.push('<dt style="--d:900ms">上一趟相差</dt><dd class="dim" style="--d:900ms">' +
       (prev.actual - prev.est > 0 ? '+' : '') + (prev.actual - prev.est) + '</dd>');
   }
 
   /* 承諾的時候標的那幾段，跟實際比較久的那幾段，對到幾個。
      兩份資料本來就都在（flags 與 overs），只是從來沒有比對過。
-     沒標過就整行不出現。 */
+     沒標過就整行不出現。
+
+     ── 從這裡起是另一份清單 ──
+
+     上面那四行是排過拍子進來的（見 .rep.stage）。底下這幾行沒有拍子，
+     如果留在同一個 dl 裡，它們的 delay 是 0——會**比「上一趟相差」
+     還早出現**，整個順序就亂了。
+
+     所以在這裡收掉，另開一份。演出只給那四個數字，這幾行直接在。 */
+  H.push('</dl>');
+  H.push('<dl class="rep">');
   var fl = r.flags || [];
   if (fl.length) {
     var hit = 0;
@@ -13641,7 +13718,7 @@ PAGES.stamp = function () {
   H.push('<p class="duel-t">' + esc(mob.n) + '讓開了。</p>');
 
   /* 「去圖鑑看看」那一句拿掉了——圖鑑那一頁不在主流程上，整個拿掉了。 */
-  H.push(btn('好', 'skipcamp:' + r.runId, 'big'));
+  H.push(btn('回廊道', 'sawstamp:' + r.runId, 'big'));
   return H.join('');
 };
 
@@ -16458,7 +16535,8 @@ var BT_STEPS = [
     body: function () {
       return '<textarea class="bt-w" rows="2" maxlength="200" ' +
         'oninput="DRAFT.next=this.value" placeholder="' +
-        esc('例：再訪一個人，第三份的資料太薄') + '">' + esc(draft('next', '')) + '</textarea>';
+        esc('例：把第三件收尾，那一件只做了一半') + '">' +
+        esc(draft('next', '')) + '</textarea>';
     },
     need: function () { return !!String(DRAFT.next || '').trim(); } }
 ];
@@ -17369,6 +17447,25 @@ PAGES.review = function () {
   /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
   var H = [head('審核', t.name + '　·　' + m.title, '')];
 
+  /* ── 要這件事的那一位 ──
+
+     學生從頭到尾在跟一個人打交道：他來委託、他在路的另一端等、
+     他收下東西。而老師這一頁上他完全不在——老師看到的是一份表單，
+     學生看到的是一場戲。同一件事的兩端，長得像兩個不同的系統。
+
+     放他一張臉跟一個名字。這一頁不加登場動畫——老師打開它是要做事，
+     一段演出會擋在他跟他要判斷的東西中間。學生那一邊要動機，
+     老師這一邊要看得清楚。 */
+  var pat = mobOfRun(r);
+  if (pat) {
+    var pz = mobZone(pat);
+    H.push('<div class="card rvw-pat ' + pz.key + '">');
+    H.push(patTag(pat, pz.pal, 'rvw-px'));
+    H.push('<div class="rvw-t"><b>' + esc(pat.n) + '</b>');
+    H.push('<em>' + esc(pat.t) + '</em></div>');
+    H.push('</div>');
+  }
+
   /* 他們說東西在哪，排在最上面——他打開這一頁的第一件事就是去看東西。
 
      本來這裡只有一句「成果交在你原本收的地方」，然後叫他自己去找。
@@ -17466,7 +17563,8 @@ PAGES.review = function () {
   H.push('<div class="eyebrow">你的想法　選填</div>');
   H.push('<p class="dim">退回去改一定要寫。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
-    esc('例：訪綱太長，受訪者撐不到後面那幾題。') + '">' + esc(draft('gr-word')) + '</textarea>');
+    esc('例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
+    '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
 
@@ -17515,7 +17613,7 @@ PAGES.ms = function () {
   /* 「派一個新的」拿掉了：這一頁的標題就是「發派任務／你要他們交什麼」，
      而底下第一個框就是題目——同一件事說三次。 */
   H.push('<div class="card">');
-  H.push('<input id="ms-title" value="' + esc(draft('msTitle', '')) + '" oninput="DRAFT[\'msTitle\']=this.value" placeholder="' + esc('例：訪三個人，記下他們怎麼講') + '">');
+  H.push('<input id="ms-title" value="' + esc(draft('msTitle', '')) + '" oninput="DRAFT[\'msTitle\']=this.value" placeholder="' + esc('一句話說清楚要做完什麼') + '">');
   H.push('<textarea id="ms-note" oninput="DRAFT[\'msNote\']=this.value" rows="2" placeholder="' +
     esc('要注意的地方。選填。') + '">' + esc(draft('msNote', '')) + '</textarea>');
   /* ── 分段 ──
@@ -17539,7 +17637,7 @@ PAGES.ms = function () {
     H.push('</div>');
   }
   H.push('<input id="ms-step" placeholder="' +
-    esc(sp.length ? '再切一段，按 Enter' : '例：訪三個人　→ 按 Enter') +
+    esc(sp.length ? '再切一段，按 Enter' : '切一段，按 Enter') +
     '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
   H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段' :
     '不寫的話他們自己拆。') + '</p>');
@@ -17690,7 +17788,7 @@ PAGES.rs = function () {
   });
   H.push('<div class="eyebrow" style="margin-top:14px">開一個新的班</div>');
   H.push('<div class="rn-row">');
-  H.push('<input id="ncls" value="' + esc(draft('nCls', '')) + '" oninput="DRAFT[\'nCls\']=this.value" placeholder="' + esc('班級名稱，例：設計專題') + '">');
+  H.push('<input id="ncls" value="' + esc(draft('nCls', '')) + '" oninput="DRAFT[\'nCls\']=this.value" placeholder="' + esc('班級名稱，例：114-1 畢業專題') + '">');
   H.push(btn('建立', 'newclass', 'ghost'));
   H.push('</div>');
   H.push('</div>');

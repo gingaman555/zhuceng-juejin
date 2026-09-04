@@ -52,7 +52,7 @@ PAGES.rs = function () {
   });
   H.push('<div class="eyebrow" style="margin-top:14px">開一個新的班</div>');
   H.push('<div class="rn-row">');
-  H.push('<input id="ncls" value="' + esc(draft('nCls', '')) + '" oninput="DRAFT[\'nCls\']=this.value" placeholder="' + esc('班級名稱，例：設計專題') + '">');
+  H.push('<input id="ncls" value="' + esc(draft('nCls', '')) + '" oninput="DRAFT[\'nCls\']=this.value" placeholder="' + esc('班級名稱，例：114-1 畢業專題') + '">');
   H.push(btn('建立', 'newclass', 'ghost'));
   H.push('</div>');
   H.push('</div>');

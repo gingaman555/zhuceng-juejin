@@ -663,7 +663,7 @@ var ACTS = {
      它跟「沒有回答」不一樣。 */
   oversame: function () { DRAFT.overs = []; DRAFT.said = 1; render(); },
 
-  skipcamp: function (runId) { actSkipCamp(runId); go('home'); },
+  sawstamp: function (runId) { actSawStamp(runId); go('home'); },
 
   reflect: function (runId) {
     var t = myTeam();
@@ -925,8 +925,14 @@ var ACTS = {
   approve: function (runId) {
     var word = (document.getElementById('gr-word') || {}).value || '';
     var b = DRAFT.bonus || RULES.COIN.bonusMin;
+    var r0 = find('Runs', function (x) { return x.runId === runId; });
+    var pat0 = r0 ? mobOfRun(r0) : null;
     if (!actApprove(runId, word.trim(), b)) return say('這一件已經看過了。');
     go('radar');
-    say('收下了。給了 ' + b + ' 枚。');
+    /* 誰收下的。本來只說「收下了」——而收下這件事在學生那一邊是
+       一場戲（委託人伸手接過去），在老師這一邊只有兩個字。
+       把那一位的名字放進去，兩端講的才是同一件事。 */
+    say((pat0 ? pat0.n + ' 收下了。' : '收下了。') +
+      '你多給了 ' + b + ' 枚。');
   }
 };

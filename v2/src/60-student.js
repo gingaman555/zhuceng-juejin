@@ -900,8 +900,15 @@ PAGES.stamp = function () {
   var zone = strataAt(Math.max(0, depthOf(t.teamId) - 1), t.teamId);
   var mob = mobOfRun(r);
 
-  /* 戲在戰鬥那一頁演完了，這裡只留報告。
-     再演一次是重複，而且那一層閃光在動畫被凍住的時候會蓋成一片白。 */
+  /* 戲在照面那一頁演完了，這裡只留報告——再把那一下重演一次是重複，
+     而且那一層閃光在動畫被凍住的時候會蓋成一片白。
+
+     但這一頁有一樣東西是照面沒有的：**跟上一趟比**。那是整套系統裡
+     唯一說得出「我在變好」的地方，而它本來只是清單上的又一行。
+
+     所以演出不落在揭曉上，落在那一行上：三行一行一行進來，
+     上一趟那一行最後到，而且慢一拍。他讀完自己這一趟，
+     才看到上一次的自己站在旁邊。 */
   var H = [];
   H.push('<div class="stamp-card ' + r.stamp + '">');
   /* 他怎麼樣了。準的時候舉起手，比說的久的時候撐著膝蓋喘——
@@ -910,11 +917,11 @@ PAGES.stamp = function () {
     pxTag(r.stamp === 'late' ? HERO.pant : HERO.win, HERO.pal, 'sw-px') + '</div>');
   H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
-  H.push('<dl class="rep">');
-  H.push('<dt>你的規劃</dt><dd>' + r.est + '</dd>');
-  H.push('<dt>實際</dt><dd>' + r.actual + '</dd>');
-  H.push('<dt>相差</dt><dd>' + (r.actual - r.est > 0 ? '+' : '') +
-    (r.actual - r.est) + '</dd>');
+  H.push('<dl class="rep stage">');
+  H.push('<dt style="--d:0ms">你的規劃</dt><dd style="--d:0ms">' + r.est + '</dd>');
+  H.push('<dt style="--d:260ms">實際</dt><dd style="--d:260ms">' + r.actual + '</dd>');
+  H.push('<dt style="--d:520ms">相差</dt><dd style="--d:520ms">' +
+    (r.actual - r.est > 0 ? '+' : '') + (r.actual - r.est) + '</dd>');
 
   /* 上一趟差幾天。「我在變好」這件事本來沒有任何地方說得出口，
      而它只需要兩個數字。不寫「比上一趟準」那種結論——
@@ -927,13 +934,24 @@ PAGES.stamp = function () {
     if (!prev || (x.run.submittedAt || 0) > (prev.submittedAt || 0)) prev = x.run;
   });
   if (prev) {
-    H.push('<dt>上一趟相差</dt><dd class="dim">' +
+    /* 慢一拍。他讀完自己這一趟，才看到上一次的自己站在旁邊。 */
+    H.push('<dt style="--d:900ms">上一趟相差</dt><dd class="dim" style="--d:900ms">' +
       (prev.actual - prev.est > 0 ? '+' : '') + (prev.actual - prev.est) + '</dd>');
   }
 
   /* 承諾的時候標的那幾段，跟實際比較久的那幾段，對到幾個。
      兩份資料本來就都在（flags 與 overs），只是從來沒有比對過。
-     沒標過就整行不出現。 */
+     沒標過就整行不出現。
+
+     ── 從這裡起是另一份清單 ──
+
+     上面那四行是排過拍子進來的（見 .rep.stage）。底下這幾行沒有拍子，
+     如果留在同一個 dl 裡，它們的 delay 是 0——會**比「上一趟相差」
+     還早出現**，整個順序就亂了。
+
+     所以在這裡收掉，另開一份。演出只給那四個數字，這幾行直接在。 */
+  H.push('</dl>');
+  H.push('<dl class="rep">');
   var fl = r.flags || [];
   if (fl.length) {
     var hit = 0;
@@ -958,7 +976,7 @@ PAGES.stamp = function () {
   H.push('<p class="duel-t">' + esc(mob.n) + '讓開了。</p>');
 
   /* 「去圖鑑看看」那一句拿掉了——圖鑑那一頁不在主流程上，整個拿掉了。 */
-  H.push(btn('好', 'skipcamp:' + r.runId, 'big'));
+  H.push(btn('回廊道', 'sawstamp:' + r.runId, 'big'));
   return H.join('');
 };
 
