@@ -187,6 +187,36 @@ if (ansFn && /\br\.askEst\s*=[^=]/.test(ansFn[0])) {
   console.error('actAnswerAsk 改了 r.askEst　——老師說過的話不能被改寫');
 }
 
+/* ---------- 三之一又四分之三 · 試用列不能出現在真的班上 ----------
+
+   切換身分、把時間往前推、整班重來。三個都是只有在示範資料上才
+   說得通的東西，而第三個會呼叫 seed()——那一支第一行是 DB = blank()，
+   接上雲端之後等於一個學生就能清掉全班。
+
+   demoBar 的第一行必須是那道門。 */
+const demoFn = src.match(/function demoBar\([\s\S]*?\n\}/);
+if (!demoFn) {
+  bad++;
+  console.error('找不到 demoBar——試用列那一段不見了');
+} else if (!/if\s*\(!isDemo\(\)\)\s*return\s*''/.test(demoFn[0])) {
+  bad++;
+  console.error('試用列沒有擋在示範資料裡　——真的班上學生點一下就變成老師');
+}
+/* 這兩顆會動到資料與時間，要的是嚴格那道門（isPureDemo）：
+   本機還是示範資料，但雲端的真帳號已經拉下來了，也不准。 */
+['forward', 'reset'].forEach(function (k) {
+  var fn = src.match(new RegExp('\\b' + k + ':\\s*function[\\s\\S]*?\\n  \\}'));
+  if (fn && !/isPureDemo\(\)/.test(fn[0])) {
+    bad++;
+    console.error('ACTS.' + k + ' 沒有用 isPureDemo 擋　——混著真資料的時候它會清掉全班');
+  }
+});
+/* 切換身分的選單不准列出真帳號。 */
+if (demoFn && !/filter\(function \(u\) \{ return u\._d; \}\)/.test(demoFn[0])) {
+  bad++;
+  console.error('切換身分那一格列出了真帳號　——學生點一下就變成老師');
+}
+
 /* ---------- 三之二 · 研究者只能看 ----------
 
    研究者是這個研究的觀察者。一個觀察者如果同時改得動被觀察對象的
@@ -348,7 +378,7 @@ if (bad) {
   process.exit(1);
 }
 console.log('殘留檢查通過：' + BANNED.length + ' 個禁用詞、畫面代號、寫死的規則句、' +
-  '判定的純度、老師改不動那個數字、研究者只能看、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度、沒有小字，都守住了。');
+  '判定的純度、老師改不動那個數字、試用列不上真的班、研究者只能看、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度、沒有小字，都守住了。');
 
 /* ---------- 九 · 這不是一個交作業的平台 ----------
 

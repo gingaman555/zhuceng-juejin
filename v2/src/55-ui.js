@@ -374,9 +374,51 @@ function topBar() {
     '</div>';
 }
 
-/* 試用列。真的上線沒有這一條——它在這裡只是為了讓你兩邊都走得完。 */
+/* 這一台機器上還是不是示範資料。
+
+   seed() 開著這個旗子，actRegister 關掉它——有人真的在這台機器上
+   建過一次帳號，這份資料就不再是示範資料了（見 40-db.js 的 load）。 */
+function isDemo() { return !!(DB && DB.Config && DB.Config.demo); }
+
+/* 而且整份資料裡沒有任何一筆是真的。
+
+   兩道門不一樣，是因為有第三種狀態：這台機器自己還是示範資料
+   （沒有人在這裡註冊過），但雲端已經有真的班了，而同步會把那些
+   真帳號拉下來跟示範資料混在一起。
+
+   那時候 isDemo() 還是 true，可是「整班重來」會呼叫 seed()，
+   而 seed() 第一行是 DB = blank()——連那些真的紀錄一起清掉，
+   然後同步把清空推上去。全班的資料在每一台機器上一起消失。
+
+   所以會動到資料與時間的那兩顆，用的是這一道嚴格的門。 */
+function isPureDemo() {
+  if (!isDemo()) return false;
+  var cols = ['Users', 'Classes', 'Teams', 'Milestones', 'Runs', 'Pushes', 'Keeps'];
+  for (var i = 0; i < cols.length; i++) {
+    var a = DB[cols[i]] || [];
+    for (var j = 0; j < a.length; j++) if (a[j] && !a[j]._d) return false;
+  }
+  return true;
+}
+
+/* 試用列：切換身分、把時間往前推、整班重來。
+
+   2026-09-05：它本來每一頁都畫，不分是不是示範資料。真的開一個班
+   之後那三顆還在，而那是三個都會出事的東西：
+
+     切換身分   學生點一下就變成老師，收下自己的作業
+     往前推一天 CLOCK 是算「實際花幾天」的來源，推了就等於改判定
+     整班重來   reset 直接呼叫 seed()，而 seed() 第一行是 DB = blank()。
+                加上雲端同步之後，那個清空會被推上去——一個學生按一下，
+                全班的資料在每一個人的機器上一起消失。
+
+   所以：有人真的註冊過就整條不畫。示範資料那一份完全沒變，
+   要展示、要走完兩邊，照舊。 */
 function demoBar() {
-  var opts = DB.Users.map(function (u) {
+  if (!isDemo()) return '';
+  /* 只列示範帳號。雲端拉下來的真帳號不進這個選單——
+     不然這一格就是「學生點一下變成老師」。 */
+  var opts = DB.Users.filter(function (u) { return u._d; }).map(function (u) {
     var t = u.teamId ? teamOf(u.teamId) : null;
     return '<option value="' + u.userId + '"' + (u.userId === S.who ? ' selected' : '') + '>' +
       esc(t ? t.name : u.name) + '</option>';
@@ -457,6 +499,11 @@ document.addEventListener('click', function (ev) {
 document.addEventListener('change', function (ev) {
   var a = ev.target.closest('[data-act="who"]');
   if (!a) return;
+  /* 只換得到示範帳號。真的帳號不在選單裡（見 demoBar），
+     這裡再擋一次——選單是畫面，畫面是可以被改的。 */
+  if (!isDemo()) return;
+  var target = userOf(a.value);
+  if (!target || !target._d) return;
   S.who = a.value;
   DB.Session = S.who;
   save();
@@ -480,8 +527,18 @@ function runAct(str) {
    推進」那一版的殘留——程式還在，但畫面上沒有任何地方按得到。
    留著只會讓下一個讀的人以為那個機制還在。 */
 var ACTS = {
-  forward: function () { CLOCK += DAY; say('往前一天了。'); },
-  reset: function () { seed(); S.who = 'U1'; go('home'); },
+  /* 這兩顆連同切換身分那一格，只有示範資料上才有（見 demoBar）。
+     這裡再擋一次：畫面沒畫不代表沒有人叫得到它。 */
+  forward: function () {
+    /* CLOCK 是「實際花了幾天」的來源。手上只要有一筆真的紀錄，
+       推一天就等於改掉那一筆的判定。 */
+    if (!isPureDemo()) return say('這裡有真的資料，時間不能往前推。');
+    CLOCK += DAY; say('往前一天了。');
+  },
+  reset: function () {
+    if (!isPureDemo()) return say('這裡有真的資料，不能整班重來。');
+    seed(); S.who = 'U1'; go('home');
+  },
 
   go: function (arg) {
     var i = arg.indexOf(':');
