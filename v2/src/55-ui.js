@@ -28,6 +28,9 @@ function go(page, p) {
      旗子放在 S 上，畫完就收；一次事件，不是一個狀態。
      只有 go 才掃，render 不掃——不然打一個字就掃一次。 */
   S.wipe = 1;
+  /* 上一頁是誰。放大看一位委託人之後要回得去原本那一頁——
+     從廊道點進去的回廊道，從圖鑑點進去的回圖鑑。 */
+  if (page !== S.page) S.prev = S.page;
   S.page = page; S.p = p || {}; S.flash = null; DRAFT = {};
   setTimeout(function () {
     S.wipe = 0;
@@ -97,6 +100,7 @@ var PAGE_ROLE = {
   eco: 'student', pack: 'student',
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
+  patron: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
   rs: 'researcher', events: 'researcher'
 };

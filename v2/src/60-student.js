@@ -584,7 +584,10 @@ PAGES.commit = function () {
   var pat = mobFor(m.msId, t.teamId);
   if (pat) {
     var pz = mobZone(pat);
-    H.push('<div class="card patron ' + pz.key + '">');
+    /* 整張卡點得下去——這是你第一次看到這次是誰的地方，
+       而「他長這樣」值得看清楚。 */
+    H.push('<div class="card patron can ' + pz.key + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:patron:' + pat.n })) + '\'>');
     H.push(patTag(pat, pz.pal, 'pat-px'));
     H.push('<div class="pat-t"><b>' + esc(pat.n) + '</b>');
     H.push('<em>' + esc(pat.t) + '</em>');

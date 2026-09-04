@@ -652,7 +652,8 @@ function sceneMob(t, row, prog, est, ENT) {
      每一趟因此有一條小小的線從頭拉到尾。 */
   /* 走到底了牠才出現，而且是浮出來的（scn-mob 那一段動畫）。
      還在路上的時候那裡什麼都沒有——前面是霧，不是一隻站著等你的東西。 */
-  H.push('<div class="scn-mob meet" style="left:' + x + 'px">');
+  H.push('<div class="scn-mob meet can" style="left:' + x + 'px" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:patron:' + mob.n })) + '\'>');
   H.push(patTag(mob, pal, 'ch'));
   H.push('<span class="mobn">' + esc(mob.n) + '</span>');
   H.push('</div>');
@@ -964,6 +965,15 @@ function osTick() {
        說完拿掉。他們因此還是沒有狀態牌，只是會出聲。 */
     var t = pick.tag;
     var made = !t;
+    /* 隊友開口的時候，你頭上那塊牌子先讓開。
+
+       以前只有你會說話，而你說話是把牌子上的字換掉——一個位置兩種內容，
+       所以不可能疊到。隊友頭上多長一塊之後就會了：兩個人只差 44px，
+       而一句話最寬 264px（量到疊了 90×33）。
+
+       那一條帶子一次只放一句話。 */
+    var box0 = document.querySelector('.scn');
+    if (made && box0) box0.className += ' matetalk';
     var back = '', kls = cls;
     if (made) {
       t = document.createElement('div');
@@ -997,6 +1007,8 @@ function osTick() {
     OS_T = setTimeout(function () {
       if (made) {
         if (t.parentNode) t.parentNode.removeChild(t);
+        var b2 = document.querySelector('.scn');
+        if (b2) b2.className = b2.className.replace(' matetalk', '');
       } else {
         var u2 = document.querySelector('.scn .scn-hero .hero-tag');
         if (!u2) return stopOS();

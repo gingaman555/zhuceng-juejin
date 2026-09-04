@@ -811,3 +811,13 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
     animation:none;margin-bottom:0
   }
 }
+
+/* 隊友開口的時候，那一條帶子上別的字先讓開。
+
+   以前只有你會說話，而你說話是把自己牌子上的字換掉——一個位置
+   兩種內容，結構上不可能疊到。隊友頭上多長一塊之後就會了：
+   兩個人只差 44px，一句話最寬 264px。量到疊了 90×33px。
+
+   讓開不是消失：4.2 秒之後那句話收掉，牌子就回來。 */
+.scn.matetalk .scn-hero .hero-tag,
+.scn.matetalk .scn-mob .mobn{ opacity:0 }

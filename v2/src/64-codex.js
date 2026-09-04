@@ -80,8 +80,13 @@ PAGES.codex = function () {
     var nth = 0;
     faunaOf(z.key).forEach(function (c) {
       var isNew = !!fresh[c.n];
+      /* 遇過的才點得進去。沒遇過的那一格是暗的，點進去也沒有東西可以看。 */
+      var can = !!met[c.n];
       H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (isNew ? ' fresh' : '') +
-        '"' + (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') + '>');
+        (can ? ' can' : '') + '"' +
+        (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') +
+        (can ? ' data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'go:patron:' + c.n })) + '\'' : '') + '>');
       H.push(patTag(c, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');
@@ -232,6 +237,56 @@ PAGES.crew = function () {
 
    別人的也看得到。看得到的是他挑了什麼、他的角色會說什麼——
    一個一個字都不能拿來比。 */
+/* ---------- 一位委託人，放大 ----------
+
+   廊道上他只有 66px，圖鑑格子裡 44px——那個尺寸讀得出剪影，
+   讀不出他長什麼樣。而「這次的委託人竟然長這樣啊」是這一段
+   要給的東西，所以要有一個地方看得清楚。
+
+   點得進來的地方有三個：廊道盡頭那一位、委託卡、圖鑑裡遇過的那幾格。
+
+   這一頁不判斷任何事，也不給任何獎賞。它只是把人放大，
+   加上你跟他之間發生過什麼——那些是資料，不是評語。 */
+PAGES.patron = function () {
+  var c = faunaByName(S.p && S.p.id);
+  if (!c) return '<div class="card">找不到這一位。</div>';
+  var z = mobZone(c);
+  var t = myTeam();
+
+  /* 他託過你哪幾件。只算真的走到、見到面的那幾趟。 */
+  var mine = [];
+  if (t) {
+    runsFor(t.teamId).forEach(function (x) {
+      if (!metRun(x.run)) return;
+      var m = mobOfRun(x.run);
+      if (m && m.n === c.n) mine.push(x);
+    });
+  }
+
+  var H = ['<div class="pz ' + z.key + '">'];
+  H.push('<div class="pz-art">' + patTag(c, z.pal, 'pz-px') + '</div>');
+  H.push('<div class="pz-t">');
+  H.push(head(z.name, c.n, c.t));
+  H.push('</div>');
+
+  if (mine.length) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">他託過你的</div>');
+    mine.forEach(function (x) {
+      H.push('<div class="pz-r"><b>' + esc(x.ms.title) + '</b>');
+      var d = x.run.committedAt ? dayText(x.run.committedAt) : '';
+      H.push('<em>' + esc(d) + '</em></div>');
+    });
+    H.push('</div>');
+  } else {
+    H.push('<p class="dim">還沒有跟他打過交道。</p>');
+  }
+
+  H.push(btn('回去', 'go:' + (S.prev && PAGES[S.prev] ? S.prev : 'codex'), 'big'));
+  H.push('</div>');
+  return H.join('');
+};
+
 PAGES.person = function () {
   var tm = teamOf(S.p.id);
   if (!tm) return '<div class="card">找不到。</div>';

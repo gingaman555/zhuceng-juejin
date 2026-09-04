@@ -2108,3 +2108,31 @@ button.ac:active{transform:translateY(1px)}
   .pat .wa{animation:none;opacity:1}
   .pat .wb{animation:none;opacity:0}
 }
+
+/* ── 一位委託人，放大 ──
+
+   廊道上 66px、圖鑑格子裡 44px，都只讀得出剪影。這一頁把他放到
+   一個看得清楚的尺寸——「這次的委託人竟然長這樣啊」需要一個
+   看得清楚的地方。
+
+   寬度用 vw 收在 396 以內：手機上它就是整個寬，桌機上不會大到失焦。 */
+.pz{ display:flex; flex-direction:column; align-items:center; text-align:center }
+.pz-art{
+  width:100%; max-width:396px; aspect-ratio:3 / 2;
+  display:flex; align-items:flex-end; justify-content:center;
+  background:var(--sunk); box-shadow:inset 0 0 0 2px var(--line2);
+  margin:0 0 22px; padding:22px 0 0
+}
+.px.pz-px{ width:min(88vw,352px); height:auto; image-rendering:pixelated }
+.pz-t{ width:100%; max-width:528px }
+.pz-t .lead{ color:var(--dim) }
+.pz .card{ width:100%; max-width:528px; text-align:left }
+.pz-r{ display:flex; justify-content:space-between; gap:14px; padding:5px 0 }
+.pz-r b{ font-weight:400; color:var(--ink) }
+.pz-r em{ font-style:normal; color:var(--mute); white-space:nowrap }
+.pz .dim{ margin:14px 0 }
+
+/* 點得下去的那幾個地方。滑過去亮一階——不是裝飾，是在說「這個點得動」。 */
+.cxi.can,.card.patron.can,.scn-mob.can{ cursor:pointer }
+.cxi.can:hover{ box-shadow:inset 0 0 0 2px var(--gold) }
+.card.patron.can:hover{ box-shadow:inset 0 0 0 2px var(--gold) }
