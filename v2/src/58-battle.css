@@ -603,3 +603,7 @@
 @media (prefers-reduced-motion: reduce){
   .bt.told ~ .bt-bottom .bt-name{animation:none}
 }
+
+/* 他寫好了，但你還沒——看得到有這一行，看不到內容。
+   不是鎖，是順序：同時出牌，然後一起翻。 */
+.sd-hid{color:var(--mute);letter-spacing:.14em}

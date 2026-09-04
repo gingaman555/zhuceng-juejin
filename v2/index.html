@@ -4852,6 +4852,10 @@ button.ac:active{transform:translateY(1px)}
   .bt.told ~ .bt-bottom .bt-name{animation:none}
 }
 
+/* 他寫好了，但你還沒——看得到有這一行，看不到內容。
+   不是鎖，是順序：同時出牌，然後一起翻。 */
+.sd-hid{color:var(--mute);letter-spacing:.14em}
+
 /* ---------- 排行榜 ----------
    刻意加進來、而且準備好隨時拿掉的（見 68-rank.js 的說明）。
 
@@ -16285,11 +16289,26 @@ function btSteps(runId) {
   }
 
   /* 我做了什麼。每個人各寫一行，全隊並排——
-     這一段本身就是「互相表達」的介面：誰寫了、誰沒寫，同一個畫面上。 */
+     這一段本身就是「互相表達」的介面：誰寫了、誰沒寫，同一個畫面上。
+
+     ── 先寫完自己的，才看得到別人的 ──
+
+     本來一打開就看得到隊友寫了什麼。那會發生兩件事：你會照著他的
+     句型寫，而且你會挑他沒提到的講——你寫的不再是「我做了什麼」，
+     是「相對於他，我做了什麼」。
+
+     這一份資料是老師判斷的材料，被錨定過的材料沒有用。
+
+     所以在你自己那一行寫完之前，隊友那幾行只看得到寫了沒有；
+     寫完就全部打開。這不是規則，是順序——同時出牌，然後一起翻。
+     （這一套本來就擋著跨組的預估互看，理由一樣：見 40-db.js 結尾
+     那一段 estSpread 為什麼拿掉。） */
   H.push('<div class="bt-qh">誰做了什麼</div>');
   H.push('<div class="saidlist">');
   var mem = t ? where('Users', function (u) { return u.teamId === t.teamId; }) : [];
   var said = (r && r.said) || {};
+  /* 你自己那一行寫了沒有。DRAFT 是他現在打的，said 是之前存的。 */
+  var wrote = !!String(DRAFT.said1 == null ? (said[S.who] || '') : DRAFT.said1).trim();
   mem.forEach(function (u) {
     var me0 = u.userId === S.who;
     H.push('<div class="sd' + (me0 ? ' mine' : '') + '">');
@@ -16299,8 +16318,13 @@ function btSteps(runId) {
       H.push('<input class="bt-w" id="bt-said" oninput="DRAFT.said1=this.value" ' +
         'placeholder="' + esc('這幾天你做的是什麼') + '" value="' +
         esc(draft('said1', said[u.userId] || '')) + '">');
+    } else if (!said[u.userId]) {
+      H.push('<span>還沒說</span>');
+    } else if (wrote) {
+      H.push('<span>' + esc(said[u.userId]) + '</span>');
     } else {
-      H.push('<span>' + (said[u.userId] ? esc(said[u.userId]) : '還沒說') + '</span>');
+      /* 他寫了，但你還沒。看得到有這一行，看不到內容。 */
+      H.push('<span class="sd-hid">寫好了</span>');
     }
     H.push('</div>');
   });
