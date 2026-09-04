@@ -47,6 +47,14 @@
 
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink)}
+/* 捲軸的位置一直留著。
+
+   高的那幾頁有捲軸、矮的那幾頁沒有，於是每次換頁整個版面會左右
+   彈 10px。量得到的一次：首頁廊道 1060 寬，按下「交作業」變成
+   1070——那兩格是同一條路的前後兩秒，中間跳一下就穿幫了。
+
+   這是整站的，不是那一頁的：每一次換頁都少一次跳動。 */
+html{scrollbar-gutter:stable}
 body{
   font-family:'C11','Noto Sans TC',monospace;
   font-size:22px; line-height:1.7;

@@ -269,6 +269,10 @@
 @media (min-width: 900px){
   .bt{max-width:704px;margin-left:auto;margin-right:auto;height:396px}
   .bt-bottom{max-width:704px;margin-left:auto;margin-right:auto}
+  /* 對話那一格不收窄。上面那個方框是為了對峙——兩邊各站一個，
+     拉寬就變成中間一整片空。對話只有他一個人站中間，而他站的
+     是廊道那條路：收成 704 的話，按下去的那一刻左右各縮一截。 */
+  .bt.talk,.bt-bottom.talk{max-width:none}
   .bt-side.foe .bt-ch{right:110px}
   .bt-side.me .bt-ch{left:110px}
   .bt-side.foe .bt-pad{right:77px}
@@ -523,7 +527,16 @@
    舊的那一套沒有刪掉：.bt 本體、名牌、站台、閃場都還在，
    .talk 只是把它們重排。 */
 
-.bt.talk{height:286px}
+/* 跟廊道一模一樣大。
+
+   本來兩格是各自訂的：廊道 396 / 319 / 462（斷點 860、1200），
+   對話 286 / 242 / 198（斷點 899、520）。按下「交作業」的那一刻
+   場景會縮掉 110px，而那兩格演的是同一件事的前後兩秒——他站在
+   路的另一端，你走過去。中間不該有一次跳動。
+
+   斷點也跟著廊道走（860、1200），不然中間那一段寬度會各縮各的。
+   數字要改的話兩邊一起改，見 59-mobile.css 的 .scn。 */
+.bt.talk{height:396px}
 /* 你不在場上了——你是鏡頭。 */
 .bt.talk .bt-side.me{display:none}
 /* 他一個人站中間。
@@ -578,17 +591,22 @@
 }
 
 @media (max-width:899px){
-  .bt.talk{height:242px}
+  /* 高度不在這裡——它跟著廊道的斷點（860），寫在底下。 */
   .bt.talk .bt-px{width:198px;height:132px}
   .bt.talk .bt-side.foe .bt-ch{margin-left:-99px;bottom:36px}
   .bt.talk .bt-side.foe .bt-pad{margin-left:-83px;width:165px;bottom:28px}
 }
 @media (max-width:520px){
-  .bt.talk{height:198px}
+  /* 這裡只縮他，不縮場景——廊道到最窄也還是 319，
+     多出來的那一段是他頭上的空間，跟廊道上一樣。 */
   .bt.talk .bt-px{width:154px;height:103px}
   .bt.talk .bt-side.foe .bt-ch{margin-left:-77px;bottom:29px}
   .bt.talk .bt-side.foe .bt-pad{margin-left:-66px;width:132px;bottom:21px}
 }
+
+/* 廊道的兩個斷點。順序要在上面那兩塊之後，後面的才蓋得掉前面的。 */
+@media (max-width:860px){ .bt.talk{height:319px} }
+@media (min-width:1200px){ .bt.talk{height:462px} }
 
 /* 接委託那一場用同一個名牌（見 57-viz.css 的 .pmt）。 */
 .pmt-say{margin-top:33px}
