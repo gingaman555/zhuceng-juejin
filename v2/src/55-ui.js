@@ -135,6 +135,21 @@ function pxTag(px, pal, cls) {
   return '<img class="px ' + (cls || '') + '" src="' + pxSvg(px, pal, false) + '" alt="">';
 }
 
+/* 一位委託人。兩張幀疊起來輪流亮——跟角色同一套（見 57-viz.css 的
+   wkA／wkB）。他站在那裡等你，不是一張貼在牆上的圖。
+
+   換幀比角色慢很多：角色 .44s 是腳步，委託人 1.5～2.3 秒是呼吸。
+   快慢由名字決定，所以同一位每次都是同一種呼吸法，而一整層的人
+   不會同時起伏。 */
+function patTag(c, pal, cls) {
+  if (!c || !c.px) return '';
+  if (!c.px2) return pxTag(c.px, pal, cls);
+  var ms = [1500, 1900, 2300][hash(String(c.n) + 'p') % 3];
+  return '<span class="pat" style="--pt:' + ms + 'ms">' +
+    pxTag(c.px, pal, (cls || '') + ' wf wa') +
+    pxTag(c.px2, pal, (cls || '') + ' wf wb') + '</span>';
+}
+
 /* 按鈕。act 是「動作:參數」的字串，全部收在 ACTS 裡。 */
 function btn(label, act, kind) {
   return '<button class="btn ' + (kind || '') + '" data-act="run" data-p="' +

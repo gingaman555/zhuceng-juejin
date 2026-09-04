@@ -585,7 +585,7 @@ PAGES.commit = function () {
   if (pat) {
     var pz = mobZone(pat);
     H.push('<div class="card patron ' + pz.key + '">');
-    H.push(pxTag(pat.px, pz.pal, 'pat-px'));
+    H.push(patTag(pat, pz.pal, 'pat-px'));
     H.push('<div class="pat-t"><b>' + esc(pat.n) + '</b>');
     H.push('<em>' + esc(pat.t) + '</em>');
     H.push('<u>' + RULES.COIN.base + ' 枚金幣</u></div>');

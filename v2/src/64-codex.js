@@ -82,7 +82,7 @@ PAGES.codex = function () {
       var isNew = !!fresh[c.n];
       H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (isNew ? ' fresh' : '') +
         '"' + (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') + '>');
-      H.push(pxTag(c.px, z.pal, 'cx-px'));
+      H.push(patTag(c, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');
 

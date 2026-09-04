@@ -4082,6 +4082,26 @@ button.ac:active{transform:translateY(1px)}
 }
 .btn.dm:hover{box-shadow:inset 0 0 0 2px var(--gold)}
 
+/* ── 委託人會呼吸 ──
+
+   兩張幀疊起來輪流亮，跟角色同一組 keyframes（wkA／wkB）。
+   差別在快慢：角色 .44s 是腳步，委託人 --pt 是 1.5～2.3 秒的呼吸，
+   而且每一位由名字決定——一整層的人不會同時起伏。
+
+   .pat 這一層要跟裡面那張圖一樣大，不然它會塌成一行文字的高度，
+   而兩張絕對定位的幀就沒有東西可以定位。 */
+/* flex:none 是必要的：本來 flex 容器裡的項目是那張 img，而它身上寫著
+   flex:0 0 110px；現在項目變成這一層 span，沒有那一條就會被擠扁。 */
+.pat{position:relative;display:inline-block;line-height:0;flex:none}
+.pat .wf{position:absolute;left:0;top:0}
+.pat .wf.wa{position:relative}
+.pat .wa{animation:wkA var(--pt,1900ms) steps(1,end) infinite}
+.pat .wb{animation:wkB var(--pt,1900ms) steps(1,end) infinite}
+@media (prefers-reduced-motion: reduce){
+  .pat .wa{animation:none;opacity:1}
+  .pat .wb{animation:none;opacity:0}
+}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -5679,9 +5699,26 @@ var STRATA = [
    j 點高光、c 挖凹處——跟角色同一種畫法，而且換一層就換一種顏色。
 
    只補沒有的鍵：#、o、* 三個維持原樣，所有舊的圖一格都不會變。 */
+/* ── 不隨層改變的三種材質 ──
+
+   色階解決了明暗，但一整個人還是同一種東西做的。角色不是這樣：
+   法師身上有皮膚、布、木頭的杖、杖頂那一顆會亮的珠子——四種材質，
+   所以看得出哪一塊是他、哪一塊是他帶著的。
+
+   身體歸這一層（換一層就換一種顏色），帶著的東西歸材質（永遠一樣）。
+   金屬在哪一層都是金屬，火在哪一層都是暖的——那正是它們看起來
+   「不是這個洞長出來的」的原因。 */
+var PAT_MAT = {
+  n: '#2A2620', N: '#8C8478',   /* 金屬：暗面、受光 */
+  w: '#5A564C', W: '#CFC9B8',   /* 骨與白：暗面、受光 */
+  y: '#9A6A1E', Y: '#F5CB74'    /* 光：火、燈、亮著的芯 */
+};
 STRATA.forEach(function (z) {
   Object.keys(z.spal).forEach(function (t) {
     if (z.pal[t] === undefined) z.pal[t] = z.spal[t];
+  });
+  Object.keys(PAT_MAT).forEach(function (t) {
+    if (z.pal[t] === undefined) z.pal[t] = PAT_MAT[t];
   });
 });
 
@@ -6860,324 +6897,341 @@ function placeArt(z, cls) {
 
 var PAT_W = 24, PAT_H = 16;
 
-/* ── 顏色分區 ──
+/* ── 怎麼樣才像一個人，不像一塊石頭 ──
+
+   上一版每一位都有明暗了，但還是一團對稱的東西。角色不是這樣有魅力的：
+   冒險者提著一盞燈、法師戴一頂歪的尖帽、忍者拖一條圍巾、騎士左手一面盾——
+   四個都不對稱，而且四個都有眼睛。
+
+   所以這一版每一位都守三條：
+
+   一 · 有眼睛。眼睛是最快讓一個形狀變成一個人的東西。
+        白的那一格（W）擺在凹處（c）裡，六層都一樣白——眼睛不該
+        跟著地層變色。會發光的那幾位用 Y。
+
+   二 · 不對稱。左右一樣的東西看起來是物件。一隻手伸出來、頭歪一邊、
+        東西掛在同一側——哪一種都行，但一定要有一個。
+
+   三 · 有一個動作。他是來託付事情的人，不是站在路上的東西。
+        伸手、前傾、抬頭、搓手——姿勢要說得出他在做什麼。
+
+   ── 顏色分區 ──
 
    跟角色同一套規矩（見 12-heroes.js）：光從左上來，輪廓一律 k，
-   受光面在左上、陰影在右下。字母是這一層的色階，換一層就換一種顏色：
+   受光面在左上、陰影在右下。
 
-     k  輪廓，最暗的那一階
-     c  凹處：兜帽裡面、眼窩、縫
-     f  最暗的暗面（右下角）
-     g  暗面
-     h  身體
-     i  受光面（左上）
-     j  一點光：眼睛、晶體、火
+     k 輪廓 · c 凹處 · f 最暗 · g 暗面 · h 身體 · i 受光 · j 一點光
+     nN 金屬 · wW 骨與白 · yY 光　（這三組不隨地層改變，見 13-strata.js）
 
-   本來只有三個：# 身體、+ 陰影、* 反光。三階畫不出一個角色——
-   委託人因此只是一團有邊的色塊。 */
+   ── 怎麼畫 ──
 
-/* 十八種體型。差的是形狀，不是配件。 */
+   每一種畫在一個窄框裡（寬度隨意），程式自動置中、貼到地面那一列。 */
+
+/* 十八種體型。差的是形狀跟姿態，不是配件。 */
 var PAT_BODY = {
 
-  /* 很高很瘦。頭小、脖子長，站著的時候比別人高出一截。 */
+  /* 很高很瘦。低著頭看你，右手長到膝蓋。 */
   tall: [
-    '..kkk..',
-    '.kiihk.',
-    '.kihgk.',
-    '.kihgk.',
-    '..kkk..',
-    '..kik..',
-    '..kik..',
-    '.kiihk.',
-    'kiihhgk',
-    'kihhhgk',
-    'kihhggk',
-    'kihhggk',
-    '.kihgk.',
-    '.kh.gk.',
-    '.kk.kk.'
+    '..kkkk....',
+    '.kiihgk...',
+    '.kcWcgk...',
+    '.kihhgk...',
+    '..kkkk....',
+    '...kk.....',
+    '..kiik....',
+    '.kiihgkkk.',
+    'kiihhggkhk',
+    'kihhhhggkk',
+    'kihhhggfk.',
+    'kihhggfk..',
+    '.kihgfk...',
+    '.kh.gk....',
+    '.kk.kk....'
   ],
 
-  /* 很矮很寬。沒有脖子，整個人像一塊。 */
+  /* 很矮很寬。眼睛分很開，右手插在腰上。 */
   squat: [
-    '..kkkkkk..',
-    '.kiiihhgk.',
-    'kiihhhhggk',
-    'kiihcchggk',
-    'kihhhhhggk',
-    'kihhhhhggk',
-    'kihhhggffk',
-    '.kihhggfk.',
-    '..kk..kk..'
+    '..kkkkkk....',
+    '.kiiihhgk...',
+    'kicWchWcggk.',
+    'kihhhhhhggk.',
+    'kihhcccchgkk',
+    'kihhhhhhggkh',
+    'kihhhggfffkk',
+    '.kihhggffk..',
+    '..kk..kk....'
   ],
 
-  /* 一堆布。看不到腿，只有頂上一顆小頭。 */
+  /* 一堆布。頭從布裡歪出來，左邊一隻手伸出布縫。 */
   drape: [
-    '...kkkk...',
-    '..kiihgk..',
-    '..kihhgk..',
-    '...kkkk...',
-    '..kiihgk..',
-    '.kiihhggk.',
-    '.kihhhggk.',
-    'kiihhhgggk',
-    'kihhhhgggk',
-    'kihhchgggk',
-    'kihhhhgggk',
-    'kihhhggffk',
-    'kihhggfffk',
-    'kkkkkkkkkk'
+    '.....kkkk..',
+    '....kiihgk.',
+    '....kcWhgk.',
+    '....kihhgk.',
+    '.....kkkk..',
+    '...kiihggk.',
+    '..kiihhhggk',
+    '.kiihhhhggk',
+    'kkihhhhhggk',
+    'khkihhhhggk',
+    'kkihhhhhggk',
+    '.kihhhhggfk',
+    '.kihhhggffk',
+    '.kihhggfffk',
+    '.kkkkkkkkkk'
   ],
 
-  /* 兩個頭。同一個身體上面兩顆，一顆看著你、一顆看別的地方。 */
+  /* 兩個頭。左邊那顆看著你，右邊那顆轉開了。 */
   twin: [
-    '.kkk..kkk..',
-    'kiihkkiihk.',
-    'kihgkkihgk.',
-    '.kkk..kkk..',
-    '..kikkik...',
-    '.kiihhhgk..',
-    'kiihhhhggk.',
-    'kihhhhhggk.',
-    'kihhhhhggk.',
-    'kihhhggffk.',
-    '.kihhggfk..',
-    '.kh....gk..',
-    '.kk....kk..'
+    '.kkk...kkk.',
+    'kiihk.kiihk',
+    'kcWck.kihck',
+    'kihgk.kihWk',
+    '.kkk...kkk.',
+    '..kik.kik..',
+    '.kiihhhhgk.',
+    'kiihhhhhggk',
+    'kihhhhhhggk',
+    'kihhhhhggfk',
+    'kihhhggfffk',
+    '.kihhggffk.',
+    '.kh.....gk.',
+    '.kk.....kk.'
   ],
 
-  /* 浮著。底下什麼都沒有，只有一截漸漸散掉的東西。 */
+  /* 浮著。眼睛很大，底下那一截往左飄。 */
   float: [
-    '..kkkkk..',
-    '.kiihhgk.',
-    'kiihhhggk',
-    'kihhcchgk',
-    'kihhhhhgk',
-    'kiihhhggk',
-    '.kihhggk.',
-    '.kihhggk.',
-    '..kihgk..',
-    '..kf.gk..',
-    '...k.k...',
-    '...f.f...',
-    '....f....'
+    '..kkkkkk..',
+    '.kiihhhgk.',
+    'kiihhhhggk',
+    'kicWchWcgk',
+    'kihhhhhhgk',
+    'kiihcchggk',
+    '.kihhhhgk.',
+    '.kihhhggk.',
+    '..kihhgk..',
+    '..kihgk...',
+    '.kfk.gk...',
+    '.f...k....',
+    'f....f....'
   ],
 
-  /* 背著比自己還大的東西。人被壓得往前傾。 */
+  /* 背著比自己還大的東西。被壓得往前傾，右手撐著膝蓋。 */
   haul: [
     '.....kkkkkk.',
     '....kiihhggk',
     '...kkiihhggk',
     '..kihkihhggk',
-    '.kiihkihhggk',
+    '.kcWckihhggk',
     '.kihgkihhggk',
     '..kkkkihhggk',
     '.kiihkihhggk',
     'kiihhkihhggk',
     'kihhhkiggffk',
     'kihhggkkkkkk',
-    'kihhggk.....',
-    '.kh.gk......',
-    '.kk.kk......'
+    'kihhggkk....',
+    '.kh.gkhk....',
+    '.kk.kkk.....'
   ],
 
-  /* 一團兜帽，只有兩點光。 */
+  /* 一團兜帽。帽簷壓得很低，只有兩點光；右手從袍子裡伸出來指著你。 */
   hood: [
-    '...kkkk...',
-    '..kiihgk..',
-    '.kiicchgk.',
-    '.kihcjchgk',
-    'kiihcccjgk',
-    'kihhhcchgk',
-    'kihhhhhhgk',
-    'kihhhhhggk',
-    'kihhhhhggk',
-    'kihhhggffk',
-    'kihhggfffk',
-    '.kihggffk.',
-    '.kkkkkkkk.'
+    '...kkkk....',
+    '..kiihgk...',
+    '.kiihhhgk..',
+    '.kccccccgk.',
+    'kicYccYcggk',
+    'kihcccchggk',
+    'kihhhhhhhgk',
+    'kihhhhhhggk',
+    'kihhhhhggkk',
+    'kihhhggffkh',
+    'kihhggfffkk',
+    '.kihggffk..',
+    '.kkkkkkkk..'
   ],
 
-  /* 有殼。一個硬的外框，裡面一小個。 */
+  /* 有殼。殼縫裡一雙眼睛看出來，左下角伸出一隻小腳。 */
   shell: [
-    '.kkkkkkkk.',
-    'kiiihhhggk',
-    'kikkkkkkgk',
-    'kikccccjgk',
-    'kikchhckgk',
-    'kikchhckgk',
-    'kikcccckgk',
-    'kikkkkkkgk',
-    'kihhhhhggk',
-    'kihhhggffk',
-    '.kkkkkkkk.',
-    '..k....k..',
-    '..k....k..'
+    '.kkkkkkkk..',
+    'kiiihhhggk.',
+    'kikkkkkkgk.',
+    'kikcccckgk.',
+    'kikWccWkgk.',
+    'kikcccckgk.',
+    'kikkkkkkgkk',
+    'kihhhhhhggh',
+    'kihhhhhggkk',
+    'kihhhggffk.',
+    '.kkkkkkkk..',
+    '.k.k...k...',
+    '.k.k...k...'
   ],
 
-  /* 一節一節疊起來的，像一疊東西長了一顆頭。 */
+  /* 一節一節疊起來的。最上面那一節歪向左邊，每一道縫裡有一點光。 */
   stack: [
-    '..kkkk..',
-    '.kiihgk.',
-    '.kihhgk.',
-    '.kkkkkk.',
-    'kiihhhgk',
-    'kihhhggk',
-    'kkkkkkkk',
-    'kiihhhgk',
-    'kihhhggk',
-    'kkkkkkkk',
-    'kiihhhgk',
-    'kihhhggk',
-    'kihhggfk',
-    'kkkkkkkk'
+    '.kkkk.....',
+    'kiihgk....',
+    'kcWhgk....',
+    'kihhgk....',
+    'kkkkkk....',
+    '.kiihhhgk.',
+    '.kihjjhggk',
+    '.kkkkkkkkk',
+    'kiihhhhggk',
+    'kihjjhhggk',
+    'kkkkkkkkkk',
+    'kiihhhhggk',
+    'kihhhggffk',
+    'kkkkkkkkkk'
   ],
 
-  /* 頭比身體大很多。 */
+  /* 頭比身體大很多。眼睛一大一小，兩隻小手在胸前搓著。 */
   bighead: [
     '..kkkkkkk..',
     '.kiiihhhgk.',
     'kiihhhhhggk',
-    'kiihcchcggk',
+    'kicWWchWcgk',
     'kihhhhhhhgk',
-    'kihhhhhhggk',
+    'kihhcccchgk',
     'kihhhggfffk',
     '.kkkkkkkkk.',
-    '...kihgk...',
-    '..kiihggk..',
+    '..kkihgkk..',
+    '.khkiihgkhk',
+    '.kkkihhgkkk',
     '..kihhggk..',
-    '..kihggfk..',
     '..kk...kk..'
   ],
 
-  /* 很長，貼著地拖過來的。 */
+  /* 很長，貼著地拖過來。頭抬起來看你。 */
   long: [
     '.......kkkk',
     '......kiihk',
-    '.....kiihgk',
+    '.....kicWck',
     '.kkkkkihhgk',
     'kiihhhhhhgk',
     'kihhhhhhggk',
-    'kihcchhhggk',
+    'kihhhhhhggk',
     'kihhhhhggfk',
     'kihhhggfffk',
     'kkkkkkkkkkk'
   ],
 
-  /* 分成好幾小塊，一起動的那種。 */
+  /* 分成好幾小塊。每一塊一隻眼睛，看的方向都不一樣。 */
   swarm: [
     '.kkk....kkk.',
-    'kiihk..kiihk',
+    'kcWhk..kihWk',
     'kihgk..kihgk',
     '.kkk....kkk.',
     '............',
     '...kkk.kkk..',
-    '..kiihkiihk.',
+    '..kiWhkcWhk.',
     '..kihgkihgk.',
     '...kkk.kkk..',
     '............',
     '.kkk........',
-    'kiihk.......',
+    'kihWk.......',
     'kihgk.......',
     '.kkk........'
   ],
 
-  /* 蹲著，背弓起來。矮，但看得出是一個人的姿勢。 */
+  /* 蹲著，抬頭看你，左手撐在地上。 */
   kneel: [
     '....kkkk...',
     '...kiihgk..',
-    '...kihcgk..',
+    '...kcWcgk..',
     '..kkkkkkk..',
     '.kiihhhggk.',
     'kiihhhhhggk',
     'kihhhhhhggk',
-    'kihhhhhgffk',
-    'kihhhggfffk',
+    'kkhhhhhgffk',
+    'khhhhggfffk',
     'kkhhggffffk',
     '.kkkkkkkkkk'
   ],
 
-  /* 一個環立在那裡，中間是空的。看得穿。 */
+  /* 一個環立在那裡，中間是空的。眼睛長在環上偏左的地方。 */
   ring: [
     '...kkkkk...',
     '..kiihhgk..',
-    '.kiihkkhgk.',
-    'kiihkcckhgk',
+    '.kcWhkkhgk.',
     'kihhkcckhgk',
     'kihhkcckhgk',
+    'kiWhkcckhgk',
     'kihhkcckhgk',
     'kihgkcckhgk',
     '.kihkkkhgk.',
     '..kihhggk..',
     '...kkkkk...',
     '....k.k....',
-    '....k.k....'
+    '...kk.k....'
   ],
 
-  /* 很多節從中間伸出去。放射狀，不是左右對稱的人形。 */
+  /* 很多節從中間伸出去，長短不一。中間一顆大眼睛。 */
   many: [
-    'k....k....k',
+    'k....k.....',
     '.k...k...k.',
     '..kkkkkkk..',
     '.kiihhhggk.',
-    'kiihhjhhggk',
-    'kihhhjhhggk',
+    'kiihcYchggk',
+    'kihhcccchgk',
     'kiihhhhhggk',
     '.kihhhhggk.',
     '..kkkkkkk..',
-    '.k..k.k..k.',
-    'k...k.k...k',
-    '....k.k....'
+    '.k..k.k....',
+    'k...k.k..k.',
+    '....k.k..k.'
   ],
 
-  /* 一條很細的東西，頂端一個結。幾乎只有一根線。 */
+  /* 一條很細的東西。頂端一顆歪著的頭，左邊伸出一隻小手。 */
   thread: [
-    '.kkk.',
-    'kijhk',
-    'kihgk',
-    '.kkk.',
-    '.kik.',
-    '.khk.',
-    '.kik.',
-    '.khk.',
-    '.kik.',
-    '.khk.',
-    '.kik.',
-    '.khk.',
-    'kkkkk'
+    '.kkk..',
+    'kcWhk.',
+    'kihgk.',
+    '.kkk..',
+    '.kik..',
+    'kkhk..',
+    'khik..',
+    'kkhk..',
+    '.kik..',
+    '.khk..',
+    '.kik..',
+    '.khk..',
+    'kkkk..'
   ],
 
-  /* 上半身裂成兩半，往兩邊開。下面還是連著的。 */
+  /* 上半身裂成兩半往兩邊開。裂縫裡一排眼睛看著你。 */
   split: [
     'kkk....kkk',
     'kihk..kihk',
     'kihk..kihk',
     'kihhkkhhgk',
     'kiihhhhhgk',
-    '.kihhhhgk.',
+    '.kiWhhWgk.',
     '.kihcchgk.',
-    'kiihhhhggk',
+    'kiihWhhggk',
     'kihhhhhggk',
     'kihhhggffk',
     'kihhggfffk',
     '.kk....kk.'
   ],
 
-  /* 一個罩子，裡面亮著。腳看不見，光從下緣漏出來。 */
+  /* 一個罩子，裡面亮著。罩下面露出一雙眼睛跟一隻手。 */
   bell: [
     '....kk....',
     '...kiik...',
     '..kkkkkk..',
     '.kiihhhgk.',
-    'kiihjjhggk',
-    'kihhjjhhgk',
-    'kihhjjhhgk',
-    'kiihjjhggk',
+    'kiihYYhggk',
+    'kihhYYhhgk',
+    'kihhYYhhgk',
+    'kiihYYhggk',
     'kihhhhhggk',
     'kihhhggffk',
-    'kjjjjjjjjk',
+    'kyyyyyyyyk',
     'kkkkkkkkkk',
-    '.j.j..j.j.'
+    '.kWk..kWk.',
+    '..k....hk.'
   ]
 };
 
@@ -7185,85 +7239,94 @@ var PAT_BODY = {
 
    體型已經把人拉開了，這一層讓同一種體型的幾個人不一樣。
 
-   位置不寫死座標。本來每個記號有一組 x／y，而體型從 5 格寬到 13 格寬
-   都有——同一個 x 對細的那幾位落在身體外面，對寬的那幾位埋在身體裡。
-   改成貼著身體放：
+   ── 材質 ──
+
+   帶著的東西不用身體的色階，用固定的材質色（見 13-strata.js 的 PAT_MAT）：
+   nN 金屬、wW 骨與白、yY 光。所以一把鎖在六層都是同一種鐵灰，
+   一盞燈在六層都是暖的——它們看起來不是這個洞長出來的，
+   是他從別的地方帶來的。這也是角色的做法：法師的杖是木頭色、
+   杖頂那一顆是寶石色，都不跟著袍子走。
+
+   ── 位置 ──
+
+   不寫死座標。體型從 5 格寬到 13 格寬都有，同一個 x 對細的那幾位
+   落在身體外面、對寬的那幾位埋在身體裡。改成貼著身體放：
 
      top    壓在頭頂，跟身體同一個中線
      left   掛在左邊，身體的中間高度
      right  掛在右邊
 
-   sink 是往身體裡壓幾格：角在頭上要壓進去一格才長在頭上，
-   提著的東西壓 0 格才是提著。 */
+   sink 是往身體裡壓幾格：角在頭上要壓進去一格才長在頭上。 */
 var PAT_MARK = {
   none: null,
 
-  /* 頭上兩隻角。 */
+  /* 頭上兩隻角。骨。 */
   horn: { at: 'top', sink: 1, px: [
     '.k..k.',
-    'ki..ik',
-    'kh..hk'
+    'kW..Wk',
+    'kw..wk'
   ] },
 
-  /* 一頂小的。三個尖，中間那個亮。 */
+  /* 一頂小的。金屬，三個尖，尖端亮著。 */
   crown: { at: 'top', sink: 1, px: [
-    '.j.j.j.',
-    'kjkjkjk',
-    'kiihhgk',
+    '.Y.Y.Y.',
+    'kYkYkYk',
+    'kNNNnnk',
     'kkkkkkk'
   ] },
 
   /* 一點光跟在旁邊。不是他的眼睛——是另外一個東西。 */
   eye: { at: 'left', sink: -1, px: [
     '.kk.',
-    'kjjk',
-    'kjhk',
+    'kYYk',
+    'kYyk',
     '.kk.'
   ] },
 
-  /* 一盞掛著的燈。 */
+  /* 一盞掛著的燈。鐵的殼，裡面燒著。 */
   lamp: { at: 'left', sink: 0, px: [
     '..k..',
-    '..k..',
-    '.kkk.',
-    'kjjjk',
-    'kjhjk',
-    'kjjjk',
+    '..n..',
+    '.knk.',
+    'kNYYk',
+    'kNYyk',
+    'kNyyk',
     '.kkk.'
   ] },
 
-  /* 一根杖，頂端亮著。 */
+  /* 一根杖。木身，頂端一顆亮的。 */
   staff: { at: 'right', sink: 0, px: [
-    '.kjk.',
-    'kjjjk',
-    '.kjk.',
-    '..k..',
-    '..k..',
-    '..k..',
-    '..k..',
-    '..k..',
+    '.kYk.',
+    'kYYYk',
+    '.kYk.',
+    '..n..',
+    '..N..',
+    '..n..',
+    '..N..',
+    '..n..',
     '..k..'
   ] },
 
   /* 一把鎖掛在身上。
 
      他要的東西鎖著，而你交出去的那一份是鑰匙——整個作品的那一句話
-     （見 10-pack.js）。所以這個記號不是裝飾，它是這件事的樣子。 */
+     （見 10-pack.js）。所以這個記號不是裝飾，它是這件事的樣子。
+     鐵灰，在哪一層都一樣：那把鎖不屬於任何一層。 */
   lock: { at: 'right', sink: 1, px: [
     '.kkk.',
-    'kh.hk',
-    'kh.hk',
+    'kN.Nk',
+    'kn.nk',
     'kkkkk',
-    'kiihk',
-    'kicik',
-    'kihgk',
+    'kNNnk',
+    'kNYnk',
+    'kNnnk',
     'kkkkk'
   ] },
 
-  /* 一個袋子。 */
+  /* 一個袋子。布，繩子扎著。 */
   bag: { at: 'right', sink: 1, px: [
-    '..k..',
-    '.kkk.',
+    '..n..',
+    '.knk.',
     'kiihk',
     'kihgk',
     'kihgk',
@@ -7273,35 +7336,99 @@ var PAT_MARK = {
   /* 一圈一圈捲起來的東西。 */
   coil: { at: 'left', sink: 1, px: [
     'kkkk.',
-    'kiihk',
+    'kWWwk',
     '.kkkk',
     'kkkk.',
-    'kiihk',
+    'kWWwk',
     '.kkkk'
   ] },
 
-  /* 一塊板子，平平地端在前面。 */
+  /* 一塊板子，平平地端在前面。上面刻著東西。 */
   plate: { at: 'right', sink: 0, px: [
     'kkkkkk',
-    'kiiihk',
-    'kihhgk',
-    'kihhgk',
+    'kWWWwk',
+    'kWnnwk',
+    'kWnnwk',
     'kkkkkk'
   ] },
 
   /* 有東西一直在滴。 */
   drip: { at: 'left', sink: 0, px: [
     '.k.',
-    'kjk',
+    'kYk',
     '.k.',
     '...',
     '.k.',
-    'kjk',
+    'kyk',
     '.k.',
     '...',
     '.k.'
   ] }
 };
+
+/* ── 會動的那一下 ──
+
+   一張靜止的圖擺在那裡，跟一個站在那裡等你的人差很多。角色有十四個
+   姿勢、走坐各兩幀；委託人本來只有一張。
+
+   34 位不可能一張一張畫第二幀，所以第二幀是算出來的——而怎麼算
+   由體型決定，不是全部套同一種：
+
+     bob    上半身沉一格，底下兩列不動。站著的人在呼吸。
+     hover  整個沉一格。浮著的、成群的——它們沒有腳，整個都會動。
+     sway   上半身往右挪一格。細長的東西被風帶著。
+     lit    形狀不動，只有亮的那幾格暗下來。硬的殼、亮著的罩子。
+
+   兩幀之間差一格。差兩格會變成在跳，差零格等於沒動。 */
+var PAT_IDLE = {
+  tall: 'bob', squat: 'bob', drape: 'bob', twin: 'bob',
+  float: 'hover', haul: 'bob', hood: 'bob', shell: 'lit',
+  stack: 'bob', bighead: 'bob', long: 'bob', swarm: 'hover',
+  kneel: 'bob', ring: 'lit', many: 'hover', thread: 'sway',
+  split: 'bob', bell: 'lit'
+};
+
+/* 亮的那幾格暗下來的時候變成什麼。 */
+var PAT_DIM = { j: 'i', Y: 'y', W: 'w', N: 'n' };
+
+function patMove(px, kind) {
+  var h = px.length, w = px[0].length, y, x;
+  var out = [];
+  for (y = 0; y < h; y++) out.push(px[y].split(''));
+
+  if (kind === 'lit') {
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      var c = out[y][x];
+      if (PAT_DIM[c]) out[y][x] = PAT_DIM[c];
+    }
+    return out.map(function (r) { return r.join(''); });
+  }
+
+  if (kind === 'sway') {
+    /* 上半身整段往右挪一格，下半身不動。 */
+    var mid = Math.floor(h / 2);
+    for (y = 0; y < mid; y++) {
+      var row = px[y].split('');
+      row.pop();
+      row.unshift('.');
+      out[y] = row;
+    }
+    return out.map(function (r) { return r.join(''); });
+  }
+
+  /* bob 與 hover：整段往下挪一格。
+     bob 留住底下兩列（腳踩著地），hover 不留（它本來就沒有腳）。 */
+  var keep = kind === 'hover' ? 0 : 2;
+  var blank = new Array(w + 1).join('.');
+  var moved = [];
+  for (y = 0; y < h; y++) {
+    if (y < h - keep) moved.push(y === 0 ? blank : px[y - 1]);
+    else moved.push(px[y]);
+  }
+  /* 挪下來之後被蓋掉的那一列要補回去：不然身體會少一列。 */
+  if (keep) moved[h - keep] = px[h - keep - 1];
+  return moved;
+}
 
 function patNew() {
   var g = [], y, x;
@@ -7468,6 +7595,9 @@ function dressPatrons() {
       taken[bd + '|' + mk] = 1;
     }
     c.px = patPx(bd, mk);
+    /* 第二幀。怎麼動由體型決定（見 PAT_IDLE）——站著的呼吸、
+       浮著的整個沉、細的搖、硬的只有光在閃。 */
+    c.px2 = patMove(c.px, PAT_IDLE[bd] || 'bob');
   });
 }
 
@@ -10092,6 +10222,21 @@ function pxTag(px, pal, cls) {
   return '<img class="px ' + (cls || '') + '" src="' + pxSvg(px, pal, false) + '" alt="">';
 }
 
+/* 一位委託人。兩張幀疊起來輪流亮——跟角色同一套（見 57-viz.css 的
+   wkA／wkB）。他站在那裡等你，不是一張貼在牆上的圖。
+
+   換幀比角色慢很多：角色 .44s 是腳步，委託人 1.5～2.3 秒是呼吸。
+   快慢由名字決定，所以同一位每次都是同一種呼吸法，而一整層的人
+   不會同時起伏。 */
+function patTag(c, pal, cls) {
+  if (!c || !c.px) return '';
+  if (!c.px2) return pxTag(c.px, pal, cls);
+  var ms = [1500, 1900, 2300][hash(String(c.n) + 'p') % 3];
+  return '<span class="pat" style="--pt:' + ms + 'ms">' +
+    pxTag(c.px, pal, (cls || '') + ' wf wa') +
+    pxTag(c.px2, pal, (cls || '') + ' wf wb') + '</span>';
+}
+
 /* 按鈕。act 是「動作:參數」的字串，全部收在 ACTS 裡。 */
 function btn(label, act, kind) {
   return '<button class="btn ' + (kind || '') + '" data-act="run" data-p="' +
@@ -12038,7 +12183,7 @@ PAGES.commit = function () {
   if (pat) {
     var pz = mobZone(pat);
     H.push('<div class="card patron ' + pz.key + '">');
-    H.push(pxTag(pat.px, pz.pal, 'pat-px'));
+    H.push(patTag(pat, pz.pal, 'pat-px'));
     H.push('<div class="pat-t"><b>' + esc(pat.n) + '</b>');
     H.push('<em>' + esc(pat.t) + '</em>');
     H.push('<u>' + RULES.COIN.base + ' 枚金幣</u></div>');
@@ -13198,7 +13343,7 @@ function sceneMob(t, row, prog, est, ENT) {
   /* 走到底了牠才出現，而且是浮出來的（scn-mob 那一段動畫）。
      還在路上的時候那裡什麼都沒有——前面是霧，不是一隻站著等你的東西。 */
   H.push('<div class="scn-mob meet" style="left:' + x + 'px">');
-  H.push(pxTag(mob.px, pal, 'ch'));
+  H.push(patTag(mob, pal, 'ch'));
   H.push('<span class="mobn">' + esc(mob.n) + '</span>');
   H.push('</div>');
   return H.join('');
@@ -13799,7 +13944,7 @@ function faunaCard() {
   STRATA.forEach(function (x) { if (x.name === c.r) s = x; });
   var H = ['<div class="card fa ' + (s ? s.key : '') + '">'];
   H.push('<div class="fa-in">');
-  H.push(pxTag(c.px, (s || STRATA[0]).pal, 'fa-px'));
+  H.push(patTag(c, (s || STRATA[0]).pal, 'fa-px'));
   H.push('<div>');
   H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
   H.push('<h2>' + esc(c.n) + '</h2>');
@@ -14189,7 +14334,7 @@ PAGES.codex = function () {
       var isNew = !!fresh[c.n];
       H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (isNew ? ' fresh' : '') +
         '"' + (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') + '>');
-      H.push(pxTag(c.px, z.pal, 'cx-px'));
+      H.push(patTag(c, z.pal, 'cx-px'));
       H.push('<div><b>' + esc(c.n) + '</b>');
       H.push('<em>' + esc(c.t) + '</em>');
 

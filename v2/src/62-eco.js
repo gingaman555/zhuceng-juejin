@@ -238,7 +238,7 @@ function faunaCard() {
   STRATA.forEach(function (x) { if (x.name === c.r) s = x; });
   var H = ['<div class="card fa ' + (s ? s.key : '') + '">'];
   H.push('<div class="fa-in">');
-  H.push(pxTag(c.px, (s || STRATA[0]).pal, 'fa-px'));
+  H.push(patTag(c, (s || STRATA[0]).pal, 'fa-px'));
   H.push('<div>');
   H.push('<div class="eyebrow">' + esc(c.r) + '</div>');
   H.push('<h2>' + esc(c.n) + '</h2>');

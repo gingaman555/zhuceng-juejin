@@ -653,7 +653,7 @@ function sceneMob(t, row, prog, est, ENT) {
   /* 走到底了牠才出現，而且是浮出來的（scn-mob 那一段動畫）。
      還在路上的時候那裡什麼都沒有——前面是霧，不是一隻站著等你的東西。 */
   H.push('<div class="scn-mob meet" style="left:' + x + 'px">');
-  H.push(pxTag(mob.px, pal, 'ch'));
+  H.push(patTag(mob, pal, 'ch'));
   H.push('<span class="mobn">' + esc(mob.n) + '</span>');
   H.push('</div>');
   return H.join('');

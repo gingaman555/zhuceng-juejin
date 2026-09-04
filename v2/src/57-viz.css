@@ -2088,3 +2088,23 @@ button.ac:active{transform:translateY(1px)}
   box-shadow:inset 0 0 0 2px var(--line2)
 }
 .btn.dm:hover{box-shadow:inset 0 0 0 2px var(--gold)}
+
+/* ── 委託人會呼吸 ──
+
+   兩張幀疊起來輪流亮，跟角色同一組 keyframes（wkA／wkB）。
+   差別在快慢：角色 .44s 是腳步，委託人 --pt 是 1.5～2.3 秒的呼吸，
+   而且每一位由名字決定——一整層的人不會同時起伏。
+
+   .pat 這一層要跟裡面那張圖一樣大，不然它會塌成一行文字的高度，
+   而兩張絕對定位的幀就沒有東西可以定位。 */
+/* flex:none 是必要的：本來 flex 容器裡的項目是那張 img，而它身上寫著
+   flex:0 0 110px；現在項目變成這一層 span，沒有那一條就會被擠扁。 */
+.pat{position:relative;display:inline-block;line-height:0;flex:none}
+.pat .wf{position:absolute;left:0;top:0}
+.pat .wf.wa{position:relative}
+.pat .wa{animation:wkA var(--pt,1900ms) steps(1,end) infinite}
+.pat .wb{animation:wkB var(--pt,1900ms) steps(1,end) infinite}
+@media (prefers-reduced-motion: reduce){
+  .pat .wa{animation:none;opacity:1}
+  .pat .wb{animation:none;opacity:0}
+}
