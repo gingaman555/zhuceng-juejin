@@ -102,17 +102,15 @@ function runOf(teamId, msId) {
 /* 這一組收得到哪幾個任務。
 
    三層篩：同一個課程 → 派的人帶不帶這一組 → 有沒有指名哪幾組。
-   中間那一層是新的：老師對任務規劃有自己的自主性，所以他派的
-   東西不會落到別位老師帶的組上。
-
-   兩邊都可以是空的，空的就不篩——舊資料（沒有 mentorId 的任務、
-   還沒指定老師的組）行為跟以前一模一樣。 */
+   本來中間還有一層：派的老師跟帶那一組的老師對不上就擋掉。
+   拿掉了——一個課程就是一個地方，「這一組是誰帶的」不該決定
+   一件委託到不到得了他們手上。要發給誰，老師在派的時候自己點
+   （m.teams），那才是他真的做過的決定。 */
 function msFor(teamId) {
   var t = teamOf(teamId);
   if (!t) return [];
   return where('Milestones', function (m) {
     if (m.classId !== t.classId) return false;
-    if (m.mentorId && t.mentorId && m.mentorId !== t.mentorId) return false;
     return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
 }

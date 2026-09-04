@@ -7,14 +7,14 @@
      各組進度   誰在哪、誰慢下來了
 
    他對專案制定有自主權：派什麼、分幾段、排在什麼時候、發給自己
-   帶的哪幾組，都是他的。
+   哪幾組，都是全班的。
 
    但他排的那一天**不進判定**。判定只讀兩個數字：學生說幾天、
    實際幾天（RULES.judge，check.js 第三條擋著）。那條軌是整個
    作品的地基——一旦系統拿老師的日期去評分，被評價的對象就
    換回作業了。他也不打分、不挑裝備。 */
 
-/* 老師走到哪一步了。有人等你看就是第三步，其餘看自己帶的組有沒有人在走。
+/* 老師走到哪一步了。有人等你看就是第三步，其餘看班上有沒有人在走。
    本來那個 running 沒有篩班也沒有篩老師——全系統只要有人在走就算，
    在一個課程三位老師的設定下那是別人的組。 */
 
@@ -49,8 +49,9 @@ function overTags(teamId, run) {
 /* ---------- 審核（首頁） ---------- */
 PAGES.radar = function () {
   var u = me();
-  /* 只有自己帶的組。三位老師共用一個課程，同一個佇列會讓
-     A 老師勾到 B 老師的組。 */
+  /* 全班。三位老師共用一個課程，而每一位本來就會被問到任何一組的事——
+     切成三個互相看不到的小班只是多出來的複雜度（見 40-db.js 的
+     teamsUnder）。 */
   var rows = radar(u.classId, u.userId);
   var H = [];
 
@@ -75,7 +76,7 @@ PAGES.radar = function () {
   H.push('</div>');
 
   if (tq === 'exit') {
-    /* 他帶的每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
+    /* 全班每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
        所以他要能主動開，不是只能回應。
 
        有說的排在前面：那是一個訊號，不是一道關卡。 */
@@ -392,7 +393,7 @@ PAGES.ms = function () {
   H.push('<div class="tags">');
   H.push('<span class="tag static' + (to.length ? '' : ' hit') + '">' +
          (to.length ? '只發給 ' + to.length + ' 組'
-           : '我帶的 ' + teams.length + ' 組') + '</span>');
+           : '全班 ' + teams.length + ' 組') + '</span>');
   teams.forEach(function (t) {
     var on = to.indexOf(t.teamId) >= 0;
     H.push('<button class="tag' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
@@ -418,7 +419,7 @@ PAGES.ms = function () {
     /* 三種發法。「課程共用」不只是舊資料——一位老師可以刻意派一個
        不掛自己的任務（期中發表那一種），那時候全課程都收得到。 */
     H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組'
-      : (m.mentorId ? '我帶的' : '課程共用')) + '</span>');
+      : '全班') + '</span>');
     /* 我排到哪一天。過了就寫過了——不是警告，是事實。 */
     var di = dueIn(m);
     if (di) {

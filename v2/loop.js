@@ -44,18 +44,40 @@ const TEAM = 'G1';
 
 console.log('迴圈測試　' + ROUNDS + ' 輪\n');
 
-/* ---------- 先把種子裡進行中的那一輪收掉，從乾淨狀態開始 ---------- */
-runsFor(TEAM).forEach(function (x) {
-  if (x.run.state === 'running') {
-    while (RULES.progress(x.run.pushes, x.run.est) < 1) { tick(); actPush(TEAM, x.run.runId, -1, 0); }
-    /* 省思在「上」之前，而且每一次都問。 */
-    actReflect(TEAM, x.run.runId, [0]);
-    actSubmit(TEAM, x.run.runId);
-    /* actSkipCamp 拿掉了：交出去現在直接進老師的清單，
-       那一支改成只記「他看過結算」（actSawStamp），不影響流程。 */
-    actApprove(x.run.runId, '');
+/* ---------- 先把種子留下的每一件都收乾淨 ----------
+
+   本來只收 state === 'running' 那一件。而老師端不再分「我帶的組」之後
+   （見 40-db.js 的 msFor），G1 收得到的委託變多了——剩下那幾件會讓
+   每一輪結束時停在 commit，於是「一輪跑完回到 idle」整片失敗。
+
+   改成照 nextThing 一路收到 idle 為止：一件都不剩，
+   後面那一句斷言才是在測這一輪，不是在測種子剩下什麼。 */
+(function () {
+  var guard = 0;
+  while (nextThing(TEAM).kind !== 'idle' && guard++ < 60) {
+    var nx = nextThing(TEAM);
+    var rid = nx.row && nx.row.run ? nx.row.run.runId : null;
+    if (nx.kind === 'commit') {
+      actCommit(TEAM, nx.row.ms.msId, 3, [], [], '', 'mid');
+    } else if (nx.kind === 'doing') {
+      var g2 = 0;
+      while (daysBetween(nx.row.run.committedAt, now()) < (nx.row.run.est || 1) && g2++ < 40) tick();
+      actReflect(TEAM, rid, [0]);
+      actSubmit(TEAM, rid);
+    } else if (nx.kind === 'stamped') {
+      actSawStamp(rid);
+    } else if (nx.kind === 'review') {
+      actApprove(rid, '');
+    } else if (nx.kind === 'back') {
+      actResend(TEAM, rid);
+    } else {
+      break;
+    }
   }
-});
+  if (nextThing(TEAM).kind !== 'idle') {
+    console.error('  ✗ 起手就收不乾淨：停在 ' + nextThing(TEAM).kind);
+  }
+})();
 
 const before = { runs: DB.Runs.length, pushes: DB.Pushes.length, ms: DB.Milestones.length };
 let stamps = { early: 0, exact: 0, late: 0 };
