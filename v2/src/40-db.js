@@ -319,7 +319,10 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
     .slice(0, RULES.STEPS_MAX)
     .map(function (x) {
       return { n: String(x.n).slice(0, 24),
-        d: clamp(1, RULES.EST_MAX, Number(x.d) || 1) };
+        d: clamp(1, RULES.EST_MAX, Number(x.d) || 1),
+        /* 誰做這一件。回報的時候只有他填得了自己那幾件，
+           而他的預估因此終於是「對自己的」預估。 */
+        who: String(x.who || '') };
     });
   /* 列了就是加起來。永遠只有一個地方在輸入。 */
   if (pl.length) est = planDays(pl);
@@ -754,6 +757,27 @@ function sureOf(teamId) {
   return out;
 }
 
+/* 已經交出去、老師還沒收下，而這個人還沒說他做了什麼的那一趟。
+
+   回一筆就好——同時有兩趟在等老師是很少見的，而一次問一件。 */
+function saidGap(teamId, userId) {
+  var rs = where('Runs', function (r) {
+    if (r.teamId !== teamId) return false;
+    if (r.state !== 'judged' && r.state !== 'submitted' && r.state !== 'back') return false;
+    return !((r.said || {})[userId]);
+  });
+  return rs.length ? rs[0] : null;
+}
+
+/* 這一趟裡掛在某個人名下的那幾件（回的是索引）。
+   沒有指定負責人的舊資料算成大家的，才不會有人填不了。 */
+function myItems(run, userId) {
+  var pl = (run && run.plan) || [];
+  var out = [];
+  pl.forEach(function (x, i) { if (!x.who || x.who === userId) out.push(i); });
+  return out;
+}
+
 /* 上一次他們寫的「老師要去哪裡看」。同一門課通常交在同一個地方，
    所以下一趟預先帶進來，改幾個字就好——摩擦一低，這一格才不會
    變成隨便打兩個字過關。 */
@@ -864,6 +888,20 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
      這是全系統唯一的自由書寫，而那正好是「不替他們定義」的極致。 */
   r.hard = (hard || '').slice(0, 300);
   r.pace = (pace || '').slice(0, 300);
+  /* 範圍有沒有變。不進判定——砍範圍是一個合法的專案決定，
+     它該被記下來，不該被懲罰。但它必須被記下來，不然那兩個天數
+     會在說謊：三天做完可能是因為砍了一半。 */
+  if (o.scope) r.scope = ({ more: 1, same: 1, less: 1 })[o.scope] ? o.scope : '';
+  /* 再給兩天會做什麼。老師覺得「可以」的關鍵不是他們做得多好，
+     是他們知道自己做到哪裡。 */
+  if (o.next != null) r.next = String(o.next).slice(0, 200);
+  /* 我做了什麼。一個人一行，記在自己名下——每個人各自寫，
+     沒寫的人在畫面上是「還沒說」，但不擋交出去。 */
+  if (o.said1 != null && (typeof S !== 'undefined') && S.who) {
+    r.said = r.said || {};
+    var one = String(o.said1).slice(0, 200).trim();
+    if (one) r.said[S.who] = one;
+  }
   save();
   logEvent('reflect', { teamId: teamId, runId: runId,
     overs: (overs || []).map(function (i) { return stepName(runId, i); }).join('、') });

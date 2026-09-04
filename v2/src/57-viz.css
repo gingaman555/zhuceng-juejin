@@ -2029,3 +2029,31 @@ button.ac:active{transform:translateY(1px)}
   .card.patron{flex-direction:column;align-items:center;text-align:center}
   .pat-t{align-items:center}
 }
+
+/* 誰做這一件。點一下換人。 */
+.pl .pw{
+  font:inherit;font-size:22px;line-height:1.2;padding:4px 9px;border:none;
+  cursor:pointer;color:var(--gold);background:var(--sunk);
+  box-shadow:inset 0 0 0 2px var(--gold-d);white-space:nowrap
+}
+.pl .pw:hover{box-shadow:inset 0 0 0 2px var(--gold)}
+.pl .pw:active{transform:translateY(1px)}
+
+/* 寬度不綁祖先——這張圖換個地方畫也不能被撐開（check.js 守著）。 */
+.px.sd-px{width:33px;height:33px;flex:0 0 33px;image-rendering:pixelated}
+
+/* 誰做了什麼：一個人一行，全隊並排。
+   只有你那一行是輸入框——你看得到全隊在同一張紙上，
+   但你只寫得了自己那一行。 */
+.saidlist{display:flex;flex-direction:column;gap:6px;margin:6px 0 0}
+.sd{display:flex;align-items:center;gap:11px;padding:6px 9px;background:var(--sunk)}
+.sd b{font-size:22px;font-weight:400;color:var(--mute);flex:0 0 auto;min-width:66px}
+.sd.mine b{color:var(--ink)}
+.sd span{font-size:22px;color:var(--dim);min-width:0;overflow-wrap:anywhere}
+.sd .bt-w{flex:1;min-width:0}
+
+/* 別人負責的那幾件：看得到，按不動。 */
+.sp2.theirs{opacity:.72}
+.sp2 .who{
+  font-size:22px;color:var(--gold-d);white-space:nowrap;text-decoration:none
+}

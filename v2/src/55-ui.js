@@ -42,6 +42,15 @@ function go(page, p) {
 }
 function me() { return S.who ? userOf(S.who) : null; }
 function isTeacher() { var u = me(); return !!u && u.role === 'teacher'; }
+
+/* 一顆鍵上放得下的名字。負責人那一顆只有一格寬，
+   所以取最後兩個字——同一組裡通常就分得出來了。 */
+function shortWho(id) {
+  var u = id ? userOf(id) : null;
+  if (!u) return '？';
+  var n = String(u.name || u.account || '').trim();
+  return n.length > 3 ? n.slice(-2) : (n || '？');
+}
 function myTeam() { var u = me(); return u ? teamOf(u.teamId) : null; }
 
 /* 首頁那一條「你不在的這幾天」看過就記下來，不然每次進來都再喊一次。
@@ -438,6 +447,20 @@ var ACTS = {
     var el = document.getElementById('pl-add');
     if (el) { el.value = ''; el.focus(); }
   },
+  /* 點一下換下一個組員。組員只有自己的話就沒得換，那也對——
+     一個人的隊，每一件都是他的。 */
+  planwho: function (i) {
+    var t = myTeam(); if (!t) return;
+    var mem = where('Users', function (u) { return u.teamId === t.teamId; })
+      .map(function (u) { return u.userId; });
+    if (!mem.length) return;
+    var k = Number(i);
+    var pl = DRAFT.plan || [];
+    if (!pl[k]) return;
+    var at = mem.indexOf(pl[k].who);
+    pl[k].who = mem[(at + 1) % mem.length];
+    render();
+  },
   plandel: function (i) {
     var p = (DRAFT.plan || []).slice();
     p.splice(Number(i), 1);
@@ -821,6 +844,20 @@ var ACTS = {
   /* 老師只勾一個「可以」。挑哪一件是學生的事。 */
   /* 收下的時候順手給幾枚。沒選就是最少的那一枚——
      「他沒有特別想說什麼」是一個正常的答案。 */
+  scope: function (k) { DRAFT.scope = k; render(); },
+  /* 交出去之後補寫「我做了什麼」。老師收下之前都寫得進去——
+     他還沒讀，所以這仍然是他讀到之前的紀錄。 */
+  saidnow: function (runId) {
+    var v = String((document.getElementById('sd-now') || {}).value || '').trim();
+    if (!v) return say('寫一行就好。');
+    var r = find('Runs', function (x) { return x.runId === runId; });
+    if (!r || r.state === 'done' || r.state === 'approved') return say('老師已經收下了。');
+    r.said = r.said || {};
+    r.said[S.who] = v.slice(0, 200);
+    save();
+    logEvent('said', { teamId: r.teamId, runId: runId });
+    say('記下來了。');
+  },
   bonus: function (n) { DRAFT.bonus = Number(n) || RULES.COIN.bonusMin; render(); },
   approve: function (runId) {
     var word = (document.getElementById('gr-word') || {}).value || '';

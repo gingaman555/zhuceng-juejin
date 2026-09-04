@@ -117,6 +117,21 @@ PAGES.home = function () {
     H.push('</div>');
   }
 
+  /* 交出去了，但這個人還沒說他做了什麼。
+
+     每個人是獨立帳號，交出去的那一下只有一個人在場——其他人本來
+     就再也沒有地方寫。老師收下之前補得上，補上去仍然在他讀到之前。 */
+  var gap = saidGap(t.teamId, S.who);
+  if (gap) {
+    var gm = msOf(gap.msId);
+    H.push('<div class="card"><div class="eyebrow lit">你還沒說你做了什麼</div>');
+    H.push('<p class="dim">' + esc(gm ? gm.title : '那一趟') +
+      '　·　老師收下之前都寫得進去。</p>');
+    H.push('<input id="sd-now" placeholder="' + esc('這幾天你做的是什麼') + '">');
+    H.push(btn('記下來', 'saidnow:' + gap.runId, 'big'));
+    H.push('</div>');
+  }
+
   /* 三扇門。本來在整頁最底下、在走過的那一條帶子後面——它們是
      「這個世界裡有什麼」，不是「我剛剛做了什麼」，放在最後等於
      要滑到底才看得到。 */
@@ -505,7 +520,11 @@ PAGES.commit = function () {
   /* 他自己拆的那幾件。第一次進來用老師寫的分段當起點——
      老師沒寫就是一張白紙，那時候拆的人是他。 */
   if (!DRAFT.plan) {
-    DRAFT.plan = previewSteps(m).map(function (x) { return { n: x, d: 1 }; });
+    /* 預設掛在自己名下。沒有人負責的細項在回報的時候沒有人填得了，
+       所以預設要是一個真的人，不是空的。 */
+    DRAFT.plan = previewSteps(m).map(function (x) {
+      return { n: x, d: 1, who: S.who };
+    });
   }
   var plan = DRAFT.plan;
   /* 列了就是加起來，沒列就直接說一個數字。永遠只有一個地方在輸入。 */
@@ -583,6 +602,10 @@ PAGES.commit = function () {
       H.push('<div class="pl">');
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
+      /* 誰做這一件。點一下換下一個人。 */
+      H.push('<button class="pw" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'planwho:' + i })) + '\' title="' +
+        esc('點一下換人') + '">' + esc(shortWho(x.who)) + '</button>');
       H.push('<button class="pd" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'pland:' + i + ',-1' })) + '\'>−</button>');
       H.push('<u>' + x.d + '</u>');

@@ -190,6 +190,24 @@ PAGES.review = function () {
 
      兩欄並排是重點——這個作品在練的就是那兩個數字之間的距離，
      而老師要寫那一句話的時候，看的就是這張表。 */
+  /* 誰做了什麼。沒寫的顯示「還沒說」——那是一個事實，不是一個指控，
+     而且它是這一頁上唯一看得出「這一組是不是一起做的」的地方。 */
+  var mem = where('Users', function (u) { return u.teamId === r.teamId; });
+  if (mem.length) {
+    var sd = r.said || {};
+    H.push('<div class="eyebrow">誰做了什麼</div>');
+    H.push('<div class="saidlist">');
+    mem.forEach(function (u) {
+      H.push('<div class="sd">');
+      H.push(pxTag(heroOf(u).idleA, heroOf(u).pal, 'sd-px'));
+      H.push('<b>' + esc(u.name || '') + '</b>');
+      H.push('<span' + (sd[u.userId] ? '' : ' class="dim"') + '>' +
+        (sd[u.userId] ? esc(sd[u.userId]) : '還沒說') + '</span>');
+      H.push('</div>');
+    });
+    H.push('</div>');
+  }
+
   var pl = r.plan || [], sp = r.spent || [];
   if (pl.length) {
     H.push('<div class="eyebrow">他們拆的那幾件　說／實際</div>');
@@ -199,6 +217,7 @@ PAGES.review = function () {
       H.push('<div class="sp2">');
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
+      H.push('<u class="who">' + esc(shortWho(x.who)) + '</u>');
       H.push('<u class="said">說 ' + x.d + '</u>');
       H.push('<u class="got' + (got != null && got > x.d ? ' over' : '') + '">' +
         (got == null ? '—' : got) + '</u>');
@@ -211,7 +230,19 @@ PAGES.review = function () {
     H.push('<div class="eyebrow">他們覺得進展</div>');
     H.push('<div class="feels one"><span class="fl on">' + esc(fn) + '</span></div>');
   }
+  /* 範圍有沒有變。跟順不順擺在一起——「順」但範圍砍了一半，
+     跟「不順」但範圍沒動，是兩件很不一樣的事。 */
+  if (r.scope) {
+    var sn = ({ more: '比說的多', same: '差不多', less: '比說的少' })[r.scope] || '';
+    H.push('<div class="eyebrow">做出來的跟當初說的</div>');
+    H.push('<div class="feels one"><span class="fl on">' + esc(sn) + '</span></div>');
+  }
   if (r.why) H.push('<p class="quote"><b>為什麼</b>' + nl(r.why) + '</p>');
+  /* 再給兩天會做什麼。他寫那一句話的時候，這一格是最有用的輸入——
+     他們自己已經看到的東西，他不用再說一次。 */
+  if (r.next) {
+    H.push('<p class="quote"><b>再給兩天他們會做</b>' + nl(r.next) + '</p>');
+  }
   if (r.hard) H.push('<p class="quote"><b>他們說卡在哪裡</b>' + nl(r.hard) + '</p>');
   if (r.pace) H.push('<p class="quote"><b>他們覺得的進度</b>' + nl(r.pace) + '</p>');
   H.push(estBar(r.est, r.actual, false));

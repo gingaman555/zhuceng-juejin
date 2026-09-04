@@ -169,20 +169,62 @@ function btChoice(act, label, cls) {
    在量的東西是數字。 */
 function btSteps(runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
+  var t = myTeam();
   var pl = (r && r.plan) || [];
-  if (!pl.length) return '';
-  if (!DRAFT.spent) DRAFT.spent = pl.map(function (x) { return x.d; });
-  var H = ['<div class="splist">'];
-  pl.forEach(function (x, i) {
-    H.push('<div class="sp2">');
-    H.push('<b style="background:' + stepHue(i) + '"></b>');
-    H.push('<i>' + esc(x.n) + '</i>');
-    H.push('<u class="said">說 ' + x.d + '</u>');
-    H.push('<button class="pd" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'spent:' + i + ',-1' })) + '\'>−</button>');
-    H.push('<u class="got">' + DRAFT.spent[i] + '</u>');
-    H.push('<button class="pd" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'spent:' + i + ',1' })) + '\'>＋</button>');
+  var H = [];
+
+  /* 老師要去哪裡看。排在最前面——那是他打開審核頁的第一件事。 */
+  H.push('<div class="bt-qh">老師要去哪裡看</div>');
+  H.push('<input class="bt-w" id="bt-where" oninput="DRAFT.where=this.value" ' +
+    'placeholder="' + esc('例：TronClass 第三次作業 · 印出來放你桌上') +
+    '" value="' + esc(draft('where', t ? lastWhere(t.teamId) : '')) + '">');
+
+  if (pl.length) {
+    if (!DRAFT.spent) DRAFT.spent = pl.map(function (x) { return x.d; });
+    var mine = myItems(r, S.who);
+    H.push('<div class="bt-qh">這幾件各花幾天</div>');
+    H.push('<div class="splist">');
+    pl.forEach(function (x, i) {
+      /* 只有掛在你名下的那幾件按得動。別人的看得到，按不動——
+         同一張紙上你只寫得了自己那一行。 */
+      var own = mine.indexOf(i) >= 0;
+      H.push('<div class="sp2' + (own ? '' : ' theirs') + '">');
+      H.push('<b style="background:' + stepHue(i) + '"></b>');
+      H.push('<i>' + esc(x.n) + '</i>');
+      H.push('<u class="who">' + esc(shortWho(x.who)) + '</u>');
+      H.push('<u class="said">說 ' + x.d + '</u>');
+      if (own) {
+        H.push('<button class="pd" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'spent:' + i + ',-1' })) + '\'>−</button>');
+        H.push('<u class="got">' + DRAFT.spent[i] + '</u>');
+        H.push('<button class="pd" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'spent:' + i + ',1' })) + '\'>＋</button>');
+      } else {
+        H.push('<u class="got dim">' + DRAFT.spent[i] + '</u>');
+      }
+      H.push('</div>');
+    });
+    H.push('</div>');
+  }
+
+  /* 我做了什麼。每個人各寫一行，全隊並排——
+     這一段本身就是「互相表達」的介面：誰寫了、誰沒寫，同一個畫面上。 */
+  H.push('<div class="bt-qh">誰做了什麼</div>');
+  H.push('<div class="saidlist">');
+  var mem = t ? where('Users', function (u) { return u.teamId === t.teamId; }) : [];
+  var said = (r && r.said) || {};
+  mem.forEach(function (u) {
+    var me0 = u.userId === S.who;
+    H.push('<div class="sd' + (me0 ? ' mine' : '') + '">');
+    H.push(pxTag(heroOf(u).idleA, heroOf(u).pal, 'sd-px'));
+    H.push('<b>' + esc(me0 ? '你' : (u.name || '')) + '</b>');
+    if (me0) {
+      H.push('<input class="bt-w" id="bt-said" oninput="DRAFT.said1=this.value" ' +
+        'placeholder="' + esc('這幾天你做的是什麼') + '" value="' +
+        esc(draft('said1', said[u.userId] || '')) + '">');
+    } else {
+      H.push('<span>' + (said[u.userId] ? esc(said[u.userId]) : '還沒說') + '</span>');
+    }
     H.push('</div>');
   });
   H.push('</div>');
@@ -219,13 +261,23 @@ function btAsk(r) {
       'oninput="DRAFT.why=this.value" placeholder="' +
       esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>');
   }
-  /* 老師要去哪裡看。必填，但系統只檢查有沒有字——
-     擋的是「你有沒有告訴他」，不是「你寫得對不對」。 */
-  H.push('<div class="bt-qh">老師要去哪裡看</div>');
-  H.push('<input class="bt-w" id="bt-where" ' +
-    'oninput="DRAFT.where=this.value" placeholder="' +
-    esc('例：TronClass 第三次作業 · 印出來放你桌上 · 週三帶去給你看') +
-    '" value="' + esc(draft('where', lastWhere(r.teamId))) + '">');
+  /* 範圍有沒有變。守住數字不說謊——三天做完可能是砍了一半，
+     而只有他們知道。不進判定，所以誠實回答沒有代價。 */
+  H.push('<div class="bt-qh">做出來的跟當初說的</div>');
+  H.push('<div class="feels">');
+  [['more', '比說的多'], ['same', '差不多'], ['less', '比說的少']].forEach(function (x) {
+    H.push('<button class="fl' + (DRAFT.scope === x[1 - 1] ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'scope:' + x[0] })) +
+      '\'>' + esc(x[1]) + '</button>');
+  });
+  H.push('</div>');
+
+  /* 再給兩天會做什麼。必填。老師覺得「可以」的關鍵不是他們做得多好，
+     是他們知道自己做到哪裡——而用天數問比用形容詞問精準。 */
+  H.push('<div class="bt-qh">如果再給你們兩天，你們會做什麼</div>');
+  H.push('<textarea class="bt-w" rows="2" maxlength="200" ' +
+    'oninput="DRAFT.next=this.value" placeholder="' +
+    esc('例：再訪一個人，第三份的資料太薄') + '">' + esc(draft('next', '')) + '</textarea>');
   return H.join('');
 }
 
@@ -360,8 +412,12 @@ ACTS.btq2 = function (id) {
   battleStop();
   var run = find('Runs', function (x) { return x.runId === id; });
   var again = !!(run && run.state === 'back');
+  /* 沒寫「再給兩天會做什麼」就交不出去。跟「為什麼」一樣，
+     系統只檢查有沒有字。 */
+  if (!String(DRAFT.next || '').trim()) return say('先寫再給兩天你們會做什麼。');
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
-    { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why });
+    { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why,
+      scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1 });
   /* 退回那一場走 actResend 不走 actSubmit：答案更新，判定不動。
 
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
@@ -373,6 +429,7 @@ ACTS.btq2 = function (id) {
   var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
+  DRAFT.scope = null; DRAFT.next = ''; DRAFT.said1 = ''; DRAFT.where = null;
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', hurt: 1 };
   render();
