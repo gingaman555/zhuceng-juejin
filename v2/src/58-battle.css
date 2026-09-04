@@ -607,3 +607,13 @@
 /* 他寫好了，但你還沒——看得到有這一行，看不到內容。
    不是鎖，是順序：同時出牌，然後一起翻。 */
 .sd-hid{color:var(--mute);letter-spacing:.14em}
+
+/* 一頁一題：還有幾題。一排點，不是「3 / 7」——
+   那是一個要讀的東西，而這裡只需要知道還有幾個。 */
+.bt-dots{display:flex;gap:5px;margin:0 0 14px}
+.bt-dots i{
+  width:11px;height:11px;display:block;background:var(--sunk);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.34)
+}
+.bt-dots i.done{background:var(--gold-d)}
+.bt-dots i.on{background:var(--gold)}

@@ -63,12 +63,14 @@ function btPhase(r) {
   if (r.state !== 'running' && r.state !== 'back') return 'play';
   var ph = S.p.ph;
   if (!ph) return 'menu';
+  /* 問答只剩一種階段，第幾題記在 S.p.q（見 BT_STEPS）。 */
+  if (ph === 'q1' || ph === 'q2' || ph === 'q') return 'q';
   /* 本來這裡有一條：沒拆件就跳過第一問，直接進第二問。
 
      那條寫在第一問只問「這幾件各花幾天」的年代——沒有細項，那一問
      確實沒東西可問。但第一問現在還收兩樣跟細項無關的東西：
      老師要去哪裡看、你自己做了什麼。而他不收的那兩道關卡就架在
-     那兩樣上（見 handoverGap）。
+     那兩樣上（見 BT_STEPS 每一題的 no）。
 
      跳過去的話，沒拆件的那一趟會卡死：關卡在第二問擋下來，叫他去
      第一問補，而第一問又被跳掉——他看得到那句話，但沒有地方可以打字。
@@ -148,16 +150,24 @@ PAGES.battle = function () {
   }
   H.push('</div>');
 
-  /* ── 問答 ──
-     兩問都接在字幕框底下，答完打牠一下。 */
-  if (ph === 'q1' || ph === 'q2') {
+  /* ── 問答：一頁一題 ──
+     題目寫在對話框裡（他問的那一句），答的地方接在底下。 */
+  if (ph === 'q') {
+    var qs = btAsks(r);
+    var qi = Math.max(0, Math.min(qs.length - 1, Number(S.p.q) || 0));
+    var last = qi === qs.length - 1;
     H.push('<div class="bt-q">');
-    H.push(ph === 'q1' ? btSteps(r.runId) : btAsk(r));
+    /* 第幾題。一排點，不是文字——「3 / 7」是一個要讀的東西，
+       而這裡只需要知道「還有幾個」。 */
+    H.push('<div class="bt-dots">');
+    qs.forEach(function (s, i) {
+      H.push('<i' + (i === qi ? ' class="on"' : (i < qi ? ' class="done"' : '')) + '></i>');
+    });
+    H.push('</div>');
+    H.push(qs[qi].body(r, t));
     H.push('<div class="bt-menu wide">');
-    /* 兩問各自一句，不共用「打過去」——第一下是他先出手，
-       第二下是接著再一下。同一句話用兩次，那兩下就變成同一下。 */
-    H.push(btChoice('bt' + ph + ':' + r.runId,
-      ph === 'q1' ? '接著說' : '交出去', 'go'));
+    H.push(btChoice('btnext:' + r.runId, last ? '交出去' : '接著說', 'go'));
+    if (qi > 0) H.push(btChoice('btprev:' + r.runId, '回上一題', ''));
     H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
     H.push('</div></div>');
   }
@@ -189,35 +199,109 @@ function btLine(r, mob, ph) {
     if (r.runId && !mobDebut(r.teamId, r.runId)) return '又是你。這次帶了什麼來？';
     return '你走到了。' + mob.n + ' 在這裡。';
   }
-  if (ph === 'q1') return '你帶了什麼來？';
-  if (ph === 'q2') return '路上怎麼樣？';
+  /* 問答的時候，框裡那一句就是他問的那一題（見 BT_STEPS）。
+     本來是「你帶了什麼來？」這種過場，而過場底下接一疊表單，
+     等於那一句跟底下那些格子沒有關係。 */
+  if (ph === 'q') {
+    var qs = btAsks(r);
+    var qi = Math.max(0, Math.min(qs.length - 1, Number(S.p.q) || 0));
+    return qs[qi].ask;
+  }
   return '他伸手接過去。';
-}
-
-/* ── 他自己的那一道關卡 ──
-
-   他收的是東西，老師收的是好不好。所以他只擋一件事：**你有沒有
-   交代完**。那是事實，不是評價——他數得出來少了什麼，而他不需要
-   有意見。
-
-   兩樣：老師要去哪裡看、你自己那一行做了什麼。
-
-   只擋你自己那一行，不擋隊友的——你寫不了別人的那一行，拿別人
-   沒寫來擋你，那是連坐。隊友的空著看得見（同一張畫面上誰寫了誰
-   沒寫），而且老師收下之前都補得進去。 */
-function handoverGap(r, t) {
-  var wh = String(DRAFT.where == null ? (t ? lastWhere(t.teamId) : '') : DRAFT.where).trim();
-  if (!wh) return '你還沒說老師要去哪裡看。';
-  var said = (r && r.said) || {};
-  var mine = String(DRAFT.said1 == null ? (said[S.who] || '') : DRAFT.said1).trim();
-  if (!mine) return '你還沒說你做了什麼。';
-  return '';
 }
 
 /* 選單上的一行。舊版寶可夢的游標長在前面（見 58-battle.css）。 */
 function btChoice(act, label, cls) {
   return '<button class="bm ' + cls + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: act })) + '\'>' + esc(label) + '</button>';
+}
+
+/* ---------- 一頁一題 ----------
+
+   本來兩頁：第一問塞了三題（老師去哪看、各花幾天、誰做了什麼），
+   第二問塞了四題（順不順、為什麼、範圍、再兩天）。七題兩頁。
+
+   兩個問題：
+
+   一 · 這個作品自己的規矩是「一頁只給一個動作」（見 60-student.js
+        開頭）。交作業那一段是全站唯一違反它的地方，而且違反得最兇。
+
+   二 · 那一疊表單比一個畫面高，所以要往下拉——**一拉委託人就出去了**。
+        他站在那裡等你回話，而你答題的時候看不到他。那就不是對話，
+        是他站在表單上面當插圖。
+
+   所以拆成七步，一步一題，委託人一直在畫面上。而每一步的那一句
+   就是題目本身：對話框裡寫的不再是「路上怎麼樣？」這種過場，
+   是他真的在問的那一句。
+
+   有幾題會被跳過：沒拆件就沒有「各花幾天」，深度不夠就沒有「為什麼」
+   （見 RULES.asks）。跳過的不算在步數裡，所以那一排點數得出來幾題。 */
+var BT_STEPS = [
+  { k: 'where', ask: '老師要去哪裡看？',
+    body: function (r, t) {
+      return '<input class="bt-w" id="bt-where" oninput="DRAFT.where=this.value" ' +
+        'placeholder="' + esc('例：TronClass 第三次作業 · 印出來放你桌上') +
+        '" value="' + esc(draft('where', t ? lastWhere(t.teamId) : '')) + '">';
+    },
+    need: function (r, t) {
+      return !!String(DRAFT.where == null ? (t ? lastWhere(t.teamId) : '') : DRAFT.where).trim();
+    } },
+
+  { k: 'spent', ask: '這幾件各花了幾天？',
+    skip: function (r) { return !((r.plan || []).length); },
+    body: function (r, t) { return btSpent(r); } },
+
+  { k: 'said', ask: '你做了什麼？',
+    body: function (r, t) { return btSaid(r, t); },
+    need: function (r, t) {
+      var said = (r && r.said) || {};
+      return !!String(DRAFT.said1 == null ? (said[S.who] || '') : DRAFT.said1).trim();
+    } },
+
+  { k: 'feel', ask: '這一趟順不順？',
+    body: function () {
+      var H = ['<div class="feels">'];
+      FEELS.forEach(function (f) {
+        H.push('<button class="fl' + (DRAFT.feel === f[0] ? ' on' : '') +
+          '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'feel:' + f[0] })) +
+          '\'>' + esc(f[1]) + '</button>');
+      });
+      H.push('</div>');
+      return H.join('');
+    } },
+
+  { k: 'why', ask: '為什麼？',
+    skip: function (r) { return !btAskHard(r.teamId); },
+    body: function () {
+      return '<textarea class="bt-w" rows="3" maxlength="300" ' +
+        'oninput="DRAFT.why=this.value" placeholder="' +
+        esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>';
+    } },
+
+  { k: 'scope', ask: '做出來的，跟你當初說的一樣嗎？',
+    body: function () {
+      var H = ['<div class="feels">'];
+      [['more', '比說的多'], ['same', '差不多'], ['less', '比說的少']].forEach(function (x) {
+        H.push('<button class="fl' + (DRAFT.scope === x[0] ? ' on' : '') +
+          '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'scope:' + x[0] })) +
+          '\'>' + esc(x[1]) + '</button>');
+      });
+      H.push('</div>');
+      return H.join('');
+    } },
+
+  { k: 'next', ask: '再給你們兩天，你們會做什麼？',
+    body: function () {
+      return '<textarea class="bt-w" rows="2" maxlength="200" ' +
+        'oninput="DRAFT.next=this.value" placeholder="' +
+        esc('例：再訪一個人，第三份的資料太薄') + '">' + esc(draft('next', '')) + '</textarea>';
+    },
+    need: function () { return !!String(DRAFT.next || '').trim(); } }
+];
+
+/* 這一趟真的要問哪幾題。 */
+function btAsks(r) {
+  return BT_STEPS.filter(function (s) { return !(s.skip && s.skip(r)); });
 }
 
 /* 第一問：老師分的段，勾掉做完的。 */
@@ -228,22 +312,14 @@ function btChoice(act, label, cls) {
 
    本來這一問是「勾掉哪幾段做完了」。勾掉不帶任何數字，而這個作品
    在量的東西是數字。 */
-function btSteps(runId) {
-  var r = find('Runs', function (x) { return x.runId === runId; });
-  var t = myTeam();
+/* 這幾件各花了幾天。一題一頁，所以這裡不再需要標題——
+   標題在對話框裡，是他問的那一句（見 BT_STEPS）。 */
+function btSpent(r) {
   var pl = (r && r.plan) || [];
   var H = [];
-
-  /* 老師要去哪裡看。排在最前面——那是他打開審核頁的第一件事。 */
-  H.push('<div class="bt-qh">老師要去哪裡看</div>');
-  H.push('<input class="bt-w" id="bt-where" oninput="DRAFT.where=this.value" ' +
-    'placeholder="' + esc('例：TronClass 第三次作業 · 印出來放你桌上') +
-    '" value="' + esc(draft('where', t ? lastWhere(t.teamId) : '')) + '">');
-
   if (pl.length) {
     if (!DRAFT.spent) DRAFT.spent = pl.map(function (x) { return x.d; });
     var mine = myItems(r, S.who);
-    H.push('<div class="bt-qh">這幾件各花幾天</div>');
     H.push('<div class="splist">');
     pl.forEach(function (x, i) {
       /* 只有掛在你名下的那幾件按得動。別人的看得到，按不動——
@@ -267,7 +343,12 @@ function btSteps(runId) {
     });
     H.push('</div>');
   }
+  return H.join('');
+}
 
+/* 誰做了什麼。 */
+function btSaid(r, t) {
+  var H = [];
   /* 我做了什麼。每個人各寫一行，全隊並排——
      這一段本身就是「互相表達」的介面：誰寫了、誰沒寫，同一個畫面上。
 
@@ -283,7 +364,6 @@ function btSteps(runId) {
      寫完就全部打開。這不是規則，是順序——同時出牌，然後一起翻。
      （這一套本來就擋著跨組的預估互看，理由一樣：見 40-db.js 結尾
      那一段 estSpread 為什麼拿掉。） */
-  H.push('<div class="bt-qh">誰做了什麼</div>');
   H.push('<div class="saidlist">');
   var mem = t ? where('Users', function (u) { return u.teamId === t.teamId; }) : [];
   var said = (r && r.said) || {};
@@ -319,48 +399,10 @@ function btSteps(runId) {
 
    輸入框跟 DRAFT 綁著、而且不重畫：重畫會把 innerHTML 換掉，
    打到一半的字會不見，游標也會跳掉。 */
-/* 第二問：順不順，跟為什麼。
-
-   「進度如何」本來是一個空白的多行框，而那是一個要人自己想格式的
-   問題——三選一之後它答得掉，而「為什麼」才是真正有內容的那一格。 */
+/* 三選一那三個。BT_STEPS 的「順不順」那一題用它。
+   本來這裡還有一支 btAsk，把順不順、為什麼、範圍、再兩天四題
+   畫在同一頁；拆成一頁一題之後那四題各自搬進 BT_STEPS 了。 */
 var FEELS = [['good', '順'], ['ok', '普通'], ['bad', '不順']];
-function btAsk(r) {
-  var H = [];
-  H.push('<div class="bt-qh">目前專案進展的狀況你覺得如何</div>');
-  H.push('<div class="feels">');
-  FEELS.forEach(function (f) {
-    H.push('<button class="fl' + (DRAFT.feel === f[0] ? ' on' : '') +
-      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'feel:' + f[0] })) +
-      '\'>' + esc(f[1]) + '</button>');
-  });
-  H.push('</div>');
-  /* 「為什麼」要打字。選填——逼出來的字是為了交差的字，
-     而那一刻資料就開始說謊；他想寫才寫，寫的才是真的。 */
-  if (btAskHard(r.teamId)) {
-    H.push('<div class="bt-qh">為什麼</div>');
-    H.push('<textarea class="bt-w" rows="3" maxlength="300" ' +
-      'oninput="DRAFT.why=this.value" placeholder="' +
-      esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>');
-  }
-  /* 範圍有沒有變。守住數字不說謊——三天做完可能是砍了一半，
-     而只有他們知道。不進判定，所以誠實回答沒有代價。 */
-  H.push('<div class="bt-qh">做出來的跟當初說的</div>');
-  H.push('<div class="feels">');
-  [['more', '比說的多'], ['same', '差不多'], ['less', '比說的少']].forEach(function (x) {
-    H.push('<button class="fl' + (DRAFT.scope === x[1 - 1] ? ' on' : '') +
-      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'scope:' + x[0] })) +
-      '\'>' + esc(x[1]) + '</button>');
-  });
-  H.push('</div>');
-
-  /* 再給兩天會做什麼。必填。老師覺得「可以」的關鍵不是他們做得多好，
-     是他們知道自己做到哪裡——而用天數問比用形容詞問精準。 */
-  H.push('<div class="bt-qh">如果再給你們兩天，你們會做什麼</div>');
-  H.push('<textarea class="bt-w" rows="2" maxlength="200" ' +
-    'oninput="DRAFT.next=this.value" placeholder="' +
-    esc('例：再訪一個人，第三份的資料太薄') + '">' + esc(draft('next', '')) + '</textarea>');
-  return H.join('');
-}
 
 /* 名牌。照舊版寶可夢：名字在上，底下一行小字。
    那條斜出去的尾線是那個畫面最好認的一筆，在 CSS 裡。 */
@@ -472,29 +514,38 @@ function battleRun() {
 /* 上：進第一問。老師沒分段就直接到第二問（見 btPhase）。 */
 ACTS.btgo = function (id) {
   battleStop();
-  S.p = { id: id, ph: 'q1' };
+  S.p = { id: id, ph: 'q', q: 0 };
   render();
 };
 
-/* 他不收的時候留在原地，那一句換成他說的（見 btLine）。 */
-function btNo(id, ph, msg) {
-  S.p = { id: id, ph: ph, no: msg };
-  render();
-}
-
-/* 第一問答完：打牠一下，進第二問。 */
-ACTS.btq1 = function (id) {
+ACTS.btprev = function (id) {
   battleStop();
-  /* 他先看你有沒有交代完。少一樣他不收——這道關卡本來是 say()
-     彈一下，那是系統在講話；現在是他不收。 */
-  var r0 = find('Runs', function (x) { return x.runId === id; });
-  var gap = handoverGap(r0, myTeam());
-  if (gap) return btNo(id, 'q1', gap);
-  /* 一律進第二問。「順／普通／不順」是一下，不是一段文章——
-     漸進的是「系統要求他說明自己的深度」，而那個深度在「為什麼」
-     那一格上（見 btAsk），不在這一個三選一上。 */
-  S.p = { id: id, ph: 'q2', hurt: 1 };
+  S.p = { id: id, ph: 'q', q: Math.max(0, (Number(S.p.q) || 0) - 1) };
   render();
+};
+
+/* 答完一題，往下一題。最後一題按下去就是交出去。
+
+   每一題自己那道關卡在這裡跑：他不收的時候留在原地，那一句換成
+   他說的（見 BT_STEPS 的 no 與 btLine）。關卡跟著題目走，所以他
+   是在你漏掉那一題的當下就說，不是等到最後才一次退回來。 */
+ACTS.btnext = function (id) {
+  battleStop();
+  var r0 = find('Runs', function (x) { return x.runId === id; });
+  if (!r0) return;
+  var qs = btAsks(r0);
+  var qi = Math.max(0, Math.min(qs.length - 1, Number(S.p.q) || 0));
+  var step = qs[qi];
+  /* 他不收。那一句是「還沒。」＋這一題——拒收看得出來，題目也還在。 */
+  if (step.need && !step.need(r0, myTeam())) {
+    S.p = { id: id, ph: 'q', q: qi, no: '還沒。' + step.ask };
+    return render();
+  }
+  if (qi + 1 < qs.length) {
+    S.p = { id: id, ph: 'q', q: qi + 1, hurt: 1 };
+    return render();
+  }
+  ACTS.btq2(id);
 };
 
 /* 第二問答完：打牠一下，然後交出去。
@@ -504,10 +555,13 @@ ACTS.btq2 = function (id) {
   battleStop();
   var run = find('Runs', function (x) { return x.runId === id; });
   var again = !!(run && run.state === 'back');
-  /* 沒寫「再給兩天會做什麼」就交不出去。跟「為什麼」一樣，
-     系統只檢查有沒有字。 */
-  if (!String(DRAFT.next || '').trim()) {
-    return btNo(id, 'q2', '再給你兩天，你們會做什麼？');
+  /* 每一題自己的關卡在 btnext 跑過了（見 BT_STEPS 的 no）。
+     這裡再擋一次是因為 btq2 也可能被別的路叫到。 */
+  var qs0 = btAsks(run);
+  for (var qq = 0; qq < qs0.length; qq++) {
+    if (!qs0[qq].need || qs0[qq].need(run, t)) continue;
+    S.p = { id: id, ph: 'q', q: qq, no: '還沒。' + qs0[qq].ask };
+    return render();
   }
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why,
@@ -517,9 +571,7 @@ ACTS.btq2 = function (id) {
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
      數字在他第一次交出去的當下就定了，重做不會讓他當初說的話
      變成別的話。 */
-  /* 沒寫「老師要去哪裡看」就交不出去。 */
   var wh = String(DRAFT.where == null ? lastWhere(t.teamId) : DRAFT.where).trim();
-  if (!wh) return btNo(id, 'q1', '你還沒說老師要去哪裡看。');
   var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
