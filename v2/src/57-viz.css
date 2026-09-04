@@ -1978,14 +1978,28 @@ button.ac:active{transform:translateY(1px)}
    本來這裡有第二階（老師收下才算進館藏），拿掉了。 */
 .cxi.met{opacity:1}
 
-/* 你有多確定：三顆。選中的亮起來，沒選中的是安靜的。
-   三顆等重——沒有哪一個是「比較好的答案」。 */
+/* 一排裡挑一個：沒選的安靜，選中的亮起來。
+   幾顆等重——沒有哪一個是「比較好的答案」。
+
+   2026-09-05：本來只寫了 .on 那一半，而 .btn 的底本來就是滿金的。
+   於是 .on 的 color:var(--gold) 是金字寫在金底上——選中的那一顆
+   整個字消失（量到 rgb(233,179,65) 寫在 rgb(233,179,65) 上），
+   沒選的那一顆反而看起來像是被選的那一個。整個顛倒。
+
+   三個地方共用這一組：註冊選學生／老師／研究者、承諾時說把握、
+   老師收下時給幾枚。 */
 .sure-row{gap:8px;flex-wrap:wrap}
-.btn.sure{flex:1 1 auto;min-width:150px}
+.btn.sure{
+  flex:1 1 auto;min-width:150px;
+  background:var(--sunk);color:var(--dim);
+  box-shadow:inset 0 0 0 2px var(--line)
+}
+.btn.sure:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--line2)}
 .btn.sure.on{
-  color:var(--gold);
+  background:var(--gold);color:#1A1408;
   box-shadow:inset 0 0 0 3px #000, inset 0 0 0 6px var(--gold-d)
 }
+.btn.sure.on:hover{background:var(--gold2)}
 
 /* 你說的把握，跟後來。一階一行，三欄：說了什麼、幾次、準了幾次。
    不畫成長條——那會變成一個比較的圖。它只是三行事實。 */

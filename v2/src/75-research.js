@@ -35,8 +35,7 @@ var ROLE_SAY = { student: '學生', teacher: '老師', researcher: '研究者' }
 PAGES.rs = function () {
   var cid = rsClassId();
   var H = [head('帳號', '誰在這個系統裡',
-    '老師與研究者的帳號從這裡開。' +
-    '所以不開放自己註冊。')];
+    '老師與研究者的帳號也可以從這裡開，不用回門口。')];
 
   H.push(classPicker());
 

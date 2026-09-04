@@ -127,14 +127,22 @@ PAGES.login = function () {
 PAGES.reg = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
   var role = DRAFT.rgRole || 'student';
-  H.push(head('建立帳號', role === 'teacher' ?
-    '開一個班，或加進同事開好的那一班' : '先報上你在哪一班', ''));
+  H.push(head('建立帳號',
+    role === 'teacher' ? '開一個班，或加進同事開好的那一班'
+      : role === 'researcher' ? '看得到每一個動作，不進地下城'
+        : '先報上你在哪一班', ''));
   /* 身分自己選。本來只開得了學生帳號，老師要找研究者——
      那等於課還沒開始就卡在一個不在現場的人身上。 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你是</div>');
   H.push('<div class="row sure-row">');
-  [['student', '學生'], ['teacher', '老師']].forEach(function (r) {
+  /* 研究者也在這一排。他要的東西跟老師一樣是一個進得去的帳號——
+     使用紀錄那一頁本來就在（見 75-research.js），只是開不出第一個
+     研究者帳號來，於是真的開一個班之後那一整端等於不存在。
+
+     代價講清楚：學生也看得到這一顆。點錯了會拿到一個沒有班的帳號，
+     一眼就看得出不對，重開一個就好。 */
+  [['student', '學生'], ['teacher', '老師'], ['researcher', '研究者']].forEach(function (r) {
     H.push(btn(r[1], 'rgrole:' + r[0], 'sure' + (role === r[0] ? ' on' : '')));
   });
   H.push('</div></div>');
@@ -143,6 +151,8 @@ PAGES.reg = function () {
     H.push('<div class="eyebrow">班級加入碼</div>');
     H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
            esc('六個英數字，跟老師拿') + '">');
+  } else if (role === 'researcher') {
+    /* 研究者不屬於哪一個班——他那一端是跨班看的，班在頁面上自己挑。 */
   } else {
     /* 老師這一格本來不畫——「他是發碼的人，不該先跟人要碼」。
 
@@ -261,7 +271,8 @@ ACTS.reg = function () {
     code: (document.getElementById('rg-code') || {}).value || '',
     account: (document.getElementById('rg-acc') || {}).value || '',
     password: (document.getElementById('rg-pw') || {}).value || '',
-    role: DRAFT.rgRole === 'teacher' ? 'teacher' : 'student'
+    role: (DRAFT.rgRole === 'teacher' || DRAFT.rgRole === 'researcher')
+      ? DRAFT.rgRole : 'student'
   };
   var r = actRegister(o);
   if (r.err) {
