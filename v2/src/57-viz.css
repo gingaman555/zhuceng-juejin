@@ -1964,12 +1964,9 @@ button.ac:active{transform:translateY(1px)}
 
 /* 遇到了但還沒進館藏。比遇過的暗一階，但比沒遇過的亮——
    三階：沒遇過 .55 ／ 遇過還沒存檔 .78 ／ 存檔 1。 */
-.cxi.met{opacity:.78}
-.cxi.met.filed{opacity:1}
-.cxi.met.filed{box-shadow:inset 3px 0 0 var(--zink,var(--frame))}
-.cxi .cx-wait{
-  display:block;font-size:22px;line-height:1.4;color:var(--gold-d);margin-top:5px
-}
+/* 圖鑑只有一階：遇過就是滿的。
+   本來這裡有第二階（老師收下才算進館藏），拿掉了。 */
+.cxi.met{opacity:1}
 
 /* 你有多確定：三顆。選中的亮起來，沒選中的是安靜的。
    三顆等重——沒有哪一個是「比較好的答案」。 */

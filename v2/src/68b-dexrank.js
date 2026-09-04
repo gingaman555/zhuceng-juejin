@@ -36,8 +36,9 @@
 
 /* 這一組遇過幾種，跟牠們散在哪幾個地方。 */
 function dexOf(teamId) {
-  /* 只算存檔的。這是一張榜，而榜是獎賞——獎賞不該由系統自己發。 */
-  var met = sealedMobs(teamId);
+  /* 遇過就算。圖鑑沒有第二階了，所以這一榜也跟著回到「遇過幾位」——
+     兩邊的數字必須是同一個，不然學生看到的跟榜上的對不起來。 */
+  var met = metMobs(teamId);
   var names = Object.keys(met);
   /* 去過的地方：從遇過的那幾隻反推。牠們住在哪一層寫在生物表上。 */
   var zs = {};
