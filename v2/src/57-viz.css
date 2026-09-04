@@ -2136,3 +2136,7 @@ button.ac:active{transform:translateY(1px)}
 .cxi.can,.card.patron.can,.scn-mob.can{ cursor:pointer }
 .cxi.can:hover{ box-shadow:inset 0 0 0 2px var(--gold) }
 .card.patron.can:hover{ box-shadow:inset 0 0 0 2px var(--gold) }
+
+/* 故事第二頁那一條。跟門口同一個元件，只是上下留白不一樣：
+   在門口它是招牌的一部分，在這裡它是標題的答案，所以貼著標題。 */
+.sty-loop{margin:0 0 22px}

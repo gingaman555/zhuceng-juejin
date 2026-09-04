@@ -139,6 +139,29 @@ function pxTag(px, pal, cls) {
   return '<img class="px ' + (cls || '') + '" src="' + pxSvg(px, pal, false) + '" alt="">';
 }
 
+/* ── 一趟是這樣走的 ──
+
+   四個字說完一圈。門口那一頁跟故事第二頁用的是同一個——
+
+   同一件事講兩次要長一樣。學生在門口看過一次「接下委託 → 規劃天數
+   → 交件回報 → 拿到金幣」，進來之後在故事裡看到的如果是另外五句話，
+   那是兩份要各自記的東西；看到同一條，那是同一份看第二次。
+
+   認知負荷最省的一段，是他已經記過的那一段。 */
+function loopStrip() {
+  var H = ['<div class="four">'];
+  [
+    [ICONS.home, '接下委託'], [ICONS.pack, '規劃天數'],
+    [ICONS.radar, '交件回報'], [ICONS.eco, '拿到金幣']
+  ].forEach(function (x, i) {
+    if (i) H.push('<i class="fr-a"></i>');
+    H.push('<div class="fr">' + pxTag(x[0], ICON_ON, 'fr-px') +
+      '<b>' + esc(x[1]) + '</b></div>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
+
 /* 一位委託人。兩張幀疊起來輪流亮——跟角色同一套（見 57-viz.css 的
    wkA／wkB）。他站在那裡等你，不是一張貼在牆上的圖。
 

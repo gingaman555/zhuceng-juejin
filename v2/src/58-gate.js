@@ -31,20 +31,9 @@ PAGES.gate = function () {
   H.push(btn('我是新的', 'go:reg', 'ghost'));
   H.push('</div>');
 
-  /* 一趟就這四件事。四個圖示一排，不寫成一段話。 */
-  H.push('<div class="four">');
-  [
-    /* 四個字說完一圈：接下來、說幾天、交出去、拿到錢。
-       本來是「規劃天數／進行任務／回報進度／查看全班」——
-       四個功能名，四件不連起來的事。 */
-    [ICONS.home, '接下委託'], [ICONS.pack, '規劃天數'],
-    [ICONS.radar, '交件回報'], [ICONS.eco, '拿到金幣']
-  ].forEach(function (x, i) {
-    if (i) H.push('<i class="fr-a"></i>');
-    H.push('<div class="fr">' + pxTag(x[0], ICON_ON, 'fr-px') +
-      '<b>' + esc(x[1]) + '</b></div>');
-  });
-  H.push('</div>');
+  /* 一趟就這四件事。四個圖示一排，不寫成一段話。
+     故事第二頁用的是同一個（見 55-ui.js 的 loopStrip）。 */
+  H.push(loopStrip());
 
   /* 六層。進去之前就知道下面有什麼，那是世界，不是說明。
      刻意不寫「地下幾公尺起」——層沒有先後，順序是每一個班隨機洗出來的。 */
