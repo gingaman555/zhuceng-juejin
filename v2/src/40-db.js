@@ -808,14 +808,16 @@ function myItems(run, userId) {
   return out;
 }
 
-/* 上一次他們寫的「老師要去哪裡看」。同一門課通常交在同一個地方，
-   所以下一趟預先帶進來，改幾個字就好——摩擦一低，這一格才不會
-   變成隨便打兩個字過關。 */
-function lastWhere(teamId) {
-  var rs = where('Runs', function (r) { return r.teamId === teamId && r.link; })
-    .sort(function (a, b) { return (b.submittedAt || 0) - (a.submittedAt || 0); });
-  return rs.length ? rs[0].link : '';
-}
+/* lastWhere 拿掉了。
+
+   它回的是上一次寫的「老師要去哪裡看」，用來預先填進下一趟——
+   當初的理由是「摩擦一低，這一格才不會變成隨便打兩個字過關」。
+
+   而它產生的是相反的東西：一路按過去，老師收到一個看起來填過、
+   其實沒有人想過的位置。上一趟交在 TronClass，這一趟可能印出來
+   放在他桌上，那不是同一件事。
+
+   要人寫的地方就不要先幫他寫。 */
 
 /* 這一趟的形狀：承諾幾天、過了幾天、來過幾天、說沒動幾天、勾了幾段。
    老師看得到這個。系統不說任何一句判斷——它只把數字擺出來。 */

@@ -244,15 +244,29 @@ var BT_STEPS = [
     body: function (r, t) {
       return '<input class="bt-w" id="bt-where" oninput="DRAFT.where=this.value" ' +
         'placeholder="' + esc('例：TronClass 第三次作業 · 印出來放你桌上') +
-        '" value="' + esc(draft('where', t ? lastWhere(t.teamId) : '')) + '">';
+        /* 空的。本來會把上一趟填過的那一句帶進來（lastWhere），
+           而那是幫他填——上一趟交在 TronClass，這一趟可能印出來放在
+           老師桌上，那不是同一件事。而且他只要一路按過去，
+           老師就會收到一個看起來填過、其實沒人想過的位置。 */
+        '" value="' + esc(draft('where', '')) + '">';
     },
     need: function (r, t) {
-      return !!String(DRAFT.where == null ? (t ? lastWhere(t.teamId) : '') : DRAFT.where).trim();
+      return !!String(DRAFT.where || '').trim();
     } },
 
   { k: 'spent', ask: '這幾件各花了幾天？',
     skip: function (r) { return !((r.plan || []).length); },
-    body: function (r, t) { return btSpent(r); } },
+    body: function (r, t) { return btSpent(r); },
+    /* 只看你名下那幾件。別人的那幾格他們自己填，拿別人沒填來擋你
+       是連坐（跟「誰做了什麼」同一條規矩）。 */
+    need: function (r) {
+      var mine = myItems(r, S.who);
+      if (!mine.length) return true;
+      for (var i = 0; i < mine.length; i++) {
+        if (!(Number((DRAFT.spent || [])[mine[i]]) > 0)) return false;
+      }
+      return true;
+    } },
 
   { k: 'said', ask: '你做了什麼？',
     body: function (r, t) { return btSaid(r, t); },
@@ -321,7 +335,15 @@ function btSpent(r) {
   var pl = (r && r.plan) || [];
   var H = [];
   if (pl.length) {
-    if (!DRAFT.spent) DRAFT.spent = pl.map(function (x) { return x.d; });
+    /* 從 0 開始，不是從他當初估的天數開始。
+
+       本來每一格預設成 x.d——也就是他承諾的那個數字。那等於系統
+       先替他回答「跟我說的一樣」，而他只要一路按過去，交出去的
+       就是一份「每一件都剛剛好」的報告。
+
+       這一格是整套系統唯一在量的東西（說幾天 vs 實際幾天）的細項版。
+       預填它就是在汙染那份資料，而且汙染的方向剛好是「看起來很準」。 */
+    if (!DRAFT.spent) DRAFT.spent = pl.map(function () { return 0; });
     var mine = myItems(r, S.who);
     H.push('<div class="splist">');
     pl.forEach(function (x, i) {
@@ -574,7 +596,9 @@ ACTS.btq2 = function (id) {
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
      數字在他第一次交出去的當下就定了，重做不會讓他當初說的話
      變成別的話。 */
-  var wh = String(DRAFT.where == null ? lastWhere(t.teamId) : DRAFT.where).trim();
+  /* 交出去用的也是他這一次打的。本來這裡也會退回 lastWhere，
+     所以就算欄位看起來是空的，交出去的仍然是上一趟那一句。 */
+  var wh = String(DRAFT.where || '').trim();
   var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
