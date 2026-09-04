@@ -592,3 +592,14 @@
 /* 他不收的時候，那一句是紅的一階（--over 是這個作品裡「超過了」
    的顏色，不是錯誤的顏色）。他在陳述少了什麼，不是在罵人。 */
 .bt-say.no b{color:var(--over)}
+
+/* 名牌搬到對話框上之後，這兩條原本掛在 .bt-plate 上的收尾就對不到
+   任何東西了——它們不會報錯，只是那兩下不再發生：
+   報出天數的時候名牌閃一下、他收下之後名牌暗一階。
+
+   接回 .bt-name。 */
+.bt.told ~ .bt-bottom .bt-name{animation:bttold .4s steps(2,end) 1}
+.bt.foe-out ~ .bt-bottom .bt-name{opacity:.55}
+@media (prefers-reduced-motion: reduce){
+  .bt.told ~ .bt-bottom .bt-name{animation:none}
+}
