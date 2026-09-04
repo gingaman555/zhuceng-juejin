@@ -613,6 +613,681 @@ function patPx(body, mark) {
   return g.map(function (r) { return r.join(''); });
 }
 
+/* ---------- 放大之後的樣子 ----------
+
+   廊道上他是 24×16，那個尺寸讀得出剪影、讀不出樣貌。點進去放大那一頁
+   （PAGES.patron）畫的是這一組：36×24，格子多 3.4 倍。
+
+   多出來的格子拿去畫小的那張畫不下的東西：
+
+     眼睛有瞳孔跟一點反光，不再是一格白的
+     手有指節
+     布有褶、殼有裂、節與節之間有縫
+     臉上有表情——眉、嘴、下巴的暗面
+
+   每一種的姿態跟小的那張一樣（低頭的還是低頭、蹲著的還是蹲著），
+   不然放大之後會像換了一個人。
+
+   顏色跟小的那張同一套：k 輪廓 · c 凹處 · f 最暗 · g 暗面 · h 身體
+   · i 受光 · j 一點光 · nN 金屬 · wW 骨與白 · yY 光。 */
+
+var PAT_BIG_W = 36, PAT_BIG_H = 24;
+
+var PAT_BIG = {
+  /* 很高很瘦。低著頭看你，右手長到膝蓋，指節看得出來。 */
+  tall: [
+    '.....kkkkk......',
+    '....kiiihhgk....',
+    '...kiihhhhggk...',
+    '...kihhhhhhgk...',
+    '...kckWkckWhk...',
+    '...kihhhhhhgk...',
+    '....kihccchk....',
+    '.....kkkkkk.....',
+    '......kiik......',
+    '......kihk......',
+    '....kkiihkk.....',
+    '..kkiihhhggkk...',
+    '.kiihhhhhhggk...',
+    'kiihhhhhhhggkkk.',
+    'kihhhhhhhhggkhk.',
+    'kihhhhhhhggkkhk.',
+    '.kihhhhhhggkkhk.',
+    '.kihhhhhggk.khk.',
+    '.kihhhhggfk.kWk.',
+    '.kihhhggffk.kkk.',
+    '..kihgkkgfk.....',
+    '..kihk.kgfk.....',
+    '..kkk...kkk.....'
+  ],
+
+  /* 很矮很寬。眼睛分很開，嘴咧著，右手插在腰上。 */
+  squat: [
+    '....kkkkkkkkk.....',
+    '..kkiiiihhhhggkk..',
+    '.kiiihhhhhhhhhggk.',
+    'kiihhhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhhhgk',
+    'kickWkhhhhhhckWhgk',
+    'kihhhhhhhhhhhhhhgk',
+    'kihhhcccccccchhggk',
+    'kihhhckkkkkkchhggk',
+    'kihhhhcccccchhhggk',
+    'kihhhhhhhhhhhhggkk',
+    'kihhhhhhhhhhhggkhk',
+    'kihhhhhhhhhhggkkhk',
+    'kihhhhhhhhhggffkkk',
+    'kihhhhhhhhggfffk..',
+    '.kihhhhhhggfffk...',
+    '..kihhhhggfffk....',
+    '...kkkk..kkkk.....',
+    '...khhk..khhk.....',
+    '...kkkk..kkkk.....'
+  ],
+
+  /* 一堆布。頭從布裡歪出來，左邊一隻手伸出布縫，布上有褶。 */
+  drape: [
+    '.........kkkkk....',
+    '........kiiihgk...',
+    '.......kiihhhhgk..',
+    '.......kihhhhhgk..',
+    '.......kckWkhhgk..',
+    '.......kihhhhhgk..',
+    '.......kihcchhgk..',
+    '........kkkkkkk...',
+    '.....kkiihhhggkk..',
+    '...kkiihhhhhhgggk.',
+    '..kiihhhhfhhhhgggk',
+    '.kiihhhhhfhhhhgggk',
+    'kkihhhhhhfhhhhgggk',
+    'khkihhhhhfhhhhgggk',
+    'kWkihhhhhfhhhhgggk',
+    'kkihhhhhhfhhhhgggk',
+    '.kihhhhhhfhhhhggfk',
+    '.kihhhhhhfhhhhggfk',
+    '.kihhhhhhfhhhggffk',
+    '.kihhhhhhfhhggfffk',
+    '.kihhhhhhfhggffffk',
+    '.kihhhhhhfggfffffk',
+    '.kkkkkkkkkkkkkkkkk'
+  ],
+
+  /* 兩個頭。左邊那顆看著你，右邊那顆轉開了。 */
+  twin: [
+    '..kkkkk.....kkkkk.',
+    '.kiiihgk...kiiihgk',
+    'kiihhhhgk.kiihhhhg',
+    'kihhhhhhk.kihhhhhg',
+    'kckWkchgk.kihcckWg',
+    'kihhhhhgk.kihhhhhg',
+    'kihccchgk.kihhhchg',
+    '.kkkkkkk...kkkkkkk',
+    '..kiihk......kiihk',
+    '..kiihkkkkkkkkiihk',
+    '..kiihhhhhhhhhhihk',
+    '.kkiihhhhhhhhhhhgk',
+    'kiihhhhhhhhhhhhhgk',
+    'kihhhhhhhhhhhhhhgk',
+    'kihhhhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhggfk',
+    'kihhhhhhhhhhhggffk',
+    '.kihhhhhhhhhggfffk',
+    '.kihhhhhhhhggffffk',
+    '..kihhhhhhggfffk..',
+    '..kihgk..kkgffk...',
+    '..kihk....kgfk....',
+    '..kkk......kkk....'
+  ],
+
+  /* 浮著。眼睛很大，底下那一截往左飄，越下面越散。 */
+  float: [
+    '....kkkkkkkkk.....',
+    '..kkiiihhhhhggkk..',
+    '.kiiihhhhhhhhhggk.',
+    'kiihhhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhhhgk',
+    'kicckWWkhhkWWkchgk',
+    'kickWjWkhhkWjWchgk',
+    'kihhkWWkhhkWWhhhgk',
+    'kihhhhhhhhhhhhhhgk',
+    'kihhhhcccccchhhhgk',
+    'kihhhhhhhhhhhhhggk',
+    '.kihhhhhhhhhhhhgk.',
+    '.kihhhhhhhhhhhggk.',
+    '..kihhhhhhhhhggk..',
+    '..kihhhhhhhhggk...',
+    '...kihhhhhhggk....',
+    '...kihhhhhggk.....',
+    '..kfihhhhggk......',
+    '..kf.kihggk.......',
+    '.kf...kigk........',
+    '.f.....kk.........',
+    'f........f........',
+    '....f.............'
+  ],
+
+  /* 背著比自己還大的東西。被壓得往前傾，右手撐著膝蓋。 */
+  haul: [
+    '.......kkkkkkkkkk.',
+    '......kiiihhhhggk.',
+    '.....kkiihhhhhggk.',
+    '...kkkkihhhhhhggk.',
+    '..kiiihkihhhhhggk.',
+    '.kiihhhkihhhhhggk.',
+    '.kckWkhkihhhhhggk.',
+    '.kihhhhkihhhhhggk.',
+    '.kihcchkihhhhhggk.',
+    '..kkkkkkihhhhhggk.',
+    '.kkiihhkihhhhhggk.',
+    'kiihhhhkihhhhhggk.',
+    'kihhhhhkihhhhhggk.',
+    'kihhhhhkihhhhggfk.',
+    'kihhhhhkiggfffffk.',
+    'kihhhhhkkkkkkkkkk.',
+    'kihhhhggkk........',
+    'kihhhggkhk........',
+    '.kihhggkhk........',
+    '.kihgffkWk........',
+    '.kihk.kkkk........',
+    '.kkk..kgfk........',
+    '......kkkk........'
+  ],
+
+  /* 一團兜帽。帽簷壓得很低，裡面兩點光；右手從袍子裡伸出來指著你。 */
+  hood: [
+    '......kkkkkkk.....',
+    '....kkiiihhhggkk..',
+    '..kkiihhhhhhhhggk.',
+    '.kiihhhhhhhhhhhggk',
+    'kiihhhhhhhhhhhhhgk',
+    'kiccccccccccccccgk',
+    'kicccYYcccccYYccgk',
+    'kicccYYcccccYYccgk',
+    'kiccccccccccccccgk',
+    'kihccccccccccccggk',
+    'kihhhcccccccchhggk',
+    'kihhhhhhhhhhhhhggk',
+    'kihhhhfhhhhfhhhggk',
+    'kihhhhfhhhhfhhggkk',
+    'kihhhhfhhhhfhhggkh',
+    'kihhhhfhhhhfhggkkh',
+    'kihhhhfhhhhfhggkWh',
+    'kihhhhfhhhhfggfkkk',
+    'kihhhhfhhhfggfffk.',
+    'kihhhhfhhfggffffk.',
+    'kihhhhfhfggfffffk.',
+    'kihhhhffggffffffk.',
+    'kkkkkkkkkkkkkkkkk.'
+  ],
+
+  /* 有殼。殼上有裂，縫裡一雙眼睛看出來，左下角一隻小腳。 */
+  shell: [
+    '..kkkkkkkkkkkkkk..',
+    '.kiiihhhhhhhhggk..',
+    'kiihhhhfhhhhhhggk.',
+    'kihhhhhfhhhhhhhggk',
+    'kikkkkkkkkkkkkkkgk',
+    'kikcccccccccccckgk',
+    'kikccWWccccWWcckgk',
+    'kikccWjccccWjcckgk',
+    'kikccWWccccWWcckgk',
+    'kikcccccccccccckgk',
+    'kikccccccccccckkgk',
+    'kikkkkkkkkkkkkkkgk',
+    'kihhhhfhhhhhhhhggk',
+    'kihhhhfhhhhhhhggkk',
+    'kihhhhfhhhhhhggkhk',
+    'kihhhhfhhhhhggkkhk',
+    'kihhhhffhhhggffkkk',
+    '.kihhhhffhggfffk..',
+    '..kkkkkkkkkkkkk...',
+    '..kk...kk...kk....',
+    '..kh...kh...kh....',
+    '..kk...kk...kk....'
+  ],
+
+  /* 一節一節疊起來的。最上面那節歪向左，每一道縫裡有光。 */
+  stack: [
+    '..kkkkkkkk........',
+    '.kiiihhhggk.......',
+    'kiihhhhhhggk......',
+    'kihhhhhhhhgk......',
+    'kckWkchhhhgk......',
+    'kihhhhhhhhgk......',
+    'kihccchhhhgk......',
+    'kkkkkkkkkkkk......',
+    '..kkiiihhhhhggkk..',
+    '.kiihhhhhhhhhhggk.',
+    '.kijjjjjjjjjjjjgk.',
+    '.kkkkkkkkkkkkkkkk.',
+    'kiiihhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhhggk',
+    'kijjjjjjjjjjjjjjgk',
+    'kkkkkkkkkkkkkkkkkk',
+    'kiiihhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhggfk',
+    'kihhhhhhhhhhhggffk',
+    'kihhhhhhhhhggfffdk'.replace('d', 'f'),
+    'kkkkkkkkkkkkkkkkkk'
+  ],
+
+  /* 頭比身體大很多。眼睛一大一小，兩隻小手在胸前搓著。 */
+  bighead: [
+    '...kkkkkkkkkkkk...',
+    '.kkiiiihhhhhhggkk.',
+    'kiiihhhhhhhhhhhggk',
+    'kiihhhhhhhhhhhhhgk',
+    'kihhhhhhhhhhhhhhgk',
+    'kiccccchhhhhcccchk',
+    'kicWWWchhhhhcWWchk',
+    'kicWjWchhhhhcWjchk',
+    'kicWWWchhhhhcWWchk',
+    'kiccccchhhhhcccchk',
+    'kihhhhhhhhhhhhhhgk',
+    'kihhhhccccccchhggk',
+    'kihhhhhhhhhhhhggfk',
+    '.kihhhhhhhhhhggfk.',
+    '..kkkkkkkkkkkkkk..',
+    '....kkkihhgkkk....',
+    '..kkhkiihhggkhkk..',
+    '..khWkihhhhgkWhk..',
+    '..kkkkihhhhggkkk..',
+    '....kihhhhhggk....',
+    '....kihhhggffk....',
+    '....kkkk..kkkk....'
+  ],
+
+  /* 很長，貼著地拖過來。頭抬起來看你，身上一節一節。 */
+  long: [
+    '.............kkkkk',
+    '............kiiihk',
+    '...........kiihhgk',
+    '..........kihhhhgk',
+    '..........kckWkhgk',
+    '..........kihhhhgk',
+    '..kkkkkkkkkihcchgk',
+    '.kiihhhhhhhhhhhhgk',
+    'kiihhhhhhhhhhhhhgk',
+    'kihhfhhhfhhhfhhhgk',
+    'kihhfhhhfhhhfhhggk',
+    'kihhfhhhfhhhfhhggk',
+    'kihhfhhhfhhhfhggfk',
+    'kihhfhhhfhhhfggffk',
+    'kihhfhhhfhhfggfffk',
+    'kkkkkkkkkkkkkkkkkk'
+  ],
+
+  /* 分成好幾小塊。每一塊一隻眼睛，看的方向都不一樣。 */
+  swarm: [
+    '.kkkkkk......kkkkkk',
+    'kiihhhgk....kiihhhg',
+    'kickWchgk..kihcckWg',
+    'kihhhhhgk..kihhhhhg',
+    'kihcchhgk..kihhcchg',
+    '.kkkkkkk....kkkkkkk',
+    '...................',
+    '.....kkkkkk..kkkkk.',
+    '....kiihhhgkkiihhgk',
+    '....kickWchkickWchk',
+    '....kihhhhhkihhhhhk',
+    '....kihcchgkihcchgk',
+    '.....kkkkkk..kkkkk.',
+    '...................',
+    '.kkkkkk............',
+    'kiihhhgk...........',
+    'kihcckWgk..........',
+    'kihhhhhgk..........',
+    'kihhcchgk..........',
+    '.kkkkkkk...........'
+  ],
+
+  /* 蹲著，抬頭看你，左手撐在地上，背弓起來。 */
+  kneel: [
+    '.........kkkkkkk..',
+    '.......kkiiihhggk.',
+    '......kiihhhhhhggk',
+    '.....kihhhhhhhhhgk',
+    '.....kckWkchhhhhgk',
+    '.....kihhhhhhhhhgk',
+    '.....kihcccchhhhgk',
+    '....kkkkkkkkkkkkgk',
+    '..kkiiihhhhhhhhggk',
+    '.kiihhhhhhhhhhhggk',
+    'kiihhhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhggfk',
+    'kkhhhhhhhhhhhggffk',
+    'khhhhhhhhhhhggfffk',
+    'khhhhhhhhhhggffffk',
+    'kkhhhhhhhhggfffffk',
+    '.khhhhhhhggffffffk',
+    '.kkhhhhhggfffffffk',
+    '..kkkkkkkkkkkkkkkk'
+  ],
+
+  /* 一個環立在那裡，中間是空的。眼睛長在環上偏左的地方。 */
+  ring: [
+    '.....kkkkkkkk.....',
+    '...kkiiihhhhggkk..',
+    '..kiihhhhhhhhhggk.',
+    '.kiihhhkkkkhhhhggk',
+    'kiihhhkkccckkhhhgk',
+    'kihWhkkccccckkhhgk',
+    'kickWkcccccccckhgk',
+    'kihWhkcccccccckhgk',
+    'kihhhkcccccccckhgk',
+    'kihhhkcccccccckhgk',
+    'kihhhkcccccccckhgk',
+    'kihhhkkcccccckkhgk',
+    'kihhhhkkccckkhhhgk',
+    'kiihhhhkkkkkhhhggk',
+    '.kihhhhhhhhhhhggk.',
+    '..kihhhhhhhhhggk..',
+    '...kkiihhhhhggkk..',
+    '.....kkkkkkkk.....',
+    '.....kk....kk.....',
+    '....kkh....khk....',
+    '....kkk....kkk....'
+  ],
+
+  /* 很多節從中間伸出去，長短不一。中間一顆大眼睛。 */
+  many: [
+    'k.....k......k....',
+    '.k....k.....k.....',
+    '..k...k....k....k.',
+    '...kkkkkkkkkk...k.',
+    '..kiiihhhhhggk..k.',
+    '.kiihhhhhhhhhggk..',
+    'kiihhcccccchhhggk.',
+    'kihhccYYYYcchhhggk',
+    'kihhcYYjjYYchhhggk',
+    'kihhccYYYYcchhhggk',
+    'kiihhcccccchhhhggk',
+    '.kihhhhhhhhhhhggk.',
+    '..kkkkkkkkkkkkkk..',
+    '..k...k....k...k..',
+    '.k....k....k....k.',
+    'k.....k....k.....k',
+    '......k....k......',
+    '.....k......k.....'
+  ],
+
+  /* 一條很細的東西。頂端一顆歪著的頭，左邊伸出一隻小手。 */
+  thread: [
+    '..kkkkkk..',
+    '.kiiihhgk.',
+    'kiihhhhggk',
+    'kickWkchgk',
+    'kihhhhhhgk',
+    'kihhcchhgk',
+    '.kkkkkkkk.',
+    '...kiihk..',
+    '...kihhk..',
+    'kkkkiihk..',
+    'kWkkihhk..',
+    'kkkkiihk..',
+    '...kihhk..',
+    '...kiihk..',
+    '...kihhk..',
+    '...kiihk..',
+    '...kihhk..',
+    '...kiihk..',
+    '...kihhk..',
+    '..kkkkkk..'
+  ],
+
+  /* 上半身裂成兩半往兩邊開。裂縫裡一排眼睛看著你。 */
+  split: [
+    'kkkkk........kkkkk',
+    'kiihk........kiihk',
+    'kihhk........kihhk',
+    'kihhkk......kkhhgk',
+    'kihhhk......khhhgk',
+    'kihhhhk....khhhhgk',
+    'kiihhhhkkkkhhhhhgk',
+    '.kihhhhhhhhhhhhgk.',
+    '.kihhWWhhhhWWhhgk.',
+    '.kihhWjhhhhWjhhgk.',
+    '.kihhhhhhhhhhhhgk.',
+    'kiihhhccccccchhggk',
+    'kihhhhhWWWWhhhhggk',
+    'kihhhhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhggfk',
+    'kihhhhhhhhhhhggffk',
+    'kihhhhhhhhhhggfffk',
+    'kihhhhhhhhhggffffk',
+    '.kihhhhhhhggfffk..',
+    '.kkkkk....kkkkk...',
+    '.khhhk....khhhk...',
+    '.kkkkk....kkkkk...'
+  ],
+
+  /* 一個罩子，裡面亮著。罩下面露出一雙眼睛跟一隻手，光從下緣漏出來。 */
+  bell: [
+    '.......kkkk.......',
+    '......kiiihk......',
+    '.....kkiihhkk.....',
+    '..kkkkkkkkkkkkkk..',
+    '.kiiihhhhhhhhggkk.',
+    'kiihhhhhhhhhhhhggk',
+    'kihhhYYYYYYhhhhhgk',
+    'kihhYYYYYYYYhhhhgk',
+    'kihhYYYjjYYYhhhhgk',
+    'kihhYYYjjYYYhhhhgk',
+    'kihhYYYYYYYYhhhhgk',
+    'kihhhYYYYYYhhhhhgk',
+    'kihhhhhhhhhhhhhggk',
+    'kihhhhhhhhhhhhggfk',
+    'kihhhhhhhhhhhggffk',
+    'kyyyyyyyyyyyyyyyyk',
+    'kkkkkkkkkkkkkkkkkk',
+    '.kkk..kkk...kkkk..',
+    '.kWk..kWk...khhk..',
+    '.kkk..kkk...kkkk..',
+    '..y....y......y...'
+  ]
+};
+
+/* 大圖用的記號。
+
+   不能拿小的那一組來用：它們是照 24×16 的身體畫的，掛在 36×24 上
+   只有一半大，看起來像別人的東西黏上去。而記號不能省——
+   同一種體型有兩三位，放大之後分得出誰是誰全靠這一層。
+
+   所以重畫一遍，順便把小的畫不下的東西補上：燈有提把跟火苗、
+   鎖有鎖孔、板子上刻著東西、角有紋路。 */
+var PAT_BIG_MARK = {
+  none: null,
+
+  /* 頭上兩隻角，骨，上面有一圈一圈的紋。 */
+  horn: { at: 'top', sink: 2, px: [
+    '.kk......kk.',
+    'kWWk....kWWk',
+    'kWwk....kwWk',
+    'kWWk....kWWk',
+    'kwWk....kWwk',
+    '.kWWk..kWWk.',
+    '.kwwk..kwwk.'
+  ] },
+
+  /* 一頂金屬的冠。三個尖，尖端各一點光。 */
+  crown: { at: 'top', sink: 2, px: [
+    '..Y....Y....Y..',
+    '.kYk..kYk..kYk.',
+    '.kNk..kNk..kNk.',
+    'kkNkkkkNkkkkNkk',
+    'kNNNNNNNNNNNnnk',
+    'kNNnnnnnnnnnnnk',
+    'kkkkkkkkkkkkkkk'
+  ] },
+
+  /* 一點光跟在旁邊，外面一圈暈。 */
+  eye: { at: 'left', sink: -1, px: [
+    '..kk..',
+    '.kYYk.',
+    'kYjjYk',
+    'kYjjYk',
+    '.kYYk.',
+    '..kk..'
+  ] },
+
+  /* 一盞掛著的燈。鐵的殼，裡面一朵火。 */
+  lamp: { at: 'left', sink: 0, px: [
+    '...k...',
+    '...n...',
+    '..knk..',
+    '.knnnk.',
+    'kkNNNkk',
+    'kNYjYNk',
+    'kNYjYNk',
+    'kNYYYNk',
+    'kNyyyNk',
+    'kknnnkk',
+    '..kkk..'
+  ] },
+
+  /* 一根杖。木身有節，頂端一顆亮的。 */
+  staff: { at: 'right', sink: 0, px: [
+    '.kYYk.',
+    'kYjjYk',
+    'kYjjYk',
+    '.kYYk.',
+    '..kk..',
+    '..Nn..',
+    '..Nn..',
+    '..kk..',
+    '..Nn..',
+    '..Nn..',
+    '..Nn..',
+    '..kk..',
+    '..Nn..',
+    '..kk..'
+  ] },
+
+  /* 一把鎖。鎖孔看得見。
+
+     他要的東西鎖著，而你交出去的那一份是鑰匙——整個作品的那一句話
+     （見 10-pack.js）。鐵灰，在哪一層都一樣：那把鎖不屬於任何一層。 */
+  lock: { at: 'right', sink: 2, px: [
+    '..kkkk..',
+    '.kNNNNk.',
+    'kNnkkNNk',
+    'kNk..kNk',
+    'kNk..kNk',
+    'kkkkkkkk',
+    'kNNNNNnk',
+    'kNNkkNnk',
+    'kNkYYknk',
+    'kNkYYknk',
+    'kNNkkNnk',
+    'kNnnnnnk',
+    'kkkkkkkk'
+  ] },
+
+  /* 一個袋子，繩子扎著，鼓鼓的。 */
+  bag: { at: 'right', sink: 2, px: [
+    '..nn..',
+    '.knnk.',
+    'kknnkk',
+    'kiihgk',
+    'kihhgk',
+    'kihhgk',
+    'kihggk',
+    'kihggk',
+    '.kkkk.'
+  ] },
+
+  /* 一圈一圈捲起來的東西。 */
+  coil: { at: 'left', sink: 2, px: [
+    'kkkkkk..',
+    'kWWWwwk.',
+    '.kkkkWk.',
+    'kkkkkkk.',
+    'kWWWwwk.',
+    '.kkkkWk.',
+    'kkkkkkk.',
+    'kWWWwwk.',
+    '.kkkkkk.'
+  ] },
+
+  /* 一塊板子，平平地端在前面。上面刻著東西。 */
+  plate: { at: 'right', sink: 0, px: [
+    'kkkkkkkkk',
+    'kWWWWWWwk',
+    'kWnnnnWwk',
+    'kWnWWnWwk',
+    'kWnnnnWwk',
+    'kWWWWWWwk',
+    'kwwwwwwwk',
+    'kkkkkkkkk'
+  ] },
+
+  /* 有東西一直在滴。 */
+  drip: { at: 'left', sink: 0, px: [
+    '.kk.',
+    'kYYk',
+    'kyyk',
+    '.kk.',
+    '....',
+    '.kk.',
+    'kYYk',
+    'kyyk',
+    '.kk.',
+    '....',
+    '.kk.',
+    'kyyk',
+    '.kk.'
+  ] }
+};
+
+
+/* 組出一張大圖。跟小的那張同一套規矩：置中、貼地、記號貼著身體掛。 */
+function patBigPx(body, mark) {
+  var b = PAT_BIG[body];
+  if (!b) return null;
+  var w = patWide(b);
+  var bx = Math.max(0, Math.round((PAT_BIG_W - w) / 2));
+  var by = Math.max(0, PAT_BIG_H - b.length);
+  var g = [], y, x;
+  for (y = 0; y < PAT_BIG_H; y++) {
+    var r = [];
+    for (x = 0; x < PAT_BIG_W; x++) r.push('.');
+    g.push(r);
+  }
+  function put(art, x0, y0) {
+    art.forEach(function (row, dy) {
+      for (var dx = 0; dx < row.length; dx++) {
+        var c = row[dx];
+        if (c === '.') continue;
+        var px = x0 + dx, py = y0 + dy;
+        if (px >= 0 && px < PAT_BIG_W && py >= 0 && py < PAT_BIG_H) g[py][px] = c;
+      }
+    });
+  }
+  put(b, bx, by);
+  var m = PAT_BIG_MARK[mark || 'none'];
+  if (m) {
+    var mw = patWide(m.px);
+    var sink = m.sink || 0;
+    var mx, my;
+    if (m.at === 'top') {
+      mx = bx + Math.round((w - mw) / 2);
+      my = by - m.px.length + sink;
+    } else if (m.at === 'left') {
+      mx = bx - mw + sink;
+      my = by + Math.round((b.length - m.px.length) / 2);
+    } else {
+      mx = bx + w - sink;
+      my = by + Math.round((b.length - m.px.length) / 2);
+    }
+    mx = Math.max(0, Math.min(PAT_BIG_W - mw, mx));
+    my = Math.max(0, Math.min(PAT_BIG_H - m.px.length, my));
+    put(m.px, mx, my);
+  }
+  return g.map(function (r) { return r.join(''); });
+}
+
 /* ---------- 誰長什麼樣 ----------
 
    照名字對。名字、住哪一區、那一句描述都不動——那些寫得很好，
@@ -727,6 +1402,10 @@ function dressPatrons() {
     /* 第二幀。怎麼動由體型決定（見 PAT_IDLE）——站著的呼吸、
        浮著的整個沉、細的搖、硬的只有光在閃。 */
     c.px2 = patMove(c.px, PAT_IDLE[bd] || 'bob');
+    /* 放大那一頁用的那一張。同一個人、同一個姿態，格子多 3.4 倍——
+       眼睛有瞳孔、手有指節、布有褶。 */
+    c.big = patBigPx(bd, mk);
+    if (c.big) c.big2 = patMove(c.big, PAT_IDLE[bd] || 'bob');
   });
 }
 

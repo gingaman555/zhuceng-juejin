@@ -264,7 +264,7 @@ PAGES.patron = function () {
   }
 
   var H = ['<div class="pz ' + z.key + '">'];
-  H.push('<div class="pz-art">' + patTag(c, z.pal, 'pz-px') + '</div>');
+  H.push('<div class="pz-art">' + patTag(c, z.pal, 'pz-px', 1) + '</div>');
   H.push('<div class="pz-t">');
   H.push(head(z.name, c.n, c.t));
   H.push('</div>');

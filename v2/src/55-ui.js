@@ -145,13 +145,18 @@ function pxTag(px, pal, cls) {
    換幀比角色慢很多：角色 .44s 是腳步，委託人 1.5～2.3 秒是呼吸。
    快慢由名字決定，所以同一位每次都是同一種呼吸法，而一整層的人
    不會同時起伏。 */
-function patTag(c, pal, cls) {
-  if (!c || !c.px) return '';
-  if (!c.px2) return pxTag(c.px, pal, cls);
+function patTag(c, pal, cls, big) {
+  if (!c) return '';
+  /* big 是放大那一頁用的那一張：36×24，格子多 2.3 倍。
+     兩張都跑同一套呼吸，所以放大之後還是同一個人在呼吸。 */
+  var a = big && c.big ? c.big : c.px;
+  var b = big && c.big ? c.big2 : c.px2;
+  if (!a) return '';
+  if (!b) return pxTag(a, pal, cls);
   var ms = [1500, 1900, 2300][hash(String(c.n) + 'p') % 3];
   return '<span class="pat" style="--pt:' + ms + 'ms">' +
-    pxTag(c.px, pal, (cls || '') + ' wf wa') +
-    pxTag(c.px2, pal, (cls || '') + ' wf wb') + '</span>';
+    pxTag(a, pal, (cls || '') + ' wf wa') +
+    pxTag(b, pal, (cls || '') + ' wf wb') + '</span>';
 }
 
 /* 按鈕。act 是「動作:參數」的字串，全部收在 ACTS 裡。 */
