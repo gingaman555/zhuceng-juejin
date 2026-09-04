@@ -193,30 +193,12 @@ function actLogin(account, pw) {
 
 
 
-/* ---------- 研究者的帳號處理 ---------- */
+/* 重設密碼與刪帳號那兩支拿掉了。
 
-function actResetPw(userId, pw) {
-  var u = userOf(userId);
-  if (!u) return { err: '找不到這個帳號。' };
-  if (String(pw).length < 4) return { err: '密碼至少四個字。' };
-  u.salt = newSalt();
-  u.hash = pwHash(pw, u.salt);
-  save();
-  return { ok: true };
-}
-
-function actDeleteUser(userId) {
-  var u = userOf(userId);
-  if (!u) return { err: '找不到這個帳號。' };
-  if (u.role === 'researcher' &&
-      where('Users', function (x) { return x.role === 'researcher'; }).length <= 1) {
-    return { err: '這是最後一個研究者帳號，刪掉就沒有人管得了系統。' };
-  }
-  /* 認領過的名字要放回去，不然那個位子永遠卡著 */
-  DB.Users = DB.Users.filter(function (x) { return x.userId !== userId; });
-  save();
-  return { ok: true };
-}
+   它們唯一的呼叫端是研究者那一頁，而研究者現在只能看不能改
+   （見 75-research.js 的檔頭）。留著一支沒有人呼叫得到的
+   「刪掉任何人的帳號」，只會讓下一個讀這份程式的人以為那個
+   權限還在。 */
 
 /* 六個英數字。去掉會看錯的 I O 0 1——這串要用唸的。 */
 function newCode() {

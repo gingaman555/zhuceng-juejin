@@ -397,7 +397,7 @@ function sideBar() {
     headBlock = '<div class="side-head"><div class="k">LAB</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
       '<div class="s">帳號與紀錄</div></div>';
-    nav = [['rs', '帳號'], ['events', '紀錄']];
+    nav = [['rs', '名單'], ['events', '紀錄']];
   } else if (u.role === 'teacher') {
     var kl = classOf(u);
     headBlock = '<div class="side-head"><div class="k">TEACHER</div>' +

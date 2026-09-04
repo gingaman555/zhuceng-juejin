@@ -1,10 +1,23 @@
 /* 研究者端。
 
-   這一端不是給老師用的，也不進地下城。它做三件事：
+   這一端不是給老師用的，也不進地下城。它**只做兩件事，而且兩件都是讀**：
 
-     帳號   建班、開老師的帳號、重設密碼、解除認領、刪帳號
-     名冊   把班上的名單貼進來，學生才點得到自己
+     名單   誰在這個系統裡。看得到，改不動
      紀錄   每一個動作的流水帳，可以匯出
+
+   ── 為什麼一顆會改東西的鍵都沒有 ──
+
+   本來這一頁可以建班、開老師的帳號、重設密碼、刪帳號。全部拿掉了。
+
+   研究者是這個研究的觀察者。一個觀察者如果同時改得動被觀察對象的
+   帳號與狀態，那份資料就沒辦法說「這些是他們自己做的」——而那正是
+   這個研究唯一在主張的事。
+
+   拿掉之後沒有人少掉能力：老師自己註冊、自己開班或用同事給的碼加進
+   同一個班（見 58-gate.js），學生自己註冊、自己建隊。整條路上不需要
+   一個管理員。
+
+   界線寫成測試：check.js 擋住這個檔案裡出現任何 act 開頭的動作。
 
    紀錄那一頁是這個研究真正的資料。它記的是行為的形狀——承諾幾天、
    哪一天推進、判定結果、卡在哪——不記作業內容，因為系統本來就不收作業。
@@ -31,43 +44,32 @@ function classPicker() {
 
 var ROLE_SAY = { student: '學生', teacher: '老師', researcher: '研究者' };
 
-/* ---------- 帳號 ---------- */
+/* ---------- 名單（唯讀） ----------
+
+   這一頁存在的理由只有一個：匯出的資料裡是一堆代號，要有一個地方
+   對得回「這是誰、哪一班、哪一組」。所以它印得出來，但一顆改得動
+   東西的鍵都沒有。 */
 PAGES.rs = function () {
-  var cid = rsClassId();
-  var H = [head('帳號', '誰在這個系統裡',
-    '老師與研究者的帳號也可以從這裡開，不用回門口。')];
+  var H = [head('名單', '誰在這個系統裡',
+    '這一頁只能看。帳號由他們自己在門口開。')];
 
   H.push(classPicker());
 
   /* 班級 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">班級</div>');
+  H.push('<div class="eyebrow">班級　' + DB.Classes.length + ' 個</div>');
+  if (!DB.Classes.length) H.push('<p class="dim">還沒有人開班。</p>');
   DB.Classes.forEach(function (c) {
-    var t = userOf(c.teacherId);
+    var tea = where('Users', function (u) {
+      return u.role === 'teacher' && u.classId === c.classId;
+    });
     H.push('<div class="rn-row"><b>' + esc(c.name) + '</b>' +
       '<span class="dim">加入碼 ' + esc(c.joinCode) + '　·　' +
       where('Teams', function (x) { return x.classId === c.classId; }).length + ' 組　·　' +
-      '老師 ' + esc(t ? t.name : '（還沒指定）') + '</span></div>');
+      /* 一個班三位老師共同帶，所以這裡數的是人數不是「那一位」。 */
+      '老師 ' + (tea.length ? tea.map(function (u) { return esc(u.name); }).join('、')
+        : '（還沒有人）') + '</span></div>');
   });
-  H.push('<div class="eyebrow" style="margin-top:14px">開一個新的班</div>');
-  H.push('<div class="rn-row">');
-  H.push('<input id="ncls" value="' + esc(draft('nCls', '')) + '" oninput="DRAFT[\'nCls\']=this.value" placeholder="' + esc('班級名稱，例：114-1 畢業專題') + '">');
-  H.push(btn('建立', 'newclass', 'ghost'));
-  H.push('</div>');
-  H.push('</div>');
-
-  /* 開一個老師或研究者 */
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">開一個老師或研究者的帳號</div>');
-  H.push('<div class="rn-row">');
-  H.push('<input id="nu-acc" value="' + esc(draft('nuAcc', '')) + '" oninput="DRAFT[\'nuAcc\']=this.value" placeholder="' + esc('帳號') + '">');
-  H.push('<input id="nu-name" value="' + esc(draft('nuName', '')) + '" oninput="DRAFT[\'nuName\']=this.value" placeholder="' + esc('顯示名稱') + '">');
-  H.push('<input id="nu-pw" placeholder="' + esc('先給一個密碼，之後請他自己換') + '">');
-  H.push('</div>');
-  H.push('<div class="row" style="margin:11px 0 0">');
-  H.push(btn('建老師', 'newuser:teacher', 'ghost'));
-  H.push(btn('建研究者', 'newuser:researcher', 'ghost'));
-  H.push('</div>');
   H.push('</div>');
 
   /* 帳號清單 */
@@ -75,15 +77,15 @@ PAGES.rs = function () {
   H.push('<div class="eyebrow">帳號　' + DB.Users.length + ' 個</div>');
   DB.Users.forEach(function (u) {
     var t = u.teamId ? teamOf(u.teamId) : null;
+    var kl = u.classId ? find('Classes', function (c) { return c.classId === u.classId; }) : null;
     H.push('<div class="rn-row">');
     H.push('<b>' + esc(u.name) + '</b>');
     H.push('<span class="dim">' + esc(u.account) + '　·　' + esc(ROLE_SAY[u.role] || u.role) +
+      (kl ? '　·　' + esc(kl.name) : '') +
       (t ? '　·　' + esc(t.name) : '') +
-      (u.lastLogin ? '　·　上次登入 ' + daysBetween(u.lastLogin, now()) + ' 天前' : '　·　還沒登入過') +
+      (u.lastLogin ? '　·　上次登入 ' + daysBetween(u.lastLogin, now()) + ' 天前'
+        : '　·　還沒登入過') +
       '</span>');
-    H.push('<span class="sp" style="flex:1"></span>');
-    H.push(btn('重設密碼', 'respw:' + u.userId, 'ghost'));
-    H.push(btn('刪除', 'deluser:' + u.userId, 'ghost'));
     H.push('</div>');
   });
   H.push('</div>');
@@ -171,51 +173,8 @@ PAGES.events = function () {
 ACTS.rscls = function (id) { DRAFT.rsClass = id; render(); };
 ACTS.evteam = function (id) { DRAFT.evTeam = id; render(); };
 
-ACTS.newclass = function () {
-  var v = (document.getElementById('ncls') || {}).value || '';
-  if (!v.trim()) return say('先給這個班一個名字。');
-  var r = actCreateClass(v.trim(), '');
-  DRAFT.rsClass = r.klass.classId;
-  render();
-  say('建好了。加入碼是 ' + r.klass.joinCode + '——把它給學生。');
-};
-
-ACTS.newuser = function (role) {
-  var acc = (document.getElementById('nu-acc') || {}).value || '';
-  var name = (document.getElementById('nu-name') || {}).value || '';
-  var pw = (document.getElementById('nu-pw') || {}).value || '';
-  var kl = find('Classes', function (c) { return c.classId === rsClassId(); });
-  var r = actRegister({
-    account: acc, password: pw, name: name, role: role,
-    code: kl ? kl.joinCode : ''
-  });
-  if (r.err) return say(r.err);
-  /* 老師要跟班綁在一起，不然他打開來看不到任何一組 */
-  if (role === 'teacher' && kl && !kl.teacherId) { kl.teacherId = r.user.userId; save(); }
-  say((role === 'teacher' ? '老師' : '研究者') + '帳號好了。請他用這個密碼登入之後自己換掉。');
-};
-
-ACTS.respw = function (userId) {
-  var pw = (document.getElementById('nu-pw') || {}).value || '';
-  if (!pw.trim()) return say('先在上面寫一個新密碼。');
-  var r = actResetPw(userId, pw.trim());
-  if (r.err) return say(r.err);
-  say(userOf(userId).name + ' 的密碼換成你寫的那一個了。');
-};
-
-ACTS.deluser = function (userId) {
-  if (DRAFT.del !== userId) {
-    DRAFT.del = userId;
-    return say('再按一次「刪除」就真的刪掉 ' + userOf(userId).name + ' 的帳號。');
-  }
-  var name = userOf(userId).name;
-  var r = actDeleteUser(userId);
-  DRAFT.del = null;
-  if (r.err) return say(r.err);
-  if (userId === S.who) return ACTS.logout();
-  render();
-  say(name + ' 的帳號刪掉了。他認領過的名字放回名冊上了。');
-};
+/* newclass／newuser／respw／deluser 四顆都拿掉了。
+   研究者是觀察者，不是管理員——見檔頭。 */
 
 ACTS.csv = function () {
   var name = '專案地下城-紀錄.csv';
