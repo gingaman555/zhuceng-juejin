@@ -705,11 +705,53 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
    低你一層（z-index 5 是暗那一層，所以用 6 但畫在你前面），
    而且沒有牌子、沒有燈：那些是「你」的東西。
 
-   呼吸與踏步各自錯開 --md，不然四個人會像同一張圖複製四份。 */
+   呼吸各自散開（--bd），腳步照隊伍順序一個個晚一拍（--md）。
+   兩個分開才對：一列人走路是會排隊的，站著呼吸不會。 */
 .scn-mate{
   position:absolute;bottom:66px;width:66px;height:66px;z-index:6;
   animation:bob 1.4s steps(1,end) infinite;
-  animation-delay:var(--md,0ms)
+  animation-delay:var(--bd,0ms)
 }
 .scn-mate.asleep{animation:none;opacity:.75}
-.scn-mate .wf{animation-delay:var(--md,0ms)}
+
+/* 隊友的兩張幀。
+
+   本來這裡只有一行 animation-delay，而那一行指的是一個不存在的動畫：
+   position:absolute 跟 wkA/wkB 都只寫在 .scn-hero 底下。
+   結果是隊友的兩張圖都不透明、都排在文件流裡——每個人被畫成兩次，
+   並排、靜止。一隊人因此看起來是一排卡住的雙重影。
+
+   跟你用同一組 keyframes、同一個 .44s：一隊人要踏同一種步伐。 */
+.scn-mate .wf{position:absolute;left:0;top:0}
+.scn-mate .wa{animation:wkA .44s steps(1,end) infinite}
+.scn-mate .wb{animation:wkB .44s steps(1,end) infinite}
+.scn-mate .wa,.scn-mate .wb{animation-delay:var(--md,0ms)}
+
+/* ── 走到新的一天 ──
+
+   角色的位置是日曆算出來的，不是按出來的（見 61-scene.js 的 walked）。
+   所以隔天再打開，整隊人會直接出現在前面一格——沒有走過去的過程。
+
+   畫面每次重畫都換掉整個 DOM，transition 因此不會跑。
+   用一段從「昨天站的地方」滑進來的 keyframe：一格 44px，四階，
+   一階 11px。硬邊，沒有漸變。
+
+   bob 走 transform，這一段走 margin-left，兩個不打架。
+   你先動，後面的人一個個跟上（--sd 跟腳步同一組延遲）。 */
+.scn.stepped .scn-hero,
+.scn.stepped .scn-mate{
+  animation-name:bob,stepin;
+  animation-duration:1.4s,.52s;
+  animation-timing-function:steps(1,end),steps(4,end);
+  animation-iteration-count:infinite,1;
+  animation-delay:var(--bd,0ms),var(--sd,0ms);
+  animation-fill-mode:none,backwards
+}
+@keyframes stepin{from{margin-left:var(--from,-44px)}to{margin-left:0}}
+
+@media (prefers-reduced-motion: reduce){
+  .scn-mate .wa{animation:none;opacity:1}
+  .scn-mate .wb{animation:none;opacity:0}
+  .scn-mate{animation:none}
+  .scn.stepped .scn-hero,.scn.stepped .scn-mate{animation:none;margin-left:0}
+}

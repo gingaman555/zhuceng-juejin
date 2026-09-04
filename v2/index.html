@@ -1622,14 +1622,56 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
    低你一層（z-index 5 是暗那一層，所以用 6 但畫在你前面），
    而且沒有牌子、沒有燈：那些是「你」的東西。
 
-   呼吸與踏步各自錯開 --md，不然四個人會像同一張圖複製四份。 */
+   呼吸各自散開（--bd），腳步照隊伍順序一個個晚一拍（--md）。
+   兩個分開才對：一列人走路是會排隊的，站著呼吸不會。 */
 .scn-mate{
   position:absolute;bottom:66px;width:66px;height:66px;z-index:6;
   animation:bob 1.4s steps(1,end) infinite;
-  animation-delay:var(--md,0ms)
+  animation-delay:var(--bd,0ms)
 }
 .scn-mate.asleep{animation:none;opacity:.75}
-.scn-mate .wf{animation-delay:var(--md,0ms)}
+
+/* 隊友的兩張幀。
+
+   本來這裡只有一行 animation-delay，而那一行指的是一個不存在的動畫：
+   position:absolute 跟 wkA/wkB 都只寫在 .scn-hero 底下。
+   結果是隊友的兩張圖都不透明、都排在文件流裡——每個人被畫成兩次，
+   並排、靜止。一隊人因此看起來是一排卡住的雙重影。
+
+   跟你用同一組 keyframes、同一個 .44s：一隊人要踏同一種步伐。 */
+.scn-mate .wf{position:absolute;left:0;top:0}
+.scn-mate .wa{animation:wkA .44s steps(1,end) infinite}
+.scn-mate .wb{animation:wkB .44s steps(1,end) infinite}
+.scn-mate .wa,.scn-mate .wb{animation-delay:var(--md,0ms)}
+
+/* ── 走到新的一天 ──
+
+   角色的位置是日曆算出來的，不是按出來的（見 61-scene.js 的 walked）。
+   所以隔天再打開，整隊人會直接出現在前面一格——沒有走過去的過程。
+
+   畫面每次重畫都換掉整個 DOM，transition 因此不會跑。
+   用一段從「昨天站的地方」滑進來的 keyframe：一格 44px，四階，
+   一階 11px。硬邊，沒有漸變。
+
+   bob 走 transform，這一段走 margin-left，兩個不打架。
+   你先動，後面的人一個個跟上（--sd 跟腳步同一組延遲）。 */
+.scn.stepped .scn-hero,
+.scn.stepped .scn-mate{
+  animation-name:bob,stepin;
+  animation-duration:1.4s,.52s;
+  animation-timing-function:steps(1,end),steps(4,end);
+  animation-iteration-count:infinite,1;
+  animation-delay:var(--bd,0ms),var(--sd,0ms);
+  animation-fill-mode:none,backwards
+}
+@keyframes stepin{from{margin-left:var(--from,-44px)}to{margin-left:0}}
+
+@media (prefers-reduced-motion: reduce){
+  .scn-mate .wa{animation:none;opacity:1}
+  .scn-mate .wb{animation:none;opacity:0}
+  .scn-mate{animation:none}
+  .scn.stepped .scn-hero,.scn.stepped .scn-mate{animation:none;margin-left:0}
+}
 
 /* 班級地下城的樣子。
 
@@ -12144,12 +12186,19 @@ function beatBar(next, t) {
    還有一件事是刻意不做的：走廊上沒有任何「你應該走到哪」的記號。
    沒有基準線，就沒有落後這回事。 */
 
+/* 上一次畫的時候，每一組走到哪。只活在這一次使用裡——
+   往前了才讓整隊滑進來一格（見 scene 裡的 stepped）。 */
+var WALKED_AT = {};
+
 var SCN = {
   TILE: 44,     /* 一天一格 */
   ENT: 132,     /* 洞口那一段 */
   END: 154,     /* 魔物站的那一段 */
   H: 286,       /* 場景高 */
-  FLOOR: 66     /* 地板上緣離底部多高——站在地上的東西都用這個 */
+  FLOOR: 66,    /* 地板上緣離底部多高——站在地上的東西都用這個 */
+  /* 最窄的那一條走廊。320 的螢幕上量出來的 284——廊道不會橫向捲，
+     超過這個數字的東西就是看不到。休息的隊形靠它算得下幾個人。 */
+  NARROW: 284
 };
 
 /* 一條走廊。
@@ -12244,9 +12293,29 @@ function scene(t, row, st, kind) {
       kind === 'stamped' || kind === 'review');
   /* 剛按下承諾那一下。go() 會清掉 DRAFT，所以旗子放在 S 上。 */
   var launch = !!S.launch;
+  /* ── 昨天站在哪 ──
+
+     角色的位置是日曆算出來的，不是按出來的。所以隔天再打開，
+     整隊人直接出現在前面一格，沒有走過去的過程——「又過了一天」
+     這件事只剩下卡片上的一行字。
+
+     記住上一次畫的時候站在哪，往前了就讓整隊滑進來（.stepped）。
+     只記在這一次使用裡：重新整理不會再放一次，那不是「又過了一天」。
+
+     一次最多滑三格。離開一個禮拜再回來，滑七格會變成一段動畫表演，
+     而它要說的只是「你不在的時候，隊伍往前了」。 */
+  var seenKey = t.teamId;
+  var was = WALKED_AT[seenKey];
+  /* 睡著的時候不滑。那個狀態的意思是很多天沒有人動過，
+     讓他滑進來等於在說一件沒發生的事。 */
+  var stepped = st.level < 2 && was !== undefined && walked > was;
+  var fromPx = stepped ? -Math.min(3, walked - was) * SCN.TILE : 0;
+  WALKED_AT[seenKey] = walked;
+
   var H = ['<div class="scn ' + light.key + ' z-' + zone.key +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
-    (launch ? ' launch' : '') + '">'];
+    (stepped ? ' stepped' : '') +
+    (launch ? ' launch' : '') + '" style="--from:' + fromPx + 'px">'];
   /* 出發那一下：一道白光掃過去，加上一句大字砸在正中間。
 
      這是整個流程裡唯一一個「從現在開始」的時刻——之前他在營火旁邊
@@ -12431,26 +12500,60 @@ function scene(t, row, st, kind) {
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
   var hx = resting ? 44 : ENT + walked * SCN.TILE - 11;
   /* ── 同一組的其他人 ──
-     排在你前面畫，所以你在最上層。他們沒有牌子也沒有燈。 */
-  /* 全部的人，不砍。本來 slice(0,3)——四個人以上的組會有人
-     憑空不見，而組別卡上他明明在。同一組人在兩個地方數目不一樣，
-     是這個系統最不該出現的錯。
 
-     人多就站近一點，不是趕人走。 */
+     一隊人走在同一條廊道上。四件事決定它看起來是一隊人還是一排複製品：
+
+     一 · 幀。每個人兩張圖輪流亮。本來只有 .scn-hero 底下寫了那條規則，
+          隊友的兩張是靜止的、而且並排畫兩次——一個人佔兩個人的寬，
+          整隊都是凍住的。現在隊友跟你用同一套（見 53-scene.css）。
+
+     二 · 相位。腳步照隊伍順序一個個晚一拍——那是一列人在走。
+          呼吸不排隊，各自散開；不然停下來的時候整排會像波浪一起起伏。
+
+     三 · 間距。等距的一排是輸送帶。每個人偏 -11／0／+11，
+          偏多少由他的 id 決定，所以同一個人每次都站在同一個位置。
+          全部落在 11 的倍數上——圖是 16 格畫成 66px，一格 4.13px，
+          不對齊格子的偏移只會看起來像沒對準。
+
+     四 · 疊法。最遠的先畫，近的蓋上去，你最後畫。本來反過來，
+          排在最後面的人蓋在最前面的人身上。 */
   var mates = where('Users', function (u) {
     return u.teamId === t.teamId && u.userId !== S.who;
   });
-  var gap = mates.length > 3 ? 30 : 40;
-  mates.forEach(function (mu, i) {
-    var mh = heroOf(mu);
-    /* 走的時候排成一列跟在後面；休息的時候圍在火邊。
-       剛出發的時候後面的人還在洞口，靠左牆排開——不疊在同一點上。 */
-    var mx = resting ? (hx + gap * (i + 1))
-      : Math.max(6 + i * 5, hx - gap * (i + 1));
+  /* 後面放得下多寬。放不下就整隊縮，縮到 22 為止——
+     人多的時候擠在一起，好過有人被推到牆外面。
+
+     休息的時候人排在你右邊。那一邊看起來很寬，但廊道不會橫向捲，
+     所以能用的只有最窄那一條的寬度——六個人在 320 的螢幕上，
+     本來最後兩個會被切在畫面外。 */
+  var room = resting
+    ? Math.max(0, SCN.NARROW - hx - 66)
+    : Math.max(0, hx - 6);
+  var gap = SCN.TILE;
+  if (mates.length) {
+    gap = Math.min(SCN.TILE, Math.floor(room / mates.length / 11) * 11);
+    if (gap < 22) gap = 22;
+  }
+  /* 間距夠寬才偏——已經擠成一團的時候再偏只會亂。 */
+  var sway = gap >= SCN.TILE ? 11 : 0;
+  var acc = 0;
+  var line = mates.map(function (mu, i) {
+    acc += gap + (sway ? (hash(mu.userId) % 3 - 1) * sway : 0);
+    return {
+      u: mu,
+      x: resting ? (hx + acc) : Math.max(6, hx - acc),
+      /* 腳步：往隊伍後面一個個晚一拍。呼吸：各自散開。 */
+      md: (i + 1) * 110,
+      bd: hash(mu.userId + 'b') % 7 * 200
+    };
+  });
+  /* 最遠的先畫。 */
+  line.reverse().forEach(function (p) {
+    var mh = heroOf(p.u);
     H.push('<div class="hero scn-mate' + (st.level >= 2 ? ' asleep' : '') +
       (walking ? ' walking' : '') + (resting ? ' resting' : '') +
-      '" style="left:' + mx + 'px;--md:' + ((i + 1) * 170) + 'ms" title="' +
-      esc(mu.name || '') + '">');
+      '" style="left:' + p.x + 'px;--md:' + p.md + 'ms;--bd:' + p.bd +
+      'ms;--sd:' + p.md + 'ms" title="' + esc(p.u.name || '') + '">');
     if (walking) {
       H.push(pxTag(mh.walkA, mh.pal, 'ch wf wa'));
       H.push(pxTag(mh.walkB, mh.pal, 'ch wf wb'));
