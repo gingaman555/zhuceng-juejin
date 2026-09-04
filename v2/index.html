@@ -11818,6 +11818,17 @@ var ACTS = {
        它是一次事件，不是一個狀態。 */
     S.launch = 1;
     render();
+    /* 捲到廊道。
+
+       出發那一下的白光是演在廊道上的，而廊道在首頁的第二塊——
+       手機上（320×700）量到它從 y=662 開始，整個在摺線下面。
+       按下出發、畫面沒有任何事發生，那一場戲等於沒演。
+
+       用 scrollIntoView 不寫死數字：組別卡的高度會隨組員人數變。 */
+    var scn0 = document.querySelector('.scn');
+    if (scn0 && scn0.scrollIntoView) {
+      scn0.scrollIntoView({ block: 'center' });
+    }
     setTimeout(function () {
       S.launch = 0;
       var e = document.querySelector('.scn');
