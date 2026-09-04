@@ -755,3 +755,59 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   .scn-mate{animation:none}
   .scn.stepped .scn-hero,.scn.stepped .scn-mate{animation:none;margin-left:0}
 }
+
+/* ══════════ 停下來的時候 ══════════
+
+   走路跟坐著本來共用同一組換幀速度：.44s。那是腳步的節奏——
+   一秒鐘換兩次多。坐著用那個速度不像在呼吸，像在發抖。
+
+   坐著慢下來，而且每個人不一樣（--bt 由他的 id 決定，1.5／1.9／2.3 秒）。
+   一群人坐在火邊同一個節奏起伏，看起來是同一個人複製了五份。
+
+   duration 寫兩個值是為了 .stepped：那個狀態下這個元素身上有兩段動畫
+   （bob 跟 stepin），只寫一個值會把 stepin 也拉長。多出來的值在只有
+   一段動畫的時候會被忽略，所以兩種情況都對。 */
+.scn.resting .scn-hero .wa,.scn.resting .scn-hero .wb,
+.scn.resting .scn-mate .wa,.scn.resting .scn-mate .wb{
+  animation-duration:var(--bt,1900ms)
+}
+/* 身體那一下起伏也跟著慢。走的時候 1.4s 是踏步，坐著是呼吸。 */
+.scn.resting .scn-hero,
+.scn.resting .scn-mate{ animation-duration:2.2s,.52s }
+
+/* ── 坐下來 ──
+
+   走著變成坐著，本來沒有過程：上一次重畫還在走，這一次已經坐在火邊。
+
+   往下沉 11px 再落地，兩階。跟往前那一格一樣走 margin——bob 佔著
+   transform。你先坐，後面的人一個個跟著坐下（--sd 跟腳步同一組延遲）。 */
+.scn.satdown .scn-hero,
+.scn.satdown .scn-mate{
+  animation-name:bob,sitdown;
+  animation-duration:2.2s,.36s;
+  animation-timing-function:steps(1,end),steps(2,end);
+  animation-iteration-count:infinite,1;
+  animation-delay:var(--bd,0ms),var(--sd,0ms);
+  animation-fill-mode:none,backwards
+}
+@keyframes sitdown{from{margin-bottom:11px}to{margin-bottom:0}}
+
+/* ── 站起來 ──
+   老師把東西退回來、或者下一趟開始。反過來：先蹲一下再起身。 */
+.scn.stoodup .scn-hero,
+.scn.stoodup .scn-mate{
+  animation-name:bob,standup;
+  animation-duration:1.4s,.36s;
+  animation-timing-function:steps(1,end),steps(2,end);
+  animation-iteration-count:infinite,1;
+  animation-delay:var(--bd,0ms),var(--sd,0ms);
+  animation-fill-mode:none,backwards
+}
+@keyframes standup{from{margin-bottom:-11px}to{margin-bottom:0}}
+
+@media (prefers-reduced-motion: reduce){
+  .scn.satdown .scn-hero,.scn.satdown .scn-mate,
+  .scn.stoodup .scn-hero,.scn.stoodup .scn-mate{
+    animation:none;margin-bottom:0
+  }
+}

@@ -17,6 +17,8 @@
 /* 上一次畫的時候，每一組走到哪。只活在這一次使用裡——
    往前了才讓整隊滑進來一格（見 scene 裡的 stepped）。 */
 var WALKED_AT = {};
+/* 上一次畫的時候是走著還是坐著。換了才放一次坐下／站起來。 */
+var POSE_AT = {};
 
 var SCN = {
   TILE: 44,     /* 一天一格 */
@@ -132,6 +134,19 @@ function scene(t, row, st, kind) {
 
      一次最多滑三格。離開一個禮拜再回來，滑七格會變成一段動畫表演，
      而它要說的只是「你不在的時候，隊伍往前了」。 */
+  /* ── 姿勢換了 ──
+
+     走著變成坐著，是一整隊人停下來這件事。本來它沒有過程：
+     上一次重畫還在走，這一次直接坐在火邊了。
+
+     跟往前那一格同一種做法——記住上一次的姿勢，換了才放一次。
+     坐下是往下沉一段再落地，站起來是反過來。 */
+  var pose = walking ? 'walk' : resting ? 'rest' : '';
+  var wasPose = POSE_AT[t.teamId];
+  var satdown = st.level < 2 && wasPose === 'walk' && pose === 'rest';
+  var stoodup = st.level < 2 && wasPose === 'rest' && pose === 'walk';
+  POSE_AT[t.teamId] = pose;
+
   var seenKey = t.teamId;
   var was = WALKED_AT[seenKey];
   /* 睡著的時候不滑。那個狀態的意思是很多天沒有人動過，
@@ -143,6 +158,7 @@ function scene(t, row, st, kind) {
   var H = ['<div class="scn ' + light.key + ' z-' + zone.key +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
     (stepped ? ' stepped' : '') +
+    (satdown ? ' satdown' : '') + (stoodup ? ' stoodup' : '') +
     (launch ? ' launch' : '') + '" style="--from:' + fromPx + 'px">'];
   /* 出發那一下：一道白光掃過去，加上一句大字砸在正中間。
 
@@ -372,7 +388,10 @@ function scene(t, row, st, kind) {
       x: resting ? (hx + acc) : Math.max(6, hx - acc),
       /* 腳步：往隊伍後面一個個晚一拍。呼吸：各自散開。 */
       md: (i + 1) * 110,
-      bd: hash(mu.userId + 'b') % 7 * 200
+      bd: hash(mu.userId + 'b') % 7 * 200,
+      /* 坐著的時候換幀的快慢。走路是一起踏的，呼吸不是——
+         一群人坐在火邊同一個節奏起伏，看起來像同一個人複製了五份。 */
+      bt: [1500, 1900, 2300][hash(mu.userId + 't') % 3]
     };
   });
   /* 最遠的先畫。 */
@@ -381,7 +400,8 @@ function scene(t, row, st, kind) {
     H.push('<div class="hero scn-mate' + (st.level >= 2 ? ' asleep' : '') +
       (walking ? ' walking' : '') + (resting ? ' resting' : '') +
       '" style="left:' + p.x + 'px;--md:' + p.md + 'ms;--bd:' + p.bd +
-      'ms;--sd:' + p.md + 'ms" title="' + esc(p.u.name || '') + '">');
+      'ms;--sd:' + p.md + 'ms;--bt:' + p.bt + 'ms" data-u="' +
+      esc(p.u.userId) + '" title="' + esc(p.u.name || '') + '">');
     if (walking) {
       H.push(pxTag(mh.walkA, mh.pal, 'ch wf wa'));
       H.push(pxTag(mh.walkB, mh.pal, 'ch wf wb'));
@@ -399,7 +419,8 @@ function scene(t, row, st, kind) {
 
   H.push('<div class="hero scn-hero' + (st.level >= 2 ? ' asleep' : '') +
     (walking ? ' walking' : '') + (resting ? ' resting' : '') +
-    '" style="left:' + hx + 'px">');
+    '" style="left:' + hx + 'px;--bt:' +
+    [1500, 1900, 2300][hash(String(S.who) + 't') % 3] + 'ms">');
   /* 頭上寫他在幹嘛。本來只靠姿勢，而姿勢在 66px 上看不太出來——
      寫出來最快，而且它同時說明了「現在沒事做」是一個正常狀態。 */
   /* 牌子跟著姿勢走。「待命」本來蓋掉三個很不一樣的處境——
@@ -904,16 +925,56 @@ function osTick() {
   var mode = scn.className.indexOf('dim') >= 0 ? 'over'
     : (walking ? 'walk' : 'rest');
 
-  var back = tag.textContent;
+  /* 隊友臨時長出來的那一塊要跟你頭上那一塊長一樣——
+     顏色跟著姿勢走（.go／.rest），不是另外一種東西。 */
   var cls = tag.className;
 
+  /* 這一句是誰說的，每一次重挑。
+
+     本來永遠是你。而廊道上站著一整組人，只有你會出聲——
+     其他人因此像佈景，不像同行的人。
+
+     挑到誰就說誰那個職業的話：法師講知識，忍者結尾加「是也」。
+     所以「這一句是誰說的」看得出來，不用寫名字。 */
+  function speakers() {
+    var box = document.querySelector('.scn');
+    if (!box) return [];
+    var out = [];
+    var h = box.querySelector('.scn-hero');
+    if (h) out.push({ el: h, u: me(), tag: h.querySelector('.hero-tag') });
+    [].forEach.call(box.querySelectorAll('.scn-mate'), function (el) {
+      /* 睡著的人不說話——整組都停很久了，這裡本來就 return 掉了，
+         留這一行是因為姿勢跟狀態不是同一件事。 */
+      if (el.className.indexOf('asleep') >= 0) return;
+      var u = userOf(el.getAttribute('data-u'));
+      if (u) out.push({ el: el, u: u, tag: null });
+    });
+    return out;
+  }
+
   function say() {
-    var t = document.querySelector('.scn .hero-tag');
-    if (!t) return stopOS();
-    var line = heroLine(me(), mode);
+    var who = speakers();
+    if (!who.length) return stopOS();
+    var pick = who[Math.floor(Math.random() * who.length)];
+    var line = heroLine(pick.u, mode);
     if (!line) return stopOS();
+
+    /* 你頭上本來就有一塊牌子，借它來說話（說完換回原本那幾個字）。
+       隊友頭上沒有牌子——那是「你」的東西——所以臨時長一塊出來，
+       說完拿掉。他們因此還是沒有狀態牌，只是會出聲。 */
+    var t = pick.tag;
+    var made = !t;
+    var back = '', kls = cls;
+    if (made) {
+      t = document.createElement('div');
+      t.className = cls;
+      pick.el.appendChild(t);
+    } else {
+      back = t.textContent;
+      kls = t.className;
+    }
     t.textContent = line;
-    t.className = cls + ' os';
+    t.className = kls + ' os';
     /* 放得下才放得進去。
 
        泡泡從角色身上長出去，而廊道是一個會捲的窗——他站在窗的哪裡，
@@ -925,22 +986,28 @@ function osTick() {
     var box = document.querySelector('.scn');
     if (box) {
       var br = box.getBoundingClientRect();
-      var hr = t.parentNode.getBoundingClientRect();
+      var hr = pick.el.getBoundingClientRect();
       var roomR = br.right - hr.left - 11;
       var roomL = hr.right - br.left - 11;
       var left = roomL > roomR;
       var room = Math.max(roomL, roomR);
       t.style.maxWidth = Math.max(132, Math.min(264, room)) + 'px';
-      t.className = cls + ' os' + (left ? ' os-l' : '');
+      t.className = kls + ' os' + (left ? ' os-l' : '');
     }
     OS_T = setTimeout(function () {
-      var u = document.querySelector('.scn .hero-tag');
-      if (!u) return stopOS();
-      u.textContent = back;
-      u.className = cls;
+      if (made) {
+        if (t.parentNode) t.parentNode.removeChild(t);
+      } else {
+        var u2 = document.querySelector('.scn .scn-hero .hero-tag');
+        if (!u2) return stopOS();
+        u2.textContent = back;
+        u2.className = kls;
+        u2.style.maxWidth = '';
+      }
       OS_T = setTimeout(say, 12000 + Math.random() * 11000);
     }, 4200);
   }
+
   /* 第一句別在打開的同一秒冒出來——那看起來像通知，不像自言自語。 */
   OS_T = setTimeout(say, 6000 + Math.random() * 7000);
 }
