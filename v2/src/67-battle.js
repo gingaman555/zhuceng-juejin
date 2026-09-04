@@ -79,42 +79,52 @@ PAGES.battle = function () {
   var est = r.est || 1;
   var ph = btPhase(r);
 
-  var H = ['<div class="bt ' + zone.key + ' at-' + ph + '" data-run="' +
+  /* ── 一場講話，不是一場對峙 ──
+
+     本來是寶可夢的排法：他站右上、你站左下（背影）、兩張名牌在對角、
+     底下字幕框、右邊選單。那個排法在說「兩邊要分勝負」。
+
+     可是這裡發生的事是：你走到了，把東西交給他，他收下。那是一段對話。
+     所以改成近幾年 RPG 的講話畫面——
+
+       場上只有說話的那一個。你是鏡頭，背影的自己拿掉了。
+       名牌長在對話框上，斜切一角，不是漂在場景角落。
+       選項排在框底下，不是排在框旁邊。
+       他大一階：對峙的時候他是對手，講話的時候他是這一格的主角。
+
+     你承諾了幾天沒有不見，它搬到右上角一行——那是你身上帶著的東西，
+     不是他名牌上該有的字。
+
+     舊的那一套沒有刪掉：.bt 本體、名牌、站台、閃場都還在，
+     .talk 只是把它們重排（見 58-battle.css）。 */
+  var H = ['<div class="bt talk ' + zone.key + ' at-' + ph + '" data-run="' +
     esc(r.runId) + '">'];
 
   /* 遭遇：整個畫面閃一次再進場。 */
   H.push('<div class="bt-wipe"></div>');
+  /* 你說了幾天。本來寫在你那張名牌上。 */
+  H.push('<div class="bt-hud">說 ' + est + ' 天</div>');
 
-  /* ── 牠 ──
-     名牌上只有名字。這一趟實際幾天要等到最後才報出來，那是懸念。 */
   H.push('<div class="bt-side foe">');
-  H.push(btPlate(esc(mob.n), 'foe', ''));
   H.push('<div class="bt-pad"></div>');
   /* 大隻的那一張（36×24，見 19-patron.js 的 PAT_BIG）。
 
      這一格本來畫 24×16 的那張——那是廊道上遠遠看一眼的尺寸，
-     而這裡是整條流程最近的一次照面，他就在你對面。
+     而這裡是整條流程最近的一次照面，他就在你面前。
      兩張都是 3:2，所以同一個框，多 2.3 倍的格子：眼睛有瞳孔、
      手有指節、他在呼吸。 */
   H.push('<div class="bt-ch foe">' + patTag(mob, zone.pal, 'bt-px', 1) +
     pxFlash(mob.big || mob.px) + '</div>');
   H.push('</div>');
 
-  /* ── 你 ──
-     自己那一張從一開始就寫著承諾幾天——那是他本來就知道的事。 */
-  H.push('<div class="bt-side me">');
-  H.push('<div class="bt-pad"></div>');
-  H.push('<div class="bt-ch me">' + pxTag(HERO.back, HERO.pal, 'bt-px') +
-    heroPack(t.teamId) + '</div>');
-  H.push(btPlate(esc(shortName(t.name)), 'me', '說 ' + est + ' 天'));
   H.push('</div>');
 
-  H.push('</div>');
-
-  /* ── 下面那一條 ──
-     舊版寶可夢的排法：左邊字幕框、右邊選單。 */
-  H.push('<div class="bt-bottom">');
-  H.push('<div class="bt-say"><i class="bt-arrow"></i><b id="btline">' +
+  /* ── 對話框 ──
+     名牌長在框的左上角。整段對話都掛他的名字：你站在他面前，
+     這個框裡的每一句都是這一場的話。 */
+  H.push('<div class="bt-bottom talk">');
+  H.push('<div class="bt-say"><span class="bt-name">' + esc(mob.n) + '</span>' +
+    '<i class="bt-arrow"></i><b id="btline">' +
     esc(btLine(r, mob, ph)) + '</b></div>');
 
   if (ph === 'menu') {

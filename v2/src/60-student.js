@@ -620,12 +620,12 @@ PAGES.commit = function () {
       '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:patron:' + pat.n })) + '\'>');
     if (firstLook) H.push('<div class="bt-wipe"></div>');
-    H.push(btPlate(esc(pat.n), 'foe', ''));
     H.push('<div class="pmt-ch">' + patTag(pat, pz.pal, 'bt-px', 1) + '</div>');
     H.push('</div>');
-    /* 字幕框。第一句是遇到，第二句是他這個人——跟照面那一場
-       同一種語氣（「你走到了。X 在這裡。」）。 */
+    /* 對話框。名牌長在框的左上角，跟交出去那一場同一個做法——
+       兩端是同一個人的兩次見面，長相要一樣。 */
     H.push('<div class="bt-say pmt-say' + (firstLook ? ' enter' : '') + '">');
+    H.push('<span class="bt-name">' + esc(pat.n) + '</span>');
     H.push('<i class="bt-arrow"></i>');
     H.push('<b>' + esc(pat.n + ' 在等這一件。') + '</b>');
     H.push('<em>' + esc(pat.t) + '</em>');
