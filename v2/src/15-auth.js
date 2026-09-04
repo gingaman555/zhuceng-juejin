@@ -124,6 +124,9 @@ function actRegister(o) {
     teamId: '',
     createdAt: now()
   };
+  /* 有人自己建帳號了——這份資料不再是示範資料，
+     之後改版也不會被洗掉（見 40-db.js 的 load）。 */
+  if (DB.Config) DB.Config.demo = 0;
   DB.Users.push(u);
   save();
   logEvent('register', { by: u.userId, account: acc, role: u.role });

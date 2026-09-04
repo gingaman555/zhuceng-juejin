@@ -6018,6 +6018,9 @@ function actRegister(o) {
     teamId: '',
     createdAt: now()
   };
+  /* 有人自己建帳號了——這份資料不再是示範資料，
+     之後改版也不會被洗掉（見 40-db.js 的 load）。 */
+  if (DB.Config) DB.Config.demo = 0;
   DB.Users.push(u);
   save();
   logEvent('register', { by: u.userId, account: acc, role: u.role });
@@ -7225,9 +7228,22 @@ function blank() {
 
 function nid(p) { return p + (DB.Config.seq++); }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {} }
+/* 示範資料的版本。改了種子就把這個數字加一——
+   已經開過的瀏覽器會自己換成新的那一份。
+
+   只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
+var SEED_V = 2;
+
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
-  return !!(DB && DB.Users && DB.Users.length);
+  if (!(DB && DB.Users && DB.Users.length)) return false;
+  /* 還是示範資料、而且版本舊了 → 重種一次。
+
+     demo 這個旗子由 seed() 開著、由 actRegister 關掉：有人真的
+     建過帳號的那一刻，這份資料就不再是示範資料，之後永遠不會被洗掉。 */
+  var cfg = DB.Config || {};
+  if (cfg.demo && cfg.seedV !== SEED_V) return false;
+  return true;
 }
 function find(tbl, fn) { for (var i = 0; i < DB[tbl].length; i++) if (fn(DB[tbl][i])) return DB[tbl][i]; return null; }
 function where(tbl, fn) { return DB[tbl].filter(fn); }
@@ -9124,6 +9140,10 @@ function seed() {
   dressRuns(cid);
 
   DB.Config.seq = 100;
+  /* 這一份是示範資料，而且是第幾版。兩個旗子一起決定要不要重種
+     （見 40-db.js 的 load）。 */
+  DB.Config.demo = 1;
+  DB.Config.seedV = SEED_V;
   save();
 }
 

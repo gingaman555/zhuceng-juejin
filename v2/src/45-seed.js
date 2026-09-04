@@ -246,6 +246,10 @@ function seed() {
   dressRuns(cid);
 
   DB.Config.seq = 100;
+  /* 這一份是示範資料，而且是第幾版。兩個旗子一起決定要不要重種
+     （見 40-db.js 的 load）。 */
+  DB.Config.demo = 1;
+  DB.Config.seedV = SEED_V;
   save();
 }
 
