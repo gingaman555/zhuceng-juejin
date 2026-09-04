@@ -8925,18 +8925,44 @@ function seed() {
     { id: 'G4', name: '第四組 · 丁', project: '系上導覽',     tier: 1, joined: 30, mentor: 'U6' },
     { id: 'G5', name: '第五組 · 戊', project: '（還沒定）',   tier: 0, joined: 30, mentor: 'U7' }
   ];
+  /* 一組三到四個人，各自挑不同的職業。
+
+     四種職業的剪影不一樣，所以廊道上排成一列的時候一眼看得出誰是誰——
+     那正是這個作品現在的樣子，種子資料要能示範它。
+
+     名字用真的名字不用「學生1」：老師端會列出誰做了什麼，
+     一排編號看不出那是四個人。 */
+  var NAMES = [
+    ['小美', '阿哲', '子涵', '柏宇'],
+    ['宜庭', '冠廷'],
+    ['雅琪', '承翰', '思妤'],
+    ['伯凱', '玟君', '尚恩'],
+    ['沛慈', '柏翰', '孟儒']
+  ];
+  var JOBS = ['adv', 'mage', 'ninja', 'knight'];
+  var CODES = ['KX7M2P', 'RD4T8W', 'BQ9N5J', 'HC3V6L', 'ZF8K1S'];
+  var uSeq = 100;
   TEAMS.forEach(function (t, i) {
     DB.Teams.push({
       teamId: t.id, classId: cid, name: t.name, mentorId: t.mentor,
-      project: t.project, joinedAt: ago(t.joined)
+      project: t.project, joinedAt: ago(t.joined),
+      /* 隊伍代碼。新的流程是學生自己建隊，把這一串唸給隊友。 */
+      joinCode: CODES[i]
     });
-    DB.Users.push(seedPw({
-      userId: 'U' + (i + 1), account: 'stu0' + (i + 1), name: '學生' + (i + 1),
-      role: 'student', classId: cid, teamId: t.id, createdAt: ago(30)
-    }));
-    DB.Roster.push({
-      rosterId: 'RS' + (i + 1), classId: cid, teamId: t.id, teamName: t.name,
-      memberName: '學生' + (i + 1), claimedBy: 'U' + (i + 1), claimedAt: ago(30)
+    (NAMES[i] || ['學生']).forEach(function (nm, k) {
+      /* 第一個人沿用舊 id——底下的種子資料（每一趟是誰交的、
+         挑了什麼角色）都指名 U1–U5。 */
+      var uid = k === 0 ? 'U' + (i + 1) : 'U' + (++uSeq);
+      DB.Users.push(seedPw({
+        userId: uid,
+        account: k === 0 ? 'stu0' + (i + 1) : 'stu' + uid.slice(1),
+        name: nm, role: 'student', classId: cid, teamId: t.id,
+        hero: JOBS[(i + k) % JOBS.length], createdAt: ago(30)
+      }));
+      DB.Roster.push({
+        rosterId: 'RS' + uid.slice(1), classId: cid, teamId: t.id, teamName: t.name,
+        memberName: nm, claimedBy: uid, claimedAt: ago(30)
+      });
     });
   });
   var ALL = TEAMS.map(function (t) { return t.id; });
@@ -9090,8 +9116,81 @@ function seed() {
       est: sh.est, elapsed: sh.elapsed, moved: sh.moved,
       rested: sh.rested, blank: sh.blank });
   });
+  /* ---------- 收尾：把新的欄位補上 ----------
+
+     這幾樣是「個人帳號、屬於一個組」之後才有的東西。沒有它們的話，
+     打開來看到的還是上一版的樣子：一組一個人、細項沒有主人、
+     沒有人說過自己做了什麼。 */
+  dressRuns(cid);
+
   DB.Config.seq = 100;
   save();
+}
+
+function dressRuns(cid) {
+  var SAID = ['找到人跟排訪談', '約時間跟場地', '逐字稿', '整理成一頁',
+    '畫流程圖', '訪談紀錄', '分類那幾張', '寫成一句'];
+  var NEXT = ['再訪一個人，第三份太薄', '把流程圖的虛線補掉',
+    '重排一次訪綱，前面太長', '再看一次分類，有兩類是同一件事'];
+  var WHY = ['第二個受訪者臨時改期', '逐字稿比想的久很多',
+    '訪綱太長，前兩場都超時', '中間卡在找不到人'];
+  var WHERE = ['TronClass 第三次作業', 'TronClass 第二次作業，檔名 G-訪談',
+    '印出來放你桌上', 'https://drive.example.com/d/abc123'];
+  var SURE = ['high', 'mid', 'low'];
+
+  where('Runs', function (r) { return true; }).forEach(function (r) {
+    var t = teamOf(r.teamId);
+    if (!t || t.classId !== cid) return;
+    var mem = where('Users', function (u) { return u.teamId === r.teamId; });
+    if (!mem.length) return;
+    var h = hash(r.runId);
+    var ms = msOf(r.msId);
+
+    /* 拆件。老師分過段就用那幾段，沒分就給兩件。 */
+    if (!r.plan || !r.plan.length) {
+      var names = (ms && ms.steps && ms.steps.length) ? ms.steps.slice(0, 4)
+        : ['先做的那一半', '後做的那一半'];
+      var left = r.est || 4;
+      r.plan = names.map(function (n, i) {
+        var d = i === names.length - 1 ? Math.max(1, left) : 1;
+        left -= d;
+        return { n: n, d: d, who: mem[(h + i) % mem.length].userId };
+      });
+    }
+
+    /* 他當初有多確定。 */
+    if (!r.sure) r.sure = SURE[h % SURE.length];
+
+    if (r.state === 'running') return;
+
+    /* 交出去之後才有的那幾樣。 */
+    if (!r.spent) {
+      var got = r.actual || r.est || 1, n = r.plan.length;
+      r.spent = r.plan.map(function (x, i) {
+        return i === n - 1 ? Math.max(1, got - (n - 1)) : 1;
+      });
+    }
+    if (!r.feel) r.feel = ['good', 'ok', 'bad'][h % 3];
+    if (!r.why) r.why = WHY[h % WHY.length];
+    if (!r.scope) r.scope = ['same', 'same', 'less', 'more'][h % 4];
+    if (!r.next) r.next = NEXT[h % NEXT.length];
+    if (!r.link) r.link = WHERE[h % WHERE.length];
+
+    /* 每個人各寫的那一行。刻意讓每一組的最後一個人在最新的那一趟
+       沒有寫——「還沒說」是這個模型裡看得到的一種真實情況。 */
+    if (!r.said) {
+      r.said = {};
+      mem.forEach(function (u, i) {
+        if (i === mem.length - 1 && h % 3 === 0) return;
+        r.said[u.userId] = SAID[(h + i) % SAID.length];
+      });
+    }
+
+    /* 老師收下時給的那幾枚。 */
+    if ((r.state === 'done' || r.state === 'approved') && !r.bonus) {
+      r.bonus = 1 + (h % RULES.COIN.bonusMax);
+    }
+  });
 }
 
 
