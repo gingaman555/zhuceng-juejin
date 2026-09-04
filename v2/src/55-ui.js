@@ -329,9 +329,9 @@ function topBar() {
       '<span class="badge t">老師端</span>' +
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
-      /* 我帶幾組。本來是整個課程的組數——三位老師共用一個課程
-         之後，那個數字不是他負責的東西。 */
-      '<span>' + esc(classOf(u).name) + '　·　我帶 ' +
+      /* 全班幾組。三位老師共同帶一個班，沒有「我帶的那幾組」這回事，
+         寫「我帶」會讓他以為別的組不歸他管。 */
+      '<span>' + esc(classOf(u).name) + '　·　全班 ' +
         teamsUnder(u.classId, u.userId).length + ' 組</span>' +
       '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' + topEnd() +
       '</div>';

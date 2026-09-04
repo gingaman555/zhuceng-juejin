@@ -295,7 +295,6 @@ function teachersOf(classId) {
   });
 }
 
-/* 這位老師要處理的那幾組。mentorId 沒給就是整個課程。 */
 /* 這個課程的每一組。
 
    本來吃 mentorId：一位老師只看自己帶的那幾組。拿掉了——
@@ -1395,7 +1394,7 @@ function actOpenExit(teamId, on) {
   return t;
 }
 
-/* 等著老師確認出口的那幾組。跟 radar 一樣只看自己帶的。 */
+/* 等著老師確認出口的那幾組。跟 radar 一樣，全班的。 */
 function exitQueue(classId, mentorId) {
   return teamsUnder(classId, mentorId).filter(function (t) {
     return t.exitAsk && !t.leftAt;

@@ -22,12 +22,13 @@ function seed() {
   var cid = 'C1';
 
   DB.Classes.push({
-    classId: cid, name: '設計專題', joinCode: 'DG7K2M',
+    classId: cid, name: '114-1 畢業專題', joinCode: 'DG7K2M',
     teacherId: 'U0', startedAt: ago(30)
   });
   /* 三位老師，同一個課程。Class.teacherId 不是權限（研究者那一頁
      只拿它顯示名字），所以共用一個 classId 就是共用一個課程。
-     每位帶哪幾組寫在 Team.mentorId 上。 */
+     三位共同帶整個班。Team.mentorId 是舊模型留下來的欄位，
+     沒有畫面在用（見 40-db.js 的 teachersOf）。 */
   [{ id: 'U0', ac: 'tea01', n: '老師·孟' },
    { id: 'U6', ac: 'tea02', n: '老師·薛' },
    { id: 'U7', ac: 'tea03', n: '老師·鄰' }].forEach(function (t) {

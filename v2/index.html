@@ -9464,7 +9464,6 @@ function teachersOf(classId) {
   });
 }
 
-/* 這位老師要處理的那幾組。mentorId 沒給就是整個課程。 */
 /* 這個課程的每一組。
 
    本來吃 mentorId：一位老師只看自己帶的那幾組。拿掉了——
@@ -10564,7 +10563,7 @@ function actOpenExit(teamId, on) {
   return t;
 }
 
-/* 等著老師確認出口的那幾組。跟 radar 一樣只看自己帶的。 */
+/* 等著老師確認出口的那幾組。跟 radar 一樣，全班的。 */
 function exitQueue(classId, mentorId) {
   return teamsUnder(classId, mentorId).filter(function (t) {
     return t.exitAsk && !t.leftAt;
@@ -10945,12 +10944,13 @@ function seed() {
   var cid = 'C1';
 
   DB.Classes.push({
-    classId: cid, name: '設計專題', joinCode: 'DG7K2M',
+    classId: cid, name: '114-1 畢業專題', joinCode: 'DG7K2M',
     teacherId: 'U0', startedAt: ago(30)
   });
   /* 三位老師，同一個課程。Class.teacherId 不是權限（研究者那一頁
      只拿它顯示名字），所以共用一個 classId 就是共用一個課程。
-     每位帶哪幾組寫在 Team.mentorId 上。 */
+     三位共同帶整個班。Team.mentorId 是舊模型留下來的欄位，
+     沒有畫面在用（見 40-db.js 的 teachersOf）。 */
   [{ id: 'U0', ac: 'tea01', n: '老師·孟' },
    { id: 'U6', ac: 'tea02', n: '老師·薛' },
    { id: 'U7', ac: 'tea03', n: '老師·鄰' }].forEach(function (t) {
@@ -11588,9 +11588,9 @@ function topBar() {
       '<span class="badge t">老師端</span>' +
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
-      /* 我帶幾組。本來是整個課程的組數——三位老師共用一個課程
-         之後，那個數字不是他負責的東西。 */
-      '<span>' + esc(classOf(u).name) + '　·　我帶 ' +
+      /* 全班幾組。三位老師共同帶一個班，沒有「我帶的那幾組」這回事，
+         寫「我帶」會讓他以為別的組不歸他管。 */
+      '<span>' + esc(classOf(u).name) + '　·　全班 ' +
         teamsUnder(u.classId, u.userId).length + ' 組</span>' +
       '<span>' + (r.length ? r.length + ' 件等你看' : '沒有等你的') + '</span>' + topEnd() +
       '</div>';
