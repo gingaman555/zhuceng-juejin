@@ -198,9 +198,9 @@ PAGES.story = function () {
 
 ACTS.story = function (n) { go('story', { n: Number(n) || 0 }); };
 
-/* 看完了。記在使用者身上，所以換一台電腦也不會再跳一次。 */
-ACTS.storyend = function () {
-  var u = me();
-  if (u && !u.sawStory) { u.sawStory = now(); save(); }
-  go('home');
-};
+/* 看完了，進廊道。
+
+   旗子不在這裡寫——寫在「把他送來這一頁」的那一刻（見 55-ui.js 的
+   hero）。寫在這裡的話，從別的路離開這一頁就等於沒看過，
+   而這一頁上導覽一直在。 */
+ACTS.storyend = function () { go('home'); };
