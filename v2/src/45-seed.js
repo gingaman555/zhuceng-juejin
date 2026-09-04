@@ -40,7 +40,7 @@ function seed() {
     role: 'researcher', classId: cid, createdAt: ago(31) }));
 
   var TEAMS = [
-    /* mentor：誰帶這一組。2／2／1 分給三位老師。 */
+    /* mentor 留著沒有用了——老師看整個班（見 40-db.js 的 teamsUnder）。 */
     { id: 'G1', name: '第一組 · 甲', project: '畢製分工失衡', tier: 2, joined: 30, mentor: 'U0' },
     { id: 'G2', name: '第二組 · 乙', project: '課表 App',     tier: 0, joined: 30, mentor: 'U0' },
     { id: 'G3', name: '第三組 · 丙', project: '宿舍回收動線', tier: 1, joined: 30, mentor: 'U6' },
@@ -81,10 +81,8 @@ function seed() {
         name: nm, role: 'student', classId: cid, teamId: t.id,
         hero: JOBS[(i + k) % JOBS.length], createdAt: ago(30)
       }));
-      DB.Roster.push({
-        rosterId: 'RS' + uid.slice(1), classId: cid, teamId: t.id, teamName: t.name,
-        memberName: nm, claimedBy: uid, claimedAt: ago(30)
-      });
+      /* 不貼名冊。新流程是學生自己建隊、用代碼加入——
+         留著名冊等於兩條路並存，而路由會優先走名冊那一條。 */
     });
   });
   var ALL = TEAMS.map(function (t) { return t.id; });
@@ -106,10 +104,8 @@ function seed() {
     userId: 'U8', account: 'stu06', name: '學生6',
     role: 'student', classId: cid, createdAt: ago(0)
   }));
-  DB.Roster.push({
-    rosterId: 'RS6', classId: cid, teamId: 'G6', teamName: '第六組 · 己',
-    memberName: '學生6', claimedBy: null, claimedAt: 0
-  });
+  /* 第六組沒有人，也沒有名冊——它示範的是「還沒有隊的人看到什麼」，
+     而新流程裡那一頁是建隊，不是從名冊上點自己。 */
 
 
   /* 老師分的段寫在任務上（見下面的 M1／M2）。第三個刻意不分——

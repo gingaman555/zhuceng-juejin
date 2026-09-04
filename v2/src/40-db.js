@@ -55,7 +55,7 @@ function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 2;
+var SEED_V = 3;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -272,12 +272,15 @@ function teachersOf(classId) {
 }
 
 /* 這位老師要處理的那幾組。mentorId 沒給就是整個課程。 */
+/* 這個課程的每一組。
+
+   本來吃 mentorId：一位老師只看自己帶的那幾組。拿掉了——
+   一個課程就是一個地方，切成三個互相看不到的小班只是多出來的複雜度，
+   而且每一位老師本來就會被問到任何一組的事。
+
+   參數留著沒有拿掉：十幾個呼叫端都在傳它，改簽名的風險比留著大。 */
 function teamsUnder(classId, mentorId) {
-  return where('Teams', function (t) {
-    if (t.classId !== classId) return false;
-    if (!mentorId) return true;
-    return !t.mentorId || t.mentorId === mentorId;
-  });
+  return where('Teams', function (t) { return t.classId === classId; });
 }
 
 /* ---------- 全班生態 ----------
