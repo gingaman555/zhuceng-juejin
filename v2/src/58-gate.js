@@ -104,7 +104,9 @@ PAGES.login = function () {
       if (!mem.length) return;
       H.push('<div class="dm-t"><b>' + esc(t.name) + '</b><div class="dm-r">');
       mem.forEach(function (u) {
-        H.push(btn(u.name || u.account, 'asdemo:' + u.account, 'dm'));
+        /* 名字後面帶帳號：最後那一句說「帳號就是名字旁邊那一串」，
+           不寫出來的話那句話是假的。 */
+        H.push(btn(u.name + ' ' + u.account, 'asdemo:' + u.account, 'dm'));
       });
       H.push('</div></div>');
     });
@@ -113,7 +115,7 @@ PAGES.login = function () {
     if (loose.length) {
       H.push('<div class="dm-t"><b>沒有組的</b><div class="dm-r">');
       loose.forEach(function (u) {
-        H.push(btn(u.name || u.account, 'asdemo:' + u.account, 'dm'));
+        H.push(btn(u.name + ' ' + u.account, 'asdemo:' + u.account, 'dm'));
       });
       H.push('</div></div>');
     }

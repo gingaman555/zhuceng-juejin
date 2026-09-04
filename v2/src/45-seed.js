@@ -241,7 +241,23 @@ function seed() {
      沒有人說過自己做了什麼。 */
   dressRuns(cid);
 
-  DB.Config.seq = 100;
+  /* 下一個 id 從所有種子 id 的最大號往後接。
+
+     本來寫死 100。而多人小組那一版把隊友放在 U101–U110，
+     於是第二個真的註冊的人拿到 U101——跟種子裡的冠廷同號。
+     userOf() 回傳先找到的那一筆，所以那個人一登入就變成冠廷：
+     名字是別人的、組是別人的、他自己那一筆從此找不到。
+
+     不要再寫死一個數字。數出來。 */
+  var top = 0;
+  [['Users', 'userId'], ['Teams', 'teamId'], ['Classes', 'classId'],
+   ['Milestones', 'msId'], ['Runs', 'runId']].forEach(function (p) {
+    (DB[p[0]] || []).forEach(function (r) {
+      var n = parseInt(String(r[p[1]]).replace(/^[A-Za-z]+/, ''), 10);
+      if (n > top) top = n;
+    });
+  });
+  DB.Config.seq = top + 1;
   /* 這一份是示範資料，而且是第幾版。兩個旗子一起決定要不要重種
      （見 40-db.js 的 load）。 */
   DB.Config.demo = 1;

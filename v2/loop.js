@@ -226,5 +226,42 @@ if (eco.map(function (e) { return e.teamId; }).join(',') !== order) {
   if (r.state !== 'running') fail('省思之後狀態被改成 ' + r.state + '，判定會被跳過');
   else ok('省思不動狀態');
 })();
+
+/* ---------- 沒有兩筆資料共用一個 id ----------
+
+   2026-09-04 補的。種子把隊友放在 U101–U110，而 Config.seq 寫死 100，
+   所以第二個真的註冊的人拿到 U101——跟種子裡的冠廷同號。
+   userOf() 回傳先找到的那一筆：那個人一登入就變成別人，
+   名字、組、紀錄全部是冠廷的，而他自己那一筆再也找不到。
+
+   畫面不會報錯，每一頁都畫得出來。所以要在這裡數。 */
+(function () {
+  seed();
+  var cols = [['Users', 'userId'], ['Teams', 'teamId'], ['Classes', 'classId'],
+              ['Milestones', 'msId'], ['Runs', 'runId']];
+  var seen = {}, dup = [], top = 0;
+  cols.forEach(function (p) {
+    (DB[p[0]] || []).forEach(function (r) {
+      var k = r[p[1]];
+      if (seen[k]) dup.push(k);
+      seen[k] = 1;
+      var n = parseInt(String(k).replace(/^[A-Za-z]+/, ''), 10);
+      if (n > top) top = n;
+    });
+  });
+  if (dup.length) return fail('種子裡有兩筆共用一個 id：' + dup.join(' '));
+  if (DB.Config.seq <= top) {
+    return fail('下一個 id 是 ' + DB.Config.seq + '，但種子已經用到 ' +
+      top + '——新註冊的人會變成種子裡的某個人');
+  }
+  /* 真的開幾個看看，不要只信那個數字。 */
+  for (var i = 0; i < 20; i++) {
+    var n = nid('U');
+    if (seen[n]) return fail('新開的帳號 ' + n + ' 撞到種子裡的人');
+    seen[n] = 1;
+  }
+  ok('沒有人會變成別人（' + Object.keys(seen).length + ' 個 id，連開 20 個新帳號都不撞）');
+})();
+
 console.log('\n' + (bad ? '── ' + bad + ' 項失敗 ──' : '── 全部通過：這台機器轉得動 ──'));
 process.exit(bad ? 1 : 0);
