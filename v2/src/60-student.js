@@ -113,7 +113,7 @@ PAGES.home = function () {
       pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
       false));
     /* 他那一句話擺在最下面，而且是這一整張上唯一的人話。 */
-    if (r.word) H.push('<p class="quote big">' + nl(r.word) + '</p>');
+    if (r.word) H.push(wordBlock(r, 'big'));
     H.push('</div>');
   });
   if (okPend.length) {
@@ -514,7 +514,7 @@ function actionCard(t, next, st) {
        而且退回一定帶著話（沒寫理由的退回擋在資料層）。 */
     /* 眉標拿掉了：上面那一行已經寫著「退回來了」。
        這裡剩下的是他的那一句話——那才是這一刻唯一要讀的東西。 */
-    if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
+    if (row.run.word) H.push(wordBlock(row.run, 'big'));
     /* 本來這裡直接再交一次，不用重答。但牠在廊道上站起來了，
        而「牠站著」跟「按一顆鍵就過去」是兩件互相矛盾的事。
        改成走同一條路：再打一次，答完再交。 */
@@ -1153,7 +1153,7 @@ function logRow(m, r, t) {
     }
     if (r.hard) H.push('<p class="quote"><b>卡在哪裡</b>' + nl(r.hard) + '</p>');
     if (r.pace) H.push('<p class="quote"><b>你覺得的進度</b>' + nl(r.pace) + '</p>');
-    if (r.word) H.push('<p class="quote tw">' + nl(r.word) + '</p>');
+    if (r.word) H.push(wordBlock(r, 'tw'));
     H.push('</div>');
   }
   return H.join('');

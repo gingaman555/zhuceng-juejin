@@ -55,7 +55,7 @@ function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 8;
+var SEED_V = 9;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -280,10 +280,15 @@ function accuracyOf(teamId) {
   return { total: done.length, early: n.early, exact: n.exact, late: n.late, rows: done };
 }
 
-/* ---------- 誰帶哪幾組 ----------
+/* ---------- 這個課程有哪幾位老師 ----------
 
-   一個課程三位老師，每位帶不同的組。mentorId 空的組還沒指定，
-   那時候每位老師都看得到它——不然剛貼完名冊的組會沒有人管。 */
+   三位老師共同帶整個班，不是一人分走幾組。所以「誰」這件事不掛在
+   組上，掛在每一件上：這一件是誰派的（Milestone.mentorId）、
+   那一句話是誰說的（Run.wordBy）。同一組這一週可能收到甲老師派的，
+   下一週收到乙老師派的，兩件都是真的。
+
+   Team.mentorId 還在，但已經沒有任何畫面在設它——留著只是為了讀得懂
+   舊資料，新開的班不會有值。 */
 function teachersOf(classId) {
   return where('Users', function (u) {
     return u.role === 'teacher' && u.classId === classId;
@@ -974,8 +979,10 @@ function actSawStamp(runId) {
 function actPublish(classId, o) {
   var m = {
     msId: nid('M'), classId: classId,
-    /* 誰派的。他派的東西只到他帶的組（見 msFor）——
-       任務規劃與步調是每位老師自己的事。 */
+    /* 誰派的。三位老師共同帶一個班，所以這一欄不是用來篩的——
+       它是用來寫在畫面上的：這一件是誰派的（見 70-teacher.js），
+       以及匯出的時候分得出是哪一位（見 15-auth.js 的 exportCsv）。
+       要發給誰是他自己點的，在 teams 那一欄。 */
     mentorId: o.mentorId || '',
     title: o.title, note: o.note || '',
     steps: (o.steps || []).slice(0, 12),
@@ -1072,7 +1079,8 @@ function waitAt(runId) {
   if (!r || r.state !== 'submitted') return null;
   var t = teamOf(r.teamId);
   if (!t) return null;
-  var q = radar(t.classId, t.mentorId);
+  /* 全班同一個佇列，所以他排第幾是算得出來的。 */
+  var q = radar(t.classId);
   for (var i = 0; i < q.length; i++) {
     if (q[i].run.runId === runId) {
       return { at: i + 1, of: q.length,
@@ -1080,15 +1088,6 @@ function waitAt(runId) {
     }
   }
   return null;
-}
-
-/* 這一組給哪一位老師帶。空字串＝收回來，變成大家都看得到。 */
-function actMentor(teamId, mentorId) {
-  var t = teamOf(teamId);
-  if (!t) return false;
-  t.mentorId = mentorId || '';
-  save();
-  return true;
 }
 
 /* 這一個班有沒有開排行榜。預設關。 */
@@ -1107,8 +1106,12 @@ function actSetRank(classId, on) {
 }
 
 /* 老師的雷達：誰交了、等多久了 */
-/* 等你看的那幾件。只有自己帶的組——三位老師共用一個課程，
-   同一個佇列會讓 A 老師勾到 B 老師的組。 */
+/* 等你看的那幾件，全班的。三位老師共用一個佇列：誰有空誰看，
+   有人請假的那一週學生不會卡在那裡。
+
+   是誰派的那一件寫在列上（見 70-teacher.js），所以「這件本來是誰的事」
+   看得到——要留給他就留給他。那是三個人之間可以商量的事，
+   不是系統該替他們擋掉的事。 */
 function radar(classId, mentorId) {
   var out = [];
   teamsUnder(classId, mentorId).forEach(function (t) {
@@ -1137,6 +1140,8 @@ function actReject(runId, word) {
   if (!r || r.state !== 'submitted') return null;
   if (!String(word || '').trim()) return null;
   r.word = word;
+  /* 退回那一句更要署名：學生要知道去找誰問。 */
+  r.wordBy = (typeof S !== 'undefined' && S.who) || '';
   r.state = 'back';
   r.backAt = now();
   r.backs = (r.backs || 0) + 1;
@@ -1185,6 +1190,10 @@ function actApprove(runId, word, bonus) {
   if (!r || (r.state !== 'submitted' && r.state !== 'back')) return null;
   var s = runShape(runId);
   r.word = word || '';
+  /* 誰說的。一個班三位老師共同帶，那一句話沒有署名的話，學生讀到的
+     會是「系統說的」——而這整個作品立在「系統給資訊，人給承認」上，
+     承認要有一個人，不然它就退回成一個自動回覆。 */
+  r.wordBy = (typeof S !== 'undefined' && S.who) || '';
   /* 老師給的那幾枚。收下就一定有，最少 1——0 會被讀成負評，
      而「他沒有特別想說什麼」跟「他覺得這份差」是兩件事。 */
   r.bonus = Math.max(RULES.COIN.bonusMin,

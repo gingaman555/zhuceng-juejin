@@ -127,7 +127,8 @@ PAGES.login = function () {
 PAGES.reg = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
   var role = DRAFT.rgRole || 'student';
-  H.push(head('建立帳號', role === 'teacher' ? '開一個班，把碼唸給學生' : '先報上你在哪一班', ''));
+  H.push(head('建立帳號', role === 'teacher' ?
+    '開一個班，或加進同事開好的那一班' : '先報上你在哪一班', ''));
   /* 身分自己選。本來只開得了學生帳號，老師要找研究者——
      那等於課還沒開始就卡在一個不在現場的人身上。 */
   H.push('<div class="card">');
@@ -142,6 +143,21 @@ PAGES.reg = function () {
     H.push('<div class="eyebrow">班級加入碼</div>');
     H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
            esc('六個英數字，跟老師拿') + '">');
+  } else {
+    /* 老師這一格本來不畫——「他是發碼的人，不該先跟人要碼」。
+
+       那句話對第一位老師是對的，對第二、第三位是錯的：一個班三位
+       老師共同帶，後面兩位要進的是同一個班。這一格不畫的話他們會
+       各自開一個空班，而且不會知道自己走錯了。
+
+       資料層本來就收（見 15-auth.js 的 actRegister）——只有這一格
+       沒畫出來。留空就是開一個新的班，第一位老師的路沒有變。 */
+    H.push('<div class="eyebrow">班級加入碼　選填</div>');
+    H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
+           esc('跟同事拿') + '">');
+    /* 這一句不塞進 placeholder：320 寬的框裡只放得下九個字，
+       塞進去會被截掉，而被截掉的正好是「留空會怎樣」。 */
+    H.push('<p class="dim">留空就開一個新的班。</p>');
   }
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="rg-acc" value="' + esc(draft('rg-acc')) + '" placeholder="' +
@@ -159,20 +175,33 @@ PAGES.reg = function () {
 };
 
 /* ---------- 老師開班 ----------
-   他是那個發碼的人，所以他不跟任何人要碼——他自己開一個，然後唸出去。 */
+
+   兩條路，跟學生那一頁（PAGES.myteam）同一個形狀：開一個，
+   或用別人給的碼加進去。
+
+   本來只有前面那一條，理由是「他是發碼的人，不該跟任何人要碼」。
+   那對第一位老師是對的。可是一個班三位老師共同帶，後面兩位
+   要進的是同一個班——只有一條路的時候，他們會各自開一個空班。 */
 PAGES.mkclass = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
-  H.push(head('開一個班', '取個名字就好', ''));
+  H.push(head('你的班', '開一個，或用同事給的碼加進去', ''));
+
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">班名</div>');
+  H.push('<div class="eyebrow">開一個班</div>');
   H.push('<input id="mk-name" value="" placeholder="' +
     esc('例：114-1 畢業專題') + '">');
-  H.push('</div>');
-  H.push('<p class="dim">開好之後會給你一組六碼。學生用那組碼建自己的帳號。</p>');
-  H.push('<div class="row">');
+  H.push('<p class="dim">開好會給你一組六碼。學生跟另外幾位老師都用那組碼建帳號。</p>');
   H.push(btn('開班', 'mkclass', 'big'));
-  H.push(btn('登出', 'logout', 'ghost'));
   H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">加進已經開好的班</div>');
+  H.push('<input id="jc-code" value="' + esc(draft('jc-code')) + '" placeholder="' +
+    esc('六個英數字，跟同事拿') + '">');
+  H.push(btn('加入', 'joinclass', 'big'));
+  H.push('</div>');
+
+  H.push(btn('登出', 'logout', 'ghost'));
   H.push('</div></div>');
   return H.join('');
 };
@@ -261,7 +290,16 @@ ACTS.mkclass = function () {
   var r = actNewClass(n, S.who);
   if (r.err) return say(r.err);
   go(homeFor(userOf(S.who)));
-  say('開好了。把加入碼唸給學生。');
+  say('開好了。把加入碼唸給學生跟另外幾位老師。');
+};
+
+/* 加進同事已經開好的那一班。 */
+ACTS.joinclass = function () {
+  var c = (document.getElementById('jc-code') || {}).value || '';
+  var r = actJoinClass(S.who, c);
+  if (r.err) { DRAFT['jc-code'] = c; return say(r.err); }
+  go(homeFor(userOf(S.who)));
+  say('加進「' + r.klass.name + '」了。');
 };
 
 /* 學生建一隊。 */

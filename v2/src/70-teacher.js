@@ -140,7 +140,14 @@ PAGES.radar = function () {
     H.push('<button class="rq" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:review:' + x.run.runId })) + '\'>');
     H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b>');
-    H.push('<em>' + esc(x.team.name) + '</em></span>');
+    /* 這一件是誰派的，接在組名後面——不另外開一格，那一列要回答的
+       還是同一個問題（先看哪一件）。自己派的不寫。
+
+       三位老師共用一個佇列，所以「這一件本來是誰的事」要看得到：
+       看得到才有得商量，看不到就會兩個人都以為對方會看。 */
+    var rby = x.ms.mentorId && x.ms.mentorId !== u.userId ? userOf(x.ms.mentorId) : null;
+    H.push('<em>' + esc(x.team.name) +
+      (rby ? '　·　' + esc(rby.name) + ' 派的' : '') + '</em></span>');
     H.push('<span class="rq-d">等 ' + x.waited + ' 天</span>');
     H.push('</button>');
   });
@@ -152,6 +159,7 @@ PAGES.radar = function () {
 
 /* ---------- 勾一個可以 ---------- */
 PAGES.review = function () {
+  var u = me();
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var m = msOf(r.msId), t = teamOf(r.teamId);
@@ -193,11 +201,20 @@ PAGES.review = function () {
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
          esc(s.name) + '</span>');
-  /* 我排到哪一天。判定跟它無關（判定只看他說幾天、實際幾天），
-     但他有沒有走進我排的那一段，是我要寫那一句話時真的需要知道的。 */
+  /* 排到哪一天。判定跟它無關（判定只看他說幾天、實際幾天），
+     但他有沒有走進那一段，是要寫那一句話時真的需要知道的。
+
+     三位老師共同帶一個班，這一件很可能不是我派的——那時候「我排到」
+     是錯的，而且我會拿別人的排程去讀這一份成果卻不知道那是別人排的。
+     不是我派的就寫出是誰。 */
+  var rvBy = m.mentorId && m.mentorId !== u.userId ? userOf(m.mentorId) : null;
   if (m.due) {
-    H.push('<span class="sp"></span><span class="dim">我排到 ' +
+    H.push('<span class="sp"></span><span class="dim">' +
+      (rvBy ? esc(rvBy.name) + ' 派的，排到 ' : '我排到 ') +
       esc(dueSay(m)) + '</span>');
+  } else if (rvBy) {
+    H.push('<span class="sp"></span><span class="dim">' +
+      esc(rvBy.name) + ' 派的</span>');
   }
   H.push('</div>');
   /* 他們自己寫的兩段放最上面。他在這一頁要做的事是寫一句話，
@@ -312,9 +329,17 @@ PAGES.review = function () {
 /* ---------- 發派任務 ---------- */
 PAGES.ms = function () {
   var u = me();
-  /* 我派過的。別位老師派的不在這裡——他規劃他的，我規劃我的。 */
+  /* 這個班派出去的每一件，不只我派的。
+
+     三位老師共同帶一個班，一定會出現「這一週我發給甲乙，你發給丙丁」。
+     本來這裡只印自己派的——於是我完全不知道甲組這一週已經被派了兩件，
+     照著看起來很空的清單再加一件，學生那邊就疊了三件。那不是他們
+     估不準，是我們三個沒對過。
+
+     誰派的印在那一列上。要不要跟人家的錯開，是他看得到之後
+     自己會做的判斷——這一頁的工作是讓他做得成那個判斷。 */
   var list = where('Milestones', function (m) {
-    return m.classId === u.classId && (!m.mentorId || m.mentorId === u.userId);
+    return m.classId === u.classId;
   })
     .sort(function (a, b) { return b.at - a.at; });
   var teams = teamsUnder(u.classId, u.userId);
@@ -416,8 +441,7 @@ PAGES.ms = function () {
     var done = got.filter(function (r) { return r.state === 'done'; }).length;
     H.push('<div class="msr">');
     H.push('<b>' + esc(m.title) + '</b>');
-    /* 三種發法。「課程共用」不只是舊資料——一位老師可以刻意派一個
-       不掛自己的任務（期中發表那一種），那時候全課程都收得到。 */
+    /* 發給誰是老師派的時候自己點的：不點就是全班。 */
     H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組'
       : '全班') + '</span>');
     /* 我排到哪一天。過了就寫過了——不是警告，是事實。 */
@@ -434,9 +458,16 @@ PAGES.ms = function () {
             那個動作旁邊，等於邀請他照著他們的數字去訂下一件事的大小，
             而任務該有多大是題目本身的事，不是他們上一次估得準不準。
 
-       二 · 它印的是整個課程的組，包含別位老師帶的。那不是他的事。
+       二 · 它印的是全班每一組，而這一頁現在也印別人派的那幾件。
+            兩件事疊起來就是一整片跟他要寫的這一個任務無關的數字。
 
        那幾個數字沒有消失：審核那一頁上每一趟都有，各組進度上一整排。 */
+    /* 誰派的。自己派的不寫——不然每一列都掛著一個「我」，
+       而這一行存在的意義就是把別人的跟我的分開。 */
+    if (m.mentorId && m.mentorId !== u.userId) {
+      var mby = userOf(m.mentorId);
+      if (mby) H.push('<span class="msr-by">' + esc(mby.name) + ' 派的</span>');
+    }
     H.push('</div>');
   });
   H.push('</div></div>');

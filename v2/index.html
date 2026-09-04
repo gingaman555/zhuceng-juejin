@@ -3086,6 +3086,12 @@ button.ac:active{transform:translateY(1px)}
    系統不解讀、不歸類——原話放上去就好。 */
 .quote b{display:block;font-size:22px;font-weight:400;color:var(--gold2);
   margin-bottom:3px}
+/* 署名也走同一條。.quote.big（老師收下／退回那一句）跟 .quote.tw
+   各自設了自己的顏色，權重比上面那一條高——名字會被吃成跟句子
+   一模一樣，於是「老師·孟」讀起來像那句話的第一行，不像是誰說的。
+
+   一個班三位老師共同帶，那個名字是這一句話最重要的一半。 */
+.quote.big b,.quote.tw b{color:var(--gold2)}
 
 /* 廊道抓得住。桌機上本來只能靠捲軸，等於不能前後看。 */
 .scn-scroll{cursor:grab}
@@ -3208,6 +3214,10 @@ button.ac:active{transform:translateY(1px)}
 .msr-w{font-size:22px;color:var(--gold2);white-space:nowrap}
 .msr-n{font-size:22px;color:var(--dim);white-space:nowrap;
   font-variant-numeric:tabular-nums}
+/* 別位老師派的那幾件。自己派的沒有這一行，所以有這一行就是別人的。
+   佔滿一整列，不跟上面那幾個數字擠。 */
+.msr-by{grid-column:1 / -1;font-size:22px;color:var(--dim)}
+
 /* 各組承諾了幾天。老師唯一看得到的「他們怎麼想這件事」。 */
 .msr-e{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:4px 14px}
 .msr-e i{font-size:22px;font-style:normal;color:var(--dim);
@@ -6539,7 +6549,20 @@ var EV_SAY = {
   tick:     function (e) { return (e.on ? '勾掉' : '取消勾掉') + '「' + e.step + '」'; },
   askexit:  function () { return '說專案做完了'; },
   left:     function () { return '走出去了'; },
-  rename:   function (e) { return '把招牌改成「' + e.name + '」'; }
+  rename:   function (e) { return '把招牌改成「' + e.name + '」'; },
+  joinclass:function (e) { return '加進「' + e.klass + '」'; },
+  newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
+  jointeam: function () { return '用代碼加入隊伍'; },
+  claim:    function () { return '在班級地圖上占了一格'; },
+  hero:     function (e) { return '挑了角色 ' + e.hero; },
+  blurb:    function (e) { return '寫了招牌，' + e.len + ' 個字'; },
+  mark:     function (e) { return '補登第 ' + e.n + ' 天'; },
+  said:     function () { return '寫了這一趟做了什麼'; },
+  reject:   function (e) { return '退回去改，寫了 ' + e.len + ' 個字'; },
+  resend:   function (e) { return '改好再交一次（第 ' + e.backs + ' 次被退）'; },
+  rethink:  function (e) { return '重新想過：本來說 ' + e.est + ' 天，走到第 ' + e.went + ' 天'; },
+  denyexit: function () { return '說現在還不是時候'; },
+  rank:     function (e) { return (e.on ? '打開' : '關掉') + '排行榜'; }
 };
 function evSay(e) {
   var f = EV_SAY[e.kind];
@@ -6595,6 +6618,26 @@ function actRegister(o) {
   save();
   logEvent('register', { by: u.userId, account: acc, role: u.role });
   return { user: u };
+}
+
+/* 老師加進一個已經開好的班。
+
+   一個班三位老師共同帶，所以第二、第三位要進的是同一個班，不是各自
+   開一個。開下去他會拿到一個誰都不在裡面的空班——而空班長得跟正常的
+   一模一樣（沒有組、沒有人在等他看），他不會發現自己走錯了，
+   會以為是學生還沒註冊。
+
+   註冊那一頁有這一格；這一支是給註冊完才聽到碼的那一位。 */
+function actJoinClass(userId, code) {
+  var u = userOf(userId);
+  if (!u || u.role !== 'teacher') return { err: '只有老師可以這樣加入。' };
+  if (u.classId) return { err: '你已經在一個班裡了。' };
+  var kl = classByCode(code);
+  if (!kl) return { err: '找不到這個加入碼。跟同事確認一次。' };
+  u.classId = kl.classId;
+  save();
+  logEvent('joinclass', { by: u.userId, klass: kl.name });
+  return { klass: kl };
 }
 
 /* ---------- 登入 ---------- */
@@ -6711,22 +6754,26 @@ function actCreateClass(name, teacherId) {
 /* ---------- 匯出 ----------
    研究資料。CSV，因為那是最容易進統計軟體的東西。 */
 function exportCsv(classId) {
-  var teamName = {}, teamTea = {};
+  var teamName = {};
   where('Teams', function (t) { return t.classId === classId; })
-    .forEach(function (t) {
-      teamName[t.teamId] = t.name;
-      /* 哪一位老師帶的。實驗是一個課程三位老師，那三位就是變項——
-         沒有這一欄，匯出的資料沒辦法照老師分組。 */
-      var te = t.mentorId ? userOf(t.mentorId) : null;
-      teamTea[t.teamId] = te ? te.name : '';
-    });
-  var head = ['時間', '角色', '組別', '指導老師', '事件', '說明'];
+    .forEach(function (t) { teamName[t.teamId] = t.name; });
+  /* 「誰做的」這一欄是新的，換掉本來的「指導老師」。
+
+     實驗是三位老師共同帶一個班，那三位就是變項。本來那一欄印的是
+     Team.mentorId——一組配一位老師。可是共同帶班沒有那個關係，
+     而且已經沒有畫面在設它，真的開一個班匯出來會整欄空白。
+
+     真正分得開的是每一筆各自的行動者：這一件是哪一位派的、
+     哪一位收的、哪一位退回的。logEvent 一直有記（e.by），
+     只是從來沒印出來——「角色＝老師」在三位老師的班上等於沒分。 */
+  var head = ['時間', '誰做的', '角色', '組別', '事件', '說明'];
   var rows = eventsOf(classId).map(function (e) {
+    var by = e.by ? userOf(e.by) : null;
     return [
       new Date(e.at).toISOString(),
+      by ? by.name : '',
       e.role || '',
       teamName[e.teamId] || '',
-      teamTea[e.teamId] || '',
       e.kind,
       evSay(e)
     ];
@@ -9151,7 +9198,7 @@ function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 8;
+var SEED_V = 9;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -9376,10 +9423,15 @@ function accuracyOf(teamId) {
   return { total: done.length, early: n.early, exact: n.exact, late: n.late, rows: done };
 }
 
-/* ---------- 誰帶哪幾組 ----------
+/* ---------- 這個課程有哪幾位老師 ----------
 
-   一個課程三位老師，每位帶不同的組。mentorId 空的組還沒指定，
-   那時候每位老師都看得到它——不然剛貼完名冊的組會沒有人管。 */
+   三位老師共同帶整個班，不是一人分走幾組。所以「誰」這件事不掛在
+   組上，掛在每一件上：這一件是誰派的（Milestone.mentorId）、
+   那一句話是誰說的（Run.wordBy）。同一組這一週可能收到甲老師派的，
+   下一週收到乙老師派的，兩件都是真的。
+
+   Team.mentorId 還在，但已經沒有任何畫面在設它——留著只是為了讀得懂
+   舊資料，新開的班不會有值。 */
 function teachersOf(classId) {
   return where('Users', function (u) {
     return u.role === 'teacher' && u.classId === classId;
@@ -10070,8 +10122,10 @@ function actSawStamp(runId) {
 function actPublish(classId, o) {
   var m = {
     msId: nid('M'), classId: classId,
-    /* 誰派的。他派的東西只到他帶的組（見 msFor）——
-       任務規劃與步調是每位老師自己的事。 */
+    /* 誰派的。三位老師共同帶一個班，所以這一欄不是用來篩的——
+       它是用來寫在畫面上的：這一件是誰派的（見 70-teacher.js），
+       以及匯出的時候分得出是哪一位（見 15-auth.js 的 exportCsv）。
+       要發給誰是他自己點的，在 teams 那一欄。 */
     mentorId: o.mentorId || '',
     title: o.title, note: o.note || '',
     steps: (o.steps || []).slice(0, 12),
@@ -10168,7 +10222,8 @@ function waitAt(runId) {
   if (!r || r.state !== 'submitted') return null;
   var t = teamOf(r.teamId);
   if (!t) return null;
-  var q = radar(t.classId, t.mentorId);
+  /* 全班同一個佇列，所以他排第幾是算得出來的。 */
+  var q = radar(t.classId);
   for (var i = 0; i < q.length; i++) {
     if (q[i].run.runId === runId) {
       return { at: i + 1, of: q.length,
@@ -10176,15 +10231,6 @@ function waitAt(runId) {
     }
   }
   return null;
-}
-
-/* 這一組給哪一位老師帶。空字串＝收回來，變成大家都看得到。 */
-function actMentor(teamId, mentorId) {
-  var t = teamOf(teamId);
-  if (!t) return false;
-  t.mentorId = mentorId || '';
-  save();
-  return true;
 }
 
 /* 這一個班有沒有開排行榜。預設關。 */
@@ -10203,8 +10249,12 @@ function actSetRank(classId, on) {
 }
 
 /* 老師的雷達：誰交了、等多久了 */
-/* 等你看的那幾件。只有自己帶的組——三位老師共用一個課程，
-   同一個佇列會讓 A 老師勾到 B 老師的組。 */
+/* 等你看的那幾件，全班的。三位老師共用一個佇列：誰有空誰看，
+   有人請假的那一週學生不會卡在那裡。
+
+   是誰派的那一件寫在列上（見 70-teacher.js），所以「這件本來是誰的事」
+   看得到——要留給他就留給他。那是三個人之間可以商量的事，
+   不是系統該替他們擋掉的事。 */
 function radar(classId, mentorId) {
   var out = [];
   teamsUnder(classId, mentorId).forEach(function (t) {
@@ -10233,6 +10283,8 @@ function actReject(runId, word) {
   if (!r || r.state !== 'submitted') return null;
   if (!String(word || '').trim()) return null;
   r.word = word;
+  /* 退回那一句更要署名：學生要知道去找誰問。 */
+  r.wordBy = (typeof S !== 'undefined' && S.who) || '';
   r.state = 'back';
   r.backAt = now();
   r.backs = (r.backs || 0) + 1;
@@ -10281,6 +10333,10 @@ function actApprove(runId, word, bonus) {
   if (!r || (r.state !== 'submitted' && r.state !== 'back')) return null;
   var s = runShape(runId);
   r.word = word || '';
+  /* 誰說的。一個班三位老師共同帶，那一句話沒有署名的話，學生讀到的
+     會是「系統說的」——而這整個作品立在「系統給資訊，人給承認」上，
+     承認要有一個人，不然它就退回成一個自動回覆。 */
+  r.wordBy = (typeof S !== 'undefined' && S.who) || '';
   /* 老師給的那幾枚。收下就一定有，最少 1——0 會被讀成負評，
      而「他沒有特別想說什麼」跟「他覺得這份差」是兩件事。 */
   r.bonus = Math.max(RULES.COIN.bonusMin,
@@ -10966,12 +11022,13 @@ function seed() {
   var M3 = { msId: 'M3', classId: cid, teams: [], at: ago(3), due: T0 + 6 * DAY,
     title: '畫一張現在的流程圖',
     note: '猜的那幾步用虛線。' };
-  /* 上面三個不掛 mentorId＝整個課程都收得到。它們底下掛著全部九趟
-     的紀錄，掛上去會讓別位老師帶的組收不到自己已經走完的任務。
+  /* 上面三個不掛 mentorId＝沒有記是誰派的，全班都收得到。
+     它們底下掛著全部九趟的紀錄。
 
-     M4 才是在示範「每位老師規劃自己的任務與步調」：薛老師自己派的，
-     只有他帶的那兩組收得到，而且比別人晚了十天才開始。 */
-  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: [], at: ago(1), due: T0 + 12 * DAY,
+     M4 示範三位老師共同帶一個班長什麼樣：薛老師派的，他在派的時候
+     自己點名發給丙丁兩組，而且比別人晚了十天才開始。「發給誰」是他
+     點的（teams），不是系統照帶組關係替他分的——那個關係已經沒有了。 */
+  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: ['G3', 'G4'], at: ago(1), due: T0 + 12 * DAY,
     title: '找兩個人試一次，記下卡在哪',
     steps: ['做出可以試的版本', '約人', '在旁邊看他用'],
     note: '不要跟他解釋。他卡住的地方就是答案。' };
@@ -11362,6 +11419,23 @@ function patTag(c, pal, cls, big) {
 function btn(label, act, kind) {
   return '<button class="btn ' + (kind || '') + '" data-act="run" data-p="' +
     esc(JSON.stringify({ a: act })) + '">' + esc(label) + '</button>';
+}
+
+/* 那一句話是誰說的。查不到就回空字串——舊的紀錄沒有 wordBy，
+   那時候照舊只印那一句話，不要印一個空的署名。 */
+function saidBy(id) {
+  var u = id ? userOf(id) : null;
+  return u ? u.name : '';
+}
+
+/* 老師那一句話加上署名。收下、退回、往下捲的紀錄三個地方共用一個。
+
+   一個班三位老師共同帶，沒有署名的話學生讀到的是「系統說的」，
+   而這整個作品立在「系統給資訊，人給承認」上——承認要有一個人。 */
+function wordBlock(run, cls) {
+  var who = saidBy(run.wordBy);
+  return '<p class="quote ' + cls + '">' +
+    (who ? '<b>' + esc(who) + '</b>' : '') + nl(run.word) + '</p>';
 }
 
 /* ---------- 路由 ---------- */
@@ -11917,14 +11991,6 @@ var ACTS = {
 
   /* 老師那一頁上的審核／出口。跟 tab 分開，不然兩邊會互相蓋掉。 */
   tq: function (k) { DRAFT.tq = k; render(); },
-
-
-  /* 這一組給哪一位老師帶。再點一次同一位就是收回來。 */
-  mentor: function (v) {
-    var p = String(v).split(',');
-    actMentor(p[0], p[1] || '');
-    render();
-  },
 
 
 
@@ -12568,7 +12634,8 @@ PAGES.login = function () {
 PAGES.reg = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
   var role = DRAFT.rgRole || 'student';
-  H.push(head('建立帳號', role === 'teacher' ? '開一個班，把碼唸給學生' : '先報上你在哪一班', ''));
+  H.push(head('建立帳號', role === 'teacher' ?
+    '開一個班，或加進同事開好的那一班' : '先報上你在哪一班', ''));
   /* 身分自己選。本來只開得了學生帳號，老師要找研究者——
      那等於課還沒開始就卡在一個不在現場的人身上。 */
   H.push('<div class="card">');
@@ -12583,6 +12650,21 @@ PAGES.reg = function () {
     H.push('<div class="eyebrow">班級加入碼</div>');
     H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
            esc('六個英數字，跟老師拿') + '">');
+  } else {
+    /* 老師這一格本來不畫——「他是發碼的人，不該先跟人要碼」。
+
+       那句話對第一位老師是對的，對第二、第三位是錯的：一個班三位
+       老師共同帶，後面兩位要進的是同一個班。這一格不畫的話他們會
+       各自開一個空班，而且不會知道自己走錯了。
+
+       資料層本來就收（見 15-auth.js 的 actRegister）——只有這一格
+       沒畫出來。留空就是開一個新的班，第一位老師的路沒有變。 */
+    H.push('<div class="eyebrow">班級加入碼　選填</div>');
+    H.push('<input id="rg-code" value="' + esc(draft('rg-code')) + '" placeholder="' +
+           esc('跟同事拿') + '">');
+    /* 這一句不塞進 placeholder：320 寬的框裡只放得下九個字，
+       塞進去會被截掉，而被截掉的正好是「留空會怎樣」。 */
+    H.push('<p class="dim">留空就開一個新的班。</p>');
   }
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="rg-acc" value="' + esc(draft('rg-acc')) + '" placeholder="' +
@@ -12600,20 +12682,33 @@ PAGES.reg = function () {
 };
 
 /* ---------- 老師開班 ----------
-   他是那個發碼的人，所以他不跟任何人要碼——他自己開一個，然後唸出去。 */
+
+   兩條路，跟學生那一頁（PAGES.myteam）同一個形狀：開一個，
+   或用別人給的碼加進去。
+
+   本來只有前面那一條，理由是「他是發碼的人，不該跟任何人要碼」。
+   那對第一位老師是對的。可是一個班三位老師共同帶，後面兩位
+   要進的是同一個班——只有一條路的時候，他們會各自開一個空班。 */
 PAGES.mkclass = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
-  H.push(head('開一個班', '取個名字就好', ''));
+  H.push(head('你的班', '開一個，或用同事給的碼加進去', ''));
+
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">班名</div>');
+  H.push('<div class="eyebrow">開一個班</div>');
   H.push('<input id="mk-name" value="" placeholder="' +
     esc('例：114-1 畢業專題') + '">');
-  H.push('</div>');
-  H.push('<p class="dim">開好之後會給你一組六碼。學生用那組碼建自己的帳號。</p>');
-  H.push('<div class="row">');
+  H.push('<p class="dim">開好會給你一組六碼。學生跟另外幾位老師都用那組碼建帳號。</p>');
   H.push(btn('開班', 'mkclass', 'big'));
-  H.push(btn('登出', 'logout', 'ghost'));
   H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">加進已經開好的班</div>');
+  H.push('<input id="jc-code" value="' + esc(draft('jc-code')) + '" placeholder="' +
+    esc('六個英數字，跟同事拿') + '">');
+  H.push(btn('加入', 'joinclass', 'big'));
+  H.push('</div>');
+
+  H.push(btn('登出', 'logout', 'ghost'));
   H.push('</div></div>');
   return H.join('');
 };
@@ -12702,7 +12797,16 @@ ACTS.mkclass = function () {
   var r = actNewClass(n, S.who);
   if (r.err) return say(r.err);
   go(homeFor(userOf(S.who)));
-  say('開好了。把加入碼唸給學生。');
+  say('開好了。把加入碼唸給學生跟另外幾位老師。');
+};
+
+/* 加進同事已經開好的那一班。 */
+ACTS.joinclass = function () {
+  var c = (document.getElementById('jc-code') || {}).value || '';
+  var r = actJoinClass(S.who, c);
+  if (r.err) { DRAFT['jc-code'] = c; return say(r.err); }
+  go(homeFor(userOf(S.who)));
+  say('加進「' + r.klass.name + '」了。');
 };
 
 /* 學生建一隊。 */
@@ -12864,7 +12968,7 @@ PAGES.home = function () {
       pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
       false));
     /* 他那一句話擺在最下面，而且是這一整張上唯一的人話。 */
-    if (r.word) H.push('<p class="quote big">' + nl(r.word) + '</p>');
+    if (r.word) H.push(wordBlock(r, 'big'));
     H.push('</div>');
   });
   if (okPend.length) {
@@ -13265,7 +13369,7 @@ function actionCard(t, next, st) {
        而且退回一定帶著話（沒寫理由的退回擋在資料層）。 */
     /* 眉標拿掉了：上面那一行已經寫著「退回來了」。
        這裡剩下的是他的那一句話——那才是這一刻唯一要讀的東西。 */
-    if (row.run.word) H.push('<p class="quote big">' + nl(row.run.word) + '</p>');
+    if (row.run.word) H.push(wordBlock(row.run, 'big'));
     /* 本來這裡直接再交一次，不用重答。但牠在廊道上站起來了，
        而「牠站著」跟「按一顆鍵就過去」是兩件互相矛盾的事。
        改成走同一條路：再打一次，答完再交。 */
@@ -13904,7 +14008,7 @@ function logRow(m, r, t) {
     }
     if (r.hard) H.push('<p class="quote"><b>卡在哪裡</b>' + nl(r.hard) + '</p>');
     if (r.pace) H.push('<p class="quote"><b>你覺得的進度</b>' + nl(r.pace) + '</p>');
-    if (r.word) H.push('<p class="quote tw">' + nl(r.word) + '</p>');
+    if (r.word) H.push(wordBlock(r, 'tw'));
     H.push('</div>');
   }
   return H.join('');
@@ -15346,21 +15450,24 @@ PAGES.classeco = function () {
   /* 班級加入碼要一直看得到——學生用那一串建帳號，而老師是唸它的人。
      不放在這裡的話，他得去一個不存在的地方找。 */
   var kls = classOf(u);
-  /* 整個課程都畫，自己帶的那幾條鑲金邊。
+  /* 每一條都是他的，所以沒有一條要鑲金邊。
 
-     不切成「只有我帶的」，是因為這張圖跟學生看到的是同一張——
-     一個課程就是一個地方。切開它等於把一個課程拆成三個互相
-     看不到的小班，而那正是這一版要拿掉的複雜度。 */
-  var mine = teamsUnder(u.classId, u.userId).map(function (t) { return t.teamId; });
-  var H = [head('各組進度', '整個課程　·　金邊的是你帶的 ' +
-    mine.length + ' 組', '')];
+     三位老師共同帶一個班：金邊本來標的是「我帶的那幾組」，而那個
+     關係已經沒有了——照舊傳下去的話每一條都會鑲上金邊，副標還會
+     寫「金邊的是你帶的 6 組」，等於用一個標記講「全部」。
+     一個標到每一個東西上的標記，不標任何東西。
+
+     學生那一邊沒變：他傳自己那一組進去，金邊還是「你在這裡」。 */
+  var mine = [];
+  var H = [head('各組進度', '整個課程　·　' +
+    ecoRows(u.classId).length + ' 組', '')];
 
   /* 那一串是唸出去的：學生用它建帳號。放在最上面，因為開學前兩週
      他每次進來都要唸一次。 */
   if (kls && kls.joinCode) {
     H.push('<div class="card quiet"><div class="eyebrow">班級加入碼</div>' +
       '<b class="joincode">' + esc(kls.joinCode) + '</b>' +
-      '<p class="dim">學生用這組碼建自己的帳號。</p></div>');
+      '<p class="dim">學生跟另外幾位老師都用這組碼建帳號。</p></div>');
   }
 
   /* 剖面圖已經畫出每一組走到哪、正在走哪一趟、誰在等你看。
@@ -17437,7 +17544,14 @@ PAGES.radar = function () {
     H.push('<button class="rq" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:review:' + x.run.runId })) + '\'>');
     H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b>');
-    H.push('<em>' + esc(x.team.name) + '</em></span>');
+    /* 這一件是誰派的，接在組名後面——不另外開一格，那一列要回答的
+       還是同一個問題（先看哪一件）。自己派的不寫。
+
+       三位老師共用一個佇列，所以「這一件本來是誰的事」要看得到：
+       看得到才有得商量，看不到就會兩個人都以為對方會看。 */
+    var rby = x.ms.mentorId && x.ms.mentorId !== u.userId ? userOf(x.ms.mentorId) : null;
+    H.push('<em>' + esc(x.team.name) +
+      (rby ? '　·　' + esc(rby.name) + ' 派的' : '') + '</em></span>');
     H.push('<span class="rq-d">等 ' + x.waited + ' 天</span>');
     H.push('</button>');
   });
@@ -17449,6 +17563,7 @@ PAGES.radar = function () {
 
 /* ---------- 勾一個可以 ---------- */
 PAGES.review = function () {
+  var u = me();
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var m = msOf(r.msId), t = teamOf(r.teamId);
@@ -17490,11 +17605,20 @@ PAGES.review = function () {
   H.push('<div class="card">');
   H.push('<div class="radar-head"><span class="st ' + r.stamp + '">' + 
          esc(s.name) + '</span>');
-  /* 我排到哪一天。判定跟它無關（判定只看他說幾天、實際幾天），
-     但他有沒有走進我排的那一段，是我要寫那一句話時真的需要知道的。 */
+  /* 排到哪一天。判定跟它無關（判定只看他說幾天、實際幾天），
+     但他有沒有走進那一段，是要寫那一句話時真的需要知道的。
+
+     三位老師共同帶一個班，這一件很可能不是我派的——那時候「我排到」
+     是錯的，而且我會拿別人的排程去讀這一份成果卻不知道那是別人排的。
+     不是我派的就寫出是誰。 */
+  var rvBy = m.mentorId && m.mentorId !== u.userId ? userOf(m.mentorId) : null;
   if (m.due) {
-    H.push('<span class="sp"></span><span class="dim">我排到 ' +
+    H.push('<span class="sp"></span><span class="dim">' +
+      (rvBy ? esc(rvBy.name) + ' 派的，排到 ' : '我排到 ') +
       esc(dueSay(m)) + '</span>');
+  } else if (rvBy) {
+    H.push('<span class="sp"></span><span class="dim">' +
+      esc(rvBy.name) + ' 派的</span>');
   }
   H.push('</div>');
   /* 他們自己寫的兩段放最上面。他在這一頁要做的事是寫一句話，
@@ -17609,9 +17733,17 @@ PAGES.review = function () {
 /* ---------- 發派任務 ---------- */
 PAGES.ms = function () {
   var u = me();
-  /* 我派過的。別位老師派的不在這裡——他規劃他的，我規劃我的。 */
+  /* 這個班派出去的每一件，不只我派的。
+
+     三位老師共同帶一個班，一定會出現「這一週我發給甲乙，你發給丙丁」。
+     本來這裡只印自己派的——於是我完全不知道甲組這一週已經被派了兩件，
+     照著看起來很空的清單再加一件，學生那邊就疊了三件。那不是他們
+     估不準，是我們三個沒對過。
+
+     誰派的印在那一列上。要不要跟人家的錯開，是他看得到之後
+     自己會做的判斷——這一頁的工作是讓他做得成那個判斷。 */
   var list = where('Milestones', function (m) {
-    return m.classId === u.classId && (!m.mentorId || m.mentorId === u.userId);
+    return m.classId === u.classId;
   })
     .sort(function (a, b) { return b.at - a.at; });
   var teams = teamsUnder(u.classId, u.userId);
@@ -17713,8 +17845,7 @@ PAGES.ms = function () {
     var done = got.filter(function (r) { return r.state === 'done'; }).length;
     H.push('<div class="msr">');
     H.push('<b>' + esc(m.title) + '</b>');
-    /* 三種發法。「課程共用」不只是舊資料——一位老師可以刻意派一個
-       不掛自己的任務（期中發表那一種），那時候全課程都收得到。 */
+    /* 發給誰是老師派的時候自己點的：不點就是全班。 */
     H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組'
       : '全班') + '</span>');
     /* 我排到哪一天。過了就寫過了——不是警告，是事實。 */
@@ -17731,9 +17862,16 @@ PAGES.ms = function () {
             那個動作旁邊，等於邀請他照著他們的數字去訂下一件事的大小，
             而任務該有多大是題目本身的事，不是他們上一次估得準不準。
 
-       二 · 它印的是整個課程的組，包含別位老師帶的。那不是他的事。
+       二 · 它印的是全班每一組，而這一頁現在也印別人派的那幾件。
+            兩件事疊起來就是一整片跟他要寫的這一個任務無關的數字。
 
        那幾個數字沒有消失：審核那一頁上每一趟都有，各組進度上一整排。 */
+    /* 誰派的。自己派的不寫——不然每一列都掛著一個「我」，
+       而這一行存在的意義就是把別人的跟我的分開。 */
+    if (m.mentorId && m.mentorId !== u.userId) {
+      var mby = userOf(m.mentorId);
+      if (mby) H.push('<span class="msr-by">' + esc(mby.name) + ' 派的</span>');
+    }
     H.push('</div>');
   });
   H.push('</div></div>');

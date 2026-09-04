@@ -1016,6 +1016,12 @@ button.ac:active{transform:translateY(1px)}
    系統不解讀、不歸類——原話放上去就好。 */
 .quote b{display:block;font-size:22px;font-weight:400;color:var(--gold2);
   margin-bottom:3px}
+/* 署名也走同一條。.quote.big（老師收下／退回那一句）跟 .quote.tw
+   各自設了自己的顏色，權重比上面那一條高——名字會被吃成跟句子
+   一模一樣，於是「老師·孟」讀起來像那句話的第一行，不像是誰說的。
+
+   一個班三位老師共同帶，那個名字是這一句話最重要的一半。 */
+.quote.big b,.quote.tw b{color:var(--gold2)}
 
 /* 廊道抓得住。桌機上本來只能靠捲軸，等於不能前後看。 */
 .scn-scroll{cursor:grab}
@@ -1138,6 +1144,10 @@ button.ac:active{transform:translateY(1px)}
 .msr-w{font-size:22px;color:var(--gold2);white-space:nowrap}
 .msr-n{font-size:22px;color:var(--dim);white-space:nowrap;
   font-variant-numeric:tabular-nums}
+/* 別位老師派的那幾件。自己派的沒有這一行，所以有這一行就是別人的。
+   佔滿一整列，不跟上面那幾個數字擠。 */
+.msr-by{grid-column:1 / -1;font-size:22px;color:var(--dim)}
+
 /* 各組承諾了幾天。老師唯一看得到的「他們怎麼想這件事」。 */
 .msr-e{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:4px 14px}
 .msr-e i{font-size:22px;font-style:normal;color:var(--dim);

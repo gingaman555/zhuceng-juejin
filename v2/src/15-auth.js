@@ -74,7 +74,20 @@ var EV_SAY = {
   tick:     function (e) { return (e.on ? '勾掉' : '取消勾掉') + '「' + e.step + '」'; },
   askexit:  function () { return '說專案做完了'; },
   left:     function () { return '走出去了'; },
-  rename:   function (e) { return '把招牌改成「' + e.name + '」'; }
+  rename:   function (e) { return '把招牌改成「' + e.name + '」'; },
+  joinclass:function (e) { return '加進「' + e.klass + '」'; },
+  newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
+  jointeam: function () { return '用代碼加入隊伍'; },
+  claim:    function () { return '在班級地圖上占了一格'; },
+  hero:     function (e) { return '挑了角色 ' + e.hero; },
+  blurb:    function (e) { return '寫了招牌，' + e.len + ' 個字'; },
+  mark:     function (e) { return '補登第 ' + e.n + ' 天'; },
+  said:     function () { return '寫了這一趟做了什麼'; },
+  reject:   function (e) { return '退回去改，寫了 ' + e.len + ' 個字'; },
+  resend:   function (e) { return '改好再交一次（第 ' + e.backs + ' 次被退）'; },
+  rethink:  function (e) { return '重新想過：本來說 ' + e.est + ' 天，走到第 ' + e.went + ' 天'; },
+  denyexit: function () { return '說現在還不是時候'; },
+  rank:     function (e) { return (e.on ? '打開' : '關掉') + '排行榜'; }
 };
 function evSay(e) {
   var f = EV_SAY[e.kind];
@@ -130,6 +143,26 @@ function actRegister(o) {
   save();
   logEvent('register', { by: u.userId, account: acc, role: u.role });
   return { user: u };
+}
+
+/* 老師加進一個已經開好的班。
+
+   一個班三位老師共同帶，所以第二、第三位要進的是同一個班，不是各自
+   開一個。開下去他會拿到一個誰都不在裡面的空班——而空班長得跟正常的
+   一模一樣（沒有組、沒有人在等他看），他不會發現自己走錯了，
+   會以為是學生還沒註冊。
+
+   註冊那一頁有這一格；這一支是給註冊完才聽到碼的那一位。 */
+function actJoinClass(userId, code) {
+  var u = userOf(userId);
+  if (!u || u.role !== 'teacher') return { err: '只有老師可以這樣加入。' };
+  if (u.classId) return { err: '你已經在一個班裡了。' };
+  var kl = classByCode(code);
+  if (!kl) return { err: '找不到這個加入碼。跟同事確認一次。' };
+  u.classId = kl.classId;
+  save();
+  logEvent('joinclass', { by: u.userId, klass: kl.name });
+  return { klass: kl };
 }
 
 /* ---------- 登入 ---------- */
@@ -246,22 +279,26 @@ function actCreateClass(name, teacherId) {
 /* ---------- 匯出 ----------
    研究資料。CSV，因為那是最容易進統計軟體的東西。 */
 function exportCsv(classId) {
-  var teamName = {}, teamTea = {};
+  var teamName = {};
   where('Teams', function (t) { return t.classId === classId; })
-    .forEach(function (t) {
-      teamName[t.teamId] = t.name;
-      /* 哪一位老師帶的。實驗是一個課程三位老師，那三位就是變項——
-         沒有這一欄，匯出的資料沒辦法照老師分組。 */
-      var te = t.mentorId ? userOf(t.mentorId) : null;
-      teamTea[t.teamId] = te ? te.name : '';
-    });
-  var head = ['時間', '角色', '組別', '指導老師', '事件', '說明'];
+    .forEach(function (t) { teamName[t.teamId] = t.name; });
+  /* 「誰做的」這一欄是新的，換掉本來的「指導老師」。
+
+     實驗是三位老師共同帶一個班，那三位就是變項。本來那一欄印的是
+     Team.mentorId——一組配一位老師。可是共同帶班沒有那個關係，
+     而且已經沒有畫面在設它，真的開一個班匯出來會整欄空白。
+
+     真正分得開的是每一筆各自的行動者：這一件是哪一位派的、
+     哪一位收的、哪一位退回的。logEvent 一直有記（e.by），
+     只是從來沒印出來——「角色＝老師」在三位老師的班上等於沒分。 */
+  var head = ['時間', '誰做的', '角色', '組別', '事件', '說明'];
   var rows = eventsOf(classId).map(function (e) {
+    var by = e.by ? userOf(e.by) : null;
     return [
       new Date(e.at).toISOString(),
+      by ? by.name : '',
       e.role || '',
       teamName[e.teamId] || '',
-      teamTea[e.teamId] || '',
       e.kind,
       evSay(e)
     ];

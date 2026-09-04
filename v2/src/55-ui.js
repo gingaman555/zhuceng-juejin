@@ -188,6 +188,23 @@ function btn(label, act, kind) {
     esc(JSON.stringify({ a: act })) + '">' + esc(label) + '</button>';
 }
 
+/* 那一句話是誰說的。查不到就回空字串——舊的紀錄沒有 wordBy，
+   那時候照舊只印那一句話，不要印一個空的署名。 */
+function saidBy(id) {
+  var u = id ? userOf(id) : null;
+  return u ? u.name : '';
+}
+
+/* 老師那一句話加上署名。收下、退回、往下捲的紀錄三個地方共用一個。
+
+   一個班三位老師共同帶，沒有署名的話學生讀到的是「系統說的」，
+   而這整個作品立在「系統給資訊，人給承認」上——承認要有一個人。 */
+function wordBlock(run, cls) {
+  var who = saidBy(run.wordBy);
+  return '<p class="quote ' + cls + '">' +
+    (who ? '<b>' + esc(who) + '</b>' : '') + nl(run.word) + '</p>';
+}
+
 /* ---------- 路由 ---------- */
 
 var PAGES = {};
@@ -741,14 +758,6 @@ var ACTS = {
 
   /* 老師那一頁上的審核／出口。跟 tab 分開，不然兩邊會互相蓋掉。 */
   tq: function (k) { DRAFT.tq = k; render(); },
-
-
-  /* 這一組給哪一位老師帶。再點一次同一位就是收回來。 */
-  mentor: function (v) {
-    var p = String(v).split(',');
-    actMentor(p[0], p[1] || '');
-    render();
-  },
 
 
 
