@@ -181,8 +181,13 @@ function scene(t, row, st, kind) {
     '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
     '<span>走到 ' + depthOf(t.teamId) + ' 個任務</span>' +
     /* 站得住的：老師收下才算。走是他自己的事，留下來是要有人看過的事。 */
-    '<span class="hud-seal">站得住 ' + sealedDepth(t.teamId) + ' 個</span>' +
-    '<span class="zn-note">' + esc(zone.note) + '</span></div>');
+    /* 地層的那一句說明拿掉了。它不會變、也不影響任何決定，卻是這塊
+       面板上最高的一段（198×112）——把面板擐進角色活動的區域，
+       壓到委託人的名牌跟你頭上那塊牌子。
+
+       這塊面板要說的是「你在哪、多深」，不是地質。
+       那一句在故事那張地圖跟門口的地層卡上都還在。 */
+    '<span class="hud-seal">站得住 ' + sealedDepth(t.teamId) + ' 個</span></div>');
 
   /* 釘在框上、不跟著捲的兩層：近景的岩石與暗角。
      拖動廊道的時候它們不動——那一下就有視差。 */

@@ -155,11 +155,72 @@ input,textarea{
     inset 0 calc(var(--px) * -1) 0 var(--lit),
     0 0 0 1px #000;
 }
+/* ---------- 這一格等你填，還是已經填好了 ----------
+
+   上面那一段給了每一個 input 一道冷藍的左邊——「這一格等你」。
+   但它從頭到尾同一個顏色：空的跟寫好的長一樣，所以一整頁欄位
+   全部都在喊「等你」，包括那些他早就填完的。
+
+   一個顏色一件事，那就把「等你」跟「收到了」分開：
+
+     --write      冷藍，滿的      這一格在等你
+     --write-dim  冷灰藍，退一階  這一格填好了
+
+   同一個家族，換的是彩度不是色相——因為那還是同一件事的兩個狀態，
+   不是兩件事。（色相已經分完了：金＝可以按、綠＝準、紅＝要注意。）
+
+   用 :placeholder-shown 判斷空不空，所以它是**打字的當下就變**的。
+   這件事不能靠重畫：輸入框一重畫，打到一半的字跟游標會一起不見。 */
+input:not(:placeholder-shown),
+textarea:not(:placeholder-shown){
+  box-shadow:
+    inset var(--px) 0 0 var(--write-dim),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+
+/* 交作業那幾格本來自己畫一套框，所以整套冷藍的語言在那一頁不存在——
+   那一頁偏偏是全站最需要「哪一格等你填」的地方。接回同一套。 */
+.bt-w{
+  background:var(--write-bg);
+  padding-left:14px;
+  box-shadow:
+    inset var(--px) 0 0 var(--write),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+.bt-w:not(:placeholder-shown){
+  box-shadow:
+    inset var(--px) 0 0 var(--write-dim),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+.bt-w:focus:not(:disabled){
+  outline:none;
+  box-shadow:
+    inset var(--px) 0 0 var(--write),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 2px var(--write);
+}
+
+/* 他一定要的那一格，那一道寬一階。
+
+   為什麼是寬度不是顏色：色相在這套語言裡分完了，而「必填」跟
+   「選填」是同一件事的兩個程度，不是兩件事——程度用粗細。 */
+.bt-q.need .bt-w{ --px:5px }
+
 /* 提示不是內文。同一個冷色家族，讀得到但一眼知道那不是他寫的字。 */
 input::placeholder,textarea::placeholder{color:var(--write-dim)}
 
 /* 游標在哪裡要看得出來：那一道邊整個亮起來，不是換一圈細框。 */
-input:focus,textarea:focus{outline:none;box-shadow:
+/* :focus 要贏過 :not(:placeholder-shown)——後者是兩個 class 的權重，
+   單純的 :focus 打不過，於是寫好字之後游標進去那一道不會亮回來。
+   多一個 :not(:disabled) 把權重補平（停用的欄位本來也聚焦不了）。 */
+input:focus:not(:disabled),textarea:focus:not(:disabled){outline:none;box-shadow:
   inset var(--px) 0 0 var(--write),
   inset 0 var(--px) 0 var(--shd2),
   inset 0 calc(var(--px) * -1) 0 var(--lit),

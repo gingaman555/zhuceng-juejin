@@ -322,13 +322,17 @@
 /* 第二問那三塊。小標在上、東西在下，跟字幕框同一種框。 */
 .bt-qh{font-size:22px;color:var(--gold2);margin:11px 0 6px}
 .bt-qh:first-child{margin-top:0}
+/* 只管排版。長相歸材質層——底色、那道冷藍的左邊、聚焦的樣子
+   都在 52-material.css 的「你要寫字的地方」那一段。
+
+   本來這裡自己畫一套（灰底、一圈黑框、聚焦是暗金），而 58 載入在
+   52 後面，所以整套冷藍的語言在交作業那一頁被蓋掉了——
+   偏偏那一頁是全站最需要「哪一格在等你填」的地方。
+   而聚焦用金色更是走錯：金色是「可以按」。 */
 .bt-w{
   width:100%;margin:0;padding:9px 11px;font:inherit;font-size:22px;line-height:22px;
-  color:var(--ink);background:var(--sunk);border:none;resize:vertical;
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.42)
+  border:none;resize:vertical
 }
-.bt-w:focus{outline:none;box-shadow:inset 0 0 0 2px var(--gold-d)}
-.bt-w::placeholder{color:var(--write-dim)}
 
 /* ── 登場：牠先跳出來 ──
    舊版寶可夢的野生遭遇：畫面切掉，牠從下面跳上來、彈一下才站定。

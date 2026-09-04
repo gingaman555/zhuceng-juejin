@@ -684,11 +684,72 @@ input,textarea{
     inset 0 calc(var(--px) * -1) 0 var(--lit),
     0 0 0 1px #000;
 }
+/* ---------- 這一格等你填，還是已經填好了 ----------
+
+   上面那一段給了每一個 input 一道冷藍的左邊——「這一格等你」。
+   但它從頭到尾同一個顏色：空的跟寫好的長一樣，所以一整頁欄位
+   全部都在喊「等你」，包括那些他早就填完的。
+
+   一個顏色一件事，那就把「等你」跟「收到了」分開：
+
+     --write      冷藍，滿的      這一格在等你
+     --write-dim  冷灰藍，退一階  這一格填好了
+
+   同一個家族，換的是彩度不是色相——因為那還是同一件事的兩個狀態，
+   不是兩件事。（色相已經分完了：金＝可以按、綠＝準、紅＝要注意。）
+
+   用 :placeholder-shown 判斷空不空，所以它是**打字的當下就變**的。
+   這件事不能靠重畫：輸入框一重畫，打到一半的字跟游標會一起不見。 */
+input:not(:placeholder-shown),
+textarea:not(:placeholder-shown){
+  box-shadow:
+    inset var(--px) 0 0 var(--write-dim),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+
+/* 交作業那幾格本來自己畫一套框，所以整套冷藍的語言在那一頁不存在——
+   那一頁偏偏是全站最需要「哪一格等你填」的地方。接回同一套。 */
+.bt-w{
+  background:var(--write-bg);
+  padding-left:14px;
+  box-shadow:
+    inset var(--px) 0 0 var(--write),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+.bt-w:not(:placeholder-shown){
+  box-shadow:
+    inset var(--px) 0 0 var(--write-dim),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 1px #000;
+}
+.bt-w:focus:not(:disabled){
+  outline:none;
+  box-shadow:
+    inset var(--px) 0 0 var(--write),
+    inset 0 var(--px) 0 var(--shd2),
+    inset 0 calc(var(--px) * -1) 0 var(--lit),
+    0 0 0 2px var(--write);
+}
+
+/* 他一定要的那一格，那一道寬一階。
+
+   為什麼是寬度不是顏色：色相在這套語言裡分完了，而「必填」跟
+   「選填」是同一件事的兩個程度，不是兩件事——程度用粗細。 */
+.bt-q.need .bt-w{ --px:5px }
+
 /* 提示不是內文。同一個冷色家族，讀得到但一眼知道那不是他寫的字。 */
 input::placeholder,textarea::placeholder{color:var(--write-dim)}
 
 /* 游標在哪裡要看得出來：那一道邊整個亮起來，不是換一圈細框。 */
-input:focus,textarea:focus{outline:none;box-shadow:
+/* :focus 要贏過 :not(:placeholder-shown)——後者是兩個 class 的權重，
+   單純的 :focus 打不過，於是寫好字之後游標進去那一道不會亮回來。
+   多一個 :not(:disabled) 把權重補平（停用的欄位本來也聚焦不了）。 */
+input:focus:not(:disabled),textarea:focus:not(:disabled){outline:none;box-shadow:
   inset var(--px) 0 0 var(--write),
   inset 0 var(--px) 0 var(--shd2),
   inset 0 calc(var(--px) * -1) 0 var(--lit),
@@ -1142,7 +1203,6 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
    max-width 與 margin-left:auto 兩個都不生效——「走完 4 個任務」後面
    直接接著地層的說明，接成一句話。說明短的時候看不出來。 */
 .scn-hud span{display:block}
-.scn-hud .zn-note{max-width:198px;margin-left:auto;line-height:1.7;margin-top:3px}
 .scn .scn-hud em{color:var(--zink,#E9B341)}
 
 /* 跨進新的一區的那一張。這是少數幾個「世界自己變了」的時刻。 */
@@ -4253,55 +4313,6 @@ button.ac:active{transform:translateY(1px)}
 .rs-sh{display:flex;gap:1px;width:100%;height:5px;margin:5px 0 0}
 .rs-sh i{flex:1 1 auto;min-width:3px;height:5px;display:block}
 
-/* ══════════ 要人寫出來的地方 ══════════
-
-   全站二十個要打字的欄位，本來跟按鈕、跟卡片、跟旁邊的說明長得
-   一樣安靜：一個微微凹下去的框，一條 1px 的邊。你要按下去被退了
-   才知道那裡本來要填東西。
-
-   一種樣子，全站通用——**左邊那一條**：
-
-     空著  亮的   這裡還沒有東西
-     寫了  暗的   收到了
-
-   用 :placeholder-shown 判斷空不空，所以它是**打字的當下就變**的。
-   這件事不能用重畫做：輸入框重畫會把打到一半的字跟游標一起弄丟
-   （見 67-battle.js 那一段註解），所以那個狀態只能交給 CSS。
-
-   為什麼是左邊一條，不是加一個「必填」的字：這個作品的規矩是
-   文字量到最小，而且字級下限 22px——一個 22px 的「必填」在每一個
-   欄位旁邊重複二十次，那是二十行要讀的東西。一條線不用讀。 */
-input, textarea{
-  box-shadow:inset 4px 0 0 var(--line2);
-  transition:none
-}
-input:placeholder-shown, textarea:placeholder-shown{
-  box-shadow:inset 4px 0 0 var(--gold-d)
-}
-input:focus, textarea:focus{
-  outline:none;
-  border-color:var(--gold);
-  box-shadow:inset 4px 0 0 var(--gold)
-}
-/* 唸出來給別人聽的那幾個（加入碼、帳號）不算「寫出來的東西」，
-   它們是抄進來的。不特別標。 */
-input[type="password"]{box-shadow:inset 4px 0 0 var(--line2)}
-
-/* 交作業那幾題：他一定要的那幾格，空著的時候那條是全亮的。
-
-   其餘的欄位空著是暗金——「還沒有東西」；這幾格空著是亮金——
-   「他在等這一格」。差一階，而那一階剛好對上「按下去他會不會退你」。 */
-.bt-q.need .bt-w:placeholder-shown{
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.42), inset 5px 0 0 var(--gold)
-}
-.bt-q.need .bt-w:not(:placeholder-shown){
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.42), inset 5px 0 0 var(--gold-d)
-}
-.bt-w:focus{
-  outline:none;
-  box-shadow:inset 0 0 0 2px var(--gold), inset 5px 0 0 var(--gold)
-}
-
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -4626,13 +4637,17 @@ input[type="password"]{box-shadow:inset 4px 0 0 var(--line2)}
 /* 第二問那三塊。小標在上、東西在下，跟字幕框同一種框。 */
 .bt-qh{font-size:22px;color:var(--gold2);margin:11px 0 6px}
 .bt-qh:first-child{margin-top:0}
+/* 只管排版。長相歸材質層——底色、那道冷藍的左邊、聚焦的樣子
+   都在 52-material.css 的「你要寫字的地方」那一段。
+
+   本來這裡自己畫一套（灰底、一圈黑框、聚焦是暗金），而 58 載入在
+   52 後面，所以整套冷藍的語言在交作業那一頁被蓋掉了——
+   偏偏那一頁是全站最需要「哪一格在等你填」的地方。
+   而聚焦用金色更是走錯：金色是「可以按」。 */
 .bt-w{
   width:100%;margin:0;padding:9px 11px;font:inherit;font-size:22px;line-height:22px;
-  color:var(--ink);background:var(--sunk);border:none;resize:vertical;
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.42)
+  border:none;resize:vertical
 }
-.bt-w:focus{outline:none;box-shadow:inset 0 0 0 2px var(--gold-d)}
-.bt-w::placeholder{color:var(--write-dim)}
 
 /* ── 登場：牠先跳出來 ──
    舊版寶可夢的野生遭遇：畫面切掉，牠從下面跳上來、彈一下才站定。
@@ -14002,8 +14017,13 @@ function scene(t, row, st, kind) {
     '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
     '<span>走到 ' + depthOf(t.teamId) + ' 個任務</span>' +
     /* 站得住的：老師收下才算。走是他自己的事，留下來是要有人看過的事。 */
-    '<span class="hud-seal">站得住 ' + sealedDepth(t.teamId) + ' 個</span>' +
-    '<span class="zn-note">' + esc(zone.note) + '</span></div>');
+    /* 地層的那一句說明拿掉了。它不會變、也不影響任何決定，卻是這塊
+       面板上最高的一段（198×112）——把面板擐進角色活動的區域，
+       壓到委託人的名牌跟你頭上那塊牌子。
+
+       這塊面板要說的是「你在哪、多深」，不是地質。
+       那一句在故事那張地圖跟門口的地層卡上都還在。 */
+    '<span class="hud-seal">站得住 ' + sealedDepth(t.teamId) + ' 個</span></div>');
 
   /* 釘在框上、不跟著捲的兩層：近景的岩石與暗角。
      拖動廊道的時候它們不動——那一下就有視差。 */
