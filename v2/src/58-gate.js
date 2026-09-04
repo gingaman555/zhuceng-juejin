@@ -80,8 +80,46 @@ PAGES.login = function () {
   H.push(btn('進去', 'login', 'big'));
   H.push(btn('還沒有帳號', 'go:reg', 'ghost'));
   H.push('</div>');
-  H.push('<p class="dim">試用的帳號：學生 stu01 到 stu06、老師 tea01、研究者 lab01，' +
-         '密碼都是 ' + DEMO_PW + '。</p>');
+  /* ── 試用的資料 ──
+
+     本來這裡是一行字：「學生 stu01 到 stu06」。那一行有兩個問題。
+
+     一 · 它漏掉一半的人。同組的隊友是 stu101 起跳，沒有寫出來，
+          所以照著這一行登入的人永遠只會看到自己那一格，
+          看不到「一組有幾個人」——而這個系統講的就是那件事。
+
+     二 · 它在真的上課的時候還在。學生第一次打開就看到一串試用帳號，
+          那不是招牌，是沒收乾淨的東西。
+
+     改成：照組排，點名字直接進去那個人；有人真的建過帳號就整塊消失。 */
+  if ((DB.Config || {}).demo) {
+    H.push('<div class="card demo">');
+    H.push('<div class="eyebrow">試用的資料</div>');
+    H.push('<p class="dim">點一個人就直接用他的身分進去。' +
+      '同一組的人看到的是同一條廊道。</p>');
+    DB.Teams.forEach(function (t) {
+      var mem = where('Users', function (u) {
+        return u.teamId === t.teamId && u.account;
+      });
+      if (!mem.length) return;
+      H.push('<div class="dm-t"><b>' + esc(t.name) + '</b><div class="dm-r">');
+      mem.forEach(function (u) {
+        H.push(btn(u.name || u.account, 'asdemo:' + u.account, 'dm'));
+      });
+      H.push('</div></div>');
+    });
+    /* 沒有組的那幾個：老師、研究者，還有那位刻意留白的學生。 */
+    var loose = where('Users', function (u) { return u.account && !u.teamId; });
+    if (loose.length) {
+      H.push('<div class="dm-t"><b>沒有組的</b><div class="dm-r">');
+      loose.forEach(function (u) {
+        H.push(btn(u.name || u.account, 'asdemo:' + u.account, 'dm'));
+      });
+      H.push('</div></div>');
+    }
+    H.push('<p class="dim">帳號就是名字旁邊那一串，密碼都是 ' + DEMO_PW + '。</p>');
+    H.push('</div>');
+  }
   H.push('</div></div>');
   return H.join('');
 };
@@ -168,6 +206,82 @@ PAGES.myteam = function () {
   H.push(btn('登出', 'logout', 'ghost'));
   H.push('</div></div>');
   return H.join('');
+};
+
+/* ---------- 門口那幾顆按鈕 ----------
+
+   2026-09-04：這六個曾經整組不見。拿掉名冊那一條路的時候，
+   ACTS.claim 跟它旁邊的鄰居一起被刪掉了——而它旁邊坐的是
+   登入、建立帳號、開班、建隊、加入。
+
+   結果是前門五顆按鈕全部按下去沒反應：沒有人登得進示範帳號，
+   也沒有人開得了班。畫面完全正常，每一頁都畫得出來，
+   每一顆按鈕都長得像按鈕——只是後面沒有東西。
+
+   pages.js 當時說「按得到的都接得上」，因為它沒有走門口那三頁
+   （那三頁在登入之前，不在它的清單裡）。沒被看的地方就是會出事的地方。 */
+
+ACTS.login = function () {
+  var acc = (document.getElementById('lg-acc') || {}).value || '';
+  var pw = (document.getElementById('lg-pw') || {}).value || '';
+  var r = actLogin(acc, pw);
+  if (r.err) { DRAFT['lg-acc'] = acc; return say(r.err); }
+  signIn(r.user);
+};
+
+ACTS.reg = function () {
+  var o = {
+    code: (document.getElementById('rg-code') || {}).value || '',
+    account: (document.getElementById('rg-acc') || {}).value || '',
+    password: (document.getElementById('rg-pw') || {}).value || '',
+    role: DRAFT.rgRole === 'teacher' ? 'teacher' : 'student'
+  };
+  var r = actRegister(o);
+  if (r.err) {
+    DRAFT['rg-code'] = o.code; DRAFT['rg-acc'] = o.account;
+    return say(r.err);
+  }
+  signIn(r.user);
+  say('帳號好了。');
+};
+
+ACTS.rgrole = function (r) { DRAFT.rgRole = r; render(); };
+/* 點名字就用那個人的身分進去。只有試用資料在的時候，登入頁才畫得出
+   這幾顆——有人真的建過帳號，那一整塊就不見了（見 PAGES.login）。 */
+ACTS.asdemo = function (acc) {
+  var r = actLogin(acc, DEMO_PW);
+  if (r.err) return say(r.err);
+  signIn(r.user);
+};
+
+
+/* 老師開班。開完就在這個班裡，碼唸給學生。
+   本來寫 go('home')——那是學生的首頁，老師的是 radar。
+   讓 homeFor 決定，不要在這裡再寫一次規則。 */
+ACTS.mkclass = function () {
+  var n = (document.getElementById('mk-name') || {}).value || '';
+  var r = actNewClass(n, S.who);
+  if (r.err) return say(r.err);
+  go(homeFor(userOf(S.who)));
+  say('開好了。把加入碼唸給學生。');
+};
+
+/* 學生建一隊。 */
+ACTS.mkteam = function () {
+  var n = (document.getElementById('mk-team') || {}).value || '';
+  var r = actNewTeam(n, S.who);
+  if (r.err) return say(r.err);
+  go('who');
+  say('隊伍建好了。把代碼唸給隊友。');
+};
+
+/* 學生用代碼加入。 */
+ACTS.jointeam = function () {
+  var c = (document.getElementById('jn-code') || {}).value || '';
+  var r = actJoinTeam(c, S.who);
+  if (r.err) { DRAFT['jn-code'] = c; return say(r.err); }
+  go('who');
+  say('進來了。');
 };
 
 ACTS.logout = function () {

@@ -129,6 +129,78 @@ Object.keys(ROLE_USER).forEach(function (role) {
   });
 });
 if (!bad) ok('每一個角色的每一頁都畫得出來（' + drawn + ' 次）');
+/* ---------- 三 · 每一顆按鈕後面真的有一個動作 ----------
+
+   2026-09-04 補的。前門五顆按鈕（登入、建立帳號、開班、建隊、加入）
+   曾經整組是死的：ACTS 裡的那幾支被連坐刪掉，而畫面完全正常——
+   按鈕畫得出來、長得像按鈕、點下去沒有任何事發生，也不報錯。
+
+   上面第一項只看 go:X 那種「換頁」的按鈕，第二項只看頁畫不畫得出來。
+   「按下去會做事」的那一種，兩項都沒有在看。
+
+   門口那幾頁還得另外叫一次：它們在登入之前，不在角色迴圈裡。 */
+const GATE = ['gate', 'login', 'reg', 'mkclass', 'myteam'];
+const outs = [];
+
+function grab(tag, p) {
+  S.page = p; S.p = null; DRAFT = {};
+  try { outs.push([tag, PAGES[p]()]); }
+  catch (e) { fail(tag + '畫到一半炸了：' + e.message); }
+}
+
+/* 門口：還沒登入的時候 */
+S.who = null; DB.Session = null;
+GATE.forEach(function (p) { grab('沒登入看「' + p + '」', p); });
+
+/* 門口：登進來了、但還沒有隊的那一種人 */
+const solo = DB.Users.filter(function (u) {
+  return u.role === 'student' && !u.teamId;
+})[0];
+if (solo) {
+  S.who = solo.userId; DB.Session = { userId: solo.userId, at: Date.now() };
+  GATE.forEach(function (p) { grab('還沒組隊的人看「' + p + '」', p); });
+}
+
+/* 每一個角色的每一頁再走一次——這次把 HTML 收起來 */
+Object.keys(ROLE_USER).forEach(function (role) {
+  const u = ROLE_USER[role];
+  S.who = u.userId;
+  DB.Session = { userId: u.userId, at: Date.now() };
+  Object.keys(PAGES).forEach(function (p) {
+    if (!allowed(u, p)) return;
+    S.page = p; S.p = pickParam(p, u); DRAFT = {};
+    try { outs.push([role + ' 的「' + p + '」', PAGES[p]()]); } catch (e) {}
+  });
+});
+
+/* 收每一顆按鈕帶的動作名，去 ACTS 裡找那一支。 */
+const deadBtn = {};
+let btnSeen = 0;
+outs.forEach(function (pair) {
+  const at = pair[0], html = String(pair[1] || '');
+  /* btn() 用雙引號，手寫的那幾顆用單引號。兩種都要收——
+     只收單引號的話，前門那五顆（全部都是 btn()）剛好一顆都看不到，
+     而這一項就是為了它們才寫的。 */
+  const re = /data-p=(?:'([^']*)'|"([^"]*)")/g;
+  let mm;
+  while ((mm = re.exec(html))) {
+    let pl;
+    try {
+      pl = JSON.parse((mm[1] !== undefined ? mm[1] : mm[2]).replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
+    } catch (e) { continue; }
+    if (!pl || typeof pl.a !== 'string') continue;
+    btnSeen++;
+    const nm = pl.a.split(':')[0];
+    if (typeof ACTS[nm] !== 'function') deadBtn[nm] = deadBtn[nm] || at;
+  }
+});
+Object.keys(deadBtn).forEach(function (nm) {
+  fail('按得下去「' + nm + '」，但 ACTS 裡沒有這一支（在 ' + deadBtn[nm] + '）');
+});
+if (!Object.keys(deadBtn).length) {
+  ok('每一顆按鈕後面都有動作（' + btnSeen + ' 顆，含門口那幾頁）');
+}
+
 
 /* 那幾頁要的 id */
 function pickParam(p, u) {

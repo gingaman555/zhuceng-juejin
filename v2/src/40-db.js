@@ -66,6 +66,20 @@ function load() {
      建過帳號的那一刻，這份資料就不再是示範資料，之後永遠不會被洗掉。 */
   var cfg = DB.Config || {};
   if (cfg.demo && cfg.seedV !== SEED_V) return false;
+  /* 更舊的那一批：demo 這個旗子還沒發明的時候存下來的示範資料。
+     它沒有 demo、也沒有 seedV，所以上面那一行永遠不會成立——
+     那份存檔會永遠留在瀏覽器裡，而它是「一組只有一個人」的年代。
+
+     認法是找種子自己開的那三個固定帳號。三個同時在，才算數：
+     真的班級不會剛好有 tea01、stu01、lab01 這三個帳號，
+     所以這一條不會洗掉任何一個人真的建出來的東西。 */
+  if (cfg.seedV === undefined && !cfg.demo) {
+    var seedAcc = 0;
+    DB.Users.forEach(function (u) {
+      if (u.account === 'tea01' || u.account === 'stu01' || u.account === 'lab01') seedAcc++;
+    });
+    if (seedAcc === 3) return false;
+  }
   return true;
 }
 function find(tbl, fn) { for (var i = 0; i < DB[tbl].length; i++) if (fn(DB[tbl][i])) return DB[tbl][i]; return null; }
