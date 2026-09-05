@@ -657,6 +657,15 @@ var ACTS = {
     say(r1.est === was ? '維持 ' + r1.est + ' 天。' : '改成 ' + r1.est + ' 天了。');
   },
 
+  /* 接委託走到第幾步（見 60-student.js 的 PAGES.commit）。
+     不用 go()：換頁會清掉 DRAFT，而那一頁上拆到一半的東西
+     都在 DRAFT 裡。 */
+  cmstep: function (n) {
+    S.p = { id: S.p.id, st: Number(n) || 0 };
+    window.scrollTo(0, 0);
+    render();
+  },
+
   /* 說幾天：一按一天。到頭就停在那裡，不會繞回去——
      繞回去會讓「按到底」變成一件要小心的事。 */
   estep: function (d) {

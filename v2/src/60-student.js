@@ -675,6 +675,24 @@ PAGES.commit = function () {
     });
   }
   var plan = DRAFT.plan;
+  /* ── 一步一步，不要一路往下 ──
+
+     這一頁本來是一路捲下去的：委託人、老師排到哪天、天數、走廊、
+     拆件、標記、把握、承諾。390 寬量到 2029px——**兩屏半**，而且
+     委託人在第一屏底就不見了。
+
+     交出去那一場早就不是這樣了（見 67-battle.js）：他釘在畫面上，
+     一次問一件事。這一頁跟那一頁是同一個人的兩次見面，做法要一樣。
+
+     三步：
+       0　他說的那一句　　　接下來要做什麼，先聽他講
+       1　你要做哪幾件　　　拆件與「哪幾段會比想的久」，可以整步跳過
+       2　幾天 ＋ 有多確定　這兩樣互相決定，所以一定要在同一步上
+
+     為什麼 2 不能再拆：拆件會改天數（列了就加總）、把握是「對這個
+     天數」的把握、老師排的那一天畫在同一把尺上讓他當場比得出來。
+     那三樣拆開就要來回翻，而來回翻正是這一次要修掉的東西。 */
+  var st = Math.max(0, Math.min(2, Number(S.p.st) || 0));
   /* 列了就是加起來，沒列就直接說一個數字。永遠只有一個地方在輸入。 */
   var est = plan.length ? planDays(plan)
     : Number(draft('est', RULES.EST_DEFAULT));
@@ -704,7 +722,12 @@ PAGES.commit = function () {
      每次重畫都演一次會變成雜訊，而演出只有第一次是演出。 */
   var firstLook = pat && !PAT_IN[m.msId];
   if (pat) PAT_IN[m.msId] = 1;
-  if (pat) {
+  /* 第 2 步不畫他的大圖了。
+
+     他不是消失——走廊那一條的盡頭站的就是他（見 estWalk）。這一步
+     他在決定一個數字，而那張大圖在這裡佔掉 450px，把尺跟走廊推到
+     第二屏去。同一個人在同一頁上出現兩次，其中一次就是雜訊。 */
+  if (pat && st < 2) {
     var pz = mobZone(pat);
     /* ── 一場戲，不是一張卡 ──
 
@@ -719,9 +742,12 @@ PAGES.commit = function () {
 
        畫的是大隻的那一張（36×24）——那張本來就是為了這種近的
        場面畫的，眼睛有瞳孔、手有指節，而且他在呼吸。 */
-    H.push('<div class="pmt ' + pz.key + (firstLook ? ' enter' : '') +
-      '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'go:patron:' + pat.n })) + '\'>');
+    /* 點不進去了。
+
+       本來整塊是一顆鍵，點下去跳到那一位的放大頁。可是他打開這一頁
+       是來決定要花幾天的——中間跳出去看一隻生物的介紹，回來還要
+       重新進入狀況。要看他，圖鑑那一頁一直都在。 */
+    H.push('<div class="pmt ' + pz.key + (firstLook && st === 0 ? ' enter' : '') + '">');
     if (firstLook) H.push('<div class="bt-wipe"></div>');
     H.push('<div class="pmt-ch">' + patTag(pat, pz.pal, 'bt-px', 1) + '</div>');
     H.push('</div>');
@@ -757,6 +783,26 @@ PAGES.commit = function () {
        他自己看得到。 */
   }
 
+  /* 走到第幾步。跟交出去那一場同一排點（見 58-battle.css 的 .bt-dots）
+     ——同一件事在兩邊要長一樣。 */
+  H.push('<div class="bt-dots">');
+  for (var sd = 0; sd < 3; sd++) {
+    H.push('<i' + (sd === st ? ' class="on"' : (sd < st ? ' class="done"' : '')) + '></i>');
+  }
+  H.push('</div>');
+
+  /* ── 第 0 步：先聽他講 ── */
+  if (st === 0) {
+    H.push('<div class="row">');
+    H.push(btn('這一件我接了', 'cmstep:1', 'big'));
+    H.push(btn('回廊道', 'go:home', 'ghost'));
+    H.push('</div>');
+    return H.join('');
+  }
+
+  /* ── 第 2 步：幾天 ＋ 有多確定 ── */
+  if (st === 2) {
+
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
   H.push('<div class="card">');
   /* 老師排到哪一天。他排的是課程的排程，不是判定——所以這裡只寫
@@ -789,12 +835,14 @@ PAGES.commit = function () {
   H.push(estWalk(t, m, est));
   H.push('</div>');
 
-  /* ── 你要做哪幾件，每一件幾天 ──
+  } else {
+
+  /* ── 第 1 步：你要做哪幾件，每一件幾天 ──
 
      老師可以只丟一個大任務，拆的人是要做的那一個。他寫過分段的話
      那幾行就是起點；沒寫就是一張白紙。
 
-     每一件預設一天，所以加一件一定會動到上面那個數字——
+     每一件預設一天，所以加一件一定會動到下一步那個數字——
      加了東西畫面沒反應是最容易讓人以為壞掉的事。 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你要做哪幾件</div>');
@@ -840,6 +888,15 @@ PAGES.commit = function () {
     H.push('</div>');
   }
 
+  /* 拆完了往下一步。沒拆也走得過去——拆件本來就是選填的。 */
+  H.push('<div class="row">');
+  H.push(btn(plan.length ? '就這幾件' : '不用拆，直接說天數', 'cmstep:2', 'big'));
+  H.push(btn('回上一步', 'cmstep:0', 'ghost'));
+  H.push('</div>');
+  return H.join('');
+
+  }
+
   /* 你有多確定。
 
      不是選填——這一格是這套系統唯一在教的東西：不是估得準，
@@ -866,7 +923,7 @@ PAGES.commit = function () {
   /* 承諾完就出發，中間不再問「去哪裡」——地方是委託人帶來的，
      不是他挑的（見底下 wherePanel 那一段拿掉的理由）。 */
   H.push(btn('我承諾 ' + est + ' 天，出發', 'commit:' + m.msId, 'big cm-go'));
-  H.push(btn('回廊道', 'go:home', 'ghost'));
+  H.push(btn('回上一步', 'cmstep:1', 'ghost'));
   H.push('</div>');
   return H.join('');
 };
