@@ -10924,13 +10924,43 @@ function syncTrouble(e) {
   if (typeof console !== 'undefined' && console.warn) console.warn('同步：' + SYNC.err);
 }
 
-/* 現在手上這一份，攤平成「路徑 → JSON 字串」。示範資料不算。 */
+/* 哪些班、哪些隊是示範用的。
+
+   示範資料本身帶 _d（seed 打上去的），那一批不會上雲。可是**在示範班
+   裡跑出來的東西**——承諾、推進、任務之證、跟老師談過——是執行時才
+   生出來的，身上沒有 _d。
+
+   2026-09-05 量到：示範班的動態上出現四筆別人留下的「跟老師談過」，
+   來源是我自己在示範班上測協商。那幾筆被推上去，再散到每一台打開
+   網頁的機器上，而且看不出是誰弄的。拿去給人看的那一份會越來越髒，
+   一次比一次髒，沒有人清得掉。
+
+   我當初判斷「示範班的 run 上去了也無害」，那是錯的。 */
+function demoSide() {
+  var team = {}, cls = {};
+  (DB.Teams || []).forEach(function (t) {
+    if (t && t._d) { team[t.teamId] = 1; if (t.classId) cls[t.classId] = 1; }
+  });
+  (DB.Classes || []).forEach(function (c) { if (c && c._d) cls[c.classId] = 1; });
+  return { team: team, cls: cls };
+}
+
+/* 這一筆掛在示範班上嗎。 */
+function onDemoSide(r, d) {
+  if (!r) return true;
+  if (r._d) return true;
+  if (r.teamId && d.team[r.teamId]) return true;
+  if (r.classId && d.cls[r.classId]) return true;
+  return false;
+}
+
+/* 現在手上這一份，攤平成「路徑 → JSON 字串」。示範那一邊的不算。 */
 function syncFlat() {
-  var out = {};
+  var out = {}, d = demoSide();
   Object.keys(SYNC_KEY).forEach(function (col) {
     var idf = SYNC_KEY[col];
     (DB[col] || []).forEach(function (r) {
-      if (!r || r._d || !r[idf]) return;
+      if (!r || !r[idf] || onDemoSide(r, d)) return;
       out[col + '/' + r[idf]] = JSON.stringify(r);
     });
   });
@@ -11027,10 +11057,15 @@ function syncStart() {
   Object.keys(SYNC_KEY).forEach(function (col) {
     if (SYNC_UP_ONLY[col]) { SYNC.first[col] = 1; return; }
     SYNC.db.collection(SYNC_ROOT + col).onSnapshot(function (snap) {
-      var inc = {};
+      var inc = {}, ds = demoSide();
       snap.forEach(function (d) {
         var v = d.data();
-        try { inc[d.id] = JSON.parse(v.j); } catch (e) {}
+        try {
+          var rec = JSON.parse(v.j);
+          /* 雲端上已經有的那幾筆髒資料就當作沒看到——不刪它（刪東西
+             不該是自己偷偷做的），但它不會再進到任何人的畫面上。 */
+          if (!onDemoSide(rec, ds)) inc[d.id] = rec;
+        } catch (e) {}
       });
       syncTake(col, inc);
       /* 收完再推一次：第一批快照回來之後，本機有而雲端沒有的
@@ -16677,13 +16712,23 @@ PAGES.who = function () {
 
    feed 裡放什麼，這件事要小心。放的是「發生了什麼」，不是「誰比較好」：
 
-     封存了一根岩心    ← 最有內容的一則，那根長什麼樣是那一組那一週的形狀
+     完成了一趟        ← 最有內容的一則：哪一件、交給了哪一位委託人
      交出去了          ← 不寫判定。誰估得準不準不該出現在別人的首頁上
-     走到新的一層
+     跟老師談過        ← 有人在數字定下來之前跟老師談過（見下）
      走出去了
-     老師派了新的里程碑
+     老師派了新的      ← 哪一位老師派的。三位共同帶一個班，「老師」不夠
 
-   沒有名次、沒有數量、沒有印章。它是時間順序，不是排行榜。 */
+   沒有名次、沒有數量、沒有印章。它是時間順序，不是排行榜。
+
+   ── 為什麼「跟老師談過」要放上來，而且不能放數字 ──
+
+   協商是這個系統裡唯一一個「老師在事情發生之前說話」的位置，也是
+   最容易沒有人用的一個——第一個開口的人要先相信那真的沒有代價。
+   別組談過而且沒事，是這件事唯一便宜的證據。
+
+   但它一個數字都不能帶。「甲組說 5 天，老師說 8 天」放在別人的首頁上
+   就是比較，而這一整條動態存在的前提是它不比較。所以只寫「談過」，
+   不寫談出了什麼，也不寫最後有沒有改。 */
 
 /* 全班最近發生的事。從資料直接組，不從 Events——Events 是研究紀錄，
    欄位是為了匯出設計的，不是為了畫面。 */
@@ -16706,6 +16751,15 @@ function feedOf(classId, limit) {
       out.push({ at: r.submittedAt, kind: 'sent', team: teams[r.teamId], ms: m });
     });
 
+  /* 跟老師談過。只收「學生已經回答了」的那幾筆——還在等他回的那一趟
+     是他手上的事，不是一件已經發生完的事。 */
+  where('Runs', function (r) {
+    return teams[r.teamId] && r.askAt && r.askAns;
+  }).forEach(function (r) {
+    out.push({ at: r.askAns, kind: 'nego', team: teams[r.teamId],
+      ms: msOf(r.msId), by: r.askBy ? userOf(r.askBy) : null });
+  });
+
   /* 走出去 */
   Object.keys(teams).forEach(function (id) {
     if (teams[id].leftAt) out.push({ at: teams[id].leftAt, kind: 'left', team: teams[id] });
@@ -16726,7 +16780,10 @@ function feedOf(classId, limit) {
 function feedRow(f, meId) {
   var mine = f.team && f.team.teamId === meId;
   var H = ['<div class="fd' + (mine ? ' mine' : '') + '">'];
-  var who = f.team ? shortName(f.team.name) : '老師';
+  /* 誰做的。老師派的那一則本來只寫「老師」——三位共同帶一個班，
+     那三個字等於沒說（見 40-db.js 的 teachersOf）。 */
+  var by = f.ms && f.ms.mentorId ? userOf(f.ms.mentorId) : null;
+  var who = f.team ? shortName(f.team.name) : (by ? by.name : '老師');
   var act = '', ic = '';
 
   /* 老師收下的那一趟。整條動態上唯一一件「完整發生過」的事，
@@ -16742,8 +16799,10 @@ function feedRow(f, meId) {
     ic = mob ? pxTag(mob.px, z.pal, 'nic') : pxTag(ICONS.log, ICON_ON, 'nic');
     H.push('<span class="fd-ic">' + ic + '</span>');
     H.push('<b>' + esc(who) + '</b>');
-    H.push('<em class="fd-say">完成了「' + esc(ms ? ms.title : '一件事') + '」，' +
-      (mob ? '，把東西交給了 ' + esc(mob.n) + '！' : '') + '</em>');
+    /* 本來這一句是「完成了「X」，，把東西交給了 Y！」——多一個逗號，
+       而那個驚嘆號是全站唯一一個。系統不歡呼，它只說發生了什麼。 */
+    H.push('<em class="fd-say">完成了「' + esc(ms ? ms.title : '一件事') + '」' +
+      (mob ? '，交給 ' + esc(mob.n) : '') + '</em>');
     H.push('<i>' + feedWhen(f.at) + '</i>');
     H.push('</div>');
     return H.join('');
@@ -16751,13 +16810,19 @@ function feedRow(f, meId) {
 
   if (f.kind === 'sent') {
     ic = pxTag(ICONS.log, ICON_PAL, 'nic');
-    act = '交出去';
+    /* 交了哪一件。本來只有「交出去」，而同一組一週交三件的時候，
+       三則長得一模一樣。 */
+    act = '交出去了「' + (f.ms ? f.ms.title : '一件事') + '」';
+  } else if (f.kind === 'nego') {
+    ic = pxTag(ICONS.radar, ICON_PAL, 'nic');
+    /* 不寫談出了什麼（見檔頭）。 */
+    act = '跟 ' + (f.by ? f.by.name : '老師') + ' 談過那一趟';
   } else if (f.kind === 'left') {
     ic = pxTag(ICONS.home, ICON_ON, 'nic');
     act = '走出去了';
   } else {
     ic = pxTag(ICONS.ms, ICON_PAL, 'nic');
-    act = '派了新的';
+    act = '派了「' + (f.ms ? f.ms.title : '新的' ) + '」';
   }
 
   H.push('<span class="fd-ic">' + ic + '</span>');

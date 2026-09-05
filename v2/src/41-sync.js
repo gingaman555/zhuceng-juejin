@@ -68,13 +68,43 @@ function syncTrouble(e) {
   if (typeof console !== 'undefined' && console.warn) console.warn('同步：' + SYNC.err);
 }
 
-/* 現在手上這一份，攤平成「路徑 → JSON 字串」。示範資料不算。 */
+/* 哪些班、哪些隊是示範用的。
+
+   示範資料本身帶 _d（seed 打上去的），那一批不會上雲。可是**在示範班
+   裡跑出來的東西**——承諾、推進、任務之證、跟老師談過——是執行時才
+   生出來的，身上沒有 _d。
+
+   2026-09-05 量到：示範班的動態上出現四筆別人留下的「跟老師談過」，
+   來源是我自己在示範班上測協商。那幾筆被推上去，再散到每一台打開
+   網頁的機器上，而且看不出是誰弄的。拿去給人看的那一份會越來越髒，
+   一次比一次髒，沒有人清得掉。
+
+   我當初判斷「示範班的 run 上去了也無害」，那是錯的。 */
+function demoSide() {
+  var team = {}, cls = {};
+  (DB.Teams || []).forEach(function (t) {
+    if (t && t._d) { team[t.teamId] = 1; if (t.classId) cls[t.classId] = 1; }
+  });
+  (DB.Classes || []).forEach(function (c) { if (c && c._d) cls[c.classId] = 1; });
+  return { team: team, cls: cls };
+}
+
+/* 這一筆掛在示範班上嗎。 */
+function onDemoSide(r, d) {
+  if (!r) return true;
+  if (r._d) return true;
+  if (r.teamId && d.team[r.teamId]) return true;
+  if (r.classId && d.cls[r.classId]) return true;
+  return false;
+}
+
+/* 現在手上這一份，攤平成「路徑 → JSON 字串」。示範那一邊的不算。 */
 function syncFlat() {
-  var out = {};
+  var out = {}, d = demoSide();
   Object.keys(SYNC_KEY).forEach(function (col) {
     var idf = SYNC_KEY[col];
     (DB[col] || []).forEach(function (r) {
-      if (!r || r._d || !r[idf]) return;
+      if (!r || !r[idf] || onDemoSide(r, d)) return;
       out[col + '/' + r[idf]] = JSON.stringify(r);
     });
   });
@@ -171,10 +201,15 @@ function syncStart() {
   Object.keys(SYNC_KEY).forEach(function (col) {
     if (SYNC_UP_ONLY[col]) { SYNC.first[col] = 1; return; }
     SYNC.db.collection(SYNC_ROOT + col).onSnapshot(function (snap) {
-      var inc = {};
+      var inc = {}, ds = demoSide();
       snap.forEach(function (d) {
         var v = d.data();
-        try { inc[d.id] = JSON.parse(v.j); } catch (e) {}
+        try {
+          var rec = JSON.parse(v.j);
+          /* 雲端上已經有的那幾筆髒資料就當作沒看到——不刪它（刪東西
+             不該是自己偷偷做的），但它不會再進到任何人的畫面上。 */
+          if (!onDemoSide(rec, ds)) inc[d.id] = rec;
+        } catch (e) {}
       });
       syncTake(col, inc);
       /* 收完再推一次：第一批快照回來之後，本機有而雲端沒有的

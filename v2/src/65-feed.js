@@ -12,13 +12,23 @@
 
    feed 裡放什麼，這件事要小心。放的是「發生了什麼」，不是「誰比較好」：
 
-     封存了一根岩心    ← 最有內容的一則，那根長什麼樣是那一組那一週的形狀
+     完成了一趟        ← 最有內容的一則：哪一件、交給了哪一位委託人
      交出去了          ← 不寫判定。誰估得準不準不該出現在別人的首頁上
-     走到新的一層
+     跟老師談過        ← 有人在數字定下來之前跟老師談過（見下）
      走出去了
-     老師派了新的里程碑
+     老師派了新的      ← 哪一位老師派的。三位共同帶一個班，「老師」不夠
 
-   沒有名次、沒有數量、沒有印章。它是時間順序，不是排行榜。 */
+   沒有名次、沒有數量、沒有印章。它是時間順序，不是排行榜。
+
+   ── 為什麼「跟老師談過」要放上來，而且不能放數字 ──
+
+   協商是這個系統裡唯一一個「老師在事情發生之前說話」的位置，也是
+   最容易沒有人用的一個——第一個開口的人要先相信那真的沒有代價。
+   別組談過而且沒事，是這件事唯一便宜的證據。
+
+   但它一個數字都不能帶。「甲組說 5 天，老師說 8 天」放在別人的首頁上
+   就是比較，而這一整條動態存在的前提是它不比較。所以只寫「談過」，
+   不寫談出了什麼，也不寫最後有沒有改。 */
 
 /* 全班最近發生的事。從資料直接組，不從 Events——Events 是研究紀錄，
    欄位是為了匯出設計的，不是為了畫面。 */
@@ -41,6 +51,15 @@ function feedOf(classId, limit) {
       out.push({ at: r.submittedAt, kind: 'sent', team: teams[r.teamId], ms: m });
     });
 
+  /* 跟老師談過。只收「學生已經回答了」的那幾筆——還在等他回的那一趟
+     是他手上的事，不是一件已經發生完的事。 */
+  where('Runs', function (r) {
+    return teams[r.teamId] && r.askAt && r.askAns;
+  }).forEach(function (r) {
+    out.push({ at: r.askAns, kind: 'nego', team: teams[r.teamId],
+      ms: msOf(r.msId), by: r.askBy ? userOf(r.askBy) : null });
+  });
+
   /* 走出去 */
   Object.keys(teams).forEach(function (id) {
     if (teams[id].leftAt) out.push({ at: teams[id].leftAt, kind: 'left', team: teams[id] });
@@ -61,7 +80,10 @@ function feedOf(classId, limit) {
 function feedRow(f, meId) {
   var mine = f.team && f.team.teamId === meId;
   var H = ['<div class="fd' + (mine ? ' mine' : '') + '">'];
-  var who = f.team ? shortName(f.team.name) : '老師';
+  /* 誰做的。老師派的那一則本來只寫「老師」——三位共同帶一個班，
+     那三個字等於沒說（見 40-db.js 的 teachersOf）。 */
+  var by = f.ms && f.ms.mentorId ? userOf(f.ms.mentorId) : null;
+  var who = f.team ? shortName(f.team.name) : (by ? by.name : '老師');
   var act = '', ic = '';
 
   /* 老師收下的那一趟。整條動態上唯一一件「完整發生過」的事，
@@ -77,8 +99,10 @@ function feedRow(f, meId) {
     ic = mob ? pxTag(mob.px, z.pal, 'nic') : pxTag(ICONS.log, ICON_ON, 'nic');
     H.push('<span class="fd-ic">' + ic + '</span>');
     H.push('<b>' + esc(who) + '</b>');
-    H.push('<em class="fd-say">完成了「' + esc(ms ? ms.title : '一件事') + '」，' +
-      (mob ? '，把東西交給了 ' + esc(mob.n) + '！' : '') + '</em>');
+    /* 本來這一句是「完成了「X」，，把東西交給了 Y！」——多一個逗號，
+       而那個驚嘆號是全站唯一一個。系統不歡呼，它只說發生了什麼。 */
+    H.push('<em class="fd-say">完成了「' + esc(ms ? ms.title : '一件事') + '」' +
+      (mob ? '，交給 ' + esc(mob.n) : '') + '</em>');
     H.push('<i>' + feedWhen(f.at) + '</i>');
     H.push('</div>');
     return H.join('');
@@ -86,13 +110,19 @@ function feedRow(f, meId) {
 
   if (f.kind === 'sent') {
     ic = pxTag(ICONS.log, ICON_PAL, 'nic');
-    act = '交出去';
+    /* 交了哪一件。本來只有「交出去」，而同一組一週交三件的時候，
+       三則長得一模一樣。 */
+    act = '交出去了「' + (f.ms ? f.ms.title : '一件事') + '」';
+  } else if (f.kind === 'nego') {
+    ic = pxTag(ICONS.radar, ICON_PAL, 'nic');
+    /* 不寫談出了什麼（見檔頭）。 */
+    act = '跟 ' + (f.by ? f.by.name : '老師') + ' 談過那一趟';
   } else if (f.kind === 'left') {
     ic = pxTag(ICONS.home, ICON_ON, 'nic');
     act = '走出去了';
   } else {
     ic = pxTag(ICONS.ms, ICON_PAL, 'nic');
-    act = '派了新的';
+    act = '派了「' + (f.ms ? f.ms.title : '新的' ) + '」';
   }
 
   H.push('<span class="fd-ic">' + ic + '</span>');
