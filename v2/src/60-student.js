@@ -86,13 +86,24 @@ PAGES.home = function () {
        而這是一則通知不是一張表單——碰哪裡都該讓它走。 */
     H.push('<div class="okwrap" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'okgot' })) + '\'>');
+    /* 那三行只印一次。
+
+       本來一件一張卡，每一張都重印「老師勾了／確認已完成任務，你的
+       專案又在前進了一頁／完成進度已疊加至班級地下城內」。放幾天沒開，
+       回來五件一起勾，那三行就一字不差地出現五次——而三位老師寫的
+       三句話全都不一樣、而且都是這一整條流程裡最值得讀的東西，
+       就夾在那面牆中間。
+
+       樣板抽出來放上面，底下每一張只留真的不一樣的：拿到幾枚、
+       哪一件、還有他那一句。 */
+    H.push('<div class="eyebrow lit">老師勾了' +
+      (okPend.length > 1 ? '　' + okPend.length + ' 件' : '') + '</div>');
+    H.push('<b class="ok-big">確認已完成任務，你的專案又在前進了一頁</b>');
+    H.push('<em class="ok-sub">完成進度已疊加至班級地下城內</em>');
   }
   okPend.forEach(function (r) {
     var m = msOf(r.msId);
     H.push('<div class="okcard">');
-    H.push('<div class="eyebrow lit">老師勾了</div>');
-    H.push('<b class="ok-big">確認已完成任務，你的專案又在前進了一頁</b>');
-    H.push('<em class="ok-sub">完成進度已疊加至班級地下城內</em>');
     /* 拿到的那一張。它就是這一刻本身變成的東西——老師審核過了的證明，
        名字是那一件任務，圖鑑裡收著。
 

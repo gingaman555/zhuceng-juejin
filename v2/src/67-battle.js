@@ -83,6 +83,31 @@ PAGES.battle = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var t = myTeam();
+  /* ── 重做的時候，上一次寫的還在 ──
+
+     被退回的時候只有一件事被指出不對，可是七題全部要重打：去哪裡看、
+     最想要老師看哪裡、你做了什麼、再給兩天會做什麼。系統自己寫著
+     「退回不是懲罰」——而重打七題就是懲罰。
+
+     帶回來的是**他自己上一次寫的**，不是幫他填（那條規則擋的是
+     「拿別人的東西或上一趟的東西塞給他」）。每一格他都可以改，
+     而改哪一格正好就是他這一次要做的事。
+
+     一趟只帶一次：__pre 記著已經帶過哪一趟，不然他每改一個字、
+     畫面一重畫就被蓋回去。 */
+  if (r.state === 'back' && DRAFT.__pre !== r.runId) {
+    DRAFT.__pre = r.runId;
+    if (r.link != null) DRAFT.where = r.link;
+    if (r.look != null) DRAFT.look = r.look;
+    if (r.next != null) DRAFT.next = r.next;
+    if (r.pace != null) DRAFT.hard = r.pace;
+    if (r.scope) DRAFT.scope = r.scope;
+    if (r.feel) DRAFT.feel = r.feel;
+    if (r.why != null) DRAFT.why = r.why;
+    if (r.spent) DRAFT.spent = r.spent.slice();
+    var mine0 = (r.said || {})[S.who];
+    if (mine0 != null) DRAFT.said1 = mine0;
+  }
   var mob = mobOfRun(r);
   /* 那一場打在那一趟去的地方，不是「現在」在哪——回頭看一場舊的，
      背景要是當時那個地方。 */
@@ -139,6 +164,20 @@ PAGES.battle = function () {
     '<i class="bt-arrow"></i><b id="btline">' +
     esc(btLine(r, mob, ph)) + '</b></div>');
 
+  /* ── 老師為什麼退回 ──
+
+     本來這一句只在首頁那張卡上。學生按下「再打一次」之後它就不見了，
+     於是他要在**看不到理由的情況下**重答七題——而那句話正是他這一刻
+     唯一需要的東西。
+
+     退回一定帶著一句話（actReject 擋在資料層），所以這裡一定有東西
+     可以印。署名：一個班三位老師，沒有名字他不知道去找誰問。 */
+  if (r.state === 'back' && r.word) {
+    var rw = r.wordBy ? userOf(r.wordBy) : null;
+    H.push('<div class="bt-rej"><b>' + esc(rw ? rw.name : '老師') + '</b>' +
+      esc(r.word) + '</div>');
+  }
+
   if (ph === 'menu') {
     H.push('<div class="bt-menu">');
     /* 兩個選項寫成他真的要做的事：戰鬥就是回報進度，那不是比喻，
@@ -192,8 +231,12 @@ function btLine(r, mob, ph) {
   if (S.p && S.p.no) return S.p.no;
 
   if (ph === 'menu') {
-    /* 退回＝他把東西退回來了，不是他復活。 */
-    if (r.state === 'back') return mob.n + ' 把東西退回來了。';
+    /* 退回是老師做的，不是他做的。本來這一句寫「◯◯ 把東西退回來了」,
+       等於把老師的決定算在委託人頭上——而學生這一刻最需要知道的是
+       「是誰、為什麼」，那兩件在底下那張卡上（見下面的 rejCard）。
+
+       他這一句只做一件事：你又回來了，我還在。 */
+    if (r.state === 'back') return patSay(mob, 'redo') || '你又回來了。';
     /* 他認得你。
 
        第二次遇到同一位還講「你走到了。X 在這裡。」是錯的——

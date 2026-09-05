@@ -578,6 +578,15 @@
   background:var(--gold);
   clip-path:polygon(0 0,100% 0,calc(100% - 14px) 100%,0 100%)
 }
+/* 老師為什麼退回。接在對話框底下，不在框裡——框裡是委託人說的話，
+   這一句是老師說的，兩個人不能共用一個框。 */
+.bt-rej{
+  margin:11px 0 0;padding:11px 0 11px 14px;
+  font-size:22px;line-height:33px;color:var(--ink);
+  box-shadow:inset 3px 0 0 var(--over)
+}
+.bt-rej b{display:block;font-size:22px;font-weight:400;color:var(--over)}
+
 .bt-bottom.talk{display:block}
 .bt-bottom.talk .bt-say{margin:33px 0 11px}
 /* 選項排在框底下，一排靠左。 */

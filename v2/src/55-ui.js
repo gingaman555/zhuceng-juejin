@@ -966,9 +966,11 @@ var ACTS = {
   reject: function (runId) {
     var w = (document.getElementById('gr-word') || {}).value || '';
     if (!w.trim()) return say('退回去改要寫一句話。');
+    var r0 = find('Runs', function (x) { return x.runId === runId; });
+    var ms0 = r0 ? r0.msId : null;
     if (!actReject(runId, w.trim())) return say('這一件退不回去。');
-    go('radar');
-    say('退回去了。');
+    /* 退回也接著看同一件的下一組（見 nextSame）。 */
+    nextSame(ms0, '退回去了。');
   },
 
   /* 改好了再交一次。判定還是原來那一個——重做不會讓他當初
@@ -1065,12 +1067,30 @@ var ACTS = {
     var b = DRAFT.bonus || RULES.COIN.bonusMin;
     var r0 = find('Runs', function (x) { return x.runId === runId; });
     var pat0 = r0 ? mobOfRun(r0) : null;
+    var ms0 = r0 ? r0.msId : null;
     if (!actApprove(runId, word.trim(), b)) return say('這一件已經看過了。');
-    go('radar');
     /* 誰收下的。本來只說「收下了」——而收下這件事在學生那一邊是
        一場戲（委託人伸手接過去），在老師這一邊只有兩個字。
        把那一位的名字放進去，兩端講的才是同一件事。 */
-    say((pat0 ? pat0.n + ' 收下了。' : '收下了。') +
-      '你多給了 ' + b + ' 枚。');
+    var line = (pat0 ? pat0.n + ' 收下了。' : '收下了。') + '你多給了 ' + b + ' 枚。';
+    nextSame(ms0, line);
   }
 };
+
+/* 同一件委託還有沒有下一組在等。
+
+   有就直接翻過去，沒有才回清單。他手上剛讀完那一份標準，連著看
+   同一件最快——回一次清單再點一次，等於每一件都要重新進入狀況。 */
+function nextSame(msId, line) {
+  var u = me();
+  var nx = msId ? radar(u.classId).filter(function (x) {
+    return x.run.msId === msId;
+  })[0] : null;
+  if (nx) {
+    go('review', { id: nx.run.runId });
+    say(line + '　接著看同一件的下一組。');
+  } else {
+    go('radar');
+    say(line);
+  }
+}

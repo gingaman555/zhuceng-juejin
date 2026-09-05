@@ -1274,7 +1274,26 @@ function radar(classId, mentorId) {
       });
     });
   });
-  return out.sort(function (a, b) { return b.waited - a.waited; });
+  out.sort(function (a, b) { return b.waited - a.waited; });
+  /* 同一件委託的排在一起。
+
+     真實的批改是「一次改同一份作業的三組」——標準在腦袋裡剛熱好，
+     連著改最快。本來只照等最久排，同一件會被別件打散，他要在三份
+     不同的標準之間來回切換。
+
+     群跟群之間還是照等最久：那一群裡等最久的那一件決定它排第幾。
+     所以「先看哪一件」這個答案沒有變，只是它後面跟著同一件的其他組。 */
+  var byMs = {}, order = [];
+  out.forEach(function (x) {
+    var k = x.ms ? x.ms.msId : '-';
+    if (!byMs[k]) { byMs[k] = []; order.push(k); }
+    byMs[k].push(x);
+  });
+  var g = [];
+  order.forEach(function (k) {
+    byMs[k].forEach(function (x) { g.push(x); });
+  });
+  return g;
 }
 
 /* 老師勾「可以」。他不選裝備——選哪一件是學生的事。
