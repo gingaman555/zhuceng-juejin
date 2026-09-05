@@ -587,6 +587,20 @@
 }
 .bt-rej b{display:block;font-size:22px;font-weight:400;color:var(--over)}
 
+/* 一頁上有兩格的時候，每一格上面一行小標。
+   （不是小字——22px，跟別的一樣。） */
+.bt-lab{font-size:22px;line-height:33px;color:var(--mute);margin:11px 0 5px}
+.bt-lab:first-child{margin-top:0}
+/* 上一趟那一句：一顆可以點的，不是預填好的值。 */
+.lastw{
+  display:block;margin:5px 0 0;padding:5px 11px;
+  font:inherit;font-size:22px;line-height:33px;
+  color:var(--dim);background:var(--sunk);border:0;cursor:pointer;
+  text-align:left;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;box-shadow:inset 0 0 0 2px var(--line)
+}
+.lastw:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--line2)}
+
 .bt-bottom.talk{display:block}
 .bt-bottom.talk .bt-say{margin:33px 0 11px}
 /* 選項排在框底下，一排靠左。 */

@@ -678,6 +678,16 @@ var ACTS = {
     say(r1.est === was ? '維持 ' + r1.est + ' 天。' : '改成 ' + r1.est + ' 天了。');
   },
 
+  /* 上一趟交在哪裡，點一下拿來用。不是預填——他要自己按這一下。 */
+  usewhere: function () {
+    var r = find('Runs', function (x) { return x.runId === S.p.id; });
+    if (!r) return;
+    var lw = lastLink(r.teamId, r.runId);
+    if (!lw) return;
+    DRAFT.where = lw;
+    render();
+  },
+
   /* 接委託走到第幾步（見 60-student.js 的 PAGES.commit）。
      不用 go()：換頁會清掉 DRAFT，而那一頁上拆到一半的東西
      都在 DRAFT 裡。 */

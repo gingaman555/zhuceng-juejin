@@ -747,6 +747,20 @@ function codexFresh(u, teamId) {
   return out;
 }
 
+/* 上一趟他們說東西交在哪裡。
+
+   不是拿來預填的——預填等於幫他決定，而「上一趟交在 TronClass、
+   這一趟印出來放老師桌上」是兩件不同的事。它只是變成一顆可以點的：
+   一樣是他自己選，但大部分的時候少打一次字。 */
+function lastLink(teamId, runId) {
+  var rs = runsFor(teamId).filter(function (x) {
+    return x.run.runId !== runId && x.run.link;
+  }).sort(function (a, b) {
+    return (b.run.submittedAt || 0) - (a.run.submittedAt || 0);
+  });
+  return rs.length ? rs[0].run.link : '';
+}
+
 /* 這一組以前跟這一位打過交道嗎。
 
    用的是 run.mob——承諾那一刻存下來的名字，所以之後改了名字也不會

@@ -210,7 +210,10 @@ PAGES.battle = function () {
     H.push('<div class="bt-menu wide">');
     H.push(btChoice('btnext:' + r.runId, last ? '交出去' : '接著說', 'go'));
     if (qi > 0) H.push(btChoice('btprev:' + r.runId, '回上一題', ''));
-    H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
+    /* 「還沒準備好」只留在第一題。後面那幾題有「回上一題」，
+       要退出一路退回去就好——每一頁都掛一顆離開鍵，等於每一頁
+       都在問他一次「你確定要繼續嗎」。 */
+    if (qi === 0) H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
     H.push('</div></div>');
   }
 
@@ -287,42 +290,38 @@ function btChoice(act, label, cls) {
    有幾題會被跳過：沒拆件就沒有「各花幾天」，深度不夠就沒有「為什麼」
    （見 RULES.asks）。跳過的不算在步數裡，所以那一排點數得出來幾題。 */
 var BT_STEPS = [
-  { k: 'where', ask: '老師要去哪裡看？',
+  /* ── 東西在哪裡，跟你要他看哪裡 ──
+
+     兩題併成一頁。它們是同一個動作的兩半（都是「指」），而且互相
+     不影響：知道東西放在哪，不會改變你希望他看哪一段。
+
+     分兩頁只多一次「接著說」——這一段每一趟都要走一次，
+     多按一次就是每一趟都多按一次。 */
+  { k: 'where', ask: '東西在哪裡？最想要老師看哪裡？',
     body: function (r, t) {
-      return '<input class="bt-w" id="bt-where" oninput="DRAFT.where=this.value" ' +
-        'placeholder="' + esc('例：TronClass 第三次作業 · 印出來放你桌上') +
+      var H = [];
+      H.push('<div class="bt-lab">老師要去哪裡看</div>');
+      H.push('<input class="bt-w" id="bt-where" oninput="DRAFT.where=this.value" ' +
         /* 空的。本來會把上一趟填過的那一句帶進來（lastWhere），
            而那是幫他填——上一趟交在 TronClass，這一趟可能印出來放在
-           老師桌上，那不是同一件事。而且他只要一路按過去，
-           老師就會收到一個看起來填過、其實沒人想過的位置。 */
-        '" value="' + esc(draft('where', '')) + '">';
-    },
-    need: function (r, t) {
-      return !!String(DRAFT.where || '').trim();
-    } },
-
-  /* ── 你最想要老師看哪裡 ──
-
-     這一題是學生這一邊讓出來的那一樣。
-
-     上一題他說了東西在哪，這一題他要指出**哪一處**。指哪裡本身就
-     洩漏了他覺得哪裡重要、哪裡心虛——那是有代價的，而代價正是
-     這一題存在的理由：交作業跟審核不是各自自主，是兩邊各讓一樣。
-
-     老師那一邊對應的是：他寫的那一句話從此接在這一處底下，不再是
-     一句憑空的評語（見 70-teacher.js 的審核頁）。
-
-     必填。可以選擇不指的話，指這件事就沒有代價，也就沒有交換。
-     排在「去哪裡看」正後面：兩題是同一個動作的兩半，放在一起
-     只要想一次。 */
-  { k: 'look', ask: '你最想要老師看哪裡？',
-    body: function (r, t) {
-      return '<input class="bt-w" id="bt-look" oninput="DRAFT.look=this.value" ' +
+           老師桌上，那不是同一件事。 */
+        'placeholder="' + esc('例：TronClass 第三次作業 · 印出來放你桌上') +
+        '" value="' + esc(draft('where', '')) + '">');
+      /* 上一趟那一句，一顆可以點的。點了才進去——一樣是他自己選，
+         但大部分的時候不用再打一次同樣的字。 */
+      var lw = lastLink(t.teamId, r.runId);
+      if (lw && String(DRAFT.where || '').trim() !== lw) {
+        H.push('<button class="lastw" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'usewhere' })) + '\'>上次：' + esc(lw) + '</button>');
+      }
+      H.push('<div class="bt-lab">你最想要他看哪裡</div>');
+      H.push('<input class="bt-w" id="bt-look" oninput="DRAFT.look=this.value" ' +
         'placeholder="' + esc('例：第三頁那張流程圖，虛線那幾段') + '"' +
-        ' value="' + esc(draft('look', '')) + '">';
+        ' value="' + esc(draft('look', '')) + '">');
+      return H.join('');
     },
     need: function (r, t) {
-      return !!String(DRAFT.look || '').trim();
+      return !!String(DRAFT.where || '').trim() && !!String(DRAFT.look || '').trim();
     } },
 
   { k: 'spent', ask: '這幾件各花了幾天？',
@@ -346,8 +345,13 @@ var BT_STEPS = [
       return !!String(DRAFT.said1 == null ? (said[S.who] || '') : DRAFT.said1).trim();
     } },
 
+  /* 「為什麼」本來是獨立的一題。併回來了：它問的就是上面那三顆的
+     理由，而一個問「為什麼」卻看不到自己剛剛選了什麼的頁面，
+     等於要他自己記住。
+
+     選了才長出來——順的那一趟不會多出一個空框。 */
   { k: 'feel', ask: '這一趟順不順？',
-    body: function () {
+    body: function (r) {
       var H = ['<div class="feels">'];
       FEELS.forEach(function (f) {
         H.push('<button class="fl' + (DRAFT.feel === f[0] ? ' on' : '') +
@@ -355,15 +359,13 @@ var BT_STEPS = [
           '\'>' + esc(f[1]) + '</button>');
       });
       H.push('</div>');
+      if (DRAFT.feel && btAskHard(r.teamId)) {
+        H.push('<div class="bt-lab">為什麼　選填</div>');
+        H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
+          'oninput="DRAFT.why=this.value" placeholder="' +
+          esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>');
+      }
       return H.join('');
-    } },
-
-  { k: 'why', ask: '為什麼？',
-    skip: function (r) { return !btAskHard(r.teamId); },
-    body: function () {
-      return '<textarea class="bt-w" rows="3" maxlength="300" ' +
-        'oninput="DRAFT.why=this.value" placeholder="' +
-        esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>';
     } },
 
   { k: 'scope', ask: '做出來的，跟你當初說的一樣嗎？',
