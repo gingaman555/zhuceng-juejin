@@ -146,10 +146,15 @@ button.ac:active{transform:translateY(1px)}
   display:flex;gap:11px;align-items:flex-start;width:264px;padding:11px;
   background:rgba(0,0,0,.30);opacity:.55
 }
-/* 遇沒遇過現在只靠這一格自己講（那一行字拿掉了），
-   所以差別要拉開：沒遇過的暗一階，遇過的多一道邊。 */
+/* 解鎖沒解鎖靠這一格自己講：沒解鎖的是一個黑影＋？？？，
+   解鎖的整個亮起來、多一道邊。 */
 .cxi.met{opacity:1;background:rgba(0,0,0,.45);
   box-shadow:inset 2px 0 0 var(--zink,var(--frame))}
+/* 沒解鎖的不再壓透明度——壓了之後黑影本身也跟著淡掉。
+   它靠「沒有顏色」跟旁邊分開，不是靠淡。 */
+.cxi:not(.met){opacity:1;background:rgba(0,0,0,.16)}
+.cxi:not(.met) b{color:var(--mute)}
+.cxi:not(.met) em{color:var(--line2)}
 .px.cx-px{width:44px;height:44px;flex:0 0 44px}
 .cxi b{display:block;font-size:22px;font-weight:400;color:var(--ink);line-height:1.3}
 /* 說明砍成一句「牠會做什麼」之後，字級就升得上來——

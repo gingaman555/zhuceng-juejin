@@ -34,12 +34,14 @@ PAGES.codex = function () {
     FRESH = { mob: codexFresh(me(), t.teamId), keep: keepFresh(me(), t.teamId) };
   }
   var fresh = FRESH.mob, freshK = FRESH.keep;
-  /* 圖鑑只有一階：遇過，或還沒遇過。
+  /* 圖鑑只有一階：收下了，或還沒。
 
-     本來這裡分「遇過」跟「進館藏」（老師收下才算第二階）。拿掉了——
-     圖鑑是他自己的回憶，那件事在他走到的那一天就發生了，不需要
-     另一個人確認。要老師收下才有的東西是金幣、任務之證、
-     班級地下城上那一塊，那幾樣本來就都在。 */
+     一度改成「走到就算」，理由是「圖鑑是他自己的回憶，不需要另一個人
+     確認」。又改回來了——那樣一個學期下來每一位都會自己跑進來，
+     那一頁就從「我做到的」變成「時間到了就有的」。
+
+     沒解鎖的那一格是一個黑影：形狀看得到，名字跟那一句形容都不給。
+     見 40-db.js 的 metMobs。 */
 
   /* 副題要蓋住這一頁的兩種東西：六個地層裡的魔物，跟老師發的任務之證。
      本來寫「這座地下城裡有哪些魔物」——那漏掉了第七個分頁。
@@ -80,16 +82,19 @@ PAGES.codex = function () {
     var nth = 0;
     faunaOf(z.key).forEach(function (c) {
       var isNew = !!fresh[c.n];
-      /* 遇過的才點得進去。沒遇過的那一格是暗的，點進去也沒有東西可以看。 */
+      /* 收下過的才點得進去。沒解鎖的那一格是一個黑影，
+         點進去也沒有東西可以看。 */
       var can = !!met[c.n];
       H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (isNew ? ' fresh' : '') +
         (can ? ' can' : '') + '"' +
         (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') +
         (can ? ' data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'go:patron:' + c.n })) + '\'' : '') + '>');
-      H.push(patTag(c, z.pal, 'cx-px'));
-      H.push('<div><b>' + esc(c.n) + '</b>');
-      H.push('<em>' + esc(c.t) + '</em>');
+      /* 沒解鎖的：黑影一個，名字跟形容都不給。 */
+      H.push(patTag(c, can ? z.pal : shadePal(z.pal), 'cx-px'));
+      H.push('<div><b>' + (can ? esc(c.n) : '？？？') + '</b>');
+      if (can) H.push('<em>' + esc(c.t) + '</em>');
+      else H.push('<em>還沒收下過他的委託。</em>');
 
       /* 「遇過 · 某某任務」那一行拿掉了：那是一句把兩件不相干的事
          接在一起的話（一隻生物 · 一個任務名），而遇沒遇過那一格自己

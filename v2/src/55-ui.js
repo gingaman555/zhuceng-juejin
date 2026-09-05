@@ -168,6 +168,18 @@ function loopStrip() {
    換幀比角色慢很多：角色 .44s 是腳步，委託人 1.5～2.3 秒是呼吸。
    快慢由名字決定，所以同一位每次都是同一種呼吸法，而一整層的人
    不會同時起伏。 */
+/* 還沒解鎖的那一張：同一張圖，全部塗成同一個暗色。
+
+   形狀留著，其餘都不給。形狀本身就是那一格要說的話——
+   「這裡有一位，你還沒遇到他」。名字跟那一句形容留到解鎖那一天，
+   不然圖鑑第一天就被讀完了，之後只剩把格子點亮。 */
+var SHADE = '#2A323D';
+function shadePal(pal) {
+  var out = {};
+  Object.keys(pal || {}).forEach(function (k) { out[k] = SHADE; });
+  return out;
+}
+
 function patTag(c, pal, cls, big) {
   if (!c) return '';
   /* big 是放大那一頁用的那一張：36×24，格子多 2.3 倍。

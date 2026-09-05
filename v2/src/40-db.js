@@ -742,6 +742,24 @@ function codexFresh(u, teamId) {
   return out;
 }
 
+/* 這一組以前跟這一位打過交道嗎。
+
+   用的是 run.mob——承諾那一刻存下來的名字，所以之後改了名字也不會
+   讓一段已經發生過的相遇消失。
+
+   跟圖鑑那一套（metMobs）刻意不同：這裡不要求老師收下。他上一次
+   確實站在那條路的盡頭，所以他再來的時候應該認得你——那跟老師
+   有沒有勾完全沒有關係。 */
+function patSeen(teamId, name) {
+  if (!name) return false;
+  return runsFor(teamId).some(function (x) {
+    /* 用 mobOfRun 不直接讀 run.mob：mob 是 actCommit 存的，
+       示範資料那幾趟是直接組出來的，身上沒有這一欄。 */
+    var m = mobOfRun(x.run);
+    return !!m && m.n === name;
+  });
+}
+
 /* 這一組遇過的那幾隻。全部看得到，這裡只是標出「你遇過」。 */
 /* 這一趟遇到牠了沒有。
 
@@ -788,10 +806,22 @@ function mobDebut(teamId, runId) {
 }
 
 /* 遇過的那幾隻。 */
+/* 圖鑑上收進來的那幾位。**老師收下那一件之後**才算。
+
+   本來是走到就算（metRun）：你走到路的盡頭看到他，圖鑑就記下來。
+   那一版的說法是「圖鑑是他自己的回憶，不需要另一個人確認」。
+
+   改了。收進圖鑑的東西要有代價，不然一個學期下來每一位都會自己
+   跑進來，那一頁就從「我做到的」變成「時間到了就有的」。金幣、
+   任務之證、班級地下城上那一塊本來就是收下才有的——圖鑑跟它們
+   站在同一邊比較說得通。
+
+   metRun 沒有跟著改：那一支是廊道上「畫不畫得出他」的判斷
+   （見 61-scene.js），他站在那裡是一件已經發生的事。 */
 function metMobs(teamId) {
   var seen = {};
   runsFor(teamId).forEach(function (x) {
-    if (!metRun(x.run)) return;
+    if (x.run.state !== 'done' && x.run.state !== 'approved') return;
     var m = mobOfRun(x.run);
     if (m) seen[m.n] = x.ms.title;
   });

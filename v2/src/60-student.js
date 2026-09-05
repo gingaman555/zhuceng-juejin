@@ -719,7 +719,12 @@ PAGES.commit = function () {
 
        底下那一行還是他的形容：上面是他說的，下面是他長什麼樣。
        兩行分工，所以不用擠成一句。 */
-    H.push('<b>' + esc(patSay(pat, 'ask') || (pat.n + ' 在等這一件。')) + '</b>');
+    /* 第一次上門，跟他又來了，是兩句不一樣的話。
+
+       他上一次站在那條路的盡頭等過你——如果他再來的時候講的是
+       跟第一次一模一樣的話，那前面那一趟就等於沒有發生過。 */
+    H.push('<b>' + esc(patSay(pat, patSeen(t.teamId, pat.n) ? 'back' : 'ask') ||
+      patSay(pat, 'ask') || (pat.n + ' 在等這一件。')) + '</b>');
     H.push('<em>' + esc(pat.t) + '</em>');
     H.push('</div>');
     H.push('<p class="pmt-coin' + (firstLook ? ' enter' : '') + '">' +

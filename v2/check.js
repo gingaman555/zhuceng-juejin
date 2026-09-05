@@ -207,7 +207,7 @@ if (!sayBlock) {
       console.error('委託人「' + n + '」沒有自己的話　——他會講跟別人一樣的句子');
       return;
     }
-    ['ask', 'wait', 'again', 'take'].forEach(function (k) {
+    ['ask', 'back', 'wait', 'again', 'take'].forEach(function (k) {
       if (one[0].indexOf(k + ':') < 0) {
         bad++;
         console.error('委託人「' + n + '」少了 ' + k + ' 那一句');
