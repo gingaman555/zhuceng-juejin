@@ -31,6 +31,8 @@
   /* 底下那一列會蓋住內容，把位置留出來 */
   /* 22px 的字貼螢幕邊要留 22px，不然每一行都像被切到。 */
   .wrap{padding:22px 22px 121px}
+  /* 剖面圖跟著內距走，兩邊貼到底（見 54-eco.css）。 */
+  .xsec-wrap{margin-left:-22px;margin-right:-22px}
   .gate .gate-box{padding-bottom:0}
 
   /* ---------- 字級 ---------- */
@@ -122,6 +124,7 @@
    窄螢幕該收的是「一排放幾個」，不是「留多少空氣」。 */
 @media (max-width: 400px) {
   .wrap{padding:22px 18px 121px}
+  .xsec-wrap{margin-left:-18px;margin-right:-18px}
   .step{min-width:100%;border-right:1px solid var(--line)}
   .nav a{padding:11px 4px}
   .zn{min-width:100%}
@@ -174,6 +177,11 @@
   }
   /* 預設整列。任何新加的東西都吃這一條。 */
   .wrap > *{flex:0 0 100%;margin-bottom:0;min-width:0}
+
+  /* 剖面圖要兩邊貼到底。上面那一條把基準寬度釘在內容框上，
+     所以 54-eco.css 裡那個負的外距只會把它往左推，不會讓它變寬。
+     基準加上左右內距的和（44×2），兩邊才真的貼齊。 */
+  .wrap > .xsec-wrap{flex:0 0 calc(100% + 88px)}
 
   /* 只有安靜的卡並排。420 是一張卡讀起來還舒服的最小寬度。 */
   .wrap > .card.quiet{flex:1 1 420px}

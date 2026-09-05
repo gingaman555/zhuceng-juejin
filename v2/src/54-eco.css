@@ -5,8 +5,15 @@
    不屬於任何一組。同一個深度，五條廊道打通的石頭一定同一個顏色——
    一旦讓某一組的廊道有自己的顏色，那張圖就開始比較誰的比較漂亮。 */
 
+/* 撐滿整頁的寬：抵銷 .wrap 的左右內距，兩邊貼到底。
+
+   不用 100vw——html 上有 scrollbar-gutter:stable，捲軸那一條一直佔著
+   位置，100vw 會比內容區寬出那一條，整頁就橫向溢出（那條剛修好，
+   見 50-style.css）。用內距的負值最準，而且不會出事。
+
+   內距在別的斷點會變（見 59-mobile.css），那邊各自對一次。 */
 .xsec-wrap{
-  overflow-x:auto;overflow-y:hidden;margin:0 0 22px;
+  overflow-x:auto;overflow-y:hidden;margin:0 -44px 22px;
   background:#06080B;
   box-shadow:
     inset 0 3px 0 rgba(0,0,0,.7), inset 3px 0 0 rgba(0,0,0,.7),

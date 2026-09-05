@@ -71,9 +71,16 @@ function xsScene(rows, meId, classId) {
   /* 橫向全部交給 CSS 算（見 54-eco.css）：--cols 是幾格、--nm 是名牌多寬，
      每一塊的左緣與寬度都是 (100% − 名牌) ÷ 格數。
      所以這張圖在電腦上撐滿、在手機上退到最窄再捲。 */
+  /* 寬度上限拿掉了。
+
+     本來是 XL.MAX（一塊最寬 88px）×格數：格數少的時候整張圖會縮在
+     頁面中間，兩邊留白。可是這張圖是「全班在同一片地層裡」，它縮成
+     一小塊的時候那句話就講不出來了。
+
+     min-width 留著：窄到一塊 55px 就不再收，改成橫著捲。 */
   var out = ['<div class="xsec-wrap"><div class="xsec" style="--cols:' + cols +
     ';--nm:' + XL.NAME + 'px;min-width:' + (XL.NAME + cols * XL.MIN) +
-    'px;max-width:' + (XL.NAME + cols * XL.MAX) + 'px;height:' + H + 'px">'];
+    'px;height:' + H + 'px">'];
 
   /* ── 每一直行的石頭 ──
 
@@ -285,7 +292,6 @@ PAGES.eco = function () {
 
      打通與蓋東西也在這裡——動手的地方跟看的地方要是同一個。 */
   var H = [head('班級地下城', '大家都在下面', '')];
-  H.push(xsScene(rows, t.teamId, t.classId));
   /* 岩壁裡那幾隻不再是鈕（見 xsPlace），所以這裡也不再有那張卡。
      要查一隻去圖鑑。 */
   /* 排行榜搬到底下「估得準」那一段。刻意加進來、準備好隨時拿掉的
@@ -310,10 +316,15 @@ PAGES.eco = function () {
 
      藏起來的東西不會發生任何事，所以它還是預設打開的，只是換成
      兩個數字並排的那一張。 */
-  var tab = DRAFT.tab || (dt ? 'team' : 'both');
-  if (tab === 'team' && !dt) tab = 'both';
+  var tab = DRAFT.tab || (dt ? 'team' : 'map');
+  if (tab === 'team' && !dt) tab = 'map';
 
-  var segs = [['both', '各組'], ['feed', '最近']];
+  /* 剖面圖也是一格。本來它一直釘在最上面，底下再切三格——所以那張圖
+     永遠佔掉一整個螢幕的高度，底下那幾格每次都要先捲過它。
+
+     四格，一次只看一個。點圖上的某一組會直接跳到那一組那一格
+     （見 55-ui.js 的 digteam），所以圖跟細節之間還是一下就到。 */
+  var segs = [['map', '剖面圖'], ['both', '各組'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -323,7 +334,9 @@ PAGES.eco = function () {
   });
   H.push('</div>');
 
-  if (tab === 'both') {
+  if (tab === 'map') {
+    H.push(xsScene(rows, t.teamId, t.classId));
+  } else if (tab === 'both') {
     /* 這一張是刻意加進來、而且準備好隨時拿掉的（見 68-rank.js 檔頭）。
        要拿掉：刪掉 68-rank.js、68c-coinrank.js、58-rank.css，
        再把這一段跟 segs 裡的 'both' 拿走。沒有別的地方依賴它。 */
