@@ -1099,12 +1099,8 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
   /* 再給兩天會做什麼。老師覺得「可以」的關鍵不是他們做得多好，
      是他們知道自己做到哪裡。 */
   if (o.next != null) r.next = String(o.next).slice(0, 200);
-  /* 他們指的那一處。這是學生在交作業那一刻讓出來的東西——
-     指哪裡會洩漏他覺得哪裡重要、哪裡心虛。老師那一邊的對應是：
-     他的評語接在這一處底下（見 70-teacher.js）。
-
-     跟 link 一樣，系統不讀它的內容做任何決定，只是印出來。 */
-  if (o.look != null) r.look = String(o.look).slice(0, 200);
+  /* 這裡一度有一個 look（他指的那一處）。拿掉了——那一題每一趟都要
+     再想一次，而交出去這一段是每一趟都要走的。 */
   /* 我做了什麼。一個人一行，記在自己名下——每個人各自寫，
      沒寫的人在畫面上是「還沒說」，但不擋交出去。 */
   if (o.said1 != null && (typeof S !== 'undefined') && S.who) {

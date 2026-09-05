@@ -4994,10 +4994,6 @@ button.ac:active{transform:translateY(1px)}
 }
 .bt-rej b{display:block;font-size:22px;font-weight:400;color:var(--over)}
 
-/* 一頁上有兩格的時候，每一格上面一行小標。
-   （不是小字——22px，跟別的一樣。） */
-.bt-lab{font-size:22px;line-height:33px;color:var(--mute);margin:11px 0 5px}
-.bt-lab:first-child{margin-top:0}
 /* 上一趟那一句：一顆可以點的，不是預填好的值。 */
 .lastw{
   display:block;margin:5px 0 0;padding:5px 11px;
@@ -10509,12 +10505,8 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
   /* 再給兩天會做什麼。老師覺得「可以」的關鍵不是他們做得多好，
      是他們知道自己做到哪裡。 */
   if (o.next != null) r.next = String(o.next).slice(0, 200);
-  /* 他們指的那一處。這是學生在交作業那一刻讓出來的東西——
-     指哪裡會洩漏他覺得哪裡重要、哪裡心虛。老師那一邊的對應是：
-     他的評語接在這一處底下（見 70-teacher.js）。
-
-     跟 link 一樣，系統不讀它的內容做任何決定，只是印出來。 */
-  if (o.look != null) r.look = String(o.look).slice(0, 200);
+  /* 這裡一度有一個 look（他指的那一處）。拿掉了——那一題每一趟都要
+     再想一次，而交出去這一段是每一趟都要走的。 */
   /* 我做了什麼。一個人一行，記在自己名下——每個人各自寫，
      沒寫的人在畫面上是「還沒說」，但不擋交出去。 */
   if (o.said1 != null && (typeof S !== 'undefined') && S.who) {
@@ -17572,7 +17564,6 @@ PAGES.battle = function () {
   if (r.state === 'back' && DRAFT.__pre !== r.runId) {
     DRAFT.__pre = r.runId;
     if (r.link != null) DRAFT.where = r.link;
-    if (r.look != null) DRAFT.look = r.look;
     if (r.next != null) DRAFT.next = r.next;
     if (r.pace != null) DRAFT.hard = r.pace;
     if (r.scope) DRAFT.scope = r.scope;
@@ -17764,17 +17755,17 @@ function btChoice(act, label, cls) {
    有幾題會被跳過：沒拆件就沒有「各花幾天」，深度不夠就沒有「為什麼」
    （見 RULES.asks）。跳過的不算在步數裡，所以那一排點數得出來幾題。 */
 var BT_STEPS = [
-  /* ── 東西在哪裡，跟你要他看哪裡 ──
+  /* ── 東西在哪裡 ──
 
-     兩題併成一頁。它們是同一個動作的兩半（都是「指」），而且互相
-     不影響：知道東西放在哪，不會改變你希望他看哪一段。
+     這裡一度還有第二格「你最想要老師看哪裡」。拿掉了：那一題每一趟
+     都要再想一次「哪一段最值得看」，而這一段是每一趟都要走的，
+     消耗掉的耐心比它換來的東西多。
 
-     分兩頁只多一次「接著說」——這一段每一趟都要走一次，
-     多按一次就是每一趟都多按一次。 */
-  { k: 'where', ask: '東西在哪裡？最想要老師看哪裡？',
+     老師那一邊跟著回去：他的評語不再接在某一處底下，回到一句
+     他自己起頭的話（見 70-teacher.js）。 */
+  { k: 'where', ask: '老師要去哪裡看？',
     body: function (r, t) {
       var H = [];
-      H.push('<div class="bt-lab">老師要去哪裡看</div>');
       H.push('<input class="bt-w" id="bt-where" oninput="DRAFT.where=this.value" ' +
         /* 空的。本來會把上一趟填過的那一句帶進來（lastWhere），
            而那是幫他填——上一趟交在 TronClass，這一趟可能印出來放在
@@ -17788,14 +17779,10 @@ var BT_STEPS = [
         H.push('<button class="lastw" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'usewhere' })) + '\'>上次：' + esc(lw) + '</button>');
       }
-      H.push('<div class="bt-lab">你最想要他看哪裡</div>');
-      H.push('<input class="bt-w" id="bt-look" oninput="DRAFT.look=this.value" ' +
-        'placeholder="' + esc('例：第三頁那張流程圖，虛線那幾段') + '"' +
-        ' value="' + esc(draft('look', '')) + '">');
       return H.join('');
     },
     need: function (r, t) {
-      return !!String(DRAFT.where || '').trim() && !!String(DRAFT.look || '').trim();
+      return !!String(DRAFT.where || '').trim();
     } },
 
   { k: 'spent', ask: '這幾件各花了幾天？',
@@ -17834,7 +17821,7 @@ var BT_STEPS = [
       });
       H.push('</div>');
       if (DRAFT.feel && btAskHard(r.teamId)) {
-        H.push('<div class="bt-lab">為什麼　選填</div>');
+        H.push('<div class="eyebrow">為什麼　選填</div>');
         H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
           'oninput="DRAFT.why=this.value" placeholder="' +
           esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>');
@@ -18138,8 +18125,7 @@ ACTS.btq2 = function (id) {
   }
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why,
-      scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1,
-      look: DRAFT.look });
+      scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1 });
   /* 退回那一場走 actResend 不走 actSubmit：答案更新，判定不動。
 
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
@@ -18152,7 +18138,6 @@ ACTS.btq2 = function (id) {
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.scope = null; DRAFT.next = ''; DRAFT.said1 = ''; DRAFT.where = null;
-  DRAFT.look = null;
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', hurt: 1 };
   render();
@@ -18954,24 +18939,13 @@ PAGES.review = function () {
   H.push('</div>');
 
   H.push('<div class="card">');
-  /* ── 他們請你看的那一處 ──
-
-     這是兩邊各讓一樣裡的另一半。學生在交出去的時候必須指一個地方
-     （見 67-battle.js 的 look），而他指了之後，老師的那一句話就
-     不再是一句憑空的評語——它接在這一處底下，是在回答他問的那一題。
-
-     老師讓掉的是「不必交代看了哪裡」。那不是多做一件事：他本來就要
-     寫一句話，只是那句話從此有一個對象。 */
-  if (r.look) {
-    H.push('<div class="eyebrow">他們請你看這裡</div>');
-    H.push('<p class="quote">' + nl(r.look) + '</p>');
-  }
-  H.push('<div class="eyebrow"' + (r.look ? ' style="margin-top:14px"' : '') + '>' +
-    (r.look ? '你看了之後' : '你的想法　選填') + '</div>');
+  /* 這裡一度有一塊「他們請你看這裡」——學生交出去的時候指的那一處，
+     而他的評語接在那一處底下。學生那一題拿掉了（每一趟都要再想一次，
+     太消耗），所以這一塊跟著回去。他的那一句話又是他自己起頭的。 */
+  H.push('<div class="eyebrow">你的想法　選填</div>');
   H.push('<p class="dim">退回去改一定要寫。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
-    esc(r.look ? '例：那幾段虛線我看了，第二段跟第三段其實是同一件事。'
-      : '例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
+    esc('例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
     '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 

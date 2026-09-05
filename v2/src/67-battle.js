@@ -98,7 +98,6 @@ PAGES.battle = function () {
   if (r.state === 'back' && DRAFT.__pre !== r.runId) {
     DRAFT.__pre = r.runId;
     if (r.link != null) DRAFT.where = r.link;
-    if (r.look != null) DRAFT.look = r.look;
     if (r.next != null) DRAFT.next = r.next;
     if (r.pace != null) DRAFT.hard = r.pace;
     if (r.scope) DRAFT.scope = r.scope;
@@ -290,17 +289,17 @@ function btChoice(act, label, cls) {
    有幾題會被跳過：沒拆件就沒有「各花幾天」，深度不夠就沒有「為什麼」
    （見 RULES.asks）。跳過的不算在步數裡，所以那一排點數得出來幾題。 */
 var BT_STEPS = [
-  /* ── 東西在哪裡，跟你要他看哪裡 ──
+  /* ── 東西在哪裡 ──
 
-     兩題併成一頁。它們是同一個動作的兩半（都是「指」），而且互相
-     不影響：知道東西放在哪，不會改變你希望他看哪一段。
+     這裡一度還有第二格「你最想要老師看哪裡」。拿掉了：那一題每一趟
+     都要再想一次「哪一段最值得看」，而這一段是每一趟都要走的，
+     消耗掉的耐心比它換來的東西多。
 
-     分兩頁只多一次「接著說」——這一段每一趟都要走一次，
-     多按一次就是每一趟都多按一次。 */
-  { k: 'where', ask: '東西在哪裡？最想要老師看哪裡？',
+     老師那一邊跟著回去：他的評語不再接在某一處底下，回到一句
+     他自己起頭的話（見 70-teacher.js）。 */
+  { k: 'where', ask: '老師要去哪裡看？',
     body: function (r, t) {
       var H = [];
-      H.push('<div class="bt-lab">老師要去哪裡看</div>');
       H.push('<input class="bt-w" id="bt-where" oninput="DRAFT.where=this.value" ' +
         /* 空的。本來會把上一趟填過的那一句帶進來（lastWhere），
            而那是幫他填——上一趟交在 TronClass，這一趟可能印出來放在
@@ -314,14 +313,10 @@ var BT_STEPS = [
         H.push('<button class="lastw" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'usewhere' })) + '\'>上次：' + esc(lw) + '</button>');
       }
-      H.push('<div class="bt-lab">你最想要他看哪裡</div>');
-      H.push('<input class="bt-w" id="bt-look" oninput="DRAFT.look=this.value" ' +
-        'placeholder="' + esc('例：第三頁那張流程圖，虛線那幾段') + '"' +
-        ' value="' + esc(draft('look', '')) + '">');
       return H.join('');
     },
     need: function (r, t) {
-      return !!String(DRAFT.where || '').trim() && !!String(DRAFT.look || '').trim();
+      return !!String(DRAFT.where || '').trim();
     } },
 
   { k: 'spent', ask: '這幾件各花了幾天？',
@@ -360,7 +355,7 @@ var BT_STEPS = [
       });
       H.push('</div>');
       if (DRAFT.feel && btAskHard(r.teamId)) {
-        H.push('<div class="bt-lab">為什麼　選填</div>');
+        H.push('<div class="eyebrow">為什麼　選填</div>');
         H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
           'oninput="DRAFT.why=this.value" placeholder="' +
           esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>');
@@ -664,8 +659,7 @@ ACTS.btq2 = function (id) {
   }
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why,
-      scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1,
-      look: DRAFT.look });
+      scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1 });
   /* 退回那一場走 actResend 不走 actSubmit：答案更新，判定不動。
 
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
@@ -678,7 +672,6 @@ ACTS.btq2 = function (id) {
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.scope = null; DRAFT.next = ''; DRAFT.said1 = ''; DRAFT.where = null;
-  DRAFT.look = null;
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', hurt: 1 };
   render();

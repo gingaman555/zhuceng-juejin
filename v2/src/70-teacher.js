@@ -372,24 +372,13 @@ PAGES.review = function () {
   H.push('</div>');
 
   H.push('<div class="card">');
-  /* ── 他們請你看的那一處 ──
-
-     這是兩邊各讓一樣裡的另一半。學生在交出去的時候必須指一個地方
-     （見 67-battle.js 的 look），而他指了之後，老師的那一句話就
-     不再是一句憑空的評語——它接在這一處底下，是在回答他問的那一題。
-
-     老師讓掉的是「不必交代看了哪裡」。那不是多做一件事：他本來就要
-     寫一句話，只是那句話從此有一個對象。 */
-  if (r.look) {
-    H.push('<div class="eyebrow">他們請你看這裡</div>');
-    H.push('<p class="quote">' + nl(r.look) + '</p>');
-  }
-  H.push('<div class="eyebrow"' + (r.look ? ' style="margin-top:14px"' : '') + '>' +
-    (r.look ? '你看了之後' : '你的想法　選填') + '</div>');
+  /* 這裡一度有一塊「他們請你看這裡」——學生交出去的時候指的那一處，
+     而他的評語接在那一處底下。學生那一題拿掉了（每一趟都要再想一次，
+     太消耗），所以這一塊跟著回去。他的那一句話又是他自己起頭的。 */
+  H.push('<div class="eyebrow">你的想法　選填</div>');
   H.push('<p class="dim">退回去改一定要寫。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
-    esc(r.look ? '例：那幾段虛線我看了，第二段跟第三段其實是同一件事。'
-      : '例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
+    esc('例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
     '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 

@@ -422,15 +422,13 @@ NOFILE.forEach(function (w) {
   bad++;
   console.error('系統開始收檔案了　' + w + '　——作業交在老師原本收的地方，這裡只記一行字');
 });
-/* r.link 與 r.look 只能被寫進去、被畫出來。出現在判斷式裡就是它開始
-   有意義了——那一刻系統就從「不解讀」變成「會讀你寫了什麼」。
+/* r.link 只能被寫進去、被畫出來。出現在判斷式裡就是它開始有意義了
+   ——那一刻系統就從「不解讀」變成「會讀你寫了什麼」。
 
-   r.look 是學生交出去時指的那一處（見 67-battle.js）。它跟 link 一樣是
-   自由文字，也跟 link 一樣只印出來給老師看，沒有任何一支函式讀它的
-   內容做決定。 */
+   （這一條一度也守著 r.look。那個欄位拿掉了，規則留成單數。） */
 src.split('\n').forEach(function (line, i) {
-  if (line.indexOf('.link') < 0 && line.indexOf('.look') < 0) return;
-  if (/\.(link|look)\s*(===|!==|\.indexOf|\.match|\.test)/.test(line) &&
+  if (line.indexOf('.link') < 0) return;
+  if (/\.link\s*(===|!==|\.indexOf|\.match|\.test)/.test(line) &&
       line.indexOf('whereLine') < 0) {
     bad++;
     console.error('學生寫的自由文字被拿去做判斷了　第 ' + (i + 1) + ' 行');
