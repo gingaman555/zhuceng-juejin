@@ -1229,6 +1229,19 @@ button.ac:active{transform:translateY(1px)}
   .four{gap:5px}
   .fr{min-width:55px}
 }
+/* 窄的時候排成 2×2，連接線收起來。
+
+   本來是一排四格加三根連接線，靠 flex-wrap 換行。375 寬量到：
+   第四格換到第二行，而它前面那一根線跟著換行、停在整行的最左邊
+   （x=18，在「拿到金幣」左邊 19px），指著畫面外——那是學生
+   第一眼看到的頁。
+
+   換行的線沒有意義：兩格不相鄰的時候，它連的東西不在旁邊。 */
+@media (max-width:430px){
+  .four{display:grid;grid-template-columns:1fr 1fr;gap:14px 5px;justify-items:center}
+  .fr-a{display:none}
+  .fr{min-width:0}
+}
 
 /* ── 剖面圖底下那三顆 ──
    本來這幾段是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */

@@ -117,6 +117,10 @@ function classByCode(code) {
 function actRegister(o) {
   var acc = String(o.account || '').trim();
   var pw = String(o.password || '');
+  /* 名字一定要。沒有的話底下那一行會拿帳號頂替，而那正是要修的東西：
+     全站印的都是 u.name，學號當名字的話老師分不出誰是誰。 */
+  var nm = String(o.name || '').trim();
+  if (!nm) return { err: '先寫你的名字——同學跟老師看到的就是這個。' };
   if (acc.length < 3) return { err: '帳號至少三個字。' };
   if (pw.length < 4) return { err: '密碼至少四個字。' };
   if (accountTaken(acc)) return { err: '這個帳號有人用了。' };
@@ -136,7 +140,7 @@ function actRegister(o) {
   var u = {
     userId: nid('U'), account: acc, salt: salt, hash: pwHash(pw, salt),
     role: o.role || 'student',
-    name: String(o.name || acc).trim(),
+    name: nm,
     classId: kl ? kl.classId : '',
     teamId: '',
     createdAt: now()

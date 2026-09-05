@@ -169,6 +169,17 @@ PAGES.reg = function () {
        塞進去會被截掉，而被截掉的正好是「留空會怎樣」。 */
     H.push('<p class="dim">留空就開一個新的班。</p>');
   }
+  /* ── 名字 ──
+
+     這一格本來沒有，而 actRegister 沒收到名字就拿帳號頂替
+     （name: o.name || acc）。學生用學號註冊，老師的清單上就是
+     一整排 b11234567——他分不出誰是誰，而這整套系統立在
+     「系統給資訊，人給承認」上，承認要有一個名字。
+
+     排在帳號前面：先問你是誰，再問你怎麼登入。 */
+  H.push('<div class="eyebrow">你的名字</div>');
+  H.push('<input id="rg-name" value="' + esc(draft('rg-name')) + '" placeholder="' +
+         esc('同學跟老師看到的就是這個') + '">');
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="rg-acc" value="' + esc(draft('rg-acc')) + '" placeholder="' +
          esc('至少三個字，登入用') + '">');
@@ -269,6 +280,7 @@ ACTS.login = function () {
 ACTS.reg = function () {
   var o = {
     code: (document.getElementById('rg-code') || {}).value || '',
+    name: (document.getElementById('rg-name') || {}).value || '',
     account: (document.getElementById('rg-acc') || {}).value || '',
     password: (document.getElementById('rg-pw') || {}).value || '',
     role: (DRAFT.rgRole === 'teacher' || DRAFT.rgRole === 'researcher')
@@ -277,6 +289,7 @@ ACTS.reg = function () {
   var r = actRegister(o);
   if (r.err) {
     DRAFT['rg-code'] = o.code; DRAFT['rg-acc'] = o.account;
+    DRAFT['rg-name'] = o.name;
     return say(r.err);
   }
   signIn(r.user);

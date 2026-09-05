@@ -3304,6 +3304,19 @@ button.ac:active{transform:translateY(1px)}
   .four{gap:5px}
   .fr{min-width:55px}
 }
+/* 窄的時候排成 2×2，連接線收起來。
+
+   本來是一排四格加三根連接線，靠 flex-wrap 換行。375 寬量到：
+   第四格換到第二行，而它前面那一根線跟著換行、停在整行的最左邊
+   （x=18，在「拿到金幣」左邊 19px），指著畫面外——那是學生
+   第一眼看到的頁。
+
+   換行的線沒有意義：兩格不相鄰的時候，它連的東西不在旁邊。 */
+@media (max-width:430px){
+  .four{display:grid;grid-template-columns:1fr 1fr;gap:14px 5px;justify-items:center}
+  .fr-a{display:none}
+  .fr{min-width:0}
+}
 
 /* ── 剖面圖底下那三顆 ──
    本來這幾段是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
@@ -6692,6 +6705,10 @@ function classByCode(code) {
 function actRegister(o) {
   var acc = String(o.account || '').trim();
   var pw = String(o.password || '');
+  /* 名字一定要。沒有的話底下那一行會拿帳號頂替，而那正是要修的東西：
+     全站印的都是 u.name，學號當名字的話老師分不出誰是誰。 */
+  var nm = String(o.name || '').trim();
+  if (!nm) return { err: '先寫你的名字——同學跟老師看到的就是這個。' };
   if (acc.length < 3) return { err: '帳號至少三個字。' };
   if (pw.length < 4) return { err: '密碼至少四個字。' };
   if (accountTaken(acc)) return { err: '這個帳號有人用了。' };
@@ -6711,7 +6728,7 @@ function actRegister(o) {
   var u = {
     userId: nid('U'), account: acc, salt: salt, hash: pwHash(pw, salt),
     role: o.role || 'student',
-    name: String(o.name || acc).trim(),
+    name: nm,
     classId: kl ? kl.classId : '',
     teamId: '',
     createdAt: now()
@@ -13613,6 +13630,17 @@ PAGES.reg = function () {
        塞進去會被截掉，而被截掉的正好是「留空會怎樣」。 */
     H.push('<p class="dim">留空就開一個新的班。</p>');
   }
+  /* ── 名字 ──
+
+     這一格本來沒有，而 actRegister 沒收到名字就拿帳號頂替
+     （name: o.name || acc）。學生用學號註冊，老師的清單上就是
+     一整排 b11234567——他分不出誰是誰，而這整套系統立在
+     「系統給資訊，人給承認」上，承認要有一個名字。
+
+     排在帳號前面：先問你是誰，再問你怎麼登入。 */
+  H.push('<div class="eyebrow">你的名字</div>');
+  H.push('<input id="rg-name" value="' + esc(draft('rg-name')) + '" placeholder="' +
+         esc('同學跟老師看到的就是這個') + '">');
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="rg-acc" value="' + esc(draft('rg-acc')) + '" placeholder="' +
          esc('至少三個字，登入用') + '">');
@@ -13713,6 +13741,7 @@ ACTS.login = function () {
 ACTS.reg = function () {
   var o = {
     code: (document.getElementById('rg-code') || {}).value || '',
+    name: (document.getElementById('rg-name') || {}).value || '',
     account: (document.getElementById('rg-acc') || {}).value || '',
     password: (document.getElementById('rg-pw') || {}).value || '',
     role: (DRAFT.rgRole === 'teacher' || DRAFT.rgRole === 'researcher')
@@ -13721,6 +13750,7 @@ ACTS.reg = function () {
   var r = actRegister(o);
   if (r.err) {
     DRAFT['rg-code'] = o.code; DRAFT['rg-acc'] = o.account;
+    DRAFT['rg-name'] = o.name;
     return say(r.err);
   }
   signIn(r.user);
