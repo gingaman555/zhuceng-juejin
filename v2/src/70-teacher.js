@@ -282,6 +282,23 @@ PAGES.review = function () {
   H.push('</div>');
   /* 這一趟談過的話。判定的那兩個數字有來歷，而來歷就在這裡。 */
   H.push(negoLine(r, false));
+  /* ── 上一趟 ──
+
+     沒有這一行，每一次審核都是沒有前情的。三位老師共同帶一個班的
+     時候尤其：甲上次跟他們說了什麼，乙這一次完全不知道，於是同一件
+     事會被講兩次，或者根本沒有人接續。
+
+     不用任何人多做事——那一句話本來就在資料裡。 */
+  var prev = runsFor(r.teamId).filter(function (x) {
+    return x.run.runId !== r.runId && x.run.doneAt;
+  }).sort(function (a, b) { return b.run.doneAt - a.run.doneAt; })[0];
+  if (prev) {
+    var pw = prev.run.wordBy ? userOf(prev.run.wordBy) : null;
+    H.push('<p class="dim prev">上一趟「' + esc(prev.ms ? prev.ms.title : '') + '」　·　' +
+      (pw ? esc(pw.name) + ' 收下了' : '收下了') +
+      (prev.run.backs ? '（退回過 ' + prev.run.backs + ' 次）' : '') +
+      (prev.run.word ? '　·　「' + esc(prev.run.word) + '」' : '') + '</p>');
+  }
   /* 他們自己寫的兩段放最上面。他在這一頁要做的事是寫一句話，
      而最有用的輸入就是這兩段——本來排在整張卡的最後面。
      系統不解讀、不歸類，原話放上去就好。 */
@@ -355,10 +372,24 @@ PAGES.review = function () {
   H.push('</div>');
 
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">你的想法　選填</div>');
+  /* ── 他們請你看的那一處 ──
+
+     這是兩邊各讓一樣裡的另一半。學生在交出去的時候必須指一個地方
+     （見 67-battle.js 的 look），而他指了之後，老師的那一句話就
+     不再是一句憑空的評語——它接在這一處底下，是在回答他問的那一題。
+
+     老師讓掉的是「不必交代看了哪裡」。那不是多做一件事：他本來就要
+     寫一句話，只是那句話從此有一個對象。 */
+  if (r.look) {
+    H.push('<div class="eyebrow">他們請你看這裡</div>');
+    H.push('<p class="quote">' + nl(r.look) + '</p>');
+  }
+  H.push('<div class="eyebrow"' + (r.look ? ' style="margin-top:14px"' : '') + '>' +
+    (r.look ? '你看了之後' : '你的想法　選填') + '</div>');
   H.push('<p class="dim">退回去改一定要寫。</p>');
   H.push('<textarea id="gr-word" rows="3" placeholder="' +
-    esc('例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
+    esc(r.look ? '例：那幾段虛線我看了，第二段跟第三段其實是同一件事。'
+      : '例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
     '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
 
@@ -380,6 +411,16 @@ PAGES.review = function () {
     ' 枚。這幾枚是你想多說的部分。</p>');
   H.push('</div>');
 
+  /* 他按下去那一刻有多重。
+
+     老師在這一套裡讓掉了不少：他排的日期不進判定、他不能無理由退回、
+     他改不動學生承諾的天數。那幾件在畫面上一句話都沒說，所以他只
+     感覺到自己被拿走了東西。
+
+     這一句講的是反過來那一半——沒有他點頭，學生什麼都拿不到。
+     一句，而且是事實，不是打氣。 */
+  H.push('<p class="dim">你收下的那一刻，他們才拿得到金幣、圖鑑那一格，' +
+    '跟疊上去的那一塊。</p>');
   H.push('<div class="row">');
   H.push(btn('收下', 'approve:' + r.runId, 'big'));
   /* 退回。它不動判定也不動深度——那一趟的兩個數字在他交出去的

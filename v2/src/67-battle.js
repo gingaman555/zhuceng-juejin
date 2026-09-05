@@ -258,6 +258,30 @@ var BT_STEPS = [
       return !!String(DRAFT.where || '').trim();
     } },
 
+  /* ── 你最想要老師看哪裡 ──
+
+     這一題是學生這一邊讓出來的那一樣。
+
+     上一題他說了東西在哪，這一題他要指出**哪一處**。指哪裡本身就
+     洩漏了他覺得哪裡重要、哪裡心虛——那是有代價的，而代價正是
+     這一題存在的理由：交作業跟審核不是各自自主，是兩邊各讓一樣。
+
+     老師那一邊對應的是：他寫的那一句話從此接在這一處底下，不再是
+     一句憑空的評語（見 70-teacher.js 的審核頁）。
+
+     必填。可以選擇不指的話，指這件事就沒有代價，也就沒有交換。
+     排在「去哪裡看」正後面：兩題是同一個動作的兩半，放在一起
+     只要想一次。 */
+  { k: 'look', ask: '你最想要老師看哪裡？',
+    body: function (r, t) {
+      return '<input class="bt-w" id="bt-look" oninput="DRAFT.look=this.value" ' +
+        'placeholder="' + esc('例：第三頁那張流程圖，虛線那幾段') + '"' +
+        ' value="' + esc(draft('look', '')) + '">';
+    },
+    need: function (r, t) {
+      return !!String(DRAFT.look || '').trim();
+    } },
+
   { k: 'spent', ask: '這幾件各花了幾天？',
     skip: function (r) { return !((r.plan || []).length); },
     body: function (r, t) { return btSpent(r); },
@@ -595,7 +619,8 @@ ACTS.btq2 = function (id) {
   }
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why,
-      scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1 });
+      scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1,
+      look: DRAFT.look });
   /* 退回那一場走 actResend 不走 actSubmit：答案更新，判定不動。
 
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
@@ -608,6 +633,7 @@ ACTS.btq2 = function (id) {
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.scope = null; DRAFT.next = ''; DRAFT.said1 = ''; DRAFT.where = null;
+  DRAFT.look = null;
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', hurt: 1 };
   render();

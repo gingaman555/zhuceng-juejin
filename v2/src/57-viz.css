@@ -1153,6 +1153,9 @@ button.ac:active{transform:translateY(1px)}
    佔滿一整列，不跟上面那幾個數字擠。 */
 .msr-by{grid-column:1 / -1;font-size:22px;color:var(--dim)}
 
+/* 上一趟。一行，接在這一趟的來歷底下。 */
+.prev{margin:11px 0 0;color:var(--mute)}
+
 /* 當初派的時候分的那幾段。一塊一段，掃過去就好——
    他們自己拆成什麼樣子在底下那一段，兩個並排才看得出有沒有走鐘。 */
 .msspec{display:flex;flex-wrap:wrap;gap:5px 11px;margin:11px 0 0}
