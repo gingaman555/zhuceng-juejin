@@ -714,7 +714,12 @@ PAGES.commit = function () {
     H.push('<div class="bt-say pmt-say' + (firstLook ? ' enter' : '') + '">');
     H.push('<span class="bt-name">' + esc(pat.n) + '</span>');
     H.push('<i class="bt-arrow"></i>');
-    H.push('<b>' + esc(pat.n + ' 在等這一件。') + '</b>');
+    /* 他自己的那一句（見 19-patron.js 的 PAT_SAY）。查不到才退回
+       本來那一句——三十四位都寫了，這一段是給以後多加人用的。
+
+       底下那一行還是他的形容：上面是他說的，下面是他長什麼樣。
+       兩行分工，所以不用擠成一句。 */
+    H.push('<b>' + esc(patSay(pat, 'ask') || (pat.n + ' 在等這一件。')) + '</b>');
     H.push('<em>' + esc(pat.t) + '</em>');
     H.push('</div>');
     H.push('<p class="pmt-coin' + (firstLook ? ' enter' : '') + '">' +

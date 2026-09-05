@@ -199,8 +199,10 @@ function btLine(r, mob, ph) {
        第二次遇到同一位還講「你走到了。X 在這裡。」是錯的——
        那句話把每一次都當成第一次。mobDebut 算的正是「這一趟是不是
        這一組最早遇到他的那一趟」，資料本來就在。 */
-    if (r.runId && !mobDebut(r.teamId, r.runId)) return '又是你。這次帶了什麼來？';
-    return '你走到了。' + mob.n + ' 在這裡。';
+    if (r.runId && !mobDebut(r.teamId, r.runId)) {
+      return patSay(mob, 'again') || '又是你。這次帶了什麼來？';
+    }
+    return patSay(mob, 'wait') || ('你走到了。' + mob.n + ' 在這裡。');
   }
   /* 問答的時候，框裡那一句就是他問的那一題（見 BT_STEPS）。
      本來是「你帶了什麼來？」這種過場，而過場底下接一疊表單，
@@ -210,7 +212,9 @@ function btLine(r, mob, ph) {
     var qi = Math.max(0, Math.min(qs.length - 1, Number(S.p.q) || 0));
     return qs[qi].ask;
   }
-  return '他伸手接過去。';
+  /* 他接過去那一下。埋岩獸的下半身在岩壁裡、蔓群沒有手、
+     引鐵根本不用伸手——「他伸手接過去」對這三位都是錯的。 */
+  return patSay(mob, 'take') || '他伸手接過去。';
 }
 
 /* 選單上的一行。舊版寶可夢的游標長在前面（見 58-battle.css）。 */

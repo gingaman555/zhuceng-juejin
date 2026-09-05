@@ -187,6 +187,35 @@ if (ansFn && /\br\.askEst\s*=[^=]/.test(ansFn[0])) {
   console.error('actAnswerAsk 改了 r.askEst　——老師說過的話不能被改寫');
 }
 
+/* ---------- 三之四 · 每一位委託人都要有自己的話 ----------
+
+   三十四位的樣子全都不一樣，那就不該共用同一組句子。加了第 35 位
+   而忘了寫他的話，畫面不會壞——他只會退回那句通用的，然後
+   那一位就是全場唯一一個沒有個性的。那種漏掉最不容易被看到。 */
+const patSrc = fs.readFileSync(path.join(__dirname, 'src', '19-patron.js'), 'utf8');
+const patNames = (patSrc.match(/^\s*\['[^']+',\s*'([^']+)'/gm) || [])
+  .map(function (x) { return x.match(/'[^']+',\s*'([^']+)'/)[1]; });
+const sayBlock = patSrc.match(/var PAT_SAY = \{[\s\S]*?\n\};/);
+if (!sayBlock) {
+  bad++;
+  console.error('找不到 PAT_SAY——委託人的話不見了');
+} else {
+  patNames.forEach(function (n) {
+    var one = sayBlock[0].match(new RegExp("'" + n + "':\\s*\\{[^}]*\\}"));
+    if (!one) {
+      bad++;
+      console.error('委託人「' + n + '」沒有自己的話　——他會講跟別人一樣的句子');
+      return;
+    }
+    ['ask', 'wait', 'again', 'take'].forEach(function (k) {
+      if (one[0].indexOf(k + ':') < 0) {
+        bad++;
+        console.error('委託人「' + n + '」少了 ' + k + ' 那一句');
+      }
+    });
+  });
+}
+
 /* ---------- 三之一又四分之三 · 試用列不能出現在真的班上 ----------
 
    切換身分、把時間往前推、整班重來。三個都是只有在示範資料上才
@@ -378,7 +407,7 @@ if (bad) {
   process.exit(1);
 }
 console.log('殘留檢查通過：' + BANNED.length + ' 個禁用詞、畫面代號、寫死的規則句、' +
-  '判定的純度、老師改不動那個數字、試用列不上真的班、研究者只能看、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度、沒有小字，都守住了。');
+  '判定的純度、老師改不動那個數字、委託人各有各的話、試用列不上真的班、研究者只能看、生態圖不排序、一天一格、按得到的都接得上、每張點陣圖都有寬度、沒有小字，都守住了。');
 
 /* ---------- 九 · 這不是一個交作業的平台 ----------
 
