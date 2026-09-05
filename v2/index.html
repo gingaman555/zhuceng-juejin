@@ -3228,6 +3228,16 @@ button.ac:active{transform:translateY(1px)}
    佔滿一整列，不跟上面那幾個數字擠。 */
 .msr-by{grid-column:1 / -1;font-size:22px;color:var(--dim)}
 
+/* 當初派的時候分的那幾段。一塊一段，掃過去就好——
+   他們自己拆成什麼樣子在底下那一段，兩個並排才看得出有沒有走鐘。 */
+.msspec{display:flex;flex-wrap:wrap;gap:5px 11px;margin:11px 0 0}
+.mss{
+  display:inline-flex;align-items:baseline;gap:6px;
+  font-size:22px;color:var(--dim);
+  background:var(--sunk);padding:3px 11px
+}
+.mss i{font-style:normal;color:var(--mute);font-variant-numeric:tabular-nums}
+
 /* 各組承諾了幾天。老師唯一看得到的「他們怎麼想這件事」。 */
 .msr-e{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:4px 14px}
 .msr-e i{font-size:22px;font-style:normal;color:var(--dim);
@@ -9411,7 +9421,7 @@ function save() {
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 9;
+var SEED_V = 10;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -11598,7 +11608,7 @@ function seed() {
     title: '找三份資料，記下各自在講什麼',
     steps: ['找來源', '讀過一次', '摘重點', '整理成表'],
     steps: ['找來源', '讀過一次', '摘重點', '整理成表'],
-    note: '不要問「你覺得好不好」。問他上一次遇到這件事是什麼時候。' };
+    note: '三份要來自不同的地方。同一個來源的三篇算一份。' };
   var M2 = { msId: 'M2', classId: cid, teams: [], at: ago(14),
     title: '把問題收斂成一句話',
     steps: ['把重點分類', '挑出一直出現的', '寫成一句'],
@@ -18434,7 +18444,40 @@ PAGES.review = function () {
     H.push('</div>');
   }
 
-  /* 他們說東西在哪，排在最上面——他打開這一頁的第一件事就是去看東西。
+  /* ── 當初要的 ──
+
+     這一段本來不在。老師在派的時候寫下「什麼算做完」，然後在**判斷
+     做完了沒有的那一刻**，那句話不在畫面上——他要嘛憑記憶，要嘛切回
+     發派任務那一頁去翻。
+
+     三位老師共同帶一個班的時候更明顯：甲寫下的標準，乙在審的時候
+     根本沒看過。而這個作品的主旨那一句就是「老師寫的合格考量就是
+     教材」——那句話要成立，它至少得出現在他判斷的那一頁上。
+
+     排在「東西在這裡」上面，因為讀的順序是：我當初要什麼 →
+     去看他們交了什麼 → 回來判斷。標準要在他點出去之前就讀到。
+
+     兩樣都沒寫就整段不畫。大部分的委託只有一句標題，這一段
+     不該讓那些委託多出一塊空的東西。 */
+  var note = (m.note || '').trim();
+  var mst = m.steps || [];
+  if (note || mst.length) {
+    H.push('<div class="card"><div class="eyebrow">當初要的</div>');
+    if (note) H.push('<p class="quote">' + nl(note) + '</p>');
+    /* 分段排成一行一行的小塊，不是一項一列——它是「我要的形狀」，
+       一眼掃過去就好。他們自己拆成什麼樣子在底下那一段，
+       兩個並排才看得出有沒有走鐘。 */
+    if (mst.length) {
+      H.push('<div class="msspec">');
+      mst.forEach(function (x, i) {
+        H.push('<span class="mss"><i>' + (i + 1) + '</i>' + esc(x) + '</span>');
+      });
+      H.push('</div>');
+    }
+    H.push('</div>');
+  }
+
+  /* 他們說東西在哪。他打開這一頁、讀完當初要的，下一件事就是去看東西。
 
      本來這裡只有一句「成果交在你原本收的地方」，然後叫他自己去找。
      那三步（離開系統、翻、回來）會殺掉審核這件事，而審核不發生的話，
