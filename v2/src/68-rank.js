@@ -6,8 +6,9 @@
    （research through design）為方法決定要做：東西做出來、放進去用、
    看實際發生什麼；評價不好就拿掉，而「拿掉」本身也是一個發現。
 
-   要拿掉的話：刪掉這個檔案與 58-rank.css，再把 62-eco.js 裡那一行
-   rankCard(...) 拿掉就好。沒有別的地方依賴它。
+   要拿掉的話：刪掉這個檔案、68c-coinrank.js 與 58-rank.css，再把
+   62-eco.js 裡那一行 bothCard(...) 與 segs 裡的 both 拿掉。
+   沒有別的地方依賴它。
 
    ── 排什麼 ──
 
@@ -89,62 +90,3 @@ ACTS.norank = function () {
   say(t.noRank ? '不上榜了。' : '上榜了。');
 };
 
-function rankCard(classId, meId) {
-  var rows = rankRows(classId);
-  var me = meId ? teamOf(meId) : null;
-  var has = rows.some(function (r) { return r.dev !== null; });
-
-  var H = ['<div class="card rank">'];
-  /* 一行說完。本來眉標寫「估得準 · 最近 3 趟」，底下再寫一次
-     「最近三趟，準了幾次」——同一句話講兩次。
-
-     單位只在這裡說一次。本來每一列寫的是偏差率（13%、100%），
-     沒有人那樣想事情——而且 100% 看起來像世界末日，
-     其實只是「說 5 天走了 10 天」。 */
-  H.push('<h2 class="rk-h">最近 ' + RANK_N + ' 趟，準了幾次</h2>');
-
-  if (!has) {
-    H.push('<p class="dim">還沒有人交過。</p>');
-    H.push('</div>');
-    return H.join('');
-  }
-
-  H.push('<div class="rk-list">');
-  rows.forEach(function (r, i) {
-    var mine = r.teamId === meId;
-    H.push('<div class="rk-r' + (mine ? ' mine' : '') + (r.dev === null ? ' none' : '') + '">');
-    H.push('<i class="rk-i">' + (r.dev === null ? '·' : (i + 1)) + '</i>');
-    H.push('<b>' + esc(shortName(r.name)) + '</b>');
-    if (r.dev === null) {
-      H.push('<span class="rk-d">還沒交過</span>');
-    } else {
-      /* 三個記號，一趟一個，照時間排。
-
-         本來是三顆點（實心＝準的），讀得出「幾次」，但把「往哪一邊偏」
-         丟掉了——說 5 走 6 跟說 5 走 15 都只是一顆空心的點。
-
-         換成判定用的那三個記號之後，一列變成一條看得到形狀的三趟史：
-         全部朝右的那一列，是「他每一趟都比自己說的久」。
-         那三個記號在判定頁與任務清單上都已經在用，不用學新東西。 */
-      H.push('<div class="rk-dots">');
-      for (var k = 0; k < RANK_N; k++) {
-        var mk = r.marks[k];
-        H.push('<span class="rk-m ' + (mk || 'none') + '">' +
-          (mk ? stampPx(mk) : '') + '</span>');
-      }
-      H.push('</div>');
-      H.push('<span class="rk-d">' + (r.hit ? '準 ' + r.hit + ' 次' : '還沒準過') + '</span>');
-    }
-    H.push('</div>');
-  });
-  H.push('</div>');
-
-  /* 上不上榜自己決定。這一條是這張榜唯一的出口，所以它一直在。 */
-  if (me) {
-    H.push('<button class="rk-out" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'norank' })) + '\'>' +
-      (me.noRank ? '回到榜上' : '不要上榜') + '</button>');
-  }
-  H.push('</div>');
-  return H.join('');
-}

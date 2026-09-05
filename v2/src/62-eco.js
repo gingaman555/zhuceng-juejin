@@ -86,14 +86,17 @@ function xsScene(rows, meId, classId) {
     out.push('<div class="xl-col" style="--i:' + n + '"></div>');
   }
 
-  /* ── 最上面那條尺 ──
-     只寫多深，不寫「應該到哪」。兩塊一個刻度，一塊一個會太密。 */
+  /* ── 最上面那一條地表 ──
+
+     那條帶子留著（它是地面），但上面的公尺刻度拿掉了。
+
+     那把尺是「深度＝進度」那一版留下來的。這一版的地形跟走多少刻意
+     脫鉤了，而那把尺又把「走到第幾公尺」放回來——而且它橫跨全班，
+     所以就算這張圖不排序，一把共用的尺還是讓人一眼讀得出名次。
+
+     它也沒有多說什麼：一塊就是一趟，數得出來。80 m 只是 2 塊乘以 40，
+     把趟數包裝成一個假的單位。 */
   out.push('<div class="xl-rule"></div>');
-  /* 最後一格那一條不畫：它剛好落在整張圖的右緣，1px 就撐出一條橫向捲軸。 */
-  for (var d = 2; d < cols; d += 2) {
-    out.push('<div class="xl-tick" style="--i:' + d + '">' +
-      '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
-  }
 
   /* ── 還沒去過的地方住著東西 ── */
   out.push(xlFauna(rows, cols, classId));
@@ -301,12 +304,16 @@ PAGES.eco = function () {
   /* ── 底下分成三段，一次只看一段 ──
      本來是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
   var dt = DRAFT.dt && teamOf(DRAFT.dt);
-  /* 預設打開排行榜。藏起來的東西不會發生任何事——而這一版做它的方法
-     是「放進去用，看實際發生什麼」。 */
-  var tab = DRAFT.tab || (dt ? 'team' : 'coin');
-  if (tab === 'team' && !dt) tab = 'feed';
+  /* 預設是「各組」：大家的進度放在一起的那一張（見 68c-coinrank.js
+     的 bothCard）。本來是金幣那一張——一打開班級頁面先看到錢的排名，
+     跟這個作品在講的事情調性不合。
 
-  var segs = [['coin', '金幣'], ['rank', '估得準'], ['feed', '最近']];
+     藏起來的東西不會發生任何事，所以它還是預設打開的，只是換成
+     兩個數字並排的那一張。 */
+  var tab = DRAFT.tab || (dt ? 'team' : 'both');
+  if (tab === 'team' && !dt) tab = 'both';
+
+  var segs = [['both', '各組'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -316,14 +323,11 @@ PAGES.eco = function () {
   });
   H.push('</div>');
 
-  if (tab === 'coin') {
-    /* 金幣榜。第三張刻意加進來、準備好隨時拿掉的——
-       要拿掉就刪掉 68c-coinrank.js，再把這一段跟 segs 裡的 'coin' 拿走。
-
-       它排的其實是「收下幾件」：加成最多佔 5%，只在同分的時候拉開。 */
-    H.push(coinCard(t.classId, t.teamId));
-  } else if (tab === 'rank') {
-    H.push(rankCard(t.classId, t.teamId));
+  if (tab === 'both') {
+    /* 這一張是刻意加進來、而且準備好隨時拿掉的（見 68-rank.js 檔頭）。
+       要拿掉：刪掉 68-rank.js、68c-coinrank.js、58-rank.css，
+       再把這一段跟 segs 裡的 'both' 拿走。沒有別的地方依賴它。 */
+    H.push(bothCard(t.classId, t.teamId));
   } else if (tab === 'team') {
     H.push(digTeamCard(t.classId));
   } else {

@@ -48,16 +48,6 @@
   position:absolute;left:0;right:0;top:0;height:55px;z-index:2;pointer-events:none;
   background:linear-gradient(180deg,#0E1520 0 33px,#151C27 33px 52px,#000 52px 55px)
 }
-.xl-tick{
-  position:absolute;top:0;bottom:0;width:1px;z-index:2;pointer-events:none;
-  left:calc(var(--nm) + var(--i) * var(--cw));
-  background:repeating-linear-gradient(180deg,
-    rgba(255,240,214,.09) 0 4px, transparent 4px 10px)
-}
-.xl-tick span{
-  position:absolute;left:6px;top:14px;line-height:1;white-space:nowrap;
-  font-size:22px;color:var(--mute);opacity:.7
-}
 
 /* ---------- 一組一條 ---------- */
 .xl-lane{position:absolute;left:0;right:0;z-index:3}

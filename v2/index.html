@@ -1864,16 +1864,6 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   position:absolute;left:0;right:0;top:0;height:55px;z-index:2;pointer-events:none;
   background:linear-gradient(180deg,#0E1520 0 33px,#151C27 33px 52px,#000 52px 55px)
 }
-.xl-tick{
-  position:absolute;top:0;bottom:0;width:1px;z-index:2;pointer-events:none;
-  left:calc(var(--nm) + var(--i) * var(--cw));
-  background:repeating-linear-gradient(180deg,
-    rgba(255,240,214,.09) 0 4px, transparent 4px 10px)
-}
-.xl-tick span{
-  position:absolute;left:6px;top:14px;line-height:1;white-space:nowrap;
-  font-size:22px;color:var(--mute);opacity:.7
-}
 
 /* ---------- 一組一條 ---------- */
 .xl-lane{position:absolute;left:0;right:0;z-index:3}
@@ -5048,6 +5038,11 @@ button.ac:active{transform:translateY(1px)}
 .rk-bar u{display:block;height:100%;background:var(--gold);text-decoration:none}
 .rk-d{flex:0 0 auto;font-size:22px;color:var(--dim);
   font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+/* 收下幾件與金幣：靠最右邊，窄的時候整個掉到第二行。
+   它不決定順序，所以掉下去不影響這一列在說什麼。 */
+.rk-r{flex-wrap:wrap}
+.ck-c{margin-left:auto;font-size:22px;color:var(--mute);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* 自己那一列標出來，但不放大——放大就變成「看我」。 */
 .rk-r.mine .rk-i{color:var(--gold)}
@@ -15878,14 +15873,17 @@ function xsScene(rows, meId, classId) {
     out.push('<div class="xl-col" style="--i:' + n + '"></div>');
   }
 
-  /* ── 最上面那條尺 ──
-     只寫多深，不寫「應該到哪」。兩塊一個刻度，一塊一個會太密。 */
+  /* ── 最上面那一條地表 ──
+
+     那條帶子留著（它是地面），但上面的公尺刻度拿掉了。
+
+     那把尺是「深度＝進度」那一版留下來的。這一版的地形跟走多少刻意
+     脫鉤了，而那把尺又把「走到第幾公尺」放回來——而且它橫跨全班，
+     所以就算這張圖不排序，一把共用的尺還是讓人一眼讀得出名次。
+
+     它也沒有多說什麼：一塊就是一趟，數得出來。80 m 只是 2 塊乘以 40，
+     把趟數包裝成一個假的單位。 */
   out.push('<div class="xl-rule"></div>');
-  /* 最後一格那一條不畫：它剛好落在整張圖的右緣，1px 就撐出一條橫向捲軸。 */
-  for (var d = 2; d < cols; d += 2) {
-    out.push('<div class="xl-tick" style="--i:' + d + '">' +
-      '<span>' + (d * WORLD.depthPerMilestone) + ' m</span></div>');
-  }
 
   /* ── 還沒去過的地方住著東西 ── */
   out.push(xlFauna(rows, cols, classId));
@@ -16093,12 +16091,16 @@ PAGES.eco = function () {
   /* ── 底下分成三段，一次只看一段 ──
      本來是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
   var dt = DRAFT.dt && teamOf(DRAFT.dt);
-  /* 預設打開排行榜。藏起來的東西不會發生任何事——而這一版做它的方法
-     是「放進去用，看實際發生什麼」。 */
-  var tab = DRAFT.tab || (dt ? 'team' : 'coin');
-  if (tab === 'team' && !dt) tab = 'feed';
+  /* 預設是「各組」：大家的進度放在一起的那一張（見 68c-coinrank.js
+     的 bothCard）。本來是金幣那一張——一打開班級頁面先看到錢的排名，
+     跟這個作品在講的事情調性不合。
 
-  var segs = [['coin', '金幣'], ['rank', '估得準'], ['feed', '最近']];
+     藏起來的東西不會發生任何事，所以它還是預設打開的，只是換成
+     兩個數字並排的那一張。 */
+  var tab = DRAFT.tab || (dt ? 'team' : 'both');
+  if (tab === 'team' && !dt) tab = 'both';
+
+  var segs = [['both', '各組'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -16108,14 +16110,11 @@ PAGES.eco = function () {
   });
   H.push('</div>');
 
-  if (tab === 'coin') {
-    /* 金幣榜。第三張刻意加進來、準備好隨時拿掉的——
-       要拿掉就刪掉 68c-coinrank.js，再把這一段跟 segs 裡的 'coin' 拿走。
-
-       它排的其實是「收下幾件」：加成最多佔 5%，只在同分的時候拉開。 */
-    H.push(coinCard(t.classId, t.teamId));
-  } else if (tab === 'rank') {
-    H.push(rankCard(t.classId, t.teamId));
+  if (tab === 'both') {
+    /* 這一張是刻意加進來、而且準備好隨時拿掉的（見 68-rank.js 檔頭）。
+       要拿掉：刪掉 68-rank.js、68c-coinrank.js、58-rank.css，
+       再把這一段跟 segs 裡的 'both' 拿走。沒有別的地方依賴它。 */
+    H.push(bothCard(t.classId, t.teamId));
   } else if (tab === 'team') {
     H.push(digTeamCard(t.classId));
   } else {
@@ -17691,8 +17690,9 @@ ACTS.btback = function (id) {
    （research through design）為方法決定要做：東西做出來、放進去用、
    看實際發生什麼；評價不好就拿掉，而「拿掉」本身也是一個發現。
 
-   要拿掉的話：刪掉這個檔案與 58-rank.css，再把 62-eco.js 裡那一行
-   rankCard(...) 拿掉就好。沒有別的地方依賴它。
+   要拿掉的話：刪掉這個檔案、68c-coinrank.js 與 58-rank.css，再把
+   62-eco.js 裡那一行 bothCard(...) 與 segs 裡的 both 拿掉。
+   沒有別的地方依賴它。
 
    ── 排什麼 ──
 
@@ -17774,65 +17774,6 @@ ACTS.norank = function () {
   say(t.noRank ? '不上榜了。' : '上榜了。');
 };
 
-function rankCard(classId, meId) {
-  var rows = rankRows(classId);
-  var me = meId ? teamOf(meId) : null;
-  var has = rows.some(function (r) { return r.dev !== null; });
-
-  var H = ['<div class="card rank">'];
-  /* 一行說完。本來眉標寫「估得準 · 最近 3 趟」，底下再寫一次
-     「最近三趟，準了幾次」——同一句話講兩次。
-
-     單位只在這裡說一次。本來每一列寫的是偏差率（13%、100%），
-     沒有人那樣想事情——而且 100% 看起來像世界末日，
-     其實只是「說 5 天走了 10 天」。 */
-  H.push('<h2 class="rk-h">最近 ' + RANK_N + ' 趟，準了幾次</h2>');
-
-  if (!has) {
-    H.push('<p class="dim">還沒有人交過。</p>');
-    H.push('</div>');
-    return H.join('');
-  }
-
-  H.push('<div class="rk-list">');
-  rows.forEach(function (r, i) {
-    var mine = r.teamId === meId;
-    H.push('<div class="rk-r' + (mine ? ' mine' : '') + (r.dev === null ? ' none' : '') + '">');
-    H.push('<i class="rk-i">' + (r.dev === null ? '·' : (i + 1)) + '</i>');
-    H.push('<b>' + esc(shortName(r.name)) + '</b>');
-    if (r.dev === null) {
-      H.push('<span class="rk-d">還沒交過</span>');
-    } else {
-      /* 三個記號，一趟一個，照時間排。
-
-         本來是三顆點（實心＝準的），讀得出「幾次」，但把「往哪一邊偏」
-         丟掉了——說 5 走 6 跟說 5 走 15 都只是一顆空心的點。
-
-         換成判定用的那三個記號之後，一列變成一條看得到形狀的三趟史：
-         全部朝右的那一列，是「他每一趟都比自己說的久」。
-         那三個記號在判定頁與任務清單上都已經在用，不用學新東西。 */
-      H.push('<div class="rk-dots">');
-      for (var k = 0; k < RANK_N; k++) {
-        var mk = r.marks[k];
-        H.push('<span class="rk-m ' + (mk || 'none') + '">' +
-          (mk ? stampPx(mk) : '') + '</span>');
-      }
-      H.push('</div>');
-      H.push('<span class="rk-d">' + (r.hit ? '準 ' + r.hit + ' 次' : '還沒準過') + '</span>');
-    }
-    H.push('</div>');
-  });
-  H.push('</div>');
-
-  /* 上不上榜自己決定。這一條是這張榜唯一的出口，所以它一直在。 */
-  if (me) {
-    H.push('<button class="rk-out" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'norank' })) + '\'>' +
-      (me.noRank ? '回到榜上' : '不要上榜') + '</button>');
-  }
-  H.push('</div>');
-  return H.join('');
-}
 
 
 /* ===== 68c-coinrank.js ===== */
@@ -17840,8 +17781,8 @@ function rankCard(classId, meId) {
 
    跟另外兩張榜一樣：刻意加進來、而且準備好隨時拿掉的。
 
-   要拿掉的話：刪掉這個檔案，再把 62-eco.js 裡那一行 coinCard(...) 與
-   segs 裡的 'coin' 拿掉就好。沒有別的地方依賴它。
+   金幣跟估得準現在合成同一張（bothCard，就在底下）。要拿掉整套的話
+   見 68-rank.js 的檔頭。
 
    ── 這一張排的是什麼 ──
 
@@ -17861,6 +17802,74 @@ function rankCard(classId, meId) {
 
    要是觀察到學生開始為那幾枚做事，就拿掉——而拿掉本身也是一個發現。 */
 
+/* ---------- 各組：兩個數字放在一起 ----------
+
+   本來是兩張分開的榜，一次只看得到一個：金幣一張、估得準一張。
+   使用者要的是把大家的進度放在一起，所以合成一張。
+
+   ── 排序照估得準，不照金幣 ──
+
+   68-rank.js 的檔頭把理由寫得很清楚：排產出量會直接壞掉——做得多的
+   組永遠在上面，而做得多跟做得好、跟專案管理學得如何都沒有關係，
+   那只會獎勵灌水與過勞。估得準是這裡唯一非零和的量：每一組可以
+   同時很準，不是有人上去就有人下來，而且它正是這個系統在教的東西。
+
+   收下幾件與金幣留在最右邊，看得到，但不決定順序。 */
+function bothCard(classId, meId) {
+  var rows = rankRows(classId);
+  var me = meId ? teamOf(meId) : null;
+  var coin = {};
+  coinRows(classId).forEach(function (c) { coin[c.teamId] = c; });
+
+  var H = ['<div class="card rank">'];
+  H.push('<h2 class="rk-h">各組</h2>');
+  H.push('<p class="dim">照最近 ' + RANK_N +
+    ' 趟準了幾次排。收下幾件不決定順序——排做得多的，永遠是同幾組在上面。</p>');
+
+  if (!rows.length) {
+    H.push('<p class="dim">還沒有人上榜。</p></div>');
+    return H.join('');
+  }
+
+  H.push('<div class="rk-list">');
+  rows.forEach(function (r, i) {
+    var mine = r.teamId === meId;
+    var c = coin[r.teamId];
+    H.push('<div class="rk-r' + (mine ? ' mine' : '') +
+      (r.dev === null ? ' none' : '') + '">');
+    H.push('<i class="rk-i">' + (r.dev === null ? '·' : (i + 1)) + '</i>');
+    H.push('<b>' + esc(shortName(r.name)) + '</b>');
+    if (r.dev === null) {
+      H.push('<span class="rk-d">還沒交過</span>');
+    } else {
+      /* 三個記號，一趟一個，照時間排。全部朝右的那一列，
+         是「他每一趟都比自己說的久」（見 68-rank.js）。 */
+      H.push('<div class="rk-dots">');
+      for (var k = 0; k < RANK_N; k++) {
+        var mk = r.marks[k];
+        H.push('<span class="rk-m ' + (mk || 'none') + '">' +
+          (mk ? stampPx(mk) : '') + '</span>');
+      }
+      H.push('</div>');
+      H.push('<span class="rk-d">' + (r.hit ? '準 ' + r.hit + ' 次' : '還沒準過') + '</span>');
+    }
+    if (c && c.coins.all) {
+      H.push('<span class="ck-c">收下 ' + c.done + ' 件　' + c.coins.all + ' 枚</span>');
+    }
+    H.push('</div>');
+  });
+  H.push('</div>');
+
+  /* 出口一直在。自主性優先於排名。 */
+  if (me) {
+    H.push('<button class="rk-out" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'norank' })) + '\'>' +
+      (me.noRank ? '回到榜上' : '不要上榜') + '</button>');
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
 function coinRows(classId) {
   var out = [];
   where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
@@ -17874,47 +17883,6 @@ function coinRows(classId) {
   return out;
 }
 
-function coinCard(classId, meId) {
-  var rows = coinRows(classId);
-  var me = meId ? teamOf(meId) : null;
-  var has = rows.some(function (r) { return r.coins.all > 0; });
-
-  var H = ['<div class="card rank">'];
-  H.push('<h2 class="rk-h">金幣</h2>');
-  H.push('<p class="dim">一件收下的委託 ' + RULES.COIN.base +
-    ' 枚，做完就有。老師收下的時候另外給 ' + RULES.COIN.bonusMin + '–' +
-    RULES.COIN.bonusMax + ' 枚——那幾枚是他想多說的部分。</p>');
-
-  if (!has) {
-    H.push('<p class="dim">還沒有人拿到金幣。老師收下之後才有。</p>');
-    H.push('</div>');
-    return H.join('');
-  }
-
-  H.push('<div class="rk-list">');
-  var last = null, place = 0;
-  rows.forEach(function (r, i) {
-    if (last === null || r.coins.all !== last) { place = i + 1; last = r.coins.all; }
-    var mine = r.teamId === meId;
-    H.push('<div class="rk-r' + (mine ? ' mine' : '') + (r.coins.all ? '' : ' none') + '">');
-    H.push('<i class="rk-i">' + (r.coins.all ? place : '·') + '</i>');
-    H.push('<b>' + esc(shortName(r.name)) + '</b>');
-    /* 完成幾件寫出來，因為那才是這個數字真正在說的事。 */
-    H.push('<span class="rk-d">收下 ' + r.done + ' 件</span>');
-    H.push('<span class="ck-c">' + r.coins.all + ' 枚</span>');
-    H.push('</div>');
-  });
-  H.push('</div>');
-
-  /* 跟另外兩張榜共用同一個開關：不上榜就是三張都不上。 */
-  if (me) {
-    H.push('<button class="rk-out" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'norank' })) + '\'>' +
-      (me.noRank ? '回到榜上' : '不要上榜') + '</button>');
-  }
-  H.push('</div>');
-  return H.join('');
-}
 
 
 /* ===== 69-story.js ===== */

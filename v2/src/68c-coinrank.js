@@ -2,8 +2,8 @@
 
    跟另外兩張榜一樣：刻意加進來、而且準備好隨時拿掉的。
 
-   要拿掉的話：刪掉這個檔案，再把 62-eco.js 裡那一行 coinCard(...) 與
-   segs 裡的 'coin' 拿掉就好。沒有別的地方依賴它。
+   金幣跟估得準現在合成同一張（bothCard，就在底下）。要拿掉整套的話
+   見 68-rank.js 的檔頭。
 
    ── 這一張排的是什麼 ──
 
@@ -23,6 +23,74 @@
 
    要是觀察到學生開始為那幾枚做事，就拿掉——而拿掉本身也是一個發現。 */
 
+/* ---------- 各組：兩個數字放在一起 ----------
+
+   本來是兩張分開的榜，一次只看得到一個：金幣一張、估得準一張。
+   使用者要的是把大家的進度放在一起，所以合成一張。
+
+   ── 排序照估得準，不照金幣 ──
+
+   68-rank.js 的檔頭把理由寫得很清楚：排產出量會直接壞掉——做得多的
+   組永遠在上面，而做得多跟做得好、跟專案管理學得如何都沒有關係，
+   那只會獎勵灌水與過勞。估得準是這裡唯一非零和的量：每一組可以
+   同時很準，不是有人上去就有人下來，而且它正是這個系統在教的東西。
+
+   收下幾件與金幣留在最右邊，看得到，但不決定順序。 */
+function bothCard(classId, meId) {
+  var rows = rankRows(classId);
+  var me = meId ? teamOf(meId) : null;
+  var coin = {};
+  coinRows(classId).forEach(function (c) { coin[c.teamId] = c; });
+
+  var H = ['<div class="card rank">'];
+  H.push('<h2 class="rk-h">各組</h2>');
+  H.push('<p class="dim">照最近 ' + RANK_N +
+    ' 趟準了幾次排。收下幾件不決定順序——排做得多的，永遠是同幾組在上面。</p>');
+
+  if (!rows.length) {
+    H.push('<p class="dim">還沒有人上榜。</p></div>');
+    return H.join('');
+  }
+
+  H.push('<div class="rk-list">');
+  rows.forEach(function (r, i) {
+    var mine = r.teamId === meId;
+    var c = coin[r.teamId];
+    H.push('<div class="rk-r' + (mine ? ' mine' : '') +
+      (r.dev === null ? ' none' : '') + '">');
+    H.push('<i class="rk-i">' + (r.dev === null ? '·' : (i + 1)) + '</i>');
+    H.push('<b>' + esc(shortName(r.name)) + '</b>');
+    if (r.dev === null) {
+      H.push('<span class="rk-d">還沒交過</span>');
+    } else {
+      /* 三個記號，一趟一個，照時間排。全部朝右的那一列，
+         是「他每一趟都比自己說的久」（見 68-rank.js）。 */
+      H.push('<div class="rk-dots">');
+      for (var k = 0; k < RANK_N; k++) {
+        var mk = r.marks[k];
+        H.push('<span class="rk-m ' + (mk || 'none') + '">' +
+          (mk ? stampPx(mk) : '') + '</span>');
+      }
+      H.push('</div>');
+      H.push('<span class="rk-d">' + (r.hit ? '準 ' + r.hit + ' 次' : '還沒準過') + '</span>');
+    }
+    if (c && c.coins.all) {
+      H.push('<span class="ck-c">收下 ' + c.done + ' 件　' + c.coins.all + ' 枚</span>');
+    }
+    H.push('</div>');
+  });
+  H.push('</div>');
+
+  /* 出口一直在。自主性優先於排名。 */
+  if (me) {
+    H.push('<button class="rk-out" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'norank' })) + '\'>' +
+      (me.noRank ? '回到榜上' : '不要上榜') + '</button>');
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
 function coinRows(classId) {
   var out = [];
   where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
@@ -36,44 +104,3 @@ function coinRows(classId) {
   return out;
 }
 
-function coinCard(classId, meId) {
-  var rows = coinRows(classId);
-  var me = meId ? teamOf(meId) : null;
-  var has = rows.some(function (r) { return r.coins.all > 0; });
-
-  var H = ['<div class="card rank">'];
-  H.push('<h2 class="rk-h">金幣</h2>');
-  H.push('<p class="dim">一件收下的委託 ' + RULES.COIN.base +
-    ' 枚，做完就有。老師收下的時候另外給 ' + RULES.COIN.bonusMin + '–' +
-    RULES.COIN.bonusMax + ' 枚——那幾枚是他想多說的部分。</p>');
-
-  if (!has) {
-    H.push('<p class="dim">還沒有人拿到金幣。老師收下之後才有。</p>');
-    H.push('</div>');
-    return H.join('');
-  }
-
-  H.push('<div class="rk-list">');
-  var last = null, place = 0;
-  rows.forEach(function (r, i) {
-    if (last === null || r.coins.all !== last) { place = i + 1; last = r.coins.all; }
-    var mine = r.teamId === meId;
-    H.push('<div class="rk-r' + (mine ? ' mine' : '') + (r.coins.all ? '' : ' none') + '">');
-    H.push('<i class="rk-i">' + (r.coins.all ? place : '·') + '</i>');
-    H.push('<b>' + esc(shortName(r.name)) + '</b>');
-    /* 完成幾件寫出來，因為那才是這個數字真正在說的事。 */
-    H.push('<span class="rk-d">收下 ' + r.done + ' 件</span>');
-    H.push('<span class="ck-c">' + r.coins.all + ' 枚</span>');
-    H.push('</div>');
-  });
-  H.push('</div>');
-
-  /* 跟另外兩張榜共用同一個開關：不上榜就是三張都不上。 */
-  if (me) {
-    H.push('<button class="rk-out" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'norank' })) + '\'>' +
-      (me.noRank ? '回到榜上' : '不要上榜') + '</button>');
-  }
-  H.push('</div>');
-  return H.join('');
-}
