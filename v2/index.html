@@ -9474,7 +9474,7 @@ function save() {
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 10;
+var SEED_V = 11;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -11836,6 +11836,11 @@ function seed() {
   DB.Config.seq = top + 1;
   /* 這一份是示範資料，而且是第幾版。兩個旗子一起決定要不要重種
      （見 40-db.js 的 load）。 */
+  /* 示範資料裡的學生都已經走過好幾趟了，所以他們早就看過開場。
+     不標的話，每一位第一次換角色都會被重播一次（見 55-ui.js 的 hero）。 */
+  DB.Users.forEach(function (u) {
+    if (u.role === 'student' && !u.sawStory) u.sawStory = T0;
+  });
   DB.Config.demo = 1;
   DB.Config.seedV = SEED_V;
   /* 示範資料的記號。帶著 _d 的那幾筆永遠不會被推到雲端上
@@ -12875,7 +12880,16 @@ var ACTS = {
     if (!u.sawStory) {
       u.sawStory = now();
       save();
-      return go('story', { n: 0 });
+      /* 只有還沒開始走的人才自動播。
+
+         旗子擋不住所有情況：示範資料裡的學生沒有這一欄、換一台機器、
+         清過瀏覽器資料，旗子都會不在。而一個已經走了五趟的人按「換角色」
+         被丟進開場動畫，只會覺得系統壞了——他要的是換一張臉，
+         不是重看一次「這座地下城就是你們的專案」。
+
+         所以再加一道：這一組如果已經走過任何一趟，就不播。
+         故事那一頁一直在（首頁那一排上就有一格），想看隨時點得到。 */
+      if (!runsFor(u.teamId).length) return go('story', { n: 0 });
     }
     go('home', {});
   },

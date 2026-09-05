@@ -262,6 +262,11 @@ function seed() {
   DB.Config.seq = top + 1;
   /* 這一份是示範資料，而且是第幾版。兩個旗子一起決定要不要重種
      （見 40-db.js 的 load）。 */
+  /* 示範資料裡的學生都已經走過好幾趟了，所以他們早就看過開場。
+     不標的話，每一位第一次換角色都會被重播一次（見 55-ui.js 的 hero）。 */
+  DB.Users.forEach(function (u) {
+    if (u.role === 'student' && !u.sawStory) u.sawStory = T0;
+  });
   DB.Config.demo = 1;
   DB.Config.seedV = SEED_V;
   /* 示範資料的記號。帶著 _d 的那幾筆永遠不會被推到雲端上
