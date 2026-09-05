@@ -182,8 +182,24 @@ PAGES.battle = function () {
     /* 兩個選項寫成他真的要做的事：戰鬥就是回報進度，那不是比喻，
        那一頁問的就是「實際花了幾天」跟「順不順」。括號裡那一句
        讓第一次進來的人不用猜「上」是什麼意思。 */
-    H.push(btChoice('btgo:' + r.runId, '交東西給他', 'go'));
-    H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
+    H.push(btChoice('btgo:' + r.runId,
+      r.state === 'back' ? '改好了，再交一次' : '交東西給他', 'go'));
+    /* ── 退回的那一趟沒有「還沒準備好」 ──
+
+       那一顆按下去走的是 actRethink，而 actRethink 只收 running。
+       所以被退回的人按了它：角色演完往回跑、畫面把他丟回「說幾天」
+       那一頁，可是那一趟還停在 back——他在那一頁按「出發」也不會
+       有事發生（actCommit 看到已經有一趟就直接回傳）。
+       一顆看起來會做事、其實什麼都不會發生的鍵。
+
+       而且它本來就不該做事：那一趟的兩個數字在他第一次交出去的
+       當下就定了、判定也蓋了。退回不動判定，那就沒有東西可以退。
+
+       換成一顆老實的：回廊道。老師那一句還在那裡等他，他隨時
+       回得來。 */
+    H.push(r.state === 'back'
+      ? btChoice('go:home', '回廊道', '')
+      : btChoice('btback:' + r.runId, '還沒準備好', ''));
     H.push('</div>');
   }
   H.push('</div>');
@@ -212,7 +228,11 @@ PAGES.battle = function () {
     /* 「還沒準備好」只留在第一題。後面那幾題有「回上一題」，
        要退出一路退回去就好——每一頁都掛一顆離開鍵，等於每一頁
        都在問他一次「你確定要繼續嗎」。 */
-    if (qi === 0) H.push(btChoice('btback:' + r.runId, '還沒準備好', ''));
+    if (qi === 0) {
+      H.push(r.state === 'back'
+        ? btChoice('go:home', '回廊道', '')
+        : btChoice('btback:' + r.runId, '還沒準備好', ''));
+    }
     H.push('</div></div>');
   }
 
@@ -356,7 +376,7 @@ var BT_STEPS = [
       H.push('</div>');
       if (DRAFT.feel && btAskHard(r.teamId)) {
         H.push('<div class="eyebrow">為什麼　選填</div>');
-        H.push('<textarea class="bt-w" rows="2" maxlength="300" ' +
+        H.push('<textarea class="bt-w" id="bt-why" rows="2" maxlength="300" ' +
           'oninput="DRAFT.why=this.value" placeholder="' +
           esc('選填。') + '">' + esc(draft('why', '')) + '</textarea>');
       }
@@ -377,7 +397,7 @@ var BT_STEPS = [
 
   { k: 'next', ask: '再給你們兩天，你們會做什麼？',
     body: function () {
-      return '<textarea class="bt-w" rows="2" maxlength="200" ' +
+      return '<textarea class="bt-w" id="bt-next" rows="2" maxlength="200" ' +
         'oninput="DRAFT.next=this.value" placeholder="' +
         esc('例：把第三件收尾，那一件只做了一半') + '">' +
         esc(draft('next', '')) + '</textarea>';
@@ -586,23 +606,16 @@ function battleRun() {
     box.classList.add('foe-out');
   });
 
-  /* 三 · 第一次遇到的那一隻，收進圖鑑——在這裡喊一次。
+  /* 三 · 演完直接換頁。不用再按一次。
 
-     牠倒下的下一拍就是「牠被記下來了」，那是這個作品裡少數幾個
-     「你多了一個東西」的時刻。不喊的話它只在圖鑑那一頁看得到，
-     而他不一定會去翻。同一隻再遇到不會再喊（見 mobDebut）。 */
-  var debut = mobDebut(r.teamId, r.runId);
-  if (debut) {
-    btAt(2700, function () {
-      var m = mobOfRun(r);
-      var z = zoneOfRun(r, r.teamId);
-      box.insertAdjacentHTML('beforeend',
-        regCard('新登場', m.n, '已收錄在圖鑑',
-          pxTag(m.px, (z || STRATA[0]).pal, 'reg-px'), true));
-    });
-  }
-  /* 四 · 演完直接換頁。不用再按一次。 */
-  btAt(debut ? 5000 : 3200, function () { go('stamp', { id: r.runId }); });
+     這裡本來還有一張卡：「新登場 · 已收錄在圖鑑」，在牠倒下的
+     下一拍跳出來。拿掉了，搬到老師收下的那一刻（見 60-student.js
+     的 okPend）——圖鑑的解鎖條件是收下，而這一刻老師還沒看。
+     卡片說收好了、翻開圖鑑還是黑影，那張卡就是在說謊。
+
+     而且它算的是「第一次遇到」：被退回、改好再交一次，牠會再
+     跳一次——同一位新登場兩遍。 */
+  btAt(3200, function () { go('stamp', { id: r.runId }); });
 }
 
 /* 上：進第一問。老師沒分段就直接到第二問（見 btPhase）。 */
@@ -668,7 +681,7 @@ ACTS.btq2 = function (id) {
   /* 交出去用的也是他這一次打的。本來這裡也會退回 lastWhere，
      所以就算欄位看起來是空的，交出去的仍然是上一趟那一句。 */
   var wh = String(DRAFT.where || '').trim();
-  var okd = again ? actResend(t.teamId, id) : actSubmit(t.teamId, id, wh);
+  var okd = again ? actResend(t.teamId, id, wh) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.scope = null; DRAFT.next = ''; DRAFT.said1 = ''; DRAFT.where = null;

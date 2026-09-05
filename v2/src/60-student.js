@@ -123,6 +123,18 @@ PAGES.home = function () {
     H.push(regCard('新拿到', (m ? m.title : '那一趟'), '任務之證已收錄在圖鑑',
       pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
       false));
+    /* 這一位第一次進圖鑑的話，同一張卡上再加一張。
+
+       本來這一句是在交出去那一刻喊的（戰鬥演完跳一張卡）。那時候
+       老師還沒看，而圖鑑要收下才解鎖——卡片說收好了，翻開來是
+       黑影。搬到這裡：說「他被收進去了」的那一刻，他真的被收進去了。 */
+    if (mobNewInCodex(t.teamId, r.runId)) {
+      var pm = mobOfRun(r);
+      if (pm && pm.n) {
+        H.push(regCard('新登場', pm.n, '已收錄在圖鑑',
+          pxTag(pm.px, (kz || zoneNow(t.teamId)).pal, 'reg-px'), false));
+      }
+    }
     /* 他那一句話擺在最下面，而且是這一整張上唯一的人話。 */
     if (r.word) H.push(wordBlock(r, 'big'));
     H.push('</div>');

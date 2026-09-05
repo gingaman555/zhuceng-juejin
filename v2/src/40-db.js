@@ -824,6 +824,31 @@ function mobDebut(teamId, runId) {
   return !!first && first.runId === runId;
 }
 
+/* 這一趟是不是「這一位進圖鑑」的那一趟。
+
+   跟 mobDebut 不一樣的地方是它跟 metMobs 用同一條線：收下才算。
+   圖鑑那一頁的解鎖條件是老師收下（見下面的 metMobs），所以
+   「他被收進去了」這句話也只能在那一刻說。
+
+   本來這一句是在交出去的當下說的（戰鬥演完那一張「新登場 ·
+   已收錄在圖鑑」）。那時候老師還沒看，圖鑑裡還是一個黑影——
+   卡片說收好了，翻開來沒有。而且被退回再交一次，那張卡會再跳
+   一次，因為它算的是「第一次遇到」，遇到了兩次。 */
+function mobNewInCodex(teamId, runId) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r) return false;
+  var m = mobOfRun(r);
+  if (!m || !m.n) return false;
+  var first = null;
+  where('Runs', function (x) { return x.teamId === teamId; }).forEach(function (x) {
+    if (x.state !== 'done' && x.state !== 'approved') return;
+    var mm = mobOfRun(x);
+    if (!mm || mm.n !== m.n) return;
+    if (!first || (x.committedAt || 0) < (first.committedAt || 0)) first = x;
+  });
+  return !!first && first.runId === runId;
+}
+
 /* 遇過的那幾隻。 */
 /* 圖鑑上收進來的那幾位。**老師收下那一件之後**才算。
 
@@ -1336,9 +1361,20 @@ function actReject(runId, word) {
 }
 
 /* 改好了再交一次。回到老師那一排，判定還是原來那一個。 */
-function actResend(teamId, runId) {
+function actResend(teamId, runId, link) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.teamId !== teamId || r.state !== 'back') return false;
+  /* 改過的位置要跟著更新。
+
+     本來這一支不收 link，而重交那一條路走的就是它——所以學生在
+     畫面上把「東西在哪裡」改掉、按了交出去，老師收到的還是上一次
+     那個位置。老師退回最常見的理由偏偏就是「我找不到你的東西」，
+     那正好是這一格唯一會被改的時候。
+
+     空的不覆蓋：那一題必填（見 67-battle.js），走到這裡一定有字，
+     但別條路叫這一支的時候不該把它清掉。 */
+  var wh = String(link == null ? '' : link).trim();
+  if (wh) r.link = wh;
   r.state = 'submitted';
   r.submittedAt = r.submittedAt || now();
   save();
