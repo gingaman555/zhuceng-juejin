@@ -3228,6 +3228,12 @@ button.ac:active{transform:translateY(1px)}
    佔滿一整列，不跟上面那幾個數字擠。 */
 .msr-by{grid-column:1 / -1;font-size:22px;color:var(--dim)}
 
+/* 別人那一行：看得到，按不動。跟交出去那一頁的 .sp2.theirs 同一個做法。 */
+.pl.theirs{opacity:.72}
+.pl .got{min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
+/* 還沒本人按過的那個數字：它現在只是一個預設值，不是誰說的話。 */
+.pl .wait{color:var(--mute);text-decoration:underline dotted}
+
 /* 上一趟。一行，接在這一趟的來歷底下。 */
 .prev{margin:11px 0 0;color:var(--mute)}
 
@@ -9774,7 +9780,12 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
         d: clamp(1, RULES.EST_MAX, Number(x.d) || 1),
         /* 誰做這一件。回報的時候只有他填得了自己那幾件，
            而他的預估因此終於是「對自己的」預估。 */
-        who: String(x.who || '') };
+        who: String(x.who || ''),
+        /* 那個天數是不是本人自己按的。擋不住代填（他們常常是一起
+           坐著、一台電腦規劃的），所以老實記下來——事後分得出
+           「他自己說的」跟「別人幫他填的」，而那個比例本身就是一個
+           值得看的東西。 */
+        byOwn: x.byOwn ? 1 : 0 };
     });
   /* 列了就是加起來。永遠只有一個地方在輸入。 */
   if (pl.length) est = planDays(pl);
@@ -12499,7 +12510,9 @@ var ACTS = {
     if (!x) return;
     var p = (DRAFT.plan || []).slice();
     if (p.length >= RULES.STEPS_MAX) return say('最多 ' + RULES.STEPS_MAX + ' 件。');
-    p.push({ n: x.slice(0, 24), d: 1 });
+    /* 掛在加的人名下。本來不掛，而 myPlan 把「沒有主人」當成
+       「大家都可以報」——那樣回報的時候誰都填得了那一件。 */
+    p.push({ n: x.slice(0, 24), d: 1, who: S.who });
     DRAFT.plan = p;
     render();
     var el = document.getElementById('pl-add');
@@ -12517,6 +12530,8 @@ var ACTS = {
     if (!pl[k]) return;
     var at = mem.indexOf(pl[k].who);
     pl[k].who = mem[(at + 1) % mem.length];
+    /* 換了人，那個天數就不再是新主人說的。 */
+    pl[k].byOwn = 0;
     render();
   },
   plandel: function (i) {
@@ -12531,7 +12546,24 @@ var ACTS = {
     var p = (DRAFT.plan || []).slice();
     var i = Number(q[0]);
     if (!p[i]) return;
-    p[i] = { n: p[i].n, d: clamp(1, RULES.EST_MAX, p[i].d + Number(q[1])) };
+    /* 只有掛在你名下的那一件按得動。跟交出去那一頁同一條規則
+       （見 67-battle.js）：同一張紙上你只寫得了自己那一行。
+
+       承諾那一邊本來沒有這一條——所以一個人可以替全組把每一件的
+       天數都打完，而回報的時候卻是四個人各自報自己那幾件。
+       前面一個人宣告，後面四個人回報，那兩個數字不是同一種東西。 */
+    if (p[i].who && p[i].who !== S.who) return say('這一件是 ' + shortWho(p[i].who) + ' 的。');
+    /* 本來這裡寫 { n, d }——who 整個被丟掉。指派完再調一次天數，
+       指派就不見了。 */
+    p[i] = {
+      n: p[i].n,
+      d: clamp(1, RULES.EST_MAX, p[i].d + Number(q[1])),
+      who: p[i].who || S.who,
+      /* 這一格是不是本人自己按的。他們常常是一起坐著、一台電腦
+         規劃的，所以擋不住代填——那就老實記下來，事後分得出
+         「他自己說的」跟「別人幫他填的」。 */
+      byOwn: 1
+    };
     DRAFT.plan = p;
     render();
   },
@@ -14539,25 +14571,41 @@ PAGES.commit = function () {
   H.push('<div class="eyebrow">你要做哪幾件</div>');
   if (plan.length) {
     H.push('<div class="plist">');
+    var waiting = 0;
     plan.forEach(function (x, i) {
-      H.push('<div class="pl">');
+      /* 同一張紙，各寫各的行（見 55-ui.js 的 pland）。
+         別人那幾件看得到、按不動——跟交出去那一頁一模一樣。 */
+      var own = !x.who || x.who === S.who;
+      if (!x.byOwn) waiting++;
+      H.push('<div class="pl' + (own ? '' : ' theirs') + '">');
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
-      /* 誰做這一件。點一下換下一個人。 */
+      /* 誰做這一件。點一下換下一個人。分工是一起喬的，所以這一顆
+         不擋——擋的是天數，因為天數是那個人自己要說的話。 */
       H.push('<button class="pw" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'planwho:' + i })) + '\' title="' +
         esc('點一下換人') + '">' + esc(shortWho(x.who)) + '</button>');
-      H.push('<button class="pd" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'pland:' + i + ',-1' })) + '\'>−</button>');
-      H.push('<u>' + x.d + '</u>');
-      H.push('<button class="pd" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'pland:' + i + ',1' })) + '\'>＋</button>');
+      if (own) {
+        H.push('<button class="pd" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'pland:' + i + ',-1' })) + '\'>−</button>');
+        H.push('<u' + (x.byOwn ? '' : ' class="wait"') + '>' + x.d + '</u>');
+        H.push('<button class="pd" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'pland:' + i + ',1' })) + '\'>＋</button>');
+      } else {
+        H.push('<u class="got' + (x.byOwn ? '' : ' wait') + '">' + x.d + '</u>');
+      }
       H.push('<button class="px-del" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'plandel:' + i })) + '\' title="' +
         esc('拿掉這一件') + '">×</button>');
       H.push('</div>');
     });
     H.push('</div>');
+    /* 還有幾件沒有本人自己說過天數。不擋出發——擋了的話，一個人
+       不在，整組就走不了。只是說出來，讓他們自己決定要不要等。 */
+    if (waiting) {
+      H.push('<p class="dim">還有 ' + waiting +
+        ' 件沒有本人說幾天。出發前讓他們自己按一次，那個數字才是他的。</p>');
+    }
   }
   H.push('<input id="pl-add" placeholder="' +
     esc(plan.length ? '再一件，按 Enter' : '例：找到人　→ 按 Enter') +

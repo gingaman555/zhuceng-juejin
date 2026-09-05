@@ -588,7 +588,9 @@ var ACTS = {
     if (!x) return;
     var p = (DRAFT.plan || []).slice();
     if (p.length >= RULES.STEPS_MAX) return say('最多 ' + RULES.STEPS_MAX + ' 件。');
-    p.push({ n: x.slice(0, 24), d: 1 });
+    /* 掛在加的人名下。本來不掛，而 myPlan 把「沒有主人」當成
+       「大家都可以報」——那樣回報的時候誰都填得了那一件。 */
+    p.push({ n: x.slice(0, 24), d: 1, who: S.who });
     DRAFT.plan = p;
     render();
     var el = document.getElementById('pl-add');
@@ -606,6 +608,8 @@ var ACTS = {
     if (!pl[k]) return;
     var at = mem.indexOf(pl[k].who);
     pl[k].who = mem[(at + 1) % mem.length];
+    /* 換了人，那個天數就不再是新主人說的。 */
+    pl[k].byOwn = 0;
     render();
   },
   plandel: function (i) {
@@ -620,7 +624,24 @@ var ACTS = {
     var p = (DRAFT.plan || []).slice();
     var i = Number(q[0]);
     if (!p[i]) return;
-    p[i] = { n: p[i].n, d: clamp(1, RULES.EST_MAX, p[i].d + Number(q[1])) };
+    /* 只有掛在你名下的那一件按得動。跟交出去那一頁同一條規則
+       （見 67-battle.js）：同一張紙上你只寫得了自己那一行。
+
+       承諾那一邊本來沒有這一條——所以一個人可以替全組把每一件的
+       天數都打完，而回報的時候卻是四個人各自報自己那幾件。
+       前面一個人宣告，後面四個人回報，那兩個數字不是同一種東西。 */
+    if (p[i].who && p[i].who !== S.who) return say('這一件是 ' + shortWho(p[i].who) + ' 的。');
+    /* 本來這裡寫 { n, d }——who 整個被丟掉。指派完再調一次天數，
+       指派就不見了。 */
+    p[i] = {
+      n: p[i].n,
+      d: clamp(1, RULES.EST_MAX, p[i].d + Number(q[1])),
+      who: p[i].who || S.who,
+      /* 這一格是不是本人自己按的。他們常常是一起坐著、一台電腦
+         規劃的，所以擋不住代填——那就老實記下來，事後分得出
+         「他自己說的」跟「別人幫他填的」。 */
+      byOwn: 1
+    };
     DRAFT.plan = p;
     render();
   },

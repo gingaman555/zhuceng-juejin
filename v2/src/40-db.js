@@ -384,7 +384,12 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
         d: clamp(1, RULES.EST_MAX, Number(x.d) || 1),
         /* 誰做這一件。回報的時候只有他填得了自己那幾件，
            而他的預估因此終於是「對自己的」預估。 */
-        who: String(x.who || '') };
+        who: String(x.who || ''),
+        /* 那個天數是不是本人自己按的。擋不住代填（他們常常是一起
+           坐著、一台電腦規劃的），所以老實記下來——事後分得出
+           「他自己說的」跟「別人幫他填的」，而那個比例本身就是一個
+           值得看的東西。 */
+        byOwn: x.byOwn ? 1 : 0 };
     });
   /* 列了就是加起來。永遠只有一個地方在輸入。 */
   if (pl.length) est = planDays(pl);

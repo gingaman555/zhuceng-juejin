@@ -848,25 +848,41 @@ PAGES.commit = function () {
   H.push('<div class="eyebrow">你要做哪幾件</div>');
   if (plan.length) {
     H.push('<div class="plist">');
+    var waiting = 0;
     plan.forEach(function (x, i) {
-      H.push('<div class="pl">');
+      /* 同一張紙，各寫各的行（見 55-ui.js 的 pland）。
+         別人那幾件看得到、按不動——跟交出去那一頁一模一樣。 */
+      var own = !x.who || x.who === S.who;
+      if (!x.byOwn) waiting++;
+      H.push('<div class="pl' + (own ? '' : ' theirs') + '">');
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
-      /* 誰做這一件。點一下換下一個人。 */
+      /* 誰做這一件。點一下換下一個人。分工是一起喬的，所以這一顆
+         不擋——擋的是天數，因為天數是那個人自己要說的話。 */
       H.push('<button class="pw" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'planwho:' + i })) + '\' title="' +
         esc('點一下換人') + '">' + esc(shortWho(x.who)) + '</button>');
-      H.push('<button class="pd" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'pland:' + i + ',-1' })) + '\'>−</button>');
-      H.push('<u>' + x.d + '</u>');
-      H.push('<button class="pd" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'pland:' + i + ',1' })) + '\'>＋</button>');
+      if (own) {
+        H.push('<button class="pd" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'pland:' + i + ',-1' })) + '\'>−</button>');
+        H.push('<u' + (x.byOwn ? '' : ' class="wait"') + '>' + x.d + '</u>');
+        H.push('<button class="pd" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'pland:' + i + ',1' })) + '\'>＋</button>');
+      } else {
+        H.push('<u class="got' + (x.byOwn ? '' : ' wait') + '">' + x.d + '</u>');
+      }
       H.push('<button class="px-del" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'plandel:' + i })) + '\' title="' +
         esc('拿掉這一件') + '">×</button>');
       H.push('</div>');
     });
     H.push('</div>');
+    /* 還有幾件沒有本人自己說過天數。不擋出發——擋了的話，一個人
+       不在，整組就走不了。只是說出來，讓他們自己決定要不要等。 */
+    if (waiting) {
+      H.push('<p class="dim">還有 ' + waiting +
+        ' 件沒有本人說幾天。出發前讓他們自己按一次，那個數字才是他的。</p>');
+    }
   }
   H.push('<input id="pl-add" placeholder="' +
     esc(plan.length ? '再一件，按 Enter' : '例：找到人　→ 按 Enter') +

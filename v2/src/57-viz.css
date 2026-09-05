@@ -1153,6 +1153,12 @@ button.ac:active{transform:translateY(1px)}
    佔滿一整列，不跟上面那幾個數字擠。 */
 .msr-by{grid-column:1 / -1;font-size:22px;color:var(--dim)}
 
+/* 別人那一行：看得到，按不動。跟交出去那一頁的 .sp2.theirs 同一個做法。 */
+.pl.theirs{opacity:.72}
+.pl .got{min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
+/* 還沒本人按過的那個數字：它現在只是一個預設值，不是誰說的話。 */
+.pl .wait{color:var(--mute);text-decoration:underline dotted}
+
 /* 上一趟。一行，接在這一趟的來歷底下。 */
 .prev{margin:11px 0 0;color:var(--mute)}
 
