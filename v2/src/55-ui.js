@@ -1013,8 +1013,18 @@ var ACTS = {
   /* 退回去改。一定要寫一句話——不寫理由的退回等於
      「再做一次，但我不告訴你為什麼」。 */
   reject: function (runId) {
-    var w = (document.getElementById('gr-word') || {}).value || '';
-    if (!w.trim()) return say('退回去改要寫一句話。');
+    var box = document.getElementById('gr-word');
+    var w = (box || {}).value || '';
+    if (!w.trim()) {
+      /* 那顆鍵現在釘在底部（見 70-teacher.js 的 rvw-pin），所以按下去的
+         時候，要寫的那一格可能在三屏以外。只說「要寫一句話」等於叫他
+         自己去找——捲過去，順便讓游標停在那裡。 */
+      if (box && box.scrollIntoView) {
+        box.scrollIntoView({ block: 'center' });
+        if (box.focus) box.focus();
+      }
+      return say('退回去改要寫一句話。');
+    }
     var r0 = find('Runs', function (x) { return x.runId === runId; });
     var ms0 = r0 ? r0.msId : null;
     if (!actReject(runId, w.trim())) return say('這一件退不回去。');

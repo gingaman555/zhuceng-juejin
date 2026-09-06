@@ -2413,6 +2413,27 @@ button.ac:active{transform:translateY(1px)}
 /* 有新東西的那一扇：金邊。金＝可以按、你在這裡（見 50-style.css）。 */
 .dk.lit{color:var(--ink);box-shadow:inset 0 0 0 2px var(--gold)}
 
+/* ---------- 審核頁：釘在底部的那兩顆 ----------
+
+   這一頁量到 4.7 屏，而決定在最底下（見 70-teacher.js）。
+   釘住之後老師滑到哪都按得到，一個字都不用刪。
+
+   不用 position:fixed 而用 sticky：fixed 會脫離文件流，底下那一段
+   會被蓋住；sticky 留在流裡，配合底下那塊空白就不會壓到任何東西。 */
+.rvw-pin{
+  position:sticky;bottom:0;z-index:5;
+  margin:22px -22px 0;padding:11px 22px;
+  background:var(--panel);
+  box-shadow:0 -2px 0 var(--line2), 0 -22px 22px -11px rgba(0,0,0,.55)
+}
+.rvw-pin-in{display:flex;gap:11px;align-items:stretch}
+.rvw-pin .big{flex:1 1 auto}
+.rvw-pin .ghost{flex:0 0 auto}
+@media (max-width:430px){
+  .rvw-pin{margin-left:-14px;margin-right:-14px;padding:11px 14px}
+  .rvw-pin-in{gap:5px}
+}
+
 /* ---------- 全班最近 ----------
    打開它的理由是別人，留下來的理由才是自己。
    放的是「發生了什麼」，不是「誰比較好」——沒有名次、沒有印章。 */
@@ -13039,8 +13060,18 @@ var ACTS = {
   /* 退回去改。一定要寫一句話——不寫理由的退回等於
      「再做一次，但我不告訴你為什麼」。 */
   reject: function (runId) {
-    var w = (document.getElementById('gr-word') || {}).value || '';
-    if (!w.trim()) return say('退回去改要寫一句話。');
+    var box = document.getElementById('gr-word');
+    var w = (box || {}).value || '';
+    if (!w.trim()) {
+      /* 那顆鍵現在釘在底部（見 70-teacher.js 的 rvw-pin），所以按下去的
+         時候，要寫的那一格可能在三屏以外。只說「要寫一句話」等於叫他
+         自己去找——捲過去，順便讓游標停在那裡。 */
+      if (box && box.scrollIntoView) {
+        box.scrollIntoView({ block: 'center' });
+        if (box.focus) box.focus();
+      }
+      return say('退回去改要寫一句話。');
+    }
     var r0 = find('Runs', function (x) { return x.runId === runId; });
     var ms0 = r0 ? r0.msId : null;
     if (!actReject(runId, w.trim())) return say('這一件退不回去。');
@@ -19129,14 +19160,34 @@ PAGES.review = function () {
      一句，而且是事實，不是打氣。 */
   H.push('<p class="dim">你收下的那一刻，他們才拿得到金幣、圖鑑那一格，' +
     '跟疊上去的那一塊。</p>');
+  /* 回審核清單留在正文裡——它不是決定，是離開。 */
   H.push('<div class="row">');
+  H.push(btn('回審核清單', 'go:radar', 'ghost'));
+  H.push('</div>');
+
+  /* ── 決定那兩顆釘在底部 ──
+
+     量出來的：這一頁在手機上 4.7 屏（3846px），而「收下」在 y=3583。
+     老師要滑四屏才按得到，而這是全系統他最常打開的一頁，
+     星期三三位老師會一直用它。
+
+     不是砍內容——上面那 1592px 是十五小塊（上一趟、誰做了什麼、
+     拆件說／實際、順不順、範圍、為什麼、再兩天、承諾時標的），
+     每一塊都是「老師資訊夠不夠」那一輪加進去的，沒有一塊該砍。
+     問題是決定被埋在最底下。
+
+     首頁那個 sticky 當初拿掉是對的：那一頁兩屏，釘在底部只會蓋住
+     東西。這一頁四點七屏、而且唯一的出口在最底下——同一個做法在
+     這裡剛好是解法。
+
+     底下留一塊等高的空白，所以它不會蓋住最後一行。 */
+  H.push('<div class="rvw-pin"><div class="rvw-pin-in">');
   H.push(btn('收下', 'approve:' + r.runId, 'big'));
   /* 退回。它不動判定也不動深度——那一趟的兩個數字在他交出去的
      當下就定了，重做不會讓他當初說的話變成別的話。
      退回講的只有一件事：那份成果還沒被收下。 */
   H.push(btn('退回去改', 'reject:' + r.runId, 'ghost'));
-  H.push(btn('回審核清單', 'go:radar', 'ghost'));
-  H.push('</div>');
+  H.push('</div></div>');
   return H.join('');
 };
 
