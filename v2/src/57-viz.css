@@ -1733,6 +1733,13 @@ button.ac:active{transform:translateY(1px)}
 .sty-me .wa{animation:wkA 1.6s steps(1,end) infinite}
 .sty-me .wb{animation:wkB 1.6s steps(1,end) infinite}
 
+/* 每一個地方站著的那一位。你在的那一間他站在你左邊，
+   別的地方他自己站著——六個地方六個人在等。 */
+.sty-wait{
+  position:absolute;left:11px;bottom:25%;display:block;width:33px;height:33px
+}
+.sty-wait .px{width:33px;height:33px}
+
 /* 關著的那一扇。不是第七個地方——是唯一的出去。 */
 .sty-door{
   flex:0 0 88px;position:relative;display:flex;flex-direction:column;
@@ -1756,17 +1763,20 @@ button.ac:active{transform:translateY(1px)}
 }
 /* 一格＝一天。走過的那幾格亮著。 */
 .sty-tile{
-  position:absolute;bottom:66px;width:44px;height:6px;z-index:1;
+  position:absolute;bottom:66px;width:6.5%;height:6px;z-index:1;
   background:rgba(255,240,214,.07)
 }
 .sty-tile.on{background:var(--zink);opacity:.55}
-.sty-hero{position:absolute;left:110px;bottom:66px;width:66px;height:66px;z-index:3}
+/* 人站在「實際走到」那一條上——那一條就是他走到哪裡的意思。
+   本來他站在最左邊（left:110），而那時候圖上只有一條線、他站哪裡
+   都不影響。現在有兩條，他站的位置本身就是其中一個數字。 */
+.sty-hero{position:absolute;left:78%;margin-left:-33px;bottom:66px;width:66px;height:66px;z-index:3}
 .sty-hero .wf{position:absolute;left:0;top:0;width:66px;height:66px}
 .sty-hero .wa{animation:wkA .44s steps(1,end) infinite}
 .sty-hero .wb{animation:wkB .44s steps(1,end) infinite}
 /* 你說的那一天：一條實線加一句話。廊道上那條虛線拿掉之後，
    它只在這裡出現一次——因為這一頁在解釋它。 */
-.sty-day{position:absolute;left:286px;top:22px;bottom:66px;z-index:2}
+.sty-day{position:absolute;left:47%;top:22px;bottom:66px;z-index:2}
 .sty-day i{
   position:absolute;left:0;top:0;bottom:0;width:3px;
   background:repeating-linear-gradient(180deg,
@@ -1776,8 +1786,32 @@ button.ac:active{transform:translateY(1px)}
   position:absolute;left:11px;top:0;font-size:22px;font-weight:400;
   color:var(--gold);white-space:nowrap;line-height:1
 }
-.sty-mob{position:absolute;left:297px;bottom:66px;width:66px;height:66px;z-index:3}
+.sty-mob{position:absolute;left:47%;margin-left:-33px;bottom:66px;width:66px;height:66px;z-index:3}
 .sty-mob .px{width:66px;height:66px}
+/* 你實際走到的那一條。實線，因為它是已經發生的事；
+   虛線那一條是承諾，還沒發生。 */
+.sty-real{position:absolute;left:78%;top:22px;bottom:66px;z-index:2}
+.sty-real i{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ink)}
+/* 這一行不掛在那條線旁邊——線在 78%，四個字掛出去就出畫面了。
+   改成貼著圖的右緣往左寫。 */
+/* 往左寫，而且錯開一行——兩行都貼在 top:0 的話，窄螢幕上
+   「你說的」跟「實際走到」會疊在一起（量到 178–249 對 170–276）。 */
+.sty-real b{
+  position:absolute;right:auto;left:0;top:33px;
+  font-size:22px;font-weight:400;
+  color:var(--ink);white-space:nowrap;line-height:1;
+  transform:translateX(-100%);padding-right:11px
+}
+/* 兩條之間那一段。系統唯一在量的東西，所以它要有一個形狀。 */
+.sty-gap{position:absolute;left:47%;width:31%;bottom:22px;z-index:2}
+.sty-gap i{
+  display:block;height:11px;
+  border:3px solid var(--gold);border-top:0
+}
+.sty-gap b{
+  display:block;margin-top:5px;font-size:22px;font-weight:400;
+  color:var(--gold);text-align:center;white-space:nowrap;line-height:1
+}
 
 /* 兩頁的字。一句一行，行與行之間留白——這兩頁是唯一一個
    刻意讓人讀完的地方。 */
@@ -2387,10 +2421,27 @@ button.ac:active{transform:translateY(1px)}
 
 /* ── 故事第三頁：會留下來的三樣 ── */
 .sty-keep{
-  display:flex;align-items:flex-end;justify-content:center;gap:22px;
+  display:flex;align-items:flex-end;justify-content:center;gap:14px;
   padding:22px 14px 44px;
   background-color:var(--zbg);background-image:var(--ztex)
 }
+/* 左邊「交出去了」與右邊「收下之後」。同一組東西，差別只有亮不亮。 */
+.sk-side{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;z-index:1}
+.sk-row{display:flex;align-items:flex-end;gap:8px}
+.sk-side > em{font-style:normal;font-size:22px;color:var(--mute)}
+.sk-side.on > em{color:var(--dim)}
+/* 三個名字，一個對一個站在那三張圖底下。 */
+.sk-names{display:flex;gap:8px}
+.sk-names b{
+  font-weight:400;font-size:22px;color:var(--dim);
+  width:66px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+/* 中間那一道門。箭頭上那四個字是整張圖的重點。 */
+.sk-gate{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  position:relative;z-index:1;padding-bottom:22px
+}
+.sk-gate em{font-style:normal;font-size:22px;color:var(--gold)}
 /* 三樣東西站的那一片地。跟廊道那一張同一個做法（見 .sty-floor）：
    上緣一條亮的，底下暗。 */
 .sk-floor{
@@ -2398,6 +2449,7 @@ button.ac:active{transform:translateY(1px)}
   background:linear-gradient(180deg,var(--zfl2,#3B2D11) 0 3px,var(--zfl,#241B0C) 3px 100%)
 }
 .sk{position:relative;z-index:1}
+.sk-side.on .sk-px{filter:none}
 .sk{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:66px}
 .sk em{font-style:normal;font-size:22px;color:var(--dim)}
 /* .sk-coin 那個大數字退休了——那一格現在是一枚畫出來的金幣。 */
@@ -2425,9 +2477,11 @@ button.ac:active{transform:translateY(1px)}
     -3px 3px 0 0 var(--line2), -3px 9px 0 0 var(--line2),
     0 0 0 0 var(--line2),      0 6px 0 0 var(--line2), 0 12px 0 0 var(--line2)
 }
-@media (max-width:430px){
-  .sty-keep{gap:11px;padding:14px 5px}
-  .sk{min-width:0}
-  .sk-px{width:55px}
-  .sk-pair .sk-px{width:33px}
+/* 窄的時候：三張圖縮小，名字跟著縮，箭頭轉成往下不佔寬。 */
+@media (max-width:520px){
+  .sty-keep{gap:8px;padding:14px 5px 33px}
+  .sk-px{width:44px}
+  .sk-row{gap:5px}
+  .sk-names b{width:44px;font-size:22px}
+  .sk-gate{padding-bottom:11px}
 }

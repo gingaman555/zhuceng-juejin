@@ -140,7 +140,9 @@ var STORY = [
     ],
     /* 三樣東西的名字旁邊的圖上都有標，所以這一句不用再介紹它們，
        只要說它們什麼時候才會出現。 */
-    key: '金幣、任務之證、圖鑑——都要老師收下才有。'
+    /* 三個名字現在排在圖上那三張圖底下，一個對一個，所以這一句
+       不用再念一次它們的名字。留下的是規則本身。 */
+    key: '這三樣，都要老師收下才有。'
   }
 ];
 
@@ -220,6 +222,19 @@ function storyMap(t) {
         pxTag(HERO.idleA, HERO.pal, 'wf wa') + pxTag(HERO.idleB, HERO.pal, 'wf wb') +
         '</span>');
     }
+    /* ── 每一個地方都有人在等 ──
+
+       這一頁的那一句是「你是下來接委託的人」，可是圖上本來只有
+       六個空房間跟你自己——**委託**那兩個字在圖上完全沒有對應物。
+       那張圖答得出「這裡有六個地方」，答不出「你為什麼下來」。
+
+       每一個地方放一位站在那裡的委託人（那一層真的會出現的那一位，
+       見 faunaOf），你在的那一間他站在你旁邊。六個地方六個人在等，
+       那一句話就不用光靠文字撐著。 */
+    var who = faunaOf(z.key)[0];
+    if (who) {
+      H.push('<span class="sty-wait">' + patTag(who, z.pal, '') + '</span>');
+    }
     H.push('</span>');
     H.push('<em>' + esc(z.name) + '</em>');
     H.push('</div>');
@@ -237,53 +252,103 @@ function storyRoad(t) {
   var mob = faunaOf(z.key)[0];
   var H = ['<div class="sty-art sty-road z-' + z.key + '">'];
   H.push('<div class="sty-floor"></div>');
-  /* 五格：走過的三格點著火把，還沒到的兩格是暗的 */
-  for (var i = 0; i < 5; i++) {
-    H.push('<div class="sty-tile' + (i < 3 ? ' on' : '') +
-      '" style="left:' + (66 + i * 44) + 'px"></div>');
+  /* 一格＝一天。亮到人站的地方為止——亮的格數就是他實際走的天數，
+     所以那一排本身也是一個數字。 */
+  /* 位置全部用百分比，不用像素。
+
+     量出來的：那張圖在 390 寬的手機上只有 354 寬，而本來的位置是
+     寫死的像素（實際走到那一條在 396），所以整個右半邊被切掉——
+     而右半邊正是「兩個數字」裡的第二個。圖只剩一半，那一句就又
+     只剩文字自己在講。 */
+  for (var i = 0; i < 8; i++) {
+    H.push('<div class="sty-tile' + (i < 7 ? ' on' : '') +
+      '" style="left:' + (9 + i * 7) + '%"></div>');
   }
+  /* ── 兩個數字都要畫出來 ──
+
+     這一頁的那一句是「系統只比**兩個**數字：你說的，跟實際的」。
+     可是圖上本來只有一條線——「你說的那一天」。少了另一半，
+     那張圖答得出「你承諾了一天」，答不出「然後呢」。
+
+     現在畫兩條：你說的那一條（金色、虛線、委託人站在上面），
+     跟你實際走到的那一條（實線、人站在上面）。中間那一段用一個
+     括號框起來，寫「這一段就是判定」。
+
+     人站在右邊那一條上，也就是走得比說的久——那是最常發生的一種。
+     早到一樣不算準，可是先讓他看懂「差多少就是判定的東西」，
+     再由文字補上「所以估寬不會比較好看」。 */
+  /* 你說的那一天。委託人站在上面等。 */
+  H.push('<div class="sty-day"><i></i><b>你說的</b></div>');
+  if (mob) H.push('<div class="sty-mob">' + patTag(mob, z.pal, '') + '</div>');
+  /* 你實際走到哪一天。人站在上面。 */
+  H.push('<div class="sty-real"><i></i><b>實際走到</b></div>');
   H.push('<div class="sty-hero">' +
     pxTag(HERO.walkA, HERO.pal, 'wf wa') + pxTag(HERO.walkB, HERO.pal, 'wf wb') +
     '</div>');
-  /* 你說的那一天，跟站在上面的那一隻 */
-  H.push('<div class="sty-day"><i></i><b>你說的那一天</b></div>');
-  /* 站在那一天上的那一位。用 patTag 他才會呼吸——這一頁是學生
-     第一次看到委託人，站著不動的那一張看起來是一塊石頭。 */
-  if (mob) H.push('<div class="sty-mob">' + patTag(mob, z.pal, '') + '</div>');
+  /* 兩條之間那一段。系統唯一在量的東西。 */
+  H.push('<div class="sty-gap"><i></i><b>這一段就是判定</b></div>');
   H.push('</div>');
   return H.join('');
 }
 
-/* 第三頁的圖：三樣會留下來的東西。
+/* 第三頁的圖：把「都要老師收下才有」畫出來。
 
-   最右邊那一格是重點——同一位委託人並排兩次，左邊是黑影、右邊是
-   亮的，中間一個箭頭。圖鑑那一條規則（收下才解鎖）用講的要一句話，
-   用畫的一眼就懂，而這一份的規矩是圖說得出來的事不要再用字說一次。 */
+   ── 本來是什麼、為什麼不夠 ──
+
+   本來是三樣東西並排的標本櫃：一枚金幣、一根岩心、一位委託人，
+   各自一個名字。它答得出「有哪三樣」，卻答不出這一頁真正在講的
+   那一句——**那三樣什麼時候才會出現**。
+
+   而那一句才是重點：收集這一層全部掛在老師收下上，沒有一樣是
+   交出去就有的。圖沒有畫到它，那一句就只剩文字自己在講。
+
+   ── 現在這一張 ──
+
+     左邊  同樣那三樣，灰的、黑影的　＋「交出去了」
+     中間  一支箭頭　　　　　　　　　＋「老師收下」
+     右邊  同樣那三樣，亮的　　　　　＋ 三個名字一個對一個
+
+   同一組東西出現兩次，差別只有亮不亮——所以中間那四個字是唯一
+   讓它們亮起來的原因，不用讀文字也看得出來。
+
+   三個名字排在右邊那三張圖底下，一個對一個，所以底下那一句話
+   不再需要念一次它們的名字（見這一頁的 key）。 */
 function storyKeep(t) {
   var z = t ? zoneNow(t.teamId) : STRATA[0];
-  var fa = faunaOf(z.key);
-  var one = fa[0];
+  var one = faunaOf(z.key)[0];
   var H = ['<div class="sty-art sty-keep z-' + z.key + '">'];
-  /* 一片地。前兩頁的圖裡東西都站在什麼上面（廊道有地板、
-     六個地方各自有底），只有這一頁的三樣浮在半空——那讓它們
-     看起來像被貼上去的圖示，不是這個世界裡的東西。 */
+  /* 一片地。前兩頁的圖裡東西都站在什麼上面（廊道有地板、六個地方
+     各自有底），飄著的東西看起來像貼上去的圖示。 */
   H.push('<div class="sk-floor"></div>');
 
-  H.push('<div class="sk">' + pxTag(STORY_COIN, ICON_ON, 'sk-px') +
-    '<em>金幣</em></div>');
-
-  H.push('<div class="sk">' + pxTag(STORY_CORE, z.pal, 'sk-px') +
-    '<em>任務之證</em></div>');
-
-  H.push('<div class="sk sk-two">');
-  H.push('<span class="sk-pair">');
-  if (one) {
-    H.push(patTag(one, shadePal(z.pal), 'sk-px'));
-    H.push('<i class="sk-arrow"></i>');
-    H.push(patTag(one, z.pal, 'sk-px'));
-  }
+  /* ── 左邊：還沒收下 ── */
+  H.push('<div class="sk-side">');
+  H.push('<span class="sk-row">');
+  H.push(pxTag(STORY_COIN, ICON_PAL, 'sk-px'));
+  H.push(pxTag(STORY_CORE, shadePal(z.pal), 'sk-px'));
+  if (one) H.push(patTag(one, shadePal(z.pal), 'sk-px'));
   H.push('</span>');
-  H.push('<em>圖鑑</em></div>');
+  H.push('<em>交出去了</em>');
+  H.push('</div>');
+
+  /* ── 中間：那一道門 ──
+     整句話的重點在這裡。箭頭上寫的那四個字就是條件本身。 */
+  H.push('<div class="sk-gate">');
+  H.push('<i class="sk-arrow"></i>');
+  H.push('<em>老師收下</em>');
+  H.push('</div>');
+
+  /* ── 右邊：收下之後 ──
+     三個名字排在三張圖底下，一個對一個。所以底下那一句話不用再
+     念一次它們的名字，只要講規則（見這一頁的 key）。 */
+  H.push('<div class="sk-side on">');
+  H.push('<span class="sk-row">');
+  H.push(pxTag(STORY_COIN, ICON_ON, 'sk-px'));
+  H.push(pxTag(STORY_CORE, z.pal, 'sk-px'));
+  if (one) H.push(patTag(one, z.pal, 'sk-px'));
+  H.push('</span>');
+  H.push('<span class="sk-names"><b>金幣</b><b>任務之證</b><b>圖鑑</b></span>');
+  H.push('</div>');
 
   H.push('</div>');
   return H.join('');
