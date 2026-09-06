@@ -2388,27 +2388,42 @@ button.ac:active{transform:translateY(1px)}
 /* ── 故事第三頁：會留下來的三樣 ── */
 .sty-keep{
   display:flex;align-items:flex-end;justify-content:center;gap:22px;
-  padding:22px 14px
+  padding:22px 14px 44px;
+  background-color:var(--zbg);background-image:var(--ztex)
 }
+/* 三樣東西站的那一片地。跟廊道那一張同一個做法（見 .sty-floor）：
+   上緣一條亮的，底下暗。 */
+.sk-floor{
+  position:absolute;left:0;right:0;bottom:0;height:33px;z-index:0;
+  background:linear-gradient(180deg,var(--zfl2,#3B2D11) 0 3px,var(--zfl,#241B0C) 3px 100%)
+}
+.sk{position:relative;z-index:1}
 .sk{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:66px}
 .sk em{font-style:normal;font-size:22px;color:var(--dim)}
-.sk-coin{
-  font-size:44px;line-height:1;color:var(--gold);font-weight:400;
-  font-variant-numeric:tabular-nums
-}
+/* .sk-coin 那個大數字退休了——那一格現在是一枚畫出來的金幣。 */
 /* 寬度寫在 .sk-px 自己身上，不掛在祖先底下——換個地方畫也要有寬度
    （check.js 那一條在守的就是這個）。 */
 .sk-px{width:66px;height:auto;image-rendering:pixelated}
 .sk-pair{display:flex;align-items:center;gap:8px}
 .sk-pair .sk-px{width:44px}
-/* 黑影 → 亮的，中間那一支。用邊框拼，不另外畫圖。 */
+/* 黑影 → 亮的，中間那一支。
+
+   本來是 CSS 的三角形，而斜邊會被瀏覽器抹平——這一整個作品的
+   東西都是方格（image-rendering:pixelated、11px 的斜角），
+   一條平滑的斜邊在裡面特別顯眼。
+
+   改成用 box-shadow 疊方塊拼，每一塊 3px，所以它是階梯不是斜線。 */
 .sk-arrow{
-  width:22px;height:2px;background:var(--line2);position:relative;flex:0 0 22px
+  position:relative;flex:0 0 21px;width:21px;height:3px;
+  background:var(--line2)
 }
 .sk-arrow::after{
-  content:'';position:absolute;right:0;top:-4px;
-  border-left:8px solid var(--line2);
-  border-top:5px solid transparent;border-bottom:5px solid transparent
+  content:'';position:absolute;right:0;top:-6px;width:3px;height:15px;
+  background:transparent;
+  box-shadow:
+    -6px 6px 0 0 var(--line2),
+    -3px 3px 0 0 var(--line2), -3px 9px 0 0 var(--line2),
+    0 0 0 0 var(--line2),      0 6px 0 0 var(--line2), 0 12px 0 0 var(--line2)
 }
 @media (max-width:430px){
   .sty-keep{gap:11px;padding:14px 5px}
