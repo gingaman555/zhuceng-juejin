@@ -53,6 +53,72 @@ PAGES.gate = function () {
 };
 
 /* ---------- 登入 ---------- */
+/* ---------- 這一台的資料不對，重新拿一份 ----------
+
+   為什麼要有這一顆：
+
+   種子只在「還是示範資料、而且版本舊了」的時候才重種（見 40-db.js
+   的 load）。而 demo 那個旗子在**有人在這台機器上建過帳號的那一刻**
+   就關掉了——關掉之後，那份資料永遠不會再被洗，版本號加幾次都一樣。
+
+   那一條是對的：學生真的資料不可以被一次更新洗掉。可是它的副作用是
+   ——測過的人會永遠卡在測試那天的那一份。三位老師這幾天都在試，
+   星期三每一台上都混著殘留，而他們不會開開發者工具打指令。
+
+   ── 為什麼這一顆不會弄壞全班 ──
+
+   它只做兩件事：把這台機器上那一個 key 刪掉、重新載入。
+
+   關鍵是**中間不呼叫 save()**。推上雲端只發生在 save() 裡
+   （見 41-sync.js 的 syncPush），所以刪掉再重載，走的就是一台
+   全新機器第一次打開的那條路——而那條路星期三每一個學生都會走。
+   雲端一筆都不會少。
+
+   SYNC.last 本來就只活在記憶體裡，重載自己就沒了，不用另外處理。 */
+PAGES.fresh = function () {
+  var 連得上 = (typeof syncReady === 'function') && syncReady() && SYNC.on;
+  var H = [head('這一台', '重新拿一份', '')];
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">會發生什麼</div>');
+  H.push('<p>清掉這台機器上存的那一份，然後重新載入。</p>');
+  H.push('<p class="dim">別人的機器不受影響。這一顆不會刪掉雲端上的任何東西。</p>');
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  if (連得上) {
+    H.push('<div class="eyebrow lit">雲端連得上</div>');
+    H.push('<p>班上的東西在雲端，重新載入之後會再拉回來——' +
+      '就跟一台新的機器第一次打開一樣。</p>');
+  } else {
+    H.push('<div class="eyebrow warnx">現在連不上雲端</div>');
+    H.push('<p>只存在這一台、還沒上傳的東西會不見。' +
+      '等連得上再按，比較安全。</p>');
+  }
+  H.push('</div>');
+
+  H.push('<div class="row">');
+  /* 兩段：先按一次才長出真的那一顆。這一頁上唯一會弄丟東西的動作，
+     不該一下就按得到。 */
+  if (DRAFT.sure2) {
+    H.push(btn('確定，清掉重來', 'freshgo', 'big'));
+    H.push(btn('算了', 'go:gate', 'ghost'));
+  } else {
+    H.push(btn('我要重新拿一份', 'freshask', 'big'));
+    H.push(btn('回去', 'go:gate', 'ghost'));
+  }
+  H.push('</div>');
+  return H.join('');
+};
+
+ACTS.freshask = function () { DRAFT.sure2 = 1; render(); };
+
+/* 刪掉、重載。中間**不能**呼叫 save()——那會把清空推上雲端。 */
+ACTS.freshgo = function () {
+  try { localStorage.removeItem(STORE); } catch (e) {}
+  location.reload();
+};
+
 PAGES.login = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
   /* 隨機一位在旁邊走。挑好的那一個記在 S 上——打字會重畫，
@@ -74,6 +140,11 @@ PAGES.login = function () {
   H.push('<div class="row">');
   H.push(btn('進去', 'login', 'big'));
   H.push(btn('還沒有帳號', 'go:reg', 'ghost'));
+  /* 這一台的資料不對的時候的那條路（見 PAGES.fresh）。放在登入頁
+     是因為「看到不對的東西」之後最自然的下一步就是登出——而登出
+     就會落在這一頁。它不能太顯眼：一整個學期只有極少數人會用到，
+     可是用到的那一次沒有它就只能開開發者工具。 */
+  H.push(btn('這一台的資料不對', 'go:fresh', 'ghost'));
   H.push('</div>');
   /* ── 試用的資料 ──
 

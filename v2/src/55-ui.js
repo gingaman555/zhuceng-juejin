@@ -93,7 +93,10 @@ function seen() {
 
    這不是裝飾。研究者看得到全班的紀錄、老師看得到別組的進度——
    路由如果不擋，改一下網址就變成別人。 */
-var GATE_PAGES = { gate: 1, login: 1, reg: 1 };
+/* fresh 也算門口那一種：那一顆是「登出之後發現這台不對」才會按的，
+   而登出就落在門口。放在這裡同時擋掉一件事——登入著的時候走不到它，
+   所以它不可能在做到一半的時候被誤觸（見 58-gate.js 的 PAGES.fresh）。 */
+var GATE_PAGES = { gate: 1, login: 1, reg: 1, fresh: 1 };
 /* 這兩頁不在側欄上，是路由自己插進來的（見 render）。 */
 var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
