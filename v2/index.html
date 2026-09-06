@@ -4460,6 +4460,38 @@ button.ac:active{transform:translateY(1px)}
 .rvw-t b{font-size:22px;font-weight:400;color:var(--zink,var(--ink))}
 .rvw-t em{font-size:22px;font-style:normal;line-height:1.6;color:var(--dim)}
 
+/* ── 故事第三頁：會留下來的三樣 ── */
+.sty-keep{
+  display:flex;align-items:flex-end;justify-content:center;gap:22px;
+  padding:22px 14px
+}
+.sk{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:66px}
+.sk em{font-style:normal;font-size:22px;color:var(--dim)}
+.sk-coin{
+  font-size:44px;line-height:1;color:var(--gold);font-weight:400;
+  font-variant-numeric:tabular-nums
+}
+/* 寬度寫在 .sk-px 自己身上，不掛在祖先底下——換個地方畫也要有寬度
+   （check.js 那一條在守的就是這個）。 */
+.sk-px{width:66px;height:auto;image-rendering:pixelated}
+.sk-pair{display:flex;align-items:center;gap:8px}
+.sk-pair .sk-px{width:44px}
+/* 黑影 → 亮的，中間那一支。用邊框拼，不另外畫圖。 */
+.sk-arrow{
+  width:22px;height:2px;background:var(--line2);position:relative;flex:0 0 22px
+}
+.sk-arrow::after{
+  content:'';position:absolute;right:0;top:-4px;
+  border-left:8px solid var(--line2);
+  border-top:5px solid transparent;border-bottom:5px solid transparent
+}
+@media (max-width:430px){
+  .sty-keep{gap:11px;padding:14px 5px}
+  .sk{min-width:0}
+  .sk-px{width:55px}
+  .sk-pair .sk-px{width:33px}
+}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -15140,6 +15172,18 @@ PAGES.stamp = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var s = RULES.STAMPS[r.stamp];
+  /* 還沒有判定就沒有東西可報。
+
+     本來這裡直接往下讀 s.key，而 s 在那一刻是 undefined——整頁炸掉，
+     畫面全白。走得到的路：那一趟還在走的時候用上一頁回到這裡，
+     或是分頁停在這裡放了幾天再回來。
+
+     炸掉的頁比一句「還沒」糟得多：他不知道是自己按錯還是壞了。 */
+  if (!s) {
+    return '<div class="card"><div class="eyebrow">還沒有結果</div>' +
+      '<p class="dim">這一趟還在走。交出去之後才有準不準。</p></div>' +
+      '<div class="row">' + btn('回廊道', 'go:home', 'big') + '</div>';
+  }
 
   var t = myTeam();
   /* 剛走完的那一層。判定當下深度就 +1 了，所以要退一格。 */
@@ -18874,7 +18918,56 @@ var STORY = [
       '系統只比兩個數字：你說的，跟實際的。做得好不好，老師說。'
     ],
     key: '所以估寬，不會比較好看。'
+  },
+  {
+    k: 'keep',
+    eyebrow: '第三頁',
+    /* ── 為什麼要有這一頁 ──
+
+       前兩頁講完「這是什麼地方」跟「一趟怎麼走」，可是**走完會留下
+       什麼**一句都沒說。金幣只在門口那一條上出現過四個字，圖鑑跟
+       任務之證則是走到才會撞見。
+
+       量出來的問題：一個學生第一次交出去、老師收下，畫面跳出
+       「＋130 枚金幣」跟「新登場」兩張卡——那是他第一次知道這一層
+       存在。第一次知道的時機不該是拿到的那一刻，不然那看起來像
+       系統臨時多給他的東西，而不是他一開始就在往那裡走。
+
+       ── 這一頁真正在講的那一條 ──
+
+       收集這一層全部掛在「老師收下」上：金幣、任務之證、圖鑑、
+       深度，沒有一樣是交出去就有的。那一條要先講，因為它剛好
+       擋掉最容易長出來的誤解——「多接幾件就多收集一點」。
+       接幾件是老師派的，他決定不了；被收下幾件才是他的事。
+
+       數字從 RULES.COIN 組出來，不寫死：規則改了句子要跟著變，
+       不能只是變成謊話。 */
+    title: '走完會留下什麼',
+    lines: [
+      '老師收下一件，' + RULES.COIN.base + ' 枚金幣。' +
+        '他想多說一點，再給 ' + RULES.COIN.bonusMin + ' 到 ' + RULES.COIN.bonusMax + ' 枚。',
+      '收下的那一件會變成一張任務之證。',
+      '路上那一位也是——老師收下的那一刻，他才從黑影變成圖鑑裡的一頁。'
+    ],
+    key: '收集的不是走過幾趟，是被收下幾件。'
   }
+];
+
+/* 第三頁那張圖上的任務之證。
+
+   岩心平常是從那一趟的紀錄長出來的（見 43-core.js 的 coreOf），
+   而看故事的人通常一趟都還沒走過——所以這裡放一根固定的，
+   用同一套筆畫拼的，只是為了讓他知道那個東西長什麼樣。 */
+var STORY_CORE = [
+  '..++++++++++..',
+  '.+##########+.',
+  '.+#*######*#+.',
+  '.+##########+.',
+  '.+#+......+#+.',
+  '.+#+......+#+.',
+  '.+#*######*#+.',
+  '.+##########+.',
+  '..++++++++++..'
 ];
 
 /* ---------- 圖 ----------
@@ -18945,6 +19038,37 @@ function storyRoad(t) {
   return H.join('');
 }
 
+/* 第三頁的圖：三樣會留下來的東西。
+
+   最右邊那一格是重點——同一位委託人並排兩次，左邊是黑影、右邊是
+   亮的，中間一個箭頭。圖鑑那一條規則（收下才解鎖）用講的要一句話，
+   用畫的一眼就懂，而這一份的規矩是圖說得出來的事不要再用字說一次。 */
+function storyKeep(t) {
+  var z = t ? zoneNow(t.teamId) : STRATA[0];
+  var fa = faunaOf(z.key);
+  var one = fa[0];
+  var H = ['<div class="sty-art sty-keep z-' + z.key + '">'];
+
+  H.push('<div class="sk"><b class="sk-coin">' + RULES.COIN.base + '</b>' +
+    '<em>金幣</em></div>');
+
+  H.push('<div class="sk">' + pxTag(STORY_CORE, z.pal, 'sk-px') +
+    '<em>任務之證</em></div>');
+
+  H.push('<div class="sk sk-two">');
+  H.push('<span class="sk-pair">');
+  if (one) {
+    H.push(patTag(one, shadePal(z.pal), 'sk-px'));
+    H.push('<i class="sk-arrow"></i>');
+    H.push(patTag(one, z.pal, 'sk-px'));
+  }
+  H.push('</span>');
+  H.push('<em>圖鑑</em></div>');
+
+  H.push('</div>');
+  return H.join('');
+}
+
 /* ---------- 頁 ---------- */
 PAGES.story = function () {
   var t = myTeam();
@@ -18956,7 +19080,7 @@ PAGES.story = function () {
   /* 那一圈排在標題底下、圖上面：標題問「一趟怎麼走」，
      它就是答案；圖是那一圈裡的一格，排在答案後面。 */
   if (s.strip) H.push('<div class="sty-loop">' + loopStrip() + '</div>');
-  H.push(n === 0 ? storyMap(t) : storyRoad(t));
+  H.push(n === 0 ? storyMap(t) : (n === 1 ? storyRoad(t) : storyKeep(t)));
 
   /* 一句一行，能砍的都砍掉了。八段散文改成五句——這個作品自己的
      規矩是文字量到最小，而開場那兩頁本來是全站文字最多的地方。
@@ -19188,6 +19312,17 @@ PAGES.review = function () {
   if (!r) return '<div class="card">找不到。</div>';
   var m = msOf(r.msId), t = teamOf(r.teamId);
   var s = RULES.STAMPS[r.stamp];
+  /* 還沒交出來的那一趟沒有判定，而底下整頁都在讀 s。
+
+     正常的路走不到（清單只收交出來的），但兩位老師同時開著同一件、
+     或是分頁放了很久再回來，就會落在這裡。炸掉的頁對老師更糟：
+     他會以為是學生那一邊出事了。 */
+  if (!s) {
+    return '<div class="card"><div class="eyebrow">還沒交出來</div>' +
+      '<p class="dim">' + esc(t ? t.name : '這一組') +
+      ' 還在走這一趟。他們交出來之後才會出現在你的清單上。</p></div>' +
+      '<div class="row">' + btn('回審核清單', 'go:radar', 'big') + '</div>';
+  }
 
   /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
   var H = [head('審核', t.name + '　·　' + m.title, '')];

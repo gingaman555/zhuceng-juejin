@@ -194,6 +194,17 @@ PAGES.review = function () {
   if (!r) return '<div class="card">找不到。</div>';
   var m = msOf(r.msId), t = teamOf(r.teamId);
   var s = RULES.STAMPS[r.stamp];
+  /* 還沒交出來的那一趟沒有判定，而底下整頁都在讀 s。
+
+     正常的路走不到（清單只收交出來的），但兩位老師同時開著同一件、
+     或是分頁放了很久再回來，就會落在這裡。炸掉的頁對老師更糟：
+     他會以為是學生那一邊出事了。 */
+  if (!s) {
+    return '<div class="card"><div class="eyebrow">還沒交出來</div>' +
+      '<p class="dim">' + esc(t ? t.name : '這一組') +
+      ' 還在走這一趟。他們交出來之後才會出現在你的清單上。</p></div>' +
+      '<div class="row">' + btn('回審核清單', 'go:radar', 'big') + '</div>';
+  }
 
   /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
   var H = [head('審核', t.name + '　·　' + m.title, '')];

@@ -1130,6 +1130,18 @@ PAGES.stamp = function () {
   var r = find('Runs', function (x) { return x.runId === S.p.id; });
   if (!r) return '<div class="card">找不到。</div>';
   var s = RULES.STAMPS[r.stamp];
+  /* 還沒有判定就沒有東西可報。
+
+     本來這裡直接往下讀 s.key，而 s 在那一刻是 undefined——整頁炸掉，
+     畫面全白。走得到的路：那一趟還在走的時候用上一頁回到這裡，
+     或是分頁停在這裡放了幾天再回來。
+
+     炸掉的頁比一句「還沒」糟得多：他不知道是自己按錯還是壞了。 */
+  if (!s) {
+    return '<div class="card"><div class="eyebrow">還沒有結果</div>' +
+      '<p class="dim">這一趟還在走。交出去之後才有準不準。</p></div>' +
+      '<div class="row">' + btn('回廊道', 'go:home', 'big') + '</div>';
+  }
 
   var t = myTeam();
   /* 剛走完的那一層。判定當下深度就 +1 了，所以要退一格。 */
