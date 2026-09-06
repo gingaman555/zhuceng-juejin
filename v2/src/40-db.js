@@ -816,7 +816,12 @@ function mobDebut(teamId, runId) {
   if (!m || !m.n) return false;
   var first = null;
   where('Runs', function (x) { return x.teamId === teamId; }).forEach(function (x) {
-    if (!metRun(x)) return;
+    /* 問的就是這一趟的話，它一定算——他人就站在那裡。
+
+       本來這裡只寫 !metRun(x) 就跳過，而 metRun 對「還在走、天數還沒到」
+       的那一趟回 false。結果：準時或提早交的人，第一次見到那一位
+       卻被講「你又走這條」——而「初見跟再見要不一樣」正是這一段的重點。 */
+    if (x.runId !== runId && !metRun(x)) return;
     var mm = mobOfRun(x);
     if (!mm || mm.n !== m.n) return;
     if (!first || (x.committedAt || 0) < (first.committedAt || 0)) first = x;

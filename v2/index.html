@@ -10239,7 +10239,12 @@ function mobDebut(teamId, runId) {
   if (!m || !m.n) return false;
   var first = null;
   where('Runs', function (x) { return x.teamId === teamId; }).forEach(function (x) {
-    if (!metRun(x)) return;
+    /* 問的就是這一趟的話，它一定算——他人就站在那裡。
+
+       本來這裡只寫 !metRun(x) 就跳過，而 metRun 對「還在走、天數還沒到」
+       的那一趟回 false。結果：準時或提早交的人，第一次見到那一位
+       卻被講「你又走這條」——而「初見跟再見要不一樣」正是這一段的重點。 */
+    if (x.runId !== runId && !metRun(x)) return;
     var mm = mobOfRun(x);
     if (!mm || mm.n !== m.n) return;
     if (!first || (x.committedAt || 0) < (first.committedAt || 0)) first = x;
@@ -17610,7 +17615,26 @@ function btPhase(r) {
      畫面上什麼都不能按。 */
   if (r.state !== 'running' && r.state !== 'back') return 'play';
   var ph = S.p.ph;
-  if (!ph) return 'menu';
+  /* ── 那一頁只在他有話要說的時候才出現 ──
+
+     本來每一趟都先停在一個選單頁：他打招呼，底下兩顆鍵
+     「交東西給他」「還沒準備好」。
+
+     可是學生是從廊道按「做完了」進來的——進來再按一次「交東西給他」，
+     等於連續兩次「對，我要交」，而第二次沒有帶任何新資訊。
+     那一下剛好落在耐心最低的時候（整段交件是 7 頁裡的第 1 頁）。
+
+     留下來的兩種情況，都是他真的有新的話：
+
+       退回　　老師寫的那一句印在這一頁上，那是他這一刻唯一需要讀的
+       初見　　第一次遇到這一位，讓他先說一句再問問題
+
+     其他時候他認得你，你也認得他——直接走進去。 */
+  if (!ph) {
+    if (r.state === 'back') return 'menu';
+    if (mobDebut(r.teamId, r.runId)) return 'menu';
+    return 'q';
+  }
   /* 問答只剩一種階段，第幾題記在 S.p.q（見 BT_STEPS）。 */
   if (ph === 'q1' || ph === 'q2' || ph === 'q') return 'q';
   /* 本來這裡有一條：沒拆件就跳過第一問，直接進第二問。
