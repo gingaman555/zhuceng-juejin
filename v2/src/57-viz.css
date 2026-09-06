@@ -2384,3 +2384,35 @@ button.ac:active{transform:translateY(1px)}
 .rvw-t{display:flex;flex-direction:column;gap:4px;min-width:0}
 .rvw-t b{font-size:22px;font-weight:400;color:var(--zink,var(--ink))}
 .rvw-t em{font-size:22px;font-style:normal;line-height:1.6;color:var(--dim)}
+
+/* ── 故事第三頁：會留下來的三樣 ── */
+.sty-keep{
+  display:flex;align-items:flex-end;justify-content:center;gap:22px;
+  padding:22px 14px
+}
+.sk{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:66px}
+.sk em{font-style:normal;font-size:22px;color:var(--dim)}
+.sk-coin{
+  font-size:44px;line-height:1;color:var(--gold);font-weight:400;
+  font-variant-numeric:tabular-nums
+}
+/* 寬度寫在 .sk-px 自己身上，不掛在祖先底下——換個地方畫也要有寬度
+   （check.js 那一條在守的就是這個）。 */
+.sk-px{width:66px;height:auto;image-rendering:pixelated}
+.sk-pair{display:flex;align-items:center;gap:8px}
+.sk-pair .sk-px{width:44px}
+/* 黑影 → 亮的，中間那一支。用邊框拼，不另外畫圖。 */
+.sk-arrow{
+  width:22px;height:2px;background:var(--line2);position:relative;flex:0 0 22px
+}
+.sk-arrow::after{
+  content:'';position:absolute;right:0;top:-4px;
+  border-left:8px solid var(--line2);
+  border-top:5px solid transparent;border-bottom:5px solid transparent
+}
+@media (max-width:430px){
+  .sty-keep{gap:11px;padding:14px 5px}
+  .sk{min-width:0}
+  .sk-px{width:55px}
+  .sk-pair .sk-px{width:33px}
+}
