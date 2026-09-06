@@ -10718,7 +10718,7 @@ function actPublish(classId, o) {
        要發給誰是他自己點的，在 teams 那一欄。 */
     mentorId: o.mentorId || '',
     title: o.title, note: o.note || '',
-    steps: (o.steps || []).slice(0, 12),
+    steps: (Array.isArray(o.steps) ? o.steps : []).slice(0, 12),
     teams: o.teams || [],
     /* 老師排的那一刻。0＝沒排。dueU 是他當初用的單位
        （小時／天／週），只用來決定要不要寫出幾點。
@@ -14651,7 +14651,15 @@ function overRow(r) {
 /* 承諾那一頁還沒有 run，所以直接從任務上讀老師分的那幾段。
    那一排同時是兩件事：這一趟有哪幾段（範圍），
    以及點起來標「這一段會比想的久」。 */
-function previewSteps(m) { return (m && m.steps) || []; }
+/* 老師寫的那幾段。
+
+   一定要回陣列：呼叫的地方直接 .map / .length，而 m.steps 是從雲端
+   拿回來的（Firestore 的規則是完全開放的，見 41-sync.js）。一筆形狀
+   壞掉的任務會讓接委託那一頁整個畫不出來，而那是學生走的第一頁。 */
+function previewSteps(m) {
+  var a = m && m.steps;
+  return Array.isArray(a) ? a : [];
+}
 
 function msStepLegend(m, sel, act) {
   var a = previewSteps(m);

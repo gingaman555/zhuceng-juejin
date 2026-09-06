@@ -1253,7 +1253,7 @@ function actPublish(classId, o) {
        要發給誰是他自己點的，在 teams 那一欄。 */
     mentorId: o.mentorId || '',
     title: o.title, note: o.note || '',
-    steps: (o.steps || []).slice(0, 12),
+    steps: (Array.isArray(o.steps) ? o.steps : []).slice(0, 12),
     teams: o.teams || [],
     /* 老師排的那一刻。0＝沒排。dueU 是他當初用的單位
        （小時／天／週），只用來決定要不要寫出幾點。
