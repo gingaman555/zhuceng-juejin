@@ -255,8 +255,97 @@ be('退出之後', r2b.state, 'rethought');
 be('沒有判定', !!r2b.stamp, false);
 be('走過的天數留著', r2b.went >= 1, true);
 
-/* ══ 十 · 每一頁 × 每一個角色 ══ */
-H('每一頁 × 每一個角色都畫得出來');
+/* ══ 十 · 協商：老師回一句「我覺得會是幾天」 ══ */
+H('協商：老師回一次，最後那一下還是學生按的');
+as(stu[0]);
+const ms3 = DB.Milestones[1];
+DRAFT = { plan: [{ n: '甲', d: 3, who: stu[0].userId, byOwn: 1 }], sure: 'low' };
+ACTS.commit(ms3.msId);
+const r3 = runOf(tm.teamId, ms3.msId);
+be('學生承諾', r3.est, 3);
+as(tea);
+be('沒帶理由回不了', actAskEst(r3.runId, 6, ''), null);
+actAskEst(r3.runId, 6, '這一件去年那一組花了六天。');
+const asked = find('Runs', x => x.runId === r3.runId);
+be('老師回的數字', asked.askEst, 6);
+be('學生承諾沒被改掉', asked.est, 3);
+be('那一句有署名', userOf(asked.askBy).name, '孟老師');
+as(stu[0]);
+actAnswerAsk(tm.teamId, r3.runId, 5);
+const answered = find('Runs', x => x.runId === r3.runId);
+be('最後那一下是學生按的', answered.est, 5);
+be('老師回不了第二次', actAskEst(r3.runId, 9, '再一次'), null);
+
+/* ══ 十一 · 走完剩下的，看深度長出來 ══ */
+H('走完幾趟，深度長出來');
+function 走完一趟(r, 天) {
+  stu.forEach(function (u, i) {
+    as(u); DRAFT = {}; S.p = { id: r.runId, ph: 'q', q: 1 };
+    PAGES.battle();
+    myItems(r, u.userId).forEach(k => { for (let n = 0; n < 天; n++) ACTS.spent(k + ',1'); });
+    DRAFT.said1 = u.name + '這一趟做的';
+    S.p = { id: r.runId, ph: 'q', q: 2 };
+    ACTS.btsave(r.runId);
+  });
+  as(stu[0]);
+  /* 先走過那一題，DRAFT.spent 才會從已經存好的值帶回來——
+     真的使用者是一題一題走過去的，所以這一步不能跳。 */
+  DRAFT = {}; S.p = { id: r.runId, ph: 'q', q: 1 }; PAGES.battle();
+  DRAFT.where = '放你桌上'; DRAFT.feel = 'ok'; DRAFT.next = '下一步';
+  S.p = { id: r.runId, ph: 'q', q: btAsks(r).length - 1 };
+  ACTS.btnext(r.runId);
+  as(tea);
+  actApprove(r.runId, '可以。', 20);
+}
+const d0 = depthOf(tm.teamId);
+走完一趟(answered, 2);
+as(tea);
+const ms4 = actPublish(kl.classId, { title: '第三件', note: '', steps: [], due: 7, teams: [] });
+as(stu[0]);
+DRAFT = { plan: [{ n: '甲', d: 2, who: stu[0].userId, byOwn: 1 }], sure: 'mid' };
+ACTS.commit(ms4.msId);
+走完一趟(runOf(tm.teamId, ms4.msId), 2);
+const d1 = depthOf(tm.teamId);
+be('深度變深了', d1 > d0, true);
+be('收下的件數', where('Runs', r => r.teamId === tm.teamId && r.state === 'done').length, 3);
+be('金幣', coinsOf(tm.teamId).all, 3 * RULES.COIN.base + 30 + 20 + 20);
+be('圖鑑收了幾位', Object.keys(metMobs(tm.teamId)).length >= 1, true);
+
+/* ══ 十二 · 出口：專案做完了 ══ */
+H('出口：說 → 老師開 → 走出去');
+as(stu[0]);
+S.page = 'pack'; S.p = {}; DRAFT = {};
+be('任務清單畫得出來', PAGES.pack().length > 0, true);
+be('門還鎖著', !!teamOf(tm.teamId).exitOk, false);
+be('鎖著的時候走不出去', actLetGo(tm.teamId, '謝謝'), null);
+actAskExit(tm.teamId);
+be('說了「我們做完了」', !!teamOf(tm.teamId).exitAsk, true);
+as(tea);
+be('老師的出口佇列裡有他們', exitQueue(kl.classId).some(t => t.teamId === tm.teamId), true);
+actDenyExit(tm.teamId);
+be('老師先說還不行', !!teamOf(tm.teamId).exitAsk, false);
+as(stu[0]);
+actAskExit(tm.teamId);
+as(tea);
+actOpenExit(tm.teamId, 1);
+be('門開了', !!teamOf(tm.teamId).exitOk, true);
+as(stu[0]);
+S.page = 'exit'; S.p = {}; DRAFT = {};
+be('出口那一頁畫得出來', PAGES.exit().length > 0, true);
+actLetGo(tm.teamId, '謝謝這一學期。');
+const left = teamOf(tm.teamId);
+be('走出去了', !!left.leftAt, true);
+be('留下的那一句', left.exitWord, '謝謝這一學期。');
+S.page = 'exit'; S.p = {}; DRAFT = {};
+be('出去之後那一頁還畫得出來', PAGES.exit().length > 0, true);
+S.page = 'home'; S.p = {}; DRAFT = {};
+be('出去之後首頁還畫得出來', PAGES.home().length > 0, true);
+as(tea);
+be('老師那邊看得到他們出去了', !!teamOf(tm.teamId).leftAt, true);
+
+/* ══ 十三 · 每一頁 × 每一個角色 ══ */
+
+H('每一頁 × 每一個角色都畫得出來（專案已經結束）');
 let drew = 0;
 [['student', stu[0]], ['teacher', tea]].forEach(function (pair) {
   const u = pair[1];
