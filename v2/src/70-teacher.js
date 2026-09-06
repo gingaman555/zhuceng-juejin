@@ -392,7 +392,9 @@ PAGES.review = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">收下的時候多給幾枚　選填</div>');
   H.push('<div class="row sure-row">');
-  for (var bi = RULES.COIN.bonusMin; bi <= RULES.COIN.bonusMax; bi++) {
+  /* 一格 10 枚，所以這一排是 10 20 30 40 50，不是 1 2 3 4 5。 */
+  for (var bi = RULES.COIN.bonusMin; bi <= RULES.COIN.bonusMax;
+       bi += (RULES.COIN.bonusStep || 1)) {
     H.push(btn(String(bi), 'bonus:' + bi, 'sure' + (bn === bi ? ' on' : '')));
   }
   H.push('</div>');

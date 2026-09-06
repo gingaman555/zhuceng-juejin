@@ -1471,7 +1471,9 @@ function actResend(teamId, runId, link) {
      基本   一件收下的委託 100 枚
      加成   老師收下時給的 1–5 枚
 
-   加成最多佔 5%，所以這個數字幾乎就是「他們完成了幾件」。 */
+   加成一趟 10–50 枚，佔一趟總額的 9–33%——所以這個數字**不再**
+   幾乎等於「他們完成了幾件」，老師給多給少看得出來。
+   （本來是 1–5 枚、最多佔 5%，那時候它幾乎就是完成件數。） */
 function coinsOf(teamId) {
   var base = 0, bonus = 0;
   where('Runs', function (r) {

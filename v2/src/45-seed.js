@@ -344,7 +344,10 @@ function dressRuns(cid) {
 
     /* 老師收下時給的那幾枚。 */
     if ((r.state === 'done' || r.state === 'approved') && !r.bonus) {
-      r.bonus = 1 + (h % RULES.COIN.bonusMax);
+      /* 一格 10 枚，所以試用資料也要落在 10 20 30 40 50 上——
+         不然示範班上會出現一個學生按不出來的數字。 */
+      r.bonus = RULES.COIN.bonusMin +
+        (h % 5) * (RULES.COIN.bonusStep || 1);
     }
   });
 }

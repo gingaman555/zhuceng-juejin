@@ -9105,8 +9105,19 @@ RULES.STEPS_MAX = 12;     /* 一個任務最多分幾段 */
 
 /* ---------- 金幣 ----------
    一件委託 100 枚，做完就有。老師收下時另外給 1–5 枚。
-   上限刻意壓在基本的 5%：它是老師的一句話，不是經濟誘因。 */
-RULES.COIN = { base: 100, bonusMin: 1, bonusMax: 5 };
+   ── 一格從 1 變 10（使用者的決定）──
+
+   本來是 1–5 枚，上限刻意壓在基本額的 5%，理由寫在下面那一段：
+   它是老師的一句話，不是經濟誘因。
+
+   改成 10–50 之後，加成佔一趟總額的 9–33%——它不再只是一句話，
+   老師給 10 還是給 50 開始有份量。那是刻意的：二選一（可以／退回）
+   太粗，而 1–5 枚在一個 100 起跳的數字旁邊小到看不出差別。
+
+   代價要記著：一個會漲而且看得出差別的數值，會把「做這件事」
+   往「拿到那個數字」推。原本的停止規則不變——觀察到學生開始為
+   那幾枚做事，就把整層拿掉（見 68-rank.js 的檔頭寫了怎麼拆）。 */
+RULES.COIN = { base: 100, bonusMin: 10, bonusMax: 50, bonusStep: 10 };
 
 /* ---------- 你有多確定 ----------
    三階。不進判定，只決定廊道上看得到多遠（light 對到 WORLD.light）。
@@ -10936,7 +10947,9 @@ function actResend(teamId, runId, link) {
      基本   一件收下的委託 100 枚
      加成   老師收下時給的 1–5 枚
 
-   加成最多佔 5%，所以這個數字幾乎就是「他們完成了幾件」。 */
+   加成一趟 10–50 枚，佔一趟總額的 9–33%——所以這個數字**不再**
+   幾乎等於「他們完成了幾件」，老師給多給少看得出來。
+   （本來是 1–5 枚、最多佔 5%，那時候它幾乎就是完成件數。） */
 function coinsOf(teamId) {
   var base = 0, bonus = 0;
   where('Runs', function (r) {
@@ -12110,7 +12123,10 @@ function dressRuns(cid) {
 
     /* 老師收下時給的那幾枚。 */
     if ((r.state === 'done' || r.state === 'approved') && !r.bonus) {
-      r.bonus = 1 + (h % RULES.COIN.bonusMax);
+      /* 一格 10 枚，所以試用資料也要落在 10 20 30 40 50 上——
+         不然示範班上會出現一個學生按不出來的數字。 */
+      r.bonus = RULES.COIN.bonusMin +
+        (h % 5) * (RULES.COIN.bonusStep || 1);
     }
   });
 }
@@ -19314,7 +19330,9 @@ PAGES.review = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">收下的時候多給幾枚　選填</div>');
   H.push('<div class="row sure-row">');
-  for (var bi = RULES.COIN.bonusMin; bi <= RULES.COIN.bonusMax; bi++) {
+  /* 一格 10 枚，所以這一排是 10 20 30 40 50，不是 1 2 3 4 5。 */
+  for (var bi = RULES.COIN.bonusMin; bi <= RULES.COIN.bonusMax;
+       bi += (RULES.COIN.bonusStep || 1)) {
     H.push(btn(String(bi), 'bonus:' + bi, 'sure' + (bn === bi ? ' on' : '')));
   }
   H.push('</div>');
