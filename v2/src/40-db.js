@@ -78,7 +78,7 @@ function save() {
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 11;
+var SEED_V = 12;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
