@@ -2385,17 +2385,33 @@ button.ac:active{transform:translateY(1px)}
 .task .card{background:rgba(0,0,0,.28);box-shadow:none;clip-path:none;margin:14px 0 0;padding:14px}
 
 /* 底下那三樣：偶爾才用，但不能藏起來 */
-.desk{display:flex;gap:11px;flex-wrap:wrap;margin-top:22px;
-  border-top:1px solid rgba(255,240,214,.10);padding-top:14px}
-.dk{
-  display:flex;align-items:center;gap:8px;padding:8px 11px;
-  background:rgba(0,0,0,.30);border:none;cursor:pointer;color:var(--mute);
-  font-size:22px;opacity:.6
+/* ── 那一排門 ──
+
+   接在廊道正下方（見 60-student.js）。本來是四顆半透明的小方塊，
+   排在整頁靠底的地方——量到手機上要滑 1.8 屏。
+
+   做大：圖示從 22 變 44，四顆平均分掉整行的寬，字在圖底下不在旁邊。
+   一排四扇門，看起來像門，不像一列次要連結。 */
+.desk{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:5px;
+  margin-top:14px;padding-top:14px;
+  border-top:1px solid rgba(255,240,214,.10)
 }
-.dk .px{width:22px;height:22px}
-.dk i{font-style:normal;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dk:hover{opacity:1;color:var(--dim)}
-.dk.lit{opacity:1;color:var(--dim)}
+.dk{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;padding:14px 5px;
+  background:rgba(0,0,0,.30);border:none;cursor:pointer;color:var(--dim);
+  font-size:22px;opacity:1;position:relative;min-height:110px;
+  box-shadow:inset 0 0 0 2px var(--line)
+}
+/* 圖的盒子固定高，四扇才會一樣高——點陣圖的長寬比每一張都不同，
+   不框住的話那一排會參差（量過：134 / 134 / 114 / 114）。 */
+.dk .px{width:44px;height:44px;object-fit:contain}
+.dk > .px, .dk > span.px{flex:0 0 44px}
+.dk i{font-style:normal;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dk:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--line2)}
+/* 有新東西的那一扇：金邊。金＝可以按、你在這裡（見 50-style.css）。 */
+.dk.lit{color:var(--ink);box-shadow:inset 0 0 0 2px var(--gold)}
 
 /* ---------- 全班最近 ----------
    打開它的理由是別人，留下來的理由才是自己。
@@ -3613,6 +3629,11 @@ button.ac:active{transform:translateY(1px)}
 
 /* 鎖著的那一扇。不是一顆按下去會跳「還不行」的鍵——它根本按不下去，
    而且看得出來按不下去。點得動卻沒有反應是最糟的那一種。 */
+/* 手機上也維持四欄。
+
+   一度改成 2×2，量出來整排從 114 變 268 高——那把「要做的那一件」
+   又往下推了 148px。四欄在 375 寬每格 88px，圖示 44 加兩個字放得下，
+   而且那一排就停在廊道正下方，滑一點點就到。 */
 .dk.shut{
   cursor:default;opacity:.42;
   box-shadow:inset 0 0 0 2px var(--line)
@@ -14041,6 +14062,22 @@ PAGES.home = function () {
   H.push(scene(t, next.row, st, next.kind));
   if (r) H.push(stepRow(r.runId));
 
+  /* ── 那一排門，接在廊道正下方 ──
+
+     本來排在節奏尺後面，量到手機上是 y=1475——**要滑 1.8 屏**才看得到。
+     而圖鑑、故事、角色是這整件作品裡「你會想再打開一次」的那一層：
+     金幣、任務之證、委託人、開場那兩頁，全部從這三扇門進去。
+     滑一屏半才看得到的誘因等於沒有誘因。
+
+     為什麼是廊道正下方而不是最上面：它們跟廊道是同一種東西——
+     「這個世界裡有什麼」。廊道是你走的那一條，這三扇是你走完之後
+     會想回去翻的。放在一起，那一整塊就是這個世界；接在底下的
+     才是「你現在要做的事」。
+
+     代價講清楚：要做的那一件因此往下 121px（手機上本來就在第一屏
+     外，現在更遠一點）。那是使用者的取捨——他要的是誘因先被看到。 */
+  H.push(deskRow(t, next));
+
   /* ── 要做的那一件事，就接在廊道下面。 ──
 
      本來走過的那一條帶子插在這中間，所以「收到一個新任務」要越過
@@ -14065,12 +14102,6 @@ PAGES.home = function () {
      在整圈裡的哪個位置。 */
   H.push(beatBar(next, t));
 
-  /* 三扇門。它們是「這個世界裡有什麼」，不是「我剛剛做了什麼」。
-
-     本來在整頁最底下、在走過的那一條帶子後面，那樣要滑到底才看得到；
-     後來搬到最上面，那又把廊道擠掉了。放在這裡：動作與這一組之後、
-     過去那一條帶子之前。 */
-  H.push(deskRow(t, next));
   /* 「還有 N 個在等」拿掉了：正在做的那一張卡裡已經寫著
      「老師又派了 N 個。做完這一趟才輪到。」——同一件事，前後兩行。
      留下的是說得比較清楚的那一句。 */
