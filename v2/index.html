@@ -14568,7 +14568,30 @@ function doingCard(t, row, st) {
   if (st && st.level) {
     H.push('<div class="eyebrow warnx">' + esc(RULES.stallSay(st.level, st.days)) + '</div>');
   }
-  H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
+  /* ── 大家都填好了，可是沒有人交 ──
+
+     每個人現在可以按「我這一份好了」先走（見 67-battle.js）。
+     四個人都按完之後那一趟還是 running——東西沒有到老師手上，
+     而畫面上一句話都沒說。量出來的樣子：四個人都覺得自己做完了，
+     老師的清單是空的，沒有人知道少了最後那一下。
+
+     所以這一顆會換字：還有人沒填就是「做完了」（跟以前一樣），
+     全部填完就變成「交出去給老師」，而且上面說一句。
+
+     開頭那幾天不說「還有 4 個人沒填」——那時候一個人都還沒填，
+     那句話是雜訊不是提醒。要等到有人開始填了才算一件事。 */
+  var pl0 = (r.plan || []).length;
+  var wrote = Object.keys(r.said || {}).length;
+  var left = pl0 || wrote ? partsLeft(r) : 0;
+  if (wrote && !left) {
+    H.push('<p class="waiting">大家都填好自己那一份了，還沒有人交出去。</p>');
+    H.push(btn('交出去給老師', 'go:battle:' + r.runId, 'big'));
+  } else {
+    if (wrote && left) {
+      H.push('<p class="dim">還有 ' + left + ' 個人沒填自己那一份。</p>');
+    }
+    H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
+  }
   /* 做到一半發現自己說少了，可以改。
 
      這條路本來只從戰鬥裡進得去，而且語氣是逃跑——一個學生在第三天
