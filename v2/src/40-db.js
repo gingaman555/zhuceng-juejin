@@ -1111,8 +1111,20 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
   o = o || {};
   var pl = r.plan || [];
   if (o.spent) {
+    /* ── 只寫得了自己名下那幾件 ──
+
+       本來這裡整條蓋掉。那在「只有一個人填」的年代沒問題，可是
+       現在每個人都先填自己那一份（見 actMyPart），第二個人存進來
+       就會把第一個人的數字洗成 0。
+
+       同一張紙，各寫各的行——這一條在畫面上早就有了（別人那幾格
+       按不動），資料層現在跟上。 */
+    var prev = r.spent || pl.map(function () { return 0; });
+    var mine = (typeof S !== 'undefined' && S.who) ? myItems(r, S.who) : null;
     r.spent = pl.map(function (x, i) {
-      return clamp(0, RULES.EST_MAX, Number(o.spent[i]) || 0);
+      var v = clamp(0, RULES.EST_MAX, Number(o.spent[i]) || 0);
+      if (mine && mine.indexOf(i) < 0) return clamp(0, RULES.EST_MAX, Number(prev[i]) || 0);
+      return v;
     });
   }
   if (o.feel) r.feel = ({ good: 1, ok: 1, bad: 1 })[o.feel] ? o.feel : '';
@@ -1142,6 +1154,66 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
   logEvent('reflect', { teamId: teamId, runId: runId,
     overs: (overs || []).map(function (i) { return stepName(runId, i); }).join('、') });
   return r;
+}
+
+/* ---------- 我這一份先存起來 ----------
+
+   交出去之前，每個人各自把自己那兩樣填進去：**他名下那幾件的實際
+   天數**，跟**他做了什麼**。狀態不動，老師還看不到。
+
+   為什麼要有這一支：
+
+   本來只有 actReflect，而它是在按下「交出去」的同一下被呼叫的。
+   所以整組四個人裡，只有按那一下的人填得到東西——其他三個人的
+   廊道上那顆「做完了」已經不見了（那一趟變成 submitted），
+   硬進交作業頁也是 play 狀態。
+
+   量出來的樣子：四個人各認一件，一個人交出去之後，老師收到的是
+   「乙 說 2 天／實際 0 天、丙 說 1 天／實際 0 天、丁 說 3 天／實際 0 天」，
+   而「我做了什麼」只有一個人的。老師會以為那三個人什麼都沒做，
+   而那是假的。
+
+   「同一張紙各寫各的行」跟「先寫完自己的才看得到別人的」這兩條，
+   在那個流程下從來沒有真的發生過——因為永遠只有一個寫的人。
+
+   這一支只碰兩樣，而那兩樣剛好就是這個系統裡唯二屬於個人的東西。
+   順不順、範圍、再兩天、東西在哪裡都是整組一個答案，由交出去的
+   那個人寫。 */
+function actMyPart(teamId, runId, o) {
+  var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!r || r.teamId !== teamId) return null;
+  /* 交出去之後就不能再改了——老師看的東西不可以在他眼前變。 */
+  if (r.state !== 'running') return null;
+  o = o || {};
+  var pl = r.plan || [];
+  var me0 = (typeof S !== 'undefined' && S.who) ? S.who : '';
+  if (o.spent && pl.length) {
+    var prev = r.spent || pl.map(function () { return 0; });
+    var mine = myItems(r, me0);
+    r.spent = pl.map(function (x, i) {
+      if (mine.indexOf(i) < 0) return clamp(0, RULES.EST_MAX, Number(prev[i]) || 0);
+      return clamp(0, RULES.EST_MAX, Number(o.spent[i]) || 0);
+    });
+  }
+  if (o.said1 != null && me0) {
+    r.said = r.said || {};
+    var one = String(o.said1).slice(0, 200).trim();
+    if (one) r.said[me0] = one;
+  }
+  save();
+  logEvent('mypart', { teamId: teamId, runId: runId,
+    said: Object.keys(r.said || {}).length });
+  return r;
+}
+
+/* 這一趟還有幾個人沒填自己那一份。 */
+function partsLeft(run) {
+  if (!run) return 0;
+  var mem = where('Users', function (u) { return u.teamId === run.teamId; });
+  var said = run.said || {};
+  var n = 0;
+  mem.forEach(function (u) { if (!said[u.userId]) n++; });
+  return n;
 }
 
 /* 看過那兩個數字了。

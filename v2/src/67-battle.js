@@ -248,6 +248,20 @@ PAGES.battle = function () {
     H.push('<div class="bt-menu wide">');
     H.push(btChoice('btnext:' + r.runId, last ? '交出去' : '接著說', 'go'));
     if (qi > 0) H.push(btChoice('btprev:' + r.runId, '回上一題', ''));
+    /* ── 前兩題是你的，後三題是你們的 ──
+
+       第 2、3 題（你那幾件各花幾天、你做了什麼）是這個系統裡唯二
+       屬於個人的東西；第 1、4、5、6 題整組一個答案。
+
+       那條界線本來在畫面上完全看不出來，而且更糟的是：交出去那一下
+       會把整趟關掉，所以只有一個人填得到自己那兩樣，其他人的實際
+       天數就帶著 0 交到老師手上。
+
+       在界線上放一顆鍵，兩件事一次解決——他填完自己的可以先走，
+       而「哪裡是你的、哪裡是你們的」不用另外寫一句話解釋。 */
+    if (qs[qi].k === 'said' && r.state === 'running') {
+      H.push(btChoice('btsave:' + r.runId, '我這一份先存起來', ''));
+    }
     /* 「還沒準備好」只留在第一題。後面那幾題有「回上一題」，
        要退出一路退回去就好——每一頁都掛一顆離開鍵，等於每一頁
        都在問他一次「你確定要繼續嗎」。 */
@@ -455,7 +469,21 @@ function btSpent(r) {
 
        這一格是整套系統唯一在量的東西（說幾天 vs 實際幾天）的細項版。
        預填它就是在汙染那份資料，而且汙染的方向剛好是「看起來很準」。 */
-    if (!DRAFT.spent) DRAFT.spent = pl.map(function () { return 0; });
+    /* 已經存進去的先帶回來。
+
+       本來一律從 0 開始（理由見上面：不能拿他承諾的天數當預設，
+       那等於系統先替他回答「跟我說的一樣」）。可是每個人現在會先
+       存自己那一份（見 40-db.js 的 actMyPart），所以回來交出去的
+       時候，畫面上要看得到組員已經填過的數字——不然那一題的守門
+       會擋住他，而他明明填過了。
+
+       帶回來的是**已經回報的實際天數**，不是他承諾的天數。
+       那兩件事不一樣：前者是已經發生的事，後者才是預設答案。 */
+    if (!DRAFT.spent) {
+      DRAFT.spent = pl.map(function (x, i) {
+        return clamp(0, RULES.EST_MAX, Number((r && r.spent || [])[i]) || 0);
+      });
+    }
     var mine = myItems(r, S.who);
     H.push('<div class="splist">');
     pl.forEach(function (x, i) {
@@ -479,6 +507,14 @@ function btSpent(r) {
       H.push('</div>');
     });
     H.push('</div>');
+    /* 還有幾個人沒填自己那一份。不擋交出去——擋了的話一個人不在，
+       整組就交不出去。只是說出來，讓他們自己決定要不要等。
+       跟承諾那一頁同一句話（見 60-student.js）。 */
+    var lf = partsLeft(r);
+    if (lf) {
+      H.push('<p class="dim">還有 ' + lf + ' 個人沒填自己那一份。' +
+        '他們各自進來填，那幾個數字才是他們的。</p>');
+    }
   }
   return H.join('');
 }
@@ -713,6 +749,30 @@ ACTS.btq2 = function (id) {
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', hurt: 1 };
   render();
+};
+
+/* 我這一份先存起來。狀態不動，老師還看不到——他填的是自己那兩樣。
+
+   底下三題（順不順、範圍、再兩天）是整組一個答案，由交出去的
+   那個人寫，所以這裡不碰它們。 */
+ACTS.btsave = function (id) {
+  battleStop();
+  var t = myTeam();
+  var r = find('Runs', function (x) { return x.runId === id; });
+  if (!r) return;
+  /* 自己那一句一定要有，不然這一顆等於什麼都沒存。 */
+  var said = (r && r.said) || {};
+  var one = String(DRAFT.said1 == null ? (said[S.who] || '') : DRAFT.said1).trim();
+  if (!one) {
+    S.p = { id: id, ph: 'q', q: Number(S.p.q) || 0, no: '還沒。你做了什麼？' };
+    return render();
+  }
+  actMyPart(t.teamId, id, { spent: DRAFT.spent, said1: DRAFT.said1 });
+  var left = partsLeft(find('Runs', function (x) { return x.runId === id; }));
+  DRAFT.spent = null; DRAFT.said1 = '';
+  go('home');
+  say(left ? '存起來了。還有 ' + left + ' 個人沒填。'
+    : '存起來了。全組都填完了，誰按交出去都可以。');
 };
 
 /* 還沒好：角色往回跑出畫面，然後回到「說幾天」。 */
