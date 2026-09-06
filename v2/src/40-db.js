@@ -115,6 +115,27 @@ function msOf(id) { return find('Milestones', function (m) { return m.msId === i
 
    「重新想過」的那幾趟要跳過：它們留在資料庫裡當紀錄，但那個任務
    對這一組來說是重新開始的，所以要讓畫面回到「還沒承諾」。 */
+/* ---------- 這一趟是不是你自己組的 ----------
+
+   六組一起跑的時候量出來的：actSubmit 收了 teamId 卻**完全沒有用它**，
+   而 actMyPart 比的是呼叫端自己給的 teamId——兩支都等於沒有守門。
+   結果是任何一個登入的學生都交得掉別組的那一趟、也寫得進別組的
+   「我做了什麼」。
+
+   介面上走不到那裡（廊道只給自己那一趟），但走不到不是守門，那是運氣。
+   而且這一版的資料庫規則是完全開放的（見 41-sync.js），所以「介面沒有
+   那條路」在雲端那一層完全不成立。
+
+   沒有人登入的時候放行：loop.js 是直接呼叫資料層在跑模擬，它沒有 S.who。
+   老師那幾支（收下、退回、回一句）不走這一條——他本來就不在那一組裡。 */
+function ownRun(r) {
+  if (!r) return false;
+  var who = (typeof S !== 'undefined' && S.who) ? S.who : '';
+  if (!who) return true;
+  var u = userOf(who);
+  return !!u && !!u.teamId && u.teamId === r.teamId;
+}
+
 function runOf(teamId, msId) {
   return find('Runs', function (r) {
     return r.teamId === teamId && r.msId === msId && r.state !== 'rethought';
@@ -375,6 +396,10 @@ function planDays(plan) {
 }
 
 function actCommit(teamId, msId, est, flags, plan, zone, sure) {
+  /* 只開得了自己那一組的。跟 ownRun 同一條理由，只是這一刻還沒有
+     run 可以比，所以直接比人身上的 teamId。 */
+  var who0 = (typeof S !== 'undefined' && S.who) ? userOf(S.who) : null;
+  if (who0 && who0.teamId !== teamId) return null;
   var r = runOf(teamId, msId);
   if (r) return r;
   var pl = (plan || []).filter(function (x) { return x && x.n; })
@@ -965,6 +990,7 @@ function runShape(runId) {
 function actRethink(teamId, runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.teamId !== teamId || r.state !== 'running') return false;
+  if (!ownRun(r)) return false;
   r.state = 'rethought';
   r.went = Math.max(1, daysBetween(r.committedAt, now()));
   r.rethoughtAt = now();
@@ -1043,6 +1069,7 @@ function actAskSkip(runId) {
    不是拿來罰他聽了一句話。 */
 function actAnswerAsk(teamId, runId, est) {
   var r = find('Runs', function (x) { return x.runId === runId; });
+  if (!ownRun(r)) return null;
   if (!r || r.teamId !== teamId || r.state !== 'running') return null;
   if (!r.askAt || r.askAns) return null;
   var n = clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || r.est);
@@ -1069,6 +1096,8 @@ function askPending(teamId) {
 function actSubmit(teamId, runId, link) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.state !== 'running') return null;
+  /* 別組的交不掉（見 ownRun）。本來這一支收了 teamId 卻沒用它。 */
+  if (!ownRun(r) || r.teamId !== teamId) return null;
   r.actual = Math.max(1, daysBetween(r.committedAt, now()));
   r.stamp = RULES.judge(r.est, r.actual).key;
   r.link = link || '';
@@ -1107,7 +1136,7 @@ function actSubmit(teamId, runId, link) {
      why    為什麼。全系統唯一的自由書寫。 */
 function actReflect(teamId, runId, overs, hard, pace, o) {
   var r = find('Runs', function (x) { return x.runId === runId; });
-  if (!r) return null;
+  if (!r || !ownRun(r)) return null;
   o = o || {};
   var pl = r.plan || [];
   if (o.spent) {
@@ -1182,6 +1211,8 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
 function actMyPart(teamId, runId, o) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.teamId !== teamId) return null;
+  /* 比 teamId 不是守門——那是呼叫端自己給的。看的是登入的那個人。 */
+  if (!ownRun(r)) return null;
   /* 交出去之後就不能再改了——老師看的東西不可以在他眼前變。 */
   if (r.state !== 'running') return null;
   o = o || {};
@@ -1441,6 +1472,7 @@ function actReject(runId, word) {
 function actResend(teamId, runId, link) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r || r.teamId !== teamId || r.state !== 'back') return false;
+  if (!ownRun(r)) return false;
   /* 改過的位置要跟著更新。
 
      本來這一支不收 link，而重交那一條路走的就是它——所以學生在
