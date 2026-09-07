@@ -175,7 +175,26 @@
   background:rgba(0,0,0,.45)
 }
 .xl-hero .px.vine-s{position:absolute;inset:0;width:44px;height:44px;opacity:.9}
-.xl-hero.sleep{opacity:.6}
+/* 停很久那一組。
+
+   本來 .6，而半透明是把身體跟背景**混色**——等於把好不容易拉開的
+   對比再吃掉一次。量出來（身體對六層底色的最低對比）：
+
+     opacity   冒險者  忍者  騎士
+     .6        1.38✗  1.74  1.92
+     .85       1.66   2.29  2.62
+     1         1.86   2.70  3.16
+
+   1.38 就是看不見。而使用者回報的正好是丙組——那一組在種子裡是
+   停很久的狀態，所以它是六條裡唯一被這一條規則吃到的。
+
+   淡下去這件事本身是對的（停滯用畫面暗下來表示，見 check.js 的
+   禁用詞那一段），可是淡到看不見就不是訊號了，是消失。而這一頁的
+   標題是「大家都在下面」。
+
+   改成 .85：跟旁邊五組並排的時候還是看得出來比較暗，但人還在。
+   睡著的姿勢本來就跟站著不一樣，那一張圖自己也在講同一件事。 */
+.xl-hero.sleep{opacity:.85}
 .xl-hero:hover{transform:translateY(-3px)}
 .xl-hero:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
