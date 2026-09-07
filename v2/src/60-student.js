@@ -642,15 +642,52 @@ function doingCard(t, row, st) {
 
      開頭那幾天不說「還有 4 個人沒填」——那時候一個人都還沒填，
      那句話是雜訊不是提醒。要等到有人開始填了才算一件事。 */
+  /* ── 填完的人跟沒填的人，看到的不一樣 ──
+
+     本來這一段對兩個人說同一句話。實際跑出來是這樣（小美填完、
+     阿哲還沒）：
+
+       小美看到　還有 1 個人沒填自己那一份。　[做完了]
+       阿哲看到　還有 1 個人沒填自己那一份。　[做完了]
+
+     一模一樣。於是：
+
+       小美讀到那句，不知道那個「1 個人」是不是自己——她只好再進去
+       走一次同樣的六題，確認一下
+       阿哲讀到那句，也不知道那個人就是他自己——他以為在等別人
+
+     兩個人都在等對方。而這一格是這套系統收個人層資料的入口。
+
+     所以每一個人先讀到的是自己那一半。
+
+     ── 為什麼是「改」不是「不能按」 ──
+
+     填完之後把鍵鎖起來是一條死路：她寫 3 天、隔天發現其實是 4 天，
+     那就再也改不了。而資料層本來就允許改（actMyPart 只要 running
+     就收），鎖的是畫面不是規則——那種擋法只會讓人以為系統壞了。
+
+     所以鍵換字不換路：「改我那一份」。進去看得到自己存過的數字，
+     改完再存一次。交出去之後才真的不能改（那時候老師在看了）。 */
   var pl0 = (r.plan || []).length;
   var wrote = Object.keys(r.said || {}).length;
   var left = pl0 || wrote ? partsLeft(r) : 0;
+  var 我填了 = !!((r.said || {})[S.who]);
+  /* 一個人一組（個人制）。那時候「大家」只有他自己，
+     「還有 N 個人沒填」也永遠是 0——那幾句話要換一套。 */
+  var 獨 = where('Users', function (u) {
+    return u.teamId === t.teamId && u.role === 'student';
+  }).length <= 1;
   if (wrote && !left) {
-    H.push('<p class="waiting">大家都填好自己那一份了，還沒有人交出去。</p>');
+    H.push('<p class="waiting">' +
+      (獨 ? '你填好了，還沒交出去。' : '大家都填好自己那一份了，還沒有人交出去。') +
+      '</p>');
     H.push(btn('交出去給老師', 'go:battle:' + r.runId, 'big'));
+  } else if (我填了) {
+    H.push('<p class="dim">你那一份填好了。還在等 ' + left + ' 個人。</p>');
+    H.push(btn('改我那一份', 'go:battle:' + r.runId, 'big'));
   } else {
-    if (wrote && left) {
-      H.push('<p class="dim">還有 ' + left + ' 個人沒填自己那一份。</p>');
+    if (wrote) {
+      H.push('<p class="dim">' + wrote + ' 個人填好了。你還沒填自己那一份。</p>');
     }
     H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
   }
@@ -896,8 +933,21 @@ PAGES.commit = function () {
   if (plan.length) {
     H.push('<div class="estep"><div class="es-n sum"><b>' + est +
       '</b><span>天</span></div></div>');
+    /* 這個數字是誰說的，取決於上一步有沒有拆件。
+
+       拆了　　它是每一件加起來的，而每一件的天數只有本人按得動
+               （見 55-ui.js 的 pland）——所以它是全組每一個人各自
+               說的話的總和
+       沒拆　　它是一個數字，誰在承諾就是誰按的——那一趟的個人層
+               完全沒有資料（exportItems 是照 r.plan 一件一列的，
+               沒有 plan 就沒有列）
+
+       兩種都成立，可是它們不是同一種東西，而畫面上長得一模一樣。
+       所以在這裡說出來。 */
+    H.push(whoTag('one', '', '這個數字是上面那幾件加起來的'));
   } else {
     H.push(estStep(est));
+    H.push(whoTag('team', '拆件的話，天數會變成每個人各自說的', '沒有拆件'));
   }
 
   /* 決定的時候要看的東西全部畫在同一根尺上：你前幾趟說了幾天、
@@ -1394,7 +1444,10 @@ function logRow(m, r, t) {
     }
     var sp = stepsOf(r.runId);
     if (sp) {
-      H.push('<div class="tags small"><span class="k">老師分的段</span>');
+      /* 寫死「老師分的段」是錯的：stepsOf 先拿的是他們自己拆的那幾件
+         （見 40-db.js），只有沒拆的時候才退回老師分的。 */
+      H.push('<div class="tags small"><span class="k">' +
+        (sp.from === 'mine' ? '你們拆的那幾件' : '老師分的段') + '</span>');
       sp.all.forEach(function (q, i) {
         H.push('<span class="tag static' + (sp.on.indexOf(i) >= 0 ? ' hit' : '') +
           '">' + esc(q) + '</span>');

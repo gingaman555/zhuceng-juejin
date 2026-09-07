@@ -271,8 +271,15 @@ PAGES.battle = function () {
        替大家交的人——不用設定、不會缺席、每一趟可以是不同的人。 */
     var mineDone = qs[qi].k === 'said' && r.state === 'running';
     if (mineDone) {
-      H.push(btChoice('btsave:' + r.runId, '我這一份好了', 'go'));
-      H.push(btChoice('btnext:' + r.runId, '順便幫大家交出去', ''));
+      /* 存過了就是「改」。同一顆鍵、同一條路，只有字不一樣——
+         鎖起來的話他發現寫錯就沒有出口了（見 60-student.js）。 */
+      var 存過 = !!((r.said || {})[S.who]);
+      /* 一個人一組的時候沒有「大家」。 */
+      var 只有他 = where('Users', function (u) {
+        return u.teamId === t.teamId && u.role === 'student';
+      }).length <= 1;
+      H.push(btChoice('btsave:' + r.runId, 存過 ? '改好了' : '我這一份好了', 'go'));
+      H.push(btChoice('btnext:' + r.runId, 只有他 ? '接著交出去' : '順便幫大家交出去', ''));
     } else {
       H.push(btChoice('btnext:' + r.runId, last ? '交出去' : '接著說', 'go'));
     }
@@ -555,8 +562,13 @@ function btSpent(r) {
     /* 還有幾個人沒填自己那一份。不擋交出去——擋了的話一個人不在，
        整組就交不出去。只是說出來，讓他們自己決定要不要等。
        跟承諾那一頁同一句話（見 60-student.js）。 */
+    /* 跟廊道同一條規矩：先講你自己那一半（見 60-student.js）。 */
     var lf = partsLeft(r);
-    if (lf) {
+    var 我存過 = !!((r.said || {})[S.who]);
+    if (lf && 我存過) {
+      H.push('<p class="dim">你這一份存過了，改了再存一次就好。' +
+        '還有 ' + lf + ' 個人沒填。</p>');
+    } else if (lf) {
       H.push('<p class="dim">還有 ' + lf + ' 個人沒填自己那一份。' +
         '他們各自進來填，那幾個數字才是他們的。</p>');
     }
@@ -816,8 +828,13 @@ ACTS.btsave = function (id) {
   var left = partsLeft(find('Runs', function (x) { return x.runId === id; }));
   DRAFT.spent = null; DRAFT.said1 = '';
   go('home');
+  /* 一個人一組的時候沒有「全組」。 */
+  var 只有我 = where('Users', function (u) {
+    return u.teamId === t.teamId && u.role === 'student';
+  }).length <= 1;
   say(left ? '存起來了。還有 ' + left + ' 個人沒填。'
-    : '存起來了。全組都填完了，誰按交出去都可以。');
+    : (只有我 ? '存起來了。可以交出去了。'
+      : '存起來了。全組都填完了，誰按交出去都可以。'));
 };
 
 /* 還沒好：角色往回跑出畫面，然後回到「說幾天」。 */

@@ -565,13 +565,18 @@ function stepsOf(runId) {
   var r = find('Runs', function (x) { return x.runId === runId; });
   if (!r) return null;
   if (r.plan && r.plan.length) {
-    return { all: r.plan.map(function (x) { return x.n; }),
+    /* from：這幾段是誰分的。畫面上要寫得出來——記錄那一頁本來寫死
+       「老師分的段」，可是這一支先拿的是學生自己拆的那幾件，
+       所以只要他們拆過件，那個標籤就是假的。 */
+    return { from: 'mine',
+      all: r.plan.map(function (x) { return x.n; }),
       days: r.plan.map(function (x) { return x.d; }),
+      who: r.plan.map(function (x) { return x.who || ''; }),
       on: r.steps || [] };
   }
   var m = msOf(r.msId);
   if (!m || !m.steps || !m.steps.length) return null;
-  return { all: m.steps, on: r.steps || [] };
+  return { from: 'ms', all: m.steps, on: r.steps || [] };
 }
 
 /* 這一個 run 在某一天推過了沒 */

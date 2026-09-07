@@ -137,8 +137,15 @@ function 廊道鍵(u) {
       }
       return '(沒有)';
     })(),
-    話: (h.match(/class="waiting">([^<]*)</) || [])[1] ||
-        (h.match(/class="dim">(還有[^<]*)</) || [])[1] || ''
+    /* 那一句。本來只認「還有…」開頭的——而填完的人現在讀到的是
+       「你那一份填好了…」，沒有一句以「還有」開頭。改成抓那張卡上
+       第一句 .dim / .waiting，不預設它長什麼樣。 */
+    話: (function () {
+      var i = h.indexOf('act-card');
+      var seg = i < 0 ? h : h.slice(i);
+      var m = seg.match(/class="(?:waiting|dim)">([^<]*)</);
+      return m ? m[1] : '';
+    })()
   };
 }
 let c = 廊道鍵(stu[0]);
@@ -154,8 +161,15 @@ function 填自己那一份(u, i, 天) {
   ACTS.btsave(run.runId);
 }
 填自己那一份(stu[0], 0, 1);
-c = 廊道鍵(stu[1]);
-be('填了一個 · 話', /還有 1 個人/.test(c.話), true);
+/* 填完的人跟沒填的人看到的要不一樣（見 60-student.js）。
+   兩邊都驗——只驗一邊的話，把兩句話寫成一樣也會過。 */
+const 已 = 廊道鍵(stu[0]), 未 = 廊道鍵(stu[1]);
+be('填完的那一位 · 話', /你那一份填好了/.test(已.話), true);
+be('填完的那一位 · 鍵', 已.鍵, '改我那一份');
+be('還沒填的那一位 · 話', /你還沒填自己那一份/.test(未.話), true);
+be('還沒填的那一位 · 鍵', 未.鍵, '做完了');
+be('兩個人看到的不一樣', 已.話 !== 未.話, true);
+c = 未;
 be('填了一個 · 狀態沒動', find('Runs', x => x.runId === run.runId).state, 'running');
 
 填自己那一份(stu[1], 1, 4);
