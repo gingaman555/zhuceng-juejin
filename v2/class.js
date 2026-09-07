@@ -381,7 +381,7 @@ const 記 = [];
 
 節('6', '每一台看到的是不是同一份');
 
-const 樣 = ['Users', 'Classes', 'Teams', 'Milestones', 'Runs'].map(col => {
+const 樣 = ['Users', 'Classes', 'Teams', 'Milecrystals', 'Runs'].map(col => {
   const 數 = 全.map(m => m.where(col, r => !r._d).length);
   const 齊 = new Set(數).size === 1;
   ok(齊, col + ' 十五台看到的筆數一樣（' + 數[0] + '）' + (齊 ? '' : '　→ ' + 數.join('/')));

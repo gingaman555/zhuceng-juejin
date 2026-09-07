@@ -49,7 +49,7 @@ const 站 = {
 const 檢查 = [
   ['check.js', ''], ['loop.js', '200'], ['pages.js', ''], ['e2e.js', ''],
   ['read.js', ''], ['leak.js', ''], ['multi.js', ''], ['multi.js', '1'],
-  ['class.js', ''], ['absent.js', ''], ['solo.js', ''], ['twoclass.js', '']
+  ['class.js', ''], ['absent.js', ''], ['solo.js', ''], ['twoclass.js', ''], ['crystal.js', '']
 ];
 
 const 參 = process.argv.slice(2);

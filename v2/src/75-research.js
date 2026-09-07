@@ -155,7 +155,7 @@ PAGES.events = function () {
 
   H.push('<p><b>一趟一列</b>　' + exportRuns(cid).split('\n').length + ' 列</p>');
   H.push('<p class="dim">承諾天數、實際天數、判定、偏差率、把握、拆幾件、' +
-    '順不順、範圍、老師回的天數、被退幾次、金幣、三個時間戳。</p>');
+    '順不順、範圍、老師回的天數、被退幾次、水晶、三個時間戳。</p>');
   H.push(btn('存成檔案', 'csvruns', 'ghost'));
 
   H.push('<p style="margin-top:22px"><b>一件一列</b>　' +

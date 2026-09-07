@@ -105,7 +105,7 @@ be('任務出來了', ms && (ms.ms || ms).title, '把問題收斂成一句話');
 /* ══ 三 · 學生接委託（三步） ══ */
 H('接委託：三步');
 as(stu[0]);
-const msId = DB.Milestones[0].msId;
+const msId = DB.Milecrystals[0].msId;
 [0, 1, 2].forEach(function (st) {
   S.page = 'commit'; S.p = { id: msId, st: st }; DRAFT.plan = null;
   const h = PAGES.commit();
@@ -245,11 +245,13 @@ H('老師收下');
 as(tea);
 const mobName = mobOfRun(re).n;
 be('收下之前圖鑑裡沒有他', !!metMobs(tm.teamId)[mobName], false);
-actApprove(run.runId, '這一次找得到了。', 30);
+/* 加成用規則裡的最大值，不寫死——刻度改了測試不用跟著改。 */
+const 加 = RULES.CRYSTAL.bonusMax;
+actApprove(run.runId, '這一次找得到了。', 加);
 const done = find('Runs', x => x.runId === run.runId);
 be('狀態', done.state, 'done');
 be('收下之後圖鑑裡有他了', !!metMobs(tm.teamId)[mobName], true);
-be('金幣', coinsOf(tm.teamId).all, RULES.COIN.base + 30);
+be('水晶', crystalOf(tm.teamId).all, RULES.CRYSTAL.base + 加);
 as(stu[0]); SEEN_CUT = 1; OKGOT = {};
 S.page = 'home'; S.p = {}; DRAFT = {};
 const home = PAGES.home();
@@ -261,8 +263,8 @@ as(stu[0]);
 const ms2 = actPublish(kl.classId, { title: '第二件', note: '', steps: [], due: 7, teams: [] });
 as(stu[0]);
 DRAFT = { plan: [{ n: '甲', d: 3, who: stu[0].userId, byOwn: 1 }], sure: 'low' };
-ACTS.commit(DB.Milestones[1].msId);
-const r2 = runOf(tm.teamId, DB.Milestones[1].msId);
+ACTS.commit(DB.Milecrystals[1].msId);
+const r2 = runOf(tm.teamId, DB.Milecrystals[1].msId);
 be('第二趟出發', r2.state, 'running');
 be('第二次遇到委託人就不停選單頁了',
   btPhase(Object.assign({}, r2)) === 'q' || mobDebut(tm.teamId, r2.runId), true);
@@ -275,7 +277,7 @@ be('走過的天數留著', r2b.went >= 1, true);
 /* ══ 十 · 協商：老師回一句「我覺得會是幾天」 ══ */
 H('協商：老師回一次，最後那一下還是學生按的');
 as(stu[0]);
-const ms3 = DB.Milestones[1];
+const ms3 = DB.Milecrystals[1];
 DRAFT = { plan: [{ n: '甲', d: 3, who: stu[0].userId, byOwn: 1 }], sure: 'low' };
 ACTS.commit(ms3.msId);
 const r3 = runOf(tm.teamId, ms3.msId);
@@ -312,7 +314,7 @@ function 走完一趟(r, 天) {
   S.p = { id: r.runId, ph: 'q', q: btAsks(r).length - 1 };
   ACTS.btnext(r.runId);
   as(tea);
-  actApprove(r.runId, '可以。', 20);
+  actApprove(r.runId, '可以。', RULES.CRYSTAL.bonusMin);
 }
 const d0 = depthOf(tm.teamId);
 走完一趟(answered, 2);
@@ -325,7 +327,7 @@ ACTS.commit(ms4.msId);
 const d1 = depthOf(tm.teamId);
 be('深度變深了', d1 > d0, true);
 be('收下的件數', where('Runs', r => r.teamId === tm.teamId && r.state === 'done').length, 3);
-be('金幣', coinsOf(tm.teamId).all, 3 * RULES.COIN.base + 30 + 20 + 20);
+be('水晶', crystalOf(tm.teamId).all, 3 * RULES.CRYSTAL.base + 加 + 2 * RULES.CRYSTAL.bonusMin);
 be('圖鑑收了幾位', Object.keys(metMobs(tm.teamId)).length >= 1, true);
 
 /* ══ 十二 · 出口：專案做完了 ══ */
@@ -370,7 +372,7 @@ let drew = 0;
   Object.keys(PAGES).forEach(function (p) {
     if (!allowed(u, p)) return;
     S.page = p; DRAFT = {};
-    const anyRun = DB.Runs[0], anyMs = DB.Milestones[0];
+    const anyRun = DB.Runs[0], anyMs = DB.Milecrystals[0];
     S.p = ['stamp', 'pick', 'camp', 'battle', 'radar', 'review'].indexOf(p) >= 0
       ? { id: anyRun.runId } : (p === 'commit' ? { id: anyMs.msId } : {});
     try {

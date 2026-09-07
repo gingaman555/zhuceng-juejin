@@ -94,7 +94,7 @@ PAGES.home = function () {
        三句話全都不一樣、而且都是這一整條流程裡最值得讀的東西，
        就夾在那面牆中間。
 
-       樣板抽出來放上面，底下每一張只留真的不一樣的：拿到幾枚、
+       樣板抽出來放上面，底下每一張只留真的不一樣的：拿到幾顆、
        哪一件、還有他那一句。 */
     H.push('<div class="eyebrow lit">老師勾了' +
       (okPend.length > 1 ? '　' + okPend.length + ' 件' : '') + '</div>');
@@ -116,10 +116,10 @@ PAGES.home = function () {
     var kz = null;
     var kk = keepsOf(t.teamId).filter(function (x) { return x.runId === r.runId; })[0];
     STRATA.forEach(function (x) { if (kk && x.key === kk.zone) kz = x; });
-    /* 拿到幾枚。基本的做完就有，後面那幾枚是老師多說的。 */
-    var cb = Math.max(RULES.COIN.bonusMin, Number(r.bonus) || RULES.COIN.bonusMin);
-    H.push('<div class="coingot">＋' + (RULES.COIN.base + cb) + ' 枚金幣' +
-      '<span>' + RULES.COIN.base + ' 是完成的，' + cb + ' 是他多給的</span></div>');
+    /* 拿到幾顆。基本的做完就有，後面那幾顆是老師多說的。 */
+    var cb = Math.max(RULES.CRYSTAL.bonusMin, Number(r.bonus) || RULES.CRYSTAL.bonusMin);
+    H.push('<div class="crygot">＋' + (RULES.CRYSTAL.base + cb) + ' 顆水晶' +
+      '<span>' + RULES.CRYSTAL.base + ' 是完成的，' + cb + ' 是他多給的</span></div>');
     H.push(regCard('新拿到', (m ? m.title : '那一趟'), '任務之證已收錄在圖鑑',
       pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
       false));
@@ -207,7 +207,7 @@ PAGES.home = function () {
 
      本來排在節奏尺後面，量到手機上是 y=1475——**要滑 1.8 屏**才看得到。
      而圖鑑、故事、角色是這整件作品裡「你會想再打開一次」的那一層：
-     金幣、任務之證、委託人、開場那兩頁，全部從這三扇門進去。
+     水晶、任務之證、委託人、開場那兩頁，全部從這三扇門進去。
      滑一屏半才看得到的誘因等於沒有誘因。
 
      為什麼是廊道正下方而不是最上面：它們跟廊道是同一種東西——
@@ -353,19 +353,19 @@ function stepRow(runId) {
   return H.join('');
 }
 
-/* 你們這一組。組名、專案、幾個人、隊伍代碼、金幣。
+/* 你們這一組。組名、專案、幾個人、隊伍代碼、水晶。
 
    隊伍代碼一直在：新的人要加進來就是靠那一串，而它會被唸出來。 */
 function teamCard(t) {
   var mem = where('Users', function (u) { return inTeam(u, t.teamId); });
-  var c = coinsOf(t.teamId);
+  var c = crystalOf(t.teamId);
   /* 三行。本來五段（眉標、隊名、專案、人、代碼）疊成 281px，
      而它排在最上面，於是廊道被推到畫面外。
 
      哪些合併得起來：
        眉標「你們這一組」拿掉——底下就是四個人的臉，那一行在說
        已經看得出來的事。
-       隊名跟專案接成一行（中點分隔），跟金幣同一列。
+       隊名跟專案接成一行（中點分隔），跟水晶同一列。
        代碼那一句從「隊伍代碼 X　要加進來的人用這一串。」縮成
        「代碼 X」——那一句解釋只有第一天有用，而代碼本身就是動作。 */
   var H = ['<div class="card tmc">'];
@@ -375,7 +375,7 @@ function teamCard(t) {
   if (t.joinCode) {
     H.push('<span class="tmc-c">代碼 <b>' + esc(t.joinCode) + '</b></span>');
   }
-  H.push('<span class="tmc-coin">' + c.all + ' 枚</span></div>');
+  H.push('<span class="tmc-cry">' + c.all + ' 份</span></div>');
   H.push('<div class="tmc-l">');
   mem.forEach(function (u) {
     var g = heroOf(u);
@@ -888,12 +888,12 @@ PAGES.commit = function () {
     H.push('<b>' + esc(patSay(pat, patSeen(t.teamId, pat.n) ? 'back' : 'ask') ||
       patSay(pat, 'ask') || (pat.n + ' 在等這一件。')) + '</b>');
     H.push('</div>');
-    /* 「100 枚金幣」拿掉了。
+    /* 「100 顆水晶」拿掉了。
 
        每一件委託都是同一個 100，所以那一行在每一頁上都一模一樣——
        一個永遠不變的數字不帶任何資訊，它只是佔著這一頁最上面的位置。
 
-       真的會不一樣的是老師收下時多給的那 1–5 枚，而那個在判定頁上
+       真的會不一樣的是老師收下時多給的那 1–5 顆，而那個在判定頁上
        他自己看得到。 */
   }
 
@@ -1326,7 +1326,7 @@ PAGES.stamp = function () {
    地圖是動手的地方，不是一個看的頁面。 */
 
 /* ---------- 大躍進 ---------- */
-/* 大躍進那一頁退休了：「石頭變了」搬到班級地下城（那才是新的一層
+/* 大躍進那一頁退休了：「水晶變了」搬到班級地下城（那才是新的一層
    實際發生的地方），其餘只是一句「去看看那一層」。 */
 
 /* ---------- 出口 ----------

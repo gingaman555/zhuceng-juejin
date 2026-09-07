@@ -20,7 +20,7 @@
 .rk-bar u{display:block;height:100%;background:var(--gold);text-decoration:none}
 .rk-d{flex:0 0 auto;font-size:22px;color:var(--dim);
   font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
-/* 收下幾件與金幣：靠最右邊，窄的時候整個掉到第二行。
+/* 收下幾件與水晶：靠最右邊，窄的時候整個掉到第二行。
    它不決定順序，所以掉下去不影響這一列在說什麼。 */
 .rk-r{flex-wrap:wrap}
 .ck-c{margin-left:auto;font-size:22px;color:var(--mute);

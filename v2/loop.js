@@ -79,7 +79,7 @@ console.log('迴圈測試　' + ROUNDS + ' 輪\n');
   }
 })();
 
-const before = { runs: DB.Runs.length, pushes: DB.Pushes.length, ms: DB.Milestones.length };
+const before = { runs: DB.Runs.length, pushes: DB.Pushes.length, ms: DB.Milecrystals.length };
 let stamps = { early: 0, exact: 0, late: 0 };
 
 /* ================= 跑 N 輪 ================= */
@@ -268,7 +268,7 @@ if (eco.map(function (e) { return e.teamId; }).join(',') !== order) {
 (function () {
   seed();
   var cols = [['Users', 'userId'], ['Teams', 'teamId'], ['Classes', 'classId'],
-              ['Milestones', 'msId'], ['Runs', 'runId']];
+              ['Milecrystals', 'msId'], ['Runs', 'runId']];
   var seen = {}, dup = [], top = 0;
   cols.forEach(function (p) {
     (DB[p[0]] || []).forEach(function (r) {

@@ -34,7 +34,7 @@ function blank() {
     Config: { seq: 1 },
     Users: [], Classes: [], Teams: [],
     /* 任務：老師派的。同一個任務可以只發給某幾組。 */
-    Milestones: [],
+    Milecrystals: [],
     /* 一組在一個任務上的狀態。這張表是整個系統的心臟。 */
     Runs: [],
     /* 每一次推進打卡。一天一筆。 */
@@ -92,7 +92,7 @@ function nid(p) {
   var c = DB.Config || (DB.Config = {});
   if (!(c.seq > 0)) {
     var top = 0;
-    ['Users', 'Classes', 'Teams', 'Milestones', 'Runs', 'Pushes', 'Keeps']
+    ['Users', 'Classes', 'Teams', 'Milecrystals', 'Runs', 'Pushes', 'Keeps']
       .forEach(function (t) {
         (DB[t] || []).forEach(function (x) {
           var id = String(x.userId || x.classId || x.teamId ||
@@ -230,7 +230,7 @@ function where(tbl, fn) { return DB[tbl].filter(fn); }
 
 function teamOf(id) { return find('Teams', function (t) { return t.teamId === id; }); }
 function userOf(id) { return find('Users', function (u) { return u.userId === id; }); }
-function msOf(id) { return find('Milestones', function (m) { return m.msId === id; }); }
+function msOf(id) { return find('Milecrystals', function (m) { return m.msId === id; }); }
 /* 這一組在這個任務上的那一趟。
 
    「重新想過」的那幾趟要跳過：它們留在資料庫裡當紀錄，但那個任務
@@ -273,7 +273,7 @@ function runOf(teamId, msId) {
 function msFor(teamId) {
   var t = teamOf(teamId);
   if (!t) return [];
-  return where('Milestones', function (m) {
+  return where('Milecrystals', function (m) {
     if (m.classId !== t.classId) return false;
     return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
@@ -447,7 +447,7 @@ function accuracyOf(teamId) {
 /* ---------- 這個課程有哪幾位老師 ----------
 
    三位老師共同帶整個班，不是一人分走幾組。所以「誰」這件事不掛在
-   組上，掛在每一件上：這一件是誰派的（Milestone.mentorId）、
+   組上，掛在每一件上：這一件是誰派的（Milecrystal.mentorId）、
    那一句話是誰說的（Run.wordBy）。同一組這一週可能收到甲老師派的，
    下一週收到乙老師派的，兩件都是真的。
 
@@ -1013,7 +1013,7 @@ function mobNewInCodex(teamId, runId) {
    那一版的說法是「圖鑑是他自己的回憶，不需要另一個人確認」。
 
    改了。收進圖鑑的東西要有代價，不然一個學期下來每一位都會自己
-   跑進來，那一頁就從「我做到的」變成「時間到了就有的」。金幣、
+   跑進來，那一頁就從「我做到的」變成「時間到了就有的」。水晶、
    任務之證、班級地下城上那一塊本來就是收下才有的——圖鑑跟它們
    站在同一邊比較說得通。
 
@@ -1045,7 +1045,7 @@ function metMobs(teamId) {
 
    ── 它不進判定 ──
 
-   回的是三個數字，沒有名次、沒有印章、不影響金幣、不上榜、
+   回的是三個數字，沒有名次、沒有印章、不影響水晶、不上榜、
    RULES.judge 一個字都沒碰。它是一面鏡子，不是第二個判定。
 
    在團隊裡判個人是製造推卸的最快方法：一旦自己的準度有後果，
@@ -1466,7 +1466,7 @@ function actPublish(classId, o) {
     dueU: o.dueU || '',
     at: now()
   };
-  DB.Milestones.push(m);
+  DB.Milecrystals.push(m);
   save();
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
@@ -1671,23 +1671,68 @@ function actResend(teamId, runId, link) {
    本來中間還有一步——學生要再走到一頁去按「收起來」。那一步
    不產生任何東西，只是叫他確認一次自己已經做完、而且老師也已經
    勾過的事。approved 這個狀態因此也不再出現。 */
-/* 這一組的金幣。不存起來，每次算——存起來就會有兩份真相。
+/* 這一組的水晶。不存起來，每次算——存起來就會有兩份真相。
 
-     基本   一件收下的委託 100 枚
-     加成   老師收下時給的 1–5 枚
+     基本   一件收下的委託 100 份
+     加成   老師收下時給的 1–5 份
 
-   加成一趟 10–50 枚，佔一趟總額的 9–33%——所以這個數字**不再**
+   加成一趟 10–50 顆，佔一趟總額的 9–33%——所以這個數字**不再**
    幾乎等於「他們完成了幾件」，老師給多給少看得出來。
-   （本來是 1–5 枚、最多佔 5%，那時候它幾乎就是完成件數。） */
-function coinsOf(teamId) {
+   （本來是 1–5 份、最多佔 5%，那時候它幾乎就是完成件數。） */
+function crystalOf(teamId) {
   var base = 0, bonus = 0;
   where('Runs', function (r) {
     return r.teamId === teamId && (r.state === 'done' || r.state === 'approved');
   }).forEach(function (r) {
-    base += RULES.COIN.base;
-    bonus += Math.max(0, Math.min(RULES.COIN.bonusMax, Number(r.bonus) || 0));
+    base += RULES.CRYSTAL.base;
+    bonus += Math.max(0, Math.min(RULES.CRYSTAL.bonusMax, Number(r.bonus) || 0));
   });
-  return { base: base, bonus: bonus, all: base + bonus };
+  var 拿過 = base + bonus;
+  var 用掉 = litMobs(teamId).length * RULES.CRYSTAL.light;
+  /* all 是**拿過的總數**，不是手上剩下的。
+
+     榜上排的是 all，所以點亮不會讓一組在榜上退步——不然那張榜就會
+     變成「不要用它」的壓力，而一個沒有人敢用的用途等於沒有用途。
+
+     left 是手上剩下的，那是他要做決定的時候看的數字。 */
+  return { base: base, bonus: bonus, all: 拿過, used: 用掉, left: 拿過 - 用掉 };
+}
+
+/* ---------- 用水晶照亮的那幾位 ----------
+
+   存在隊伍那一筆上（t.lit）。一個欄位同時是「花了多少」跟「解鎖了誰」
+   ——兩份紀錄會不同步，一份不會。 */
+function litMobs(teamId) {
+  var t = teamOf(teamId);
+  return (t && Array.isArray(t.lit)) ? t.lit : [];
+}
+function isLit(teamId, name) {
+  return litMobs(teamId).indexOf(name) >= 0;
+}
+
+/* 點亮一位。
+
+   擋四件事：不是自己組的、沒有這一位、已經看得到了、水晶不夠。
+   已經遇過的不用點——那是白花，而且畫面上不該給他一顆會浪費東西的鍵。 */
+function actLight(teamId, name) {
+  var t = teamOf(teamId);
+  if (!t) return { err: '找不到這一組。' };
+  /* 只點得亮自己組的（跟 ownRun 同一條理由）。 */
+  var who = (typeof S !== 'undefined' && S.who) ? userOf(S.who) : null;
+  if (who && who.teamId !== teamId) return { err: '那不是你的圖鑑。' };
+  var 有 = false;
+  allFauna().forEach(function (c) { if (c.n === name) 有 = true; });
+  if (!有) return { err: '沒有這一位。' };
+  if (metMobs(teamId)[name]) return { err: '你們已經遇過他了。' };
+  if (isLit(teamId, name)) return { err: '已經照亮過了。' };
+  var o = crystalOf(teamId);
+  if (o.left < RULES.CRYSTAL.light) {
+    return { err: '水晶不夠。還差 ' + (RULES.CRYSTAL.light - o.left) + ' 顆。' };
+  }
+  t.lit = litMobs(teamId).concat([name]);
+  save();
+  logEvent('light', { teamId: teamId, who: name, cost: RULES.CRYSTAL.light });
+  return { name: name };
 }
 
 function actApprove(runId, word, bonus) {
@@ -1699,10 +1744,10 @@ function actApprove(runId, word, bonus) {
      會是「系統說的」——而這整個作品立在「系統給資訊，人給承認」上，
      承認要有一個人，不然它就退回成一個自動回覆。 */
   r.wordBy = (typeof S !== 'undefined' && S.who) || '';
-  /* 老師給的那幾枚。收下就一定有，最少 1——0 會被讀成負評，
+  /* 老師給的那幾顆。收下就一定有，最少 1——0 會被讀成負評，
      而「他沒有特別想說什麼」跟「他覺得這份差」是兩件事。 */
-  r.bonus = Math.max(RULES.COIN.bonusMin,
-    Math.min(RULES.COIN.bonusMax, Number(bonus) || RULES.COIN.bonusMin));
+  r.bonus = Math.max(RULES.CRYSTAL.bonusMin,
+    Math.min(RULES.CRYSTAL.bonusMax, Number(bonus) || RULES.CRYSTAL.bonusMin));
   r.approvedAt = now();
   r.state = 'done';
   r.doneAt = now();

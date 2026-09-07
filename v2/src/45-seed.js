@@ -181,7 +181,7 @@ function seed() {
     title: '找兩個人試一次，記下卡在哪',
     steps: ['做出可以試的版本', '約人', '在旁邊看他用'],
     note: '不要跟他解釋。他卡住的地方就是答案。' };
-  DB.Milestones.push(M1, M2, M3, M4);
+  DB.Milecrystals.push(M1, M2, M3, M4);
   DB.Config.seq = 10;
 
   /* 幫忙塞推進紀錄。
@@ -298,7 +298,7 @@ function seed() {
      不要再寫死一個數字。數出來。 */
   var top = 0;
   [['Users', 'userId'], ['Teams', 'teamId'], ['Classes', 'classId'],
-   ['Milestones', 'msId'], ['Runs', 'runId']].forEach(function (p) {
+   ['Milecrystals', 'msId'], ['Runs', 'runId']].forEach(function (p) {
     (DB[p[0]] || []).forEach(function (r) {
       var n = parseInt(String(r[p[1]]).replace(/^[A-Za-z]+/, ''), 10);
       if (n > top) top = n;
@@ -401,12 +401,12 @@ function dressRuns(cid) {
       });
     }
 
-    /* 老師收下時給的那幾枚。 */
+    /* 老師收下時給的那幾顆。 */
     if ((r.state === 'done' || r.state === 'approved') && !r.bonus) {
-      /* 一格 10 枚，所以試用資料也要落在 10 20 30 40 50 上——
+      /* 一格 10 顆，所以試用資料也要落在 10 20 30 40 50 上——
          不然示範班上會出現一個學生按不出來的數字。 */
-      r.bonus = RULES.COIN.bonusMin +
-        (h % 5) * (RULES.COIN.bonusStep || 1);
+      r.bonus = RULES.CRYSTAL.bonusMin +
+        (h % 5) * (RULES.CRYSTAL.bonusStep || 1);
     }
   });
 }

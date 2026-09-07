@@ -89,6 +89,7 @@ var EV_SAY = {
   denyexit: function () { return '說現在還不是時候'; },
   rank:     function (e) { return (e.on ? '打開' : '關掉') + '排行榜'; },
   askest:   function (e) { return '回了一句：他們說 ' + e.est + ' 天，我覺得 ' + e.ask + ' 天'; },
+  light:    function (e) { return '用 ' + e.cost + ' 顆水晶照亮了「' + e.who + '」'; },
   askans:   function (e) {
     return e.was === e.now ? '談過之後維持 ' + e.now + ' 天（老師說 ' + e.ask + '）'
       : '談過之後從 ' + e.was + ' 天改成 ' + e.now + ' 天（老師說 ' + e.ask + '）';
@@ -306,7 +307,7 @@ function exportRuns(classId) {
     '把握', '有沒有拆件', '拆幾件', '本人自己按的件數',
     '順不順', '為什麼', '範圍', '再兩天會做什麼', '東西在哪裡',
     '老師回的天數', '談完之後的天數',
-    '被退幾次', '老師的話', '哪一位老師', '金幣加成',
+    '被退幾次', '老師的話', '哪一位老師', '水晶加成',
     '承諾時間', '交出去時間', '收下時間', '交出去等了幾天'];
   var rows = [];
   where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {

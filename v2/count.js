@@ -121,7 +121,7 @@ L('跨機器同步', n(SYNC_KEY) + ' 張全上雲（Firestore）');
 L('事件種類', n(EV_SAY) + ' 種（研究者匯出的那一份）');
 L('示範班', DB.Users.filter(u => u.role === 'teacher').length + ' 位老師　' +
   DB.Users.filter(u => u.role === 'student').length + ' 位學生　' +
-  DB.Teams.length + ' 組　' + DB.Milestones.length + ' 件任務');
+  DB.Teams.length + ' 組　' + DB.Milecrystals.length + ' 件任務');
 
 /* ── 六 · 規矩 ── */
 H('六 · 規矩（自動守著的）');
@@ -137,7 +137,7 @@ L('字級', '只能是 11 的倍數，下限 22px');
 /* ---------- --doc：把上面那些數字寫回流程文件的附錄 ----------
 
    為什麼要有這一段：那份附錄的數字在一天之內就全部過期了
-   （頁數、動作數、行數、檔案大小、示範班人數、金幣的範圍）。
+   （頁數、動作數、行數、檔案大小、示範班人數、水晶的範圍）。
    手抄的東西一定會過期，所以改成產生的——文件裡那一段夾在
    兩個記號中間，這裡整段換掉。
 
@@ -229,15 +229,15 @@ if (process.argv.indexOf('--doc') >= 0) {
     '| 匯出 | 三份：一趟一列 · 一件一列 · 流水帳 |',
     '| 示範班 | ' + DB.Users.filter(u => u.role === 'teacher').length + ' 位老師 · ' +
       DB.Users.filter(u => u.role === 'student' && u.teamId).length + ' 位學生 · ' +
-      DB.Teams.length + ' 組 · ' + DB.Milestones.length + ' 件任務 |',
+      DB.Teams.length + ' 組 · ' + DB.Milecrystals.length + ' 件任務 |',
     '',
     '### 五 · 收集層（可分離）',
     '',
     '| | 數量 |',
     '|---|---|',
-    '| 金幣 | 完成一件 ' + RULES.COIN.base + ' 枚 ＋ 老師給 ' +
-      RULES.COIN.bonusMin + '–' + RULES.COIN.bonusMax + ' 枚（一格 ' +
-      (RULES.COIN.bonusStep || 1) + '）|',
+    '| 水晶 | 完成一件 ' + RULES.CRYSTAL.base + ' 份 ＋ 老師給 ' +
+      RULES.CRYSTAL.bonusMin + '–' + RULES.CRYSTAL.bonusMax + ' 份（一格 ' +
+      (RULES.CRYSTAL.bonusStep || 1) + '）|',
     '| 任務之證 | 一件一張，形狀由那一趟的資料決定 |',
     '| 岩心 | 學生自己封存，可命名 |',
     '| 委託人圖鑑 | ' + PATRONS.length + ' 位，**老師收下才解鎖**，沒解鎖的是黑影 |',

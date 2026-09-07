@@ -418,23 +418,27 @@ PAGES.review = function () {
   H.push('</div>');
 
 
-  /* 收下的時候給幾枚。這是他比「可以／退回」更有層次的那一個回應——
-     一件委託本來就有 100 枚（做完就有），這幾枚是他想多說的部分。
+  /* 收下的時候給幾顆。這是他比「可以／退回」更有層次的那一個回應——
+     一件委託本來就有 100 份（做完就有），這幾顆是他想多說的部分。
 
      最少 1，不是 0：沒有特別想說什麼是一個正常的答案，
      不該被讀成負評。 */
-  var bn = DRAFT.bonus || RULES.COIN.bonusMin;
+  var bn = DRAFT.bonus || RULES.CRYSTAL.bonusMin;
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">收下的時候多給幾枚　選填</div>');
+  H.push('<div class="eyebrow">收下的時候多給幾顆　選填</div>');
   H.push('<div class="row sure-row">');
-  /* 一格 10 枚，所以這一排是 10 20 30 40 50，不是 1 2 3 4 5。 */
-  for (var bi = RULES.COIN.bonusMin; bi <= RULES.COIN.bonusMax;
-       bi += (RULES.COIN.bonusStep || 1)) {
+  /* 一格一顆，所以這一排是 1 2 3。
+
+     本來是 10 20 30 40 50——那是基本額 100 的時代，10 以下在 100
+     旁邊看不出差別。基本額縮到 3 之後，多給 3 顆等於把這一件的份量
+     加倍（見 20-rules.js）。 */
+  for (var bi = RULES.CRYSTAL.bonusMin; bi <= RULES.CRYSTAL.bonusMax;
+       bi += (RULES.CRYSTAL.bonusStep || 1)) {
     H.push(btn(String(bi), 'bonus:' + bi, 'sure' + (bn === bi ? ' on' : '')));
   }
   H.push('</div>');
-  H.push('<p class="dim">這一件本來就有 ' + RULES.COIN.base +
-    ' 枚。這幾枚是你想多說的部分。</p>');
+  H.push('<p class="dim">這一件本來就有 ' + RULES.CRYSTAL.base +
+    ' 顆。這幾顆是你想多說的部分。</p>');
   H.push('</div>');
 
   /* 他按下去那一刻有多重。
@@ -445,7 +449,7 @@ PAGES.review = function () {
 
      這一句講的是反過來那一半——沒有他點頭，學生什麼都拿不到。
      一句，而且是事實，不是打氣。 */
-  H.push('<p class="dim">你收下的那一刻，他們才拿得到金幣、圖鑑那一格，' +
+  H.push('<p class="dim">你收下的那一刻，他們才拿得到水晶、圖鑑那一格，' +
     '跟疊上去的那一塊。</p>');
   /* 回審核清單留在正文裡——它不是決定，是離開。 */
   H.push('<div class="row">');
@@ -529,7 +533,7 @@ PAGES.ms = function () {
 
      誰派的印在那一列上。要不要跟人家的錯開，是他看得到之後
      自己會做的判斷——這一頁的工作是讓他做得成那個判斷。 */
-  var list = where('Milestones', function (m) {
+  var list = where('Milecrystals', function (m) {
     return m.classId === u.classId;
   })
     .sort(function (a, b) { return b.at - a.at; });

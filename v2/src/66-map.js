@@ -37,7 +37,7 @@ function mapSurface(classId, teams, hue, meId) {
   }
 
   /* 地面那一條。硬邊，沒有漸層——泥土在上，岩層從這裡開始。 */
-  H.push('<div class="dig-soil" style="left:0;top:' + (MAP_T - 8) +
+  H.push('<div class="dig-scrystal" style="left:0;top:' + (MAP_T - 8) +
     'px;width:' + (MAP_L + W) + 'px"></div>');
 
   return H.join('');
@@ -57,7 +57,7 @@ function zoneSeam(classId, y, cy, above) {
 }
 
 /* 這一格的岩層裡有什麼。用班級與座標算，不擲骰子——
-   每次重畫石頭都跳一次的話，那就不是一個地方。 */
+   每次重畫水晶都跳一次的話，那就不是一個地方。 */
 function mapProp(classId, x, y, z) {
   var p = propFor(classId + 'map', y * DIG.W + x, z.key);
   var g = MAP_PX[p];

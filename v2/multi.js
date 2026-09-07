@@ -3,7 +3,7 @@
 
    e2e.js 走的是一組一條路走到底；這一支看的是**很多組同時在裡面**的時候
    會怎樣：組跟組之間碰不碰得到、老師的清單排不排得動、三位老師分著看
-   會不會打架、深度與金幣是不是各算各的、班級地下城與榜畫不畫得出來，
+   會不會打架、深度與水晶是不是各算各的、班級地下城與榜畫不畫得出來，
    最後六組全部走完專案、出口關上之後畫面還在不在。 */
 const fs = require('fs');
 const path = require('path');
@@ -242,16 +242,16 @@ radar(kl.classId).slice().forEach(function (x, i) {
 be('三趟總共收下', DB.Runs.filter(r => r.state === 'done').length, 組數 * 3 - 1);
 be('老師的清單清空了', (as(teas[0]), radar(kl.classId).length), 0);
 
-/* ══ 七 · 深度、金幣、圖鑑、校準各算各的 ══ */
-H('深度 · 金幣 · 圖鑑 · 校準');
-const 錢 = teams.map(g => coinsOf(g.t.teamId).all);
+/* ══ 七 · 深度、水晶、圖鑑、校準各算各的 ══ */
+H('深度 · 水晶 · 圖鑑 · 校準');
+const 錢 = teams.map(g => crystalOf(g.t.teamId).all);
 const 深 = teams.map(g => depthOf(g.t.teamId));
 const 鑑 = teams.map(g => Object.keys(metMobs(g.t.teamId)).length);
-console.log('   金幣：' + 錢.join(' / '));
+console.log('   水晶：' + 錢.join(' / '));
 console.log('   深度：' + 深.join(' / '));
 console.log('   圖鑑：' + 鑑.join(' / '));
-be('每一組都有金幣', 錢.every(x => x > 0), true);
-be('金幣不是全部一樣（各算各的）', new Set(錢).size > 1, true);
+be('每一組都有水晶', 錢.every(x => x > 0), true);
+be('水晶不是全部一樣（各算各的）', new Set(錢).size > 1, true);
 be('每一組都有深度', 深.every(x => x > 0), true);
 be('圖鑑每一組都收到東西', 鑑.every(x => x > 0), true);
 teams.forEach(function (g) {

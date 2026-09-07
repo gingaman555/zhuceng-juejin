@@ -11,7 +11,7 @@ window.AUDIT = function () {
   var t = myTeam(), cls = t.classId;
   var done = where('Runs', function (r) { return r.teamId === t.teamId && r.stamp; })[0];
   var run = where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'running'; })[0];
-  var ms = where('Milestones', function (m) { return m.classId === cls; })[0];
+  var ms = where('Milecrystals', function (m) { return m.classId === cls; })[0];
   var P = [['home', {}], ['commit', { id: ms.msId }], ['battle', { id: (run || done).runId, at: 'end' }],
            ['stamp', { id: done.runId }],
            ['pack', {}], ['codex', {}],

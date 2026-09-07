@@ -25,6 +25,12 @@ PAGES.codex = function () {
      所以掀開遇到的生物從來沒進過圖鑑。 */
   var found = foundMobs(t.teamId);
   Object.keys(found).forEach(function (n) { if (!met[n]) met[n] = found[n]; });
+  /* 用水晶照亮的那幾位。**跟遇過分開放**——遇過的那幾位跟你說過六句話，
+     照亮的只是你知道有這麼一個人。兩件事在畫面上、在匯出的資料上
+     都分得開（見 40-db.js 的 actLight）。 */
+  var lit = {};
+  litMobs(t.teamId).forEach(function (n) { lit[n] = 1; });
+  var 石 = crystalOf(t.teamId);
   /* 上次翻開之後才遇到的那幾隻，跟才拿到的那幾張。
 
      整趟只算一次（FRESH 存在 55-ui.js）：畫完之後 seen() 會把名單
@@ -67,6 +73,14 @@ PAGES.codex = function () {
     var k = Object.keys(PAT_SAY)[0];
     return k ? Object.keys(PAT_SAY[k]).length : 0;
   })();
+  /* 手上有幾顆。放在這一頁最上面，因為底下每一個黑影都會問這個
+     數字——不放在這裡的話他要一格一格去看「還差幾顆」。 */
+  if (石.all) {
+    H.push('<p class="dim cx-crystal">' +
+      esc('手上 ' + 石.left + ' 顆水晶。' +
+        (石.used ? '照亮過 ' + (石.used / RULES.CRYSTAL.light) + ' 位。' : '')) +
+      '</p>');
+  }
   H.push('<p class="dim cx-lead">' +
     esc('這座地下城裡住著 ' + 共 + ' 位，' + STRATA.length + ' 層各有各的一群。') +
     esc('每一位有自己的' + (句 ? ' ' + 句 + ' ' : '') + '句話——' +
@@ -107,8 +121,11 @@ PAGES.codex = function () {
       var isNew = !!fresh[c.n];
       /* 收下過的才點得進去。沒解鎖的那一格是一個黑影，
          點進去也沒有東西可以看。 */
-      var can = !!met[c.n];
-      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (isNew ? ' fresh' : '') +
+      /* 看得到形狀跟名字：遇過的，或用水晶照亮的。 */
+      var 照 = !!lit[c.n] && !met[c.n];
+      var can = !!met[c.n] || 照;
+      H.push('<div class="cxi' + (met[c.n] ? ' met' : '') + (照 ? ' lit' : '') +
+        (isNew ? ' fresh' : '') +
         (can ? ' can' : '') + '"' +
         (isNew ? ' style="--d:' + (nth++ * 180) + 'ms"' : '') +
         (can ? ' data-act="run" data-p=\'' +
@@ -126,6 +143,30 @@ PAGES.codex = function () {
       H.push('<div><b>' + (can ? esc(c.n) : '？？？') + '</b>');
       if (can) H.push('<em>' + esc(c.t) + '</em>');
       else H.push('<em>還沒收下過他的委託。</em>');
+      /* ── 照亮的那一位，說清楚它跟遇過不一樣 ──
+
+         這一行不是提醒也不是註腳，它是這一格的內容：他知道有這個人，
+         可是那六句話一句都沒聽過。少了這一行，圖鑑上兩種格子長得
+         一樣，而「老師收下一件，你就多認識一位」那句話就變成假的。 */
+      if (照) H.push('<em class="cx-lit">水晶照亮的。還沒真的遇過他。</em>');
+      /* ── 還沒遇到、也還沒照亮的：給他一條路 ──
+
+         一個班六組、一學期八趟，而委託人有 34 位分在六層——**有些人
+         他這輩子走不到**。那幾位永遠是黑影，而理由跟他做得好不好
+         無關。這一顆是那個洞的補法。
+
+         水晶不夠的時候不畫那一顆，只說還差幾顆——一顆按下去只會被
+         拒絕的鍵，比沒有那一顆更吵（跟改承諾那一顆同一條規矩）。 */
+      if (!can) {
+        if (石.left >= RULES.CRYSTAL.light) {
+          H.push('<button class="cx-light" data-act="run" data-p=\'' +
+            esc(JSON.stringify({ a: 'light:' + c.n })) + '\'>' +
+            '放一顆水晶照亮　' + RULES.CRYSTAL.light + ' 顆</button>');
+        } else {
+          H.push('<em class="cx-need">照亮要 ' + RULES.CRYSTAL.light +
+            ' 顆水晶，還差 ' + (RULES.CRYSTAL.light - 石.left) + ' 顆。</em>');
+        }
+      }
 
       /* 「遇過 · 某某任務」那一行拿掉了：那是一句把兩件不相干的事
          接在一起的話（一隻生物 · 一個任務名），而遇沒遇過那一格自己

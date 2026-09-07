@@ -27,7 +27,7 @@ function pxPut(g, x, y, ch) {
 function pxBox(g, x0, y0, x1, y1, ch) {
   for (var y = y0; y <= y1; y++) for (var x = x0; x <= x1; x++) pxPut(g, x, y, ch);
 }
-/* 一張小圖蓋上去。'.' 是不畫——所以石頭、根、晶體都可以手畫，
+/* 一張小圖蓋上去。'.' 是不畫——所以水晶、根、晶體都可以手畫，
    底下那片牆是算出來的。 */
 function pxArt(g, art, x0, y0) {
   art.forEach(function (row, dy) {

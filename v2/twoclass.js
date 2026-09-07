@@ -160,14 +160,17 @@ ok(radar(userOf(孟.userId).classId).length === 1, '換到 B 班 → 看到 B �
 ok(radar(userOf(孟.userId).classId)[0].run.runId === runB.runId, '是 B 班那一件');
 
 /* 收下 */
-as(孟); ok(!!actApprove(runB.runId, 'B 班這一件很好。', 30), '孟老師在 B 班收下');
-as(薛); ok(!!actApprove(runA.runId, 'A 班這一件也很好。', 20), '薛老師在 A 班收下');
+/* 加成用規則裡的值，不寫死——刻度改了測試不用跟著改。 */
+const 加B = RULES.CRYSTAL.bonusMax, 加A = RULES.CRYSTAL.bonusMin;
+as(孟); ok(!!actApprove(runB.runId, 'B 班這一件很好。', 加B), '孟老師在 B 班收下');
+as(薛); ok(!!actApprove(runA.runId, 'A 班這一件也很好。', 加A), '薛老師在 A 班收下');
 
-節('6', '金幣、圖鑑、匯出都分開');
+節('6', '水晶、圖鑑、匯出都分開');
 
-ok(coinsOf(gA.teamId).all !== 0 && coinsOf(gB.teamId).all !== 0, '兩個班各自有金幣');
-ok(coinsOf(gA.teamId).all === 120 && coinsOf(gB.teamId).all === 130,
-  'A 組 ' + coinsOf(gA.teamId).all + ' 枚、B 組 ' + coinsOf(gB.teamId).all + ' 枚，各算各的');
+ok(crystalOf(gA.teamId).all !== 0 && crystalOf(gB.teamId).all !== 0, '兩個班各自有水晶');
+ok(crystalOf(gA.teamId).all === RULES.CRYSTAL.base + 加A &&
+   crystalOf(gB.teamId).all === RULES.CRYSTAL.base + 加B,
+  'A 組 ' + crystalOf(gA.teamId).all + ' 顆、B 組 ' + crystalOf(gB.teamId).all + ' 顆，各算各的');
 const cA = exportItems(A.classId).trim().split('\n');
 const cB = exportItems(B.classId).trim().split('\n');
 ok(cA.length - 1 === 2, 'A 班匯出 2 件');

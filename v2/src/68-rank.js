@@ -6,7 +6,7 @@
    （research through design）為方法決定要做：東西做出來、放進去用、
    看實際發生什麼；評價不好就拿掉，而「拿掉」本身也是一個發現。
 
-   要拿掉的話：刪掉這個檔案、68c-coinrank.js 與 58-rank.css，再把
+   要拿掉的話：刪掉這個檔案、68c-crystalrank.js 與 58-rank.css，再把
    62-eco.js 裡那一行 bothCard(...) 與 segs 裡的 both 拿掉。
    沒有別的地方依賴它。
 

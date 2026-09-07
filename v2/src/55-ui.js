@@ -147,7 +147,7 @@ function pxTag(px, pal, cls) {
    四個字說完一圈。門口那一頁跟故事第二頁用的是同一個——
 
    同一件事講兩次要長一樣。學生在門口看過一次「接下委託 → 規劃天數
-   → 交件回報 → 拿到金幣」，進來之後在故事裡看到的如果是另外五句話，
+   → 交件回報 → 拿到水晶」，進來之後在故事裡看到的如果是另外五句話，
    那是兩份要各自記的東西；看到同一條，那是同一份看第二次。
 
    認知負荷最省的一段，是他已經記過的那一段。 */
@@ -155,7 +155,7 @@ function loopStrip() {
   var H = ['<div class="four">'];
   [
     [ICONS.home, '接下委託'], [ICONS.pack, '規劃天數'],
-    [ICONS.radar, '交件回報'], [ICONS.eco, '拿到金幣']
+    [ICONS.radar, '交件回報'], [ICONS.eco, '拿到水晶']
   ].forEach(function (x, i) {
     if (i) H.push('<i class="fr-a"></i>');
     H.push('<div class="fr">' + pxTag(x[0], ICON_ON, 'fr-px') +
@@ -436,7 +436,7 @@ function topBar() {
     '<span class="sp"></span>' +
     '<span class="hud-z">' + esc(z.name) + '</span>' +
     '<span class="hud-d' + (st.level ? ' warnx' : '') + '">' +
-      (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</span>' + topEnd() +
+      (depthOf(t.teamId) * WORLD.depthPerMilecrystal) + ' m</span>' + topEnd() +
     '</div>';
 }
 
@@ -459,7 +459,7 @@ function isDemo() { return !!(DB && DB.Config && DB.Config.demo); }
    所以會動到資料與時間的那兩顆，用的是這一道嚴格的門。 */
 function isPureDemo() {
   if (!isDemo()) return false;
-  var cols = ['Users', 'Classes', 'Teams', 'Milestones', 'Runs', 'Pushes', 'Keeps'];
+  var cols = ['Users', 'Classes', 'Teams', 'Milecrystals', 'Runs', 'Pushes', 'Keeps'];
   for (var i = 0; i < cols.length; i++) {
     var a = DB[cols[i]] || [];
     for (var j = 0; j < a.length; j++) if (a[j] && !a[j]._d) return false;
@@ -1175,7 +1175,7 @@ var ACTS = {
   },
 
   /* 老師只勾一個「可以」。挑哪一件是學生的事。 */
-  /* 收下的時候順手給幾枚。沒選就是最少的那一枚——
+  /* 收下的時候順手給幾顆。沒選就是最少的那一份——
      「他沒有特別想說什麼」是一個正常的答案。 */
   scope: function (k) { DRAFT.scope = k; render(); },
   /* 交出去之後補寫「我做了什麼」。老師收下之前都寫得進去——
@@ -1191,10 +1191,17 @@ var ACTS = {
     logEvent('said', { teamId: r.teamId, runId: runId });
     say('記下來了。');
   },
-  bonus: function (n) { DRAFT.bonus = Number(n) || RULES.COIN.bonusMin; render(); },
+  bonus: function (n) { DRAFT.bonus = Number(n) || RULES.CRYSTAL.bonusMin; render(); },
+  /* 放一顆水晶照亮圖鑑上的一個黑影（見 40-db.js 的 actLight）。 */
+  light: function (n) {
+    var t = myTeam(); if (!t) return;
+    var r = actLight(t.teamId, String(n || ''));
+    if (r.err) return say(r.err);
+    say('照亮了「' + r.name + '」。他還在那底下，你只是先知道有這個人。');
+  },
   approve: function (runId) {
     var word = (document.getElementById('gr-word') || {}).value || '';
-    var b = DRAFT.bonus || RULES.COIN.bonusMin;
+    var b = DRAFT.bonus || RULES.CRYSTAL.bonusMin;
     var r0 = find('Runs', function (x) { return x.runId === runId; });
     var pat0 = r0 ? mobOfRun(r0) : null;
     var ms0 = r0 ? r0.msId : null;
@@ -1202,7 +1209,7 @@ var ACTS = {
     /* 誰收下的。本來只說「收下了」——而收下這件事在學生那一邊是
        一場戲（委託人伸手接過去），在老師這一邊只有兩個字。
        把那一位的名字放進去，兩端講的才是同一件事。 */
-    var line = (pat0 ? pat0.n + ' 收下了。' : '收下了。') + '你多給了 ' + b + ' 枚。';
+    var line = (pat0 ? pat0.n + ' 收下了。' : '收下了。') + '你多給了 ' + b + ' 顆。';
     nextSame(ms0, line);
   }
 };

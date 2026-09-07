@@ -1,7 +1,7 @@
 /* 廊道的場景。
 
    之前這裡是一條進度條：角色 → 幾個方格 → 魔物。它讀得懂，但它是圖表。
-   這一支把它改成一個地方——有洞口、有天花板、有地板、有石頭、有火把，
+   這一支把它改成一個地方——有洞口、有天花板、有地板、有水晶、有火把，
    角色站在裡面而不是站在旁邊。
 
    幾件事是有意義的，不是裝飾：
@@ -178,7 +178,7 @@ function scene(t, row, st, kind) {
      那是「你在多深的地方」，不是走廊上的一個位置。 */
   H.push('<div class="scn-hud">' +
     '<em>' + esc(zone.name) + '</em>' +
-    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
+    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilecrystal) + ' m</b>' +
     '<span>走到 ' + depthOf(t.teamId) + ' 個任務</span>' +
     /* 站得住的：老師收下才算。走是他自己的事，留下來是要有人看過的事。 */
     /* 地層的那一句說明拿掉了。它不會變、也不影響任何決定，卻是這塊
@@ -208,7 +208,7 @@ function scene(t, row, st, kind) {
   H.push('<div class="scn-ceil" style="width:' + W + 'px"></div>');
 
 
-  /* 這一層的空氣。不帶任何資訊——哪一層已經由牆、地板、石頭的顏色
+  /* 這一層的空氣。不帶任何資訊——哪一層已經由牆、地板、水晶的顏色
      說了；空氣只是讓那個地方看起來真的有空氣。 */
   H.push(sceneAir(seed, zone, W));
 
@@ -257,7 +257,7 @@ function scene(t, row, st, kind) {
        那一行用白話寫。 */
 
     /* 走通的地方才長得出東西，而且每一層長的不一樣（見 12-props.js）。
-       全部用那一層的配色——換了地方，連地上的石頭都該換顏色。 */
+       全部用那一層的配色——換了地方，連地上的水晶都該換顏色。 */
     if (on) {
       var p = propFor(seed, i, zone.key);
       if (p === 'rubble') H.push('<img class="px prop rubble" style="left:' + (x + 5) +
@@ -322,7 +322,7 @@ function scene(t, row, st, kind) {
 
   /* ── 盡頭的岩壁裡有東西 ──
 
-     這一趟走完、把記號插進去的那一下會敲開這一層的石頭。
+     這一趟走完、把記號插進去的那一下會敲開這一層的水晶。
      有東西的時候先讓那塊岩壁看起來不一樣——只給「那裡有東西」，
      不給「那裡有什麼」。揭曉留給敲開的那一下。 */
   if (buriedAt(t.classId, t.teamId, depthOf(t.teamId))) {
@@ -675,7 +675,7 @@ function sceneMob(t, row, prog, est, ENT) {
    位置全部用 hash 算——同一趟每次打開，每一顆都在同一個地方。
    會亂跳的東西不是環境，是特效。節奏各自不同，不然一整片會一起眨。
 
-   它們不帶任何資訊，也不能帶：這一層是哪一層，牆、地板、石頭的顏色
+   它們不帶任何資訊，也不能帶：這一層是哪一層，牆、地板、水晶的顏色
    已經說了。空氣只是讓那個地方看起來真的有空氣。 */
 var AIR = {
   wild: { n: 14, k: 'dust' },

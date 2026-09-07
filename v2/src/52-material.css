@@ -43,7 +43,7 @@ body{
 }
 
 /* ---------- 石塊 ----------
-   卡片是一塊鑿出來的石頭：四邊有 3px 的斜面，表面有兩層錯開的顆粒。
+   卡片是一塊鑿出來的水晶：四邊有 3px 的斜面，表面有兩層錯開的顆粒。
    顆粒用 radial-gradient 點陣做，1px 的圓點在點陣字旁邊就是一顆像素。 */
 .card,
 .stamp-card,
@@ -114,7 +114,7 @@ body{
   var(--gold) calc(100% - var(--px)) 100%)}
 .btn:active{transform:translate(2px,2px);filter:drop-shadow(2px 2px 0 rgba(0,0,0,.75))}
 
-/* 次要的那顆是刻進石頭裡的，不是墊在上面。所以斜面反過來。 */
+/* 次要的那顆是刻進水晶裡的，不是墊在上面。所以斜面反過來。 */
 .btn.ghost{
   border:none;background:var(--sunk);filter:none;
   box-shadow:
@@ -242,7 +242,7 @@ input:focus:not(:disabled),textarea:focus:not(:disabled){outline:none;box-shadow
 }
 
 /* ---------- 木料 ----------
-   三選一的那三張是木匣。直紋，不是石頭的顆粒——材質不同，
+   三選一的那三張是木匣。直紋，不是水晶的顆粒——材質不同，
    眼睛就知道這一排跟旁邊的資訊不是同一種東西。 */
 .gcard{
   background-color:#20180F;

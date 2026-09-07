@@ -6,7 +6,7 @@
      U1 / G3 / R12 / M2 / C1                       內部 id
      {x} / ${x} / %s                                樣板沒填
      連續兩個全形空白、開頭或結尾的標點              句子被切斷
-     「＋  枚」「說  天」這種數字掉了的句型          數字沒填
+     「＋  份」「說  天」這種數字掉了的句型          數字沒填
 
    掃的是**畫出來的字**（把標籤拿掉之後），不是原始碼——原始碼裡
    出現 undefined 是正常的，畫面上出現才是問題。 */
@@ -70,7 +70,7 @@ function 掃(頁, html) {
     if (/\bnull\b/.test(行)) 記(頁, 'null', 行);
     if (/\$\{|\{\{|%s\b/.test(行)) 記(頁, '樣板沒填', 行);
     if (ID_RE.test(行) && !/^[UGRMCK]/.test(行.replace(/\s/g, ''))) 記(頁, '內部 id', 行);
-    /* 數字掉了的句型：「＋  枚」「說  天」「還有  個」 */
+    /* 數字掉了的句型：「＋  份」「說  天」「還有  個」 */
     if (/[＋+]\s*枚|說\s+天|還有\s+個|共\s+件|第\s+題/.test(行)) 記(頁, '數字沒填', 行);
     /* 句子開頭就是標點 */
     if (/^[，。、）」』]/.test(行)) 記(頁, '句子被切斷', 行);
@@ -120,7 +120,7 @@ function 全掃(標) {
     Object.keys(PAGES).forEach(function (p) {
       if (!allowed(pair[1], p)) return;
       S.page = p; DRAFT = {};
-      const anyRun = DB.Runs[0], anyMs = DB.Milestones[0];
+      const anyRun = DB.Runs[0], anyMs = DB.Milecrystals[0];
       S.p = ['stamp', 'pick', 'camp', 'battle', 'radar', 'review'].indexOf(p) >= 0
         ? { id: (anyRun || {}).runId } : (p === 'commit' ? { id: (anyMs || {}).msId } : {});
       try { 掃(標 + '/' + pair[0] + '/' + p, PAGES[p]()); }

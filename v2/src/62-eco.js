@@ -82,7 +82,7 @@ function xsScene(rows, meId, classId) {
     ';--nm:' + XL.NAME + 'px;min-width:' + (XL.NAME + cols * XL.MIN) +
     'px;height:' + H + 'px">'];
 
-  /* ── 每一直行的石頭 ──
+  /* ── 每一直行的水晶 ──
 
      整張圖的底，一片中性的岩壁。本來每一直行是一個地層——那是
      「第幾層由深度算出來」那一版留下的：同一個深度全班一定同一層。
@@ -372,7 +372,7 @@ PAGES.eco = function () {
      要查一隻去圖鑑。 */
   /* 排行榜搬到底下「估得準」那一段。刻意加進來、準備好隨時拿掉的
      ——見 68-rank.js。要拿掉就刪掉那一段跟那兩個檔案。 */
-  /* 「石頭變了」那張卡拿掉了。
+  /* 「水晶變了」那張卡拿掉了。
 
      它寫的是「你走到新的一層了」，而這一版的地形跟走多少刻意脫鉤：
      六層沒有先後、順序一個班洗一次、顏色只看第幾塊。一張說
@@ -386,8 +386,8 @@ PAGES.eco = function () {
   /* ── 底下分成三段，一次只看一段 ──
      本來是直的疊在一起，一路捲到兩千像素。捲到底的東西等於沒有。 */
   var dt = DRAFT.dt && teamOf(DRAFT.dt);
-  /* 預設是「各組」：大家的進度放在一起的那一張（見 68c-coinrank.js
-     的 bothCard）。本來是金幣那一張——一打開班級頁面先看到錢的排名，
+  /* 預設是「各組」：大家的進度放在一起的那一張（見 68c-crystalrank.js
+     的 bothCard）。本來是水晶那一張——一打開班級頁面先看到錢的排名，
      跟這個作品在講的事情調性不合。
 
      藏起來的東西不會發生任何事，所以它還是預設打開的，只是換成
@@ -414,7 +414,7 @@ PAGES.eco = function () {
     H.push(xsScene(rows, t.teamId, t.classId));
   } else if (tab === 'both') {
     /* 這一張是刻意加進來、而且準備好隨時拿掉的（見 68-rank.js 檔頭）。
-       要拿掉：刪掉 68-rank.js、68c-coinrank.js、58-rank.css，
+       要拿掉：刪掉 68-rank.js、68c-crystalrank.js、58-rank.css，
        再把這一段跟 segs 裡的 'both' 拿走。沒有別的地方依賴它。 */
     H.push(bothCard(t.classId, t.teamId));
   } else if (tab === 'team') {
