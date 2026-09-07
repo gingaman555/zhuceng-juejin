@@ -404,6 +404,41 @@ if (small.length) {
   console.error('還有 ' + small.length + ' 條小於 22px 的字級　——沒有小字了，太長就砍短');
 }
 
+/* ---------- 十 · 同一個規則的名字不能被指定兩次 ----------
+
+   2026-09-07 補的，因為我自己剛踩到：
+
+     RULES.ASK = { flags: 2, hard: 0 }   ← 本來的，RULES.asks 讀它決定
+                                            「走過幾趟才開始問這一題」
+     RULES.ASK = 1                        ← 我後來加的開關
+
+   第二行把第一行整個蓋掉。然後 RULES.ASK['flags'] 是 undefined，
+   RULES.asks 一律回 'on'，於是「哪幾段會比你想的久」從第一趟就開始問
+   ——而那一題對沒走過一趟的人不成立（20-rules.js 自己寫著）。
+
+   **十一支檢查沒有一支抓到。** 因為 'on' 是合法的回傳值：畫面照畫、
+   每一頁都畫得出來、流程從頭到尾走得完、資料不變量也守著。
+   壞掉的只有「什麼時候問」，而那件事沒有任何斷言在看。
+
+   這一條擋的是整類：規則檔是一份「這個系統的立場」的清單，同一個名字
+   出現兩次代表其中一個立場被靜靜地取消了，而取消的那一刻不會有任何
+   東西報錯。 */
+(function () {
+  var 見 = {};
+  var 行 = fs.readFileSync(path.join(__dirname, 'src', '20-rules.js'), 'utf8').split('\n');
+  行.forEach(function (line, i) {
+    var m = line.match(/^\s*RULES\.([A-Za-z_$][\w$]*)\s*=[^=]/);
+    if (!m) return;
+    var k = m[1];
+    if (見[k]) {
+      bad++;
+      console.error('同一個規則被指定兩次　RULES.' + k +
+        '　第 ' + 見[k] + ' 行與第 ' + (i + 1) + ' 行');
+      console.error('　　後面那一次會把前面那一次整個蓋掉，而且不會報錯');
+    } else 見[k] = i + 1;
+  });
+})();
+
 if (bad) {
   console.error('\n' + bad + ' 項殘留。');
   process.exit(1);

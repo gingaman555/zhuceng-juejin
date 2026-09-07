@@ -258,7 +258,17 @@ RULES.keepOf = function (key) {
 
    所以做成開關：程式全部留著（actAskEst／actAnswerAsk／PAGES.askest
    一行都沒動），要收那份資料的時候把這裡改成 1 就回來了。 */
-RULES.ASK = 1;
+/* 名字不能叫 ASK：RULES.ASK 已經被用掉了（上面那個
+   { flags: 2, hard: 0 }，RULES.asks 讀它決定「走過幾趟才開始問」）。
+
+   我第一次就是寫成 RULES.ASK = 1，把那個物件整個蓋掉——然後
+   RULES.ASK['flags'] 變成 undefined，RULES.asks 一律回 'on'，
+   於是「哪幾段會比你想的久」從第一趟就開始問，而註解裡明寫著
+   那一題對沒走過一趟的人不成立。
+
+   十一支檢查沒有一支抓到，因為 'on' 是合法的回傳值——畫面照畫、
+   流程照走，只是問錯了時候。check.js 現在有一條擋這件事。 */
+RULES.NEGOTIATE = 1;
 
 /* ---------- 停滯 ----------
    系統不發「已逾期」通知。狀態本身就是回饋：幾天沒推進，畫面自己會暗下來。

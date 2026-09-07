@@ -71,10 +71,10 @@ PAGES.radar = function () {
   /* 分頁只有兩格。「剛承諾」不在這裡——它是一件有的時候才發生的事，
      從審核那一頁上的一行進去（見下面）。
 
-     RULES.ASK 關著的話連那一行都不出現，而且不管 DRAFT 記著什麼
+     RULES.NEGOTIATE 關著的話連那一行都不出現，而且不管 DRAFT 記著什麼
      都退回「審核」——不然關掉之前停在那一格的人會落在一個空白頁。 */
   var tq = DRAFT.tq === 'exit' ? 'exit'
-    : ((DRAFT.tq === 'ask' && RULES.ASK) ? 'ask' : 'rev');
+    : ((DRAFT.tq === 'ask' && RULES.NEGOTIATE) ? 'ask' : 'rev');
   H.push('<div class="segs">');
   [['rev', '審核', rows.length], ['exit', '出口', out.length]].forEach(function (g) {
     H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
@@ -163,7 +163,7 @@ PAGES.radar = function () {
      （見 40-db.js 的 actAskSkip：「我看過但沒意見」對學生沒有資訊）。
      所以這裡不寫成「N 件待處理」，也不放在清單裡佔一列——放在清單裡
      它就變成一件擋在真正工作前面的事。 */
-  if (RULES.ASK && asks.length) {
+  if (RULES.NEGOTIATE && asks.length) {
     H.push('<button class="asknote pressable" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'tq:ask' })) + '\'>' +
       '<b>' + asks.length + ' 組剛說了要花幾天</b>' +
