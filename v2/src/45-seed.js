@@ -355,12 +355,26 @@ function dressRuns(cid) {
       r.plan = names.map(function (n, i) {
         var d = i === names.length - 1 ? Math.max(1, left) : 1;
         left -= d;
-        return { n: n, d: d, who: mem[(h + i) % mem.length].userId };
+        /* 那個天數是不是本人自己按的。真的班上會是一個混的比例
+           （他們常常一起坐著、一台電腦規劃），所以示範資料也給一個
+           混的——全部 N 會讓那一欄看起來像沒有作用。 */
+        return { n: n, d: d, who: mem[(h + i) % mem.length].userId,
+          byOwn: ((h + i) % 5 < 3) ? 1 : 0 };
       });
     }
 
     /* 他當初有多確定。 */
     if (!r.sure) r.sure = SURE[h % SURE.length];
+
+    /* 老師回過一句的那一趟。示範資料裡留一個例子，不然匯出那一份
+       的「老師回的天數」整欄空白，看起來像那個機制不存在。
+       挑第一組最早那一趟——它已經收下了，所以整條協商的痕跡看得完整。 */
+    if (r.runId === 'R1' && !r.askAt) {
+      r.askEst = 8;
+      r.askWord = '這一件去年那一組花了八天。你們要不要再看一次？';
+      r.askBy = 'U0';
+      r.askAt = (r.committedAt || now()) + DAY;
+    }
 
     if (r.state === 'running') return;
 

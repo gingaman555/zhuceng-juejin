@@ -143,11 +143,32 @@ PAGES.events = function () {
     H.push('</div>');
   }
 
-  /* 匯出 */
+  /* ── 匯出：三份 ──
+
+     本來只有流水帳那一份。它的說明欄是一句中文（「交出去：承諾 4 天，
+     實際 6 天 → early」），人讀很好，可是要算偏差率得先剖字。
+
+     另外兩份是給試算表用的：一趟一列（組的單位）、一件一列（個人的
+     單位）。每一個要算的東西自己一欄，一個字都不用剖。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">匯出　CSV</div>');
-  H.push('<p class="dim">欄位：時間、誰做的、角色、組別、事件、說明。</p>');
-  H.push('<textarea id="csv" rows="4" readonly>' + esc(exportCsv(cid)) + '</textarea>');
+  H.push('<div class="eyebrow">匯出</div>');
+
+  H.push('<p><b>一趟一列</b>　' + exportRuns(cid).split('\n').length + ' 列</p>');
+  H.push('<p class="dim">承諾天數、實際天數、判定、偏差率、把握、拆幾件、' +
+    '順不順、範圍、老師回的天數、被退幾次、金幣、三個時間戳。</p>');
+  H.push(btn('存成檔案', 'csvruns', 'ghost'));
+
+  H.push('<p style="margin-top:22px"><b>一件一列</b>　' +
+    exportItems(cid).split('\n').length + ' 列</p>');
+  H.push('<p class="dim">個人層：那一件掛在誰名下、他說幾天、實際幾天、' +
+    '差幾天、那個天數是不是他本人按的。</p>');
+  H.push(btn('存成檔案', 'csvitems', 'ghost'));
+
+  H.push('<p style="margin-top:22px"><b>流水帳</b>　' +
+    exportCsv(cid).split('\n').length + ' 列</p>');
+  H.push('<p class="dim">時間、誰做的、角色、組別、事件、說明。' +
+    '說明是一句中文，人讀的那一份。</p>');
+  H.push('<textarea id="csv" rows="3" readonly>' + esc(exportCsv(cid)) + '</textarea>');
   H.push(btn('存成檔案', 'csv', 'ghost'));
   H.push('</div>');
 
@@ -175,6 +196,31 @@ ACTS.evteam = function (id) { DRAFT.evTeam = id; render(); };
 
 /* newclass／newuser／respw／deluser 四顆都拿掉了。
    研究者是觀察者，不是管理員——見檔頭。 */
+
+/* 三顆下載鍵共用這一支。研究者只有讀跟存檔，一支寫入的函式都沒有
+   （check.js 守著這一條）。 */
+function rsSave(name, text) {
+  try {
+    /* BOM，不然 Excel 開起來中文是亂碼 */
+    var blob = new Blob(['\ufeff' + text], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    say('存成 ' + name + ' 了。');
+  } catch (e) {
+    say('這個瀏覽器不給存檔。上面那格的字全選複製也一樣。');
+  }
+}
+
+ACTS.csvruns = function () {
+  rsSave('專案地下城-一趟一列.csv', exportRuns(rsClassId()));
+};
+
+ACTS.csvitems = function () {
+  rsSave('專案地下城-一件一列.csv', exportItems(rsClassId()));
+};
 
 ACTS.csv = function () {
   var name = '專案地下城-紀錄.csv';

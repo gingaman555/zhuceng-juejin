@@ -7000,6 +7000,105 @@ function actCreateClass(name, teacherId) {
 
 /* ---------- 匯出 ----------
    研究資料。CSV，因為那是最容易進統計軟體的東西。 */
+/* ---------- 一趟一列 ----------
+
+   上面那一份（exportCsv）是流水帳：時間、誰做的、事件、說明。
+   說明是一句中文——「交出去：承諾 4 天，實際 6 天 → early」。
+   人讀很好，可是要算偏差率就得先從中文裡剖字。
+
+   論文要看的那幾條全部卡在這裡：
+     偏差率隨趟數有沒有下降　　需要 est 與 actual 成欄
+     說「很確定」的準不準　　　需要 sure × stamp
+     協商之後往哪邊靠　　　　　需要老師回的天數與最後定的天數
+     退出集中在什麼時候　　　　需要承諾時間與退出時間
+
+   所以另外給一份：一趟一列，每一個要算的東西自己一欄。
+   一個字都不用剖。 */
+function exportRuns(classId) {
+  var head = ['組別', '專案', '任務', '一趟', '狀態',
+    '承諾天數', '實際天數', '判定', '偏差率',
+    '把握', '有沒有拆件', '拆幾件', '本人自己按的件數',
+    '順不順', '為什麼', '範圍', '再兩天會做什麼', '東西在哪裡',
+    '老師回的天數', '談完之後的天數',
+    '被退幾次', '老師的話', '哪一位老師', '金幣加成',
+    '承諾時間', '交出去時間', '收下時間', '交出去等了幾天'];
+  var rows = [];
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    where('Runs', function (r) { return r.teamId === t.teamId; })
+      .sort(function (a, b) { return (a.committedAt || 0) - (b.committedAt || 0); })
+      .forEach(function (r) {
+        var m = msOf(r.msId);
+        var pl = r.plan || [];
+        var byOwn = pl.filter(function (x) { return x.byOwn; }).length;
+        /* 偏差率：|實際 − 承諾| ÷ 承諾。跟排行榜同一個算法
+           （見 68-rank.js）——那裡解釋過為什麼不用「準的範圍」。 */
+        var dev = (r.actual && r.est) ? Math.abs(r.actual - r.est) / r.est : '';
+        var by = r.wordBy ? userOf(r.wordBy) : null;
+        rows.push([
+          t.name, t.project || '', m ? m.title : '', r.runId, r.state,
+          r.est || '', r.actual || '', r.stamp || '',
+          dev === '' ? '' : dev.toFixed(3),
+          r.sure || '', pl.length ? 'Y' : 'N', pl.length, byOwn,
+          r.feel || '', r.why || '', r.scope || '', r.next || '', r.link || '',
+          r.askEst || '', r.askAt ? (r.est || '') : '',
+          r.backs || 0, r.word || '', by ? by.name : '', r.bonus || '',
+          r.committedAt ? new Date(r.committedAt).toISOString() : '',
+          r.submittedAt ? new Date(r.submittedAt).toISOString() : '',
+          r.doneAt ? new Date(r.doneAt).toISOString() : '',
+          (r.submittedAt && r.doneAt) ? daysBetween(r.submittedAt, r.doneAt) : ''
+        ]);
+      });
+  });
+  return csvOf(head, rows);
+}
+
+/* ---------- 一件一列 ----------
+
+   這一份是**個人層**的。系統裡唯二屬於個人的東西都在拆件上：
+   那一件掛在誰名下、他說幾天、他實際幾天、那個天數是不是他本人
+   按的（byOwn）。
+
+   一趟一列那一份是組的單位，而「一個人學會預估自己要幾天」是個人的
+   事——沒有這一份，那個主張只能用組的平均去談。
+
+   資料一直都在，只是從來沒有一個地方把它攤成一列一列。 */
+function exportItems(classId) {
+  var head = ['組別', '任務', '一趟', '第幾件', '件名',
+    '掛在誰名下', '他說幾天', '實際幾天', '差幾天',
+    '天數是不是本人按的', '他寫了什麼', '這一趟的判定', '這一趟的把握'];
+  var rows = [];
+  where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
+    where('Runs', function (r) { return r.teamId === t.teamId; })
+      .sort(function (a, b) { return (a.committedAt || 0) - (b.committedAt || 0); })
+      .forEach(function (r) {
+        var m = msOf(r.msId);
+        (r.plan || []).forEach(function (x, i) {
+          var u = x.who ? userOf(x.who) : null;
+          var got = (r.spent || [])[i];
+          rows.push([
+            t.name, m ? m.title : '', r.runId, i + 1, x.n,
+            u ? u.name : '', x.d || '', (got == null ? '' : got),
+            (got == null || !x.d) ? '' : (got - x.d),
+            x.byOwn ? 'Y' : 'N',
+            u && r.said ? (r.said[u.userId] || '') : '',
+            r.stamp || '', r.sure || ''
+          ]);
+        });
+      });
+  });
+  return csvOf(head, rows);
+}
+
+/* 三份共用的那一段：逗號與引號要跳脫。 */
+function csvOf(head, rows) {
+  return [head].concat(rows).map(function (r) {
+    return r.map(function (c) {
+      var s = String(c == null ? '' : c);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(',');
+  }).join('\n');
+}
+
 function exportCsv(classId) {
   var teamName = {};
   where('Teams', function (t) { return t.classId === classId; })
@@ -9655,7 +9754,7 @@ function save() {
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 12;
+var SEED_V = 13;
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -12267,12 +12366,26 @@ function dressRuns(cid) {
       r.plan = names.map(function (n, i) {
         var d = i === names.length - 1 ? Math.max(1, left) : 1;
         left -= d;
-        return { n: n, d: d, who: mem[(h + i) % mem.length].userId };
+        /* 那個天數是不是本人自己按的。真的班上會是一個混的比例
+           （他們常常一起坐著、一台電腦規劃），所以示範資料也給一個
+           混的——全部 N 會讓那一欄看起來像沒有作用。 */
+        return { n: n, d: d, who: mem[(h + i) % mem.length].userId,
+          byOwn: ((h + i) % 5 < 3) ? 1 : 0 };
       });
     }
 
     /* 他當初有多確定。 */
     if (!r.sure) r.sure = SURE[h % SURE.length];
+
+    /* 老師回過一句的那一趟。示範資料裡留一個例子，不然匯出那一份
+       的「老師回的天數」整欄空白，看起來像那個機制不存在。
+       挑第一組最早那一趟——它已經收下了，所以整條協商的痕跡看得完整。 */
+    if (r.runId === 'R1' && !r.askAt) {
+      r.askEst = 8;
+      r.askWord = '這一件去年那一組花了八天。你們要不要再看一次？';
+      r.askBy = 'U0';
+      r.askAt = (r.committedAt || now()) + DAY;
+    }
 
     if (r.state === 'running') return;
 
@@ -20210,11 +20323,32 @@ PAGES.events = function () {
     H.push('</div>');
   }
 
-  /* 匯出 */
+  /* ── 匯出：三份 ──
+
+     本來只有流水帳那一份。它的說明欄是一句中文（「交出去：承諾 4 天，
+     實際 6 天 → early」），人讀很好，可是要算偏差率得先剖字。
+
+     另外兩份是給試算表用的：一趟一列（組的單位）、一件一列（個人的
+     單位）。每一個要算的東西自己一欄，一個字都不用剖。 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">匯出　CSV</div>');
-  H.push('<p class="dim">欄位：時間、誰做的、角色、組別、事件、說明。</p>');
-  H.push('<textarea id="csv" rows="4" readonly>' + esc(exportCsv(cid)) + '</textarea>');
+  H.push('<div class="eyebrow">匯出</div>');
+
+  H.push('<p><b>一趟一列</b>　' + exportRuns(cid).split('\n').length + ' 列</p>');
+  H.push('<p class="dim">承諾天數、實際天數、判定、偏差率、把握、拆幾件、' +
+    '順不順、範圍、老師回的天數、被退幾次、金幣、三個時間戳。</p>');
+  H.push(btn('存成檔案', 'csvruns', 'ghost'));
+
+  H.push('<p style="margin-top:22px"><b>一件一列</b>　' +
+    exportItems(cid).split('\n').length + ' 列</p>');
+  H.push('<p class="dim">個人層：那一件掛在誰名下、他說幾天、實際幾天、' +
+    '差幾天、那個天數是不是他本人按的。</p>');
+  H.push(btn('存成檔案', 'csvitems', 'ghost'));
+
+  H.push('<p style="margin-top:22px"><b>流水帳</b>　' +
+    exportCsv(cid).split('\n').length + ' 列</p>');
+  H.push('<p class="dim">時間、誰做的、角色、組別、事件、說明。' +
+    '說明是一句中文，人讀的那一份。</p>');
+  H.push('<textarea id="csv" rows="3" readonly>' + esc(exportCsv(cid)) + '</textarea>');
   H.push(btn('存成檔案', 'csv', 'ghost'));
   H.push('</div>');
 
@@ -20242,6 +20376,31 @@ ACTS.evteam = function (id) { DRAFT.evTeam = id; render(); };
 
 /* newclass／newuser／respw／deluser 四顆都拿掉了。
    研究者是觀察者，不是管理員——見檔頭。 */
+
+/* 三顆下載鍵共用這一支。研究者只有讀跟存檔，一支寫入的函式都沒有
+   （check.js 守著這一條）。 */
+function rsSave(name, text) {
+  try {
+    /* BOM，不然 Excel 開起來中文是亂碼 */
+    var blob = new Blob(['\ufeff' + text], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    say('存成 ' + name + ' 了。');
+  } catch (e) {
+    say('這個瀏覽器不給存檔。上面那格的字全選複製也一樣。');
+  }
+}
+
+ACTS.csvruns = function () {
+  rsSave('專案地下城-一趟一列.csv', exportRuns(rsClassId()));
+};
+
+ACTS.csvitems = function () {
+  rsSave('專案地下城-一件一列.csv', exportItems(rsClassId()));
+};
 
 ACTS.csv = function () {
   var name = '專案地下城-紀錄.csv';
