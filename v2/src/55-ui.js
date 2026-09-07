@@ -314,6 +314,40 @@ function flashBar() {
    而且那是一種只有測試才抓得到的錯。讓它自己負責。 */
 function say(m) { S.flash = m; render(); }
 
+/* ---------- 複製到剪貼簿 ----------
+
+   兩條路：新的 navigator.clipboard（需要 https，本站是），
+   舊的 execCommand（給不給的瀏覽器都有可能）。兩條都不行的時候
+   要說出來——按了沒反應比沒有那一顆更糟。
+
+   成功的那一句用 say()，跟全站其他回饋同一個地方出現。 */
+function copyText(t) {
+  t = String(t == null ? '' : t);
+  if (!t) return;
+  function 好() { say('複製了。'); }
+  function 舊() {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.position = 'fixed';
+      ta.style.top = '-999px';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      var okd = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (okd) 好(); else 不行();
+    } catch (e) { 不行(); }
+  }
+  function 不行() { say('這台瀏覽器不讓網頁複製。那一行可以自己選起來。'); }
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(好, 舊);
+      return;
+    }
+  } catch (e) { }
+  舊();
+}
+
 /* ---------- 收進圖鑑的那一下 ----------
 
    打贏了、或老師勾了，圖鑑就多一個。但那件事本來只在圖鑑那一頁才看得到，
@@ -506,6 +540,9 @@ document.addEventListener('click', function (ev) {
   var a = ev.target.closest('[data-act]');
   if (!a) return;
   var act = a.getAttribute('data-act');
+  /* 複製那一顆。要複製的字在屬性上，不在 data-p（見 56-viz.js 的
+     whereLine：那一格是學生打的字，裡面可能有單引號）。 */
+  if (act === 'copy') { copyText(a.getAttribute('data-copy')); return; }
   if (act !== 'run') return;
   var p = JSON.parse(a.getAttribute('data-p') || '{}');
   runAct(p.a);

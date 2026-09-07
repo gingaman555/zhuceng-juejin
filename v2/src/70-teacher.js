@@ -268,7 +268,7 @@ PAGES.review = function () {
      後面每一個設計都沒有觸發點。 */
   if (r.link) {
     H.push('<div class="card"><div class="eyebrow">他們說東西在這裡</div>');
-    H.push(whereLine(r.link));
+    H.push(whereLine(r.link, 1));
     H.push('</div>');
   }
 

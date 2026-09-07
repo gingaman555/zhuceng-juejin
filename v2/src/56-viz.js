@@ -299,12 +299,50 @@ function estAxis(est, past) {
    這是畫法，不是判斷——系統沒有因為它是不是網址而做任何不同的事，
    只是省老師一次複製貼上。這一行的內容對系統來說跟一段亂碼沒有差別
    （check.js 第九道守著這件事）。 */
-function whereLine(v) {
+/* ── 網址不一定是整串 ──
+
+   本來的條件是「整串都是網址」才變成連結。可是學生寫的多半是
+   「TronClass 第三次作業 https://…」或「雲端硬碟 / 第三組 https://…」
+   ——有網址，可是整串不是網址，於是那一行完全不能點。
+
+   改成在字裡面找。找到幾個就把哪幾個變成連結，其餘的字原樣留著。
+
+   ── 為什麼還要一顆複製 ──
+
+   老師那一邊真正要做的事是「把東西打開來看」。可點的連結解決一半，
+   另一半是：他可能要貼到別的地方（貼進評語、貼給同事、貼到自己
+   開著的那個分頁），而且有些瀏覽器把 target=_blank 擋掉。
+
+   複製的是**第一個網址**（如果有的話），不是整串——他要貼的是位址，
+   不是那一句話。整串沒有網址的時候才複製整句。 */
+var WH_URL = /https?:[/][/][^\s，。、）)】」』]+/g;
+
+function whereLine(v, copy) {
   var t = String(v || '').trim();
   if (!t) return '';
-  if (/^https?:[/][/][^\s]+$/.test(t)) {
-    return '<a class="wh-link" href="' + esc(t) + '" target="_blank" rel="noopener">' +
-      esc(t) + '</a>';
+  var urls = t.match(WH_URL) || [];
+  var H = [];
+  if (urls.length === 1 && urls[0] === t) {
+    H.push('<a class="wh-link" href="' + esc(t) + '" target="_blank" rel="noopener">' +
+      esc(t) + '</a>');
+  } else {
+    /* 先整段跳脫，再把跳脫過的網址換成連結——兩邊都經過同一支 esc，
+       所以對得上（& 兩邊都是 &amp;）。 */
+    var html = esc(t);
+    urls.forEach(function (u) {
+      html = html.split(esc(u)).join('<a class="wh-link" href="' + esc(u) +
+        '" target="_blank" rel="noopener">' + esc(u) + '</a>');
+    });
+    H.push('<p class="wh-txt">' + html + '</p>');
   }
-  return '<p class="wh-txt">' + esc(t) + '</p>';
+  if (copy) {
+    /* 要複製的字放在屬性裡，不走 data-p。
+
+       data-p 是單引號包住的 JSON，而 esc() 不跳脫單引號——學生在
+       那一格打一個 ' 就會把按鈕拆掉。雙引號的屬性沒有這個問題
+       （esc 有跳脫 "）。 */
+    H.push('<button class="btn ghost wh-copy" data-act="copy" data-copy="' +
+      esc(urls[0] || t) + '">' + (urls[0] ? '複製連結' : '複製這一句') + '</button>');
+  }
+  return H.join('');
 }

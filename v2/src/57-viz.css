@@ -2509,3 +2509,8 @@ button.ac:active{transform:translateY(1px)}
   .sk-names b{width:44px;font-size:22px}
   .sk-gate{padding-bottom:11px}
 }
+
+/* 複製那一顆。跟在「他們說東西在這裡」那一行下面——
+   老師打開這一頁之後的下一個動作就是去看東西，這一顆是那條路的一半
+   （另一半是可以點的連結，見 56-viz.js 的 whereLine）。 */
+.wh-copy{margin-top:11px}
