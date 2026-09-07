@@ -67,7 +67,44 @@ function devTag() {
   }
   return DEV_TAG;
 }
-function nid(p) { return p + (DB.Config.seq++) + devTag(); }
+/* 號碼牌不見的話要當場補一張。
+
+   本來直接寫 DB.Config.seq++。那個數字由 blank() 給、由 seed() 設，
+   正常路徑一定有——可是 load() 從 localStorage 讀回來的那一份完全
+   沒有人檢查它。少了那個數字，undefined++ 是 NaN，而 NaN++ 還是 NaN：
+   那台機器從此產出的每一個 ID 都叫 U NaN、R NaN、G NaN。
+
+   然後 userOf() 會回傳第一個撞到的人。實際跑出來的樣子是這個：
+
+     老師三 註冊完 classId = ""
+     actJoinClass → 「你已經在一個班裡了。」
+     老師三 classId 之後 = "CNaNacqc"
+
+   ——他被當成老師一了。一整堂課的人互相蓋掉，而畫面上完全看不出來。
+
+   我目前找不到會讓它真的發生的路徑（Config 不進雲端同步，見
+   41-sync.js）。可是代價不對稱：補一張是一行，沒補的那一天是
+   整班的資料混在一起，而且是在教室現場。
+
+   接在最大的那個號碼後面，不從 1 開始——從 1 開始會跟已經存在的
+   東西撞。 */
+function nid(p) {
+  var c = DB.Config || (DB.Config = {});
+  if (!(c.seq > 0)) {
+    var top = 0;
+    ['Users', 'Classes', 'Teams', 'Milestones', 'Runs', 'Pushes', 'Keeps']
+      .forEach(function (t) {
+        (DB[t] || []).forEach(function (x) {
+          var id = String(x.userId || x.classId || x.teamId ||
+            x.msId || x.runId || x.id || '');
+          var m = id.match(/^[A-Z](\d+)/);
+          if (m && +m[1] > top) top = +m[1];
+        });
+      });
+    c.seq = top + 1;
+  }
+  return p + (c.seq++) + devTag();
+}
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {}
   /* 接得上雲端就把變過的那幾筆推上去（見 41-sync.js）。node 裡跑

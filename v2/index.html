@@ -1991,26 +1991,41 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   background:rgba(0,0,0,.45)
 }
 .xl-hero .px.vine-s{position:absolute;inset:0;width:44px;height:44px;opacity:.9}
-/* 停很久那一組。
+/* ---------- 停很久那一組 ----------
 
-   本來 .6，而半透明是把身體跟背景**混色**——等於把好不容易拉開的
-   對比再吃掉一次。量出來（身體對六層底色的最低對比）：
+   這一條追了兩輪。第一輪把 .6 改成 .85，使用者說還是沒修好——
+   對的，因為半透明從來不是主因。
 
-     opacity   冒險者  忍者  騎士
-     .6        1.38✗  1.74  1.92
-     .85       1.66   2.29  2.62
-     1         1.86   2.70  3.16
+   量出來的（44×44 的框裡看得見的格，底 #06080B）：
 
-   1.38 就是看不見。而使用者回報的正好是丙組——那一組在種子裡是
-   停很久的狀態，所以它是六條裡唯一被這一條規則吃到的。
+                    看得見的格   佔框   身高      會不會動
+     站著　　　　　  52–69       20–27%  13–15/16  會呼吸
+     睡著 .85　　　  21–25        8–10%   8–9/16   不會
 
-   淡下去這件事本身是對的（停滯用畫面暗下來表示，見 check.js 的
-   禁用詞那一段），可是淡到看不見就不是訊號了，是消失。而這一頁的
-   標題是「大家都在下面」。
+   四件事疊在一起：墨只有一半、身高只有一半、不會動、還被調暗。
+   我上一輪只動了其中最小的那一件（而且騎士在 .85 反而多掉 5 格）。
 
-   改成 .85：跟旁邊五組並排的時候還是看得出來比較暗，但人還在。
-   睡著的姿勢本來就跟站著不一樣，那一張圖自己也在講同一件事。 */
-.xl-hero.sleep{opacity:.85}
+   所以這裡不再淡。停滯要看得見，是靠另外兩件：
+     · 位置——丙站在 x182 而別人在 x261。那是最強的訊號，本來就在。
+     · 藤蔓——現在停就有（見 62-eco.js），補回缺掉的那一半墨。
+
+   opacity 這一條整條拿掉。自己那一條廊道上（.scn-hero.asleep，66px、
+   全畫面只有他）的 .75 留著——那裡不缺份量，這裡缺。 */
+
+/* 睡著的人也在呼吸。
+
+   這一頁上另外五組都在動，只有停很久那一組是凍住的——一個不會動的
+   東西在會動的東西旁邊會被眼睛當成背景。
+
+   睡著只有一張圖，所以呼吸用位移做：3.4 秒一次，抬 1px。
+   走路那個是 1.6 秒——睡著的人本來就慢。steps(1,end)，不補間。 */
+@keyframes slpB{0%,62%{transform:translateY(0)}63%,100%{transform:translateY(-1px)}}
+.xl-hero.sleep .px.ch-s{
+  animation:slpB 3.4s steps(1,end) infinite;animation-delay:var(--d,0ms)
+}
+@media (prefers-reduced-motion: reduce){
+  .xl-hero.sleep .px.ch-s{animation:none}
+}
 .xl-hero:hover{transform:translateY(-3px)}
 .xl-hero:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
@@ -9821,7 +9836,44 @@ function devTag() {
   }
   return DEV_TAG;
 }
-function nid(p) { return p + (DB.Config.seq++) + devTag(); }
+/* 號碼牌不見的話要當場補一張。
+
+   本來直接寫 DB.Config.seq++。那個數字由 blank() 給、由 seed() 設，
+   正常路徑一定有——可是 load() 從 localStorage 讀回來的那一份完全
+   沒有人檢查它。少了那個數字，undefined++ 是 NaN，而 NaN++ 還是 NaN：
+   那台機器從此產出的每一個 ID 都叫 U NaN、R NaN、G NaN。
+
+   然後 userOf() 會回傳第一個撞到的人。實際跑出來的樣子是這個：
+
+     老師三 註冊完 classId = ""
+     actJoinClass → 「你已經在一個班裡了。」
+     老師三 classId 之後 = "CNaNacqc"
+
+   ——他被當成老師一了。一整堂課的人互相蓋掉，而畫面上完全看不出來。
+
+   我目前找不到會讓它真的發生的路徑（Config 不進雲端同步，見
+   41-sync.js）。可是代價不對稱：補一張是一行，沒補的那一天是
+   整班的資料混在一起，而且是在教室現場。
+
+   接在最大的那個號碼後面，不從 1 開始——從 1 開始會跟已經存在的
+   東西撞。 */
+function nid(p) {
+  var c = DB.Config || (DB.Config = {});
+  if (!(c.seq > 0)) {
+    var top = 0;
+    ['Users', 'Classes', 'Teams', 'Milestones', 'Runs', 'Pushes', 'Keeps']
+      .forEach(function (t) {
+        (DB[t] || []).forEach(function (x) {
+          var id = String(x.userId || x.classId || x.teamId ||
+            x.msId || x.runId || x.id || '');
+          var m = id.match(/^[A-Z](\d+)/);
+          if (m && +m[1] > top) top = +m[1];
+        });
+      });
+    c.seq = top + 1;
+  }
+  return p + (c.seq++) + devTag();
+}
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {}
   /* 接得上雲端就把變過的那幾筆推上去（見 41-sync.js）。node 裡跑
@@ -17197,9 +17249,27 @@ function xlLane(r, i, cols, classId, mine) {
       H.push(pxTag(hr.idleA, hr.pal, 'ch-s wf wa'));
       H.push(pxTag(hr.idleB, hr.pal, 'ch-s wf wb'));
     }
+    /* ── 藤蔓 ──
+
+       本來寫的是 stall === 1，也就是藤蔓只長在「剛開始停」那一組，
+       停最久的那一組反而把它收掉——訊號是反的。而且說不通：爬上來的
+       藤蔓不會因為那個人睡著就縮回去，停更久只會更多。
+
+       它同時補回一塊真的缺掉的東西。量出來（44×44 的框裡看得見的格）：
+
+         站著　　　　　　52–69 格　20–27%
+         睡著　　　　　　21–26 格　 8–10%　← 只有一半
+         睡著 ＋ 藤蔓　　79–83 格　31–32%　← 回到同一個量級
+
+       睡著那張圖只有 20% 的格子有東西、而且集中在下半部（9/16 格高），
+       所以停很久那一組在這一頁上剩不到別人一半的墨，還不會動。
+       這才是丙組看不見的主因，半透明是最小的那一件。
+
+       藤蔓 57 格全部看得見、11/16 格高、蓋滿整個框，正好補在身體不在的
+       地方。 */
+    if (r.stall >= 1 && !left) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
     H.push('</span>');
   });
-  if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</button>');
 
   /* 走出去的那一組，那一條的盡頭是一道光。
