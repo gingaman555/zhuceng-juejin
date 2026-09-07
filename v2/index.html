@@ -496,6 +496,24 @@ a.plain:hover{color:var(--gold)}
 /* 已經展開的那一列，箭頭轉下來——它現在說的是「再按一次收起來」。 */
 .pressable.open::after{content:'▾'}
 
+/* ── 字要讓出箭頭那一塊 ──
+
+   箭頭是絕對定位，浮在格子右邊。格子裡的字如果一路排到右緣，
+   箭頭就直接壓在字上面。實測（在真的頁面上量每一個子元素的右緣
+   對箭頭左緣的距離）：
+
+     側欄那一格　　　壓掉 33px
+     紀錄那一列　　　壓掉 19px　← 使用者看到的就是這個
+     剖面圖的名牌　　壓掉 22px
+     頂條的專案名　　沒事（它本來就短）
+
+   所以每一個掛了 .pressable 的東西都要自己留位置。留多少不一樣，
+   因為它們原本的內距不一樣——所以不寫成一條通則，一個一個寫，
+   而且寫在這裡讓它們排在一起看得到。 */
+.rec.pressable{padding-right:33px}
+.side-head.pressable{padding-right:44px}
+.seat:not(.on) b,.seat:not(.on) i,.seat:not(.on) u{padding-right:26px}
+
 /* 六個區域的顏色與紋理，一個來源。
 
    這一份存在的理由：自己的廊道跟全班那張剖面圖，同一個深度必須長得
@@ -2147,7 +2165,10 @@ b.ptitle{display:block;font-size:33px;font-weight:400;color:var(--ink);line-heig
 /* 名牌只有 --nm 寬（手機上 88px），所以那個箭頭要更貼邊，
    而且組名要讓出位置——不然長一點的組名會被壓在箭頭底下。 */
 .xl-name.pressable::after{right:4px;font-size:22px}
-.xl-name.pressable b,.xl-name.pressable i{padding-right:14px}
+/* 名牌裡面是 b 跟 em（不是 i——我第一次寫錯，所以那一條沒生效，
+   量出來還是壓掉 22px）。 */
+/* 16px 量出來只剩 1px 空隙——組名再長一點就會貼上箭頭。放到 22。 */
+.xl-name.pressable b,.xl-name.pressable em,.xl-name.pressable i{padding-right:22px}
 
 /* 把數字畫出來的那幾個東西。
 

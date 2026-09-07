@@ -296,4 +296,7 @@ b.ptitle{display:block;font-size:33px;font-weight:400;color:var(--ink);line-heig
 /* 名牌只有 --nm 寬（手機上 88px），所以那個箭頭要更貼邊，
    而且組名要讓出位置——不然長一點的組名會被壓在箭頭底下。 */
 .xl-name.pressable::after{right:4px;font-size:22px}
-.xl-name.pressable b,.xl-name.pressable i{padding-right:14px}
+/* 名牌裡面是 b 跟 em（不是 i——我第一次寫錯，所以那一條沒生效，
+   量出來還是壓掉 22px）。 */
+/* 16px 量出來只剩 1px 空隙——組名再長一點就會貼上箭頭。放到 22。 */
+.xl-name.pressable b,.xl-name.pressable em,.xl-name.pressable i{padding-right:22px}
