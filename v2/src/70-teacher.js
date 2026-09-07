@@ -427,11 +427,11 @@ PAGES.review = function () {
   H.push('<div class="card">');
   H.push('<div class="eyebrow">收下的時候多給幾顆　選填</div>');
   H.push('<div class="row sure-row">');
-  /* 一格一顆，所以這一排是 1 2 3。
+  /* 一格 10 份，所以這一排是 10 20 30 40 50，不是 1 2 3 4 5。
 
-     本來是 10 20 30 40 50——那是基本額 100 的時代，10 以下在 100
-     旁邊看不出差別。基本額縮到 3 之後，多給 3 顆等於把這一件的份量
-     加倍（見 20-rules.js）。 */
+     一件本來就有 100，所以個位數的差別在畫面上看不出來——而這一格
+     是老師唯一能說「這一件我想多說一點」的地方，看不出來等於沒有
+     發生（見 20-rules.js）。 */
   for (var bi = RULES.CRYSTAL.bonusMin; bi <= RULES.CRYSTAL.bonusMax;
        bi += (RULES.CRYSTAL.bonusStep || 1)) {
     H.push(btn(String(bi), 'bonus:' + bi, 'sure' + (bn === bi ? ' on' : '')));

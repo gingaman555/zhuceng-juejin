@@ -2573,3 +2573,9 @@ button.side-head{
 .cx-light:hover{border-color:var(--gold);background:rgba(233,179,65,.10)}
 /* 這一頁最上面那一行：手上有幾顆。 */
 .cx-crystal{color:var(--dim);margin:0 0 11px}
+
+/* 組別卡上那個括號：拿過多少。它是背景資訊，退一階
+   （前面那個「手上剩多少」才是他要用的數字）。 */
+.tmc-cry em{
+  display:block;font-style:normal;font-size:22px;color:var(--mute);margin-top:5px
+}

@@ -375,7 +375,15 @@ function teamCard(t) {
   if (t.joinCode) {
     H.push('<span class="tmc-c">代碼 <b>' + esc(t.joinCode) + '</b></span>');
   }
-  H.push('<span class="tmc-cry">' + c.all + ' 份</span></div>');
+  /* 這一格印的是**手上剩下的**，不是拿過的總數。
+
+     兩個數字是兩種用途：榜上那個是「你們做了多少」（拿過的，花掉不扣，
+     見 68c-cryrank.js），這一格是「你們現在能做什麼」——他要決定
+     點不點得亮圖鑑上那一位的時候，看的是這個。
+
+     花過才寫括號那一半。沒花過的時候兩個數字一樣，寫出來是雜訊。 */
+  H.push('<span class="tmc-cry">' + c.left + ' 顆' +
+    (c.used ? '<em>拿過 ' + c.all + '</em>' : '') + '</span></div>');
   H.push('<div class="tmc-l">');
   mem.forEach(function (u) {
     var g = heroOf(u);

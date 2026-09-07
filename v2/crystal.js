@@ -49,15 +49,26 @@ console.log('\n═════════════════════�
 console.log('  水晶：收集得到，也交換得出去');
 console.log('════════════════════════════════════════════════════');
 
-節('1', '數字要數得出來');
+節('1', '刻度');
 
 console.log('   一件收下 ' + RULES.CRYSTAL.base + ' 顆　老師多給 ' +
   RULES.CRYSTAL.bonusMin + '–' + RULES.CRYSTAL.bonusMax + ' 顆　點亮一位 ' +
   RULES.CRYSTAL.light + ' 顆');
-ok(RULES.CRYSTAL.base <= 5, '一件的基本額數得出來（' + RULES.CRYSTAL.base + ' 顆）');
-ok(RULES.CRYSTAL.bonusMax <= RULES.CRYSTAL.base,
-  '老師多給的最多跟基本額一樣多——「他想多說一點」要有重量（最多 ' +
-  RULES.CRYSTAL.bonusMax + '，基本 ' + RULES.CRYSTAL.base + '）');
+
+/* 這裡不驗「數字要小」——刻度是使用者定的（100／10–50／300），而數字
+   大小本身沒有對錯。要守的是**比例**，因為比例才決定行為：
+
+     老師多給的那幾份要看得出來，不然他那一下「我想多說一點」在畫面上
+     等於沒有發生；可是也不能大到蓋過基本額，不然它就從一句話變成
+     一條路（見 20-rules.js）。
+
+     點亮的價錢要讓一學期只點得亮兩三位，不然圖鑑就變成用水晶換的，
+     而「老師收下一件，你就多認識一位」那句話會垮掉。 */
+const 佔比 = Math.round(RULES.CRYSTAL.bonusMax / RULES.CRYSTAL.base * 100);
+ok(佔比 >= 10 && 佔比 <= 50,
+  '老師多給的最多佔基本額 ' + 佔比 + '%——看得出差別，可是拿不到也不覺得少了什麼');
+ok(RULES.CRYSTAL.bonusMin > 0,
+  '收下就一定有（最少 ' + RULES.CRYSTAL.bonusMin + '——0 會被讀成負評）');
 const 一學期 = 8 * (RULES.CRYSTAL.base + Math.round((RULES.CRYSTAL.bonusMin + RULES.CRYSTAL.bonusMax) / 2));
 const 點得亮 = Math.floor(一學期 / RULES.CRYSTAL.light);
 console.log('   一學期八趟大約 ' + 一學期 + ' 顆 → 點得亮 ' + 點得亮 + ' 位');
@@ -126,6 +137,18 @@ ok(後.all === 前.all,
   '**拿過的總數沒有變**（' + 後.all + '）——榜上排的是這個，所以放水晶不會讓一組退步');
 ok(isLit(g.teamId, 目標.n), '那一位進了「照亮過」的名單');
 ok(!metMobs(g.teamId)[目標.n], '而且**沒有**被算成遇過');
+
+節('3.5', '花掉之後，榜上不能掉');
+
+/* 這一條是設計不是實作細節：水晶花得掉，而如果榜上印的是手上剩的，
+   那張榜就變成「不要用它」的壓力——一個沒有人敢用的用途等於沒有用途。 */
+as(A);
+/* 那張榜是 bothCard 畫的（見 68c-cryrank.js），直接叫它——
+   不用去猜 eco 那一頁要切到哪一格。 */
+const 榜html = bothCard(kl.classId, g.teamId);
+ok(榜html.indexOf('拿過 ' + 後.all) >= 0,
+  '榜上印的是拿過的 ' + 後.all + ' 顆，不是手上剩的 ' + 後.left + ' 顆');
+ok(榜html.indexOf('拿過') >= 0, '而且寫著「拿過」，不是只丟一個數字給人自己猜');
 
 節('4', '照亮 ≠ 遇過');
 
