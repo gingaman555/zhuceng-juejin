@@ -1,16 +1,10 @@
 {
   "hosting": {
-    "public": "v2",
+    "public": "v2/b",
     "ignore": [
       "firebase.json",
-      "firebase.b.json",
       "**/.*",
-      "**/node_modules/**",
-      "**/src/**",
-      "**/*.md",
-      "**/*.js",
-      "!**/index.html",
-      "b/**"
+      "**/node_modules/**"
     ],
     "rewrites": [
       {
@@ -29,8 +23,5 @@
         ]
       }
     ]
-  },
-  "firestore": {
-    "rules": "firestore.rules"
   }
 }
