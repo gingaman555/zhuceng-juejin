@@ -1958,18 +1958,33 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 
 /* 角色站在自己疊到的那一塊上面。一整排人的左右，就是一整排的長短。 */
 /* 角色站在第 k 格的正中間。--cw 是一格的寬，所以他跟著格子一起變寬變窄。 */
+/* 整組站在自己那一條的最後一塊上面。
+
+   一個人 44px，四個人排開是 176px——那比一格寬多了，會壓到隔壁。
+   所以往左疊：每多一個往左 22px（半個身體），四個人佔 110px。
+   疊在一起也像一群人站著，不像一排並排的圖示。 */
 .xl-hero{
-  position:absolute;top:0;width:44px;height:44px;z-index:6;
+  position:absolute;top:0;height:44px;z-index:6;
   left:calc(var(--nm) + (var(--k) + .5) * var(--cw) - 22px);
   padding:0;border:0;background:none;cursor:pointer
+}
+.xl-hero.n1{width:44px}
+.xl-hero.n2{width:66px;margin-left:-11px}
+.xl-hero.n3{width:88px;margin-left:-22px}
+.xl-hero.n4{width:110px;margin-left:-33px}
+/* 一個人一格，往右疊 22px。後面的人畫在前面的人上面。 */
+.xl-one{
+  position:absolute;top:0;left:calc(var(--i) * 22px);
+  width:44px;height:44px;z-index:calc(6 + var(--i))
 }
 .xl-hero .px.ch-s{width:44px;height:44px}
 /* 兩幀要疊在一起才會變成呼吸，不然就是上下兩個人。
    .wf 的絕對定位本來只寫在 .scn-hero 底下（見 57-viz.css），
    所以這裡要自己補一份。 */
 .xl-hero .wf{position:absolute;left:0;top:0}
-.xl-hero .wa{animation:wkA 1.6s steps(1,end) infinite}
-.xl-hero .wb{animation:wkB 1.6s steps(1,end) infinite}
+/* 每一個人的呼吸差一點點，不然一排人像同一個複製四次。 */
+.xl-hero .wa{animation:wkA 1.6s steps(1,end) infinite;animation-delay:var(--d,0ms)}
+.xl-hero .wb{animation:wkB 1.6s steps(1,end) infinite;animation-delay:var(--d,0ms)}
 /* 腳下一道暗。沒有的話他看起來是浮在那一塊上面，不是站著。 */
 .xl-hero::after{
   content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;
@@ -17106,22 +17121,34 @@ function xlLane(r, i, cols, classId, mine) {
      本來人站在最深的那一格裡。搬到條上面來，是因為一整排人的左右
      就是一整排的長短——誰疊得多，不用讀任何數字。
      還沒疊到任何一塊的那一組站在起點上，不是站在空中。 */
-  var hr = r.hero || HERO;
+  /* 整組站在一起。一個人一張圖，稍微疊著往左排——四個人排開會超過
+     一格的寬，疊著就還在自己那一條上面。
+
+     title 帶全員的名字：滑鼠移上去看得到那一組是誰跟誰。 */
+  var hs = (r.heroes && r.heroes.length) ? r.heroes : [r.hero || HERO];
   H.push('<button class="xl-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
+    ' n' + Math.min(4, hs.length) +
     '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'person:' + r.teamId })) + '\' title="' +
-    esc(shortName(r.name)) + '" style="--k:' + Math.max(0, n - 1) + '">');
-  /* 兩幀，會呼吸。本來這裡只畫一張 hr.idle——廊道裡的人在呼吸，
-     這一頁上的六個人是凍住的，所以那一頁讀起來像圖表不像有人住在裡面。
-     停很久的那一組睡著（睡著只有一張圖），走出去的那一組舉手。 */
-  if (left) {
-    H.push(pxTag(hr.win, hr.pal, 'ch-s'));
-  } else if (r.stall >= 2) {
-    H.push(pxTag(hr.sleep, hr.pal, 'ch-s'));
-  } else {
-    H.push(pxTag(hr.idleA, hr.pal, 'ch-s wf wa'));
-    H.push(pxTag(hr.idleB, hr.pal, 'ch-s wf wb'));
-  }
+    esc(shortName(r.name) + '　' + (r.names || []).join('、')) +
+    '" style="--k:' + Math.max(0, n - 1) + '">');
+  hs.forEach(function (hr, i) {
+    /* 兩幀，會呼吸。廊道裡的人在呼吸，這一頁上的人凍住的話，
+       那一頁讀起來像圖表不像有人住在裡面。
+       停很久的那一組睡著（睡著只有一張圖），走出去的那一組舉手。
+
+       每一個人的呼吸差一點點（--d），不然一排人像同一個複製四次。 */
+    H.push('<span class="xl-one" style="--i:' + i + ';--d:' + (i * 180) + 'ms">');
+    if (left) {
+      H.push(pxTag(hr.win, hr.pal, 'ch-s'));
+    } else if (r.stall >= 2) {
+      H.push(pxTag(hr.sleep, hr.pal, 'ch-s'));
+    } else {
+      H.push(pxTag(hr.idleA, hr.pal, 'ch-s wf wa'));
+      H.push(pxTag(hr.idleB, hr.pal, 'ch-s wf wb'));
+    }
+    H.push('</span>');
+  });
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</button>');
 
@@ -17171,12 +17198,26 @@ function ecoRows(classId) {
   return ecology(classId).map(function (r) {
     var tm = teamOf(r.teamId);
     r.project = tm && tm.project;
-    /* 那一條廊道裡站的是那一組自己的人。這一頁一次畫五組，
-       不能吃全域那一個 HERO——那樣五條裡站的都是看的人自己。 */
+    /* 那一條廊道裡站的是那一組自己的人。這一頁一次畫六組，
+       不能吃全域那一個 HERO——那樣六條裡站的都是看的人自己。
+
+       ── 全員，不是第一個 ──
+
+       本來只取 [0]：一組四個人，圖上只出現一個。而這一頁講的是
+       「大家都在下面」——少了三個人那句話就不成立，而且四個角色的
+       剪影本來就不一樣，一排站在一起才看得出那一組是誰跟誰。
+
+       順序照加入的順序，所以每一次畫都一樣（不會今天這個在前面、
+       明天換一個）。 */
     var mem = where('Users', function (x) {
       return x.teamId === r.teamId && x.role === 'student';
-    })[0];
-    r.hero = heroOf(mem);
+    }).sort(function (a, b) {
+      return String(a.userId).localeCompare(String(b.userId));
+    });
+    r.heroes = mem.map(function (u) { return heroOf(u); });
+    r.names = mem.map(function (u) { return u.name || ''; });
+    /* 舊的那一個留著：別的地方還在讀 r.hero。 */
+    r.hero = r.heroes[0] || heroOf(null);
     return r;
   });
 }
@@ -17552,6 +17593,29 @@ PAGES.codex = function () {
      （魔物這個詞本身是對的：畫面上這一類東西本來沒有名字，
      講的是「一隻」「東西」「幾種」，只有故事那一頁叫牠魔物。） */
   var H = [head('圖鑑', '遇過的委託人，跟拿到的任務之證', '')];
+
+  /* ── 這一頁到底裝著什麼 ──
+
+     本來只有一句副題。而這一頁底下裝的是這個作品裡最大的一塊
+     內容：每一層住著不一樣的一群，每一位有自己的樣子、自己的
+     一句形容、還有六句只屬於他的話——第一次遇到跟第二次遇到
+     講的不一樣，收下的時候跟退回的時候也不一樣。
+
+     那件事本來只有真的走過很多趟的人才會發現，而多數學生一學期
+     只會遇到三、四位。所以在這裡說一次：不是說明書，是告訴他
+     這底下還有東西。
+
+     數字從資料自己算，不寫死——加一位、改一句，這一行跟著變。 */
+  var 共 = allFauna().length;
+  var 句 = (function () {
+    var k = Object.keys(PAT_SAY)[0];
+    return k ? Object.keys(PAT_SAY[k]).length : 0;
+  })();
+  H.push('<p class="dim cx-lead">' +
+    esc('這座地下城裡住著 ' + 共 + ' 位，' + STRATA.length + ' 層各有各的一群。') +
+    esc('每一位有自己的' + (句 ? ' ' + 句 + ' ' : '') + '句話——' +
+      '第一次遇到他跟又走到他面前，他說的不一樣。') +
+    '</p>');
 
   /* 上面那一排：六層 ＋ 任務之證。一次只看一頁。 */
   H.push('<div class="cxtabs">');
@@ -19358,7 +19422,10 @@ var STORY = [
        留下三行：多少（數字）、在哪裡看得到（排行榜）、
        還有唯一那一條規則。 */
     lines: [
-      '老師收下一件，' + RULES.COIN.base + ' 枚金幣。' +
+      /* 使用者改的說法：從「老師收下」換成整條走完的條件。
+         下面 key 那一句還是講老師——那一句是規則本身，指的是同一件事，
+         只是這裡描述過程、那裡描述條件。 */
+      '角色收到委託並審查通過後，' + RULES.COIN.base + ' 枚金幣。' +
         '他想多說一點，再給 ' + RULES.COIN.bonusMin + ' 到 ' + RULES.COIN.bonusMax + ' 枚。',
       /* 金幣看得到，是使用者要加的。分號後面那半句不是修飾——
          少了它，這一句最自然的讀法是「金幣多的排前面」，而榜排的是

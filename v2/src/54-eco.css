@@ -142,18 +142,33 @@
 
 /* 角色站在自己疊到的那一塊上面。一整排人的左右，就是一整排的長短。 */
 /* 角色站在第 k 格的正中間。--cw 是一格的寬，所以他跟著格子一起變寬變窄。 */
+/* 整組站在自己那一條的最後一塊上面。
+
+   一個人 44px，四個人排開是 176px——那比一格寬多了，會壓到隔壁。
+   所以往左疊：每多一個往左 22px（半個身體），四個人佔 110px。
+   疊在一起也像一群人站著，不像一排並排的圖示。 */
 .xl-hero{
-  position:absolute;top:0;width:44px;height:44px;z-index:6;
+  position:absolute;top:0;height:44px;z-index:6;
   left:calc(var(--nm) + (var(--k) + .5) * var(--cw) - 22px);
   padding:0;border:0;background:none;cursor:pointer
+}
+.xl-hero.n1{width:44px}
+.xl-hero.n2{width:66px;margin-left:-11px}
+.xl-hero.n3{width:88px;margin-left:-22px}
+.xl-hero.n4{width:110px;margin-left:-33px}
+/* 一個人一格，往右疊 22px。後面的人畫在前面的人上面。 */
+.xl-one{
+  position:absolute;top:0;left:calc(var(--i) * 22px);
+  width:44px;height:44px;z-index:calc(6 + var(--i))
 }
 .xl-hero .px.ch-s{width:44px;height:44px}
 /* 兩幀要疊在一起才會變成呼吸，不然就是上下兩個人。
    .wf 的絕對定位本來只寫在 .scn-hero 底下（見 57-viz.css），
    所以這裡要自己補一份。 */
 .xl-hero .wf{position:absolute;left:0;top:0}
-.xl-hero .wa{animation:wkA 1.6s steps(1,end) infinite}
-.xl-hero .wb{animation:wkB 1.6s steps(1,end) infinite}
+/* 每一個人的呼吸差一點點，不然一排人像同一個複製四次。 */
+.xl-hero .wa{animation:wkA 1.6s steps(1,end) infinite;animation-delay:var(--d,0ms)}
+.xl-hero .wb{animation:wkB 1.6s steps(1,end) infinite;animation-delay:var(--d,0ms)}
 /* 腳下一道暗。沒有的話他看起來是浮在那一塊上面，不是站著。 */
 .xl-hero::after{
   content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;

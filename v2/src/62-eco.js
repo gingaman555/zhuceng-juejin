@@ -207,22 +207,34 @@ function xlLane(r, i, cols, classId, mine) {
      本來人站在最深的那一格裡。搬到條上面來，是因為一整排人的左右
      就是一整排的長短——誰疊得多，不用讀任何數字。
      還沒疊到任何一塊的那一組站在起點上，不是站在空中。 */
-  var hr = r.hero || HERO;
+  /* 整組站在一起。一個人一張圖，稍微疊著往左排——四個人排開會超過
+     一格的寬，疊著就還在自己那一條上面。
+
+     title 帶全員的名字：滑鼠移上去看得到那一組是誰跟誰。 */
+  var hs = (r.heroes && r.heroes.length) ? r.heroes : [r.hero || HERO];
   H.push('<button class="xl-hero' + (r.stall >= 2 && !left ? ' sleep' : '') +
+    ' n' + Math.min(4, hs.length) +
     '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'person:' + r.teamId })) + '\' title="' +
-    esc(shortName(r.name)) + '" style="--k:' + Math.max(0, n - 1) + '">');
-  /* 兩幀，會呼吸。本來這裡只畫一張 hr.idle——廊道裡的人在呼吸，
-     這一頁上的六個人是凍住的，所以那一頁讀起來像圖表不像有人住在裡面。
-     停很久的那一組睡著（睡著只有一張圖），走出去的那一組舉手。 */
-  if (left) {
-    H.push(pxTag(hr.win, hr.pal, 'ch-s'));
-  } else if (r.stall >= 2) {
-    H.push(pxTag(hr.sleep, hr.pal, 'ch-s'));
-  } else {
-    H.push(pxTag(hr.idleA, hr.pal, 'ch-s wf wa'));
-    H.push(pxTag(hr.idleB, hr.pal, 'ch-s wf wb'));
-  }
+    esc(shortName(r.name) + '　' + (r.names || []).join('、')) +
+    '" style="--k:' + Math.max(0, n - 1) + '">');
+  hs.forEach(function (hr, i) {
+    /* 兩幀，會呼吸。廊道裡的人在呼吸，這一頁上的人凍住的話，
+       那一頁讀起來像圖表不像有人住在裡面。
+       停很久的那一組睡著（睡著只有一張圖），走出去的那一組舉手。
+
+       每一個人的呼吸差一點點（--d），不然一排人像同一個複製四次。 */
+    H.push('<span class="xl-one" style="--i:' + i + ';--d:' + (i * 180) + 'ms">');
+    if (left) {
+      H.push(pxTag(hr.win, hr.pal, 'ch-s'));
+    } else if (r.stall >= 2) {
+      H.push(pxTag(hr.sleep, hr.pal, 'ch-s'));
+    } else {
+      H.push(pxTag(hr.idleA, hr.pal, 'ch-s wf wa'));
+      H.push(pxTag(hr.idleB, hr.pal, 'ch-s wf wb'));
+    }
+    H.push('</span>');
+  });
   if (r.stall === 1) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
   H.push('</button>');
 
@@ -272,12 +284,26 @@ function ecoRows(classId) {
   return ecology(classId).map(function (r) {
     var tm = teamOf(r.teamId);
     r.project = tm && tm.project;
-    /* 那一條廊道裡站的是那一組自己的人。這一頁一次畫五組，
-       不能吃全域那一個 HERO——那樣五條裡站的都是看的人自己。 */
+    /* 那一條廊道裡站的是那一組自己的人。這一頁一次畫六組，
+       不能吃全域那一個 HERO——那樣六條裡站的都是看的人自己。
+
+       ── 全員，不是第一個 ──
+
+       本來只取 [0]：一組四個人，圖上只出現一個。而這一頁講的是
+       「大家都在下面」——少了三個人那句話就不成立，而且四個角色的
+       剪影本來就不一樣，一排站在一起才看得出那一組是誰跟誰。
+
+       順序照加入的順序，所以每一次畫都一樣（不會今天這個在前面、
+       明天換一個）。 */
     var mem = where('Users', function (x) {
       return x.teamId === r.teamId && x.role === 'student';
-    })[0];
-    r.hero = heroOf(mem);
+    }).sort(function (a, b) {
+      return String(a.userId).localeCompare(String(b.userId));
+    });
+    r.heroes = mem.map(function (u) { return heroOf(u); });
+    r.names = mem.map(function (u) { return u.name || ''; });
+    /* 舊的那一個留著：別的地方還在讀 r.hero。 */
+    r.hero = r.heroes[0] || heroOf(null);
     return r;
   });
 }
