@@ -2434,6 +2434,19 @@ button.ac:active{transform:translateY(1px)}
   .rvw-pin-in{gap:5px}
 }
 
+/* ---------- 你自己那幾件 ----------
+   兩個數字並排，中間一支箭頭。沒有顏色編碼——多了幾天不是紅的，
+   少了幾天也不是綠的：這一張只印不判（見 63-pack.js）。 */
+.mine2 .m2-big{
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;
+  margin:5px 0 11px;font-size:22px;color:var(--dim)
+}
+.mine2 .m2-big b{
+  font-size:44px;line-height:1;color:var(--ink);font-weight:400;
+  font-variant-numeric:tabular-nums
+}
+.mine2 .m2-sep{color:var(--mute);padding:0 5px}
+
 /* ---------- 全班最近 ----------
    打開它的理由是別人，留下來的理由才是自己。
    放的是「發生了什麼」，不是「誰比較好」——沒有名次、沒有印章。 */
@@ -10578,6 +10591,52 @@ function metMobs(teamId) {
   return seen;
 }
 
+/* ---------- 一個人自己那幾件 ----------
+
+   這一支把 plan[].who / d / spent[i] / byOwn 攤開來，只算掛在他名下的。
+
+   ── 為什麼要有它 ──
+
+   這整套系統在教的是「一個人學會預估自己要幾天」。可是承諾的數字是
+   全組一個、判定也是全組一個——四個人共用一個準不準。那量到的是誰的
+   校準？
+
+   個人版的資料一直都在收（拆件掛在誰名下、他說幾天、他實際幾天），
+   只是從來沒有一個地方算給他看。收了三個月的東西，當事人一次都
+   沒看過。
+
+   ── 它不進判定 ──
+
+   回的是三個數字，沒有名次、沒有印章、不影響金幣、不上榜、
+   RULES.judge 一個字都沒碰。它是一面鏡子，不是第二個判定。
+
+   在團隊裡判個人是製造推卸的最快方法：一旦自己的準度有後果，
+   最理性的做法就是少報一點讓別人吸收。所以這裡只印，不判。
+
+   只算老師收下的那幾趟——跟圖鑑、跟排行榜同一條線。 */
+function myItems2(userId, teamId) {
+  var out = { n: 0, said: 0, got: 0, own: 0, runs: 0, rows: [] };
+  if (!userId || !teamId) return out;
+  where('Runs', function (r) {
+    return r.teamId === teamId && (r.state === 'done' || r.state === 'approved');
+  }).sort(function (a, b) {
+    return (a.committedAt || 0) - (b.committedAt || 0);
+  }).forEach(function (r) {
+    var pl = r.plan || [], sp = r.spent || [];
+    var 這趟 = 0;
+    pl.forEach(function (x, i) {
+      if (x.who !== userId) return;
+      var d = Number(x.d) || 0, g = Number(sp[i]);
+      if (!d || !(g > 0)) return;
+      out.n++; out.said += d; out.got += g; 這趟++;
+      if (x.byOwn) out.own++;
+      out.rows.push({ n: x.n, said: d, got: g, ms: (msOf(r.msId) || {}).title || '' });
+    });
+    if (這趟) out.runs++;
+  });
+  return out;
+}
+
 /* 校準：他說「很確定」的那幾次，實際準了幾次。
 
    這是這套系統唯一一句他自己不知道的話。它不評價任何東西——
@@ -17286,6 +17345,44 @@ PAGES.pack = function () {
     H.push('<div class="card dim">老師還沒派過任何一件事。</div>');
     H.push(btn('回廊道', 'go:home', 'ghost'));
     return H.join('');
+  }
+
+  /* ── 你自己那幾件 ──
+
+     上面那幾張卡全部是**這一組**的：走過幾趟、準了幾次、說很確定的
+     時候準不準。可是這一套在教的是「一個人學會預估自己要幾天」，
+     而四個人共用一個準不準——量到的是誰的校準？
+
+     個人版的資料一直都在收（拆件掛在誰名下、他說幾天、他實際幾天），
+     只是從來沒有一個地方算給他看。這一張補那一個洞。
+
+     ── 它只印，不判 ──
+
+     兩個數字並排，沒有名次、沒有印章、不進判定、不影響金幣、不上榜
+     （見 40-db.js 的 myItems2）。在團隊裡判個人是製造推卸的最快方法
+     ——一旦自己的準度有後果，最理性的做法就是少報一點讓別人吸收。
+
+     放在組的那幾張前面：這一頁上唯一屬於他一個人的東西，
+     不該排在四張組的卡片後面。 */
+  var 我 = myItems2(S.who, t.teamId);
+  if (我.n) {
+    var 差 = 我.got - 我.said;
+    H.push('<div class="card mine2">');
+    H.push('<div class="eyebrow lit">你自己那幾件</div>');
+    H.push('<p class="m2-big"><b>' + 我.said + '</b> 天　你說的' +
+      '<span class="m2-sep">→</span>' +
+      '<b>' + 我.got + '</b> 天　實際走的</p>');
+    H.push('<p class="dim">' + 我.n + ' 件，' + 我.runs + ' 趟。' +
+      (差 === 0 ? '剛好。'
+        : 差 > 0 ? '比你說的多了 ' + 差 + ' 天。'
+        : '比你說的少了 ' + (-差) + ' 天。') + '</p>');
+    /* 有幾件的天數是他本人按的。擋不住代填，所以老實記下來——
+       那個比例本身就是一個值得他自己看到的東西。 */
+    if (我.own < 我.n) {
+      H.push('<p class="dim">其中 ' + 我.own + ' 件的天數是你自己按的。' +
+        '別人幫你填的那幾件，那個數字不是你說的話。</p>');
+    }
+    H.push('</div>');
   }
 
   /* 準度總表。本來在「紀錄」那一頁上——那一頁跟這一頁幾乎是同一份資料，

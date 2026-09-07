@@ -359,6 +359,19 @@ button.ac:active{transform:translateY(1px)}
   .rvw-pin-in{gap:5px}
 }
 
+/* ---------- 你自己那幾件 ----------
+   兩個數字並排，中間一支箭頭。沒有顏色編碼——多了幾天不是紅的，
+   少了幾天也不是綠的：這一張只印不判（見 63-pack.js）。 */
+.mine2 .m2-big{
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;
+  margin:5px 0 11px;font-size:22px;color:var(--dim)
+}
+.mine2 .m2-big b{
+  font-size:44px;line-height:1;color:var(--ink);font-weight:400;
+  font-variant-numeric:tabular-nums
+}
+.mine2 .m2-sep{color:var(--mute);padding:0 5px}
+
 /* ---------- 全班最近 ----------
    打開它的理由是別人，留下來的理由才是自己。
    放的是「發生了什麼」，不是「誰比較好」——沒有名次、沒有印章。 */

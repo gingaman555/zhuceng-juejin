@@ -902,6 +902,52 @@ function metMobs(teamId) {
   return seen;
 }
 
+/* ---------- 一個人自己那幾件 ----------
+
+   這一支把 plan[].who / d / spent[i] / byOwn 攤開來，只算掛在他名下的。
+
+   ── 為什麼要有它 ──
+
+   這整套系統在教的是「一個人學會預估自己要幾天」。可是承諾的數字是
+   全組一個、判定也是全組一個——四個人共用一個準不準。那量到的是誰的
+   校準？
+
+   個人版的資料一直都在收（拆件掛在誰名下、他說幾天、他實際幾天），
+   只是從來沒有一個地方算給他看。收了三個月的東西，當事人一次都
+   沒看過。
+
+   ── 它不進判定 ──
+
+   回的是三個數字，沒有名次、沒有印章、不影響金幣、不上榜、
+   RULES.judge 一個字都沒碰。它是一面鏡子，不是第二個判定。
+
+   在團隊裡判個人是製造推卸的最快方法：一旦自己的準度有後果，
+   最理性的做法就是少報一點讓別人吸收。所以這裡只印，不判。
+
+   只算老師收下的那幾趟——跟圖鑑、跟排行榜同一條線。 */
+function myItems2(userId, teamId) {
+  var out = { n: 0, said: 0, got: 0, own: 0, runs: 0, rows: [] };
+  if (!userId || !teamId) return out;
+  where('Runs', function (r) {
+    return r.teamId === teamId && (r.state === 'done' || r.state === 'approved');
+  }).sort(function (a, b) {
+    return (a.committedAt || 0) - (b.committedAt || 0);
+  }).forEach(function (r) {
+    var pl = r.plan || [], sp = r.spent || [];
+    var 這趟 = 0;
+    pl.forEach(function (x, i) {
+      if (x.who !== userId) return;
+      var d = Number(x.d) || 0, g = Number(sp[i]);
+      if (!d || !(g > 0)) return;
+      out.n++; out.said += d; out.got += g; 這趟++;
+      if (x.byOwn) out.own++;
+      out.rows.push({ n: x.n, said: d, got: g, ms: (msOf(r.msId) || {}).title || '' });
+    });
+    if (這趟) out.runs++;
+  });
+  return out;
+}
+
 /* 校準：他說「很確定」的那幾次，實際準了幾次。
 
    這是這套系統唯一一句他自己不知道的話。它不評價任何東西——
