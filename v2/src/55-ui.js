@@ -436,7 +436,7 @@ function topBar() {
     '<span class="sp"></span>' +
     '<span class="hud-z">' + esc(z.name) + '</span>' +
     '<span class="hud-d' + (st.level ? ' warnx' : '') + '">' +
-      (depthOf(t.teamId) * WORLD.depthPerMilecrystal) + ' m</span>' + topEnd() +
+      (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</span>' + topEnd() +
     '</div>';
 }
 
@@ -459,7 +459,7 @@ function isDemo() { return !!(DB && DB.Config && DB.Config.demo); }
    所以會動到資料與時間的那兩顆，用的是這一道嚴格的門。 */
 function isPureDemo() {
   if (!isDemo()) return false;
-  var cols = ['Users', 'Classes', 'Teams', 'Milecrystals', 'Runs', 'Pushes', 'Keeps'];
+  var cols = ['Users', 'Classes', 'Teams', 'Milestones', 'Runs', 'Pushes', 'Keeps'];
   for (var i = 0; i < cols.length; i++) {
     var a = DB[cols[i]] || [];
     for (var j = 0; j < a.length; j++) if (a[j] && !a[j]._d) return false;

@@ -121,7 +121,7 @@ L('跨機器同步', n(SYNC_KEY) + ' 張全上雲（Firestore）');
 L('事件種類', n(EV_SAY) + ' 種（研究者匯出的那一份）');
 L('示範班', DB.Users.filter(u => u.role === 'teacher').length + ' 位老師　' +
   DB.Users.filter(u => u.role === 'student').length + ' 位學生　' +
-  DB.Teams.length + ' 組　' + DB.Milecrystals.length + ' 件任務');
+  DB.Teams.length + ' 組　' + DB.Milestones.length + ' 件任務');
 
 /* ── 六 · 規矩 ── */
 H('六 · 規矩（自動守著的）');
@@ -229,7 +229,7 @@ if (process.argv.indexOf('--doc') >= 0) {
     '| 匯出 | 三份：一趟一列 · 一件一列 · 流水帳 |',
     '| 示範班 | ' + DB.Users.filter(u => u.role === 'teacher').length + ' 位老師 · ' +
       DB.Users.filter(u => u.role === 'student' && u.teamId).length + ' 位學生 · ' +
-      DB.Teams.length + ' 組 · ' + DB.Milecrystals.length + ' 件任務 |',
+      DB.Teams.length + ' 組 · ' + DB.Milestones.length + ' 件任務 |',
     '',
     '### 五 · 收集層（可分離）',
     '',

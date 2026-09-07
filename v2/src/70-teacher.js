@@ -533,7 +533,7 @@ PAGES.ms = function () {
 
      誰派的印在那一列上。要不要跟人家的錯開，是他看得到之後
      自己會做的判斷——這一頁的工作是讓他做得成那個判斷。 */
-  var list = where('Milecrystals', function (m) {
+  var list = where('Milestones', function (m) {
     return m.classId === u.classId;
   })
     .sort(function (a, b) { return b.at - a.at; });

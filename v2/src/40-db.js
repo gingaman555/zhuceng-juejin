@@ -34,7 +34,7 @@ function blank() {
     Config: { seq: 1 },
     Users: [], Classes: [], Teams: [],
     /* 任務：老師派的。同一個任務可以只發給某幾組。 */
-    Milecrystals: [],
+    Milestones: [],
     /* 一組在一個任務上的狀態。這張表是整個系統的心臟。 */
     Runs: [],
     /* 每一次推進打卡。一天一筆。 */
@@ -92,7 +92,7 @@ function nid(p) {
   var c = DB.Config || (DB.Config = {});
   if (!(c.seq > 0)) {
     var top = 0;
-    ['Users', 'Classes', 'Teams', 'Milecrystals', 'Runs', 'Pushes', 'Keeps']
+    ['Users', 'Classes', 'Teams', 'Milestones', 'Runs', 'Pushes', 'Keeps']
       .forEach(function (t) {
         (DB[t] || []).forEach(function (x) {
           var id = String(x.userId || x.classId || x.teamId ||
@@ -115,7 +115,7 @@ function save() {
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 13;
+var SEED_V = 14;   /* 14：不分組那一站的示範資料改成一人一組 */
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -230,7 +230,7 @@ function where(tbl, fn) { return DB[tbl].filter(fn); }
 
 function teamOf(id) { return find('Teams', function (t) { return t.teamId === id; }); }
 function userOf(id) { return find('Users', function (u) { return u.userId === id; }); }
-function msOf(id) { return find('Milecrystals', function (m) { return m.msId === id; }); }
+function msOf(id) { return find('Milestones', function (m) { return m.msId === id; }); }
 /* 這一組在這個任務上的那一趟。
 
    「重新想過」的那幾趟要跳過：它們留在資料庫裡當紀錄，但那個任務
@@ -273,7 +273,7 @@ function runOf(teamId, msId) {
 function msFor(teamId) {
   var t = teamOf(teamId);
   if (!t) return [];
-  return where('Milecrystals', function (m) {
+  return where('Milestones', function (m) {
     if (m.classId !== t.classId) return false;
     return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
@@ -447,7 +447,7 @@ function accuracyOf(teamId) {
 /* ---------- 這個課程有哪幾位老師 ----------
 
    三位老師共同帶整個班，不是一人分走幾組。所以「誰」這件事不掛在
-   組上，掛在每一件上：這一件是誰派的（Milecrystal.mentorId）、
+   組上，掛在每一件上：這一件是誰派的（Milestone.mentorId）、
    那一句話是誰說的（Run.wordBy）。同一組這一週可能收到甲老師派的，
    下一週收到乙老師派的，兩件都是真的。
 
@@ -1466,7 +1466,7 @@ function actPublish(classId, o) {
     dueU: o.dueU || '',
     at: now()
   };
-  DB.Milecrystals.push(m);
+  DB.Milestones.push(m);
   save();
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });

@@ -178,7 +178,7 @@ function scene(t, row, st, kind) {
      那是「你在多深的地方」，不是走廊上的一個位置。 */
   H.push('<div class="scn-hud">' +
     '<em>' + esc(zone.name) + '</em>' +
-    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilecrystal) + ' m</b>' +
+    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
     '<span>走到 ' + depthOf(t.teamId) + ' 個任務</span>' +
     /* 站得住的：老師收下才算。走是他自己的事，留下來是要有人看過的事。 */
     /* 地層的那一句說明拿掉了。它不會變、也不影響任何決定，卻是這塊

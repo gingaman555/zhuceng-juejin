@@ -72,14 +72,36 @@ if (站.root !== 'world/v1/') {
   js = js.replace(舊, "var SYNC_ROOT = '" + 站.root + "';　/* 這一個站自己的資料 */");
 }
 
-/* 這一個站跟主站不一樣的那幾條規則。接在最後面，所以它蓋得過
-   20-rules.js 裡的預設值，而且看得出來是「這一個站改的」。 */
+/* 這一個站跟主站不一樣的那幾條規則。
+
+   ── 接在哪裡很重要 ──
+
+   本來接在整包 JS 的**最後面**。那是錯的：80-app.js 在那之前就把系統
+   開起來了（load() 不成就 seed()），所以種示範資料的時候 RULES.SOLO
+   還是 0——B 站的示範資料因此一直是六組每組兩人，而使用者第一眼看到
+   的就是那個。
+
+   這種錯很難自己發現：檢查工具是直接 eval 整包再自己設 RULES.SOLO，
+   所以它們永遠測到對的那一邊。是使用者開網頁才看到的。
+
+   所以插在 20-rules.js **後面**、其餘所有檔案之前——那時候 RULES 這個
+   物件剛定義好，而還沒有任何一支程式跑起來。 */
 const 改 = Object.keys(站.rules || {});
 if (改.length) {
-  js += '\n\n/* ===== 這一個站的研究條件 ===== */\n' +
+  const 那一段 = '\n\n/* ===== 這一個站的研究條件（見 build.js 的 SITES） ===== */\n' +
     改.map(function (k) {
       return 'RULES.' + k + ' = ' + JSON.stringify(站.rules[k]) + ';';
     }).join('\n') + '\n';
+  /* 20-rules.js 那一段結束的地方＝下一個檔案的標頭。 */
+  const 後 = files.filter(function (f) { return f.endsWith('.js'); })
+    .filter(function (f) { return f > '20-rules.js'; })[0];
+  const 位 = 後 ? js.indexOf('/* ===== ' + 後 + ' ===== */') : -1;
+  if (位 < 0) {
+    console.error('找不到 20-rules.js 後面那個接點。停——' +
+      '接錯地方等於這個站的設定沒生效，而那不會報錯。');
+    process.exit(1);
+  }
+  js = js.slice(0, 位) + 那一段 + '\n' + js.slice(位);
 }
 
 const html = `<!doctype html>
@@ -112,6 +134,23 @@ ${js}
 </body>
 </html>
 `;
+
+/* ── 這個站的設定真的在開機之前嗎 ──
+
+   設定要是接在開機之後，這個站就會安靜地跑成主站的樣子——不會報錯、
+   每一頁都畫得出來、檢查工具也全過（它們是直接 eval 整包再自己設
+   RULES，永遠測到對的那一邊）。只有真的開網頁才看得到。
+
+   所以在這裡驗一次：那幾行的位置一定要在 80-app.js 那一句開機之前。 */
+if (改.length) {
+  const 設 = js.indexOf('RULES.' + 改[0] + ' =');
+  const 開 = js.indexOf('if (!load()');
+  if (設 < 0 || 開 < 0 || 設 > 開) {
+    console.error('這個站的設定接在開機之後（設 ' + 設 + '、開機 ' + 開 + '）。停。');
+    console.error('接在那裡等於沒生效，而且不會有任何東西報錯。');
+    process.exit(1);
+  }
+}
 
 const 出 = path.join(__dirname, 站.out);
 if (!fs.existsSync(出)) fs.mkdirSync(出, { recursive: true });

@@ -77,6 +77,53 @@ if (fs.existsSync(bfile)) {
   console.log('   （還沒 build b：node build.js b）');
 }
 
+節('1.5', '示範資料也要是一人一組');
+
+/* 第一次打開網頁看到的是示範資料，而 RULES.SOLO 只管新註冊的人
+   ——所以那一份也要拆（使用者：「為什麼我開 B 版首頁裡還是分組
+   兩個人的狀態」）。 */
+seed();
+const 隊們 = where('Teams', function (x) { return x._d; });
+const 人數 = 隊們.map(function (x) {
+  return where('Users', function (u) { return inTeam(u, x.teamId) && u.role === 'student'; }).length;
+});
+ok(人數.every(function (n) { return n <= 1; }),
+  '示範資料裡沒有一支隊超過一個人（' + 隊們.length + ' 支）');
+ok(隊們.every(function (x) {
+  return where('Users', function (u) { return inTeam(u, x.teamId); }).some(function (u) {
+    return u.name === x.name;
+  }) || !where('Users', function (u) { return inTeam(u, x.teamId); }).length;
+}), '隊名就是那個人的名字，不是「第一組 · 甲」那種編號');
+const 有東西 = 隊們.filter(function (x) {
+  return where('Runs', function (r) { return r.teamId === x.teamId; }).length;
+}).length;
+ok(有東西 >= 隊們.length / 2,
+  '一半以上有走過的紀錄（' + 有東西 + '/' + 隊們.length + '）——趟數是分給每一個人的，' +
+  '不是全部給第一個');
+/* 搬過的那幾趟，資料不能指向已經不在這一組的人 */
+let 壞 = [];
+where('Runs', function (r) { return r._d; }).forEach(function (r) {
+  const mem = where('Users', function (u) { return inTeam(u, r.teamId); }).map(function (u) { return u.userId; });
+  (r.plan || []).forEach(function (x) {
+    if (x.who && mem.indexOf(x.who) < 0) 壞.push(r.runId + ' 的拆件掛在組外的人身上');
+  });
+  Object.keys(r.said || {}).forEach(function (k) {
+    if (mem.indexOf(k) < 0) 壞.push(r.runId + ' 的那一句掛在組外的人身上');
+  });
+});
+ok(!壞.length, '搬過的那幾趟，拆件與那幾句話都掛在現在的主人身上' +
+  (壞.length ? '　→ ' + 壞.slice(0, 2).join('、') : ''));
+/* Pushes / Keeps 也要跟著搬 */
+let 漏 = [];
+['Pushes', 'Keeps'].forEach(function (tb) {
+  where(tb, function (x) { return x._d && x.runId; }).forEach(function (x) {
+    const r = find('Runs', function (y) { return y.runId === x.runId; });
+    if (r && r.teamId !== x.teamId) 漏.push(tb + ' ' + x.runId);
+  });
+});
+ok(!漏.length, 'Pushes 與 Keeps 跟著那一趟一起搬了' +
+  (漏.length ? '　→ ' + 漏.slice(0, 3).join('、') : ''));
+
 節('2', '註冊完就有一支自己的隊，中間沒有組隊那一步');
 
 DB = blank();

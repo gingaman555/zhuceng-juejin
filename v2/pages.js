@@ -207,7 +207,7 @@ function pickParam(p, u) {
   const t = u.teamId ? teamOf(u.teamId) : null;
   const anyRun = DB.Runs[0];
   const myRun = t ? where('Runs', function (r) { return r.teamId === t.teamId; })[0] : null;
-  const anyMs = DB.Milecrystals[0];
+  const anyMs = DB.Milestones[0];
   if (p === 'stamp' || p === 'pick' || p === 'camp' || p === 'battle') {
     return { id: (myRun || anyRun || {}).runId };
   }

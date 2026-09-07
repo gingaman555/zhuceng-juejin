@@ -181,7 +181,7 @@ function seed() {
     title: '找兩個人試一次，記下卡在哪',
     steps: ['做出可以試的版本', '約人', '在旁邊看他用'],
     note: '不要跟他解釋。他卡住的地方就是答案。' };
-  DB.Milecrystals.push(M1, M2, M3, M4);
+  DB.Milestones.push(M1, M2, M3, M4);
   DB.Config.seq = 10;
 
   /* 幫忙塞推進紀錄。
@@ -298,7 +298,7 @@ function seed() {
      不要再寫死一個數字。數出來。 */
   var top = 0;
   [['Users', 'userId'], ['Teams', 'teamId'], ['Classes', 'classId'],
-   ['Milecrystals', 'msId'], ['Runs', 'runId']].forEach(function (p) {
+   ['Milestones', 'msId'], ['Runs', 'runId']].forEach(function (p) {
     (DB[p[0]] || []).forEach(function (r) {
       var n = parseInt(String(r[p[1]]).replace(/^[A-Za-z]+/, ''), 10);
       if (n > top) top = n;
@@ -325,6 +325,11 @@ function seed() {
       DB[c].forEach(function (r) { if (r) r._d = 1; });
     }
   });
+  /* 不分組那一站：把示範資料也拆成一人一組（見底下的 soloize）。
+
+     放在打 _d 之後：soloize 只挑 _d 的那幾筆，而且它自己建的新隊也
+     要帶 _d——那個記號決定這一批不上雲（見 41-sync.js）。 */
+  if (RULES.SOLO) soloize();
   save();
 }
 
@@ -408,5 +413,86 @@ function dressRuns(cid) {
       r.bonus = RULES.CRYSTAL.bonusMin +
         (h % 5) * (RULES.CRYSTAL.bonusStep || 1);
     }
+  });
+}
+
+/* ---------- 不分組那一站：示範資料也要是一人一組 ----------
+
+   使用者：「為什麼我開 B 版首頁裡還是分組兩個人的狀態」。
+
+   RULES.SOLO 只管**新註冊**的人（見 15-auth.js 的 actRegister）——
+   而第一次打開網頁看到的是**示範資料**，那一份是種子寫死的六組每組
+   兩人。所以那一站的第一印象一直是分組的。
+
+   ── 為什麼是「種完再拆」不是「種的時候就分開」 ──
+
+   種子把隊伍、代碼、每一趟的資料寫死了，而且 plan[].who 指名那幾個
+   userId。要在種的時候分開就得整份重寫，而那份資料是好幾輪調出來的
+   （停很久的那一組、談過的那一趟、最後一個人還沒寫的那一份…）。
+
+   拆是一個小而封閉的轉換：留在原組的那一位保留全部歷史，其餘每一位
+   拿到一支自己的新隊。
+
+   ── 那一趟上別人的那幾件怎麼辦 ──
+
+   拆件掛在誰名下（plan[].who）、誰寫了什麼（said[userId]）——那兩樣
+   會指向一個已經不在這一組的人。所以一起改掛給留下來的那一位，
+   不然畫面上會出現一個查不到的名字。 */
+function soloize() {
+  where('Teams', function (t) { return !!t._d; }).slice().forEach(function (t) {
+    var mem = where('Users', function (u) {
+      return u._d && u.role === 'student' && u.teamId === t.teamId;
+    });
+    if (mem.length <= 1) return;
+
+    /* ── 那幾趟要分，不是全部給第一個人 ──
+
+       全部給第一個人的話，另一半的人各自拿到一支空的隊——那在剖面圖
+       上是一半的廊道什麼都沒有，而那一頁的第一印象就是那個。
+
+       所以照順序輪流分。趟數本來就不一樣（3 2 2 2 0 0），分完是
+       2 1 1 1 1 1 1 1 0 0 0 0：八位有東西，四位剛開始。
+       那四位本來就是「還沒動」那兩組的人，是刻意留的示範狀態。 */
+    var runs = where('Runs', function (r) { return r.teamId === t.teamId; })
+      .sort(function (a, b) { return (a.committedAt || 0) - (b.committedAt || 0); });
+
+    /* 先幫後面那幾位各開一支自己的隊。 */
+    var 隊 = [t];
+    mem.slice(1).forEach(function (u) {
+      var g = {
+        teamId: nid('G'), classId: t.classId, name: u.name,
+        project: t.project, joinCode: newCode(), joinedAt: t.joinedAt, _d: 1
+      };
+      DB.Teams.push(g);
+      u.teamId = g.teamId;
+      u.seats = [{ classId: t.classId, teamId: g.teamId }];
+      隊.push(g);
+    });
+    t.name = mem[0].name;
+    mem[0].seats = [{ classId: t.classId, teamId: t.teamId }];
+
+    runs.forEach(function (r, i) {
+      var k = i % mem.length;
+      var u = mem[k], g = 隊[k];
+      /* 搬趟：Pushes 跟 Keeps 也掛 teamId，一起搬，
+         不然那一趟走過的天數與封存的岩心會留在別人那一組。 */
+      if (r.teamId !== g.teamId) {
+        var 舊 = r.teamId;
+        r.teamId = g.teamId;
+        where('Pushes', function (p) { return p.runId === r.runId && p.teamId === 舊; })
+          .forEach(function (p) { p.teamId = g.teamId; });
+        where('Keeps', function (kk) { return kk.runId === r.runId && kk.teamId === 舊; })
+          .forEach(function (kk) { kk.teamId = g.teamId; });
+      }
+      /* 拆件掛在誰名下、誰寫了什麼——那兩樣會指向一個已經不在這一組
+         的人。改掛給這一趟現在的主人，不然畫面上會出現查不到的名字。 */
+      (r.plan || []).forEach(function (x) { if (x.who) x.who = u.userId; });
+      if (r.said) {
+        var 話 = null;
+        Object.keys(r.said).forEach(function (kk) { if (話 == null) 話 = r.said[kk]; });
+        r.said = {};
+        if (話) r.said[u.userId] = 話;
+      }
+    });
   });
 }

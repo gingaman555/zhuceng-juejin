@@ -5783,7 +5783,7 @@ var WORLD = {
   name: '地下城',
   surface: '地表',
   /* 廊道往下走，深度＝這一組完成過幾個任務。沒有終點，也沒有「走完」。 */
-  depthPerMilecrystal: 40,   /* 每完成一個任務往下 40 公尺（只是說法，不是門檻） */
+  depthPerMilestone: 40,   /* 每完成一個任務往下 40 公尺（只是說法，不是門檻） */
 
   /* 一天的光。停滯越久越暗——不是懲罰，是狀態本身看得見。 */
   light: [
@@ -9959,6 +9959,11 @@ RULES.progress = function (pushes, est) {
 };
 
 
+
+
+/* ===== 這一個站的研究條件（見 build.js 的 SITES） ===== */
+RULES.SOLO = 1;
+
 /* ===== 30-art.js ===== */
 /* 畫圖。只有兩件事：一個雜湊、一個把像素字串變成 SVG 的函式。
 
@@ -10205,7 +10210,7 @@ function blank() {
     Config: { seq: 1 },
     Users: [], Classes: [], Teams: [],
     /* 任務：老師派的。同一個任務可以只發給某幾組。 */
-    Milecrystals: [],
+    Milestones: [],
     /* 一組在一個任務上的狀態。這張表是整個系統的心臟。 */
     Runs: [],
     /* 每一次推進打卡。一天一筆。 */
@@ -10263,7 +10268,7 @@ function nid(p) {
   var c = DB.Config || (DB.Config = {});
   if (!(c.seq > 0)) {
     var top = 0;
-    ['Users', 'Classes', 'Teams', 'Milecrystals', 'Runs', 'Pushes', 'Keeps']
+    ['Users', 'Classes', 'Teams', 'Milestones', 'Runs', 'Pushes', 'Keeps']
       .forEach(function (t) {
         (DB[t] || []).forEach(function (x) {
           var id = String(x.userId || x.classId || x.teamId ||
@@ -10286,7 +10291,7 @@ function save() {
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 13;
+var SEED_V = 14;   /* 14：不分組那一站的示範資料改成一人一組 */
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -10401,7 +10406,7 @@ function where(tbl, fn) { return DB[tbl].filter(fn); }
 
 function teamOf(id) { return find('Teams', function (t) { return t.teamId === id; }); }
 function userOf(id) { return find('Users', function (u) { return u.userId === id; }); }
-function msOf(id) { return find('Milecrystals', function (m) { return m.msId === id; }); }
+function msOf(id) { return find('Milestones', function (m) { return m.msId === id; }); }
 /* 這一組在這個任務上的那一趟。
 
    「重新想過」的那幾趟要跳過：它們留在資料庫裡當紀錄，但那個任務
@@ -10444,7 +10449,7 @@ function runOf(teamId, msId) {
 function msFor(teamId) {
   var t = teamOf(teamId);
   if (!t) return [];
-  return where('Milecrystals', function (m) {
+  return where('Milestones', function (m) {
     if (m.classId !== t.classId) return false;
     return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
@@ -10618,7 +10623,7 @@ function accuracyOf(teamId) {
 /* ---------- 這個課程有哪幾位老師 ----------
 
    三位老師共同帶整個班，不是一人分走幾組。所以「誰」這件事不掛在
-   組上，掛在每一件上：這一件是誰派的（Milecrystal.mentorId）、
+   組上，掛在每一件上：這一件是誰派的（Milestone.mentorId）、
    那一句話是誰說的（Run.wordBy）。同一組這一週可能收到甲老師派的，
    下一週收到乙老師派的，兩件都是真的。
 
@@ -11637,7 +11642,7 @@ function actPublish(classId, o) {
     dueU: o.dueU || '',
     at: now()
   };
-  DB.Milecrystals.push(m);
+  DB.Milestones.push(m);
   save();
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
@@ -12225,7 +12230,7 @@ var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '' };
    手上那份示範資料的版本，三個都不該跟別人共用。 */
 var SYNC_KEY = {
   Users: 'userId', Classes: 'classId', Teams: 'teamId',
-  Milecrystals: 'msId', Runs: 'runId', Pushes: 'pushId',
+  Milestones: 'msId', Runs: 'runId', Pushes: 'pushId',
   Keeps: 'keepId', Events: 'evId'
 };
 /* 推上去但不訂閱的那幾張（見檔頭）。 */
@@ -13022,7 +13027,7 @@ function seed() {
     title: '找兩個人試一次，記下卡在哪',
     steps: ['做出可以試的版本', '約人', '在旁邊看他用'],
     note: '不要跟他解釋。他卡住的地方就是答案。' };
-  DB.Milecrystals.push(M1, M2, M3, M4);
+  DB.Milestones.push(M1, M2, M3, M4);
   DB.Config.seq = 10;
 
   /* 幫忙塞推進紀錄。
@@ -13139,7 +13144,7 @@ function seed() {
      不要再寫死一個數字。數出來。 */
   var top = 0;
   [['Users', 'userId'], ['Teams', 'teamId'], ['Classes', 'classId'],
-   ['Milecrystals', 'msId'], ['Runs', 'runId']].forEach(function (p) {
+   ['Milestones', 'msId'], ['Runs', 'runId']].forEach(function (p) {
     (DB[p[0]] || []).forEach(function (r) {
       var n = parseInt(String(r[p[1]]).replace(/^[A-Za-z]+/, ''), 10);
       if (n > top) top = n;
@@ -13166,6 +13171,11 @@ function seed() {
       DB[c].forEach(function (r) { if (r) r._d = 1; });
     }
   });
+  /* 不分組那一站：把示範資料也拆成一人一組（見底下的 soloize）。
+
+     放在打 _d 之後：soloize 只挑 _d 的那幾筆，而且它自己建的新隊也
+     要帶 _d——那個記號決定這一批不上雲（見 41-sync.js）。 */
+  if (RULES.SOLO) soloize();
   save();
 }
 
@@ -13249,6 +13259,87 @@ function dressRuns(cid) {
       r.bonus = RULES.CRYSTAL.bonusMin +
         (h % 5) * (RULES.CRYSTAL.bonusStep || 1);
     }
+  });
+}
+
+/* ---------- 不分組那一站：示範資料也要是一人一組 ----------
+
+   使用者：「為什麼我開 B 版首頁裡還是分組兩個人的狀態」。
+
+   RULES.SOLO 只管**新註冊**的人（見 15-auth.js 的 actRegister）——
+   而第一次打開網頁看到的是**示範資料**，那一份是種子寫死的六組每組
+   兩人。所以那一站的第一印象一直是分組的。
+
+   ── 為什麼是「種完再拆」不是「種的時候就分開」 ──
+
+   種子把隊伍、代碼、每一趟的資料寫死了，而且 plan[].who 指名那幾個
+   userId。要在種的時候分開就得整份重寫，而那份資料是好幾輪調出來的
+   （停很久的那一組、談過的那一趟、最後一個人還沒寫的那一份…）。
+
+   拆是一個小而封閉的轉換：留在原組的那一位保留全部歷史，其餘每一位
+   拿到一支自己的新隊。
+
+   ── 那一趟上別人的那幾件怎麼辦 ──
+
+   拆件掛在誰名下（plan[].who）、誰寫了什麼（said[userId]）——那兩樣
+   會指向一個已經不在這一組的人。所以一起改掛給留下來的那一位，
+   不然畫面上會出現一個查不到的名字。 */
+function soloize() {
+  where('Teams', function (t) { return !!t._d; }).slice().forEach(function (t) {
+    var mem = where('Users', function (u) {
+      return u._d && u.role === 'student' && u.teamId === t.teamId;
+    });
+    if (mem.length <= 1) return;
+
+    /* ── 那幾趟要分，不是全部給第一個人 ──
+
+       全部給第一個人的話，另一半的人各自拿到一支空的隊——那在剖面圖
+       上是一半的廊道什麼都沒有，而那一頁的第一印象就是那個。
+
+       所以照順序輪流分。趟數本來就不一樣（3 2 2 2 0 0），分完是
+       2 1 1 1 1 1 1 1 0 0 0 0：八位有東西，四位剛開始。
+       那四位本來就是「還沒動」那兩組的人，是刻意留的示範狀態。 */
+    var runs = where('Runs', function (r) { return r.teamId === t.teamId; })
+      .sort(function (a, b) { return (a.committedAt || 0) - (b.committedAt || 0); });
+
+    /* 先幫後面那幾位各開一支自己的隊。 */
+    var 隊 = [t];
+    mem.slice(1).forEach(function (u) {
+      var g = {
+        teamId: nid('G'), classId: t.classId, name: u.name,
+        project: t.project, joinCode: newCode(), joinedAt: t.joinedAt, _d: 1
+      };
+      DB.Teams.push(g);
+      u.teamId = g.teamId;
+      u.seats = [{ classId: t.classId, teamId: g.teamId }];
+      隊.push(g);
+    });
+    t.name = mem[0].name;
+    mem[0].seats = [{ classId: t.classId, teamId: t.teamId }];
+
+    runs.forEach(function (r, i) {
+      var k = i % mem.length;
+      var u = mem[k], g = 隊[k];
+      /* 搬趟：Pushes 跟 Keeps 也掛 teamId，一起搬，
+         不然那一趟走過的天數與封存的岩心會留在別人那一組。 */
+      if (r.teamId !== g.teamId) {
+        var 舊 = r.teamId;
+        r.teamId = g.teamId;
+        where('Pushes', function (p) { return p.runId === r.runId && p.teamId === 舊; })
+          .forEach(function (p) { p.teamId = g.teamId; });
+        where('Keeps', function (kk) { return kk.runId === r.runId && kk.teamId === 舊; })
+          .forEach(function (kk) { kk.teamId = g.teamId; });
+      }
+      /* 拆件掛在誰名下、誰寫了什麼——那兩樣會指向一個已經不在這一組
+         的人。改掛給這一趟現在的主人，不然畫面上會出現查不到的名字。 */
+      (r.plan || []).forEach(function (x) { if (x.who) x.who = u.userId; });
+      if (r.said) {
+        var 話 = null;
+        Object.keys(r.said).forEach(function (kk) { if (話 == null) 話 = r.said[kk]; });
+        r.said = {};
+        if (話) r.said[u.userId] = 話;
+      }
+    });
   });
 }
 
@@ -13692,7 +13783,7 @@ function topBar() {
     '<span class="sp"></span>' +
     '<span class="hud-z">' + esc(z.name) + '</span>' +
     '<span class="hud-d' + (st.level ? ' warnx' : '') + '">' +
-      (depthOf(t.teamId) * WORLD.depthPerMilecrystal) + ' m</span>' + topEnd() +
+      (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</span>' + topEnd() +
     '</div>';
 }
 
@@ -13715,7 +13806,7 @@ function isDemo() { return !!(DB && DB.Config && DB.Config.demo); }
    所以會動到資料與時間的那兩顆，用的是這一道嚴格的門。 */
 function isPureDemo() {
   if (!isDemo()) return false;
-  var cols = ['Users', 'Classes', 'Teams', 'Milecrystals', 'Runs', 'Pushes', 'Keeps'];
+  var cols = ['Users', 'Classes', 'Teams', 'Milestones', 'Runs', 'Pushes', 'Keeps'];
   for (var i = 0; i < cols.length; i++) {
     var a = DB[cols[i]] || [];
     for (var j = 0; j < a.length; j++) if (a[j] && !a[j]._d) return false;
@@ -17085,7 +17176,7 @@ function scene(t, row, st, kind) {
      那是「你在多深的地方」，不是走廊上的一個位置。 */
   H.push('<div class="scn-hud">' +
     '<em>' + esc(zone.name) + '</em>' +
-    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilecrystal) + ' m</b>' +
+    '<b>' + (depthOf(t.teamId) * WORLD.depthPerMilestone) + ' m</b>' +
     '<span>走到 ' + depthOf(t.teamId) + ' 個任務</span>' +
     /* 站得住的：老師收下才算。走是他自己的事，留下來是要有人看過的事。 */
     /* 地層的那一句說明拿掉了。它不會變、也不影響任何決定，卻是這塊
@@ -19124,7 +19215,7 @@ function feedOf(classId, limit) {
   });
 
   /* 老師派的 */
-  where('Milecrystals', function (m) { return m.classId === classId; })
+  where('Milestones', function (m) { return m.classId === classId; })
     .forEach(function (m) { out.push({ at: m.at, kind: 'pub', ms: m }); });
 
   out.sort(function (a, b) { return b.at - a.at; });
@@ -21496,7 +21587,7 @@ PAGES.ms = function () {
 
      誰派的印在那一列上。要不要跟人家的錯開，是他看得到之後
      自己會做的判斷——這一頁的工作是讓他做得成那個判斷。 */
-  var list = where('Milecrystals', function (m) {
+  var list = where('Milestones', function (m) {
     return m.classId === u.classId;
   })
     .sort(function (a, b) { return b.at - a.at; });
@@ -21883,7 +21974,7 @@ ACTS.csv = function () {
 (function () {
   /* 資料結構換過就重種一次，不要拿舊的撐新的畫面。
      Events 是後來才加的表——舊的存檔沒有它，畫面一讀就會炸。 */
-  if (!load() || !DB.Milecrystals || !DB.Runs || !DB.Events || !DB.Keeps) seed();
+  if (!load() || !DB.Milestones || !DB.Runs || !DB.Events || !DB.Keeps) seed();
 
   /* 上次登入的人還記得。關掉分頁再打開不用重登。 */
   var u = DB.Session ? userOf(DB.Session) : null;
@@ -21911,7 +22002,7 @@ window.AUDIT = function () {
   var t = myTeam(), cls = t.classId;
   var done = where('Runs', function (r) { return r.teamId === t.teamId && r.stamp; })[0];
   var run = where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'running'; })[0];
-  var ms = where('Milecrystals', function (m) { return m.classId === cls; })[0];
+  var ms = where('Milestones', function (m) { return m.classId === cls; })[0];
   var P = [['home', {}], ['commit', { id: ms.msId }], ['battle', { id: (run || done).runId, at: 'end' }],
            ['stamp', { id: done.runId }],
            ['pack', {}], ['codex', {}],
@@ -21968,10 +22059,6 @@ window.PLAY = function () {
   for (var i = 0; i < a.length; i++) { try { a[i].play(); } catch (e) {} }
   return a.length + ' 段動畫放開了';
 };
-
-
-/* ===== 這一個站的研究條件 ===== */
-RULES.SOLO = 1;
 
 </script>
 </body>

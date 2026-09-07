@@ -46,7 +46,7 @@ var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '' };
    手上那份示範資料的版本，三個都不該跟別人共用。 */
 var SYNC_KEY = {
   Users: 'userId', Classes: 'classId', Teams: 'teamId',
-  Milecrystals: 'msId', Runs: 'runId', Pushes: 'pushId',
+  Milestones: 'msId', Runs: 'runId', Pushes: 'pushId',
   Keeps: 'keepId', Events: 'evId'
 };
 /* 推上去但不訂閱的那幾張（見檔頭）。 */

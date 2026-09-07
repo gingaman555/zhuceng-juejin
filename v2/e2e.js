@@ -105,7 +105,7 @@ be('任務出來了', ms && (ms.ms || ms).title, '把問題收斂成一句話');
 /* ══ 三 · 學生接委託（三步） ══ */
 H('接委託：三步');
 as(stu[0]);
-const msId = DB.Milecrystals[0].msId;
+const msId = DB.Milestones[0].msId;
 [0, 1, 2].forEach(function (st) {
   S.page = 'commit'; S.p = { id: msId, st: st }; DRAFT.plan = null;
   const h = PAGES.commit();
@@ -263,8 +263,8 @@ as(stu[0]);
 const ms2 = actPublish(kl.classId, { title: '第二件', note: '', steps: [], due: 7, teams: [] });
 as(stu[0]);
 DRAFT = { plan: [{ n: '甲', d: 3, who: stu[0].userId, byOwn: 1 }], sure: 'low' };
-ACTS.commit(DB.Milecrystals[1].msId);
-const r2 = runOf(tm.teamId, DB.Milecrystals[1].msId);
+ACTS.commit(DB.Milestones[1].msId);
+const r2 = runOf(tm.teamId, DB.Milestones[1].msId);
 be('第二趟出發', r2.state, 'running');
 be('第二次遇到委託人就不停選單頁了',
   btPhase(Object.assign({}, r2)) === 'q' || mobDebut(tm.teamId, r2.runId), true);
@@ -277,7 +277,7 @@ be('走過的天數留著', r2b.went >= 1, true);
 /* ══ 十 · 協商：老師回一句「我覺得會是幾天」 ══ */
 H('協商：老師回一次，最後那一下還是學生按的');
 as(stu[0]);
-const ms3 = DB.Milecrystals[1];
+const ms3 = DB.Milestones[1];
 DRAFT = { plan: [{ n: '甲', d: 3, who: stu[0].userId, byOwn: 1 }], sure: 'low' };
 ACTS.commit(ms3.msId);
 const r3 = runOf(tm.teamId, ms3.msId);
@@ -372,7 +372,7 @@ let drew = 0;
   Object.keys(PAGES).forEach(function (p) {
     if (!allowed(u, p)) return;
     S.page = p; DRAFT = {};
-    const anyRun = DB.Runs[0], anyMs = DB.Milecrystals[0];
+    const anyRun = DB.Runs[0], anyMs = DB.Milestones[0];
     S.p = ['stamp', 'pick', 'camp', 'battle', 'radar', 'review'].indexOf(p) >= 0
       ? { id: anyRun.runId } : (p === 'commit' ? { id: anyMs.msId } : {});
     try {

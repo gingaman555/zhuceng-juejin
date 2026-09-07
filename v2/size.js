@@ -89,7 +89,7 @@ function 造班(組數, 每組, 趟數) {
     const m = { msId: 'M' + r, classId: cid, mentorId: teas[r % 3].userId,
       title: '第' + (r + 1) + '件任務', note: '寫清楚你要解決什麼。',
       steps: ['查', '做', '收'], teams: [], due: now() + 7 * DAY, at: now() };
-    DB.Milecrystals.push(m);
+    DB.Milestones.push(m);
     teams.forEach(function (g, gi) {
       const run = {
         runId: 'R' + gi + '_' + r, teamId: g.t.teamId, msId: m.msId,

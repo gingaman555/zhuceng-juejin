@@ -120,7 +120,7 @@ function 全掃(標) {
     Object.keys(PAGES).forEach(function (p) {
       if (!allowed(pair[1], p)) return;
       S.page = p; DRAFT = {};
-      const anyRun = DB.Runs[0], anyMs = DB.Milecrystals[0];
+      const anyRun = DB.Runs[0], anyMs = DB.Milestones[0];
       S.p = ['stamp', 'pick', 'camp', 'battle', 'radar', 'review'].indexOf(p) >= 0
         ? { id: (anyRun || {}).runId } : (p === 'commit' ? { id: (anyMs || {}).msId } : {});
       try { 掃(標 + '/' + pair[0] + '/' + p, PAGES[p]()); }
