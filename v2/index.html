@@ -4820,7 +4820,8 @@ button.side-head{
   .bt-plate{width:150px}
 }
 @media (prefers-reduced-motion: reduce){
-  .bt-wipe,.bt.hit,.bt.hit::after,.bt-side .bt-ch{animation:none}
+  .bt-wipe,.bt.hit,.bt.hit::after,.bt-side .bt-ch,
+  .bt.take .bt-side.foe .bt-ch{animation:none}
   .bt-wipe{display:none}
   .bt-bar i{transition:none}
 }
@@ -4990,7 +4991,7 @@ button.side-head{
 }
 
 /* ── 兩問 ──
-   接在字幕框底下，跟選單同一個位置。答完打牠一下。 */
+   接在字幕框底下，跟選單同一個位置。答完他接過去。 */
 .bt-q{
   margin:0 0 11px;padding:14px 16px;background:var(--card2);
   box-shadow:0 0 0 3px #0D0B08, inset 0 0 0 2px rgba(255,240,214,.30)
@@ -5000,23 +5001,37 @@ button.side-head{
 .bt-menu.wide{display:flex;gap:22px;background:none;box-shadow:none;padding:0}
 .bt-menu.wide .bm{width:auto}
 
-/* ── 受傷 ──
-   答完一問打牠一下：整個畫面震一下，牠往右退、閃三下。
-   牠不會倒——倒下是最後那一句數字才發生的事。 */
-.bt.hurt{animation:bthit .26s steps(2,end) 1}
-.bt.hurt .bt-side.foe .bt-ch{animation:bthurt .56s steps(1,end) 1}
-@keyframes bthurt{
-  0%{transform:translateX(0);opacity:1}
-  10%{transform:translateX(14px);opacity:.15}
-  22%{opacity:1}  34%{opacity:.15}
-  46%{opacity:1}  58%{opacity:.15}
-  70%{opacity:1;transform:translateX(14px)}
-  100%{transform:translateX(0);opacity:1}
-}
-.bt.hurt::after{
-  content:'';position:absolute;inset:0;z-index:8;pointer-events:none;
-  background:rgba(255,243,216,.6);
-  animation:btflash .26s steps(1,end) 1 forwards
+/* ── 接過去 ──
+
+   答完一題，他接過去。
+
+   ── 換掉了什麼 ──
+
+   本來這一段的註解自己就寫著這是一場對決：答完一問就朝牠來一下，
+   整個畫面震一下，牠往右退、閃三下。那是回合制的殘留——而這個作品已經沒有對決了
+   （67-battle.js 的註解也寫著「不是被打——是有人回話了」，兩邊互相
+   矛盾，而動畫用的是對決那一組）。
+
+   三樣都不對：
+
+     整個畫面震一下　　那是打到東西的回饋。這裡沒有人打到東西
+     牠往右退　　　　　退是被撞開。他是在接東西，接東西是**往前**
+     閃三下　　　　　　閃爍在這一套裡的意思是「挨了一下」
+
+   而且它每答一題就演一次——一趟六題，等於揍他六下。
+
+   ── 換成什麼 ──
+
+   接東西的動作：往前低一下，再回來。往左是往學生那一邊（他在畫面
+   右側，見 .bt-side.foe）。沒有畫面震動、沒有白閃、沒有閃爍。
+
+   一格一格（steps(1,end)），跟全站一樣。 */
+.bt.take .bt-side.foe .bt-ch{animation:bttake .42s steps(1,end) 1}
+@keyframes bttake{
+  0%  {transform:translate(0,0)}
+  20% {transform:translate(-7px,5px)}
+  50% {transform:translate(-3px,2px)}
+  100%{transform:translate(0,0)}
 }
 
 /* ── 逃跑 ──
@@ -5029,7 +5044,6 @@ button.side-head{
 .bt.flee .bt-side.me .bt-plate{opacity:.4}
 
 @media (prefers-reduced-motion: reduce){
-  .bt.hurt,.bt.hurt .bt-side.foe .bt-ch,.bt.hurt::after{animation:none}
   .bt.flee .bt-side.me .bt-ch{animation:none;opacity:.2}
 }
 
@@ -16089,10 +16103,28 @@ PAGES.commit = function () {
 
        兩種都成立，可是它們不是同一種東西，而畫面上長得一模一樣。
        所以在這裡說出來。 */
-    H.push(whoTag('one', '', '這個數字是上面那幾件加起來的'));
+    /* 這裡不掛標記。
+
+       ── 為什麼 ──
+
+       這一頁上學生真正**碰得到**的只有一格：把握。上面那個天數在
+       有拆件的時候是第 2 步的加總，唯讀——它不是一個「誰來寫」的
+       問題，它是一個已經發生的結果。
+
+       本來這裡掛了一個【個人】、底下把握又掛一個【組】，於是同一頁
+       上兩個標記；而沒拆件的時候兩個都是「全組一份」，變成同一句話
+       講兩次（使用者回報的就是這個）。
+
+       標記是用來回答「這一格是誰寫的」。一格一個，沒有那一格就不要
+       有標記——多一個就開始要人去分辨兩個標記在講哪一格。
+
+       那個數字從哪裡來還是要說，只是那是一句事實不是一個標記。 */
+    H.push('<p class="dim">上面那幾件加起來的。每一件的天數是各自按的。</p>');
   } else {
     H.push(estStep(est));
-    H.push(whoTag('team', '拆件的話，天數會變成每個人各自說的', '沒有拆件'));
+    /* 沒拆件：這個數字就是這一頁上唯一寫得了的東西之一，而它是組的。
+       所以標記掛在這裡，底下把握那一格就不再掛（見下面）。 */
+    H.push(whoTag('team', '拆件的話，天數會變成每個人各自說的', '這個數字'));
   }
 
   /* 決定的時候要看的東西全部畫在同一根尺上：你前幾趟說了幾天、
@@ -16202,7 +16234,12 @@ PAGES.commit = function () {
      「你說『很確定』的 N 次裡，準了 M 次」。 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow' + (DRAFT.sure ? '' : ' lit') + '">對這個天數，你有多確定</div>');
-  H.push(whoTag('team'));
+  /* 只有拆過件的時候才掛：那時候上面那個天數是每個人各自說的，
+     所以要說清楚這一格不是——它是全組一個。
+
+     沒拆件的話上面已經掛了一個「這個數字：全組一份」，這裡再掛一個
+     就是同一句話講兩次。 */
+  if (plan.length) H.push(whoTag('team', '', '這一格'));
   H.push('<div class="row sure-row">');
   RULES.SURE.forEach(function (s) {
     H.push(btn(s.name, 'sure:' + s.key, 'sure' + (DRAFT.sure === s.key ? ' on' : '')));
@@ -19844,12 +19881,15 @@ function battleRun() {
     return;
   }
 
-  /* 答完一題，他動一下。不是被打——是有人回話了，站在那裡的人
-     會有反應。標點，不是勝負。 */
-  if (S.p.hurt) {
-    S.p.hurt = 0;
-    box.classList.add('hurt');
-    btAt(560, function () { box.classList.remove('hurt'); });
+  /* 答完一題，他接過去。往前低一下再回來——接東西的動作。
+
+     本來這裡叫 hurt，掛的是對決那一組動畫（畫面震、往右退、閃三下），
+     而註解自己寫著「不是被打」。名字跟動畫都換掉了，見 58-battle.css
+     的「接過去」。 */
+  if (S.p.take) {
+    S.p.take = 0;
+    box.classList.add('take');
+    btAt(560, function () { box.classList.remove('take'); });
   }
 
   var ph = btPhase(r);
@@ -19922,7 +19962,7 @@ ACTS.btnext = function (id) {
     return render();
   }
   if (qi + 1 < qs.length) {
-    S.p = { id: id, ph: 'q', q: qi + 1, hurt: 1 };
+    S.p = { id: id, ph: 'q', q: qi + 1, take: 1 };
     return render();
   }
   ACTS.btq2(id);
@@ -19959,7 +19999,7 @@ ACTS.btq2 = function (id) {
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.scope = null; DRAFT.next = ''; DRAFT.said1 = ''; DRAFT.where = null;
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
-  S.p = { id: id, ph: 'play', hurt: 1 };
+  S.p = { id: id, ph: 'play', take: 1 };
   render();
 };
 

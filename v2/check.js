@@ -268,6 +268,33 @@ if (rsAct) {
    這一個是地下城：你走的是廊道，你不是在挖，你是往下探。
    兩個比喻混著用的時候，使用者兩個都進不去。 */
 const METAPHOR = [['坑道', '廊道'], ['豎坑', '廊道'], ['坑口', '入口'], ['挖掘', '前進'], ['挖', '走／打通']];
+
+/* ---------- 三之一又八分之一 · 樣式表裡不能有打擊 ----------
+
+   2026-09-07 補的。禁用詞那一張表只掃畫面上會出現的字，掃不到
+   註解與樣式——而動畫本身就是一種語氣。
+
+   實際發生的：交件那一場，每答完一題就播一次「整個畫面震一下、
+   牠往右退、閃三下」，而那一段的註解自己寫著「答完一問**打牠一下**」。
+   同一個檔案裡 67-battle.js 的註解寫的是「不是被打——是有人回話了」。
+   兩邊矛盾了很久，因為沒有任何東西在看樣式表。
+
+   這個作品已經沒有回合制對決（使用者：「我現在已經沒有回合制對決」）。
+   動畫的名字如果還在講打擊，下一個讀的人就會照著那個框架往下加。 */
+(function () {
+  var CSSHIT = ['打牠', '打他', '受傷', '攻擊', '傷害', '打擊', '血量'];
+  var 樣式 = fs.readdirSync(path.join(__dirname, 'src'))
+    .filter(function (f) { return /\.css$/.test(f); });
+  樣式.forEach(function (f) {
+    var t = fs.readFileSync(path.join(__dirname, 'src', f), 'utf8');
+    CSSHIT.forEach(function (w) {
+      if (t.indexOf(w) < 0) return;
+      bad++;
+      console.error('樣式表裡出現打擊的說法　' + f + '　「' + w + '」');
+      console.error('　　這個作品沒有對決。動畫的名字要講它真的在演什麼');
+    });
+  });
+})();
 METAPHOR.forEach(function (pair) {
   var i = scan.indexOf(pair[0]);
   if (i < 0) return;

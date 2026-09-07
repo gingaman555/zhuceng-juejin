@@ -689,12 +689,15 @@ function battleRun() {
     return;
   }
 
-  /* 答完一題，他動一下。不是被打——是有人回話了，站在那裡的人
-     會有反應。標點，不是勝負。 */
-  if (S.p.hurt) {
-    S.p.hurt = 0;
-    box.classList.add('hurt');
-    btAt(560, function () { box.classList.remove('hurt'); });
+  /* 答完一題，他接過去。往前低一下再回來——接東西的動作。
+
+     本來這裡叫 hurt，掛的是對決那一組動畫（畫面震、往右退、閃三下），
+     而註解自己寫著「不是被打」。名字跟動畫都換掉了，見 58-battle.css
+     的「接過去」。 */
+  if (S.p.take) {
+    S.p.take = 0;
+    box.classList.add('take');
+    btAt(560, function () { box.classList.remove('take'); });
   }
 
   var ph = btPhase(r);
@@ -767,7 +770,7 @@ ACTS.btnext = function (id) {
     return render();
   }
   if (qi + 1 < qs.length) {
-    S.p = { id: id, ph: 'q', q: qi + 1, hurt: 1 };
+    S.p = { id: id, ph: 'q', q: qi + 1, take: 1 };
     return render();
   }
   ACTS.btq2(id);
@@ -804,7 +807,7 @@ ACTS.btq2 = function (id) {
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
   DRAFT.scope = null; DRAFT.next = ''; DRAFT.said1 = ''; DRAFT.where = null;
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
-  S.p = { id: id, ph: 'play', hurt: 1 };
+  S.p = { id: id, ph: 'play', take: 1 };
   render();
 };
 
