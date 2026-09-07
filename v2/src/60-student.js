@@ -923,6 +923,14 @@ PAGES.commit = function () {
      加了東西畫面沒反應是最容易讓人以為壞掉的事。 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">你要做哪幾件</div>');
+  /* 這一張卡是混的：拆幾件、誰做哪一件，大家都改得動；**天數**只有
+     本人按得動（見 55-ui.js 的 pland）。
+
+     所以兩行並排，不寫成「全組一份，但天數例外」——那樣會把這一頁
+     上真正重要的那一半塞進「例外」兩個字裡。天數是這整套系統唯一
+     在收的個人層資料，它該自己站一行。 */
+  H.push(whoTag('team', '', '拆幾件、誰做哪一件'));
+  H.push(whoTag('one', '', '每一件幾天'));
   if (plan.length) {
     H.push('<div class="plist">');
     var waiting = 0;
@@ -999,6 +1007,7 @@ PAGES.commit = function () {
      「你說『很確定』的 N 次裡，準了 M 次」。 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow' + (DRAFT.sure ? '' : ' lit') + '">對這個天數，你有多確定</div>');
+  H.push(whoTag('team'));
   H.push('<div class="row sure-row">');
   RULES.SURE.forEach(function (s) {
     H.push(btn(s.name, 'sure:' + s.key, 'sure' + (DRAFT.sure === s.key ? ' on' : '')));

@@ -658,3 +658,23 @@
 }
 .bt-dots i.done{background:var(--gold-d)}
 .bt-dots i.on{background:var(--gold)}
+
+/* ---------- 這一格是誰寫的 ----------
+
+   固定在題目跟答案中間那一行（見 67-battle.js 的 whoTag）。
+
+   22px 是這個作品的字級下限——這一句不是註腳，它決定他等一下寫的
+   東西是給誰的。左邊那一條線是唯一的區別：全組那一種是暗的，
+   自己那一種亮起來。沒有用顏色，因為一個顏色一件事。 */
+.wtag{
+  font-size:22px;line-height:1.5;color:var(--mute);
+  border-left:3px solid var(--mute);padding-left:11px;
+  margin:0 0 11px
+}
+.wtag.one{color:var(--ink);border-left-color:var(--ink)}
+/* 兩行連著的時候（承諾那一頁的拆件卡）不要各自空一行——
+   它們是同一件事的兩半。 */
+.wtag + .wtag{margin-top:-6px}
+/* 後面那半句是補充，不是同一件事，所以退一階。 */
+.wtag span{color:var(--mute);margin-left:11px}
+.wtag.one span{color:var(--mute)}

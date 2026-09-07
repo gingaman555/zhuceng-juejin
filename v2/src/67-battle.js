@@ -244,6 +244,12 @@ PAGES.battle = function () {
       H.push('<i' + (i === qi ? ' class="on"' : (i < qi ? ' class="done"' : '')) + '></i>');
     });
     H.push('</div>');
+    /* 題目跟答案中間那一行：這一格是誰寫的（見 whoTag）。
+
+       「誰交出去就是誰寫的那一份」只在第一題說一次。它回答的是
+       「我要不要等隊友寫」，而那個疑問一趟只會產生一次——四題各說
+       一遍就從說明變成雜訊。 */
+    H.push(whoTag(qs[qi].who, qi === 0 ? qs[qi].tail : ''));
     H.push(qs[qi].body(r, t));
     H.push('<div class="bt-menu wide">');
     /* ── 前兩題是你的，後三題是你們的 ──
@@ -328,6 +334,35 @@ function btLine(r, mob, ph) {
   return patSay(mob, 'take') || '他伸手接過去。';
 }
 
+/* ---------- 這一格是誰寫的 ----------
+
+   交件那七頁裡，有兩題是每個人各寫各的（各花幾天、你做了什麼），
+   其餘是全組一份。而畫面上沒有任何地方說過這件事——學生只能從
+   「按不按得動」去猜：別人那幾格是灰的，自己那幾格有 ＋ －。
+
+   那個線索只在有拆件的時候存在，而且它是事後才發現的（伸手去按
+   才知道按不動）。第一次用的人在「你做了什麼」那一頁根本不知道
+   隊友等一下也要寫一份，於是他寫的是整組做了什麼——那一格就變成
+   第二份組的答案，而它本來是這套系統收個人層資料的唯一入口。
+
+   所以在答之前先說。兩種狀態、同一個位置、同一種寫法：
+
+     全組一份　　　　誰交出去，就是誰寫的那一份
+     每個人各寫各的　隊友那幾格他們自己填
+
+   不用顏色編碼——顏色在這個作品裡一個顏色一件事（見 3.2），
+   而這件事不值得吃掉一個顏色。位置固定就夠了：它永遠在題目
+   跟答案中間那一行。 */
+/* head 是「這一行在講哪一格」——只有同一張卡上兩種都有的時候要寫
+   （承諾那一頁的拆件卡）。一頁一題的那幾頁不用，題目自己就是。 */
+function whoTag(kind, tail, head) {
+  if (kind !== 'one' && kind !== 'team') return '';
+  return '<div class="wtag' + (kind === 'one' ? ' one' : '') + '">' +
+    (head ? esc(head) + '：' : '') +
+    esc(kind === 'one' ? '每個人各寫各的' : '全組一份') +
+    (tail ? '<span>' + esc(tail) + '</span>' : '') + '</div>';
+}
+
 /* 選單上的一行。舊版寶可夢的游標長在前面（見 58-battle.css）。 */
 function btChoice(act, label, cls) {
   return '<button class="bm ' + cls + '" data-act="run" data-p=\'' +
@@ -363,7 +398,8 @@ var BT_STEPS = [
 
      老師那一邊跟著回去：他的評語不再接在某一處底下，回到一句
      他自己起頭的話（見 70-teacher.js）。 */
-  { k: 'where', ask: '老師要去哪裡看？',
+  { k: 'where', ask: '老師要去哪裡看？', who: 'team',
+    tail: '誰交出去就是誰寫的那一份',
     body: function (r, t) {
       var H = [];
       H.push('<input class="bt-w" id="bt-where" oninput="DRAFT.where=this.value" ' +
@@ -385,7 +421,7 @@ var BT_STEPS = [
       return !!String(DRAFT.where || '').trim();
     } },
 
-  { k: 'spent', ask: '這幾件各花了幾天？',
+  { k: 'spent', ask: '這幾件各花了幾天？', who: 'one',
     skip: function (r) { return !((r.plan || []).length); },
     body: function (r, t) { return btSpent(r); },
     /* 只看你名下那幾件。別人的那幾格他們自己填，拿別人沒填來擋你
@@ -399,7 +435,7 @@ var BT_STEPS = [
       return true;
     } },
 
-  { k: 'said', ask: '你做了什麼？',
+  { k: 'said', ask: '你做了什麼？', who: 'one',
     body: function (r, t) { return btSaid(r, t); },
     need: function (r, t) {
       var said = (r && r.said) || {};
@@ -411,7 +447,7 @@ var BT_STEPS = [
      等於要他自己記住。
 
      選了才長出來——順的那一趟不會多出一個空框。 */
-  { k: 'feel', ask: '這一趟順不順？',
+  { k: 'feel', ask: '這一趟順不順？', who: 'team',
     body: function (r) {
       var H = ['<div class="feels">'];
       FEELS.forEach(function (f) {
@@ -429,7 +465,7 @@ var BT_STEPS = [
       return H.join('');
     } },
 
-  { k: 'scope', ask: '做出來的，跟你當初說的一樣嗎？',
+  { k: 'scope', ask: '做出來的，跟你當初說的一樣嗎？', who: 'team',
     body: function () {
       var H = ['<div class="feels">'];
       [['more', '比說的多'], ['same', '差不多'], ['less', '比說的少']].forEach(function (x) {
@@ -441,7 +477,7 @@ var BT_STEPS = [
       return H.join('');
     } },
 
-  { k: 'next', ask: '再給你們兩天，你們會做什麼？',
+  { k: 'next', ask: '再給你們兩天，你們會做什麼？', who: 'team',
     body: function () {
       return '<textarea class="bt-w" id="bt-next" rows="2" maxlength="200" ' +
         'oninput="DRAFT.next=this.value" placeholder="' +
