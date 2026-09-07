@@ -173,8 +173,23 @@ function awayOf(meId) {
   };
 }
 
-/* 看過就記下來。不記的話它每次進來都會再喊一次同樣的話。 */
+/* 看過就記下來。不記的話它每次進來都會再喊一次同樣的話。
+
+   ── 不要每畫一次就寫一次 ──
+
+   本來這裡無條件 u.seenAt = now(); save()。而 render() 每一次畫首頁
+   都會叫它一次，所以每一次重畫都是一次 localStorage 寫入加一次雲端
+   寫入——手機上那是真的成本，而雲端那一次會讓別人的畫面重畫，
+   然後對方也寫一次推回來（見 41-sync.js 的 SYNC_SKIP）。
+
+   這一欄的用途是「你上次看是什麼時候」，而讀它的地方（awayOf）
+   問的是「隔了幾天」。毫秒沒有意義。五分鐘寫一次就夠，
+   而且「上次之後才有的」那些標記也不會在同一次瀏覽裡被自己清掉。 */
+var SEEN_GAP = 5 * 60 * 1000;
 function markSeen(meId) {
   var u = userOf(meId);
-  if (u) { u.seenAt = now(); save(); }
+  if (!u) return;
+  if (u.seenAt && now() - u.seenAt < SEEN_GAP) return;
+  u.seenAt = now();
+  save();
 }

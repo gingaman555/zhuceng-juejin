@@ -52,6 +52,46 @@ var SYNC_KEY = {
 /* 推上去但不訂閱的那幾張（見檔頭）。 */
 var SYNC_UP_ONLY = { Events: 1 };
 
+/* ---------- 這幾欄不上雲 ----------
+
+   seenAt 是「你上次看首頁是什麼時候」，markSeen 每畫一次首頁就寫一次
+   now()（見 65-feed.js）。它寫在 Users 那一筆裡，所以會跟著上雲——
+   然後：
+
+     A 畫首頁 → seenAt 變了 → 推上去
+     B 的訂閱響 → syncTake 看到 A 那一筆變了 → syncDraw() → render()
+     B 也在首頁 → markSeen → seenAt 變了 → 推上去
+     A 的訂閱響 → render() → markSeen → 推上去
+     → 永遠不停
+
+   十五台機器一起跑的時候量到的：轉八趟還在變，而且每一趟每一台
+   都寫一次。速率被 Firestore 的來回延遲擋著（100–300ms），
+   換算下來一分鐘幾千次寫入——Firestore 免費額度是一天兩萬次。
+   全班同時開著，幾分鐘就把一整天的額度燒光，然後那一天剩下的
+   時間所有人都同步不了。
+
+   這件事只有十五台機器一起跑才看得到（見 class.js）。一台機器跑的
+   e2e、multi 永遠不會碰到它——沒有第二台可以打回來。
+
+   ── 為什麼可以直接不同步 ──
+
+   seenAt 回答的是「這個人上次看是什麼時候」，用來算「你不在的時候
+   發生了什麼」（awayOf）跟標「上次之後才有的」。它是那一台機器上的
+   閱讀狀態，不是那個班的資料。留在本機，換一台裝置最多就是同一件事
+   再看到一次「新的」——那不痛。
+
+   syncTake 會把本機的值蓋回收到的那一筆上（見下面）。 */
+var SYNC_SKIP = { Users: ['seenAt'] };
+
+/* 這一筆要上雲的樣子（把不上雲的那幾欄拿掉）。 */
+function syncCut(col, r) {
+  var skip = SYNC_SKIP[col];
+  if (!skip) return r;
+  var o = {};
+  for (var k in r) if (Object.prototype.hasOwnProperty.call(r, k) && skip.indexOf(k) < 0) o[k] = r[k];
+  return o;
+}
+
 /* 全部掛在同一個文件底下，之後要換版本的時候換這一段就好。 */
 var SYNC_ROOT = 'world/v1/';
 
@@ -105,7 +145,7 @@ function syncFlat() {
     var idf = SYNC_KEY[col];
     (DB[col] || []).forEach(function (r) {
       if (!r || !r[idf] || onDemoSide(r, d)) return;
-      out[col + '/' + r[idf]] = JSON.stringify(r);
+      out[col + '/' + r[idf]] = JSON.stringify(syncCut(col, r));
     });
   });
   return out;
@@ -140,6 +180,64 @@ function syncBatch(chunk) {
   });
 }
 
+/* ---------- 同一筆上，兩個人各寫各的那一格 ----------
+
+   雲端一筆 = 一整份 JSON 字串，所以同一筆被兩台機器同時寫的時候是
+   **整筆**後蓋前。跑出來的樣子（六組每組兩人的模擬）：
+
+     小美 存自己那一件　A 這台 spent = [3,0]
+     阿哲 存自己那一件　B 這台 spent = [0,5]
+     A 推、B 推（同一秒，B 還沒收到 A 的）
+     雲端 spent = [0,5]
+     A 收到之後　　　　A 這台 spent = [0,5]　← 小美的那一件不見了
+
+   而且畫面上沒有任何跡象。這條在教室裡最容易發生——老師說「大家
+   現在填自己那一份」，全班在同一分鐘內按下去。掉的正好是這套系統
+   要收的個人層資料。
+
+   ── 為什麼可以直接併 ──
+
+   看 40-db.js 的 actMyPart：一個人只寫得到掛在自己名下的那幾格
+   （spent[i]），還有以自己 userId 為鍵的那一句（said[me]）。
+   兩個人寫的永遠是不同的格子，所以「對方那一份是空的、我這一份有」
+   就一定是被蓋掉的，不是被清掉的：
+
+     · said 只加不刪——actMyPart 裡是 if (one) r.said[me] = one，
+       空字串不寫。所以缺鍵就是缺，不是「他刪掉了」。
+     · spent 的 0 就是「還沒填」，介面上沒有把自己那一格改回 0 的
+       意義（0 跟沒填長一樣）。
+
+   併完之後那一筆跟雲端不一樣了，所以要推回去（見 syncTake 結尾）。
+   兩邊都會做同一件事，最後收斂到兩份都在。
+
+   這是補救不是預防：真正乾淨的做法是一個人的那一份存成獨立的一筆
+   （Parts/runId_userId），兩台機器永遠不會寫到同一個文件。那是
+   資料結構的改動，等這學期跑完再說。 */
+var SYNC_MERGE = {
+  Runs: function (我的, 他的) {
+    var 補 = 0, 出 = 他的;
+    function 攤() { if (出 === 他的) 出 = JSON.parse(JSON.stringify(他的)); return 出; }
+
+    var a = 我的.spent;
+    if (a && a.length) {
+      var b = (他的.spent || []).slice();
+      for (var i = 0; i < a.length; i++) {
+        if ((Number(a[i]) || 0) > 0 && !(Number(b[i]) || 0)) { b[i] = a[i]; 補 = 1; }
+      }
+      if (補) 攤().spent = b;
+    }
+
+    var m = 我的.said;
+    if (m) Object.keys(m).forEach(function (k) {
+      if (!m[k]) return;
+      if (他的.said && 他的.said[k]) return;
+      var o = 攤(); o.said = o.said || {}; o.said[k] = m[k]; 補 = 1;
+    });
+
+    return 補 ? 出 : null;
+  }
+};
+
 /* 別人動了：把那一張表併進來。
 
    併，不是換掉：本機原本的順序留著（陣列順序在幾個地方是有意義的，
@@ -149,12 +247,28 @@ function syncTake(col, inc) {
   var idf = SYNC_KEY[col], arr = DB[col] || (DB[col] = []);
   var seen = {}, hit = 0, firstTime = !SYNC.first[col], pre = col + '/';
   SYNC.first[col] = 1;
+  /* 雲端本來的樣子，先留一份。下面可能會把 inc[id] 換成併過的版本，
+     而 SYNC.last 要記的是**雲端**那一份——不然併出來的東西跟
+     SYNC.last 一樣，syncPush 會以為沒變，就推不回去了。 */
+  var 雲 = {}, 併了 = 0;
+  Object.keys(inc).forEach(function (id) { 雲[pre + id] = JSON.stringify(inc[id]); });
   for (var i = arr.length - 1; i >= 0; i--) {
     var r = arr[i], id = r && r[idf];
     if (!r || r._d) continue;                /* 示範資料只在這台機器上 */
     if (inc[id]) {
       seen[id] = 1;
-      if (JSON.stringify(r) !== JSON.stringify(inc[id])) { arr[i] = inc[id]; hit = 1; }
+      /* 我這一台上有、對方那一份沒有的格子，補回去（見 SYNC_MERGE）。 */
+      var mg = SYNC_MERGE[col];
+      if (mg) { var 併 = mg(r, inc[id]); if (併) { inc[id] = 併; 併了 = 1; } }
+      /* 不上雲的那幾欄留本機的（見 SYNC_SKIP）。雲端那一份根本沒有
+         這幾欄，不補回去的話收一次就被清掉一次。 */
+      var sk = SYNC_SKIP[col];
+      if (sk) sk.forEach(function (k) { if (r[k] !== undefined) inc[id][k] = r[k]; });
+      /* 比的是「上雲的那個樣子」。連本機欄一起比的話，那幾欄一變
+         就會判定成「別人動了」，然後推回去——那正是要修的迴圈。 */
+      if (JSON.stringify(syncCut(col, r)) !== JSON.stringify(syncCut(col, inc[id]))) {
+        arr[i] = inc[id]; hit = 1;
+      }
     } else if (!firstTime && SYNC.last[pre + id] !== undefined) {
       /* 只刪「我知道雲端本來有」的那幾筆。本機有、雲端沒有、而且
          從來沒推上去過的，是還沒同步的東西，不是別人刪掉的——
@@ -170,12 +284,15 @@ function syncTake(col, inc) {
     if (p.indexOf(pre) === 0) delete SYNC.last[p];
   });
   Object.keys(inc).forEach(function (id) {
-    SYNC.last[pre + id] = JSON.stringify(inc[id]);
+    /* 記的是雲端本來那一份，不是併過的。 */
+    SYNC.last[pre + id] = 雲[pre + id];
   });
   if (!hit) return;
   SYNC.hold = 1;
   try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {}
   SYNC.hold = 0;
+  /* 併過的話，把補回去的那一份推上去。放開 hold 之後才推。 */
+  if (併了) syncPush();
   syncDraw();
 }
 
