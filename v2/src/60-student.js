@@ -372,7 +372,8 @@ function teamCard(t) {
   H.push('<div class="tmc-h">');
   H.push('<b class="tmc-n">' + esc(t.name) +
     (t.project ? '<i>' + esc(t.project) + '</i>' : '') + '</b>');
-  if (t.joinCode) {
+  /* 隊伍代碼是唸給隊友的。不分組那一站沒有隊友。 */
+  if (t.joinCode && !RULES.SOLO) {
     H.push('<span class="tmc-c">代碼 <b>' + esc(t.joinCode) + '</b></span>');
   }
   /* 這一格印的是**手上剩下的**，不是拿過的總數。
@@ -1019,10 +1020,15 @@ PAGES.commit = function () {
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
       /* 誰做這一件。點一下換下一個人。分工是一起喬的，所以這一顆
-         不擋——擋的是天數，因為天數是那個人自己要說的話。 */
-      H.push('<button class="pw" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'planwho:' + i })) + '\' title="' +
-        esc('點一下換人') + '">' + esc(shortWho(x.who)) + '</button>');
+         不擋——擋的是天數，因為天數是那個人自己要說的話。
+
+         不分組那一站不畫：每一件都是他的，那一顆按下去也只會換回
+         他自己。 */
+      if (!RULES.SOLO) {
+        H.push('<button class="pw" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'planwho:' + i })) + '\' title="' +
+          esc('點一下換人') + '">' + esc(shortWho(x.who)) + '</button>');
+      }
       if (own) {
         H.push('<button class="pd" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'pland:' + i + ',-1' })) + '\'>−</button>');

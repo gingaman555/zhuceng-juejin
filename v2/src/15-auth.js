@@ -154,6 +154,20 @@ function actRegister(o) {
   DB.Users.push(u);
   save();
   logEvent('register', { by: u.userId, account: acc, role: u.role });
+  /* ── 不分組那一站：一個人就是一組 ──
+
+     這一站上沒有組隊這一步（RULES.SOLO，由 build.js 的站台表打開）。
+     所以註冊完當場給他一支只有他自己的隊，隊名就是他的名字。
+
+     ── 為什麼是「自動建一隊」不是「把組拿掉」 ──
+
+     Runs、Pushes、Keeps、圖鑑、深度、水晶全部掛在 teamId 上（全站 239
+     處）。真的把那個概念拿掉是重寫資料層，而「一個人一組」在資料上
+     就已經是個人制——那條路整支驗過（見 solo.js）。
+
+     差別只在畫面上：底下那幾條把「你的隊呢」「全組一份」「誰做哪一件」
+     藏起來，因為那幾句話對一個人不成立。 */
+  if (RULES.SOLO && u.role === 'student' && kl) actNewTeam(nm, u.userId);
   return { user: u };
 }
 

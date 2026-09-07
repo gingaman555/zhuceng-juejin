@@ -175,7 +175,7 @@ PAGES.radar = function () {
     H.push('<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
     H.push('<div class="row">');
     H.push(btn('去發一個任務', 'go:ms', 'big'));
-    H.push(btn('看各組進度', 'go:classeco', 'ghost'));
+    H.push(btn(RULES.SOLO ? '看每一位的進度' : '看各組進度', 'go:classeco', 'ghost'));
     H.push('</div></div>');
   }
 

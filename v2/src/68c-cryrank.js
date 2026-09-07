@@ -57,7 +57,7 @@ function bothCard(classId, meId) {
   crystalRows(classId).forEach(function (c) { crystal[c.teamId] = c; });
 
   var H = ['<div class="card rank">'];
-  H.push('<h2 class="rk-h">各組</h2>');
+  H.push('<h2 class="rk-h">' + (RULES.SOLO ? '每一位' : '各組') + '</h2>');
   H.push('<p class="dim">照最近 ' + RANK_N +
     ' 趟準了幾次排。收下幾件不決定順序——排做得多的，永遠是同幾組在上面。</p>');
 

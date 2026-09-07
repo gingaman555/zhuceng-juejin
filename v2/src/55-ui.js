@@ -526,7 +526,7 @@ function sideBar() {
     nav = [
       ['radar', '等你的' + (wait ? '（' + wait + '）' : '')],
       ['ms', '發派任務'],
-      ['classeco', '各組進度']
+      ['classeco', RULES.SOLO ? '每一位' : '各組進度']
     ];
   } else {
     var t = myTeam();

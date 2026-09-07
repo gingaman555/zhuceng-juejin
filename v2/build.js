@@ -29,8 +29,21 @@ const path = require('path');
      node build.js b          第二站　v2/b/index.html
 */
 const SITES = {
-  main: { root: 'world/v1/', out: '.',  rules: {} },
-  b:    { root: 'world/v2/', out: 'b',  rules: {} }
+  main: {
+    title: '專案地下城',
+    root: 'world/v1/', out: '.', rules: {}
+  },
+  b: {
+    title: '專案地下城 B',
+    root: 'world/v2/', out: 'b',
+    /* 這一站不分組：一個人就是一組（見 20-rules.js 的 RULES.SOLO）。
+
+       **除了這一條，其餘一律跟主站一模一樣**——協商、水晶的刻度、
+       圖鑑的價錢，一個字都沒有動。兩站只差一個變項，那份資料才比得
+       出東西；動第二個變項的那一刻，兩邊的差別就再也說不清是哪一個
+       造成的。 */
+    rules: { SOLO: 1 }
+  }
 };
 const 站 = SITES[process.argv[2] || 'main'];
 if (!站) {
@@ -74,7 +87,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>專案地下城</title>
+<title>${站.title || '專案地下城'}</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@v1.500/fonts/web/Cubic_11.woff2">

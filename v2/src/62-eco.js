@@ -400,7 +400,8 @@ PAGES.eco = function () {
 
      四格，一次只看一個。點圖上的某一組會直接跳到那一組那一格
      （見 55-ui.js 的 digteam），所以圖跟細節之間還是一下就到。 */
-  var segs = [['map', '剖面圖'], ['both', '各組'], ['feed', '最近']];
+  /* 「各組」在不分組那一站是錯的——那一張排的是每一個人。 */
+  var segs = [['map', '剖面圖'], ['both', RULES.SOLO ? '每一位' : '各組'], ['feed', '最近']];
   if (dt) segs.push(['team', shortName(dt.name)]);
   H.push('<div class="segs">');
   segs.forEach(function (sg) {
@@ -451,8 +452,8 @@ PAGES.classeco = function () {
 
      學生那一邊沒變：他傳自己那一組進去，金邊還是「你在這裡」。 */
   var mine = [];
-  var H = [head('各組進度', '整個課程　·　' +
-    ecoRows(u.classId).length + ' 組', '')];
+  var H = [head(RULES.SOLO ? '每一位的進度' : '各組進度', '整個課程　·　' +
+    ecoRows(u.classId).length + (RULES.SOLO ? ' 位' : ' 組'), '')];
 
   /* 那一串是唸出去的：學生用它建帳號。放在最上面，因為開學前兩週
      他每次進來都要唸一次。 */

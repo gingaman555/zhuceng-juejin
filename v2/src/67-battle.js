@@ -363,6 +363,10 @@ function btLine(r, mob, ph) {
 /* head 是「這一行在講哪一格」——只有同一張卡上兩種都有的時候要寫
    （承諾那一頁的拆件卡）。一頁一題的那幾頁不用，題目自己就是。 */
 function whoTag(kind, tail, head) {
+  /* 不分組那一站不畫這一行：一個人的時候「全組一份」跟「每個人各寫
+     各的」是同一件事，兩句都變成廢話——而一句廢話擺在題目跟答案中間
+     比沒有那一行更糟。 */
+  if (RULES.SOLO) return '';
   if (kind !== 'one' && kind !== 'team') return '';
   return '<div class="wtag' + (kind === 'one' ? ' one' : '') + '">' +
     (head ? esc(head) + '：' : '') +
@@ -484,7 +488,11 @@ var BT_STEPS = [
       return H.join('');
     } },
 
-  { k: 'next', ask: '再給你們兩天，你們會做什麼？', who: 'team',
+  { k: 'next',
+    /* 一個人的時候「你們」是錯的。這一題問的是同一件事，
+       只是這一站上那個人只有一個。 */
+    get ask() { return RULES.SOLO ? '再給你兩天，你會做什麼？' : '再給你們兩天，你們會做什麼？'; },
+    who: 'team',
     body: function () {
       return '<textarea class="bt-w" id="bt-next" rows="2" maxlength="200" ' +
         'oninput="DRAFT.next=this.value" placeholder="' +
@@ -545,7 +553,8 @@ function btSpent(r) {
       H.push('<div class="sp2' + (own ? '' : ' theirs') + '">');
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
-      H.push('<u class="who">' + esc(shortWho(x.who)) + '</u>');
+      /* 不分組那一站不畫這一欄：每一件都是他的。 */
+      if (!RULES.SOLO) H.push('<u class="who">' + esc(shortWho(x.who)) + '</u>');
       H.push('<u class="said">說 ' + x.d + '</u>');
       if (own) {
         H.push('<button class="pd" data-act="run" data-p=\'' +
