@@ -491,10 +491,14 @@ function sideBar() {
     nav = [['rs', '名單'], ['events', '紀錄']];
   } else if (u.role === 'teacher') {
     var kl = classOf(u);
-    headBlock = '<div class="side-head"><div class="k">TEACHER</div>' +
+    /* 點得進去換班。多一個班的時候才寫幾個——只有一個的時候
+       那個數字是雜訊。 */
+    var ns = seatsOf(u).length;
+    headBlock = '<button class="side-head" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:mkclass' })) + '\'><div class="k">TEACHER</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
       '<div class="s">' + esc(kl.name) + ' · 加入碼 ' +
-      esc(kl.joinCode) + '</div></div>';
+      esc(kl.joinCode) + (ns > 1 ? '　·　' + ns + ' 個班' : '') + '</div></button>';
     /* 老師只有三件事，側欄就只有三格——多一格就是多一件他要煩惱的事。
 
        出口不另外開一格：它跟審核在那一頁上切換，數字併進來。
@@ -509,9 +513,15 @@ function sideBar() {
     ];
   } else {
     var t = myTeam();
-    headBlock = '<div class="side-head">' +
+    /* 同上。學生這一格印的是組名，所以多一個班的時候要把班名也寫出來
+       ——不然兩個班的兩支隊伍長得一樣，他分不出自己在看哪一個。 */
+    var ns2 = seatsOf(u).length;
+    var kl2 = classOf(u);
+    headBlock = '<button class="side-head" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:mkclass' })) + '\'>' +
       '<div class="n">' + esc(t.name) + '</div>' +
-      '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
+      '<div class="s">' + esc(ns2 > 1 ? (kl2 ? kl2.name : '') + '　·　' + ns2 + ' 個班'
+        : (t.project || '（還沒定）')) + '</div></button>';
     /* 三個。四件事是流程，不是分頁——說幾天、去做事、看判定都在廊道，
        第四件是看全班在哪。任務清單不是步驟，但它是「老師派過的每一件事
        各自走到哪」，那是隨時會想確認的東西，所以它在側欄。
@@ -579,6 +589,10 @@ function runAct(str) {
    推進」那一版的殘留——程式還在，但畫面上沒有任何地方按得到。
    留著只會讓下一個讀的人以為那個機制還在。 */
 var ACTS = {
+  /* 純導覽。data-go 那條路只吃靜態屬性，而側欄那一格要在同一個
+     data-act 裡跟別的動作並存，所以這裡補一支。 */
+  go: function (p) { go(String(p || '')); },
+
   /* 這兩顆連同切換身分那一格，只有示範資料上才有（見 demoBar）。
      這裡再擋一次：畫面沒畫不代表沒有人叫得到它。 */
   forward: function () {
@@ -640,7 +654,7 @@ var ACTS = {
      一個人的隊，每一件都是他的。 */
   planwho: function (i) {
     var t = myTeam(); if (!t) return;
-    var mem = where('Users', function (u) { return u.teamId === t.teamId; })
+    var mem = where('Users', function (u) { return inTeam(u, t.teamId); })
       .map(function (u) { return u.userId; });
     if (!mem.length) return;
     var k = Number(i);

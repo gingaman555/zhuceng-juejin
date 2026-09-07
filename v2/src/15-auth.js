@@ -141,10 +141,12 @@ function actRegister(o) {
     userId: nid('U'), account: acc, salt: salt, hash: pwHash(pw, salt),
     role: o.role || 'student',
     name: nm,
-    classId: kl ? kl.classId : '',
-    teamId: '',
+    /* classId／teamId 是「現在坐的那一個座位」，seats 才是全部
+       （見 40-db.js 的座位那一段）。 */
+    classId: '', teamId: '', seats: [],
     createdAt: now()
   };
+  if (kl) addSeat(u, kl.classId, '');
   /* 有人自己建帳號了——這份資料不再是示範資料，
      之後改版也不會被洗掉（見 40-db.js 的 load）。 */
   if (DB.Config) DB.Config.demo = 0;
@@ -154,21 +156,32 @@ function actRegister(o) {
   return { user: u };
 }
 
-/* 老師加進一個已經開好的班。
+/* 加進一個已經開好的班。
 
    一個班三位老師共同帶，所以第二、第三位要進的是同一個班，不是各自
    開一個。開下去他會拿到一個誰都不在裡面的空班——而空班長得跟正常的
    一模一樣（沒有組、沒有人在等他看），他不會發現自己走錯了，
    會以為是學生還沒註冊。
 
-   註冊那一頁有這一格；這一支是給註冊完才聽到碼的那一位。 */
+   ── 好幾個班 ──
+
+   本來這一支只給老師，而且已經有班的人會被擋（「你已經在一個班裡了」）。
+   那條規則假設一個人一輩子只在一個班裡，可是：
+
+     學生修兩門都用這套　　設計專題 ＋ 互動設計
+     老師帶兩班　　　　　　大四專題 ＋ 大三專題
+
+   現在兩種身分都加得了，而且已經有班的人是**再加一個座位**，
+   不是換掉原本那個（見 40-db.js 的 addSeat）。研究者不用——
+   他本來就看得到每一個班。 */
 function actJoinClass(userId, code) {
   var u = userOf(userId);
-  if (!u || u.role !== 'teacher') return { err: '只有老師可以這樣加入。' };
-  if (u.classId) return { err: '你已經在一個班裡了。' };
+  if (!u) return { err: '找不到這個人。' };
+  if (u.role === 'researcher') return { err: '研究者看得到每一個班，不用加入。' };
   var kl = classByCode(code);
-  if (!kl) return { err: '找不到這個加入碼。跟同事確認一次。' };
-  u.classId = kl.classId;
+  if (!kl) return { err: '找不到這個加入碼。跟開班的人確認一次。' };
+  if (inClass(u, kl.classId)) return { err: '你已經在「' + kl.name + '」裡了。' };
+  addSeat(u, kl.classId, '');
   save();
   logEvent('joinclass', { by: u.userId, klass: kl.name });
   return { klass: kl };
@@ -217,7 +230,8 @@ function actNewClass(name, teacherId) {
   var u = userOf(teacherId);
   if (!u) return { err: '找不到這個人。' };
   var c = actCreateClass(name, teacherId).klass;
-  u.classId = c.classId;
+  /* 加一個座位，不是換掉原本那個——他可能已經在帶另一班。 */
+  addSeat(u, c.classId, '');
   save();
   return { klass: c };
 }
@@ -226,14 +240,16 @@ function actNewClass(name, teacherId) {
 function actNewTeam(name, userId) {
   var u = userOf(userId);
   if (!u || !u.classId) return { err: '你還沒有班級。' };
-  if (u.teamId) return { err: '你已經有隊了。' };
+  /* 擋的是「你在**這一班**已經有隊了」。他在另一個班有隊是正常的
+     ——那是另一個座位。 */
+  if (teamIn(u, u.classId)) return { err: '你在這一個班已經有隊了。' };
   var t = {
     teamId: nid('G'), classId: u.classId,
     name: String(name || '').trim().slice(0, 20) || '一支隊伍',
     joinCode: newCode(), project: '', joinedAt: now()
   };
   DB.Teams.push(t);
-  u.teamId = t.teamId;
+  addSeat(u, u.classId, t.teamId);
   save();
   logEvent('newteam', { teamId: t.teamId, name: t.name });
   return { team: t };
@@ -244,13 +260,14 @@ function actNewTeam(name, userId) {
 function actJoinTeam(code, userId) {
   var u = userOf(userId);
   if (!u) return { err: '找不到這個人。' };
-  if (u.teamId) return { err: '你已經在一隊裡了。組好了就不能換。' };
+  /* 同上：擋的是這一班。組好就不能換還是成立，只是範圍是一個班。 */
+  if (teamIn(u, u.classId)) return { err: '你在這一個班已經在一隊裡了。組好了就不能換。' };
   var t = find('Teams', function (x) {
     return x.classId === u.classId &&
       String(x.joinCode || '').toUpperCase() === String(code || '').toUpperCase();
   });
   if (!t) return { err: '找不到這個隊伍代碼。跟隊友確認一次。' };
-  u.teamId = t.teamId;
+  addSeat(u, u.classId, t.teamId);
   save();
   logEvent('jointeam', { teamId: t.teamId });
   return { team: t };

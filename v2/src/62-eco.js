@@ -346,7 +346,7 @@ function ecoRows(classId) {
        順序照加入的順序，所以每一次畫都一樣（不會今天這個在前面、
        明天換一個）。 */
     var mem = where('Users', function (x) {
-      return x.teamId === r.teamId && x.role === 'student';
+      return inTeam(x, r.teamId) && x.role === 'student';
     }).sort(function (a, b) {
       return String(a.userId).localeCompare(String(b.userId));
     });

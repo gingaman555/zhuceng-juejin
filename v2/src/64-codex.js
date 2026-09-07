@@ -238,7 +238,7 @@ PAGES.crew = function () {
 
      從帳號來，不從名冊來——名冊那一條路拿掉了，現在一支隊伍就是
      「teamId 指到這裡的那幾個帳號」。 */
-  var crew = where('Users', function (x) { return x.teamId === tm.teamId; });
+  var crew = where('Users', function (x) { return inTeam(x, tm.teamId); });
   H.push('<div class="card">');
   H.push('<div class="eyebrow">' + crew.length + ' 個人</div>');
   H.push('<div class="crew">');
@@ -327,7 +327,7 @@ PAGES.person = function () {
   var tm = teamOf(S.p.id);
   if (!tm) return '<div class="card">找不到。</div>';
   var mem = where('Users', function (x) {
-    return x.teamId === tm.teamId && x.role === 'student';
+    return inTeam(x, tm.teamId) && x.role === 'student';
   })[0];
   var k = heroKey(mem);
   var g = HEROES[k];

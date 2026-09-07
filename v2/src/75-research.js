@@ -61,7 +61,7 @@ PAGES.rs = function () {
   if (!DB.Classes.length) H.push('<p class="dim">還沒有人開班。</p>');
   DB.Classes.forEach(function (c) {
     var tea = where('Users', function (u) {
-      return u.role === 'teacher' && u.classId === c.classId;
+      return u.role === 'teacher' && inClass(u, c.classId);
     });
     H.push('<div class="rn-row"><b>' + esc(c.name) + '</b>' +
       '<span class="dim">加入碼 ' + esc(c.joinCode) + '　·　' +

@@ -165,7 +165,7 @@ PAGES.login = function () {
       '同一組的人看到的是同一條廊道。</p>');
     DB.Teams.forEach(function (t) {
       var mem = where('Users', function (u) {
-        return u.teamId === t.teamId && u.account;
+        return inTeam(u, t.teamId) && u.account;
       });
       if (!mem.length) return;
       H.push('<div class="dm-t"><b>' + esc(t.name) + '</b><div class="dm-r">');
@@ -274,26 +274,65 @@ PAGES.reg = function () {
    本來只有前面那一條，理由是「他是發碼的人，不該跟任何人要碼」。
    那對第一位老師是對的。可是一個班三位老師共同帶，後面兩位
    要進的是同一個班——只有一條路的時候，他們會各自開一個空班。 */
+/* ---------- 你的班 ----------
+
+   兩種時候會走到這裡：
+
+     還沒有班　　老師剛註冊完（render 把他丟過來，見 55-ui.js）
+     已經有班了　他要換去另一個班，或再加一個
+
+   一個人可以同時在好幾個班（見 40-db.js 的座位那一段）：學生修兩門
+   都用這套、老師帶兩班。所以這一頁先列出他已經有的那幾個，
+   底下才是加新的。 */
 PAGES.mkclass = function () {
+  /* 沒登入的時候走不到這一頁（render 會先把人擋在門口），可是
+     pages.js 會把每一頁都畫一次來檢查——那時候 me() 是 null。 */
+  var u = me();
+  if (!u) return PAGES.gate();
+  var ss = seatsOf(u);
   var H = ['<div class="gate"><div class="gate-box">'];
-  H.push(head('你的班', '開一個，或用同事給的碼加進去', ''));
+  H.push(head('你的班', ss.length ? '現在在哪一個，還有哪幾個' : '開一個，或用別人給的碼加進去', ''));
+
+  /* ── 已經有的那幾個 ── */
+  if (ss.length) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">你在這幾個班裡</div>');
+    H.push('<div class="seats">');
+    ss.forEach(function (s) {
+      var c = find('Classes', function (x) { return x.classId === s.classId; });
+      var t = s.teamId ? teamOf(s.teamId) : null;
+      var on = s.classId === u.classId;
+      H.push('<button class="seat' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'sit:' + s.classId })) + '\'>' +
+        '<b>' + esc(c ? c.name : '（找不到這個班）') + '</b>' +
+        '<i>' + esc(t ? t.name : (u.role === 'teacher' ? '加入碼 ' + ((c || {}).joinCode || '') : '還沒有組')) + '</i>' +
+        (on ? '<u>現在在這裡</u>' : '') + '</button>');
+    });
+    H.push('</div></div>');
+  }
+
+  /* ── 開一個（只有老師）── */
+  if (u.role === 'teacher') {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">' + (ss.length ? '再開一個班' : '開一個班') + '</div>');
+    H.push('<input id="mk-name" value="" placeholder="' +
+      esc('例：114-1 畢業專題') + '">');
+    H.push('<p class="dim">開好會給你一組六碼。學生跟另外幾位老師都用那組碼建帳號。</p>');
+    H.push(btn('開班', 'mkclass', 'big'));
+    H.push('</div>');
+  }
 
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">開一個班</div>');
-  H.push('<input id="mk-name" value="" placeholder="' +
-    esc('例：114-1 畢業專題') + '">');
-  H.push('<p class="dim">開好會給你一組六碼。學生跟另外幾位老師都用那組碼建帳號。</p>');
-  H.push(btn('開班', 'mkclass', 'big'));
-  H.push('</div>');
-
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">加進已經開好的班</div>');
+  H.push('<div class="eyebrow">' + (ss.length ? '再加一個班' : '加進已經開好的班') + '</div>');
   H.push('<input id="jc-code" value="' + esc(draft('jc-code')) + '" placeholder="' +
-    esc('六個英數字，跟同事拿') + '">');
+    esc('六個英數字，跟開班的人拿') + '">');
   H.push(btn('加入', 'joinclass', 'big'));
   H.push('</div>');
 
+  H.push('<div class="row">');
+  if (ss.length && u.classId) H.push(btn('回去', 'go:' + homeFor(u), 'ghost'));
   H.push(btn('登出', 'logout', 'ghost'));
+  H.push('</div>');
   H.push('</div></div>');
   return H.join('');
 };
@@ -389,6 +428,16 @@ ACTS.mkclass = function () {
 };
 
 /* 加進同事已經開好的那一班。 */
+/* 換去另一個班。換完直接落在那一個班的首頁——留在這一頁的話，
+   他會不確定到底換過去了沒有。 */
+ACTS.sit = function (classId) {
+  var r = actSit(S.who, classId);
+  if (r.err) return say(r.err);
+  DRAFT = {};
+  S.p = {};
+  go(homeFor(me()));
+};
+
 ACTS.joinclass = function () {
   var c = (document.getElementById('jc-code') || {}).value || '';
   var r = actJoinClass(S.who, c);

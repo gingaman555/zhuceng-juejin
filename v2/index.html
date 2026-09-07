@@ -4626,6 +4626,25 @@ button.ac:active{transform:translateY(1px)}
    （另一半是可以點的連結，見 56-viz.js 的 whereLine）。 */
 .wh-copy{margin-top:11px}
 
+/* ---------- 你在哪幾個班 ----------
+   一行一個。現在坐的那一個亮著，其餘的點一下換過去。 */
+.seats{display:flex;flex-direction:column;gap:5px;margin:5px 0 11px}
+.seat{
+  display:block;width:100%;text-align:left;
+  padding:11px;border:1px solid var(--line);background:none;
+  color:var(--dim);cursor:pointer;font:inherit
+}
+.seat b{display:block;font-size:22px;font-weight:400;color:var(--ink)}
+.seat i{display:block;font-size:22px;font-style:normal;color:var(--mute);margin-top:5px}
+.seat u{display:block;font-size:22px;text-decoration:none;color:var(--gold);margin-top:5px}
+.seat.on{border-color:var(--gold)}
+.seat:not(.on):hover{border-color:var(--dim)}
+/* 側欄那一格現在是一顆鍵。看起來要跟原本一模一樣。 */
+button.side-head{
+  display:block;width:100%;text-align:left;border:0;background:none;
+  color:inherit;font:inherit;cursor:pointer;padding:0
+}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -7074,10 +7093,12 @@ function actRegister(o) {
     userId: nid('U'), account: acc, salt: salt, hash: pwHash(pw, salt),
     role: o.role || 'student',
     name: nm,
-    classId: kl ? kl.classId : '',
-    teamId: '',
+    /* classId／teamId 是「現在坐的那一個座位」，seats 才是全部
+       （見 40-db.js 的座位那一段）。 */
+    classId: '', teamId: '', seats: [],
     createdAt: now()
   };
+  if (kl) addSeat(u, kl.classId, '');
   /* 有人自己建帳號了——這份資料不再是示範資料，
      之後改版也不會被洗掉（見 40-db.js 的 load）。 */
   if (DB.Config) DB.Config.demo = 0;
@@ -7087,21 +7108,32 @@ function actRegister(o) {
   return { user: u };
 }
 
-/* 老師加進一個已經開好的班。
+/* 加進一個已經開好的班。
 
    一個班三位老師共同帶，所以第二、第三位要進的是同一個班，不是各自
    開一個。開下去他會拿到一個誰都不在裡面的空班——而空班長得跟正常的
    一模一樣（沒有組、沒有人在等他看），他不會發現自己走錯了，
    會以為是學生還沒註冊。
 
-   註冊那一頁有這一格；這一支是給註冊完才聽到碼的那一位。 */
+   ── 好幾個班 ──
+
+   本來這一支只給老師，而且已經有班的人會被擋（「你已經在一個班裡了」）。
+   那條規則假設一個人一輩子只在一個班裡，可是：
+
+     學生修兩門都用這套　　設計專題 ＋ 互動設計
+     老師帶兩班　　　　　　大四專題 ＋ 大三專題
+
+   現在兩種身分都加得了，而且已經有班的人是**再加一個座位**，
+   不是換掉原本那個（見 40-db.js 的 addSeat）。研究者不用——
+   他本來就看得到每一個班。 */
 function actJoinClass(userId, code) {
   var u = userOf(userId);
-  if (!u || u.role !== 'teacher') return { err: '只有老師可以這樣加入。' };
-  if (u.classId) return { err: '你已經在一個班裡了。' };
+  if (!u) return { err: '找不到這個人。' };
+  if (u.role === 'researcher') return { err: '研究者看得到每一個班，不用加入。' };
   var kl = classByCode(code);
-  if (!kl) return { err: '找不到這個加入碼。跟同事確認一次。' };
-  u.classId = kl.classId;
+  if (!kl) return { err: '找不到這個加入碼。跟開班的人確認一次。' };
+  if (inClass(u, kl.classId)) return { err: '你已經在「' + kl.name + '」裡了。' };
+  addSeat(u, kl.classId, '');
   save();
   logEvent('joinclass', { by: u.userId, klass: kl.name });
   return { klass: kl };
@@ -7150,7 +7182,8 @@ function actNewClass(name, teacherId) {
   var u = userOf(teacherId);
   if (!u) return { err: '找不到這個人。' };
   var c = actCreateClass(name, teacherId).klass;
-  u.classId = c.classId;
+  /* 加一個座位，不是換掉原本那個——他可能已經在帶另一班。 */
+  addSeat(u, c.classId, '');
   save();
   return { klass: c };
 }
@@ -7159,14 +7192,16 @@ function actNewClass(name, teacherId) {
 function actNewTeam(name, userId) {
   var u = userOf(userId);
   if (!u || !u.classId) return { err: '你還沒有班級。' };
-  if (u.teamId) return { err: '你已經有隊了。' };
+  /* 擋的是「你在**這一班**已經有隊了」。他在另一個班有隊是正常的
+     ——那是另一個座位。 */
+  if (teamIn(u, u.classId)) return { err: '你在這一個班已經有隊了。' };
   var t = {
     teamId: nid('G'), classId: u.classId,
     name: String(name || '').trim().slice(0, 20) || '一支隊伍',
     joinCode: newCode(), project: '', joinedAt: now()
   };
   DB.Teams.push(t);
-  u.teamId = t.teamId;
+  addSeat(u, u.classId, t.teamId);
   save();
   logEvent('newteam', { teamId: t.teamId, name: t.name });
   return { team: t };
@@ -7177,13 +7212,14 @@ function actNewTeam(name, userId) {
 function actJoinTeam(code, userId) {
   var u = userOf(userId);
   if (!u) return { err: '找不到這個人。' };
-  if (u.teamId) return { err: '你已經在一隊裡了。組好了就不能換。' };
+  /* 同上：擋的是這一班。組好就不能換還是成立，只是範圍是一個班。 */
+  if (teamIn(u, u.classId)) return { err: '你在這一個班已經在一隊裡了。組好了就不能換。' };
   var t = find('Teams', function (x) {
     return x.classId === u.classId &&
       String(x.joinCode || '').toUpperCase() === String(code || '').toUpperCase();
   });
   if (!t) return { err: '找不到這個隊伍代碼。跟隊友確認一次。' };
-  u.teamId = t.teamId;
+  addSeat(u, u.classId, t.teamId);
   save();
   logEvent('jointeam', { teamId: t.teamId });
   return { team: t };
@@ -10020,6 +10056,89 @@ function load() {
   }
   return true;
 }
+/* ---------- 座位 ----------
+
+   一個人可以同時在好幾個班（學生修兩門課、老師帶兩班）。
+
+   ── 為什麼不是把 classId 換成陣列 ──
+
+   全站有 71 個地方讀 .classId、239 個地方讀 .teamId。換成陣列的話
+   每一個都要跟著改，而其中絕大多數問的是同一件事：「他現在在看的
+   那一班／那一組」。
+
+   所以留著 classId 與 teamId，讓它們**指著現在坐的那一個座位**。
+   既有的每一個讀取一行都不用動，語意也沒變。
+
+   真正要改的只有一種：「誰在這一班／這一組」——那種問題不能問
+   「你現在在看哪一班」，要問「你有沒有那一班的座位」。那種地方
+   只有十幾處，全部換成下面這兩支。
+
+     u.seats   [{ classId, teamId }, …]　他有哪幾個座位
+     u.classId 現在坐的那一個（永遠等於某一個 seat 的 classId）
+     u.teamId  同上
+
+   ── 舊資料 ──
+
+   沒有 seats 的那些人（這一版之前建的帳號）由 seatsOf 當場推出來：
+   一個班一個組，就是一個座位。所以不需要遷移步驟，也不會有
+   「升級到一半」的中間狀態。 */
+function seatsOf(u) {
+  if (!u) return [];
+  if (Array.isArray(u.seats) && u.seats.length) return u.seats;
+  if (u.classId) return [{ classId: u.classId, teamId: u.teamId || '' }];
+  return [];
+}
+
+/* 他有沒有這一班的座位。點名冊要問的是這個，不是「他現在在看哪一班」。 */
+function inClass(u, classId) {
+  if (!u || !classId) return false;
+  var ss = seatsOf(u);
+  for (var i = 0; i < ss.length; i++) if (ss[i].classId === classId) return true;
+  return false;
+}
+/* 他有沒有在這一組。 */
+function inTeam(u, teamId) {
+  if (!u || !teamId) return false;
+  var ss = seatsOf(u);
+  for (var i = 0; i < ss.length; i++) if (ss[i].teamId === teamId) return true;
+  return false;
+}
+/* 他在這一班裡的那一組（沒有就是空字串）。 */
+function teamIn(u, classId) {
+  var ss = seatsOf(u);
+  for (var i = 0; i < ss.length; i++) if (ss[i].classId === classId) return ss[i].teamId || '';
+  return '';
+}
+
+/* 加一個座位。已經有那一班就不重複加，只把組補上去。 */
+function addSeat(u, classId, teamId) {
+  if (!u || !classId) return;
+  u.seats = seatsOf(u).slice();
+  var hit = null;
+  u.seats.forEach(function (s) { if (s.classId === classId) hit = s; });
+  if (hit) { if (teamId) hit.teamId = teamId; }
+  else u.seats.push({ classId: classId, teamId: teamId || '' });
+  /* 新加的那一個就是現在坐的——他剛加進來，要看的就是它。 */
+  u.classId = classId;
+  u.teamId = teamId || (hit ? hit.teamId : '') || '';
+}
+
+/* 換去坐另一個座位。 */
+function actSit(userId, classId) {
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個人。' };
+  var ss = seatsOf(u), hit = null;
+  ss.forEach(function (s) { if (s.classId === classId) hit = s; });
+  if (!hit) return { err: '你不在這一個班裡。' };
+  u.seats = ss;
+  u.classId = hit.classId;
+  u.teamId = hit.teamId || '';
+  save();
+  logEvent('sit', { by: u.userId, klass: (classOf2(classId) || {}).name || classId });
+  return { klass: classOf2(classId) };
+}
+function classOf2(id) { return find('Classes', function (c) { return c.classId === id; }); }
+
 function find(tbl, fn) { for (var i = 0; i < DB[tbl].length; i++) if (fn(DB[tbl][i])) return DB[tbl][i]; return null; }
 function where(tbl, fn) { return DB[tbl].filter(fn); }
 
@@ -10249,8 +10368,10 @@ function accuracyOf(teamId) {
    Team.mentorId 還在，但已經沒有任何畫面在設它——留著只是為了讀得懂
    舊資料，新開的班不會有值。 */
 function teachersOf(classId) {
+  /* 問的是「他有沒有這一班的座位」，不是「他現在在看哪一班」——
+     一位老師帶兩班的時候，他在看 B 班不代表他不是 A 班的老師。 */
   return where('Users', function (u) {
-    return u.role === 'teacher' && u.classId === classId;
+    return u.role === 'teacher' && inClass(u, classId);
   });
 }
 
@@ -11206,7 +11327,7 @@ function actMyPart(teamId, runId, o) {
 /* 這一趟還有幾個人沒填自己那一份。 */
 function partsLeft(run) {
   if (!run) return 0;
-  var mem = where('Users', function (u) { return u.teamId === run.teamId; });
+  var mem = where('Users', function (u) { return inTeam(u, run.teamId); });
   var said = run.said || {};
   var n = 0;
   mem.forEach(function (u) { if (!said[u.userId]) n++; });
@@ -12760,7 +12881,7 @@ function dressRuns(cid) {
   where('Runs', function (r) { return true; }).forEach(function (r) {
     var t = teamOf(r.teamId);
     if (!t || t.classId !== cid) return;
-    var mem = where('Users', function (u) { return u.teamId === r.teamId; });
+    var mem = where('Users', function (u) { return inTeam(u, r.teamId); });
     if (!mem.length) return;
     var h = hash(r.runId);
     var ms = msOf(r.msId);
@@ -13324,10 +13445,14 @@ function sideBar() {
     nav = [['rs', '名單'], ['events', '紀錄']];
   } else if (u.role === 'teacher') {
     var kl = classOf(u);
-    headBlock = '<div class="side-head"><div class="k">TEACHER</div>' +
+    /* 點得進去換班。多一個班的時候才寫幾個——只有一個的時候
+       那個數字是雜訊。 */
+    var ns = seatsOf(u).length;
+    headBlock = '<button class="side-head" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:mkclass' })) + '\'><div class="k">TEACHER</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
       '<div class="s">' + esc(kl.name) + ' · 加入碼 ' +
-      esc(kl.joinCode) + '</div></div>';
+      esc(kl.joinCode) + (ns > 1 ? '　·　' + ns + ' 個班' : '') + '</div></button>';
     /* 老師只有三件事，側欄就只有三格——多一格就是多一件他要煩惱的事。
 
        出口不另外開一格：它跟審核在那一頁上切換，數字併進來。
@@ -13342,9 +13467,15 @@ function sideBar() {
     ];
   } else {
     var t = myTeam();
-    headBlock = '<div class="side-head">' +
+    /* 同上。學生這一格印的是組名，所以多一個班的時候要把班名也寫出來
+       ——不然兩個班的兩支隊伍長得一樣，他分不出自己在看哪一個。 */
+    var ns2 = seatsOf(u).length;
+    var kl2 = classOf(u);
+    headBlock = '<button class="side-head" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'go:mkclass' })) + '\'>' +
       '<div class="n">' + esc(t.name) + '</div>' +
-      '<div class="s">' + esc(t.project || '（還沒定）') + '</div></div>';
+      '<div class="s">' + esc(ns2 > 1 ? (kl2 ? kl2.name : '') + '　·　' + ns2 + ' 個班'
+        : (t.project || '（還沒定）')) + '</div></button>';
     /* 三個。四件事是流程，不是分頁——說幾天、去做事、看判定都在廊道，
        第四件是看全班在哪。任務清單不是步驟，但它是「老師派過的每一件事
        各自走到哪」，那是隨時會想確認的東西，所以它在側欄。
@@ -13412,6 +13543,10 @@ function runAct(str) {
    推進」那一版的殘留——程式還在，但畫面上沒有任何地方按得到。
    留著只會讓下一個讀的人以為那個機制還在。 */
 var ACTS = {
+  /* 純導覽。data-go 那條路只吃靜態屬性，而側欄那一格要在同一個
+     data-act 裡跟別的動作並存，所以這裡補一支。 */
+  go: function (p) { go(String(p || '')); },
+
   /* 這兩顆連同切換身分那一格，只有示範資料上才有（見 demoBar）。
      這裡再擋一次：畫面沒畫不代表沒有人叫得到它。 */
   forward: function () {
@@ -13473,7 +13608,7 @@ var ACTS = {
      一個人的隊，每一件都是他的。 */
   planwho: function (i) {
     var t = myTeam(); if (!t) return;
-    var mem = where('Users', function (u) { return u.teamId === t.teamId; })
+    var mem = where('Users', function (u) { return inTeam(u, t.teamId); })
       .map(function (u) { return u.userId; });
     if (!mem.length) return;
     var k = Number(i);
@@ -14547,7 +14682,7 @@ PAGES.login = function () {
       '同一組的人看到的是同一條廊道。</p>');
     DB.Teams.forEach(function (t) {
       var mem = where('Users', function (u) {
-        return u.teamId === t.teamId && u.account;
+        return inTeam(u, t.teamId) && u.account;
       });
       if (!mem.length) return;
       H.push('<div class="dm-t"><b>' + esc(t.name) + '</b><div class="dm-r">');
@@ -14656,26 +14791,65 @@ PAGES.reg = function () {
    本來只有前面那一條，理由是「他是發碼的人，不該跟任何人要碼」。
    那對第一位老師是對的。可是一個班三位老師共同帶，後面兩位
    要進的是同一個班——只有一條路的時候，他們會各自開一個空班。 */
+/* ---------- 你的班 ----------
+
+   兩種時候會走到這裡：
+
+     還沒有班　　老師剛註冊完（render 把他丟過來，見 55-ui.js）
+     已經有班了　他要換去另一個班，或再加一個
+
+   一個人可以同時在好幾個班（見 40-db.js 的座位那一段）：學生修兩門
+   都用這套、老師帶兩班。所以這一頁先列出他已經有的那幾個，
+   底下才是加新的。 */
 PAGES.mkclass = function () {
+  /* 沒登入的時候走不到這一頁（render 會先把人擋在門口），可是
+     pages.js 會把每一頁都畫一次來檢查——那時候 me() 是 null。 */
+  var u = me();
+  if (!u) return PAGES.gate();
+  var ss = seatsOf(u);
   var H = ['<div class="gate"><div class="gate-box">'];
-  H.push(head('你的班', '開一個，或用同事給的碼加進去', ''));
+  H.push(head('你的班', ss.length ? '現在在哪一個，還有哪幾個' : '開一個，或用別人給的碼加進去', ''));
+
+  /* ── 已經有的那幾個 ── */
+  if (ss.length) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">你在這幾個班裡</div>');
+    H.push('<div class="seats">');
+    ss.forEach(function (s) {
+      var c = find('Classes', function (x) { return x.classId === s.classId; });
+      var t = s.teamId ? teamOf(s.teamId) : null;
+      var on = s.classId === u.classId;
+      H.push('<button class="seat' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'sit:' + s.classId })) + '\'>' +
+        '<b>' + esc(c ? c.name : '（找不到這個班）') + '</b>' +
+        '<i>' + esc(t ? t.name : (u.role === 'teacher' ? '加入碼 ' + ((c || {}).joinCode || '') : '還沒有組')) + '</i>' +
+        (on ? '<u>現在在這裡</u>' : '') + '</button>');
+    });
+    H.push('</div></div>');
+  }
+
+  /* ── 開一個（只有老師）── */
+  if (u.role === 'teacher') {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">' + (ss.length ? '再開一個班' : '開一個班') + '</div>');
+    H.push('<input id="mk-name" value="" placeholder="' +
+      esc('例：114-1 畢業專題') + '">');
+    H.push('<p class="dim">開好會給你一組六碼。學生跟另外幾位老師都用那組碼建帳號。</p>');
+    H.push(btn('開班', 'mkclass', 'big'));
+    H.push('</div>');
+  }
 
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">開一個班</div>');
-  H.push('<input id="mk-name" value="" placeholder="' +
-    esc('例：114-1 畢業專題') + '">');
-  H.push('<p class="dim">開好會給你一組六碼。學生跟另外幾位老師都用那組碼建帳號。</p>');
-  H.push(btn('開班', 'mkclass', 'big'));
-  H.push('</div>');
-
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">加進已經開好的班</div>');
+  H.push('<div class="eyebrow">' + (ss.length ? '再加一個班' : '加進已經開好的班') + '</div>');
   H.push('<input id="jc-code" value="' + esc(draft('jc-code')) + '" placeholder="' +
-    esc('六個英數字，跟同事拿') + '">');
+    esc('六個英數字，跟開班的人拿') + '">');
   H.push(btn('加入', 'joinclass', 'big'));
   H.push('</div>');
 
+  H.push('<div class="row">');
+  if (ss.length && u.classId) H.push(btn('回去', 'go:' + homeFor(u), 'ghost'));
   H.push(btn('登出', 'logout', 'ghost'));
+  H.push('</div>');
   H.push('</div></div>');
   return H.join('');
 };
@@ -14771,6 +14945,16 @@ ACTS.mkclass = function () {
 };
 
 /* 加進同事已經開好的那一班。 */
+/* 換去另一個班。換完直接落在那一個班的首頁——留在這一頁的話，
+   他會不確定到底換過去了沒有。 */
+ACTS.sit = function (classId) {
+  var r = actSit(S.who, classId);
+  if (r.err) return say(r.err);
+  DRAFT = {};
+  S.p = {};
+  go(homeFor(me()));
+};
+
 ACTS.joinclass = function () {
   var c = (document.getElementById('jc-code') || {}).value || '';
   var r = actJoinClass(S.who, c);
@@ -15182,7 +15366,7 @@ function stepRow(runId) {
 
    隊伍代碼一直在：新的人要加進來就是靠那一串，而它會被唸出來。 */
 function teamCard(t) {
-  var mem = where('Users', function (u) { return u.teamId === t.teamId; });
+  var mem = where('Users', function (u) { return inTeam(u, t.teamId); });
   var c = coinsOf(t.teamId);
   /* 三行。本來五段（眉標、隊名、專案、人、代碼）疊成 281px，
      而它排在最上面，於是廊道被推到畫面外。
@@ -15500,7 +15684,7 @@ function doingCard(t, row, st) {
   /* 一個人一組（個人制）。那時候「大家」只有他自己，
      「還有 N 個人沒填」也永遠是 0——那幾句話要換一套。 */
   var 獨 = where('Users', function (u) {
-    return u.teamId === t.teamId && u.role === 'student';
+    return inTeam(u, t.teamId) && u.role === 'student';
   }).length <= 1;
   if (wrote && !left) {
     H.push('<p class="waiting">' +
@@ -16718,7 +16902,7 @@ function scene(t, row, st, kind) {
      四 · 疊法。最遠的先畫，近的蓋上去，你最後畫。本來反過來，
           排在最後面的人蓋在最前面的人身上。 */
   var mates = where('Users', function (u) {
-    return u.teamId === t.teamId && u.userId !== S.who;
+    return inTeam(u, t.teamId) && u.userId !== S.who;
   });
   /* 後面放得下多寬。放不下就整隊縮，縮到 22 為止——
      人多的時候擠在一起，好過有人被推到牆外面。
@@ -17730,7 +17914,7 @@ function ecoRows(classId) {
        順序照加入的順序，所以每一次畫都一樣（不會今天這個在前面、
        明天換一個）。 */
     var mem = where('Users', function (x) {
-      return x.teamId === r.teamId && x.role === 'student';
+      return inTeam(x, r.teamId) && x.role === 'student';
     }).sort(function (a, b) {
       return String(a.userId).localeCompare(String(b.userId));
     });
@@ -18302,7 +18486,7 @@ PAGES.crew = function () {
 
      從帳號來，不從名冊來——名冊那一條路拿掉了，現在一支隊伍就是
      「teamId 指到這裡的那幾個帳號」。 */
-  var crew = where('Users', function (x) { return x.teamId === tm.teamId; });
+  var crew = where('Users', function (x) { return inTeam(x, tm.teamId); });
   H.push('<div class="card">');
   H.push('<div class="eyebrow">' + crew.length + ' 個人</div>');
   H.push('<div class="crew">');
@@ -18391,7 +18575,7 @@ PAGES.person = function () {
   var tm = teamOf(S.p.id);
   if (!tm) return '<div class="card">找不到。</div>';
   var mem = where('Users', function (x) {
-    return x.teamId === tm.teamId && x.role === 'student';
+    return inTeam(x, tm.teamId) && x.role === 'student';
   })[0];
   var k = heroKey(mem);
   var g = HEROES[k];
@@ -19111,7 +19295,7 @@ PAGES.battle = function () {
       var 存過 = !!((r.said || {})[S.who]);
       /* 一個人一組的時候沒有「大家」。 */
       var 只有他 = where('Users', function (u) {
-        return u.teamId === t.teamId && u.role === 'student';
+        return inTeam(u, t.teamId) && u.role === 'student';
       }).length <= 1;
       H.push(btChoice('btsave:' + r.runId, 存過 ? '改好了' : '我這一份好了', 'go'));
       H.push(btChoice('btnext:' + r.runId, 只有他 ? '接著交出去' : '順便幫大家交出去', ''));
@@ -19430,7 +19614,7 @@ function btSaid(r, t) {
      （這一套本來就擋著跨組的預估互看，理由一樣：見 40-db.js 結尾
      那一段 estSpread 為什麼拿掉。） */
   H.push('<div class="saidlist">');
-  var mem = t ? where('Users', function (u) { return u.teamId === t.teamId; }) : [];
+  var mem = t ? where('Users', function (u) { return inTeam(u, t.teamId); }) : [];
   var said = (r && r.said) || {};
   /* 你自己那一行寫了沒有。DRAFT 是他現在打的，said 是之前存的。 */
   var wrote = !!String(DRAFT.said1 == null ? (said[S.who] || '') : DRAFT.said1).trim();
@@ -19665,7 +19849,7 @@ ACTS.btsave = function (id) {
   go('home');
   /* 一個人一組的時候沒有「全組」。 */
   var 只有我 = where('Users', function (u) {
-    return u.teamId === t.teamId && u.role === 'student';
+    return inTeam(u, t.teamId) && u.role === 'student';
   }).length <= 1;
   say(left ? '存起來了。還有 ' + left + ' 個人沒填。'
     : (只有我 ? '存起來了。可以交出去了。'
@@ -20615,7 +20799,7 @@ PAGES.review = function () {
      而老師要寫那一句話的時候，看的就是這張表。 */
   /* 誰做了什麼。沒寫的顯示「還沒說」——那是一個事實，不是一個指控，
      而且它是這一頁上唯一看得出「這一組是不是一起做的」的地方。 */
-  var mem = where('Users', function (u) { return u.teamId === r.teamId; });
+  var mem = where('Users', function (u) { return inTeam(u, r.teamId); });
   if (mem.length) {
     var sd = r.said || {};
     H.push('<div class="eyebrow">誰做了什麼</div>');
@@ -21001,7 +21185,7 @@ PAGES.rs = function () {
   if (!DB.Classes.length) H.push('<p class="dim">還沒有人開班。</p>');
   DB.Classes.forEach(function (c) {
     var tea = where('Users', function (u) {
-      return u.role === 'teacher' && u.classId === c.classId;
+      return u.role === 'teacher' && inClass(u, c.classId);
     });
     H.push('<div class="rn-row"><b>' + esc(c.name) + '</b>' +
       '<span class="dim">加入碼 ' + esc(c.joinCode) + '　·　' +

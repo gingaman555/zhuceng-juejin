@@ -276,7 +276,7 @@ PAGES.battle = function () {
       var 存過 = !!((r.said || {})[S.who]);
       /* 一個人一組的時候沒有「大家」。 */
       var 只有他 = where('Users', function (u) {
-        return u.teamId === t.teamId && u.role === 'student';
+        return inTeam(u, t.teamId) && u.role === 'student';
       }).length <= 1;
       H.push(btChoice('btsave:' + r.runId, 存過 ? '改好了' : '我這一份好了', 'go'));
       H.push(btChoice('btnext:' + r.runId, 只有他 ? '接著交出去' : '順便幫大家交出去', ''));
@@ -595,7 +595,7 @@ function btSaid(r, t) {
      （這一套本來就擋著跨組的預估互看，理由一樣：見 40-db.js 結尾
      那一段 estSpread 為什麼拿掉。） */
   H.push('<div class="saidlist">');
-  var mem = t ? where('Users', function (u) { return u.teamId === t.teamId; }) : [];
+  var mem = t ? where('Users', function (u) { return inTeam(u, t.teamId); }) : [];
   var said = (r && r.said) || {};
   /* 你自己那一行寫了沒有。DRAFT 是他現在打的，said 是之前存的。 */
   var wrote = !!String(DRAFT.said1 == null ? (said[S.who] || '') : DRAFT.said1).trim();
@@ -830,7 +830,7 @@ ACTS.btsave = function (id) {
   go('home');
   /* 一個人一組的時候沒有「全組」。 */
   var 只有我 = where('Users', function (u) {
-    return u.teamId === t.teamId && u.role === 'student';
+    return inTeam(u, t.teamId) && u.role === 'student';
   }).length <= 1;
   say(left ? '存起來了。還有 ' + left + ' 個人沒填。'
     : (只有我 ? '存起來了。可以交出去了。'

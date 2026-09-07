@@ -322,7 +322,7 @@ PAGES.review = function () {
      而老師要寫那一句話的時候，看的就是這張表。 */
   /* 誰做了什麼。沒寫的顯示「還沒說」——那是一個事實，不是一個指控，
      而且它是這一頁上唯一看得出「這一組是不是一起做的」的地方。 */
-  var mem = where('Users', function (u) { return u.teamId === r.teamId; });
+  var mem = where('Users', function (u) { return inTeam(u, r.teamId); });
   if (mem.length) {
     var sd = r.said || {};
     H.push('<div class="eyebrow">誰做了什麼</div>');

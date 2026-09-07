@@ -368,7 +368,7 @@ function scene(t, row, st, kind) {
      四 · 疊法。最遠的先畫，近的蓋上去，你最後畫。本來反過來，
           排在最後面的人蓋在最前面的人身上。 */
   var mates = where('Users', function (u) {
-    return u.teamId === t.teamId && u.userId !== S.who;
+    return inTeam(u, t.teamId) && u.userId !== S.who;
   });
   /* 後面放得下多寬。放不下就整隊縮，縮到 22 為止——
      人多的時候擠在一起，好過有人被推到牆外面。

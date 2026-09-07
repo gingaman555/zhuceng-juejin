@@ -342,7 +342,7 @@ function dressRuns(cid) {
   where('Runs', function (r) { return true; }).forEach(function (r) {
     var t = teamOf(r.teamId);
     if (!t || t.classId !== cid) return;
-    var mem = where('Users', function (u) { return u.teamId === r.teamId; });
+    var mem = where('Users', function (u) { return inTeam(u, r.teamId); });
     if (!mem.length) return;
     var h = hash(r.runId);
     var ms = msOf(r.msId);

@@ -2514,3 +2514,22 @@ button.ac:active{transform:translateY(1px)}
    老師打開這一頁之後的下一個動作就是去看東西，這一顆是那條路的一半
    （另一半是可以點的連結，見 56-viz.js 的 whereLine）。 */
 .wh-copy{margin-top:11px}
+
+/* ---------- 你在哪幾個班 ----------
+   一行一個。現在坐的那一個亮著，其餘的點一下換過去。 */
+.seats{display:flex;flex-direction:column;gap:5px;margin:5px 0 11px}
+.seat{
+  display:block;width:100%;text-align:left;
+  padding:11px;border:1px solid var(--line);background:none;
+  color:var(--dim);cursor:pointer;font:inherit
+}
+.seat b{display:block;font-size:22px;font-weight:400;color:var(--ink)}
+.seat i{display:block;font-size:22px;font-style:normal;color:var(--mute);margin-top:5px}
+.seat u{display:block;font-size:22px;text-decoration:none;color:var(--gold);margin-top:5px}
+.seat.on{border-color:var(--gold)}
+.seat:not(.on):hover{border-color:var(--dim)}
+/* 側欄那一格現在是一顆鍵。看起來要跟原本一模一樣。 */
+button.side-head{
+  display:block;width:100%;text-align:left;border:0;background:none;
+  color:inherit;font:inherit;cursor:pointer;padding:0
+}

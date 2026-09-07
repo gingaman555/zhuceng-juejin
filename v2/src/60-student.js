@@ -357,7 +357,7 @@ function stepRow(runId) {
 
    隊伍代碼一直在：新的人要加進來就是靠那一串，而它會被唸出來。 */
 function teamCard(t) {
-  var mem = where('Users', function (u) { return u.teamId === t.teamId; });
+  var mem = where('Users', function (u) { return inTeam(u, t.teamId); });
   var c = coinsOf(t.teamId);
   /* 三行。本來五段（眉標、隊名、專案、人、代碼）疊成 281px，
      而它排在最上面，於是廊道被推到畫面外。
@@ -675,7 +675,7 @@ function doingCard(t, row, st) {
   /* 一個人一組（個人制）。那時候「大家」只有他自己，
      「還有 N 個人沒填」也永遠是 0——那幾句話要換一套。 */
   var 獨 = where('Users', function (u) {
-    return u.teamId === t.teamId && u.role === 'student';
+    return inTeam(u, t.teamId) && u.role === 'student';
   }).length <= 1;
   if (wrote && !left) {
     H.push('<p class="waiting">' +

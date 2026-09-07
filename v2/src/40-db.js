@@ -142,6 +142,89 @@ function load() {
   }
   return true;
 }
+/* ---------- 座位 ----------
+
+   一個人可以同時在好幾個班（學生修兩門課、老師帶兩班）。
+
+   ── 為什麼不是把 classId 換成陣列 ──
+
+   全站有 71 個地方讀 .classId、239 個地方讀 .teamId。換成陣列的話
+   每一個都要跟著改，而其中絕大多數問的是同一件事：「他現在在看的
+   那一班／那一組」。
+
+   所以留著 classId 與 teamId，讓它們**指著現在坐的那一個座位**。
+   既有的每一個讀取一行都不用動，語意也沒變。
+
+   真正要改的只有一種：「誰在這一班／這一組」——那種問題不能問
+   「你現在在看哪一班」，要問「你有沒有那一班的座位」。那種地方
+   只有十幾處，全部換成下面這兩支。
+
+     u.seats   [{ classId, teamId }, …]　他有哪幾個座位
+     u.classId 現在坐的那一個（永遠等於某一個 seat 的 classId）
+     u.teamId  同上
+
+   ── 舊資料 ──
+
+   沒有 seats 的那些人（這一版之前建的帳號）由 seatsOf 當場推出來：
+   一個班一個組，就是一個座位。所以不需要遷移步驟，也不會有
+   「升級到一半」的中間狀態。 */
+function seatsOf(u) {
+  if (!u) return [];
+  if (Array.isArray(u.seats) && u.seats.length) return u.seats;
+  if (u.classId) return [{ classId: u.classId, teamId: u.teamId || '' }];
+  return [];
+}
+
+/* 他有沒有這一班的座位。點名冊要問的是這個，不是「他現在在看哪一班」。 */
+function inClass(u, classId) {
+  if (!u || !classId) return false;
+  var ss = seatsOf(u);
+  for (var i = 0; i < ss.length; i++) if (ss[i].classId === classId) return true;
+  return false;
+}
+/* 他有沒有在這一組。 */
+function inTeam(u, teamId) {
+  if (!u || !teamId) return false;
+  var ss = seatsOf(u);
+  for (var i = 0; i < ss.length; i++) if (ss[i].teamId === teamId) return true;
+  return false;
+}
+/* 他在這一班裡的那一組（沒有就是空字串）。 */
+function teamIn(u, classId) {
+  var ss = seatsOf(u);
+  for (var i = 0; i < ss.length; i++) if (ss[i].classId === classId) return ss[i].teamId || '';
+  return '';
+}
+
+/* 加一個座位。已經有那一班就不重複加，只把組補上去。 */
+function addSeat(u, classId, teamId) {
+  if (!u || !classId) return;
+  u.seats = seatsOf(u).slice();
+  var hit = null;
+  u.seats.forEach(function (s) { if (s.classId === classId) hit = s; });
+  if (hit) { if (teamId) hit.teamId = teamId; }
+  else u.seats.push({ classId: classId, teamId: teamId || '' });
+  /* 新加的那一個就是現在坐的——他剛加進來，要看的就是它。 */
+  u.classId = classId;
+  u.teamId = teamId || (hit ? hit.teamId : '') || '';
+}
+
+/* 換去坐另一個座位。 */
+function actSit(userId, classId) {
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個人。' };
+  var ss = seatsOf(u), hit = null;
+  ss.forEach(function (s) { if (s.classId === classId) hit = s; });
+  if (!hit) return { err: '你不在這一個班裡。' };
+  u.seats = ss;
+  u.classId = hit.classId;
+  u.teamId = hit.teamId || '';
+  save();
+  logEvent('sit', { by: u.userId, klass: (classOf2(classId) || {}).name || classId });
+  return { klass: classOf2(classId) };
+}
+function classOf2(id) { return find('Classes', function (c) { return c.classId === id; }); }
+
 function find(tbl, fn) { for (var i = 0; i < DB[tbl].length; i++) if (fn(DB[tbl][i])) return DB[tbl][i]; return null; }
 function where(tbl, fn) { return DB[tbl].filter(fn); }
 
@@ -371,8 +454,10 @@ function accuracyOf(teamId) {
    Team.mentorId 還在，但已經沒有任何畫面在設它——留著只是為了讀得懂
    舊資料，新開的班不會有值。 */
 function teachersOf(classId) {
+  /* 問的是「他有沒有這一班的座位」，不是「他現在在看哪一班」——
+     一位老師帶兩班的時候，他在看 B 班不代表他不是 A 班的老師。 */
   return where('Users', function (u) {
-    return u.role === 'teacher' && u.classId === classId;
+    return u.role === 'teacher' && inClass(u, classId);
   });
 }
 
@@ -1328,7 +1413,7 @@ function actMyPart(teamId, runId, o) {
 /* 這一趟還有幾個人沒填自己那一份。 */
 function partsLeft(run) {
   if (!run) return 0;
-  var mem = where('Users', function (u) { return u.teamId === run.teamId; });
+  var mem = where('Users', function (u) { return inTeam(u, run.teamId); });
   var said = run.said || {};
   var n = 0;
   mem.forEach(function (u) { if (!said[u.userId]) n++; });
