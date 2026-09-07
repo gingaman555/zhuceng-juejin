@@ -251,7 +251,8 @@ actApprove(run.runId, '這一次找得到了。', 加);
 const done = find('Runs', x => x.runId === run.runId);
 be('狀態', done.state, 'done');
 be('收下之後圖鑑裡有他了', !!metMobs(tm.teamId)[mobName], true);
-be('水晶', crystalOf(tm.teamId).all, RULES.CRYSTAL.base + 加);
+/* 進場那 200 也算在裡面（見 20-rules.js 的 start）。 */
+be('水晶', crystalOf(tm.teamId).all, RULES.CRYSTAL.start + RULES.CRYSTAL.base + 加);
 as(stu[0]); SEEN_CUT = 1; OKGOT = {};
 S.page = 'home'; S.p = {}; DRAFT = {};
 const home = PAGES.home();
@@ -327,7 +328,7 @@ ACTS.commit(ms4.msId);
 const d1 = depthOf(tm.teamId);
 be('深度變深了', d1 > d0, true);
 be('收下的件數', where('Runs', r => r.teamId === tm.teamId && r.state === 'done').length, 3);
-be('水晶', crystalOf(tm.teamId).all, 3 * RULES.CRYSTAL.base + 加 + 2 * RULES.CRYSTAL.bonusMin);
+be('水晶', crystalOf(tm.teamId).all, RULES.CRYSTAL.start + 3 * RULES.CRYSTAL.base + 加 + 2 * RULES.CRYSTAL.bonusMin);
 be('圖鑑收了幾位', Object.keys(metMobs(tm.teamId)).length >= 1, true);
 
 /* ══ 十二 · 出口：專案做完了 ══ */

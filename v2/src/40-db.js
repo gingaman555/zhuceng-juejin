@@ -115,7 +115,7 @@ function save() {
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 15;   /* 15：甲組多一趟走完的，示範資料才買得起點亮 */
+var SEED_V = 16;   /* 16：R10 撤掉（進場給 200 之後不需要那個繞路） */
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
@@ -1687,7 +1687,10 @@ function crystalOf(teamId) {
     base += RULES.CRYSTAL.base;
     bonus += Math.max(0, Math.min(RULES.CRYSTAL.bonusMax, Number(r.bonus) || 0));
   });
-  var 拿過 = base + bonus;
+  /* 進場那 200 也算在裡面（見 20-rules.js 的 start）。
+     它讓「走完一件就點得起一位」成立，而每一組拿到的一樣多，
+     所以榜上的排序不受影響。 */
+  var 拿過 = RULES.CRYSTAL.start + base + bonus;
   var 用掉 = litMobs(teamId).length * RULES.CRYSTAL.light;
   /* all 是**拿過的總數**，不是手上剩下的。
 

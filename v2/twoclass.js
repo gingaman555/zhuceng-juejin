@@ -168,8 +168,9 @@ as(薛); ok(!!actApprove(runA.runId, 'A 班這一件也很好。', 加A), '薛�
 節('6', '水晶、圖鑑、匯出都分開');
 
 ok(crystalOf(gA.teamId).all !== 0 && crystalOf(gB.teamId).all !== 0, '兩個班各自有水晶');
-ok(crystalOf(gA.teamId).all === RULES.CRYSTAL.base + 加A &&
-   crystalOf(gB.teamId).all === RULES.CRYSTAL.base + 加B,
+/* 進場那 200 也算在裡面（見 20-rules.js 的 start）。 */
+ok(crystalOf(gA.teamId).all === RULES.CRYSTAL.start + RULES.CRYSTAL.base + 加A &&
+   crystalOf(gB.teamId).all === RULES.CRYSTAL.start + RULES.CRYSTAL.base + 加B,
   'A 組 ' + crystalOf(gA.teamId).all + ' 顆、B 組 ' + crystalOf(gB.teamId).all + ' 顆，各算各的');
 const cA = exportItems(A.classId).trim().split('\n');
 const cB = exportItems(B.classId).trim().split('\n');

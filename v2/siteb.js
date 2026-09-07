@@ -159,7 +159,7 @@ actMyPart(g.teamId, run.runId, { spent: { 0: 3, 1: 2 }, said1: '我做完了' })
 ok(partsLeft(find('Runs', x => x.runId === run.runId)) === 0, '填完就是填完，沒有人要等');
 as(A); actSubmit(g.teamId, run.runId, 'https://drive.google.com/abc');
 as(t); ok(!!actApprove(run.runId, '很好。', RULES.CRYSTAL.bonusMax), '老師收得下');
-ok(crystalOf(g.teamId).all === RULES.CRYSTAL.base + RULES.CRYSTAL.bonusMax,
+ok(crystalOf(g.teamId).all === RULES.CRYSTAL.start + RULES.CRYSTAL.base + RULES.CRYSTAL.bonusMax,
   '水晶跟主站同一個刻度（' + crystalOf(g.teamId).all + ' 顆）');
 ok(Object.keys(metMobs(g.teamId)).length === 1, '圖鑑收了一位');
 ok(depthOf(g.teamId) === 1, '深度算得出來');

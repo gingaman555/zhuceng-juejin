@@ -82,7 +82,8 @@ const t = actRegister({ account: 'tea_x', password: 'aaaa', name: '孟老師', r
 const kl = actNewClass('班', t.userId).klass;
 const A = actRegister({ account: 'stu_a', password: 'aaaa', name: '小美', role: 'student', code: kl.joinCode }).user;
 as(A); const g = actNewTeam('第一組', A.userId).team; actRename(g.teamId, '專題');
-ok(crystalOf(g.teamId).all === 0, '還沒走過任何一趟 → 0 顆');
+ok(crystalOf(g.teamId).all === RULES.CRYSTAL.start,
+  '還沒走過任何一趟 → ' + RULES.CRYSTAL.start + ' 顆（進場給的）');
 
 as(t);
 const ms = actPublish(kl.classId, { title: '第一件', mentorId: t.userId, teams: [g.teamId] });
@@ -92,9 +93,24 @@ actMyPart(g.teamId, run.runId, { spent: { 0: 3 }, said1: '做完了' });
 actSubmit(g.teamId, run.runId, 'https://x');
 as(t); actApprove(run.runId, '可以。', RULES.CRYSTAL.bonusMax);
 const s1 = crystalOf(g.teamId);
-ok(s1.all === RULES.CRYSTAL.base + RULES.CRYSTAL.bonusMax,
-  '收下一件 → ' + s1.all + ' 顆（' + RULES.CRYSTAL.base + ' ＋ 老師多給 ' + RULES.CRYSTAL.bonusMax + '）');
+ok(s1.all === RULES.CRYSTAL.start + RULES.CRYSTAL.base + RULES.CRYSTAL.bonusMax,
+  '收下一件 → ' + s1.all + ' 顆（進場 ' + RULES.CRYSTAL.start +
+  ' ＋ ' + RULES.CRYSTAL.base + ' ＋ 老師多給 ' + RULES.CRYSTAL.bonusMax + '）');
 ok(s1.left === s1.all, '一顆都還沒放出去');
+/* ── 這一條是這次改動要保證的事 ──
+
+   進場給 200 的理由就是這個：光靠收下要三件才點得起一位，而那是學期
+   後段的事——前幾週那個功能對學生等於不存在，他看到的永遠是
+   「還差 N 顆」。一個要等三個星期才第一次出現的東西，在它出現之前
+   不會被當成系統的一部分。
+
+   所以「走完一件就點得起一位」不是巧合，是這個刻度存在的目的。
+   哪一天有人調了 start 或 base 或 light，這一條會先攔下來。 */
+ok(RULES.CRYSTAL.start + RULES.CRYSTAL.base >= RULES.CRYSTAL.light,
+  '走完一件（進場 ' + RULES.CRYSTAL.start + ' ＋ ' + RULES.CRYSTAL.base +
+  '）就點得起一位（要 ' + RULES.CRYSTAL.light + '）');
+ok(RULES.CRYSTAL.start < RULES.CRYSTAL.light,
+  '但一件都還沒收下的時候點不起——不然那個用途跟他做了什麼就沒有關係了');
 
 節('3', '放一顆上去，黑影亮起來');
 
@@ -104,24 +120,23 @@ const 遇過 = metMobs(g.teamId);
 const 沒遇過 = 全.filter(c => !遇過[c.n])[0];
 ok(!!沒遇過, '找得到一位還沒遇過的：' + (沒遇過 ? 沒遇過.n : '—'));
 
-/* 水晶不夠的時候要擋 */
-const 不夠 = actLight(g.teamId, 沒遇過.n);
-ok(!!不夠.err, '水晶不夠 → 擋下來：「' + 不夠.err + '」');
+/* ── 水晶不夠的時候要擋 ──
 
-/* 補到夠 */
-let 補 = 0;
-while (crystalOf(g.teamId).left < RULES.CRYSTAL.light) {
-  as(t);
-  const m2 = actPublish(kl.classId, { title: '第 ' + (補 + 2) + ' 件', mentorId: t.userId, teams: [g.teamId] });
-  as(A);
-  const r2 = actCommit(g.teamId, m2.msId, 3, [], [{ n: '做', d: 3, who: A.userId, byOwn: 1 }], '', 2);
-  actMyPart(g.teamId, r2.runId, { spent: { 0: 3 }, said1: 'ok' });
-  actSubmit(g.teamId, r2.runId, 'https://x');
-  as(t); actApprove(r2.runId, '可以。', RULES.CRYSTAL.bonusMax);
-  補++;
-  if (補 > 20) break;
-}
-console.log('   再走 ' + 補 + ' 趟，手上 ' + crystalOf(g.teamId).left + ' 顆');
+   一件都還沒收下的那一組來驗：他手上只有進場那 200，點不起。
+
+   本來這裡是拿 A 組驗的，可是進場給 200 之後 A 組收下一件就有 350
+   ——已經點得起了。要驗「不夠」就得找一個真的不夠的人，
+   而那正是每一個學生第一天的狀態。 */
+const 窮組 = actNewTeam('還沒開始的',
+  actRegister({ account: 'stu_p', password: 'aaaa', name: '小窮', role: 'student',
+    code: kl.joinCode }).user.userId).team;
+ok(crystalOf(窮組.teamId).all === RULES.CRYSTAL.start,
+  '一件都還沒收下 → 只有進場那 ' + RULES.CRYSTAL.start + ' 顆');
+const 不夠 = actLight(窮組.teamId, 沒遇過.n);
+ok(!!不夠.err, '點不起 → 擋下來：「' + 不夠.err + '」');
+
+as(A);
+console.log('   小美收下一件，手上 ' + crystalOf(g.teamId).left + ' 顆');
 
 as(A);
 const 前 = crystalOf(g.teamId);

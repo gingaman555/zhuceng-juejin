@@ -177,7 +177,7 @@ function seed() {
      M4 示範三位老師共同帶一個班長什麼樣：薛老師派的，他在派的時候
      自己點名發給丙丁兩組，而且比別人晚了十天才開始。「發給誰」是他
      點的（teams），不是系統照帶組關係替他分的——那個關係已經沒有了。 */
-  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: ['G1', 'G3', 'G4'], at: ago(1), due: T0 + 12 * DAY,
+  var M4 = { msId: 'M4', classId: cid, mentorId: 'U6', teams: ['G3', 'G4'], at: ago(1), due: T0 + 12 * DAY,
     title: '找兩個人試一次，記下卡在哪',
     steps: ['做出可以試的版本', '約人', '在旁邊看他用'],
     note: '不要跟他解釋。他卡住的地方就是答案。' };
@@ -212,39 +212,6 @@ function seed() {
     committedAt: ago(14), submittedAt: ago(11), doneAt: ago(10),
     word: '比上一次早兩天。' });
   pushes('G1', 'R2', 4, 13);
-
-  /* ── 甲組走完的第三趟 ──
-
-     加這一趟的理由是**示範資料要看得到那個功能**。
-
-     實測（2026-09-08）：點亮圖鑑上一位要 300 顆，而示範班最有錢的
-     那一組只有 250——所以打開示範資料的人永遠看不到那一顆鍵，
-     只看得到「還差 50 顆」。一個在示範裡出不來的功能，對要看這份
-     作品的人來說等於不存在。
-
-     ── 為什麼不是把價錢改低 ──
-
-     300 ＝ 三件委託，那是刻意的（見 20-rules.js）：這個機制本來就
-     屬於學期後段——你收集到一定程度，才會注意到圖鑑上還缺誰。
-     真的班級從零開始，前幾週看不到它是對的。
-
-     示範資料是另一回事：它要一次呈現整套。所以補的是「有一組走得
-     比別人遠」，那本身也是真的班級會有的樣子。
-
-     ── 掛在 M4 不是 M3 ──
-
-     一組一個任務只能有一趟（loop.js 的不變量在看，而我第一次就是把它
-     跟 R3 一起掛在 M3 上，當場被抓到）。甲組在 M3 上已經有一趟正在
-     走的，所以這一趟掛在別件上。
-
-     M4 是薛老師派的、還有十二天到期——甲組提早做完了。那也正好多示範
-     一件事：三位老師各自派的東西，同一組都收得到。 */
-  DB.Runs.push({ runId: 'R10', teamId: 'G1', msId: 'M4', state: 'done',
-    est: 5, actual: 5, stamp: 'exact', flags: [], overs: [], pushes: 5,
-    committedAt: ago(9), submittedAt: ago(4), doneAt: ago(3),
-    bonus: RULES.CRYSTAL.bonusMax,
-    word: '第三次了，說幾天就是幾天。' });
-  pushes('G1', 'R10', 5, 8);
 
   DB.Runs.push({ runId: 'R3', teamId: 'G1', msId: 'M3', state: 'running',
     est: 5, flags: [2], overs: [], pushes: 2, committedAt: ago(3) });
