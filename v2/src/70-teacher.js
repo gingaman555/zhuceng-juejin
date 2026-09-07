@@ -68,10 +68,15 @@ PAGES.radar = function () {
   var out = exitQueue(u.classId, u.userId);
   /* 剛說了幾天、還沒有人回一句的那幾趟（見 40-db.js 的 askQueue）。 */
   var asks = askQueue(u.classId);
-  var tq = DRAFT.tq === 'exit' ? 'exit' : (DRAFT.tq === 'ask' ? 'ask' : 'rev');
+  /* RULES.ASK 關著的時候連那一格都不畫，而且不管 DRAFT 記著什麼，
+     都退回「審核」——不然關掉之前停在那一格的人會落在一個空白頁。 */
+  var tq = DRAFT.tq === 'exit' ? 'exit'
+    : ((DRAFT.tq === 'ask' && RULES.ASK) ? 'ask' : 'rev');
+  var 格 = [['rev', '審核', rows.length]];
+  if (RULES.ASK) 格.push(['ask', '剛承諾', asks.length]);
+  格.push(['exit', '出口', out.length]);
   H.push('<div class="segs">');
-  [['rev', '審核', rows.length], ['ask', '剛承諾', asks.length],
-   ['exit', '出口', out.length]].forEach(function (g) {
+  格.forEach(function (g) {
     H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
       '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');

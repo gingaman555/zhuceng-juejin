@@ -9719,6 +9719,29 @@ RULES.keepOf = function (key) {
 
 
 
+/* ---------- 老師回一句（協商） ----------
+
+   0 = 老師端不出現「剛承諾」那一格。
+
+   ── 為什麼是開關不是刪掉 ──
+
+   這個機制是這個作品裡唯一「老師可以在事情發生之前說話」的地方，
+   其餘每一個接觸點都是事後的（收下、退回，都是對著已經做完的東西）。
+   它也是「自主不等於不受干涉」那一整段的實作，而且是這套判定唯一
+   擋得住「把天數報寬一點」的管道——系統測不出灌水，人看得出來。
+
+   第一次進教室先關掉是合理的：老師那一頁本來有三格（審核／剛承諾／
+   出口），而他第一天真正要做的只有一件事——看學生交上來的東西。
+   多一格就是多一件他要煩惱的事。
+
+   關掉的代價要講清楚：**現場不會產生任何協商資料**。
+   estFirst／askEst／est 那三個數字（他一個人說的、老師說的、
+   最後定的）一筆都不會有，而那三個數字是論文第六章要的東西。
+
+   所以做成開關：程式全部留著（actAskEst／actAnswerAsk／PAGES.askest
+   一行都沒動），要收那份資料的時候把這裡改成 1 就回來了。 */
+RULES.ASK = 0;
+
 /* ---------- 停滯 ----------
    系統不發「已逾期」通知。狀態本身就是回饋：幾天沒推進，畫面自己會暗下來。
    這是勸導式設計的核心——不指責，只是讓停下來這件事看得見。 */
@@ -20621,10 +20644,15 @@ PAGES.radar = function () {
   var out = exitQueue(u.classId, u.userId);
   /* 剛說了幾天、還沒有人回一句的那幾趟（見 40-db.js 的 askQueue）。 */
   var asks = askQueue(u.classId);
-  var tq = DRAFT.tq === 'exit' ? 'exit' : (DRAFT.tq === 'ask' ? 'ask' : 'rev');
+  /* RULES.ASK 關著的時候連那一格都不畫，而且不管 DRAFT 記著什麼，
+     都退回「審核」——不然關掉之前停在那一格的人會落在一個空白頁。 */
+  var tq = DRAFT.tq === 'exit' ? 'exit'
+    : ((DRAFT.tq === 'ask' && RULES.ASK) ? 'ask' : 'rev');
+  var 格 = [['rev', '審核', rows.length]];
+  if (RULES.ASK) 格.push(['ask', '剛承諾', asks.length]);
+  格.push(['exit', '出口', out.length]);
   H.push('<div class="segs">');
-  [['rev', '審核', rows.length], ['ask', '剛承諾', asks.length],
-   ['exit', '出口', out.length]].forEach(function (g) {
+  格.forEach(function (g) {
     H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
       '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
