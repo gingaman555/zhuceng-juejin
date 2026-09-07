@@ -196,20 +196,6 @@
    opacity 這一條整條拿掉。自己那一條廊道上（.scn-hero.asleep，66px、
    全畫面只有他）的 .75 留著——那裡不缺份量，這裡缺。 */
 
-/* 睡著的人也在呼吸。
-
-   這一頁上另外五組都在動，只有停很久那一組是凍住的——一個不會動的
-   東西在會動的東西旁邊會被眼睛當成背景。
-
-   睡著只有一張圖，所以呼吸用位移做：3.4 秒一次，抬 1px。
-   走路那個是 1.6 秒——睡著的人本來就慢。steps(1,end)，不補間。 */
-@keyframes slpB{0%,62%{transform:translateY(0)}63%,100%{transform:translateY(-1px)}}
-.xl-hero.sleep .px.ch-s{
-  animation:slpB 3.4s steps(1,end) infinite;animation-delay:var(--d,0ms)
-}
-@media (prefers-reduced-motion: reduce){
-  .xl-hero.sleep .px.ch-s{animation:none}
-}
 .xl-hero:hover{transform:translateY(-3px)}
 .xl-hero:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
