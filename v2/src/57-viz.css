@@ -2527,6 +2527,15 @@ button.ac:active{transform:translateY(1px)}
 .seat i{display:block;font-size:22px;font-style:normal;color:var(--mute);margin-top:5px}
 .seat u{display:block;font-size:22px;text-decoration:none;color:var(--gold);margin-top:5px}
 .seat.on{border-color:var(--gold)}
+/* 可以換過去的那幾張要看得出來按得下去（見 50-style.css 的 .pressable）。
+   現在坐的那一張不用——它是狀態不是動作，而且它已經有金框跟
+   「現在在這裡」那一行。 */
+.seat:not(.on){position:relative}
+.seat:not(.on)::after{
+  content:'▸';position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  font-size:22px;line-height:1;color:var(--mute);pointer-events:none
+}
+.seat:not(.on):hover::after,.seat:not(.on):focus-visible::after{color:var(--gold)}
 .seat:not(.on):hover{border-color:var(--dim)}
 /* 側欄那一格現在是一顆鍵。看起來要跟原本一模一樣。 */
 button.side-head{

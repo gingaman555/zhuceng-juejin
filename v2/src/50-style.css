@@ -448,3 +448,38 @@ a.plain:hover{color:var(--gold)}
 .zn i{display:block;font-style:normal;font-size:22px;color:var(--gold-d);margin-top:5px}
 .zn{background:var(--zbg)}
 .zn b{color:var(--zink)}
+
+/* ---------- 按得下去的地方 ----------
+
+   量出來的（在真的頁面上讀計算樣式，不是讀原始碼）：這幾個地方按得下去
+   可是身上只有 cursor:pointer——
+
+     側欄那一格　590×190　換班
+     頂條的專案名　191×37　改名字
+     紀錄那一列　610×131　點開細節
+     剖面圖的組名牌　　　　點進那一組
+
+   **而 cursor:pointer 在手機上根本不存在。** 星期三是手機。所以那四個
+   地方在現場等於沒有任何提示：它們是可以按的東西，長得像字。
+
+   ── 用哪一個記號 ──
+
+   這個作品已經有「可以按」的記號了：act-card 那顆閃爍的 ▶，
+   舊版寶可夢的選單游標（見 58-battle.css）。那一顆留給「這一頁唯一
+   的動作」——到處都閃就不是提示是雜訊。
+
+   所以用同一套語言的靜態版：一個不會動的 ▸，永遠在，暗的。
+   靜態才在手機上成立（沒有 hover 可以用）。
+
+   顏色用 --mute，不吃新的顏色（一個顏色一件事）。按到的時候
+   （hover／focus）才亮成金色——那是「你正在碰它」，跟「它按得下去」
+   是兩件事。 */
+.pressable{position:relative}
+.pressable::after{
+  content:'▸';
+  position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  font-size:22px;line-height:1;color:var(--mute);pointer-events:none
+}
+.pressable:hover::after,.pressable:focus-visible::after{color:var(--gold)}
+/* 已經展開的那一列，箭頭轉下來——它現在說的是「再按一次收起來」。 */
+.pressable.open::after{content:'▾'}

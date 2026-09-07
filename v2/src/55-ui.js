@@ -430,7 +430,7 @@ function topBar() {
     '<span class="who">' + esc(t.name) + '</span>' +
     /* 專案名點得進招牌。名字最大的地方就是改名字的入口——
    本來只有廊道最底下那個小圖示能進去。 */
-'<a class="hud-pj" data-act="run" data-p=\'' +
+'<a class="hud-pj pressable" data-act="run" data-p=\'' +
   esc(JSON.stringify({ a: 'go:sign' })) + '\'>' +
   esc(t.project || '（還沒定）') + '</a>' +
     '<span class="sp"></span>' +
@@ -511,7 +511,7 @@ function sideBar() {
     /* 點得進去換班。多一個班的時候才寫幾個——只有一個的時候
        那個數字是雜訊。 */
     var ns = seatsOf(u).length;
-    headBlock = '<button class="side-head" data-act="run" data-p=\'' +
+    headBlock = '<button class="side-head pressable" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:mkclass' })) + '\'><div class="k">TEACHER</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
       '<div class="s">' + esc(kl.name) + ' · 加入碼 ' +
@@ -534,7 +534,7 @@ function sideBar() {
        ——不然兩個班的兩支隊伍長得一樣，他分不出自己在看哪一個。 */
     var ns2 = seatsOf(u).length;
     var kl2 = classOf(u);
-    headBlock = '<button class="side-head" data-act="run" data-p=\'' +
+    headBlock = '<button class="side-head pressable" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:mkclass' })) + '\'>' +
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(ns2 > 1 ? (kl2 ? kl2.name : '') + '　·　' + ns2 + ' 個班'

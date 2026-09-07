@@ -292,3 +292,8 @@ b.ptitle{display:block;font-size:33px;font-weight:400;color:var(--ink);line-heig
   .xl-hero .wa{animation:none;opacity:1}
   .xl-hero .wb{animation:none;opacity:0}
 }
+
+/* 名牌只有 --nm 寬（手機上 88px），所以那個箭頭要更貼邊，
+   而且組名要讓出位置——不然長一點的組名會被壓在箭頭底下。 */
+.xl-name.pressable::after{right:4px;font-size:22px}
+.xl-name.pressable b,.xl-name.pressable i{padding-right:14px}

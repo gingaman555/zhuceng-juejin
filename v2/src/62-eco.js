@@ -168,7 +168,7 @@ function xlLane(r, i, cols, classId, mine) {
 
      整格是一顆鈕，點進去是「他們是誰」；中間那一疊是另一顆，
      點進去是「他們做了什麼」。一條上兩個問題，各自一顆鈕。 */
-  H.push('<button class="xl-name" data-act="run" data-p=\'' +
+  H.push('<button class="xl-name pressable" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'crew:' + r.teamId })) + '\' title="' +
     esc(r.name) + '" style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
   /* 這裡試過掛那一組的招牌，撤掉了：signOf 對每一組都回同一張

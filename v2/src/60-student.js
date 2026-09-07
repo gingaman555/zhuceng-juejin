@@ -1414,7 +1414,7 @@ function logRow(m, r, t) {
   /* 用 div 不用 button：<button> 上的 grid／flex 在 Chromium 不完整生效
      ——內容會被包進一個匿名區塊，第一個子元素因此被收縮成內容寬，
      標題就變成一個字一行。role 與 tabindex 補回鍵盤與輔助工具。 */
-  var H = ['<div role="button" tabindex="0" class="rec' + (open ? ' open' : '') + '" data-act="run" data-p=\'' +
+  var H = ['<div role="button" tabindex="0" class="rec pressable' + (open ? ' open' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'lgopen:' + r.runId })) + '\'>'];
 
   /* 直接排在格線上，不要再包一層。<button> 裡面包巢狀區塊的時候，

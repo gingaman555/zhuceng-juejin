@@ -461,6 +461,41 @@ a.plain:hover{color:var(--gold)}
 .zn{background:var(--zbg)}
 .zn b{color:var(--zink)}
 
+/* ---------- 按得下去的地方 ----------
+
+   量出來的（在真的頁面上讀計算樣式，不是讀原始碼）：這幾個地方按得下去
+   可是身上只有 cursor:pointer——
+
+     側欄那一格　590×190　換班
+     頂條的專案名　191×37　改名字
+     紀錄那一列　610×131　點開細節
+     剖面圖的組名牌　　　　點進那一組
+
+   **而 cursor:pointer 在手機上根本不存在。** 星期三是手機。所以那四個
+   地方在現場等於沒有任何提示：它們是可以按的東西，長得像字。
+
+   ── 用哪一個記號 ──
+
+   這個作品已經有「可以按」的記號了：act-card 那顆閃爍的 ▶，
+   舊版寶可夢的選單游標（見 58-battle.css）。那一顆留給「這一頁唯一
+   的動作」——到處都閃就不是提示是雜訊。
+
+   所以用同一套語言的靜態版：一個不會動的 ▸，永遠在，暗的。
+   靜態才在手機上成立（沒有 hover 可以用）。
+
+   顏色用 --mute，不吃新的顏色（一個顏色一件事）。按到的時候
+   （hover／focus）才亮成金色——那是「你正在碰它」，跟「它按得下去」
+   是兩件事。 */
+.pressable{position:relative}
+.pressable::after{
+  content:'▸';
+  position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  font-size:22px;line-height:1;color:var(--mute);pointer-events:none
+}
+.pressable:hover::after,.pressable:focus-visible::after{color:var(--gold)}
+/* 已經展開的那一列，箭頭轉下來——它現在說的是「再按一次收起來」。 */
+.pressable.open::after{content:'▾'}
+
 /* 六個區域的顏色與紋理，一個來源。
 
    這一份存在的理由：自己的廊道跟全班那張剖面圖，同一個深度必須長得
@@ -2108,6 +2143,11 @@ b.ptitle{display:block;font-size:33px;font-weight:400;color:var(--ink);line-heig
   .xl-hero .wa{animation:none;opacity:1}
   .xl-hero .wb{animation:none;opacity:0}
 }
+
+/* 名牌只有 --nm 寬（手機上 88px），所以那個箭頭要更貼邊，
+   而且組名要讓出位置——不然長一點的組名會被壓在箭頭底下。 */
+.xl-name.pressable::after{right:4px;font-size:22px}
+.xl-name.pressable b,.xl-name.pressable i{padding-right:14px}
 
 /* 把數字畫出來的那幾個東西。
 
@@ -4638,6 +4678,15 @@ button.ac:active{transform:translateY(1px)}
 .seat i{display:block;font-size:22px;font-style:normal;color:var(--mute);margin-top:5px}
 .seat u{display:block;font-size:22px;text-decoration:none;color:var(--gold);margin-top:5px}
 .seat.on{border-color:var(--gold)}
+/* 可以換過去的那幾張要看得出來按得下去（見 50-style.css 的 .pressable）。
+   現在坐的那一張不用——它是狀態不是動作，而且它已經有金框跟
+   「現在在這裡」那一行。 */
+.seat:not(.on){position:relative}
+.seat:not(.on)::after{
+  content:'▸';position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  font-size:22px;line-height:1;color:var(--mute);pointer-events:none
+}
+.seat:not(.on):hover::after,.seat:not(.on):focus-visible::after{color:var(--gold)}
 .seat:not(.on):hover{border-color:var(--dim)}
 /* 側欄那一格現在是一顆鍵。看起來要跟原本一模一樣。 */
 button.side-head{
@@ -13384,7 +13433,7 @@ function topBar() {
     '<span class="who">' + esc(t.name) + '</span>' +
     /* 專案名點得進招牌。名字最大的地方就是改名字的入口——
    本來只有廊道最底下那個小圖示能進去。 */
-'<a class="hud-pj" data-act="run" data-p=\'' +
+'<a class="hud-pj pressable" data-act="run" data-p=\'' +
   esc(JSON.stringify({ a: 'go:sign' })) + '\'>' +
   esc(t.project || '（還沒定）') + '</a>' +
     '<span class="sp"></span>' +
@@ -13465,7 +13514,7 @@ function sideBar() {
     /* 點得進去換班。多一個班的時候才寫幾個——只有一個的時候
        那個數字是雜訊。 */
     var ns = seatsOf(u).length;
-    headBlock = '<button class="side-head" data-act="run" data-p=\'' +
+    headBlock = '<button class="side-head pressable" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:mkclass' })) + '\'><div class="k">TEACHER</div>' +
       '<div class="n">' + esc(u.name) + '</div>' +
       '<div class="s">' + esc(kl.name) + ' · 加入碼 ' +
@@ -13488,7 +13537,7 @@ function sideBar() {
        ——不然兩個班的兩支隊伍長得一樣，他分不出自己在看哪一個。 */
     var ns2 = seatsOf(u).length;
     var kl2 = classOf(u);
-    headBlock = '<button class="side-head" data-act="run" data-p=\'' +
+    headBlock = '<button class="side-head pressable" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:mkclass' })) + '\'>' +
       '<div class="n">' + esc(t.name) + '</div>' +
       '<div class="s">' + esc(ns2 > 1 ? (kl2 ? kl2.name : '') + '　·　' + ns2 + ' 個班'
@@ -16450,7 +16499,7 @@ function logRow(m, r, t) {
   /* 用 div 不用 button：<button> 上的 grid／flex 在 Chromium 不完整生效
      ——內容會被包進一個匿名區塊，第一個子元素因此被收縮成內容寬，
      標題就變成一個字一行。role 與 tabindex 補回鍵盤與輔助工具。 */
-  var H = ['<div role="button" tabindex="0" class="rec' + (open ? ' open' : '') + '" data-act="run" data-p=\'' +
+  var H = ['<div role="button" tabindex="0" class="rec pressable' + (open ? ' open' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'lgopen:' + r.runId })) + '\'>'];
 
   /* 直接排在格線上，不要再包一層。<button> 裡面包巢狀區塊的時候，
@@ -17763,7 +17812,7 @@ function xlLane(r, i, cols, classId, mine) {
 
      整格是一顆鈕，點進去是「他們是誰」；中間那一疊是另一顆，
      點進去是「他們做了什麼」。一條上兩個問題，各自一顆鈕。 */
-  H.push('<button class="xl-name" data-act="run" data-p=\'' +
+  H.push('<button class="xl-name pressable" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'crew:' + r.teamId })) + '\' title="' +
     esc(r.name) + '" style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
   /* 這裡試過掛那一組的招牌，撤掉了：signOf 對每一組都回同一張
