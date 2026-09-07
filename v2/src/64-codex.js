@@ -114,7 +114,15 @@ PAGES.codex = function () {
         (can ? ' data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'go:patron:' + c.n })) + '\'' : '') + '>');
       /* 沒解鎖的：黑影一個，名字跟形容都不給。 */
-      H.push(patTag(c, can ? z.pal : shadePal(z.pal), 'cx-px'));
+      /* 用大圖（36×24），不是小圖（24×16）。
+
+         小圖在這一格顯示成 44px＝一格 1.83 個螢幕像素，而 pixelated
+         的縮放只會取整數——所以同一圈輪廓有的地方 2px、有的地方 1px，
+         那一圈就斷斷續續。使用者說「看不到完整輪廓」講的就是這個。
+
+         大圖 36 格寬顯示成 72px 剛好 2 倍，每一格都是兩個像素，
+         輪廓是連續的。 */
+      H.push(patTag(c, can ? z.pal : shadePal(z.pal), 'cx-px', 1));
       H.push('<div><b>' + (can ? esc(c.n) : '？？？') + '</b>');
       if (can) H.push('<em>' + esc(c.t) + '</em>');
       else H.push('<em>還沒收下過他的委託。</em>');

@@ -155,7 +155,18 @@ button.ac:active{transform:translateY(1px)}
 .cxi:not(.met){opacity:1;background:rgba(0,0,0,.16)}
 .cxi:not(.met) b{color:var(--mute)}
 .cxi:not(.met) em{color:var(--line2)}
-.px.cx-px{width:44px;height:44px;flex:0 0 44px}
+/* 圖鑑那一格的生物。
+
+   本來 44×44——而那張圖是 24×16（3:2），硬塞進正方形等於**拉扁**，
+   再加上 44÷24＝1.83 的非整數縮放，輪廓那一圈就斷斷續續。
+
+   改成大圖 36×24 顯示成 72×48：長寬比對得上，而且剛好 2 倍，
+   每一格都是兩個螢幕像素。
+
+   （試過改成白底——量出來反而更糟：每一隻的反光是近白色，
+   在白底上對比只有 1.03，整片反光會不見。暗底是量過六種底色
+   裡最好的一個，最差的一階還有 2.36。） */
+.px.cx-px{width:72px;height:48px;flex:0 0 72px}
 .cxi b{display:block;font-size:22px;font-weight:400;color:var(--ink);line-height:1.3}
 /* 說明砍成一句「牠會做什麼」之後，字級就升得上來——
    長什麼樣那半句刪掉了，因為旁邊就畫著牠。 */
