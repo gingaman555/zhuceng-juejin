@@ -251,7 +251,17 @@ function xlLane(r, i, cols, classId, mine) {
 
        藤蔓 57 格全部看得見、11/16 格高、蓋滿整個框，正好補在身體不在的
        地方。 */
-    if (r.stall >= 1 && !left) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
+    /* 藤蔓只長在第一階（人還站著）。
+
+       上一輪把它改成 stall >= 1，也就是睡著那一組也長——錯了。
+       藤蔓是為站著的人畫的：53/57 格會壓在站著的身上，壓到躺著的人
+       身上只剩 41 格，另外 16 格浮在他上面的空氣裡。而且藤蔓最亮那
+       一階對比 6.09、忍者最亮 3.02，所以眼睛先讀到一個綠色的 X，
+       人變成它下面的影子。
+
+       真正的病在睡著那張圖本身（見 11-world.js 的 HERO.sleep），
+       已經重畫。這裡改回第一階。 */
+    if (r.stall === 1 && !left) H.push(pxTag(VINE.px, VINE.pal, 'vine-s'));
     H.push('</span>');
   });
   H.push('</button>');
