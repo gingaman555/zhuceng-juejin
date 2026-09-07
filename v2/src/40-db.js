@@ -115,7 +115,7 @@ function save() {
    已經開過的瀏覽器會自己換成新的那一份。
 
    只影響示範資料。有人自己建過帳號的那一份永遠不動（見 load）。 */
-var SEED_V = 14;   /* 14：不分組那一站的示範資料改成一人一組 */
+var SEED_V = 15;   /* 15：甲組多一趟走完的，示範資料才買得起點亮 */
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE)); } catch (e) { DB = null; }
