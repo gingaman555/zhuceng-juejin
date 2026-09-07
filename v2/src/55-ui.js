@@ -263,6 +263,23 @@ function render() {
      沒有組別的話，不知道要畫哪一條廊道——側欄跟頂條也一樣，
      它們每一格都在講「你的組」，這時候還沒有那個東西。 */
   /* 老師還沒有班：先開一個。他是發碼的人，不該卡在別人身上。 */
+  /* ── 「你的班」永遠走得進去 ──
+
+     底下那兩道門是「還沒有班／還沒有隊就哪裡都不能去」，那對第一次
+     進來的人是對的。可是加了第二個班之後會踩到這個坑：
+
+       小美在 A 班有一組 → 加進 B 班 → B 班還沒有組
+       → render 把她強制送到「建一隊」
+       → 那一頁只有建立／加入／登出　**再也回不去 A 班**
+
+     她被自己加的那個班困住了。所以這一頁要在兩道門前面放行——
+     她是特地按進來換班的，不是走錯路。 */
+  if (S.page === 'mkclass') {
+    document.getElementById('app').innerHTML =
+      '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
+      (S.flash ? flashBar() : '') + PAGES.mkclass() + '</div></div>';
+    return;
+  }
   if (u.role === 'teacher' && !u.classId) {
     document.getElementById('app').innerHTML =
       '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +

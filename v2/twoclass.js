@@ -203,7 +203,27 @@ ok(座數 === 2, '「你的班」那一頁列出 2 個座位（數到 ' + 座數
 ok(/現在在這裡/.test(mk), '標出現在坐在哪一個');
 ok(mk.indexOf(A.name) >= 0 && mk.indexOf(B.name) >= 0, '兩個班的名字都在');
 
-節('8', '舊資料（這一版之前建的帳號）', '');
+節('8', '加了新班還沒建隊，會不會被困住');
+
+/* 這一條是實測踩到的：小美在 A 班有一組 → 加進 B 班 → B 班還沒有組
+   → render 把她強制送到「建一隊」→ 那一頁只有建立／加入／登出，
+   她再也回不去 A 班。被自己加的那個班困住。 */
+const 丁 = actRegister({ account: 'b1081299', password: 'aaaa', name: '小丁', role: 'student', code: A.joinCode }).user;
+as(丁); const g丁 = actNewTeam('第九組', 丁.userId).team; actRename(g丁.teamId, '丁的專題');
+actJoinClass(丁.userId, B.classId ? B.joinCode : '');
+ok(seatsOf(userOf(丁.userId)).length === 2, '小丁有兩個座位');
+ok(!userOf(丁.userId).teamId, '新的那一班還沒有組');
+ok(homeFor(userOf(丁.userId)) === 'myteam', 'homeFor 會把她送到「建一隊」');
+as(丁); S.page = 'myteam'; S.p = {}; DRAFT = {};
+const mt = PAGES.myteam();
+ok(/回到你的班/.test(mt), '「建一隊」那一頁上有「回到你的班」　← 不是死路');
+S.page = 'mkclass'; S.p = {}; DRAFT = {};
+const mk2 = PAGES.mkclass();
+ok((mk2.match(/<button class="seat/g) || []).length === 2,
+  '就算這一班還沒有組，「你的班」那一頁還是列得出兩個座位');
+ok(/去建這一班的隊/.test(mk2), '那一顆「回去」在沒有組的時候換成「去建這一班的隊」');
+
+節('9', '舊資料（這一版之前建的帳號）');
 
 const 舊 = { userId: 'Uold', account: 'old01', name: '舊帳號', role: 'student',
   classId: A.classId, teamId: gA.teamId, createdAt: now() };

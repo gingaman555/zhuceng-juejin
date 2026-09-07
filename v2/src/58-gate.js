@@ -330,7 +330,12 @@ PAGES.mkclass = function () {
   H.push('</div>');
 
   H.push('<div class="row">');
-  if (ss.length && u.classId) H.push(btn('回去', 'go:' + homeFor(u), 'ghost'));
+  /* 這一班還沒有組的時候，homeFor 回的是「建一隊」——那一頁現在有
+     回來的路（見 PAGES.myteam），所以指過去是安全的。 */
+  if (ss.length && u.classId) {
+    H.push(btn(homeFor(u) === 'myteam' ? '去建這一班的隊' : '回去',
+      'go:' + homeFor(u), 'ghost'));
+  }
   H.push(btn('登出', 'logout', 'ghost'));
   H.push('</div>');
   H.push('</div></div>');
@@ -361,7 +366,12 @@ PAGES.myteam = function () {
   H.push('</div>');
 
   H.push('<p class="dim">組好了就不能換——之後每一趟的紀錄都掛在這一隊上。</p>');
+  H.push('<div class="row">');
+  /* 在好幾個班裡的人，這一頁不是死路：他可能是剛加進這一個班、
+     現在想先回去原本那一班。 */
+  if (seatsOf(me()).length > 1) H.push(btn('回到你的班', 'go:mkclass', 'ghost'));
   H.push(btn('登出', 'logout', 'ghost'));
+  H.push('</div>');
   H.push('</div></div>');
   return H.join('');
 };
