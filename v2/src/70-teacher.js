@@ -68,15 +68,15 @@ PAGES.radar = function () {
   var out = exitQueue(u.classId, u.userId);
   /* 剛說了幾天、還沒有人回一句的那幾趟（見 40-db.js 的 askQueue）。 */
   var asks = askQueue(u.classId);
-  /* RULES.ASK 關著的時候連那一格都不畫，而且不管 DRAFT 記著什麼，
+  /* 分頁只有兩格。「剛承諾」不在這裡——它是一件有的時候才發生的事，
+     從審核那一頁上的一行進去（見下面）。
+
+     RULES.ASK 關著的話連那一行都不出現，而且不管 DRAFT 記著什麼
      都退回「審核」——不然關掉之前停在那一格的人會落在一個空白頁。 */
   var tq = DRAFT.tq === 'exit' ? 'exit'
     : ((DRAFT.tq === 'ask' && RULES.ASK) ? 'ask' : 'rev');
-  var 格 = [['rev', '審核', rows.length]];
-  if (RULES.ASK) 格.push(['ask', '剛承諾', asks.length]);
-  格.push(['exit', '出口', out.length]);
   H.push('<div class="segs">');
-  格.forEach(function (g) {
+  [['rev', '審核', rows.length], ['exit', '出口', out.length]].forEach(function (g) {
     H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
       '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
@@ -93,6 +93,9 @@ PAGES.radar = function () {
        收到（「我看過但沒意見」對他沒有資訊，只會多一則通知）。 */
     H.push(head('剛承諾', asks.length ? asks.length + ' 組剛說了天數' : '沒有剛承諾的',
       ''));
+    /* 這一頁不在分頁上，所以要自己給一條回去的路。 */
+    H.push('<div class="row"><button class="btn ghost" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'tq:rev' })) + '\'>回審核</button></div>');
     if (!asks.length) {
       H.push('<div class="card"><p class="dim">' +
         '他們一說要花幾天，這裡就會出現。你可以回一句，也可以不回。' +
@@ -150,6 +153,22 @@ PAGES.radar = function () {
 
   /* 說明句拿掉：清單本來就照等最久排。 */
   H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '沒有等你的', ''));
+
+  /* ── 有人剛說了天數 ──
+
+     只在真的有的時候出現，沒有就完全不存在。所以它不佔常態的複雜度
+     ——老師平常打開這一頁看到的還是只有一件事。
+
+     語氣是邀請不是待辦：回一句是選項，沒有話要說就不用進去
+     （見 40-db.js 的 actAskSkip：「我看過但沒意見」對學生沒有資訊）。
+     所以這裡不寫成「N 件待處理」，也不放在清單裡佔一列——放在清單裡
+     它就變成一件擋在真正工作前面的事。 */
+  if (RULES.ASK && asks.length) {
+    H.push('<button class="asknote pressable" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'tq:ask' })) + '\'>' +
+      '<b>' + asks.length + ' 組剛說了要花幾天</b>' +
+      '<i>你可以回一句，也可以不回</i></button>');
+  }
 
   if (!rows.length) {
     H.push('<div class="card">');

@@ -2542,3 +2542,17 @@ button.side-head{
   display:block;width:100%;text-align:left;border:0;background:none;
   color:inherit;font:inherit;cursor:pointer;padding:0
 }
+
+/* ---------- 有人剛說了天數 ----------
+
+   只在有的時候出現的一行（見 70-teacher.js）。它不是待辦，是邀請——
+   所以不用金色（金色在這裡是「該你動了」），用一條暗的邊。 */
+.asknote{
+  display:block;width:100%;text-align:left;
+  padding:14px 33px 14px 14px;margin:0 0 11px;
+  border:0;border-left:3px solid var(--mute);background:none;
+  color:var(--dim);font:inherit;cursor:pointer
+}
+.asknote b{display:block;font-size:22px;font-weight:400;color:var(--ink)}
+.asknote i{display:block;font-size:22px;font-style:normal;color:var(--mute);margin-top:5px}
+.asknote:hover{border-left-color:var(--gold)}
