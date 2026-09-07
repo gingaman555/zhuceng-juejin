@@ -5298,9 +5298,15 @@ button.ac:active{transform:translateY(1px)}
 /* 兩行連著的時候（承諾那一頁的拆件卡）不要各自空一行——
    它們是同一件事的兩半。 */
 .wtag + .wtag{margin-top:-6px}
-/* 後面那半句是補充，不是同一件事，所以退一階。 */
-.wtag span{color:var(--mute);margin-left:11px}
-.wtag.one span{color:var(--mute)}
+/* 後面那半句是補充，自己一行。
+
+   本來是接在同一行後面、靠 margin-left 隔開。可是全組那一種本身就是
+   --mute，補充也是 --mute——同色又同一行，讀起來會黏成一句：
+   「全組一份誰交出去就是誰寫的那一份」。
+
+   而這裡沒有更暗的一階可以退（--mute 已經是三階裡最暗的），
+   所以改用換行分開。不用顏色，一個顏色一件事。 */
+.wtag span{display:block;color:var(--mute);margin-top:5px}
 
 /* ---------- 排行榜 ----------
    刻意加進來、而且準備好隨時拿掉的（見 68-rank.js 的說明）。
