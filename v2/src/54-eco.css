@@ -174,7 +174,8 @@
   content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;
   background:rgba(0,0,0,.45)
 }
-.xl-hero .px.vine-s{position:absolute;inset:0;width:44px;height:44px;opacity:.9}
+/* .xl-hero .px.vine-s 拿掉了：這一頁上不畫停滯（見 62-eco.js）。
+   藤蔓還在用，在自己那一條廊道上——那裡的樣式在 50-style.css 的 .px.vine。 */
 /* ---------- 停很久那一組 ----------
 
    這一條追了兩輪。第一輪把 .6 改成 .85，使用者說還是沒修好——

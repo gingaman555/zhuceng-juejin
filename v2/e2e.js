@@ -66,7 +66,10 @@ go('mkclass'); form('mk-name', '設計專題'); ACTS.mkclass();
 const kl = DB.Classes[0];
 ok('開班了，加入碼 ' + kl.joinCode);
 
-const NAMES = ['王小美', '陳阿哲', '林子涵', '黃柏宇'];
+/* 兩個人。真的要上的那個班是六組每組兩人（見 45-seed.js 與 class.js），
+   而組員人數會改變好幾件事的形狀：拆件掛在誰名下、「還有幾個人沒填」、
+   剖面圖上一條廊道站幾個人。用四個人跑等於在測一個不存在的班。 */
+const NAMES = ['王小美', '陳阿哲'];
 const stu = [];
 NAMES.forEach(function (n, i) {
   S.who = null; DB.Session = null;
@@ -76,12 +79,12 @@ NAMES.forEach(function (n, i) {
   ACTS.reg();
   stu.push(me());
 });
-be('四個學生註冊完，名字是', stu.map(u => u.name).join('、'), NAMES.join('、'));
+be('兩個學生註冊完，名字是', stu.map(u => u.name).join('、'), NAMES.join('、'));
 
 as(stu[0]);
 const tm = actNewTeam('第一組', stu[0].userId).team;
 stu.slice(1).forEach(u => { as(u); actJoinTeam(tm.joinCode, u.userId); });
-be('組員人數', DB.Users.filter(u => u.teamId === tm.teamId).length, 4);
+be('組員人數', DB.Users.filter(u => u.teamId === tm.teamId).length, NAMES.length);
 
 /* 新的一組要先取專案名——廊道在取名之前不給「做完了」那一顆，
    那是第一天真的會走到的一步。 */
@@ -115,7 +118,9 @@ DRAFT.plan = stu.map((u, i) => ({ n: '第' + (i + 1) + '件', d: i + 1, who: u.u
 DRAFT.sure = 'mid';
 ACTS.commit(msId);
 const run = runOf(tm.teamId, msId);
-be('承諾天數（拆件加總）', run.est, 1 + 2 + 3 + 4);
+/* 拆件的天數是 1、2、3…，人數一變總和就變。寫成算的，
+   不是寫死一個只有四個人的時候才對的數字。 */
+be('承諾天數（拆件加總）', run.est, NAMES.reduce((a, _, i) => a + i + 1, 0));
 be('狀態', run.state, 'running');
 
 /* ══ 四 · 廊道那一顆的三種狀態 ══ */
@@ -149,31 +154,29 @@ function 填自己那一份(u, i, 天) {
   ACTS.btsave(run.runId);
 }
 填自己那一份(stu[0], 0, 1);
-填自己那一份(stu[1], 1, 4);
-c = 廊道鍵(stu[2]);
-be('填了兩個 · 話', /還有 2 個人/.test(c.話), true);
-be('填了兩個 · 狀態沒動', find('Runs', x => x.runId === run.runId).state, 'running');
+c = 廊道鍵(stu[1]);
+be('填了一個 · 話', /還有 1 個人/.test(c.話), true);
+be('填了一個 · 狀態沒動', find('Runs', x => x.runId === run.runId).state, 'running');
 
-填自己那一份(stu[2], 2, 1);
-填自己那一份(stu[3], 3, 3);
+填自己那一份(stu[1], 1, 4);
 c = 廊道鍵(stu[0]);
 be('全填完 · 鍵', c.鍵, '交出去給老師');
 be('全填完 · 話', /還沒有人交出去/.test(c.話), true);
 
 const mid = find('Runs', x => x.runId === run.runId);
-be('四個人的實際天數', JSON.stringify(mid.spent), JSON.stringify([1, 4, 1, 3]));
-be('四句「我做了什麼」', Object.keys(mid.said).length, 4);
+be('兩個人的實際天數', JSON.stringify(mid.spent), JSON.stringify([1, 4]));
+be('兩句「我做了什麼」', Object.keys(mid.said).length, 2);
 as(tea);
 be('老師還看不到（還沒交）', radar(kl.classId).some(x => x.run.runId === run.runId), false);
 
 /* ══ 五 · 交出去 ══ */
 H('交出去');
-as(stu[3]);
+as(stu[1]);
 S.page = 'battle'; S.p = { id: run.runId }; DRAFT = {};
 be('第一次遇到他，先停在選單頁', btPhase(find('Runs', x => x.runId === run.runId)), 'menu');
 ACTS.btgo(run.runId);
 DRAFT = {}; S.p = { id: run.runId, ph: 'q', q: 1 }; PAGES.battle();
-be('存過的數字帶回畫面', JSON.stringify(DRAFT.spent), JSON.stringify([1, 4, 1, 3]));
+be('存過的數字帶回畫面', JSON.stringify(DRAFT.spent), JSON.stringify([1, 4]));
 DRAFT.where = 'TronClass 第三次作業';
 DRAFT.feel = 'bad'; DRAFT.why = '第二個受訪者臨時改期';
 DRAFT.scope = 'less'; DRAFT.next = '再訪一個人';
@@ -184,7 +187,7 @@ be('狀態', sub.state, 'submitted');
 be('判定', !!sub.stamp, true);
 be('組的四題都寫進去了', [sub.link, sub.feel, sub.scope, sub.next].join('|'),
   'TronClass 第三次作業|bad|less|再訪一個人');
-be('個人那兩樣沒被洗掉', JSON.stringify(sub.spent), JSON.stringify([1, 4, 1, 3]));
+be('個人那兩樣沒被洗掉', JSON.stringify(sub.spent), JSON.stringify([1, 4]));
 as(stu[0]);
 be('交出去之後個人改不動了', actMyPart(tm.teamId, run.runId, { said1: '偷改' }), null);
 as(tea);
@@ -196,7 +199,7 @@ as(tea);
 S.page = 'review'; S.p = { id: run.runId }; DRAFT = {};
 const rv = PAGES.review();
 be('釘在底部那一條在', rv.indexOf('rvw-pin') >= 0, true);
-be('四個人的名字都印出來', NAMES.filter(n => rv.indexOf(n) >= 0).length, 4);
+be('每一個人的名字都印出來', NAMES.filter(n => rv.indexOf(n) >= 0).length, NAMES.length);
 FIELDS['gr-word'] = Object.create(stubEl); FIELDS['gr-word'].value = '';
 ACTS.reject(run.runId);
 be('沒寫字退不掉', find('Runs', x => x.runId === run.runId).state, 'submitted');
