@@ -348,8 +348,28 @@ button.ac:active{transform:translateY(1px)}
 .dk > .px, .dk > span.px{flex:0 0 44px}
 .dk i{font-style:normal;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dk:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--line2)}
-/* 有新東西的那一扇：金邊。金＝可以按、你在這裡（見 50-style.css）。 */
-.dk.lit{color:var(--ink);box-shadow:inset 0 0 0 2px var(--gold)}
+/* ── 有新東西的那一扇：光從裡面透出來 ──
+
+   本來是 inset 0 0 0 2px var(--gold)——金色的內框。問題是按下去的樣子
+   （.dk:active，見 52-material.css）**一模一樣**也是金色內框，所以一扇
+   「裡面有東西」的門看起來就是一顆正在被按著的鍵。使用者講的就是這個：
+   「很像是已經按上去了」。
+
+   內框是往裡凹的，那是手指壓下去的方向。所以這裡改成往外：門面透出
+   一層暖光、金邊長在外面。兩個方向相反，就不會再讀成同一件事。
+
+   而且它比內框更顯眼——內框是往內縮的一條線，外光是整扇門亮起來，
+   那正是這一扇要的：它是唯一會累積東西的那一扇，有新的就該被看見。 */
+.dk.lit{
+  color:var(--ink);
+  background:rgba(233,179,65,.12);
+  box-shadow:0 0 0 2px var(--gold), inset 0 2px 0 rgba(255,240,214,.16)
+}
+/* 按下去的時候還是要看得出被按住——所以 lit 的門按下去換回內框。
+   同一顆鍵上，外＝有東西、內＝我正在按它。 */
+.dk.lit:active{
+  box-shadow:0 0 0 2px var(--gold-d), inset 0 0 0 2px var(--gold)
+}
 
 /* ---------- 審核頁：釘在底部的那兩顆 ----------
 

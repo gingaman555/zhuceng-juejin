@@ -449,7 +449,18 @@ function deskRow(t, next) {
     ? '圖鑑：多了 ' + [cnM ? cnM + ' 位委託人' : '', cnK ? cnK + ' 張任務之證' : '']
         .filter(function (x) { return x; }).join('、')
     : '圖鑑：遇過的委託人，跟拿到的任務之證';
-  H.push('<button class="dk lit" data-act="run" data-p=\'' +
+  /* ── 金邊是「裡面有你還沒看過的東西」 ──
+
+     這一顆本來寫死 lit，所以第一天打開就是金的——而那時候圖鑑裡
+     一位委託人都沒遇過、一張任務之證都沒有。金邊在說「這裡面有東西」，
+     學生點進去看到一整片黑影。
+
+     金色在這整套裡只代表一件事（見 50-style.css）：可以按、你在這裡、
+     有新東西。寫死就是把它變成裝飾，而一個永遠亮著的記號等於沒有記號
+     ——真的多了一位委託人的時候，它跟昨天長得一模一樣。
+
+     改成跟門上那個數字同一個來源：有 cn 才亮。 */
+  H.push('<button class="dk' + (cn ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:codex' })) + '\' title="' +
     esc(cnSay) + '">' +
     pxTag(ICONS.codex, ICON_ON, '') + '<i>圖鑑</i>' +
@@ -458,8 +469,18 @@ function deskRow(t, next) {
 
      放在圖鑑旁邊是因為它們是同一種東西：都不是「要你做的事」，
      都是「這個世界是什麼」。而它一直在——沒觸發過的東西等於不存在，
-     一個看過就消失的開場，等於他忘了之後再也找不回來。 */
-  H.push('<button class="dk" data-act="run" data-p=\'' +
+     一個看過就消失的開場，等於他忘了之後再也找不回來。
+
+     ── 還沒讀過就亮 ──
+
+     金邊的意思是「裡面有你還沒看過的東西」，而第一天最符合那句話的
+     就是這一扇：圖鑑是空的，故事是滿的。本來剛好相反——圖鑑寫死亮著、
+     故事不亮，於是那個記號指著空房間，而真正該先讀的那一扇沒有記號。
+
+     sawStory 本來就有（見 55-ui.js：第一次進來會先擋去讀一次），
+     所以這裡不用多存任何東西。讀過就不亮了，跟圖鑑同一條規則。 */
+  var 沒讀過故事 = !(me() || {}).sawStory;
+  H.push('<button class="dk' + (沒讀過故事 ? ' lit' : '') + '" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'story:0' })) + '\' title="' +
     esc('故事：這是什麼地方，這裡怎麼走') + '">' +
     pxTag(ICONS.pack, ICON_PAL, '') + '<i>故事</i></button>');
@@ -474,8 +495,13 @@ function deskRow(t, next) {
 
      「我們做完了」那一句話搬到任務清單去說：看完那一頁才知道自己是不是
      真的做完了，說出口的地方就該在那裡。 */
+  /* 這一顆的 lit 是真的有條件的（只有老師開了才畫得出來），可是條件
+     寫在外面的 if 上、class 寫死在字串裡——從字串上看不出差別。
+
+     寫成跟另外兩扇同一種形狀：條件放進 class 裡。這樣「金邊有沒有接
+     在條件上」就變成看一眼字串就知道的事，check.js 才擋得準。 */
   if (t.exitOk) {
-    H.push('<button class="dk lit" data-act="run" data-p=\'' +
+    H.push('<button class="dk' + (t.exitOk ? ' lit' : '') + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:exit' })) + '\' title="' +
       esc('出口：老師開了，從這裡上去') + '">' +
       pxTag(ICONS.log, ICON_ON, '') + '<i>出口</i></button>');
