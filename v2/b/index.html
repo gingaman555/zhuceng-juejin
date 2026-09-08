@@ -5055,12 +5055,24 @@ button.side-head{
 .bt-plate{width:auto;min-width:110px}
 
 /* ── 登場 ──
-   牠從右邊滑進來。舊版寶可夢就是這樣：沒有粒子，就是滑進來。 */
-.bt-side.foe .bt-ch{animation:btenter .5s steps(5,end) 1, btbob 1.2s steps(2,end) .5s infinite}
+   牠從右邊滑進來。舊版寶可夢就是這樣：沒有粒子，就是滑進來。
+
+   ── 只有剛遇到的時候滑 ──
+
+   這一頁每答完一題就整塊重畫，元素重新生出來、掛在上面的動畫就重播。
+   所以本來每按完一部份，委託人就從右邊再滑進來一次、名牌再推一次——
+   看起來像他每答一題就消失再出現。
+
+   登場那幾段收進 .bt.first（見 67-battle.js：進這一頁的時候 S.p 只有
+   id，問題那幾步一定帶 ph）。呼吸（btbob）不收，它是狀態不是事件——
+   而它上面那一條（.bt-side.foe .bt-ch）本來就給了，這裡不用再寫一次。 */
+.bt.first .bt-side.foe .bt-ch{
+  animation:btenter .5s steps(5,end) 1, btbob 1.2s steps(2,end) .5s infinite
+}
 @keyframes btenter{from{transform:translateX(44px)}to{transform:translateX(0)}}
-.bt-side.foe .bt-plate{animation:btslide .45s steps(5,end) 1}
+.bt.first .bt-side.foe .bt-plate{animation:btslide .45s steps(5,end) 1}
 @keyframes btslide{from{transform:translateX(-55px)}to{transform:translateX(0)}}
-.bt-side.me .bt-plate{animation:btslider .45s steps(5,end) 1}
+.bt.first .bt-side.me .bt-plate{animation:btslider .45s steps(5,end) 1}
 @keyframes btslider{from{transform:translateX(55px)}to{transform:translateX(0)}}
 
 /* ── 被打敗 ──
@@ -20240,11 +20252,24 @@ PAGES.battle = function () {
 
      舊的那一套沒有刪掉：.bt 本體、名牌、站台、閃場都還在，
      .talk 只是把它們重排（見 58-battle.css）。 */
-  var H = ['<div class="bt talk ' + zone.key + ' at-' + ph + '" data-run="' +
-    esc(r.runId) + '">'];
+  /* ── 遭遇只有一次 ──
 
-  /* 遭遇：整個畫面閃一次再進場。 */
-  H.push('<div class="bt-wipe"></div>');
+     這一頁每答完一題就整塊重畫（見 ACTS.btnext：S.p 換一個 q 再 render），
+     而遭遇那兩段動畫是掛在元素上的——元素重新生出來，動畫就重播。
+     所以本來是：每按完一部份，整個畫面黑閃一次、委託人再從右邊滑進來
+     一次。使用者：「為什麼我交作業每按完一部份生物就會閃一次」。
+
+     那兩段是「你遇到他了」的戲，一趟只該演一次。演第二次就不是遇到，
+     是他每答一題就消失再出現。
+
+     怎麼分：進這一頁的時候 S.p 只有 { id }（見 60-student.js 的
+     go:battle），問題那幾步一定帶 ph。所以沒有 ph 就是剛遇到。 */
+  var 剛遇到 = !S.p.ph;
+  var H = ['<div class="bt talk ' + zone.key + ' at-' + ph +
+    (剛遇到 ? ' first' : '') + '" data-run="' + esc(r.runId) + '">'];
+
+  /* 遭遇：整個畫面閃一次再進場。只有剛遇到才放。 */
+  if (剛遇到) H.push('<div class="bt-wipe"></div>');
   /* 你說了幾天。本來寫在你那張名牌上。 */
   H.push('<div class="bt-hud">說 ' + est + ' 天</div>');
 

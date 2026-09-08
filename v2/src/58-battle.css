@@ -221,12 +221,24 @@
 .bt-plate{width:auto;min-width:110px}
 
 /* ── 登場 ──
-   牠從右邊滑進來。舊版寶可夢就是這樣：沒有粒子，就是滑進來。 */
-.bt-side.foe .bt-ch{animation:btenter .5s steps(5,end) 1, btbob 1.2s steps(2,end) .5s infinite}
+   牠從右邊滑進來。舊版寶可夢就是這樣：沒有粒子，就是滑進來。
+
+   ── 只有剛遇到的時候滑 ──
+
+   這一頁每答完一題就整塊重畫，元素重新生出來、掛在上面的動畫就重播。
+   所以本來每按完一部份，委託人就從右邊再滑進來一次、名牌再推一次——
+   看起來像他每答一題就消失再出現。
+
+   登場那幾段收進 .bt.first（見 67-battle.js：進這一頁的時候 S.p 只有
+   id，問題那幾步一定帶 ph）。呼吸（btbob）不收，它是狀態不是事件——
+   而它上面那一條（.bt-side.foe .bt-ch）本來就給了，這裡不用再寫一次。 */
+.bt.first .bt-side.foe .bt-ch{
+  animation:btenter .5s steps(5,end) 1, btbob 1.2s steps(2,end) .5s infinite
+}
 @keyframes btenter{from{transform:translateX(44px)}to{transform:translateX(0)}}
-.bt-side.foe .bt-plate{animation:btslide .45s steps(5,end) 1}
+.bt.first .bt-side.foe .bt-plate{animation:btslide .45s steps(5,end) 1}
 @keyframes btslide{from{transform:translateX(-55px)}to{transform:translateX(0)}}
-.bt-side.me .bt-plate{animation:btslider .45s steps(5,end) 1}
+.bt.first .bt-side.me .bt-plate{animation:btslider .45s steps(5,end) 1}
 @keyframes btslider{from{transform:translateX(55px)}to{transform:translateX(0)}}
 
 /* ── 被打敗 ──

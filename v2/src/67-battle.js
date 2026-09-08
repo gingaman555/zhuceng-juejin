@@ -155,11 +155,24 @@ PAGES.battle = function () {
 
      舊的那一套沒有刪掉：.bt 本體、名牌、站台、閃場都還在，
      .talk 只是把它們重排（見 58-battle.css）。 */
-  var H = ['<div class="bt talk ' + zone.key + ' at-' + ph + '" data-run="' +
-    esc(r.runId) + '">'];
+  /* ── 遭遇只有一次 ──
 
-  /* 遭遇：整個畫面閃一次再進場。 */
-  H.push('<div class="bt-wipe"></div>');
+     這一頁每答完一題就整塊重畫（見 ACTS.btnext：S.p 換一個 q 再 render），
+     而遭遇那兩段動畫是掛在元素上的——元素重新生出來，動畫就重播。
+     所以本來是：每按完一部份，整個畫面黑閃一次、委託人再從右邊滑進來
+     一次。使用者：「為什麼我交作業每按完一部份生物就會閃一次」。
+
+     那兩段是「你遇到他了」的戲，一趟只該演一次。演第二次就不是遇到，
+     是他每答一題就消失再出現。
+
+     怎麼分：進這一頁的時候 S.p 只有 { id }（見 60-student.js 的
+     go:battle），問題那幾步一定帶 ph。所以沒有 ph 就是剛遇到。 */
+  var 剛遇到 = !S.p.ph;
+  var H = ['<div class="bt talk ' + zone.key + ' at-' + ph +
+    (剛遇到 ? ' first' : '') + '" data-run="' + esc(r.runId) + '">'];
+
+  /* 遭遇：整個畫面閃一次再進場。只有剛遇到才放。 */
+  if (剛遇到) H.push('<div class="bt-wipe"></div>');
   /* 你說了幾天。本來寫在你那張名牌上。 */
   H.push('<div class="bt-hud">說 ' + est + ' 天</div>');
 
