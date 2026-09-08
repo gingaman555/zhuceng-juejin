@@ -397,11 +397,18 @@
 }
 .tline{margin-bottom:11px}
 
-/* 主要那一顆鍵：選單的一行，前面有游標。 */
+/* 主要那一顆鍵：選單的一行，前面有游標。
+
+   直向的 padding 是 11 不是 6：這一顆是廊道上每一個狀態唯一該按的那一顆
+   （去見他、做完了、這個專案叫什麼都是它），而 6 的時候整顆只有 38px 高。
+   手指按得到的下限是 44——38 不是按不到，是會按歪，而按歪的那一下
+   會落在它後面的卡片上，看起來就像「我按了但沒反應」。
+
+   11 之後是 48。左邊維持 11，所以那條游標的位置一格都沒動。 */
 .act-card .btn.big{
   clip-path:none;border-radius:0;text-align:left;
   background:none;color:var(--gold);
-  box-shadow:none;padding:6px 11px
+  box-shadow:none;padding:11px
 }
 .act-card .btn.big::before{
   content:'▶';margin-right:9px;color:var(--gold);

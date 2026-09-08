@@ -1563,6 +1563,18 @@ button.ac:active{transform:translateY(1px)}
   color:var(--mute);background:none
 }
 .pl .px-del:hover{color:var(--over)}
+/* 加一件那一列：一格輸入 ＋ 一顆鍵，並排。
+   鍵借上面那幾件的 .pd——同一顆金色方塊，在這裡是加一件。 */
+.pl-new{display:flex;align-items:center;gap:8px}
+.pl-new input{flex:1;min-width:0;margin:0}
+.pl-new .pd{
+  flex:0 0 44px;height:44px;border:0;cursor:pointer;font:inherit;
+  font-size:22px;line-height:1;color:#1A1408;background:var(--gold);
+  box-shadow:2px 2px 0 rgba(0,0,0,.6)
+}
+.pl-new .pd:hover{background:var(--gold2)}
+.pl-new .pd:active{transform:translate(2px,2px);box-shadow:none}
+
 /* 加起來的那個數字。不是鍵，所以沒有鍵的樣子。 */
 .es-n.sum{margin:0 auto}
 

@@ -47,18 +47,39 @@ function rankDev(teamId) {
   var use = rs.slice(-RANK_N);
   var sum = 0, hit = 0, marks = [];
   use.forEach(function (r) {
-    sum += Math.abs(r.actual - r.est) / r.est;
+    /* ── 用他自己說的那個數字，不是談完的那個 ──
+
+       老師回一句「我覺得會是 8 天」，學生按下去，真的做了 8 天。
+       判定算他做到了，那是對的——他答應 8 天，做到 8 天。
+
+       可是這張榜排的是「他估得準不準」。用談完的數字算，那一趟會變成
+       滿分，而那個滿分是老師估的。每次都說「好」的那一組會排在最上面，
+       榜就不再是它自己說的那件事了。
+
+       改讀 estOwn（見 40-db.js）：他一個人的時候按下去的那一個。
+       所以接受那一句話對榜完全沒有影響——不加分，也不扣分。
+       判定那一邊一個字都沒動。 */
+    var own = estOwn(r);
+    if (!(own > 0)) return;
+    sum += Math.abs(r.actual - own) / own;
     /* 只有「跟承諾的一樣」算準。早跟晚都是不準——
-       說 5 天做了 1 天是差了 80%，跟做了 9 天一樣。 */
-    if (r.stamp === 'exact') hit++;
+       說 5 天做了 1 天是差了 80%，跟做了 9 天一樣。
+
+       這裡不能讀 r.stamp：那是拿談完的數字判的。同一列上面排的是
+       他自己的數字、下面印的是談完的判定，那一列會自己打架。 */
+    var mk = RULES.judge(own, r.actual).key;
+    if (mk === 'exact') hit++;
     /* 每一趟往哪一邊偏。三顆空心的點看不出「他每次都比說的久」，
        而那是這張榜上最值得看到的一件事。 */
-    marks.push(r.stamp);
+    marks.push(mk);
   });
+  if (!marks.length) return null;
   /* hit 是寫出來給人看的：準了幾次。加法的講法——
      「你拿到了什麼」，不是「你錯了多少」。
      dev 只留著當平手時分先後，不寫出來。 */
-  return { hit: hit, dev: sum / use.length, n: use.length, marks: marks };
+  /* 除的是真的算進去的那幾趟，不是 use.length——上面會跳過沒有
+     自己數字的那一趟，兩個數對不上的話平均會被稀釋。 */
+  return { hit: hit, dev: sum / marks.length, n: marks.length, marks: marks };
 }
 
 /* 一個班的榜。沒有資料的排在最後，選擇不上榜的整個不出現。 */

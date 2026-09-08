@@ -3735,6 +3735,18 @@ button.ac:active{transform:translateY(1px)}
   color:var(--mute);background:none
 }
 .pl .px-del:hover{color:var(--over)}
+/* 加一件那一列：一格輸入 ＋ 一顆鍵，並排。
+   鍵借上面那幾件的 .pd——同一顆金色方塊，在這裡是加一件。 */
+.pl-new{display:flex;align-items:center;gap:8px}
+.pl-new input{flex:1;min-width:0;margin:0}
+.pl-new .pd{
+  flex:0 0 44px;height:44px;border:0;cursor:pointer;font:inherit;
+  font-size:22px;line-height:1;color:#1A1408;background:var(--gold);
+  box-shadow:2px 2px 0 rgba(0,0,0,.6)
+}
+.pl-new .pd:hover{background:var(--gold2)}
+.pl-new .pd:active{transform:translate(2px,2px);box-shadow:none}
+
 /* 加起來的那個數字。不是鍵，所以沒有鍵的樣子。 */
 .es-n.sum{margin:0 auto}
 
@@ -5151,11 +5163,18 @@ button.side-head{
 }
 .tline{margin-bottom:11px}
 
-/* 主要那一顆鍵：選單的一行，前面有游標。 */
+/* 主要那一顆鍵：選單的一行，前面有游標。
+
+   直向的 padding 是 11 不是 6：這一顆是廊道上每一個狀態唯一該按的那一顆
+   （去見他、做完了、這個專案叫什麼都是它），而 6 的時候整顆只有 38px 高。
+   手指按得到的下限是 44——38 不是按不到，是會按歪，而按歪的那一下
+   會落在它後面的卡片上，看起來就像「我按了但沒反應」。
+
+   11 之後是 48。左邊維持 11，所以那條游標的位置一格都沒動。 */
 .act-card .btn.big{
   clip-path:none;border-radius:0;text-align:left;
   background:none;color:var(--gold);
-  box-shadow:none;padding:6px 11px
+  box-shadow:none;padding:11px
 }
 .act-card .btn.big::before{
   content:'▶';margin-right:9px;color:var(--gold);
@@ -7082,7 +7101,15 @@ var EXTRA_FAUNA = [
    不是真的安全措施。真的上線要換成後端 ＋ bcrypt——這件事寫在這裡，
    免得有人以為它已經安全了。 */
 
-var AUTH_NOTE = '這一版的密碼雜湊只擋肉眼，不是真的加密。上線前要換成後端驗證。';
+/* 這句話印在建立帳號那一頁上，不藏起來（見 58-gate.js）。
+
+   本來寫的是「這一版的密碼雜湊只擋肉眼，不是真的加密。上線前要換成
+   後端驗證。」——誠實是對的，可是那是寫給工程師看的。讀它的是正在
+   註冊的學生，他讀到的只有「這東西還沒做完」。
+
+   同一件事講給他聽，而且給他唯一做得到的那件事：別重用密碼。
+   誠實沒有少一分，多了一個他按得下去的動作。 */
+var AUTH_NOTE = '這裡的密碼不是真的加密。別用你其他地方在用的密碼。';
 
 /* 加鹽的字串雜湊。同一組帳密永遠得到同一個值。 */
 function pwHash(pw, salt) {
@@ -11459,6 +11486,27 @@ function actAnswerAsk(teamId, runId, est) {
   logEvent('askans', { teamId: teamId, runId: runId,
     was: was, ask: r.askEst, now: r.est });
   return r;
+}
+
+/* ---------- 他一個人的時候說的那個數字 ----------
+
+   一趟上有兩個天數，而它們回答的是兩個不同的問題：
+
+     run.est        最後承諾的。判定讀這一個——他答應的是這個數字，
+                    協商完就定了，之後照著它算準不準。
+     estOwn(run)    他還沒聽到任何人講話之前自己說的。談過而且動了
+                    才會跟上面不一樣（estFirst）。
+
+   分開的理由：老師比學生會估。老師回一句「我覺得會是 8 天」、學生
+   按下去、真的做了 8 天——判定當然算他做到了（他答應 8 天，做到 8 天），
+   可是那不代表**他自己**估得準，而排行榜排的正是那一件事。
+
+   兩邊用不同的數字，「聽得進去」跟「估得準」才不會被混成同一個分數：
+   接受那一句對榜完全沒有影響，他榜上的數字永遠是他自己按下去的那一個。
+
+   判定那一邊一個字都沒動（見 20-rules.js 的 judge）。 */
+function estOwn(r) {
+  return (r && r.estFirst != null) ? r.estFirst : (r ? r.est : 0);
 }
 
 /* 有沒有一句話在等他回。 */
@@ -16531,9 +16579,23 @@ PAGES.commit = function () {
         ' 件沒有本人說幾天。出發前讓他們自己按一次，那個數字才是他的。</p>');
     }
   }
+  /* ── 加一件要有一顆看得到的鍵 ──
+
+     本來只有 Enter，而「按 Enter」寫在 placeholder 裡——他一打字那行
+     字就不見了。抬起頭要找「新增」的時候，畫面上沒有任何東西可以按。
+     手機鍵盤的 return 是有效的，但那要他先想到。
+
+     ＋ 就在旁邊，跟底下那幾件的「＋」是同一顆（.pd），所以它不用學：
+     那一顆在下面是加一天，在這裡是加一件。Enter 照樣留著。
+
+     鍵出現以後 placeholder 就不用再教了——圖說得出來的事不再用字說。 */
+  H.push('<div class="pl-new">');
   H.push('<input id="pl-add" placeholder="' +
-    esc(plan.length ? '再一件，按 Enter' : '例：找到人　→ 按 Enter') +
+    esc(plan.length ? '再一件' : '例：找到人') +
     '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.planadd(this.value);}">');
+  H.push('<button class="pd" title="' + esc('加一件') +
+    '" onclick="ACTS.planadd((document.getElementById(\'pl-add\')||{}).value)">＋</button>');
+  H.push('</div>');
   H.push('</div>');
 
   /* 老師分的段。點起來標「這一段會比想的久」——
@@ -20476,18 +20538,39 @@ function rankDev(teamId) {
   var use = rs.slice(-RANK_N);
   var sum = 0, hit = 0, marks = [];
   use.forEach(function (r) {
-    sum += Math.abs(r.actual - r.est) / r.est;
+    /* ── 用他自己說的那個數字，不是談完的那個 ──
+
+       老師回一句「我覺得會是 8 天」，學生按下去，真的做了 8 天。
+       判定算他做到了，那是對的——他答應 8 天，做到 8 天。
+
+       可是這張榜排的是「他估得準不準」。用談完的數字算，那一趟會變成
+       滿分，而那個滿分是老師估的。每次都說「好」的那一組會排在最上面，
+       榜就不再是它自己說的那件事了。
+
+       改讀 estOwn（見 40-db.js）：他一個人的時候按下去的那一個。
+       所以接受那一句話對榜完全沒有影響——不加分，也不扣分。
+       判定那一邊一個字都沒動。 */
+    var own = estOwn(r);
+    if (!(own > 0)) return;
+    sum += Math.abs(r.actual - own) / own;
     /* 只有「跟承諾的一樣」算準。早跟晚都是不準——
-       說 5 天做了 1 天是差了 80%，跟做了 9 天一樣。 */
-    if (r.stamp === 'exact') hit++;
+       說 5 天做了 1 天是差了 80%，跟做了 9 天一樣。
+
+       這裡不能讀 r.stamp：那是拿談完的數字判的。同一列上面排的是
+       他自己的數字、下面印的是談完的判定，那一列會自己打架。 */
+    var mk = RULES.judge(own, r.actual).key;
+    if (mk === 'exact') hit++;
     /* 每一趟往哪一邊偏。三顆空心的點看不出「他每次都比說的久」，
        而那是這張榜上最值得看到的一件事。 */
-    marks.push(r.stamp);
+    marks.push(mk);
   });
+  if (!marks.length) return null;
   /* hit 是寫出來給人看的：準了幾次。加法的講法——
      「你拿到了什麼」，不是「你錯了多少」。
      dev 只留著當平手時分先後，不寫出來。 */
-  return { hit: hit, dev: sum / use.length, n: use.length, marks: marks };
+  /* 除的是真的算進去的那幾趟，不是 use.length——上面會跳過沒有
+     自己數字的那一趟，兩個數對不上的話平均會被稀釋。 */
+  return { hit: hit, dev: sum / marks.length, n: marks.length, marks: marks };
 }
 
 /* 一個班的榜。沒有資料的排在最後，選擇不上榜的整個不出現。 */

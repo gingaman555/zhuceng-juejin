@@ -1051,9 +1051,23 @@ PAGES.commit = function () {
         ' 件沒有本人說幾天。出發前讓他們自己按一次，那個數字才是他的。</p>');
     }
   }
+  /* ── 加一件要有一顆看得到的鍵 ──
+
+     本來只有 Enter，而「按 Enter」寫在 placeholder 裡——他一打字那行
+     字就不見了。抬起頭要找「新增」的時候，畫面上沒有任何東西可以按。
+     手機鍵盤的 return 是有效的，但那要他先想到。
+
+     ＋ 就在旁邊，跟底下那幾件的「＋」是同一顆（.pd），所以它不用學：
+     那一顆在下面是加一天，在這裡是加一件。Enter 照樣留著。
+
+     鍵出現以後 placeholder 就不用再教了——圖說得出來的事不再用字說。 */
+  H.push('<div class="pl-new">');
   H.push('<input id="pl-add" placeholder="' +
-    esc(plan.length ? '再一件，按 Enter' : '例：找到人　→ 按 Enter') +
+    esc(plan.length ? '再一件' : '例：找到人') +
     '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.planadd(this.value);}">');
+  H.push('<button class="pd" title="' + esc('加一件') +
+    '" onclick="ACTS.planadd((document.getElementById(\'pl-add\')||{}).value)">＋</button>');
+  H.push('</div>');
   H.push('</div>');
 
   /* 老師分的段。點起來標「這一段會比想的久」——

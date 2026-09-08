@@ -1259,6 +1259,27 @@ function actAnswerAsk(teamId, runId, est) {
   return r;
 }
 
+/* ---------- 他一個人的時候說的那個數字 ----------
+
+   一趟上有兩個天數，而它們回答的是兩個不同的問題：
+
+     run.est        最後承諾的。判定讀這一個——他答應的是這個數字，
+                    協商完就定了，之後照著它算準不準。
+     estOwn(run)    他還沒聽到任何人講話之前自己說的。談過而且動了
+                    才會跟上面不一樣（estFirst）。
+
+   分開的理由：老師比學生會估。老師回一句「我覺得會是 8 天」、學生
+   按下去、真的做了 8 天——判定當然算他做到了（他答應 8 天，做到 8 天），
+   可是那不代表**他自己**估得準，而排行榜排的正是那一件事。
+
+   兩邊用不同的數字，「聽得進去」跟「估得準」才不會被混成同一個分數：
+   接受那一句對榜完全沒有影響，他榜上的數字永遠是他自己按下去的那一個。
+
+   判定那一邊一個字都沒動（見 20-rules.js 的 judge）。 */
+function estOwn(r) {
+  return (r && r.estFirst != null) ? r.estFirst : (r ? r.est : 0);
+}
+
 /* 有沒有一句話在等他回。 */
 function askPending(teamId) {
   return runsFor(teamId).filter(function (x) {
