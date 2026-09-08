@@ -75,6 +75,20 @@ PAGES.gate = function () {
    雲端一筆都不會少。
 
    SYNC.last 本來就只活在記憶體裡，重載自己就沒了，不用另外處理。 */
+/* 有沒有開口要看示範帳號。
+
+   網址帶 ?demo 或 #demo 才給（見登入頁那一段）。學生拿到的是乾淨的
+   網址，所以他們看不到那一串帳號；要展示的人自己加得上去。
+
+   讀不到 location 的時候回 false——寧可少畫，不要在測試或別的環境裡
+   自己冒出來。 */
+function demoAsked() {
+  try {
+    var s = String(location.search || '') + String(location.hash || '');
+    return /(^|[?&#])demo\b/.test(s);
+  } catch (e) { return false; }
+}
+
 PAGES.fresh = function () {
   var 連得上 = (typeof syncReady === 'function') && syncReady() && SYNC.on;
   var H = [head('這一台', '重新拿一份', '')];
@@ -157,8 +171,23 @@ PAGES.login = function () {
      二 · 它在真的上課的時候還在。學生第一次打開就看到一串試用帳號，
           那不是招牌，是沒收乾淨的東西。
 
-     改成：照組排，點名字直接進去那個人；有人真的建過帳號就整塊消失。 */
-  if ((DB.Config || {}).demo) {
+     改成：照組排，點名字直接進去那個人；有人真的建過帳號就整塊消失。
+
+     ── 而它預設不畫了 ──
+
+     「有人建過帳號就消失」擋不住真的上課那一天：每一台機器的第一眼
+     都是還沒有人註冊的狀態，所以二十個學生打開登入頁，第一個看到的
+     東西就是十七組帳號跟一行「密碼都是 1234」。
+
+     那不是招牌，是沒收乾淨的東西——而且它會蓋掉真正該被看到的那兩顆
+     （登入、我是新的）。
+
+     所以改成要開口才給：網址後面帶 ?demo（或 #demo）才畫。
+     示範資料本身一點都沒動，它還在、還是分開的（見 demo.js），
+     只是不再自己跳出來說「這裡有帳號可以用」。
+
+     要展示的時候（口試、給人看）就開 ?demo；學生拿到的是乾淨的網址。 */
+  if ((DB.Config || {}).demo && demoAsked()) {
     H.push('<div class="card demo">');
     H.push('<div class="eyebrow">試用的資料</div>');
     H.push('<p class="dim">點一個人就直接用他的身分進去。' +

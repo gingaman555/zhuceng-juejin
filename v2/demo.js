@@ -176,7 +176,41 @@ Object.keys(PAGES).forEach(function (p) {
 });
 ok(!破.length, '用真的帳號看，也都不炸');
 
-節('7', '真的學生看不到示範班的東西');
+節('7', '登入頁預設不給示範帳號');
+
+/* 星期三每一台機器的第一眼都是「還沒有人註冊」，所以「有人建過帳號
+   就消失」擋不住那一刻——二十個學生打開登入頁，第一個看到的會是
+   十七組帳號跟一行「密碼都是 1234」。
+
+   改成要開口才給（網址帶 ?demo）。這兩條驗的是兩個分支都對。 */
+/* 這一節要的是「一台還沒有人註冊的機器」，所以先把現在這一份收起來，
+   驗完再放回去——下一節還要用到上面跑出來的真資料。 */
+const 存起來 = DB, 存誰 = S.who, 存角 = S.role;
+DB = blank(); seed();
+S.who = null; S.role = null; DB.Session = null;
+
+global.location = { search: '', hash: '', href: 'https://x/' };
+const 乾淨 = PAGES.login();
+ok(!demoAsked(), '沒帶 ?demo 的時候 demoAsked() 是 false');
+ok(乾淨.indexOf('試用的資料') < 0, '學生看到的登入頁沒有那一塊');
+ok(乾淨.indexOf(DEMO_PW) < 0, '也沒有印出密碼（' + DEMO_PW + '）');
+ok(!/stu\d|tea\d|lab\d/.test(乾淨), '一個示範帳號都沒出現');
+
+global.location = { search: '?demo', hash: '', href: 'https://x/?demo' };
+const 開了 = PAGES.login();
+ok(demoAsked(), '帶了 ?demo 就是 true');
+ok(開了.indexOf('試用的資料') >= 0, '要展示的時候那一塊回得來');
+ok(開了.indexOf(DEMO_PW) >= 0, '密碼那一行也回得來');
+const 顆 = (開了.match(/asdemo:/g) || []).length;
+ok(顆 === where('Users', u => u._d && u.account).length,
+  '每一個示範帳號都點得進去（' + 顆 + ' 顆）');
+
+global.location = { search: '', hash: '#demo', href: 'https://x/#demo' };
+ok(demoAsked(), '#demo 也算（有些地方會把 ? 吃掉）');
+global.location = { search: '', hash: '', href: 'https://x/' };
+DB = 存起來; S.who = 存誰; S.role = 存角;
+
+節('8', '真的學生看不到示範班的東西');
 
 as(美);
 const 我的班 = userOf(美.userId).classId;
