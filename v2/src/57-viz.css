@@ -41,7 +41,9 @@
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), inset 0 -2px 0 rgba(255,240,214,.06),
     0 0 0 1px #000
 }
-button.ac{cursor:pointer}
+/* 只有按得下去的那一版有手指的下限。同一個 .ac 當圖例的時候是 span，
+   那不是按鍵，撐高它只是把版面拉鬆。 */
+button.ac{cursor:pointer;min-height:44px;box-sizing:border-box}
 button.ac:hover{color:var(--ink)}
 button.ac:active{transform:translateY(1px)}
 .ac b{flex:0 0 14px;width:14px;height:14px;display:block}
@@ -412,8 +414,18 @@ button.ac:active{transform:translateY(1px)}
 .tline b{font-size:22px;font-weight:400;color:var(--ink)}
 .tline i{font-style:normal;font-size:22px}
 .srow{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 11px}
+/* min-height 是手指的下限，不是版面要的高度。
+
+   這一排是廊道上勾掉「這一段做完了」的方塊，量出來 42px。它跟別的
+   鍵不一樣的地方是**它們並排而且很密**（gap 只有 5px）——按歪的那一下
+   會落在隔壁那一段上，勾錯段。而勾錯了畫面不會說什麼，因為系統不判斷
+   他勾得對不對。
+
+   padding 算出來剛好差一點點，所以直接寫下限，不要再靠加減 padding
+   去湊——字級或行高一動就又掉下來了。 */
 .sq{
   display:flex;align-items:center;gap:8px;padding:8px 11px;font-size:22px;
+  min-height:44px;box-sizing:border-box;
   background:var(--sunk);color:var(--mute);border:none;cursor:pointer;
   box-shadow:inset 0 2px 0 rgba(0,0,0,.6), 0 0 0 1px #000
 }
@@ -2201,8 +2213,12 @@ button.ac:active{transform:translateY(1px)}
 }
 
 /* 誰做這一件。點一下換人。 */
+/* 這一顆是「點一下換人」，而換到最後一格就是「全體」——
+   分工那一步唯一的入口。量出來 34px，是這一整頁最矮的一顆。
+   跟旁邊加減天數那兩顆（.pd，44px）站在同一列上，齊高也比較好看。 */
 .pl .pw{
   font:inherit;font-size:22px;line-height:1.2;padding:4px 9px;border:none;
+  min-height:44px;box-sizing:border-box;
   cursor:pointer;color:var(--gold);background:var(--sunk);
   box-shadow:inset 0 0 0 2px var(--gold-d);white-space:nowrap
 }

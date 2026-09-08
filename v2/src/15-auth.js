@@ -91,6 +91,13 @@ var EV_SAY = {
   blurb:    function (e) { return '寫了招牌，' + e.len + ' 個字'; },
   mark:     function (e) { return '補登第 ' + e.n + ' 天'; },
   said:     function () { return '寫了這一趟做了什麼'; },
+  /* 這兩筆本來沒有說法，所以流水帳那一欄印的是英文的 kind 本身。
+
+     mypart 尤其不該漏：它是**個人層唯一的動作**——那一格只有本人
+     填得了（見 55-ui.js 的 pland），所以「他自己進來填了」跟「別人
+     幫他填的」在資料上差在有沒有這一筆。 */
+  mypart:   function () { return '自己進來填了他那幾件'; },
+  sit:      function (e) { return '換到「' + (e.klass || '另一個班') + '」'; },
   reject:   function (e) { return '退回去改，寫了 ' + e.len + ' 個字'; },
   resend:   function (e) { return '改好再交一次（第 ' + e.backs + ' 次被退）'; },
   rethink:  function (e) { return '重新想過：本來說 ' + e.est + ' 天，走到第 ' + e.went + ' 天'; },
