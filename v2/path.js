@@ -85,6 +85,31 @@ console.log('   甲 2＋2＝4　乙 3');
 ok(planDays(混) === 4, '這一趟 4 天（甲是要徑），不是 3（最大的那一件）也不是 7（全部相加）');
 ok(planWho(混) === '甲', '最慢的那一位是甲');
 
+節('3.5', '全組一起做的那幾件要相加，不是並行');
+
+const 合 = [
+  { n: '一起討論方向', d: 1, who: WHO_ALL },
+  { n: '查資料', d: 2, who: '甲' },
+  { n: '訪談', d: 3, who: '乙' }
+];
+console.log('   全體 1　甲 2　乙 3');
+ok(planDays(合) === 4,
+  '1 ＋ max(2,3) ＝ 4 天（現在是 ' + planDays(合) + '）——' +
+  '一起做的時候沒有人能同時做自己那一件');
+ok(planWho(合) === '乙', '要徑上那一位是乙（全體不算在任何人頭上）');
+const sp = planSplit(合);
+ok(sp.all === 1 && sp.solo === 3 && sp.n === 2,
+  '拆得出三塊：一起 ' + sp.all + ' 天、各自最久 ' + sp.solo + ' 天、' + sp.n + ' 個人');
+
+/* 全部都是一起做的 */
+const 全合 = [{ n: 'a', d: 2, who: WHO_ALL }, { n: 'b', d: 3, who: WHO_ALL }];
+ok(planDays(全合) === 5, '全部一起做就是相加（5 天）');
+ok(planWho(全合) === '', '沒有「最慢的那一位」可言');
+
+/* 一起做的那幾件不會因為人多變久 */
+const 合2 = [{ n: '一起', d: 2, who: WHO_ALL }].concat(一人一件(4, 1));
+ok(planDays(合2) === 3, '一起 2 天 ＋ 四個人各 1 天並行 ＝ 3 天');
+
 節('4', '沒掛名字的退回相加');
 
 const 沒名 = [{ n: 'a', d: 2 }, { n: 'b', d: 3 }];
@@ -160,6 +185,32 @@ const 列3 = rc.find(l => l.indexOf(r3.runId) >= 0).split(',');
 console.log('   他們自己定的那一趟　要徑 ' + 列2[i算] + '　有沒有改掉 ' + 列2[i改]);
 console.log('   照著算的那一趟　　　要徑 ' + 列3[i算] + '　有沒有改掉 ' + 列3[i改]);
 ok(列2[i改] === 'Y' && 列3[i改] === 'N', '兩種分得開');
+
+節('8.5', '全體那一件：誰都填得了、不掛在誰名下');
+
+as(T);
+const m4 = actPublish(K.classId, { title: '有一起做的', mentorId: T.userId, teams: [g.teamId] });
+as(us[0]);
+const r4 = actCommit(g.teamId, m4.msId, 0, [], [
+  { n: '一起討論', d: 1, who: WHO_ALL },
+  { n: '甲查資料', d: 2, who: us[0].userId, byOwn: 1 },
+  { n: '乙訪談', d: 3, who: us[1].userId, byOwn: 1 }], '', 2);
+ok(r4.est === 4, '承諾 1 ＋ max(2,3) ＝ 4 天（' + r4.est + '）');
+ok(isAll(r4.plan[0].who), '全體那一件的記號存下來了');
+/* 每一位都填得了全體那一件，但只填得了自己那一件 */
+as(us[2]);
+const 我的 = myItems(r4, us[2].userId);
+ok(我的.indexOf(0) >= 0, '沒被分到事的人也填得了全體那一件');
+ok(我的.indexOf(1) < 0, '但填不了甲的那一件');
+as(us[0]);
+ok(myItems(r4, us[0].userId).indexOf(0) >= 0, '甲也填得了全體那一件');
+
+const it4 = exportItems(K.classId).trim().split('\n');
+const ih = it4[0].split(',');
+const i誰 = ih.indexOf('掛在誰名下');
+const 全體列 = it4.find(l => l.indexOf('一起討論') >= 0).split(',');
+console.log('   匯出那一列的「掛在誰名下」＝' + JSON.stringify(全體列[i誰]));
+ok(全體列[i誰] === '全體', '匯出寫「全體」，不是空白（空白會被讀成漏填）');
 
 節('9', '兩個站算出來要一樣');
 

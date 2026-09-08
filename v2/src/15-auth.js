@@ -406,11 +406,14 @@ function exportItems(classId) {
       .forEach(function (r) {
         var m = msOf(r.msId);
         (r.plan || []).forEach(function (x, i) {
-          var u = x.who ? userOf(x.who) : null;
+          /* 全組一起做的那一件不掛在任何人名下，而空白會被讀成
+             「漏填」——那一欄要寫得出「他們決定一起做」。 */
+          var u = (x.who && !isAll(x.who)) ? userOf(x.who) : null;
+          var 誰 = isAll(x.who) ? '全體' : (u ? u.name : '');
           var got = (r.spent || [])[i];
           rows.push([
             t.name, m ? m.title : '', r.runId, i + 1, x.n,
-            u ? u.name : '', x.d || '', (got == null ? '' : got),
+            誰, x.d || '', (got == null ? '' : got),
             (got == null || !x.d) ? '' : (got - x.d),
             x.byOwn ? 'Y' : 'N',
             u && r.said ? (r.said[u.userId] || '') : '',

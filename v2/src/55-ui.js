@@ -60,6 +60,8 @@ function isTeacher() { var u = me(); return !!u && u.role === 'teacher'; }
 /* 一顆鍵上放得下的名字。負責人那一顆只有一格寬，
    所以取最後兩個字——同一組裡通常就分得出來了。 */
 function shortWho(id) {
+  /* 全組一起做的那一件（見 40-db.js 的 WHO_ALL）。 */
+  if (typeof isAll === 'function' && isAll(id)) return '全體';
   var u = id ? userOf(id) : null;
   if (!u) return '？';
   var n = String(u.name || u.account || '').trim();
@@ -689,9 +691,16 @@ var ACTS = {
     var k = Number(i);
     var pl = DRAFT.plan || [];
     if (!pl[k]) return;
-    var at = mem.indexOf(pl[k].who);
-    pl[k].who = mem[(at + 1) % mem.length];
-    /* 換了人，那個天數就不再是新主人說的。 */
+    /* 一圈是：每一位組員，最後再一個「全體」。
+
+       全體不是第五個人，是「這一件我們一起做」——它在要徑上要相加
+       而不是並行（見 40-db.js 的 planSplit）。放在圈的最後面，因為
+       多數的件還是分給人的，一起做的是少數。 */
+    var 圈 = mem.concat([WHO_ALL]);
+    var at = 圈.indexOf(pl[k].who);
+    pl[k].who = 圈[(at + 1) % 圈.length];
+    /* 換了人，那個天數就不再是新主人說的。
+       全體那一件沒有「本人」可言，所以也是 0。 */
     pl[k].byOwn = 0;
     planEstReset();
     render();
@@ -715,7 +724,10 @@ var ACTS = {
        承諾那一邊本來沒有這一條——所以一個人可以替全組把每一件的
        天數都打完，而回報的時候卻是四個人各自報自己那幾件。
        前面一個人宣告，後面四個人回報，那兩個數字不是同一種東西。 */
-    if (p[i].who && p[i].who !== S.who) return say('這一件是 ' + shortWho(p[i].who) + ' 的。');
+    /* 全組一起做的那一件誰都按得動——它本來就不是誰的。 */
+    if (p[i].who && !isAll(p[i].who) && p[i].who !== S.who) {
+      return say('這一件是 ' + shortWho(p[i].who) + ' 的。');
+    }
     /* 本來這裡寫 { n, d }——who 整個被丟掉。指派完再調一次天數，
        指派就不見了。 */
     p[i] = {
@@ -724,8 +736,11 @@ var ACTS = {
       who: p[i].who || S.who,
       /* 這一格是不是本人自己按的。他們常常是一起坐著、一台電腦
          規劃的，所以擋不住代填——那就老實記下來，事後分得出
-         「他自己說的」跟「別人幫他填的」。 */
-      byOwn: 1
+         「他自己說的」跟「別人幫他填的」。
+
+         全組一起做的那一件沒有「本人」，所以永遠是 0——不然它會混進
+         「本人自己按的件數」那一欄，把個人層的比例灌水。 */
+      byOwn: isAll(p[i].who) ? 0 : 1
     };
     DRAFT.plan = p;
     planEstReset();

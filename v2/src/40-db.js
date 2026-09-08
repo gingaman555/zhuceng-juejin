@@ -548,28 +548,51 @@ function ecology(classId, mentorId) {
 
    沒有掛名字的件全部算成同一個人（也就是相加），那是安全的退路：
    不知道誰做的時候，只能假設是同一個人一件一件做。 */
-function planDays(plan) {
-  var 每人 = {};
+/* ---------- 全組一起做的那幾件 ----------
+
+   有些件不是分給誰的，是全組一起做：一起討論方向、一起去訪談、
+   一起把東西排版完。那種件掛在 WHO_ALL 上。
+
+   它在要徑上跟個人的件**不一樣**：一起做的時候沒有人能同時做自己
+   那一件，所以它是**串起來的**，要相加；個人的件才是並行的，取最久的。
+
+     全體  一起討論方向  1 天
+     甲    查資料        2 天
+     乙    訪談          3 天
+                   這一趟 ＝ 1 ＋ max(2, 3) ＝ 4 天
+
+   用一個看得出來的記號，不用空字串——空的是「沒指定」，那是舊資料
+   跟沒選到的情況。「我們決定一起做」跟「還沒分」不是同一件事，
+   而研究上要分得開。 */
+var WHO_ALL = '*';
+function isAll(w) { return String(w || '') === WHO_ALL; }
+
+/* 拆成三塊：一起做的幾天、各自做裡面最久的幾天、那一位是誰。
+   畫面上那一句要講得出來，所以不能只回一個總數。 */
+function planSplit(plan) {
+  var 一起 = 0, 每人 = {};
   (plan || []).forEach(function (x) {
+    var d = Number(x && x.d) || 0;
+    if (isAll(x && x.who)) { 一起 += d; return; }
     var w = String((x && x.who) || '');
-    每人[w] = (每人[w] || 0) + (Number(x.d) || 0);
+    每人[w] = (每人[w] || 0) + d;
   });
-  var n = 0;
-  Object.keys(每人).forEach(function (w) { if (每人[w] > n) n = 每人[w]; });
-  return n;
+  var 最久 = 0, 誰 = '';
+  Object.keys(每人).forEach(function (w) {
+    if (每人[w] > 最久) { 最久 = 每人[w]; 誰 = w; }
+  });
+  return { all: 一起, solo: 最久, who: 誰, n: Object.keys(每人).length };
+}
+
+function planDays(plan) {
+  var s = planSplit(plan);
+  return s.all + s.solo;
 }
 
 /* 誰是要徑上的那一位。畫面上要講得出「最慢的是誰」——
-   不然那個數字看起來就只是一個變小了的總和。 */
-function planWho(plan) {
-  var 每人 = {}, 誰 = '', n = 0;
-  (plan || []).forEach(function (x) {
-    var w = String((x && x.who) || '');
-    每人[w] = (每人[w] || 0) + (Number(x.d) || 0);
-  });
-  Object.keys(每人).forEach(function (w) { if (每人[w] > n) { n = 每人[w]; 誰 = w; } });
-  return 誰;
-}
+   不然那個數字看起來就只是一個變小了的總和。
+   全組一起做的那幾件不算在這裡：它們不屬於任何一個人。 */
+function planWho(plan) { return planSplit(plan).who; }
 
 function actCommit(teamId, msId, est, flags, plan, zone, sure) {
   /* 只開得了自己那一組的。跟 ownRun 同一條理由，只是這一刻還沒有
@@ -1182,7 +1205,11 @@ function saidGap(teamId, userId) {
 function myItems(run, userId) {
   var pl = (run && run.plan) || [];
   var out = [];
-  pl.forEach(function (x, i) { if (!x.who || x.who === userId) out.push(i); });
+  /* 全組一起做的那幾件誰都填得了——它本來就不是誰的。
+     沒指定的（舊資料）維持原本的行為，也是誰都填得了。 */
+  pl.forEach(function (x, i) {
+    if (!x.who || isAll(x.who) || x.who === userId) out.push(i);
+  });
   return out;
 }
 

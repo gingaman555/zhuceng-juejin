@@ -1053,8 +1053,11 @@ PAGES.commit = function () {
     plan.forEach(function (x, i) {
       /* 同一張紙，各寫各的行（見 55-ui.js 的 pland）。
          別人那幾件看得到、按不動——跟交出去那一頁一模一樣。 */
-      var own = !x.who || x.who === S.who;
-      if (!x.byOwn) waiting++;
+      /* 全組一起做的那一件誰都按得動（見 55-ui.js 的 pland）。 */
+      var own = !x.who || isAll(x.who) || x.who === S.who;
+      /* 「還有幾件沒有本人說幾天」不算全體那幾件——那一件沒有本人，
+         算進去的話那一句永遠消不掉，而它會變成一個假的待辦。 */
+      if (!x.byOwn && !isAll(x.who)) waiting++;
       H.push('<div class="pl' + (own ? '' : ' theirs') + '">');
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
@@ -1256,16 +1259,25 @@ function estWalkIn(t, m, est) {
    三句都只講事實，不評價他改得對不對（見 20-rules.js：系統只比對
    兩個數字，判斷是老師的事）。 */
 function estWhy(plan, est) {
-  var 算的 = planDays(plan);
-  var 慢 = planWho(plan);
-  var 慢名 = 慢 ? (userOf(慢) || {}).name : '';
-  var 幾人 = {};
-  (plan || []).forEach(function (x) { 幾人[String(x.who || '')] = 1; });
-  var 多人 = Object.keys(幾人).length > 1 && 慢名;
+  var s = planSplit(plan);
+  var 算的 = s.all + s.solo;
+  var 慢名 = s.who ? (userOf(s.who) || {}).name : '';
+  var 多人 = s.n > 1 && 慢名;
+
   if (est !== 算的) {
-    return (多人 ? esc(慢名) + ' 手上那幾件加起來是 ' + 算的 + ' 天'
-                 : '那幾件加起來是 ' + 算的 + ' 天') +
-      '，你們改成 ' + est + ' 天。這一趟算 ' + est + ' 天。';
+    return '算出來是 ' + 算的 + ' 天，你們改成 ' + est +
+      ' 天。這一趟算 ' + est + ' 天。';
+  }
+  /* 有全組一起做的件：那幾天是**加上去**的，不是並行的——一起做的
+     時候沒有人能同時做自己那一件。這一句要把加號講出來，不然
+     「分工不會讓天數相加」那句話跟眼前的算術會互相打臉。 */
+  if (s.all && s.solo) {
+    return '一起做的 ' + s.all + ' 天，加上' +
+      (多人 ? esc(慢名) + '那幾件' : '自己那幾件') + ' ' + s.solo +
+      ' 天。一起做的要相加，各自做的取最久的。改得動。';
+  }
+  if (s.all) {
+    return '這幾件全組一起做，加起來 ' + s.all + ' 天。改得動。';
   }
   if (多人) {
     return esc(慢名) + ' 手上那幾件加起來最久，所以先算 ' + est +

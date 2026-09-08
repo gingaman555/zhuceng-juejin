@@ -7498,11 +7498,14 @@ function exportItems(classId) {
       .forEach(function (r) {
         var m = msOf(r.msId);
         (r.plan || []).forEach(function (x, i) {
-          var u = x.who ? userOf(x.who) : null;
+          /* 全組一起做的那一件不掛在任何人名下，而空白會被讀成
+             「漏填」——那一欄要寫得出「他們決定一起做」。 */
+          var u = (x.who && !isAll(x.who)) ? userOf(x.who) : null;
+          var 誰 = isAll(x.who) ? '全體' : (u ? u.name : '');
           var got = (r.spent || [])[i];
           rows.push([
             t.name, m ? m.title : '', r.runId, i + 1, x.n,
-            u ? u.name : '', x.d || '', (got == null ? '' : got),
+            誰, x.d || '', (got == null ? '' : got),
             (got == null || !x.d) ? '' : (got - x.d),
             x.byOwn ? 'Y' : 'N',
             u && r.said ? (r.said[u.userId] || '') : '',
@@ -10789,28 +10792,51 @@ function ecology(classId, mentorId) {
 
    沒有掛名字的件全部算成同一個人（也就是相加），那是安全的退路：
    不知道誰做的時候，只能假設是同一個人一件一件做。 */
-function planDays(plan) {
-  var 每人 = {};
+/* ---------- 全組一起做的那幾件 ----------
+
+   有些件不是分給誰的，是全組一起做：一起討論方向、一起去訪談、
+   一起把東西排版完。那種件掛在 WHO_ALL 上。
+
+   它在要徑上跟個人的件**不一樣**：一起做的時候沒有人能同時做自己
+   那一件，所以它是**串起來的**，要相加；個人的件才是並行的，取最久的。
+
+     全體  一起討論方向  1 天
+     甲    查資料        2 天
+     乙    訪談          3 天
+                   這一趟 ＝ 1 ＋ max(2, 3) ＝ 4 天
+
+   用一個看得出來的記號，不用空字串——空的是「沒指定」，那是舊資料
+   跟沒選到的情況。「我們決定一起做」跟「還沒分」不是同一件事，
+   而研究上要分得開。 */
+var WHO_ALL = '*';
+function isAll(w) { return String(w || '') === WHO_ALL; }
+
+/* 拆成三塊：一起做的幾天、各自做裡面最久的幾天、那一位是誰。
+   畫面上那一句要講得出來，所以不能只回一個總數。 */
+function planSplit(plan) {
+  var 一起 = 0, 每人 = {};
   (plan || []).forEach(function (x) {
+    var d = Number(x && x.d) || 0;
+    if (isAll(x && x.who)) { 一起 += d; return; }
     var w = String((x && x.who) || '');
-    每人[w] = (每人[w] || 0) + (Number(x.d) || 0);
+    每人[w] = (每人[w] || 0) + d;
   });
-  var n = 0;
-  Object.keys(每人).forEach(function (w) { if (每人[w] > n) n = 每人[w]; });
-  return n;
+  var 最久 = 0, 誰 = '';
+  Object.keys(每人).forEach(function (w) {
+    if (每人[w] > 最久) { 最久 = 每人[w]; 誰 = w; }
+  });
+  return { all: 一起, solo: 最久, who: 誰, n: Object.keys(每人).length };
+}
+
+function planDays(plan) {
+  var s = planSplit(plan);
+  return s.all + s.solo;
 }
 
 /* 誰是要徑上的那一位。畫面上要講得出「最慢的是誰」——
-   不然那個數字看起來就只是一個變小了的總和。 */
-function planWho(plan) {
-  var 每人 = {}, 誰 = '', n = 0;
-  (plan || []).forEach(function (x) {
-    var w = String((x && x.who) || '');
-    每人[w] = (每人[w] || 0) + (Number(x.d) || 0);
-  });
-  Object.keys(每人).forEach(function (w) { if (每人[w] > n) { n = 每人[w]; 誰 = w; } });
-  return 誰;
-}
+   不然那個數字看起來就只是一個變小了的總和。
+   全組一起做的那幾件不算在這裡：它們不屬於任何一個人。 */
+function planWho(plan) { return planSplit(plan).who; }
 
 function actCommit(teamId, msId, est, flags, plan, zone, sure) {
   /* 只開得了自己那一組的。跟 ownRun 同一條理由，只是這一刻還沒有
@@ -11423,7 +11449,11 @@ function saidGap(teamId, userId) {
 function myItems(run, userId) {
   var pl = (run && run.plan) || [];
   var out = [];
-  pl.forEach(function (x, i) { if (!x.who || x.who === userId) out.push(i); });
+  /* 全組一起做的那幾件誰都填得了——它本來就不是誰的。
+     沒指定的（舊資料）維持原本的行為，也是誰都填得了。 */
+  pl.forEach(function (x, i) {
+    if (!x.who || isAll(x.who) || x.who === userId) out.push(i);
+  });
   return out;
 }
 
@@ -13565,6 +13595,8 @@ function isTeacher() { var u = me(); return !!u && u.role === 'teacher'; }
 /* 一顆鍵上放得下的名字。負責人那一顆只有一格寬，
    所以取最後兩個字——同一組裡通常就分得出來了。 */
 function shortWho(id) {
+  /* 全組一起做的那一件（見 40-db.js 的 WHO_ALL）。 */
+  if (typeof isAll === 'function' && isAll(id)) return '全體';
   var u = id ? userOf(id) : null;
   if (!u) return '？';
   var n = String(u.name || u.account || '').trim();
@@ -14194,9 +14226,16 @@ var ACTS = {
     var k = Number(i);
     var pl = DRAFT.plan || [];
     if (!pl[k]) return;
-    var at = mem.indexOf(pl[k].who);
-    pl[k].who = mem[(at + 1) % mem.length];
-    /* 換了人，那個天數就不再是新主人說的。 */
+    /* 一圈是：每一位組員，最後再一個「全體」。
+
+       全體不是第五個人，是「這一件我們一起做」——它在要徑上要相加
+       而不是並行（見 40-db.js 的 planSplit）。放在圈的最後面，因為
+       多數的件還是分給人的，一起做的是少數。 */
+    var 圈 = mem.concat([WHO_ALL]);
+    var at = 圈.indexOf(pl[k].who);
+    pl[k].who = 圈[(at + 1) % 圈.length];
+    /* 換了人，那個天數就不再是新主人說的。
+       全體那一件沒有「本人」可言，所以也是 0。 */
     pl[k].byOwn = 0;
     planEstReset();
     render();
@@ -14220,7 +14259,10 @@ var ACTS = {
        承諾那一邊本來沒有這一條——所以一個人可以替全組把每一件的
        天數都打完，而回報的時候卻是四個人各自報自己那幾件。
        前面一個人宣告，後面四個人回報，那兩個數字不是同一種東西。 */
-    if (p[i].who && p[i].who !== S.who) return say('這一件是 ' + shortWho(p[i].who) + ' 的。');
+    /* 全組一起做的那一件誰都按得動——它本來就不是誰的。 */
+    if (p[i].who && !isAll(p[i].who) && p[i].who !== S.who) {
+      return say('這一件是 ' + shortWho(p[i].who) + ' 的。');
+    }
     /* 本來這裡寫 { n, d }——who 整個被丟掉。指派完再調一次天數，
        指派就不見了。 */
     p[i] = {
@@ -14229,8 +14271,11 @@ var ACTS = {
       who: p[i].who || S.who,
       /* 這一格是不是本人自己按的。他們常常是一起坐著、一台電腦
          規劃的，所以擋不住代填——那就老實記下來，事後分得出
-         「他自己說的」跟「別人幫他填的」。 */
-      byOwn: 1
+         「他自己說的」跟「別人幫他填的」。
+
+         全組一起做的那一件沒有「本人」，所以永遠是 0——不然它會混進
+         「本人自己按的件數」那一欄，把個人層的比例灌水。 */
+      byOwn: isAll(p[i].who) ? 0 : 1
     };
     DRAFT.plan = p;
     planEstReset();
@@ -16731,8 +16776,11 @@ PAGES.commit = function () {
     plan.forEach(function (x, i) {
       /* 同一張紙，各寫各的行（見 55-ui.js 的 pland）。
          別人那幾件看得到、按不動——跟交出去那一頁一模一樣。 */
-      var own = !x.who || x.who === S.who;
-      if (!x.byOwn) waiting++;
+      /* 全組一起做的那一件誰都按得動（見 55-ui.js 的 pland）。 */
+      var own = !x.who || isAll(x.who) || x.who === S.who;
+      /* 「還有幾件沒有本人說幾天」不算全體那幾件——那一件沒有本人，
+         算進去的話那一句永遠消不掉，而它會變成一個假的待辦。 */
+      if (!x.byOwn && !isAll(x.who)) waiting++;
       H.push('<div class="pl' + (own ? '' : ' theirs') + '">');
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
@@ -16934,16 +16982,25 @@ function estWalkIn(t, m, est) {
    三句都只講事實，不評價他改得對不對（見 20-rules.js：系統只比對
    兩個數字，判斷是老師的事）。 */
 function estWhy(plan, est) {
-  var 算的 = planDays(plan);
-  var 慢 = planWho(plan);
-  var 慢名 = 慢 ? (userOf(慢) || {}).name : '';
-  var 幾人 = {};
-  (plan || []).forEach(function (x) { 幾人[String(x.who || '')] = 1; });
-  var 多人 = Object.keys(幾人).length > 1 && 慢名;
+  var s = planSplit(plan);
+  var 算的 = s.all + s.solo;
+  var 慢名 = s.who ? (userOf(s.who) || {}).name : '';
+  var 多人 = s.n > 1 && 慢名;
+
   if (est !== 算的) {
-    return (多人 ? esc(慢名) + ' 手上那幾件加起來是 ' + 算的 + ' 天'
-                 : '那幾件加起來是 ' + 算的 + ' 天') +
-      '，你們改成 ' + est + ' 天。這一趟算 ' + est + ' 天。';
+    return '算出來是 ' + 算的 + ' 天，你們改成 ' + est +
+      ' 天。這一趟算 ' + est + ' 天。';
+  }
+  /* 有全組一起做的件：那幾天是**加上去**的，不是並行的——一起做的
+     時候沒有人能同時做自己那一件。這一句要把加號講出來，不然
+     「分工不會讓天數相加」那句話跟眼前的算術會互相打臉。 */
+  if (s.all && s.solo) {
+    return '一起做的 ' + s.all + ' 天，加上' +
+      (多人 ? esc(慢名) + '那幾件' : '自己那幾件') + ' ' + s.solo +
+      ' 天。一起做的要相加，各自做的取最久的。改得動。';
+  }
+  if (s.all) {
+    return '這幾件全組一起做，加起來 ' + s.all + ' 天。改得動。';
   }
   if (多人) {
     return esc(慢名) + ' 手上那幾件加起來最久，所以先算 ' + est +
