@@ -23,18 +23,39 @@
    哪一天推進、判定結果、卡在哪——不記作業內容，因為系統本來就不收作業。
    看得到誰做了什麼，看不到他做得好不好。 */
 
+/* ---------- 研究者這一邊只看真的 ----------
+
+   這一台機器上同時有兩份資料：示範那一份（帶 _d，seed 打的）跟這個班
+   真的跑出來的。同步早就分得開（見 41-sync.js 的 onDemoSide），匯出
+   那三份也是照班分的，所以都乾淨。
+
+   可是研究者這一邊本來直接數 DB.Classes 與 DB.Users——它把示範那一班
+   跟十七個示範帳號一起算進去。使用者：「我研究者端他會記錄模擬紀錄」。
+
+   實際看到的是「班級 2 個、帳號 19 個」，而真的只有 1 個班、2 個人。
+   那一頁存在的理由是「匯出的資料裡是一堆代號，要有一個地方查那是誰」
+   ——混進十七個不存在的人，那個理由就不成立了。
+
+   這三支是這一頁所有列舉的入口，收在這裡一次擋掉。 */
+function rsClasses() { return where('Classes', function (c) { return !c._d; }); }
+function rsUsers() { return where('Users', function (u) { return !u._d; }); }
+function rsTeams(cid) {
+  return where('Teams', function (t) { return !t._d && t.classId === cid; });
+}
+
 function rsClassId() {
   var c = DRAFT.rsClass ? find('Classes', function (x) { return x.classId === DRAFT.rsClass; }) : null;
-  if (c) return c.classId;
-  return DB.Classes.length ? DB.Classes[0].classId : '';
+  if (c && !c._d) return c.classId;
+  var a = rsClasses();
+  return a.length ? a[0].classId : '';
 }
 
 /* 換班的那一排。只有一個班就不畫——一個選項的選單是雜訊。 */
 function classPicker() {
-  if (DB.Classes.length < 2) return '';
+  if (rsClasses().length < 2) return '';
   var cur = rsClassId();
   var H = ['<div class="tags">'];
-  DB.Classes.forEach(function (c) {
+  rsClasses().forEach(function (c) {
     H.push('<button class="tag' + (c.classId === cur ? ' on' : '') + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'rscls:' + c.classId })) + '\'>' + esc(c.name) + '</button>');
   });
@@ -57,15 +78,15 @@ PAGES.rs = function () {
 
   /* 班級 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">班級　' + DB.Classes.length + ' 個</div>');
-  if (!DB.Classes.length) H.push('<p class="dim">還沒有人開班。</p>');
-  DB.Classes.forEach(function (c) {
+  H.push('<div class="eyebrow">班級　' + rsClasses().length + ' 個</div>');
+  if (!rsClasses().length) H.push('<p class="dim">還沒有人開班。</p>');
+  rsClasses().forEach(function (c) {
     var tea = where('Users', function (u) {
       return u.role === 'teacher' && inClass(u, c.classId);
     });
     H.push('<div class="rn-row"><b>' + esc(c.name) + '</b>' +
       '<span class="dim">加入碼 ' + esc(c.joinCode) + '　·　' +
-      where('Teams', function (x) { return x.classId === c.classId; }).length + ' 組　·　' +
+      rsTeams(c.classId).length + ' 組　·　' +
       /* 一個班三位老師共同帶，所以這裡數的是人數不是「那一位」。 */
       '老師 ' + (tea.length ? tea.map(function (u) { return esc(u.name); }).join('、')
         : '（還沒有人）') + '</span></div>');
@@ -74,8 +95,8 @@ PAGES.rs = function () {
 
   /* 帳號清單 */
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">帳號　' + DB.Users.length + ' 個</div>');
-  DB.Users.forEach(function (u) {
+  H.push('<div class="eyebrow">帳號　' + rsUsers().length + ' 個</div>');
+  rsUsers().forEach(function (u) {
     var t = u.teamId ? teamOf(u.teamId) : null;
     var kl = u.classId ? find('Classes', function (c) { return c.classId === u.classId; }) : null;
     H.push('<div class="rn-row">');

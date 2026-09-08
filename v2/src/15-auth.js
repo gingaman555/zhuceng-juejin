@@ -60,7 +60,23 @@ function eventsOf(classId, filter) {
   var teamIds = {};
   where('Teams', function (t) { return t.classId === classId; })
     .forEach(function (t) { teamIds[t.teamId] = t.name; });
+  /* ── 示範那一邊弄出來的不是研究資料 ──
+
+     示範資料本身不寫事件（seed 不呼叫 logEvent），可是**在示範班上做的
+     動作**會寫：登入、承諾、回報，那些都是執行時發生的，身上沒有 _d。
+
+     底下那一條「掛在別班的隊上就不算」擋得掉一部分，可是擋不掉登入
+     ——login 那一筆沒有 teamId，所以它從那個篩子直接穿過去，然後出現在
+     研究者的紀錄裡跟匯出的流水帳裡。使用者：「我研究者端他會記錄
+     模擬紀錄」。
+
+     所以再看一次是誰做的：示範帳號做的一律不算。 */
+  var 示隊 = {}, 示人 = {};
+  (DB.Teams || []).forEach(function (t) { if (t && t._d) 示隊[t.teamId] = 1; });
+  (DB.Users || []).forEach(function (u) { if (u && u._d) 示人[u.userId] = 1; });
   return DB.Events.filter(function (e) {
+    if (e.teamId && 示隊[e.teamId]) return false;
+    if (e.by && 示人[e.by]) return false;
     if (e.teamId && !teamIds[e.teamId]) return false;
     if (filter && filter.kind && e.kind !== filter.kind) return false;
     if (filter && filter.teamId && e.teamId !== filter.teamId) return false;

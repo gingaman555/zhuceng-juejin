@@ -176,6 +176,40 @@ Object.keys(PAGES).forEach(function (p) {
 });
 ok(!破.length, '用真的帳號看，也都不炸');
 
+節('6.5', '研究者那一邊只看得到真的');
+
+/* 匯出早就照班分了，可是研究者那一頁本來直接數 DB.Classes 與 DB.Users
+   ——示範那一班跟十七個示範帳號一起算進去，而那一頁存在的理由就是
+   「匯出的代號要對得回是誰」。
+
+   紀錄那一份漏的是另一種：在示範班上做的動作會寫事件（登入、回報），
+   身上沒有 _d，而 login 沒有 teamId，所以照班篩的那個篩子攔不到。 */
+const 示範者 = where('Users', u => u._d && u.role === 'student' && u.teamId)[0];
+S.who = 示範者.userId; S.role = 'student';
+logEvent('login', { by: 示範者.userId });
+const 示趟 = where('Runs', x => x.teamId === 示範者.teamId && x.state === 'running')[0];
+if (示趟) actMyPart(示範者.teamId, 示趟.runId, { spent: { 0: 1 }, said1: '示範的' });
+
+const lab = where('Users', u => u.role === 'researcher')[0];
+if (lab) { S.who = lab.userId; S.role = 'researcher'; DB.Session = { userId: lab.userId, at: Date.now() }; }
+ok(rsClasses().every(c => !c._d),
+  '名單上的班只有真的（' + rsClasses().length + ' 個，機器上共 ' +
+  where('Classes', c => 1).length + ' 個）');
+ok(rsUsers().every(u => !u._d),
+  '名單上的人只有真的（' + rsUsers().length + ' 個，機器上共 ' +
+  where('Users', u => 1).length + ' 個）');
+ok(rsTeams(真班.classId).every(x => !x._d), '數組數也只數真的');
+
+const 紀 = eventsOf(真班.classId);
+const 髒 = 紀.filter(function (e) {
+  const u = e.by ? userOf(e.by) : null;
+  if (u && u._d) return true;
+  return !!(e.teamId && where('Teams', t => t._d && t.teamId === e.teamId).length);
+});
+console.log('   機器上 ' + DB.Events.length + ' 筆事件，研究者看到 ' + 紀.length + ' 筆');
+ok(!髒.length, '紀錄裡沒有示範帳號做的事（' + 髒.length + ' 筆髒的）');
+ok(紀.length < DB.Events.length, '而且真的有擋掉東西——不是篩子沒作用');
+
 節('7', '登入頁預設不給示範帳號');
 
 /* 星期三每一台機器的第一眼都是「還沒有人註冊」，所以「有人建過帳號
