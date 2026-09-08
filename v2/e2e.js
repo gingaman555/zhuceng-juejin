@@ -118,9 +118,13 @@ DRAFT.plan = stu.map((u, i) => ({ n: '第' + (i + 1) + '件', d: i + 1, who: u.u
 DRAFT.sure = 'mid';
 ACTS.commit(msId);
 const run = runOf(tm.teamId, msId);
-/* 拆件的天數是 1、2、3…，人數一變總和就變。寫成算的，
-   不是寫死一個只有四個人的時候才對的數字。 */
-be('承諾天數（拆件加總）', run.est, NAMES.reduce((a, _, i) => a + i + 1, 0));
+/* 拆件的天數是 1、2、3…，一人一件。
+
+   這裡不是加總——分工的人同一天各做各的，加起來會被人數灌水
+   （見 40-db.js 的 planDays）。要徑：每個人自己那幾件相加，
+   再取最慢的那一位，也就是這裡的最大值。 */
+be('承諾天數（要徑：最慢的那一位）', run.est,
+  NAMES.reduce((a, _, i) => Math.max(a, i + 1), 0));
 be('狀態', run.state, 'running');
 
 /* ══ 四 · 廊道那一顆的三種狀態 ══ */

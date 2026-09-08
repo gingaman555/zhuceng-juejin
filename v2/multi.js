@@ -204,7 +204,9 @@ teams.forEach(function (g, gi) { g.run = 接(g, m2, 2); });
 as(teas[2]);
 be('沒帶理由回不了', actAskEst(teams[0].run.runId, 9, ''), null);
 actAskEst(teams[0].run.runId, 9, '這一件去年那一組花了九天。');
-be('學生承諾沒被改掉', find('Runs', x => x.runId === teams[0].run.runId).est, 2 * 每組);
+/* 2 而不是 2 × 每組：一人一件、每件 2 天，要徑是最慢的那一位＝2。
+   這個數字不跟人數走，正是要徑要修掉的那件事（見 40-db.js 的 planDays）。 */
+be('學生承諾沒被改掉', find('Runs', x => x.runId === teams[0].run.runId).est, 2);
 as(teams[0].mems[0]);
 actAnswerAsk(teams[0].t.teamId, teams[0].run.runId, 2 * 每組 + 2);
 be('最後那一下是學生按的', find('Runs', x => x.runId === teams[0].run.runId).est, 2 * 每組 + 2);
