@@ -7429,6 +7429,14 @@ function exportRuns(classId) {
 
        而「協商之後往哪邊靠」正是要那三個點：他一個人說的、老師說的、
        最後定的。少了第一個，那一題算不出來。 */
+    /* 拆件用要徑算出來是幾天，以及他們有沒有改掉它。
+
+       算出來 2 天、他們定 4 天，是這一組真的在做預估——他們知道某件
+       計算不知道的事（相依、這禮拜有三科要交、一週只碰一次面）。
+       算出來 2 天、他們就走 2 天，是接受了系統的算術。
+
+       這兩件事在研究上完全不同，而少了這一欄它們長得一模一樣。 */
+    '要徑算幾天', '有沒有改掉',
     '學生本來說幾天', '老師回的天數', '談完之後的天數',
     '被退幾次', '老師的話', '哪一位老師', '水晶加成',
     '承諾時間', '交出去時間', '收下時間', '交出去等了幾天'];
@@ -7450,6 +7458,10 @@ function exportRuns(classId) {
           dev === '' ? '' : dev.toFixed(3),
           r.sure || '', pl.length ? 'Y' : 'N', pl.length, byOwn,
           r.feel || '', r.why || '', r.scope || '', r.next || '', r.link || '',
+          /* 沒拆件就沒有要徑可言（estCalc 是 0），那一欄留空——
+             0 會被讀成「算出來是零天」。 */
+          r.estCalc || '',
+          !r.estCalc ? '' : (r.estCalc === estOwn(r) ? 'N' : 'Y'),
           /* estFirst 只有「談過而且動了」才有；沒動的時候他本來說的
              就是 est 本身，所以那一欄照樣填得出來。 */
           r.askAt ? (r.estFirst == null ? (r.est || '') : r.estFirst) : '',
@@ -10826,10 +10838,25 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
            值得看的東西。 */
         byOwn: x.byOwn ? 1 : 0 };
     });
-  /* 列了就是加起來。永遠只有一個地方在輸入。 */
-  if (pl.length) est = planDays(pl);
+  /* ── 要徑算的是起點，他們定的才是承諾 ──
+
+     拆了件就用要徑算一個數字出來（planDays），可是那個計算不知道
+     相依、不知道他們這禮拜還有三科要交、不知道他們一週只碰得到一次面。
+     所以第 2 步那一格是按得動的（見 60-student.js），他們可以再調一次。
+
+     這裡只在「沒有給數字」的時候才自己算——畫面永遠會給（見 55-ui.js
+     的 ACTS.commit），沒給的是直接呼叫這一支的地方（測試、示範資料），
+     那些地方要的正是「照著拆件算」。
+
+     estCalc 兩種情況都留著：有它才分得出「他們照著算的走」跟「他們
+     自己定了一個」，而那兩件事在研究上不是同一件事——後者是這一組
+     真的在做預估，前者只是接受了系統的算術。 */
+  var 算的 = pl.length ? planDays(pl) : 0;
+  if (pl.length && !(Number(est) > 0)) est = 算的;
   r = {
     runId: nid('R'), teamId: teamId, msId: msId,
+    /* 要徑算出來是幾天。跟 est 一樣的時候代表他們沒有改。 */
+    estCalc: 算的,
     state: 'running',
     est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
     plan: pl,
@@ -13500,6 +13527,17 @@ var S = { who: null, page: 'gate', p: {}, flash: null };
 var DRAFT = {};
 function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback || ''); }
 
+/* 動了拆件，第 2 步那個數字要重新算一次。
+
+   DRAFT.est 是他在第 2 步自己按出來的（見 60-student.js 的 est）。
+   拆件一改，要徑就變了——這裡不清掉的話，他回上一步改了件、再往下走，
+   看到的還是改件**之前**那個數字，而底下那一句會說「那幾件加起來是
+   N 天」，N 已經是新的了，畫面上兩個數字當場對不上。
+
+   清掉就是回到「算出來的那一個」。他要再調一次就再調一次——
+   調整是他的，不是一個要幫他記住的設定。 */
+function planEstReset() { DRAFT.est = null; }
+
 
 
 function go(page, p) {
@@ -14146,6 +14184,7 @@ var ACTS = {
        「大家都可以報」——那樣回報的時候誰都填得了那一件。 */
     p.push({ n: x.slice(0, 24), d: 1, who: S.who });
     DRAFT.plan = p;
+    planEstReset();
     render();
     var el = document.getElementById('pl-add');
     if (el) { el.value = ''; el.focus(); }
@@ -14164,12 +14203,14 @@ var ACTS = {
     pl[k].who = mem[(at + 1) % mem.length];
     /* 換了人，那個天數就不再是新主人說的。 */
     pl[k].byOwn = 0;
+    planEstReset();
     render();
   },
   plandel: function (i) {
     var p = (DRAFT.plan || []).slice();
     p.splice(Number(i), 1);
     DRAFT.plan = p;
+    planEstReset();
     render();
   },
   /* 某一件加減一天。到頭停在那裡。 */
@@ -14197,6 +14238,7 @@ var ACTS = {
       byOwn: 1
     };
     DRAFT.plan = p;
+    planEstReset();
     render();
   },
 
@@ -14253,9 +14295,14 @@ var ACTS = {
 
   /* 說幾天：一按一天。到頭就停在那裡，不會繞回去——
      繞回去會讓「按到底」變成一件要小心的事。 */
-  estep: function (d) {
-    var n = clamp(RULES.EST_MIN, RULES.EST_MAX,
-      Number(draft('est', RULES.EST_DEFAULT)) + Number(d));
+  /* 送過來的是「按完會變成幾」，不是「加幾」——那兩顆鍵是從畫面上
+     正在顯示的數字算出來的（見 56-viz.js 的 estStep）。
+
+     本來這裡是拿差值去加 draft('est', RULES.EST_DEFAULT)，而用到這一組
+     鍵的三頁起點都不是 EST_DEFAULT（要徑算的、r.est、r.est），所以
+     DRAFT.est 還空著的時候按第一下會跳到 5 附近。 */
+  estep: function (v) {
+    var n = clamp(RULES.EST_MIN, RULES.EST_MAX, Number(v));
     DRAFT.est = n;
     estLive(n);
   },
@@ -14361,8 +14408,18 @@ var ACTS = {
     var msId = String(arg).split('|')[0];
     var pat = mobFor(msId, t.teamId);
     var zone = pat ? mobZone(pat).key : '';
-    actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT),
-      DRAFT.flags || [], DRAFT.plan || [], zone, DRAFT.sure);
+    /* 送出去的是**畫面上那個數字**。
+
+       本來寫 DRAFT.est || EST_DEFAULT，而拆了件的時候 DRAFT.est 是空的
+       （那一格以前唯讀），靠 actCommit 自己去算。現在那一格按得動了，
+       所以這裡要講清楚：他按過就用他按的，沒按過就用要徑算的。
+
+       兩邊算的是同一支 planDays，所以「畫面上寫幾天」跟「承諾幾天」
+       不會有機會分岔。 */
+    var pl0 = DRAFT.plan || [];
+    var est0 = DRAFT.est != null ? Number(DRAFT.est)
+      : (pl0.length ? planDays(pl0) : RULES.EST_DEFAULT);
+    actCommit(t.teamId, msId, est0, DRAFT.flags || [], pl0, zone, DRAFT.sure);
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——
@@ -14902,17 +14959,40 @@ function spreadBar(sp, mine) {
 
    一按一天。到頭了那一顆就暗下去——不擋，只是讓他知道到頭了。
    數字在中間，是這一頁最大的一個字，因為它是這一頁唯一的內容。 */
+/* ---------- 加減那兩顆 ----------
+
+   ── 送出去的是「按完會變成幾」，不是「加幾」 ──
+
+   本來送的是差值（estep:+1／estep:−1），而 ACTS.estep 拿差值去加在
+   draft('est', RULES.EST_DEFAULT) 上面。問題是這一組鍵有三個地方在用，
+   而那三個地方的起點都不是 EST_DEFAULT：
+
+     承諾（有拆件）  起點是要徑算出來的
+     學生回協商　　  起點是 r.est
+     老師回一句　　  起點是 r.est
+
+   那三頁畫出來的數字都對，可是 DRAFT.est 還是空的時候按下去，
+   estep 會從 5 開始算——畫面上寫 8，按一下 ＋ 變成 6。
+
+   改成送絕對值：按鍵自己知道「我按下去會變成幾」，因為它是從畫面上
+   正在顯示的那個數字算出來的。這樣就沒有「起點是多少」這個問題了，
+   三個地方都不必再各自記得要傳什麼。 */
 function estStep(est) {
   function k(d, s, cls, off) {
     return '<button class="es-b ' + cls + (off ? ' off' : '') +
       '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'estep:' + d })) + '\'>' + s + '</button>';
+      esc(JSON.stringify({ a: 'estep:' + estGo(est, d) })) + '\'>' + s + '</button>';
   }
   return '<div class="estep">' +
     k(-1, '−', 'es-m', est <= RULES.EST_MIN) +
     '<div class="es-n"><b>' + est + '</b><span>天</span></div>' +
     k(1, '＋', 'es-p', est >= RULES.EST_MAX) +
     '</div>';
+}
+
+/* 從 est 按一下 d 之後會停在幾。到頭就停在頭。 */
+function estGo(est, d) {
+  return clamp(RULES.EST_MIN, RULES.EST_MAX, (Number(est) || 0) + Number(d));
 }
 
 function estLive(n) {
@@ -14926,16 +15006,32 @@ function estLive(n) {
     if (e) fn(e);
   }
   set('.es-n b', function (e) { e.textContent = n; });
-  set('.es-m', function (e) {
-    e.className = 'es-b es-m' + (n <= RULES.EST_MIN ? ' off' : ''); });
-  set('.es-p', function (e) {
-    e.className = 'es-b es-p' + (n >= RULES.EST_MAX ? ' off' : ''); });
+  /* 這一支不重畫，是直接改 DOM——所以那兩顆鍵身上的「按下去會變成幾」
+     也要跟著改，不然按第二下會再跑回同一個數字。 */
+  function 鍵(e, cls, d, off) {
+    e.className = 'es-b ' + cls + (off ? ' off' : '');
+    e.setAttribute('data-p', JSON.stringify({ a: 'estep:' + estGo(n, d) }));
+  }
+  set('.es-m', function (e) { 鍵(e, 'es-m', -1, n <= RULES.EST_MIN); });
+  set('.es-p', function (e) { 鍵(e, 'es-p', 1, n >= RULES.EST_MAX); });
   set('.ax-now .ax-ok', function (e) {
     e.style.left = at(n - b);
     e.style.right = (100 - parseFloat(at(n + b))) + '%';
   });
   set('.ax-now .ax-me', function (e) { e.style.left = at(n); });
-  set('.cm-go', function (e) { e.textContent = '我承諾 ' + n + ' 天'; });
+  /* 「，出發」不能掉。這一支是直接改 textContent，而畫出來的是
+     「我承諾 N 天，出發」——少寫那三個字的話，調過一次天數之後
+     那顆鍵就從「出發」變成一句沒有動作的話。 */
+  set('.cm-go', function (e) { e.textContent = '我承諾 ' + n + ' 天，出發'; });
+
+  /* 「這個數字怎麼來的」那一句。他一改，那一句就要跟著改——
+     不改的話畫面上寫 4 天、底下說這一趟是 2 天（見 60-student.js
+     的 estWhy，兩邊讀同一支）。 */
+  set('.es-why', function (e) {
+    if (typeof estWhy === 'function' && DRAFT.plan && DRAFT.plan.length) {
+      e.innerHTML = estWhy(DRAFT.plan, n);
+    }
+  });
 
   /* 底下那條走廊。整塊換掉沒關係——滑桿不在裡面。 */
   var ew = document.querySelector('.ew');
@@ -16403,8 +16499,26 @@ PAGES.commit = function () {
      天數」的把握、老師排的那一天畫在同一把尺上讓他當場比得出來。
      那三樣拆開就要來回翻，而來回翻正是這一次要修掉的東西。 */
   var st = Math.max(0, Math.min(2, Number(S.p.st) || 0));
-  /* 列了就是加起來，沒列就直接說一個數字。永遠只有一個地方在輸入。 */
-  var est = plan.length ? planDays(plan)
+  /* ── 算出來的那個數字是起點，不是結論 ──
+
+     拆了件，要徑會算出一個數字（見 40-db.js 的 planDays）。可是那個
+     計算只知道「誰做哪幾件、各幾天」，它不知道的事情多得是：
+
+       乙要等甲做完才能開始（要徑假設兩個人可以同時動）
+       這禮拜還有三科要交
+       他們一個禮拜只碰得到一次面
+
+     算出來 2 天、他們心裡知道是 4 天——如果那一格不能動，他們就得
+     承諾一個自己不相信的數字，而判定讀的正是那個數字。那等於系統
+     幫他們估，然後拿它自己估的去評他們。
+
+     所以算出來的數字當**預設值**，那兩顆加減鍵照樣給。他改了就是他的。
+     沒改就是算出來的那一個——兩種都留在紀錄上（見 actCommit 的 estCalc）。
+
+     draft() 的第二個參數就是預設值，所以這一行同時做了兩件事：
+     沒動過的時候給要徑算的，動過之後給他按出來的。 */
+  var 算的 = plan.length ? planDays(plan) : 0;
+  var est = plan.length ? Number(draft('est', 算的))
     : Number(draft('est', RULES.EST_DEFAULT));
   var flags = DRAFT.flags || [];
 
@@ -16525,10 +16639,10 @@ PAGES.commit = function () {
       '<span>老師排到</span><b>' + esc(dueSay(m)) + '</b>' +
       '<em>' + esc(dueLeftSay(m)) + '</em></div>');
   }
-  /* 列了就顯示加起來的，沒列才給那兩顆鍵。 */
+  /* 兩種都給那兩顆鍵。拆了件只是先幫他算一個起點——
+     那個數字是他要承諾的，所以最後一定要按得動（見上面 est 那一段）。 */
   if (plan.length) {
-    H.push('<div class="estep"><div class="es-n sum"><b>' + est +
-      '</b><span>天</span></div></div>');
+    H.push(estStep(est));
     /* 這個數字是誰說的，取決於上一步有沒有拆件。
 
        拆了　　它是每一件加起來的，而每一件的天數只有本人按得動
@@ -16567,17 +16681,17 @@ PAGES.commit = function () {
 
        一個人的隊（含 B 站）沒有「最慢的那一位」可言，那一句對他不成立，
        所以就照實說是他自己那幾件加起來的。 */
-    var 慢 = planWho(plan);
-    var 慢名 = 慢 ? (userOf(慢) || {}).name : '';
-    var 幾人 = {};
-    plan.forEach(function (x) { 幾人[String(x.who || '')] = 1; });
-    if (Object.keys(幾人).length > 1 && 慢名) {
-      H.push('<p class="dim">' + esc(慢名) +
-        ' 手上那幾件加起來最久，所以這一趟是 ' + est +
-        ' 天。分工不會讓天數相加——最慢的那一位決定。</p>');
-    } else {
-      H.push('<p class="dim">上面那幾件加起來的。每一件的天數是各自按的。</p>');
-    }
+    /* 而且他改過之後，那一句要跟著換。
+
+       本來那一句是用斷定的語氣講的（「所以這一趟是 2 天」）。數字變成
+       按得動之後，同一句話在他按了 ＋ 之後就變成假的——畫面上寫 4 天，
+       底下說「所以這一趟是 2 天」。
+
+       所以分兩句：沒動過的時候講要徑怎麼算的；動過了就講算出來是多少、
+       現在是他定的。兩句都只講事實，不評價他改得對不對。 */
+    /* 這一句放在 estWhy 裡，因為按加減鍵的時候不重畫（estLive 是直接
+       改 DOM）——兩邊要讀同一支，不然按完數字變了、這一句還停在舊的。 */
+    H.push('<p class="dim es-why">' + estWhy(plan, est) + '</p>');
   } else {
     H.push(estStep(est));
     /* 沒拆件：這個數字就是這一頁上唯一寫得了的東西之一，而它是組的。
@@ -16807,6 +16921,40 @@ function estWalkIn(t, m, est) {
     '>' + pxTag(mob.px, z.pal, 'ew-px') + '</span>');
   H.push('</div>');
   return H.join('');
+}
+
+/* ---------- 那個天數是怎麼來的 ----------
+
+   拆了件才會走到這一支。三句，看兩件事：這一組是不是多人，
+   以及他們有沒有把算出來的數字改掉。
+
+   多人　沒改　要徑算的，講得出最慢的是誰
+   多人　改了　算出來幾天、他們改成幾天
+   一人　　　　就是他自己那幾件加起來（B 站與單人的隊）
+
+   為什麼要分「改了」那一句：本來只有一句斷定的話（「所以這一趟是
+   2 天」），而數字變成按得動之後，他按了 ＋ 那一句就變成假的——
+   畫面上寫 4 天，底下說這一趟是 2 天。
+
+   三句都只講事實，不評價他改得對不對（見 20-rules.js：系統只比對
+   兩個數字，判斷是老師的事）。 */
+function estWhy(plan, est) {
+  var 算的 = planDays(plan);
+  var 慢 = planWho(plan);
+  var 慢名 = 慢 ? (userOf(慢) || {}).name : '';
+  var 幾人 = {};
+  (plan || []).forEach(function (x) { 幾人[String(x.who || '')] = 1; });
+  var 多人 = Object.keys(幾人).length > 1 && 慢名;
+  if (est !== 算的) {
+    return (多人 ? esc(慢名) + ' 手上那幾件加起來是 ' + 算的 + ' 天'
+                 : '那幾件加起來是 ' + 算的 + ' 天') +
+      '，你們改成 ' + est + ' 天。這一趟算 ' + est + ' 天。';
+  }
+  if (多人) {
+    return esc(慢名) + ' 手上那幾件加起來最久，所以先算 ' + est +
+      ' 天。分工不會讓天數相加——最慢的那一位決定。改得動。';
+  }
+  return '上面那幾件加起來的。每一件的天數是各自按的。改得動。';
 }
 
 /* ---------- 老師回了一句：最後幾天 ----------

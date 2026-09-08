@@ -183,17 +183,40 @@ function spreadBar(sp, mine) {
 
    一按一天。到頭了那一顆就暗下去——不擋，只是讓他知道到頭了。
    數字在中間，是這一頁最大的一個字，因為它是這一頁唯一的內容。 */
+/* ---------- 加減那兩顆 ----------
+
+   ── 送出去的是「按完會變成幾」，不是「加幾」 ──
+
+   本來送的是差值（estep:+1／estep:−1），而 ACTS.estep 拿差值去加在
+   draft('est', RULES.EST_DEFAULT) 上面。問題是這一組鍵有三個地方在用，
+   而那三個地方的起點都不是 EST_DEFAULT：
+
+     承諾（有拆件）  起點是要徑算出來的
+     學生回協商　　  起點是 r.est
+     老師回一句　　  起點是 r.est
+
+   那三頁畫出來的數字都對，可是 DRAFT.est 還是空的時候按下去，
+   estep 會從 5 開始算——畫面上寫 8，按一下 ＋ 變成 6。
+
+   改成送絕對值：按鍵自己知道「我按下去會變成幾」，因為它是從畫面上
+   正在顯示的那個數字算出來的。這樣就沒有「起點是多少」這個問題了，
+   三個地方都不必再各自記得要傳什麼。 */
 function estStep(est) {
   function k(d, s, cls, off) {
     return '<button class="es-b ' + cls + (off ? ' off' : '') +
       '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'estep:' + d })) + '\'>' + s + '</button>';
+      esc(JSON.stringify({ a: 'estep:' + estGo(est, d) })) + '\'>' + s + '</button>';
   }
   return '<div class="estep">' +
     k(-1, '−', 'es-m', est <= RULES.EST_MIN) +
     '<div class="es-n"><b>' + est + '</b><span>天</span></div>' +
     k(1, '＋', 'es-p', est >= RULES.EST_MAX) +
     '</div>';
+}
+
+/* 從 est 按一下 d 之後會停在幾。到頭就停在頭。 */
+function estGo(est, d) {
+  return clamp(RULES.EST_MIN, RULES.EST_MAX, (Number(est) || 0) + Number(d));
 }
 
 function estLive(n) {
@@ -207,16 +230,32 @@ function estLive(n) {
     if (e) fn(e);
   }
   set('.es-n b', function (e) { e.textContent = n; });
-  set('.es-m', function (e) {
-    e.className = 'es-b es-m' + (n <= RULES.EST_MIN ? ' off' : ''); });
-  set('.es-p', function (e) {
-    e.className = 'es-b es-p' + (n >= RULES.EST_MAX ? ' off' : ''); });
+  /* 這一支不重畫，是直接改 DOM——所以那兩顆鍵身上的「按下去會變成幾」
+     也要跟著改，不然按第二下會再跑回同一個數字。 */
+  function 鍵(e, cls, d, off) {
+    e.className = 'es-b ' + cls + (off ? ' off' : '');
+    e.setAttribute('data-p', JSON.stringify({ a: 'estep:' + estGo(n, d) }));
+  }
+  set('.es-m', function (e) { 鍵(e, 'es-m', -1, n <= RULES.EST_MIN); });
+  set('.es-p', function (e) { 鍵(e, 'es-p', 1, n >= RULES.EST_MAX); });
   set('.ax-now .ax-ok', function (e) {
     e.style.left = at(n - b);
     e.style.right = (100 - parseFloat(at(n + b))) + '%';
   });
   set('.ax-now .ax-me', function (e) { e.style.left = at(n); });
-  set('.cm-go', function (e) { e.textContent = '我承諾 ' + n + ' 天'; });
+  /* 「，出發」不能掉。這一支是直接改 textContent，而畫出來的是
+     「我承諾 N 天，出發」——少寫那三個字的話，調過一次天數之後
+     那顆鍵就從「出發」變成一句沒有動作的話。 */
+  set('.cm-go', function (e) { e.textContent = '我承諾 ' + n + ' 天，出發'; });
+
+  /* 「這個數字怎麼來的」那一句。他一改，那一句就要跟著改——
+     不改的話畫面上寫 4 天、底下說這一趟是 2 天（見 60-student.js
+     的 estWhy，兩邊讀同一支）。 */
+  set('.es-why', function (e) {
+    if (typeof estWhy === 'function' && DRAFT.plan && DRAFT.plan.length) {
+      e.innerHTML = estWhy(DRAFT.plan, n);
+    }
+  });
 
   /* 底下那條走廊。整塊換掉沒關係——滑桿不在裡面。 */
   var ew = document.querySelector('.ew');

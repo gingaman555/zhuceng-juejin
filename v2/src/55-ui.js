@@ -17,6 +17,17 @@ var S = { who: null, page: 'gate', p: {}, flash: null };
 var DRAFT = {};
 function draft(id, fallback) { return DRAFT[id] != null ? DRAFT[id] : (fallback || ''); }
 
+/* 動了拆件，第 2 步那個數字要重新算一次。
+
+   DRAFT.est 是他在第 2 步自己按出來的（見 60-student.js 的 est）。
+   拆件一改，要徑就變了——這裡不清掉的話，他回上一步改了件、再往下走，
+   看到的還是改件**之前**那個數字，而底下那一句會說「那幾件加起來是
+   N 天」，N 已經是新的了，畫面上兩個數字當場對不上。
+
+   清掉就是回到「算出來的那一個」。他要再調一次就再調一次——
+   調整是他的，不是一個要幫他記住的設定。 */
+function planEstReset() { DRAFT.est = null; }
+
 
 
 function go(page, p) {
@@ -663,6 +674,7 @@ var ACTS = {
        「大家都可以報」——那樣回報的時候誰都填得了那一件。 */
     p.push({ n: x.slice(0, 24), d: 1, who: S.who });
     DRAFT.plan = p;
+    planEstReset();
     render();
     var el = document.getElementById('pl-add');
     if (el) { el.value = ''; el.focus(); }
@@ -681,12 +693,14 @@ var ACTS = {
     pl[k].who = mem[(at + 1) % mem.length];
     /* 換了人，那個天數就不再是新主人說的。 */
     pl[k].byOwn = 0;
+    planEstReset();
     render();
   },
   plandel: function (i) {
     var p = (DRAFT.plan || []).slice();
     p.splice(Number(i), 1);
     DRAFT.plan = p;
+    planEstReset();
     render();
   },
   /* 某一件加減一天。到頭停在那裡。 */
@@ -714,6 +728,7 @@ var ACTS = {
       byOwn: 1
     };
     DRAFT.plan = p;
+    planEstReset();
     render();
   },
 
@@ -770,9 +785,14 @@ var ACTS = {
 
   /* 說幾天：一按一天。到頭就停在那裡，不會繞回去——
      繞回去會讓「按到底」變成一件要小心的事。 */
-  estep: function (d) {
-    var n = clamp(RULES.EST_MIN, RULES.EST_MAX,
-      Number(draft('est', RULES.EST_DEFAULT)) + Number(d));
+  /* 送過來的是「按完會變成幾」，不是「加幾」——那兩顆鍵是從畫面上
+     正在顯示的數字算出來的（見 56-viz.js 的 estStep）。
+
+     本來這裡是拿差值去加 draft('est', RULES.EST_DEFAULT)，而用到這一組
+     鍵的三頁起點都不是 EST_DEFAULT（要徑算的、r.est、r.est），所以
+     DRAFT.est 還空著的時候按第一下會跳到 5 附近。 */
+  estep: function (v) {
+    var n = clamp(RULES.EST_MIN, RULES.EST_MAX, Number(v));
     DRAFT.est = n;
     estLive(n);
   },
@@ -878,8 +898,18 @@ var ACTS = {
     var msId = String(arg).split('|')[0];
     var pat = mobFor(msId, t.teamId);
     var zone = pat ? mobZone(pat).key : '';
-    actCommit(t.teamId, msId, Number(DRAFT.est || RULES.EST_DEFAULT),
-      DRAFT.flags || [], DRAFT.plan || [], zone, DRAFT.sure);
+    /* 送出去的是**畫面上那個數字**。
+
+       本來寫 DRAFT.est || EST_DEFAULT，而拆了件的時候 DRAFT.est 是空的
+       （那一格以前唯讀），靠 actCommit 自己去算。現在那一格按得動了，
+       所以這裡要講清楚：他按過就用他按的，沒按過就用要徑算的。
+
+       兩邊算的是同一支 planDays，所以「畫面上寫幾天」跟「承諾幾天」
+       不會有機會分岔。 */
+    var pl0 = DRAFT.plan || [];
+    var est0 = DRAFT.est != null ? Number(DRAFT.est)
+      : (pl0.length ? planDays(pl0) : RULES.EST_DEFAULT);
+    actCommit(t.teamId, msId, est0, DRAFT.flags || [], pl0, zone, DRAFT.sure);
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——

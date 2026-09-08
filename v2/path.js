@@ -128,7 +128,40 @@ const i說 = 欄.indexOf('他說幾天');
 ok(it.slice(1).every(l => l.split(',')[i說] === '2'),
   '每一個人說的還是 2 天——他自己的預估沒有被改掉');
 
-節('7', '兩個站算出來要一樣');
+節('7', '算出來的是起點，他們還可以再調一次');
+
+as(us[0]);
+const m2 = actPublish(K.classId, { title: '再一件', mentorId: T.userId, teams: [g.teamId] });
+as(T); actPublish(K.classId, { title: '佔位', mentorId: T.userId, teams: [] });
+as(us[0]);
+const pl2 = us.map((u, i) => ({ n: '第' + i + '件', d: 2, who: u.userId, byOwn: 1 }));
+/* 要徑算 2 天，他們自己定 5 天（他們知道乙要等甲、這禮拜還有三科要交） */
+const r2 = actCommit(g.teamId, m2.msId, 5, [], pl2, '', 2);
+ok(r2.est === 5, '他們定 5 天就是 5 天，沒有被要徑蓋掉（' + r2.est + '）');
+ok(r2.estCalc === 2, '而要徑算的 2 天也留著（estCalc ' + r2.estCalc + '）');
+ok(RULES.judge(r2.est, 5).key === 'exact',
+  '判定讀的是他們定的那一個——走 5 天算準');
+
+/* 沒給數字的時候（測試、示範資料）還是照要徑算 */
+as(T);
+const m3 = actPublish(K.classId, { title: '沒給數字', mentorId: T.userId, teams: [g.teamId] });
+as(us[0]);
+const r3 = actCommit(g.teamId, m3.msId, 0, [], pl2, '', 2);
+ok(r3.est === 2 && r3.estCalc === 2, '沒給數字就照要徑算（' + r3.est + ' 天）');
+
+節('8', '匯出分得出「照著算的走」跟「他們自己定了一個」');
+
+const rc = exportRuns(K.classId).trim().split('\n');
+const rh = rc[0].split(',');
+const i算 = rh.indexOf('要徑算幾天'), i改 = rh.indexOf('有沒有改掉');
+ok(i算 >= 0 && i改 >= 0, '兩欄都在');
+const 列2 = rc.find(l => l.indexOf(r2.runId) >= 0).split(',');
+const 列3 = rc.find(l => l.indexOf(r3.runId) >= 0).split(',');
+console.log('   他們自己定的那一趟　要徑 ' + 列2[i算] + '　有沒有改掉 ' + 列2[i改]);
+console.log('   照著算的那一趟　　　要徑 ' + 列3[i算] + '　有沒有改掉 ' + 列3[i改]);
+ok(列2[i改] === 'Y' && 列3[i改] === 'N', '兩種分得開');
+
+節('9', '兩個站算出來要一樣');
 
 RULES.SOLO = 1;
 const b = planDays(一人一件(1, 2));

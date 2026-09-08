@@ -592,10 +592,25 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
            值得看的東西。 */
         byOwn: x.byOwn ? 1 : 0 };
     });
-  /* 列了就是加起來。永遠只有一個地方在輸入。 */
-  if (pl.length) est = planDays(pl);
+  /* ── 要徑算的是起點，他們定的才是承諾 ──
+
+     拆了件就用要徑算一個數字出來（planDays），可是那個計算不知道
+     相依、不知道他們這禮拜還有三科要交、不知道他們一週只碰得到一次面。
+     所以第 2 步那一格是按得動的（見 60-student.js），他們可以再調一次。
+
+     這裡只在「沒有給數字」的時候才自己算——畫面永遠會給（見 55-ui.js
+     的 ACTS.commit），沒給的是直接呼叫這一支的地方（測試、示範資料），
+     那些地方要的正是「照著拆件算」。
+
+     estCalc 兩種情況都留著：有它才分得出「他們照著算的走」跟「他們
+     自己定了一個」，而那兩件事在研究上不是同一件事——後者是這一組
+     真的在做預估，前者只是接受了系統的算術。 */
+  var 算的 = pl.length ? planDays(pl) : 0;
+  if (pl.length && !(Number(est) > 0)) est = 算的;
   r = {
     runId: nid('R'), teamId: teamId, msId: msId,
+    /* 要徑算出來是幾天。跟 est 一樣的時候代表他們沒有改。 */
+    estCalc: 算的,
     state: 'running',
     est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
     plan: pl,
