@@ -320,7 +320,16 @@ function exportRuns(classId) {
     '承諾天數', '實際天數', '判定', '偏差率',
     '把握', '有沒有拆件', '拆幾件', '本人自己按的件數',
     '順不順', '為什麼', '範圍', '再兩天會做什麼', '東西在哪裡',
-    '老師回的天數', '談完之後的天數',
+    /* 協商那三個數字要分得開。
+
+       本來這裡只有「老師回的天數」與「談完之後的天數」，而後者印的是
+       run.est——可是 actAnswerAsk 動的就是 run.est，所以「承諾天數」
+       那一欄印的也是談完之後的那一個。兩欄同一個數字，學生本來說的
+       那一個（estFirst）整份匯出裡沒有任何地方看得到。
+
+       而「協商之後往哪邊靠」正是要那三個點：他一個人說的、老師說的、
+       最後定的。少了第一個，那一題算不出來。 */
+    '學生本來說幾天', '老師回的天數', '談完之後的天數',
     '被退幾次', '老師的話', '哪一位老師', '水晶加成',
     '承諾時間', '交出去時間', '收下時間', '交出去等了幾天'];
   var rows = [];
@@ -341,6 +350,9 @@ function exportRuns(classId) {
           dev === '' ? '' : dev.toFixed(3),
           r.sure || '', pl.length ? 'Y' : 'N', pl.length, byOwn,
           r.feel || '', r.why || '', r.scope || '', r.next || '', r.link || '',
+          /* estFirst 只有「談過而且動了」才有；沒動的時候他本來說的
+             就是 est 本身，所以那一欄照樣填得出來。 */
+          r.askAt ? (r.estFirst == null ? (r.est || '') : r.estFirst) : '',
           r.askEst || '', r.askAt ? (r.est || '') : '',
           r.backs || 0, r.word || '', by ? by.name : '', r.bonus || '',
           r.committedAt ? new Date(r.committedAt).toISOString() : '',

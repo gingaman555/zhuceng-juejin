@@ -326,13 +326,28 @@ function whereLine(v, copy) {
     H.push('<a class="wh-link" href="' + esc(t) + '" target="_blank" rel="noopener">' +
       esc(t) + '</a>');
   } else {
-    /* 先整段跳脫，再把跳脫過的網址換成連結——兩邊都經過同一支 esc，
-       所以對得上（& 兩邊都是 &amp;）。 */
-    var html = esc(t);
-    urls.forEach(function (u) {
-      html = html.split(esc(u)).join('<a class="wh-link" href="' + esc(u) +
-        '" target="_blank" rel="noopener">' + esc(u) + '</a>');
-    });
+    /* 從頭走一遍，走到哪裡接到哪裡。
+
+       本來是「先整段跳脫，再一個一個 split／join 換掉」，那個做法會壞在
+       兩種學生真的會寫出來的東西上：
+
+         同一個網址寫兩次　　urls 裡就有兩筆一樣的，第二輪會把第一輪
+                             already 做好的 <a> 內容再包一次 → 標籤爛掉
+         一個是另一個的開頭　「…/abc」跟「…/abc/x」，換短的那一次會
+                             連長的那一個的前半段一起吃掉 → 老師點下去
+                             會去到資料夾，不是他要看的那一份
+
+       走一遍就沒有這兩件事：每一段字只被處理一次，換過的地方不再回頭看。 */
+    var html = '';
+    var last = 0, m;
+    WH_URL.lastIndex = 0;
+    while ((m = WH_URL.exec(t))) {
+      html += esc(t.slice(last, m.index)) +
+        '<a class="wh-link" href="' + esc(m[0]) + '" target="_blank" rel="noopener">' +
+        esc(m[0]) + '</a>';
+      last = m.index + m[0].length;
+    }
+    html += esc(t.slice(last));
     H.push('<p class="wh-txt">' + html + '</p>');
   }
   if (copy) {

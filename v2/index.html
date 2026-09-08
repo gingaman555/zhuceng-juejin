@@ -7393,7 +7393,16 @@ function exportRuns(classId) {
     '承諾天數', '實際天數', '判定', '偏差率',
     '把握', '有沒有拆件', '拆幾件', '本人自己按的件數',
     '順不順', '為什麼', '範圍', '再兩天會做什麼', '東西在哪裡',
-    '老師回的天數', '談完之後的天數',
+    /* 協商那三個數字要分得開。
+
+       本來這裡只有「老師回的天數」與「談完之後的天數」，而後者印的是
+       run.est——可是 actAnswerAsk 動的就是 run.est，所以「承諾天數」
+       那一欄印的也是談完之後的那一個。兩欄同一個數字，學生本來說的
+       那一個（estFirst）整份匯出裡沒有任何地方看得到。
+
+       而「協商之後往哪邊靠」正是要那三個點：他一個人說的、老師說的、
+       最後定的。少了第一個，那一題算不出來。 */
+    '學生本來說幾天', '老師回的天數', '談完之後的天數',
     '被退幾次', '老師的話', '哪一位老師', '水晶加成',
     '承諾時間', '交出去時間', '收下時間', '交出去等了幾天'];
   var rows = [];
@@ -7414,6 +7423,9 @@ function exportRuns(classId) {
           dev === '' ? '' : dev.toFixed(3),
           r.sure || '', pl.length ? 'Y' : 'N', pl.length, byOwn,
           r.feel || '', r.why || '', r.scope || '', r.next || '', r.link || '',
+          /* estFirst 只有「談過而且動了」才有；沒動的時候他本來說的
+             就是 est 本身，所以那一欄照樣填得出來。 */
+          r.askAt ? (r.estFirst == null ? (r.est || '') : r.estFirst) : '',
           r.askEst || '', r.askAt ? (r.est || '') : '',
           r.backs || 0, r.word || '', by ? by.name : '', r.bonus || '',
           r.committedAt ? new Date(r.committedAt).toISOString() : '',
@@ -14926,13 +14938,28 @@ function whereLine(v, copy) {
     H.push('<a class="wh-link" href="' + esc(t) + '" target="_blank" rel="noopener">' +
       esc(t) + '</a>');
   } else {
-    /* 先整段跳脫，再把跳脫過的網址換成連結——兩邊都經過同一支 esc，
-       所以對得上（& 兩邊都是 &amp;）。 */
-    var html = esc(t);
-    urls.forEach(function (u) {
-      html = html.split(esc(u)).join('<a class="wh-link" href="' + esc(u) +
-        '" target="_blank" rel="noopener">' + esc(u) + '</a>');
-    });
+    /* 從頭走一遍，走到哪裡接到哪裡。
+
+       本來是「先整段跳脫，再一個一個 split／join 換掉」，那個做法會壞在
+       兩種學生真的會寫出來的東西上：
+
+         同一個網址寫兩次　　urls 裡就有兩筆一樣的，第二輪會把第一輪
+                             already 做好的 <a> 內容再包一次 → 標籤爛掉
+         一個是另一個的開頭　「…/abc」跟「…/abc/x」，換短的那一次會
+                             連長的那一個的前半段一起吃掉 → 老師點下去
+                             會去到資料夾，不是他要看的那一份
+
+       走一遍就沒有這兩件事：每一段字只被處理一次，換過的地方不再回頭看。 */
+    var html = '';
+    var last = 0, m;
+    WH_URL.lastIndex = 0;
+    while ((m = WH_URL.exec(t))) {
+      html += esc(t.slice(last, m.index)) +
+        '<a class="wh-link" href="' + esc(m[0]) + '" target="_blank" rel="noopener">' +
+        esc(m[0]) + '</a>';
+      last = m.index + m[0].length;
+    }
+    html += esc(t.slice(last));
     H.push('<p class="wh-txt">' + html + '</p>');
   }
   if (copy) {
