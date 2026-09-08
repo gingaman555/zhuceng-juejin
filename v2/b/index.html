@@ -2532,14 +2532,46 @@ button.ac:active{transform:translateY(1px)}
 
    而且它比內框更顯眼——內框是往內縮的一條線，外光是整扇門亮起來，
    那正是這一扇要的：它是唯一會累積東西的那一扇，有新的就該被看見。 */
+/* ── 而且它會一閃一閃 ──
+
+   靜的金邊還是要被找到才看得到。這一扇是唯一會累積東西的門，多了
+   一位委託人的那一刻應該自己跳出來，不用學生自己去比對哪裡不一樣。
+
+   兩段硬切，不是漸亮漸暗——這個作品的東西一律逐格（見 53-scene.css
+   的檔頭），漸層在這裡會像另一個系統的元件。
+
+   暗的那一段還是亮的（金邊只是換成暗金、門面留一點光），所以它從頭到尾
+   都讀得出「這扇有東西」；閃只是讓它被看見，不是讓它一半的時間消失。
+
+   1.4 秒一次，跟廊道上角色呼吸那一下同一個拍子（bob）——同一個畫面上
+   兩種節奏會打架。 */
+@keyframes dkblink{
+  0%,54%{
+    background:rgba(233,179,65,.12);
+    box-shadow:0 0 0 2px var(--gold), inset 0 2px 0 rgba(255,240,214,.16)
+  }
+  55%,100%{
+    background:rgba(233,179,65,.04);
+    box-shadow:0 0 0 2px var(--gold-d), inset 0 2px 0 rgba(255,240,214,.06)
+  }
+}
 .dk.lit{
   color:var(--ink);
   background:rgba(233,179,65,.12);
-  box-shadow:0 0 0 2px var(--gold), inset 0 2px 0 rgba(255,240,214,.16)
+  box-shadow:0 0 0 2px var(--gold), inset 0 2px 0 rgba(255,240,214,.16);
+  animation:dkblink 1.4s steps(1,end) infinite
 }
+/* 關掉動畫的人拿到的是靜止的亮狀態，不是什麼都沒有。 */
+@media (prefers-reduced-motion: reduce){ .dk.lit{animation:none} }
 /* 按下去的時候還是要看得出被按住——所以 lit 的門按下去換回內框。
-   同一顆鍵上，外＝有東西、內＝我正在按它。 */
+   同一顆鍵上，外＝有東西、內＝我正在按它。
+
+   animation:none 一定要寫：動畫的宣告贏過一般宣告，不關掉的話手指
+   壓在上面那一顆會照樣閃、而且完全沒有被按住的樣子——按了沒反應是
+   最糟的那一種。 */
 .dk.lit:active{
+  animation:none;
+  background:rgba(233,179,65,.12);
   box-shadow:0 0 0 2px var(--gold-d), inset 0 0 0 2px var(--gold)
 }
 
