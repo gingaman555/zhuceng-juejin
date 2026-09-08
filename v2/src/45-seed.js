@@ -207,9 +207,14 @@ function seed() {
     word: '你說六天就是六天。中間那幾天沒有拖。' });
   pushes('G1', 'R1', 6, 23);
 
+  /* 承諾 4、實際 2 → early（容差是 ±1，所以 3 還算準，2 才是提早）。
+
+     本來寫 actual: 3，而 judge(4,3) 回的是 exact——示範資料上印著
+     early，點進去卻是「跟承諾的一樣」。老師那句話寫「比上一次早兩天」，
+     照那句話就是 2，兩邊一起對上。 */
   DB.Runs.push({ runId: 'R2', teamId: 'G1', msId: 'M2', state: 'done',
-    est: 4, actual: 3, stamp: 'early', flags: [], overs: [], pushes: 4,
-    committedAt: ago(14), submittedAt: ago(11), doneAt: ago(10),
+    est: 4, actual: 2, stamp: 'early', flags: [], overs: [], pushes: 4,
+    committedAt: ago(14), submittedAt: ago(12), doneAt: ago(10),
     word: '比上一次早兩天。' });
   pushes('G1', 'R2', 4, 13);
 
@@ -356,14 +361,28 @@ function dressRuns(cid) {
     if (!r.plan || !r.plan.length) {
       var names = (ms && ms.steps && ms.steps.length) ? ms.steps.slice(0, 4)
         : ['先做的那一半', '後做的那一半'];
-      var left = r.est || 4;
+      /* ── 拆件要跟這一趟的天數對得上，而對的方式是要徑 ──
+
+         本來這裡把 est 攤在幾件上（最後一件拿剩下的），因為當時
+         planDays 是相加的。改成要徑之後（見 40-db.js），那樣攤出來的
+         plan 算回去會比 est 小——九趟示範資料每一趟都對不上，而
+         R1 老師那句話寫的是「你說六天就是六天」。
+
+         現在反過來做：先決定誰是要徑上那一位（最後一件的主人，
+         沿用原本「最後一件最大」的手感），再讓**他手上那幾件加起來
+         剛好等於 est**。其他人各件一天，並行，不影響總數。 */
+      var 主 = names.map(function (n, i) { return mem[(h + i) % mem.length].userId; });
+      var 慢 = 主[主.length - 1];
+      var 他幾件 = 主.filter(function (w) { return w === 慢; }).length;
       r.plan = names.map(function (n, i) {
-        var d = i === names.length - 1 ? Math.max(1, left) : 1;
-        left -= d;
+        /* 慢的那一位：最後那一件吃掉剩下的，他其餘的件各一天。
+           所以他加起來 = (est − 其餘件數) + 其餘件數 = est。 */
+        var d = (i === names.length - 1)
+          ? Math.max(1, (r.est || 4) - (他幾件 - 1)) : 1;
         /* 那個天數是不是本人自己按的。真的班上會是一個混的比例
            （他們常常一起坐著、一台電腦規劃），所以示範資料也給一個
            混的——全部 N 會讓那一欄看起來像沒有作用。 */
-        return { n: n, d: d, who: mem[(h + i) % mem.length].userId,
+        return { n: n, d: d, who: 主[i],
           byOwn: ((h + i) % 5 < 3) ? 1 : 0 };
       });
     }

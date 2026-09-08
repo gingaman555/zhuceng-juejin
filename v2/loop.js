@@ -293,5 +293,42 @@ if (eco.map(function (e) { return e.teamId; }).join(',') !== order) {
   ok('沒有人會變成別人（' + Object.keys(seen).length + ' 個 id，連開 20 個新帳號都不撞）');
 })();
 
+/* ---------- 示範資料自己說的話要對得上 ----------
+
+   這兩條是實際踩到的：
+
+   一 · est 跟拆件。本來 planDays 是相加的，示範資料的 plan 就是把 est
+        攤在幾件上；改成要徑之後（見 40-db.js），九趟每一趟算回去都比
+        寫的少，而 R1 老師那句話寫的是「你說六天就是六天」。
+
+   二 · stamp 跟兩個數字。R2 寫 est 4 / actual 3 / early，可是容差是 ±1，
+        judge(4,3) 回的是 exact——卡片上印 early，點進去是「跟承諾的一樣」。
+        那一條從第一版就錯著，十六支檢查沒有一支在看它。
+
+   兩條都不會爆、不會讓任何頁面畫不出來。它們只是讓示範資料自己
+   前後矛盾，而示範資料是每一個人打開網頁看到的第一個東西。 */
+(function () {
+  DB = blank(); seed();
+  var 不合 = [];
+  where('Runs', function (r) { return true; }).forEach(function (r) {
+    var pl = r.plan || [];
+    if (pl.length && planDays(pl) !== r.est) {
+      不合.push(r.runId + ' 寫 ' + r.est + ' 天，拆件算出來是 ' + planDays(pl));
+    }
+    if (r.stamp && r.est > 0 && r.actual > 0) {
+      var 該 = RULES.judge(r.est, r.actual).key;
+      if (該 !== r.stamp) {
+        不合.push(r.runId + ' 印 ' + r.stamp + '，但 ' + r.est + '／' +
+          r.actual + ' 算出來是 ' + 該);
+      }
+    }
+  });
+  if (不合.length) {
+    return fail('示範資料自己對不上：' + 不合.slice(0, 3).join('；') +
+      (不合.length > 3 ? ' …共 ' + 不合.length + ' 條' : ''));
+  }
+  ok('示範資料自己說的話對得上（天數＝拆件算的、判定＝兩個數字算的）');
+})();
+
 console.log('\n' + (bad ? '── ' + bad + ' 項失敗 ──' : '── 全部通過：這台機器轉得動 ──'));
 process.exit(bad ? 1 : 0);
