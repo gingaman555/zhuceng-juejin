@@ -208,7 +208,26 @@ const 髒 = 紀.filter(function (e) {
 });
 console.log('   機器上 ' + DB.Events.length + ' 筆事件，研究者看到 ' + 紀.length + ' 筆');
 ok(!髒.length, '紀錄裡沒有示範帳號做的事（' + 髒.length + ' 筆髒的）');
-ok(紀.length < DB.Events.length, '而且真的有擋掉東西——不是篩子沒作用');
+
+/* ── 而且是根本沒記，不是記了再藏 ──
+
+   上面那幾筆（示範學生登入、在示範班上回報）是真的做過的動作。
+   本來每一個 act* 都會寫一筆，所以那些會變成研究資料而且**被推上雲**
+   ——Events 是 SYNC_UP_ONLY，上去了就下不來也刪不掉。
+
+   所以這一條驗的不是「篩子有沒有作用」，是「那幾筆從來沒有被寫下來」。
+   數字要對得上：機器上的總數 == 研究者看到的數。 */
+const 髒的有幾筆 = DB.Events.filter(function (e) {
+  const u = e.by ? userOf(e.by) : null;
+  if (u && u._d) return true;
+  return !!(e.teamId && where('Teams', t => t._d && t.teamId === e.teamId).length);
+}).length;
+ok(髒的有幾筆 === 0,
+  '示範那一邊的動作**根本沒有被記下來**（機器上 ' + 髒的有幾筆 + ' 筆髒的）');
+ok(紀.length === DB.Events.length,
+  '所以下游不用擋任何東西：機器上 ' + DB.Events.length +
+  ' 筆＝研究者看到 ' + 紀.length + ' 筆');
+ok(DB.Events.length > 0, '而真的那一邊照樣記（' + DB.Events.length + ' 筆）');
 
 節('7', '登入頁預設不給示範帳號');
 

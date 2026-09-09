@@ -40,8 +40,39 @@ function newSalt() {
 
    刻意不記「內容」——系統本來就不收作業。記的是行為的形狀：
    承諾幾天、推進的節奏、判定結果、卡在哪。 */
+/* ---------- 示範那一邊的動作根本不記 ----------
+
+   本來每一個 act* 都會寫一筆，不分是誰做的。所以在示範班上點來點去
+   ——展示、測試、上課前試一次——全部變成研究資料，而且**會被推上雲**
+   （Events 是 SYNC_UP_ONLY，只上去不下來，所以刪也刪不掉）。
+
+   我在雲端量到的那 75 筆就是這樣來的。
+
+   下游的篩子（eventsOf、rsUsers）擋得住畫面跟匯出，可是那是「記了
+   再藏起來」。使用者要的是「不要被追蹤」——那就不該記。
+
+   在源頭擋掉還多解決一件事：示範那一邊不再產生新的雲端垃圾。
+
+   下游那幾道篩子留著：這台機器上可能還有以前記下來的舊事件，
+   而且雲端那幾筆已經下不來也刪不掉了。 */
+function evDemoSide(o) {
+  var by = (typeof S !== 'undefined' && S.who) ? S.who : (o && o.by);
+  if (by) { var u = userOf(by); if (u && u._d) return true; }
+  if (o && o.teamId) {
+    var t = teamOf(o.teamId);
+    if (t && (t._d || (t.classId && (find('Classes', function (c) {
+      return c.classId === t.classId; }) || {})._d))) return true;
+  }
+  if (o && o.classId) {
+    var c = find('Classes', function (x) { return x.classId === o.classId; });
+    if (c && c._d) return true;
+  }
+  return false;
+}
+
 function logEvent(kind, o) {
   if (!DB || !DB.Events) return;
+  if (evDemoSide(o)) return;
   /* 登入與註冊那兩筆是在還沒有 S.who 的時候記的，所以要讓呼叫端
      自己帶 by 進來——不然研究資料裡最重要的兩個動作會沒有角色。 */
   var u = (typeof S !== 'undefined' && S.who) ? userOf(S.who) : null;
