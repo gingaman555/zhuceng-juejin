@@ -76,7 +76,18 @@ PAGES.radar = function () {
   var tq = DRAFT.tq === 'exit' ? 'exit'
     : ((DRAFT.tq === 'ask' && RULES.NEGOTIATE) ? 'ask' : 'rev');
   H.push('<div class="segs">');
-  [['rev', '審核', rows.length], ['exit', '出口', out.length]].forEach(function (g) {
+  /* 這一格對老師叫「完成專案」，不叫「出口」。
+
+     出口是學生那一邊的東西：廊道盡頭一扇門，開了他才走得上去。
+     老師這一邊做的不是開門，是判斷「這一組整個專案結束了沒」——
+     那是一學期一次、看一整條路的決定。
+
+     老師端其餘的字都是白話（審核、退回、收下），只有這一格用了世界觀
+     的詞，而老師沒有走過那條廊道，那個詞對他不指任何東西。
+
+     門還留在說明裡：那是他按下去之後學生會看到的事，講出來他才知道
+     自己剛剛做了什麼。 */
+  [['rev', '審核', rows.length], ['exit', '完成專案', out.length]].forEach(function (g) {
     H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
       '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
@@ -121,7 +132,7 @@ PAGES.radar = function () {
     var mine = teamsUnder(u.classId, u.userId).slice().sort(function (a, b) {
       return (b.exitAsk || 0) - (a.exitAsk || 0);
     });
-    H.push(head('出口', '門開了他們才走得出去', ''));
+    H.push(head('完成專案', '你確認了，他們才結束得了', ''));
     mine.forEach(function (t) {
       var acc = accuracyOf(t.teamId);
       H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
@@ -134,13 +145,15 @@ PAGES.radar = function () {
       if (t.leftAt) {
         H.push('<p class="dim">他們走出去了。</p>');
       } else if (t.exitOk) {
-        /* 開了但還沒走。走出去那一下是他們自己按的——
+        /* 確認了但還沒走。走出去那一下是他們自己按的——
            走出去該是他們的動作，不是老師代勞的。 */
-        H.push('<p class="dim">門開著，等他們自己走上去。</p>');
-        H.push(btn('把門關回去', 'openexit:' + t.teamId + ',0', 'ghost'));
+        H.push('<p class="dim">確認過了。門開著，等他們自己走上去。</p>');
+        H.push(btn('取消確認', 'openexit:' + t.teamId + ',0', 'ghost'));
       } else {
         H.push('<div class="row">');
-        H.push(btn('開門讓他們上去', 'openexit:' + t.teamId + ',1', 'big'));
+        /* 鍵上寫的是這個決定叫什麼，說明那一行才講它在學生那邊長什麼樣
+           ——鍵要短到一眼讀完，而「門」不是老師要做的事。 */
+        H.push(btn('確認他們完成了', 'openexit:' + t.teamId + ',1', 'big'));
         /* 「現在還不是時候」只對有說過的那幾組出現——沒說過的組
            沒有東西要回。 */
         if (t.exitAsk) H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
