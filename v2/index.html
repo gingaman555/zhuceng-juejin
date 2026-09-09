@@ -5045,21 +5045,27 @@ button.side-head{
 .bt-plate{width:auto;min-width:110px}
 
 /* ── 登場 ──
-   牠從右邊滑進來。舊版寶可夢就是這樣：沒有粒子，就是滑進來。
-
-   ── 只有剛遇到的時候滑 ──
 
    這一頁每答完一題就整塊重畫，元素重新生出來、掛在上面的動畫就重播。
-   所以本來每按完一部份，委託人就從右邊再滑進來一次、名牌再推一次——
-   看起來像他每答一題就消失再出現。
+   所以登場那幾段要收進 .bt.first（見 67-battle.js：進這一頁的時候
+   S.p 只有 id，問題那幾步一定帶 ph）。呼吸（btbob）不收，它是狀態不是
+   事件——上面那一條（.bt-side.foe .bt-ch）本來就給了。
 
-   登場那幾段收進 .bt.first（見 67-battle.js：進這一頁的時候 S.p 只有
-   id，問題那幾步一定帶 ph）。呼吸（btbob）不收，它是狀態不是事件——
-   而它上面那一條（.bt-side.foe .bt-ch）本來就給了，這裡不用再寫一次。 */
-.bt.first .bt-side.foe .bt-ch{
-  animation:btenter .5s steps(5,end) 1, btbob 1.2s steps(2,end) .5s infinite
-}
-@keyframes btenter{from{transform:translateX(44px)}to{transform:translateX(0)}}
+   ── 這裡本來有第二個登場動畫 ──
+
+   btenter（從右邊滑進來）躺在這裡，而底下第 366 行還有一個 btjump
+   （從下面跳上來，舊版寶可夢的野生遭遇）。兩條同一個元素、同一件事。
+
+   因為 .bt.first 的權重比較高，剛遇到的時候播的是**滑**；而 btjump
+   那一條沒有任何條件，所以每一次重畫都在播——也就是每答完一題，
+   牠就從下面再跳進來一次。
+
+   我第一次修這個 bug 的時候只擋到 btenter，量的又剛好是 .bt.take 還在
+   的那一刻（那時 bttake 蓋過去，看起來是對的），所以沒看到 take 被
+   拿掉之後 btjump 又接手。
+
+   留 btjump：它才是這一頁想要的那一下（檔案裡的註解也是那樣寫的），
+   而且它是後來加的。btenter 跟它的 keyframes 一起拿掉。 */
 .bt.first .bt-side.foe .bt-plate{animation:btslide .45s steps(5,end) 1}
 @keyframes btslide{from{transform:translateX(-55px)}to{transform:translateX(0)}}
 .bt.first .bt-side.me .bt-plate{animation:btslider .45s steps(5,end) 1}
@@ -5190,8 +5196,11 @@ button.side-head{
 
 /* ── 登場：牠先跳出來 ──
    舊版寶可夢的野生遭遇：畫面切掉，牠從下面跳上來、彈一下才站定。
-   跳完才輪到你——所以選單是登場演完才出現的。 */
-.bt-side.foe .bt-ch{
+   跳完才輪到你——所以選單是登場演完才出現的。
+
+   .bt.first 是後來加的：這一條本來沒有任何條件，而這一頁每答完一題就
+   整塊重畫，所以牠每一題都跳一次進來（見上面「登場」那一段）。 */
+.bt.first .bt-side.foe .bt-ch{
   animation:btjump .62s steps(6,end) 1, btbob 1.2s steps(2,end) .62s infinite
 }
 @keyframes btjump{
