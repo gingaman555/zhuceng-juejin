@@ -178,3 +178,6 @@ console.log('  畫不出來的尺寸：' + (壞了.length ? 壞了.map(r => r.�
 console.log('  存不下的尺寸　：' + (爆了.length ? 爆了.map(r => r.組 + ' 組').join('、') : '沒有（都在 5 MB 以內）'));
 console.log('  畫超過 ' + 慢 + 'ms：' + (卡了.length ? 卡了.map(r => r.組 + ' 組').join('、') : '沒有'));
 console.log('  id 撞號　　　　：' + (表.some(r => r.撞id) ? '有' : '沒有'));
+
+/* 離開碼。畫不出來、存不下、id 撞號是硬傷；畫得慢只是報告，不擋。 */
+process.exit((壞了.length || 爆了.length || 表.some(r => r.撞id)) ? 1 : 0);

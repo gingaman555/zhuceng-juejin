@@ -335,3 +335,7 @@ be('研究者匯出得出來', (function () { as(ra); try { return exportCsv().l
 console.log('\n' + '═'.repeat(52));
 console.log('  ' + 組數 + ' 組 × ' + 每組 + ' 人 · 3 位老師 · 3 趟委託 · 全部走出出口');
 console.log(bad ? '  有 ' + bad + ' 個地方不對' : '  全部對得上');
+
+/* 離開碼。本來沒有——上面那幾十條斷言印得出錯，可是離開碼永遠 0，
+   deploy 的關卡因此從來擋不下這一支（見 e2e.js 檔尾同一段）。 */
+process.exit(bad ? 1 : 0);
