@@ -293,8 +293,22 @@ PAGES.reg = function () {
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="rg-acc" value="' + esc(draft('rg-acc')) + '" placeholder="' +
          esc('至少三個字，登入用') + '">');
+  /* ── 密碼要打兩次 ──
+
+     這一頁沒有「忘記密碼」那條路：帳號存在瀏覽器裡，密碼是雜湊過的，
+     沒有任何地方救得回來（見 15-auth.js）。所以打錯一個字的代價不是
+     「再登入一次」，是那個帳號**再也進不去**——而他打的時候看到的
+     全是圓點。
+
+     兩格是為了那件事，不是為了嚴謹。兩格不一樣就擋在這裡，
+     擋在他按下建立之前。 */
   H.push('<div class="eyebrow">密碼</div>');
   H.push('<input id="rg-pw" type="password" placeholder="' + esc('至少四個字') + '">');
+  /* 眉標不寫「再打一次」：那四個字剛從這個作品裡拿掉（老師退回之後
+     學生那一顆鍵），check.js 也擋著。同一個字串在同一套介面裡指兩件
+     不同的事，下一個讀的人要猜。 */
+  H.push('<div class="eyebrow">再一次</div>');
+  H.push('<input id="rg-pw2" type="password" placeholder="' + esc('跟上面那一格一樣') + '">');
   H.push('</div>');
   H.push('<div class="row">');
   H.push(btn('建立', 'reg', 'big'));
@@ -445,6 +459,21 @@ ACTS.reg = function () {
     role: (DRAFT.rgRole === 'teacher' || DRAFT.rgRole === 'researcher')
       ? DRAFT.rgRole : 'student'
   };
+  /* 兩格不一樣就停在這裡。
+
+     擋在 actRegister 前面，不是在資料層——資料層不該知道畫面上有
+     幾個密碼欄。它收到的永遠是一個已經確認過的密碼。
+
+     那三格（碼、名字、帳號）留著，密碼兩格清掉：他要重打的就是密碼，
+     而留著半個打錯的密碼只會讓他看著兩排一樣長的圓點猜哪一格錯了。 */
+  var pw2 = (document.getElementById('rg-pw2') || {}).value || '';
+  if (o.password !== pw2) {
+    DRAFT['rg-code'] = o.code; DRAFT['rg-acc'] = o.account;
+    DRAFT['rg-name'] = o.name;
+    render();
+    /* 不寫「再打一次」：那四個字被 check.js 擋著（見上面眉標那一段）。 */
+    return say('兩次密碼不一樣。再輸入一次。');
+  }
   var r = actRegister(o);
   if (r.err) {
     DRAFT['rg-code'] = o.code; DRAFT['rg-acc'] = o.account;

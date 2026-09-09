@@ -57,7 +57,7 @@ H('開班 · 註冊 · 組隊');
 DB = blank(); save(); S.who = null; DB.Session = null;
 
 go('reg'); DRAFT.rgRole = 'teacher';
-form('rg-name', '孟老師'); form('rg-acc', 'meng'); form('rg-pw', 'aaaa');
+form('rg-name', '孟老師'); form('rg-acc', 'meng'); form('rg-pw', 'aaaa'); form('rg-pw2', 'aaaa');
 ACTS.reg();
 const tea = me();
 be('老師的顯示名', tea && tea.name, '孟老師');
@@ -75,7 +75,7 @@ NAMES.forEach(function (n, i) {
   S.who = null; DB.Session = null;
   go('reg'); DRAFT.rgRole = 'student';
   form('rg-code', kl.joinCode); form('rg-name', n);
-  form('rg-acc', 'b1100000' + i); form('rg-pw', 'aaaa');
+  form('rg-acc', 'b1100000' + i); form('rg-pw', 'aaaa'); form('rg-pw2', 'aaaa');
   ACTS.reg();
   stu.push(me());
 });

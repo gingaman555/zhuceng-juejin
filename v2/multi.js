@@ -71,7 +71,7 @@ const teas = [];
 TEA.forEach(function (n, i) {
   S.who = null; DB.Session = null;
   go('reg'); DRAFT.rgRole = 'teacher';
-  F('rg-name', n); F('rg-acc', 'tea' + i); F('rg-pw', 'aaaa');
+  F('rg-name', n); F('rg-acc', 'tea' + i); F('rg-pw', 'aaaa'); F('rg-pw2', 'aaaa');
   if (i > 0) F('rg-code', DB.Classes[0].joinCode);
   ACTS.reg();
   if (i === 0) { go('mkclass'); F('mk-name', '設計專題'); ACTS.mkclass(); }
@@ -91,7 +91,7 @@ for (let gi = 0; gi < 組數; gi++) {
     S.who = null; DB.Session = null;
     go('reg'); DRAFT.rgRole = 'student';
     F('rg-code', kl.joinCode); F('rg-name', 姓[序] + '同學');
-    F('rg-acc', 'b11' + String(1000 + 序)); F('rg-pw', 'aaaa');
+    F('rg-acc', 'b11' + String(1000 + 序)); F('rg-pw', 'aaaa'); F('rg-pw2', 'aaaa');
     ACTS.reg(); mems.push(me()); 序++;
   }
   as(mems[0]);
@@ -311,7 +311,7 @@ H('專案結束之後，每一頁 × 每一個角色');
 const ra = DB.Users.filter(u => u.role === 'researcher')[0] || (function () {
   S.who = null; DB.Session = null;
   go('reg'); DRAFT.rgRole = 'researcher';
-  F('rg-name', '研究者'); F('rg-acc', 'lab'); F('rg-pw', 'aaaa'); ACTS.reg();
+  F('rg-name', '研究者'); F('rg-acc', 'lab'); F('rg-pw', 'aaaa'); F('rg-pw2', 'aaaa'); ACTS.reg();
   return me();
 })();
 let drew = 0, errs = [];

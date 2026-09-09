@@ -87,7 +87,7 @@ function F(id, v) { document.getElementById(id).value = v; }
 function as(u) { S.who = u.userId; DB.Session = { userId: u.userId, at: Date.now() }; }
 DB = blank(); save(); S.who = null; DB.Session = null;
 go('reg'); DRAFT.rgRole = 'teacher';
-F('rg-name', '孟老師'); F('rg-acc', 'meng'); F('rg-pw', 'aaaa'); ACTS.reg();
+F('rg-name', '孟老師'); F('rg-acc', 'meng'); F('rg-pw', 'aaaa'); F('rg-pw2', 'aaaa'); ACTS.reg();
 const tea = me();
 go('mkclass'); F('mk-name', '設計專題'); ACTS.mkclass();
 const kl = DB.Classes[0];
@@ -96,11 +96,11 @@ const stu = [];
   S.who = null; DB.Session = null;
   go('reg'); DRAFT.rgRole = 'student';
   F('rg-code', kl.joinCode); F('rg-name', n);
-  F('rg-acc', 'b11000' + i); F('rg-pw', 'aaaa'); ACTS.reg(); stu.push(me());
+  F('rg-acc', 'b11000' + i); F('rg-pw', 'aaaa'); F('rg-pw2', 'aaaa'); ACTS.reg(); stu.push(me());
 });
 S.who = null; DB.Session = null;
 go('reg'); DRAFT.rgRole = 'researcher';
-F('rg-name', '研究者'); F('rg-acc', 'lab'); F('rg-pw', 'aaaa'); ACTS.reg();
+F('rg-name', '研究者'); F('rg-acc', 'lab'); F('rg-pw', 'aaaa'); F('rg-pw2', 'aaaa'); ACTS.reg();
 const ra = me();
 as(stu[0]);
 const tm = actNewTeam('第一組', stu[0].userId).team;
