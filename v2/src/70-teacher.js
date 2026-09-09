@@ -185,7 +185,19 @@ PAGES.radar = function () {
 
   if (!rows.length) {
     H.push('<div class="card">');
-    H.push('<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
+    /* 「沒有人在等你」講的是審核這一格，可是它印出來的時候旁邊那一格
+       可能正掛著號碼——完成專案那一格裡的每一組都按過「我們做完了」，
+       那就是有人在等（exitQueue 只收 exitAsk 的，見 40-db.js）。
+
+       實際看到的畫面：分頁寫著「完成專案（1）」，底下同一張卡寫
+       「沒有人在等你」。兩句話在同一個畫面上互相打臉。
+
+       協商那一排不算——那一格寫著「你可以回一句，也可以不回」，
+       沒有人在那裡等他。 */
+    H.push(out.length
+      ? '<p class="dim">這裡沒有要看的。有 ' + out.length +
+        ' 組說他們做完了，在「完成專案」那一格。</p>'
+      : '<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
     H.push('<div class="row">');
     H.push(btn('去發一個任務', 'go:ms', 'big'));
     H.push(btn(RULES.SOLO ? '看每一位的進度' : '看各組進度', 'go:classeco', 'ghost'));

@@ -114,6 +114,22 @@ var EV_SAY = {
      幫他填的」在資料上差在有沒有這一筆。 */
   mypart:   function () { return '自己進來填了他那幾件'; },
   sit:      function (e) { return '換到「' + (e.klass || '另一個班') + '」'; },
+  /* 這兩筆是 logEvent(on ? 'exitopen' : 'exitshut', …) 寫的——三元式，
+     所以「哪些種類會被記下來」那一份清單掃不到它們，流水帳上印的一直是
+     英文的 kind 本身。
+
+     用老師那一邊的說法（見 70-teacher.js：那一格叫「完成專案」），
+     不用「開門／關門」——門是學生那一頭看到的東西。 */
+  exitopen: function () { return '確認他們完成了'; },
+  exitshut: function () { return '收回了那個確認'; },
+  /* 休息也是 logEvent(kind === 'move' ? 'push' : 'rest', …) 記的，同一個
+     三元式，所以它跟 exitopen 一起躲了很久。
+
+     它在研究上不是「沒有資料」——「這一天我們沒有動」是他自己按下去的
+     一個判斷，跟推進那一格是同一種東西（見 40-db.js 的 actRest）。
+     少了這一行，流水帳上那幾筆會印成英文的 rest。 */
+  rest:     function (e) { return '第 ' + e.n + ' 天：這一天沒有動' +
+    (e.back ? '（補登）' : ''); },
   reject:   function (e) { return '退回去改，寫了 ' + e.len + ' 個字'; },
   resend:   function (e) { return '改好再交一次（第 ' + e.backs + ' 次被退）'; },
   rethink:  function (e) { return '重新想過：本來說 ' + e.est + ' 天，走到第 ' + e.went + ' 天'; },
