@@ -415,8 +415,16 @@ function topBar() {
       '<span class="badge r">研究者</span>' +
       '<span class="who">' + esc(u.name) + '</span>' +
       '<span class="sp"></span>' +
-      '<span>' + DB.Users.length + ' 個帳號　·　' + DB.Classes.length + ' 個班　·　' +
-        DB.Events.length + ' 筆紀錄</span>' + topEnd() +
+      /* 這三個數字要跟名單那一頁對得上——都不算示範資料。
+
+         本來直接數 DB，所以示範那一班跟十七個示範帳號一起算進去，
+         而這一條在研究者的**每一頁**上都印著（名單那一頁修好了，
+         這一條沒有，於是同一個畫面上兩個數字互相打臉：頁首寫 19 個
+         帳號，內容列出 2 個）。
+
+         紀錄數用 eventsOf(現在這一班)，跟紀錄那一頁看到的是同一份。 */
+      '<span>' + rsUsers().length + ' 個帳號　·　' + rsClasses().length + ' 個班　·　' +
+        eventsOf(rsClassId()).length + ' 筆紀錄</span>' + topEnd() +
       '</div>';
   }
   if (u.role === 'teacher') {
