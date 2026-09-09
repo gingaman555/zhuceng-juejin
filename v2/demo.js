@@ -229,6 +229,10 @@ ok(!demoAsked(), '沒帶 ?demo 的時候 demoAsked() 是 false');
 ok(乾淨.indexOf('試用的資料') < 0, '學生看到的登入頁沒有那一塊');
 ok(乾淨.indexOf(DEMO_PW) < 0, '也沒有印出密碼（' + DEMO_PW + '）');
 ok(!/stu\d|tea\d|lab\d/.test(乾淨), '一個示範帳號都沒出現');
+/* 「這一台的資料不對」那一顆做的是「清掉這台機器再重載」。學生不需要
+   （他的機器上本來就沒有舊資料），而它看得到的時候是登入頁上唯一一個
+   長得像「出事了才會用到」的東西。跟示範帳號同一個開關。 */
+ok(乾淨.indexOf('這一台的資料不對') < 0, '「這一台的資料不對」那一顆也不印');
 
 global.location = { search: '?demo', hash: '', href: 'https://x/?demo' };
 const 開了 = PAGES.login();
@@ -238,6 +242,7 @@ ok(開了.indexOf(DEMO_PW) >= 0, '密碼那一行也回得來');
 const 顆 = (開了.match(/asdemo:/g) || []).length;
 ok(顆 === where('Users', u => u._d && u.account).length,
   '每一個示範帳號都點得進去（' + 顆 + ' 顆）');
+ok(開了.indexOf('這一台的資料不對') >= 0, '重置那一顆也回得來——功能沒有被拿掉');
 
 global.location = { search: '', hash: '#demo', href: 'https://x/#demo' };
 ok(demoAsked(), '#demo 也算（有些地方會把 ? 吃掉）');
