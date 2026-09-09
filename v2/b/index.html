@@ -1242,15 +1242,9 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   .scn-hud b{font-size:22px}
 }
 
-/* 鑿下去那一下：整條走廊抖 3px。三幀，不補間。 */
-.scn-in.hit{animation:hit .18s steps(1,end) 1}
-@keyframes hit{
-  0%  {transform:translate(0,0)}
-  33% {transform:translate(-3px,2px)}
-  66% {transform:translate(2px,-2px)}
-  100%{transform:translate(0,0)}
-}
-@media (prefers-reduced-motion: reduce){ .scn-in.hit{animation:none} }
+/* 「鑿下去那一下」（.scn-in.hit）拿掉了：它接的是 35-anim.js 的
+   shakeScene，而那一支從來沒有人呼叫過——同一天跟 .bt.hit 那一組
+   一起清掉，見 35-anim.js 與 58-battle.css。 */
 
 /* 紀錄頁：那一趟每天做的，排成一列 */
 .seq{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0;font-size:22px;line-height:1}
@@ -4905,22 +4899,21 @@ button.side-head{
 }
 @keyframes btwipe{0%{opacity:1}100%{opacity:0}}
 
-/* 上前那一下：撞一下、閃一下、人往前跨。 */
-.bt.hit{animation:bthit .24s steps(2,end) 1}
-@keyframes bthit{
-  0%{transform:translateX(0)} 25%{transform:translateX(-5px)}
-  50%{transform:translateX(4px)} 75%{transform:translateX(-2px)}
-  100%{transform:translateX(0)}
-}
-.bt.hit .bt-side.me .bt-ch{animation:btlunge .24s steps(2,end) 1}
-@keyframes btlunge{0%{transform:translateX(0)}50%{transform:translateX(18px)}
-  100%{transform:translateX(0)}}
-.bt.hit::after{
-  content:'';position:absolute;inset:0;z-index:8;pointer-events:none;
-  background:rgba(255,243,216,.75);
-  animation:btflash .24s steps(1,end) 1 forwards
-}
-@keyframes btflash{0%{opacity:.9}40%{opacity:.3}100%{opacity:0}}
+/* ── 對決那一組拿掉了 ──
+
+   這裡本來有 .bt.hit：畫面震一下（bthit）、角色往前跨（btlunge）、
+   整片白閃（btflash），底下還有一條讓牠閃三下（btblink）。
+
+   那是回合制對決那一版的東西，而這個作品已經沒有對決了。答完一題
+   現在播的是 .bt.take——往前低一下再回來，接東西的動作。
+
+   它們早就打不到了：唯一會加 'hit' 的是 35-anim.js 的 shakeScene，
+   而那一支加在 .scn-in 上、而且沒有人呼叫。所以留著不會播，
+   可是下一個讀這段的人很可能會把它接回去——一組現成的、名字剛好對上
+   的那一組動畫躺在那裡，比沒有更危險。
+
+   （同一天剛把「再打一次」那顆鍵改成「再交一次」，那是同一版留下來的
+     最後一個字。check.js 現在擋畫面上的對決字眼。） */
 
 /* 牠見底：退開、暗下去。牠不是被打死的，牠只是不再擋在那裡。 */
 .bt.foe-out .bt-side.foe .bt-ch{
@@ -4944,7 +4937,7 @@ button.side-head{
   .bt-plate{width:150px}
 }
 @media (prefers-reduced-motion: reduce){
-  .bt-wipe,.bt.hit,.bt.hit::after,.bt-side .bt-ch,
+  .bt-wipe,.bt-side .bt-ch,
   .bt.take .bt-side.foe .bt-ch{animation:none}
   .bt-wipe{display:none}
   .bt-bar i{transition:none}
@@ -5021,13 +5014,10 @@ button.side-head{
 }
 @keyframes btar{0%,50%{opacity:1}51%,100%{opacity:0}}
 
-/* 被打到：牠閃爍，不是整片閃光——那個年代就是這樣做的。 */
-.bt.hit .bt-side.foe .bt-ch{animation:btblink .24s steps(1,end) 3}
-@keyframes btblink{0%,49%{opacity:1}50%,100%{opacity:.15}}
+/* 「牠閃三下」那一條跟 .bt.hit 一起拿掉了（見上面）。 */
 
 @media (prefers-reduced-motion: reduce){
   .bt-arrow{animation:none}
-  .bt.hit .bt-side.foe .bt-ch{animation:none}
 }
 
 /* 背景太黑就不是一個地方。鋪上那一層的紋理，
@@ -10348,17 +10338,17 @@ function animDash(onDone) {
   ], 130, onDone);
 }
 
-/* ---------- 鑿下去那一下 ----------
-   揮劍如果只有角色在動，看起來像角色在原地比劃。整條走廊抖一下，
-   那一下才像是「打到東西了」。位移只有 3px——跟身上一個像素同一個量級。 */
-function shakeScene() {
-  if (REDUCED) return;
-  var el = document.querySelector('.scn-in');
-  if (!el) return;
-  el.classList.remove('hit');
-  void el.offsetWidth;           /* 重新觸發動畫 */
-  el.classList.add('hit');
-}
+/* ---------- 鑿下去那一下：拿掉了 ----------
+
+   shakeScene() 在這裡放了很久：整條走廊抖 3px，註解寫著「那一下才像是
+   打到東西了」。它是揮劍那一版的東西，而這個作品已經沒有揮劍了。
+
+   而且它從來沒有人呼叫——全站只有這一行定義，一個呼叫都沒有。
+   跟 58-battle.css 那一組 .bt.hit 一樣：不會播，可是名字剛好對上，
+   下一個要做「有東西發生」的人很容易就把它接回去。
+
+   走廊上真的會動的那幾樣都還在（走路、水漫過來、火把），
+   它們接的是狀態，不是打擊。 */
 
 /* ---------- 睡著的呼吸 ----------
    不是動畫，是狀態。用 CSS 做（見 50-style.css 的 .px.sleep），

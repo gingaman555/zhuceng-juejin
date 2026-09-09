@@ -196,15 +196,9 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
   .scn-hud b{font-size:22px}
 }
 
-/* 鑿下去那一下：整條走廊抖 3px。三幀，不補間。 */
-.scn-in.hit{animation:hit .18s steps(1,end) 1}
-@keyframes hit{
-  0%  {transform:translate(0,0)}
-  33% {transform:translate(-3px,2px)}
-  66% {transform:translate(2px,-2px)}
-  100%{transform:translate(0,0)}
-}
-@media (prefers-reduced-motion: reduce){ .scn-in.hit{animation:none} }
+/* 「鑿下去那一下」（.scn-in.hit）拿掉了：它接的是 35-anim.js 的
+   shakeScene，而那一支從來沒有人呼叫過——同一天跟 .bt.hit 那一組
+   一起清掉，見 35-anim.js 與 58-battle.css。 */
 
 /* 紀錄頁：那一趟每天做的，排成一列 */
 .seq{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0;font-size:22px;line-height:1}

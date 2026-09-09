@@ -102,17 +102,17 @@ function animDash(onDone) {
   ], 130, onDone);
 }
 
-/* ---------- 鑿下去那一下 ----------
-   揮劍如果只有角色在動，看起來像角色在原地比劃。整條走廊抖一下，
-   那一下才像是「打到東西了」。位移只有 3px——跟身上一個像素同一個量級。 */
-function shakeScene() {
-  if (REDUCED) return;
-  var el = document.querySelector('.scn-in');
-  if (!el) return;
-  el.classList.remove('hit');
-  void el.offsetWidth;           /* 重新觸發動畫 */
-  el.classList.add('hit');
-}
+/* ---------- 鑿下去那一下：拿掉了 ----------
+
+   shakeScene() 在這裡放了很久：整條走廊抖 3px，註解寫著「那一下才像是
+   打到東西了」。它是揮劍那一版的東西，而這個作品已經沒有揮劍了。
+
+   而且它從來沒有人呼叫——全站只有這一行定義，一個呼叫都沒有。
+   跟 58-battle.css 那一組 .bt.hit 一樣：不會播，可是名字剛好對上，
+   下一個要做「有東西發生」的人很容易就把它接回去。
+
+   走廊上真的會動的那幾樣都還在（走路、水漫過來、火把），
+   它們接的是狀態，不是打擊。 */
 
 /* ---------- 睡著的呼吸 ----------
    不是動畫，是狀態。用 CSS 做（見 50-style.css 的 .px.sleep），

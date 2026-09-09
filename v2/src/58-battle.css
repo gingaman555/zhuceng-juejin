@@ -71,22 +71,21 @@
 }
 @keyframes btwipe{0%{opacity:1}100%{opacity:0}}
 
-/* 上前那一下：撞一下、閃一下、人往前跨。 */
-.bt.hit{animation:bthit .24s steps(2,end) 1}
-@keyframes bthit{
-  0%{transform:translateX(0)} 25%{transform:translateX(-5px)}
-  50%{transform:translateX(4px)} 75%{transform:translateX(-2px)}
-  100%{transform:translateX(0)}
-}
-.bt.hit .bt-side.me .bt-ch{animation:btlunge .24s steps(2,end) 1}
-@keyframes btlunge{0%{transform:translateX(0)}50%{transform:translateX(18px)}
-  100%{transform:translateX(0)}}
-.bt.hit::after{
-  content:'';position:absolute;inset:0;z-index:8;pointer-events:none;
-  background:rgba(255,243,216,.75);
-  animation:btflash .24s steps(1,end) 1 forwards
-}
-@keyframes btflash{0%{opacity:.9}40%{opacity:.3}100%{opacity:0}}
+/* ── 對決那一組拿掉了 ──
+
+   這裡本來有 .bt.hit：畫面震一下（bthit）、角色往前跨（btlunge）、
+   整片白閃（btflash），底下還有一條讓牠閃三下（btblink）。
+
+   那是回合制對決那一版的東西，而這個作品已經沒有對決了。答完一題
+   現在播的是 .bt.take——往前低一下再回來，接東西的動作。
+
+   它們早就打不到了：唯一會加 'hit' 的是 35-anim.js 的 shakeScene，
+   而那一支加在 .scn-in 上、而且沒有人呼叫。所以留著不會播，
+   可是下一個讀這段的人很可能會把它接回去——一組現成的、名字剛好對上
+   的那一組動畫躺在那裡，比沒有更危險。
+
+   （同一天剛把「再打一次」那顆鍵改成「再交一次」，那是同一版留下來的
+     最後一個字。check.js 現在擋畫面上的對決字眼。） */
 
 /* 牠見底：退開、暗下去。牠不是被打死的，牠只是不再擋在那裡。 */
 .bt.foe-out .bt-side.foe .bt-ch{
@@ -110,7 +109,7 @@
   .bt-plate{width:150px}
 }
 @media (prefers-reduced-motion: reduce){
-  .bt-wipe,.bt.hit,.bt.hit::after,.bt-side .bt-ch,
+  .bt-wipe,.bt-side .bt-ch,
   .bt.take .bt-side.foe .bt-ch{animation:none}
   .bt-wipe{display:none}
   .bt-bar i{transition:none}
@@ -187,13 +186,10 @@
 }
 @keyframes btar{0%,50%{opacity:1}51%,100%{opacity:0}}
 
-/* 被打到：牠閃爍，不是整片閃光——那個年代就是這樣做的。 */
-.bt.hit .bt-side.foe .bt-ch{animation:btblink .24s steps(1,end) 3}
-@keyframes btblink{0%,49%{opacity:1}50%,100%{opacity:.15}}
+/* 「牠閃三下」那一條跟 .bt.hit 一起拿掉了（見上面）。 */
 
 @media (prefers-reduced-motion: reduce){
   .bt-arrow{animation:none}
-  .bt.hit .bt-side.foe .bt-ch{animation:none}
 }
 
 /* 背景太黑就不是一個地方。鋪上那一層的紋理，
