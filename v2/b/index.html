@@ -143,6 +143,12 @@ p{margin:0 0 11px}
   font-size:22px;color:var(--ink);line-height:1.8;
   border-left:3px solid var(--gold-d);padding:11px 0 11px 14px;margin:11px 0
 }
+/* 後果不能收回的那種警語（密碼救不回來）。借判定裡「要注意」那一階
+   （--over），跟其他要注意的東西同一套語言——不是另外發明一種紅。 */
+.warn-block{
+  font-size:22px;color:var(--ink);line-height:1.8;
+  border-left:3px solid var(--over);padding:11px 0 11px 14px;margin:11px 0
+}
 
 .card{
   background:var(--panel);border:1px solid var(--line);
@@ -3788,8 +3794,10 @@ button.ac:active{transform:translateY(1px)}
 }
 .pl .pd:hover{background:var(--gold2)}
 .pl .pd:active{transform:translate(2px,2px);box-shadow:none}
+/* 44px：跟旁邊加減天數那兩顆（.pd）同一個下限——這一顆刪掉一整件，
+   代價比加減一天重，觸控目標不該比它們窄。 */
 .pl .px-del{
-  flex:0 0 33px;height:44px;border:0;cursor:pointer;font:inherit;font-size:22px;
+  flex:0 0 44px;height:44px;border:0;cursor:pointer;font:inherit;font-size:22px;
   color:var(--mute);background:none
 }
 .pl .px-del:hover{color:var(--over)}
@@ -15803,11 +15811,15 @@ PAGES.login = function () {
     pxTag(gw.walkA, gw.pal, 'wf wa') + pxTag(gw.walkB, gw.pal, 'wf wb') + '</span>');
   H.push('</div>');
   H.push('<div class="card">');
+  /* 兩格都接 Enter：打完帳號按 Enter 習慣上是換到下一格，
+     這裡的下一格只有密碼，所以兩格都直接送出——不用特別去點那顆鍵。 */
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="lg-acc" value="' + esc(draft('lg-acc')) + '" placeholder="' +
-         esc('註冊時取的帳號') + '">');
+         esc('註冊時取的帳號') +
+         '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.login();}">');
   H.push('<div class="eyebrow">密碼</div>');
-  H.push('<input id="lg-pw" type="password" placeholder="' + esc('密碼') + '">');
+  H.push('<input id="lg-pw" type="password" placeholder="' + esc('密碼') +
+         '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.login();}">');
   H.push('</div>');
   H.push('<div class="row">');
   H.push(btn('進去', 'login', 'big'));
@@ -15900,20 +15912,30 @@ PAGES.reg = function () {
       : role === 'researcher' ? '看得到每一個動作，不進地下城'
         : '先報上你在哪一班', ''));
   /* 身分自己選。本來只開得了學生帳號，老師要找研究者——
-     那等於課還沒開始就卡在一個不在現場的人身上。 */
-  H.push('<div class="card">');
-  H.push('<div class="eyebrow">你是</div>');
-  H.push('<div class="row sure-row">');
-  /* 研究者也在這一排。他要的東西跟老師一樣是一個進得去的帳號——
-     使用紀錄那一頁本來就在（見 75-research.js），只是開不出第一個
-     研究者帳號來，於是真的開一個班之後那一整端等於不存在。
+     那等於課還沒開始就卡在一個不在現場的人身上。
 
-     代價講清楚：學生也看得到這一顆。點錯了會拿到一個沒有班的帳號，
-     一眼就看得出不對，重開一個就好。 */
-  [['student', '學生'], ['teacher', '老師'], ['researcher', '研究者']].forEach(function (r) {
-    H.push(btn(r[1], 'rgrole:' + r[0], 'sure' + (role === r[0] ? ' on' : '')));
-  });
-  H.push('</div></div>');
+     ── 但這一排本來三顆等重 ──
+
+     全班同時註冊那一天，二十幾個學生看到的第一排選項是「學生／老師／
+     研究者」三顆一樣大——手滑點錯一顆，拿到的是一個沒有班的帳號，
+     自己看不出哪裡不對，還得回頭重開一次。
+
+     改成預設收起來，只留學生要走的欄位；老師跟研究者（一堂課三個人）
+     改用一條不搶眼的連結展開，跟「忘記密碼」那種例外路徑同一個份量。 */
+  var showRole = DRAFT.rgShowRole || role !== 'student';
+  H.push('<div class="card">');
+  if (showRole) {
+    H.push('<div class="eyebrow">你是</div>');
+    H.push('<div class="row sure-row">');
+    [['student', '學生'], ['teacher', '老師'], ['researcher', '研究者']].forEach(function (r) {
+      H.push(btn(r[1], 'rgrole:' + r[0], 'sure' + (role === r[0] ? ' on' : '')));
+    });
+    H.push('</div>');
+  } else {
+    H.push('<a class="plain" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'rgshowrole' })) + '\'>' + esc('我是老師或研究者') + '</a>');
+  }
+  H.push('</div>');
   H.push('<div class="card">');
   if (role === 'student') {
     H.push('<div class="eyebrow">班級加入碼</div>');
@@ -15959,20 +15981,27 @@ PAGES.reg = function () {
      全是圓點。
 
      兩格是為了那件事，不是為了嚴謹。兩格不一樣就擋在這裡，
-     擋在他按下建立之前。 */
+     擋在他按下建立之前。
+
+     ── 警語搬到密碼欄位上面 ──
+
+     本來印在送出鍵下面、跟「密碼」眉標一樣的灰階字——後果最重的
+     那句話反而讀起來最不起眼。搬到打密碼之前先看到，顏色借用
+     判定裡「要注意」那一階（--over），跟其他警語同一套語言。 */
+  H.push('<p class="warn-block">' + esc(AUTH_NOTE) + '</p>');
   H.push('<div class="eyebrow">密碼</div>');
   H.push('<input id="rg-pw" type="password" placeholder="' + esc(RULES.pwRule()) + '">');
   /* 眉標不寫「再打一次」：那四個字剛從這個作品裡拿掉（老師退回之後
      學生那一顆鍵），check.js 也擋著。同一個字串在同一套介面裡指兩件
      不同的事，下一個讀的人要猜。 */
   H.push('<div class="eyebrow">再一次</div>');
-  H.push('<input id="rg-pw2" type="password" placeholder="' + esc('跟上面那一格一樣') + '">');
+  H.push('<input id="rg-pw2" type="password" placeholder="' + esc('跟上面那一格一樣') +
+         '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.reg();}">');
   H.push('</div>');
   H.push('<div class="row">');
   H.push(btn('建立', 'reg', 'big'));
   H.push(btn('我有帳號了', 'go:login', 'ghost'));
   H.push('</div>');
-  H.push('<p class="dim">' + esc(AUTH_NOTE) + '</p>');
   H.push('</div></div>');
   return H.join('');
 };
@@ -16143,6 +16172,7 @@ ACTS.reg = function () {
 };
 
 ACTS.rgrole = function (r) { DRAFT.rgRole = r; render(); };
+ACTS.rgshowrole = function () { DRAFT.rgShowRole = true; render(); };
 /* 點名字就用那個人的身分進去。只有試用資料在的時候，登入頁才畫得出
    這幾顆——有人真的建過帳號，那一整塊就不見了（見 PAGES.login）。 */
 ACTS.asdemo = function (acc) {
@@ -16294,6 +16324,14 @@ PAGES.pw = function () {
   H.push('<div class="eyebrow">現在的密碼</div>');
   H.push('<input id="pw-old" type="password" placeholder="' +
     esc('你現在在用的那一個') + '">');
+  /* 換完還是救不回來。這句話要在他按下去之前就看到——
+     這一版沒有「忘記密碼」那條路，而那是設計選的，不是漏的
+     （理由見 firestore.rules 與 75-research.js 的檔頭）。
+
+     搬到新密碼欄位前面、換上跟建立帳號那一頁一樣的警語樣式——
+     這句的後果一樣重，不該因為在哪一頁而看起來比較不起眼。 */
+  H.push('<p class="warn-block">換完要記得。這裡沒有「忘記密碼」那條路，' +
+    '忘了就只能用新的帳號重來。</p>');
   H.push('<div class="eyebrow">新的密碼</div>');
   H.push('<input id="pw-new" type="password" placeholder="' +
     esc(RULES.pwRule()) + '">');
@@ -16301,13 +16339,9 @@ PAGES.pw = function () {
      那一段：同一個字串在同一套介面裡不該指兩件事）。 */
   H.push('<div class="eyebrow">再一次</div>');
   H.push('<input id="pw-new2" type="password" placeholder="' +
-    esc('跟上面那一格一樣') + '">');
+    esc('跟上面那一格一樣') +
+    '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.setpw();}">');
   H.push('</div>');
-  /* 換完還是救不回來。這句話要在他按下去之前就看到——
-     這一版沒有「忘記密碼」那條路，而那是設計選的，不是漏的
-     （理由見 firestore.rules 與 75-research.js 的檔頭）。 */
-  H.push('<p class="dim">換完要記得。這裡沒有「忘記密碼」那條路，' +
-    '忘了就只能用新的帳號重來。</p>');
   H.push('<div class="row">');
   H.push(btn('換密碼', 'setpw', 'big'));
   H.push(btn('回去', 'go:me', 'ghost'));

@@ -1622,8 +1622,10 @@ button.ac:active{transform:translateY(1px)}
 }
 .pl .pd:hover{background:var(--gold2)}
 .pl .pd:active{transform:translate(2px,2px);box-shadow:none}
+/* 44px：跟旁邊加減天數那兩顆（.pd）同一個下限——這一顆刪掉一整件，
+   代價比加減一天重，觸控目標不該比它們窄。 */
 .pl .px-del{
-  flex:0 0 33px;height:44px;border:0;cursor:pointer;font:inherit;font-size:22px;
+  flex:0 0 44px;height:44px;border:0;cursor:pointer;font:inherit;font-size:22px;
   color:var(--mute);background:none
 }
 .pl .px-del:hover{color:var(--over)}
