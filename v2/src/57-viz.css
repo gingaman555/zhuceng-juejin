@@ -2523,29 +2523,54 @@ button.ac:active{transform:translateY(1px)}
 .rvw-t b{font-size:22px;font-weight:400;color:var(--zink,var(--ink))}
 .rvw-t em{font-size:22px;font-style:normal;line-height:1.6;color:var(--dim)}
 
-/* ── 故事第三頁：會留下來的三樣 ── */
+/* ── 故事第三頁：會留下來的三樣 ──
+
+   左暗右亮，中間一道門。門是重點——那四個字是唯一讓東西亮起來的條件。
+   右邊的光暈要讓人一眼就讀到「這邊才是你要的」。 */
 .sty-keep{
-  display:flex;align-items:flex-end;justify-content:center;gap:14px;
+  display:flex;align-items:flex-end;justify-content:center;gap:22px;
   padding:22px 14px 44px;
   background-color:var(--zbg);background-image:var(--ztex)
 }
 /* 左邊「交出去了」與右邊「收下之後」。同一組東西，差別只有亮不亮。 */
 .sk-side{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;z-index:1}
-.sk-row{display:flex;align-items:flex-end;gap:8px}
+.sk-row{display:flex;align-items:flex-end;gap:11px}
 .sk-side > em{font-style:normal;font-size:22px;color:var(--mute)}
-.sk-side.on > em{color:var(--dim)}
-/* 三個名字，一個對一個站在那三張圖底下。 */
-.sk-names{display:flex;gap:8px}
-.sk-names b{
-  font-weight:400;font-size:22px;color:var(--dim);
-  width:66px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+/* 左邊壓暗——交出去了但還沒被收下，灰而且退後。 */
+.sk-side:not(.on){opacity:.55}
+/* 右邊亮起來，底下墊一層暖光。 */
+.sk-side.on > em{color:var(--ink)}
+.sk-side.on{position:relative}
+.sk-side.on::before{
+  content:'';position:absolute;left:50%;top:50%;z-index:-1;
+  width:200%;height:200%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse at center,rgba(233,179,65,.18) 0%,transparent 70%);
+  pointer-events:none
 }
-/* 中間那一道門。箭頭上那四個字是整張圖的重點。 */
+/* 三個名字，一個對一個站在那三張圖底下。 */
+.sk-names{display:flex;gap:11px}
+.sk-names b{
+  font-weight:400;font-size:22px;color:var(--gold2);
+  min-width:44px;text-align:center;white-space:nowrap
+}
+/* 中間那一道門。箭頭上那四個字是整張圖的重點。
+   加了一道光柱：從門往右邊暈開，把「收下」的視覺重量拉上來。 */
 .sk-gate{
   display:flex;flex-direction:column;align-items:center;gap:8px;
   position:relative;z-index:1;padding-bottom:22px
 }
-.sk-gate em{font-style:normal;font-size:22px;color:var(--gold)}
+.sk-gate em{
+  font-style:normal;font-size:22px;color:var(--gold);
+  text-shadow:0 0 11px rgba(233,179,65,.5)
+}
+/* 門後面的光柱。 */
+.sk-gate::before{
+  content:'';position:absolute;left:50%;top:0;bottom:0;width:200px;z-index:-1;
+  transform:translateX(-30%);
+  background:linear-gradient(90deg,transparent 0%,rgba(233,179,65,.08) 30%,rgba(233,179,65,.12) 50%,transparent 100%);
+  pointer-events:none
+}
 /* 三樣東西站的那一片地。跟廊道那一張同一個做法（見 .sty-floor）：
    上緣一條亮的，底下暗。 */
 .sk-floor{
@@ -2556,10 +2581,11 @@ button.ac:active{transform:translateY(1px)}
 .sk-side.on .sk-px{filter:none}
 .sk{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:66px}
 .sk em{font-style:normal;font-size:22px;color:var(--dim)}
-/* .sk-cry 那個大數字退休了——那一格現在是一份畫出來的水晶。 */
 /* 寬度寫在 .sk-px 自己身上，不掛在祖先底下——換個地方畫也要有寬度
    （check.js 那一條在守的就是這個）。 */
 .sk-px{width:66px;height:auto;image-rendering:pixelated}
+/* 右邊那三張亮的加一圈微光。 */
+.sk-side.on .sk-px{filter:drop-shadow(0 0 6px rgba(233,179,65,.4))}
 .sk-pair{display:flex;align-items:center;gap:8px}
 .sk-pair .sk-px{width:44px}
 /* 黑影 → 亮的，中間那一支。
@@ -2571,23 +2597,25 @@ button.ac:active{transform:translateY(1px)}
    改成用 box-shadow 疊方塊拼，每一塊 3px，所以它是階梯不是斜線。 */
 .sk-arrow{
   position:relative;flex:0 0 21px;width:21px;height:3px;
-  background:var(--line2)
+  background:var(--gold-d)
 }
 .sk-arrow::after{
   content:'';position:absolute;right:0;top:-6px;width:3px;height:15px;
   background:transparent;
   box-shadow:
-    -6px 6px 0 0 var(--line2),
-    -3px 3px 0 0 var(--line2), -3px 9px 0 0 var(--line2),
-    0 0 0 0 var(--line2),      0 6px 0 0 var(--line2), 0 12px 0 0 var(--line2)
+    -6px 6px 0 0 var(--gold-d),
+    -3px 3px 0 0 var(--gold-d), -3px 9px 0 0 var(--gold-d),
+    0 0 0 0 var(--gold-d),      0 6px 0 0 var(--gold-d), 0 12px 0 0 var(--gold-d)
 }
 /* 窄的時候：三張圖縮小，名字跟著縮，箭頭轉成往下不佔寬。 */
 @media (max-width:520px){
-  .sty-keep{gap:8px;padding:14px 5px 33px}
+  .sty-keep{gap:11px;padding:14px 5px 33px}
   .sk-px{width:44px}
+  .sk-side.on .sk-px{filter:drop-shadow(0 0 4px rgba(233,179,65,.35))}
   .sk-row{gap:5px}
-  .sk-names b{width:44px;font-size:22px}
+  .sk-names{display:none}
   .sk-gate{padding-bottom:11px}
+  .sk-gate::before{width:120px}
 }
 
 /* 複製那一顆。跟在「他們說東西在這裡」那一行下面——

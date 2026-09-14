@@ -126,9 +126,11 @@ L('示範班', DB.Users.filter(u => u.role === 'teacher').length + ' 位老師�
 /* ── 六 · 規矩 ── */
 H('六 · 規矩（自動守著的）');
 const chk = fs.readFileSync('check.js', 'utf8');
-const line = (chk.match(/殘留檢查通過：'[\s\S]{0,400}?都守住了/) || [''])[0]
-  .replace(/[\s\S]*通過：'/, '').replace(/'\s*\+\s*/g, '').replace(/\n/g, '');
-L('check.js', (chk.match(/\bfail\(/g) || []).length + ' 條檢查');
+const nBan = ((chk.match(/const BANNED[\s\S]*?];/) || [''])[0].match(/\['/g) || []).length;
+const line = (chk.match(/殘留檢查通過：[\s\S]{0,800}?都守住了/) || [''])[0]
+  .replace(/[\s\S]*通過：/, '').replace(/['"]\s*\+\s*/g, '').replace(/\s*\+\s*['"]/g, '')
+  .replace(/BANNED\.length/, nBan).replace(/['"]/g, '').replace(/\n/g, '');
+L('check.js', (chk.match(/\bbad\+\+/g) || []).length + ' 條檢查');
 console.log('     ' + line.replace(/、/g, '　'));
 L('loop.js', '資料層不變量（跑 200 天）');
 L('pages.js', '每一頁 × 每一個角色都畫得出來、每一顆按鈕都接得上');
@@ -249,7 +251,7 @@ if (process.argv.indexOf('--doc') >= 0) {
     '',
     '| 工具 | 守什麼 |',
     '|---|---|',
-    '| ' + q + 'check.js' + q + ' | ' + (chk2.match(/\bfail\(/g) || []).length +
+    '| ' + q + 'check.js' + q + ' | ' + (chk2.match(/\bbad\+\+/g) || []).length +
       ' 條檢查（禁用詞、判定的純度、研究者只能看、沒有小字…）|',
     '| ' + q + 'loop.js' + q + ' | 資料層不變量，跑 200 天 |',
     '| ' + q + 'pages.js' + q + ' | 每一頁 × 每一個角色都畫得出來、每一顆按鈕後面都有動作 |',

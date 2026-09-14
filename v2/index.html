@@ -4689,29 +4689,54 @@ button.ac:active{transform:translateY(1px)}
 .rvw-t b{font-size:22px;font-weight:400;color:var(--zink,var(--ink))}
 .rvw-t em{font-size:22px;font-style:normal;line-height:1.6;color:var(--dim)}
 
-/* ── 故事第三頁：會留下來的三樣 ── */
+/* ── 故事第三頁：會留下來的三樣 ──
+
+   左暗右亮，中間一道門。門是重點——那四個字是唯一讓東西亮起來的條件。
+   右邊的光暈要讓人一眼就讀到「這邊才是你要的」。 */
 .sty-keep{
-  display:flex;align-items:flex-end;justify-content:center;gap:14px;
+  display:flex;align-items:flex-end;justify-content:center;gap:22px;
   padding:22px 14px 44px;
   background-color:var(--zbg);background-image:var(--ztex)
 }
 /* 左邊「交出去了」與右邊「收下之後」。同一組東西，差別只有亮不亮。 */
 .sk-side{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;z-index:1}
-.sk-row{display:flex;align-items:flex-end;gap:8px}
+.sk-row{display:flex;align-items:flex-end;gap:11px}
 .sk-side > em{font-style:normal;font-size:22px;color:var(--mute)}
-.sk-side.on > em{color:var(--dim)}
-/* 三個名字，一個對一個站在那三張圖底下。 */
-.sk-names{display:flex;gap:8px}
-.sk-names b{
-  font-weight:400;font-size:22px;color:var(--dim);
-  width:66px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+/* 左邊壓暗——交出去了但還沒被收下，灰而且退後。 */
+.sk-side:not(.on){opacity:.55}
+/* 右邊亮起來，底下墊一層暖光。 */
+.sk-side.on > em{color:var(--ink)}
+.sk-side.on{position:relative}
+.sk-side.on::before{
+  content:'';position:absolute;left:50%;top:50%;z-index:-1;
+  width:200%;height:200%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse at center,rgba(233,179,65,.18) 0%,transparent 70%);
+  pointer-events:none
 }
-/* 中間那一道門。箭頭上那四個字是整張圖的重點。 */
+/* 三個名字，一個對一個站在那三張圖底下。 */
+.sk-names{display:flex;gap:11px}
+.sk-names b{
+  font-weight:400;font-size:22px;color:var(--gold2);
+  min-width:44px;text-align:center;white-space:nowrap
+}
+/* 中間那一道門。箭頭上那四個字是整張圖的重點。
+   加了一道光柱：從門往右邊暈開，把「收下」的視覺重量拉上來。 */
 .sk-gate{
   display:flex;flex-direction:column;align-items:center;gap:8px;
   position:relative;z-index:1;padding-bottom:22px
 }
-.sk-gate em{font-style:normal;font-size:22px;color:var(--gold)}
+.sk-gate em{
+  font-style:normal;font-size:22px;color:var(--gold);
+  text-shadow:0 0 11px rgba(233,179,65,.5)
+}
+/* 門後面的光柱。 */
+.sk-gate::before{
+  content:'';position:absolute;left:50%;top:0;bottom:0;width:200px;z-index:-1;
+  transform:translateX(-30%);
+  background:linear-gradient(90deg,transparent 0%,rgba(233,179,65,.08) 30%,rgba(233,179,65,.12) 50%,transparent 100%);
+  pointer-events:none
+}
 /* 三樣東西站的那一片地。跟廊道那一張同一個做法（見 .sty-floor）：
    上緣一條亮的，底下暗。 */
 .sk-floor{
@@ -4722,10 +4747,11 @@ button.ac:active{transform:translateY(1px)}
 .sk-side.on .sk-px{filter:none}
 .sk{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:66px}
 .sk em{font-style:normal;font-size:22px;color:var(--dim)}
-/* .sk-cry 那個大數字退休了——那一格現在是一份畫出來的水晶。 */
 /* 寬度寫在 .sk-px 自己身上，不掛在祖先底下——換個地方畫也要有寬度
    （check.js 那一條在守的就是這個）。 */
 .sk-px{width:66px;height:auto;image-rendering:pixelated}
+/* 右邊那三張亮的加一圈微光。 */
+.sk-side.on .sk-px{filter:drop-shadow(0 0 6px rgba(233,179,65,.4))}
 .sk-pair{display:flex;align-items:center;gap:8px}
 .sk-pair .sk-px{width:44px}
 /* 黑影 → 亮的，中間那一支。
@@ -4737,23 +4763,25 @@ button.ac:active{transform:translateY(1px)}
    改成用 box-shadow 疊方塊拼，每一塊 3px，所以它是階梯不是斜線。 */
 .sk-arrow{
   position:relative;flex:0 0 21px;width:21px;height:3px;
-  background:var(--line2)
+  background:var(--gold-d)
 }
 .sk-arrow::after{
   content:'';position:absolute;right:0;top:-6px;width:3px;height:15px;
   background:transparent;
   box-shadow:
-    -6px 6px 0 0 var(--line2),
-    -3px 3px 0 0 var(--line2), -3px 9px 0 0 var(--line2),
-    0 0 0 0 var(--line2),      0 6px 0 0 var(--line2), 0 12px 0 0 var(--line2)
+    -6px 6px 0 0 var(--gold-d),
+    -3px 3px 0 0 var(--gold-d), -3px 9px 0 0 var(--gold-d),
+    0 0 0 0 var(--gold-d),      0 6px 0 0 var(--gold-d), 0 12px 0 0 var(--gold-d)
 }
 /* 窄的時候：三張圖縮小，名字跟著縮，箭頭轉成往下不佔寬。 */
 @media (max-width:520px){
-  .sty-keep{gap:8px;padding:14px 5px 33px}
+  .sty-keep{gap:11px;padding:14px 5px 33px}
   .sk-px{width:44px}
+  .sk-side.on .sk-px{filter:drop-shadow(0 0 4px rgba(233,179,65,.35))}
   .sk-row{gap:5px}
-  .sk-names b{width:44px;font-size:22px}
+  .sk-names{display:none}
   .sk-gate{padding-bottom:11px}
+  .sk-gate::before{width:120px}
 }
 
 /* 複製那一顆。跟在「他們說東西在這裡」那一行下面——
@@ -21276,17 +21304,15 @@ function battleRun() {
   var line = document.getElementById('btline');
   function say(s) { if (line) line.textContent = s; }
 
-  /* 逃跑：角色往回跑出畫面，跑完才真的退出去。 */
+  /* 還沒準備好：角色往回跑出畫面，回到廊道。
+     run 不動——他只是先離開，隨時可以再走進來交。
+     本來這裡會呼叫 actRethink 把那一趟作廢再開新的，
+     但使用者預期的是「先不交」不是「這一趟重來」。 */
   if (S.p.flee) {
     box.classList.add('flee');
-    say('走過的那幾天留著。');
     btAt(850, function () {
-      var t = myTeam();
-      actRethink(t.teamId, r.runId);
-      var ms = r.msId;
       S.p = {};
-      /* 跟廊道上那一顆走到同一個地方——它們是同一件事。 */
-      go('commit', { id: ms });
+      go('home');
     });
     return;
   }
@@ -21791,10 +21817,15 @@ var STORY = [
        「規劃天數」讀成 deadline，然後第一次就估寬，
        而那正好毀掉這個作品要測的行為。 */
     strip: 1,
+    /* 第一句是前提——他還沒承諾過天數，不補這一句的話
+       「你說的」三個字不會自動連到「你說要花幾天」。
+       第二句是規則本身，跟原來同一句。
+       key 把「估寬」換成白話：那是我們的術語，新人不懂。 */
     lines: [
+      '每一件事，你先說要花幾天。',
       '系統只比兩個數字：你說的，跟實際的。做得好不好，老師說。'
     ],
-    key: '所以估寬，不會比較好看。'
+    key: '故意說久一點，不會比較好看。'
   },
   {
     k: 'keep',
@@ -21851,12 +21882,15 @@ var STORY = [
          不是一條規則。
 
          機制沒有動，只是不在故事裡先講一次。 */
+      /* 「角色收到委託並審查通過後」主詞混在一起——收委託的是學生，
+         審查的是老師。新人還沒走過一趟，這句話不會自動拆成兩件事。
+         換成「老師收下一件」，四個字講完同一件事。 */
       '一開始有 ' + RULES.CRYSTAL.start + ' 顆水晶。' +
-        '角色收到委託並審查通過後，再 ' + RULES.CRYSTAL.base + ' 顆。',
-      /* 水晶看得到，是使用者要加的。分號後面那半句不是修飾——
-         少了它，這一句最自然的讀法是「水晶多的排前面」，而榜排的是
-         偏差率（見 68-rank.js）。 */
-      '每一組有多少，排行榜看得到；那張榜排的是估得準。'
+        '老師收下一件，再拿 ' + RULES.CRYSTAL.base + ' 顆。',
+      /* 「估得準」是我們的術語。新人沒估過，「準」對他沒有意義。
+         「說到做到」跟第二頁的「你說的，跟實際的」是同一件事的白話版，
+         而且不用先知道這套系統在幹嘛就看得懂。 */
+      '排行榜排的不是水晶多少，是說到做到。'
       /* ── 水晶能幹嘛 ──
 
          沒有這一句的話，水晶就只是一個會漲的數字——而「一個會漲的
@@ -21889,8 +21923,11 @@ var STORY = [
 
        這種矛盾會被讀出來：第一行說一開始就有，第三行說都要老師收下才有，
        而讀的人會停在那裡想哪一句是真的。 */
-    key: '任務之證跟圖鑑要老師收下才有。遇不到的那幾位，' +
-      RULES.CRYSTAL.light + ' 顆水晶照亮一位。'
+    /* 「300 顆水晶照亮一位」砍掉了。他連水晶長什麼都還沒看過，
+       就被告知一個消費機制——那個資訊等他真的打開圖鑑再說
+       （見 64-codex.js 的「放一顆水晶照亮」那顆鍵）。
+       這一頁的任務是讓他知道「有東西可以收集」，不是教他怎麼花。 */
+    key: '任務之證跟圖鑑，要老師收下才有。'
   }
 ];
 

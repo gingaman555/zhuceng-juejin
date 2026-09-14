@@ -696,17 +696,15 @@ function battleRun() {
   var line = document.getElementById('btline');
   function say(s) { if (line) line.textContent = s; }
 
-  /* 逃跑：角色往回跑出畫面，跑完才真的退出去。 */
+  /* 還沒準備好：角色往回跑出畫面，回到廊道。
+     run 不動——他只是先離開，隨時可以再走進來交。
+     本來這裡會呼叫 actRethink 把那一趟作廢再開新的，
+     但使用者預期的是「先不交」不是「這一趟重來」。 */
   if (S.p.flee) {
     box.classList.add('flee');
-    say('走過的那幾天留著。');
     btAt(850, function () {
-      var t = myTeam();
-      actRethink(t.teamId, r.runId);
-      var ms = r.msId;
       S.p = {};
-      /* 跟廊道上那一顆走到同一個地方——它們是同一件事。 */
-      go('commit', { id: ms });
+      go('home');
     });
     return;
   }
