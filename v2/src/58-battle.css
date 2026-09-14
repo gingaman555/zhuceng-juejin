@@ -87,11 +87,19 @@
    （同一天剛把「再打一次」那顆鍵改成「再交一次」，那是同一版留下來的
      最後一個字。check.js 現在擋畫面上的對決字眼。） */
 
-/* 牠見底：退開、暗下去。牠不是被打死的，牠只是不再擋在那裡。 */
+/* 牠見底：退開、暗下去。牠不是被打死的，牠只是不再擋在那裡。
+
+   2026-09-14：使用者量到的——「整個繳交委託人的動畫還是像是在打倒他」。
+   這一條當時就是為了取代下面那組舊的而寫的，可是舊的排在檔案後面，
+   同一個選擇器、同分量，後面那條贏。於是畫面上真的播的從來不是這裡，
+   是被判定為「早就打不到了」的另一組——判斷錯了對象，删掉 .bt.hit
+   那組的時候，這裡沒一起清乾淨。見底下拿掉的那一段。 */
 .bt.foe-out .bt-side.foe .bt-ch{
   animation:btfall .55s steps(3,end) 1 forwards
 }
 @keyframes btfall{to{transform:translate(33px,11px);opacity:.18}}
+/* 名牌跟著暗，退場退得完整——不是只有人淡出，桌上那張牌還亮著。 */
+.bt.foe-out .bt-side.foe .bt-plate{opacity:.55}
 
 /* 字幕框。一句一句走——一次全部倒出來就不是一場戰鬥，是一張結果表。 */
 .bt-say{
@@ -243,21 +251,19 @@
 .bt.first .bt-side.me .bt-plate{animation:btslider .45s steps(5,end) 1}
 @keyframes btslider{from{transform:translateX(55px)}to{transform:translateX(0)}}
 
-/* ── 被打敗 ──
-   閃四下，然後往下滑出畫面。沒有爆炸、沒有粒子——
-   那個年代畫不出來，而少掉那些之後這一下反而更重。 */
-.bt.foe-out .bt-side.foe .bt-ch{
-  animation:btko 1.1s steps(1,end) 1 forwards
-}
-@keyframes btko{
-  0%,8%{opacity:1}   9%,16%{opacity:.1}
-  17%,24%{opacity:1} 25%,32%{opacity:.1}
-  33%,40%{opacity:1} 41%,48%{opacity:.1}
-  49%,56%{opacity:1} 57%,64%{opacity:.1}
-  65%{opacity:1;transform:translateY(0)}
-  100%{opacity:0;transform:translateY(66px)}
-}
-.bt.foe-out .bt-side.foe .bt-plate{opacity:.55}
+/* ── 「被打敗」那組刪掉了 ──
+
+   這裡本來也有一條 .bt.foe-out .bt-side.foe .bt-ch，animation 是
+   btko：閃四下、往下滑出畫面、淡出——回合制對決那一版「打贏」的收尾，
+   跟上面 .bt.hit 那組（bthit／btlunge／btflash）同一批留下來的。
+
+   跟那一批不一樣的是，這一條**沒有打不到**：foe-out 是 67-battle.js
+   真的會加的 class（老師收下、牠退場的那一刻），而這裡跟上面 90 行
+   那條是同一個選擇器——後寫的這條覆蓋掉前面那條溫和的版本，所以
+   真正播出來的一直是這個「打贏收尾」，畫面才會像在打倒他。
+
+   拿掉了。牠退場借的就是上面那條 btfall：淡出、退開，不閃、不用
+   「KO」那種一格一格的生死閃爍。 */
 
 /* 報出來那一刻，兩張名牌一起亮一下。 */
 .bt.told .bt-plate{animation:bttold .4s steps(2,end) 1}
