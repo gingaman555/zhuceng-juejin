@@ -14,3 +14,6 @@ public/
 functions/Code.gs
 firebase-debug.log
 *.log
+
+# deploy.js 比對暫存
+.lv-*.html

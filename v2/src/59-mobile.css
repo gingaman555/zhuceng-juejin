@@ -18,7 +18,20 @@
     border-right:none;
     box-shadow:0 -3px 0 rgba(0,0,0,.72), 0 -4px 0 rgba(255,240,214,.05)
   }
-  .side-head{display:none}
+  /* ── 特異度：這一條要贏得過 57-viz.css 的 button.side-head ──
+
+     2026-09-10 量到：手機上那塊組別標題根本沒有被藏起來。它佔掉 522/630px，
+     把導覽擠成 108px——「班級地下城」被壓成一個字一行、七行高，整條底列
+     變成 190px，而版面只留了 121px，所以蓋掉內容 69px。
+
+     原因是側欄那一格改成一顆鍵的時候，57-viz.css 寫了 button.side-head
+     { display:block }（特異度 0,1,1）。**media query 不加特異度**，所以這裡
+     的 .side-head（0,1,0）永遠贏不了它——兩條規則互相取消，而畫面上看起來
+     只是「手機版怪怪的」。
+
+     用 .side .side-head（0,2,0）壓過去，而且不寫死 button：研究者那一格
+     以後如果不是按鈕，這一條照樣有效。 */
+  .side .side-head{display:none}
   .nav{display:flex;flex-direction:row;padding:0;width:100%}
   .nav a{
     flex:1;min-width:0;flex-direction:column;justify-content:center;

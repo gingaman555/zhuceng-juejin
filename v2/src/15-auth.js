@@ -130,6 +130,14 @@ var EV_SAY = {
   askexit:  function () { return '說專案做完了'; },
   left:     function () { return '走出去了'; },
   rename:   function (e) { return '把招牌改成「' + e.name + '」'; },
+  /* 改名字要寫出「從什麼改成什麼」：全站印的都是 u.name，所以讀
+     流水帳的人要能把改名字前後的那個人接起來，不然同一個 userId
+     在畫面截圖裡會像兩個人。 */
+  setname:  function (e) { return '把名字從「' + e.from + '」改成「' + e.name + '」'; },
+  /* 換密碼只說換過。這一筆會上雲，而那邊的規則是完全開放的
+     （見 firestore.rules），所以連長度都不寫——研究要知道的是
+     「他自己來改過一次」，那件事本身就是全部的資訊。 */
+  setpw:    function () { return '換了密碼'; },
   joinclass:function (e) { return '加進「' + e.klass + '」'; },
   newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
   jointeam: function () { return '用代碼加入隊伍'; },
@@ -200,8 +208,10 @@ function actRegister(o) {
      全站印的都是 u.name，學號當名字的話老師分不出誰是誰。 */
   var nm = String(o.name || '').trim();
   if (!nm) return { err: '先寫你的名字——同學跟老師看到的就是這個。' };
-  if (acc.length < 3) return { err: '帳號至少三個字。' };
-  if (pw.length < 4) return { err: '密碼至少四個字。' };
+  if (acc.length < RULES.ACC_MIN) {
+    return { err: '帳號至少 ' + RULES.ACC_MIN + ' 個字。' };
+  }
+  if (pw.length < RULES.PW_MIN) return { err: RULES.pwRule() };
   if (accountTaken(acc)) return { err: '這個帳號有人用了。' };
 
   /* 學生一定要有班級加入碼（老師唸給他們）。
@@ -286,11 +296,107 @@ function actLogin(account, pw) {
     return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
   });
   if (!u) return { err: '找不到這個帳號。' };
-  if (!u.salt) return { err: '這個帳號還沒設定密碼，請研究者重設一次。' };
+  /* 這一句本來寫「請研究者重設一次」。重設那一支在研究者變成唯讀的
+     時候一起拿掉了（見底下那一段），話卻留著——它叫使用者去找一個
+     做不到這件事的人。正常註冊一定會拿到 salt，所以踩得到這一條的
+     只有舊資料。 */
+  if (!u.salt) return { err: '這個帳號沒有密碼，登不進去。用新的帳號註冊一個。' };
   if (pwHash(pw, u.salt) !== u.hash) return { err: '密碼不對。' };
   u.lastLogin = now();
+  /* 真的人登入 ＝ 這台機器不再只是拿來看示範的。
+
+     本來只有 actRegister 關得掉這支旗標，所以「在電腦上註冊、在手機上
+     登入」的人，手機那一台永遠是示範狀態（見 55-ui.js 的 demoBar）。
+
+     示範帳號登入不算——那正是要留著示範模式的那一種。 */
+  if (DB.Config && !u._d) DB.Config.demo = 0;
   save();
   logEvent('login', { by: u.userId });
+  return { user: u };
+}
+
+/* ---------- 改自己的資料 ----------
+
+   2026-09-09：加這一段之前，一個帳號建立之後就再也改不動了。
+
+   名字打錯就錯著——而全站印的都是 u.name，老師端、榜、匯出看到的
+   都是那一個字串。密碼打錯就是那個帳號再也進不去：註冊那一刻是
+   唯一一次設定密碼的機會（見這個檔的 actRegister，密碼只在那裡
+   被寫進去），重設那一支拿掉了，老師叫得到的只有 actAskEst 與
+   actAskSkip。
+
+   所以在此之前，這兩種錯的唯一出路都是**再註冊一個帳號**——而那條路
+   每走一次就多一個 userId 指向同一個人：事件流被切成兩段，第一段在
+   匯出裡看起來像「這個人第一週就放棄了」。那是研究資料裡的假訊號，
+   而它是介面逼出來的，不是那個人做的事。
+
+   ── 這裡加的是「本人自己改」，不是「有人改得動別人」 ──
+
+   兩支都要 userId 才動得了，而換密碼一定要先打對現在那一個。沒有任何
+   角色因此拿到改別人帳號的能力，研究者唯讀那條軸一個字都沒有被碰到
+   （理由見 75-research.js 的檔頭：觀察者如果改得動被觀察對象，
+   那份資料就沒辦法說「這些是他們自己做的」）。
+
+   ── 帳號不給改 ──
+
+   它是他登入時打的那一串，也是第一節課寫在紙上的那一串。改它救不了
+   任何人——忘記密碼的人不會因為換一個帳號名就進得去，只會多一個
+   對不上紙條的帳號。 */
+
+function actSetName(userId, name) {
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個人。' };
+  var nm = String(name || '').trim();
+  /* 跟註冊同一句話。名字是空的的話，全站會退回拿帳號頂替。 */
+  if (!nm) return { err: '先寫你的名字——同學跟老師看到的就是這個。' };
+  if (nm === u.name) return { err: '跟原本一樣，沒有改到。' };
+  var old = u.name;
+  u.name = nm;
+  /* ── 不分組那一站：隊名要跟著改 ──
+
+     2026-09-09 量到的：B 站上（RULES.SOLO）一個人就是一組，那支隊是
+     註冊那一刻用他的名字建的（見這個檔 actRegister 最後那一段）。而
+     頂條跟側欄印的是**隊名**，不是 u.name——所以在那一站改完名字，
+     畫面會回一句「改好了。」，然後他看得到的每一個地方還是舊的那個。
+
+     主站沒有這件事：那邊的隊名是「第一組」，跟人名無關。
+
+     只在隊名還等於舊名字的時候才跟著改。執行時 t.name 只有 actNewTeam
+     寫得到，所以這個條件現在永遠成立——寫著是為了以後真的加了改隊名
+     那條路的時候，不會把他自己取的那個名字蓋掉。 */
+  if (RULES.SOLO && u.role === 'student' && u.teamId) {
+    var solo = teamOf(u.teamId);
+    if (solo && solo.name === old) solo.name = nm;
+  }
+  save();
+  /* 改名字要記一筆：老師端、榜、匯出印的都是這個字串，所以
+     「哪一天起這個人在畫面上叫別的名字」是讀資料的人需要知道的事。
+     記的是名字本身，不是任何跟表現有關的東西。 */
+  logEvent('setname', { by: u.userId, name: nm, from: old });
+  return { user: u };
+}
+
+function actSetPw(userId, oldPw, pw) {
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個人。' };
+  if (!u.salt) return { err: '這個帳號沒有密碼可以換。' };
+  /* 一定要先打對現在那一個。這是這一版唯一驗得出「是不是本人」的
+     方法——沒有後端、沒有信箱，帳號就在這台瀏覽器裡。 */
+  if (pwHash(String(oldPw || ''), u.salt) !== u.hash) {
+    return { err: '現在的密碼不對。' };
+  }
+  var np = String(pw || '');
+  if (np.length < RULES.PW_MIN) return { err: RULES.pwRule() };
+  if (pwHash(np, u.salt) === u.hash) return { err: '跟原本一樣，沒有改到。' };
+  /* 換一組新的鹽，不是拿舊的再雜湊一次。 */
+  var salt = newSalt();
+  u.salt = salt;
+  u.hash = pwHash(np, salt);
+  save();
+  /* 記「他換過」，**不記密碼也不記長度**。事件流會上雲，而那邊的規則
+     是完全開放的（見 41-sync.js 的檔頭與 firestore.rules），所以這裡
+     多寫一個欄位就等於把它放到一個只靠網址保護的地方。 */
+  logEvent('setpw', { by: u.userId });
   return { user: u };
 }
 
@@ -444,7 +550,11 @@ function exportRuns(classId) {
              就是 est 本身，所以那一欄照樣填得出來。 */
           r.askAt ? (r.estFirst == null ? (r.est || '') : r.estFirst) : '',
           r.askEst || '', r.askAt ? (r.est || '') : '',
-          r.backs || 0, r.word || '', by ? by.name : '', r.bonus || '',
+          r.backs || 0, r.word || '', by ? by.name : '',
+          /* 0 是老師真的選的一個答案（多給 0 顆 ＝ 收下、沒有要多說的），
+             跟「還沒收下所以沒有這一格」不是同一件事。用 || '' 會把
+             那兩件事寫成同一格空白。 */
+          r.bonus == null ? '' : r.bonus,
           r.committedAt ? new Date(r.committedAt).toISOString() : '',
           r.submittedAt ? new Date(r.submittedAt).toISOString() : '',
           r.doneAt ? new Date(r.doneAt).toISOString() : '',

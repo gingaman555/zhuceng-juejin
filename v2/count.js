@@ -1,4 +1,4 @@
-/* 這個系統裡有多少東西（完整版）。跑：node scratchpad/count2.js（cwd 在 v2） */
+/* 這個系統裡有多少東西（完整版）。跑：node count.js（cwd 在 v2） */
 const fs = require('fs');
 const path = require('path');
 let MEM = {};

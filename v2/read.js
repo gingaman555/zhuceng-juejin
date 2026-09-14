@@ -224,7 +224,8 @@ S.page = 'home'; S.p = {}; DRAFT = {};
 /* ── 其餘那幾扇門 ── */
 ACTS.okgot();
 [['codex', '圖鑑'], ['pack', '任務清單'], ['eco', '班級地下城'],
- ['who', '換角色'], ['exit', '出口（還鎖著）'], ['story', '故事']].forEach(function (p) {
+ ['who', '換角色'], ['exit', '出口（還鎖著）'], ['story', '故事'],
+ ['me', '你的資料'], ['pw', '換密碼']].forEach(function (p) {
   S.page = p[0]; S.p = {}; DRAFT = {};
   看(p[1], PAGES[p[0]]());
 });

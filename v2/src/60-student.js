@@ -118,8 +118,13 @@ PAGES.home = function () {
     STRATA.forEach(function (x) { if (kk && x.key === kk.zone) kz = x; });
     /* 拿到幾顆。基本的做完就有，後面那幾顆是老師多說的。 */
     var cb = Math.max(RULES.CRYSTAL.bonusMin, Number(r.bonus) || RULES.CRYSTAL.bonusMin);
+    /* 老師沒有多給的時候不印分解那一行。
+
+       「0 是他多給的」會把一個正常的答案（收下、沒有要多說的）講成
+       一句負評，而這個系統不評價任何人。 */
     H.push('<div class="crygot">＋' + (RULES.CRYSTAL.base + cb) + ' 顆水晶' +
-      '<span>' + RULES.CRYSTAL.base + ' 是完成的，' + cb + ' 是他多給的</span></div>');
+      (cb ? '<span>' + RULES.CRYSTAL.base + ' 是完成的，' + cb +
+        ' 是他多給的</span>' : '') + '</div>');
     H.push(regCard('新拿到', (m ? m.title : '那一趟'), '任務之證已收錄在圖鑑',
       pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
       false));
@@ -383,9 +388,22 @@ function teamCard(t) {
   H.push('<div class="tmc-h">');
   H.push('<b class="tmc-n">' + esc(t.name) +
     (t.project ? '<i>' + esc(t.project) + '</i>' : '') + '</b>');
-  /* 隊伍代碼是唸給隊友的。不分組那一站沒有隊友。 */
+  /* 隊伍代碼是唸給隊友的。不分組那一站沒有隊友。
+
+     ── 一顆複製鍵 ──
+
+     2026-09-09 加的。這一串的用途從頭到尾只有一個：交到隊友手上。
+     在那之前唯一的路是看著螢幕把六個字念出來或打出來，而開學第一節
+     課全班同時在做這件事——六組的六串同時在空氣裡。抄錯一個字的
+     代價不是重打，是加進別人那一組，而那個是退不掉的
+     （見 15-auth.js 的 actJoinTeam：組好了就不能換）。
+
+     用 data-copy 這條路，跟「老師要去哪裡看」那一行同一顆
+     （見 56-viz.js 的 whereLine，以及 55-ui.js 裡收 copy 的那一行）。 */
   if (t.joinCode && !RULES.SOLO) {
-    H.push('<span class="tmc-c">代碼 <b>' + esc(t.joinCode) + '</b></span>');
+    H.push('<span class="tmc-c">代碼 <b>' + esc(t.joinCode) + '</b>' +
+      '<button class="btn ghost cp" data-act="copy" data-copy="' +
+      esc(t.joinCode) + '">複製</button></span>');
   }
   /* 這一格印的是**手上剩下的**，不是拿過的總數。
 
@@ -773,7 +791,9 @@ PAGES.sign = function () {
   var sg = signOf(t.teamId);
   var H = [head('專案名', '這個專案叫什麼', '')];
   H.push('<div class="card"><div class="fa-in">');
-  H.push(pxTag(sg.px, sg.pal, 'fa-px'));
+  /* 同廊道口那一塊：套當層的顏色（見 61-scene.js 的 sceneMouth）。
+     這一頁就是點招牌進來的，兩邊要是同一塊牌子。 */
+  H.push(pxTag(sg.px, zoneNow(t.teamId).pal, 'fa-px'));
   H.push('<div>');
   H.push('<input id="pj-name" value="' + esc(t.project || '') +
          '" placeholder="' + esc('這個專案叫什麼') + '">');

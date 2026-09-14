@@ -18,7 +18,7 @@
 
    ── 為什麼要一支腳本 ──
 
-   一 · 手動的話是「build main → build b → 跑十八支檢查 →
+   一 · 手動的話是「build main → build b → 跑二十支檢查 →
         deploy A（用 firebase.json）→ deploy B（用 firebase.b.json）」。
         五個步驟裡漏掉任何一個，兩個站就開始不一樣，而那是最難發現的
         那種問題：你在 A 站看到修好了，B 站的學生沒有。
@@ -28,7 +28,7 @@
         只看「這一版的記號」跟資料庫，剛好兩個都對，所以它安靜地錯了
         好幾次。現在驗那一段會抓每一站自己的標題。
 
-   二 · 檢查沒過就不要上。這一支會先跑完十八支（大約 8 秒），
+   二 · 檢查沒過就不要上。這一支會先跑完二十支（大約 10 秒），
         任何一支掛掉就停在那裡，一個站都不動。
 
    三 · 這台機器連 googleapis 會間歇性 DNS 失敗（getaddrinfo
@@ -59,7 +59,21 @@ const V2 = path.join(__dirname, 'v2');
    結果 B 站拿到的是主站那一份（分組版），而部署後的驗證只看
    「這一版的記號」跟資料庫，剛好兩個都對，所以它安靜地錯了好幾次。
 
-   驗那一段現在會抓每一站自己的標題，這種錯下次會被抓到。 */
+   驗那一段現在會抓每一站自己的標題，這種錯下次會被抓到。
+
+   ── config 不是只有 hosting ──
+
+   2026-09-09：firebase.b.json 裡沒有 firestore 那一段，所以
+   firestore.rules 從來沒有被推到 boss-fight-b —— B 站的規則一直是
+   Console 上手動設的那一份，repo 裡沒有紀錄，deploy 也復原不了。
+
+   當天探過，B 站的讀取是通的（打一個不存在的文件路徑回 404 而不是
+   403），所以沒有漏收資料。可是如果 Console 上那一份是 test mode，
+   它帶著到期時間戳，到期那天會靜靜地翻成拒絕——而學生端寫入失敗只有
+   console.warn（見 41-sync.js 的 syncTrouble），畫面上什麼都不會說。
+   B 站是實驗組，那份資料掉了補不回來。
+
+   兩個 config 現在都帶 firestore.rules。 */
 const 站 = {
   main: {
     project: 'boss-fight-816f3', url: 'https://boss-fight-816f3.web.app',
@@ -73,11 +87,22 @@ const 站 = {
 
 /* 上線之前一定要過的那幾支。順序照「壞掉的時候多痛」排：
    check 擋設計界線、loop 擋資料、pages 擋畫不出來，
-   後面那幾支是流程與教室情境。 */
+   後面那幾支是流程與教室情境。
+
+   ── 這張清單要跟 gate.js 掃到的那一批對得起來 ──
+
+   2026-09-09：gate.js 把 size.js 當關卡在驗（它不在 gate 的「不算」
+   名單裡），而這張清單上沒有它。所以 size.js 的離開碼補上了、gate 也
+   說它接得上，可是從來沒有人跑它——它依然擋不下任何東西。
+
+   那是同一次事故修到一半：離開碼是「這一支說得出不對」，在這張清單上
+   才是「有人在聽」。兩件事都要有。
+
+   加新工具的時候：gate.js 是自動掃目錄的，這張清單不是。 */
 const 檢查 = [
-  ['check.js', ''], ['loop.js', '200'], ['pages.js', ''], ['e2e.js', ''],
+  ['check.js', ''], ['loop.js', '200'], ['pages.js', ''], ['e2e.js', ''], ['me.js', ''],
   ['read.js', ''], ['leak.js', ''], ['multi.js', ''], ['multi.js', '1'],
-  ['class.js', ''], ['absent.js', ''], ['solo.js', ''], ['twoclass.js', ''],
+  ['class.js', ''], ['size.js', ''], ['absent.js', ''], ['solo.js', ''], ['twoclass.js', ''],
   ['crystal.js', ''], ['siteb.js', ''], ['rank.js', ''], ['path.js', ''], ['demo.js', ''], ['gate.js', '']
 ];
 

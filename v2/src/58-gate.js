@@ -292,7 +292,7 @@ PAGES.reg = function () {
          esc('同學跟老師看到的就是這個') + '">');
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="rg-acc" value="' + esc(draft('rg-acc')) + '" placeholder="' +
-         esc('至少三個字，登入用') + '">');
+         esc('至少 ' + RULES.ACC_MIN + ' 個字，登入用') + '">');
   /* ── 密碼要打兩次 ──
 
      這一頁沒有「忘記密碼」那條路：帳號存在瀏覽器裡，密碼是雜湊過的，
@@ -303,7 +303,7 @@ PAGES.reg = function () {
      兩格是為了那件事，不是為了嚴謹。兩格不一樣就擋在這裡，
      擋在他按下建立之前。 */
   H.push('<div class="eyebrow">密碼</div>');
-  H.push('<input id="rg-pw" type="password" placeholder="' + esc('至少四個字') + '">');
+  H.push('<input id="rg-pw" type="password" placeholder="' + esc(RULES.pwRule()) + '">');
   /* 眉標不寫「再打一次」：那四個字剛從這個作品裡拿掉（老師退回之後
      學生那一顆鍵），check.js 也擋著。同一個字串在同一套介面裡指兩件
      不同的事，下一個讀的人要猜。 */
@@ -574,3 +574,108 @@ function homeFor(u) {
   if (!u.teamId) return 'myteam';
   return 'home';
 }
+
+/* ---------- 你的資料 ----------
+
+   2026-09-09：在此之前這個系統沒有這一頁——帳號建好之後，名字跟密碼
+   都是定死的（見 15-auth.js 的 actSetName 那一段）。
+
+   為什麼是一頁不是兩頁：名字跟密碼是同一件事的兩半（「這個帳號是誰、
+   他怎麼進來」），拆成兩格側欄會讓兩件小事各佔一個位置。可是**主要
+   動作只能有一個**（read.js 在量），所以這一頁的大鍵是換名字，
+   換密碼是一顆指過去的小鍵，到它自己那一頁去做。
+
+   三種角色共用。跟登出同一個理由：改自己的名字這件事不該因為身分
+   而長在不同的地方。 */
+PAGES.me = function () {
+  /* pages.js 會把每一頁都畫一次來檢查，那時候 me() 是 null
+     （同 PAGES.mkclass 的理由）。 */
+  var u = me();
+  if (!u) return PAGES.gate();
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('你的資料', '改名字，或換密碼', ''));
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你的名字</div>');
+  H.push('<input id="me-name" value="' + esc(u.name || '') + '" placeholder="' +
+    esc('同學跟老師看到的就是這個') + '">');
+  H.push(btn('換名字', 'setname', 'big'));
+  H.push('</div>');
+
+  /* 帳號印出來但改不動。印它是因為忘記帳號跟忘記密碼一樣常見，
+     而這一頁是他唯一會來找的地方。 */
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">你的帳號</div>');
+  H.push('<p class="lead">' + esc(u.account || '') + '</p>');
+  H.push('<p class="dim">帳號改不了——你登入時打的就是這一串。</p>');
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">密碼</div>');
+  H.push('<p class="dim">' + esc(AUTH_NOTE) + '</p>');
+  H.push(btn('換密碼', 'go:pw', ''));
+  H.push('</div>');
+
+  H.push('<div class="row">');
+  H.push(btn('回去', 'go:' + homeFor(u), 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* 換密碼自己一頁。
+
+   「先打現在的」不是形式：這一版沒有後端也沒有信箱，帳號就在這台
+   瀏覽器裡，打得出現在那一個是唯一驗得出「是不是本人」的方法。 */
+PAGES.pw = function () {
+  var u = me();
+  if (!u) return PAGES.gate();
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('換密碼', '先打現在的，再打新的', ''));
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">現在的密碼</div>');
+  H.push('<input id="pw-old" type="password" placeholder="' +
+    esc('你現在在用的那一個') + '">');
+  H.push('<div class="eyebrow">新的密碼</div>');
+  H.push('<input id="pw-new" type="password" placeholder="' +
+    esc(RULES.pwRule()) + '">');
+  /* 眉標寫「再一次」，跟建立帳號那一頁同一個字（見 PAGES.reg
+     那一段：同一個字串在同一套介面裡不該指兩件事）。 */
+  H.push('<div class="eyebrow">再一次</div>');
+  H.push('<input id="pw-new2" type="password" placeholder="' +
+    esc('跟上面那一格一樣') + '">');
+  H.push('</div>');
+  /* 換完還是救不回來。這句話要在他按下去之前就看到——
+     這一版沒有「忘記密碼」那條路，而那是設計選的，不是漏的
+     （理由見 firestore.rules 與 75-research.js 的檔頭）。 */
+  H.push('<p class="dim">換完要記得。這裡沒有「忘記密碼」那條路，' +
+    '忘了就只能用新的帳號重來。</p>');
+  H.push('<div class="row">');
+  H.push(btn('換密碼', 'setpw', 'big'));
+  H.push(btn('回去', 'go:me', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+ACTS.setname = function () {
+  var v = (document.getElementById('me-name') || {}).value || '';
+  var r = actSetName(S.who, v);
+  if (r.err) return say(r.err);
+  render();
+  say('改好了。');
+};
+
+ACTS.setpw = function () {
+  var o = (document.getElementById('pw-old') || {}).value || '';
+  var a = (document.getElementById('pw-new') || {}).value || '';
+  var b = (document.getElementById('pw-new2') || {}).value || '';
+  /* 兩格不一樣就擋在這裡，不進資料層——同建立帳號那一頁的理由：
+     資料層不該知道畫面上有幾個密碼欄，它收到的永遠是一個
+     已經確認過的密碼。 */
+  if (a !== b) return say('兩次新密碼不一樣。再輸入一次。');
+  var r = actSetPw(S.who, o, a);
+  if (r.err) return say(r.err);
+  go('me');
+  say('密碼換好了。下次用新的登入。');
+};

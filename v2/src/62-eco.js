@@ -458,8 +458,13 @@ PAGES.classeco = function () {
   /* 那一串是唸出去的：學生用它建帳號。放在最上面，因為開學前兩週
      他每次進來都要唸一次。 */
   if (kls && kls.joinCode) {
+    /* 複製鍵跟隊伍代碼那一顆同一個理由（見 60-student.js 的組別卡）：
+       這一串存在的意義就是交到別人手上，而開學前兩週他每次進來都要
+       再給一次。念出去以外多一條路，而且那條路不會念錯。 */
     H.push('<div class="card quiet"><div class="eyebrow">班級加入碼</div>' +
       '<b class="joincode">' + esc(kls.joinCode) + '</b>' +
+      '<button class="btn ghost cp" data-act="copy" data-copy="' +
+      esc(kls.joinCode) + '">複製</button>' +
       '<p class="dim">學生跟另外幾位老師都用這組碼建帳號。</p></div>');
   }
 

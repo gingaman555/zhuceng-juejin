@@ -55,20 +55,24 @@ console.log('   一件收下 ' + RULES.CRYSTAL.base + ' 顆　老師多給 ' +
   RULES.CRYSTAL.bonusMin + '–' + RULES.CRYSTAL.bonusMax + ' 顆　點亮一位 ' +
   RULES.CRYSTAL.light + ' 顆');
 
-/* 這裡不驗「數字要小」——刻度是使用者定的（100／10–50／300），而數字
+/* 這裡不驗「數字要小」——刻度是使用者定的（100／0–5／300），而數字
    大小本身沒有對錯。要守的是**比例**，因為比例才決定行為：
 
-     老師多給的那幾份要看得出來，不然他那一下「我想多說一點」在畫面上
-     等於沒有發生；可是也不能大到蓋過基本額，不然它就從一句話變成
-     一條路（見 20-rules.js）。
+     老師多給的那幾顆要留在「一句話」那一側。大到看得出名次差別的
+     時候，它就從一個回應變成一個值得追的數字——那一版存在過
+     （10–50，佔 9–33%），2026-09-09 縮回來了，改過兩次的紀錄
+     寫在 20-rules.js。
 
      點亮的價錢要讓一學期只點得亮兩三位，不然圖鑑就變成用水晶換的，
      而「老師收下一件，你就多認識一位」那句話會垮掉。 */
 const 佔比 = Math.round(RULES.CRYSTAL.bonusMax / RULES.CRYSTAL.base * 100);
-ok(佔比 >= 10 && 佔比 <= 50,
-  '老師多給的最多佔基本額 ' + 佔比 + '%——看得出差別，可是拿不到也不覺得少了什麼');
-ok(RULES.CRYSTAL.bonusMin > 0,
-  '收下就一定有（最少 ' + RULES.CRYSTAL.bonusMin + '——0 會被讀成負評）');
+ok(佔比 > 0 && 佔比 <= 5,
+  '老師多給的最多佔基本額 ' + 佔比 + '%——榜上看得見，可是動不了名次');
+/* 下限是 0：收下了、沒有要多說的，那是一個正常的答案。
+   舊註解擔心 0 會被讀成負評——那個顧慮由學生那一頭處理：0 的時候
+   不印分解那一行（見 60-student.js，底下第 7 節驗的就是這件事）。 */
+ok(RULES.CRYSTAL.bonusMin === 0,
+  '0 選得下去——收下、沒有要多說的，那是一個正常的答案');
 const 一學期 = 8 * (RULES.CRYSTAL.base + Math.round((RULES.CRYSTAL.bonusMin + RULES.CRYSTAL.bonusMax) / 2));
 const 點得亮 = Math.floor(一學期 / RULES.CRYSTAL.light);
 console.log('   一學期八趟大約 ' + 一學期 + ' 顆 → 點得亮 ' + 點得亮 + ' 位');
@@ -207,6 +211,59 @@ ok(h2.indexOf('cx-light') < 0, '而且真的不畫（一顆按下去只會被拒
 const ev = where('Events', function (e) { return e.kind === 'light'; });
 ok(ev.length >= 1, '照亮這件事有進紀錄（' + ev.length + ' 筆）');
 ok(evSay(ev[0]).indexOf('水晶') >= 0, '紀錄讀得懂：「' + evSay(ev[0]) + '」');
+節('7', '老師多給的那幾顆：0–5，而 0 不會被講成負評');
+
+/* 2026-09-09 的來回：1–5 → 10–50 → 0–5。老師那一格問的是「完成到
+   什麼程度」，不是「你願意多給幾顆」——老師不熟悉這個作品的樣式，
+   那個問法對他不成立（見 70-teacher.js）。 */
+const 選項 = [];
+for (var bi = RULES.CRYSTAL.bonusMin; bi <= RULES.CRYSTAL.bonusMax;
+     bi += (RULES.CRYSTAL.bonusStep || 1)) { 選項.push(bi); }
+ok(選項.join(' ') === '0 1 2 3 4 5', '老師選得到的是 ' + 選項.join(' '));
+
+function 一趟(帳號, 隊名, 送) {
+  const u = actRegister({ account: 帳號, password: 'aaaa', name: 隊名, role: 'student', code: kl.joinCode }).user;
+  as(u); const gg = actNewTeam(隊名, u.userId).team;
+  as(t); const mm = actPublish(kl.classId, { title: 隊名 + '的一件', mentorId: t.userId, teams: [gg.teamId] });
+  as(u); const rr = actCommit(gg.teamId, mm.msId, 2, [], [{ n: '做', d: 2, who: u.userId, byOwn: 1 }], '', 2);
+  actMyPart(gg.teamId, rr.runId, { spent: { 0: 2 }, said1: '做完了' });
+  actSubmit(gg.teamId, rr.runId, 'https://x');
+  as(t); actApprove(rr.runId, '收下。', 送);
+  as(u); S.page = 'home'; S.p = {}; DRAFT = {};
+  /* crygot 只在「老師剛勾、學生還沒看過」那個視窗才畫（okPend）。
+     SEEN_CUT 不可以設 0——okSince 第一行是 if (!cut) return []，
+     設 0 等於整塊不畫，底下的否定式就會無條件通過。 */
+  SEEN_CUT = 1; OKGOT = {};
+  return { run: find('Runs', function (x) { return x.runId === rr.runId; }), 廊道: PAGES.home() };
+}
+
+const 沒選 = 一趟('stu_z', '沒選組', undefined);
+ok(沒選.run.bonus === 0, '老師沒選 → 落在 0');
+const 送大 = 一趟('stu_v', '送大組', 99);
+ok(送大.run.bonus === RULES.CRYSTAL.bonusMax, '送 99 進來夾到 ' + 送大.run.bonus);
+
+const 給零 = 一趟('stu_x', '零組', 0);
+ok(給零.廊道.indexOf(' 顆水晶') >= 0, '「拿到幾顆」那一塊真的有畫出來（不然底下都是空的）');
+ok(給零.廊道.indexOf('＋' + RULES.CRYSTAL.base + ' 顆水晶') >= 0,
+  '多給 0 顆 → 畫面上是 ＋' + RULES.CRYSTAL.base + ' 顆');
+ok(給零.廊道.indexOf('是他多給的') < 0, '而且不出現「0 是他多給的」');
+
+const 給三 = 一趟('stu_y', '三組', 3);
+ok(給三.廊道.indexOf('＋' + (RULES.CRYSTAL.base + 3) + ' 顆水晶') >= 0,
+  '多給 3 顆 → 畫面上是 ＋' + (RULES.CRYSTAL.base + 3) + ' 顆');
+ok(給三.廊道.indexOf('3 是他多給的') >= 0, '而且寫著「3 是他多給的」——它一樣是老師多給的水晶');
+
+/* 匯出：0 要留得住，跟「還沒收下所以沒有這一格」分得開。
+   本來這一欄是 r.bonus || ''，0 會被寫成空白（見 15-auth.js）。 */
+const 趟列 = String(exportRuns(kl.classId)).split('\n');
+const 欄 = 趟列[0].split(',').indexOf('水晶加成');
+ok(欄 >= 0, '匯出裡有「水晶加成」那一欄');
+const 零列 = 趟列.filter(function (x) { return x.indexOf('零組的一件') >= 0; })[0] || '';
+ok(零列.split(',')[欄] === '0', '多給 0 顆寫成 0，不是空白（實際是 ' +
+  JSON.stringify(零列.split(',')[欄]) + '）');
+
+
+
 
 console.log('\n════════════════════════════════════════════════════');
 console.log(錯.length ? '  ✗ ' + 錯.length + ' 條沒過\n  ' + 錯.join('\n  ')

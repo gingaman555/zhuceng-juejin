@@ -268,6 +268,54 @@ ok(demoAsked(), '#demo 也算（有些地方會把 ? 吃掉）');
 global.location = { search: '', hash: '', href: 'https://x/' };
 DB = 存起來; S.who = 存誰; S.role = 存角;
 
+節('7之二', '試用列：這台機器上有真的資料就整條不畫');
+
+/* 2026-09-09：使用者在自己的手機上看到這一條。
+
+   本來 demoBar 用的是 isDemo()，而它讀的 DB.Config.demo 只有 actRegister
+   關得掉，而且不跟著雲端同步——所以「在電腦上註冊、在手機上登入」的人，
+   手機那一台永遠是示範狀態，登入後第一眼看到的是一條寫著「試用」的列，
+   裡面是十七個身分的下拉選單，包含老師跟研究者。
+
+   兩邊都修了：畫不畫改用 isPureDemo()（見 55-ui.js），登入也會關掉那支
+   旗標（見 15-auth.js 的 actLogin）。 */
+(function () {
+  const 存 = DB, 存誰2 = S.who, 存角2 = S.role;
+  DB = blank(); seed();
+  S.who = null; S.role = null; DB.Session = null;
+
+  ok(isPureDemo(), '全新的機器是純示範狀態');
+  ok(demoBar().length > 0, '純示範的時候試用列還是畫得出來（展示與口試要用）');
+
+  /* 雲端同步下來一個真帳號，可是這台機器上沒有人註冊過 */
+  DB.Users.push({ userId: 'Ureal', account: 'real1', name: '真的人', role: 'student', seats: [] });
+  ok(isDemo(), 'Config.demo 還是 1——沒有人在這一台註冊過');
+  ok(!isPureDemo(), '可是這台已經不是純示範了（雲端拉下了真帳號）');
+  ok(demoBar().length === 0, '→ 試用列整條不畫（這就是手機上看到的那一條）');
+
+  /* 這一條不歸 ?demo 管 */
+  global.location = { search: '', hash: '', href: 'https://x/' };
+  ok(!demoAsked(), '乾淨網址');
+  ok(demoBar().length === 0, '乾淨網址下一樣不畫——試用列跟 ?demo 是兩道門');
+
+  /* 真的人登入就關掉旗標，不必等雲端同步 */
+  DB = blank(); seed();
+  actRegister({ account: 'zz_tea', password: 'aaaa', name: '林老師', role: 'teacher' });
+  DB.Config.demo = 1;   /* 裝成「在別台註冊、這台只是登入」 */
+  ok(isDemo(), '裝回示範狀態');
+  actLogin('zz_tea', 'aaaa');
+  ok(DB.Config.demo === 0, '真的人登入就把旗標關掉了');
+
+  /* 示範帳號登入不算——那正是要留著示範模式的那一種 */
+  DB = blank(); seed();
+  const 示帳 = where('Users', u => u._d && u.account)[0];
+  ok(DB.Config.demo === 1, '示範資料是示範狀態');
+  actLogin(示帳.account, DEMO_PW);
+  ok(DB.Config.demo === 1, '示範帳號登入不會關掉——展示模式要留著');
+
+  DB = 存; S.who = 存誰2; S.role = 存角2;
+})();
+
 節('8', '真的學生看不到示範班的東西');
 
 as(美);
@@ -276,6 +324,48 @@ ok(我的班 === 真班.classId, '宜庭的班是真班');
 ok(myTeam().teamId === 真隊.teamId, 'myTeam() 回的是真的那一隊');
 const 我看到的趟 = runsFor(myTeam().teamId).length;
 ok(我看到的趟 === 1, '她看得到的趟數是 1（不是 ' + (1 + 示範趟) + '）');
+
+節('9', '示範資料在每一台機器上都一樣');
+
+/* 2026-09-10：使用者發現手機跟電腦的示範資料不一樣。
+
+   原因是 45-seed.js 的 T0 本來是 Date.now()——底下每一個日期都是
+   ago(n)，相對於**這台機器第一次長出示範資料的那一刻**。兩台在不同
+   時間打開，錨點就不同；長出來之後還會一直漂，因為停滯、睡著、期限、
+   進行中那一趟花了幾天，全部是拿 now() 現算的。一份放了一週的示範
+   資料看起來會像這個班荒廢了。
+
+   改成錨在當天 0 時，加上 seedDay（跨過一天就重長一次）。 */
+(function () {
+  const 存 = DB;
+
+  DB = blank(); seed(); save();
+  ok(load() === true, 'seedDay 是今天 → 沿用，不重長');
+
+  DB = blank(); seed();
+  DB.Config.seedDay = DB.Config.seedDay - 1;
+  save();
+  ok(load() === false, 'seedDay 不是今天 → 重長（80-app.js 那一行接手 seed()）');
+
+  DB = blank(); seed();
+  actRegister({ account: 'zz_tea', password: 'aaaa', name: '林老師', role: 'teacher' });
+  ok(DB.Config.demo === 0, '有人在這台註冊之後 demo 旗子關掉了');
+  DB.Config.seedDay = 19700101;
+  save();
+  ok(load() === true, '真的資料就算 seedDay 再舊也照樣沿用——一筆都不會被洗掉');
+
+  DB = blank(); seed(); const 甲 = JSON.stringify(DB);
+  DB = blank(); seed(); const 乙 = JSON.stringify(DB);
+  ok(甲 === 乙, '連長兩次完全一樣：沒有亂數，也沒有時分秒');
+
+  DB = blank(); seed();
+  const 碼 = where('Teams', function (t) { return t._d; }).map(function (t) { return t.joinCode; });
+  ok(碼.every(function (c) { return /^[A-Z2-9]{6}$/.test(c); }),
+    '每一支示範隊的代碼都是六碼、而且沒有 I O 0 1（' + 碼.join(' ') + '）');
+  ok(new Set(碼).size === 碼.length, '而且不重複');
+
+  DB = 存;
+})();
 
 console.log('\n════════════════════════════════════════════════════');
 console.log(錯.length ? '  ✗ ' + 錯.length + ' 條沒過\n  ' + 錯.join('\n  ')

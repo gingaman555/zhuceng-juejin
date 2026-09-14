@@ -224,14 +224,28 @@ if (!sayBlock) {
    說得通的東西，而第三個會呼叫 seed()——那一支第一行是 DB = blank()，
    接上雲端之後等於一個學生就能清掉全班。
 
-   demoBar 的第一行必須是那道門。 */
+   demoBar 的第一行必須是那道門。
+
+   ── 2026-09-09：那道門本來太鬆 ──
+
+   這一條本來要求的是 isDemo()。可是 isDemo() 讀的 DB.Config.demo 是
+   **每一台機器自己的**旗標，全站只有 actRegister 關得掉它，而且不跟著
+   雲端同步——所以「在電腦上註冊、在手機上登入」的人，手機那一台照畫。
+   使用者就是在自己的手機上看到它的。
+
+   現在要求 isPureDemo()：這台機器上只要有任何一筆真的資料（自己註冊的，
+   或雲端拉下來的）就整條不畫。那本來就是底下 forward／reset 在用的判準，
+   所以「看得到」跟「按得動」現在是同一道門——不會再有一顆按下去只會回
+   「這裡有真的資料」的鍵擺在畫面上。
+
+   改回 isDemo() 會被這一條擋下來。 */
 const demoFn = src.match(/function demoBar\([\s\S]*?\n\}/);
 if (!demoFn) {
   bad++;
   console.error('找不到 demoBar——試用列那一段不見了');
-} else if (!/if\s*\(!isDemo\(\)\)\s*return\s*''/.test(demoFn[0])) {
+} else if (!/if\s*\(!isPureDemo\(\)\)\s*return\s*''/.test(demoFn[0])) {
   bad++;
-  console.error('試用列沒有擋在示範資料裡　——真的班上學生點一下就變成老師');
+  console.error('試用列沒有擋在純示範資料裡　——在別台註冊、這台只登入的人照樣看得到');
 }
 /* 這兩顆會動到資料與時間，要的是嚴格那道門（isPureDemo）：
    本機還是示範資料，但雲端的真帳號已經拉下來了，也不准。 */
@@ -420,11 +434,23 @@ Object.keys(pxc).forEach(function (c) {
 
 /* ---------- 八 · 沒有小字 ----------
 
-   字級只有 22 / 33 / 44 / 66。11px 是這套點陣字的原生尺寸，畫得清楚，
-   但讀不清楚——而且它一直是一個出口：句子太長就縮成 11px 塞進去。
-   出口關掉之後，句子太長只有一條路，就是把句子砍短。 */
-const small = (src.match(/font-size:(d+)px/g) || [])
-  .map(function (x) { return Number(x.match(/d+/)[0]); })
+   字級只有 22 / 33 / 44 / 55 / 66 / 88。11px 是這套點陣字的原生尺寸，
+   畫得清楚，但讀不清楚——而且它一直是一個出口：句子太長就縮成 11px
+   塞進去。出口關掉之後，句子太長只有一條路，就是把句子砍短。
+
+   ── 2026-09-09：這一條從加上去到今天沒有擋過任何東西 ──
+
+   本來寫的是 /font-size:(d+)px/——d 少了反斜線，所以它找的是字面上的
+   「font-size:dpx」。index.html 裡 332 條字級宣告，它一條都沒有掃到。
+
+   當時實際上沒有小於 22px 的字級，所以它沒有藏住任何違規——守住這條
+   線的一直是紀律，不是這支檢查。而那是最難發現的狀態：畫面是對的、
+   檢查是綠的，可是兩者之間沒有關係。gate.js 管的是「有沒有離開碼」，
+   這一次壞在更前面：那條規則本身抓不到東西。
+
+   改讀 scan 不讀 src：註解裡寫「本來是 11px」不該讓上線停下來。 */
+const small = (scan.match(/font-size:\s*(\d+)px/g) || [])
+  .map(function (x) { return Number(x.match(/\d+/)[0]); })
   .filter(function (n) { return n < 22; });
 if (small.length) {
   bad++;

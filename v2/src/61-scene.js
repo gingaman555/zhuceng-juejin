@@ -574,7 +574,20 @@ function sceneMouth(t, next, ENT, resting) {
     esc(JSON.stringify({ a: 'go:sign' })) + '\' title="' +
     esc('招牌：' + (t.project || '（還沒定）')) + '">');
   H.push('<div class="chain"></div>');
-  H.push(pxTag(sg.px, sg.pal, 'sign'));
+  /* ── 招牌套當層的顏色，不是它自己那一組 ──
+
+     2026-09-10：使用者說廊道上有一塊「奇怪的藍色方塊」。那就是這一張。
+
+     signOf 永遠回 SIGNS.iron，而鐵牌的配色是冷灰藍（#9AA6B0／#5C666F／
+     #DDE6EC，見 11-world.js）。廊道口其他每一樣東西——委託人、碎石、
+     水晶、蘑菇、鏽鐵——都套 zone.pal，只有招牌用自己那一組。在冷色的
+     那幾層看不出來，走到熔火深淵（#D9603F 暖橘）就變成畫面上唯一一塊
+     冷色，讀起來像一個外來物。
+
+     配色表的鍵一樣（# ／ o ／ *），所以直接換一組就好，圖不用動。
+     材質的差別本來就已經拿掉了（SIGN_TIERS 只剩 iron），
+     所以那一組配色現在沒有在表達任何東西。 */
+  H.push(pxTag(sg.px, zoneNow(t.teamId).pal, 'sign'));
   H.push('</button>');
   /* 洞口那一塊專案名拿掉了。
 

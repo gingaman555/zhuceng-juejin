@@ -17,6 +17,23 @@
 
 var DEMO_PW = '1234';
 
+/* 示範資料裡不可以有亂數：兩台機器要長出一模一樣的東西。
+
+   不分組那一站的單人隊本來用 newCode()（Math.random），所以每一台
+   看到的代碼都不一樣。改成從帳號雜湊出來——同一個帳號永遠同一組。
+
+   字母表跟 newCode() 一樣，去掉會看錯的 I O 0 1：這一串是用唸的。
+
+   放在檔案層級不是放在 seed() 裡面：soloize() 也要用（2026-09-10 踩過，
+   siteb.js 擋下來的）。 */
+function 固定碼(種) {
+  var CH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var h = 2166136261, s = String(種), c = '';
+  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
+  for (var k = 0; k < 6; k++) { c += CH[h % CH.length]; h = (h * 16777619 + 7) >>> 0; }
+  return c;
+}
+
 /* 把密碼種進一個使用者。真的註冊走 actRegister，這裡只是讓試用資料登得進去。 */
 function seedPw(u) {
   u.salt = 'seed|' + u.userId;
@@ -26,7 +43,21 @@ function seedPw(u) {
 
 function seed() {
   DB = blank();
-  var T0 = Date.now();
+  /* ── 錨點是「今天 0 時」，不是「打開的那一刻」 ──
+
+     2026-09-10：使用者發現手機跟電腦的示範資料不一樣。原因是這一行
+     本來是 Date.now()——底下每一個日期都是 ago(n)，也就是相對於
+     **這台機器第一次長出示範資料的那一刻**。兩台在不同時間打開，
+     錨點就不同；而且長出來之後還會一直漂，因為畫面上很多東西是拿
+     now() 現算的（停滯兩天長藤蔓、四天睡著、期限剩幾天、進行中那一趟
+     花了幾天）。一份放了一週的示範資料看起來會像這個班荒廢了。
+
+     錨到當天 0 時，加上底下 seedDay 那一條（跨過一天就重長一次），
+     同一天打開的每一台就會長出一模一樣的東西。
+
+     用 new Date() 不用 now()：CLOCK 是試用列推出來的假時間，
+     推一天不該把示範資料整個換一份。 */
+  var T0 = (function () { var d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); })();
   var ago = function (d) { return T0 - Math.round(d * DAY); };
   var cid = 'C1';
 
@@ -80,7 +111,9 @@ function seed() {
     ['沛慈', '柏翰']
   ];
   var JOBS = ['adv', 'mage', 'ninja', 'knight'];
-  var CODES = ['KX7M2P', 'RD4T8W', 'BQ9N5J', 'HC3V6L', 'ZF8K1S'];
+  /* 去掉會看錯的 I O 0 1（見 固定碼 與 newCode）。
+     ZF8K1S 本來帶著一個 1，2026-09-10 被 demo.js 抓到。 */
+  var CODES = ['KX7M2P', 'RD4T8W', 'BQ9N5J', 'HC3V6L', 'ZF8K7S'];
   var uSeq = 100;
   TEAMS.forEach(function (t, i) {
     DB.Teams.push({
@@ -319,6 +352,9 @@ function seed() {
   });
   DB.Config.demo = 1;
   DB.Config.seedV = SEED_V;
+  /* 哪一天長的。跨過一天就重長一次（見 40-db.js 的 load），
+     這樣示範資料永遠是「今天」的，而且每一台都一樣。 */
+  DB.Config.seedDay = dayOf(T0);
   /* 示範資料的記號。帶著 _d 的那幾筆永遠不會被推到雲端上
      （見 41-sync.js）——不然第一個打開網頁的人會把整個示範班
      推上去給所有人看。
@@ -480,7 +516,7 @@ function soloize() {
     mem.slice(1).forEach(function (u) {
       var g = {
         teamId: nid('G'), classId: t.classId, name: u.name,
-        project: t.project, joinCode: newCode(), joinedAt: t.joinedAt, _d: 1
+        project: t.project, joinCode: 固定碼(u.account), joinedAt: t.joinedAt, _d: 1
       };
       DB.Teams.push(g);
       u.teamId = g.teamId;
