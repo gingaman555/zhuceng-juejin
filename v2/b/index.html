@@ -5801,9 +5801,13 @@ button.side-head{
    導覽在任何寬度都必須在。 */
 @media (max-width: 860px) {
   .side{display:flex !important}
-  /* 試用列在手機會排到三行，收成一行 */
+  /* 試用列在手機會排到三行，收成一行——但只擋外層不夠：
+     nowrap 不擋每一格自己內部的字還是會被壓窄，一擠就逐字斷行，
+     「切換身分」變成直的。每一格自己也要 flex:none + nowrap，
+     擠不下的話是整列橫向捲，不是文字直著斷。 */
   .demo{font-size:22px;flex-wrap:nowrap;overflow-x:auto}
-  .demo select{max-width:132px}
+  .demo b,.demo span,.demo a{flex:0 0 auto;white-space:nowrap}
+  .demo select{max-width:132px;flex:0 1 132px}
 }
 
 
