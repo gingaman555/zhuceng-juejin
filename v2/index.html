@@ -14061,6 +14061,23 @@ function seen() {
    而登出就落在門口。放在這裡同時擋掉一件事——登入著的時候走不到它，
    所以它不可能在做到一半的時候被誤觸（見 58-gate.js 的 PAGES.fresh）。 */
 var GATE_PAGES = { gate: 1, login: 1, reg: 1, fresh: 1 };
+/* 分頁標題。開好幾個分頁同時用（老師審核、學生自己那台）的時候，
+   瀏覽器的分頁列上原本全部長一樣，選不出哪一個是哪一個。
+   短名字就好——這裡不是在講故事，是在講「這是哪一頁」。 */
+var PAGE_TITLE = {
+  gate: '登入', login: '登入', reg: '建立帳號', fresh: '資料不對',
+  mkclass: '開班', myteam: '建隊', me: '你的資料', pw: '換密碼',
+  home: '廊道', sign: '認領', commit: '接委託', ask: '委託人',
+  stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
+  pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
+  person: '角色', who: '挑角色', battle: '交作業', story: '故事',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務',
+  rs: '名單', events: '紀錄'
+};
+function pageTitle(page) {
+  var n = PAGE_TITLE[page];
+  return (n ? n + '｜' : '') + '專案地下城';
+}
 /* 這兩頁不在側欄上，是路由自己插進來的（見 render）。 */
 var PAGE_ROLE = {
   home: 'student', commit: 'student', stamp: 'student',
@@ -14217,6 +14234,7 @@ function render() {
      還不知道你是誰的時候，畫面上不該有任何「你的」東西。 */
   if (!u) {
     if (!GATE_PAGES[S.page]) S.page = 'gate';
+    document.title = pageTitle(S.page);
     document.getElementById('app').innerHTML =
       '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES[S.page]() + '</div></div>';
@@ -14239,12 +14257,14 @@ function render() {
      她被自己加的那個班困住了。所以這一頁要在兩道門前面放行——
      她是特地按進來換班的，不是走錯路。 */
   if (S.page === 'mkclass') {
+    document.title = pageTitle('mkclass');
     document.getElementById('app').innerHTML =
       '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES.mkclass() + '</div></div>';
     return;
   }
   if (u.role === 'teacher' && !u.classId) {
+    document.title = pageTitle('mkclass');
     document.getElementById('app').innerHTML =
       '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES.mkclass() + '</div></div>';
@@ -14256,6 +14276,7 @@ function render() {
      名冊那一條拿掉了——兩條路並存的時候舊的優先，所以只要有人
      貼了名冊，新的建隊頁就再也不會出現。 */
   if (u.role === 'student' && !u.teamId) {
+    document.title = pageTitle('myteam');
     document.getElementById('app').innerHTML =
       '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES.myteam() + '</div></div>';
@@ -14266,6 +14287,7 @@ function render() {
 
   if (!PAGES[S.page] || !allowed(u, S.page)) S.page = homeFor(u);
 
+  document.title = pageTitle(S.page);
   var body = PAGES[S.page]();
   /* 畫完才記，所以這一次還看得到那一條。 */
   seen();
