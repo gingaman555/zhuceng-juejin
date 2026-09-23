@@ -128,8 +128,10 @@ var EV_SAY = {
   keep:     function (e) { return '留下了「' + e.keep + '」那一張'; },
   tick:     function (e) { return (e.on ? '勾掉' : '取消勾掉') + '「' + e.step + '」'; },
   askexit:  function () { return '說專案做完了'; },
+  setexitopen: function (e) { return (e.on ? '開放' : '關掉') + '了「我們做完了」那顆鍵'; },
   left:     function () { return '走出去了'; },
   rename:   function (e) { return '把招牌改成「' + e.name + '」'; },
+  teamrename: function (e) { return '把組名從「' + e.from + '」改成「' + e.name + '」'; },
   /* 改名字要寫出「從什麼改成什麼」：全站印的都是 u.name，所以讀
      流水帳的人要能把改名字前後的那個人接起來，不然同一個 userId
      在畫面截圖裡會像兩個人。 */
@@ -138,6 +140,10 @@ var EV_SAY = {
      （見 firestore.rules），所以連長度都不寫——研究要知道的是
      「他自己來改過一次」，那件事本身就是全部的資訊。 */
   setpw:    function () { return '換了密碼'; },
+  recoverpw: function () { return '用救援碼換了密碼'; },
+  genrecov: function () { return '拿了一組救援碼'; },
+  teacherrecov: function (e) { return '幫「' + (e.account || '') + '」補發了一組救援碼'; },
+  mergeaccount: function (e) { return '把「' + (e.from || '') + '」接回「' + (e.to || '') + '」'; },
   joinclass:function (e) { return '加進「' + e.klass + '」'; },
   newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
   jointeam: function () { return '用代碼加入隊伍'; },
@@ -157,7 +163,7 @@ var EV_SAY = {
      所以「哪些種類會被記下來」那一份清單掃不到它們，流水帳上印的一直是
      英文的 kind 本身。
 
-     用老師那一邊的說法（見 70-teacher.js：那一格叫「完成專案」），
+     用老師那一邊的說法（見 70-teacher.js：那一格叫「結案」），
      不用「開門／關門」——門是學生那一頭看到的東西。 */
   exitopen: function () { return '確認他們完成了'; },
   exitshut: function () { return '收回了那個確認'; },
@@ -226,8 +232,14 @@ function actRegister(o) {
   }
 
   var salt = newSalt();
+  /* 救援碼：註冊這一刻唯一給得出來的第二把鑰匙。跟密碼一樣只存雜湊，
+     明碼只在這一次回傳裡出現，畫過一次就沒有地方再讀得到
+     （見 58-gate.js 的 PAGES.rgcode）。 */
+  var recov = newRecov();
+  var rsalt = newSalt();
   var u = {
     userId: nid('U'), account: acc, salt: salt, hash: pwHash(pw, salt),
+    recovSalt: rsalt, recovHash: pwHash(recov, rsalt),
     role: o.role || 'student',
     name: nm,
     /* classId／teamId 是「現在坐的那一個座位」，seats 才是全部
@@ -256,7 +268,7 @@ function actRegister(o) {
      差別只在畫面上：底下那幾條把「你的隊呢」「全組一份」「誰做哪一件」
      藏起來，因為那幾句話對一個人不成立。 */
   if (RULES.SOLO && u.role === 'student' && kl) actNewTeam(nm, u.userId);
-  return { user: u };
+  return { user: u, recov: recov };
 }
 
 /* 加進一個已經開好的班。
@@ -296,12 +308,22 @@ function actLogin(account, pw) {
     return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
   });
   if (!u) return { err: '找不到這個帳號。' };
+  /* 合併過的舊帳號：指一條路過去，不要讓他以為帳號壞了。
+     見 actMergeAccount 跟 CLAUDE.md 2026-09-23 那一段。 */
+  if (u.mergedInto) {
+    var into = userOf(u.mergedInto);
+    return { err: '這個帳號已經合併到「' + (into ? into.account : '另一個帳號') +
+      '」了，用那一個登入。' };
+  }
   /* 這一句本來寫「請研究者重設一次」。重設那一支在研究者變成唯讀的
      時候一起拿掉了（見底下那一段），話卻留著——它叫使用者去找一個
      做不到這件事的人。正常註冊一定會拿到 salt，所以踩得到這一條的
      只有舊資料。 */
   if (!u.salt) return { err: '這個帳號沒有密碼，登不進去。用新的帳號註冊一個。' };
-  if (pwHash(pw, u.salt) !== u.hash) return { err: '密碼不對。' };
+  /* 忘記密碼的人打錯打好幾次看到的都是這一句。指一條路過去——
+     登入頁下面那顆「忘記密碼」講的就是同一件事（見 58-gate.js
+     的 PAGES.forgotpw）。 */
+  if (pwHash(pw, u.salt) !== u.hash) return { err: '密碼不對。忘記的話，下面有一顆「忘記密碼」。' };
   u.lastLogin = now();
   /* 真的人登入 ＝ 這台機器不再只是拿來看示範的。
 
@@ -400,6 +422,164 @@ function actSetPw(userId, oldPw, pw) {
   return { user: u };
 }
 
+/* ---------- 補發救援碼 ----------
+
+   救援碼是這個功能上線那一刻才開始給的——在那之前註冊的帳號沒有
+   recovHash。這一支讓已經登入、打得出現在密碼以外的人（也就是
+   本人，正在用著這個帳號的人）自己補一組，不用重新註冊。
+
+   同一支也拿來給已經有救援碼的人換一組新的——邏輯完全一樣，
+   都是「本人現在就在這裡，給他一把新鑰匙」。 */
+function actGenRecov(userId) {
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個人。' };
+  var recov = newRecov();
+  var rsalt = newSalt();
+  u.recovSalt = rsalt;
+  u.recovHash = pwHash(recov, rsalt);
+  save();
+  logEvent('genrecov', { by: u.userId });
+  return { user: u, recov: recov };
+}
+
+/* ---------- 老師幫現場認出來的學生發一組救援碼 ----------
+
+   2026-09-23：「只改得動自己的帳號」那條線上開的第一個、也是唯一
+   一個例外（見 CLAUDE.md 同一天的那一段）。開的理由：已經卡住、
+   從沒補發過救援碼的帳號，本人生不出那把鑰匙——不開這個例外，
+   唯一的路是重新註冊，而那條路上星期真的把一個人的組別跟歷史
+   紀錄弄斷過。
+
+   這一支換的只有救援碼本身，不是密碼：老師發完碼，學生要自己
+   拿那組碼去 actRecoverPw 設一個新密碼，設定過程老師不在場，
+   也不會知道那個新密碼是什麼。老師手上唯一多出來的能力是
+   「幫這個帳號補發一次救援碼」，不是「登入這個帳號」。
+
+   只認自己班上的學生——老師不該碰得到別班的帳號。 */
+function actTeacherRecov(teacherId, account) {
+  var teacher = userOf(teacherId);
+  if (!teacher || teacher.role !== 'teacher') return { err: '只有老師看得到這個功能。' };
+  var u = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
+  });
+  if (!u) return { err: '找不到這個帳號。' };
+  if (u.role !== 'student') return { err: '這個功能只給學生用。' };
+  /* 合併過的帳號沒有人登得進去，發救援碼給它沒有意義——
+     見 actMergeAccount。畫面上的選人清單已經濾掉這種帳號，
+     這裡是資料層再擋一次，不只靠畫面。 */
+  if (u.mergedInto) return { err: '這個帳號已經合併過了，救援碼要發給接回去的那個帳號。' };
+  var mine = seatsOf(teacher).map(function (s) { return s.classId; });
+  if (mine.indexOf(u.classId) < 0) return { err: '這個帳號不在你的班上。' };
+  var recov = newRecov();
+  var rsalt = newSalt();
+  u.recovSalt = rsalt;
+  u.recovHash = pwHash(recov, rsalt);
+  save();
+  /* 記著是哪一位老師發的，不是只記「有人發過」——這是研究資料裡
+     唯一一種「別人幫本人做了一件跟帳號有關的事」，要看得出是誰做的。 */
+  logEvent('teacherrecov', { by: teacher.userId, account: u.account, forUser: u.userId });
+  return { user: u, recov: recov };
+}
+
+/* ---------- 老師把重複註冊的兩個帳號接回同一個人 ----------
+
+   2026-09-23：救援碼上線之前，忘記密碼唯一的路是重新註冊——已經有
+   人這樣做過，現在同一個人手上有兩個帳號：舊帳號（oldAccount）有
+   他之前的隊伍跟紀錄，新帳號（newAccount）是他現在登得進去、
+   自己知道密碼的那一個。
+
+   合併只動一件事：把新帳號在這個班的座位，換成舊帳號原本坐的
+   那一個（同一組，同一份歷史）。密碼、名字、帳號本身都不動——
+   新帳號還是他自己在用，只是從現在起坐回原本那一組。
+
+   舊帳號不刪、salt／hash 也不動——那個 userId 底下每一筆歷史紀錄
+   還在，事件流不能改也不用改。只標一個 mergedInto，讓 actLogin
+   指一條路過去，不讓人以為舊帳號壞了。 */
+function actMergeAccount(teacherId, oldAccount, newAccount) {
+  var teacher = userOf(teacherId);
+  if (!teacher || teacher.role !== 'teacher') return { err: '只有老師看得到這個功能。' };
+  var oldU = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(oldAccount || '').trim().toLowerCase();
+  });
+  var newU = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(newAccount || '').trim().toLowerCase();
+  });
+  if (!oldU || !newU) return { err: '找不到這個帳號。' };
+  if (oldU.userId === newU.userId) return { err: '這是同一個帳號。' };
+  if (oldU.role !== 'student' || newU.role !== 'student') return { err: '這個功能只給學生用。' };
+  var mine = seatsOf(teacher).map(function (s) { return s.classId; });
+  if (mine.indexOf(oldU.classId) < 0 || mine.indexOf(newU.classId) < 0) {
+    return { err: '這兩個帳號要都在你的班上。' };
+  }
+  if (oldU.classId !== newU.classId) return { err: '這兩個帳號不在同一個班上。' };
+  if (oldU.mergedInto) return { err: '這個舊帳號已經合併過了。' };
+  /* 目標（新帳號）不能是一個已經被接走的死帳號——不然隊伍會被接到
+     一個誰都登不進去的 userId 上，畫面上看起來成功了，其實接丟了。
+     畫面上的選人清單已經濾掉這種帳號，這裡是資料層再擋一次。 */
+  if (newU.mergedInto) return { err: '這個新帳號已經合併過了，選現在真的在用的那一個。' };
+  var classId = oldU.classId;
+  var oldTeamId = teamIn(oldU, classId);
+  if (!oldTeamId) return { err: '舊帳號在這個班還沒有隊，沒有東西好接。' };
+
+  /* 新帳號原本坐的那一組（通常是重新註冊當下自動建的空隊）。
+     換完座位之後，如果那一組已經沒有人坐了，跟清空隊一樣的處理
+     ——標 _removed，不整包刪掉（見這學期稍早清空隊那一次）。 */
+  var newTeamId = teamIn(newU, classId);
+  var ss = seatsOf(newU).slice();
+  var seat = null;
+  ss.forEach(function (s) { if (s.classId === classId) seat = s; });
+  if (seat) seat.teamId = oldTeamId; else ss.push({ classId: classId, teamId: oldTeamId });
+  newU.seats = ss;
+  if (newU.classId === classId) newU.teamId = oldTeamId;
+
+  if (newTeamId && newTeamId !== oldTeamId) {
+    var stillIn = where('Users', function (x) { return inTeam(x, newTeamId); }).length;
+    if (!stillIn) {
+      var nt = teamOf(newTeamId);
+      if (nt) { nt.classId = ''; nt._removed = true; }
+    }
+  }
+
+  oldU.mergedInto = newU.userId;
+  save();
+  logEvent('mergeaccount', { by: teacher.userId, from: oldU.account, to: newU.account });
+  return { oldUser: oldU, newUser: newU, teamId: oldTeamId };
+}
+
+/* ---------- 用救援碼找回密碼 ----------
+
+   跟 actSetPw 是同一件事的兩種驗法：一個是「打對現在那一個密碼」，
+   一個是「打對註冊那一刻拿到、只有他自己收著的那組碼」。兩種都是
+   本人才拿得出來的東西，都沒有任何角色（老師、研究者）幫得上忙——
+   救援碼從沒有明碼存進 DB，也沒有任何畫面印得出別人的救援碼。
+
+   用過一次就換一組新的：碼不是密碼，用掉不換的話，任何人撿到那張紙
+   等於永遠握著這個帳號的後門。換完照樣只回傳這一次，畫過就沒了。 */
+function actRecoverPw(account, code, pw) {
+  var u = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
+  });
+  if (!u) return { err: '找不到這個帳號。' };
+  if (!u.recovHash) {
+    return { err: '這個帳號沒有救援碼——它是比這個功能更早註冊的帳號，救不回來。' };
+  }
+  var c = String(code || '').trim().toUpperCase();
+  if (pwHash(c, u.recovSalt) !== u.recovHash) return { err: '救援碼不對。' };
+  var np = String(pw || '');
+  if (np.length < RULES.PW_MIN) return { err: RULES.pwRule() };
+  var salt = newSalt();
+  u.salt = salt;
+  u.hash = pwHash(np, salt);
+  var recov = newRecov();
+  var rsalt = newSalt();
+  u.recovSalt = rsalt;
+  u.recovHash = pwHash(recov, rsalt);
+  save();
+  /* 跟 setpw 一樣：只記「他用救援碼換過」，不記密碼、不記救援碼。 */
+  logEvent('recoverpw', { by: u.userId });
+  return { user: u, recov: recov };
+}
+
 /* ---------- 名冊與身分認領 ----------
    老師先把名冊貼進來（一行一組），學生註冊之後從裡面挑自己是誰。
    這樣系統知道「這個帳號是哪一組的誰」，而且不用學生自己打組名。 */
@@ -422,6 +602,15 @@ function newCode() {
   var CH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (var i = 0; i < 6; i++) code += CH[Math.floor(Math.random() * CH.length)];
   return code;
+}
+
+/* 十二個英數字，分三段。這一串不是用唸的——是要他抄下來或截圖收著，
+   所以比加入碼長，分段是為了肉眼對得上、抄的時候不會看丟一段。 */
+function newRecov() {
+  var CH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var s = '';
+  for (var i = 0; i < 12; i++) s += CH[Math.floor(Math.random() * CH.length)];
+  return s.slice(0, 4) + '-' + s.slice(4, 8) + '-' + s.slice(8, 12);
 }
 
 /* 老師自己開班。開完他就在這個班裡，而那六碼是他唸給學生的東西。 */
@@ -465,7 +654,7 @@ function actJoinTeam(code, userId) {
     return x.classId === u.classId &&
       String(x.joinCode || '').toUpperCase() === String(code || '').toUpperCase();
   });
-  if (!t) return { err: '找不到這個隊伍代碼。跟隊友確認一次。' };
+  if (!t) return { err: '找不到這個隊伍代碼。重新整理頁面再試一次，或跟隊友確認代碼。' };
   addSeat(u, u.classId, t.teamId);
   save();
   logEvent('jointeam', { teamId: t.teamId });
@@ -503,7 +692,7 @@ function exportRuns(classId) {
   var head = ['組別', '專案', '任務', '一趟', '狀態',
     '承諾天數', '實際天數', '判定', '偏差率',
     '把握', '有沒有拆件', '拆幾件', '本人自己按的件數',
-    '順不順', '為什麼', '範圍', '再兩天會做什麼', '東西在哪裡',
+    '順不順', '為什麼', '範圍', '東西在哪裡',
     /* 協商那三個數字要分得開。
 
        本來這裡只有「老師回的天數」與「談完之後的天數」，而後者印的是
@@ -541,7 +730,7 @@ function exportRuns(classId) {
           r.est || '', r.actual || '', r.stamp || '',
           dev === '' ? '' : dev.toFixed(3),
           r.sure || '', pl.length ? 'Y' : 'N', pl.length, byOwn,
-          r.feel || '', r.why || '', r.scope || '', r.next || '', r.link || '',
+          r.feel || '', r.why || '', r.scope || '', r.link || '',
           /* 沒拆件就沒有要徑可言（estCalc 是 0），那一欄留空——
              0 會被讀成「算出來是零天」。 */
           r.estCalc || '',

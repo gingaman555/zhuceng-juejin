@@ -135,7 +135,6 @@ function 交(g, r, gi) {
   DRAFT.where = teamOf(g.t.teamId).project + ' 交在 TronClass';
   DRAFT.feel = ['good', 'ok', 'bad'][gi % 3];
   DRAFT.scope = ['same', 'less', 'more'][gi % 3];
-  DRAFT.next = '下一步';
   S.p = { id: r.runId, ph: 'q', q: btAsks(r).length - 1 };
   ACTS.btnext(r.runId);
 }

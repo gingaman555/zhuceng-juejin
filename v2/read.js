@@ -195,7 +195,7 @@ S.page = 'home'; S.p = {}; DRAFT = {};
 
 /* ── 交出去 ── */
 DRAFT = {}; S.page = 'battle'; S.p = { id: run.runId, ph: 'q', q: 1 }; PAGES.battle();
-DRAFT.where = 'TronClass'; DRAFT.feel = 'ok'; DRAFT.next = '下一步';
+DRAFT.where = 'TronClass'; DRAFT.feel = 'ok';
 S.p = { id: run.runId, ph: 'q', q: qs.length - 1 };
 ACTS.btnext(run.runId);
 S.page = 'stamp'; S.p = { id: run.runId }; DRAFT = {};

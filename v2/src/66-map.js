@@ -115,8 +115,8 @@ function digTeamCard(classId) {
       H.push('<div class="or ' + r.stamp + '">');
       H.push('<span class="or-s">' + (s ? stampPx(s.key) : '') + '</span>');
       H.push('<b>' + esc(x.ms ? x.ms.title : '') + '</b>');
-      H.push('<span class="or-n">說 <b>' + r.est + '</b>　實際 <b>' +
-        (r.actual || 0) + '</b></span>');
+      H.push('<span class="or-n">說 <b>' + esc(estSay(r)) + '</b>　實際 <b>' +
+        (r.actual || 0) + ' 天</b></span>');
       if (kp && kp.name) H.push('<span class="or-w">「' + esc(kp.name) + '」</span>');
       H.push('</div>');
     });

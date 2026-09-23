@@ -162,6 +162,7 @@ PAGES.codex = function () {
           H.push('<button class="cx-light" data-act="run" data-p=\'' +
             esc(JSON.stringify({ a: 'light:' + c.n })) + '\'>' +
             '放一顆水晶照亮　' + RULES.CRYSTAL.light + ' 顆</button>');
+          H.push('<em class="cx-hint">先看到他的名字。真正遇到他要等老師收下一件委託。</em>');
         } else {
           H.push('<em class="cx-need">照亮要 ' + RULES.CRYSTAL.light +
             ' 顆水晶，還差 ' + (RULES.CRYSTAL.light - 石.left) + ' 顆。</em>');

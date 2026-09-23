@@ -169,7 +169,10 @@ function awayOf(meId) {
     days: d,
     cells: cells,
     okd: ok,
-    left: run ? Math.max(0, run.est - daysBetween(run.committedAt, now())) : null
+    /* 小時／週承諾的話 run.est 是換算過的小數天，「還剩 0.33 天到期」
+       比不顯示還誤導——那種時候不算這個數字（見 40-db.js 的 estSay）。 */
+    left: (run && (!run.estU || run.estU === 'd'))
+      ? Math.max(0, run.est - daysBetween(run.committedAt, now())) : null
   };
 }
 

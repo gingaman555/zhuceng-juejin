@@ -109,12 +109,13 @@ function seen() {
 /* fresh 也算門口那一種：那一顆是「登出之後發現這台不對」才會按的，
    而登出就落在門口。放在這裡同時擋掉一件事——登入著的時候走不到它，
    所以它不可能在做到一半的時候被誤觸（見 58-gate.js 的 PAGES.fresh）。 */
-var GATE_PAGES = { gate: 1, login: 1, reg: 1, fresh: 1 };
+var GATE_PAGES = { gate: 1, login: 1, reg: 1, fresh: 1, forgotpw: 1 };
 /* 分頁標題。開好幾個分頁同時用（老師審核、學生自己那台）的時候，
    瀏覽器的分頁列上原本全部長一樣，選不出哪一個是哪一個。
    短名字就好——這裡不是在講故事，是在講「這是哪一頁」。 */
 var PAGE_TITLE = {
-  gate: '登入', login: '登入', reg: '建立帳號', fresh: '資料不對',
+  gate: '登入', login: '登入', reg: '建立帳號', fresh: '資料不對', forgotpw: '忘記密碼',
+  rgcode: '救援碼', acctrecov: '補發救援碼', acctmerge: '接回帳號',
   mkclass: '開班', myteam: '建隊', me: '你的資料', pw: '換密碼',
   home: '廊道', sign: '認領', commit: '接委託', ask: '委託人',
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
@@ -125,7 +126,7 @@ var PAGE_TITLE = {
 };
 function pageTitle(page) {
   var n = PAGE_TITLE[page];
-  return (n ? n + '｜' : '') + '專案地下城';
+  return (n ? n + '｜' : '') + '專案地下城' + (RULES.SOLO ? ' B' : '');
 }
 /* 這兩頁不在側欄上，是路由自己插進來的（見 render）。 */
 var PAGE_ROLE = {
@@ -134,7 +135,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher'
 };
 function allowed(u, page) {
@@ -260,8 +261,15 @@ function wordBlock(run, cls) {
 function negoLine(r, you) {
   if (!r || !r.askAt) return '';
   var u = r.askBy ? userOf(r.askBy) : null;
-  var first = r.estFirst == null ? r.est : r.estFirst;
-  return '<p class="dim nego">' + (you ? '你說 ' : '他們說 ') + first + ' 天' +
+  /* 「一開始說的」不管談完有沒有改，都是承諾那一刻的那個數字——
+     r.estU／r.estN 記的正是那一刻的原始單位，協商只改 r.est，
+     不會覆蓋這兩欄（見 40-db.js 的 actCommit／actAnswerAsk）。
+     談完最後定的數字一律是天，不用管單位。 */
+  var firstDays = r.estFirst == null ? r.est : r.estFirst;
+  var first = esc(r.estU && r.estU !== 'd' && r.estN != null
+    ? r.estN + ' ' + estUnit(r.estU).name
+    : firstDays + ' 天');
+  return '<p class="dim nego">' + (you ? '你說 ' : '他們說 ') + first +
     '　·　' + esc(u ? u.name : '老師') + ' 說 ' + r.askEst + ' 天' +
     (r.askAns ? '　·　最後 ' + r.est + ' 天' + (r.estFirst == null ? '（維持）' : '')
       : '　·　還沒回') + '</p>';
@@ -287,6 +295,17 @@ function render() {
     document.getElementById('app').innerHTML =
       '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES[S.page]() + '</div></div>';
+    return;
+  }
+
+  /* 救援碼：註冊或用救援碼換完密碼，一定會先經過這一頁，不論這個人
+     有沒有班、有沒有隊——跟 mkclass 那一格一樣要放在兩道門前面，
+     不然剛註冊、還沒有隊的學生會被 myteam 攔住，永遠看不到這一頁。 */
+  if (S.page === 'rgcode') {
+    document.title = pageTitle('rgcode');
+    document.getElementById('app').innerHTML =
+      '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
+      (S.flash ? flashBar() : '') + PAGES.rgcode() + '</div></div>';
     return;
   }
 
@@ -788,9 +807,17 @@ var ACTS = {
     }
     /* 本來這裡寫 { n, d }——who 整個被丟掉。指派完再調一次天數，
        指派就不見了。 */
+    /* 這一件用什麼單位承諾（見 56-viz.js 的 estStepU、40-db.js 的
+       EST_UNITS）——沒選過就是天，跟以前一模一樣。加減鍵動的是
+       「這個單位底下的原始數字」（dN），d 永遠是換算成天、給
+       planDays 加總用的那一個。 */
+    var pu = estUnit(p[i].dU || 'd');
+    var pn = clamp(pu.min, pu.max, (p[i].dN != null ? p[i].dN : p[i].d) + Number(q[1]));
     p[i] = {
       n: p[i].n,
-      d: clamp(1, RULES.EST_MAX, p[i].d + Number(q[1])),
+      d: estToDays(pn, p[i].dU || 'd'),
+      dU: p[i].dU || 'd',
+      dN: pn,
       who: p[i].who || S.who,
       /* 這一格是不是本人自己按的。他們常常是一起坐著、一台電腦
          規劃的，所以擋不住代填——那就老實記下來，事後分得出
@@ -799,6 +826,32 @@ var ACTS = {
          全組一起做的那一件沒有「本人」，所以永遠是 0——不然它會混進
          「本人自己按的件數」那一欄，把個人層的比例灌水。 */
       byOwn: isAll(p[i].who) ? 0 : 1
+    };
+    DRAFT.plan = p;
+    planEstReset();
+    render();
+  },
+
+  /* 換這一件的單位：小時／天／週輪著換。跟 pland 同一條守門——
+     只有掛在你名下的那一件換得動。換單位重設成那個單位的預設值，
+     不是硬把舊數字塞進新單位（8 小時換成週的話變 8 週會很荒謬）。 */
+  plandu: function (i) {
+    var p = (DRAFT.plan || []).slice();
+    var k = Number(i);
+    if (!p[k]) return;
+    if (p[k].who && !isAll(p[k].who) && p[k].who !== S.who) {
+      return say('這一件是 ' + shortWho(p[k].who) + ' 的。');
+    }
+    var order = ['h', 'd', 'w'];
+    var next = order[(order.indexOf(p[k].dU || 'd') + 1) % order.length];
+    var def = estUnit(next).def;
+    p[k] = {
+      n: p[k].n,
+      d: estToDays(def, next),
+      dU: next,
+      dN: def,
+      who: p[k].who || S.who,
+      byOwn: isAll(p[k].who) ? 0 : 1
     };
     DRAFT.plan = p;
     planEstReset();
@@ -870,6 +923,14 @@ var ACTS = {
     estLive(n);
   },
 
+  /* 切換承諾要用的單位（見 56-viz.js 的 estStepU）。換單位要重畫
+     ——「天」是按鍵，小時／週是輸入框，不是同一種元件改個數字。 */
+  estunit: function (k) {
+    DRAFT.estU = k;
+    if (DRAFT.estN == null) DRAFT.estN = estUnit(k).def;
+    render();
+  },
+
   /* 承諾的時候標「這一件我覺得會比想的久」 */
   flag: function (k) {
     DRAFT.flags = DRAFT.flags || [];
@@ -917,22 +978,22 @@ var ACTS = {
   /* ---- 出口 ---- */
   noop: function () {},
 
-  askexit: function () {
-    actAskExit(myTeam().teamId);
-    go('exit');
-    say('說出去了。');
-  },
-
   cancelexit: function () {
     actCancelExit(myTeam().teamId);
     go('home');
     say('收回來了。');
   },
 
+  /* 第一下只是問，不是說。常來看任務清單的人往下滑到底，
+     這一下不該跟手滑一樣重——真的要說出去要再按一次（見 63-pack.js）。 */
+  exitcheck: function () { DRAFT.exitConfirm = true; render(); },
+  exitundo: function () { DRAFT.exitConfirm = false; render(); },
+
   /* 學生說「我們做完了」。它不開門——門是老師開的。 */
   askexit: function () {
     var t = myTeam();
     if (!actAskExit(t.teamId)) return;
+    DRAFT.exitConfirm = false;
     render(); say('說出去了。');
   },
   unexit: function () {
@@ -941,13 +1002,22 @@ var ACTS = {
     render(); say('收回來了。');
   },
 
+  /* 老師開放／關掉學生那邊「我們做完了」的入口（見 63-pack.js）。 */
+  exitopenset: function (v) {
+    var u = me();
+    var r = actSetExitOpen(u.classId, S.who, String(v) === '1');
+    if (!r) return say('這個班不是你的。');
+    render();
+    say(r.exitOpen ? '開放了。學生任務清單最下面會出現那顆鍵。' : '關掉了。');
+  },
+
   /* 老師開門／關門。開了學生才點得動廊道上那扇出口。 */
   openexit: function (v) {
     var p = String(v).split(',');
     actOpenExit(p[0], p[1] === '1');
     render();
     /* 這一句是老師按完看到的，所以講老師剛剛做的那件事（見 70-teacher.js
-       的「完成專案」），後半句才講學生那邊會看到什麼。 */
+       的「結案」），後半句才講學生那邊會看到什麼。 */
     say(p[1] === '1' ? '確認了。他們那邊的門開了。' : '收回了。門關回來了。');
   },
 
@@ -982,9 +1052,13 @@ var ACTS = {
        兩邊算的是同一支 planDays，所以「畫面上寫幾天」跟「承諾幾天」
        不會有機會分岔。 */
     var pl0 = DRAFT.plan || [];
-    var est0 = DRAFT.est != null ? Number(DRAFT.est)
-      : (pl0.length ? planDays(pl0) : RULES.EST_DEFAULT);
-    actCommit(t.teamId, msId, est0, DRAFT.flags || [], pl0, zone, DRAFT.sure);
+    /* 選了小時／週的話，畫面上那個數字是那個單位的，要先換成天
+       （見 40-db.js 的 estToDays）——actCommit 存的 est 一律是天。 */
+    var estU0 = DRAFT.estU || 'd';
+    var est0 = estU0 === 'd'
+      ? (DRAFT.est != null ? Number(DRAFT.est) : (pl0.length ? planDays(pl0) : RULES.EST_DEFAULT))
+      : estToDays(DRAFT.estN, estU0);
+    actCommit(t.teamId, msId, est0, DRAFT.flags || [], pl0, zone, DRAFT.sure, estU0, DRAFT.estN);
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——
@@ -1153,12 +1227,34 @@ var ACTS = {
     go('home', {});
   },
 
-  /* 學生改自己的招牌 */
+  /* 學生改自己的招牌。
+
+     2026-09-23：這兩支本來存完留在 sign 頁（go('sign')），是為了讓
+     組名跟專案名可以一次改完、不用改一個就被彈回首頁再點進來一次。
+
+     可是留在同一頁的代價是沒有畫面上的差異——存之前跟存之後看到的
+     是同一個框、同一段文字，確認全靠一句會自己消失的 flash。
+     真的在課堂上量到：學生看不出「改好了」跟「我根本還沒按到」
+     有什麼不同，會以為專案名沒存到。
+
+     改回 go('home')：存完跳一下，回到首頁再看得到剛剛那個字——
+     「畫面換了」本身就是最直接的確認，比一句會消失的字更難錯過。
+     代價是兩格都要改的人得回招牌頁兩次，但這比「存了卻以為沒存」
+     安全。 */
   rename: function () {
     var t = myTeam();
     var v = (document.getElementById('pj-name') || {}).value || '';
     if (!v.trim()) return say('招牌上總要寫點什麼。');
     if (!actRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
+    go('home');
+    say('改好了。');
+  },
+
+  teamrename: function () {
+    var t = myTeam();
+    var v = (document.getElementById('tm-name') || {}).value || '';
+    if (!v.trim()) return say('組名不能空白。');
+    if (!actTeamRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
     go('home');
     say('改好了。');
   },

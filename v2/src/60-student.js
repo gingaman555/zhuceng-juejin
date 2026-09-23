@@ -306,11 +306,15 @@ function runStrip(t, bare) {
     H.push('<button class="rs ' + r.stamp + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'rec:' + r.runId })) + '\' title="' +
       esc((x.ms ? x.ms.title : '') + '　' + (mob ? mob.n : '') +
-        '　說 ' + r.est + '　實際 ' + (r.actual || 0) + ' 天') + '">');
+        '　說 ' + estSay(r) + '　實際 ' + (r.actual || 0) + ' 天') + '">');
     H.push(pxTag(mob ? mob.px : [], z.pal, 'rs-px'));
     H.push(runTiles(r.runId));
+    /* 這格太小放不下單位字，印他原始講的數字就好（8 小時印「8」，
+       不是換算過的 0.33）——跟 tooltip 裡完整的「8 小時」是同一件事，
+       只是這裡沒有空間寫單位。 */
     H.push('<span class="rs-s">' + stampPx(r.stamp) +
-      '<i>' + r.est + '<u>→</u>' + (r.actual || 0) + '</i></span>');
+      '<i>' + (r.estU && r.estU !== 'd' && r.estN != null ? r.estN : r.est) +
+      '<u>→</u>' + (r.actual || 0) + '</i></span>');
     H.push('</button>');
   });
   H.push('</div></div>');
@@ -630,14 +634,21 @@ function actionCard(t, next, st) {
 
        按鈕也從「要花幾天」換成「去見他」——你進去是去見一個人，
        說幾天是見到之後的事。 */
-    H.push('<p class="waiting">有人在等這一件。</p>');
+    H.push('<p class="waiting">有任務發來了。</p>');
     H.push(btn('去見他', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'doing') {
     H.push(doingCard(t, row, st));
-    /* 老師又派了幾個。小小地說一聲就好——手上這一趟做完才輪到它們。 */
+    /* 老師又派了幾個。原本是一句灰字，量出來的樣子是「完全看不到，
+       連知道都不知道」——手上這一趟做完才輪到它們沒變，但學生要
+       查得到那幾件叫什麼名字，不是只知道一個數字。借老師端「剛承諾」
+       那顆通知banner同一種樣式（見 70-teacher.js 的 asknote），
+       點下去帶去任務清單，那幾件已經在裡面（狀態「還沒說幾天」）。 */
     if (next.more) {
-      H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
+      H.push('<button class="asknote pressable" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'go:pack' })) + '\'>' +
+        '<b>老師又派了 ' + next.more + ' 個</b>' +
+        '<i>做完這一趟才輪到，先去任務清單看看叫什麼</i></button>');
     }
 
   } else if (next.kind === 'stamped') {
@@ -789,12 +800,17 @@ function sceneCap(t, next, st) { return ''; }
 PAGES.sign = function () {
   var t = myTeam();
   var sg = signOf(t.teamId);
-  var H = [head('專案名', '這個專案叫什麼', '')];
+  var H = [head('招牌', '組名跟專案名', '')];
   H.push('<div class="card"><div class="fa-in">');
   /* 同廊道口那一塊：套當層的顏色（見 61-scene.js 的 sceneMouth）。
      這一頁就是點招牌進來的，兩邊要是同一塊牌子。 */
   H.push(pxTag(sg.px, zoneNow(t.teamId).pal, 'fa-px'));
   H.push('<div>');
+  H.push('<div class="eyebrow">組名</div>');
+  H.push('<input id="tm-name" value="' + esc(t.name || '') +
+         '" placeholder="' + esc('你們這一組叫什麼') + '">');
+  H.push(btn('改組名', 'teamrename', ''));
+  H.push('<div class="eyebrow" style="margin-top:14px">專案名</div>');
   H.push('<input id="pj-name" value="' + esc(t.project || '') +
          '" placeholder="' + esc('這個專案叫什麼') + '">');
   H.push('<div class="row">');
@@ -1010,6 +1026,7 @@ PAGES.commit = function () {
   if (st === 2) {
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
+  var cmU = DRAFT.estU || 'd';
   H.push('<div class="card">');
   /* 老師排到哪一天。他排的是課程的排程，不是判定——所以這裡只寫
      事實，不寫「你來不及了」那種話。走廊上那條線畫的是同一件事。 */
@@ -1024,7 +1041,7 @@ PAGES.commit = function () {
   /* 兩種都給那兩顆鍵。拆了件只是先幫他算一個起點——
      那個數字是他要承諾的，所以最後一定要按得動（見上面 est 那一段）。 */
   if (plan.length) {
-    H.push(estStep(est));
+    H.push(estStepU(est));
     /* 這個數字是誰說的，取決於上一步有沒有拆件。
 
        拆了　　它是每一件加起來的，而每一件的天數只有本人按得動
@@ -1075,7 +1092,7 @@ PAGES.commit = function () {
        改 DOM）——兩邊要讀同一支，不然按完數字變了、這一句還停在舊的。 */
     H.push('<p class="dim es-why">' + estWhy(plan, est) + '</p>');
   } else {
-    H.push(estStep(est));
+    H.push(estStepU(est));
     /* 沒拆件：這個數字就是這一頁上唯一寫得了的東西之一，而它是組的。
        所以標記掛在這裡，底下把握那一格就不再掛（見下面）。 */
     H.push(whoTag('team', '拆件的話，天數會變成每個人各自說的', '這個數字'));
@@ -1086,11 +1103,18 @@ PAGES.commit = function () {
 
      本來是三張卡——三張卡量的是同一個單位，等於叫使用者自己
      在腦袋裡把它們疊起來。 */
-  var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
-  H.push(estAxis(est, past.reverse()));
-  /* 拉到幾就亮幾格，擋路的那一隻站在盡頭。
-     承諾是這裡唯一有阻力的選擇，它不該長得像填表。 */
-  H.push(estWalk(t, m, est));
+  /* 這兩塊是天的尺——過去幾趟、準的範圍、走廊格數，全部照著
+     1–21 天畫。選了小時／週的時候 est 是換算過的小數天（例如
+     8 小時＝0.33 天），畫在同一根尺上只會變成一格幾乎貼底的線，
+     看起來像壞掉。選了「天」以外的單位就不畫這兩塊，等他選回
+     「天」再出現，不要硬畫一個誤導的版本。 */
+  if (cmU === 'd') {
+    var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
+    H.push(estAxis(est, past.reverse()));
+    /* 拉到幾就亮幾格，擋路的那一隻站在盡頭。
+       承諾是這裡唯一有阻力的選擇，它不該長得像填表。 */
+    H.push(estWalk(t, m, est));
+  }
   H.push('</div>');
 
   } else {
@@ -1136,14 +1160,24 @@ PAGES.commit = function () {
           esc(JSON.stringify({ a: 'planwho:' + i })) + '\' title="' +
           esc('點一下換人') + '">' + esc(shortWho(x.who)) + '</button>');
       }
+      /* 這一件的原始數字：選過單位的印那個單位的數字，沒選過的
+         （舊資料、或本來就用天填的）印 x.d，一個字都不用變。 */
+      var xn = (x.dU && x.dU !== 'd' && x.dN != null) ? x.dN : x.d;
       if (own) {
         H.push('<button class="pd" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'pland:' + i + ',-1' })) + '\'>−</button>');
-        H.push('<u' + (x.byOwn ? '' : ' class="wait"') + '>' + x.d + '</u>');
+        H.push('<u' + (x.byOwn ? '' : ' class="wait"') + '>' + xn + '</u>');
         H.push('<button class="pd" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'pland:' + i + ',1' })) + '\'>＋</button>');
+        /* 單位：跟總天數那一格同一套（小時／天／週），這裡空間窄，
+           用一顆會輪著換的小鍵，不是三顆並排的籤（見 55-ui.js 的
+           plandu）。 */
+        H.push('<button class="pu" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'plandu:' + i })) + '\' title="換單位">' +
+          esc(estUnit(x.dU || 'd').name) + '</button>');
       } else {
-        H.push('<u class="got' + (x.byOwn ? '' : ' wait') + '">' + x.d + '</u>');
+        H.push('<u class="got' + (x.byOwn ? '' : ' wait') + '">' + xn + '</u>');
+        H.push('<span class="pu-fix">' + esc(estUnit(x.dU || 'd').name) + '</span>');
       }
       H.push('<button class="px-del" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'plandel:' + i })) + '\' title="' +
@@ -1155,7 +1189,8 @@ PAGES.commit = function () {
        不在，整組就走不了。只是說出來，讓他們自己決定要不要等。 */
     if (waiting) {
       H.push('<p class="dim">還有 ' + waiting +
-        ' 件沒有本人說幾天。出發前讓他們自己按一次，那個數字才是他的。</p>');
+        ' 件沒有本人說幾天。出發前讓他們自己按一次，那個數字才是他的。' +
+        (waiting > 1 ? '一個人填完再換下一個。' : '') + '</p>');
     }
   }
   /* ── 加一件要有一顆看得到的鍵 ──
@@ -1232,7 +1267,11 @@ PAGES.commit = function () {
   H.push('<div class="row">');
   /* 承諾完就出發，中間不再問「去哪裡」——地方是委託人帶來的，
      不是他挑的（見底下 wherePanel 那一段拿掉的理由）。 */
-  H.push(btn('我承諾 ' + est + ' 天，出發', 'commit:' + m.msId, 'big cm-go'));
+  H.push('<p class="dim cm-note">按下去這個數字就定了。交出來之後，比這天早或晚就是判定。</p>');
+  /* 按鍵上要印他選的那個單位，不是永遠印「天」——不然選了小時，
+     按鍵上還寫著「我承諾 8 天」，數字跟他剛剛按的完全對不上。 */
+  var cmLabel = cmU === 'd' ? est + ' 天' : draft('estN', estUnit(cmU).def) + ' ' + estUnit(cmU).name;
+  H.push(btn('我承諾 ' + cmLabel + '，出發', 'commit:' + m.msId, 'big cm-go'));
   H.push(btn('回上一步', 'cmstep:1', 'ghost'));
   H.push('</div>');
   return H.join('');
@@ -1374,7 +1413,11 @@ PAGES.ask = function () {
   H.push('</div>');
 
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">你說的是 ' + r.est + ' 天</div>');
+  /* 這裡往下協商，最後定的數字一律用「天」（估天數的單位選擇只在
+     一開始承諾那一頁，見 60-student.js 的 PAGES.commit）——但這一句
+     講的是「他之前說的」，那可能是用小時／週講的，要印他原始那句話，
+     不然承諾 8 小時的人會在這裡看到「你說的是 0.33 天」。 */
+  H.push('<div class="eyebrow">你說的是 ' + esc(estSay(r)) + '</div>');
   H.push(estStep(n));
   /* 這一句是這一頁最重要的一句。它不是客套：判定讀的是 run.est，
      而 run.est 只有這一顆鍵改得動（見 40-db.js 的 actAnswerAsk）。 */
@@ -1426,10 +1469,17 @@ PAGES.stamp = function () {
   H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push('<dl class="rep stage">');
-  H.push('<dt style="--d:0ms">你的規劃</dt><dd style="--d:0ms">' + r.est + '</dd>');
-  H.push('<dt style="--d:260ms">實際</dt><dd style="--d:260ms">' + r.actual + '</dd>');
-  H.push('<dt style="--d:520ms">相差</dt><dd style="--d:520ms">' +
-    (r.actual - r.est > 0 ? '+' : '') + (r.actual - r.est) + '</dd>');
+  /* 承諾用小時／週說的話，r.est 存的是換算過的小數天（例如
+     8 小時＝0.333…）——直接印會變成一串小數，看起來像壞了。
+     estSay 印他原始講的數字跟單位（見 40-db.js）。「相差」只在
+     兩邊同一個單位（天）的時候才有意義，小時/週承諾就不畫這格，
+     不硬算一個「+0.667」出來誤導人。 */
+  H.push('<dt style="--d:0ms">你的規劃</dt><dd style="--d:0ms">' + esc(estSay(r)) + '</dd>');
+  H.push('<dt style="--d:260ms">實際</dt><dd style="--d:260ms">' + r.actual + ' 天</dd>');
+  if (!r.estU || r.estU === 'd') {
+    H.push('<dt style="--d:520ms">相差</dt><dd style="--d:520ms">' +
+      (r.actual - r.est > 0 ? '+' : '') + (r.actual - r.est) + '</dd>');
+  }
 
   /* 上一趟差幾天。「我在變好」這件事本來沒有任何地方說得出口，
      而它只需要兩個數字。不寫「比上一趟準」那種結論——
@@ -1478,7 +1528,7 @@ PAGES.stamp = function () {
   if (r.hard) H.push('<dt>卡在哪裡</dt><dd class="s">' + esc(r.hard) + '</dd>');
   if (r.pace) H.push('<dt>你覺得的進度</dt><dd class="s">' + esc(r.pace) + '</dd>');
   H.push('</dl>');
-  H.push(estBar(r.est, r.actual, false));
+  H.push(estBar(r.est, r.actual, false, estSay(r)));
   H.push('</div>');
 
   H.push('<p class="duel-t">' + esc(mob.n) + '讓開了。</p>');
@@ -1629,18 +1679,30 @@ function logRow(m, r, t) {
     (m.due ? '<i class="rec-due">老師排到 ' + esc(dueSay(m)) + '</i>' : '') +
     '</span>');
 
-  H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">' +
-    (s ? stampPx(s.key) : '') + '</span>');
+  /* 有印章的顯示印章；沒有的那幾種狀態各自寫一句短的，
+     不然那一格空著，完成跟進行中一眼分不出來。 */
+  H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">');
+  if (s) {
+    H.push(stampPx(s.key));
+  } else {
+    var st2 = r.state === 'submitted' ? '等老師'
+      : r.state === 'back' ? '退回'
+      : r.state === 'rethought' ? '重想'
+      : r.state === 'running' ? '進行中'
+      : '';
+    if (st2) H.push('<i class="rec-st">' + st2 + '</i>');
+  }
+  H.push('</span>');
   H.push('</div>');
 
   /* 點開才出現的細節。收起來的時候整列兩秒看得完。 */
   if (open) {
     H.push('<div class="rec-more">');
     if (r.stamp) {
-      H.push(estBar(r.est, r.actual, false));
+      H.push(estBar(r.est, r.actual, false, estSay(r)));
       H.push(dayStrip(t.teamId, r.runId));
     } else {
-      H.push('<p class="dim">這一趟重新想過。說 ' + r.est + ' 天，走了 ' +
+      H.push('<p class="dim">這一趟重新想過。說 ' + esc(estSay(r)) + '，走了 ' +
         (r.went || 0) + ' 天之後退回去重新說。</p>');
     }
     var sp = stepsOf(r.runId);

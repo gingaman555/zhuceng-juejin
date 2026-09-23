@@ -37,10 +37,10 @@
    ——混進十七個不存在的人，那個理由就不成立了。
 
    這三支是這一頁所有列舉的入口，收在這裡一次擋掉。 */
-function rsClasses() { return where('Classes', function (c) { return !c._d; }); }
-function rsUsers() { return where('Users', function (u) { return !u._d; }); }
+function rsClasses() { return where('Classes', function (c) { return !c._d && !c._removed; }); }
+function rsUsers() { return where('Users', function (u) { return !u._d && !u._removed; }); }
 function rsTeams(cid) {
-  return where('Teams', function (t) { return !t._d && t.classId === cid; });
+  return where('Teams', function (t) { return !t._d && !t._removed && t.classId === cid; });
 }
 
 function rsClassId() {
@@ -236,15 +236,15 @@ function rsSave(name, text) {
 }
 
 ACTS.csvruns = function () {
-  rsSave('專案地下城-一趟一列.csv', exportRuns(rsClassId()));
+  rsSave('專案地下城' + (RULES.SOLO ? 'B' : '') + '-一趟一列.csv', exportRuns(rsClassId()));
 };
 
 ACTS.csvitems = function () {
-  rsSave('專案地下城-一件一列.csv', exportItems(rsClassId()));
+  rsSave('專案地下城' + (RULES.SOLO ? 'B' : '') + '-一件一列.csv', exportItems(rsClassId()));
 };
 
 ACTS.csv = function () {
-  var name = '專案地下城-紀錄.csv';
+  var name = '專案地下城' + (RULES.SOLO ? 'B' : '') + '-紀錄.csv';
   try {
     /* BOM，不然 Excel 開起來中文是亂碼 */
     var blob = new Blob(['﻿' + exportCsv(rsClassId())], { type: 'text/csv;charset=utf-8' });

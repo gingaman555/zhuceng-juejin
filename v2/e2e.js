@@ -197,14 +197,14 @@ DRAFT = {}; S.p = { id: run.runId, ph: 'q', q: 1 }; PAGES.battle();
 be('存過的數字帶回畫面', JSON.stringify(DRAFT.spent), JSON.stringify([1, 4]));
 DRAFT.where = 'TronClass 第三次作業';
 DRAFT.feel = 'bad'; DRAFT.why = '第二個受訪者臨時改期';
-DRAFT.scope = 'less'; DRAFT.next = '再訪一個人';
+DRAFT.scope = 'less';
 S.p = { id: run.runId, ph: 'q', q: btAsks(run).length - 1 };
 ACTS.btnext(run.runId);
 const sub = find('Runs', x => x.runId === run.runId);
 be('狀態', sub.state, 'submitted');
 be('判定', !!sub.stamp, true);
-be('組的四題都寫進去了', [sub.link, sub.feel, sub.scope, sub.next].join('|'),
-  'TronClass 第三次作業|bad|less|再訪一個人');
+be('組的三題都寫進去了', [sub.link, sub.feel, sub.scope].join('|'),
+  'TronClass 第三次作業|bad|less');
 be('個人那兩樣沒被洗掉', JSON.stringify(sub.spent), JSON.stringify([1, 4]));
 as(stu[0]);
 be('交出去之後個人改不動了', actMyPart(tm.teamId, run.runId, { said1: '偷改' }), null);
@@ -315,7 +315,7 @@ function 走完一趟(r, 天) {
   /* 先走過那一題，DRAFT.spent 才會從已經存好的值帶回來——
      真的使用者是一題一題走過去的，所以這一步不能跳。 */
   DRAFT = {}; S.p = { id: r.runId, ph: 'q', q: 1 }; PAGES.battle();
-  DRAFT.where = '放你桌上'; DRAFT.feel = 'ok'; DRAFT.next = '下一步';
+  DRAFT.where = '放你桌上'; DRAFT.feel = 'ok';
   S.p = { id: r.runId, ph: 'q', q: btAsks(r).length - 1 };
   ACTS.btnext(r.runId);
   as(tea);
@@ -340,6 +340,16 @@ H('出口：說 → 老師開 → 走出去');
 as(stu[0]);
 S.page = 'pack'; S.p = {}; DRAFT = {};
 be('任務清單畫得出來', PAGES.pack().length > 0, true);
+/* 老師還沒開放結案之前，「我們做完了」那顆鍵連畫都不畫——
+   不是畫出來按不下去，是整段不存在（見 63-pack.js）。 */
+be('老師還沒開放結案，那顆鍵不存在', PAGES.pack().indexOf('我們做完了') >= 0, false);
+as(tea);
+be('學生用不了這個開關', actSetExitOpen(kl.classId, stu[0].userId, true), null);
+actSetExitOpen(kl.classId, tea.userId, true);
+be('老師開放結案', classOf(tea).exitOpen, true);
+as(stu[0]);
+S.page = 'pack'; S.p = {}; DRAFT = {};
+be('開放之後那顆鍵才出現', PAGES.pack().indexOf('我們做完了') >= 0, true);
 be('門還鎖著', !!teamOf(tm.teamId).exitOk, false);
 be('鎖著的時候走不出去', actLetGo(tm.teamId, '謝謝'), null);
 actAskExit(tm.teamId);
@@ -388,6 +398,45 @@ let drew = 0;
   });
 });
 ok('畫了 ' + drew + ' 次，沒有一頁炸掉');
+
+/* ══ 承諾可以用小時／週，不用天（2026-09-23）══ */
+H('承諾用小時');
+as(tea);
+const msH = actPublish(kl.classId, { title: '半天內回', due: 8, dueU: 'h', teams: [] });
+as(stu[0]);
+S.page = 'commit'; S.p = { id: msH.msId, st: 2 }; DRAFT = {};
+DRAFT.plan = []; DRAFT.sure = 'mid';
+ACTS.estunit('h');
+be('切成小時之後，畫面記得這個單位', DRAFT.estU, 'h');
+DRAFT.estN = 8;
+ACTS.commit(msH.msId);
+const runH = runOf(tm.teamId, msH.msId);
+be('存的還是天，8 小時大約 0.33 天', Math.abs(runH.est - 8 / 24) < 0.001, true);
+be('原始講的單位跟數字有記著', runH.estU + ' ' + runH.estN, 'h 8');
+be('畫面印得出「8 小時」不是「0.33 天」', estSay(runH), '8 小時');
+/* 當天交，判定不該被「actual 最少算 1 天」拖累到不公平。 */
+be('容差有吃住短任務（BAND_MIN）', RULES.band(runH.est), 1);
+be('當天交＝準', RULES.judge(runH.est, 1).key, 'exact');
+be('拖三天才交＝晚了', RULES.judge(runH.est, 3).key, 'late');
+
+/* ══ 拆件明細也能用小時／週（2026-09-23）══ */
+H('拆件明細用小時');
+const msH2 = actPublish(kl.classId, { title: '拆件用小時', teams: [] });
+S.page = 'commit'; S.p = { id: msH2.msId, st: 2 }; DRAFT = {};
+DRAFT.plan = [{ n: '打樣', d: 1, who: stu[0].userId }];
+DRAFT.sure = 'mid';
+ACTS.plandu('0');
+ACTS.plandu('0');
+be('這一件的單位輪到了小時', DRAFT.plan[0].dU, 'h');
+be('切單位會重設成那個單位的預設值', DRAFT.plan[0].dN, 8);
+ACTS.pland('0,1');
+be('加減鍵動的是原始數字，不是天', DRAFT.plan[0].dN, 9);
+be('存的 d 是換算過的天', Math.abs(DRAFT.plan[0].d - 9 / 24) < 0.001, true);
+be('planDays 直接讀 d，混單位一樣加得對', planDays(DRAFT.plan), DRAFT.plan[0].d);
+ACTS.commit(msH2.msId);
+const runH2 = runOf(tm.teamId, msH2.msId);
+be('承諾存好了', !!runH2, true);
+be('那一件的單位有跟著存進 run.plan', runH2.plan[0].dU + ' ' + runH2.plan[0].dN, 'h 9');
 
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');

@@ -661,6 +661,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .sf.you b{color:var(--gold)}
 /* 窄畫面：數字從 33 收到 22（字級下限就是 22，不能再小），
    三句才擠得進兩行。 */
+.scn-wait{margin:-6px 0 16px;padding:0 14px;font-size:22px}
 @media (max-width:480px){
   .scn-foot{gap:4px 11px;padding:8px 11px}
   .sf b{font-size:22px}

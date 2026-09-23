@@ -111,11 +111,21 @@ PAGES.pack = function () {
   rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
   H.push('</div></div>');
 
-  /* 「我們做完了」在這裡說。
+  /* 「我們做完了」在這裡說——但只有老師開放結案之後才看得到這個
+     入口。2026-09-23：這顆鍵掛在任務清單最下面，整學期大半時間
+     都還沒到結案的時候，卻整學期都在，不少學生把它當成一般的
+     「交作業」按下去。老師還沒開放的時候，連這張卡都不畫，
+     不是畫出來但按不下去——不存在的東西不會被誤按。
 
-     看完這一頁才知道自己是不是真的做完了——老師派過的每一件事，
-     各自走到哪，全部在上面。廊道上那扇出口是老師開的，不是他推的。 */
-  if (!t.leftAt && !t.exitOk) {
+     已經說過、或老師已經回過「現在還不是時候」的，不受這個開關
+     影響：那是已經在走的流程，關掉開關不該讓學生連自己說過什麼、
+     還在等什麼都看不到。 */
+  var exitOpen = !!(find('Classes', function (c) { return c.classId === t.classId; }) || {}).exitOpen;
+  /* DRAFT.exitConfirm 也要算：他已經按過「我們做完了」正在看
+     「確定嗎」那一步，這時候老師剛好關掉開關，這張卡不該憑空消失
+     ——他還沒送出任何東西，但畫面上正跟他確認一件事，半路把
+     整段收掉會像壞了。 */
+  if (!t.leftAt && !t.exitOk && (exitOpen || t.exitAsk || t.exitNo || DRAFT.exitConfirm)) {
     H.push('<div class="card">');
     if (t.exitAsk) {
       H.push('<div class="eyebrow lit">說了</div>');
@@ -130,9 +140,18 @@ PAGES.pack = function () {
       H.push('<div class="eyebrow warnx">老師說</div>');
       H.push('<p class="quote big">現在還不是時候。</p>');
       H.push(btn('我們真的做完了', 'askexit', 'big'));
+    } else if (DRAFT.exitConfirm) {
+      /* 兩步，不是一步。這一格以前是任務清單最下面一顆跟「回廊道」
+         擠在一起的大鍵——常來看清單的人往下滑到底，手滑按到的
+         不是「回廊道」，是跟老師說「我們做完了」。
+         二次確認擋的就是那一下手滑，不是真的要問兩次。 */
+      H.push('<div class="eyebrow warnx">確定嗎</div>');
+      H.push('<p class="dim">按下去，老師那邊就會看到你們說這個專案做完了。</p>');
+      H.push(btn('對，做完了', 'askexit', 'big'));
+      H.push(btn('還沒，再想想', 'exitundo', 'ghost'));
     } else {
       H.push('<div class="eyebrow">這個專案做完了嗎</div>');
-      H.push(btn('我們做完了', 'askexit', 'big'));
+      H.push(btn('我們做完了', 'exitcheck', ''));
     }
     H.push('</div>');
   }
@@ -158,15 +177,21 @@ function taskRow(m, r, t) {
   /* 說幾天 → 實際幾天。還沒交的那幾趟只有左邊那個數字。 */
   if (r.est) {
     H.push('<div class="tk-n">');
-    H.push('<span>你說</span><b>' + r.est + '</b>');
+    /* 承諾用小時／週說的話，「你說」那一格印他原始講的單位，
+       「實際」那一格還是天——actual 沒有跟著改精度，兩邊單位
+       本來就不一樣，不能共用一個 tk-u。 */
+    if (r.estU && r.estU !== 'd' && r.estN != null) {
+      H.push('<span>你說</span><b>' + esc(estSay(r)) + '</b>');
+    } else {
+      H.push('<span>你說</span><b>' + r.est + '</b><span class="tk-u">天</span>');
+    }
     if (r.actual) { H.push('<span>實際</span><b class="' + (r.stamp || '') + '">' +
-      r.actual + '</b>'); }
-    else if (r.went) { H.push('<span>走了</span><b>' + r.went + '</b>'); }
+      r.actual + '</b><span class="tk-u">天</span>'); }
+    else if (r.went) { H.push('<span>走了</span><b>' + r.went + '</b><span class="tk-u">天</span>'); }
     else if (r.state === 'running') {
       var gone = daysBetween(r.committedAt, now());
-      H.push('<span>過了</span><b>' + gone + '</b>');
+      H.push('<span>過了</span><b>' + gone + '</b><span class="tk-u">天</span>');
     }
-    H.push('<span class="tk-u">天</span>');
     H.push('</div>');
   }
 

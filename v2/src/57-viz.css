@@ -870,6 +870,11 @@ button.ac:active{transform:translateY(1px)}
 .es-n b{font-size:88px;line-height:1;color:var(--gold);font-weight:400;
   font-variant-numeric:tabular-nums}
 .es-n span{font-size:33px;color:var(--dim)}
+/* 選了小時／週的時候，估天數那顆尺換成一格數字輸入（見 56-viz.js
+   的 estStepU）——跟兩顆按鍵版本用同一個 .estep 容器，只是內容換掉。 */
+.estep input{width:120px;flex:0 0 auto;font-size:44px;text-align:center;
+  font-variant-numeric:tabular-nums;margin:0}
+.es-raw-u{font-size:33px;color:var(--dim)}
 .ax-in{position:relative;margin:0 11px}
 
 /* 岩層表面看得出哪幾格裡有東西——但看不出是什麼。
@@ -1080,6 +1085,7 @@ button.ac:active{transform:translateY(1px)}
 .rec-s{grid-column:3;grid-row:1 / 4;display:flex;align-items:center;opacity:.9}
 .rec-s .px{width:22px;height:auto;image-rendering:pixelated}
 .rec-s.none{color:var(--dim)}
+.rec-st{font-size:22px;font-style:normal;color:var(--mute);white-space:nowrap}
 .rec:hover .rec-t{color:var(--gold)}
 .rec.open{border-bottom:0}
 .rec.open .rec-t{color:var(--gold)}
@@ -1281,9 +1287,10 @@ button.ac:active{transform:translateY(1px)}
 .msr-w{font-size:22px;color:var(--gold2);white-space:nowrap}
 .msr-n{font-size:22px;color:var(--dim);white-space:nowrap;
   font-variant-numeric:tabular-nums}
-/* 別位老師派的那幾件。自己派的沒有這一行，所以有這一行就是別人的。
-   佔滿一整列，不跟上面那幾個數字擠。 */
+/* 誰派的。自己跟別人都寫，佔滿一整列，不跟上面那幾個數字擠。
+   自己那句顏色比較亮——掃過去找自己剛派的那一件不用一行一行讀字。 */
 .msr-by{grid-column:1 / -1;font-size:22px;color:var(--dim)}
+.msr-by.mine{color:var(--gold2)}
 
 /* 別人那一行：看得到，按不動。跟交出去那一頁的 .sp2.theirs 同一個做法。 */
 .pl.theirs{opacity:.72}
@@ -2286,6 +2293,19 @@ button.ac:active{transform:translateY(1px)}
 .pl .pw:hover{box-shadow:inset 0 0 0 2px var(--gold)}
 .pl .pw:active{transform:translateY(1px)}
 
+/* 這一件用的單位（小時／天／週）。跟 .pw 同一種矮鍵，但只需要放得下
+   兩個字，不用它那麼寬——這一列已經很擠了（見 60-student.js 的
+   plandu）。別人那一件看得到單位、換不動，用 .pu-fix 印純文字。 */
+.pl .pu{
+  font:inherit;font-size:22px;line-height:1.2;padding:4px 6px;border:none;
+  min-height:44px;box-sizing:border-box;flex:0 0 auto;
+  cursor:pointer;color:var(--dim);background:var(--sunk);
+  box-shadow:inset 0 0 0 2px var(--line);white-space:nowrap
+}
+.pl .pu:hover{box-shadow:inset 0 0 0 2px var(--gold-d)}
+.pl .pu:active{transform:translateY(1px)}
+.pl .pu-fix{flex:0 0 auto;font-size:22px;color:var(--mute);padding:4px 6px}
+
 /* 寬度不綁祖先——這張圖換個地方畫也不能被撐開（check.js 守著）。 */
 .px.sd-px{width:33px;height:33px;flex:0 0 33px;image-rendering:pixelated}
 
@@ -2692,6 +2712,7 @@ button.side-head{
   border:1px solid var(--gold-d);background:none;color:var(--gold)
 }
 .cx-light:hover{border-color:var(--gold);background:rgba(233,179,65,.10)}
+.cx-hint{display:block;color:var(--mute);font-style:normal;font-size:22px;margin-top:5px}
 /* 這一頁最上面那一行：手上有幾顆。 */
 .cx-crystal{color:var(--dim);margin:0 0 11px}
 

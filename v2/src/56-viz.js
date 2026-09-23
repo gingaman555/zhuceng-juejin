@@ -17,7 +17,7 @@
      est     承諾幾天
      actual  實際幾天（還沒交就傳 pushes，那條會邊走邊長）
      live    true 代表還在走，下面那條不畫判定色 */
-function estBar(est, actual, live) {
+function estBar(est, actual, live, sayLabel) {
   var e = Math.max(1, Number(est) || 1);
   var a = Math.max(0, Number(actual) || 0);
   var b = RULES.band(e);
@@ -42,9 +42,12 @@ function estBar(est, actual, live) {
 
   /* 兩個數字。它們是同一條尺上的兩個位置，所以並排寫。 */
   H.push('<div class="eb-n">');
-  H.push('<span class="eb-say-n">說 <b>' + e + '</b></span>');
-  H.push('<span class="eb-go-n">' + (live ? '走到' : '實際') + ' <b>' + a + '</b></span>');
-  H.push('<span class="eb-u">天</span>');
+  /* 尺畫的是天（見上面 e＝Math.max(1,…)，小時／週已經換算過又被夾到
+     最少 1），可是「說」那個數字要印他原始講的——尺可以簡化成
+     最少 1 天寬，文字不行，不然 8 小時會被印成一個看起來像「1 天」
+     的謊。sayLabel 沒給的地方（沒有 r 可用）退回印 e，跟以前一樣。 */
+  H.push('<span class="eb-say-n">說 <b>' + esc(sayLabel != null ? sayLabel : e + ' 天') + '</b></span>');
+  H.push('<span class="eb-go-n">' + (live ? '走到' : '實際') + ' <b>' + a + ' 天</b></span>');
   H.push('</div>');
 
   H.push('</div>');
@@ -125,8 +128,15 @@ function barKey() {
 function shapeLine(runId) {
   var s = runShape(runId);
   if (!s) return '';
+  var run = find('Runs', function (x) { return x.runId === runId; });
   var H = ['<div class="shape">'];
-  H.push('<span><b>' + s.est + '</b>你說的天數</span>');
+  /* 小時／週承諾的話，s.est 是換算過的小數天——這裡跟其他量一樣是
+     「數字＋一句描述」的格式，用 estSay 印回他原始講的樣子。 */
+  if (run && run.estU && run.estU !== 'd' && run.estN != null) {
+    H.push('<span><b>' + esc(estSay(run)) + '</b>你說的</span>');
+  } else {
+    H.push('<span><b>' + s.est + '</b>你說的天數</span>');
+  }
   H.push('<span><b>' + s.elapsed + '</b>過了幾天</span>');
   H.push('<span><b>' + s.moved + '</b>你來過</span>');
   if (s.rested) H.push('<span><b>' + s.rested + '</b>你說沒動</span>');
@@ -217,6 +227,38 @@ function estStep(est) {
 /* 從 est 按一下 d 之後會停在幾。到頭就停在頭。 */
 function estGo(est, d) {
   return clamp(RULES.EST_MIN, RULES.EST_MAX, (Number(est) || 0) + Number(d));
+}
+
+/* 單位切換 ＋ 承諾要按的那顆數字。老師排期限可以選小時／天／週
+   （見 40-db.js 的 DUE_UNITS），學生承諾卻只有天——那個不對稱
+   是 2026-09-23 的問題：老師派一件「8 小時」的事，學生卻只能說
+   「1 天」，數字對不起來。EST_UNITS 是同一個概念放到學生這一邊。
+
+   單位是「天」的時候，畫面跟按鍵完全沒變（estStep 原封不動）——
+   這一支只在選了小時／週的時候換成一格數字輸入，避免動到
+   estStep／estGo／estLive 那一整套已經被讀 200 輪、六組並行測過
+   的邏輯。 */
+function estStepU(est) {
+  var u = DRAFT.estU || 'd';
+  /* .tags／.tag 是全站在用的那組籤，跟老師排期限選單位同一套
+     （見 70-teacher.js 的 DUE_UNITS 那一段）——不用另外開一組樣式。 */
+  var H = ['<div class="tags">'];
+  EST_UNITS.forEach(function (x) {
+    H.push('<button class="tag' + (u === x.k ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'estunit:' + x.k })) +
+      '\'>' + esc(x.name) + '</button>');
+  });
+  H.push('</div>');
+  if (u === 'd') {
+    H.push(estStep(est));
+  } else {
+    var uu = estUnit(u);
+    var n = draft('estN', uu.def);
+    H.push('<div class="estep"><input type="number" min="' + uu.min +
+      '" max="' + uu.max + '" value="' + esc(n) +
+      '" oninput="DRAFT.estN=this.value"><span class="es-raw-u">' + esc(uu.name) + '</span></div>');
+  }
+  return H.join('');
 }
 
 function estLive(n) {

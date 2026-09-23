@@ -159,7 +159,7 @@ stu.forEach(function (u, i) {
 
 as(stu[0]); DRAFT = {}; S.page = 'battle'; S.p = { id: run.runId, ph: 'q', q: 1 };
 PAGES.battle();
-DRAFT.where = 'TronClass'; DRAFT.feel = 'ok'; DRAFT.next = '下一步';
+DRAFT.where = 'TronClass'; DRAFT.feel = 'ok';
 S.p = { id: run.runId, ph: 'q', q: btAsks(run).length - 1 };
 ACTS.btnext(run.runId);
 全掃('交出去了');

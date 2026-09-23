@@ -377,8 +377,6 @@ function seed() {
 function dressRuns(cid) {
   var SAID = ['找到人跟排訪談', '約時間跟場地', '逐字稿', '整理成一頁',
     '畫流程圖', '訪談紀錄', '分類那幾張', '寫成一句'];
-  var NEXT = ['再訪一個人，第三份太薄', '把流程圖的虛線補掉',
-    '重排一次訪綱，前面太長', '再看一次分類，有兩類是同一件事'];
   var WHY = ['第二個受訪者臨時改期', '逐字稿比想的久很多',
     '訪綱太長，前兩場都超時', '中間卡在找不到人'];
   var WHERE = ['TronClass 第三次作業', 'TronClass 第二次作業，檔名 G-訪談',
@@ -448,7 +446,6 @@ function dressRuns(cid) {
     if (!r.feel) r.feel = ['good', 'ok', 'bad'][h % 3];
     if (!r.why) r.why = WHY[h % WHY.length];
     if (!r.scope) r.scope = ['same', 'same', 'less', 'more'][h % 4];
-    if (!r.next) r.next = NEXT[h % NEXT.length];
     if (!r.link) r.link = WHERE[h % WHERE.length];
 
     /* 每個人各寫的那一行。刻意讓每一組的最後一個人在最新的那一趟

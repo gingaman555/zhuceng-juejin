@@ -108,9 +108,9 @@ PAGES.battle = function () {
   var t = myTeam();
   /* ── 重做的時候，上一次寫的還在 ──
 
-     被退回的時候只有一件事被指出不對，可是七題全部要重打：去哪裡看、
-     最想要老師看哪裡、你做了什麼、再給兩天會做什麼。系統自己寫著
-     「退回不是懲罰」——而重打七題就是懲罰。
+     被退回的時候只有一件事被指出不對，可是每一題都要重打：去哪裡看、
+     最想要老師看哪裡、你做了什麼。系統自己寫著
+     「退回不是懲罰」——而重打全部就是懲罰。
 
      帶回來的是**他自己上一次寫的**，不是幫他填（那條規則擋的是
      「拿別人的東西或上一趟的東西塞給他」）。每一格他都可以改，
@@ -121,7 +121,6 @@ PAGES.battle = function () {
   if (r.state === 'back' && DRAFT.__pre !== r.runId) {
     DRAFT.__pre = r.runId;
     if (r.link != null) DRAFT.where = r.link;
-    if (r.next != null) DRAFT.next = r.next;
     if (r.pace != null) DRAFT.hard = r.pace;
     if (r.scope) DRAFT.scope = r.scope;
     if (r.feel) DRAFT.feel = r.feel;
@@ -134,7 +133,6 @@ PAGES.battle = function () {
   /* 那一場打在那一趟去的地方，不是「現在」在哪——回頭看一場舊的，
      背景要是當時那個地方。 */
   var zone = zoneOfRun(r, t.teamId);
-  var est = r.est || 1;
   var ph = btPhase(r);
 
   /* ── 一場講話，不是一場對峙 ──
@@ -174,7 +172,7 @@ PAGES.battle = function () {
   /* 遭遇：整個畫面閃一次再進場。只有剛遇到才放。 */
   if (剛遇到) H.push('<div class="bt-wipe"></div>');
   /* 你說了幾天。本來寫在你那張名牌上。 */
-  H.push('<div class="bt-hud">說 ' + est + ' 天</div>');
+  H.push('<div class="bt-hud">說 ' + esc(estSay(r)) + '</div>');
 
   H.push('<div class="bt-side foe">');
   H.push('<div class="bt-pad"></div>');
@@ -501,18 +499,6 @@ var BT_STEPS = [
       return H.join('');
     } },
 
-  { k: 'next',
-    /* 一個人的時候「你們」是錯的。這一題問的是同一件事，
-       只是這一站上那個人只有一個。 */
-    get ask() { return RULES.SOLO ? '再給你兩天，你會做什麼？' : '再給你們兩天，你們會做什麼？'; },
-    who: 'team',
-    body: function () {
-      return '<textarea class="bt-w" id="bt-next" rows="2" maxlength="200" ' +
-        'oninput="DRAFT.next=this.value" placeholder="' +
-        esc('例：把第三件收尾，那一件只做了一半') + '">' +
-        esc(draft('next', '')) + '</textarea>';
-    },
-    need: function () { return !!String(DRAFT.next || '').trim(); } }
 ];
 
 /* 這一趟真的要問哪幾題。 */
@@ -568,7 +554,11 @@ function btSpent(r) {
       H.push('<i>' + esc(x.n) + '</i>');
       /* 不分組那一站不畫這一欄：每一件都是他的。 */
       if (!RULES.SOLO) H.push('<u class="who">' + esc(shortWho(x.who)) + '</u>');
-      H.push('<u class="said">說 ' + x.d + '</u>');
+      /* 承諾那一件用小時／週填的話，印他原始講的數字（見 60-student.js
+         的 xn），不是換算過的小數天。 */
+      H.push('<u class="said">說 ' +
+        ((x.dU && x.dU !== 'd' && x.dN != null) ? esc(x.dN + estUnit(x.dU).name) : x.d + ' 天') +
+        '</u>');
       if (own) {
         H.push('<button class="pd" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'spent:' + i + ',-1' })) + '\'>−</button>');
@@ -669,6 +659,10 @@ function btPlate(name, side, note) {
 function btVerdict(r) {
   var est = r.est || 1;
   var act = r.actual || est;
+  /* 小時／週承諾的話，est 是換算過的小數天，「還有 0.67 天沒用完」
+     這種話比不寫還誤導——那種時候只說收下了，不算差幾天。 */
+  var hourly = r.estU && r.estU !== 'd' && r.estN != null;
+  if (hourly) return { key: act <= est ? 'early' : 'late', line: '他收下了。' };
   if (act < est) {
     return { key: 'early', line: '他收下了。你還有 ' + (est - act) + ' 天沒用完。' };
   }
@@ -730,12 +724,11 @@ function battleRun() {
   }
   if (ph !== 'play') return;
 
-  var est = r.est || 1;
-  var act = r.actual || est;
+  var act = r.actual || (r.est || 1);
 
   /* 一 · 把這一趟報出來。這是整場唯一決定結果的東西。 */
   btAt(800, function () {
-    say('你說 ' + est + ' 天，實際走了 ' + act + ' 天。');
+    say('你說 ' + estSay(r) + '，實際走了 ' + act + ' 天。');
     box.classList.add('told');
   });
 
@@ -813,7 +806,7 @@ ACTS.btq2 = function (id) {
   }
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why,
-      scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1 });
+      scope: DRAFT.scope, said1: DRAFT.said1 });
   /* 退回那一場走 actResend 不走 actSubmit：答案更新，判定不動。
 
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
@@ -825,7 +818,7 @@ ACTS.btq2 = function (id) {
   var okd = again ? actResend(t.teamId, id, wh) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
-  DRAFT.scope = null; DRAFT.next = ''; DRAFT.said1 = ''; DRAFT.where = null;
+  DRAFT.scope = null; DRAFT.said1 = ''; DRAFT.where = null;
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', take: 1 };
   render();

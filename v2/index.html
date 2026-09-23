@@ -1713,6 +1713,7 @@ img.tor.dead{width:33px;height:44px;opacity:.55;z-index:1}
 .sf.you b{color:var(--gold)}
 /* 窄畫面：數字從 33 收到 22（字級下限就是 22，不能再小），
    三句才擠得進兩行。 */
+.scn-wait{margin:-6px 0 16px;padding:0 14px;font-size:22px}
 @media (max-width:480px){
   .scn-foot{gap:4px 11px;padding:8px 11px}
   .sf b{font-size:22px}
@@ -3042,6 +3043,11 @@ button.ac:active{transform:translateY(1px)}
 .es-n b{font-size:88px;line-height:1;color:var(--gold);font-weight:400;
   font-variant-numeric:tabular-nums}
 .es-n span{font-size:33px;color:var(--dim)}
+/* 選了小時／週的時候，估天數那顆尺換成一格數字輸入（見 56-viz.js
+   的 estStepU）——跟兩顆按鍵版本用同一個 .estep 容器，只是內容換掉。 */
+.estep input{width:120px;flex:0 0 auto;font-size:44px;text-align:center;
+  font-variant-numeric:tabular-nums;margin:0}
+.es-raw-u{font-size:33px;color:var(--dim)}
 .ax-in{position:relative;margin:0 11px}
 
 /* 岩層表面看得出哪幾格裡有東西——但看不出是什麼。
@@ -3252,6 +3258,7 @@ button.ac:active{transform:translateY(1px)}
 .rec-s{grid-column:3;grid-row:1 / 4;display:flex;align-items:center;opacity:.9}
 .rec-s .px{width:22px;height:auto;image-rendering:pixelated}
 .rec-s.none{color:var(--dim)}
+.rec-st{font-size:22px;font-style:normal;color:var(--mute);white-space:nowrap}
 .rec:hover .rec-t{color:var(--gold)}
 .rec.open{border-bottom:0}
 .rec.open .rec-t{color:var(--gold)}
@@ -3453,9 +3460,10 @@ button.ac:active{transform:translateY(1px)}
 .msr-w{font-size:22px;color:var(--gold2);white-space:nowrap}
 .msr-n{font-size:22px;color:var(--dim);white-space:nowrap;
   font-variant-numeric:tabular-nums}
-/* 別位老師派的那幾件。自己派的沒有這一行，所以有這一行就是別人的。
-   佔滿一整列，不跟上面那幾個數字擠。 */
+/* 誰派的。自己跟別人都寫，佔滿一整列，不跟上面那幾個數字擠。
+   自己那句顏色比較亮——掃過去找自己剛派的那一件不用一行一行讀字。 */
 .msr-by{grid-column:1 / -1;font-size:22px;color:var(--dim)}
+.msr-by.mine{color:var(--gold2)}
 
 /* 別人那一行：看得到，按不動。跟交出去那一頁的 .sp2.theirs 同一個做法。 */
 .pl.theirs{opacity:.72}
@@ -4458,6 +4466,19 @@ button.ac:active{transform:translateY(1px)}
 .pl .pw:hover{box-shadow:inset 0 0 0 2px var(--gold)}
 .pl .pw:active{transform:translateY(1px)}
 
+/* 這一件用的單位（小時／天／週）。跟 .pw 同一種矮鍵，但只需要放得下
+   兩個字，不用它那麼寬——這一列已經很擠了（見 60-student.js 的
+   plandu）。別人那一件看得到單位、換不動，用 .pu-fix 印純文字。 */
+.pl .pu{
+  font:inherit;font-size:22px;line-height:1.2;padding:4px 6px;border:none;
+  min-height:44px;box-sizing:border-box;flex:0 0 auto;
+  cursor:pointer;color:var(--dim);background:var(--sunk);
+  box-shadow:inset 0 0 0 2px var(--line);white-space:nowrap
+}
+.pl .pu:hover{box-shadow:inset 0 0 0 2px var(--gold-d)}
+.pl .pu:active{transform:translateY(1px)}
+.pl .pu-fix{flex:0 0 auto;font-size:22px;color:var(--mute);padding:4px 6px}
+
 /* 寬度不綁祖先——這張圖換個地方畫也不能被撐開（check.js 守著）。 */
 .px.sd-px{width:33px;height:33px;flex:0 0 33px;image-rendering:pixelated}
 
@@ -4864,6 +4885,7 @@ button.side-head{
   border:1px solid var(--gold-d);background:none;color:var(--gold)
 }
 .cx-light:hover{border-color:var(--gold);background:rgba(233,179,65,.10)}
+.cx-hint{display:block;color:var(--mute);font-style:normal;font-size:22px;margin-top:5px}
 /* 這一頁最上面那一行：手上有幾顆。 */
 .cx-crystal{color:var(--dim);margin:0 0 11px}
 
@@ -7244,6 +7266,418 @@ var EXTRA_FAUNA = [
       '........++++++..........',
       '........................'
     ]
+  },
+
+  /* ---------- 六位，各自照世界各地的傳說生物畫 ----------
+
+     不用他們的名字（不寫「尼斯湖水怪」「大腳怪」）——這座地下城
+     裡的東西都是自己的名字，見 19-patron.js 的檔頭。借的是形狀跟
+     傳說裡那個「沒有人真的看清楚過」的感覺：大腳怪的腳印、尼斯湖
+     水怪只露出的那一截、家畜棚附近的血跡，都是目擊者「看到痕跡、
+     沒看到全貌」——跟這整組委託人本來的畫法一致（見 19-patron.js
+     頭一句「讀得出來的是剪影，不是細節」）。
+
+     這裡的 px 只是佔位：19-patron.js 的 dressPatrons() 用下面
+     PATRONS 表裡的體型跟記號重畫一次，一載入就蓋掉了。 */
+  {
+    r: '微光荒原', n: '林踏獸',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '........................',
+      '.......++######++.......',
+      '.....++##########++.....',
+      '....+####**##**####+....',
+      '...+####**####**####+...',
+      '...+##################+.',
+      '...+#*##*##**##*##*##+..',
+      '...+##################+.',
+      '...+####**####**####+...',
+      '....+####**##**####+....',
+      '.....++##########++.....',
+      '.......++######++.......',
+      '......+#+......+#+......',
+      '.....+#+........+#+.....',
+      '.....+*..........*+.....',
+      '........................'
+    ]
+  },
+  {
+    r: '根脈層', n: '沙鳴蟲',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '........................',
+      '........................',
+      '..++++..++++..++++......',
+      '.+#**#++#**#++#**#+.....',
+      '.+#**#++#**#++#**#+.....',
+      '.+####++####++####+..++.',
+      '..++++..++++..++++..+#*+',
+      '.....................+#+',
+      '..++++..++++..++++...++.',
+      '.+####++####++####+.....',
+      '.+#**#++#**#++#**#+.....',
+      '.+#**#++#**#++#**#+.....',
+      '..++++..++++..++++......',
+      '........................',
+      '........................',
+      '........................'
+    ]
+  },
+  {
+    r: '水晶迴廊', n: '湖頸母',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '........................',
+      '.........+####+.........',
+      '.......+#*####*#+.......',
+      '......+#*######*#+......',
+      '.....+#*########*#+.....',
+      '.....+#**#########+.....',
+      '.....+#**#########+.....',
+      '.....+#*########*#+.....',
+      '......+#*######*#+......',
+      '.......+#*####*#+.......',
+      '.........+####+.........',
+      '..........+##+..........',
+      '..........+##+..........',
+      '...........+#+..........',
+      '...........+#+..........',
+      '...........+*...........'
+    ]
+  },
+  {
+    r: '迴聲迷宮', n: '赤瞳蛾',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '.........+##+...........',
+      '.........+##+...........',
+      '........+####+..........',
+      '.......+#*##*#+.........',
+      '......+#*#**#*#+........',
+      '......+#*#**#*#+........',
+      '......+#*######+........',
+      '.......+#*##*#+.........',
+      '........+####+..........',
+      '.......+#+..+#+.........',
+      '......+#+....+#+........',
+      '.....+#+......+#+.......',
+      '....+#+........+#+......',
+      '....+*..........*+......',
+      '........................',
+      '........................'
+    ]
+  },
+  {
+    r: '銹層', n: '林角魔',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '.....+############+.....',
+      '.....+#**######**#+.....',
+      '.....+############+.....',
+      '.......+#+....+#+.......',
+      '.......+#+....+#+.......',
+      '......+###+..+###+......',
+      '......+#*#+..+#*#+......',
+      '......+###+..+###+......',
+      '.......+#+....+#+.......',
+      '.......+#+....+#+.......',
+      '.....++###++++###++.....',
+      '.....+###########+......',
+      '.....+#+.......+#+......',
+      '....+#+.........+#+.....',
+      '....+*...........*+.....',
+      '........................'
+    ]
+  },
+  {
+    r: '熔火深淵', n: '飲脊獸',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '........................',
+      '....+#+....+#+..........',
+      '...+###+..+###+.........',
+      '....+#######+...........',
+      '...+#*#####*#+..........',
+      '..+#*#######*#+.....++..',
+      '..+###########+....+##+.',
+      '..+#*#######*#+.....++..',
+      '..+###########+.........',
+      '...+#########+..++......',
+      '....+#######+..+##+.....',
+      '.....+#+.+#+....++......',
+      '....+#+...+#+...........',
+      '...+#+.....+#+..........',
+      '...+*.......*+..........',
+      '........................'
+    ]
+  },
+  {
+    r: '微光荒原', n: '尖首影',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '.........+##+...........',
+      '........+#**#+..........',
+      '.......+#*##*#+.........',
+      '......+##########+......',
+      '.....+##############+...',
+      '.....+#*##########*#+...',
+      '.....+##############+...',
+      '......+##########+......',
+      '.......+#*##*#+.........',
+      '........+#**#+..........',
+      '.........+##+...........',
+      '..........++............',
+      '........................',
+      '........................',
+      '........................',
+      '........................'
+    ]
+  },
+
+  /* ---------- 再六位，一樣的畫法（見上面那一段檔頭） ---------- */
+  {
+    r: '水晶迴廊', n: '雪隱獸',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '........................',
+      '.......++######++.......',
+      '.....++##########++.....',
+      '....+####**##**####+....',
+      '...+##################+.',
+      '...+##################+.',
+      '...+#*##*##**##*##*##+..',
+      '...+##################+.',
+      '...+####**####**####+...',
+      '....+####**##**####+....',
+      '.....++##########++.....',
+      '.......++######++.......',
+      '......+#+......+#+......',
+      '.....+#+........+#+.....',
+      '.....+*..........*+.....',
+      '........................'
+    ]
+  },
+  {
+    r: '水晶迴廊', n: '潮糾獸',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '..++++..++++..++++......',
+      '.+#**#++#**#++#**#+.....',
+      '.+#**#++#**#++#**#+.....',
+      '.+####++####++####+..++.',
+      '..++++..++++..++++..+#*+',
+      '.....................+#+',
+      '..++++..++++..++++...++.',
+      '.+####++####++####+.....',
+      '.+#**#++#**#++#**#+.....',
+      '.+#**#++#**#++#**#+.....',
+      '..++++..++++..++++......',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................'
+    ]
+  },
+  {
+    r: '根脈層', n: '橙膚仔',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '........................',
+      '.........+####+.........',
+      '.......+#*####*#+.......',
+      '......+#*######*#+......',
+      '.....+#*########*#+.....',
+      '.....+#**#########+.....',
+      '.....+#**#########+.....',
+      '.....+#*########*#+.....',
+      '......+#*######*#+......',
+      '.......+#*####*#+.......',
+      '.........+####+.........',
+      '..........+##+..........',
+      '..........+##+..........',
+      '...........+#+..........',
+      '...........+#+..........',
+      '...........+*...........'
+    ]
+  },
+  {
+    r: '熔火深淵', n: '夜鴞魅',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '.........+##+...........',
+      '........+#**#+..........',
+      '.......+#*##*#+.........',
+      '......+##########+......',
+      '.....+##############+...',
+      '.....+#*##########*#+...',
+      '.....+##############+...',
+      '......+##########+......',
+      '.......+#*##*#+.........',
+      '........+#**#+..........',
+      '.........+##+...........',
+      '..........++............',
+      '........................',
+      '........................',
+      '........................',
+      '........................'
+    ]
+  },
+  {
+    r: '微光荒原', n: '夜行褲',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '..+#+......+#+..........',
+      '..+#+......+#+..........',
+      '..+#+......+#+..........',
+      '..+*+......+*+..........',
+      '........................'
+    ]
+  },
+  {
+    r: '迴聲迷宮', n: '澤鱗獸',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '..*##*..*##*..*##*......',
+      '.*####**####**####*.....',
+      '*##################*....',
+      '+##################+....',
+      '+##*##*##*##*##*###+....',
+      '+##################+....',
+      '+####*########*####+....',
+      '+##################+....',
+      '+###*####**####*###+....',
+      '+##################+....',
+      '.+################+.....',
+      '..+##############+......',
+      '...++##########++.......',
+      '.....++######++.........',
+      '.......++##++...........',
+      '........................'
+    ]
+  },
+
+  /* ---------- 再五位，補齊每一層四種動法都有（見 19-patron.js 的 PAT_IDLE） ---------- */
+  {
+    r: '微光荒原', n: '蛙燈魅',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '.........+##+...........',
+      '........+#**#+..........',
+      '.......+#*##*#+.........',
+      '......+##########+......',
+      '.....+##############+...',
+      '.....+#*##########*#+...',
+      '.....+##############+...',
+      '......+##########+......',
+      '.......+#*##*#+.........',
+      '........+#**#+..........',
+      '.........+##+...........',
+      '..........++............',
+      '........................',
+      '........................',
+      '........................',
+      '........................'
+    ]
+  },
+  {
+    r: '水晶迴廊', n: '河潛蟲',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '.kkk..',
+      'kcWhk.',
+      'kihgk.',
+      '.kkk..',
+      '.kik..',
+      'kkhk..',
+      'khik..',
+      'kkhk..',
+      '.kik..',
+      '.khk..',
+      '.kik..',
+      '.khk..',
+      'kkkk..',
+      '......',
+      '......',
+      '......'
+    ]
+  },
+  {
+    r: '迴聲迷宮', n: '蝠肢獸',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      'k.....k......k....',
+      '.k....k.....k.....',
+      '..k...k....k....k.',
+      '...kkkkkkkkkk...k.',
+      '..kiiihhhhhggk..k.',
+      '.kiihhhhhhhhhggk..',
+      'kiihhcccccchhhggk.',
+      'kihhccYYYYcchhhggk',
+      'kihhcYYjjYYchhhggk',
+      'kihhccYYYYcchhhggk',
+      'kiihhcccccchhhhggk',
+      '.kihhhhhhhhhhhggk.',
+      '..kkkkkkkkkkkkkk..',
+      '..k...k....k...k..',
+      '.k....k....k....k.',
+      'k.....k....k.....k'
+    ]
+  },
+  {
+    r: '銹層', n: '隧鱗蟲',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '.....+############+.....',
+      '.....+#**######**#+.....',
+      '.....+############+.....',
+      '.......+#+....+#+.......',
+      '.......+#+....+#+.......',
+      '......+###+..+###+......',
+      '......+#*#+..+#*#+......',
+      '......+###+..+###+......',
+      '.......+#+....+#+.......',
+      '.......+#+....+#+.......',
+      '.....++###++++###++.....',
+      '.....+###########+......',
+      '.....+#+.......+#+......',
+      '....+#+.........+#+.....',
+      '....+*...........*+.....',
+      '........................'
+    ]
+  },
+  {
+    r: '熔火深淵', n: '迷光影',
+    t: '（佔位圖，載入後由 19-patron.js 換成真正的樣子）',
+    px: [
+      '........................',
+      '....+#+....+#+..........',
+      '...+###+..+###+.........',
+      '....+#######+...........',
+      '...+#*#####*#+..........',
+      '..+#*#######*#+.....++..',
+      '..+###########+....+##+.',
+      '..+#*#######*#+.....++..',
+      '..+###########+.........',
+      '...+#########+..++......',
+      '....+#######+..+##+.....',
+      '.....+#+.+#+....++......',
+      '....+#+...+#+...........',
+      '...+#+.....+#+..........',
+      '...+*.......*+..........',
+      '........................'
+    ]
   }
 ];
 
@@ -7379,8 +7813,10 @@ var EV_SAY = {
   keep:     function (e) { return '留下了「' + e.keep + '」那一張'; },
   tick:     function (e) { return (e.on ? '勾掉' : '取消勾掉') + '「' + e.step + '」'; },
   askexit:  function () { return '說專案做完了'; },
+  setexitopen: function (e) { return (e.on ? '開放' : '關掉') + '了「我們做完了」那顆鍵'; },
   left:     function () { return '走出去了'; },
   rename:   function (e) { return '把招牌改成「' + e.name + '」'; },
+  teamrename: function (e) { return '把組名從「' + e.from + '」改成「' + e.name + '」'; },
   /* 改名字要寫出「從什麼改成什麼」：全站印的都是 u.name，所以讀
      流水帳的人要能把改名字前後的那個人接起來，不然同一個 userId
      在畫面截圖裡會像兩個人。 */
@@ -7389,6 +7825,10 @@ var EV_SAY = {
      （見 firestore.rules），所以連長度都不寫——研究要知道的是
      「他自己來改過一次」，那件事本身就是全部的資訊。 */
   setpw:    function () { return '換了密碼'; },
+  recoverpw: function () { return '用救援碼換了密碼'; },
+  genrecov: function () { return '拿了一組救援碼'; },
+  teacherrecov: function (e) { return '幫「' + (e.account || '') + '」補發了一組救援碼'; },
+  mergeaccount: function (e) { return '把「' + (e.from || '') + '」接回「' + (e.to || '') + '」'; },
   joinclass:function (e) { return '加進「' + e.klass + '」'; },
   newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
   jointeam: function () { return '用代碼加入隊伍'; },
@@ -7408,7 +7848,7 @@ var EV_SAY = {
      所以「哪些種類會被記下來」那一份清單掃不到它們，流水帳上印的一直是
      英文的 kind 本身。
 
-     用老師那一邊的說法（見 70-teacher.js：那一格叫「完成專案」），
+     用老師那一邊的說法（見 70-teacher.js：那一格叫「結案」），
      不用「開門／關門」——門是學生那一頭看到的東西。 */
   exitopen: function () { return '確認他們完成了'; },
   exitshut: function () { return '收回了那個確認'; },
@@ -7477,8 +7917,14 @@ function actRegister(o) {
   }
 
   var salt = newSalt();
+  /* 救援碼：註冊這一刻唯一給得出來的第二把鑰匙。跟密碼一樣只存雜湊，
+     明碼只在這一次回傳裡出現，畫過一次就沒有地方再讀得到
+     （見 58-gate.js 的 PAGES.rgcode）。 */
+  var recov = newRecov();
+  var rsalt = newSalt();
   var u = {
     userId: nid('U'), account: acc, salt: salt, hash: pwHash(pw, salt),
+    recovSalt: rsalt, recovHash: pwHash(recov, rsalt),
     role: o.role || 'student',
     name: nm,
     /* classId／teamId 是「現在坐的那一個座位」，seats 才是全部
@@ -7507,7 +7953,7 @@ function actRegister(o) {
      差別只在畫面上：底下那幾條把「你的隊呢」「全組一份」「誰做哪一件」
      藏起來，因為那幾句話對一個人不成立。 */
   if (RULES.SOLO && u.role === 'student' && kl) actNewTeam(nm, u.userId);
-  return { user: u };
+  return { user: u, recov: recov };
 }
 
 /* 加進一個已經開好的班。
@@ -7547,12 +7993,22 @@ function actLogin(account, pw) {
     return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
   });
   if (!u) return { err: '找不到這個帳號。' };
+  /* 合併過的舊帳號：指一條路過去，不要讓他以為帳號壞了。
+     見 actMergeAccount 跟 CLAUDE.md 2026-09-23 那一段。 */
+  if (u.mergedInto) {
+    var into = userOf(u.mergedInto);
+    return { err: '這個帳號已經合併到「' + (into ? into.account : '另一個帳號') +
+      '」了，用那一個登入。' };
+  }
   /* 這一句本來寫「請研究者重設一次」。重設那一支在研究者變成唯讀的
      時候一起拿掉了（見底下那一段），話卻留著——它叫使用者去找一個
      做不到這件事的人。正常註冊一定會拿到 salt，所以踩得到這一條的
      只有舊資料。 */
   if (!u.salt) return { err: '這個帳號沒有密碼，登不進去。用新的帳號註冊一個。' };
-  if (pwHash(pw, u.salt) !== u.hash) return { err: '密碼不對。' };
+  /* 忘記密碼的人打錯打好幾次看到的都是這一句。指一條路過去——
+     登入頁下面那顆「忘記密碼」講的就是同一件事（見 58-gate.js
+     的 PAGES.forgotpw）。 */
+  if (pwHash(pw, u.salt) !== u.hash) return { err: '密碼不對。忘記的話，下面有一顆「忘記密碼」。' };
   u.lastLogin = now();
   /* 真的人登入 ＝ 這台機器不再只是拿來看示範的。
 
@@ -7651,6 +8107,164 @@ function actSetPw(userId, oldPw, pw) {
   return { user: u };
 }
 
+/* ---------- 補發救援碼 ----------
+
+   救援碼是這個功能上線那一刻才開始給的——在那之前註冊的帳號沒有
+   recovHash。這一支讓已經登入、打得出現在密碼以外的人（也就是
+   本人，正在用著這個帳號的人）自己補一組，不用重新註冊。
+
+   同一支也拿來給已經有救援碼的人換一組新的——邏輯完全一樣，
+   都是「本人現在就在這裡，給他一把新鑰匙」。 */
+function actGenRecov(userId) {
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個人。' };
+  var recov = newRecov();
+  var rsalt = newSalt();
+  u.recovSalt = rsalt;
+  u.recovHash = pwHash(recov, rsalt);
+  save();
+  logEvent('genrecov', { by: u.userId });
+  return { user: u, recov: recov };
+}
+
+/* ---------- 老師幫現場認出來的學生發一組救援碼 ----------
+
+   2026-09-23：「只改得動自己的帳號」那條線上開的第一個、也是唯一
+   一個例外（見 CLAUDE.md 同一天的那一段）。開的理由：已經卡住、
+   從沒補發過救援碼的帳號，本人生不出那把鑰匙——不開這個例外，
+   唯一的路是重新註冊，而那條路上星期真的把一個人的組別跟歷史
+   紀錄弄斷過。
+
+   這一支換的只有救援碼本身，不是密碼：老師發完碼，學生要自己
+   拿那組碼去 actRecoverPw 設一個新密碼，設定過程老師不在場，
+   也不會知道那個新密碼是什麼。老師手上唯一多出來的能力是
+   「幫這個帳號補發一次救援碼」，不是「登入這個帳號」。
+
+   只認自己班上的學生——老師不該碰得到別班的帳號。 */
+function actTeacherRecov(teacherId, account) {
+  var teacher = userOf(teacherId);
+  if (!teacher || teacher.role !== 'teacher') return { err: '只有老師看得到這個功能。' };
+  var u = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
+  });
+  if (!u) return { err: '找不到這個帳號。' };
+  if (u.role !== 'student') return { err: '這個功能只給學生用。' };
+  /* 合併過的帳號沒有人登得進去，發救援碼給它沒有意義——
+     見 actMergeAccount。畫面上的選人清單已經濾掉這種帳號，
+     這裡是資料層再擋一次，不只靠畫面。 */
+  if (u.mergedInto) return { err: '這個帳號已經合併過了，救援碼要發給接回去的那個帳號。' };
+  var mine = seatsOf(teacher).map(function (s) { return s.classId; });
+  if (mine.indexOf(u.classId) < 0) return { err: '這個帳號不在你的班上。' };
+  var recov = newRecov();
+  var rsalt = newSalt();
+  u.recovSalt = rsalt;
+  u.recovHash = pwHash(recov, rsalt);
+  save();
+  /* 記著是哪一位老師發的，不是只記「有人發過」——這是研究資料裡
+     唯一一種「別人幫本人做了一件跟帳號有關的事」，要看得出是誰做的。 */
+  logEvent('teacherrecov', { by: teacher.userId, account: u.account, forUser: u.userId });
+  return { user: u, recov: recov };
+}
+
+/* ---------- 老師把重複註冊的兩個帳號接回同一個人 ----------
+
+   2026-09-23：救援碼上線之前，忘記密碼唯一的路是重新註冊——已經有
+   人這樣做過，現在同一個人手上有兩個帳號：舊帳號（oldAccount）有
+   他之前的隊伍跟紀錄，新帳號（newAccount）是他現在登得進去、
+   自己知道密碼的那一個。
+
+   合併只動一件事：把新帳號在這個班的座位，換成舊帳號原本坐的
+   那一個（同一組，同一份歷史）。密碼、名字、帳號本身都不動——
+   新帳號還是他自己在用，只是從現在起坐回原本那一組。
+
+   舊帳號不刪、salt／hash 也不動——那個 userId 底下每一筆歷史紀錄
+   還在，事件流不能改也不用改。只標一個 mergedInto，讓 actLogin
+   指一條路過去，不讓人以為舊帳號壞了。 */
+function actMergeAccount(teacherId, oldAccount, newAccount) {
+  var teacher = userOf(teacherId);
+  if (!teacher || teacher.role !== 'teacher') return { err: '只有老師看得到這個功能。' };
+  var oldU = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(oldAccount || '').trim().toLowerCase();
+  });
+  var newU = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(newAccount || '').trim().toLowerCase();
+  });
+  if (!oldU || !newU) return { err: '找不到這個帳號。' };
+  if (oldU.userId === newU.userId) return { err: '這是同一個帳號。' };
+  if (oldU.role !== 'student' || newU.role !== 'student') return { err: '這個功能只給學生用。' };
+  var mine = seatsOf(teacher).map(function (s) { return s.classId; });
+  if (mine.indexOf(oldU.classId) < 0 || mine.indexOf(newU.classId) < 0) {
+    return { err: '這兩個帳號要都在你的班上。' };
+  }
+  if (oldU.classId !== newU.classId) return { err: '這兩個帳號不在同一個班上。' };
+  if (oldU.mergedInto) return { err: '這個舊帳號已經合併過了。' };
+  /* 目標（新帳號）不能是一個已經被接走的死帳號——不然隊伍會被接到
+     一個誰都登不進去的 userId 上，畫面上看起來成功了，其實接丟了。
+     畫面上的選人清單已經濾掉這種帳號，這裡是資料層再擋一次。 */
+  if (newU.mergedInto) return { err: '這個新帳號已經合併過了，選現在真的在用的那一個。' };
+  var classId = oldU.classId;
+  var oldTeamId = teamIn(oldU, classId);
+  if (!oldTeamId) return { err: '舊帳號在這個班還沒有隊，沒有東西好接。' };
+
+  /* 新帳號原本坐的那一組（通常是重新註冊當下自動建的空隊）。
+     換完座位之後，如果那一組已經沒有人坐了，跟清空隊一樣的處理
+     ——標 _removed，不整包刪掉（見這學期稍早清空隊那一次）。 */
+  var newTeamId = teamIn(newU, classId);
+  var ss = seatsOf(newU).slice();
+  var seat = null;
+  ss.forEach(function (s) { if (s.classId === classId) seat = s; });
+  if (seat) seat.teamId = oldTeamId; else ss.push({ classId: classId, teamId: oldTeamId });
+  newU.seats = ss;
+  if (newU.classId === classId) newU.teamId = oldTeamId;
+
+  if (newTeamId && newTeamId !== oldTeamId) {
+    var stillIn = where('Users', function (x) { return inTeam(x, newTeamId); }).length;
+    if (!stillIn) {
+      var nt = teamOf(newTeamId);
+      if (nt) { nt.classId = ''; nt._removed = true; }
+    }
+  }
+
+  oldU.mergedInto = newU.userId;
+  save();
+  logEvent('mergeaccount', { by: teacher.userId, from: oldU.account, to: newU.account });
+  return { oldUser: oldU, newUser: newU, teamId: oldTeamId };
+}
+
+/* ---------- 用救援碼找回密碼 ----------
+
+   跟 actSetPw 是同一件事的兩種驗法：一個是「打對現在那一個密碼」，
+   一個是「打對註冊那一刻拿到、只有他自己收著的那組碼」。兩種都是
+   本人才拿得出來的東西，都沒有任何角色（老師、研究者）幫得上忙——
+   救援碼從沒有明碼存進 DB，也沒有任何畫面印得出別人的救援碼。
+
+   用過一次就換一組新的：碼不是密碼，用掉不換的話，任何人撿到那張紙
+   等於永遠握著這個帳號的後門。換完照樣只回傳這一次，畫過就沒了。 */
+function actRecoverPw(account, code, pw) {
+  var u = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
+  });
+  if (!u) return { err: '找不到這個帳號。' };
+  if (!u.recovHash) {
+    return { err: '這個帳號沒有救援碼——它是比這個功能更早註冊的帳號，救不回來。' };
+  }
+  var c = String(code || '').trim().toUpperCase();
+  if (pwHash(c, u.recovSalt) !== u.recovHash) return { err: '救援碼不對。' };
+  var np = String(pw || '');
+  if (np.length < RULES.PW_MIN) return { err: RULES.pwRule() };
+  var salt = newSalt();
+  u.salt = salt;
+  u.hash = pwHash(np, salt);
+  var recov = newRecov();
+  var rsalt = newSalt();
+  u.recovSalt = rsalt;
+  u.recovHash = pwHash(recov, rsalt);
+  save();
+  /* 跟 setpw 一樣：只記「他用救援碼換過」，不記密碼、不記救援碼。 */
+  logEvent('recoverpw', { by: u.userId });
+  return { user: u, recov: recov };
+}
+
 /* ---------- 名冊與身分認領 ----------
    老師先把名冊貼進來（一行一組），學生註冊之後從裡面挑自己是誰。
    這樣系統知道「這個帳號是哪一組的誰」，而且不用學生自己打組名。 */
@@ -7673,6 +8287,15 @@ function newCode() {
   var CH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (var i = 0; i < 6; i++) code += CH[Math.floor(Math.random() * CH.length)];
   return code;
+}
+
+/* 十二個英數字，分三段。這一串不是用唸的——是要他抄下來或截圖收著，
+   所以比加入碼長，分段是為了肉眼對得上、抄的時候不會看丟一段。 */
+function newRecov() {
+  var CH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var s = '';
+  for (var i = 0; i < 12; i++) s += CH[Math.floor(Math.random() * CH.length)];
+  return s.slice(0, 4) + '-' + s.slice(4, 8) + '-' + s.slice(8, 12);
 }
 
 /* 老師自己開班。開完他就在這個班裡，而那六碼是他唸給學生的東西。 */
@@ -7716,7 +8339,7 @@ function actJoinTeam(code, userId) {
     return x.classId === u.classId &&
       String(x.joinCode || '').toUpperCase() === String(code || '').toUpperCase();
   });
-  if (!t) return { err: '找不到這個隊伍代碼。跟隊友確認一次。' };
+  if (!t) return { err: '找不到這個隊伍代碼。重新整理頁面再試一次，或跟隊友確認代碼。' };
   addSeat(u, u.classId, t.teamId);
   save();
   logEvent('jointeam', { teamId: t.teamId });
@@ -7754,7 +8377,7 @@ function exportRuns(classId) {
   var head = ['組別', '專案', '任務', '一趟', '狀態',
     '承諾天數', '實際天數', '判定', '偏差率',
     '把握', '有沒有拆件', '拆幾件', '本人自己按的件數',
-    '順不順', '為什麼', '範圍', '再兩天會做什麼', '東西在哪裡',
+    '順不順', '為什麼', '範圍', '東西在哪裡',
     /* 協商那三個數字要分得開。
 
        本來這裡只有「老師回的天數」與「談完之後的天數」，而後者印的是
@@ -7792,7 +8415,7 @@ function exportRuns(classId) {
           r.est || '', r.actual || '', r.stamp || '',
           dev === '' ? '' : dev.toFixed(3),
           r.sure || '', pl.length ? 'Y' : 'N', pl.length, byOwn,
-          r.feel || '', r.why || '', r.scope || '', r.next || '', r.link || '',
+          r.feel || '', r.why || '', r.scope || '', r.link || '',
           /* 沒拆件就沒有要徑可言（estCalc 是 0），那一欄留空——
              0 會被讀成「算出來是零天」。 */
           r.estCalc || '',
@@ -9768,7 +10391,36 @@ var PATRONS = [
   ['燼眠獸', '炙眠獸', '大半時間是睡的，睡在最燙的那一塊上。', 'kneel', 'lamp'],
   ['熔潛母', '浸熔', '下半身泡在熔漿裡。他說剛剛好。', 'squat', 'lamp'],
   ['焰擬者', '焰摹', '他會照你的動作做一次，但做得比你大。', 'twin', 'crown'],
-  ['炭漲群', '炭群', '你往他那邊走一步，他就燒得更旺。', 'many', 'lamp']
+  ['炭漲群', '炭群', '你往他那邊走一步，他就燒得更旺。', 'many', 'lamp'],
+
+  /* ── 六位新的，各自照世界各地的傳說生物畫（見 14-fauna.js 檔頭） ──
+
+     體型／記號沒有一組跟前面 34 位重複，不然放大也分不出誰是誰。 */
+  ['林踏獸', '林踏', '腳印比誰都大，他自己也不太確定怎麼躲起來的。', 'haul', 'none'],
+  ['沙鳴蟲', '沙鳴', '地面震一下，他就從別的地方冒出來。', 'long', 'none'],
+  ['湖頸母', '沉頸', '水面只看得到他的頭，剩下的都在底下。', 'float', 'drip'],
+  ['赤瞳蛾', '警蛾', '他出現的那幾天，附近總有點不對勁。', 'split', 'eye'],
+  ['林角魔', '雜肢獸', '身上的部件好像來自不同的動物，接得不太整齊。', 'many', 'horn'],
+  ['飲脊獸', '夜飲者', '牲畜棚附近常有他經過的痕跡，沒人真的看清楚過。', 'kneel', 'drip'],
+  ['尖首影', '尖首', '他浮在半空，頭頂那個形狀，沒有人說得準是什麼。', 'float', 'crown'],
+
+  /* ── 再六位，一樣的畫法（見上面那一段） ── */
+  ['雪隱獸', '雪隱', '腳印很大，走沒幾步就被新的雪蓋掉。', 'squat', 'horn'],
+  ['潮糾獸', '潮糾', '他一伸展，水面上會裂出好幾道紋路。', 'swarm', 'eye'],
+  ['橙膚仔', '橙皮仔', '個子很小，眼睛比頭還大一圈。', 'bighead', 'lamp'],
+  ['夜鴞魅', '夜鴞', '翅膀張開的時候，兩顆眼睛才看得清楚。', 'bell', 'eye'],
+  ['夜行褲', '夜行者', '只看得到兩條腿在走，其他部分都不清楚。', 'thread', 'drip'],
+  ['澤鱗獸', '澤鱗', '皮膚濕濕的，蹲在那裡幾乎看不出輪廓。', 'squat', 'eye'],
+
+  /* ── 再五位，補齊每一層四種動法都有（見 19-patron.js 檔頭的 PAT_IDLE） ──
+
+     sway 只有 thread 一種體型會走這條路，所以三位補 sway 的都是
+     thread，靠記號分開；lit／hover 各挑一種沒撞過的體型＋記號。 */
+  ['蛙燈魅', '蛙燈', '他蹲在那裡，肚子那圈會微微亮起來。', 'bell', 'lamp'],
+  ['河潛蟲', '河眠者', '他貼著水面滑過去，只留下一條細細的痕。', 'thread', 'eye'],
+  ['蝠肢獸', '蝠影', '他張開的時候，數不清有幾片翼。', 'many', 'eye'],
+  ['隧鱗蟲', '隧蟲', '他從舊廊道裡鑽出來，鱗片還沾著鐵鏽。', 'thread', 'staff'],
+  ['迷光影', '迷光', '你跟著他走，他就跟著你退開，距離一直不變。', 'thread', 'lamp']
 ];
 
 
@@ -9935,7 +10587,118 @@ var PAT_SAY = {
   '炭群': { ask: '你往前一步，他燒得更旺。', wait: '你一走近，整條路都亮起來。',
     again: '他認得你，先旺了一下。', take: '東西進去，火苗跳了一下就平了。',
     back: '他先旺了一下，然後才要東西。',
-    redo: '他沒有滅，還旺著。' }
+    redo: '他沒有滅，還旺著。' },
+
+  '林踏': { ask: '他把揹著的那堆放下一點，看了你一眼，又揹回去。',
+    wait: '你走近，他往後退了半步，還是站著。',
+    again: '他這次沒有退，只是把揹著的東西挪了挪。',
+    take: '他伸手接過去，動作很輕，跟他的體型不太相稱。',
+    back: '他又揹著新的一堆過來，把東西放到你腳邊。',
+    redo: '他看了一眼，沒有退，等你重新放上去。' },
+  '沙鳴': { ask: '地面震了一下，他就在你腳邊冒出頭。',
+    wait: '你站定，地面又震了一下，這次比較近。',
+    again: '他這次沒有震，直接從你腳邊冒出來。',
+    take: '他用頭頂了一下東西，把它捲進土裡。',
+    back: '地面又震了一下，這次帶著新的一件事。',
+    redo: '他已經在原地等，土都沒有蓋回去。' },
+  '沉頸': { ask: '水面只浮出他的頭，看著你，沒有再往上。',
+    wait: '你到的時候，水面剛好只有一圈波紋。',
+    again: '他這次浮得比較高，看得到肩膀那一段。',
+    take: '他低下頭，用嘴接過去，水順著滴下來。',
+    back: '水面又浮起他的頭，這次帶著新的事。',
+    redo: '他還浮在原地，水紋都還沒散。' },
+  '警蛾': { ask: '他張開那道裂縫，裡面一排眼睛看著你。',
+    wait: '你走近，裂縫裡的眼睛一個一個轉向你。',
+    again: '這次他沒有全部轉過來，只有幾隻眼睛在看。',
+    take: '裂縫合起來一半，接過去之後又慢慢張開。',
+    back: '裂縫又張開了，這次帶著新的一件事。',
+    redo: '裂縫還開著，眼睛都在等你。' },
+  '雜肢獸': { ask: '他伸出其中一節，比劃了一下要你去做的方向。',
+    wait: '他的好幾節同時轉向你，長短不一。',
+    again: '這次只有一節轉過來，其他的還在忙別的。',
+    take: '離你最近的那一節接了過去。',
+    back: '又有一節伸出來，比劃了新的方向。',
+    redo: '同一節還伸著，等你重新交回去。' },
+  '夜飲者': { ask: '他蹲在原地，滴下來的東西在地上積了一小灘。',
+    wait: '你靠近的時候，他抬起頭，沒有動。',
+    again: '他這次蹲得比較低，滴得比較慢。',
+    take: '他伸手接過去，指尖還是濕的。',
+    back: '他又蹲回原位，地上那一小灘又多了一點。',
+    redo: '他還蹲著，那一灘沒有乾。' },
+  '尖首': { ask: '他浮起來一點，頭頂那東西轉向你要走的方向。',
+    wait: '你走近，他浮得比剛才更高，沒有出聲。',
+    again: '這次他沒有升高，只是浮在原地看你。',
+    take: '他伸手接過去，指尖沒有碰到地面。',
+    back: '他又浮起來，頭頂那東西轉向新的方向。',
+    redo: '他還浮在原地，沒有再升高。' },
+
+  '雪隱': { ask: '他往雪地那邊看了一眼，腳印已經開始被蓋掉。',
+    wait: '你到的時候，他的腳印還剩最後幾個。',
+    again: '這次你比雪還快找到他。',
+    take: '他伸手接過去，手上還沾著雪。',
+    back: '他又留下一串腳印，這次比較深。',
+    redo: '腳印還在，沒有被蓋掉。' },
+  '潮糾': { ask: '他伸展了一下，水面裂出好幾道紋路。',
+    wait: '水面的紋路指向他的方向。',
+    again: '這次紋路比較淺，他沒有伸展那麼大。',
+    take: '他收回一截，把東西捲進水裡。',
+    back: '水面又裂開，這次帶著新的一件事。',
+    redo: '紋路還在，他沒有收回去。' },
+  '橙皮仔': { ask: '他那雙比頭還大的眼睛盯著你，沒有說話。',
+    wait: '你蹲下來，他才看得到你的臉。',
+    again: '他這次沒有躲，站得比較前面。',
+    take: '他伸出小小的手，接過去就退了一步。',
+    back: '他又站到你面前，眼睛比上次更亮。',
+    redo: '他站在原地，眼睛還是盯著。' },
+  '夜鴞': { ask: '他張開翅膀，兩顆眼睛這時候才看得清楚。',
+    wait: '你到的時候，他的翅膀還收著。',
+    again: '這次他沒有全部張開，只轉頭看你。',
+    take: '他闔上一半翅膀，用另一邊接過去。',
+    back: '翅膀又張開了，這次帶著新的一件事。',
+    redo: '翅膀還開著，眼睛都在等你。' },
+  '夜行者': { ask: '你只看得到兩條腿，其他都在暗處。',
+    wait: '那兩條腿停在你面前，沒有再往前。',
+    again: '這次它們沒有停，你追上才停下來。',
+    take: '其中一條腿頂了一下東西，收下去了。',
+    back: '兩條腿又出現，這次走得比較快。',
+    redo: '腿還在原地，沒有再走。' },
+  '澤鱗': { ask: '他蹲在濕地裡，皮膚的顏色跟泥差不多。',
+    wait: '你走近才看出他蹲在哪裡。',
+    again: '這次你比較快找到他的輪廓。',
+    take: '他伸手接過去，指縫還是濕的。',
+    back: '他又蹲回原位，這次蹲得更低。',
+    redo: '他還蹲著，位置沒有換。' },
+
+  '蛙燈': { ask: '他肚子那圈亮了一下，像是在催促。',
+    wait: '你到的時候，那圈光剛好暗下去。',
+    again: '這次你一到，光就亮了起來。',
+    take: '他接過去，那圈光跳了一下。',
+    back: '光又亮起來，這次帶著新的一件事。',
+    redo: '光還亮著，沒有暗下去。' },
+  '河眠者': { ask: '水面留下一條細細的痕，指向你要走的方向。',
+    wait: '你到的時候，那條痕跡剛好消失。',
+    again: '這次痕跡還在，比較深。',
+    take: '他滑過來，接過去又貼著水面退開。',
+    back: '水面又留下一條痕，這次比較長。',
+    redo: '痕跡還在，沒有散開。' },
+  '蝠影': { ask: '他張開的時候，你數不清幾片翼在動。',
+    wait: '你到的時候，他收著翼，看不出形狀。',
+    again: '這次他張開得比較快。',
+    take: '其中一片翼接過去，其他還在動。',
+    back: '他又張開，這次翼比較多片在動。',
+    redo: '翼還開著，沒有收回去。' },
+  '隧蟲': { ask: '他從舊廊道鑽出來，鱗片上還沾著鏽。',
+    wait: '你到的時候，廊道口只剩一點鏽屑。',
+    again: '這次他沒有整隻鑽出來，只探出頭。',
+    take: '他用鱗片蹭了一下，把東西捲進廊道。',
+    back: '他又從廊道鑽出來，這次帶著新的鏽屑。',
+    redo: '他還探著頭，沒有縮回去。' },
+  '迷光': { ask: '你往前一步，他退開一步，距離沒有變。',
+    wait: '你停下來，他也停在原來的距離。',
+    again: '這次他退得比較快，但距離還是一樣。',
+    take: '你伸手，他湊近一點點，接過去又退開。',
+    back: '他又出現在同樣的距離，帶著新的一件事。',
+    redo: '距離沒有變，他還在原地等。' }
 };
 
 /* 他這一刻說什麼。查不到就回空字串——呼叫端自己有原本那一句
@@ -11211,7 +11974,7 @@ function planDays(plan) {
    全組一起做的那幾件不算在這裡：它們不屬於任何一個人。 */
 function planWho(plan) { return planSplit(plan).who; }
 
-function actCommit(teamId, msId, est, flags, plan, zone, sure) {
+function actCommit(teamId, msId, est, flags, plan, zone, sure, estU, estN) {
   /* 只開得了自己那一組的。跟 ownRun 同一條理由，只是這一刻還沒有
      run 可以比，所以直接比人身上的 teamId。 */
   var who0 = (typeof S !== 'undefined' && S.who) ? userOf(S.who) : null;
@@ -11221,8 +11984,15 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
   var pl = (plan || []).filter(function (x) { return x && x.n; })
     .slice(0, RULES.STEPS_MAX)
     .map(function (x) {
+      /* 這一件用小時／週填的話，d 是換算過的小數天——跟頂層 est
+         同一條理由（見上面 estU 那一段），不能再用「天」的下限
+         夾回最少 1（見 55-ui.js 的 pland／plandu）。dU／dN 也要跟著
+         存，不然畫面上印得出來的「9 小時」在存完之後就不見了。 */
+      var xu = x.dU || 'd';
       return { n: String(x.n).slice(0, 24),
-        d: clamp(1, RULES.EST_MAX, Number(x.d) || 1),
+        d: (xu !== 'd') ? (Number(x.d) || 1) : clamp(1, RULES.EST_MAX, Number(x.d) || 1),
+        dU: xu,
+        dN: x.dN != null ? Number(x.dN) : (Number(x.d) || 1),
         /* 誰做這一件。回報的時候只有他填得了自己那幾件，
            而他的預估因此終於是「對自己的」預估。 */
         who: String(x.who || ''),
@@ -11252,7 +12022,16 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
     /* 要徑算出來是幾天。跟 est 一樣的時候代表他們沒有改。 */
     estCalc: 算的,
     state: 'running',
-    est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
+    /* 小時／週來的數字已經在 estToDays 裡按各自的範圍夾過一次了
+       （見 55-ui.js 的 ACTS.commit）——這裡的 EST_MIN／EST_MAX 是
+       「天」滑桿的範圍，用小時承諾的話不該被夾回最少 1 天，
+       那正是這個單位存在的意義。 */
+    est: (estU && estU !== 'd') ? (Number(est) || RULES.EST_DEFAULT)
+      : clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
+    /* 他原始講的數字跟單位（見上面 EST_UNITS）——est 一律是天，
+       這兩欄只是讓畫面印得出他真的講的是「8 小時」不是「0.33 天」。 */
+    estU: estU || 'd',
+    estN: estN != null ? Number(estN) : (Number(est) || RULES.EST_DEFAULT),
     plan: pl,
     flags: flags || [],
     /* 這一趟他選的地方。不進判定——判定只讀承諾幾天與實際幾天。
@@ -12074,9 +12853,6 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
      它該被記下來，不該被懲罰。但它必須被記下來，不然那兩個天數
      會在說謊：三天做完可能是因為砍了一半。 */
   if (o.scope) r.scope = ({ more: 1, same: 1, less: 1 })[o.scope] ? o.scope : '';
-  /* 再給兩天會做什麼。老師覺得「可以」的關鍵不是他們做得多好，
-     是他們知道自己做到哪裡。 */
-  if (o.next != null) r.next = String(o.next).slice(0, 200);
   /* 這裡一度有一個 look（他指的那一處）。拿掉了——那一題每一趟都要
      再想一次，而交出去這一段是每一趟都要走的。 */
   /* 我做了什麼。一個人一行，記在自己名下——每個人各自寫，
@@ -12205,6 +12981,38 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
+}
+
+/* 學生承諾的單位。判定讀的 r.est 一律是天（可能帶小數）——這一段
+   只換算輸入的樣子，不碰 RULES.judge／actSubmit 半個字：8 小時的
+   容差本來就會被 RULES.BAND_MIN（最少 1 天）吃掉，跟「承諾 1 天」
+   同一個容差，算出來的準不準沒有差。這裡要解決的不是判定的精細度，
+   是「老師派的用小時、學生卻只能用天」那個不直覺——r.estN／r.estU
+   多記一份他原始講的數字跟單位，畫面優先印那一份，沒有的話
+   （舊資料，或本來就用「天」承諾的）退回印 r.est 天，一個字都不用改。
+
+   2026-09-23 加的。 */
+var EST_UNITS = [
+  { k: 'h', name: '小時', toDays: 1 / 24, min: 1, max: 23, def: 8 },
+  { k: 'd', name: '天',   toDays: 1,      min: RULES.EST_MIN, max: RULES.EST_MAX, def: RULES.EST_DEFAULT },
+  { k: 'w', name: '週',   toDays: 7,      min: 1, max: 3, def: 1 }
+];
+function estUnit(k) {
+  for (var i = 0; i < EST_UNITS.length; i++) if (EST_UNITS[i].k === k) return EST_UNITS[i];
+  return EST_UNITS[1];
+}
+/* 幾小時／幾天／幾週，換成 r.est 用的天數（可能帶小數）。 */
+function estToDays(n, k) {
+  var u = estUnit(k);
+  var q = clamp(u.min, u.max, Number(n) || u.def);
+  return q * u.toDays;
+}
+/* r.est 印成人看得懂的樣子。優先印他當初講的原始數字跟單位。 */
+function estSay(r) {
+  if (r && r.estU && r.estU !== 'd' && r.estN != null) {
+    return r.estN + ' ' + estUnit(r.estU).name;
+  }
+  return (r ? r.est : 0) + ' 天';
 }
 
 /* 老師排的日期還有幾天。沒排回 null。
@@ -12550,6 +13358,19 @@ function actRename(teamId, name) {
   return t;
 }
 
+function actTeamRename(teamId, name) {
+  var t = teamOf(teamId);
+  if (!t) return null;
+  name = String(name || '').trim().slice(0, 20);
+  if (!name) return null;
+  if (t.name === name) return null;
+  var old = t.name;
+  t.name = name;
+  save();
+  logEvent('teamrename', { teamId: teamId, name: name, from: old });
+  return t;
+}
+
 /* 還沒寫過的那幾組先掛這一句。
 
    它不描述任何一組，所以系統沒有替誰下形容詞——它只是一句
@@ -12626,6 +13447,28 @@ function actCancelExit(teamId) {
   t.exitAsk = 0;
   save();
   return t;
+}
+
+/* 老師開放／關掉「我們做完了」這顆鍵。
+
+   2026-09-23 加的：這顆鍵掛在學生常來看的任務清單最下面，一學期
+   裡有大半時間根本還沒到結案的時候，卻整學期都在——不少學生把它
+   當成一般的「交作業」按下去，其實那顆按的是整個專案結束。
+
+   預設關（新班級、舊班級都一樣，DB.Classes 沒有這一欄就是關）：
+   老師在真的要進入結案階段之前，學生那邊連「我們做完了」那一段
+   都看不到，不是看得到但按不下去——不存在的東西不會被誤按。 */
+function actSetExitOpen(classId, teacherId, on) {
+  var teacher = userOf(teacherId);
+  if (!teacher || teacher.role !== 'teacher') return null;
+  var mine = seatsOf(teacher).map(function (s) { return s.classId; });
+  if (mine.indexOf(classId) < 0) return null;
+  var c = find('Classes', function (x) { return x.classId === classId; });
+  if (!c) return null;
+  c.exitOpen = !!on;
+  save();
+  logEvent('setexitopen', { by: teacher.userId, classId: classId, on: c.exitOpen });
+  return c;
 }
 
 /* 老師說「現在還不是時候」。
@@ -12710,13 +13553,16 @@ function keepOffers(runId) {
       : '這一趟你來了 ' + r.pushes + ' 天。'
   });
 
-  /* 二 · 你估得怎麼樣。只有兩個數字跟一段算出來的範圍。 */
+  /* 二 · 你估得怎麼樣。只有兩個數字跟一段算出來的範圍。
+     用小時／週估的話，範圍算出來的兩個端點是換算過的小數天
+     （例如「−0.67 到 1.33 天」），比不寫還誤導——那種時候只講
+     兩個事實的數字，不算範圍。 */
   var b = RULES.band(r.est);
-  out.push({
-    key: 'est',
-    line: '你估 ' + r.est + ' 天，走了 ' + r.actual + ' 天。' +
-          '你自己說的範圍是 ' + Math.max(1, r.est - b) + ' 到 ' + (r.est + b) + ' 天。'
-  });
+  var estLine = (r.estU && r.estU !== 'd' && r.estN != null)
+    ? '你估 ' + estSay(r) + '，走了 ' + r.actual + ' 天。'
+    : '你估 ' + r.est + ' 天，走了 ' + r.actual + ' 天。' +
+      '你自己說的範圍是 ' + Math.max(1, r.est - b) + ' 到 ' + (r.est + b) + ' 天。';
+  out.push({ key: 'est', line: estLine });
 
   /* 三 · 哪一件比你想的久。這是他們在營火自己說的。 */
   var ov = (r.overs || []).map(function (i) { return stepName(runId, i); })
@@ -13785,8 +14631,6 @@ function seed() {
 function dressRuns(cid) {
   var SAID = ['找到人跟排訪談', '約時間跟場地', '逐字稿', '整理成一頁',
     '畫流程圖', '訪談紀錄', '分類那幾張', '寫成一句'];
-  var NEXT = ['再訪一個人，第三份太薄', '把流程圖的虛線補掉',
-    '重排一次訪綱，前面太長', '再看一次分類，有兩類是同一件事'];
   var WHY = ['第二個受訪者臨時改期', '逐字稿比想的久很多',
     '訪綱太長，前兩場都超時', '中間卡在找不到人'];
   var WHERE = ['TronClass 第三次作業', 'TronClass 第二次作業，檔名 G-訪談',
@@ -13856,7 +14700,6 @@ function dressRuns(cid) {
     if (!r.feel) r.feel = ['good', 'ok', 'bad'][h % 3];
     if (!r.why) r.why = WHY[h % WHY.length];
     if (!r.scope) r.scope = ['same', 'same', 'less', 'more'][h % 4];
-    if (!r.next) r.next = NEXT[h % NEXT.length];
     if (!r.link) r.link = WHERE[h % WHERE.length];
 
     /* 每個人各寫的那一行。刻意讓每一組的最後一個人在最新的那一趟
@@ -14073,12 +14916,13 @@ function seen() {
 /* fresh 也算門口那一種：那一顆是「登出之後發現這台不對」才會按的，
    而登出就落在門口。放在這裡同時擋掉一件事——登入著的時候走不到它，
    所以它不可能在做到一半的時候被誤觸（見 58-gate.js 的 PAGES.fresh）。 */
-var GATE_PAGES = { gate: 1, login: 1, reg: 1, fresh: 1 };
+var GATE_PAGES = { gate: 1, login: 1, reg: 1, fresh: 1, forgotpw: 1 };
 /* 分頁標題。開好幾個分頁同時用（老師審核、學生自己那台）的時候，
    瀏覽器的分頁列上原本全部長一樣，選不出哪一個是哪一個。
    短名字就好——這裡不是在講故事，是在講「這是哪一頁」。 */
 var PAGE_TITLE = {
-  gate: '登入', login: '登入', reg: '建立帳號', fresh: '資料不對',
+  gate: '登入', login: '登入', reg: '建立帳號', fresh: '資料不對', forgotpw: '忘記密碼',
+  rgcode: '救援碼', acctrecov: '補發救援碼', acctmerge: '接回帳號',
   mkclass: '開班', myteam: '建隊', me: '你的資料', pw: '換密碼',
   home: '廊道', sign: '認領', commit: '接委託', ask: '委託人',
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
@@ -14089,7 +14933,7 @@ var PAGE_TITLE = {
 };
 function pageTitle(page) {
   var n = PAGE_TITLE[page];
-  return (n ? n + '｜' : '') + '專案地下城';
+  return (n ? n + '｜' : '') + '專案地下城' + (RULES.SOLO ? ' B' : '');
 }
 /* 這兩頁不在側欄上，是路由自己插進來的（見 render）。 */
 var PAGE_ROLE = {
@@ -14098,7 +14942,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher'
 };
 function allowed(u, page) {
@@ -14224,8 +15068,15 @@ function wordBlock(run, cls) {
 function negoLine(r, you) {
   if (!r || !r.askAt) return '';
   var u = r.askBy ? userOf(r.askBy) : null;
-  var first = r.estFirst == null ? r.est : r.estFirst;
-  return '<p class="dim nego">' + (you ? '你說 ' : '他們說 ') + first + ' 天' +
+  /* 「一開始說的」不管談完有沒有改，都是承諾那一刻的那個數字——
+     r.estU／r.estN 記的正是那一刻的原始單位，協商只改 r.est，
+     不會覆蓋這兩欄（見 40-db.js 的 actCommit／actAnswerAsk）。
+     談完最後定的數字一律是天，不用管單位。 */
+  var firstDays = r.estFirst == null ? r.est : r.estFirst;
+  var first = esc(r.estU && r.estU !== 'd' && r.estN != null
+    ? r.estN + ' ' + estUnit(r.estU).name
+    : firstDays + ' 天');
+  return '<p class="dim nego">' + (you ? '你說 ' : '他們說 ') + first +
     '　·　' + esc(u ? u.name : '老師') + ' 說 ' + r.askEst + ' 天' +
     (r.askAns ? '　·　最後 ' + r.est + ' 天' + (r.estFirst == null ? '（維持）' : '')
       : '　·　還沒回') + '</p>';
@@ -14251,6 +15102,17 @@ function render() {
     document.getElementById('app').innerHTML =
       '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
       (S.flash ? flashBar() : '') + PAGES[S.page]() + '</div></div>';
+    return;
+  }
+
+  /* 救援碼：註冊或用救援碼換完密碼，一定會先經過這一頁，不論這個人
+     有沒有班、有沒有隊——跟 mkclass 那一格一樣要放在兩道門前面，
+     不然剛註冊、還沒有隊的學生會被 myteam 攔住，永遠看不到這一頁。 */
+  if (S.page === 'rgcode') {
+    document.title = pageTitle('rgcode');
+    document.getElementById('app').innerHTML =
+      '<div class="main"><div class="wrap' + (S.wipe ? ' wipe' : '') + '">' +
+      (S.flash ? flashBar() : '') + PAGES.rgcode() + '</div></div>';
     return;
   }
 
@@ -14752,9 +15614,17 @@ var ACTS = {
     }
     /* 本來這裡寫 { n, d }——who 整個被丟掉。指派完再調一次天數，
        指派就不見了。 */
+    /* 這一件用什麼單位承諾（見 56-viz.js 的 estStepU、40-db.js 的
+       EST_UNITS）——沒選過就是天，跟以前一模一樣。加減鍵動的是
+       「這個單位底下的原始數字」（dN），d 永遠是換算成天、給
+       planDays 加總用的那一個。 */
+    var pu = estUnit(p[i].dU || 'd');
+    var pn = clamp(pu.min, pu.max, (p[i].dN != null ? p[i].dN : p[i].d) + Number(q[1]));
     p[i] = {
       n: p[i].n,
-      d: clamp(1, RULES.EST_MAX, p[i].d + Number(q[1])),
+      d: estToDays(pn, p[i].dU || 'd'),
+      dU: p[i].dU || 'd',
+      dN: pn,
       who: p[i].who || S.who,
       /* 這一格是不是本人自己按的。他們常常是一起坐著、一台電腦
          規劃的，所以擋不住代填——那就老實記下來，事後分得出
@@ -14763,6 +15633,32 @@ var ACTS = {
          全組一起做的那一件沒有「本人」，所以永遠是 0——不然它會混進
          「本人自己按的件數」那一欄，把個人層的比例灌水。 */
       byOwn: isAll(p[i].who) ? 0 : 1
+    };
+    DRAFT.plan = p;
+    planEstReset();
+    render();
+  },
+
+  /* 換這一件的單位：小時／天／週輪著換。跟 pland 同一條守門——
+     只有掛在你名下的那一件換得動。換單位重設成那個單位的預設值，
+     不是硬把舊數字塞進新單位（8 小時換成週的話變 8 週會很荒謬）。 */
+  plandu: function (i) {
+    var p = (DRAFT.plan || []).slice();
+    var k = Number(i);
+    if (!p[k]) return;
+    if (p[k].who && !isAll(p[k].who) && p[k].who !== S.who) {
+      return say('這一件是 ' + shortWho(p[k].who) + ' 的。');
+    }
+    var order = ['h', 'd', 'w'];
+    var next = order[(order.indexOf(p[k].dU || 'd') + 1) % order.length];
+    var def = estUnit(next).def;
+    p[k] = {
+      n: p[k].n,
+      d: estToDays(def, next),
+      dU: next,
+      dN: def,
+      who: p[k].who || S.who,
+      byOwn: isAll(p[k].who) ? 0 : 1
     };
     DRAFT.plan = p;
     planEstReset();
@@ -14834,6 +15730,14 @@ var ACTS = {
     estLive(n);
   },
 
+  /* 切換承諾要用的單位（見 56-viz.js 的 estStepU）。換單位要重畫
+     ——「天」是按鍵，小時／週是輸入框，不是同一種元件改個數字。 */
+  estunit: function (k) {
+    DRAFT.estU = k;
+    if (DRAFT.estN == null) DRAFT.estN = estUnit(k).def;
+    render();
+  },
+
   /* 承諾的時候標「這一件我覺得會比想的久」 */
   flag: function (k) {
     DRAFT.flags = DRAFT.flags || [];
@@ -14881,22 +15785,22 @@ var ACTS = {
   /* ---- 出口 ---- */
   noop: function () {},
 
-  askexit: function () {
-    actAskExit(myTeam().teamId);
-    go('exit');
-    say('說出去了。');
-  },
-
   cancelexit: function () {
     actCancelExit(myTeam().teamId);
     go('home');
     say('收回來了。');
   },
 
+  /* 第一下只是問，不是說。常來看任務清單的人往下滑到底，
+     這一下不該跟手滑一樣重——真的要說出去要再按一次（見 63-pack.js）。 */
+  exitcheck: function () { DRAFT.exitConfirm = true; render(); },
+  exitundo: function () { DRAFT.exitConfirm = false; render(); },
+
   /* 學生說「我們做完了」。它不開門——門是老師開的。 */
   askexit: function () {
     var t = myTeam();
     if (!actAskExit(t.teamId)) return;
+    DRAFT.exitConfirm = false;
     render(); say('說出去了。');
   },
   unexit: function () {
@@ -14905,13 +15809,22 @@ var ACTS = {
     render(); say('收回來了。');
   },
 
+  /* 老師開放／關掉學生那邊「我們做完了」的入口（見 63-pack.js）。 */
+  exitopenset: function (v) {
+    var u = me();
+    var r = actSetExitOpen(u.classId, S.who, String(v) === '1');
+    if (!r) return say('這個班不是你的。');
+    render();
+    say(r.exitOpen ? '開放了。學生任務清單最下面會出現那顆鍵。' : '關掉了。');
+  },
+
   /* 老師開門／關門。開了學生才點得動廊道上那扇出口。 */
   openexit: function (v) {
     var p = String(v).split(',');
     actOpenExit(p[0], p[1] === '1');
     render();
     /* 這一句是老師按完看到的，所以講老師剛剛做的那件事（見 70-teacher.js
-       的「完成專案」），後半句才講學生那邊會看到什麼。 */
+       的「結案」），後半句才講學生那邊會看到什麼。 */
     say(p[1] === '1' ? '確認了。他們那邊的門開了。' : '收回了。門關回來了。');
   },
 
@@ -14946,9 +15859,13 @@ var ACTS = {
        兩邊算的是同一支 planDays，所以「畫面上寫幾天」跟「承諾幾天」
        不會有機會分岔。 */
     var pl0 = DRAFT.plan || [];
-    var est0 = DRAFT.est != null ? Number(DRAFT.est)
-      : (pl0.length ? planDays(pl0) : RULES.EST_DEFAULT);
-    actCommit(t.teamId, msId, est0, DRAFT.flags || [], pl0, zone, DRAFT.sure);
+    /* 選了小時／週的話，畫面上那個數字是那個單位的，要先換成天
+       （見 40-db.js 的 estToDays）——actCommit 存的 est 一律是天。 */
+    var estU0 = DRAFT.estU || 'd';
+    var est0 = estU0 === 'd'
+      ? (DRAFT.est != null ? Number(DRAFT.est) : (pl0.length ? planDays(pl0) : RULES.EST_DEFAULT))
+      : estToDays(DRAFT.estN, estU0);
+    actCommit(t.teamId, msId, est0, DRAFT.flags || [], pl0, zone, DRAFT.sure, estU0, DRAFT.estN);
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——
@@ -15117,12 +16034,34 @@ var ACTS = {
     go('home', {});
   },
 
-  /* 學生改自己的招牌 */
+  /* 學生改自己的招牌。
+
+     2026-09-23：這兩支本來存完留在 sign 頁（go('sign')），是為了讓
+     組名跟專案名可以一次改完、不用改一個就被彈回首頁再點進來一次。
+
+     可是留在同一頁的代價是沒有畫面上的差異——存之前跟存之後看到的
+     是同一個框、同一段文字，確認全靠一句會自己消失的 flash。
+     真的在課堂上量到：學生看不出「改好了」跟「我根本還沒按到」
+     有什麼不同，會以為專案名沒存到。
+
+     改回 go('home')：存完跳一下，回到首頁再看得到剛剛那個字——
+     「畫面換了」本身就是最直接的確認，比一句會消失的字更難錯過。
+     代價是兩格都要改的人得回招牌頁兩次，但這比「存了卻以為沒存」
+     安全。 */
   rename: function () {
     var t = myTeam();
     var v = (document.getElementById('pj-name') || {}).value || '';
     if (!v.trim()) return say('招牌上總要寫點什麼。');
     if (!actRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
+    go('home');
+    say('改好了。');
+  },
+
+  teamrename: function () {
+    var t = myTeam();
+    var v = (document.getElementById('tm-name') || {}).value || '';
+    if (!v.trim()) return say('組名不能空白。');
+    if (!actTeamRename(t.teamId, v.trim())) return say('跟原本一樣，沒有改到。');
     go('home');
     say('改好了。');
   },
@@ -15322,7 +16261,7 @@ function nextSame(msId, line) {
      est     承諾幾天
      actual  實際幾天（還沒交就傳 pushes，那條會邊走邊長）
      live    true 代表還在走，下面那條不畫判定色 */
-function estBar(est, actual, live) {
+function estBar(est, actual, live, sayLabel) {
   var e = Math.max(1, Number(est) || 1);
   var a = Math.max(0, Number(actual) || 0);
   var b = RULES.band(e);
@@ -15347,9 +16286,12 @@ function estBar(est, actual, live) {
 
   /* 兩個數字。它們是同一條尺上的兩個位置，所以並排寫。 */
   H.push('<div class="eb-n">');
-  H.push('<span class="eb-say-n">說 <b>' + e + '</b></span>');
-  H.push('<span class="eb-go-n">' + (live ? '走到' : '實際') + ' <b>' + a + '</b></span>');
-  H.push('<span class="eb-u">天</span>');
+  /* 尺畫的是天（見上面 e＝Math.max(1,…)，小時／週已經換算過又被夾到
+     最少 1），可是「說」那個數字要印他原始講的——尺可以簡化成
+     最少 1 天寬，文字不行，不然 8 小時會被印成一個看起來像「1 天」
+     的謊。sayLabel 沒給的地方（沒有 r 可用）退回印 e，跟以前一樣。 */
+  H.push('<span class="eb-say-n">說 <b>' + esc(sayLabel != null ? sayLabel : e + ' 天') + '</b></span>');
+  H.push('<span class="eb-go-n">' + (live ? '走到' : '實際') + ' <b>' + a + ' 天</b></span>');
   H.push('</div>');
 
   H.push('</div>');
@@ -15430,8 +16372,15 @@ function barKey() {
 function shapeLine(runId) {
   var s = runShape(runId);
   if (!s) return '';
+  var run = find('Runs', function (x) { return x.runId === runId; });
   var H = ['<div class="shape">'];
-  H.push('<span><b>' + s.est + '</b>你說的天數</span>');
+  /* 小時／週承諾的話，s.est 是換算過的小數天——這裡跟其他量一樣是
+     「數字＋一句描述」的格式，用 estSay 印回他原始講的樣子。 */
+  if (run && run.estU && run.estU !== 'd' && run.estN != null) {
+    H.push('<span><b>' + esc(estSay(run)) + '</b>你說的</span>');
+  } else {
+    H.push('<span><b>' + s.est + '</b>你說的天數</span>');
+  }
   H.push('<span><b>' + s.elapsed + '</b>過了幾天</span>');
   H.push('<span><b>' + s.moved + '</b>你來過</span>');
   if (s.rested) H.push('<span><b>' + s.rested + '</b>你說沒動</span>');
@@ -15522,6 +16471,38 @@ function estStep(est) {
 /* 從 est 按一下 d 之後會停在幾。到頭就停在頭。 */
 function estGo(est, d) {
   return clamp(RULES.EST_MIN, RULES.EST_MAX, (Number(est) || 0) + Number(d));
+}
+
+/* 單位切換 ＋ 承諾要按的那顆數字。老師排期限可以選小時／天／週
+   （見 40-db.js 的 DUE_UNITS），學生承諾卻只有天——那個不對稱
+   是 2026-09-23 的問題：老師派一件「8 小時」的事，學生卻只能說
+   「1 天」，數字對不起來。EST_UNITS 是同一個概念放到學生這一邊。
+
+   單位是「天」的時候，畫面跟按鍵完全沒變（estStep 原封不動）——
+   這一支只在選了小時／週的時候換成一格數字輸入，避免動到
+   estStep／estGo／estLive 那一整套已經被讀 200 輪、六組並行測過
+   的邏輯。 */
+function estStepU(est) {
+  var u = DRAFT.estU || 'd';
+  /* .tags／.tag 是全站在用的那組籤，跟老師排期限選單位同一套
+     （見 70-teacher.js 的 DUE_UNITS 那一段）——不用另外開一組樣式。 */
+  var H = ['<div class="tags">'];
+  EST_UNITS.forEach(function (x) {
+    H.push('<button class="tag' + (u === x.k ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'estunit:' + x.k })) +
+      '\'>' + esc(x.name) + '</button>');
+  });
+  H.push('</div>');
+  if (u === 'd') {
+    H.push(estStep(est));
+  } else {
+    var uu = estUnit(u);
+    var n = draft('estN', uu.def);
+    H.push('<div class="estep"><input type="number" min="' + uu.min +
+      '" max="' + uu.max + '" value="' + esc(n) +
+      '" oninput="DRAFT.estN=this.value"><span class="es-raw-u">' + esc(uu.name) + '</span></div>');
+  }
+  return H.join('');
 }
 
 function estLive(n) {
@@ -15728,12 +16709,12 @@ PAGES.gate = function () {
   var H = ['<div class="gate">'];
   H.push('<div class="gate-box">');
   H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
-  H.push('<h1>專案地下城</h1>');
+  H.push('<h1>專案地下城' + (RULES.SOLO ? ' B' : '') + '</h1>');
   /* 一句話說完這是什麼。不是說明，是招牌上那一行。 */
   /* 招牌上那一行。本來是「化身勇者」——勇者是一個身分，
      而這個世界裡你的身分是「接委託的人」，三拍剛好就是那一圈：
      接下來、說幾天、走完它。 */
-  H.push('<p class="tagline">接下委託，規劃天數，走完專案地下城！！</p>');
+  H.push('<p class="tagline">接下委託，規劃天數，走完專案地下城' + (RULES.SOLO ? ' B' : '') + '！！</p>');
 
   /* 進去那兩顆放在第一屏，不要捲。 */
   H.push('<div class="row">');
@@ -15868,6 +16849,7 @@ PAGES.login = function () {
   H.push('<div class="row">');
   H.push(btn('進去', 'login', 'big'));
   H.push(btn('還沒有帳號', 'go:reg', 'ghost'));
+  H.push(btn('忘記密碼', 'go:forgotpw', 'ghost'));
   /* 這一台的資料不對的時候的那條路（見 PAGES.fresh）。
 
      ── 它不再印給學生看 ──
@@ -15941,6 +16923,96 @@ PAGES.login = function () {
     H.push('<p class="dim">帳號就是名字旁邊那一串，密碼都是 ' + DEMO_PW + '。</p>');
     H.push('</div>');
   }
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* ---------- 忘記密碼 ----------
+
+   沒有信箱、沒有後端，「打對現在那一個密碼」以外唯一驗得出「是本人」
+   的東西，是註冊那一刻給的救援碼（見 15-auth.js 的 actRecoverPw）。
+   有這組碼就救得回來；沒有——帳號是這個功能上線前註冊的，或碼真的
+   弄丟了——那就真的救不回來，只能重新註冊。
+
+   兩條路都要講清楚，不能讓人以為這一頁一定救得回來。 */
+PAGES.forgotpw = function () {
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('忘記密碼', '有救援碼就救得回來', ''));
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">用救援碼換新密碼</div>');
+  H.push('<p class="dim">註冊那一刻給過你一組碼，抄下來或截圖收著的那一組。</p>');
+  H.push('<input id="fp-acc" value="' + esc(draft('fp-acc')) + '" placeholder="帳號">');
+  H.push('<input id="fp-code" value="' + esc(draft('fp-code')) + '" placeholder="救援碼，例：KX7M-3PQR-9WZT">');
+  H.push('<input id="fp-pw" type="password" placeholder="新密碼，' + esc(RULES.pwRule()) + '">');
+  H.push('<input id="fp-pw2" type="password" placeholder="新密碼，再輸入一次">');
+  H.push(btn('換新密碼', 'recoverpw', 'big'));
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">沒有救援碼</div>');
+  H.push('<p>先問老師能不能幫你補發一組——老師看得到你的帳號、' +
+    '補得出救援碼，但看不到、也不會碰到你的密碼本身。' +
+    '真的找不到老師，或這個帳號真的已經救不回來，' +
+    '才重新註冊一個新帳號，再回去找老師說一聲你是哪一位。</p>');
+  H.push('</div>');
+
+  H.push('<div class="row">');
+  H.push(btn('重新註冊', 'go:reg', 'ghost'));
+  H.push(btn('回登入', 'go:login', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+ACTS.recoverpw = function () {
+  var acc = (document.getElementById('fp-acc') || {}).value || '';
+  var code = (document.getElementById('fp-code') || {}).value || '';
+  var pw = (document.getElementById('fp-pw') || {}).value || '';
+  var pw2 = (document.getElementById('fp-pw2') || {}).value || '';
+  if (pw !== pw2) {
+    DRAFT['fp-acc'] = acc; DRAFT['fp-code'] = code;
+    return say('兩次密碼不一樣。再輸入一次。');
+  }
+  var r = actRecoverPw(acc, code, pw);
+  if (r.err) {
+    DRAFT['fp-acc'] = acc; DRAFT['fp-code'] = code;
+    return say(r.err);
+  }
+  /* 跟註冊一樣：直接登進去，但先看新的救援碼再往下走。 */
+  S.who = r.user.userId;
+  DB.Session = r.user.userId;
+  save();
+  go('rgcode', { recov: r.recov });
+};
+
+/* ---------- 救援碼：註冊完只畫這一次 ----------
+
+   密碼救不回來，但救援碼可以——前提是他這一刻把它收好。系統自己
+   只存雜湊，這一頁是它唯一被印成明碼的地方，離開這一頁之後系統
+   自己也讀不到它了。所以這裡不接受「先跳過」：按下去才算看過。 */
+PAGES.rgcode = function () {
+  /* 老師幫學生補發的那一組，畫面上要講清楚這串碼是給誰的、
+     不是老師自己的——不然老師會以為這是他自己帳號的救援碼。 */
+  var forAcc = S.p.forAccount;
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('救援碼', forAcc ? '抄給本人，不要自己留著' : '收好它，這是密碼救不回來時唯一的路', ''));
+  H.push('<div class="card">');
+  if (forAcc) {
+    H.push('<div class="eyebrow">給「' + esc(forAcc) + '」的救援碼</div>');
+    H.push('<p class="quote big recov-code">' + esc(S.p.recov || '') + '</p>');
+    H.push('<p class="warn-block">把這組碼交給本人，讓他自己去「忘記密碼」換新密碼——' +
+      '你不會看到他換成什麼。這一頁離開之後，系統自己也讀不到這串碼了。</p>');
+  } else {
+    H.push('<div class="eyebrow">忘記密碼的時候，用這一組碼自己換新密碼</div>');
+    H.push('<p class="quote big recov-code">' + esc(S.p.recov || '') + '</p>');
+    H.push('<p class="warn-block">拍下來或抄下來，收在密碼以外的地方。' +
+      '弄丟它，跟忘記密碼一樣，這個帳號就救不回來了。</p>');
+  }
+  H.push('</div>');
+  H.push('<div class="row">');
+  H.push(btn('我收好了，繼續', 'rgcodeok', 'big'));
+  H.push('</div>');
   H.push('</div></div>');
   return H.join('');
 };
@@ -16099,7 +17171,7 @@ PAGES.mkclass = function () {
   if (u.role === 'teacher') {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">' + (ss.length ? '再開一個班' : '開一個班') + '</div>');
-    H.push('<input id="mk-name" value="" placeholder="' +
+    H.push('<input id="mk-name" value="' + esc(draft('mk-name')) + '" oninput="DRAFT[\'mk-name\']=this.value" placeholder="' +
       esc('例：114-1 畢業專題') + '">');
     H.push('<p class="dim">開好會給你一組六碼。學生跟另外幾位老師都用那組碼建帳號。</p>');
     H.push(btn('開班', 'mkclass', 'big'));
@@ -16137,7 +17209,7 @@ PAGES.myteam = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">建一隊</div>');
-  H.push('<input id="mk-team" value="" placeholder="' + esc('隊名，例：第三組') + '">');
+  H.push('<input id="mk-team" value="' + esc(draft('mk-team')) + '" oninput="DRAFT[\'mk-team\']=this.value" placeholder="' + esc('隊名，例：第三組') + '">');
   H.push('<p class="dim">建好會給你一組六碼，唸給隊友。</p>');
   H.push(btn('建立', 'mkteam', 'big'));
   H.push('</div>');
@@ -16211,7 +17283,19 @@ ACTS.reg = function () {
     DRAFT['rg-name'] = o.name;
     return say(r.err);
   }
-  signIn(r.user);
+  /* 跟 signIn 做一樣的事（登進去、記這台機器不再是示範狀態），
+     但不像 signIn 直接送去首頁——先送去救援碼那一頁，逼他看過
+     那組碼再往下走。 */
+  S.who = r.user.userId;
+  DB.Session = r.user.userId;
+  save();
+  go('rgcode', { recov: r.recov });
+};
+
+ACTS.rgcodeok = function () {
+  var u = me();
+  if (!u) return go('gate');
+  go(homeFor(u));
   say('帳號好了。');
 };
 
@@ -16232,7 +17316,8 @@ ACTS.asdemo = function (acc) {
 ACTS.mkclass = function () {
   var n = (document.getElementById('mk-name') || {}).value || '';
   var r = actNewClass(n, S.who);
-  if (r.err) return say(r.err);
+  if (r.err) { DRAFT['mk-name'] = n; return say(r.err); }
+  DRAFT['mk-name'] = '';
   go(homeFor(userOf(S.who)));
   say('開好了。把加入碼唸給學生跟另外幾位老師。');
 };
@@ -16251,7 +17336,22 @@ ACTS.sit = function (classId) {
 ACTS.joinclass = function () {
   var c = (document.getElementById('jc-code') || {}).value || '';
   var r = actJoinClass(S.who, c);
-  if (r.err) { DRAFT['jc-code'] = c; return say(r.err); }
+  if (r.err) {
+    if (!ACTS.joinclass._retried) {
+      ACTS.joinclass._retried = 1;
+      say('正在找⋯⋯');
+      setTimeout(function () {
+        ACTS.joinclass._retried = 0;
+        var r2 = actJoinClass(S.who, c);
+        if (r2.err) { DRAFT['jc-code'] = c; say(r2.err); }
+        else { go(homeFor(userOf(S.who))); say('加進「' + r2.klass.name + '」了。'); }
+      }, 2000);
+      return;
+    }
+    ACTS.joinclass._retried = 0;
+    DRAFT['jc-code'] = c;
+    return say(r.err);
+  }
   go(homeFor(userOf(S.who)));
   say('加進「' + r.klass.name + '」了。');
 };
@@ -16260,7 +17360,8 @@ ACTS.joinclass = function () {
 ACTS.mkteam = function () {
   var n = (document.getElementById('mk-team') || {}).value || '';
   var r = actNewTeam(n, S.who);
-  if (r.err) return say(r.err);
+  if (r.err) { DRAFT['mk-team'] = n; return say(r.err); }
+  DRAFT['mk-team'] = '';
   go('who');
   /* 代碼要寫在這一句裡面。
 
@@ -16274,11 +17375,28 @@ ACTS.mkteam = function () {
   say('隊伍建好了。代碼 ' + r.team.joinCode + '，唸給隊友。');
 };
 
-/* 學生用代碼加入。 */
+/* 學生用代碼加入。
+   找不到的時候等兩秒再試一次：教室裡二十幾台同時上線，建隊那一筆
+   可能還在路上。只重試一次——真的打錯了就不要讓他一直等。 */
 ACTS.jointeam = function () {
   var c = (document.getElementById('jn-code') || {}).value || '';
   var r = actJoinTeam(c, S.who);
-  if (r.err) { DRAFT['jn-code'] = c; return say(r.err); }
+  if (r.err) {
+    if (!ACTS.jointeam._retried) {
+      ACTS.jointeam._retried = 1;
+      say('正在找⋯⋯');
+      setTimeout(function () {
+        ACTS.jointeam._retried = 0;
+        var r2 = actJoinTeam(c, S.who);
+        if (r2.err) { DRAFT['jn-code'] = c; say(r2.err); }
+        else { go('who'); say('進來了。'); }
+      }, 2000);
+      return;
+    }
+    ACTS.jointeam._retried = 0;
+    DRAFT['jn-code'] = c;
+    return say(r.err);
+  }
   go('who');
   say('進來了。');
 };
@@ -16348,6 +17466,39 @@ PAGES.me = function () {
   H.push(btn('換密碼', 'go:pw', ''));
   H.push('</div>');
 
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">救援碼</div>');
+  if (u.recovHash) {
+    H.push('<p class="dim">你已經有一組救援碼。忘記密碼的時候，' +
+      '用它就能自己換一個新密碼，不用重新註冊、不會弄丟組別跟紀錄。</p>');
+    H.push(btn('換一組新的', 'genrecov', ''));
+  } else {
+    /* 這個帳號是救援碼上線之前註冊的，沒有這組碼——這一格要比
+       換密碼那一格顯眼，因為少了它，忘記密碼就真的救不回來了。 */
+    H.push('<p class="warn-block">你的帳號還沒有救援碼。' +
+      '一旦忘記密碼，現在唯一的路是重新註冊——組別跟之前的紀錄接不回來。</p>');
+    H.push(btn('產生救援碼', 'genrecov', ''));
+  }
+  H.push('</div>');
+
+  /* 只有老師看得到——幫現場認出來的學生補發救援碼（見 15-auth.js
+     的 actTeacherRecov 跟 CLAUDE.md 2026-09-23 那一段）。 */
+  if (u.role === 'teacher') {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">幫學生補發救援碼</div>');
+    H.push('<p class="dim">學生忘記密碼、又沒有救援碼的時候，' +
+      '你能幫他補發一組——你只會看到這組碼，不會看到他換成什麼密碼。</p>');
+    H.push(btn('幫學生補發', 'go:acctrecov', ''));
+    H.push('</div>');
+
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">接回重複註冊的帳號</div>');
+    H.push('<p class="dim">學生忘記密碼、以前只能重新註冊，' +
+      '現在手上有兩個帳號的話，這裡幫他把舊帳號的隊伍接回現在在用的帳號。</p>');
+    H.push(btn('接回', 'go:acctmerge', ''));
+    H.push('</div>');
+  }
+
   H.push('<div class="row">');
   H.push(btn('回去', 'go:' + homeFor(u), 'ghost'));
   H.push('</div>');
@@ -16368,14 +17519,11 @@ PAGES.pw = function () {
   H.push('<div class="eyebrow">現在的密碼</div>');
   H.push('<input id="pw-old" type="password" placeholder="' +
     esc('你現在在用的那一個') + '">');
-  /* 換完還是救不回來。這句話要在他按下去之前就看到——
-     這一版沒有「忘記密碼」那條路，而那是設計選的，不是漏的
-     （理由見 firestore.rules 與 75-research.js 的檔頭）。
-
-     搬到新密碼欄位前面、換上跟建立帳號那一頁一樣的警語樣式——
+  /* 換完記不記得住，關係到救不救得回來。這句話要在他按下去之前就
+     看到——搬到新密碼欄位前面、換上跟建立帳號那一頁一樣的警語樣式，
      這句的後果一樣重，不該因為在哪一頁而看起來比較不起眼。 */
-  H.push('<p class="warn-block">換完要記得。這裡沒有「忘記密碼」那條路，' +
-    '忘了就只能用新的帳號重來。</p>');
+  H.push('<p class="warn-block">換完要記得。忘記的話，有救援碼才救得回來——' +
+    '沒有救援碼就只能重新註冊，組別跟紀錄接不回來（見「你的資料」）。</p>');
   H.push('<div class="eyebrow">新的密碼</div>');
   H.push('<input id="pw-new" type="password" placeholder="' +
     esc(RULES.pwRule()) + '">');
@@ -16392,6 +17540,154 @@ PAGES.pw = function () {
   H.push('</div>');
   H.push('</div></div>');
   return H.join('');
+};
+
+/* 老師這一班的學生，一人一顆——跟派任務「發給誰」同一種選法
+   （見 70-teacher.js 的 teams.forEach 那一段）。名字寫大字，
+   帳號跟在底下當小字：點的時候認的是名字，帳號只是拿去比對。 */
+function studentTags(classId, act, picked) {
+  /* 合併過的舊帳號不列進來——它跟被接回去的新帳號通常同名（本來就是
+     同一個人重複註冊），留著只會讓老師選錯，選到一個誰都登不進去、
+     接了隊伍也沒有意義的死帳號（見 15-auth.js 的 actMergeAccount）。 */
+  var stu = where('Users', function (x) {
+    return x.role === 'student' && x.classId === classId && !x.mergedInto;
+  }).sort(function (a, b) { return a.name === b.name ? 0 : (a.name < b.name ? -1 : 1); });
+  if (!stu.length) return '<p class="dim">這一班還沒有學生。</p>';
+  var H = ['<div class="tags">'];
+  stu.forEach(function (x) {
+    H.push('<button class="tag' + (picked === x.account ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: act + ':' + x.account })) +
+      '\'>' + esc(x.name) +
+      '<small style="display:block;opacity:.6;font-size:22px">' + esc(x.account) + '</small>' +
+      '</button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 老師幫學生補發救援碼 ----------
+
+   選完人不是直接發：補發會把這個帳號原本那組救援碼直接作廢
+   （見 15-auth.js 的 actTeacherRecov），如果他其實已經有一組能用的，
+   等於白白燒掉一把還有效的鑰匙。跟接回帳號一樣先問一次再做。 */
+PAGES.acctrecov = function () {
+  var u = me();
+  if (!u || u.role !== 'teacher') return PAGES.gate();
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('幫學生補發救援碼', '點一位學生', ''));
+
+  if (DRAFT.arConfirm && DRAFT.arAcc) {
+    var picked = find('Users', function (x) { return x.account === DRAFT.arAcc; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow warnx">確定嗎</div>');
+    if (picked && picked.recovHash) {
+      H.push('<p class="dim">「' + esc(picked ? picked.name : DRAFT.arAcc) + '」（' + esc(DRAFT.arAcc) +
+        '）已經有一組救援碼——補發會讓那一組直接失效，換成新的這一組。</p>');
+    } else {
+      H.push('<p class="dim">幫「' + esc(picked ? picked.name : DRAFT.arAcc) + '」（' + esc(DRAFT.arAcc) +
+        '）發一組新的救援碼。</p>');
+    }
+    H.push(btn('對，發給他', 'acctrecov', 'big'));
+    H.push(btn('還沒，再檢查一次', 'arundo', 'ghost'));
+    H.push('</div>');
+  } else {
+    H.push('<div class="card">');
+    H.push('<p class="dim">發完把碼交給他本人，讓他自己去「忘記密碼」換新密碼。</p>');
+    H.push(studentTags(u.classId, 'arpick', DRAFT.arAcc));
+    H.push('</div>');
+    if (DRAFT.arAcc) {
+      H.push('<div class="row">');
+      H.push(btn('幫「' + DRAFT.arAcc + '」發救援碼', 'archeck', 'big'));
+      H.push('</div>');
+    }
+  }
+  H.push('<div class="row">');
+  H.push(btn('回去', 'go:me', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+ACTS.arpick = function (acc) { DRAFT.arAcc = acc; render(); };
+ACTS.archeck = function () { DRAFT.arConfirm = true; render(); };
+ACTS.arundo = function () { DRAFT.arConfirm = false; render(); };
+
+ACTS.acctrecov = function () {
+  var r = actTeacherRecov(S.who, DRAFT.arAcc);
+  if (r.err) return say(r.err);
+  go('rgcode', { recov: r.recov, forAccount: r.user.account });
+};
+
+/* ---------- 老師把重複註冊的兩個帳號接回同一個人 ----------
+
+   跟補發救援碼一樣點名字選，不用打帳號——選錯人的防線不是靠打字
+   這一關，是靠底下那張「確定嗎」：兩個名字都攤開來，按下去之前
+   還有一次看清楚的機會（見 ACTS.acctmergecheck 下面那一段）。 */
+PAGES.acctmerge = function () {
+  var u = me();
+  if (!u || u.role !== 'teacher') return PAGES.gate();
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('接回重複註冊的帳號', '把舊帳號的隊伍接到現在在用的帳號', ''));
+
+  /* 二次確認：這是這次會話新加的功能裡風險最高的一個動作——
+     一按下去就換掉一個帳號的隊伍歸屬，還可能連帶收掉一支隊，
+     而且沒有回頭路（跟救援碼不一樣，救援碼按錯了最多是白發一組
+     沒有人用的碼；這裡按錯是真的把人接錯隊）。跟「我們做完了」
+     同一個道理，只是這裡風險更高，用同一套先問後做的樣式。 */
+  if (DRAFT.mergeConfirm) {
+    var oldU = find('Users', function (x) { return x.account === DRAFT.amOld; });
+    var newU = find('Users', function (x) { return x.account === DRAFT.amNew; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow warnx">確定嗎</div>');
+    H.push('<p class="dim">「' + esc(newU ? newU.name : DRAFT.amNew) + '」（' + esc(DRAFT.amNew) +
+      '）現在坐的那一組，會換成「' + esc(oldU ? oldU.name : DRAFT.amOld) + '」（' + esc(DRAFT.amOld) +
+      '）原本那一組跟那些紀錄。如果「' + esc(DRAFT.amNew) + '」原本那一組沒有別人，' +
+      '那一組會被收掉。按下去之前，再確認一次這兩個是不是同一個人。</p>');
+    H.push(btn('對，接回去', 'acctmerge', 'big'));
+    H.push(btn('還沒，再檢查一次', 'acctmergeundo', 'ghost'));
+    H.push('</div>');
+  } else {
+    H.push('<div class="card">');
+    H.push('<p class="dim">兩邊都要跟本人當面對過，不是憑印象選。</p>');
+    H.push('<div class="eyebrow">舊帳號　有隊伍跟紀錄的那一個</div>');
+    H.push(studentTags(u.classId, 'ampickold', DRAFT.amOld));
+    H.push('<div class="eyebrow" style="margin-top:14px">新帳號　他現在登入用的那一個</div>');
+    H.push(studentTags(u.classId, 'ampicknew', DRAFT.amNew));
+    if (DRAFT.amOld && DRAFT.amNew) H.push(btn('接回', 'acctmergecheck', 'big'));
+    H.push('</div>');
+  }
+  H.push('<div class="row">');
+  H.push(btn('回去', 'go:me', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+ACTS.ampickold = function (acc) { DRAFT.amOld = acc; render(); };
+ACTS.ampicknew = function (acc) { DRAFT.amNew = acc; render(); };
+
+ACTS.acctmergecheck = function () {
+  var oldAcc = DRAFT.amOld, newAcc = DRAFT.amNew;
+  if (!oldAcc || !newAcc) return say('兩個帳號都要選。');
+  if (oldAcc === newAcc) return say('這是同一個帳號，選別的。');
+  DRAFT.mergeConfirm = true;
+  render();
+};
+ACTS.acctmergeundo = function () { DRAFT.mergeConfirm = false; render(); };
+
+ACTS.acctmerge = function () {
+  var r = actMergeAccount(S.who, DRAFT.amOld, DRAFT.amNew);
+  if (r.err) { DRAFT.mergeConfirm = false; return say(r.err); }
+  go('me');
+  say('接回去了。「' + r.newUser.account + '」現在坐著「' + r.oldUser.account + '」原本那一組。');
+};
+
+ACTS.genrecov = function () {
+  var r = actGenRecov(S.who);
+  if (r.err) return say(r.err);
+  /* 跟註冊一樣：先看過再往下走，不是用 say() 一閃而過——
+     這串碼只有這一次看得到，flash 訊息留不住它。 */
+  go('rgcode', { recov: r.recov });
 };
 
 ACTS.setname = function () {
@@ -16726,11 +18022,15 @@ function runStrip(t, bare) {
     H.push('<button class="rs ' + r.stamp + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'rec:' + r.runId })) + '\' title="' +
       esc((x.ms ? x.ms.title : '') + '　' + (mob ? mob.n : '') +
-        '　說 ' + r.est + '　實際 ' + (r.actual || 0) + ' 天') + '">');
+        '　說 ' + estSay(r) + '　實際 ' + (r.actual || 0) + ' 天') + '">');
     H.push(pxTag(mob ? mob.px : [], z.pal, 'rs-px'));
     H.push(runTiles(r.runId));
+    /* 這格太小放不下單位字，印他原始講的數字就好（8 小時印「8」，
+       不是換算過的 0.33）——跟 tooltip 裡完整的「8 小時」是同一件事，
+       只是這裡沒有空間寫單位。 */
     H.push('<span class="rs-s">' + stampPx(r.stamp) +
-      '<i>' + r.est + '<u>→</u>' + (r.actual || 0) + '</i></span>');
+      '<i>' + (r.estU && r.estU !== 'd' && r.estN != null ? r.estN : r.est) +
+      '<u>→</u>' + (r.actual || 0) + '</i></span>');
     H.push('</button>');
   });
   H.push('</div></div>');
@@ -17050,14 +18350,21 @@ function actionCard(t, next, st) {
 
        按鈕也從「要花幾天」換成「去見他」——你進去是去見一個人，
        說幾天是見到之後的事。 */
-    H.push('<p class="waiting">有人在等這一件。</p>');
+    H.push('<p class="waiting">有任務發來了。</p>');
     H.push(btn('去見他', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'doing') {
     H.push(doingCard(t, row, st));
-    /* 老師又派了幾個。小小地說一聲就好——手上這一趟做完才輪到它們。 */
+    /* 老師又派了幾個。原本是一句灰字，量出來的樣子是「完全看不到，
+       連知道都不知道」——手上這一趟做完才輪到它們沒變，但學生要
+       查得到那幾件叫什麼名字，不是只知道一個數字。借老師端「剛承諾」
+       那顆通知banner同一種樣式（見 70-teacher.js 的 asknote），
+       點下去帶去任務清單，那幾件已經在裡面（狀態「還沒說幾天」）。 */
     if (next.more) {
-      H.push('<p class="dim">老師又派了 ' + next.more + ' 個。做完這一趟才輪到。</p>');
+      H.push('<button class="asknote pressable" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'go:pack' })) + '\'>' +
+        '<b>老師又派了 ' + next.more + ' 個</b>' +
+        '<i>做完這一趟才輪到，先去任務清單看看叫什麼</i></button>');
     }
 
   } else if (next.kind === 'stamped') {
@@ -17209,12 +18516,17 @@ function sceneCap(t, next, st) { return ''; }
 PAGES.sign = function () {
   var t = myTeam();
   var sg = signOf(t.teamId);
-  var H = [head('專案名', '這個專案叫什麼', '')];
+  var H = [head('招牌', '組名跟專案名', '')];
   H.push('<div class="card"><div class="fa-in">');
   /* 同廊道口那一塊：套當層的顏色（見 61-scene.js 的 sceneMouth）。
      這一頁就是點招牌進來的，兩邊要是同一塊牌子。 */
   H.push(pxTag(sg.px, zoneNow(t.teamId).pal, 'fa-px'));
   H.push('<div>');
+  H.push('<div class="eyebrow">組名</div>');
+  H.push('<input id="tm-name" value="' + esc(t.name || '') +
+         '" placeholder="' + esc('你們這一組叫什麼') + '">');
+  H.push(btn('改組名', 'teamrename', ''));
+  H.push('<div class="eyebrow" style="margin-top:14px">專案名</div>');
   H.push('<input id="pj-name" value="' + esc(t.project || '') +
          '" placeholder="' + esc('這個專案叫什麼') + '">');
   H.push('<div class="row">');
@@ -17430,6 +18742,7 @@ PAGES.commit = function () {
   if (st === 2) {
 
   /* 兩顆鍵先，底下那根尺跟走廊都跟著它動。 */
+  var cmU = DRAFT.estU || 'd';
   H.push('<div class="card">');
   /* 老師排到哪一天。他排的是課程的排程，不是判定——所以這裡只寫
      事實，不寫「你來不及了」那種話。走廊上那條線畫的是同一件事。 */
@@ -17444,7 +18757,7 @@ PAGES.commit = function () {
   /* 兩種都給那兩顆鍵。拆了件只是先幫他算一個起點——
      那個數字是他要承諾的，所以最後一定要按得動（見上面 est 那一段）。 */
   if (plan.length) {
-    H.push(estStep(est));
+    H.push(estStepU(est));
     /* 這個數字是誰說的，取決於上一步有沒有拆件。
 
        拆了　　它是每一件加起來的，而每一件的天數只有本人按得動
@@ -17495,7 +18808,7 @@ PAGES.commit = function () {
        改 DOM）——兩邊要讀同一支，不然按完數字變了、這一句還停在舊的。 */
     H.push('<p class="dim es-why">' + estWhy(plan, est) + '</p>');
   } else {
-    H.push(estStep(est));
+    H.push(estStepU(est));
     /* 沒拆件：這個數字就是這一頁上唯一寫得了的東西之一，而它是組的。
        所以標記掛在這裡，底下把握那一格就不再掛（見下面）。 */
     H.push(whoTag('team', '拆件的話，天數會變成每個人各自說的', '這個數字'));
@@ -17506,11 +18819,18 @@ PAGES.commit = function () {
 
      本來是三張卡——三張卡量的是同一個單位，等於叫使用者自己
      在腦袋裡把它們疊起來。 */
-  var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
-  H.push(estAxis(est, past.reverse()));
-  /* 拉到幾就亮幾格，擋路的那一隻站在盡頭。
-     承諾是這裡唯一有阻力的選擇，它不該長得像填表。 */
-  H.push(estWalk(t, m, est));
+  /* 這兩塊是天的尺——過去幾趟、準的範圍、走廊格數，全部照著
+     1–21 天畫。選了小時／週的時候 est 是換算過的小數天（例如
+     8 小時＝0.33 天），畫在同一根尺上只會變成一格幾乎貼底的線，
+     看起來像壞掉。選了「天」以外的單位就不畫這兩塊，等他選回
+     「天」再出現，不要硬畫一個誤導的版本。 */
+  if (cmU === 'd') {
+    var past = runsFor(t.teamId).filter(function (x) { return x.run.stamp; }).slice(-3);
+    H.push(estAxis(est, past.reverse()));
+    /* 拉到幾就亮幾格，擋路的那一隻站在盡頭。
+       承諾是這裡唯一有阻力的選擇，它不該長得像填表。 */
+    H.push(estWalk(t, m, est));
+  }
   H.push('</div>');
 
   } else {
@@ -17556,14 +18876,24 @@ PAGES.commit = function () {
           esc(JSON.stringify({ a: 'planwho:' + i })) + '\' title="' +
           esc('點一下換人') + '">' + esc(shortWho(x.who)) + '</button>');
       }
+      /* 這一件的原始數字：選過單位的印那個單位的數字，沒選過的
+         （舊資料、或本來就用天填的）印 x.d，一個字都不用變。 */
+      var xn = (x.dU && x.dU !== 'd' && x.dN != null) ? x.dN : x.d;
       if (own) {
         H.push('<button class="pd" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'pland:' + i + ',-1' })) + '\'>−</button>');
-        H.push('<u' + (x.byOwn ? '' : ' class="wait"') + '>' + x.d + '</u>');
+        H.push('<u' + (x.byOwn ? '' : ' class="wait"') + '>' + xn + '</u>');
         H.push('<button class="pd" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'pland:' + i + ',1' })) + '\'>＋</button>');
+        /* 單位：跟總天數那一格同一套（小時／天／週），這裡空間窄，
+           用一顆會輪著換的小鍵，不是三顆並排的籤（見 55-ui.js 的
+           plandu）。 */
+        H.push('<button class="pu" data-act="run" data-p=\'' +
+          esc(JSON.stringify({ a: 'plandu:' + i })) + '\' title="換單位">' +
+          esc(estUnit(x.dU || 'd').name) + '</button>');
       } else {
-        H.push('<u class="got' + (x.byOwn ? '' : ' wait') + '">' + x.d + '</u>');
+        H.push('<u class="got' + (x.byOwn ? '' : ' wait') + '">' + xn + '</u>');
+        H.push('<span class="pu-fix">' + esc(estUnit(x.dU || 'd').name) + '</span>');
       }
       H.push('<button class="px-del" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'plandel:' + i })) + '\' title="' +
@@ -17575,7 +18905,8 @@ PAGES.commit = function () {
        不在，整組就走不了。只是說出來，讓他們自己決定要不要等。 */
     if (waiting) {
       H.push('<p class="dim">還有 ' + waiting +
-        ' 件沒有本人說幾天。出發前讓他們自己按一次，那個數字才是他的。</p>');
+        ' 件沒有本人說幾天。出發前讓他們自己按一次，那個數字才是他的。' +
+        (waiting > 1 ? '一個人填完再換下一個。' : '') + '</p>');
     }
   }
   /* ── 加一件要有一顆看得到的鍵 ──
@@ -17652,7 +18983,11 @@ PAGES.commit = function () {
   H.push('<div class="row">');
   /* 承諾完就出發，中間不再問「去哪裡」——地方是委託人帶來的，
      不是他挑的（見底下 wherePanel 那一段拿掉的理由）。 */
-  H.push(btn('我承諾 ' + est + ' 天，出發', 'commit:' + m.msId, 'big cm-go'));
+  H.push('<p class="dim cm-note">按下去這個數字就定了。交出來之後，比這天早或晚就是判定。</p>');
+  /* 按鍵上要印他選的那個單位，不是永遠印「天」——不然選了小時，
+     按鍵上還寫著「我承諾 8 天」，數字跟他剛剛按的完全對不上。 */
+  var cmLabel = cmU === 'd' ? est + ' 天' : draft('estN', estUnit(cmU).def) + ' ' + estUnit(cmU).name;
+  H.push(btn('我承諾 ' + cmLabel + '，出發', 'commit:' + m.msId, 'big cm-go'));
   H.push(btn('回上一步', 'cmstep:1', 'ghost'));
   H.push('</div>');
   return H.join('');
@@ -17794,7 +19129,11 @@ PAGES.ask = function () {
   H.push('</div>');
 
   H.push('<div class="card">');
-  H.push('<div class="eyebrow">你說的是 ' + r.est + ' 天</div>');
+  /* 這裡往下協商，最後定的數字一律用「天」（估天數的單位選擇只在
+     一開始承諾那一頁，見 60-student.js 的 PAGES.commit）——但這一句
+     講的是「他之前說的」，那可能是用小時／週講的，要印他原始那句話，
+     不然承諾 8 小時的人會在這裡看到「你說的是 0.33 天」。 */
+  H.push('<div class="eyebrow">你說的是 ' + esc(estSay(r)) + '</div>');
   H.push(estStep(n));
   /* 這一句是這一頁最重要的一句。它不是客套：判定讀的是 run.est，
      而 run.est 只有這一顆鍵改得動（見 40-db.js 的 actAnswerAsk）。 */
@@ -17846,10 +19185,17 @@ PAGES.stamp = function () {
   H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push('<dl class="rep stage">');
-  H.push('<dt style="--d:0ms">你的規劃</dt><dd style="--d:0ms">' + r.est + '</dd>');
-  H.push('<dt style="--d:260ms">實際</dt><dd style="--d:260ms">' + r.actual + '</dd>');
-  H.push('<dt style="--d:520ms">相差</dt><dd style="--d:520ms">' +
-    (r.actual - r.est > 0 ? '+' : '') + (r.actual - r.est) + '</dd>');
+  /* 承諾用小時／週說的話，r.est 存的是換算過的小數天（例如
+     8 小時＝0.333…）——直接印會變成一串小數，看起來像壞了。
+     estSay 印他原始講的數字跟單位（見 40-db.js）。「相差」只在
+     兩邊同一個單位（天）的時候才有意義，小時/週承諾就不畫這格，
+     不硬算一個「+0.667」出來誤導人。 */
+  H.push('<dt style="--d:0ms">你的規劃</dt><dd style="--d:0ms">' + esc(estSay(r)) + '</dd>');
+  H.push('<dt style="--d:260ms">實際</dt><dd style="--d:260ms">' + r.actual + ' 天</dd>');
+  if (!r.estU || r.estU === 'd') {
+    H.push('<dt style="--d:520ms">相差</dt><dd style="--d:520ms">' +
+      (r.actual - r.est > 0 ? '+' : '') + (r.actual - r.est) + '</dd>');
+  }
 
   /* 上一趟差幾天。「我在變好」這件事本來沒有任何地方說得出口，
      而它只需要兩個數字。不寫「比上一趟準」那種結論——
@@ -17898,7 +19244,7 @@ PAGES.stamp = function () {
   if (r.hard) H.push('<dt>卡在哪裡</dt><dd class="s">' + esc(r.hard) + '</dd>');
   if (r.pace) H.push('<dt>你覺得的進度</dt><dd class="s">' + esc(r.pace) + '</dd>');
   H.push('</dl>');
-  H.push(estBar(r.est, r.actual, false));
+  H.push(estBar(r.est, r.actual, false, estSay(r)));
   H.push('</div>');
 
   H.push('<p class="duel-t">' + esc(mob.n) + '讓開了。</p>');
@@ -18049,18 +19395,30 @@ function logRow(m, r, t) {
     (m.due ? '<i class="rec-due">老師排到 ' + esc(dueSay(m)) + '</i>' : '') +
     '</span>');
 
-  H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">' +
-    (s ? stampPx(s.key) : '') + '</span>');
+  /* 有印章的顯示印章；沒有的那幾種狀態各自寫一句短的，
+     不然那一格空著，完成跟進行中一眼分不出來。 */
+  H.push('<span class="rec-s' + (r.stamp ? ' ' + r.stamp : ' none') + '">');
+  if (s) {
+    H.push(stampPx(s.key));
+  } else {
+    var st2 = r.state === 'submitted' ? '等老師'
+      : r.state === 'back' ? '退回'
+      : r.state === 'rethought' ? '重想'
+      : r.state === 'running' ? '進行中'
+      : '';
+    if (st2) H.push('<i class="rec-st">' + st2 + '</i>');
+  }
+  H.push('</span>');
   H.push('</div>');
 
   /* 點開才出現的細節。收起來的時候整列兩秒看得完。 */
   if (open) {
     H.push('<div class="rec-more">');
     if (r.stamp) {
-      H.push(estBar(r.est, r.actual, false));
+      H.push(estBar(r.est, r.actual, false, estSay(r)));
       H.push(dayStrip(t.teamId, r.runId));
     } else {
-      H.push('<p class="dim">這一趟重新想過。說 ' + r.est + ' 天，走了 ' +
+      H.push('<p class="dim">這一趟重新想過。說 ' + esc(estSay(r)) + '，走了 ' +
         (r.went || 0) + ' 天之後退回去重新說。</p>');
     }
     var sp = stepsOf(r.runId);
@@ -18588,7 +19946,15 @@ function scene(t, row, st, kind) {
     : walking ? '前進中'
     : resting ? '休息中'
     : '待命';
-  H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
+  /* 「還沒出發」本來跟「待命」共用同一種灰色靜態樣式——兩個看起來
+     一樣的狀態，一個是「沒事」，一個是「有新任務在等你」，掃過去
+     分不出來（跟走廊上有沒有東西可以做完全是兩回事）。
+
+     借「前進中」那個 .go（金色、會脈動）給它，不是另外調一個新顏色
+     ——這個作品的顏色系統只有一條規則：「金＝你可以按這裡，或你正在
+     這裡」（見 50-style.css）。commit 這個狀態剛好就是那句話字面上的
+     意思：有一件事在等他按，用金色是照著規則走，不是破例。 */
+  H.push('<div class="hero-tag' + (walking || kind === 'commit' ? ' go' : resting ? ' rest' : '') +
     '">' + esc(tag) + '</div>');
   if (walking) {
     H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
@@ -18662,7 +20028,7 @@ function scene(t, row, st, kind) {
      三個都是假的，而且它出現在他還沒決定要走幾天的那個畫面上。 */
   if (run && run.runId) {
     H.push('<div class="scn-foot">');
-    H.push('<span class="sf est"><i>你說要</i><b>' + est + '</b><i>天</i></span>');
+    H.push('<span class="sf est"><i>你說要</i><b>' + esc(estSay(run)) + '</b></span>');
     H.push('<span class="sf days"><i>已經過了</i><b>' + gone + '</b><i>天</i></span>');
     /* 「你來了 N 天」拿掉了：那是一個每天登入的計數，而這個系統
        不要求每天登入。判定只讀兩個數字，第三個數字擺在它們旁邊，
@@ -18671,6 +20037,14 @@ function scene(t, row, st, kind) {
        來過的痕跡還在廊道上（走過的那幾格點著火把），
        但它不再被寫成一個分數。 */
     H.push('</div>');
+    /* 交出去了、等老師看——在只有兩個數字的那一頁上補一句，
+       不然學生不知道他現在該做什麼、等多久、會不會通知他。 */
+    if (kind === 'review') {
+      H.push('<p class="dim scn-wait">交出去了。老師收下之後這裡會通知你。</p>');
+    }
+    if (kind === 'back') {
+      H.push('<p class="dim scn-wait">老師退回來了，點上面的委託人看他寫了什麼。</p>');
+    }
   }
   return H.join('');
 }
@@ -19796,11 +21170,21 @@ PAGES.pack = function () {
   rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
   H.push('</div></div>');
 
-  /* 「我們做完了」在這裡說。
+  /* 「我們做完了」在這裡說——但只有老師開放結案之後才看得到這個
+     入口。2026-09-23：這顆鍵掛在任務清單最下面，整學期大半時間
+     都還沒到結案的時候，卻整學期都在，不少學生把它當成一般的
+     「交作業」按下去。老師還沒開放的時候，連這張卡都不畫，
+     不是畫出來但按不下去——不存在的東西不會被誤按。
 
-     看完這一頁才知道自己是不是真的做完了——老師派過的每一件事，
-     各自走到哪，全部在上面。廊道上那扇出口是老師開的，不是他推的。 */
-  if (!t.leftAt && !t.exitOk) {
+     已經說過、或老師已經回過「現在還不是時候」的，不受這個開關
+     影響：那是已經在走的流程，關掉開關不該讓學生連自己說過什麼、
+     還在等什麼都看不到。 */
+  var exitOpen = !!(find('Classes', function (c) { return c.classId === t.classId; }) || {}).exitOpen;
+  /* DRAFT.exitConfirm 也要算：他已經按過「我們做完了」正在看
+     「確定嗎」那一步，這時候老師剛好關掉開關，這張卡不該憑空消失
+     ——他還沒送出任何東西，但畫面上正跟他確認一件事，半路把
+     整段收掉會像壞了。 */
+  if (!t.leftAt && !t.exitOk && (exitOpen || t.exitAsk || t.exitNo || DRAFT.exitConfirm)) {
     H.push('<div class="card">');
     if (t.exitAsk) {
       H.push('<div class="eyebrow lit">說了</div>');
@@ -19815,9 +21199,18 @@ PAGES.pack = function () {
       H.push('<div class="eyebrow warnx">老師說</div>');
       H.push('<p class="quote big">現在還不是時候。</p>');
       H.push(btn('我們真的做完了', 'askexit', 'big'));
+    } else if (DRAFT.exitConfirm) {
+      /* 兩步，不是一步。這一格以前是任務清單最下面一顆跟「回廊道」
+         擠在一起的大鍵——常來看清單的人往下滑到底，手滑按到的
+         不是「回廊道」，是跟老師說「我們做完了」。
+         二次確認擋的就是那一下手滑，不是真的要問兩次。 */
+      H.push('<div class="eyebrow warnx">確定嗎</div>');
+      H.push('<p class="dim">按下去，老師那邊就會看到你們說這個專案做完了。</p>');
+      H.push(btn('對，做完了', 'askexit', 'big'));
+      H.push(btn('還沒，再想想', 'exitundo', 'ghost'));
     } else {
       H.push('<div class="eyebrow">這個專案做完了嗎</div>');
-      H.push(btn('我們做完了', 'askexit', 'big'));
+      H.push(btn('我們做完了', 'exitcheck', ''));
     }
     H.push('</div>');
   }
@@ -19843,15 +21236,21 @@ function taskRow(m, r, t) {
   /* 說幾天 → 實際幾天。還沒交的那幾趟只有左邊那個數字。 */
   if (r.est) {
     H.push('<div class="tk-n">');
-    H.push('<span>你說</span><b>' + r.est + '</b>');
+    /* 承諾用小時／週說的話，「你說」那一格印他原始講的單位，
+       「實際」那一格還是天——actual 沒有跟著改精度，兩邊單位
+       本來就不一樣，不能共用一個 tk-u。 */
+    if (r.estU && r.estU !== 'd' && r.estN != null) {
+      H.push('<span>你說</span><b>' + esc(estSay(r)) + '</b>');
+    } else {
+      H.push('<span>你說</span><b>' + r.est + '</b><span class="tk-u">天</span>');
+    }
     if (r.actual) { H.push('<span>實際</span><b class="' + (r.stamp || '') + '">' +
-      r.actual + '</b>'); }
-    else if (r.went) { H.push('<span>走了</span><b>' + r.went + '</b>'); }
+      r.actual + '</b><span class="tk-u">天</span>'); }
+    else if (r.went) { H.push('<span>走了</span><b>' + r.went + '</b><span class="tk-u">天</span>'); }
     else if (r.state === 'running') {
       var gone = daysBetween(r.committedAt, now());
-      H.push('<span>過了</span><b>' + gone + '</b>');
+      H.push('<span>過了</span><b>' + gone + '</b><span class="tk-u">天</span>');
     }
-    H.push('<span class="tk-u">天</span>');
     H.push('</div>');
   }
 
@@ -20041,6 +21440,7 @@ PAGES.codex = function () {
           H.push('<button class="cx-light" data-act="run" data-p=\'' +
             esc(JSON.stringify({ a: 'light:' + c.n })) + '\'>' +
             '放一顆水晶照亮　' + RULES.CRYSTAL.light + ' 顆</button>');
+          H.push('<em class="cx-hint">先看到他的名字。真正遇到他要等老師收下一件委託。</em>');
         } else {
           H.push('<em class="cx-need">照亮要 ' + RULES.CRYSTAL.light +
             ' 顆水晶，還差 ' + (RULES.CRYSTAL.light - 石.left) + ' 顆。</em>');
@@ -20484,7 +21884,10 @@ function awayOf(meId) {
     days: d,
     cells: cells,
     okd: ok,
-    left: run ? Math.max(0, run.est - daysBetween(run.committedAt, now())) : null
+    /* 小時／週承諾的話 run.est 是換算過的小數天，「還剩 0.33 天到期」
+       比不顯示還誤導——那種時候不算這個數字（見 40-db.js 的 estSay）。 */
+    left: (run && (!run.estU || run.estU === 'd'))
+      ? Math.max(0, run.est - daysBetween(run.committedAt, now())) : null
   };
 }
 
@@ -20627,8 +22030,8 @@ function digTeamCard(classId) {
       H.push('<div class="or ' + r.stamp + '">');
       H.push('<span class="or-s">' + (s ? stampPx(s.key) : '') + '</span>');
       H.push('<b>' + esc(x.ms ? x.ms.title : '') + '</b>');
-      H.push('<span class="or-n">說 <b>' + r.est + '</b>　實際 <b>' +
-        (r.actual || 0) + '</b></span>');
+      H.push('<span class="or-n">說 <b>' + esc(estSay(r)) + '</b>　實際 <b>' +
+        (r.actual || 0) + ' 天</b></span>');
       if (kp && kp.name) H.push('<span class="or-w">「' + esc(kp.name) + '」</span>');
       H.push('</div>');
     });
@@ -20799,9 +22202,9 @@ PAGES.battle = function () {
   var t = myTeam();
   /* ── 重做的時候，上一次寫的還在 ──
 
-     被退回的時候只有一件事被指出不對，可是七題全部要重打：去哪裡看、
-     最想要老師看哪裡、你做了什麼、再給兩天會做什麼。系統自己寫著
-     「退回不是懲罰」——而重打七題就是懲罰。
+     被退回的時候只有一件事被指出不對，可是每一題都要重打：去哪裡看、
+     最想要老師看哪裡、你做了什麼。系統自己寫著
+     「退回不是懲罰」——而重打全部就是懲罰。
 
      帶回來的是**他自己上一次寫的**，不是幫他填（那條規則擋的是
      「拿別人的東西或上一趟的東西塞給他」）。每一格他都可以改，
@@ -20812,7 +22215,6 @@ PAGES.battle = function () {
   if (r.state === 'back' && DRAFT.__pre !== r.runId) {
     DRAFT.__pre = r.runId;
     if (r.link != null) DRAFT.where = r.link;
-    if (r.next != null) DRAFT.next = r.next;
     if (r.pace != null) DRAFT.hard = r.pace;
     if (r.scope) DRAFT.scope = r.scope;
     if (r.feel) DRAFT.feel = r.feel;
@@ -20825,7 +22227,6 @@ PAGES.battle = function () {
   /* 那一場打在那一趟去的地方，不是「現在」在哪——回頭看一場舊的，
      背景要是當時那個地方。 */
   var zone = zoneOfRun(r, t.teamId);
-  var est = r.est || 1;
   var ph = btPhase(r);
 
   /* ── 一場講話，不是一場對峙 ──
@@ -20865,7 +22266,7 @@ PAGES.battle = function () {
   /* 遭遇：整個畫面閃一次再進場。只有剛遇到才放。 */
   if (剛遇到) H.push('<div class="bt-wipe"></div>');
   /* 你說了幾天。本來寫在你那張名牌上。 */
-  H.push('<div class="bt-hud">說 ' + est + ' 天</div>');
+  H.push('<div class="bt-hud">說 ' + esc(estSay(r)) + '</div>');
 
   H.push('<div class="bt-side foe">');
   H.push('<div class="bt-pad"></div>');
@@ -21192,18 +22593,6 @@ var BT_STEPS = [
       return H.join('');
     } },
 
-  { k: 'next',
-    /* 一個人的時候「你們」是錯的。這一題問的是同一件事，
-       只是這一站上那個人只有一個。 */
-    get ask() { return RULES.SOLO ? '再給你兩天，你會做什麼？' : '再給你們兩天，你們會做什麼？'; },
-    who: 'team',
-    body: function () {
-      return '<textarea class="bt-w" id="bt-next" rows="2" maxlength="200" ' +
-        'oninput="DRAFT.next=this.value" placeholder="' +
-        esc('例：把第三件收尾，那一件只做了一半') + '">' +
-        esc(draft('next', '')) + '</textarea>';
-    },
-    need: function () { return !!String(DRAFT.next || '').trim(); } }
 ];
 
 /* 這一趟真的要問哪幾題。 */
@@ -21259,7 +22648,11 @@ function btSpent(r) {
       H.push('<i>' + esc(x.n) + '</i>');
       /* 不分組那一站不畫這一欄：每一件都是他的。 */
       if (!RULES.SOLO) H.push('<u class="who">' + esc(shortWho(x.who)) + '</u>');
-      H.push('<u class="said">說 ' + x.d + '</u>');
+      /* 承諾那一件用小時／週填的話，印他原始講的數字（見 60-student.js
+         的 xn），不是換算過的小數天。 */
+      H.push('<u class="said">說 ' +
+        ((x.dU && x.dU !== 'd' && x.dN != null) ? esc(x.dN + estUnit(x.dU).name) : x.d + ' 天') +
+        '</u>');
       if (own) {
         H.push('<button class="pd" data-act="run" data-p=\'' +
           esc(JSON.stringify({ a: 'spent:' + i + ',-1' })) + '\'>−</button>');
@@ -21360,6 +22753,10 @@ function btPlate(name, side, note) {
 function btVerdict(r) {
   var est = r.est || 1;
   var act = r.actual || est;
+  /* 小時／週承諾的話，est 是換算過的小數天，「還有 0.67 天沒用完」
+     這種話比不寫還誤導——那種時候只說收下了，不算差幾天。 */
+  var hourly = r.estU && r.estU !== 'd' && r.estN != null;
+  if (hourly) return { key: act <= est ? 'early' : 'late', line: '他收下了。' };
   if (act < est) {
     return { key: 'early', line: '他收下了。你還有 ' + (est - act) + ' 天沒用完。' };
   }
@@ -21421,12 +22818,11 @@ function battleRun() {
   }
   if (ph !== 'play') return;
 
-  var est = r.est || 1;
-  var act = r.actual || est;
+  var act = r.actual || (r.est || 1);
 
   /* 一 · 把這一趟報出來。這是整場唯一決定結果的東西。 */
   btAt(800, function () {
-    say('你說 ' + est + ' 天，實際走了 ' + act + ' 天。');
+    say('你說 ' + estSay(r) + '，實際走了 ' + act + ' 天。');
     box.classList.add('told');
   });
 
@@ -21504,7 +22900,7 @@ ACTS.btq2 = function (id) {
   }
   actReflect(t.teamId, id, DRAFT.overs || [], DRAFT.hard, DRAFT.pace,
     { spent: DRAFT.spent, feel: DRAFT.feel, why: DRAFT.why,
-      scope: DRAFT.scope, next: DRAFT.next, said1: DRAFT.said1 });
+      scope: DRAFT.scope, said1: DRAFT.said1 });
   /* 退回那一場走 actResend 不走 actSubmit：答案更新，判定不動。
 
      actSubmit 會重算 actual 與 stamp，而退回不動判定——那一趟的兩個
@@ -21516,7 +22912,7 @@ ACTS.btq2 = function (id) {
   var okd = again ? actResend(t.teamId, id, wh) : actSubmit(t.teamId, id, wh);
   if (!okd) return say('這一趟已經交過了。');
   DRAFT.overs = null; DRAFT.said = 0; DRAFT.hard = ''; DRAFT.pace = '';
-  DRAFT.scope = null; DRAFT.next = ''; DRAFT.said1 = ''; DRAFT.where = null;
+  DRAFT.scope = null; DRAFT.said1 = ''; DRAFT.where = null;
   DRAFT.spent = null; DRAFT.feel = ''; DRAFT.why = '';
   S.p = { id: id, ph: 'play', take: 1 };
   render();
@@ -22359,18 +23755,25 @@ PAGES.radar = function () {
   var tq = DRAFT.tq === 'exit' ? 'exit'
     : ((DRAFT.tq === 'ask' && RULES.NEGOTIATE) ? 'ask' : 'rev');
   H.push('<div class="segs">');
-  /* 這一格對老師叫「完成專案」，不叫「出口」。
+  /* 這一格對老師叫「結案」，不叫「出口」，也不叫「完成專案」。
 
      出口是學生那一邊的東西：廊道盡頭一扇門，開了他才走得上去。
      老師這一邊做的不是開門，是判斷「這一組整個專案結束了沒」——
      那是一學期一次、看一整條路的決定。
+
+     ── 2026-09-23：「完成專案」改名「結案」──
+
+     老師在找「有沒有人交東西」的時候，「完成專案」四個字讀起來
+     太像「有人完成了一件事」，會被當成審核的同義詞點進去，
+     點進去才發現問錯格——那裡問的是整個專案，不是一件任務。
+     「結案」不跟「審核」共用「完成」這個字，兩格才分得開。
 
      老師端其餘的字都是白話（審核、退回、收下），只有這一格用了世界觀
      的詞，而老師沒有走過那條廊道，那個詞對他不指任何東西。
 
      門還留在說明裡：那是他按下去之後學生會看到的事，講出來他才知道
      自己剛剛做了什麼。 */
-  [['rev', '審核', rows.length], ['exit', '完成專案', out.length]].forEach(function (g) {
+  [['rev', '審核', rows.length], ['exit', '結案', out.length]].forEach(function (g) {
     H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
       '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
@@ -22399,7 +23802,7 @@ PAGES.radar = function () {
       H.push('<button class="rq" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'go:askest:' + x.run.runId })) + '\'>');
       H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b>');
-      H.push('<em>' + esc(x.team.name) + '　·　他們說 ' + x.run.est + ' 天</em></span>');
+      H.push('<em>' + esc(x.team.name) + '　·　他們說 ' + esc(estSay(x.run)) + '</em></span>');
       H.push('<span class="rq-d">' + (x.days ? '第 ' + (x.days + 1) + ' 天' : '今天') +
         '</span>');
       H.push('</button>');
@@ -22415,7 +23818,24 @@ PAGES.radar = function () {
     var mine = teamsUnder(u.classId, u.userId).slice().sort(function (a, b) {
       return (b.exitAsk || 0) - (a.exitAsk || 0);
     });
-    H.push(head('完成專案', '你確認了，他們才結束得了', ''));
+    H.push(head('結案', '你確認了，他們才結束得了', ''));
+
+    /* 開放／關掉學生那邊「我們做完了」的入口。
+       2026-09-23：不少學生把那顆鍵當成一般的「交作業」按下去——
+       它整學期都在，可是一學期裡大半時間根本還沒到結案的時候。
+       開學就先關著，真的要進入結案階段再開，學生那邊那張卡才會
+       出現（見 63-pack.js）。已經說過、或已經回過「現在還不是時候」
+       的不受這個開關影響，那是已經在走的流程。 */
+    var kl0 = classOf(u);
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">學生那邊看不看得到「我們做完了」</div>');
+    H.push('<p class="dim">' + (kl0.exitOpen
+      ? '開著。學生任務清單最下面看得到那顆鍵。'
+      : '關著。學生那邊還沒有這個選項，不會誤按到。') + '</p>');
+    H.push(btn(kl0.exitOpen ? '關掉' : '開放結案', 'exitopenset:' + (kl0.exitOpen ? 0 : 1),
+      kl0.exitOpen ? 'ghost' : ''));
+    H.push('</div>');
+
     mine.forEach(function (t) {
       var acc = accuracyOf(t.teamId);
       H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
@@ -22469,17 +23889,17 @@ PAGES.radar = function () {
   if (!rows.length) {
     H.push('<div class="card">');
     /* 「沒有人在等你」講的是審核這一格，可是它印出來的時候旁邊那一格
-       可能正掛著號碼——完成專案那一格裡的每一組都按過「我們做完了」，
+       可能正掛著號碼——結案那一格裡的每一組都按過「我們做完了」，
        那就是有人在等（exitQueue 只收 exitAsk 的，見 40-db.js）。
 
-       實際看到的畫面：分頁寫著「完成專案（1）」，底下同一張卡寫
+       實際看到的畫面：分頁寫著「結案（1）」，底下同一張卡寫
        「沒有人在等你」。兩句話在同一個畫面上互相打臉。
 
        協商那一排不算——那一格寫著「你可以回一句，也可以不回」，
        沒有人在那裡等他。 */
     H.push(out.length
       ? '<p class="dim">這裡沒有要看的。有 ' + out.length +
-        ' 組說他們做完了，在「完成專案」那一格。</p>'
+        ' 組說他們做完了，在「結案」那一格。</p>'
       : '<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
     H.push('<div class="row">');
     H.push(btn('去發一個任務', 'go:ms', 'big'));
@@ -22535,6 +23955,12 @@ PAGES.review = function () {
     return '<div class="card"><div class="eyebrow">還沒交出來</div>' +
       '<p class="dim">' + esc(t ? t.name : '這一組') +
       ' 還在走這一趟。他們交出來之後才會出現在你的清單上。</p></div>' +
+      '<div class="row">' + btn('回審核清單', 'go:radar', 'big') + '</div>';
+  }
+  if (r.state === 'done') {
+    return '<div class="card"><div class="eyebrow">已經處理過了</div>' +
+      '<p class="dim">這一趟' + (r.wordBy ? '由另一位老師' : '') +
+      '已經收下了。</p></div>' +
       '<div class="row">' + btn('回審核清單', 'go:radar', 'big') + '</div>';
   }
 
@@ -22680,7 +24106,9 @@ PAGES.review = function () {
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
       H.push('<u class="who">' + esc(shortWho(x.who)) + '</u>');
-      H.push('<u class="said">說 ' + x.d + '</u>');
+      H.push('<u class="said">說 ' +
+        ((x.dU && x.dU !== 'd' && x.dN != null) ? esc(x.dN + estUnit(x.dU).name) : x.d + ' 天') +
+        '</u>');
       H.push('<u class="got' + (got != null && got > x.d ? ' over' : '') + '">' +
         (got == null ? '—' : got) + '</u>');
       H.push('</div>');
@@ -22700,14 +24128,9 @@ PAGES.review = function () {
     H.push('<div class="feels one"><span class="fl on">' + esc(sn) + '</span></div>');
   }
   if (r.why) H.push('<p class="quote"><b>為什麼</b>' + nl(r.why) + '</p>');
-  /* 再給兩天會做什麼。他寫那一句話的時候，這一格是最有用的輸入——
-     他們自己已經看到的東西，他不用再說一次。 */
-  if (r.next) {
-    H.push('<p class="quote"><b>再給兩天他們會做</b>' + nl(r.next) + '</p>');
-  }
   if (r.hard) H.push('<p class="quote"><b>他們說卡在哪裡</b>' + nl(r.hard) + '</p>');
   if (r.pace) H.push('<p class="quote"><b>他們覺得的進度</b>' + nl(r.pace) + '</p>');
-  H.push(estBar(r.est, r.actual, false));
+  H.push(estBar(r.est, r.actual, false, estSay(r)));
   H.push(dayStrip(r.teamId, r.runId));
   H.push(overTags(r.teamId, r));
   /* 歷史準度分布拿掉了：那是「他們這學期怎麼樣」，屬於各組進度，
@@ -22719,8 +24142,8 @@ PAGES.review = function () {
      而他的評語接在那一處底下。學生那一題拿掉了（每一趟都要再想一次，
      太消耗），所以這一塊跟著回去。他的那一句話又是他自己起頭的。 */
   H.push('<div class="eyebrow">你的想法　選填</div>');
-  H.push('<p class="dim">退回去改一定要寫。</p>');
-  H.push('<textarea id="gr-word" rows="3" placeholder="' +
+  H.push('<p class="dim">退回去改一定要寫。收下也值得說一句——他們會看到。</p>');
+  H.push('<textarea id="gr-word" rows="3" oninput="DRAFT[\'gr-word\']=this.value" placeholder="' +
     esc('例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
     '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
@@ -22820,7 +24243,7 @@ PAGES.askest = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">他們說</div>');
-  H.push('<p class="quote big">' + r.est + ' 天</p>');
+  H.push('<p class="quote big">' + esc(estSay(r)) + '</p>');
   /* 我自己排到哪一天。它不進判定，但它是我會有意見的原因。 */
   if (m.due) H.push('<p class="dim">排到 ' + esc(dueSay(m)) + '。</p>');
   H.push('</div>');
@@ -22937,8 +24360,12 @@ PAGES.ms = function () {
            : '全班 ' + teams.length + ' 組') + '</span>');
   teams.forEach(function (t) {
     var on = to.indexOf(t.teamId) >= 0;
+    var mem = where('Users', function (u) { return inTeam(u, t.teamId); });
+    var names = mem.map(function (u) { return u.name; }).join('、');
     H.push('<button class="tag' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'to:' + t.teamId })) + '\'>' + esc(t.name) + '</button>');
+      esc(JSON.stringify({ a: 'to:' + t.teamId })) + '\'>' + esc(t.name) +
+      (names ? '<small style="display:block;opacity:.6;font-size:22px">' + esc(names) + '</small>' : '') +
+      '</button>');
   });
   H.push('</div>');
   H.push(btn('派出去', 'publish', 'big'));
@@ -22978,11 +24405,23 @@ PAGES.ms = function () {
             兩件事疊起來就是一整片跟他要寫的這一個任務無關的數字。
 
        那幾個數字沒有消失：審核那一頁上每一趟都有，各組進度上一整排。 */
-    /* 誰派的。自己派的不寫——不然每一列都掛著一個「我」，
-       而這一行存在的意義就是把別人的跟我的分開。 */
-    if (m.mentorId && m.mentorId !== u.userId) {
-      var mby = userOf(m.mentorId);
-      if (mby) H.push('<span class="msr-by">' + esc(mby.name) + ' 派的</span>');
+    /* 誰派的。
+
+       2026-09-23：本來自己派的不寫（理由是「不然每一列都掛著一個
+       「我」」）。可是這一頁列的是全班派出去的每一件，自己剛派的
+       那一件跟別人派的、跟舊的混在一起，全靠這一行的「有沒有寫」
+       分——一個很容易漏看的隱性訊號。真的在用的時候量到：老師發完
+       作業，回到這一頁找不到自己剛剛派了什麼。
+
+       改成兩種都寫：自己的寫「你派的」，跟別人那句同一個位置、
+       同一個份量，掃過去看得到，不用靠「沒寫」去猜。 */
+    if (m.mentorId) {
+      var isMine = m.mentorId === u.userId;
+      var mby = isMine ? u : userOf(m.mentorId);
+      if (mby) {
+        H.push('<span class="msr-by' + (isMine ? ' mine' : '') + '">' +
+          (isMine ? '你派的' : esc(mby.name) + ' 派的') + '</span>');
+      }
     }
     H.push('</div>');
   });
@@ -23033,10 +24472,10 @@ PAGES.ms = function () {
    ——混進十七個不存在的人，那個理由就不成立了。
 
    這三支是這一頁所有列舉的入口，收在這裡一次擋掉。 */
-function rsClasses() { return where('Classes', function (c) { return !c._d; }); }
-function rsUsers() { return where('Users', function (u) { return !u._d; }); }
+function rsClasses() { return where('Classes', function (c) { return !c._d && !c._removed; }); }
+function rsUsers() { return where('Users', function (u) { return !u._d && !u._removed; }); }
 function rsTeams(cid) {
-  return where('Teams', function (t) { return !t._d && t.classId === cid; });
+  return where('Teams', function (t) { return !t._d && !t._removed && t.classId === cid; });
 }
 
 function rsClassId() {
@@ -23232,15 +24671,15 @@ function rsSave(name, text) {
 }
 
 ACTS.csvruns = function () {
-  rsSave('專案地下城-一趟一列.csv', exportRuns(rsClassId()));
+  rsSave('專案地下城' + (RULES.SOLO ? 'B' : '') + '-一趟一列.csv', exportRuns(rsClassId()));
 };
 
 ACTS.csvitems = function () {
-  rsSave('專案地下城-一件一列.csv', exportItems(rsClassId()));
+  rsSave('專案地下城' + (RULES.SOLO ? 'B' : '') + '-一件一列.csv', exportItems(rsClassId()));
 };
 
 ACTS.csv = function () {
-  var name = '專案地下城-紀錄.csv';
+  var name = '專案地下城' + (RULES.SOLO ? 'B' : '') + '-紀錄.csv';
   try {
     /* BOM，不然 Excel 開起來中文是亂碼 */
     var blob = new Blob(['﻿' + exportCsv(rsClassId())], { type: 'text/csv;charset=utf-8' });

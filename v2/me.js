@@ -32,7 +32,8 @@ let 錯=[];const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)錯.push(
 DB=blank();
 const t=actRegister({account:'tea_x',password:'aaaa',name:'林老師',role:'teacher'}).user;
 const kl=actNewClass('班',t.userId).klass;
-const A=actRegister({account:'stu_a',password:'aaaa',name:'小美',role:'student',code:kl.joinCode}).user;
+const Areg=actRegister({account:'stu_a',password:'aaaa',name:'小美',role:'student',code:kl.joinCode});
+const A=Areg.user;
 
 console.log('\n── 改名字 ──');
 ok(actSetName(A.userId,'王小美').user.name==='王小美','改得動');
@@ -50,7 +51,7 @@ ok(actLogin('stu_a','aaaa').user,'擋掉之後舊密碼還能用');
 ok(actSetPw(A.userId,'aaaa','b').err===RULES.pwRule(),'太短會擋，而且句子是組出來的：'+RULES.pwRule());
 ok(actSetPw(A.userId,'aaaa','aaaa').err,'跟原本一樣會擋');
 ok(actSetPw(A.userId,'aaaa','bbbb').user,'舊密碼對就換得掉');
-ok(actLogin('stu_a','aaaa').err==='密碼不對。','舊密碼失效了');
+ok(actLogin('stu_a','aaaa').err==='密碼不對。忘記的話，下面有一顆「忘記密碼」。','舊密碼失效了');
 ok(actLogin('stu_a','bbbb').user,'新密碼進得去');
 
 console.log('\n── 密碼不可以外洩到事件流 ──');
@@ -58,6 +59,91 @@ const pev=DB.Events.filter(e=>e.kind==='setpw');
 ok(pev.length===1,'只記了一筆');
 ok(JSON.stringify(pev[0]).indexOf('bbbb')<0&&JSON.stringify(pev[0]).indexOf('aaaa')<0,'那一筆裡面沒有任何密碼');
 ok(JSON.stringify(DB.Events).indexOf('bbbb')<0,'整份事件流裡都沒有新密碼');
+
+console.log('\n── 救援碼：密碼救不回來的時候，本人自己換得掉 ──');
+ok(!!Areg.recov,'註冊那一刻給了一組救援碼');
+ok(actRecoverPw('stu_a','KKKK-KKKK-KKKK','zzzz').err==='救援碼不對。','碼錯就擋');
+ok(actLogin('stu_a','bbbb').user,'碼錯的時候密碼沒被動到');
+const rec1=actRecoverPw('stu_a',Areg.recov,'zzzz');
+ok(!!rec1.user,'碼對就換得掉，不用打舊密碼');
+ok(actLogin('stu_a','bbbb').err,'舊密碼失效了');
+ok(actLogin('stu_a','zzzz').user,'用救援碼換的新密碼進得去');
+ok(!!rec1.recov&&rec1.recov!==Areg.recov,'用過一次，換一組新的');
+ok(actRecoverPw('stu_a',Areg.recov,'yyyy').err==='救援碼不對。','舊的那組用過就失效');
+ok(actRecoverPw('stu_a',rec1.recov,'yyyy').user,'新的那組還能用');
+
+console.log('\n── 救援碼不可以外洩到事件流 ──');
+const rev=DB.Events.filter(e=>e.kind==='recoverpw');
+ok(rev.length===2,'兩次都記了一筆');
+ok(JSON.stringify(DB.Events).indexOf(Areg.recov)<0,'整份事件流裡都沒有第一組救援碼');
+ok(JSON.stringify(DB.Events).indexOf(rec1.recov)<0,'也沒有第二組救援碼');
+ok(JSON.stringify(DB.Events).indexOf('zzzz')<0&&JSON.stringify(DB.Events).indexOf('yyyy')<0,'也沒有救援碼換出來的新密碼');
+
+console.log('\n── 補發救援碼：這個功能上線之前註冊的帳號也拿得到 ──');
+const old=actRegister({account:'stu_old',password:'aaaa',name:'舊帳號',role:'student',code:kl.joinCode}).user;
+delete old.recovSalt; delete old.recovHash;
+ok(!old.recovHash,'模擬一個更早註冊、沒有救援碼的帳號');
+ok(actLogin('stu_old','aaaa').user,'密碼還能登入');
+ok(actRecoverPw('stu_old','KKKK-KKKK-KKKK','wwww').err==='這個帳號沒有救援碼——它是比這個功能更早註冊的帳號，救不回來。','沒有碼的帳號講清楚救不回來');
+const gr=actGenRecov(old.userId);
+ok(!!gr.recov,'本人登入之後補得到一組');
+ok(actRecoverPw('stu_old',gr.recov,'wwww').user,'補發的那一組真的能用來換密碼');
+const grev=DB.Events.filter(e=>e.kind==='genrecov');
+ok(grev.length===1&&JSON.stringify(grev).indexOf(gr.recov)<0,'補發這件事記了一筆，但碼本身沒有進事件流');
+
+console.log('\n── 老師幫現場認出來的學生補發救援碼 ──');
+const stuck=actRegister({account:'stu_stuck',password:'aaaa',name:'卡住的人',role:'student',code:kl.joinCode}).user;
+delete stuck.recovSalt; delete stuck.recovHash;
+ok(!stuck.recovHash,'模擬一個卡住、沒有救援碼、也登不進去的帳號');
+ok(actTeacherRecov(A.userId,'stu_stuck').err==='只有老師看得到這個功能。','學生用不了這個功能');
+const tr1=actTeacherRecov(t.userId,'stu_stuck');
+ok(!!tr1.recov,'老師對自己班上的學生發得出救援碼');
+ok(actRecoverPw('stu_stuck',tr1.recov,'qqqq').user,'學生拿到碼之後自己換得掉密碼');
+ok(actLogin('stu_stuck','qqqq').user,'新密碼進得去');
+
+/* 跨班：另一位老師、另一個班，發不到這個帳號的碼。 */
+const t2=actRegister({account:'tea_y',password:'aaaa',name:'另一位老師',role:'teacher'}).user;
+actNewClass('別的班',t2.userId);
+ok(actTeacherRecov(t2.userId,'stu_stuck').err==='這個帳號不在你的班上。','別班的老師發不到這個帳號的碼');
+
+const trev=DB.Events.filter(e=>e.kind==='teacherrecov');
+ok(trev.length===1&&trev[0].by===t.userId,'記著是哪一位老師發的');
+ok(JSON.stringify(DB.Events).indexOf(tr1.recov)<0,'老師發的那組碼也沒有進事件流');
+ok(JSON.stringify(DB.Events).indexOf('qqqq')<0,'學生自己換的新密碼也沒有進事件流');
+
+console.log('\n── 接回重複註冊的帳號 ──');
+/* 小美忘記密碼、重新註冊變成小美2，兩個帳號同一個人。 */
+const dupOld=actRegister({account:'stu_dup1',password:'aaaa',name:'重複的人',role:'student',code:kl.joinCode}).user;
+const dupOldTeamId=actNewTeam('舊隊',dupOld.userId).team.teamId;
+const dupNew=actRegister({account:'stu_dup2',password:'bbbb',name:'重複的人',role:'student',code:kl.joinCode}).user;
+const dupNewTeamId=actNewTeam('新隊（打錯密碼建的）',dupNew.userId).team.teamId;
+ok(dupNewTeamId!==dupOldTeamId,'兩個帳號現在坐著兩支不同的隊');
+
+ok(actMergeAccount(A.userId,'stu_dup1','stu_dup2').err==='只有老師看得到這個功能。','學生用不了這個功能');
+ok(actMergeAccount(t2.userId,'stu_dup1','stu_dup2').err==='這兩個帳號要都在你的班上。','別班的老師接不動');
+const mg=actMergeAccount(t.userId,'stu_dup1','stu_dup2');
+ok(!!mg.newUser,'接回成功');
+ok(userOf(dupNew.userId).teamId===dupOldTeamId,'新帳號現在坐著舊帳號那一組');
+ok(!!find('Teams',x=>x.teamId===dupNewTeamId)._removed,'新帳號原本那一支空隊被收掉了');
+ok(userOf(dupOld.userId).mergedInto===dupNew.userId,'舊帳號標記成合併過了');
+ok(actLogin('stu_dup1','aaaa').err==='這個帳號已經合併到「stu_dup2」了，用那一個登入。','舊帳號登入被指去新帳號');
+ok(actLogin('stu_dup2','bbbb').user,'新帳號還是用原本的密碼登入');
+ok(actMergeAccount(t.userId,'stu_dup1','stu_dup2').err==='這個舊帳號已經合併過了。','合併過的帳號不能再合併一次');
+
+const mgev=DB.Events.filter(e=>e.kind==='mergeaccount');
+ok(mgev.length===1&&mgev[0].by===t.userId&&mgev[0].from==='stu_dup1'&&mgev[0].to==='stu_dup2','記著誰接回誰、哪一位老師做的');
+
+console.log('\n── 死帳號不能再當接回／補發的目標 ──');
+/* 合併過的帳號（stu_dup1）在畫面的選人清單裡要消失——不然老師會選到
+   一個誰都登不進去的帳號。資料層也要擋，不只靠畫面濾掉。 */
+ok(!where('Users',x=>x.classId===kl.classId&&!x.mergedInto).some(x=>x.account==='stu_dup1'),
+  '選人清單（濾掉 mergedInto）看不到已經合併過的舊帳號');
+ok(actTeacherRecov(t.userId,'stu_dup1').err==='這個帳號已經合併過了，救援碼要發給接回去的那個帳號。',
+  '不能幫死帳號補救援碼');
+const dup3=actRegister({account:'stu_dup3',password:'cccc',name:'第三個',role:'student',code:kl.joinCode}).user;
+actNewTeam('第三隊',dup3.userId);
+ok(actMergeAccount(t.userId,'stu_dup3','stu_dup1').err==='這個新帳號已經合併過了，選現在真的在用的那一個。',
+  '不能把隊伍接到一個已經是死帳號的目標上');
 
 console.log('');
 console.log('── 不分組那一站：改名字畫面上要看得到 ──');
@@ -84,9 +170,13 @@ console.log('── 不分組那一站：改名字畫面上要看得到 ──')
 })();
 
 console.log('\n── 改不動別人 ──');
-const B=actRegister({account:'stu_b',password:'cccc',name:'阿哲',role:'student',code:kl.joinCode}).user;
+const Breg=actRegister({account:'stu_b',password:'cccc',name:'阿哲',role:'student',code:kl.joinCode});
+const B=Breg.user;
 ok(actSetPw(B.userId,'aaaa','zzzz').err==='現在的密碼不對。','拿別人的密碼換不掉阿哲的');
 ok(actLogin('stu_b','cccc').user,'阿哲的密碼沒被動到');
+ok(actRecoverPw('stu_b',rec1.recov,'zzzz').err==='救援碼不對。','拿小美的救援碼換不掉阿哲的密碼');
+ok(actLogin('stu_b','cccc').user,'阿哲的密碼還是沒被動到');
+ok(actRecoverPw('stu_b',Breg.recov,'dddd').user,'阿哲用自己的救援碼換得掉自己的');
 
 console.log('\n── 兩頁畫得出來 ──');
 S.who=A.userId;S.role='student';DB.Session={userId:A.userId,at:Date.now()};

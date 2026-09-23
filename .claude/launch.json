@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "dungeon", "runtimeExecutable": "node", "runtimeArgs": ["v2/serve.js"], "port": 8792 }
+    { "name": "dungeon", "runtimeExecutable": "node", "runtimeArgs": ["v2/serve.js"], "port": 8792 },
+    { "name": "calendar", "runtimeExecutable": "npx", "runtimeArgs": ["serve", "C:\\Users\\user\\Downloads\\月曆2027", "-l", "3457", "--no-clipboard"], "port": 3457 }
   ]
 }

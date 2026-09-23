@@ -608,7 +608,7 @@ function planDays(plan) {
    全組一起做的那幾件不算在這裡：它們不屬於任何一個人。 */
 function planWho(plan) { return planSplit(plan).who; }
 
-function actCommit(teamId, msId, est, flags, plan, zone, sure) {
+function actCommit(teamId, msId, est, flags, plan, zone, sure, estU, estN) {
   /* 只開得了自己那一組的。跟 ownRun 同一條理由，只是這一刻還沒有
      run 可以比，所以直接比人身上的 teamId。 */
   var who0 = (typeof S !== 'undefined' && S.who) ? userOf(S.who) : null;
@@ -618,8 +618,15 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
   var pl = (plan || []).filter(function (x) { return x && x.n; })
     .slice(0, RULES.STEPS_MAX)
     .map(function (x) {
+      /* 這一件用小時／週填的話，d 是換算過的小數天——跟頂層 est
+         同一條理由（見上面 estU 那一段），不能再用「天」的下限
+         夾回最少 1（見 55-ui.js 的 pland／plandu）。dU／dN 也要跟著
+         存，不然畫面上印得出來的「9 小時」在存完之後就不見了。 */
+      var xu = x.dU || 'd';
       return { n: String(x.n).slice(0, 24),
-        d: clamp(1, RULES.EST_MAX, Number(x.d) || 1),
+        d: (xu !== 'd') ? (Number(x.d) || 1) : clamp(1, RULES.EST_MAX, Number(x.d) || 1),
+        dU: xu,
+        dN: x.dN != null ? Number(x.dN) : (Number(x.d) || 1),
         /* 誰做這一件。回報的時候只有他填得了自己那幾件，
            而他的預估因此終於是「對自己的」預估。 */
         who: String(x.who || ''),
@@ -649,7 +656,16 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure) {
     /* 要徑算出來是幾天。跟 est 一樣的時候代表他們沒有改。 */
     estCalc: 算的,
     state: 'running',
-    est: clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
+    /* 小時／週來的數字已經在 estToDays 裡按各自的範圍夾過一次了
+       （見 55-ui.js 的 ACTS.commit）——這裡的 EST_MIN／EST_MAX 是
+       「天」滑桿的範圍，用小時承諾的話不該被夾回最少 1 天，
+       那正是這個單位存在的意義。 */
+    est: (estU && estU !== 'd') ? (Number(est) || RULES.EST_DEFAULT)
+      : clamp(RULES.EST_MIN, RULES.EST_MAX, Number(est) || RULES.EST_DEFAULT),
+    /* 他原始講的數字跟單位（見上面 EST_UNITS）——est 一律是天，
+       這兩欄只是讓畫面印得出他真的講的是「8 小時」不是「0.33 天」。 */
+    estU: estU || 'd',
+    estN: estN != null ? Number(estN) : (Number(est) || RULES.EST_DEFAULT),
     plan: pl,
     flags: flags || [],
     /* 這一趟他選的地方。不進判定——判定只讀承諾幾天與實際幾天。
@@ -1471,9 +1487,6 @@ function actReflect(teamId, runId, overs, hard, pace, o) {
      它該被記下來，不該被懲罰。但它必須被記下來，不然那兩個天數
      會在說謊：三天做完可能是因為砍了一半。 */
   if (o.scope) r.scope = ({ more: 1, same: 1, less: 1 })[o.scope] ? o.scope : '';
-  /* 再給兩天會做什麼。老師覺得「可以」的關鍵不是他們做得多好，
-     是他們知道自己做到哪裡。 */
-  if (o.next != null) r.next = String(o.next).slice(0, 200);
   /* 這裡一度有一個 look（他指的那一處）。拿掉了——那一題每一趟都要
      再想一次，而交出去這一段是每一趟都要走的。 */
   /* 我做了什麼。一個人一行，記在自己名下——每個人各自寫，
@@ -1602,6 +1615,38 @@ function actPublish(classId, o) {
   logEvent('publish', { title: m.title, teams: (m.teams || []).length,
     steps: (m.steps || []).length });
   return m;
+}
+
+/* 學生承諾的單位。判定讀的 r.est 一律是天（可能帶小數）——這一段
+   只換算輸入的樣子，不碰 RULES.judge／actSubmit 半個字：8 小時的
+   容差本來就會被 RULES.BAND_MIN（最少 1 天）吃掉，跟「承諾 1 天」
+   同一個容差，算出來的準不準沒有差。這裡要解決的不是判定的精細度，
+   是「老師派的用小時、學生卻只能用天」那個不直覺——r.estN／r.estU
+   多記一份他原始講的數字跟單位，畫面優先印那一份，沒有的話
+   （舊資料，或本來就用「天」承諾的）退回印 r.est 天，一個字都不用改。
+
+   2026-09-23 加的。 */
+var EST_UNITS = [
+  { k: 'h', name: '小時', toDays: 1 / 24, min: 1, max: 23, def: 8 },
+  { k: 'd', name: '天',   toDays: 1,      min: RULES.EST_MIN, max: RULES.EST_MAX, def: RULES.EST_DEFAULT },
+  { k: 'w', name: '週',   toDays: 7,      min: 1, max: 3, def: 1 }
+];
+function estUnit(k) {
+  for (var i = 0; i < EST_UNITS.length; i++) if (EST_UNITS[i].k === k) return EST_UNITS[i];
+  return EST_UNITS[1];
+}
+/* 幾小時／幾天／幾週，換成 r.est 用的天數（可能帶小數）。 */
+function estToDays(n, k) {
+  var u = estUnit(k);
+  var q = clamp(u.min, u.max, Number(n) || u.def);
+  return q * u.toDays;
+}
+/* r.est 印成人看得懂的樣子。優先印他當初講的原始數字跟單位。 */
+function estSay(r) {
+  if (r && r.estU && r.estU !== 'd' && r.estN != null) {
+    return r.estN + ' ' + estUnit(r.estU).name;
+  }
+  return (r ? r.est : 0) + ' 天';
 }
 
 /* 老師排的日期還有幾天。沒排回 null。
@@ -1947,6 +1992,19 @@ function actRename(teamId, name) {
   return t;
 }
 
+function actTeamRename(teamId, name) {
+  var t = teamOf(teamId);
+  if (!t) return null;
+  name = String(name || '').trim().slice(0, 20);
+  if (!name) return null;
+  if (t.name === name) return null;
+  var old = t.name;
+  t.name = name;
+  save();
+  logEvent('teamrename', { teamId: teamId, name: name, from: old });
+  return t;
+}
+
 /* 還沒寫過的那幾組先掛這一句。
 
    它不描述任何一組，所以系統沒有替誰下形容詞——它只是一句
@@ -2023,6 +2081,28 @@ function actCancelExit(teamId) {
   t.exitAsk = 0;
   save();
   return t;
+}
+
+/* 老師開放／關掉「我們做完了」這顆鍵。
+
+   2026-09-23 加的：這顆鍵掛在學生常來看的任務清單最下面，一學期
+   裡有大半時間根本還沒到結案的時候，卻整學期都在——不少學生把它
+   當成一般的「交作業」按下去，其實那顆按的是整個專案結束。
+
+   預設關（新班級、舊班級都一樣，DB.Classes 沒有這一欄就是關）：
+   老師在真的要進入結案階段之前，學生那邊連「我們做完了」那一段
+   都看不到，不是看得到但按不下去——不存在的東西不會被誤按。 */
+function actSetExitOpen(classId, teacherId, on) {
+  var teacher = userOf(teacherId);
+  if (!teacher || teacher.role !== 'teacher') return null;
+  var mine = seatsOf(teacher).map(function (s) { return s.classId; });
+  if (mine.indexOf(classId) < 0) return null;
+  var c = find('Classes', function (x) { return x.classId === classId; });
+  if (!c) return null;
+  c.exitOpen = !!on;
+  save();
+  logEvent('setexitopen', { by: teacher.userId, classId: classId, on: c.exitOpen });
+  return c;
 }
 
 /* 老師說「現在還不是時候」。
@@ -2107,13 +2187,16 @@ function keepOffers(runId) {
       : '這一趟你來了 ' + r.pushes + ' 天。'
   });
 
-  /* 二 · 你估得怎麼樣。只有兩個數字跟一段算出來的範圍。 */
+  /* 二 · 你估得怎麼樣。只有兩個數字跟一段算出來的範圍。
+     用小時／週估的話，範圍算出來的兩個端點是換算過的小數天
+     （例如「−0.67 到 1.33 天」），比不寫還誤導——那種時候只講
+     兩個事實的數字，不算範圍。 */
   var b = RULES.band(r.est);
-  out.push({
-    key: 'est',
-    line: '你估 ' + r.est + ' 天，走了 ' + r.actual + ' 天。' +
-          '你自己說的範圍是 ' + Math.max(1, r.est - b) + ' 到 ' + (r.est + b) + ' 天。'
-  });
+  var estLine = (r.estU && r.estU !== 'd' && r.estN != null)
+    ? '你估 ' + estSay(r) + '，走了 ' + r.actual + ' 天。'
+    : '你估 ' + r.est + ' 天，走了 ' + r.actual + ' 天。' +
+      '你自己說的範圍是 ' + Math.max(1, r.est - b) + ' 到 ' + (r.est + b) + ' 天。';
+  out.push({ key: 'est', line: estLine });
 
   /* 三 · 哪一件比你想的久。這是他們在營火自己說的。 */
   var ov = (r.overs || []).map(function (i) { return stepName(runId, i); })

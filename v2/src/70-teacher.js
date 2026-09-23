@@ -76,18 +76,25 @@ PAGES.radar = function () {
   var tq = DRAFT.tq === 'exit' ? 'exit'
     : ((DRAFT.tq === 'ask' && RULES.NEGOTIATE) ? 'ask' : 'rev');
   H.push('<div class="segs">');
-  /* 這一格對老師叫「完成專案」，不叫「出口」。
+  /* 這一格對老師叫「結案」，不叫「出口」，也不叫「完成專案」。
 
      出口是學生那一邊的東西：廊道盡頭一扇門，開了他才走得上去。
      老師這一邊做的不是開門，是判斷「這一組整個專案結束了沒」——
      那是一學期一次、看一整條路的決定。
+
+     ── 2026-09-23：「完成專案」改名「結案」──
+
+     老師在找「有沒有人交東西」的時候，「完成專案」四個字讀起來
+     太像「有人完成了一件事」，會被當成審核的同義詞點進去，
+     點進去才發現問錯格——那裡問的是整個專案，不是一件任務。
+     「結案」不跟「審核」共用「完成」這個字，兩格才分得開。
 
      老師端其餘的字都是白話（審核、退回、收下），只有這一格用了世界觀
      的詞，而老師沒有走過那條廊道，那個詞對他不指任何東西。
 
      門還留在說明裡：那是他按下去之後學生會看到的事，講出來他才知道
      自己剛剛做了什麼。 */
-  [['rev', '審核', rows.length], ['exit', '完成專案', out.length]].forEach(function (g) {
+  [['rev', '審核', rows.length], ['exit', '結案', out.length]].forEach(function (g) {
     H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
       '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
       '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
@@ -116,7 +123,7 @@ PAGES.radar = function () {
       H.push('<button class="rq" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'go:askest:' + x.run.runId })) + '\'>');
       H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b>');
-      H.push('<em>' + esc(x.team.name) + '　·　他們說 ' + x.run.est + ' 天</em></span>');
+      H.push('<em>' + esc(x.team.name) + '　·　他們說 ' + esc(estSay(x.run)) + '</em></span>');
       H.push('<span class="rq-d">' + (x.days ? '第 ' + (x.days + 1) + ' 天' : '今天') +
         '</span>');
       H.push('</button>');
@@ -132,7 +139,24 @@ PAGES.radar = function () {
     var mine = teamsUnder(u.classId, u.userId).slice().sort(function (a, b) {
       return (b.exitAsk || 0) - (a.exitAsk || 0);
     });
-    H.push(head('完成專案', '你確認了，他們才結束得了', ''));
+    H.push(head('結案', '你確認了，他們才結束得了', ''));
+
+    /* 開放／關掉學生那邊「我們做完了」的入口。
+       2026-09-23：不少學生把那顆鍵當成一般的「交作業」按下去——
+       它整學期都在，可是一學期裡大半時間根本還沒到結案的時候。
+       開學就先關著，真的要進入結案階段再開，學生那邊那張卡才會
+       出現（見 63-pack.js）。已經說過、或已經回過「現在還不是時候」
+       的不受這個開關影響，那是已經在走的流程。 */
+    var kl0 = classOf(u);
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">學生那邊看不看得到「我們做完了」</div>');
+    H.push('<p class="dim">' + (kl0.exitOpen
+      ? '開著。學生任務清單最下面看得到那顆鍵。'
+      : '關著。學生那邊還沒有這個選項，不會誤按到。') + '</p>');
+    H.push(btn(kl0.exitOpen ? '關掉' : '開放結案', 'exitopenset:' + (kl0.exitOpen ? 0 : 1),
+      kl0.exitOpen ? 'ghost' : ''));
+    H.push('</div>');
+
     mine.forEach(function (t) {
       var acc = accuracyOf(t.teamId);
       H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
@@ -186,17 +210,17 @@ PAGES.radar = function () {
   if (!rows.length) {
     H.push('<div class="card">');
     /* 「沒有人在等你」講的是審核這一格，可是它印出來的時候旁邊那一格
-       可能正掛著號碼——完成專案那一格裡的每一組都按過「我們做完了」，
+       可能正掛著號碼——結案那一格裡的每一組都按過「我們做完了」，
        那就是有人在等（exitQueue 只收 exitAsk 的，見 40-db.js）。
 
-       實際看到的畫面：分頁寫著「完成專案（1）」，底下同一張卡寫
+       實際看到的畫面：分頁寫著「結案（1）」，底下同一張卡寫
        「沒有人在等你」。兩句話在同一個畫面上互相打臉。
 
        協商那一排不算——那一格寫著「你可以回一句，也可以不回」，
        沒有人在那裡等他。 */
     H.push(out.length
       ? '<p class="dim">這裡沒有要看的。有 ' + out.length +
-        ' 組說他們做完了，在「完成專案」那一格。</p>'
+        ' 組說他們做完了，在「結案」那一格。</p>'
       : '<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
     H.push('<div class="row">');
     H.push(btn('去發一個任務', 'go:ms', 'big'));
@@ -252,6 +276,12 @@ PAGES.review = function () {
     return '<div class="card"><div class="eyebrow">還沒交出來</div>' +
       '<p class="dim">' + esc(t ? t.name : '這一組') +
       ' 還在走這一趟。他們交出來之後才會出現在你的清單上。</p></div>' +
+      '<div class="row">' + btn('回審核清單', 'go:radar', 'big') + '</div>';
+  }
+  if (r.state === 'done') {
+    return '<div class="card"><div class="eyebrow">已經處理過了</div>' +
+      '<p class="dim">這一趟' + (r.wordBy ? '由另一位老師' : '') +
+      '已經收下了。</p></div>' +
       '<div class="row">' + btn('回審核清單', 'go:radar', 'big') + '</div>';
   }
 
@@ -397,7 +427,9 @@ PAGES.review = function () {
       H.push('<b style="background:' + stepHue(i) + '"></b>');
       H.push('<i>' + esc(x.n) + '</i>');
       H.push('<u class="who">' + esc(shortWho(x.who)) + '</u>');
-      H.push('<u class="said">說 ' + x.d + '</u>');
+      H.push('<u class="said">說 ' +
+        ((x.dU && x.dU !== 'd' && x.dN != null) ? esc(x.dN + estUnit(x.dU).name) : x.d + ' 天') +
+        '</u>');
       H.push('<u class="got' + (got != null && got > x.d ? ' over' : '') + '">' +
         (got == null ? '—' : got) + '</u>');
       H.push('</div>');
@@ -417,14 +449,9 @@ PAGES.review = function () {
     H.push('<div class="feels one"><span class="fl on">' + esc(sn) + '</span></div>');
   }
   if (r.why) H.push('<p class="quote"><b>為什麼</b>' + nl(r.why) + '</p>');
-  /* 再給兩天會做什麼。他寫那一句話的時候，這一格是最有用的輸入——
-     他們自己已經看到的東西，他不用再說一次。 */
-  if (r.next) {
-    H.push('<p class="quote"><b>再給兩天他們會做</b>' + nl(r.next) + '</p>');
-  }
   if (r.hard) H.push('<p class="quote"><b>他們說卡在哪裡</b>' + nl(r.hard) + '</p>');
   if (r.pace) H.push('<p class="quote"><b>他們覺得的進度</b>' + nl(r.pace) + '</p>');
-  H.push(estBar(r.est, r.actual, false));
+  H.push(estBar(r.est, r.actual, false, estSay(r)));
   H.push(dayStrip(r.teamId, r.runId));
   H.push(overTags(r.teamId, r));
   /* 歷史準度分布拿掉了：那是「他們這學期怎麼樣」，屬於各組進度，
@@ -436,8 +463,8 @@ PAGES.review = function () {
      而他的評語接在那一處底下。學生那一題拿掉了（每一趟都要再想一次，
      太消耗），所以這一塊跟著回去。他的那一句話又是他自己起頭的。 */
   H.push('<div class="eyebrow">你的想法　選填</div>');
-  H.push('<p class="dim">退回去改一定要寫。</p>');
-  H.push('<textarea id="gr-word" rows="3" placeholder="' +
+  H.push('<p class="dim">退回去改一定要寫。收下也值得說一句——他們會看到。</p>');
+  H.push('<textarea id="gr-word" rows="3" oninput="DRAFT[\'gr-word\']=this.value" placeholder="' +
     esc('例：第二件比你們說的久兩天，那一段的範圍好像變大了。') +
     '">' + esc(draft('gr-word')) + '</textarea>');
   H.push('</div>');
@@ -537,7 +564,7 @@ PAGES.askest = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">他們說</div>');
-  H.push('<p class="quote big">' + r.est + ' 天</p>');
+  H.push('<p class="quote big">' + esc(estSay(r)) + '</p>');
   /* 我自己排到哪一天。它不進判定，但它是我會有意見的原因。 */
   if (m.due) H.push('<p class="dim">排到 ' + esc(dueSay(m)) + '。</p>');
   H.push('</div>');
@@ -654,8 +681,12 @@ PAGES.ms = function () {
            : '全班 ' + teams.length + ' 組') + '</span>');
   teams.forEach(function (t) {
     var on = to.indexOf(t.teamId) >= 0;
+    var mem = where('Users', function (u) { return inTeam(u, t.teamId); });
+    var names = mem.map(function (u) { return u.name; }).join('、');
     H.push('<button class="tag' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'to:' + t.teamId })) + '\'>' + esc(t.name) + '</button>');
+      esc(JSON.stringify({ a: 'to:' + t.teamId })) + '\'>' + esc(t.name) +
+      (names ? '<small style="display:block;opacity:.6;font-size:22px">' + esc(names) + '</small>' : '') +
+      '</button>');
   });
   H.push('</div>');
   H.push(btn('派出去', 'publish', 'big'));
@@ -695,11 +726,23 @@ PAGES.ms = function () {
             兩件事疊起來就是一整片跟他要寫的這一個任務無關的數字。
 
        那幾個數字沒有消失：審核那一頁上每一趟都有，各組進度上一整排。 */
-    /* 誰派的。自己派的不寫——不然每一列都掛著一個「我」，
-       而這一行存在的意義就是把別人的跟我的分開。 */
-    if (m.mentorId && m.mentorId !== u.userId) {
-      var mby = userOf(m.mentorId);
-      if (mby) H.push('<span class="msr-by">' + esc(mby.name) + ' 派的</span>');
+    /* 誰派的。
+
+       2026-09-23：本來自己派的不寫（理由是「不然每一列都掛著一個
+       「我」」）。可是這一頁列的是全班派出去的每一件，自己剛派的
+       那一件跟別人派的、跟舊的混在一起，全靠這一行的「有沒有寫」
+       分——一個很容易漏看的隱性訊號。真的在用的時候量到：老師發完
+       作業，回到這一頁找不到自己剛剛派了什麼。
+
+       改成兩種都寫：自己的寫「你派的」，跟別人那句同一個位置、
+       同一個份量，掃過去看得到，不用靠「沒寫」去猜。 */
+    if (m.mentorId) {
+      var isMine = m.mentorId === u.userId;
+      var mby = isMine ? u : userOf(m.mentorId);
+      if (mby) {
+        H.push('<span class="msr-by' + (isMine ? ' mine' : '') + '">' +
+          (isMine ? '你派的' : esc(mby.name) + ' 派的') + '</span>');
+      }
     }
     H.push('</div>');
   });

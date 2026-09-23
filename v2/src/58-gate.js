@@ -18,12 +18,12 @@ PAGES.gate = function () {
   var H = ['<div class="gate">'];
   H.push('<div class="gate-box">');
   H.push(pxTag(SIGNS.glow.px, SIGNS.glow.pal, 'sign'));
-  H.push('<h1>專案地下城</h1>');
+  H.push('<h1>專案地下城' + (RULES.SOLO ? ' B' : '') + '</h1>');
   /* 一句話說完這是什麼。不是說明，是招牌上那一行。 */
   /* 招牌上那一行。本來是「化身勇者」——勇者是一個身分，
      而這個世界裡你的身分是「接委託的人」，三拍剛好就是那一圈：
      接下來、說幾天、走完它。 */
-  H.push('<p class="tagline">接下委託，規劃天數，走完專案地下城！！</p>');
+  H.push('<p class="tagline">接下委託，規劃天數，走完專案地下城' + (RULES.SOLO ? ' B' : '') + '！！</p>');
 
   /* 進去那兩顆放在第一屏，不要捲。 */
   H.push('<div class="row">');
@@ -158,6 +158,7 @@ PAGES.login = function () {
   H.push('<div class="row">');
   H.push(btn('進去', 'login', 'big'));
   H.push(btn('還沒有帳號', 'go:reg', 'ghost'));
+  H.push(btn('忘記密碼', 'go:forgotpw', 'ghost'));
   /* 這一台的資料不對的時候的那條路（見 PAGES.fresh）。
 
      ── 它不再印給學生看 ──
@@ -231,6 +232,96 @@ PAGES.login = function () {
     H.push('<p class="dim">帳號就是名字旁邊那一串，密碼都是 ' + DEMO_PW + '。</p>');
     H.push('</div>');
   }
+  H.push('</div></div>');
+  return H.join('');
+};
+
+/* ---------- 忘記密碼 ----------
+
+   沒有信箱、沒有後端，「打對現在那一個密碼」以外唯一驗得出「是本人」
+   的東西，是註冊那一刻給的救援碼（見 15-auth.js 的 actRecoverPw）。
+   有這組碼就救得回來；沒有——帳號是這個功能上線前註冊的，或碼真的
+   弄丟了——那就真的救不回來，只能重新註冊。
+
+   兩條路都要講清楚，不能讓人以為這一頁一定救得回來。 */
+PAGES.forgotpw = function () {
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('忘記密碼', '有救援碼就救得回來', ''));
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">用救援碼換新密碼</div>');
+  H.push('<p class="dim">註冊那一刻給過你一組碼，抄下來或截圖收著的那一組。</p>');
+  H.push('<input id="fp-acc" value="' + esc(draft('fp-acc')) + '" placeholder="帳號">');
+  H.push('<input id="fp-code" value="' + esc(draft('fp-code')) + '" placeholder="救援碼，例：KX7M-3PQR-9WZT">');
+  H.push('<input id="fp-pw" type="password" placeholder="新密碼，' + esc(RULES.pwRule()) + '">');
+  H.push('<input id="fp-pw2" type="password" placeholder="新密碼，再輸入一次">');
+  H.push(btn('換新密碼', 'recoverpw', 'big'));
+  H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">沒有救援碼</div>');
+  H.push('<p>先問老師能不能幫你補發一組——老師看得到你的帳號、' +
+    '補得出救援碼，但看不到、也不會碰到你的密碼本身。' +
+    '真的找不到老師，或這個帳號真的已經救不回來，' +
+    '才重新註冊一個新帳號，再回去找老師說一聲你是哪一位。</p>');
+  H.push('</div>');
+
+  H.push('<div class="row">');
+  H.push(btn('重新註冊', 'go:reg', 'ghost'));
+  H.push(btn('回登入', 'go:login', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+ACTS.recoverpw = function () {
+  var acc = (document.getElementById('fp-acc') || {}).value || '';
+  var code = (document.getElementById('fp-code') || {}).value || '';
+  var pw = (document.getElementById('fp-pw') || {}).value || '';
+  var pw2 = (document.getElementById('fp-pw2') || {}).value || '';
+  if (pw !== pw2) {
+    DRAFT['fp-acc'] = acc; DRAFT['fp-code'] = code;
+    return say('兩次密碼不一樣。再輸入一次。');
+  }
+  var r = actRecoverPw(acc, code, pw);
+  if (r.err) {
+    DRAFT['fp-acc'] = acc; DRAFT['fp-code'] = code;
+    return say(r.err);
+  }
+  /* 跟註冊一樣：直接登進去，但先看新的救援碼再往下走。 */
+  S.who = r.user.userId;
+  DB.Session = r.user.userId;
+  save();
+  go('rgcode', { recov: r.recov });
+};
+
+/* ---------- 救援碼：註冊完只畫這一次 ----------
+
+   密碼救不回來，但救援碼可以——前提是他這一刻把它收好。系統自己
+   只存雜湊，這一頁是它唯一被印成明碼的地方，離開這一頁之後系統
+   自己也讀不到它了。所以這裡不接受「先跳過」：按下去才算看過。 */
+PAGES.rgcode = function () {
+  /* 老師幫學生補發的那一組，畫面上要講清楚這串碼是給誰的、
+     不是老師自己的——不然老師會以為這是他自己帳號的救援碼。 */
+  var forAcc = S.p.forAccount;
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('救援碼', forAcc ? '抄給本人，不要自己留著' : '收好它，這是密碼救不回來時唯一的路', ''));
+  H.push('<div class="card">');
+  if (forAcc) {
+    H.push('<div class="eyebrow">給「' + esc(forAcc) + '」的救援碼</div>');
+    H.push('<p class="quote big recov-code">' + esc(S.p.recov || '') + '</p>');
+    H.push('<p class="warn-block">把這組碼交給本人，讓他自己去「忘記密碼」換新密碼——' +
+      '你不會看到他換成什麼。這一頁離開之後，系統自己也讀不到這串碼了。</p>');
+  } else {
+    H.push('<div class="eyebrow">忘記密碼的時候，用這一組碼自己換新密碼</div>');
+    H.push('<p class="quote big recov-code">' + esc(S.p.recov || '') + '</p>');
+    H.push('<p class="warn-block">拍下來或抄下來，收在密碼以外的地方。' +
+      '弄丟它，跟忘記密碼一樣，這個帳號就救不回來了。</p>');
+  }
+  H.push('</div>');
+  H.push('<div class="row">');
+  H.push(btn('我收好了，繼續', 'rgcodeok', 'big'));
+  H.push('</div>');
   H.push('</div></div>');
   return H.join('');
 };
@@ -389,7 +480,7 @@ PAGES.mkclass = function () {
   if (u.role === 'teacher') {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">' + (ss.length ? '再開一個班' : '開一個班') + '</div>');
-    H.push('<input id="mk-name" value="" placeholder="' +
+    H.push('<input id="mk-name" value="' + esc(draft('mk-name')) + '" oninput="DRAFT[\'mk-name\']=this.value" placeholder="' +
       esc('例：114-1 畢業專題') + '">');
     H.push('<p class="dim">開好會給你一組六碼。學生跟另外幾位老師都用那組碼建帳號。</p>');
     H.push(btn('開班', 'mkclass', 'big'));
@@ -427,7 +518,7 @@ PAGES.myteam = function () {
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">建一隊</div>');
-  H.push('<input id="mk-team" value="" placeholder="' + esc('隊名，例：第三組') + '">');
+  H.push('<input id="mk-team" value="' + esc(draft('mk-team')) + '" oninput="DRAFT[\'mk-team\']=this.value" placeholder="' + esc('隊名，例：第三組') + '">');
   H.push('<p class="dim">建好會給你一組六碼，唸給隊友。</p>');
   H.push(btn('建立', 'mkteam', 'big'));
   H.push('</div>');
@@ -501,7 +592,19 @@ ACTS.reg = function () {
     DRAFT['rg-name'] = o.name;
     return say(r.err);
   }
-  signIn(r.user);
+  /* 跟 signIn 做一樣的事（登進去、記這台機器不再是示範狀態），
+     但不像 signIn 直接送去首頁——先送去救援碼那一頁，逼他看過
+     那組碼再往下走。 */
+  S.who = r.user.userId;
+  DB.Session = r.user.userId;
+  save();
+  go('rgcode', { recov: r.recov });
+};
+
+ACTS.rgcodeok = function () {
+  var u = me();
+  if (!u) return go('gate');
+  go(homeFor(u));
   say('帳號好了。');
 };
 
@@ -522,7 +625,8 @@ ACTS.asdemo = function (acc) {
 ACTS.mkclass = function () {
   var n = (document.getElementById('mk-name') || {}).value || '';
   var r = actNewClass(n, S.who);
-  if (r.err) return say(r.err);
+  if (r.err) { DRAFT['mk-name'] = n; return say(r.err); }
+  DRAFT['mk-name'] = '';
   go(homeFor(userOf(S.who)));
   say('開好了。把加入碼唸給學生跟另外幾位老師。');
 };
@@ -541,7 +645,22 @@ ACTS.sit = function (classId) {
 ACTS.joinclass = function () {
   var c = (document.getElementById('jc-code') || {}).value || '';
   var r = actJoinClass(S.who, c);
-  if (r.err) { DRAFT['jc-code'] = c; return say(r.err); }
+  if (r.err) {
+    if (!ACTS.joinclass._retried) {
+      ACTS.joinclass._retried = 1;
+      say('正在找⋯⋯');
+      setTimeout(function () {
+        ACTS.joinclass._retried = 0;
+        var r2 = actJoinClass(S.who, c);
+        if (r2.err) { DRAFT['jc-code'] = c; say(r2.err); }
+        else { go(homeFor(userOf(S.who))); say('加進「' + r2.klass.name + '」了。'); }
+      }, 2000);
+      return;
+    }
+    ACTS.joinclass._retried = 0;
+    DRAFT['jc-code'] = c;
+    return say(r.err);
+  }
   go(homeFor(userOf(S.who)));
   say('加進「' + r.klass.name + '」了。');
 };
@@ -550,7 +669,8 @@ ACTS.joinclass = function () {
 ACTS.mkteam = function () {
   var n = (document.getElementById('mk-team') || {}).value || '';
   var r = actNewTeam(n, S.who);
-  if (r.err) return say(r.err);
+  if (r.err) { DRAFT['mk-team'] = n; return say(r.err); }
+  DRAFT['mk-team'] = '';
   go('who');
   /* 代碼要寫在這一句裡面。
 
@@ -564,11 +684,28 @@ ACTS.mkteam = function () {
   say('隊伍建好了。代碼 ' + r.team.joinCode + '，唸給隊友。');
 };
 
-/* 學生用代碼加入。 */
+/* 學生用代碼加入。
+   找不到的時候等兩秒再試一次：教室裡二十幾台同時上線，建隊那一筆
+   可能還在路上。只重試一次——真的打錯了就不要讓他一直等。 */
 ACTS.jointeam = function () {
   var c = (document.getElementById('jn-code') || {}).value || '';
   var r = actJoinTeam(c, S.who);
-  if (r.err) { DRAFT['jn-code'] = c; return say(r.err); }
+  if (r.err) {
+    if (!ACTS.jointeam._retried) {
+      ACTS.jointeam._retried = 1;
+      say('正在找⋯⋯');
+      setTimeout(function () {
+        ACTS.jointeam._retried = 0;
+        var r2 = actJoinTeam(c, S.who);
+        if (r2.err) { DRAFT['jn-code'] = c; say(r2.err); }
+        else { go('who'); say('進來了。'); }
+      }, 2000);
+      return;
+    }
+    ACTS.jointeam._retried = 0;
+    DRAFT['jn-code'] = c;
+    return say(r.err);
+  }
   go('who');
   say('進來了。');
 };
@@ -638,6 +775,39 @@ PAGES.me = function () {
   H.push(btn('換密碼', 'go:pw', ''));
   H.push('</div>');
 
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">救援碼</div>');
+  if (u.recovHash) {
+    H.push('<p class="dim">你已經有一組救援碼。忘記密碼的時候，' +
+      '用它就能自己換一個新密碼，不用重新註冊、不會弄丟組別跟紀錄。</p>');
+    H.push(btn('換一組新的', 'genrecov', ''));
+  } else {
+    /* 這個帳號是救援碼上線之前註冊的，沒有這組碼——這一格要比
+       換密碼那一格顯眼，因為少了它，忘記密碼就真的救不回來了。 */
+    H.push('<p class="warn-block">你的帳號還沒有救援碼。' +
+      '一旦忘記密碼，現在唯一的路是重新註冊——組別跟之前的紀錄接不回來。</p>');
+    H.push(btn('產生救援碼', 'genrecov', ''));
+  }
+  H.push('</div>');
+
+  /* 只有老師看得到——幫現場認出來的學生補發救援碼（見 15-auth.js
+     的 actTeacherRecov 跟 CLAUDE.md 2026-09-23 那一段）。 */
+  if (u.role === 'teacher') {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">幫學生補發救援碼</div>');
+    H.push('<p class="dim">學生忘記密碼、又沒有救援碼的時候，' +
+      '你能幫他補發一組——你只會看到這組碼，不會看到他換成什麼密碼。</p>');
+    H.push(btn('幫學生補發', 'go:acctrecov', ''));
+    H.push('</div>');
+
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">接回重複註冊的帳號</div>');
+    H.push('<p class="dim">學生忘記密碼、以前只能重新註冊，' +
+      '現在手上有兩個帳號的話，這裡幫他把舊帳號的隊伍接回現在在用的帳號。</p>');
+    H.push(btn('接回', 'go:acctmerge', ''));
+    H.push('</div>');
+  }
+
   H.push('<div class="row">');
   H.push(btn('回去', 'go:' + homeFor(u), 'ghost'));
   H.push('</div>');
@@ -658,14 +828,11 @@ PAGES.pw = function () {
   H.push('<div class="eyebrow">現在的密碼</div>');
   H.push('<input id="pw-old" type="password" placeholder="' +
     esc('你現在在用的那一個') + '">');
-  /* 換完還是救不回來。這句話要在他按下去之前就看到——
-     這一版沒有「忘記密碼」那條路，而那是設計選的，不是漏的
-     （理由見 firestore.rules 與 75-research.js 的檔頭）。
-
-     搬到新密碼欄位前面、換上跟建立帳號那一頁一樣的警語樣式——
+  /* 換完記不記得住，關係到救不救得回來。這句話要在他按下去之前就
+     看到——搬到新密碼欄位前面、換上跟建立帳號那一頁一樣的警語樣式，
      這句的後果一樣重，不該因為在哪一頁而看起來比較不起眼。 */
-  H.push('<p class="warn-block">換完要記得。這裡沒有「忘記密碼」那條路，' +
-    '忘了就只能用新的帳號重來。</p>');
+  H.push('<p class="warn-block">換完要記得。忘記的話，有救援碼才救得回來——' +
+    '沒有救援碼就只能重新註冊，組別跟紀錄接不回來（見「你的資料」）。</p>');
   H.push('<div class="eyebrow">新的密碼</div>');
   H.push('<input id="pw-new" type="password" placeholder="' +
     esc(RULES.pwRule()) + '">');
@@ -682,6 +849,154 @@ PAGES.pw = function () {
   H.push('</div>');
   H.push('</div></div>');
   return H.join('');
+};
+
+/* 老師這一班的學生，一人一顆——跟派任務「發給誰」同一種選法
+   （見 70-teacher.js 的 teams.forEach 那一段）。名字寫大字，
+   帳號跟在底下當小字：點的時候認的是名字，帳號只是拿去比對。 */
+function studentTags(classId, act, picked) {
+  /* 合併過的舊帳號不列進來——它跟被接回去的新帳號通常同名（本來就是
+     同一個人重複註冊），留著只會讓老師選錯，選到一個誰都登不進去、
+     接了隊伍也沒有意義的死帳號（見 15-auth.js 的 actMergeAccount）。 */
+  var stu = where('Users', function (x) {
+    return x.role === 'student' && x.classId === classId && !x.mergedInto;
+  }).sort(function (a, b) { return a.name === b.name ? 0 : (a.name < b.name ? -1 : 1); });
+  if (!stu.length) return '<p class="dim">這一班還沒有學生。</p>';
+  var H = ['<div class="tags">'];
+  stu.forEach(function (x) {
+    H.push('<button class="tag' + (picked === x.account ? ' on' : '') +
+      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: act + ':' + x.account })) +
+      '\'>' + esc(x.name) +
+      '<small style="display:block;opacity:.6;font-size:22px">' + esc(x.account) + '</small>' +
+      '</button>');
+  });
+  H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 老師幫學生補發救援碼 ----------
+
+   選完人不是直接發：補發會把這個帳號原本那組救援碼直接作廢
+   （見 15-auth.js 的 actTeacherRecov），如果他其實已經有一組能用的，
+   等於白白燒掉一把還有效的鑰匙。跟接回帳號一樣先問一次再做。 */
+PAGES.acctrecov = function () {
+  var u = me();
+  if (!u || u.role !== 'teacher') return PAGES.gate();
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('幫學生補發救援碼', '點一位學生', ''));
+
+  if (DRAFT.arConfirm && DRAFT.arAcc) {
+    var picked = find('Users', function (x) { return x.account === DRAFT.arAcc; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow warnx">確定嗎</div>');
+    if (picked && picked.recovHash) {
+      H.push('<p class="dim">「' + esc(picked ? picked.name : DRAFT.arAcc) + '」（' + esc(DRAFT.arAcc) +
+        '）已經有一組救援碼——補發會讓那一組直接失效，換成新的這一組。</p>');
+    } else {
+      H.push('<p class="dim">幫「' + esc(picked ? picked.name : DRAFT.arAcc) + '」（' + esc(DRAFT.arAcc) +
+        '）發一組新的救援碼。</p>');
+    }
+    H.push(btn('對，發給他', 'acctrecov', 'big'));
+    H.push(btn('還沒，再檢查一次', 'arundo', 'ghost'));
+    H.push('</div>');
+  } else {
+    H.push('<div class="card">');
+    H.push('<p class="dim">發完把碼交給他本人，讓他自己去「忘記密碼」換新密碼。</p>');
+    H.push(studentTags(u.classId, 'arpick', DRAFT.arAcc));
+    H.push('</div>');
+    if (DRAFT.arAcc) {
+      H.push('<div class="row">');
+      H.push(btn('幫「' + DRAFT.arAcc + '」發救援碼', 'archeck', 'big'));
+      H.push('</div>');
+    }
+  }
+  H.push('<div class="row">');
+  H.push(btn('回去', 'go:me', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+ACTS.arpick = function (acc) { DRAFT.arAcc = acc; render(); };
+ACTS.archeck = function () { DRAFT.arConfirm = true; render(); };
+ACTS.arundo = function () { DRAFT.arConfirm = false; render(); };
+
+ACTS.acctrecov = function () {
+  var r = actTeacherRecov(S.who, DRAFT.arAcc);
+  if (r.err) return say(r.err);
+  go('rgcode', { recov: r.recov, forAccount: r.user.account });
+};
+
+/* ---------- 老師把重複註冊的兩個帳號接回同一個人 ----------
+
+   跟補發救援碼一樣點名字選，不用打帳號——選錯人的防線不是靠打字
+   這一關，是靠底下那張「確定嗎」：兩個名字都攤開來，按下去之前
+   還有一次看清楚的機會（見 ACTS.acctmergecheck 下面那一段）。 */
+PAGES.acctmerge = function () {
+  var u = me();
+  if (!u || u.role !== 'teacher') return PAGES.gate();
+  var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(head('接回重複註冊的帳號', '把舊帳號的隊伍接到現在在用的帳號', ''));
+
+  /* 二次確認：這是這次會話新加的功能裡風險最高的一個動作——
+     一按下去就換掉一個帳號的隊伍歸屬，還可能連帶收掉一支隊，
+     而且沒有回頭路（跟救援碼不一樣，救援碼按錯了最多是白發一組
+     沒有人用的碼；這裡按錯是真的把人接錯隊）。跟「我們做完了」
+     同一個道理，只是這裡風險更高，用同一套先問後做的樣式。 */
+  if (DRAFT.mergeConfirm) {
+    var oldU = find('Users', function (x) { return x.account === DRAFT.amOld; });
+    var newU = find('Users', function (x) { return x.account === DRAFT.amNew; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow warnx">確定嗎</div>');
+    H.push('<p class="dim">「' + esc(newU ? newU.name : DRAFT.amNew) + '」（' + esc(DRAFT.amNew) +
+      '）現在坐的那一組，會換成「' + esc(oldU ? oldU.name : DRAFT.amOld) + '」（' + esc(DRAFT.amOld) +
+      '）原本那一組跟那些紀錄。如果「' + esc(DRAFT.amNew) + '」原本那一組沒有別人，' +
+      '那一組會被收掉。按下去之前，再確認一次這兩個是不是同一個人。</p>');
+    H.push(btn('對，接回去', 'acctmerge', 'big'));
+    H.push(btn('還沒，再檢查一次', 'acctmergeundo', 'ghost'));
+    H.push('</div>');
+  } else {
+    H.push('<div class="card">');
+    H.push('<p class="dim">兩邊都要跟本人當面對過，不是憑印象選。</p>');
+    H.push('<div class="eyebrow">舊帳號　有隊伍跟紀錄的那一個</div>');
+    H.push(studentTags(u.classId, 'ampickold', DRAFT.amOld));
+    H.push('<div class="eyebrow" style="margin-top:14px">新帳號　他現在登入用的那一個</div>');
+    H.push(studentTags(u.classId, 'ampicknew', DRAFT.amNew));
+    if (DRAFT.amOld && DRAFT.amNew) H.push(btn('接回', 'acctmergecheck', 'big'));
+    H.push('</div>');
+  }
+  H.push('<div class="row">');
+  H.push(btn('回去', 'go:me', 'ghost'));
+  H.push('</div>');
+  H.push('</div></div>');
+  return H.join('');
+};
+
+ACTS.ampickold = function (acc) { DRAFT.amOld = acc; render(); };
+ACTS.ampicknew = function (acc) { DRAFT.amNew = acc; render(); };
+
+ACTS.acctmergecheck = function () {
+  var oldAcc = DRAFT.amOld, newAcc = DRAFT.amNew;
+  if (!oldAcc || !newAcc) return say('兩個帳號都要選。');
+  if (oldAcc === newAcc) return say('這是同一個帳號，選別的。');
+  DRAFT.mergeConfirm = true;
+  render();
+};
+ACTS.acctmergeundo = function () { DRAFT.mergeConfirm = false; render(); };
+
+ACTS.acctmerge = function () {
+  var r = actMergeAccount(S.who, DRAFT.amOld, DRAFT.amNew);
+  if (r.err) { DRAFT.mergeConfirm = false; return say(r.err); }
+  go('me');
+  say('接回去了。「' + r.newUser.account + '」現在坐著「' + r.oldUser.account + '」原本那一組。');
+};
+
+ACTS.genrecov = function () {
+  var r = actGenRecov(S.who);
+  if (r.err) return say(r.err);
+  /* 跟註冊一樣：先看過再往下走，不是用 say() 一閃而過——
+     這串碼只有這一次看得到，flash 訊息留不住它。 */
+  go('rgcode', { recov: r.recov });
 };
 
 ACTS.setname = function () {

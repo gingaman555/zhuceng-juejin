@@ -442,7 +442,15 @@ function scene(t, row, st, kind) {
     : walking ? '前進中'
     : resting ? '休息中'
     : '待命';
-  H.push('<div class="hero-tag' + (walking ? ' go' : resting ? ' rest' : '') +
+  /* 「還沒出發」本來跟「待命」共用同一種灰色靜態樣式——兩個看起來
+     一樣的狀態，一個是「沒事」，一個是「有新任務在等你」，掃過去
+     分不出來（跟走廊上有沒有東西可以做完全是兩回事）。
+
+     借「前進中」那個 .go（金色、會脈動）給它，不是另外調一個新顏色
+     ——這個作品的顏色系統只有一條規則：「金＝你可以按這裡，或你正在
+     這裡」（見 50-style.css）。commit 這個狀態剛好就是那句話字面上的
+     意思：有一件事在等他按，用金色是照著規則走，不是破例。 */
+  H.push('<div class="hero-tag' + (walking || kind === 'commit' ? ' go' : resting ? ' rest' : '') +
     '">' + esc(tag) + '</div>');
   if (walking) {
     H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
@@ -516,7 +524,7 @@ function scene(t, row, st, kind) {
      三個都是假的，而且它出現在他還沒決定要走幾天的那個畫面上。 */
   if (run && run.runId) {
     H.push('<div class="scn-foot">');
-    H.push('<span class="sf est"><i>你說要</i><b>' + est + '</b><i>天</i></span>');
+    H.push('<span class="sf est"><i>你說要</i><b>' + esc(estSay(run)) + '</b></span>');
     H.push('<span class="sf days"><i>已經過了</i><b>' + gone + '</b><i>天</i></span>');
     /* 「你來了 N 天」拿掉了：那是一個每天登入的計數，而這個系統
        不要求每天登入。判定只讀兩個數字，第三個數字擺在它們旁邊，
@@ -525,6 +533,14 @@ function scene(t, row, st, kind) {
        來過的痕跡還在廊道上（走過的那幾格點著火把），
        但它不再被寫成一個分數。 */
     H.push('</div>');
+    /* 交出去了、等老師看——在只有兩個數字的那一頁上補一句，
+       不然學生不知道他現在該做什麼、等多久、會不會通知他。 */
+    if (kind === 'review') {
+      H.push('<p class="dim scn-wait">交出去了。老師收下之後這裡會通知你。</p>');
+    }
+    if (kind === 'back') {
+      H.push('<p class="dim scn-wait">老師退回來了，點上面的委託人看他寫了什麼。</p>');
+    }
   }
   return H.join('');
 }
