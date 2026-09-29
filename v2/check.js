@@ -262,19 +262,26 @@ if (demoFn && !/filter\(function \(u\) \{ return u\._d; \}\)/.test(demoFn[0])) {
   console.error('切換身分那一格列出了真帳號　——學生點一下就變成老師');
 }
 
-/* ---------- 三之二 · 研究者只能看 ----------
+/* ---------- 三之二 · 研究者只能看（除了密碼那一個例外） ----------
 
    研究者是這個研究的觀察者。一個觀察者如果同時改得動被觀察對象的
    帳號與狀態，那份資料就沒辦法說「這些是他們自己做的」。
 
    所以他那一頁不准出現任何一個 act 開頭的動作。讀（where／find／
-   exportCsv）隨便讀，寫一個都不行。 */
+   exportCsv）隨便讀，寫一個都不行。
+
+   2026-09-23：使用者本人要求開放一個例外——研究者可以直接改學生／
+   老師的密碼（actResearcherSetPw，見 15-auth.js 與 CLAUDE.md 同一天
+   那一段）。這裡只放行這一個名字，其餘 act 開頭的照樣擋——例外
+   只開給密碼，不是「研究者頁面解禁」。 */
 const rsSrc = fs.readFileSync(path.join(__dirname, 'src', '75-research.js'), 'utf8');
-const rsAct = rsSrc.match(/\bact[A-Z][A-Za-z]*\s*\(/g);
-if (rsAct) {
+const RS_ALLOWED_ACT = ['actResearcherSetPw'];
+const rsAct = (rsSrc.match(/\bact[A-Z][A-Za-z]*\s*\(/g) || [])
+  .filter((m) => !RS_ALLOWED_ACT.includes(m.replace(/\s*\($/, '')));
+if (rsAct.length) {
   bad++;
   console.error('研究者那一頁動得了東西　' + rsAct.join('、') +
-    '　——他只能看，帳號由他們自己在門口開');
+    '　——他只能看（密碼那一條例外見 CLAUDE.md），帳號由他們自己在門口開');
 }
 
 /* ---------- 三之一半 · 一個作品只能有一個比喻 ----------

@@ -7,8 +7,9 @@
    ── 這一支守三件事 ──
 
    一 · 本人才改得動。換密碼一定要先打對現在那一個，拿別人的密碼
-        換不掉別人的。沒有任何角色因為這一頁而拿到改別人帳號的能力
-        （研究者唯讀那條軸，見 75-research.js 的檔頭）
+        換不掉別人的。唯一的例外是救援碼跟研究者直接改密碼——
+        2026-09-23 使用者本人要求開放的兩條路（見 CLAUDE.md 同一天
+        那兩段），其餘角色照樣改不動別人的帳號
 
    二 · **密碼不可以進事件流**。這一條最嚴重：Events 是 SYNC_UP_ONLY，
         上去就下不來也刪不掉（見 41-sync.js），而 Firestore 那邊的規則
@@ -144,6 +145,18 @@ const dup3=actRegister({account:'stu_dup3',password:'cccc',name:'第三個',role
 actNewTeam('第三隊',dup3.userId);
 ok(actMergeAccount(t.userId,'stu_dup3','stu_dup1').err==='這個新帳號已經合併過了，選現在真的在用的那一個。',
   '不能把隊伍接到一個已經是死帳號的目標上');
+
+console.log('\n── 研究者直接改密碼（2026-09-23 使用者本人要求開放的例外）──');
+const lab=actRegister({account:'lab1',password:'aaaa',name:'研究者',role:'researcher'}).user;
+ok(actResearcherSetPw(A.userId,'stu_dup3','zzzz').err==='只有研究者用得了這個功能。','老師用不了這個功能');
+ok(actResearcherSetPw(lab.userId,'stu_dup3','z').err===RULES.pwRule(),'新密碼太短會擋');
+ok(actResearcherSetPw(lab.userId,'stu_dup3','zzzz').user,'研究者不用打對舊密碼，直接換得掉學生的');
+ok(actLogin('stu_dup3','zzzz').user,'新密碼真的能登入');
+const lab2=actRegister({account:'lab2',password:'aaaa',name:'另一位研究者',role:'researcher'}).user;
+ok(actResearcherSetPw(lab.userId,'lab2','yyyy').err==='研究者的帳號不能用這裡改。','研究者改不動另一位研究者的密碼');
+const rspwev=DB.Events.filter(e=>e.kind==='researchersetpw');
+ok(rspwev.length===1&&rspwev[0].by===lab.userId&&rspwev[0].account==='stu_dup3','記著是哪一位研究者改了誰');
+ok(JSON.stringify(DB.Events).indexOf('zzzz')<0,'新密碼沒有進事件流');
 
 console.log('');
 console.log('── 不分組那一站：改名字畫面上要看得到 ──');

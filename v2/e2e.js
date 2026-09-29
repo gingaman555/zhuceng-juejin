@@ -66,6 +66,10 @@ go('mkclass'); form('mk-name', '設計專題'); ACTS.mkclass();
 const kl = DB.Classes[0];
 ok('開班了，加入碼 ' + kl.joinCode);
 
+/* 改班名（2026-09-23）：走正常的 save() 路徑，不是直接動資料庫。 */
+go('mkclass'); form('cls-name', '設計專題（改）'); ACTS.renameclass();
+be('班名改好了', DB.Classes[0].name, '設計專題（改）');
+
 /* 兩個人。真的要上的那個班是六組每組兩人（見 45-seed.js 與 class.js），
    而組員人數會改變好幾件事的形狀：拆件掛在誰名下、「還有幾個人沒填」、
    剖面圖上一條廊道站幾個人。用四個人跑等於在測一個不存在的班。 */
@@ -82,6 +86,7 @@ NAMES.forEach(function (n, i) {
 be('兩個學生註冊完，名字是', stu.map(u => u.name).join('、'), NAMES.join('、'));
 
 as(stu[0]);
+be('學生改不動班名', actRenameClass(kl.classId, stu[0].userId, '亂改').err, '只有老師改得動班名。');
 const tm = actNewTeam('第一組', stu[0].userId).team;
 stu.slice(1).forEach(u => { as(u); actJoinTeam(tm.joinCode, u.userId); });
 be('組員人數', DB.Users.filter(u => u.teamId === tm.teamId).length, NAMES.length);
@@ -153,7 +158,11 @@ function 廊道鍵(u) {
   };
 }
 let c = 廊道鍵(stu[0]);
-be('一個人都還沒填 · 鍵', c.鍵, '做完了');
+/* 2026-09-23：鍵不再分三種字——不管填了幾個人，都是「交出去給老師」，
+   因為資料層從來不擋單一個人交（見 60-student.js 的 doingCard）。
+   量到的問題是畫面上只講「還在等 N 個人」，沒有一顆鍵明講「你現在
+   就可以交」，很多組卡在「進行中」，其實是每個人都以為要等別人。 */
+be('一個人都還沒填 · 鍵', c.鍵, '交出去給老師');
 be('一個人都還沒填 · 話', c.話 || '(沒有)', '(沒有)');
 
 function 填自己那一份(u, i, 天) {
@@ -169,9 +178,9 @@ function 填自己那一份(u, i, 天) {
    兩邊都驗——只驗一邊的話，把兩句話寫成一樣也會過。 */
 const 已 = 廊道鍵(stu[0]), 未 = 廊道鍵(stu[1]);
 be('填完的那一位 · 話', /你那一份填好了/.test(已.話), true);
-be('填完的那一位 · 鍵', 已.鍵, '改我那一份');
+be('填完的那一位 · 鍵', 已.鍵, '交出去給老師');
 be('還沒填的那一位 · 話', /你還沒填自己那一份/.test(未.話), true);
-be('還沒填的那一位 · 鍵', 未.鍵, '做完了');
+be('還沒填的那一位 · 鍵', 未.鍵, '交出去給老師');
 be('兩個人看到的不一樣', 已.話 !== 未.話, true);
 c = 未;
 be('填了一個 · 狀態沒動', find('Runs', x => x.runId === run.runId).state, 'running');
@@ -437,6 +446,27 @@ ACTS.commit(msH2.msId);
 const runH2 = runOf(tm.teamId, msH2.msId);
 be('承諾存好了', !!runH2, true);
 be('那一件的單位有跟著存進 run.plan', runH2.plan[0].dU + ' ' + runH2.plan[0].dN, 'h 9');
+
+/* ══ 手上有一趟在做，老師又派的另一件也開得了（2026-09-29）══ */
+H('兩件並行：手上有事，另一件從任務清單開得了');
+const msP = actPublish(kl.classId, { title: '並行的另一件', note: '', steps: [], due: 7, teams: [] });
+/* 前面的段落把這一組送出去結案了，這裡要一組還在走的。 */
+tm.leftAt = 0; tm.exitAsk = 0; tm.exitNo = 0; tm.exitOk = 0;
+as(stu[0]); S.page = 'pack'; S.p = null; DRAFT = {};
+const nxP = nextThing(tm.teamId);
+be('首頁還是只推手上那一件', nxP.kind, 'doing');
+const htmlP = PAGES.pack();
+be('任務清單有「說幾天」開新的那一件', htmlP.indexOf('go:commit:' + msP.msId) >= 0, true);
+const firstRun = nxP.row.run;
+const other = runsFor(tm.teamId).filter(x => x.run.state === 'running' && x.run.runId !== firstRun.runId)[0];
+be('手上另一件在做的，清單也有「交出去」', !other || htmlP.indexOf('go:battle:' + other.run.runId) >= 0, true);
+const rP = actCommit(tm.teamId, msP.msId, 2, [], [], 'wild', 'mid');
+be('第二件承諾得了（資料層不擋）', !!rP && rP.state === 'running', true);
+be('第一件沒被動到', runOf(tm.teamId, firstRun.msId).state, 'running');
+const subP = actSubmit(tm.teamId, rP.runId, '');
+be('第二件先交得出去', !!subP && subP.state === 'submitted', true);
+be('第一件還在進行中', runOf(tm.teamId, firstRun.msId).state, 'running');
+be('第二件的判定只讀它自己的兩個數字', RULES.judge(rP.est, subP.actual).key, subP.stamp);
 
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');

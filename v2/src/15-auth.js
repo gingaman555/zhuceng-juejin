@@ -143,6 +143,8 @@ var EV_SAY = {
   recoverpw: function () { return '用救援碼換了密碼'; },
   genrecov: function () { return '拿了一組救援碼'; },
   teacherrecov: function (e) { return '幫「' + (e.account || '') + '」補發了一組救援碼'; },
+  researchersetpw: function (e) { return '研究者直接改了「' + (e.account || '') + '」的密碼'; },
+  renameclass: function (e) { return '把班名從「' + (e.from || '') + '」改成「' + (e.name || '') + '」'; },
   mergeaccount: function (e) { return '把「' + (e.from || '') + '」接回「' + (e.to || '') + '」'; },
   joinclass:function (e) { return '加進「' + e.klass + '」'; },
   newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
@@ -422,6 +424,34 @@ function actSetPw(userId, oldPw, pw) {
   return { user: u };
 }
 
+/* ---------- 研究者直接改任何人的密碼 ----------
+
+   2026-09-23：CLAUDE.md 同一天記著這條例外——使用者本人明確要求
+   打開的，不是踩坑踩出來的設計。跟救援碼不一樣：救援碼是「代發
+   鑰匙，本人自己開鎖」，這一支是研究者直接設定新密碼，本人不用
+   在場、也不用先打對舊密碼。
+
+   只認 role==='researcher'。新密碼一樣不進事件流——記的是「誰
+   幫誰換過」，不記新密碼本身，理由跟 actSetPw 一樣：事件流會上雲，
+   那邊的規則是全開的。 */
+function actResearcherSetPw(researcherId, account, pw) {
+  var res = userOf(researcherId);
+  if (!res || res.role !== 'researcher') return { err: '只有研究者用得了這個功能。' };
+  var u = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
+  });
+  if (!u) return { err: '找不到這個帳號。' };
+  if (u.role === 'researcher') return { err: '研究者的帳號不能用這裡改。' };
+  var np = String(pw || '');
+  if (np.length < RULES.PW_MIN) return { err: RULES.pwRule() };
+  var salt = newSalt();
+  u.salt = salt;
+  u.hash = pwHash(np, salt);
+  save();
+  logEvent('researchersetpw', { by: res.userId, account: u.account, forUser: u.userId });
+  return { user: u };
+}
+
 /* ---------- 補發救援碼 ----------
 
    救援碼是這個功能上線那一刻才開始給的——在那之前註冊的帳號沒有
@@ -621,6 +651,33 @@ function actNewClass(name, teacherId) {
   /* 加一個座位，不是換掉原本那個——他可能已經在帶另一班。 */
   addSeat(u, c.classId, '');
   save();
+  return { klass: c };
+}
+
+/* 改班名。
+
+   2026-09-23：本來班名只有開班那一刻設定得了，之後沒有任何入口——
+   要改只能直接動 Firestore，繞過整套同步邏輯。代價是：任何一台還連著
+   這個班、本地端還記著舊名字的裝置，只要存一次檔就會把舊名字整批
+   推回去蓋掉那筆直接改的資料（真的在教室裡發生過）。
+
+   這一支走正常的 actRename／actTeamRename 同一條路：save() 之後
+   經過 syncPush 推上雲，連著的裝置從 onSnapshot 即時收到，本地端
+   自己更新成新的——不會有「別人還記著舊的」這件事。 */
+function actRenameClass(classId, teacherId, name) {
+  var teacher = userOf(teacherId);
+  if (!teacher || teacher.role !== 'teacher') return { err: '只有老師改得動班名。' };
+  var mine = seatsOf(teacher).map(function (s) { return s.classId; });
+  if (mine.indexOf(classId) < 0) return { err: '這個班不是你的。' };
+  var c = find('Classes', function (x) { return x.classId === classId; });
+  if (!c) return { err: '找不到這個班。' };
+  var nm = String(name || '').trim().slice(0, 30);
+  if (!nm) return { err: '班名不能是空的。' };
+  if (c.name === nm) return { err: '跟原本一樣，沒有改到。' };
+  var old = c.name;
+  c.name = nm;
+  save();
+  logEvent('renameclass', { by: teacher.userId, classId: classId, name: nm, from: old });
   return { klass: c };
 }
 

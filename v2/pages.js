@@ -224,3 +224,8 @@ if (bad) {
 }
 console.log(String.fromCharCode(10) +
   '── 每一頁都畫得出來，而且點得到的地方後面真的有東西 ──');
+/* 2026-09-24 補的：80-app.js 開機會叫 checkFreshStart()，裡面是一個
+   真的 setInterval（十分鐘一次）。這支的假瀏覽器沒有把它接掉，
+   於是這支測完、印完，卻因為那個計時器還醒著而永遠不跳出——
+   deploy.js 等它等到天荒地老。跟其他每一支一樣，成功也要自己 exit。 */
+process.exit(0);

@@ -107,6 +107,31 @@ PAGES.pack = function () {
   }
 
 
+  /* 手上有一趟在做的時候，老師又派的那幾件，從這裡就開得了。
+
+     2026-09-29：本來首頁只給一件事——手上有事就不遞新的（見 40-db.js
+     的 nextThing），清單裡沒做完的那幾列也是按不動的。結果老師 9/23 派的
+     第二件，全班四十五組只有四組開始做：第一件的交件被蓋掉（見 41-sync.js）、
+     一直顯示進行中的組，第二件根本按不到。資料層本來就不擋（actCommit
+     沒有這個限制），論文寫的也是「多件任務並行時分別計算」——是畫面
+     擋的。首頁還是只推一件事；這裡是「他自己想先做別的」的路。 */
+  var nx = nextThing(t.teamId);
+  if (nx.kind === 'doing') {
+    var 別件 = runsFor(t.teamId).filter(function (x) {
+      return x.run.state === 'fresh' ||
+        (x.run.state === 'running' && x.run.runId !== nx.row.run.runId);
+    });
+    if (別件.length) {
+      H.push('<div class="card"><div class="eyebrow">也可以先做這幾件</div>');
+      別件.forEach(function (x) {
+        H.push(x.run.state === 'fresh'
+          ? btn('說幾天：' + x.ms.title, 'go:commit:' + x.ms.msId, 'ghost')
+          : btn('交出去：' + x.ms.title, 'go:battle:' + x.run.runId, 'ghost'));
+      });
+      H.push('</div>');
+    }
+  }
+
   H.push('<div class="card"><div class="rec-list">');
   rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
   H.push('</div></div>');
@@ -139,7 +164,10 @@ PAGES.pack = function () {
          老師只是還沒收。 */
       H.push('<div class="eyebrow warnx">老師說</div>');
       H.push('<p class="quote big">現在還不是時候。</p>');
-      H.push(btn('我們真的做完了', 'askexit', 'big'));
+      /* 2026-09-29：老師還沒開放結案的時候不再給這顆鍵。本來這一格
+         「再說一次不需要任何條件」，結果被回過的組永遠留著一顆可以再按
+         的鍵，老師清完一輪，隔天又有人按。老師開放之後鍵自己回來。 */
+      if (exitOpen) H.push(btn('我們真的做完了', 'askexit', 'big'));
     } else if (DRAFT.exitConfirm) {
       /* 兩步，不是一步。這一格以前是任務清單最下面一顆跟「回廊道」
          擠在一起的大鍵——常來看清單的人往下滑到底，手滑按到的

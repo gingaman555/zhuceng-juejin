@@ -114,6 +114,9 @@ img{display:block}
   position:sticky;top:0;z-index:20;font-size:22px;color:var(--dim);flex-wrap:wrap
 }
 .top .who{font-size:22px;color:var(--ink)}
+/* 同步失敗的警告（見 55-ui.js 的 topEnd）。用 --over：這是判定顏色
+   系統裡「要注意」那一階，跟老師退回、停很久了同一種語氣。 */
+.sync-warn{font-size:22px;color:var(--over)}
 .top .sp{flex:1}
 .badge{
   display:inline-block;padding:2px 8px;font-size:22px;
@@ -5034,6 +5037,11 @@ button.side-head{
 .hero-tag.go{color:#0F0C08;background:var(--gold);
   box-shadow:inset 0 0 0 2px var(--gold2);
   animation:tagb 1.1s steps(1,end) infinite}
+/* 同一塊金，不脈動——commit 那個狀態角色是坐著的，牌子閃爍會暗示
+   「正在動」，而他沒有（見 61-scene.js）。金色本身已經在講
+   「可以按這裡」，不需要再借動畫講一次「在動」。 */
+.hero-tag.new{color:#0F0C08;background:var(--gold);
+  box-shadow:inset 0 0 0 2px var(--gold2)}
 .hero-tag.rest{color:#FFD9A0;background:rgba(233,132,63,.30);
   box-shadow:inset 0 0 0 2px rgba(233,132,63,.65)}
 @keyframes tagb{0%,60%{background:var(--gold)}61%,100%{background:var(--gold2)}}
@@ -5425,7 +5433,12 @@ button.side-head{
 .sp2 i{flex:1;font-style:normal;font-size:22px;color:var(--ink);
   overflow-wrap:anywhere;min-width:0}
 .sp2 u{text-decoration:none;font-size:22px;font-variant-numeric:tabular-nums}
-.sp2 u.said{flex:0 0 66px;text-align:right;color:var(--mute)}
+/* 2026-09-23 踩過：「說 N」本來就窄到剛好，後來為了小時／週承諾
+   多印一個單位字（「說 8 小時」），固定 66px 塞不下，手機上會被擠到
+   換行、疊到旁邊的加減鍵上。改成看內容自己撐寬（white-space 不准換
+   行），旁邊那一件的名字（.sp2 i，本來就 min-width:0）讓出空間。 */
+.sp2 u.said{flex:0 0 auto;min-width:44px;white-space:nowrap;
+  text-align:right;color:var(--mute)}
 .sp2 u.got{flex:0 0 44px;text-align:center;color:var(--gold)}
 .sp2 .pd{
   flex:0 0 44px;height:44px;border:0;cursor:pointer;font:inherit;
@@ -5961,6 +5974,8 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
+var BUILD_AT = 1790679519652;
+
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
    來源是上一版的 gas/Pack.html 與 bosses/bosses.json，內容沒有改，
@@ -7828,6 +7843,8 @@ var EV_SAY = {
   recoverpw: function () { return '用救援碼換了密碼'; },
   genrecov: function () { return '拿了一組救援碼'; },
   teacherrecov: function (e) { return '幫「' + (e.account || '') + '」補發了一組救援碼'; },
+  researchersetpw: function (e) { return '研究者直接改了「' + (e.account || '') + '」的密碼'; },
+  renameclass: function (e) { return '把班名從「' + (e.from || '') + '」改成「' + (e.name || '') + '」'; },
   mergeaccount: function (e) { return '把「' + (e.from || '') + '」接回「' + (e.to || '') + '」'; },
   joinclass:function (e) { return '加進「' + e.klass + '」'; },
   newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
@@ -8107,6 +8124,34 @@ function actSetPw(userId, oldPw, pw) {
   return { user: u };
 }
 
+/* ---------- 研究者直接改任何人的密碼 ----------
+
+   2026-09-23：CLAUDE.md 同一天記著這條例外——使用者本人明確要求
+   打開的，不是踩坑踩出來的設計。跟救援碼不一樣：救援碼是「代發
+   鑰匙，本人自己開鎖」，這一支是研究者直接設定新密碼，本人不用
+   在場、也不用先打對舊密碼。
+
+   只認 role==='researcher'。新密碼一樣不進事件流——記的是「誰
+   幫誰換過」，不記新密碼本身，理由跟 actSetPw 一樣：事件流會上雲，
+   那邊的規則是全開的。 */
+function actResearcherSetPw(researcherId, account, pw) {
+  var res = userOf(researcherId);
+  if (!res || res.role !== 'researcher') return { err: '只有研究者用得了這個功能。' };
+  var u = find('Users', function (x) {
+    return String(x.account).toLowerCase() === String(account || '').trim().toLowerCase();
+  });
+  if (!u) return { err: '找不到這個帳號。' };
+  if (u.role === 'researcher') return { err: '研究者的帳號不能用這裡改。' };
+  var np = String(pw || '');
+  if (np.length < RULES.PW_MIN) return { err: RULES.pwRule() };
+  var salt = newSalt();
+  u.salt = salt;
+  u.hash = pwHash(np, salt);
+  save();
+  logEvent('researchersetpw', { by: res.userId, account: u.account, forUser: u.userId });
+  return { user: u };
+}
+
 /* ---------- 補發救援碼 ----------
 
    救援碼是這個功能上線那一刻才開始給的——在那之前註冊的帳號沒有
@@ -8306,6 +8351,33 @@ function actNewClass(name, teacherId) {
   /* 加一個座位，不是換掉原本那個——他可能已經在帶另一班。 */
   addSeat(u, c.classId, '');
   save();
+  return { klass: c };
+}
+
+/* 改班名。
+
+   2026-09-23：本來班名只有開班那一刻設定得了，之後沒有任何入口——
+   要改只能直接動 Firestore，繞過整套同步邏輯。代價是：任何一台還連著
+   這個班、本地端還記著舊名字的裝置，只要存一次檔就會把舊名字整批
+   推回去蓋掉那筆直接改的資料（真的在教室裡發生過）。
+
+   這一支走正常的 actRename／actTeamRename 同一條路：save() 之後
+   經過 syncPush 推上雲，連著的裝置從 onSnapshot 即時收到，本地端
+   自己更新成新的——不會有「別人還記著舊的」這件事。 */
+function actRenameClass(classId, teacherId, name) {
+  var teacher = userOf(teacherId);
+  if (!teacher || teacher.role !== 'teacher') return { err: '只有老師改得動班名。' };
+  var mine = seatsOf(teacher).map(function (s) { return s.classId; });
+  if (mine.indexOf(classId) < 0) return { err: '這個班不是你的。' };
+  var c = find('Classes', function (x) { return x.classId === classId; });
+  if (!c) return { err: '找不到這個班。' };
+  var nm = String(name || '').trim().slice(0, 30);
+  if (!nm) return { err: '班名不能是空的。' };
+  if (c.name === nm) return { err: '跟原本一樣，沒有改到。' };
+  var old = c.name;
+  c.name = nm;
+  save();
+  logEvent('renameclass', { by: teacher.userId, classId: classId, name: nm, from: old });
   return { klass: c };
 }
 
@@ -13634,7 +13706,7 @@ function dayText(ts) {
    都沒有 firebase 這個東西。那時候這一整層安靜地什麼都不做，
    localStorage 還是照舊——單機那條路一步都沒有變。 */
 
-var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '' };
+var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, fly: {} };
 
 /* 每一張表的主鍵。
 
@@ -13700,9 +13772,56 @@ function syncReady() {
   return 1;
 }
 
+/* ---------- 分頁開太久，程式碼是舊的 ----------
+
+   2026-09-23：伺服器端修好的 bug，對一台已經開很久的分頁沒有用——
+   它記憶體裡跑的還是打開那一刻拿到的那份 JS，deploy 再多次也不會
+   自己變成新的，只有它自己重新整理過才會拿到新的（見 build.js 的
+   BUILD_AT）。這裡每隔一段時間去掉快取問一次伺服器「現在是哪一版」，
+   跟自己手上這一份比，新的話就在頂條露出「重新整理」（見 55-ui.js
+   的 topEnd）。只問首頁那個 HTML，不碰任何 API，負擔跟同步比起來
+   可以忽略。 */
+var SYNC_FRESH_MS = 600000; /* 十分鐘問一次，不用更勤——這不是急事 */
+function checkFresh() {
+  if (typeof fetch !== 'function' || typeof BUILD_AT === 'undefined') return;
+  if (typeof location === 'undefined') return;
+  fetch(location.pathname + '?_v=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.text(); })
+    .then(function (t) {
+      var m = t.match(/BUILD_AT = (\d+);/);
+      if (m && Number(m[1]) > BUILD_AT && !SYNC.stale) {
+        SYNC.stale = 1;
+        if (typeof render === 'function') render();
+      }
+    })
+    .catch(function () {});
+}
+function checkFreshStart() {
+  if (typeof setInterval !== 'function') return;
+  checkFresh();
+  setInterval(checkFresh, SYNC_FRESH_MS);
+}
+
 function syncTrouble(e) {
   SYNC.err = (e && e.message) || String(e);
   if (typeof console !== 'undefined' && console.warn) console.warn('同步：' + SYNC.err);
+  /* 2026-09-23：本來只印主控台，沒有人看——學生按了「交出去」，
+     本機立刻顯示成功（save() 一定先寫得進 localStorage），可是那一批
+     推上雲的請求在背景默默失敗，畫面上一個字都沒變。老師隔天打開
+     審核只看到一件，其餘幾十組以為自己交了，其實東西沒離開過那台
+     瀏覽器。topEnd() 讀 syncStatus() 畫那一條，這裡補一次 render()
+     是讓「剛好失敗的那一刻」不用等使用者剛好做了下一個動作才看得到。 */
+  if (typeof render === 'function') render();
+}
+
+/* 頂條那一條的三種狀態：off（沒接上雲，本機單機模式）、
+   err（上一批推送失敗，本機資料還沒真的到雲端）、ok（其餘）。
+   ok 不特別顯示——正常狀態不該佔畫面，只有「要注意」才出現
+   （見 50-style.css 的顏色規則）。 */
+function syncStatus() {
+  if (!SYNC.db) return 'off';
+  if (SYNC.err) return 'err';
+  return 'ok';
 }
 
 /* 哪些班、哪些隊是示範用的。
@@ -13735,10 +13854,27 @@ function onDemoSide(r, d) {
   return false;
 }
 
-/* 現在手上這一份，攤平成「路徑 → JSON 字串」。示範那一邊的不算。 */
+/* 現在手上這一份，攤平成「路徑 → JSON 字串」。示範那一邊的不算。
+
+   2026-09-23 補的一道門：**這張表還沒收到第一次快照之前不推。**
+
+   分頁剛連上雲端那一刻，SYNC.last 是空的，可是「雲端現在長怎樣」
+   要等 Firestore 回應才知道——中間隔著一段網路來回。如果剛好在
+   這個空檔裡，隨便一個動作觸發了一次 save()，本機端當下那一份
+   （可能是很久沒開、還記著舊資料的那一份）會因為 SYNC.last 是空的、
+   看起來每一筆都「跟上次同步的不一樣」，整批被當成新的推上去——
+   蓋掉任何在這個空檔之前、由別的地方（另一台裝置，或像班名這種
+   直接改資料庫）寫上去的東西。這正是「班名改完又被蓋回去」那次
+   事故的根源，而且不只影響班名，任何欄位、任何時候都可能踩到。
+
+   SYNC.first[col] 由 syncTake 在收到這張表的第一次快照時打開
+   （見下面 syncStart）。打開之前，這張表在 syncFlat 裡直接跳過——
+   本機再怎麼改，都要等真的跟雲端核對過一次，才輪到它被推上去。
+   SYNC_UP_ONLY（目前只有 Events）不訂閱、不核對，維持原樣一路能推。 */
 function syncFlat() {
   var out = {}, d = demoSide();
   Object.keys(SYNC_KEY).forEach(function (col) {
+    if (!SYNC_UP_ONLY[col] && !SYNC.first[col]) return;
     var idf = SYNC_KEY[col];
     (DB[col] || []).forEach(function (r) {
       if (!r || !r[idf] || onDemoSide(r, d)) return;
@@ -13748,33 +13884,162 @@ function syncFlat() {
   return out;
 }
 
+/* 這張表，這一台裝置現在推不推得動。
+
+   2026-09-24：Classes 只有老師改得動（actRenameClass），可是每一台
+   裝置——包含從來不會去改班名的學生——只要存一次檔，都會順手把
+   手上那一份 Classes 重新推一次。裝置一多，「本機這一份到底新不新」
+   就有一堆機會出岔子：任何一台學生裝置的本機資料只要有任何時間差
+   （分頁開很久、剛好卡在還沒收到最新一次快照的那一刻），都可能把
+   老師剛改的班名蓋掉——SYNC.first 那道門擋的是「開機那一刻」的
+   賽跑，擋不住「開機很久之後，某台裝置手上那份還是舊的」這種情況。
+   真正該推 Classes 的裝置只有一種：目前登入的是老師。範圍縮到這裡，
+   會去蓋掉它的裝置就少了一整個數量級。
+
+   這一支要跟 syncPush 底下判斷「刪掉了」那一段用同一個標準——
+   不然學生的裝置會把「我推不動 Classes」誤判成「Classes 被我刪掉了」，
+   對雲端發一筆刪除。 */
+function syncPushable(col) {
+  if (col !== 'Classes') return true;
+  var u = (typeof me === 'function') ? me() : null;
+  return !!(u && u.role === 'teacher');
+}
+
+/* ---------- 一筆之內，只寫「我改過的那幾格」 ----------
+
+   2026-09-29 量到的事故：事件紀錄有三十次「交出去」，雲端的 Runs 卻
+   幾乎全是進行中，沒有交出時間、沒有實際天數，只剩隊員寫的
+   「我做了什麼」。
+
+   雲端一筆 = 一整份 JSON 字串，上面那段「一筆一筆推」只擋得住
+   「改的是不同筆」。同一組兩個人碰的是同一筆 Run：
+
+     A 交出去　　　　　　雲端 state = submitted
+     B 的手機鎖過屏、醒來，本機那份還是進行中，
+       他補寫「我做了什麼」→ 整筆（state = running）推上去
+     雲端 state = running　← A 交的東西沒了
+
+   畫面上沒有任何跡象，老師那邊永遠看不到，學生再交一次又被蓋一次。
+
+   修法：推之前讀雲端現在那一份，用「我上次看到的（base）」對「我現在的
+   （mine）」找出**我改了哪幾格**，只把那幾格套到雲端那一份上。B 沒動過
+   state，就不會去寫 state。同一格兩邊都改，才輪到後寫的贏。
+
+   陣列只在長度沒變的時候逐格併（spent、steps 那一類），長度變了整個換。 */
+function syncEq(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+function syncIsObj(x) { return !!x && typeof x === 'object' && !Array.isArray(x); }
+
+function syncApply(base, mine, theirs) {
+  if (syncEq(base, mine)) return theirs;
+  if (syncIsObj(base) && syncIsObj(mine) && syncIsObj(theirs)) {
+    var out = {}, keys = {}, k;
+    for (k in theirs) out[k] = theirs[k];
+    for (k in base) keys[k] = 1;
+    for (k in mine) keys[k] = 1;
+    for (k in keys) {
+      if (!(k in mine)) { delete out[k]; continue; }
+      if (syncEq(base[k], mine[k])) continue;
+      out[k] = syncApply(base[k], mine[k], theirs[k]);
+    }
+    return out;
+  }
+  if (Array.isArray(base) && Array.isArray(mine) && Array.isArray(theirs) &&
+      base.length === mine.length && mine.length === theirs.length) {
+    return mine.map(function (m, i) { return syncApply(base[i], m, theirs[i]); });
+  }
+  return mine;
+}
+
+/* 字串進、字串出。雲端沒有這一筆、或我沒有 base，就是整筆寫我的。 */
+function syncMergeStr(baseStr, mineStr, theirStr) {
+  if (theirStr == null || baseStr == null || mineStr == null) return mineStr;
+  try {
+    return JSON.stringify(syncApply(JSON.parse(baseStr), JSON.parse(mineStr), JSON.parse(theirStr)));
+  } catch (e) { return mineStr; }
+}
+
 /* 把變過的那幾筆寫上去。save() 每一次都會叫它一次。 */
 function syncPush() {
   if (SYNC.hold || !SYNC.last || !syncReady()) return;
   var now = syncFlat(), jobs = [];
   Object.keys(now).forEach(function (p) {
-    if (SYNC.last[p] !== now[p]) jobs.push([p, now[p]]);
+    if (!syncPushable(p.slice(0, p.indexOf('/')))) return;
+    if (SYNC.last[p] !== now[p]) jobs.push([p, now[p], SYNC.last[p]]);
   });
   Object.keys(SYNC.last).forEach(function (p) {
-    if (!(p in now)) jobs.push([p, null]);
+    if (!syncPushable(p.slice(0, p.indexOf('/')))) return;
+    if (!(p in now)) jobs.push([p, null, SYNC.last[p]]);
   });
   if (!jobs.length) return;
+  /* 送出去、還沒回來的那幾筆，base 記著——這中間如果剛好收到別人的
+     快照，syncTake 要靠它知道「本機這份哪幾格是我剛改的、不能被蓋掉」。 */
+  jobs.forEach(function (j) { if (j[1] !== null && j[2] !== undefined) SYNC.fly[j[0]] = j[2]; });
+  /* 這台裝置這次推不動的那幾筆（例如學生手上的 Classes），SYNC.last
+     還是要記著雲端現在真正的樣子，不能被 now 直接蓋掉——蓋掉的話
+     它會以為自己的（可能是舊的）那份才是基準，下一次比對就亂了。 */
+  Object.keys(now).forEach(function (p) {
+    if (!syncPushable(p.slice(0, p.indexOf('/'))) && (p in SYNC.last)) {
+      now[p] = SYNC.last[p];
+    }
+  });
   SYNC.last = now;
   /* 一批最多 500 筆是 Firestore 的上限，第一次連上去會超過。 */
   for (var i = 0; i < jobs.length; i += 400) syncBatch(jobs.slice(i, i + 400));
 }
 
-function syncBatch(chunk) {
-  var b = SYNC.db.batch();
+function syncDone() {
+  /* 這一批真的到了。清掉上一次的錯誤——如果剛剛才失敗過，
+     這一下成功了，頂條那條警告該跟著收掉，不然它會一直掛著，
+     讓人以為現在還在出事。 */
+  if (SYNC.err) { SYNC.err = ''; if (typeof render === 'function') render(); }
+}
+
+function syncFail(chunk, e) {
+  /* 沒寫成功就當作沒同步過，下一次 save 會再試一次。
+     退回原本的 base，不是刪掉——刪掉的話下一次會被當成「新的一筆」
+     整筆蓋上去，正是上面要避免的那件事。 */
   chunk.forEach(function (j) {
-    var ref = SYNC.db.doc(SYNC_ROOT + j[0]);
-    if (j[1] === null) b.delete(ref); else b.set(ref, { j: j[1] });
+    delete SYNC.fly[j[0]];
+    if (SYNC.last[j[0]] !== j[1]) return;
+    if (j[2] === undefined) delete SYNC.last[j[0]]; else SYNC.last[j[0]] = j[2];
   });
-  b.commit().catch(function (e) {
-    /* 沒寫成功就當作沒同步過，下一次 save 會再試一次。 */
-    chunk.forEach(function (j) { delete SYNC.last[j[0]]; });
-    syncTrouble(e);
+  syncTrouble(e);
+}
+
+/* chunk 裡每一筆是 [路徑, 我現在的（null＝刪）, 我上次看到的]。
+   有 base 的更新走交易（讀雲端、只套我改的那幾格）；新的一筆、刪除、
+   只上不下的 Events 沒有可以併的東西，照舊一批寫。 */
+function syncBatch(chunk) {
+  var plain = [], merge = [];
+  chunk.forEach(function (j) {
+    (j[1] !== null && j[2] !== undefined && !SYNC_UP_ONLY[j[0].slice(0, j[0].indexOf('/'))] ? merge : plain).push(j);
   });
+  if (plain.length) {
+    var b = SYNC.db.batch();
+    plain.forEach(function (j) {
+      var ref = SYNC.db.doc(SYNC_ROOT + j[0]);
+      if (j[1] === null) b.delete(ref); else b.set(ref, { j: j[1] });
+    });
+    b.commit().then(function () {
+      plain.forEach(function (j) { delete SYNC.fly[j[0]]; });
+      syncDone();
+    }).catch(function (e) { syncFail(plain, e); });
+  }
+  if (merge.length) {
+    SYNC.db.runTransaction(function (tx) {
+      var refs = merge.map(function (j) { return SYNC.db.doc(SYNC_ROOT + j[0]); });
+      return Promise.all(refs.map(function (r) { return tx.get(r); })).then(function (snaps) {
+        snaps.forEach(function (s, i) {
+          var cloud = s.exists ? s.data().j : null;
+          var out = syncMergeStr(merge[i][2], merge[i][1], cloud);
+          if (out !== cloud) tx.set(refs[i], { j: out });
+        });
+      });
+    }).then(function () {
+      merge.forEach(function (j) { delete SYNC.fly[j[0]]; });
+      syncDone();
+    }).catch(function (e) { syncFail(merge, e); });
+  }
 }
 
 /* ---------- 同一筆上，兩個人各寫各的那一格 ----------
@@ -13835,6 +14100,33 @@ var SYNC_MERGE = {
   }
 };
 
+/* ---------- 被蓋掉的交件，有人手上還留著就補回去 ----------
+
+   上面的三方併只管得到「新版」的機器。還開著 9/23 之前那份程式的
+   分頁，推的還是整筆——它手機醒來補寫一句話，就把別人交出去的
+   狀態蓋回進行中。那台舊分頁改不了，可是同一份資料在別的機器上
+   還留著（交件的那台、老師的那台）。
+
+   判斷靠一個不可能倒退的欄位：submittedAt 一旦寫進去，任何正常的
+   流程都不會再拿掉它（見 40-db.js，只有 actSubmit 寫、沒有人清）。
+   所以「我這份有 submittedAt、雲端這份沒有」只可能是被蓋掉，不會是
+   別人正常改的。補的做法：以我這份為主，雲端有而我沒有的欄位留著，
+   said 兩邊的話都留（見 SYNC_MERGE）。補完會被推回去，收到的舊分頁
+   也就跟著好了。 */
+var SYNC_HEAL = {
+  Runs: function (我的, 他的) {
+    if (!我的.submittedAt || 他的.submittedAt) return null;
+    var out = {}, k;
+    for (k in 他的) out[k] = 他的[k];
+    for (k in 我的) if (k !== 'said') out[k] = 我的[k];
+    var m = {};
+    for (k in (我的.said || {})) m[k] = 我的.said[k];
+    for (k in (他的.said || {})) m[k] = 他的.said[k];
+    out.said = m;
+    return out;
+  }
+};
+
 /* 別人動了：把那一張表併進來。
 
    併，不是換掉：本機原本的順序留著（陣列順序在幾個地方是有意義的，
@@ -13854,6 +14146,21 @@ function syncTake(col, inc) {
     if (!r || r._d) continue;                /* 示範資料只在這台機器上 */
     if (inc[id]) {
       seen[id] = 1;
+      /* 我這一台有還沒上去（或正在上去）的改動，不能被這一份快照蓋掉：
+         把「我改的那幾格」套到雲端這一份上，再往下走。
+         base 是我上次跟雲端對過的樣子；送出去還沒回來的那幾筆，
+         用送出那一刻的 base（見 syncPush 的 SYNC.fly）。 */
+      var bs = (pre + id in SYNC.fly) ? SYNC.fly[pre + id] : SYNC.last[pre + id];
+      if (bs !== undefined) {
+        var ms = JSON.stringify(syncCut(col, r));
+        if (ms !== bs) {
+          var cs = JSON.stringify(inc[id]), mm3 = syncMergeStr(bs, ms, cs);
+          if (mm3 !== cs) { inc[id] = JSON.parse(mm3); 併了 = 1; }
+        }
+      }
+      /* 交件被舊分頁蓋掉了：我這份留著的話補回去（見 SYNC_HEAL）。 */
+      var hl = SYNC_HEAL[col];
+      if (hl) { var 補好 = hl(r, inc[id]); if (補好) { inc[id] = 補好; 併了 = 1; } }
       /* 我這一台上有、對方那一份沒有的格子，補回去（見 SYNC_MERGE）。 */
       var mg = SYNC_MERGE[col];
       if (mg) { var 併 = mg(r, inc[id]); if (併) { inc[id] = 併; 併了 = 1; } }
@@ -14927,7 +15234,7 @@ var GATE_PAGES = { gate: 1, login: 1, reg: 1, fresh: 1, forgotpw: 1 };
    短名字就好——這裡不是在講故事，是在講「這是哪一頁」。 */
 var PAGE_TITLE = {
   gate: '登入', login: '登入', reg: '建立帳號', fresh: '資料不對', forgotpw: '忘記密碼',
-  rgcode: '救援碼', acctrecov: '補發救援碼', acctmerge: '接回帳號',
+  rgcode: '救援碼', acctrecov: '補發救援碼', acctmerge: '接回帳號', rspw: '換密碼',
   mkclass: '開班', myteam: '建隊', me: '你的資料', pw: '換密碼',
   home: '廊道', sign: '認領', commit: '接委託', ask: '委託人',
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
@@ -14948,7 +15255,7 @@ var PAGE_ROLE = {
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
-  rs: 'researcher', events: 'researcher'
+  rs: 'researcher', events: 'researcher', rspw: 'researcher'
 };
 function allowed(u, page) {
   var need = PAGE_ROLE[page];
@@ -15262,7 +15569,21 @@ function regCard(eye, name, note, art, over) {
    排在登出前面：兩顆都是「離開現在在做的事」，可是按錯的代價不一樣
    ——按到你的資料只是換一頁，按到登出要重打一次密碼。 */
 function topEnd() {
-  return '<a class="plain" data-act="run" data-p=\'' +
+  /* 同步失敗的時候，三種角色都要看得到——學生自己交的東西、
+     老師剛勾的可以、研究者要匯出的資料，任何一種悄悄留在本機
+     沒上雲都不該被畫面遮住（見 41-sync.js 的 syncTrouble）。
+     平常（ok／off）不顯示：這一條只在「要注意」的時候才出現。 */
+  var ss = (typeof syncStatus === 'function') ? syncStatus() : 'ok';
+  var warn = ss === 'err'
+    ? '<span class="sync-warn">還沒傳到雲端，會自動再試一次</span>' : '';
+  /* 這台分頁開很久、程式碼是舊版的時候（見 41-sync.js 的
+     checkFresh）——按下去就整頁重新載入，不用另外做動作。
+     這一條比同步失敗更該搶眼一點：舊程式碼不只是這一筆資料的事，
+     是這台分頁接下來每一個動作都可能踩到已經修過的 bug。 */
+  var stale = (typeof SYNC !== 'undefined' && SYNC.stale)
+    ? '<a class="plain sync-warn" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'reloadpage' })) + '\'>這一頁是舊版，點這裡重新整理</a>' : '';
+  return warn + stale + '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:me' })) + '\'>你的資料</a>' +
     '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'logout' })) + '\'>登出</a>';
@@ -17172,6 +17493,23 @@ PAGES.mkclass = function () {
     H.push('</div></div>');
   }
 
+  /* ── 改班名（只有老師，只改現在在的那一個）──
+
+     2026-09-23：本來沒有這個入口，要改班名只能直接動 Firestore——
+     繞過同步邏輯，容易被還開著舊分頁的裝置蓋回去（真的發生過，
+     見 15-auth.js 的 actRenameClass）。這裡走正常的存檔路徑，
+     改完會經過同步推給所有連著的裝置，不會有「別人還記著舊的」
+     這件事。 */
+  if (u.role === 'teacher' && u.classId) {
+    var curCls = find('Classes', function (x) { return x.classId === u.classId; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">改現在這個班的名字</div>');
+    H.push('<input id="cls-name" value="' + esc(draft('cls-name', curCls ? curCls.name : '')) +
+      '" oninput="DRAFT[\'cls-name\']=this.value">');
+    H.push(btn('改班名', 'renameclass', ''));
+    H.push('</div>');
+  }
+
   /* ── 開一個（只有老師）── */
   if (u.role === 'teacher') {
     H.push('<div class="card">');
@@ -17327,6 +17665,16 @@ ACTS.mkclass = function () {
   say('開好了。把加入碼唸給學生跟另外幾位老師。');
 };
 
+ACTS.renameclass = function () {
+  var n = (document.getElementById('cls-name') || {}).value || '';
+  var u = me();
+  var r = actRenameClass(u.classId, S.who, n);
+  if (r.err) { DRAFT['cls-name'] = n; return say(r.err); }
+  DRAFT['cls-name'] = r.klass.name;
+  render();
+  say('班名改好了。');
+};
+
 /* 加進同事已經開好的那一班。 */
 /* 換去另一個班。換完直接落在那一個班的首頁——留在這一頁的話，
    他會不確定到底換過去了沒有。 */
@@ -17411,6 +17759,12 @@ ACTS.logout = function () {
   save();
   S.who = null;
   go('gate');
+};
+
+/* 這台分頁是舊版，整頁重新載入（見 41-sync.js 的 checkFresh）。
+   不是 go()：go() 只是換內容，程式碼還是原本那份舊的。 */
+ACTS.reloadpage = function () {
+  if (typeof location !== 'undefined' && location.reload) location.reload();
 };
 
 /* 登入成功之後要去哪。學生還沒有隊就先去建隊——這件事沒做完，
@@ -18347,16 +18701,17 @@ function actionCard(t, next, st) {
     H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
 
   } else if (next.kind === 'commit') {
-    /* 有人在等你——但這裡不給臉。
+    /* 有任務發來了——但這裡不給臉。
 
-       他走進來那一下留在 commit 頁上：先知道有人在等，再看到是誰，
-       那一下才有東西可以演。臉先在首頁出現的話，進去就只剩一張
-       已經看過的圖。
+       委託人走進來那一下留在 commit 頁上：先知道有任務，再看到是誰
+       派來的，那一下才有東西可以演。臉先在首頁出現的話，進去就只剩
+       一張已經看過的圖。
 
-       按鈕也從「要花幾天」換成「去見他」——你進去是去見一個人，
-       說幾天是見到之後的事。 */
+       這一句講「任務」，按鈕跟著改成「去看看」——不能寫「去見他」：
+       上面那句話沒有先提到一個人，「他」會找不到指的是誰
+       （2026-09-23 踩過，原本這句是「有人在等這一件」才配得上「他」）。 */
     H.push('<p class="waiting">有任務發來了。</p>');
-    H.push(btn('去見他', 'go:commit:' + row.ms.msId, 'big'));
+    H.push(btn('去看看', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'doing') {
     H.push(doingCard(t, row, st));
@@ -18369,7 +18724,7 @@ function actionCard(t, next, st) {
       H.push('<button class="asknote pressable" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'go:pack' })) + '\'>' +
         '<b>老師又派了 ' + next.more + ' 個</b>' +
-        '<i>做完這一趟才輪到，先去任務清單看看叫什麼</i></button>');
+        '<i>可以先開始，不用等手上這一趟做完</i></button>');
     }
 
   } else if (next.kind === 'stamped') {
@@ -18481,20 +18836,28 @@ function doingCard(t, row, st) {
   var 獨 = where('Users', function (u) {
     return inTeam(u, t.teamId) && u.role === 'student';
   }).length <= 1;
+  /* 2026-09-23：這裡本來只在「大家都填完了」才給「交出去給老師」，
+     其餘兩種情況只給「做完了」／「改我那一份」——資料層從來沒有真的
+     擋著等全組（見 67-battle.js 的 spent／said 那兩題：「只看你名下
+     那幾件，拿別人沒填來擋你是連坐」），可是畫面上只有這一句「還在等
+     N 個人」，沒有一顆鍵明講「你現在就可以交」，量到的樣子是很多組
+     卡在「進行中」——不是東西不見了，是每個人都以為要等別人先填完。
+     三種情況現在都給同一顆「交出去給老師」，講法照實：任何一個人都
+     交得出去，不用等其他人。 */
   if (wrote && !left) {
     H.push('<p class="waiting">' +
       (獨 ? '你填好了，還沒交出去。' : '大家都填好自己那一份了，還沒有人交出去。') +
       '</p>');
-    H.push(btn('交出去給老師', 'go:battle:' + r.runId, 'big'));
   } else if (我填了) {
-    H.push('<p class="dim">你那一份填好了。還在等 ' + left + ' 個人。</p>');
-    H.push(btn('改我那一份', 'go:battle:' + r.runId, 'big'));
+    H.push('<p class="dim">你那一份填好了。' +
+      (left ? '還有 ' + left + ' 個人沒填，你也可以先交出去，不用等他們。' : '') + '</p>');
   } else {
     if (wrote) {
-      H.push('<p class="dim">' + wrote + ' 個人填好了。你還沒填自己那一份。</p>');
+      H.push('<p class="dim">' + wrote + ' 個人填好了，你還沒填自己那一份——' +
+        '不過不用等所有人都填，任何一個人都交得出去。</p>');
     }
-    H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
   }
+  H.push(btn('交出去給老師', 'go:battle:' + r.runId, 'big'));
   /* 做到一半發現自己說少了，可以改。
 
      這條路本來只從戰鬥裡進得去，而且語氣是逃跑——一個學生在第三天
@@ -19848,13 +20211,18 @@ function scene(t, row, st, kind) {
      姿勢因此不帶任何訊息——那就等於沒有姿勢。
 
        正在做　　　　　走路
-       還沒說幾天　　　站著　他還在洞口，沒出發
+       還沒說幾天　　　坐著　他還在火邊，沒出發（牌子是金色，跟待命分得開）
        交出去、等老師　坐著　東西送到了，這一趟結束，回火邊
        老師退回來了　　走路　牠站起來了，路還沒走完
        沒有任務　　　　坐著　營火旁邊。那是休息，不是罰站
        很多天沒動　　　睡著
 
-     停下來不是停止：坐著跟站著都有兩幀，差在呼吸，火也一直在動。 */
+     停下來不是停止：坐著跟站著都有兩幀，差在呼吸，火也一直在動。
+
+     ── 2026-09-23：這張表本來寫「還沒說幾天」是站著，程式碼其實一直
+     讓它坐著（見上面 resting 那一段）。兩邊對不上很久了，改表配code，
+     不是改 code 配表——「還坐在火邊」那句話（見上面另一段註解）
+     才是原本真正的設計意圖。 */
   /* walking／resting 在最上面算過了。 */
   /* 火釘在洞口的 left:11，寬 44。人坐在火的右邊一點。 */
   var hx = resting ? 44 : ENT + walked * SCN.TILE - 11;
@@ -19955,11 +20323,15 @@ function scene(t, row, st, kind) {
      一樣的狀態，一個是「沒事」，一個是「有新任務在等你」，掃過去
      分不出來（跟走廊上有沒有東西可以做完全是兩回事）。
 
-     借「前進中」那個 .go（金色、會脈動）給它，不是另外調一個新顏色
-     ——這個作品的顏色系統只有一條規則：「金＝你可以按這裡，或你正在
-     這裡」（見 50-style.css）。commit 這個狀態剛好就是那句話字面上的
-     意思：有一件事在等他按，用金色是照著規則走，不是破例。 */
-  H.push('<div class="hero-tag' + (walking || kind === 'commit' ? ' go' : resting ? ' rest' : '') +
+     顏色借「前進中」的金——這個作品的顏色系統只有一條規則：
+     「金＝你可以按這裡，或你正在這裡」（見 50-style.css），commit
+     剛好就是那句話字面上的意思。但 .go 的脈動動畫是走路那個狀態
+     專屬的：commit 這個處境角色是坐著的（見上面 resting 那一段，
+     還沒出發＝還坐在火邊），身體沒有在動，牌子卻在脈動，看起來像
+     「正在發生什麼」而其實只是站在原地的牌子在閃。所以只借顏色，
+     不借動畫——新開一個 .new，金底但不脈動。 */
+  H.push('<div class="hero-tag' + (walking ? ' go' : kind === 'commit' ? ' new'
+    : resting ? ' rest' : '') +
     '">' + esc(tag) + '</div>');
   if (walking) {
     H.push(pxTag(HERO.walkA, HERO.pal, 'ch wf wa'));
@@ -21171,6 +21543,31 @@ PAGES.pack = function () {
   }
 
 
+  /* 手上有一趟在做的時候，老師又派的那幾件，從這裡就開得了。
+
+     2026-09-29：本來首頁只給一件事——手上有事就不遞新的（見 40-db.js
+     的 nextThing），清單裡沒做完的那幾列也是按不動的。結果老師 9/23 派的
+     第二件，全班四十五組只有四組開始做：第一件的交件被蓋掉（見 41-sync.js）、
+     一直顯示進行中的組，第二件根本按不到。資料層本來就不擋（actCommit
+     沒有這個限制），論文寫的也是「多件任務並行時分別計算」——是畫面
+     擋的。首頁還是只推一件事；這裡是「他自己想先做別的」的路。 */
+  var nx = nextThing(t.teamId);
+  if (nx.kind === 'doing') {
+    var 別件 = runsFor(t.teamId).filter(function (x) {
+      return x.run.state === 'fresh' ||
+        (x.run.state === 'running' && x.run.runId !== nx.row.run.runId);
+    });
+    if (別件.length) {
+      H.push('<div class="card"><div class="eyebrow">也可以先做這幾件</div>');
+      別件.forEach(function (x) {
+        H.push(x.run.state === 'fresh'
+          ? btn('說幾天：' + x.ms.title, 'go:commit:' + x.ms.msId, 'ghost')
+          : btn('交出去：' + x.ms.title, 'go:battle:' + x.run.runId, 'ghost'));
+      });
+      H.push('</div>');
+    }
+  }
+
   H.push('<div class="card"><div class="rec-list">');
   rows.forEach(function (x) { H.push(logRow(x.ms, x.run, t)); });
   H.push('</div></div>');
@@ -21203,7 +21600,10 @@ PAGES.pack = function () {
          老師只是還沒收。 */
       H.push('<div class="eyebrow warnx">老師說</div>');
       H.push('<p class="quote big">現在還不是時候。</p>');
-      H.push(btn('我們真的做完了', 'askexit', 'big'));
+      /* 2026-09-29：老師還沒開放結案的時候不再給這顆鍵。本來這一格
+         「再說一次不需要任何條件」，結果被回過的組永遠留著一顆可以再按
+         的鍵，老師清完一輪，隔天又有人按。老師開放之後鍵自己回來。 */
+      if (exitOpen) H.push(btn('我們真的做完了', 'askexit', 'big'));
     } else if (DRAFT.exitConfirm) {
       /* 兩步，不是一步。這一格以前是任務清單最下面一顆跟「回廊道」
          擠在一起的大鍵——常來看清單的人往下滑到底，手滑按到的
@@ -22678,10 +23078,10 @@ function btSpent(r) {
     var 我存過 = !!((r.said || {})[S.who]);
     if (lf && 我存過) {
       H.push('<p class="dim">你這一份存過了，改了再存一次就好。' +
-        '還有 ' + lf + ' 個人沒填。</p>');
+        '還有 ' + lf + ' 個人沒填，不用等他們，你可以直接往下交出去。</p>');
     } else if (lf) {
       H.push('<p class="dim">還有 ' + lf + ' 個人沒填自己那一份。' +
-        '他們各自進來填，那幾個數字才是他們的。</p>');
+        '他們各自進來填，那幾個數字才是他們的——但不用等，你填完自己這裡就可以往下交出去。</p>');
     }
   }
   return H.join('');
@@ -24440,12 +24840,13 @@ PAGES.ms = function () {
 /* ===== 75-research.js ===== */
 /* 研究者端。
 
-   這一端不是給老師用的，也不進地下城。它**只做兩件事，而且兩件都是讀**：
+   這一端不是給老師用的，也不進地下城。它做的事：
 
      名單   誰在這個系統裡。看得到，改不動
      紀錄   每一個動作的流水帳，可以匯出
+     密碼   2026-09-23 起，研究者可以直接幫學生／老師換一組新密碼
 
-   ── 為什麼一顆會改東西的鍵都沒有 ──
+   ── 為什麼原本一顆會改東西的鍵都沒有 ──
 
    本來這一頁可以建班、開老師的帳號、重設密碼、刪帳號。全部拿掉了。
 
@@ -24457,7 +24858,12 @@ PAGES.ms = function () {
    同一個班（見 58-gate.js），學生自己註冊、自己建隊。整條路上不需要
    一個管理員。
 
-   界線寫成測試：check.js 擋住這個檔案裡出現任何 act 開頭的動作。
+   ── 密碼是唯一的例外，不是解禁 ──
+
+   使用者本人明確要求開放：研究者可以直接改任何學生／老師的密碼
+   （actResearcherSetPw，見 15-auth.js 與 CLAUDE.md 同一天那一段）。
+   除了這一個名字，這一頁不准出現任何其他 act 開頭的動作——
+   check.js 只放行 actResearcherSetPw 這一個，其餘照樣擋著。
 
    紀錄那一頁是這個研究真正的資料。它記的是行為的形狀——承諾幾天、
    哪一天推進、判定結果、卡在哪——不記作業內容，因為系統本來就不收作業。
@@ -24550,7 +24956,77 @@ PAGES.rs = function () {
     H.push('</div>');
   });
   H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">幫學生／老師換密碼</div>');
+  H.push('<p class="dim">2026-09-23 起開放的唯一例外——其餘資料這一頁一樣只能看。</p>');
+  H.push(btn('換密碼', 'go:rspw', ''));
+  H.push('</div>');
   return H.join('');
+};
+
+/* ---------- 研究者直接改密碼 ----------
+
+   跟老師補發救援碼、接回帳號同一種選法：點名字，不打帳號——
+   逼研究者看著名字選，不是憑印象點一個帳號字串。兩步驟確認，
+   跟接回帳號同一個道理：這是研究者頁面唯一一個真的會動到別人
+   帳號的動作，按錯的代價是別人的密碼被換掉，值得再看一次。 */
+PAGES.rspw = function () {
+  var u = me();
+  if (!u || u.role !== 'researcher') return PAGES.gate();
+  var H = [head('幫學生／老師換密碼', '點一個人', '')];
+
+  if (DRAFT.rspwConfirm && DRAFT.rspwAcc) {
+    var picked = find('Users', function (x) { return x.account === DRAFT.rspwAcc; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow warnx">確定嗎</div>');
+    H.push('<p class="dim">要把「' + esc(picked ? picked.name : DRAFT.rspwAcc) + '」（' +
+      esc(DRAFT.rspwAcc) + '）的密碼換成你剛剛打的那一組。他現在用的密碼會立刻失效。</p>');
+    H.push(btn('對，換掉', 'rspw', 'big'));
+    H.push(btn('還沒，再檢查一次', 'rspwundo', 'ghost'));
+    H.push('</div>');
+  } else {
+    var rows = where('Users', function (x) { return !x._d && !x._removed && x.role !== 'researcher'; })
+      .sort(function (a, b) { return a.name === b.name ? 0 : (a.name < b.name ? -1 : 1); });
+    H.push('<div class="card">');
+    H.push('<div class="tags">');
+    rows.forEach(function (x) {
+      H.push('<button class="tag' + (DRAFT.rspwAcc === x.account ? ' on' : '') +
+        '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'rspwpick:' + x.account })) +
+        '\'>' + esc(x.name) + '（' + esc(ROLE_SAY[x.role] || x.role) + '）' +
+        '<small style="display:block;opacity:.6;font-size:22px">' + esc(x.account) + '</small>' +
+        '</button>');
+    });
+    H.push('</div>');
+    if (DRAFT.rspwAcc) {
+      H.push('<div class="eyebrow" style="margin-top:14px">新密碼</div>');
+      H.push('<input id="rspw-new" type="password" placeholder="' + esc(RULES.pwRule()) + '">');
+      H.push(btn('換密碼', 'rspwcheck', 'big'));
+    }
+    H.push('</div>');
+  }
+  H.push('<div class="row">');
+  H.push(btn('回去', 'go:rs', 'ghost'));
+  H.push('</div>');
+  return H.join('');
+};
+
+ACTS.rspwpick = function (acc) { DRAFT.rspwAcc = acc; render(); };
+
+ACTS.rspwcheck = function () {
+  var np = (document.getElementById('rspw-new') || {}).value || '';
+  if (np.length < RULES.PW_MIN) return say(RULES.pwRule());
+  DRAFT.rspwNew = np;
+  DRAFT.rspwConfirm = true;
+  render();
+};
+ACTS.rspwundo = function () { DRAFT.rspwConfirm = false; render(); };
+
+ACTS.rspw = function () {
+  var r = actResearcherSetPw(S.who, DRAFT.rspwAcc, DRAFT.rspwNew);
+  if (r.err) { DRAFT.rspwConfirm = false; return say(r.err); }
+  go('rs');
+  say('「' + r.user.account + '」的密碼換好了。');
 };
 
 /* 把全班的紀錄拉下來。拉完才匯得出全班的 CSV。 */
@@ -24716,6 +25192,9 @@ ACTS.csv = function () {
      的時候會再畫一次，所以這裡先拿本機這一份把畫面立起來，
      不要讓人對著白畫面等網路。 */
   if (typeof syncStart === 'function') syncStart();
+  /* 這台分頁的程式碼會不會過期，跟有沒有接上雲端是兩回事——
+     用 file:// 單機跑的人也可能開很久（見 41-sync.js 的 checkFresh）。 */
+  if (typeof checkFreshStart === 'function') checkFreshStart();
   render();
 })();
 

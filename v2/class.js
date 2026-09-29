@@ -61,6 +61,13 @@ function 開一台(名) {
   vm.runInContext(原始碼, g);
   /* 真的機器開起來會先種示範資料。留著——順便驗它不會漏到雲上。 */
   g.seed();
+  /* 2026-09-23：syncFlat 現在會擋「還沒收過第一次快照的表」不推
+     （見 41-sync.js，防的是班名被舊分頁蓋回去那一種事故）。這裡
+     手動把 SYNC.last 設成「現在這一份」，等於已經假設這台機器
+     剛核對過雲端——所以 SYNC.first 也要跟著一起打開，不然底下
+     每一次 推(m) 直接呼叫 syncFlat() 都會被那道新的門擋住，
+     這台機器往後的每一筆本機新資料都推不出去。 */
+  Object.keys(g.SYNC_KEY).forEach(col => { g.SYNC.first[col] = 1; });
   g.SYNC.last = g.syncFlat();
   return g;
 }
@@ -73,7 +80,8 @@ function 推(m) {
   const now = m.syncFlat();
   let n = 0;
   Object.keys(now).forEach(p => {
-    if (m.SYNC.last[p] !== now[p]) { 雲[p] = now[p]; n++; }
+    /* 跟真的 syncBatch 一樣：有 base 的更新只套「我改過的那幾格」（見 41-sync.js）。 */
+    if (m.SYNC.last[p] !== now[p]) { 雲[p] = m.syncMergeStr(m.SYNC.last[p], now[p], 雲[p]); n++; }
   });
   Object.keys(m.SYNC.last).forEach(p => {
     if (!(p in now)) { delete 雲[p]; n++; }

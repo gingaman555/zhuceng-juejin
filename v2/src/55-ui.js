@@ -115,7 +115,7 @@ var GATE_PAGES = { gate: 1, login: 1, reg: 1, fresh: 1, forgotpw: 1 };
    短名字就好——這裡不是在講故事，是在講「這是哪一頁」。 */
 var PAGE_TITLE = {
   gate: '登入', login: '登入', reg: '建立帳號', fresh: '資料不對', forgotpw: '忘記密碼',
-  rgcode: '救援碼', acctrecov: '補發救援碼', acctmerge: '接回帳號',
+  rgcode: '救援碼', acctrecov: '補發救援碼', acctmerge: '接回帳號', rspw: '換密碼',
   mkclass: '開班', myteam: '建隊', me: '你的資料', pw: '換密碼',
   home: '廊道', sign: '認領', commit: '接委託', ask: '委託人',
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
@@ -136,7 +136,7 @@ var PAGE_ROLE = {
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
-  rs: 'researcher', events: 'researcher'
+  rs: 'researcher', events: 'researcher', rspw: 'researcher'
 };
 function allowed(u, page) {
   var need = PAGE_ROLE[page];
@@ -450,7 +450,21 @@ function regCard(eye, name, note, art, over) {
    排在登出前面：兩顆都是「離開現在在做的事」，可是按錯的代價不一樣
    ——按到你的資料只是換一頁，按到登出要重打一次密碼。 */
 function topEnd() {
-  return '<a class="plain" data-act="run" data-p=\'' +
+  /* 同步失敗的時候，三種角色都要看得到——學生自己交的東西、
+     老師剛勾的可以、研究者要匯出的資料，任何一種悄悄留在本機
+     沒上雲都不該被畫面遮住（見 41-sync.js 的 syncTrouble）。
+     平常（ok／off）不顯示：這一條只在「要注意」的時候才出現。 */
+  var ss = (typeof syncStatus === 'function') ? syncStatus() : 'ok';
+  var warn = ss === 'err'
+    ? '<span class="sync-warn">還沒傳到雲端，會自動再試一次</span>' : '';
+  /* 這台分頁開很久、程式碼是舊版的時候（見 41-sync.js 的
+     checkFresh）——按下去就整頁重新載入，不用另外做動作。
+     這一條比同步失敗更該搶眼一點：舊程式碼不只是這一筆資料的事，
+     是這台分頁接下來每一個動作都可能踩到已經修過的 bug。 */
+  var stale = (typeof SYNC !== 'undefined' && SYNC.stale)
+    ? '<a class="plain sync-warn" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'reloadpage' })) + '\'>這一頁是舊版，點這裡重新整理</a>' : '';
+  return warn + stale + '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:me' })) + '\'>你的資料</a>' +
     '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'logout' })) + '\'>登出</a>';

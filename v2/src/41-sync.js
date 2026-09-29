@@ -37,7 +37,7 @@
    都沒有 firebase 這個東西。那時候這一整層安靜地什麼都不做，
    localStorage 還是照舊——單機那條路一步都沒有變。 */
 
-var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '' };
+var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, fly: {} };
 
 /* 每一張表的主鍵。
 
@@ -103,9 +103,56 @@ function syncReady() {
   return 1;
 }
 
+/* ---------- 分頁開太久，程式碼是舊的 ----------
+
+   2026-09-23：伺服器端修好的 bug，對一台已經開很久的分頁沒有用——
+   它記憶體裡跑的還是打開那一刻拿到的那份 JS，deploy 再多次也不會
+   自己變成新的，只有它自己重新整理過才會拿到新的（見 build.js 的
+   BUILD_AT）。這裡每隔一段時間去掉快取問一次伺服器「現在是哪一版」，
+   跟自己手上這一份比，新的話就在頂條露出「重新整理」（見 55-ui.js
+   的 topEnd）。只問首頁那個 HTML，不碰任何 API，負擔跟同步比起來
+   可以忽略。 */
+var SYNC_FRESH_MS = 600000; /* 十分鐘問一次，不用更勤——這不是急事 */
+function checkFresh() {
+  if (typeof fetch !== 'function' || typeof BUILD_AT === 'undefined') return;
+  if (typeof location === 'undefined') return;
+  fetch(location.pathname + '?_v=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.text(); })
+    .then(function (t) {
+      var m = t.match(/BUILD_AT = (\d+);/);
+      if (m && Number(m[1]) > BUILD_AT && !SYNC.stale) {
+        SYNC.stale = 1;
+        if (typeof render === 'function') render();
+      }
+    })
+    .catch(function () {});
+}
+function checkFreshStart() {
+  if (typeof setInterval !== 'function') return;
+  checkFresh();
+  setInterval(checkFresh, SYNC_FRESH_MS);
+}
+
 function syncTrouble(e) {
   SYNC.err = (e && e.message) || String(e);
   if (typeof console !== 'undefined' && console.warn) console.warn('同步：' + SYNC.err);
+  /* 2026-09-23：本來只印主控台，沒有人看——學生按了「交出去」，
+     本機立刻顯示成功（save() 一定先寫得進 localStorage），可是那一批
+     推上雲的請求在背景默默失敗，畫面上一個字都沒變。老師隔天打開
+     審核只看到一件，其餘幾十組以為自己交了，其實東西沒離開過那台
+     瀏覽器。topEnd() 讀 syncStatus() 畫那一條，這裡補一次 render()
+     是讓「剛好失敗的那一刻」不用等使用者剛好做了下一個動作才看得到。 */
+  if (typeof render === 'function') render();
+}
+
+/* 頂條那一條的三種狀態：off（沒接上雲，本機單機模式）、
+   err（上一批推送失敗，本機資料還沒真的到雲端）、ok（其餘）。
+   ok 不特別顯示——正常狀態不該佔畫面，只有「要注意」才出現
+   （見 50-style.css 的顏色規則）。 */
+function syncStatus() {
+  if (!SYNC.db) return 'off';
+  if (SYNC.err) return 'err';
+  return 'ok';
 }
 
 /* 哪些班、哪些隊是示範用的。
@@ -138,10 +185,27 @@ function onDemoSide(r, d) {
   return false;
 }
 
-/* 現在手上這一份，攤平成「路徑 → JSON 字串」。示範那一邊的不算。 */
+/* 現在手上這一份，攤平成「路徑 → JSON 字串」。示範那一邊的不算。
+
+   2026-09-23 補的一道門：**這張表還沒收到第一次快照之前不推。**
+
+   分頁剛連上雲端那一刻，SYNC.last 是空的，可是「雲端現在長怎樣」
+   要等 Firestore 回應才知道——中間隔著一段網路來回。如果剛好在
+   這個空檔裡，隨便一個動作觸發了一次 save()，本機端當下那一份
+   （可能是很久沒開、還記著舊資料的那一份）會因為 SYNC.last 是空的、
+   看起來每一筆都「跟上次同步的不一樣」，整批被當成新的推上去——
+   蓋掉任何在這個空檔之前、由別的地方（另一台裝置，或像班名這種
+   直接改資料庫）寫上去的東西。這正是「班名改完又被蓋回去」那次
+   事故的根源，而且不只影響班名，任何欄位、任何時候都可能踩到。
+
+   SYNC.first[col] 由 syncTake 在收到這張表的第一次快照時打開
+   （見下面 syncStart）。打開之前，這張表在 syncFlat 裡直接跳過——
+   本機再怎麼改，都要等真的跟雲端核對過一次，才輪到它被推上去。
+   SYNC_UP_ONLY（目前只有 Events）不訂閱、不核對，維持原樣一路能推。 */
 function syncFlat() {
   var out = {}, d = demoSide();
   Object.keys(SYNC_KEY).forEach(function (col) {
+    if (!SYNC_UP_ONLY[col] && !SYNC.first[col]) return;
     var idf = SYNC_KEY[col];
     (DB[col] || []).forEach(function (r) {
       if (!r || !r[idf] || onDemoSide(r, d)) return;
@@ -151,33 +215,162 @@ function syncFlat() {
   return out;
 }
 
+/* 這張表，這一台裝置現在推不推得動。
+
+   2026-09-24：Classes 只有老師改得動（actRenameClass），可是每一台
+   裝置——包含從來不會去改班名的學生——只要存一次檔，都會順手把
+   手上那一份 Classes 重新推一次。裝置一多，「本機這一份到底新不新」
+   就有一堆機會出岔子：任何一台學生裝置的本機資料只要有任何時間差
+   （分頁開很久、剛好卡在還沒收到最新一次快照的那一刻），都可能把
+   老師剛改的班名蓋掉——SYNC.first 那道門擋的是「開機那一刻」的
+   賽跑，擋不住「開機很久之後，某台裝置手上那份還是舊的」這種情況。
+   真正該推 Classes 的裝置只有一種：目前登入的是老師。範圍縮到這裡，
+   會去蓋掉它的裝置就少了一整個數量級。
+
+   這一支要跟 syncPush 底下判斷「刪掉了」那一段用同一個標準——
+   不然學生的裝置會把「我推不動 Classes」誤判成「Classes 被我刪掉了」，
+   對雲端發一筆刪除。 */
+function syncPushable(col) {
+  if (col !== 'Classes') return true;
+  var u = (typeof me === 'function') ? me() : null;
+  return !!(u && u.role === 'teacher');
+}
+
+/* ---------- 一筆之內，只寫「我改過的那幾格」 ----------
+
+   2026-09-29 量到的事故：事件紀錄有三十次「交出去」，雲端的 Runs 卻
+   幾乎全是進行中，沒有交出時間、沒有實際天數，只剩隊員寫的
+   「我做了什麼」。
+
+   雲端一筆 = 一整份 JSON 字串，上面那段「一筆一筆推」只擋得住
+   「改的是不同筆」。同一組兩個人碰的是同一筆 Run：
+
+     A 交出去　　　　　　雲端 state = submitted
+     B 的手機鎖過屏、醒來，本機那份還是進行中，
+       他補寫「我做了什麼」→ 整筆（state = running）推上去
+     雲端 state = running　← A 交的東西沒了
+
+   畫面上沒有任何跡象，老師那邊永遠看不到，學生再交一次又被蓋一次。
+
+   修法：推之前讀雲端現在那一份，用「我上次看到的（base）」對「我現在的
+   （mine）」找出**我改了哪幾格**，只把那幾格套到雲端那一份上。B 沒動過
+   state，就不會去寫 state。同一格兩邊都改，才輪到後寫的贏。
+
+   陣列只在長度沒變的時候逐格併（spent、steps 那一類），長度變了整個換。 */
+function syncEq(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+function syncIsObj(x) { return !!x && typeof x === 'object' && !Array.isArray(x); }
+
+function syncApply(base, mine, theirs) {
+  if (syncEq(base, mine)) return theirs;
+  if (syncIsObj(base) && syncIsObj(mine) && syncIsObj(theirs)) {
+    var out = {}, keys = {}, k;
+    for (k in theirs) out[k] = theirs[k];
+    for (k in base) keys[k] = 1;
+    for (k in mine) keys[k] = 1;
+    for (k in keys) {
+      if (!(k in mine)) { delete out[k]; continue; }
+      if (syncEq(base[k], mine[k])) continue;
+      out[k] = syncApply(base[k], mine[k], theirs[k]);
+    }
+    return out;
+  }
+  if (Array.isArray(base) && Array.isArray(mine) && Array.isArray(theirs) &&
+      base.length === mine.length && mine.length === theirs.length) {
+    return mine.map(function (m, i) { return syncApply(base[i], m, theirs[i]); });
+  }
+  return mine;
+}
+
+/* 字串進、字串出。雲端沒有這一筆、或我沒有 base，就是整筆寫我的。 */
+function syncMergeStr(baseStr, mineStr, theirStr) {
+  if (theirStr == null || baseStr == null || mineStr == null) return mineStr;
+  try {
+    return JSON.stringify(syncApply(JSON.parse(baseStr), JSON.parse(mineStr), JSON.parse(theirStr)));
+  } catch (e) { return mineStr; }
+}
+
 /* 把變過的那幾筆寫上去。save() 每一次都會叫它一次。 */
 function syncPush() {
   if (SYNC.hold || !SYNC.last || !syncReady()) return;
   var now = syncFlat(), jobs = [];
   Object.keys(now).forEach(function (p) {
-    if (SYNC.last[p] !== now[p]) jobs.push([p, now[p]]);
+    if (!syncPushable(p.slice(0, p.indexOf('/')))) return;
+    if (SYNC.last[p] !== now[p]) jobs.push([p, now[p], SYNC.last[p]]);
   });
   Object.keys(SYNC.last).forEach(function (p) {
-    if (!(p in now)) jobs.push([p, null]);
+    if (!syncPushable(p.slice(0, p.indexOf('/')))) return;
+    if (!(p in now)) jobs.push([p, null, SYNC.last[p]]);
   });
   if (!jobs.length) return;
+  /* 送出去、還沒回來的那幾筆，base 記著——這中間如果剛好收到別人的
+     快照，syncTake 要靠它知道「本機這份哪幾格是我剛改的、不能被蓋掉」。 */
+  jobs.forEach(function (j) { if (j[1] !== null && j[2] !== undefined) SYNC.fly[j[0]] = j[2]; });
+  /* 這台裝置這次推不動的那幾筆（例如學生手上的 Classes），SYNC.last
+     還是要記著雲端現在真正的樣子，不能被 now 直接蓋掉——蓋掉的話
+     它會以為自己的（可能是舊的）那份才是基準，下一次比對就亂了。 */
+  Object.keys(now).forEach(function (p) {
+    if (!syncPushable(p.slice(0, p.indexOf('/'))) && (p in SYNC.last)) {
+      now[p] = SYNC.last[p];
+    }
+  });
   SYNC.last = now;
   /* 一批最多 500 筆是 Firestore 的上限，第一次連上去會超過。 */
   for (var i = 0; i < jobs.length; i += 400) syncBatch(jobs.slice(i, i + 400));
 }
 
-function syncBatch(chunk) {
-  var b = SYNC.db.batch();
+function syncDone() {
+  /* 這一批真的到了。清掉上一次的錯誤——如果剛剛才失敗過，
+     這一下成功了，頂條那條警告該跟著收掉，不然它會一直掛著，
+     讓人以為現在還在出事。 */
+  if (SYNC.err) { SYNC.err = ''; if (typeof render === 'function') render(); }
+}
+
+function syncFail(chunk, e) {
+  /* 沒寫成功就當作沒同步過，下一次 save 會再試一次。
+     退回原本的 base，不是刪掉——刪掉的話下一次會被當成「新的一筆」
+     整筆蓋上去，正是上面要避免的那件事。 */
   chunk.forEach(function (j) {
-    var ref = SYNC.db.doc(SYNC_ROOT + j[0]);
-    if (j[1] === null) b.delete(ref); else b.set(ref, { j: j[1] });
+    delete SYNC.fly[j[0]];
+    if (SYNC.last[j[0]] !== j[1]) return;
+    if (j[2] === undefined) delete SYNC.last[j[0]]; else SYNC.last[j[0]] = j[2];
   });
-  b.commit().catch(function (e) {
-    /* 沒寫成功就當作沒同步過，下一次 save 會再試一次。 */
-    chunk.forEach(function (j) { delete SYNC.last[j[0]]; });
-    syncTrouble(e);
+  syncTrouble(e);
+}
+
+/* chunk 裡每一筆是 [路徑, 我現在的（null＝刪）, 我上次看到的]。
+   有 base 的更新走交易（讀雲端、只套我改的那幾格）；新的一筆、刪除、
+   只上不下的 Events 沒有可以併的東西，照舊一批寫。 */
+function syncBatch(chunk) {
+  var plain = [], merge = [];
+  chunk.forEach(function (j) {
+    (j[1] !== null && j[2] !== undefined && !SYNC_UP_ONLY[j[0].slice(0, j[0].indexOf('/'))] ? merge : plain).push(j);
   });
+  if (plain.length) {
+    var b = SYNC.db.batch();
+    plain.forEach(function (j) {
+      var ref = SYNC.db.doc(SYNC_ROOT + j[0]);
+      if (j[1] === null) b.delete(ref); else b.set(ref, { j: j[1] });
+    });
+    b.commit().then(function () {
+      plain.forEach(function (j) { delete SYNC.fly[j[0]]; });
+      syncDone();
+    }).catch(function (e) { syncFail(plain, e); });
+  }
+  if (merge.length) {
+    SYNC.db.runTransaction(function (tx) {
+      var refs = merge.map(function (j) { return SYNC.db.doc(SYNC_ROOT + j[0]); });
+      return Promise.all(refs.map(function (r) { return tx.get(r); })).then(function (snaps) {
+        snaps.forEach(function (s, i) {
+          var cloud = s.exists ? s.data().j : null;
+          var out = syncMergeStr(merge[i][2], merge[i][1], cloud);
+          if (out !== cloud) tx.set(refs[i], { j: out });
+        });
+      });
+    }).then(function () {
+      merge.forEach(function (j) { delete SYNC.fly[j[0]]; });
+      syncDone();
+    }).catch(function (e) { syncFail(merge, e); });
+  }
 }
 
 /* ---------- 同一筆上，兩個人各寫各的那一格 ----------
@@ -238,6 +431,33 @@ var SYNC_MERGE = {
   }
 };
 
+/* ---------- 被蓋掉的交件，有人手上還留著就補回去 ----------
+
+   上面的三方併只管得到「新版」的機器。還開著 9/23 之前那份程式的
+   分頁，推的還是整筆——它手機醒來補寫一句話，就把別人交出去的
+   狀態蓋回進行中。那台舊分頁改不了，可是同一份資料在別的機器上
+   還留著（交件的那台、老師的那台）。
+
+   判斷靠一個不可能倒退的欄位：submittedAt 一旦寫進去，任何正常的
+   流程都不會再拿掉它（見 40-db.js，只有 actSubmit 寫、沒有人清）。
+   所以「我這份有 submittedAt、雲端這份沒有」只可能是被蓋掉，不會是
+   別人正常改的。補的做法：以我這份為主，雲端有而我沒有的欄位留著，
+   said 兩邊的話都留（見 SYNC_MERGE）。補完會被推回去，收到的舊分頁
+   也就跟著好了。 */
+var SYNC_HEAL = {
+  Runs: function (我的, 他的) {
+    if (!我的.submittedAt || 他的.submittedAt) return null;
+    var out = {}, k;
+    for (k in 他的) out[k] = 他的[k];
+    for (k in 我的) if (k !== 'said') out[k] = 我的[k];
+    var m = {};
+    for (k in (我的.said || {})) m[k] = 我的.said[k];
+    for (k in (他的.said || {})) m[k] = 他的.said[k];
+    out.said = m;
+    return out;
+  }
+};
+
 /* 別人動了：把那一張表併進來。
 
    併，不是換掉：本機原本的順序留著（陣列順序在幾個地方是有意義的，
@@ -257,6 +477,21 @@ function syncTake(col, inc) {
     if (!r || r._d) continue;                /* 示範資料只在這台機器上 */
     if (inc[id]) {
       seen[id] = 1;
+      /* 我這一台有還沒上去（或正在上去）的改動，不能被這一份快照蓋掉：
+         把「我改的那幾格」套到雲端這一份上，再往下走。
+         base 是我上次跟雲端對過的樣子；送出去還沒回來的那幾筆，
+         用送出那一刻的 base（見 syncPush 的 SYNC.fly）。 */
+      var bs = (pre + id in SYNC.fly) ? SYNC.fly[pre + id] : SYNC.last[pre + id];
+      if (bs !== undefined) {
+        var ms = JSON.stringify(syncCut(col, r));
+        if (ms !== bs) {
+          var cs = JSON.stringify(inc[id]), mm3 = syncMergeStr(bs, ms, cs);
+          if (mm3 !== cs) { inc[id] = JSON.parse(mm3); 併了 = 1; }
+        }
+      }
+      /* 交件被舊分頁蓋掉了：我這份留著的話補回去（見 SYNC_HEAL）。 */
+      var hl = SYNC_HEAL[col];
+      if (hl) { var 補好 = hl(r, inc[id]); if (補好) { inc[id] = 補好; 併了 = 1; } }
       /* 我這一台上有、對方那一份沒有的格子，補回去（見 SYNC_MERGE）。 */
       var mg = SYNC_MERGE[col];
       if (mg) { var 併 = mg(r, inc[id]); if (併) { inc[id] = 併; 併了 = 1; } }

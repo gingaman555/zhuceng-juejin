@@ -18,7 +18,7 @@
 
    ── 為什麼要一支腳本 ──
 
-   一 · 手動的話是「build main → build b → 跑二十支檢查 →
+   一 · 手動的話是「build main → build b → 跑二十一支檢查 →
         deploy A（用 firebase.json）→ deploy B（用 firebase.b.json）」。
         五個步驟裡漏掉任何一個，兩個站就開始不一樣，而那是最難發現的
         那種問題：你在 A 站看到修好了，B 站的學生沒有。
@@ -28,7 +28,7 @@
         只看「這一版的記號」跟資料庫，剛好兩個都對，所以它安靜地錯了
         好幾次。現在驗那一段會抓每一站自己的標題。
 
-   二 · 檢查沒過就不要上。這一支會先跑完二十支（大約 10 秒），
+   二 · 檢查沒過就不要上。這一支會先跑完二十一支（大約 10 秒），
         任何一支掛掉就停在那裡，一個站都不動。
 
    三 · 這台機器連 googleapis 會間歇性 DNS 失敗（getaddrinfo
@@ -102,7 +102,7 @@ const 站 = {
 const 檢查 = [
   ['check.js', ''], ['loop.js', '200'], ['pages.js', ''], ['e2e.js', ''], ['me.js', ''],
   ['read.js', ''], ['leak.js', ''], ['multi.js', ''], ['multi.js', '1'],
-  ['class.js', ''], ['size.js', ''], ['absent.js', ''], ['solo.js', ''], ['twoclass.js', ''],
+  ['class.js', ''], ['stale.js', ''], ['size.js', ''], ['absent.js', ''], ['solo.js', ''], ['twoclass.js', ''],
   ['crystal.js', ''], ['siteb.js', ''], ['rank.js', ''], ['path.js', ''], ['demo.js', ''], ['gate.js', '']
 ];
 

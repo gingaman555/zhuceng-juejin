@@ -1,11 +1,12 @@
 /* 研究者端。
 
-   這一端不是給老師用的，也不進地下城。它**只做兩件事，而且兩件都是讀**：
+   這一端不是給老師用的，也不進地下城。它做的事：
 
      名單   誰在這個系統裡。看得到，改不動
      紀錄   每一個動作的流水帳，可以匯出
+     密碼   2026-09-23 起，研究者可以直接幫學生／老師換一組新密碼
 
-   ── 為什麼一顆會改東西的鍵都沒有 ──
+   ── 為什麼原本一顆會改東西的鍵都沒有 ──
 
    本來這一頁可以建班、開老師的帳號、重設密碼、刪帳號。全部拿掉了。
 
@@ -17,7 +18,12 @@
    同一個班（見 58-gate.js），學生自己註冊、自己建隊。整條路上不需要
    一個管理員。
 
-   界線寫成測試：check.js 擋住這個檔案裡出現任何 act 開頭的動作。
+   ── 密碼是唯一的例外，不是解禁 ──
+
+   使用者本人明確要求開放：研究者可以直接改任何學生／老師的密碼
+   （actResearcherSetPw，見 15-auth.js 與 CLAUDE.md 同一天那一段）。
+   除了這一個名字，這一頁不准出現任何其他 act 開頭的動作——
+   check.js 只放行 actResearcherSetPw 這一個，其餘照樣擋著。
 
    紀錄那一頁是這個研究真正的資料。它記的是行為的形狀——承諾幾天、
    哪一天推進、判定結果、卡在哪——不記作業內容，因為系統本來就不收作業。
@@ -110,7 +116,77 @@ PAGES.rs = function () {
     H.push('</div>');
   });
   H.push('</div>');
+
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">幫學生／老師換密碼</div>');
+  H.push('<p class="dim">2026-09-23 起開放的唯一例外——其餘資料這一頁一樣只能看。</p>');
+  H.push(btn('換密碼', 'go:rspw', ''));
+  H.push('</div>');
   return H.join('');
+};
+
+/* ---------- 研究者直接改密碼 ----------
+
+   跟老師補發救援碼、接回帳號同一種選法：點名字，不打帳號——
+   逼研究者看著名字選，不是憑印象點一個帳號字串。兩步驟確認，
+   跟接回帳號同一個道理：這是研究者頁面唯一一個真的會動到別人
+   帳號的動作，按錯的代價是別人的密碼被換掉，值得再看一次。 */
+PAGES.rspw = function () {
+  var u = me();
+  if (!u || u.role !== 'researcher') return PAGES.gate();
+  var H = [head('幫學生／老師換密碼', '點一個人', '')];
+
+  if (DRAFT.rspwConfirm && DRAFT.rspwAcc) {
+    var picked = find('Users', function (x) { return x.account === DRAFT.rspwAcc; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow warnx">確定嗎</div>');
+    H.push('<p class="dim">要把「' + esc(picked ? picked.name : DRAFT.rspwAcc) + '」（' +
+      esc(DRAFT.rspwAcc) + '）的密碼換成你剛剛打的那一組。他現在用的密碼會立刻失效。</p>');
+    H.push(btn('對，換掉', 'rspw', 'big'));
+    H.push(btn('還沒，再檢查一次', 'rspwundo', 'ghost'));
+    H.push('</div>');
+  } else {
+    var rows = where('Users', function (x) { return !x._d && !x._removed && x.role !== 'researcher'; })
+      .sort(function (a, b) { return a.name === b.name ? 0 : (a.name < b.name ? -1 : 1); });
+    H.push('<div class="card">');
+    H.push('<div class="tags">');
+    rows.forEach(function (x) {
+      H.push('<button class="tag' + (DRAFT.rspwAcc === x.account ? ' on' : '') +
+        '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'rspwpick:' + x.account })) +
+        '\'>' + esc(x.name) + '（' + esc(ROLE_SAY[x.role] || x.role) + '）' +
+        '<small style="display:block;opacity:.6;font-size:22px">' + esc(x.account) + '</small>' +
+        '</button>');
+    });
+    H.push('</div>');
+    if (DRAFT.rspwAcc) {
+      H.push('<div class="eyebrow" style="margin-top:14px">新密碼</div>');
+      H.push('<input id="rspw-new" type="password" placeholder="' + esc(RULES.pwRule()) + '">');
+      H.push(btn('換密碼', 'rspwcheck', 'big'));
+    }
+    H.push('</div>');
+  }
+  H.push('<div class="row">');
+  H.push(btn('回去', 'go:rs', 'ghost'));
+  H.push('</div>');
+  return H.join('');
+};
+
+ACTS.rspwpick = function (acc) { DRAFT.rspwAcc = acc; render(); };
+
+ACTS.rspwcheck = function () {
+  var np = (document.getElementById('rspw-new') || {}).value || '';
+  if (np.length < RULES.PW_MIN) return say(RULES.pwRule());
+  DRAFT.rspwNew = np;
+  DRAFT.rspwConfirm = true;
+  render();
+};
+ACTS.rspwundo = function () { DRAFT.rspwConfirm = false; render(); };
+
+ACTS.rspw = function () {
+  var r = actResearcherSetPw(S.who, DRAFT.rspwAcc, DRAFT.rspwNew);
+  if (r.err) { DRAFT.rspwConfirm = false; return say(r.err); }
+  go('rs');
+  say('「' + r.user.account + '」的密碼換好了。');
 };
 
 /* 把全班的紀錄拉下來。拉完才匯得出全班的 CSV。 */

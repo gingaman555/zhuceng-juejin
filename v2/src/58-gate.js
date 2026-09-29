@@ -476,6 +476,23 @@ PAGES.mkclass = function () {
     H.push('</div></div>');
   }
 
+  /* ── 改班名（只有老師，只改現在在的那一個）──
+
+     2026-09-23：本來沒有這個入口，要改班名只能直接動 Firestore——
+     繞過同步邏輯，容易被還開著舊分頁的裝置蓋回去（真的發生過，
+     見 15-auth.js 的 actRenameClass）。這裡走正常的存檔路徑，
+     改完會經過同步推給所有連著的裝置，不會有「別人還記著舊的」
+     這件事。 */
+  if (u.role === 'teacher' && u.classId) {
+    var curCls = find('Classes', function (x) { return x.classId === u.classId; });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">改現在這個班的名字</div>');
+    H.push('<input id="cls-name" value="' + esc(draft('cls-name', curCls ? curCls.name : '')) +
+      '" oninput="DRAFT[\'cls-name\']=this.value">');
+    H.push(btn('改班名', 'renameclass', ''));
+    H.push('</div>');
+  }
+
   /* ── 開一個（只有老師）── */
   if (u.role === 'teacher') {
     H.push('<div class="card">');
@@ -631,6 +648,16 @@ ACTS.mkclass = function () {
   say('開好了。把加入碼唸給學生跟另外幾位老師。');
 };
 
+ACTS.renameclass = function () {
+  var n = (document.getElementById('cls-name') || {}).value || '';
+  var u = me();
+  var r = actRenameClass(u.classId, S.who, n);
+  if (r.err) { DRAFT['cls-name'] = n; return say(r.err); }
+  DRAFT['cls-name'] = r.klass.name;
+  render();
+  say('班名改好了。');
+};
+
 /* 加進同事已經開好的那一班。 */
 /* 換去另一個班。換完直接落在那一個班的首頁——留在這一頁的話，
    他會不確定到底換過去了沒有。 */
@@ -715,6 +742,12 @@ ACTS.logout = function () {
   save();
   S.who = null;
   go('gate');
+};
+
+/* 這台分頁是舊版，整頁重新載入（見 41-sync.js 的 checkFresh）。
+   不是 go()：go() 只是換內容，程式碼還是原本那份舊的。 */
+ACTS.reloadpage = function () {
+  if (typeof location !== 'undefined' && location.reload) location.reload();
 };
 
 /* 登入成功之後要去哪。學生還沒有隊就先去建隊——這件事沒做完，

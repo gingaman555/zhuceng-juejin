@@ -626,16 +626,17 @@ function actionCard(t, next, st) {
     H.push(btn('還沒，收回', 'cancelexit', 'ghost'));
 
   } else if (next.kind === 'commit') {
-    /* 有人在等你——但這裡不給臉。
+    /* 有任務發來了——但這裡不給臉。
 
-       他走進來那一下留在 commit 頁上：先知道有人在等，再看到是誰，
-       那一下才有東西可以演。臉先在首頁出現的話，進去就只剩一張
-       已經看過的圖。
+       委託人走進來那一下留在 commit 頁上：先知道有任務，再看到是誰
+       派來的，那一下才有東西可以演。臉先在首頁出現的話，進去就只剩
+       一張已經看過的圖。
 
-       按鈕也從「要花幾天」換成「去見他」——你進去是去見一個人，
-       說幾天是見到之後的事。 */
+       這一句講「任務」，按鈕跟著改成「去看看」——不能寫「去見他」：
+       上面那句話沒有先提到一個人，「他」會找不到指的是誰
+       （2026-09-23 踩過，原本這句是「有人在等這一件」才配得上「他」）。 */
     H.push('<p class="waiting">有任務發來了。</p>');
-    H.push(btn('去見他', 'go:commit:' + row.ms.msId, 'big'));
+    H.push(btn('去看看', 'go:commit:' + row.ms.msId, 'big'));
 
   } else if (next.kind === 'doing') {
     H.push(doingCard(t, row, st));
@@ -648,7 +649,7 @@ function actionCard(t, next, st) {
       H.push('<button class="asknote pressable" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'go:pack' })) + '\'>' +
         '<b>老師又派了 ' + next.more + ' 個</b>' +
-        '<i>做完這一趟才輪到，先去任務清單看看叫什麼</i></button>');
+        '<i>可以先開始，不用等手上這一趟做完</i></button>');
     }
 
   } else if (next.kind === 'stamped') {
@@ -760,20 +761,28 @@ function doingCard(t, row, st) {
   var 獨 = where('Users', function (u) {
     return inTeam(u, t.teamId) && u.role === 'student';
   }).length <= 1;
+  /* 2026-09-23：這裡本來只在「大家都填完了」才給「交出去給老師」，
+     其餘兩種情況只給「做完了」／「改我那一份」——資料層從來沒有真的
+     擋著等全組（見 67-battle.js 的 spent／said 那兩題：「只看你名下
+     那幾件，拿別人沒填來擋你是連坐」），可是畫面上只有這一句「還在等
+     N 個人」，沒有一顆鍵明講「你現在就可以交」，量到的樣子是很多組
+     卡在「進行中」——不是東西不見了，是每個人都以為要等別人先填完。
+     三種情況現在都給同一顆「交出去給老師」，講法照實：任何一個人都
+     交得出去，不用等其他人。 */
   if (wrote && !left) {
     H.push('<p class="waiting">' +
       (獨 ? '你填好了，還沒交出去。' : '大家都填好自己那一份了，還沒有人交出去。') +
       '</p>');
-    H.push(btn('交出去給老師', 'go:battle:' + r.runId, 'big'));
   } else if (我填了) {
-    H.push('<p class="dim">你那一份填好了。還在等 ' + left + ' 個人。</p>');
-    H.push(btn('改我那一份', 'go:battle:' + r.runId, 'big'));
+    H.push('<p class="dim">你那一份填好了。' +
+      (left ? '還有 ' + left + ' 個人沒填，你也可以先交出去，不用等他們。' : '') + '</p>');
   } else {
     if (wrote) {
-      H.push('<p class="dim">' + wrote + ' 個人填好了。你還沒填自己那一份。</p>');
+      H.push('<p class="dim">' + wrote + ' 個人填好了，你還沒填自己那一份——' +
+        '不過不用等所有人都填，任何一個人都交得出去。</p>');
     }
-    H.push(btn('做完了', 'go:battle:' + r.runId, 'big'));
   }
+  H.push(btn('交出去給老師', 'go:battle:' + r.runId, 'big'));
   /* 做到一半發現自己說少了，可以改。
 
      這條路本來只從戰鬥裡進得去，而且語氣是逃跑——一個學生在第三天
