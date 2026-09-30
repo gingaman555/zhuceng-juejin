@@ -124,7 +124,7 @@ var PAGE_TITLE = {
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
   pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
   person: '角色', who: '挑角色', battle: '交作業', story: '故事',
-  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', tclose: '結案',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', tclose: '結案', rsacc: '刪帳號',
   rs: '名單', events: '紀錄'
 };
 function pageTitle(page) {
@@ -139,7 +139,7 @@ var PAGE_ROLE = {
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
   radar: 'teacher', review: 'teacher', ms: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
-  rs: 'researcher', events: 'researcher', rspw: 'researcher'
+  rs: 'researcher', events: 'researcher', rspw: 'researcher', rsacc: 'researcher'
 };
 function allowed(u, page) {
   var need = PAGE_ROLE[page];

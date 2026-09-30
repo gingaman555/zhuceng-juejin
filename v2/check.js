@@ -275,7 +275,8 @@ if (demoFn && !/filter\(function \(u\) \{ return u\._d; \}\)/.test(demoFn[0])) {
    那一段）。這裡只放行這一個名字，其餘 act 開頭的照樣擋——例外
    只開給密碼，不是「研究者頁面解禁」。 */
 const rsSrc = fs.readFileSync(path.join(__dirname, 'src', '75-research.js'), 'utf8');
-const RS_ALLOWED_ACT = ['actResearcherSetPw', 'actResearcherDeleteTestClass', 'actResearcherDeleteOrphans'];
+const RS_ALLOWED_ACT = ['actResearcherSetPw', 'actResearcherDeleteTestClass', 'actResearcherDeleteOrphans',
+  'actResearcherDeleteAccount', 'actResearcherDeleteEmptyTeams'];
 const rsAct = (rsSrc.match(/\bact[A-Z][A-Za-z]*\s*\(/g) || [])
   .filter((m) => !RS_ALLOWED_ACT.includes(m.replace(/\s*\($/, '')));
 if (rsAct.length) {

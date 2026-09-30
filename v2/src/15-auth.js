@@ -143,6 +143,8 @@ var EV_SAY = {
   recoverpw: function () { return '用救援碼換了密碼'; },
   genrecov: function () { return '拿了一組救援碼'; },
   teacherrecov: function (e) { return '幫「' + (e.account || '') + '」補發了一組救援碼'; },
+  deleteaccount: function (e) { return '刪掉了多的帳號「' + (e.name || '') + '」（' + (e.account || '') + '）' + (e.team ? '，連同沒人的組' : ''); },
+  deleteteams: function (e) { return '清掉沒有人、沒有任務的組 ' + (e.n || 0) + ' 個'; },
   deletetest: function (e) { return '清掉測試班「' + (e.name || '') + '」（' + (e.users || 0) + ' 個帳號、' + (e.teams || 0) + ' 組、' + (e.runs || 0) + ' 趟）'; },
   deleteorphans: function (e) { return '清掉沒有班的測試帳號 ' + (e.users || 0) + ' 個'; },
   researchersetpw: function (e) { return '研究者直接改了「' + (e.account || '') + '」的密碼'; },
@@ -505,6 +507,90 @@ function actResearcherDeleteTestClass(researcherId, classId) {
   logEvent('deletetest', { by: res.userId, name: c.name, users: cnt.users, teams: cnt.teams, runs: cnt.runs });
   return { name: c.name, users: cnt.users, teams: cnt.teams, runs: cnt.runs };
 }
+/* ---------- 研究者刪掉多的學生帳號 ----------
+
+   2026-09-30：學生重複註冊（同一個人兩個帳號、組別建了又棄），研究者名單上
+   一堆空組與重複名字。使用者要在研究者頁面刪掉多的。
+
+   刪真實學生的帳號，代價是他留在系統裡的痕跡會找不到人。所以只有一種
+   帳號刪得掉：**沒有任何個人痕跡的**——
+
+     · 沒有在任何一趟的「我做了什麼」（said）寫過話
+     · 沒有被指定過任何一件分工（plan.who），也沒有署名過老師的話
+     · 沒有別的帳號合併到他名下（mergedInto）
+     · 手上這台機器讀得到的事件裡，沒有做過事（承諾、交出去、回報…）
+
+   有做過事的，請用老師端的「接回帳號」把兩個帳號併起來（歷史留著）。
+   只刪學生、不刪老師與研究者；事件紀錄不動。刪完如果他那一組因此沒有人、
+   也沒有任何一趟，組別一起刪。 */
+var TRIVIAL_EV = { login: 1, register: 1, joinclass: 1, jointeam: 1, newteam: 1, hero: 1, rename: 1,
+  teamrename: 1, setname: 1, sit: 1, claim: 1, setpw: 1, genrecov: 1, recoverpw: 1, teacherrecov: 1,
+  blurb: 1, left: 1, researchersetpw: 1 };
+function userTraces(u) {
+  var n = { said: 0, plan: 0, merged: 0, events: 0 };
+  DB.Runs.forEach(function (r) {
+    if (r.said && r.said[u.userId]) n.said++;
+    (r.plan || []).forEach(function (x) { if (x && x.who === u.userId) n.plan++; });
+    if (r.wordBy === u.userId || r.askBy === u.userId) n.plan++;
+  });
+  DB.Users.forEach(function (x) { if (x.mergedInto === u.userId) n.merged++; });
+  DB.Events.forEach(function (e) { if (e.by === u.userId && !TRIVIAL_EV[e.kind]) n.events++; });
+  return n;
+}
+/* 刪不了的原因；空字串＝刪得了。 */
+function whyNotDeletable(u) {
+  if (!u || u._d) return '示範帳號';
+  if (u.role !== 'student') return '只能刪學生帳號';
+  var n = userTraces(u);
+  if (n.merged) return '別的帳號合併到他名下';
+  var bits = [];
+  if (n.said) bits.push('寫過 ' + n.said + ' 次「我做了什麼」');
+  if (n.plan) bits.push('被指定過 ' + n.plan + ' 件分工');
+  if (n.events) bits.push('做過 ' + n.events + ' 個動作');
+  return bits.length ? '他做過事：' + bits.join('、') : '';
+}
+function teamHasMembers(teamId) {
+  return DB.Users.some(function (u) { return u.role !== 'researcher' && inTeam(u, teamId) && !u.mergedInto; });
+}
+function teamHasWork(teamId) {
+  return DB.Runs.some(function (r) { return r.teamId === teamId; }) ||
+    DB.Keeps.some(function (k) { return k.teamId === teamId; });
+}
+/* 沒有人、也沒有任何一趟的組。 */
+function emptyTeams() {
+  return where('Teams', function (t) {
+    return !t._d && !t.leftAt && !teamHasMembers(t.teamId) && !teamHasWork(t.teamId);
+  });
+}
+function actResearcherDeleteAccount(researcherId, userId) {
+  var res = userOf(researcherId);
+  if (!res || res.role !== 'researcher') return { err: '只有研究者用得了這個功能。' };
+  var u = userOf(userId);
+  if (!u) return { err: '找不到這個帳號。' };
+  var why = whyNotDeletable(u);
+  if (why) return { err: '這個帳號刪不了（' + why + '）。有做過事的請用「接回帳號」合併。' };
+  var tid = u.teamId, name = u.name, acc = u.account;
+  dropWhere('Users', function (x) { return x.userId === userId; });
+  var teamGone = false;
+  if (tid && !teamHasMembers(tid) && !teamHasWork(tid)) {
+    dropWhere('Teams', function (t) { return t.teamId === tid; });
+    teamGone = true;
+  }
+  save();
+  logEvent('deleteaccount', { by: res.userId, account: acc, name: name, team: teamGone ? 1 : 0 });
+  return { name: name, account: acc, team: teamGone };
+}
+function actResearcherDeleteEmptyTeams(researcherId) {
+  var res = userOf(researcherId);
+  if (!res || res.role !== 'researcher') return { err: '只有研究者用得了這個功能。' };
+  var ids = emptyTeams().map(function (t) { return t.teamId; });
+  if (!ids.length) return { err: '沒有空的組。' };
+  dropWhere('Teams', function (t) { return ids.indexOf(t.teamId) >= 0; });
+  save();
+  logEvent('deleteteams', { by: res.userId, n: ids.length });
+  return { n: ids.length };
+}
+
 function actResearcherDeleteOrphans(researcherId) {
   var res = userOf(researcherId);
   if (!res || res.role !== 'researcher') return { err: '只有研究者用得了這個功能。' };

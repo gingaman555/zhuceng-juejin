@@ -695,6 +695,48 @@ for (let i = 0; i < 21; i++) DB.Users.push({ userId: 'UM' + i, account: 'mm' + i
 be('學生超過二十位的「測試班」不刪', actResearcherDeleteTestClass(rsU.userId, 'CT2').err ? 1 : 0, 1);
 DB.Users = DB.Users.filter(u => !/^UM\d+$/.test(u.userId)); DB.Classes = DB.Classes.filter(c => c.classId !== 'CT2');
 
+/* ══ 研究者刪掉多的學生帳號（2026-09-30）══
+
+   只有「沒有任何個人痕跡」的學生帳號刪得掉；有做過事的、老師、研究者都不行。 */
+H('研究者刪多的學生帳號');
+as(rsU);
+/* 一個空組（沒人、沒任務）、一個只有一位空帳號的組、一個有做過事的帳號 */
+DB.Teams.push({ teamId: 'GE1', classId: kl.classId, name: '空組一', project: '', joinCode: 'EEEEE1' });
+DB.Teams.push({ teamId: 'GE2', classId: kl.classId, name: '只有一位的組', project: '', joinCode: 'EEEEE2' });
+DB.Users.push({ userId: 'UE1', account: 'dup_a', name: '重複的人', role: 'student', classId: kl.classId, teamId: 'GE2', hero: 'adv' });
+const 前人數 = DB.Users.length, 前組數 = DB.Teams.length;
+const 真人 = stu[0];
+be('空帳號刪得掉的原因是空的', whyNotDeletable(find('Users', u => u.userId === 'UE1')), '');
+be('做過事的帳號刪不了（有寫過話或被指定過）', (() => {
+  const tr = userTraces(真人); return (tr.said + tr.plan + tr.events) > 0 ? whyNotDeletable(真人) !== '' : true;
+})(), true);
+DB.Runs.push({ runId: 'RE1', teamId: 'GE2', msId: (DB.Milestones[0] || {}).msId, state: 'running', est: 1, said: { UE1: '我寫過' }, flags: [], plan: [], steps: [], committedAt: 1 });
+be('寫過「我做了什麼」的帳號刪不了', whyNotDeletable(find('Users', u => u.userId === 'UE1')) !== '', true);
+be('研究者也刪不了他', actResearcherDeleteAccount(rsU.userId, 'UE1').err ? 1 : 0, 1);
+DB.Runs = DB.Runs.filter(r => r.runId !== 'RE1');
+be('學生不能刪別人', actResearcherDeleteAccount(stu[0].userId, 'UE1').err ? 1 : 0, 1);
+be('老師不能刪', actResearcherDeleteAccount(tea.userId, 'UE1').err ? 1 : 0, 1);
+be('老師帳號不能從這裡刪', actResearcherDeleteAccount(rsU.userId, tea.userId).err ? 1 : 0, 1);
+be('研究者帳號不能刪', actResearcherDeleteAccount(rsU.userId, rsU.userId).err ? 1 : 0, 1);
+S.page = 'rsacc'; S.p = {}; DRAFT = {};
+let htmlA = PAGES.rsacc();
+be('頁面分成「可以刪」與「刪不了」', htmlA.indexOf('可以刪') >= 0 && htmlA.indexOf('刪不了') >= 0, true);
+be('空帳號在可以刪的那一區、還標出同名', htmlA.indexOf('rsaccpick:UE1') >= 0, true);
+be('有做過事的沒有可以按的鍵', htmlA.indexOf('rsaccpick:' + stu[0].userId) >= 0 ? (whyNotDeletable(stu[0]) === '') : true, true);
+DRAFT.rsAcc = 'UE1'; DRAFT.rsAccConfirm = true; htmlA = PAGES.rsacc();
+be('按一下先問，不直接刪', htmlA.indexOf('rsaccyes') >= 0 && !!userOf('UE1'), true);
+const dA = actResearcherDeleteAccount(rsU.userId, 'UE1');
+be('刪掉了那個空帳號', !userOf('UE1'), true);
+be('他那一組因此沒人、沒任務，一起刪', dA.team === true && !teamOf('GE2'), true);
+be('其他帳號一個都沒少', DB.Users.length, 前人數 - 1);
+be('沒相關的組一個都沒少（只少了他那一組）', DB.Teams.length, 前組數 - 1);
+be('空組被列出來', emptyTeams().some(t => t.teamId === 'GE1'), true);
+be('有人的組、有任務的組不算空組', emptyTeams().every(t => teamHasMembers(t.teamId) === false && teamHasWork(t.teamId) === false), true);
+const dT = actResearcherDeleteEmptyTeams(rsU.userId);
+be('空組刪得掉', dT.n >= 1 && !teamOf('GE1'), true);
+be('真的班的帳號、組別一筆都沒少', DB.Users.filter(u => u.classId === kl.classId).length + '/' + tm.teamId, 真班人數 + '/' + tm.teamId);
+be('留下事件', DB.Events.slice(-2).map(e => e.kind).join(','), 'deleteaccount,deleteteams');
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

@@ -153,6 +153,12 @@ PAGES.rs = function () {
   }
 
   H.push('<div class="card">');
+  H.push('<div class="eyebrow">刪掉多的學生帳號</div>');
+  H.push('<p class="dim">重複註冊留下的空帳號、沒人的組。有做過事的帳號刪不了。</p>');
+  H.push(btn('刪多的帳號', 'go:rsacc', ''));
+  H.push('</div>');
+
+  H.push('<div class="card">');
   H.push('<div class="eyebrow">幫學生／老師換密碼</div>');
   H.push('<p class="dim">2026-09-23 起開放的唯一例外——其餘資料這一頁一樣只能看。</p>');
   H.push(btn('換密碼', 'go:rspw', ''));
@@ -204,6 +210,89 @@ PAGES.rspw = function () {
   H.push(btn('回去', 'go:rs', 'ghost'));
   H.push('</div>');
   return H.join('');
+};
+
+/* ---------- 刪多的學生帳號 ---------- */
+PAGES.rsacc = function () {
+  var u = me();
+  if (!u || u.role !== 'researcher') return PAGES.gate();
+  var H = [head('刪多的學生帳號', '只有沒做過任何事的刪得掉', '')];
+  H.push('<div class="card"><p class="dim">有寫過話、被指定過分工、做過動作的帳號刪不了——刪了他的紀錄會找不到人。那種請用老師端的「接回帳號」把兩個帳號併起來。事件紀錄不會動。</p>' +
+    '<p class="dim">「可以刪」只代表他沒做過事，<b>不代表他是多的</b>——還沒開始用的真學生也會在裡面。同名、或很久沒登入的才可能是多的。</p></div>');
+
+  if (DRAFT.rsAccConfirm && DRAFT.rsAcc) {
+    var p = userOf(DRAFT.rsAcc);
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow warnx">確定嗎</div>');
+    H.push('<p>要刪掉「' + esc(p ? p.name : '') + '」（' + esc(p ? p.account : '') + '）。</p>');
+    H.push('<p class="dim">刪了就沒有了。他那一組如果因此沒有人、也沒有任何一趟，組別一起刪。如果他是還沒開始用的真學生，不是重複註冊的，請按「先不要」。</p>');
+    H.push(btn('對，刪掉這個帳號', 'rsaccyes', 'big'));
+    H.push(btn('先不要', 'rsaccno', 'ghost'));
+    H.push('</div>');
+    return H.join('') + '<div class="row">' + btn('回去', 'go:rs', 'ghost') + '</div>';
+  }
+
+  var stu = where('Users', function (x) { return x.role === 'student' && !x._d && !x._removed; })
+    .sort(function (a, b) { return a.name === b.name ? 0 : (a.name < b.name ? -1 : 1); });
+  var name = {}; stu.forEach(function (x) { name[x.name] = (name[x.name] || 0) + 1; });
+  var ok = [], no = [];
+  stu.forEach(function (x) { var why = whyNotDeletable(x); (why ? no : ok).push([x, why]); });
+  /* 同名的排最前面：那是最像「多的」的。 */
+  ok.sort(function (a, b) {
+    var da = name[a[0].name] > 1 ? 0 : 1, db = name[b[0].name] > 1 ? 0 : 1;
+    return da - db;
+  });
+
+  H.push('<div class="card"><div class="eyebrow">可以刪　' + ok.length + ' 個</div>');
+  if (!ok.length) H.push('<p class="dim">沒有。</p>');
+  H.push('<div class="tags">');
+  ok.forEach(function (r) {
+    var x = r[0], t = x.teamId ? teamOf(x.teamId) : null;
+    H.push('<button class="tag" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'rsaccpick:' + x.userId })) + '\'>' +
+      esc(x.name) + (name[x.name] > 1 ? '（同名還有 ' + (name[x.name] - 1) + ' 個帳號）' : '') +
+      '<small style="display:block;opacity:.6;font-size:22px">' + esc(x.account) + (t ? '　·　' + esc(t.name) : '　·　沒有組') +
+      (x.lastLogin ? '　·　' + daysBetween(x.lastLogin, now()) + ' 天前登入' : '　·　沒登入過') + '</small></button>');
+  });
+  H.push('</div></div>');
+
+  H.push('<div class="card"><div class="eyebrow">刪不了　' + no.length + ' 個</div>');
+  no.forEach(function (r) {
+    H.push('<div class="rn-row"><b>' + esc(r[0].name) + '</b><span class="dim">' + esc(r[0].account) + '　·　' + esc(r[1]) + '</span></div>');
+  });
+  H.push('</div>');
+
+  var et = emptyTeams();
+  H.push('<div class="card"><div class="eyebrow">沒有人、也沒有任務的組　' + et.length + ' 個</div>');
+  if (et.length) {
+    H.push('<p class="dim">' + et.map(function (t) { return esc(t.name); }).join('、') + '</p>');
+    if (DRAFT.rsTeams) {
+      H.push('<p class="dim">確定嗎？這些組會從雲端刪掉。</p>');
+      H.push(btn('對，刪掉這些組', 'rsteamsyes', 'big'));
+      H.push(btn('先不要', 'rsaccno', 'ghost'));
+    } else {
+      H.push(btn('刪掉這些空組', 'rsteams', 'ghost'));
+    }
+  } else {
+    H.push('<p class="dim">沒有。</p>');
+  }
+  H.push('</div>');
+  H.push('<div class="row">' + btn('回去', 'go:rs', 'ghost') + '</div>');
+  return H.join('');
+};
+ACTS.rsaccpick = function (id) { DRAFT.rsAcc = id; DRAFT.rsAccConfirm = true; DRAFT.rsTeams = false; render(); };
+ACTS.rsaccno = function () { DRAFT.rsAcc = null; DRAFT.rsAccConfirm = false; DRAFT.rsTeams = false; render(); };
+ACTS.rsaccyes = function () {
+  var r = actResearcherDeleteAccount(S.who, DRAFT.rsAcc);
+  DRAFT.rsAcc = null; DRAFT.rsAccConfirm = false;
+  render();
+  say(r.err ? r.err : '刪掉了「' + r.name + '」（' + r.account + '）' + (r.team ? '，連同沒人的組。' : '。'));
+};
+ACTS.rsteams = function () { DRAFT.rsTeams = true; DRAFT.rsAccConfirm = false; render(); };
+ACTS.rsteamsyes = function () {
+  DRAFT.rsTeams = false;
+  var r = actResearcherDeleteEmptyTeams(S.who);
+  render();
+  say(r.err ? r.err : '清掉了 ' + r.n + ' 個空組。');
 };
 
 ACTS.rsdel = function (id) { DRAFT.rsDel = id; DRAFT.rsOrph = false; render(); };
