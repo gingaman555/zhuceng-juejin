@@ -80,6 +80,16 @@ boss-fight-b.web.app       專案地下城 B    不分組（RULES.SOLO = 1）
 
 **這條線一旦打開就回不去了要想清楚**：`me.js` 原本測的「連研究者都改不動別人的密碼」這件事，現在改成測「只有研究者改得動，其他角色都不行」——如果之後要收回這個能力，要回頭把這一段跟對應的程式碼一起拿掉，不是只改文件。
 
+## 資料庫規則：只收新版寫入（2026-09-30）
+
+`firestore.rules` 不再是全開。新增與更新一律要帶 `v: 2`、形狀只能是 `{ j, v }`（讀取與刪除照舊開著）。還開著舊版分頁的機器推的是整筆、不帶 v，會被拒絕——9/23–9/29 之間班名與交件反覆被舊分頁蓋掉，就是這樣擋的。
+
+- 寫入只有 `v2/src/41-sync.js` 的 `syncBatch` 三處，**新增任何寫入路徑一定要帶 SYNC_V**，不然全班寫不進去（`stale.js` 的假資料庫會模擬這條規則，漏了會擋下部署）。
+- 自己寫的後臺腳本（restore、改班名那種）也要帶 `v: 2`，形狀是 `{ j, v }`。
+- 部署後量一次：`node test-strict-rules.js <專案ID>`（規則剛部署要等約半分鐘才各處生效）。
+- 出事時退回全開：`npx firebase-tools deploy --only firestore:rules --config firebase.open.json --project <專案>`。下一次 `node deploy.js` 會再推嚴格版。
+- 要改版本記號（寫入格式變了）：`SYNC_V` 與 `firestore.rules` 裡的 2 一起加一。
+
 ## 檢查
 
 二十二支（21 個檔，`multi` 跑兩次），`node deploy.js` 會全部跑一遍。

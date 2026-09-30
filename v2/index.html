@@ -5978,7 +5978,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790731675495;
+var BUILD_AT = 1790733479512;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -13850,7 +13850,7 @@ function syncCut(col, r) {
    2026-09-29：還開著舊版分頁的機器沒辦法遠端更新，而它推的是整筆
    （見 SYNC_MERGE 上面那一大段），會把別人交出去的狀態蓋掉。程式碼
    碰不到那一台，但資料庫碰得到：規則只收帶著 v = 2 的寫入
-   （見 firestore.strict.rules），舊版不帶，所以寫不進去，不會再蓋掉任何人。
+   （見 firestore.rules），舊版不帶，所以寫不進去，不會再蓋掉任何人。
    哪一天寫入的格式又要換，這個數字加一，舊的就被擋在門外。
 
    所有寫入都在這個檔案的 syncBatch，只有兩個地方。加新的寫入路徑

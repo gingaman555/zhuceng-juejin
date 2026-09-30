@@ -1,4 +1,4 @@
-/* 嚴格規則切下去之後，量一次它到底擋了什麼、放了什麼。
+/* firestore.rules（版本檢查）部署之後，量一次它到底擋了什麼、放了什麼。
 
    用法：node test-strict-rules.js <專案ID>
      例：node test-strict-rules.js boss-fight-b
