@@ -67,7 +67,8 @@ let js = files.filter(f => f.endsWith('.js'))
    一開始載進來的那份舊程式碼——伺服器端怎麼改都救不了它，
    只有它自己重新整理過才會拿到新的。BUILD_AT 就是讓它自己發現
    「我手上這份是舊的」的那個號碼牌（見 55-newver.js 怎麼用它）。 */
-js = 'var BUILD_AT = ' + Date.now() + ';\n\n' + js;
+const BUILD_TS = Date.now();
+js = 'var BUILD_AT = ' + BUILD_TS + ';\n\n' + js;
 
 /* 這一個站的資料掛在哪。改的是那一行字面量本身，不是在後面再賦值一次
    ——後面再賦值一次的話，原始碼裡就有兩個 SYNC_ROOT，而下一個讀的人
@@ -164,6 +165,9 @@ if (改.length) {
 const 出 = path.join(__dirname, 站.out);
 if (!fs.existsSync(出)) fs.mkdirSync(出, { recursive: true });
 fs.writeFileSync(path.join(出, 'index.html'), html);
+/* 版本記號單獨放一個小檔（約 20 個字）。開著的分頁每分鐘問它「現在是哪一版」，
+   不用每次把一百萬個字的網頁整份抓下來（見 41-sync.js 的 checkFresh）。 */
+fs.writeFileSync(path.join(出, 'v.json'), JSON.stringify({ build: BUILD_TS }));
 console.log(path.join('v2', 站.out, 'index.html').replace(/\\/g, '/'),
   (html.length / 1024).toFixed(0) + 'KB', '·', files.length, '個原始檔',
   '·', '資料掛在 ' + 站.root +

@@ -1704,7 +1704,7 @@ function taskNoticeFor(u) {
 }
 function taskNoticeReady() {
   if (typeof SYNC !== 'undefined') {
-    if (SYNC.blocked) return false;
+    if (SYNC.blocked || SYNC.cover) return false;
     if (SYNC.on && !(SYNC.first && SYNC.first.Milestones && SYNC.first.Runs && SYNC.first.Teams)) return false;
   }
   return TN_PAGES.indexOf(S.page) >= 0;

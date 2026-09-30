@@ -287,7 +287,7 @@ function render() {
 
   /* 資料庫不收這一頁寫的東西（見 41-sync.js 的 blockedHtml）：整頁換掉，
      不管在哪一頁、有沒有登入。 */
-  if (typeof SYNC !== 'undefined' && SYNC.blocked) {
+  if (typeof SYNC !== 'undefined' && (SYNC.blocked || SYNC.cover)) {
     document.title = '請重新打開｜專案地下城';
     document.getElementById('app').innerHTML = blockedHtml();
     return;

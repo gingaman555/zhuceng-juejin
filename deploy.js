@@ -231,6 +231,19 @@ console.log('\n── 驗 ──');
     const solo = /RULES\.SOLO = 1;/.test(html);
     const solo對 = (k === 'b') === solo;
 
+    /* ── 版本小檔跟網頁是同一版嗎 ──
+
+       開著的分頁每分鐘問 v.json「現在是哪一版」，比自己的 BUILD_AT 新就整頁蓋住
+       （v2/src/41-sync.js 的 checkFresh）。所以線上的 v.json 記號一定要等於
+       同一站網頁裡的 BUILD_AT：小檔比網頁新，全班每一台都會被蓋住、重新整理
+       之後又被蓋住。 */
+    const 暫v = path.join(__dirname, '.verify-' + k + '.json');
+    跑('curl -s -o "' + 暫v + '" ' + s.url + '/v.json?_v=' + Date.now());
+    let 小檔 = '';
+    try { 小檔 = String(JSON.parse(fs.readFileSync(暫v, 'utf8')).build); } catch (e) { 小檔 = '讀不到'; }
+    try { fs.unlinkSync(暫v); } catch (e) {}
+    const 頁記 = (html.match(/BUILD_AT = (\d+);/) || [])[1] || '？';
+    const 版對 = 小檔 === 頁記;
     /* init.js 說它連到哪一個資料庫 */
     const init = 跑('curl -s ' + s.url + '/__/firebase/init.js');
     const pid = (init.match(/"projectId": *"([^"]*)"/) || [])[1] || '？';
@@ -241,7 +254,8 @@ console.log('\n── 驗 ──');
       (對 ? ' ✓' : ' ✗ 不是這個站的！'));
     console.log('      標題「' + 標 + '」' + (標對 ? ' ✓' : ' ✗ 拿到的是別的站那一份！') +
       '　·　不分組 ' + (solo ? '是' : '否') + (solo對 ? ' ✓' : ' ✗'));
-    if (!對 || !標對 || !solo對) 失敗.push(k);
+    console.log('      版本小檔 ' + (版對 ? '跟網頁同一版 ✓' : '✗ 小檔 ' + 小檔 + '、網頁 ' + 頁記 + '——會讓全班被蓋住，馬上重上一次！'));
+    if (!對 || !標對 || !solo對 || !版對) 失敗.push(k);
   } catch (e) {
     console.log('  ' + k + '　驗不到（' + e.message.split('\n')[0] + '）');
   }

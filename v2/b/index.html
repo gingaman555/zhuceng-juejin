@@ -6013,7 +6013,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790757027363;
+var BUILD_AT = 1790757622980;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -14145,7 +14145,7 @@ function dayText(ts) {
    都沒有 firebase 這個東西。那時候這一整層安靜地什麼都不做，
    localStorage 還是照舊——單機那條路一步都沒有變。 */
 
-var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, staleAt: 0, fly: {}, denied: 0, blocked: 0, blockWhy: '', oldShown: 0 };
+var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, staleAt: 0, fly: {}, denied: 0, blocked: 0, blockWhy: '', oldShown: 0, cover: 0, coverAt: 0, coverGo: 0 };
 
 /* 每一張表的主鍵。
 
@@ -14232,7 +14232,7 @@ function syncReady() {
    跟自己手上這一份比，新的話就在頂條露出「重新整理」（見 55-ui.js
    的 topEnd）。只問首頁那個 HTML，不碰任何 API，負擔跟同步比起來
    可以忽略。 */
-var SYNC_FRESH_MS = 600000; /* 十分鐘問一次，不用更勤——這不是急事 */
+var SYNC_FRESH_MS = 60000; /* 一分鐘問一次。問的是一個 20 個字的小檔（v.json），不是整份網頁 */
 /* ---------- 閒著的舊分頁，自己換成新的 ----------
 
    2026-09-30：學生的分頁會一直開著（手機尤其是，鎖屏、切 app 都不會關）。
@@ -14358,29 +14358,80 @@ function reportBuild() {
   save();
 }
 
+/* ---------- 偵測到新版：立刻蓋住整頁 ----------
+
+   2026-09-30：本來偵測到新版只在頂條亮一句話，給十五分鐘寬限，過了才整頁停用。
+   可是舊版的程式碼多留一分鐘，就多一分鐘可能寫進不該寫的東西（班名、交件被蓋回去
+   就是這樣來的）。使用者要的是「發現舊了就直接蓋掉，不要讓他再用」。
+
+   所以現在是**偵測到的那一刻**就把整頁換成「請重新打開」，不論在哪一頁、
+   有沒有登入。跟 SYNC.blocked 不同的是：蓋住的時候**還在繼續把還沒送出的東西
+   推上去**（blocked 會停推送，所以它只在確定沒有東西沒送的時候才敢用）。
+   有東西還在飛（fly）或上一批失敗（err）的時候，按鈕先停著、寫「正在送出去」，
+   送完了自動重新打開；兩分鐘還送不出去（多半是斷線）才放行，讓他自己決定。 */
+function coverPending() {
+  if (SYNC.err) return true;
+  for (var k in SYNC.fly) if (Object.prototype.hasOwnProperty.call(SYNC.fly, k)) return true;
+  return false;
+}
+function coverWaiting() {
+  return !!SYNC.cover && !SYNC.blocked && coverPending() && Date.now() - (SYNC.coverAt || 0) < 120000;
+}
+function coverNow() {
+  if (SYNC.cover) return;
+  SYNC.cover = 1; SYNC.coverAt = Date.now();
+  if (typeof render === 'function') render();
+  coverTick();
+}
+/* 蓋住之後，東西都送完了就自動重新打開（兩秒後，讓人讀得到那一句）。
+   freshAutoReload 十分鐘內最多換一次，換不成就留在這一張上、按鈕可以按。 */
+function coverTick() {
+  if (!SYNC.cover) return;
+  if (coverPending()) return;
+  if (!SYNC.coverGo && typeof setTimeout === 'function') {
+    SYNC.coverGo = 1;
+    setTimeout(function () { freshAutoReload(); if (typeof render === 'function') render(); }, 2500);
+  }
+}
+function coverPoll() {
+  if (!SYNC.cover) return;
+  if (typeof render === 'function') render();
+  coverTick();
+}
+
+/* 問伺服器現在是哪一版。先問小檔；小檔拿不到（舊部署、單機開檔）才退回抓整份網頁。 */
+function freshBuild() {
+  var base = location.pathname.replace(/[^\/]*$/, '');
+  return fetch(base + 'v.json?_v=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { return Number(j && j.build) || 0; })
+    .catch(function () { return 0; })
+    .then(function (n) {
+      if (n) return n;
+      return fetch(location.pathname + '?_v=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.text(); })
+        .then(function (t) { var m = t.match(/BUILD_AT = (\d+);/); return m ? Number(m[1]) : 0; });
+    });
+}
 function checkFresh() {
   if (typeof fetch !== 'function' || typeof BUILD_AT === 'undefined') return;
   if (typeof location === 'undefined') return;
-  fetch(location.pathname + '?_v=' + Date.now(), { cache: 'no-store' })
-    .then(function (r) { return r.text(); })
-    .then(function (t) {
-      var m = t.match(/BUILD_AT = (\d+);/);
-      if (m && Number(m[1]) > BUILD_AT) {
-        if (!SYNC.stale) {
-          SYNC.stale = 1;
-          SYNC.staleAt = Date.now();
-          if (typeof render === 'function') render();
-        }
-        if (freshSafeToReload()) freshAutoReload();
-      }
-    })
-    .catch(function () {});
+  freshBuild().then(function (n) {
+    if (n && n > BUILD_AT) {
+      if (!SYNC.stale) { SYNC.stale = 1; SYNC.staleAt = Date.now(); }
+      /* 閒著的休息頁直接換成新的，不用停在那一張上。換不成（十分鐘內換過、
+         或不在休息頁）就蓋住整頁。 */
+      if (freshSafeToReload()) freshAutoReload();
+      coverNow();
+    }
+  }).catch(function () {});
 }
 function checkFreshStart() {
   if (typeof setInterval !== 'function') return;
   checkFresh();
   setInterval(function () { checkFresh(); tabAgeCheck(); }, SYNC_FRESH_MS);
   setInterval(staleLock, 60000);
+  setInterval(coverPoll, 2000);
   if (typeof document !== 'undefined' && document.addEventListener) {
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) { checkFresh(); tabAgeCheck(); }
@@ -14587,6 +14638,7 @@ function syncDone() {
      讓人以為現在還在出事。 */
   SYNC.denied = 0;
   if (SYNC.err) { SYNC.err = ''; if (typeof render === 'function') render(); }
+  if (SYNC.cover) coverPoll();
 }
 
 function syncFail(chunk, e) {
@@ -14619,10 +14671,13 @@ function syncFail(chunk, e) {
 
 /* 整頁換成的那一張。不放任何別的按鈕——這一頁上做的任何事都送不出去。 */
 function blockedHtml() {
-  var why = SYNC.blockWhy;
+  var why = SYNC.blocked ? SYNC.blockWhy : 'stale';
+  var 等 = coverWaiting();
   var 眉 = why === 'stale' ? '剛更新了新版' : (why === 'old' ? '這個網頁開太久了' : '這個網頁是舊的');
   var 話 = why === 'stale'
-    ? '剛剛更新了新版，這一頁不能再用了。你之前做的事都已經送出去了，重新打開就是最新的。'
+    ? '剛剛更新了新版，這一頁不能再用了。' + (等
+      ? '你剛剛做的事還在送出去，送完會自動重新打開，請先不要關。'
+      : '你之前做的事都已經送出去了，重新打開就是最新的。')
     : (why === 'old'
       ? '這一頁已經開了很久，裡面的資料可能不是最新的。你之前做的事都已經送出去了，重新打開就是最新的。'
       : '你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。');
@@ -14630,7 +14685,9 @@ function blockedHtml() {
     '<div class="eyebrow warnx">' + 眉 + '</div>' +
     '<h1>請把它關掉，重新打開一次</h1>' +
     '<p class="lead">' + 話 + '</p>' +
-    '<button class="btn big" data-act="run" data-p=\'{"a":"reloadpage"}\'>重新打開</button>' +
+    (等
+      ? '<button class="btn big" disabled>正在送出去⋯⋯</button>'
+      : '<button class="btn big" data-act="run" data-p=\'{"a":"reloadpage"}\'>重新打開</button>') +
     '</div></div></div>';
 }
 
@@ -16065,7 +16122,7 @@ function render() {
 
   /* 資料庫不收這一頁寫的東西（見 41-sync.js 的 blockedHtml）：整頁換掉，
      不管在哪一頁、有沒有登入。 */
-  if (typeof SYNC !== 'undefined' && SYNC.blocked) {
+  if (typeof SYNC !== 'undefined' && (SYNC.blocked || SYNC.cover)) {
     document.title = '請重新打開｜專案地下城';
     document.getElementById('app').innerHTML = blockedHtml();
     return;
@@ -20571,7 +20628,7 @@ function taskNoticeFor(u) {
 }
 function taskNoticeReady() {
   if (typeof SYNC !== 'undefined') {
-    if (SYNC.blocked) return false;
+    if (SYNC.blocked || SYNC.cover) return false;
     if (SYNC.on && !(SYNC.first && SYNC.first.Milestones && SYNC.first.Runs && SYNC.first.Teams)) return false;
   }
   return TN_PAGES.indexOf(S.page) >= 0;
