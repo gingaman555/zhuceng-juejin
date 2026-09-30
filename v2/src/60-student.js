@@ -440,6 +440,19 @@ function teamCard(t) {
     H.push('</span>');
   });
   H.push('</div>');
+  /* 按錯了：這一組還沒有任何紀錄、他也沒做過事的時候，才有這一顆。
+     一顆安靜的小鍵，按下去先問一次（見 15-auth.js 的 actLeaveTeam）。 */
+  if (!whyCannotLeave(me())) {
+    H.push('<div class="tmc-x">');
+    if (DRAFT.leaveConf) {
+      H.push('<p class="dim">要離開「' + esc(t.name) + '」嗎？離開之後可以重新建一隊，或用代碼加入別組。</p>');
+      H.push(btn('對，離開', 'leaveyes', 'sm'));
+      H.push(btn('先不要', 'leaveno', 'ghost sm'));
+    } else {
+      H.push(btn('按錯了？離開這一組', 'leaveask', 'ghost sm'));
+    }
+    H.push('</div>');
+  }
   H.push('</div>');
   return H.join('');
 }

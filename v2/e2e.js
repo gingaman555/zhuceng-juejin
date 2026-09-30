@@ -936,6 +936,50 @@ DRAFT = {};
 DB.Users = DB.Users.filter(u => !/^UA\d$/.test(u.userId));
 DB.Runs = DB.Runs.filter(r => r.runId !== 'RA1');
 
+/* ══ 按錯建了組、加不進別組（2026-09-30）══
+
+   學生手滑按了「建立」，變成自己一個人一組，然後 actJoinTeam 擋在「組好了就不能換」。
+   「不能換」的理由是歷史——所以這一組還沒有紀錄、他也沒做過事的時候可以離開重選；
+   一旦有了第一趟承諾就跟以前一樣不能換。 */
+H('按錯建了組：沒有紀錄之前可以離開重選');
+DB.Users.push({ userId: 'UL1', account: 'oops1', name: '手滑的人', role: 'student', classId: kl.classId, teamId: '', createdAt: 1000000 });
+const ul = find('Users', u => u.userId === 'UL1');
+as(ul);
+const nt = actNewTeam('按錯了', 'UL1');
+be('手滑建了一組', !!nt.team && ul.teamId === nt.team.teamId, true);
+be('這時候想加別組被擋下來（原本的規則沒變）', actJoinTeam(tm.joinCode, 'UL1').err ? 1 : 0, 1);
+be('這一組沒有紀錄、他也沒做過事 → 離得開', whyCannotLeave(ul), '');
+S.page = 'home'; DRAFT = {};
+const tcA = teamCard(nt.team);
+be('組別卡上有一顆「離開這一組」', tcA.indexOf('leaveask') >= 0, true);
+be('第一下只是問，不直接離開', (ACTS.leaveask(), !!DRAFT.leaveConf && ul.teamId === nt.team.teamId), true);
+be('問的時候有「對，離開」與「先不要」', teamCard(nt.team).indexOf('leaveyes') >= 0 && teamCard(nt.team).indexOf('leaveno') >= 0, true);
+ACTS.leaveno();
+be('先不要：還在原本那一組', !DRAFT.leaveConf && ul.teamId === nt.team.teamId, true);
+ACTS.leaveask(); ACTS.leaveyes();
+be('離開了：沒有組、座位上的組也清掉', ul.teamId === '' && teamIn(ul, ul.classId) === '', true);
+be('回去要走的那一頁是建立／加入', homeFor(ul), 'myteam');
+be('留下事件', DB.Events.slice(-1)[0].kind, 'leaveteam');
+be('他原本那一組沒被刪（只是空了）', !!teamOf(nt.team.teamId) && !teamHasMembers(nt.team.teamId), true);
+be('空了的組研究者清得掉', emptyTeams().some(t => t.teamId === nt.team.teamId), true);
+const jn = actJoinTeam(tm.joinCode, 'UL1');
+be('這下加得進隊友那一組', !jn.err && ul.teamId === tm.teamId, true);
+be('進去的這一組已經有紀錄，就不能再離開', whyCannotLeave(ul) !== '', true);
+be('actLeaveTeam 也擋', actLeaveTeam('UL1').err ? 1 : 0, 1);
+be('離開不算「做過事」：他還是刪得掉（研究者）', userTraces(ul).events, 0);
+/* 已經有紀錄的組、做過事的人、老師、不分組那一站：都不能 */
+be('做過事的學生（有承諾過）離不開', whyCannotLeave(stu[0]) !== '', true);
+be('老師不能', whyCannotLeave(tea) !== '', true);
+DB.Users.push({ userId: 'UL2', account: 'oops2', name: '另一個', role: 'student', classId: kl.classId, teamId: '', createdAt: 1000000 });
+const nt2 = actNewTeam('空組二', 'UL2');
+be('新建的空組離得開', whyCannotLeave(find('Users', u => u.userId === 'UL2')), '');
+DB.Pushes.push({ pushId: 'PL1', teamId: nt2.team.teamId, at: 1 });
+be('補登過日子的組就不能離開了', whyCannotLeave(find('Users', u => u.userId === 'UL2')) !== '', true);
+DB.Pushes = DB.Pushes.filter(p => p.pushId !== 'PL1');
+DB.Users = DB.Users.filter(u => !/^UL\d$/.test(u.userId));
+DB.Teams = DB.Teams.filter(t => t.teamId !== nt.team.teamId && t.teamId !== nt2.team.teamId);
+DRAFT = {};
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

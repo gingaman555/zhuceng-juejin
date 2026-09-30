@@ -735,7 +735,7 @@ document.addEventListener('change', function (ev) {
    會存資料的這幾個動作，同一個動作（連參數）在 0.8 秒內的第二下不再執行。
    導覽、加減鍵這類本來就要連按的不在名單上。 */
 var ACT_ONCE = { hero: 1, rename: 1, teamrename: 1, askexit: 1, commit: 1, publish: 1,
-  approve: 1, reject: 1, mkteam: 1, jointeam: 1, reg: 1, login: 1, renameclass: 1,
+  approve: 1, reject: 1, mkteam: 1, jointeam: 1, leaveyes: 1, reg: 1, login: 1, renameclass: 1,
   msdelyes: 1, rsdelyes: 1, rsaccyes: 1, rspw: 1 };
 var ACT_LAST = {};
 function actGuard(key, t) {

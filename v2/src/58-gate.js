@@ -547,7 +547,7 @@ PAGES.myteam = function () {
   H.push(btn('加入', 'jointeam', 'big'));
   H.push('</div>');
 
-  H.push('<p class="dim">組好了就不能換——之後每一趟的紀錄都掛在這一隊上。</p>');
+  H.push('<p class="dim">開始做事之後就不能換——之後每一趟的紀錄都掛在這一隊上。按錯的話，在還沒做任何事之前可以離開重選。</p>');
   H.push('<div class="row">');
   /* 在好幾個班裡的人，這一頁不是死路：他可能是剛加進這一個班、
      現在想先回去原本那一班。 */
@@ -736,6 +736,17 @@ ACTS.jointeam = function () {
   }
   go('who');
   say('進來了。');
+};
+
+/* 按錯了，離開這一組（兩步驟，見 15-auth.js 的 actLeaveTeam）。 */
+ACTS.leaveask = function () { DRAFT.leaveConf = true; render(); };
+ACTS.leaveno = function () { DRAFT.leaveConf = false; render(); };
+ACTS.leaveyes = function () {
+  DRAFT.leaveConf = false;
+  var r = actLeaveTeam(S.who);
+  if (r.err) { render(); return say(r.err); }
+  go('myteam');
+  say('離開了。可以重新建一隊，或用代碼加入。');
 };
 
 ACTS.logout = function () {

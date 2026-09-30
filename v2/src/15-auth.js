@@ -155,6 +155,7 @@ var EV_SAY = {
   joinclass:function (e) { return '加進「' + e.klass + '」'; },
   newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
   jointeam: function () { return '用代碼加入隊伍'; },
+  leaveteam: function (e) { return '按錯了，離開隊伍「' + (e.name || '') + '」'; },
   claim:    function () { return '在班級地圖上占了一格'; },
   hero:     function (e) { return '挑了角色 ' + e.hero; },
   blurb:    function (e) { return '寫了招牌，' + e.len + ' 個字'; },
@@ -524,7 +525,7 @@ function actResearcherDeleteTestClass(researcherId, classId) {
    只刪學生、不刪老師與研究者；事件紀錄不動。刪完如果他那一組因此沒有人、
    也沒有任何一趟，組別一起刪。 */
 var TRIVIAL_EV = { login: 1, register: 1, joinclass: 1, jointeam: 1, newteam: 1, hero: 1, rename: 1,
-  teamrename: 1, setname: 1, sit: 1, claim: 1, setpw: 1, genrecov: 1, recoverpw: 1, teacherrecov: 1,
+  teamrename: 1, setname: 1, sit: 1, leaveteam: 1, claim: 1, setpw: 1, genrecov: 1, recoverpw: 1, teacherrecov: 1,
   blurb: 1, left: 1, researchersetpw: 1 };
 function userTraces(u) {
   var n = { said: 0, plan: 0, merged: 0, events: 0 };
@@ -946,8 +947,55 @@ function actNewTeam(name, userId) {
   return { team: t };
 }
 
+/* ---------- 按錯了：離開這一組 ----------
+
+   2026-09-30：有學生手滑按了「建立」，變成自己一個人一組，之後 actJoinTeam
+   擋在「組好了就不能換」，加不進隊友那一組——而整個班在同一節課裡一起做這件事，
+   按錯一次就卡到要找人用後臺處理。
+
+   「組好了就不能換」的理由是**歷史**：任務派給組、紀錄掛在組上，中途換組會讓
+   已經寫下的紀錄說謊。這個理由只在「已經有紀錄」的時候成立。所以開一個很窄的口：
+
+     · 這一組還沒有任何紀錄（沒有承諾過任何一趟、沒有保存物、沒有補登的日子）
+     · 而且他自己沒有做過事（userTraces）
+
+   兩條都成立才離得開。離開之後他就是「沒有組」，回到建立／加入那一頁。
+   一旦這一組有了第一趟承諾，就跟以前一樣不能換——那時候換組會讓紀錄找不到人。
+
+   他原本那一組留著（就算沒人了也留），不從學生這邊刪：同時有隊友剛用代碼進來的
+   話，刪掉會讓那位隊友掛在不存在的組上。沒有人的空組由研究者頁面清（emptyTeams）。 */
+function teamHasRecord(teamId) {
+  return teamHasWork(teamId) ||
+    DB.Pushes.some(function (p) { return p.teamId === teamId; });
+}
+/* 離不開的原因；空字串＝離得開。 */
+function whyCannotLeave(u) {
+  if (!u || u.role !== 'student') return '只有學生離得開自己的組';
+  if (RULES.SOLO) return '這一站不分組';
+  var tid = u.classId ? teamIn(u, u.classId) : '';
+  if (!tid) return '你還沒有組';
+  if (teamHasRecord(tid)) return '這一組已經有紀錄了，組好就不能換';
+  var n = userTraces(u);
+  if (n.said || n.plan || n.merged || n.events) return '你在這一組做過事了';
+  return '';
+}
+function actLeaveTeam(userId) {
+  var u = userOf(userId);
+  var why = whyCannotLeave(u);
+  if (why) return { err: why + '。' };
+  var tid = teamIn(u, u.classId), t = teamOf(tid);
+  u.seats = seatsOf(u).map(function (s) {
+    return s.classId === u.classId ? { classId: s.classId, teamId: '' } : s;
+  });
+  u.teamId = '';
+  save();
+  logEvent('leaveteam', { teamId: tid, name: t ? t.name : '' });
+  return { team: t };
+}
+
 /* 用代碼加入。組建好就不能換——任務派給組、紀錄掛在組上，
-   中途換組會讓歷史說謊。所以已經有隊的人擋在這裡。 */
+   中途換組會讓歷史說謊。所以已經有隊的人擋在這裡。
+   （按錯的人有一條窄路：這一組還沒有紀錄的時候可以先離開，見上面。） */
 function actJoinTeam(code, userId) {
   var u = userOf(userId);
   if (!u) return { err: '找不到這個人。' };

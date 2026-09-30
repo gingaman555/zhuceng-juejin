@@ -2345,6 +2345,9 @@ button.ac:active{transform:translateY(1px)}
    會把整列撐開換行——四個人加一個代碼在 560px 裡排不下，
    於是那一列變成兩行、卡高 161px。 */
 .tmc-l{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0}
+/* 按錯了、離開這一組：一顆安靜的小鍵，跟隊員那一列隔開。 */
+.tmc-x{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 0 0}
+.tmc-x p{flex-basis:100%;margin:0}
 .tmc-m{
   display:flex;align-items:center;gap:6px;padding:2px 9px 2px 2px;
   background:var(--sunk);
