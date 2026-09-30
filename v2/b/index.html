@@ -5978,7 +5978,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790734821226;
+var BUILD_AT = 1790747072929;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -11793,7 +11793,17 @@ function nextThing(teamId) {
      本來第一次進來看到的是一條空廊道，寫著「等老師派下一個」——
      那是最糟的第一印象：第一個動作是「等」。取名字三十秒做得完，
      而且它完全屬於他們自己（那塊牌子掛在洞口上，別組也看得到）。 */
-  if (tm && !tm.project) return { kind: 'name' };
+  /* 2026-09-30：這一關只在「老師還沒派任何一件」的時候才擋。
+
+     本來不管手上有什麼，沒有專案名稱就是這一關——9/30 用真實資料量到：
+     42 組裡 26 組沒取名字，其中 13 組已經有任務在做（有的已經交了），
+     首頁被「先取名字」蓋住，看不到自己的任務，也交不出去、開不了新的。
+     取名字三十秒做得完，可是它不該擋在做事的前面。
+
+     這一關的本意（見上面）是「第一個動作不可以是等」。老師已經派了任務
+     的話，第一個動作就是任務，不需要它；取名字改成首頁上一顆不擋路的
+     小按鈕（見 60-student.js）。 */
+  if (tm && !tm.project && !msFor(teamId).length) return { kind: 'name' };
   /* 門開了——那是這個系統裡最後一件事。 */
   if (tm && tm.exitOk) return { kind: 'exitopen' };
   if (tm && tm.exitAsk) return { kind: 'waitexit' };
@@ -18600,6 +18610,12 @@ PAGES.home = function () {
      那個迴圈才會上癮。接在動作下面：它講的是你剛剛按的那一顆
      在整圈裡的哪個位置。 */
   H.push(beatBar(next, t));
+
+  /* 專案還沒有名字，但不擋路（見 40-db.js 的 nextThing）：想到了再取。 */
+  if (!t.project && next.kind !== 'name' && next.kind !== 'left') {
+    H.push('<div class="card"><p class="dim">你們的專案還沒有名字。想到了再取，不用等。</p>' +
+      btn('幫專案取個名字', 'go:sign', 'ghost') + '</div>');
+  }
 
   /* 「還有 N 個在等」拿掉了：正在做的那一張卡裡已經寫著
      「老師又派了 N 個。做完這一趟才輪到。」——同一件事，前後兩行。

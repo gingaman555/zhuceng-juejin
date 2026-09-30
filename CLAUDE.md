@@ -19,6 +19,8 @@ node deploy.js main     # 只上主站
 node deploy.js --skip   # 跳過檢查（只有在你剛剛才跑過的時候）
 ```
 
+**在學校網路部署「四次都沒成功」**（錯誤是 `Assertion failed: resolving hosting target…` 或 `Failed to make request to https://firebasehosting.googleapis.com/…`）：多半是校內 DNS（dns.ttu.edu.tw）解析不了那個網址，不是程式的問題。用 `dnsfix.js`（只對這次指令改用 8.8.8.8 查，不動系統設定）：把它複製到沒有空格的路徑，`NODE_OPTIONS="--require C:/Users/user/dnsfix.js" node deploy.js`。
+
 **不要手動 `firebase deploy`**：兩個站的 `public` 目錄不一樣，用預設 config 會把主站那一份推到 B 站上（踩過）。
 
 改東西的節奏是：改 `v2/src/*` → `node v2/build.js` → 跑檢查 → commit → deploy。`v2/index.html` 是產物，**不要直接改**。

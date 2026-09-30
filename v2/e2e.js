@@ -621,6 +621,27 @@ be('剩下兩件以上，還是可以一次開', html2.indexOf('一次開這 ' +
 ACTS.commitall();
 be('一次開只包含還沒開始的', S.queue.length, ids2.length - 1);
 
+/* ══ 沒取專案名稱不能擋在做事的前面（2026-09-30）══
+
+   9/30 用真實資料量到：42 組裡 26 組沒取名字，13 組已經有任務在做，
+   首頁被「先取名字」蓋住，看不到自己的任務。 */
+H('沒有專案名稱：老師派了任務就不擋，還沒派才問名字');
+DB.Teams.push({ teamId: 'GP3', classId: kl.classId, name: '沒取名字的組', project: '', joinCode: 'RRRRRR' });
+DB.Users.push({ userId: 'UP3', account: 'par3', name: '沒取名', role: 'student', classId: kl.classId, teamId: 'GP3', hero: 'adv' });
+as(find('Users', u => u.userId === 'UP3')); S.page = 'home'; S.p = {}; DRAFT = {};
+be('老師已經派了任務：首頁推任務，不是取名字', nextThing('GP3').kind, 'commit');
+const htmlN = PAGES.home();
+be('大鍵是去看任務', htmlN.indexOf('go:commit:') >= 0, true);
+be('取名字是一顆不擋路的小按鈕', htmlN.indexOf('幫專案取個名字') >= 0 && htmlN.indexOf('go:sign') >= 0, true);
+DB.Classes.push({ classId: 'CZ', name: '空班', joinCode: 'ZZZZZZ' });
+DB.Teams.push({ teamId: 'GP4', classId: 'CZ', name: '空班的組', project: '', joinCode: 'SSSSSS' });
+DB.Users.push({ userId: 'UP4', account: 'par4', name: '空班學生', role: 'student', classId: 'CZ', teamId: 'GP4', hero: 'adv' });
+as(find('Users', u => u.userId === 'UP4')); DRAFT = {};
+be('老師還沒派任何一件：才推取名字（第一個動作不可以是等）', nextThing('GP4').kind, 'name');
+DB.Teams.forEach(t => { if (t.teamId === 'GP3') t.project = '有名字了'; });
+as(find('Users', u => u.userId === 'UP3')); DRAFT = {};
+be('取了名字之後，小按鈕不再出現', PAGES.home().indexOf('幫專案取個名字') >= 0, false);
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

@@ -238,6 +238,12 @@ PAGES.home = function () {
      在整圈裡的哪個位置。 */
   H.push(beatBar(next, t));
 
+  /* 專案還沒有名字，但不擋路（見 40-db.js 的 nextThing）：想到了再取。 */
+  if (!t.project && next.kind !== 'name' && next.kind !== 'left') {
+    H.push('<div class="card"><p class="dim">你們的專案還沒有名字。想到了再取，不用等。</p>' +
+      btn('幫專案取個名字', 'go:sign', 'ghost') + '</div>');
+  }
+
   /* 「還有 N 個在等」拿掉了：正在做的那一張卡裡已經寫著
      「老師又派了 N 個。做完這一趟才輪到。」——同一件事，前後兩行。
      留下的是說得比較清楚的那一句。 */
