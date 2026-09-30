@@ -25,6 +25,9 @@
    除了這一個名字，這一頁不准出現任何其他 act 開頭的動作——
    check.js 只放行 actResearcherSetPw 這一個，其餘照樣擋著。
 
+   2026-09-30 第三個例外：清掉測試資料（actResearcherDeleteTestClass、
+   actResearcherDeleteOrphans，見 15-auth.js），形狀開得很窄。
+
    紀錄那一頁是這個研究真正的資料。它記的是行為的形狀——承諾幾天、
    哪一天推進、判定結果、卡在哪——不記作業內容，因為系統本來就不收作業。
    看得到誰做了什麼，看不到他做得好不好。 */
@@ -117,6 +120,38 @@ PAGES.rs = function () {
   });
   H.push('</div>');
 
+  /* 清掉測試資料（第三個例外，見 15-auth.js）：有東西可以清才出現。 */
+  var 測試班 = where('Classes', isTestClass), 孤兒 = orphanUsers();
+  if (測試班.length || 孤兒.length) {
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">清掉測試資料</div>');
+    H.push('<p class="dim">只刪名字裡有「測試」或「演練」的班，和掛在已不存在的班上的帳號。真的班刪不了。事件紀錄不動。</p>');
+    測試班.forEach(function (c) {
+      var n = testClassCount(c.classId);
+      H.push('<div class="rn-row"><b>' + esc(c.name) + '</b><span class="dim">' +
+        n.users + ' 個帳號　·　' + n.teams + ' 組　·　' + n.runs + ' 趟</span></div>');
+      if (DRAFT.rsDel === c.classId) {
+        H.push('<p class="dim">確定嗎？這個班的帳號、組別、任務、紀錄都會從雲端刪掉，刪了就沒有了。</p>');
+        H.push(btn('對，刪掉這個測試班', 'rsdelyes:' + c.classId, 'big'));
+        H.push(btn('先不要', 'rsdelno', 'ghost'));
+      } else {
+        H.push(btn('刪掉這個測試班', 'rsdel:' + c.classId, 'ghost'));
+      }
+    });
+    if (孤兒.length) {
+      H.push('<div class="rn-row"><b>沒有班的帳號　' + 孤兒.length + ' 個</b><span class="dim">' +
+        孤兒.map(function (u) { return esc(u.account); }).join('、') + '</span></div>');
+      if (DRAFT.rsOrph) {
+        H.push('<p class="dim">確定嗎？這些帳號會從雲端刪掉。</p>');
+        H.push(btn('對，刪掉這些帳號', 'rsorphyes', 'big'));
+        H.push(btn('先不要', 'rsdelno', 'ghost'));
+      } else {
+        H.push(btn('刪掉這些帳號', 'rsorph', 'ghost'));
+      }
+    }
+    H.push('</div>');
+  }
+
   H.push('<div class="card">');
   H.push('<div class="eyebrow">幫學生／老師換密碼</div>');
   H.push('<p class="dim">2026-09-23 起開放的唯一例外——其餘資料這一頁一樣只能看。</p>');
@@ -169,6 +204,22 @@ PAGES.rspw = function () {
   H.push(btn('回去', 'go:rs', 'ghost'));
   H.push('</div>');
   return H.join('');
+};
+
+ACTS.rsdel = function (id) { DRAFT.rsDel = id; DRAFT.rsOrph = false; render(); };
+ACTS.rsorph = function () { DRAFT.rsOrph = true; DRAFT.rsDel = null; render(); };
+ACTS.rsdelno = function () { DRAFT.rsDel = null; DRAFT.rsOrph = false; render(); };
+ACTS.rsdelyes = function (id) {
+  DRAFT.rsDel = null;
+  var r = actResearcherDeleteTestClass(S.who, id);
+  render();
+  say(r.err ? r.err : '清掉了「' + r.name + '」：' + r.users + ' 個帳號、' + r.teams + ' 組、' + r.runs + ' 趟。');
+};
+ACTS.rsorphyes = function () {
+  DRAFT.rsOrph = false;
+  var r = actResearcherDeleteOrphans(S.who);
+  render();
+  say(r.err ? r.err : '清掉了 ' + r.users + ' 個帳號。');
 };
 
 ACTS.rspwpick = function (acc) { DRAFT.rspwAcc = acc; render(); };

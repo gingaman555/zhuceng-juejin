@@ -642,6 +642,59 @@ DB.Teams.forEach(t => { if (t.teamId === 'GP3') t.project = '有名字了'; });
 as(find('Users', u => u.userId === 'UP3')); DRAFT = {};
 be('取了名字之後，小按鈕不再出現', PAGES.home().indexOf('幫專案取個名字') >= 0, false);
 
+/* ══ 研究者清掉測試資料（2026-09-30，「研究者只能看」的第三個例外）══
+
+   形狀開得很窄：只刪名字有「測試」「演練」的班、只刪沒有班的帳號；
+   真的班、學生太多的班、非研究者都刪不了。 */
+H('研究者清掉測試資料');
+DB.Users.push({ userId: 'URS', account: 'rs_t', name: '研究者', role: 'researcher' });
+const rsU = find('Users', u => u.userId === 'URS');
+/* 一個測試班：老師一位、學生兩位、一組、一個任務、一趟、一張 */
+DB.Classes.push({ classId: 'CT1', name: '測試｜上線前演練', joinCode: 'TTTTT1' });
+DB.Users.push({ userId: 'UT1', account: 'dr_t', name: '測試老師', role: 'teacher', classId: 'CT1' });
+DB.Users.push({ userId: 'UT2', account: 'dr_s1', name: '測試學生1', role: 'student', classId: 'CT1', teamId: 'GT1' });
+DB.Users.push({ userId: 'UT3', account: 'dr_s2', name: '測試學生2', role: 'student', classId: 'CT1', teamId: 'GT1' });
+DB.Teams.push({ teamId: 'GT1', classId: 'CT1', name: '測試隊', project: '測試', joinCode: 'TTTTT2' });
+DB.Milestones.push({ msId: 'MT1', classId: 'CT1', mentorId: 'UT1', title: '演練任務', note: '', steps: [], teams: [], due: 0, dueU: '', at: 1 });
+DB.Runs.push({ runId: 'RT1', teamId: 'GT1', msId: 'MT1', state: 'done', est: 1, actual: 1, stamp: 'exact', committedAt: 1, said: {}, flags: [], plan: [], steps: [] });
+DB.Keeps.push({ keepId: 'KT1', teamId: 'GT1', runId: 'RT1', name: '演練', at: 1 });
+/* 兩個掛在已不存在的班上的帳號 */
+DB.Users.push({ userId: 'UO1', account: 'wed_t', name: '孤兒一', role: 'student', classId: 'CGONE1' });
+DB.Users.push({ userId: 'UO2', account: 'ra_t', name: '孤兒二', role: 'student', classId: 'CGONE2' });
+const 真班人數 = DB.Users.filter(u => u.classId === kl.classId).length, 真班Run = DB.Runs.filter(r => (teamOf(r.teamId) || {}).classId === kl.classId).length;
+
+as(rsU); S.page = 'rs'; S.p = {}; DRAFT = {};
+let htmlR = PAGES.rs();
+be('研究者頁面看得到「清掉測試資料」', htmlR.indexOf('清掉測試資料') >= 0, true);
+be('列出測試班，還有沒有班的帳號', htmlR.indexOf('測試｜上線前演練') >= 0 && htmlR.indexOf('wed_t') >= 0, true);
+be('真的班沒有被列成可刪的', htmlR.indexOf('rsdel:' + kl.classId) >= 0, false);
+be('學生刪不了', actResearcherDeleteTestClass(stu[0].userId, 'CT1').err ? 1 : 0, 1);
+be('老師刪不了', actResearcherDeleteTestClass(tea.userId, 'CT1').err ? 1 : 0, 1);
+be('真的班就算研究者也刪不了', actResearcherDeleteTestClass(rsU.userId, kl.classId).err ? 1 : 0, 1);
+be('真的班沒有被動到', DB.Users.filter(u => u.classId === kl.classId).length, 真班人數);
+DRAFT.rsDel = 'CT1'; htmlR = PAGES.rs();
+be('按一下先問，不直接刪', htmlR.indexOf('rsdelyes:CT1') >= 0 && !!find('Classes', c => c.classId === 'CT1'), true);
+const evN = DB.Events.length;
+const del = actResearcherDeleteTestClass(rsU.userId, 'CT1');
+be('研究者刪得掉測試班', del.users + '個帳號 ' + del.teams + '組 ' + del.runs + '趟', '3個帳號 1組 1趟');
+be('班、帳號、組、任務、Run、Keep 都不見了', ['Classes', 'Users', 'Teams', 'Milestones', 'Runs', 'Keeps'].every(t => !DB[t].some(x => x.classId === 'CT1' || x.teamId === 'GT1' || x.msId === 'MT1' || x.keepId === 'KT1' || x.runId === 'RT1')), true);
+be('真的班一筆都沒少', DB.Users.filter(u => u.classId === kl.classId).length, 真班人數);
+be('真的班的 Run 一筆都沒少', DB.Runs.filter(r => (teamOf(r.teamId) || {}).classId === kl.classId).length, 真班Run);
+be('留下一筆事件說做了什麼', DB.Events.length > evN && DB.Events[DB.Events.length - 1].kind === 'deletetest', true);
+be('孤兒帳號沒被測試班那一刪牽連', DB.Users.filter(u => /^(wed_t|ra_t)$/.test(u.account)).length, 2);
+be('非研究者刪不了孤兒帳號', actResearcherDeleteOrphans(tea.userId).err ? 1 : 0, 1);
+const dO = actResearcherDeleteOrphans(rsU.userId);
+be('研究者刪得掉沒有班的帳號', dO.users, 2);
+be('真的班還是一筆都沒少', DB.Users.filter(u => u.classId === kl.classId).length, 真班人數);
+be('再刪一次會回說沒有', actResearcherDeleteOrphans(rsU.userId).err ? 1 : 0, 1);
+htmlR = PAGES.rs();
+be('清光之後，這一區不再出現', htmlR.indexOf('清掉測試資料') >= 0, false);
+/* 名字不像測試班、學生又多的，也不能刪 */
+DB.Classes.push({ classId: 'CT2', name: '測試班但人很多', joinCode: 'TTTTT3' });
+for (let i = 0; i < 21; i++) DB.Users.push({ userId: 'UM' + i, account: 'mm' + i, name: '多' + i, role: 'student', classId: 'CT2' });
+be('學生超過二十位的「測試班」不刪', actResearcherDeleteTestClass(rsU.userId, 'CT2').err ? 1 : 0, 1);
+DB.Users = DB.Users.filter(u => !/^UM\d+$/.test(u.userId)); DB.Classes = DB.Classes.filter(c => c.classId !== 'CT2');
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

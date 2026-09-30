@@ -143,6 +143,8 @@ var EV_SAY = {
   recoverpw: function () { return '用救援碼換了密碼'; },
   genrecov: function () { return '拿了一組救援碼'; },
   teacherrecov: function (e) { return '幫「' + (e.account || '') + '」補發了一組救援碼'; },
+  deletetest: function (e) { return '清掉測試班「' + (e.name || '') + '」（' + (e.users || 0) + ' 個帳號、' + (e.teams || 0) + ' 組、' + (e.runs || 0) + ' 趟）'; },
+  deleteorphans: function (e) { return '清掉沒有班的測試帳號 ' + (e.users || 0) + ' 個'; },
   researchersetpw: function (e) { return '研究者直接改了「' + (e.account || '') + '」的密碼'; },
   withdrawms: function (e) { return '刪掉了派出去的「' + (e.title || '') + '」'; },
   restorems: function (e) { return '把刪掉的「' + (e.title || '') + '」放回去'; },
@@ -436,6 +438,90 @@ function actSetPw(userId, oldPw, pw) {
    只認 role==='researcher'。新密碼一樣不進事件流——記的是「誰
    幫誰換過」，不記新密碼本身，理由跟 actSetPw 一樣：事件流會上雲，
    那邊的規則是全開的。 */
+/* ---------- 研究者清掉測試資料 ----------
+
+   2026-09-30：雲端留著上線前演練的測試班與兩個掛在已不存在的班上的帳號
+   （CLAUDE.md 的「還開著的」），研究者名單上一直看得到。本來是寫一支腳本
+   直接對資料庫刪——腳本被系統的安全檢查擋下兩次；使用者說乾脆在研究者頁面
+   開這個功能，由他本人按。
+
+   這是「研究者只能看」的第三個例外（前兩個是密碼），所以形狀開得很窄：
+
+     · 只刪名字裡有「測試」或「演練」的班（isTestClass），而且學生超過二十位
+       的不刪——真的班的名字不會有這兩個字，兩道都是為了「按錯也刪不到真的」
+     · 只刪「掛在已不存在的班上」的帳號
+     · 事件紀錄（Events）不動：它只上不下，那是研究的流水帳
+     · 都是兩步驟確認（見 75-research.js）
+
+   刪掉之後會經過同步推上去：資料庫規則刪除本來就開著（見 firestore.rules）。 */
+function isTestClass(c) { return !!c && !c._d && /測試|演練/.test(c.name || ''); }
+function dropWhere(tbl, fn) {
+  var n = 0;
+  for (var i = DB[tbl].length - 1; i >= 0; i--) if (fn(DB[tbl][i])) { DB[tbl].splice(i, 1); n++; }
+  return n;
+}
+function classExists(id) { return !!find('Classes', function (c) { return c.classId === id; }); }
+/* 掛在已不存在的班上的帳號（研究者除外）。 */
+function orphanUsers() {
+  return where('Users', function (u) {
+    if (u._d || u.role === 'researcher') return false;
+    var ss = seatsOf(u);
+    return ss.length > 0 && ss.every(function (s) { return !classExists(s.classId); });
+  });
+}
+function testClassCount(classId) {
+  var tids = where('Teams', function (t) { return t.classId === classId; }).map(function (t) { return t.teamId; });
+  return {
+    users: where('Users', function (u) { return inClass(u, classId); }).length,
+    teams: tids.length,
+    runs: where('Runs', function (r) { return tids.indexOf(r.teamId) >= 0; }).length
+  };
+}
+function actResearcherDeleteTestClass(researcherId, classId) {
+  var res = userOf(researcherId);
+  if (!res || res.role !== 'researcher') return { err: '只有研究者用得了這個功能。' };
+  var c = find('Classes', function (x) { return x.classId === classId; });
+  if (!c) return { err: '找不到這個班。' };
+  if (!isTestClass(c)) return { err: '只能刪名字裡有「測試」或「演練」的班。真的班不能從這裡刪。' };
+  var stu = where('Users', function (u) { return u.role === 'student' && inClass(u, classId); }).length;
+  if (stu > 20) return { err: '這個班有 ' + stu + ' 位學生，不像測試班，不刪。' };
+  var cnt = testClassCount(classId);
+  var tids = where('Teams', function (t) { return t.classId === classId; }).map(function (t) { return t.teamId; });
+  var mids = where('Milestones', function (m) { return m.classId === classId; }).map(function (m) { return m.msId; });
+  dropWhere('Runs', function (r) { return tids.indexOf(r.teamId) >= 0 || mids.indexOf(r.msId) >= 0; });
+  dropWhere('Keeps', function (k) { return tids.indexOf(k.teamId) >= 0; });
+  dropWhere('Pushes', function (p) { return tids.indexOf(p.teamId) >= 0; });
+  dropWhere('Teams', function (t) { return t.classId === classId; });
+  dropWhere('Milestones', function (m) { return m.classId === classId; });
+  /* 帳號：只在這個班有座位的才刪；還有別的班的，只拿掉這個班的座位。 */
+  dropWhere('Users', function (u) {
+    if (u.role === 'researcher' || !inClass(u, classId)) return false;
+    var rest = seatsOf(u).filter(function (s) { return s.classId !== classId; });
+    if (rest.length) { u.seats = rest; u.classId = rest[0].classId; u.teamId = rest[0].teamId || ''; return false; }
+    return true;
+  });
+  dropWhere('Classes', function (x) { return x.classId === classId; });
+  save();
+  logEvent('deletetest', { by: res.userId, name: c.name, users: cnt.users, teams: cnt.teams, runs: cnt.runs });
+  return { name: c.name, users: cnt.users, teams: cnt.teams, runs: cnt.runs };
+}
+function actResearcherDeleteOrphans(researcherId) {
+  var res = userOf(researcherId);
+  if (!res || res.role !== 'researcher') return { err: '只有研究者用得了這個功能。' };
+  var us = orphanUsers();
+  if (!us.length) return { err: '沒有掛在已不存在的班上的帳號。' };
+  var ids = us.map(function (u) { return u.userId; });
+  var tids = where('Teams', function (t) { return !t._d && !classExists(t.classId); }).map(function (t) { return t.teamId; });
+  dropWhere('Runs', function (r) { return tids.indexOf(r.teamId) >= 0; });
+  dropWhere('Keeps', function (k) { return tids.indexOf(k.teamId) >= 0; });
+  dropWhere('Pushes', function (p) { return tids.indexOf(p.teamId) >= 0; });
+  dropWhere('Teams', function (t) { return tids.indexOf(t.teamId) >= 0; });
+  dropWhere('Users', function (u) { return ids.indexOf(u.userId) >= 0; });
+  save();
+  logEvent('deleteorphans', { by: res.userId, users: ids.length });
+  return { users: ids.length };
+}
+
 function actResearcherSetPw(researcherId, account, pw) {
   var res = userOf(researcherId);
   if (!res || res.role !== 'researcher') return { err: '只有研究者用得了這個功能。' };
