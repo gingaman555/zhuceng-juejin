@@ -769,6 +769,47 @@ const evH2 = DB.Events.length, cur = stu[0].hero;
 ACTS.hero(cur);
 be('再選同一個：不再記', DB.Events.length - evH2, 0);
 
+/* ══ 新任務來了，剛打開就跳出通知（2026-09-30）══ */
+H('新任務通知');
+const uN = find('Users', u => u.userId === 'UP3');
+as(uN); S.page = 'home'; S.p = {}; DRAFT = {};
+if (DB.Config) delete DB.Config.ackMs;
+const 待 = taskNoticeFor(uN);
+be('還沒開始的任務都算新任務', 待.length, runsFor('GP3').filter(x => x.run.state === 'fresh').length);
+be('新任務不是零個', 待.length > 0, true);
+be('通知的畫面有標題、有兩顆鍵', 待.every(m => taskNoticeHtml(待).indexOf(m.title) >= 0 || 待.indexOf(m) >= 5) && taskNoticeHtml(待).indexOf('tngo') >= 0 && taskNoticeHtml(待).indexOf('tnok') >= 0, true);
+be('超過五個只列五個、其餘寫「還有 N 個」', 待.length <= 5 || taskNoticeHtml(待).indexOf('還有 ' + (待.length - 5) + ' 個') >= 0, true);
+S.page = 'commit'; be('寫到一半的頁面（承諾）不跳', taskNoticeReady(), false);
+S.page = 'battle'; be('交作業那一頁不跳', taskNoticeReady(), false);
+S.page = 'home'; be('回到首頁才跳', taskNoticeReady(), true);
+ACTS.tnok();
+be('按「知道了」之後，這些任務不再跳', taskNoticeFor(uN).length, 0);
+be('記在這台機器（Config），不進雲端的資料表', !!(DB.Config.ackMs.UP3), true);
+const msNew = actPublish(kl.classId, { title: '剛派下來的新任務', note: '', steps: [], teams: [], mentorId: tea.userId });
+be('老師又派一件：只有這一件是新的', taskNoticeFor(uN).map(m => m.msId).join(','), msNew.msId);
+S.page = 'home'; ACTS.tngo();
+be('只有一個新任務：「去看看」直接進那一件的承諾頁', S.page === 'commit' && S.p.id === msNew.msId, true);
+be('按過就記下了', taskNoticeFor(uN).length, 0);
+/* 已經開始做的任務不算新 */
+const msNew2 = actPublish(kl.classId, { title: '又一件', note: '', steps: [], teams: [], mentorId: tea.userId });
+actCommit('GP3', msNew2.msId, 2, [], [], 'wild', 'mid');
+be('這一組已經開始的任務不再跳', taskNoticeFor(uN).some(m => m.msId === msNew2.msId), false);
+/* 兩個以上：回首頁 */
+const msA = actPublish(kl.classId, { title: '甲任務', note: '', steps: [], teams: [], mentorId: tea.userId });
+const msB = actPublish(kl.classId, { title: '乙任務', note: '', steps: [], teams: [], mentorId: tea.userId });
+S.page = 'home'; ACTS.tngo();
+be('兩個以上：回首頁（大鍵一件、其餘列在下面）', S.page, 'home');
+/* 誰不跳 */
+be('老師不跳', taskNoticeFor(tea).length, 0);
+be('研究者不跳', taskNoticeFor(rsU).length, 0);
+be('示範帳號不跳', taskNoticeFor({ userId: 'UD', role: 'student', _d: 1, teamId: 'GP3' }).length, 0);
+be('沒有組別的學生不跳', taskNoticeFor({ userId: 'UX', role: 'student', teamId: '' }).length, 0);
+SYNC.blocked = 1; be('這一頁已被停用：不跳', taskNoticeReady(), false); SYNC.blocked = 0;
+SYNC.on = 1; SYNC.first = {}; S.page = 'home';
+be('還沒跟雲端核對過第一次：不跳（本機可能是舊的）', taskNoticeReady(), false);
+SYNC.first = { Milestones: 1, Runs: 1, Teams: 1 }; be('核對過了：可以跳', taskNoticeReady(), true);
+SYNC.on = 0; SYNC.first = {};
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

@@ -118,6 +118,15 @@ img{display:block}
 .top .who{font-size:22px;color:var(--ink)}
 /* 同步失敗的警告（見 55-ui.js 的 topEnd）。用 --over：這是判定顏色
    系統裡「要注意」那一階，跟老師退回、停很久了同一種語氣。 */
+/* 新任務通知：蓋在畫面正中間的一張卡（見 60-student.js 的 taskNoticeTick）。 */
+.tn{position:fixed;left:0;right:0;top:0;bottom:0;z-index:300;background:rgba(0,0,0,.74);
+  display:flex;align-items:center;justify-content:center;padding:22px}
+.tn-box{width:100%;max-width:560px;max-height:100%;overflow:auto;background:var(--panel);
+  border:2px solid var(--gold-d);padding:22px;box-shadow:6px 6px 0 rgba(0,0,0,.7)}
+.tn-box h2{margin:6px 0 14px}
+.tn-list{margin:0 0 14px}
+.tn-t{margin:0 0 8px;color:var(--gold);line-height:1.4}
+.tn-box .btn{display:block;width:100%;margin-top:10px}
 /* 標題與清單列的標題折行時平均折，不要最後一行只剩一個字（「一句／話」）。
    不支援的舊瀏覽器就照舊折，沒有損失。 */
 h1,h2,.rq-t b,.tk-h b,.rec-t{text-wrap:balance}
@@ -5994,7 +6003,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790752531770;
+var BUILD_AT = 1790754654788;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -16810,6 +16819,21 @@ var ACTS = {
     say('出發。');
   },
 
+  /* 新任務通知（見 60-student.js 的 taskNoticeTick）。 */
+  tnok: function () {
+    var u = me(); if (!u) return;
+    taskNoticeAck(u, taskNoticeFor(u));
+    taskNoticeTick();
+  },
+  tngo: function () {
+    var u = me(); if (!u) return;
+    var list = taskNoticeFor(u);
+    taskNoticeAck(u, list);
+    taskNoticeTick();
+    /* 只有一個：直接進去說幾天。好幾個：回首頁，大鍵是第一件、其餘列在下面。 */
+    if (list.length === 1) go('commit', { id: list[0].msId }); else go('home');
+  },
+
   /* 一次開好幾件老師派的：一件一件說幾天（見 60-student.js 的 parallelCard）。
      不是替他們一次填掉——每一件要說幾天，是那一件自己的事，
      所以每一件走完整的承諾頁，只是不必每一件都先回廊道再找下一顆鍵。 */
@@ -20347,6 +20371,81 @@ PAGES.exit = function () {
 /* 紀錄那一頁併進任務清單了：兩頁幾乎是同一份資料。
    下面那一支 logRow 留著——任務清單在用。 */
 /* 一列一趟。牠在最左邊，資訊在右邊，點開才看細節。 */
+/* ---------- 新任務來了，剛打開就跳出通知 ----------
+
+   2026-09-30：學生找不到老師派的任務（9/23 回報過，9/29 第二件任務全班只有
+   4 組開始）。首頁上有大鍵、有「也可以同時做」，可是那些都要學生自己往下看。
+   剛打開、或開著的時候老師剛派，直接在畫面中間跳一張通知：新任務叫什麼，
+   按「去看看」進去、或「知道了」關掉。
+
+   什麼算「新」：這一組還沒開始（狀態 fresh）、而且這個人在這台裝置上還沒按過
+   「知道了」的任務。按過的記在這台機器的 DB.Config.ackMs（不上雲，
+   見 41-sync.js：Config 是這台機器自己的），所以同一件任務同一台裝置只跳一次；
+   沒按就關掉網頁，下次打開還會跳。換一台裝置會再跳一次——那是可以接受的。
+
+   什麼時候不跳：
+     · 在承諾、交作業、改名這些寫到一半的頁——打斷比新任務更糟，回到首頁才跳
+     · 還沒跟雲端核對過第一次（SYNC.first）——本機可能是舊的，跳出來的
+       「新任務」可能其實已經開始了
+     · 示範帳號、老師、研究者
+     · 這一頁已經被停用（SYNC.blocked） */
+var TN_PAGES = ['home', 'pack', 'eco', 'codex'];
+function taskNoticeFor(u) {
+  if (!u || u.role !== 'student' || u._d || !u.teamId) return [];
+  var t = teamOf(u.teamId);
+  if (!t) return [];
+  var ack = ((DB.Config || {}).ackMs || {})[u.userId] || {};
+  return runsFor(t.teamId).filter(function (x) {
+    return x.run.state === 'fresh' && !ack[x.ms.msId];
+  }).map(function (x) { return x.ms; });
+}
+function taskNoticeReady() {
+  if (typeof SYNC !== 'undefined') {
+    if (SYNC.blocked) return false;
+    if (SYNC.on && !(SYNC.first && SYNC.first.Milestones && SYNC.first.Runs && SYNC.first.Teams)) return false;
+  }
+  return TN_PAGES.indexOf(S.page) >= 0;
+}
+function taskNoticeHtml(list) {
+  var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  H.push('<div class="eyebrow lit">老師派了新任務</div>');
+  H.push('<h2>' + (list.length === 1 ? '有 1 個新任務' : '有 ' + list.length + ' 個新任務') + '</h2>');
+  H.push('<div class="tn-list">');
+  list.slice(0, 5).forEach(function (m) { H.push('<p class="tn-t">' + esc(m.title) + '</p>'); });
+  if (list.length > 5) H.push('<p class="dim">還有 ' + (list.length - 5) + ' 個</p>');
+  H.push('</div>');
+  H.push(btn('去看看', 'tngo', 'big'));
+  H.push(btn('知道了', 'tnok', 'ghost'));
+  H.push('</div>');
+  return H.join('');
+}
+/* 每次畫完檢查一次：該跳就跳、不該跳的收掉。已經在跳的同一批不重畫。 */
+function taskNoticeTick() {
+  if (typeof document === 'undefined' || !document.body || !document.body.appendChild) return;
+  var u = (typeof me === 'function') ? me() : null;
+  var list = (u && taskNoticeReady()) ? taskNoticeFor(u) : [];
+  var old = document.getElementById('task-notice');
+  var key = list.map(function (m) { return m.msId; }).join(',');
+  if (old && old.getAttribute && old.getAttribute('data-k') === key && list.length) return;
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  if (!list.length) return;
+  var d = document.createElement('div');
+  d.id = 'task-notice'; d.className = 'tn';
+  d.setAttribute('data-k', key);
+  d.innerHTML = taskNoticeHtml(list);
+  document.body.appendChild(d);
+}
+function taskNoticeAck(u, list) {
+  var c = DB.Config || (DB.Config = {});
+  c.ackMs = c.ackMs || {};
+  c.ackMs[u.userId] = c.ackMs[u.userId] || {};
+  list.forEach(function (m) { c.ackMs[u.userId][m.msId] = 1; });
+  save();
+}
+/* render 換完畫面之後順手檢查（render 每一處 return 都會經過這裡）。 */
+var _renderBase = render;
+render = function () { _renderBase(); taskNoticeTick(); };
+
 /* ---------- 老師派的任務，可以同時做 ----------
 
    2026-09-30：首頁只推一件事（nextThing），手上有事就不遞新的——

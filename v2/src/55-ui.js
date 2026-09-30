@@ -1182,6 +1182,21 @@ var ACTS = {
     say('出發。');
   },
 
+  /* 新任務通知（見 60-student.js 的 taskNoticeTick）。 */
+  tnok: function () {
+    var u = me(); if (!u) return;
+    taskNoticeAck(u, taskNoticeFor(u));
+    taskNoticeTick();
+  },
+  tngo: function () {
+    var u = me(); if (!u) return;
+    var list = taskNoticeFor(u);
+    taskNoticeAck(u, list);
+    taskNoticeTick();
+    /* 只有一個：直接進去說幾天。好幾個：回首頁，大鍵是第一件、其餘列在下面。 */
+    if (list.length === 1) go('commit', { id: list[0].msId }); else go('home');
+  },
+
   /* 一次開好幾件老師派的：一件一件說幾天（見 60-student.js 的 parallelCard）。
      不是替他們一次填掉——每一件要說幾天，是那一件自己的事，
      所以每一件走完整的承諾頁，只是不必每一件都先回廊道再找下一顆鍵。 */

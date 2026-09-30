@@ -106,6 +106,15 @@ img{display:block}
 .top .who{font-size:22px;color:var(--ink)}
 /* 同步失敗的警告（見 55-ui.js 的 topEnd）。用 --over：這是判定顏色
    系統裡「要注意」那一階，跟老師退回、停很久了同一種語氣。 */
+/* 新任務通知：蓋在畫面正中間的一張卡（見 60-student.js 的 taskNoticeTick）。 */
+.tn{position:fixed;left:0;right:0;top:0;bottom:0;z-index:300;background:rgba(0,0,0,.74);
+  display:flex;align-items:center;justify-content:center;padding:22px}
+.tn-box{width:100%;max-width:560px;max-height:100%;overflow:auto;background:var(--panel);
+  border:2px solid var(--gold-d);padding:22px;box-shadow:6px 6px 0 rgba(0,0,0,.7)}
+.tn-box h2{margin:6px 0 14px}
+.tn-list{margin:0 0 14px}
+.tn-t{margin:0 0 8px;color:var(--gold);line-height:1.4}
+.tn-box .btn{display:block;width:100%;margin-top:10px}
 /* 標題與清單列的標題折行時平均折，不要最後一行只剩一個字（「一句／話」）。
    不支援的舊瀏覽器就照舊折，沒有損失。 */
 h1,h2,.rq-t b,.tk-h b,.rec-t{text-wrap:balance}
