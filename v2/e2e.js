@@ -733,8 +733,8 @@ be('老師帳號不能從這裡刪', actResearcherDeleteAccount(rsU.userId, tea.
 be('研究者帳號不能刪', actResearcherDeleteAccount(rsU.userId, rsU.userId).err ? 1 : 0, 1);
 S.page = 'rsacc'; S.p = {}; DRAFT = {};
 let htmlA = PAGES.rsacc();
-be('頁面分成「可以刪」與「刪不了」', htmlA.indexOf('可以刪') >= 0 && htmlA.indexOf('刪不了') >= 0, true);
-be('空帳號在可以刪的那一區、還標出同名', htmlA.indexOf('rsaccpick:UE1') >= 0, true);
+be('頁面先說系統看過幾個、再分區', htmlA.indexOf('系統看過了') >= 0 && htmlA.indexOf('做過事，刪不了') >= 0, true);
+be('空帳號有一顆可以按的鍵', htmlA.indexOf('rsaccpick:UE1') >= 0, true);
 be('有做過事的沒有可以按的鍵', htmlA.indexOf('rsaccpick:' + stu[0].userId) >= 0 ? (whyNotDeletable(stu[0]) === '') : true, true);
 DRAFT.rsAcc = 'UE1'; DRAFT.rsAccConfirm = true; htmlA = PAGES.rsacc();
 be('按一下先問，不直接刪', htmlA.indexOf('rsaccyes') >= 0 && !!userOf('UE1'), true);
@@ -888,6 +888,53 @@ DRAFT.closeConf = tm.teamId;
 const tcc = PAGES.tclose();
 be('確認那一步才是大鍵', tcc.slice(tcc.indexOf('openexit:' + tm.teamId + ',1') - 80, tcc.indexOf('openexit:' + tm.teamId + ',1')).indexOf('btn big') >= 0, true);
 DRAFT = {};
+
+/* ══ 帳號分析（2026-09-30）：刪之前先看系統怎麼分 ══
+
+   量真實資料：十二個「可以刪」的帳號，十個是還沒開始用的真學生，兩個是三分鐘內
+   註冊兩次的 PANZER／PANZER67。「可以刪」不等於「是多的」，所以先分四種、寫理由。
+   分析只讀，不動任何資料。 */
+H('帳號分析：只讀、分四種、寫理由');
+as(rsU);
+const mk = (id, account, name, extra) => DB.Users.push(Object.assign({ userId: id, account, name, role: 'student', classId: kl.classId, teamId: '', createdAt: 1000000 }, extra || {}));
+mk('UA1', 'realone', '王小明');
+mk('UA2', 'test_abc', '路人甲');
+mk('UA3', 'tmp1', '路人乙');
+mk('UA4', 'Yu.S', '謝宇婷');
+mk('UA5', 'twin_a', '雙胞胎', { createdAt: 2000000 });
+mk('UA6', 'twin_b', '雙胞胎', { createdAt: 2000000 + 3 * 60000 });
+mk('UA7', 'a1', 'Bo');
+mk('UA8', 'a2', 'Co');
+mk('UA9', 'ghostacct', '掛在別班', { classId: 'C_GONE', teamId: '' });
+DB.Runs.push({ runId: 'RA1', teamId: tm.teamId, msId: (DB.Milestones[0] || {}).msId, state: 'running', est: 1, said: { UA5: '我做了這個' }, flags: [], plan: [], steps: [], committedAt: 1 });
+const 前 = JSON.stringify([DB.Users, DB.Teams, DB.Runs, DB.Classes]);
+const an = id => acctAnalysis(find('Users', u => u.userId === id));
+be('正常名字、沒證據他是多的 → 看不出是多的', an('UA1').tier, 'unsure');
+be('帳號有 test → 幾乎確定是測試', an('UA2').tier, 'test');
+be('帳號 tmp1 → 幾乎確定是測試', an('UA3').tier, 'test');
+be('Yu.S 是真學生的帳號，不能被當測試（尾巴的 .S 不算）', an('UA4').tier, 'unsure');
+be('同名、另一個做過事（雙胞胎 B）→ 很可能是重複註冊', an('UA6').tier, 'dup');
+be('理由裡寫出另一個帳號做過幾個動作', an('UA6').bits.some(b => /做過 \d+ 個動作/.test(b) && b.indexOf('twin_a') >= 0), true);
+be('理由裡寫出註冊只差幾分鐘', an('UA6').bits.some(b => /只差 3 分鐘/.test(b)), true);
+be('做過事的（雙胞胎 A）是「做過事，刪不了」，不是重複', an('UA5').tier, 'busy');
+be('帳號太短的不算雙胞胎（a1／a2）', an('UA7').tier + '/' + an('UA8').tier, 'unsure/unsure');
+be('掛在已不存在的班上 → 走「清掉測試資料」', an('UA9').tier, 'gone');
+be('分析是只讀的：帳號、組、趟、班一個字都沒變', JSON.stringify([DB.Users, DB.Teams, DB.Runs, DB.Classes]), 前);
+S.page = 'rsacc'; S.p = {}; DRAFT = {};
+const hA = PAGES.rsacc();
+be('頁面有各區', ['幾乎確定是測試', '很可能是重複註冊', '看不出是多的', '測試班的帳號'].every(k => hA.indexOf(k) >= 0), true);
+be('理由印在名字下面', hA.indexOf('帳號或名字有 test') >= 0 && hA.indexOf('只差 3 分鐘') >= 0, true);
+be('測試班的帳號沒有單一刪除鍵', hA.indexOf('rsaccpick:UA9') < 0, true);
+be('做過事的沒有單一刪除鍵', hA.indexOf('rsaccpick:UA5') < 0, true);
+DRAFT.rsAcc = 'UA1'; DRAFT.rsAccConfirm = true;
+const hU = PAGES.rsacc();
+be('確認頁寫系統的看法', hU.indexOf('系統的看法') >= 0 && hU.indexOf('像還沒開始用的真學生') >= 0, true);
+be('「看不出是多的」的確認鍵不是大鍵，字也不同', hU.indexOf('我確定他是多的，刪掉') >= 0 && hU.slice(hU.indexOf('rsaccyes') - 60, hU.indexOf('rsaccyes')).indexOf('btn big') < 0, true);
+DRAFT.rsAcc = 'UA2'; const hT = PAGES.rsacc();
+be('測試帳號的確認鍵是一般的', hT.indexOf('對，刪掉這個帳號') >= 0, true);
+DRAFT = {};
+DB.Users = DB.Users.filter(u => !/^UA\d$/.test(u.userId));
+DB.Runs = DB.Runs.filter(r => r.runId !== 'RA1');
 
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');

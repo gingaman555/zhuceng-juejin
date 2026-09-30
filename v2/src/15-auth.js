@@ -549,6 +549,78 @@ function whyNotDeletable(u) {
   if (n.events) bits.push('做過 ' + n.events + ' 個動作');
   return bits.length ? '他做過事：' + bits.join('、') : '';
 }
+/* ---------- 帳號分析：這個帳號像不像測試、像不像重複註冊 ----------
+
+   2026-09-30：研究者頁面的「可以刪」只代表他沒做過事，不代表他是測試——
+   量真實資料（十二個「可以刪」的帳號）：十個是名字正常、只是還沒開始用的
+   真學生，兩個（PANZER／PANZER67）才像同一個人三分鐘內註冊兩次。使用者要
+   刪之前先由系統看過、把理由攤開，才放心按。
+
+   **只讀，不刪任何東西，也不替研究者決定。** 它只把證據排成四種：
+
+     test    幾乎確定是測試——掛在已不存在的班、在測試班裡、帳號名字有 test／demo
+             這類字。三種任一，而且沒做過事。
+     dup     很可能是重複註冊——同名，或帳號去掉尾巴的數字之後一樣，且另一個
+             帳號做過的事比這個多（或註冊只差幾分鐘）。
+     unsure  看不出是多的——多半是還沒開始用的真學生。建議不要刪。
+     busy    做過事，刪不了（whyNotDeletable）。名字像測試的話另外標出來。
+
+   這裡讀的只有帳號、名字、註冊時間、有沒有做過事——不讀學生寫了什麼。 */
+var ACCT_TEST = /(^|[^a-z])(test|demo|dummy|tmp|temp)|測試|演練|試用|(^|[_\-.])(stu|student)\d*$|[_\-.]s\d+$/i;
+var ACCT_TWIN_MS = 10 * 60 * 1000;
+function acctBase(a) { return String(a || '').toLowerCase().replace(/[\d_.\-\s]+$/, ''); }
+function traceSum(u) { var n = userTraces(u); return n.said + n.plan + n.merged + n.events; }
+function acctTwins(u) {
+  var b = acctBase(u.account);
+  return where('Users', function (x) {
+    if (x.userId === u.userId || x._d || x._removed || x.role !== 'student' || x.mergedInto) return false;
+    return (u.name && x.name === u.name) || (b.length >= 3 && acctBase(x.account) === b);
+  });
+}
+function acctAnalysis(u) {
+  var bits = [], real = [], strong = false, twin = null, viaClass = false;
+  var seats = seatsOf(u);
+  if (seats.length && seats.every(function (s) { return !classExists(s.classId); })) {
+    bits.push('掛在已不存在的班上'); strong = true; viaClass = true;
+  } else if (seats.some(function (s) { return isTestClass(find('Classes', function (c) { return c.classId === s.classId; })); })) {
+    bits.push('在測試班裡'); strong = true; viaClass = true;
+  }
+  if (ACCT_TEST.test(u.account || '') || ACCT_TEST.test(u.name || '')) {
+    bits.push('帳號或名字有 test／demo／stu 這類字'); strong = true;
+  }
+  var mine = traceSum(u);
+  var twins = acctTwins(u).map(function (x) { return { u: x, n: traceSum(x) }; })
+    .sort(function (a, b) { return b.n - a.n; });
+  if (twins.length) {
+    twin = twins[0];
+    var tw = twin.u, gap = Math.abs((tw.createdAt || 0) - (u.createdAt || 0));
+    bits.push('跟「' + tw.name + '」（' + tw.account + '）' +
+      (tw.name === u.name ? '同名' : '帳號很像') +
+      (twin.n > mine ? '，那個帳號做過 ' + twin.n + ' 個動作、這個沒有'
+        : (twin.n ? '，那個帳號也做過事' : '，兩個都還沒做過事，留哪個你來決定')));
+    if (tw.createdAt && u.createdAt && gap < ACCT_TWIN_MS) {
+      bits.push('兩個帳號註冊只差 ' + Math.max(1, Math.round(gap / 60000)) + ' 分鐘');
+    }
+  }
+  var nm = String(u.name || '');
+  if (nm && !/[一-鿿]/.test(nm) && nm.length <= 6) bits.push('名字不像真名（' + nm + '）');
+  var team = u.teamId ? teamOf(u.teamId) : null;
+  var mates = team ? where('Users', function (x) {
+    return x.userId !== u.userId && x.role === 'student' && inTeam(x, u.teamId) && !x.mergedInto;
+  }) : [];
+  if (mates.some(function (x) { return traceSum(x) > 0; })) real.push('他那一組有隊友在做事');
+  if (/^[一-鿿]{2,4}$/.test(nm)) real.push('名字像真名');
+  if (!u.teamId) real.push('還沒加入任何一組');
+  if (u.createdAt) real.push('註冊 ' + daysBetween(u.createdAt, now()) + ' 天了，還沒做過事');
+  var why = whyNotDeletable(u);
+  /* 掛在沒有的班／測試班裡的，帳號本身有紀錄也沒關係——整個班連同帳號一起清
+     （「清掉測試資料」，見上面），不走這裡的單一帳號刪除。 */
+  var tier = viaClass ? 'gone' : why ? 'busy' : strong ? 'test' : twin ? 'dup' : 'unsure';
+  return { tier: tier, why: why, bits: bits, real: real, twin: twin, testish: strong };
+}
+var ACCT_TIER_SAY = { test: '幾乎確定是測試', dup: '很可能是重複註冊', unsure: '像還沒開始用的真學生',
+  busy: '做過事，刪不了', gone: '測試班的帳號，用「清掉測試資料」刪' };
+
 function teamHasMembers(teamId) {
   return DB.Users.some(function (u) { return u.role !== 'researcher' && inTeam(u, teamId) && !u.mergedInto; });
 }
