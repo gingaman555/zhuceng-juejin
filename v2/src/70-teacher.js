@@ -200,7 +200,7 @@ PAGES.tclose = function () {
        收作業在左邊「等你的」。這一張卡放在最上面，先講這一件事。 */
     H.push('<div class="card">');
     H.push('<div class="eyebrow">先看這個</div>');
-    H.push('<p>這裡確認的是<b>整個專案已經完成</b>，不是收下一件作業。</p>');
+    H.push('<p>這裡確認的是「整個專案已經完成」，不是收下一件作業。</p>');
     H.push('<p class="dim">要收作業，請到左邊「等你的」。只有這一組的整個專案真的做完了，才按下面的「確認整個專案已完成」。按了之後，他們那邊廊道盡頭的出口就會打開，他們就可以結束專案。</p>');
     H.push('</div>');
 
@@ -242,7 +242,7 @@ PAGES.tclose = function () {
            ——鍵要短到一眼讀完，而「門」不是老師要做的事。 */
         /* 確認要問一次：這一顆按下去，學生那邊廊道盡頭的門就開了。 */
         if (DRAFT.closeConf === t.teamId) {
-          H.push('<p class="dim">確定「' + esc(t.name) + '」的<b>整個專案</b>已經完成了嗎？按下去，他們那邊的出口就會打開。</p>');
+          H.push('<p class="dim">確定「' + esc(t.name) + '」的整個專案已經完成了嗎？按下去，他們那邊的出口就會打開。</p>');
           H.push(btn('對，整個專案完成了', 'openexit:' + t.teamId + ',1', 'big'));
           H.push(btn('先不要', 'closeno', 'ghost'));
         } else {
