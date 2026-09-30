@@ -106,6 +106,11 @@ img{display:block}
 .top .who{font-size:22px;color:var(--ink)}
 /* 同步失敗的警告（見 55-ui.js 的 topEnd）。用 --over：這是判定顏色
    系統裡「要注意」那一階，跟老師退回、停很久了同一種語氣。 */
+/* 標題與清單列的標題折行時平均折，不要最後一行只剩一個字（「一句／話」）。
+   不支援的舊瀏覽器就照舊折，沒有損失。 */
+h1,h2,.rq-t b,.tk-h b,.rec-t{text-wrap:balance}
+/* 太久沒更新：比「剛部署」淡一點（沒有期限那麼急），但還是看得到。 */
+.sync-old{opacity:.8}
 .sync-warn{font-size:22px;color:var(--over)}
 .top .sp{flex:1}
 .badge{

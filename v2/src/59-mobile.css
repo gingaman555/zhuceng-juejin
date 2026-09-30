@@ -74,6 +74,17 @@
 
   /* ---------- 頂條與試用列 ---------- */
   .top{padding:11px 18px;gap:14px}
+  /* 頂條在手機上佔三排（約 150px，四分之一個螢幕），還釘在最上面，
+     捲下去每一屏都少一塊。平常讓它跟著捲走；有提醒（剛更新了新版、
+     還沒傳到雲端）的時候才釘住，那種提醒不能被捲走。 */
+  .top{position:static}
+  .top:has(.sync-warn){position:sticky}
+  /* 「你的資料」「登出」本來只有 37px 高、48px 寬，手指不好點。 */
+  .top a.plain{display:inline-flex;align-items:center;min-height:44px;min-width:44px;padding:0 10px;justify-content:center}
+  /* 學生頂條上的專案名也是一顆鍵（點進去改名），一樣要 44px 高。 */
+  .top a[data-act]:not(.plain),.top button[data-act]{display:inline-flex;align-items:center;min-height:44px}
+  /* 導覽的字不要在奇怪的地方折（見 55-ui.js 的 navLabel）。 */
+  .nav a{word-break:keep-all;overflow-wrap:normal}
   .top .who{font-size:22px}
   .demo{padding:11px 18px;gap:14px}
 

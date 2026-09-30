@@ -118,6 +118,11 @@ img{display:block}
 .top .who{font-size:22px;color:var(--ink)}
 /* 同步失敗的警告（見 55-ui.js 的 topEnd）。用 --over：這是判定顏色
    系統裡「要注意」那一階，跟老師退回、停很久了同一種語氣。 */
+/* 標題與清單列的標題折行時平均折，不要最後一行只剩一個字（「一句／話」）。
+   不支援的舊瀏覽器就照舊折，沒有損失。 */
+h1,h2,.rq-t b,.tk-h b,.rec-t{text-wrap:balance}
+/* 太久沒更新：比「剛部署」淡一點（沒有期限那麼急），但還是看得到。 */
+.sync-old{opacity:.8}
 .sync-warn{font-size:22px;color:var(--over)}
 .top .sp{flex:1}
 .badge{
@@ -5771,6 +5776,17 @@ button.side-head{
 
   /* ---------- 頂條與試用列 ---------- */
   .top{padding:11px 18px;gap:14px}
+  /* 頂條在手機上佔三排（約 150px，四分之一個螢幕），還釘在最上面，
+     捲下去每一屏都少一塊。平常讓它跟著捲走；有提醒（剛更新了新版、
+     還沒傳到雲端）的時候才釘住，那種提醒不能被捲走。 */
+  .top{position:static}
+  .top:has(.sync-warn){position:sticky}
+  /* 「你的資料」「登出」本來只有 37px 高、48px 寬，手指不好點。 */
+  .top a.plain{display:inline-flex;align-items:center;min-height:44px;min-width:44px;padding:0 10px;justify-content:center}
+  /* 學生頂條上的專案名也是一顆鍵（點進去改名），一樣要 44px 高。 */
+  .top a[data-act]:not(.plain),.top button[data-act]{display:inline-flex;align-items:center;min-height:44px}
+  /* 導覽的字不要在奇怪的地方折（見 55-ui.js 的 navLabel）。 */
+  .nav a{word-break:keep-all;overflow-wrap:normal}
   .top .who{font-size:22px}
   .demo{padding:11px 18px;gap:14px}
 
@@ -5978,7 +5994,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790750932820;
+var BUILD_AT = 1790752531843;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -13984,7 +14000,7 @@ function dayText(ts) {
    都沒有 firebase 這個東西。那時候這一整層安靜地什麼都不做，
    localStorage 還是照舊——單機那條路一步都沒有變。 */
 
-var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, staleAt: 0, fly: {}, denied: 0, blocked: 0, blockWhy: '' };
+var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, staleAt: 0, fly: {}, denied: 0, blocked: 0, blockWhy: '', oldShown: 0 };
 
 /* 每一張表的主鍵。
 
@@ -14117,6 +14133,34 @@ function freshAutoReload() {
 var SYNC_LOADED = Date.now();
 var SYNC_MAX_AGE = 4 * 3600000;
 function tabTooOld() { return Date.now() - SYNC_LOADED > SYNC_MAX_AGE; }
+
+/* ---------- 兩種不同的提醒 ----------
+
+   2026-09-30：本來只有一句「這一頁是舊版」，可是有兩件完全不同的事：
+
+     剛部署　伺服器上有比這一頁更新的版本。原因很明確、要做的事很明確，
+             而且有期限——超過一刻鐘沒處理，這一頁會停用（staleLock）。
+     太久沒更新　沒有新版，只是這一頁開了很久（手機鎖屏、切 app 放著）。
+             本機的資料可能是幾小時前的。沒有人做錯什麼，也沒有期限那麼急：
+             兩小時開始提醒，四小時閒著會自己換，八小時整頁停用。
+
+   說法要不一樣：前者是「剛更新了」，後者是「開很久了」——學生看到的
+   是不同的事，反應也不同（前者馬上處理，後者看到就順手重開）。
+   兩種同時成立的時候，剛部署優先：它有期限。 */
+var SYNC_WARN_AGE = 2 * 3600000;
+var SYNC_LOCK_AGE = 8 * 3600000;
+function tabOldWarn() { return Date.now() - SYNC_LOADED > SYNC_WARN_AGE; }
+function syncNotice() {
+  if (SYNC.stale) {
+    var left = Math.max(0, Math.ceil((SYNC_LOCK_MS - (Date.now() - (SYNC.staleAt || Date.now()))) / 60000));
+    return { kind: 'deployed',
+      text: '剛更新了新版，請點這裡重新整理' + (left > 0 ? '（' + left + ' 分鐘後這一頁會停用）' : '') };
+  }
+  if (tabOldWarn()) {
+    return { kind: 'old', text: '這一頁開很久了，資料可能不是最新的，請點這裡重新整理' };
+  }
+  return null;
+}
 function tabAgeCheck() { if (tabTooOld() && freshSafeToReload()) freshAutoReload(); }
 
 /* ---------- 過期太久的分頁，不讓它繼續用 ----------
@@ -14134,15 +14178,23 @@ function tabAgeCheck() { if (tabTooOld() && freshSafeToReload()) freshAutoReload
    那些靠資料庫擋寫入（firestore.rules）加上提示（notice-oldtab.js）。 */
 var SYNC_LOCK_MS = 15 * 60000;
 function staleLock() {
-  if (!SYNC.stale || SYNC.blocked) return;
-  if (Date.now() - (SYNC.staleAt || Date.now()) < SYNC_LOCK_MS) return;
+  if (SYNC.blocked) return;
+  var 為何 = '';
+  if (SYNC.stale && Date.now() - (SYNC.staleAt || Date.now()) >= SYNC_LOCK_MS) 為何 = 'stale';
+  else if (!SYNC.stale && Date.now() - SYNC_LOADED > SYNC_LOCK_AGE) 為何 = 'old';
+  /* 到了「開始提醒」的時間：頂條要跟著出現（不是只有下一次畫面才出現）。 */
+  if (!為何 && !SYNC.oldShown && !SYNC.stale && tabOldWarn()) {
+    SYNC.oldShown = 1;
+    if (typeof syncDraw === 'function') syncDraw();
+  }
+  if (!為何) return;
   if (SYNC.err) return;
   for (var k in SYNC.fly) if (Object.prototype.hasOwnProperty.call(SYNC.fly, k)) return;
   if (typeof document !== 'undefined') {
     var a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) return;
   }
-  SYNC.blocked = 1; SYNC.blockWhy = 'stale';
+  SYNC.blocked = 1; SYNC.blockWhy = 為何;
   if (typeof render === 'function') render();
 }
 
@@ -14422,13 +14474,17 @@ function syncFail(chunk, e) {
 
 /* 整頁換成的那一張。不放任何別的按鈕——這一頁上做的任何事都送不出去。 */
 function blockedHtml() {
-  var stale = SYNC.blockWhy === 'stale';
+  var why = SYNC.blockWhy;
+  var 眉 = why === 'stale' ? '剛更新了新版' : (why === 'old' ? '這個網頁開太久了' : '這個網頁是舊的');
+  var 話 = why === 'stale'
+    ? '剛剛更新了新版，這一頁不能再用了。你之前做的事都已經送出去了，重新打開就是最新的。'
+    : (why === 'old'
+      ? '這一頁已經開了很久，裡面的資料可能不是最新的。你之前做的事都已經送出去了，重新打開就是最新的。'
+      : '你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。');
   return '<div class="main"><div class="wrap"><div class="card">' +
-    '<div class="eyebrow warnx">' + (stale ? '這個網頁有新版了' : '這個網頁是舊的') + '</div>' +
+    '<div class="eyebrow warnx">' + 眉 + '</div>' +
     '<h1>請把它關掉，重新打開一次</h1>' +
-    '<p class="lead">' + (stale
-      ? '這一頁太舊了，不能再用。你之前做的事都已經送出去了，重新打開就是最新的。'
-      : '你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。') + '</p>' +
+    '<p class="lead">' + 話 + '</p>' +
     '<button class="btn big" data-act="run" data-p=\'{"a":"reloadpage"}\'>重新打開</button>' +
     '</div></div></div>';
 }
@@ -16049,9 +16105,11 @@ function topEnd() {
      checkFresh）——按下去就整頁重新載入，不用另外做動作。
      這一條比同步失敗更該搶眼一點：舊程式碼不只是這一筆資料的事，
      是這台分頁接下來每一個動作都可能踩到已經修過的 bug。 */
-  var stale = (typeof SYNC !== 'undefined' && SYNC.stale)
-    ? '<a class="plain sync-warn" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'reloadpage' })) + '\'>這一頁是舊版，點這裡重新整理</a>' : '';
+  /* 兩種提醒（見 41-sync.js 的 syncNotice）：剛部署（有期限）、太久沒更新（沒那麼急）。 */
+  var nt = (typeof syncNotice === 'function') ? syncNotice() : null;
+  var stale = nt
+    ? '<a class="plain sync-warn' + (nt.kind === 'old' ? ' sync-old' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'reloadpage' })) + '\'>' + esc(nt.text) + '</a>' : '';
   return warn + stale + '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:me' })) + '\'>你的資料</a>' +
     '<a class="plain" data-act="run" data-p=\'' +
@@ -16190,6 +16248,18 @@ function demoBar() {
     '</div>';
 }
 
+/* 導覽格子的字。
+
+   手機底部四格各 75px 寬，「發派任務」「各組進度」被切成「發派任／務」
+   「各組進／度」（2026-09-30 截圖）。四、五個字的在中間放一個零寬空格，
+   配合 CSS 的 word-break:keep-all（見 59-mobile.css），寬度夠就一行，
+   不夠就從中間折成兩個字＋兩個字。有括號的（等你的（1））不動。 */
+function navLabel(s) {
+  s = String(s);
+  if (s.indexOf('（') >= 0 || s.length < 4) return s;
+  return s.slice(0, 2) + '\u200b' + s.slice(2);
+}
+
 function sideBar() {
   var u = me();
   var nav, headBlock;
@@ -16250,7 +16320,7 @@ function sideBar() {
     var ic = ICONS[n[0]];
     return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
-      esc(n[1]) + '</a>';
+      esc(navLabel(n[1])) + '</a>';
   }).join('');
   return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div></div>';
 }
@@ -21582,7 +21652,7 @@ function osTick() {
    顏色因此變成他們的了，但它還是不能比較誰漂亮——六個地方沒有先後、
    沒有難易，去哪裡不影響任何判定。它是決定的痕跡，不是成績。 */
 var XL = {
-  NAME: 176,   /* 左邊：這是哪一組 */
+  NAME: 264,   /* 左邊：這是哪一組。176 放不下八個字的專案名（「校內共享單車調度」被切成「校內共享單⋯」，2026-09-30）。像素字一個字約 27px，264 減兩邊內距放得下九個字 */
   MIN: 55,     /* 一塊最窄。窄到這裡就不再收，改成橫著捲 */
   MAX: 88,     /* 一塊最寬。再寬就變成一片色塊，邊角那道斜切也看不出來 */
   BH: 66,      /* 一塊的高 */
@@ -21707,7 +21777,7 @@ function xlLane(r, i, cols, classId, mine) {
      點進去是「他們做了什麼」。一條上兩個問題，各自一顆鈕。 */
   H.push('<button class="xl-name pressable" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'crew:' + r.teamId })) + '\' title="' +
-    esc(r.name) + '" style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
+    esc((r.project ? r.project + '　·　' : '') + r.name + (teamMemberNames(r.teamId) ? '　·　' + teamMemberNames(r.teamId) : '')) + '" style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
   /* 這裡試過掛那一組的招牌，撤掉了：signOf 對每一組都回同一張
      （見 40-db.js，材質跟深度綁的那一版拿掉之後它就是個殘骸）。
      五個一模一樣的圖示不會讓一排更好認，只會教眼睛忽略那一欄。 */
@@ -24800,7 +24870,7 @@ PAGES.radar = function () {
        沒有人在那裡等他。 */
     H.push(out.length
       ? '<p class="dim">這裡沒有要看的。有 ' + out.length +
-        ' 組說他們做完了，在左邊最下面的「結案」。</p>'
+        ' 組說他們做完了，在「結案」。</p>'
       : '<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
     H.push('<div class="row">');
     H.push(btn('去發一個任務', 'go:ms', 'big'));
@@ -24870,7 +24940,7 @@ PAGES.tclose = function () {
     H.push('<div class="card">');
     H.push('<div class="eyebrow">先看這個</div>');
     H.push('<p>這裡確認的是「整個專案已經完成」，不是收下一件作業。</p>');
-    H.push('<p class="dim">要收作業，請到左邊「等你的」。只有這一組的整個專案真的做完了，才按下面的「確認整個專案已完成」。按了之後，他們那邊廊道盡頭的出口就會打開，他們就可以結束專案。</p>');
+    H.push('<p class="dim">要收作業，請到「等你的」。只有這一組的整個專案真的做完了，才按下面的「確認整個專案已完成」。按了之後，他們那邊廊道盡頭的出口就會打開，他們就可以結束專案。</p>');
     H.push('</div>');
 
     /* 開放／關掉學生那邊「我們做完了」的入口。

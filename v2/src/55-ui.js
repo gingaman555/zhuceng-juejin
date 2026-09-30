@@ -472,9 +472,11 @@ function topEnd() {
      checkFresh）——按下去就整頁重新載入，不用另外做動作。
      這一條比同步失敗更該搶眼一點：舊程式碼不只是這一筆資料的事，
      是這台分頁接下來每一個動作都可能踩到已經修過的 bug。 */
-  var stale = (typeof SYNC !== 'undefined' && SYNC.stale)
-    ? '<a class="plain sync-warn" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'reloadpage' })) + '\'>這一頁是舊版，點這裡重新整理</a>' : '';
+  /* 兩種提醒（見 41-sync.js 的 syncNotice）：剛部署（有期限）、太久沒更新（沒那麼急）。 */
+  var nt = (typeof syncNotice === 'function') ? syncNotice() : null;
+  var stale = nt
+    ? '<a class="plain sync-warn' + (nt.kind === 'old' ? ' sync-old' : '') + '" data-act="run" data-p=\'' +
+      esc(JSON.stringify({ a: 'reloadpage' })) + '\'>' + esc(nt.text) + '</a>' : '';
   return warn + stale + '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:me' })) + '\'>你的資料</a>' +
     '<a class="plain" data-act="run" data-p=\'' +
@@ -613,6 +615,18 @@ function demoBar() {
     '</div>';
 }
 
+/* 導覽格子的字。
+
+   手機底部四格各 75px 寬，「發派任務」「各組進度」被切成「發派任／務」
+   「各組進／度」（2026-09-30 截圖）。四、五個字的在中間放一個零寬空格，
+   配合 CSS 的 word-break:keep-all（見 59-mobile.css），寬度夠就一行，
+   不夠就從中間折成兩個字＋兩個字。有括號的（等你的（1））不動。 */
+function navLabel(s) {
+  s = String(s);
+  if (s.indexOf('（') >= 0 || s.length < 4) return s;
+  return s.slice(0, 2) + '\u200b' + s.slice(2);
+}
+
 function sideBar() {
   var u = me();
   var nav, headBlock;
@@ -673,7 +687,7 @@ function sideBar() {
     var ic = ICONS[n[0]];
     return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
-      esc(n[1]) + '</a>';
+      esc(navLabel(n[1])) + '</a>';
   }).join('');
   return '<div class="side">' + headBlock + '<div class="nav">' + items + '</div></div>';
 }

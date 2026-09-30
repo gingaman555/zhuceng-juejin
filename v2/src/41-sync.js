@@ -37,7 +37,7 @@
    都沒有 firebase 這個東西。那時候這一整層安靜地什麼都不做，
    localStorage 還是照舊——單機那條路一步都沒有變。 */
 
-var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, staleAt: 0, fly: {}, denied: 0, blocked: 0, blockWhy: '' };
+var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, staleAt: 0, fly: {}, denied: 0, blocked: 0, blockWhy: '', oldShown: 0 };
 
 /* 每一張表的主鍵。
 
@@ -170,6 +170,34 @@ function freshAutoReload() {
 var SYNC_LOADED = Date.now();
 var SYNC_MAX_AGE = 4 * 3600000;
 function tabTooOld() { return Date.now() - SYNC_LOADED > SYNC_MAX_AGE; }
+
+/* ---------- 兩種不同的提醒 ----------
+
+   2026-09-30：本來只有一句「這一頁是舊版」，可是有兩件完全不同的事：
+
+     剛部署　伺服器上有比這一頁更新的版本。原因很明確、要做的事很明確，
+             而且有期限——超過一刻鐘沒處理，這一頁會停用（staleLock）。
+     太久沒更新　沒有新版，只是這一頁開了很久（手機鎖屏、切 app 放著）。
+             本機的資料可能是幾小時前的。沒有人做錯什麼，也沒有期限那麼急：
+             兩小時開始提醒，四小時閒著會自己換，八小時整頁停用。
+
+   說法要不一樣：前者是「剛更新了」，後者是「開很久了」——學生看到的
+   是不同的事，反應也不同（前者馬上處理，後者看到就順手重開）。
+   兩種同時成立的時候，剛部署優先：它有期限。 */
+var SYNC_WARN_AGE = 2 * 3600000;
+var SYNC_LOCK_AGE = 8 * 3600000;
+function tabOldWarn() { return Date.now() - SYNC_LOADED > SYNC_WARN_AGE; }
+function syncNotice() {
+  if (SYNC.stale) {
+    var left = Math.max(0, Math.ceil((SYNC_LOCK_MS - (Date.now() - (SYNC.staleAt || Date.now()))) / 60000));
+    return { kind: 'deployed',
+      text: '剛更新了新版，請點這裡重新整理' + (left > 0 ? '（' + left + ' 分鐘後這一頁會停用）' : '') };
+  }
+  if (tabOldWarn()) {
+    return { kind: 'old', text: '這一頁開很久了，資料可能不是最新的，請點這裡重新整理' };
+  }
+  return null;
+}
 function tabAgeCheck() { if (tabTooOld() && freshSafeToReload()) freshAutoReload(); }
 
 /* ---------- 過期太久的分頁，不讓它繼續用 ----------
@@ -187,15 +215,23 @@ function tabAgeCheck() { if (tabTooOld() && freshSafeToReload()) freshAutoReload
    那些靠資料庫擋寫入（firestore.rules）加上提示（notice-oldtab.js）。 */
 var SYNC_LOCK_MS = 15 * 60000;
 function staleLock() {
-  if (!SYNC.stale || SYNC.blocked) return;
-  if (Date.now() - (SYNC.staleAt || Date.now()) < SYNC_LOCK_MS) return;
+  if (SYNC.blocked) return;
+  var 為何 = '';
+  if (SYNC.stale && Date.now() - (SYNC.staleAt || Date.now()) >= SYNC_LOCK_MS) 為何 = 'stale';
+  else if (!SYNC.stale && Date.now() - SYNC_LOADED > SYNC_LOCK_AGE) 為何 = 'old';
+  /* 到了「開始提醒」的時間：頂條要跟著出現（不是只有下一次畫面才出現）。 */
+  if (!為何 && !SYNC.oldShown && !SYNC.stale && tabOldWarn()) {
+    SYNC.oldShown = 1;
+    if (typeof syncDraw === 'function') syncDraw();
+  }
+  if (!為何) return;
   if (SYNC.err) return;
   for (var k in SYNC.fly) if (Object.prototype.hasOwnProperty.call(SYNC.fly, k)) return;
   if (typeof document !== 'undefined') {
     var a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) return;
   }
-  SYNC.blocked = 1; SYNC.blockWhy = 'stale';
+  SYNC.blocked = 1; SYNC.blockWhy = 為何;
   if (typeof render === 'function') render();
 }
 
@@ -475,13 +511,17 @@ function syncFail(chunk, e) {
 
 /* 整頁換成的那一張。不放任何別的按鈕——這一頁上做的任何事都送不出去。 */
 function blockedHtml() {
-  var stale = SYNC.blockWhy === 'stale';
+  var why = SYNC.blockWhy;
+  var 眉 = why === 'stale' ? '剛更新了新版' : (why === 'old' ? '這個網頁開太久了' : '這個網頁是舊的');
+  var 話 = why === 'stale'
+    ? '剛剛更新了新版，這一頁不能再用了。你之前做的事都已經送出去了，重新打開就是最新的。'
+    : (why === 'old'
+      ? '這一頁已經開了很久，裡面的資料可能不是最新的。你之前做的事都已經送出去了，重新打開就是最新的。'
+      : '你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。');
   return '<div class="main"><div class="wrap"><div class="card">' +
-    '<div class="eyebrow warnx">' + (stale ? '這個網頁有新版了' : '這個網頁是舊的') + '</div>' +
+    '<div class="eyebrow warnx">' + 眉 + '</div>' +
     '<h1>請把它關掉，重新打開一次</h1>' +
-    '<p class="lead">' + (stale
-      ? '這一頁太舊了，不能再用。你之前做的事都已經送出去了，重新打開就是最新的。'
-      : '你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。') + '</p>' +
+    '<p class="lead">' + 話 + '</p>' +
     '<button class="btn big" data-act="run" data-p=\'{"a":"reloadpage"}\'>重新打開</button>' +
     '</div></div></div>';
 }

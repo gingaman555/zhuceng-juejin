@@ -45,7 +45,7 @@
    顏色因此變成他們的了，但它還是不能比較誰漂亮——六個地方沒有先後、
    沒有難易，去哪裡不影響任何判定。它是決定的痕跡，不是成績。 */
 var XL = {
-  NAME: 176,   /* 左邊：這是哪一組 */
+  NAME: 264,   /* 左邊：這是哪一組。176 放不下八個字的專案名（「校內共享單車調度」被切成「校內共享單⋯」，2026-09-30）。像素字一個字約 27px，264 減兩邊內距放得下九個字 */
   MIN: 55,     /* 一塊最窄。窄到這裡就不再收，改成橫著捲 */
   MAX: 88,     /* 一塊最寬。再寬就變成一片色塊，邊角那道斜切也看不出來 */
   BH: 66,      /* 一塊的高 */
@@ -170,7 +170,7 @@ function xlLane(r, i, cols, classId, mine) {
      點進去是「他們做了什麼」。一條上兩個問題，各自一顆鈕。 */
   H.push('<button class="xl-name pressable" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'crew:' + r.teamId })) + '\' title="' +
-    esc(r.name) + '" style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
+    esc((r.project ? r.project + '　·　' : '') + r.name + (teamMemberNames(r.teamId) ? '　·　' + teamMemberNames(r.teamId) : '')) + '" style="top:' + XL.HEAD + 'px;height:' + XL.BH + 'px">');
   /* 這裡試過掛那一組的招牌，撤掉了：signOf 對每一組都回同一張
      （見 40-db.js，材質跟深度綁的那一版拿掉之後它就是個殘骸）。
      五個一模一樣的圖示不會讓一排更好認，只會教眼睛忽略那一欄。 */
