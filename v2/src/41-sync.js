@@ -37,7 +37,7 @@
    都沒有 firebase 這個東西。那時候這一整層安靜地什麼都不做，
    localStorage 還是照舊——單機那條路一步都沒有變。 */
 
-var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, fly: {} };
+var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, fly: {}, denied: 0, blocked: 0 };
 
 /* 每一張表的主鍵。
 
@@ -358,7 +358,7 @@ function syncMergeStr(baseStr, mineStr, theirStr) {
 
 /* 把變過的那幾筆寫上去。save() 每一次都會叫它一次。 */
 function syncPush() {
-  if (SYNC.hold || !SYNC.last || !syncReady()) return;
+  if (SYNC.hold || SYNC.blocked || !SYNC.last || !syncReady()) return;
   var now = syncFlat(), jobs = [];
   Object.keys(now).forEach(function (p) {
     if (!syncPushable(p.slice(0, p.indexOf('/')))) return;
@@ -397,6 +397,7 @@ function syncDone() {
   /* 這一批真的到了。清掉上一次的錯誤——如果剛剛才失敗過，
      這一下成功了，頂條那條警告該跟著收掉，不然它會一直掛著，
      讓人以為現在還在出事。 */
+  SYNC.denied = 0;
   if (SYNC.err) { SYNC.err = ''; if (typeof render === 'function') render(); }
 }
 
@@ -410,7 +411,32 @@ function syncFail(chunk, e) {
     if (SYNC.last[j[0]] !== j[1]) return;
     if (j[2] === undefined) delete SYNC.last[j[0]]; else SYNC.last[j[0]] = j[2];
   });
+  /* 資料庫拒絕（permission-denied）：這一頁寫的格式，資料庫已經不收了
+     ——它是舊版。舊版再怎麼重試都寫不進去，而畫面上「交出去」還照樣
+     顯示成功（本機一定先存得進去），學生會以為送出了。
+
+     連續兩次才算：單獨一次可能是規則剛部署、各處還沒同步好的空檔。
+     算了之後整頁換成「請重新打開」（見 blockedHtml），並且不再推送。
+     2026-09-30 加的：資料庫改成只收 v = 2 的寫入（見 firestore.rules）。 */
+  if (e && (e.code === 'permission-denied' || /insufficient permissions/i.test(e.message || ''))) {
+    SYNC.denied = (SYNC.denied || 0) + 1;
+    if (SYNC.denied >= 2 && !SYNC.blocked) {
+      SYNC.blocked = 1;
+      if (typeof render === 'function') render();
+      return;
+    }
+  }
   syncTrouble(e);
+}
+
+/* 整頁換成的那一張。不放任何別的按鈕——這一頁上做的任何事都送不出去。 */
+function blockedHtml() {
+  return '<div class="main"><div class="wrap"><div class="card">' +
+    '<div class="eyebrow warnx">這個網頁是舊的</div>' +
+    '<h1>請把它關掉，重新打開一次</h1>' +
+    '<p class="lead">你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。</p>' +
+    '<button class="btn big" data-act="run" data-p=\'{"a":"reloadpage"}\'>重新打開</button>' +
+    '</div></div></div>';
 }
 
 /* chunk 裡每一筆是 [路徑, 我現在的（null＝刪）, 我上次看到的]。

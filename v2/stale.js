@@ -23,20 +23,23 @@ let 斷線 = false, 交易次數 = 0, 批次次數 = 0, 交易佇列 = Promise.r
 
 /* 模擬 firestore.strict.rules：新增與更新只收 { j, v: 2 }。 */
 let 被擋次數 = 0;
-function 規則(d) {
+function 規則ok(d) {
   const k = Object.keys(d || {}).sort().join(',');
-  if (k !== 'j,v' || d.v !== 2 || typeof d.j !== 'string') { 被擋次數++; throw new Error('permission-denied'); }
+  return k === 'j,v' && d.v === 2 && typeof d.j === 'string';
 }
+/* 真的 Firestore 是在送出的時候才回拒絕（Error.code = 'permission-denied'），不是 set 的當下。 */
+function 拒絕() { 被擋次數++; return Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' }); }
 
 const 假庫 = {
   doc: p => ({ p: p.replace('world/v1/', '') }),
   batch() {
     const ops = [];
     return {
-      set: (r, d) => { 規則(d); ops.push(['s', r.p, d.j]); },
-      delete: r => ops.push(['d', r.p]),
+      set: (r, d) => { ops.push(['s', r.p, d.j, 規則ok(d)]); },
+      delete: r => ops.push(['d', r.p, null, true]),
       commit() {
         if (斷線) return Promise.reject(new Error('offline'));
+        if (ops.some(o => !o[3])) return Promise.reject(拒絕());
         批次次數++;
         ops.forEach(o => { if (o[0] === 's') 雲[o[1]] = o[2]; else delete 雲[o[1]]; });
         return Promise.resolve();
@@ -49,11 +52,15 @@ const 假庫 = {
       if (斷線) return Promise.reject(new Error('offline'));
       交易次數++;
       const 寫 = [];
+      let 壞 = false;
       const tx = {
         get: r => Promise.resolve({ exists: r.p in 雲, data: () => ({ j: 雲[r.p] }) }),
-        set: (r, d) => { 規則(d); 寫.push([r.p, d.j]); }
+        set: (r, d) => { if (!規則ok(d)) 壞 = true; 寫.push([r.p, d.j]); }
       };
-      return Promise.resolve(fn(tx)).then(() => { 寫.forEach(w => { 雲[w[0]] = w[1]; }); });
+      return Promise.resolve(fn(tx)).then(() => {
+        if (壞) throw 拒絕();
+        寫.forEach(w => { 雲[w[0]] = w[1]; });
+      });
     };
     const p = 交易佇列.then(跑);
     交易佇列 = p.catch(() => { });
@@ -266,9 +273,24 @@ const 節 = t => console.log('\n' + t + '\n' + '─'.repeat(50));
   節('10 · 規則：舊版（不帶 v）的寫入進不來，新版的每一次寫入都過得了');
   const 前 = 被擋次數;
   let 擋住 = false;
-  try { 假庫.batch().set({ p: 'Runs/RX1' }, { j: '{"state":"running"}' }); } catch (e) { 擋住 = true; }
+  try { const b0 = 假庫.batch(); b0.set({ p: 'Runs/RX1' }, { j: '{"state":"running"}' }); await b0.commit(); } catch (e) { 擋住 = e.code === 'permission-denied'; }
   ok(擋住 && 被擋次數 === 前 + 1, '舊版那種 { j } 的整筆寫入被擋下');
   ok(前 === 0, '上面每一節新版自己的寫入，一次都沒有被規則擋到（都帶 v）');
+
+  節('10a · 資料庫拒絕的分頁（舊版）：立刻換成請重新打開，而且不再推送');
+  const C = 開一台();
+  收(C); await 等();
+  C.SYNC_V = 1;                                   /* 模擬寫的格式已經不是資料庫收的那一種 */
+  const rC = 本機(C, 'RX1');
+  rC.said = rC.said || {}; rC.said.UC = '第一下'; C.save(); await 等();
+  ok(!C.SYNC.blocked, '第一次被拒絕：還不算（可能是規則剛部署）');
+  rC.said.UC = '第二下'; C.save(); await 等();
+  ok(C.SYNC.blocked === 1, '連續第二次被拒絕：判定是舊版，整頁換掉');
+  ok(C.blockedHtml().indexOf('重新打開') >= 0 && C.blockedHtml().indexOf('reloadpage') >= 0, '換成的那一張寫著「重新打開」，按下去會重新整理');
+  const 之前 = 交易次數 + 批次次數;
+  rC.said.UC = '第三下'; C.save(); await 等();
+  ok(交易次數 + 批次次數 === 之前, '換掉之後不再推送任何東西');
+  ok(B.SYNC.blocked === 0, '別的機器不受影響');
 
   節('10b · 閒著的舊分頁才會自己重新整理（換了會丟東西的時候不換）');
   A.S.page = 'home'; A.SYNC.err = ''; A.SYNC.fly = {};

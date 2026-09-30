@@ -282,6 +282,14 @@ var PAGES = {};
 function render() {
   var u = me();
 
+  /* 資料庫不收這一頁寫的東西（見 41-sync.js 的 blockedHtml）：整頁換掉，
+     不管在哪一頁、有沒有登入。 */
+  if (typeof SYNC !== 'undefined' && SYNC.blocked) {
+    document.title = '請重新打開｜專案地下城';
+    document.getElementById('app').innerHTML = blockedHtml();
+    return;
+  }
+
   /* 畫之前先把 HERO 指到這個人挑的那一套。二十幾個地方在讀 HERO，
      而它們讀的時機都在畫面要畫的時候——所以一個地方指，全部跟著換。
      （剖面圖是例外：那一頁一次畫五組，見 xsShaft。） */
