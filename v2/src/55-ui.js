@@ -124,7 +124,7 @@ var PAGE_TITLE = {
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
   pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
   person: '角色', who: '挑角色', battle: '交作業', story: '故事',
-  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', tclose: '結案', rsacc: '刪帳號',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', tclose: '結案', rsacc: '刪帳號',
   rs: '名單', events: '紀錄'
 };
 function pageTitle(page) {
@@ -138,7 +138,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher', rspw: 'researcher', rsacc: 'researcher'
 };
 function allowed(u, page) {
@@ -658,6 +658,7 @@ function sideBar() {
     nav = [
       ['radar', '等你的' + (wait ? '（' + wait + '）' : '')],
       ['ms', '發派任務'],
+      ['mslist', '已派任務'],
       ['classeco', RULES.SOLO ? '每一位' : '各組進度'],
       ['tclose', '結案' + (waitExit ? '（' + waitExit + '）' : ''), 'low']
     ];
@@ -684,7 +685,7 @@ function sideBar() {
      變成「背包裡的幾樣東西」。 */
   var items = nav.map(function (n) {
     var on = S.page === n[0];
-    var ic = ICONS[n[0]];
+    var ic = ICONS[n[0]] || (n[0] === 'mslist' ? ICONS.ms : null);
     return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
       esc(navLabel(n[1])) + '</a>';
@@ -1408,7 +1409,8 @@ var ACTS = {
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
     DRAFT.dueU = ''; DRAFT.dueN = 0;
-    go('ms');
+    /* 派完直接看「已派任務」——自己剛派的那一件在最上面「你派的」那一張。 */
+    go('mslist');
     say('派出去了。');
   },
 

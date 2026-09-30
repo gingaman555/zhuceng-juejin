@@ -6003,7 +6003,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790754654861;
+var BUILD_AT = 1790754913709;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -15766,7 +15766,7 @@ var PAGE_TITLE = {
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
   pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
   person: '角色', who: '挑角色', battle: '交作業', story: '故事',
-  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', tclose: '結案', rsacc: '刪帳號',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', tclose: '結案', rsacc: '刪帳號',
   rs: '名單', events: '紀錄'
 };
 function pageTitle(page) {
@@ -15780,7 +15780,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher', rspw: 'researcher', rsacc: 'researcher'
 };
 function allowed(u, page) {
@@ -16300,6 +16300,7 @@ function sideBar() {
     nav = [
       ['radar', '等你的' + (wait ? '（' + wait + '）' : '')],
       ['ms', '發派任務'],
+      ['mslist', '已派任務'],
       ['classeco', RULES.SOLO ? '每一位' : '各組進度'],
       ['tclose', '結案' + (waitExit ? '（' + waitExit + '）' : ''), 'low']
     ];
@@ -16326,7 +16327,7 @@ function sideBar() {
      變成「背包裡的幾樣東西」。 */
   var items = nav.map(function (n) {
     var on = S.page === n[0];
-    var ic = ICONS[n[0]];
+    var ic = ICONS[n[0]] || (n[0] === 'mslist' ? ICONS.ms : null);
     return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
       esc(navLabel(n[1])) + '</a>';
@@ -17050,7 +17051,8 @@ var ACTS = {
        （那幾個框現在跟 DRAFT 綁在一起，才不會按一下班級就消失。） */
     DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
     DRAFT.dueU = ''; DRAFT.dueN = 0;
-    go('ms');
+    /* 派完直接看「已派任務」——自己剛派的那一件在最上面「你派的」那一張。 */
+    go('mslist');
     say('派出去了。');
   },
 
@@ -24997,9 +24999,9 @@ PAGES.radar = function () {
 
        三位老師共用一個佇列，所以「這一件本來是誰的事」要看得到：
        看得到才有得商量，看不到就會兩個人都以為對方會看。 */
-    var rby = x.ms.mentorId && x.ms.mentorId !== u.userId ? userOf(x.ms.mentorId) : null;
+    var rby = x.ms.mentorId ? (x.ms.mentorId === u.userId ? u : userOf(x.ms.mentorId)) : null;
     H.push('<em>' + esc(x.team.name) + (teamMemberNames(x.team.teamId) ? '（' + esc(teamMemberNames(x.team.teamId)) + '）' : '') +
-      (rby ? '　·　' + esc(rby.name) + ' 派的' : '') + '</em></span>');
+      (rby ? '　·　' + (rby.userId === u.userId ? '你派的' : esc(rby.name) + ' 派的') : '') + '</em></span>');
     H.push('<span class="rq-d">等 ' + x.waited + ' 天</span>');
     H.push('</button>');
   });
@@ -25536,80 +25538,109 @@ PAGES.ms = function () {
   H.push(btn('派出去', 'publish', 'big'));
   H.push('</div>');
 
-  if (!list.length) {
-    H.push('<div class="card dim">還沒派過。</div>');
+  /* 派過的清單搬到左邊獨立一格「已派任務」（PAGES.mslist）。
+     2026-09-30：這一頁本來上面是發派的表單、下面是全班派過的每一件，
+     多位老師共同帶一個班之後，「我要派一件」跟「看大家派了什麼、哪些是我的」
+     是兩件事，擺在同一頁會互相擠——表單很長，清單被推到很下面。 */
+  var 我的 = list.filter(function (m) { return m.mentorId === u.userId; }).length;
+  H.push('<div class="card">');
+  H.push('<div class="eyebrow">已派出去的</div>');
+  H.push('<p class="dim">這個班目前有 ' + list.length + ' 件，其中你派的 ' + 我的 + ' 件，其他老師派的 ' + (list.length - 我的) + ' 件。</p>');
+  H.push(btn('看已派任務', 'go:mslist', 'ghost'));
+  H.push('</div>');
+  return H.join('');
+};
+
+/* ---------- 一列＝一件派出去的任務 ----------
+
+   誰派的一定寫出來：自己的寫「你派的」，別人的寫「陳老師 派的」，
+   舊資料沒記的寫「不知道誰派的」。三個字串長度、位置、份量都一樣，
+   掃過去看得到，不用靠「沒寫」去猜（見上面 9/23 那一段）。 */
+function msRow(m, u) {
+  var got = where('Runs', function (r) { return r.msId === m.msId; });
+  var done = got.filter(function (r) { return r.state === 'done'; }).length;
+  var mine = m.mentorId === u.userId;
+  var by = mine ? u : (m.mentorId ? userOf(m.mentorId) : null);
+  var H = ['<div class="msr' + (mine ? ' mine' : '') + '">'];
+  H.push('<b>' + esc(m.title) + '</b>');
+  H.push('<span class="msr-by' + (mine ? ' mine' : '') + '">' +
+    (mine ? '你派的' : (by ? esc(by.name) + ' 派的' : '不知道誰派的')) + '</span>');
+  /* 發給誰是老師派的時候自己點的：不點就是全班。 */
+  H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組' : '全班') + '</span>');
+  /* 排到哪一天。過了就寫過了——不是警告，是事實。 */
+  var di = dueIn(m);
+  if (di) {
+    H.push('<span class="msr-d' + (di.past ? ' past' : '') + '">' +
+      esc(dueSay(m)) + (di.past ? '　過了' : '') + '</span>');
+  }
+  H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
+  /* 刪掉：兩步。學生那邊會馬上少一件；別的老師派的，確認的那一句要講是誰的。 */
+  if (DRAFT.msDel === m.msId) {
+    H.push('<p class="dim msr-ask">' + (mine ? '' : '這是' + (by ? esc(by.name) : '別人') + '派的。') +
+      '學生那邊會不見，他們已經承諾、交出去的紀錄還在，隨時可以放回來。確定嗎？</p>');
+    H.push(btn('對，刪掉', 'msdelyes:' + m.msId, ''));
+    H.push(btn('先不要', 'msdelno', 'ghost'));
+  } else {
+    H.push(btn('刪掉這一件', 'msdel:' + m.msId, 'ghost'));
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
+/* ---------- 已派任務（左邊獨立一格）----------
+
+   這個班派出去的每一件，分成「你派的」與「每一位其他老師派的」，一位老師一張卡。
+   三位老師共同帶一個班，一定會出現「這一週我發給甲乙，你發給丙丁」——
+   看得到誰派了什麼，才做得成「要不要跟他的錯開」那個判斷。
+   發派新的在另一頁（PAGES.ms），這裡只看、只刪、只放回去。 */
+PAGES.mslist = function () {
+  var u = me();
+  var all = where('Milestones', function (m) {
+    return m.classId === u.classId && !m.notice;
+  }).sort(function (a, b) { return b.at - a.at; });
+  var live = all.filter(function (m) { return !m.withdrawnAt; });
+  var gone = all.filter(function (m) { return !!m.withdrawnAt; });
+  var H = [head('已派任務', '這個班派出去的每一件', '')];
+  H.push(btn('發派新任務', 'go:ms', 'big'));
+  if (!live.length) H.push('<div class="card dim">還沒有人派過。</div>');
+
+  var mine = live.filter(function (m) { return m.mentorId === u.userId; });
+  H.push('<div class="card"><div class="eyebrow lit">你派的　' + mine.length + ' 件</div>');
+  if (!mine.length) H.push('<p class="dim">你還沒有派過。</p>');
+  H.push('<div class="rec-list">' + mine.map(function (m) { return msRow(m, u); }).join('') + '</div></div>');
+
+  var byT = {}, order = [];
+  live.filter(function (m) { return m.mentorId !== u.userId; }).forEach(function (m) {
+    var k = m.mentorId || '';
+    if (!byT[k]) { byT[k] = []; order.push(k); }
+    byT[k].push(m);
+  });
+  order.forEach(function (k) {
+    var tea = k ? userOf(k) : null;
+    H.push('<div class="card"><div class="eyebrow">' +
+      (tea ? esc(tea.name) + ' 派的' : '不知道誰派的') + '　' + byT[k].length + ' 件</div>');
+    H.push('<div class="rec-list">' + byT[k].map(function (m) { return msRow(m, u); }).join('') + '</div></div>');
+  });
+  /* 班上有別的老師、但他們一件都還沒派：說一聲，不要讓人以為他們的不見了。 */
+  var 別位 = where('Users', function (x) {
+    return x.role === 'teacher' && x.userId !== u.userId && inClass(x, u.classId) && !byT[x.userId];
+  });
+  if (別位.length) {
+    H.push('<div class="card"><div class="eyebrow">還沒派過的老師</div><p class="dim">' +
+      別位.map(function (x) { return esc(x.name); }).join('、') + '</p></div>');
   }
 
-  /* 派過的每一個壓成一行：標題、幾組承諾了、幾組走完了。
-     本來一個一張卡，還帶著注意事項與每一組承諾幾天的標籤——
-     派了十個就是十張卡，而老師在這一頁要做的只有「再派一個」。 */
-  H.push('<div class="card"><div class="rec-list">');
-  list.forEach(function (m) {
-    var got = where('Runs', function (r) { return r.msId === m.msId; });
-    var done = got.filter(function (r) { return r.state === 'done'; }).length;
-    H.push('<div class="msr">');
-    H.push('<b>' + esc(m.title) + '</b>');
-    /* 發給誰是老師派的時候自己點的：不點就是全班。 */
-    H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組'
-      : '全班') + '</span>');
-    /* 我排到哪一天。過了就寫過了——不是警告，是事實。 */
-    var di = dueIn(m);
-    if (di) {
-      H.push('<span class="msr-d' + (di.past ? ' past' : '') + '">' +
-        esc(dueSay(m)) + (di.past ? '　過了' : '') + '</span>');
-    }
-    H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
-    /* 刪掉：兩步。按一下先問，因為學生那邊會馬上少一件。 */
-    if (DRAFT.msDel === m.msId) {
-      H.push('<p class="dim msr-ask">學生那邊會不見，他們已經承諾、交出去的紀錄還在，隨時可以放回來。確定嗎？</p>');
-      H.push(btn('對，刪掉', 'msdelyes:' + m.msId, ''));
-      H.push(btn('先不要', 'msdelno', 'ghost'));
-    } else {
-      H.push(btn('刪掉這一件', 'msdel:' + m.msId, 'ghost'));
-    }
-    /* 這裡本來還有一行「甲 6→6　乙 3→9　丙 7→7　丁 5→5」——每一組
-       承諾幾天、實際幾天。拿掉了，兩個理由：
-
-       一 · 這一頁在做的事是「寫下一個任務」。把每一組的預估攤在
-            那個動作旁邊，等於邀請他照著他們的數字去訂下一件事的大小，
-            而任務該有多大是題目本身的事，不是他們上一次估得準不準。
-
-       二 · 它印的是全班每一組，而這一頁現在也印別人派的那幾件。
-            兩件事疊起來就是一整片跟他要寫的這一個任務無關的數字。
-
-       那幾個數字沒有消失：審核那一頁上每一趟都有，各組進度上一整排。 */
-    /* 誰派的。
-
-       2026-09-23：本來自己派的不寫（理由是「不然每一列都掛著一個
-       「我」」）。可是這一頁列的是全班派出去的每一件，自己剛派的
-       那一件跟別人派的、跟舊的混在一起，全靠這一行的「有沒有寫」
-       分——一個很容易漏看的隱性訊號。真的在用的時候量到：老師發完
-       作業，回到這一頁找不到自己剛剛派了什麼。
-
-       改成兩種都寫：自己的寫「你派的」，跟別人那句同一個位置、
-       同一個份量，掃過去看得到，不用靠「沒寫」去猜。 */
-    if (m.mentorId) {
-      var isMine = m.mentorId === u.userId;
-      var mby = isMine ? u : userOf(m.mentorId);
-      if (mby) {
-        H.push('<span class="msr-by' + (isMine ? ' mine' : '') + '">' +
-          (isMine ? '你派的' : esc(mby.name) + ' 派的') + '</span>');
-      }
-    }
-    H.push('</div>');
-  });
-  H.push('</div></div>');
-
-  /* 刪掉的：還在這裡，放得回去。學生那邊看不到它們。 */
+  /* 刪掉的：還在這裡，放得回去。學生那邊看不到它們。誰刪的也寫出來。 */
   if (gone.length) {
     H.push('<div class="card"><div class="eyebrow">刪掉的（學生看不到）</div><div class="rec-list">');
     gone.forEach(function (m) {
-      var got2 = where('Runs', function (r) { return r.msId === m.msId; }).length;
-      H.push('<div class="msr">');
-      H.push('<b>' + esc(m.title) + '</b>');
-      H.push('<span class="msr-n">' + got2 + ' 筆紀錄還留著</span>');
-      H.push(btn('放回去', 'msrestore:' + m.msId, 'ghost'));
-      H.push('</div>');
+      var n = where('Runs', function (r) { return r.msId === m.msId; }).length;
+      var who = m.withdrawnBy === u.userId ? '你' : ((userOf(m.withdrawnBy) || {}).name || '有人');
+      var by = m.mentorId === u.userId ? '你派的' : ((userOf(m.mentorId) || {}).name ? userOf(m.mentorId).name + ' 派的' : '');
+      H.push('<div class="msr"><b>' + esc(m.title) + '</b>' +
+        (by ? '<span class="msr-by">' + esc(by) + '</span>' : '') +
+        '<span class="msr-n">' + esc(who) + ' 刪的　·　' + n + ' 筆紀錄還留著</span>' +
+        btn('放回去', 'msrestore:' + m.msId, 'ghost') + '</div>');
     });
     H.push('</div></div>');
   }
