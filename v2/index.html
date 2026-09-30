@@ -5978,7 +5978,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790733896825;
+var BUILD_AT = 1790734138373;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -11755,6 +11755,10 @@ function msFor(teamId) {
     /* 老師刪掉的（見 actWithdrawMs）：學生那一邊、審核清單、各組進度都
        當作沒有這一件。紀錄還在，只是不再被派給任何人。 */
     if (m.withdrawnAt) return false;
+    /* 系統通知（notice）：只放給還開著舊版分頁的人看的，新版當它不存在。
+       舊版沒有這個判斷，會把它當成老師派的任務，所以標題寫的是「你的網頁是舊版」。
+       它不是任務——沒有 Run、不進審核、不進匯出、不算深度。 */
+    if (m.notice) return false;
     return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
 }
@@ -19197,7 +19201,7 @@ function msStepLegend(m, sel, act) {
 PAGES.commit = function () {
   var t = myTeam();
   var m = msOf(S.p.id);
-  if (!m || m.withdrawnAt) return '<div class="card">找不到這一個任務。</div>' + btn('回廊道', 'go:home', 'ghost');
+  if (!m || m.withdrawnAt || m.notice) return '<div class="card">找不到這一個任務。</div>' + btn('回廊道', 'go:home', 'ghost');
   /* 他自己拆的那幾件。第一次進來用老師寫的分段當起點——
      老師沒寫就是一張白紙，那時候拆的人是他。 */
   if (!DRAFT.plan) {
@@ -22431,7 +22435,7 @@ function feedOf(classId, limit) {
   });
 
   /* 老師派的 */
-  where('Milestones', function (m) { return m.classId === classId && !m.withdrawnAt; })
+  where('Milestones', function (m) { return m.classId === classId && !m.withdrawnAt && !m.notice; })
     .forEach(function (m) { out.push({ at: m.at, kind: 'pub', ms: m }); });
 
   out.sort(function (a, b) { return b.at - a.at; });
@@ -24926,7 +24930,7 @@ PAGES.ms = function () {
      誰派的印在那一列上。要不要跟人家的錯開，是他看得到之後
      自己會做的判斷——這一頁的工作是讓他做得成那個判斷。 */
   var all = where('Milestones', function (m) {
-    return m.classId === u.classId;
+    return m.classId === u.classId && !m.notice;
   })
     .sort(function (a, b) { return b.at - a.at; });
   var list = all.filter(function (m) { return !m.withdrawnAt; });

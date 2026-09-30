@@ -311,6 +311,10 @@ function msFor(teamId) {
     /* 老師刪掉的（見 actWithdrawMs）：學生那一邊、審核清單、各組進度都
        當作沒有這一件。紀錄還在，只是不再被派給任何人。 */
     if (m.withdrawnAt) return false;
+    /* 系統通知（notice）：只放給還開著舊版分頁的人看的，新版當它不存在。
+       舊版沒有這個判斷，會把它當成老師派的任務，所以標題寫的是「你的網頁是舊版」。
+       它不是任務——沒有 Run、不進審核、不進匯出、不算深度。 */
+    if (m.notice) return false;
     return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
 }

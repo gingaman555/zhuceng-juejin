@@ -597,7 +597,7 @@ PAGES.ms = function () {
      誰派的印在那一列上。要不要跟人家的錯開，是他看得到之後
      自己會做的判斷——這一頁的工作是讓他做得成那個判斷。 */
   var all = where('Milestones', function (m) {
-    return m.classId === u.classId;
+    return m.classId === u.classId && !m.notice;
   })
     .sort(function (a, b) { return b.at - a.at; });
   var list = all.filter(function (m) { return !m.withdrawnAt; });

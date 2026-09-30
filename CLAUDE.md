@@ -88,6 +88,7 @@ boss-fight-b.web.app       專案地下城 B    不分組（RULES.SOLO = 1）
 - 自己寫的後臺腳本（restore、改班名那種）也要帶 `v: 2`，形狀是 `{ j, v }`。
 - 部署後量一次：`node test-strict-rules.js <專案ID>`（規則剛部署要等約半分鐘才各處生效）。
 - 出事時退回全開：`npx firebase-tools deploy --only firestore:rules --config firebase.open.json --project <專案>`。下一次 `node deploy.js` 會再推嚴格版。
+- 給還開著舊版分頁的學生一個提示：`node notice-oldtab.js on`（放一筆標記 `notice: true` 的假任務，舊版當成老師派的任務畫出來，新版當它不存在）。大家都更新完之後 `node notice-oldtab.js off` 收掉。
 - 要改版本記號（寫入格式變了）：`SYNC_V` 與 `firestore.rules` 裡的 2 一起加一。
 
 ## 檢查

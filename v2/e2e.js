@@ -533,6 +533,20 @@ be('問了之後才有「對，整個專案完成了」', PAGES.tclose().indexOf
 be('結案頁開頭講清楚：確認的是整個專案，不是收作業', htmlC.indexOf('整個專案已經完成') >= 0 && htmlC.indexOf('不是收下一件作業') >= 0, true);
 be('學生進不了老師的結案頁', allowed(stu[0], 'tclose'), false);
 
+/* ══ 系統通知：只給還開著舊版分頁的人看，新版當它不存在 ══ */
+H('系統通知（notice）新版看不到');
+DB.Milestones.push({ msId: 'MN1', classId: kl.classId, mentorId: '', title: '你的網頁是舊版', note: '請關掉重開', steps: [], teams: [], due: 0, dueU: '', at: 1, notice: true });
+as(stu[0]); S.page = 'pack'; S.p = null; DRAFT = {};
+be('學生的任務清單沒有它', runsFor(tm.teamId).some(x => x.ms.msId === 'MN1'), false);
+be('學生的 msFor 沒有它', msFor(tm.teamId).some(m => m.msId === 'MN1'), false);
+S.page = 'commit'; S.p = { id: 'MN1' };
+be('硬要打開也找不到', PAGES.commit().indexOf('找不到這一個任務') >= 0, true);
+as(tea); S.page = 'ms'; S.p = null; DRAFT = {};
+be('老師的發派任務頁沒有列它', PAGES.ms().indexOf('你的網頁是舊版') >= 0, false);
+be('動態沒有它', feedOf(kl.classId, 50).some(f => f.ms && f.ms.msId === 'MN1'), false);
+be('不進審核清單', radar(kl.classId).some(x => x.ms && x.ms.msId === 'MN1'), false);
+DB.Milestones = DB.Milestones.filter(m => m.msId !== 'MN1');
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

@@ -66,7 +66,7 @@ function feedOf(classId, limit) {
   });
 
   /* 老師派的 */
-  where('Milestones', function (m) { return m.classId === classId && !m.withdrawnAt; })
+  where('Milestones', function (m) { return m.classId === classId && !m.withdrawnAt && !m.notice; })
     .forEach(function (m) { out.push({ at: m.at, kind: 'pub', ms: m }); });
 
   out.sort(function (a, b) { return b.at - a.at; });
