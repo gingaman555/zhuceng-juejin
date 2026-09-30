@@ -270,10 +270,29 @@ function ownRun(r) {
   return !!u && !!u.teamId && u.teamId === r.teamId;
 }
 
+/* 同一組同一件任務有兩筆的時候，認進度最前面的那一筆。
+
+   2026-09-29 量到：7 組在同一件任務上有兩筆 Run——同組兩位隊友在不同
+   裝置上同時按「承諾」，各建了一筆，沒有任何地方把它們併起來。本來
+   這裡回的是陣列裡的「第一筆」，而陣列順序跟各台機器收到資料的先後
+   有關，所以兩台機器看到的可能不是同一筆；更糟的是老師的審核清單
+   只從這裡看得到的那筆去找，已經交出去的那筆排在後面就永遠看不到
+   （審核清單整個是空的，但雲端有三筆等審核）。
+
+   現在：進度越前面的越優先（老師收下 > 已交出 > 退回 > 進行中），
+   一樣的話比較早承諾的優先。每一台機器算出同一個答案，而且不會
+   有「交出去了卻被一筆進行中的擋在後面」。 */
+var RUN_RANK = { done: 5, approved: 5, submitted: 4, judged: 4, back: 3, running: 2 };
 function runOf(teamId, msId) {
-  return find('Runs', function (r) {
+  var best = null;
+  where('Runs', function (r) {
     return r.teamId === teamId && r.msId === msId && r.state !== 'rethought';
+  }).forEach(function (r) {
+    if (!best) { best = r; return; }
+    var a = RUN_RANK[r.state] || 1, b = RUN_RANK[best.state] || 1;
+    if (a > b || (a === b && (r.committedAt || 0) < (best.committedAt || 0))) best = r;
   });
+  return best;
 }
 
 /* ---------- 一組看得到哪些任務 ---------- */
@@ -289,6 +308,9 @@ function msFor(teamId) {
   if (!t) return [];
   return where('Milestones', function (m) {
     if (m.classId !== t.classId) return false;
+    /* 老師刪掉的（見 actWithdrawMs）：學生那一邊、審核清單、各組進度都
+       當作沒有這一件。紀錄還在，只是不再被派給任何人。 */
+    if (m.withdrawnAt) return false;
     return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
 }
@@ -416,7 +438,7 @@ function stallOf(teamId) {
    卻擋在作業品質的閘門後面。 */
 function depthOf(teamId) {
   return where('Runs', function (r) {
-    return r.teamId === teamId && !!r.stamp;
+    return r.teamId === teamId && !!r.stamp && runLive(r);
   }).length;
 }
 
@@ -424,7 +446,7 @@ function depthOf(teamId) {
    走是他自己的事，留下來是要有人看過的事。 */
 function sealedDepth(teamId) {
   return where('Runs', function (r) {
-    return r.teamId === teamId && (r.state === 'approved' || r.state === 'done');
+    return r.teamId === teamId && (r.state === 'approved' || r.state === 'done') && runLive(r);
   }).length;
 }
 
@@ -451,7 +473,7 @@ function signOf(teamId) {
 /* 這一組的預估準度紀錄——復盤與老師審閱都要看 */
 function accuracyOf(teamId) {
   var done = where('Runs', function (r) {
-    return r.teamId === teamId && r.stamp;
+    return r.teamId === teamId && r.stamp && runLive(r);
   });
   var n = { early: 0, exact: 0, late: 0 };
   done.forEach(function (r) { n[r.stamp] = (n[r.stamp] || 0) + 1; });
@@ -652,7 +674,19 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure, estU, estN) {
   var 算的 = pl.length ? planDays(pl) : 0;
   if (pl.length && !(Number(est) > 0)) est = 算的;
   r = {
-    runId: nid('R'), teamId: teamId, msId: msId,
+    /* 編號由「哪一組、哪一件、第幾次」決定，不是隨機的。
+
+       2026-09-29 量到：7 組同一件任務有兩筆 Run——兩位隊友在不同裝置上
+       同時按承諾，各自隨機生了一個編號，雲端就有兩個文件。編號固定之後，
+       兩台同時按會寫到同一個文件（第二台看到已經有了就不再寫，見
+       41-sync.js 的 Runs 新增），不可能有兩筆。
+
+       第幾次：重新想過（rethought）的那幾筆留著當紀錄，重新承諾就是
+       新的一次，編號往後數，不會蓋掉它們。已經存在的舊 Run 編號不動。 */
+    runId: 'R_' + teamId + '_' + msId + '_' + (where('Runs', function (x) {
+      return x.teamId === teamId && x.msId === msId;
+    }).length + 1),
+    teamId: teamId, msId: msId,
     /* 要徑算出來是幾天。跟 est 一樣的時候代表他們沒有改。 */
     estCalc: 算的,
     state: 'running',
@@ -1592,6 +1626,53 @@ function actSawStamp(runId) {
    勾一段跟每天推進是兩件事，不要混：推進是「今天我來過」（一天一次），
    勾是「這一段做完了」（隨時，幾段都可以）。兩件事都不影響判定——
    判定從頭到尾只看承諾幾天與實際幾天。 */
+/* 這一趟掛的任務還在不在。老師刪掉的任務，底下的 Run 不再算進深度、
+   準度、走過幾趟——對學生來說那一件從來沒派過。Run 本身一筆都不動，
+   匯出的時候還在（見 15-auth.js 的 exportCsv，標題後面會註明）。 */
+function runLive(r) {
+  var m = r ? msOf(r.msId) : null;
+  return !(m && m.withdrawnAt);
+}
+
+/* ---------- 老師刪掉一件派出去的任務 ----------
+
+   2026-09-30：9/23 派的兩件，多數組因為交件被蓋掉、同組重複的 Run 卡在
+   舊的那一件，整整一週沒有辦法往下做。老師需要一個辦法把派出去的收回來。
+
+   ── 為什麼是「收回」不是真的刪 ──
+
+   底下掛著學生的承諾、實際天數、老師的話。這是研究資料，也是學生
+   走過的路；真的刪掉，就沒有辦法說清楚那一週發生了什麼。所以刪掉的
+   意思是：學生看不到、審核清單看不到、不再擋住下一件、不算進深度與準度。
+   紀錄一筆都不動，匯出照樣有（標題後面加「老師已刪掉」），而且隨時
+   可以放回去（actRestoreMs）。
+
+   誰做得到：這個班的老師。三位老師共同帶一個班，派的人不一定是刪的人
+   （見 teachersOf）。 */
+function actWithdrawMs(msId, teacherId) {
+  var t = userOf(teacherId), m = msOf(msId);
+  if (!t || t.role !== 'teacher') return { err: '只有老師刪得了派出去的任務。' };
+  if (!m || m.classId !== t.classId) return { err: '這件不是你們班的。' };
+  if (m.withdrawnAt) return { err: '這一件已經刪掉了。' };
+  m.withdrawnAt = now();
+  m.withdrawnBy = t.userId;
+  save();
+  logEvent('withdrawms', { by: t.userId, msId: msId, title: m.title });
+  return { ms: m };
+}
+
+function actRestoreMs(msId, teacherId) {
+  var t = userOf(teacherId), m = msOf(msId);
+  if (!t || t.role !== 'teacher') return { err: '只有老師放得回去。' };
+  if (!m || m.classId !== t.classId) return { err: '這件不是你們班的。' };
+  if (!m.withdrawnAt) return { err: '這一件沒有被刪掉。' };
+  m.withdrawnAt = 0;
+  m.withdrawnBy = '';
+  save();
+  logEvent('restorems', { by: t.userId, msId: msId, title: m.title });
+  return { ms: m };
+}
+
 function actPublish(classId, o) {
   var m = {
     msId: nid('M'), classId: classId,
@@ -1762,12 +1843,14 @@ function actSetRank(classId, on) {
    不是系統該替他們擋掉的事。 */
 function radar(classId, mentorId) {
   var out = [];
+  /* 每一筆已交出的 Run 都列，不從 runsFor 走：那一條一組一件任務只給
+     一筆，同組同任務有兩筆的時候，另一筆交出去了也看不到。 */
   teamsUnder(classId, mentorId).forEach(function (t) {
-    runsFor(t.teamId).forEach(function (x) {
-      if (x.run.state !== 'submitted') return;
-      out.push({
-        team: t, run: x.run, ms: x.ms,
-        waited: daysBetween(x.run.submittedAt, now())
+    msFor(t.teamId).forEach(function (m) {
+      where('Runs', function (r) {
+        return r.teamId === t.teamId && r.msId === m.msId && r.state === 'submitted';
+      }).forEach(function (r) {
+        out.push({ team: t, run: r, ms: m, waited: daysBetween(r.submittedAt, now()) });
       });
     });
   });

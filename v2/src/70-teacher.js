@@ -73,33 +73,7 @@ PAGES.radar = function () {
 
      RULES.NEGOTIATE 關著的話連那一行都不出現，而且不管 DRAFT 記著什麼
      都退回「審核」——不然關掉之前停在那一格的人會落在一個空白頁。 */
-  var tq = DRAFT.tq === 'exit' ? 'exit'
-    : ((DRAFT.tq === 'ask' && RULES.NEGOTIATE) ? 'ask' : 'rev');
-  H.push('<div class="segs">');
-  /* 這一格對老師叫「結案」，不叫「出口」，也不叫「完成專案」。
-
-     出口是學生那一邊的東西：廊道盡頭一扇門，開了他才走得上去。
-     老師這一邊做的不是開門，是判斷「這一組整個專案結束了沒」——
-     那是一學期一次、看一整條路的決定。
-
-     ── 2026-09-23：「完成專案」改名「結案」──
-
-     老師在找「有沒有人交東西」的時候，「完成專案」四個字讀起來
-     太像「有人完成了一件事」，會被當成審核的同義詞點進去，
-     點進去才發現問錯格——那裡問的是整個專案，不是一件任務。
-     「結案」不跟「審核」共用「完成」這個字，兩格才分得開。
-
-     老師端其餘的字都是白話（審核、退回、收下），只有這一格用了世界觀
-     的詞，而老師沒有走過那條廊道，那個詞對他不指任何東西。
-
-     門還留在說明裡：那是他按下去之後學生會看到的事，講出來他才知道
-     自己剛剛做了什麼。 */
-  [['rev', '審核', rows.length], ['exit', '結案', out.length]].forEach(function (g) {
-    H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
-      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
-      '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
-  });
-  H.push('</div>');
+  var tq = (DRAFT.tq === 'ask' && RULES.NEGOTIATE) ? 'ask' : 'rev';
 
   if (tq === 'ask') {
     /* 他們剛說要花幾天。
@@ -131,62 +105,6 @@ PAGES.radar = function () {
     return H.join('');
   }
 
-  if (tq === 'exit') {
-    /* 全班每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
-       所以他要能主動開，不是只能回應。
-
-       有說的排在前面：那是一個訊號，不是一道關卡。 */
-    var mine = teamsUnder(u.classId, u.userId).slice().sort(function (a, b) {
-      return (b.exitAsk || 0) - (a.exitAsk || 0);
-    });
-    H.push(head('結案', '你確認了，他們才結束得了', ''));
-
-    /* 開放／關掉學生那邊「我們做完了」的入口。
-       2026-09-23：不少學生把那顆鍵當成一般的「交作業」按下去——
-       它整學期都在，可是一學期裡大半時間根本還沒到結案的時候。
-       開學就先關著，真的要進入結案階段再開，學生那邊那張卡才會
-       出現（見 63-pack.js）。已經說過、或已經回過「現在還不是時候」
-       的不受這個開關影響，那是已經在走的流程。 */
-    var kl0 = classOf(u);
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">學生那邊看不看得到「我們做完了」</div>');
-    H.push('<p class="dim">' + (kl0.exitOpen
-      ? '開著。學生任務清單最下面看得到那顆鍵。'
-      : '關著。學生那邊還沒有這個選項，不會誤按到。') + '</p>');
-    H.push(btn(kl0.exitOpen ? '關掉' : '開放結案', 'exitopenset:' + (kl0.exitOpen ? 0 : 1),
-      kl0.exitOpen ? 'ghost' : ''));
-    H.push('</div>');
-
-    mine.forEach(function (t) {
-      var acc = accuracyOf(t.teamId);
-      H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
-      if (t.exitAsk) H.push('<div class="eyebrow lit">他們說做完了</div>');
-      H.push('<h2>' + esc(t.project || '（還沒定）') + '</h2>');
-      H.push('<p class="dim">' + esc(t.name) + '　·　走完 ' +
-        depthOf(t.teamId) + ' 個任務</p>');
-      if (acc.total) H.push(accBar(acc));
-
-      if (t.leftAt) {
-        H.push('<p class="dim">他們走出去了。</p>');
-      } else if (t.exitOk) {
-        /* 確認了但還沒走。走出去那一下是他們自己按的——
-           走出去該是他們的動作，不是老師代勞的。 */
-        H.push('<p class="dim">確認過了。門開著，等他們自己走上去。</p>');
-        H.push(btn('取消確認', 'openexit:' + t.teamId + ',0', 'ghost'));
-      } else {
-        H.push('<div class="row">');
-        /* 鍵上寫的是這個決定叫什麼，說明那一行才講它在學生那邊長什麼樣
-           ——鍵要短到一眼讀完，而「門」不是老師要做的事。 */
-        H.push(btn('確認他們完成了', 'openexit:' + t.teamId + ',1', 'big'));
-        /* 「現在還不是時候」只對有說過的那幾組出現——沒說過的組
-           沒有東西要回。 */
-        if (t.exitAsk) H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
-        H.push('</div>');
-      }
-      H.push('</div>');
-    });
-    return H.join('');
-  }
 
   /* 說明句拿掉：清單本來就照等最久排。 */
   H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '沒有等你的', ''));
@@ -220,7 +138,7 @@ PAGES.radar = function () {
        沒有人在那裡等他。 */
     H.push(out.length
       ? '<p class="dim">這裡沒有要看的。有 ' + out.length +
-        ' 組說他們做完了，在「結案」那一格。</p>'
+        ' 組說他們做完了，在左邊最下面的「結案」。</p>'
       : '<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
     H.push('<div class="row">');
     H.push(btn('去發一個任務', 'go:ms', 'big'));
@@ -257,6 +175,86 @@ PAGES.radar = function () {
 
   /* 底下本來還有一塊「全班現在」，是各組進度的縮小版——
      而各組進度就在側欄第三格。同一件事說兩遍，先出現的是雜訊。 */
+  return H.join('');
+};
+
+/* ---------- 結案 ----------
+
+   2026-09-30：本來這一格是審核頁最上面的分頁（審核｜結案），兩顆並排在
+   老師每次進來第一眼看到的位置，老師們也會按錯。搬到左邊側欄最下面，
+   跟上面三格（等你的、發派任務、各組進度）隔開——結案是一學期一次的事，
+   不該跟一週好幾次的審核擺在同一排。 */
+PAGES.tclose = function () {
+  var u = me();
+  var H = [];
+    /* 全班每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
+       所以他要能主動開，不是只能回應。
+
+       有說的排在前面：那是一個訊號，不是一道關卡。 */
+    var mine = teamsUnder(u.classId, u.userId).slice().sort(function (a, b) {
+      return (b.exitAsk || 0) - (a.exitAsk || 0);
+    });
+    H.push(head('結案', '整個專案完成了，才在這裡確認', ''));
+    /* 2026-09-30：老師們會按錯，因為這一頁沒有講清楚它確認的是什麼。
+       它確認的是「這一組整個專案結束了」，不是「收下一件作業」——
+       收作業在左邊「等你的」。這一張卡放在最上面，先講這一件事。 */
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">先看這個</div>');
+    H.push('<p>這裡確認的是<b>整個專案已經完成</b>，不是收下一件作業。</p>');
+    H.push('<p class="dim">要收作業，請到左邊「等你的」。只有這一組的整個專案真的做完了，才按下面的「確認整個專案已完成」。按了之後，他們那邊廊道盡頭的出口就會打開，他們就可以結束專案。</p>');
+    H.push('</div>');
+
+    /* 開放／關掉學生那邊「我們做完了」的入口。
+       2026-09-23：不少學生把那顆鍵當成一般的「交作業」按下去——
+       它整學期都在，可是一學期裡大半時間根本還沒到結案的時候。
+       開學就先關著，真的要進入結案階段再開，學生那邊那張卡才會
+       出現（見 63-pack.js）。已經說過、或已經回過「現在還不是時候」
+       的不受這個開關影響，那是已經在走的流程。 */
+    var kl0 = classOf(u);
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">學生那邊看不看得到「我們做完了」</div>');
+    H.push('<p class="dim">' + (kl0.exitOpen
+      ? '開著。學生任務清單最下面看得到那顆鍵。'
+      : '關著。學生那邊還沒有這個選項，不會誤按到。') + '</p>');
+    H.push(btn(kl0.exitOpen ? '關掉' : '開放結案', 'exitopenset:' + (kl0.exitOpen ? 0 : 1),
+      kl0.exitOpen ? 'ghost' : ''));
+    H.push('</div>');
+
+    mine.forEach(function (t) {
+      var acc = accuracyOf(t.teamId);
+      H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
+      if (t.exitAsk) H.push('<div class="eyebrow lit">他們說整個專案做完了</div>');
+      H.push('<h2>' + esc(t.project || '（還沒定）') + '</h2>');
+      H.push('<p class="dim">' + esc(t.name) + '　·　走完 ' +
+        depthOf(t.teamId) + ' 個任務</p>');
+      if (acc.total) H.push(accBar(acc));
+
+      if (t.leftAt) {
+        H.push('<p class="dim">他們走出去了。</p>');
+      } else if (t.exitOk) {
+        /* 確認了但還沒走。走出去那一下是他們自己按的——
+           走出去該是他們的動作，不是老師代勞的。 */
+        H.push('<p class="dim">確認過了。門開著，等他們自己走上去。</p>');
+        H.push(btn('取消確認', 'openexit:' + t.teamId + ',0', 'ghost'));
+      } else {
+        H.push('<div class="row">');
+        /* 鍵上寫的是這個決定叫什麼，說明那一行才講它在學生那邊長什麼樣
+           ——鍵要短到一眼讀完，而「門」不是老師要做的事。 */
+        /* 確認要問一次：這一顆按下去，學生那邊廊道盡頭的門就開了。 */
+        if (DRAFT.closeConf === t.teamId) {
+          H.push('<p class="dim">確定「' + esc(t.name) + '」的<b>整個專案</b>已經完成了嗎？按下去，他們那邊的出口就會打開。</p>');
+          H.push(btn('對，整個專案完成了', 'openexit:' + t.teamId + ',1', 'big'));
+          H.push(btn('先不要', 'closeno', 'ghost'));
+        } else {
+          H.push(btn('確認整個專案已完成', 'closeconf:' + t.teamId, 'big'));
+        }
+        /* 「現在還不是時候」只對有說過的那幾組出現——沒說過的組
+           沒有東西要回。 */
+        if (t.exitAsk) H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
+        H.push('</div>');
+      }
+      H.push('</div>');
+    });
   return H.join('');
 };
 
@@ -598,10 +596,12 @@ PAGES.ms = function () {
 
      誰派的印在那一列上。要不要跟人家的錯開，是他看得到之後
      自己會做的判斷——這一頁的工作是讓他做得成那個判斷。 */
-  var list = where('Milestones', function (m) {
+  var all = where('Milestones', function (m) {
     return m.classId === u.classId;
   })
     .sort(function (a, b) { return b.at - a.at; });
+  var list = all.filter(function (m) { return !m.withdrawnAt; });
+  var gone = all.filter(function (m) { return !!m.withdrawnAt; });
   var teams = teamsUnder(u.classId, u.userId);
   var to = DRAFT.to || [];
 
@@ -715,6 +715,14 @@ PAGES.ms = function () {
         esc(dueSay(m)) + (di.past ? '　過了' : '') + '</span>');
     }
     H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
+    /* 刪掉：兩步。按一下先問，因為學生那邊會馬上少一件。 */
+    if (DRAFT.msDel === m.msId) {
+      H.push('<p class="dim msr-ask">學生那邊會不見，他們已經承諾、交出去的紀錄還在，隨時可以放回來。確定嗎？</p>');
+      H.push(btn('對，刪掉', 'msdelyes:' + m.msId, ''));
+      H.push(btn('先不要', 'msdelno', 'ghost'));
+    } else {
+      H.push(btn('刪掉這一件', 'msdel:' + m.msId, 'ghost'));
+    }
     /* 這裡本來還有一行「甲 6→6　乙 3→9　丙 7→7　丁 5→5」——每一組
        承諾幾天、實際幾天。拿掉了，兩個理由：
 
@@ -747,6 +755,20 @@ PAGES.ms = function () {
     H.push('</div>');
   });
   H.push('</div></div>');
+
+  /* 刪掉的：還在這裡，放得回去。學生那邊看不到它們。 */
+  if (gone.length) {
+    H.push('<div class="card"><div class="eyebrow">刪掉的（學生看不到）</div><div class="rec-list">');
+    gone.forEach(function (m) {
+      var got2 = where('Runs', function (r) { return r.msId === m.msId; }).length;
+      H.push('<div class="msr">');
+      H.push('<b>' + esc(m.title) + '</b>');
+      H.push('<span class="msr-n">' + got2 + ' 筆紀錄還留著</span>');
+      H.push(btn('放回去', 'msrestore:' + m.msId, 'ghost'));
+      H.push('</div>');
+    });
+    H.push('</div></div>');
+  }
   return H.join('');
 };
 

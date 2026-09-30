@@ -17,3 +17,6 @@ firebase-debug.log
 
 # deploy.js 比對暫存
 .lv-*.html
+
+# 備份含學生姓名與密碼雜湊，不可以進公開的儲存庫
+backups/

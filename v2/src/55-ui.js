@@ -121,7 +121,7 @@ var PAGE_TITLE = {
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
   pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
   person: '角色', who: '挑角色', battle: '交作業', story: '故事',
-  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', tclose: '結案',
   rs: '名單', events: '紀錄'
 };
 function pageTitle(page) {
@@ -135,7 +135,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher', rspw: 'researcher'
 };
 function allowed(u, page) {
@@ -626,11 +626,15 @@ function sideBar() {
        那一格因此不叫「審核」——審核是頁面裡兩個切換的其中一個，
        同一個詞當兩種範圍會讓「審核（5）」點進去變成「審核（4）」。
        叫它頁面真正在講的事：有幾件在等你。 */
-    var wait = radar(u.classId).length + exitQueue(u.classId).length;
+    var wait = radar(u.classId).length;
+    var waitExit = exitQueue(u.classId).length;
+    /* 結案獨立一格，放在最下面（第三個元素 'low'）：一學期一次的事，
+       不跟一週好幾次的審核擺在一起（2026-09-30，老師們會按錯）。 */
     nav = [
       ['radar', '等你的' + (wait ? '（' + wait + '）' : '')],
       ['ms', '發派任務'],
-      ['classeco', RULES.SOLO ? '每一位' : '各組進度']
+      ['classeco', RULES.SOLO ? '每一位' : '各組進度'],
+      ['tclose', '結案' + (waitExit ? '（' + waitExit + '）' : ''), 'low']
     ];
   } else {
     var t = myTeam();
@@ -656,7 +660,7 @@ function sideBar() {
   var items = nav.map(function (n) {
     var on = S.page === n[0];
     var ic = ICONS[n[0]];
-    return '<a class="' + (on ? 'on' : '') + '" data-go="' + n[0] + '">' +
+    return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
       esc(n[1]) + '</a>';
   }).join('');
@@ -1014,6 +1018,25 @@ var ACTS = {
     var t = myTeam();
     actCancelExit(t.teamId);
     render(); say('收回來了。');
+  },
+
+  /* 老師確認一組完成之前先問一次（見 70-teacher.js 的 PAGES.tclose）。 */
+  closeconf: function (id) { DRAFT.closeConf = id; render(); },
+  closeno: function () { DRAFT.closeConf = null; render(); },
+
+  /* 老師刪掉派出去的任務（見 40-db.js 的 actWithdrawMs）：先問一次，再做。 */
+  msdel: function (id) { DRAFT.msDel = id; render(); },
+  msdelno: function () { DRAFT.msDel = null; render(); },
+  msdelyes: function (id) {
+    DRAFT.msDel = null;
+    var r = actWithdrawMs(id, S.who);
+    if (r.err) { render(); return say(r.err); }
+    render(); say('刪掉了。學生那邊看不到了，紀錄還留著。');
+  },
+  msrestore: function (id) {
+    var r = actRestoreMs(id, S.who);
+    if (r.err) { render(); return say(r.err); }
+    render(); say('放回去了。');
   },
 
   /* 老師開放／關掉學生那邊「我們做完了」的入口（見 63-pack.js）。 */

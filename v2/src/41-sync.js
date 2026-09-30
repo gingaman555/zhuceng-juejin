@@ -92,6 +92,18 @@ function syncCut(col, r) {
   return o;
 }
 
+/* 每一次寫入都帶的版本記號。
+
+   2026-09-29：還開著舊版分頁的機器沒辦法遠端更新，而它推的是整筆
+   （見 SYNC_MERGE 上面那一大段），會把別人交出去的狀態蓋掉。程式碼
+   碰不到那一台，但資料庫碰得到：規則只收帶著 v = 2 的寫入
+   （見 firestore.strict.rules），舊版不帶，所以寫不進去，不會再蓋掉任何人。
+   哪一天寫入的格式又要換，這個數字加一，舊的就被擋在門外。
+
+   所有寫入都在這個檔案的 syncBatch，只有兩個地方。加新的寫入路徑
+   一定要帶 v，不然規則切下去那一刻，那條路全班寫不進去。 */
+var SYNC_V = 2;
+
 /* 全部掛在同一個文件底下，之後要換版本的時候換這一段就好。 */
 var SYNC_ROOT = 'world/v1/';
 
@@ -113,6 +125,41 @@ function syncReady() {
    的 topEnd）。只問首頁那個 HTML，不碰任何 API，負擔跟同步比起來
    可以忽略。 */
 var SYNC_FRESH_MS = 600000; /* 十分鐘問一次，不用更勤——這不是急事 */
+/* ---------- 閒著的舊分頁，自己換成新的 ----------
+
+   2026-09-30：學生的分頁會一直開著（手機尤其是，鎖屏、切 app 都不會關）。
+   頂條那句「這一頁是舊版」要有人看到、點下去才有用。閒著的時候直接換，
+   不用等人。
+
+   什麼時候不換（換了就會丟東西）：
+     · 不在「休息的頁」：承諾、交作業、審核、派任務都有寫到一半的東西
+     · 正在打字（游標在輸入框）
+     · 有還沒送到雲端的改動（SYNC.fly）或上一批推送失敗（SYNC.err）——
+       換掉會讓這些改動消失
+
+   十分鐘內最多換一次（sessionStorage 記著），以免哪天伺服器回的版本記號
+   一直比頁面新，變成一頁一直重新整理。sessionStorage 用不了就不換。 */
+var SYNC_REST_PAGES = ['home', 'pack', 'eco', 'classeco', 'radar', 'codex'];
+function freshSafeToReload() {
+  if (typeof S === 'undefined' || SYNC_REST_PAGES.indexOf(S.page) < 0) return false;
+  if (SYNC.err) return false;
+  for (var k in SYNC.fly) if (Object.prototype.hasOwnProperty.call(SYNC.fly, k)) return false;
+  if (typeof document !== 'undefined') {
+    var a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) return false;
+  }
+  return true;
+}
+function freshAutoReload() {
+  if (typeof location === 'undefined' || typeof sessionStorage === 'undefined') return;
+  try {
+    var last = Number(sessionStorage.getItem('dungeon_autoreload') || 0);
+    if (Date.now() - last < 600000) return;
+    sessionStorage.setItem('dungeon_autoreload', String(Date.now()));
+  } catch (e) { return; }
+  location.reload();
+}
+
 function checkFresh() {
   if (typeof fetch !== 'function' || typeof BUILD_AT === 'undefined') return;
   if (typeof location === 'undefined') return;
@@ -120,9 +167,12 @@ function checkFresh() {
     .then(function (r) { return r.text(); })
     .then(function (t) {
       var m = t.match(/BUILD_AT = (\d+);/);
-      if (m && Number(m[1]) > BUILD_AT && !SYNC.stale) {
-        SYNC.stale = 1;
-        if (typeof render === 'function') render();
+      if (m && Number(m[1]) > BUILD_AT) {
+        if (!SYNC.stale) {
+          SYNC.stale = 1;
+          if (typeof render === 'function') render();
+        }
+        if (freshSafeToReload()) freshAutoReload();
       }
     })
     .catch(function () {});
@@ -304,7 +354,15 @@ function syncPush() {
   if (!jobs.length) return;
   /* 送出去、還沒回來的那幾筆，base 記著——這中間如果剛好收到別人的
      快照，syncTake 要靠它知道「本機這份哪幾格是我剛改的、不能被蓋掉」。 */
-  jobs.forEach(function (j) { if (j[1] !== null && j[2] !== undefined) SYNC.fly[j[0]] = j[2]; });
+  /* fly[p] 記的是「最早那一份還沒確定到雲端的 base」。連續兩次存檔、
+     第一次還沒回來（或斷線失敗了）的時候，第二次的 base 用它，不用
+     第二次當下的 SYNC.last——那一份已經包含第一次的改動，第一次要是
+     沒推成，就永遠沒有人知道它還沒推（2026-09-29 隨機測試量到：
+     斷線期間先交出去、再寫一句話，交出去那一步就這樣掉了）。 */
+  jobs.forEach(function (j) {
+    if (j[1] === null || j[2] === undefined) return;
+    if (j[0] in SYNC.fly) j[2] = SYNC.fly[j[0]]; else SYNC.fly[j[0]] = j[2];
+  });
   /* 這台裝置這次推不動的那幾筆（例如學生手上的 Classes），SYNC.last
      還是要記著雲端現在真正的樣子，不能被 now 直接蓋掉——蓋掉的話
      它會以為自己的（可能是舊的）那份才是基準，下一次比對就亂了。 */
@@ -330,7 +388,8 @@ function syncFail(chunk, e) {
      退回原本的 base，不是刪掉——刪掉的話下一次會被當成「新的一筆」
      整筆蓋上去，正是上面要避免的那件事。 */
   chunk.forEach(function (j) {
-    delete SYNC.fly[j[0]];
+    /* SYNC.last 已經被更新的快照或更新的一次存檔換掉了，就不是我的事
+       （那一次自己會處理）。fly 留著：下一次存檔還要用最早的 base。 */
     if (SYNC.last[j[0]] !== j[1]) return;
     if (j[2] === undefined) delete SYNC.last[j[0]]; else SYNC.last[j[0]] = j[2];
   });
@@ -341,20 +400,40 @@ function syncFail(chunk, e) {
    有 base 的更新走交易（讀雲端、只套我改的那幾格）；新的一筆、刪除、
    只上不下的 Events 沒有可以併的東西，照舊一批寫。 */
 function syncBatch(chunk) {
-  var plain = [], merge = [];
+  var plain = [], merge = [], create = [];
   chunk.forEach(function (j) {
-    (j[1] !== null && j[2] !== undefined && !SYNC_UP_ONLY[j[0].slice(0, j[0].indexOf('/'))] ? merge : plain).push(j);
+    var col = j[0].slice(0, j[0].indexOf('/'));
+    if (j[1] !== null && j[2] !== undefined && !SYNC_UP_ONLY[col]) merge.push(j);
+    else if (j[1] !== null && j[2] === undefined && col === 'Runs') create.push(j);
+    else plain.push(j);
   });
   if (plain.length) {
     var b = SYNC.db.batch();
     plain.forEach(function (j) {
       var ref = SYNC.db.doc(SYNC_ROOT + j[0]);
-      if (j[1] === null) b.delete(ref); else b.set(ref, { j: j[1] });
+      if (j[1] === null) b.delete(ref); else b.set(ref, { j: j[1], v: SYNC_V });
     });
     b.commit().then(function () {
-      plain.forEach(function (j) { delete SYNC.fly[j[0]]; });
+      plain.forEach(function (j) { if (SYNC.last[j[0]] === j[1]) delete SYNC.fly[j[0]]; });
       syncDone();
     }).catch(function (e) { syncFail(plain, e); });
+  }
+  /* 新的一筆 Run：雲端已經有同編號的就不寫（見 40-db.js 的 actCommit）。
+     編號固定之後，兩台同時按承諾寫的是同一個文件；晚到的那一台
+     （甚至是斷線很久才回來的）不能把已經交出去的那一筆蓋成新的。
+     不寫的那一台，下一份快照會把它本機那一份換成雲端的。 */
+  if (create.length) {
+    SYNC.db.runTransaction(function (tx) {
+      var refs = create.map(function (j) { return SYNC.db.doc(SYNC_ROOT + j[0]); });
+      return Promise.all(refs.map(function (r) { return tx.get(r); })).then(function (snaps) {
+        snaps.forEach(function (s, i) {
+          if (!s.exists) tx.set(refs[i], { j: create[i][1], v: SYNC_V });
+        });
+      });
+    }).then(function () {
+      create.forEach(function (j) { if (SYNC.last[j[0]] === j[1]) delete SYNC.fly[j[0]]; });
+      syncDone();
+    }).catch(function (e) { syncFail(create, e); });
   }
   if (merge.length) {
     SYNC.db.runTransaction(function (tx) {
@@ -363,11 +442,11 @@ function syncBatch(chunk) {
         snaps.forEach(function (s, i) {
           var cloud = s.exists ? s.data().j : null;
           var out = syncMergeStr(merge[i][2], merge[i][1], cloud);
-          if (out !== cloud) tx.set(refs[i], { j: out });
+          if (out !== cloud) tx.set(refs[i], { j: out, v: SYNC_V });
         });
       });
     }).then(function () {
-      merge.forEach(function (j) { delete SYNC.fly[j[0]]; });
+      merge.forEach(function (j) { if (SYNC.last[j[0]] === j[1]) delete SYNC.fly[j[0]]; });
       syncDone();
     }).catch(function (e) { syncFail(merge, e); });
   }
@@ -446,7 +525,13 @@ var SYNC_MERGE = {
    也就跟著好了。 */
 var SYNC_HEAL = {
   Runs: function (我的, 他的) {
-    if (!我的.submittedAt || 他的.submittedAt) return null;
+    /* 被蓋掉的兩種樣子：沒有交出時間，或是「進行中卻有交出時間」——
+       後者是別台機器拿著舊的 base 去併，只寫了交出時間、沒寫狀態
+       （2026-09-29 隨機測試量到），任何正常流程都不會出現。
+       老師收下（done）之後也一樣不會回頭。 */
+    var 交過 = 我的.submittedAt && (!他的.submittedAt || 他的.state === 'running');
+    var 收下 = 我的.state === 'done' && 他的.state !== 'done';
+    if (!交過 && !收下) return null;
     var out = {}, k;
     for (k in 他的) out[k] = 他的[k];
     for (k in 我的) if (k !== 'said') out[k] = 我的[k];
@@ -521,6 +606,8 @@ function syncTake(col, inc) {
   Object.keys(inc).forEach(function (id) {
     /* 記的是雲端本來那一份，不是併過的。 */
     SYNC.last[pre + id] = 雲[pre + id];
+    /* 從這一刻起 SYNC.last 就是雲端真正的樣子，fly 記的舊 base 用完了。 */
+    delete SYNC.fly[pre + id];
   });
   if (!hit) return;
   SYNC.hold = 1;

@@ -1,0 +1,34 @@
+rules_version = '2';
+
+/* 只收「新版」寫入的那一份規則（2026-09-29）。
+
+   還開著舊版分頁的機器推的是整筆、而且不帶 v，會把別人交出去的
+   狀態蓋回進行中（見 v2/src/41-sync.js 的 SYNC_V）。程式碼碰不到那些
+   分頁，資料庫碰得到：新增與更新一律要帶 v = 2，形狀只能是 { j, v }。
+   讀取照舊全開，所以舊分頁還看得到最新資料，只是寫不進去——
+   有 9/23 之後版本的舊分頁，頂條會亮「還沒傳到雲端」。
+
+   刪除照舊開著：清理腳本（cleanup-*.sh）要用，而且舊版本身不會亂刪。
+
+   ── 為什麼不直接改 firestore.rules ──
+
+   node deploy.js 每次都會把 firestore.rules 連同 hosting 一起推到兩個專案。
+   直接改那個檔案，等於下一次部署就把規則切下去——而切錯（新版有哪一條
+   寫入路徑漏了 v）的代價是全班同時寫不進去。所以這一份獨立存放，
+   單獨部署（見 firebase.strict.json）。確定要長期使用的時候，
+   把這一份的內容換進 firestore.rules，deploy.js 才不會把它蓋回全開。
+
+   要退回：npx firebase-tools deploy --only firestore:rules --project <專案> 
+   （用預設的 firebase.json，也就是全開那一份）。 */
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasOnly(['j', 'v'])
+        && request.resource.data.keys().hasAll(['j', 'v'])
+        && request.resource.data.v == 2
+        && request.resource.data.j is string;
+      allow delete: if true;
+    }
+  }
+}

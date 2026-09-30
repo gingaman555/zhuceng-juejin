@@ -877,7 +877,7 @@ function msStepLegend(m, sel, act) {
 PAGES.commit = function () {
   var t = myTeam();
   var m = msOf(S.p.id);
-  if (!m) return '<div class="card">找不到這一個任務。</div>';
+  if (!m || m.withdrawnAt) return '<div class="card">找不到這一個任務。</div>' + btn('回廊道', 'go:home', 'ghost');
   /* 他自己拆的那幾件。第一次進來用老師寫的分段當起點——
      老師沒寫就是一張白紙，那時候拆的人是他。 */
   if (!DRAFT.plan) {

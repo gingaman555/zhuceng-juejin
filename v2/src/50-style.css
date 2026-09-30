@@ -80,7 +80,7 @@ img{display:block}
 .side-head .n{font-size:22px;margin-top:5px}
 .side-head .s{font-size:22px;color:var(--dim);margin-top:5px}
 
-.nav{padding:11px 0;flex:1}
+.nav{padding:11px 0;flex:1;display:flex;flex-direction:column}
 .nav a{
   display:flex;align-items:center;gap:11px;padding:11px 22px;
   color:var(--dim);cursor:pointer;border-left:3px solid transparent;font-size:22px
@@ -90,6 +90,8 @@ img{display:block}
 .nav a .dot{width:11px;height:11px;background:currentColor;opacity:.55;flex:0 0 11px}
 .nav a.on .dot{opacity:1}
 .nav .gap{height:11px}
+/* 結案：一學期一次，放在最下面，跟上面三格隔開（老師會按錯，2026-09-30）。 */
+.nav a.low{margin-top:auto;border-top:1px solid var(--line);padding-top:22px;padding-bottom:22px;opacity:.85}
 
 .main{flex:1;min-width:0}
 .wrap{max-width:1540px;padding:33px 44px 88px}

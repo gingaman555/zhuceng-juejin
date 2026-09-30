@@ -468,6 +468,71 @@ be('第二件先交得出去', !!subP && subP.state === 'submitted', true);
 be('第一件還在進行中', runOf(tm.teamId, firstRun.msId).state, 'running');
 be('第二件的判定只讀它自己的兩個數字', RULES.judge(rP.est, subP.actual).key, subP.stamp);
 
+/* ══ 同一組同一件任務有兩筆 Run（2026-09-29）══
+
+   同組兩位隊友在不同裝置上同時按「承諾」，各建了一筆。本來系統只顯示
+   陣列裡第一筆，已經交出去的那筆排在後面，審核清單就是空的。 */
+H('同組同任務兩筆 Run：交出去的那筆不能被擋在後面');
+const msD = actPublish(kl.classId, { title: '兩筆的那一件', note: '', steps: [], due: 7, teams: [] });
+DB.Runs.push({ runId: 'RD1', teamId: tm.teamId, msId: msD.msId, state: 'running', est: 3, committedAt: 1000, said: {}, flags: [], plan: [], steps: [], stamp: null });
+DB.Runs.push({ runId: 'RD2', teamId: tm.teamId, msId: msD.msId, state: 'submitted', est: 1, committedAt: 2000, submittedAt: 3000, actual: 1, stamp: 'exact', said: {}, flags: [], plan: [], steps: [] });
+be('同一件任務，認進度最前面的那筆（已交出），不是陣列裡第一筆', runOf(tm.teamId, msD.msId).runId, 'RD2');
+be('審核清單看得到那一筆', radar(kl.classId).some(x => x.run.runId === 'RD2'), true);
+DB.Runs.reverse();
+be('陣列順序反過來，答案不變（每一台機器看到同一筆）', runOf(tm.teamId, msD.msId).runId, 'RD2');
+DB.Runs.push({ runId: 'RD3', teamId: tm.teamId, msId: msD.msId, state: 'done', est: 1, committedAt: 2500, submittedAt: 3100, actual: 1, stamp: 'exact', said: {}, flags: [], plan: [], steps: [] });
+be('老師收下的那筆比已交出的優先', runOf(tm.teamId, msD.msId).runId, 'RD3');
+be('已交出但排在後面的那筆，審核清單一樣列出來（不會悄悄不見）', radar(kl.classId).some(x => x.run.runId === 'RD2'), true);
+
+/* ══ 老師刪掉派出去的任務（2026-09-30）══
+
+   不是真的刪：學生看不到、審核清單看不到、不再擋住下一件、不算進深度與準度。
+   紀錄一筆都不動，可以放回去。 */
+H('老師刪掉派出去的任務');
+const msW = actPublish(kl.classId, { title: '要被刪掉的那一件', note: '', steps: [], due: 7, teams: [], mentorId: tea.userId });
+const rW = actCommit(tm.teamId, msW.msId, 2, [], [], 'wild', 'mid');
+const 深前 = depthOf(tm.teamId);
+actSubmit(tm.teamId, rW.runId, '');
+be('交出去之後審核清單看得到', radar(kl.classId).some(x => x.run.runId === rW.runId), true);
+be('交出去之後深度加一', depthOf(tm.teamId), 深前 + 1);
+be('學生不能刪', actWithdrawMs(msW.msId, stu[0].userId).err ? 1 : 0, 1);
+const wr = actWithdrawMs(msW.msId, tea.userId);
+be('老師刪得掉', !!wr.ms && !!wr.ms.withdrawnAt, true);
+be('學生那邊的任務清單沒有它', runsFor(tm.teamId).some(x => x.ms.msId === msW.msId), false);
+be('審核清單沒有它', radar(kl.classId).some(x => x.run.runId === rW.runId), false);
+be('不再算進深度', depthOf(tm.teamId), 深前);
+be('紀錄還在（一筆都沒動）', !!find('Runs', r => r.runId === rW.runId) && find('Runs', r => r.runId === rW.runId).state === 'submitted', true);
+be('再刪一次會回說已經刪掉', actWithdrawMs(msW.msId, tea.userId).err ? 1 : 0, 1);
+as(stu[0]); S.page = 'commit'; S.p = { id: msW.msId }; DRAFT = {};
+be('學生打開被刪掉的任務，找不到', PAGES.commit().indexOf('找不到這一個任務') >= 0, true);
+as(tea); S.page = 'ms'; S.p = null; DRAFT = {};
+let htmlMs = PAGES.ms();
+be('老師的任務頁，「刪掉的」那一區有它', htmlMs.indexOf('刪掉的（學生看不到）') >= 0 && htmlMs.indexOf('msrestore:' + msW.msId) >= 0, true);
+const rst = actRestoreMs(msW.msId, tea.userId);
+be('放得回去', !!rst.ms && !rst.ms.withdrawnAt, true);
+be('放回去之後學生那邊又有了', runsFor(tm.teamId).some(x => x.ms.msId === msW.msId), true);
+be('放回去之後又算進深度', depthOf(tm.teamId), 深前 + 1);
+DRAFT = {}; htmlMs = PAGES.ms();
+be('列上有「刪掉這一件」', htmlMs.indexOf('msdel:' + msW.msId) >= 0, true);
+DRAFT.msDel = msW.msId; htmlMs = PAGES.ms();
+be('按一下先問，不直接刪', htmlMs.indexOf('msdelyes:' + msW.msId) >= 0 && !find('Milestones', m => m.msId === msW.msId).withdrawnAt, true);
+
+H('結案搬到側欄最下面');
+as(tea); S.page = 'radar'; DRAFT = {};
+be('審核頁上方不再有「結案」分頁', PAGES.radar().indexOf('tq:exit') >= 0, false);
+const sb = sideBar();
+be('側欄有結案這一格', sb.indexOf('data-go="tclose"') >= 0, true);
+be('結案那一格標成 low（放在最下面、跟上面隔開）', /class="[^"]*low[^"]*" data-go="tclose"/.test(sb), true);
+be('結案是側欄的最後一格', sb.lastIndexOf('data-go="') === sb.indexOf('data-go="tclose"'), true);
+S.page = 'tclose'; DRAFT = {};
+const htmlC = PAGES.tclose();
+be('結案頁畫得出來，有「確認整個專案已完成」', htmlC.indexOf('確認整個專案已完成') >= 0, true);
+be('確認鍵不直接開門，要先問', htmlC.indexOf('closeconf:') >= 0 && htmlC.indexOf('openexit:' + tm.teamId + ',1') < 0, true);
+DRAFT.closeConf = tm.teamId;
+be('問了之後才有「對，整個專案完成了」', PAGES.tclose().indexOf('對，整個專案完成了') >= 0, true);
+be('結案頁開頭講清楚：確認的是整個專案，不是收作業', htmlC.indexOf('整個專案已經完成') >= 0 && htmlC.indexOf('不是收下一件作業') >= 0, true);
+be('學生進不了老師的結案頁', allowed(stu[0], 'tclose'), false);
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

@@ -28,7 +28,7 @@ PAGES.pack = function () {
   var rows = runsFor(t.teamId).slice().reverse();
   /* 重新想過的那幾趟也是紀錄——它們確實發生過，只是沒有判定。 */
   where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'rethought'; })
-    .forEach(function (r) { rows.push({ ms: msOf(r.msId), run: r }); });
+    .forEach(function (r) { if (runLive(r)) rows.push({ ms: msOf(r.msId), run: r }); });
 
   var H = [head('任務清單', '老師派過的每一件事', '')];
 

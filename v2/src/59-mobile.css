@@ -40,6 +40,8 @@
   }
   .nav a.on{border-top-color:var(--gold);background:var(--panel2)}
   .nav a .dot{width:8px;height:8px;flex:0 0 8px}
+  /* 結案：窄一點、靠右、左邊一條線隔開，不跟前三格擠成一樣寬。 */
+  .nav a.low{flex:0 0 auto;margin-top:0;border-top:3px solid transparent;border-left:1px solid var(--line);padding:11px 14px;opacity:.85}
 
   /* 底下那一列會蓋住內容，把位置留出來 */
   /* 22px 的字貼螢幕邊要留 22px，不然每一行都像被切到。 */

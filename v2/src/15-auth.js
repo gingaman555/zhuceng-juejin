@@ -144,6 +144,8 @@ var EV_SAY = {
   genrecov: function () { return '拿了一組救援碼'; },
   teacherrecov: function (e) { return '幫「' + (e.account || '') + '」補發了一組救援碼'; },
   researchersetpw: function (e) { return '研究者直接改了「' + (e.account || '') + '」的密碼'; },
+  withdrawms: function (e) { return '刪掉了派出去的「' + (e.title || '') + '」'; },
+  restorems: function (e) { return '把刪掉的「' + (e.title || '') + '」放回去'; },
   renameclass: function (e) { return '把班名從「' + (e.from || '') + '」改成「' + (e.name || '') + '」'; },
   mergeaccount: function (e) { return '把「' + (e.from || '') + '」接回「' + (e.to || '') + '」'; },
   joinclass:function (e) { return '加進「' + e.klass + '」'; },
@@ -783,7 +785,7 @@ function exportRuns(classId) {
         var dev = (r.actual && r.est) ? Math.abs(r.actual - r.est) / r.est : '';
         var by = r.wordBy ? userOf(r.wordBy) : null;
         rows.push([
-          t.name, t.project || '', m ? m.title : '', r.runId, r.state,
+          t.name, t.project || '', m ? m.title + (m.withdrawnAt ? '（老師已刪掉）' : '') : '', r.runId, r.state,
           r.est || '', r.actual || '', r.stamp || '',
           dev === '' ? '' : dev.toFixed(3),
           r.sure || '', pl.length ? 'Y' : 'N', pl.length, byOwn,
@@ -838,7 +840,7 @@ function exportItems(classId) {
           var 誰 = isAll(x.who) ? '全體' : (u ? u.name : '');
           var got = (r.spent || [])[i];
           rows.push([
-            t.name, m ? m.title : '', r.runId, i + 1, x.n,
+            t.name, m ? m.title + (m.withdrawnAt ? '（老師已刪掉）' : '') : '', r.runId, i + 1, x.n,
             誰, x.d || '', (got == null ? '' : got),
             (got == null || !x.d) ? '' : (got - x.d),
             x.byOwn ? 'Y' : 'N',

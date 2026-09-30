@@ -92,7 +92,7 @@ img{display:block}
 .side-head .n{font-size:22px;margin-top:5px}
 .side-head .s{font-size:22px;color:var(--dim);margin-top:5px}
 
-.nav{padding:11px 0;flex:1}
+.nav{padding:11px 0;flex:1;display:flex;flex-direction:column}
 .nav a{
   display:flex;align-items:center;gap:11px;padding:11px 22px;
   color:var(--dim);cursor:pointer;border-left:3px solid transparent;font-size:22px
@@ -102,6 +102,8 @@ img{display:block}
 .nav a .dot{width:11px;height:11px;background:currentColor;opacity:.55;flex:0 0 11px}
 .nav a.on .dot{opacity:1}
 .nav .gap{height:11px}
+/* 結案：一學期一次，放在最下面，跟上面三格隔開（老師會按錯，2026-09-30）。 */
+.nav a.low{margin-top:auto;border-top:1px solid var(--line);padding-top:22px;padding-bottom:22px;opacity:.85}
 
 .main{flex:1;min-width:0}
 .wrap{max-width:1540px;padding:33px 44px 88px}
@@ -5735,6 +5737,8 @@ button.side-head{
   }
   .nav a.on{border-top-color:var(--gold);background:var(--panel2)}
   .nav a .dot{width:8px;height:8px;flex:0 0 8px}
+  /* 結案：窄一點、靠右、左邊一條線隔開，不跟前三格擠成一樣寬。 */
+  .nav a.low{flex:0 0 auto;margin-top:0;border-top:3px solid transparent;border-left:1px solid var(--line);padding:11px 14px;opacity:.85}
 
   /* 底下那一列會蓋住內容，把位置留出來 */
   /* 22px 的字貼螢幕邊要留 22px，不然每一行都像被切到。 */
@@ -5974,7 +5978,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790679519652;
+var BUILD_AT = 1790731107687;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -7844,6 +7848,8 @@ var EV_SAY = {
   genrecov: function () { return '拿了一組救援碼'; },
   teacherrecov: function (e) { return '幫「' + (e.account || '') + '」補發了一組救援碼'; },
   researchersetpw: function (e) { return '研究者直接改了「' + (e.account || '') + '」的密碼'; },
+  withdrawms: function (e) { return '刪掉了派出去的「' + (e.title || '') + '」'; },
+  restorems: function (e) { return '把刪掉的「' + (e.title || '') + '」放回去'; },
   renameclass: function (e) { return '把班名從「' + (e.from || '') + '」改成「' + (e.name || '') + '」'; },
   mergeaccount: function (e) { return '把「' + (e.from || '') + '」接回「' + (e.to || '') + '」'; },
   joinclass:function (e) { return '加進「' + e.klass + '」'; },
@@ -8483,7 +8489,7 @@ function exportRuns(classId) {
         var dev = (r.actual && r.est) ? Math.abs(r.actual - r.est) / r.est : '';
         var by = r.wordBy ? userOf(r.wordBy) : null;
         rows.push([
-          t.name, t.project || '', m ? m.title : '', r.runId, r.state,
+          t.name, t.project || '', m ? m.title + (m.withdrawnAt ? '（老師已刪掉）' : '') : '', r.runId, r.state,
           r.est || '', r.actual || '', r.stamp || '',
           dev === '' ? '' : dev.toFixed(3),
           r.sure || '', pl.length ? 'Y' : 'N', pl.length, byOwn,
@@ -8538,7 +8544,7 @@ function exportItems(classId) {
           var 誰 = isAll(x.who) ? '全體' : (u ? u.name : '');
           var got = (r.spent || [])[i];
           rows.push([
-            t.name, m ? m.title : '', r.runId, i + 1, x.n,
+            t.name, m ? m.title + (m.withdrawnAt ? '（老師已刪掉）' : '') : '', r.runId, i + 1, x.n,
             誰, x.d || '', (got == null ? '' : got),
             (got == null || !x.d) ? '' : (got - x.d),
             x.byOwn ? 'Y' : 'N',
@@ -11713,10 +11719,29 @@ function ownRun(r) {
   return !!u && !!u.teamId && u.teamId === r.teamId;
 }
 
+/* 同一組同一件任務有兩筆的時候，認進度最前面的那一筆。
+
+   2026-09-29 量到：7 組在同一件任務上有兩筆 Run——同組兩位隊友在不同
+   裝置上同時按「承諾」，各建了一筆，沒有任何地方把它們併起來。本來
+   這裡回的是陣列裡的「第一筆」，而陣列順序跟各台機器收到資料的先後
+   有關，所以兩台機器看到的可能不是同一筆；更糟的是老師的審核清單
+   只從這裡看得到的那筆去找，已經交出去的那筆排在後面就永遠看不到
+   （審核清單整個是空的，但雲端有三筆等審核）。
+
+   現在：進度越前面的越優先（老師收下 > 已交出 > 退回 > 進行中），
+   一樣的話比較早承諾的優先。每一台機器算出同一個答案，而且不會
+   有「交出去了卻被一筆進行中的擋在後面」。 */
+var RUN_RANK = { done: 5, approved: 5, submitted: 4, judged: 4, back: 3, running: 2 };
 function runOf(teamId, msId) {
-  return find('Runs', function (r) {
+  var best = null;
+  where('Runs', function (r) {
     return r.teamId === teamId && r.msId === msId && r.state !== 'rethought';
+  }).forEach(function (r) {
+    if (!best) { best = r; return; }
+    var a = RUN_RANK[r.state] || 1, b = RUN_RANK[best.state] || 1;
+    if (a > b || (a === b && (r.committedAt || 0) < (best.committedAt || 0))) best = r;
   });
+  return best;
 }
 
 /* ---------- 一組看得到哪些任務 ---------- */
@@ -11732,6 +11757,9 @@ function msFor(teamId) {
   if (!t) return [];
   return where('Milestones', function (m) {
     if (m.classId !== t.classId) return false;
+    /* 老師刪掉的（見 actWithdrawMs）：學生那一邊、審核清單、各組進度都
+       當作沒有這一件。紀錄還在，只是不再被派給任何人。 */
+    if (m.withdrawnAt) return false;
     return !m.teams.length || m.teams.indexOf(teamId) >= 0;
   });
 }
@@ -11859,7 +11887,7 @@ function stallOf(teamId) {
    卻擋在作業品質的閘門後面。 */
 function depthOf(teamId) {
   return where('Runs', function (r) {
-    return r.teamId === teamId && !!r.stamp;
+    return r.teamId === teamId && !!r.stamp && runLive(r);
   }).length;
 }
 
@@ -11867,7 +11895,7 @@ function depthOf(teamId) {
    走是他自己的事，留下來是要有人看過的事。 */
 function sealedDepth(teamId) {
   return where('Runs', function (r) {
-    return r.teamId === teamId && (r.state === 'approved' || r.state === 'done');
+    return r.teamId === teamId && (r.state === 'approved' || r.state === 'done') && runLive(r);
   }).length;
 }
 
@@ -11894,7 +11922,7 @@ function signOf(teamId) {
 /* 這一組的預估準度紀錄——復盤與老師審閱都要看 */
 function accuracyOf(teamId) {
   var done = where('Runs', function (r) {
-    return r.teamId === teamId && r.stamp;
+    return r.teamId === teamId && r.stamp && runLive(r);
   });
   var n = { early: 0, exact: 0, late: 0 };
   done.forEach(function (r) { n[r.stamp] = (n[r.stamp] || 0) + 1; });
@@ -12095,7 +12123,19 @@ function actCommit(teamId, msId, est, flags, plan, zone, sure, estU, estN) {
   var 算的 = pl.length ? planDays(pl) : 0;
   if (pl.length && !(Number(est) > 0)) est = 算的;
   r = {
-    runId: nid('R'), teamId: teamId, msId: msId,
+    /* 編號由「哪一組、哪一件、第幾次」決定，不是隨機的。
+
+       2026-09-29 量到：7 組同一件任務有兩筆 Run——兩位隊友在不同裝置上
+       同時按承諾，各自隨機生了一個編號，雲端就有兩個文件。編號固定之後，
+       兩台同時按會寫到同一個文件（第二台看到已經有了就不再寫，見
+       41-sync.js 的 Runs 新增），不可能有兩筆。
+
+       第幾次：重新想過（rethought）的那幾筆留著當紀錄，重新承諾就是
+       新的一次，編號往後數，不會蓋掉它們。已經存在的舊 Run 編號不動。 */
+    runId: 'R_' + teamId + '_' + msId + '_' + (where('Runs', function (x) {
+      return x.teamId === teamId && x.msId === msId;
+    }).length + 1),
+    teamId: teamId, msId: msId,
     /* 要徑算出來是幾天。跟 est 一樣的時候代表他們沒有改。 */
     estCalc: 算的,
     state: 'running',
@@ -13035,6 +13075,53 @@ function actSawStamp(runId) {
    勾一段跟每天推進是兩件事，不要混：推進是「今天我來過」（一天一次），
    勾是「這一段做完了」（隨時，幾段都可以）。兩件事都不影響判定——
    判定從頭到尾只看承諾幾天與實際幾天。 */
+/* 這一趟掛的任務還在不在。老師刪掉的任務，底下的 Run 不再算進深度、
+   準度、走過幾趟——對學生來說那一件從來沒派過。Run 本身一筆都不動，
+   匯出的時候還在（見 15-auth.js 的 exportCsv，標題後面會註明）。 */
+function runLive(r) {
+  var m = r ? msOf(r.msId) : null;
+  return !(m && m.withdrawnAt);
+}
+
+/* ---------- 老師刪掉一件派出去的任務 ----------
+
+   2026-09-30：9/23 派的兩件，多數組因為交件被蓋掉、同組重複的 Run 卡在
+   舊的那一件，整整一週沒有辦法往下做。老師需要一個辦法把派出去的收回來。
+
+   ── 為什麼是「收回」不是真的刪 ──
+
+   底下掛著學生的承諾、實際天數、老師的話。這是研究資料，也是學生
+   走過的路；真的刪掉，就沒有辦法說清楚那一週發生了什麼。所以刪掉的
+   意思是：學生看不到、審核清單看不到、不再擋住下一件、不算進深度與準度。
+   紀錄一筆都不動，匯出照樣有（標題後面加「老師已刪掉」），而且隨時
+   可以放回去（actRestoreMs）。
+
+   誰做得到：這個班的老師。三位老師共同帶一個班，派的人不一定是刪的人
+   （見 teachersOf）。 */
+function actWithdrawMs(msId, teacherId) {
+  var t = userOf(teacherId), m = msOf(msId);
+  if (!t || t.role !== 'teacher') return { err: '只有老師刪得了派出去的任務。' };
+  if (!m || m.classId !== t.classId) return { err: '這件不是你們班的。' };
+  if (m.withdrawnAt) return { err: '這一件已經刪掉了。' };
+  m.withdrawnAt = now();
+  m.withdrawnBy = t.userId;
+  save();
+  logEvent('withdrawms', { by: t.userId, msId: msId, title: m.title });
+  return { ms: m };
+}
+
+function actRestoreMs(msId, teacherId) {
+  var t = userOf(teacherId), m = msOf(msId);
+  if (!t || t.role !== 'teacher') return { err: '只有老師放得回去。' };
+  if (!m || m.classId !== t.classId) return { err: '這件不是你們班的。' };
+  if (!m.withdrawnAt) return { err: '這一件沒有被刪掉。' };
+  m.withdrawnAt = 0;
+  m.withdrawnBy = '';
+  save();
+  logEvent('restorems', { by: t.userId, msId: msId, title: m.title });
+  return { ms: m };
+}
+
 function actPublish(classId, o) {
   var m = {
     msId: nid('M'), classId: classId,
@@ -13205,12 +13292,14 @@ function actSetRank(classId, on) {
    不是系統該替他們擋掉的事。 */
 function radar(classId, mentorId) {
   var out = [];
+  /* 每一筆已交出的 Run 都列，不從 runsFor 走：那一條一組一件任務只給
+     一筆，同組同任務有兩筆的時候，另一筆交出去了也看不到。 */
   teamsUnder(classId, mentorId).forEach(function (t) {
-    runsFor(t.teamId).forEach(function (x) {
-      if (x.run.state !== 'submitted') return;
-      out.push({
-        team: t, run: x.run, ms: x.ms,
-        waited: daysBetween(x.run.submittedAt, now())
+    msFor(t.teamId).forEach(function (m) {
+      where('Runs', function (r) {
+        return r.teamId === t.teamId && r.msId === m.msId && r.state === 'submitted';
+      }).forEach(function (r) {
+        out.push({ team: t, run: r, ms: m, waited: daysBetween(r.submittedAt, now()) });
       });
     });
   });
@@ -13761,6 +13850,18 @@ function syncCut(col, r) {
   return o;
 }
 
+/* 每一次寫入都帶的版本記號。
+
+   2026-09-29：還開著舊版分頁的機器沒辦法遠端更新，而它推的是整筆
+   （見 SYNC_MERGE 上面那一大段），會把別人交出去的狀態蓋掉。程式碼
+   碰不到那一台，但資料庫碰得到：規則只收帶著 v = 2 的寫入
+   （見 firestore.strict.rules），舊版不帶，所以寫不進去，不會再蓋掉任何人。
+   哪一天寫入的格式又要換，這個數字加一，舊的就被擋在門外。
+
+   所有寫入都在這個檔案的 syncBatch，只有兩個地方。加新的寫入路徑
+   一定要帶 v，不然規則切下去那一刻，那條路全班寫不進去。 */
+var SYNC_V = 2;
+
 /* 全部掛在同一個文件底下，之後要換版本的時候換這一段就好。 */
 var SYNC_ROOT = 'world/v2/';　/* 這一個站自己的資料 */
 
@@ -13782,6 +13883,41 @@ function syncReady() {
    的 topEnd）。只問首頁那個 HTML，不碰任何 API，負擔跟同步比起來
    可以忽略。 */
 var SYNC_FRESH_MS = 600000; /* 十分鐘問一次，不用更勤——這不是急事 */
+/* ---------- 閒著的舊分頁，自己換成新的 ----------
+
+   2026-09-30：學生的分頁會一直開著（手機尤其是，鎖屏、切 app 都不會關）。
+   頂條那句「這一頁是舊版」要有人看到、點下去才有用。閒著的時候直接換，
+   不用等人。
+
+   什麼時候不換（換了就會丟東西）：
+     · 不在「休息的頁」：承諾、交作業、審核、派任務都有寫到一半的東西
+     · 正在打字（游標在輸入框）
+     · 有還沒送到雲端的改動（SYNC.fly）或上一批推送失敗（SYNC.err）——
+       換掉會讓這些改動消失
+
+   十分鐘內最多換一次（sessionStorage 記著），以免哪天伺服器回的版本記號
+   一直比頁面新，變成一頁一直重新整理。sessionStorage 用不了就不換。 */
+var SYNC_REST_PAGES = ['home', 'pack', 'eco', 'classeco', 'radar', 'codex'];
+function freshSafeToReload() {
+  if (typeof S === 'undefined' || SYNC_REST_PAGES.indexOf(S.page) < 0) return false;
+  if (SYNC.err) return false;
+  for (var k in SYNC.fly) if (Object.prototype.hasOwnProperty.call(SYNC.fly, k)) return false;
+  if (typeof document !== 'undefined') {
+    var a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) return false;
+  }
+  return true;
+}
+function freshAutoReload() {
+  if (typeof location === 'undefined' || typeof sessionStorage === 'undefined') return;
+  try {
+    var last = Number(sessionStorage.getItem('dungeon_autoreload') || 0);
+    if (Date.now() - last < 600000) return;
+    sessionStorage.setItem('dungeon_autoreload', String(Date.now()));
+  } catch (e) { return; }
+  location.reload();
+}
+
 function checkFresh() {
   if (typeof fetch !== 'function' || typeof BUILD_AT === 'undefined') return;
   if (typeof location === 'undefined') return;
@@ -13789,9 +13925,12 @@ function checkFresh() {
     .then(function (r) { return r.text(); })
     .then(function (t) {
       var m = t.match(/BUILD_AT = (\d+);/);
-      if (m && Number(m[1]) > BUILD_AT && !SYNC.stale) {
-        SYNC.stale = 1;
-        if (typeof render === 'function') render();
+      if (m && Number(m[1]) > BUILD_AT) {
+        if (!SYNC.stale) {
+          SYNC.stale = 1;
+          if (typeof render === 'function') render();
+        }
+        if (freshSafeToReload()) freshAutoReload();
       }
     })
     .catch(function () {});
@@ -13973,7 +14112,15 @@ function syncPush() {
   if (!jobs.length) return;
   /* 送出去、還沒回來的那幾筆，base 記著——這中間如果剛好收到別人的
      快照，syncTake 要靠它知道「本機這份哪幾格是我剛改的、不能被蓋掉」。 */
-  jobs.forEach(function (j) { if (j[1] !== null && j[2] !== undefined) SYNC.fly[j[0]] = j[2]; });
+  /* fly[p] 記的是「最早那一份還沒確定到雲端的 base」。連續兩次存檔、
+     第一次還沒回來（或斷線失敗了）的時候，第二次的 base 用它，不用
+     第二次當下的 SYNC.last——那一份已經包含第一次的改動，第一次要是
+     沒推成，就永遠沒有人知道它還沒推（2026-09-29 隨機測試量到：
+     斷線期間先交出去、再寫一句話，交出去那一步就這樣掉了）。 */
+  jobs.forEach(function (j) {
+    if (j[1] === null || j[2] === undefined) return;
+    if (j[0] in SYNC.fly) j[2] = SYNC.fly[j[0]]; else SYNC.fly[j[0]] = j[2];
+  });
   /* 這台裝置這次推不動的那幾筆（例如學生手上的 Classes），SYNC.last
      還是要記著雲端現在真正的樣子，不能被 now 直接蓋掉——蓋掉的話
      它會以為自己的（可能是舊的）那份才是基準，下一次比對就亂了。 */
@@ -13999,7 +14146,8 @@ function syncFail(chunk, e) {
      退回原本的 base，不是刪掉——刪掉的話下一次會被當成「新的一筆」
      整筆蓋上去，正是上面要避免的那件事。 */
   chunk.forEach(function (j) {
-    delete SYNC.fly[j[0]];
+    /* SYNC.last 已經被更新的快照或更新的一次存檔換掉了，就不是我的事
+       （那一次自己會處理）。fly 留著：下一次存檔還要用最早的 base。 */
     if (SYNC.last[j[0]] !== j[1]) return;
     if (j[2] === undefined) delete SYNC.last[j[0]]; else SYNC.last[j[0]] = j[2];
   });
@@ -14010,20 +14158,40 @@ function syncFail(chunk, e) {
    有 base 的更新走交易（讀雲端、只套我改的那幾格）；新的一筆、刪除、
    只上不下的 Events 沒有可以併的東西，照舊一批寫。 */
 function syncBatch(chunk) {
-  var plain = [], merge = [];
+  var plain = [], merge = [], create = [];
   chunk.forEach(function (j) {
-    (j[1] !== null && j[2] !== undefined && !SYNC_UP_ONLY[j[0].slice(0, j[0].indexOf('/'))] ? merge : plain).push(j);
+    var col = j[0].slice(0, j[0].indexOf('/'));
+    if (j[1] !== null && j[2] !== undefined && !SYNC_UP_ONLY[col]) merge.push(j);
+    else if (j[1] !== null && j[2] === undefined && col === 'Runs') create.push(j);
+    else plain.push(j);
   });
   if (plain.length) {
     var b = SYNC.db.batch();
     plain.forEach(function (j) {
       var ref = SYNC.db.doc(SYNC_ROOT + j[0]);
-      if (j[1] === null) b.delete(ref); else b.set(ref, { j: j[1] });
+      if (j[1] === null) b.delete(ref); else b.set(ref, { j: j[1], v: SYNC_V });
     });
     b.commit().then(function () {
-      plain.forEach(function (j) { delete SYNC.fly[j[0]]; });
+      plain.forEach(function (j) { if (SYNC.last[j[0]] === j[1]) delete SYNC.fly[j[0]]; });
       syncDone();
     }).catch(function (e) { syncFail(plain, e); });
+  }
+  /* 新的一筆 Run：雲端已經有同編號的就不寫（見 40-db.js 的 actCommit）。
+     編號固定之後，兩台同時按承諾寫的是同一個文件；晚到的那一台
+     （甚至是斷線很久才回來的）不能把已經交出去的那一筆蓋成新的。
+     不寫的那一台，下一份快照會把它本機那一份換成雲端的。 */
+  if (create.length) {
+    SYNC.db.runTransaction(function (tx) {
+      var refs = create.map(function (j) { return SYNC.db.doc(SYNC_ROOT + j[0]); });
+      return Promise.all(refs.map(function (r) { return tx.get(r); })).then(function (snaps) {
+        snaps.forEach(function (s, i) {
+          if (!s.exists) tx.set(refs[i], { j: create[i][1], v: SYNC_V });
+        });
+      });
+    }).then(function () {
+      create.forEach(function (j) { if (SYNC.last[j[0]] === j[1]) delete SYNC.fly[j[0]]; });
+      syncDone();
+    }).catch(function (e) { syncFail(create, e); });
   }
   if (merge.length) {
     SYNC.db.runTransaction(function (tx) {
@@ -14032,11 +14200,11 @@ function syncBatch(chunk) {
         snaps.forEach(function (s, i) {
           var cloud = s.exists ? s.data().j : null;
           var out = syncMergeStr(merge[i][2], merge[i][1], cloud);
-          if (out !== cloud) tx.set(refs[i], { j: out });
+          if (out !== cloud) tx.set(refs[i], { j: out, v: SYNC_V });
         });
       });
     }).then(function () {
-      merge.forEach(function (j) { delete SYNC.fly[j[0]]; });
+      merge.forEach(function (j) { if (SYNC.last[j[0]] === j[1]) delete SYNC.fly[j[0]]; });
       syncDone();
     }).catch(function (e) { syncFail(merge, e); });
   }
@@ -14115,7 +14283,13 @@ var SYNC_MERGE = {
    也就跟著好了。 */
 var SYNC_HEAL = {
   Runs: function (我的, 他的) {
-    if (!我的.submittedAt || 他的.submittedAt) return null;
+    /* 被蓋掉的兩種樣子：沒有交出時間，或是「進行中卻有交出時間」——
+       後者是別台機器拿著舊的 base 去併，只寫了交出時間、沒寫狀態
+       （2026-09-29 隨機測試量到），任何正常流程都不會出現。
+       老師收下（done）之後也一樣不會回頭。 */
+    var 交過 = 我的.submittedAt && (!他的.submittedAt || 他的.state === 'running');
+    var 收下 = 我的.state === 'done' && 他的.state !== 'done';
+    if (!交過 && !收下) return null;
     var out = {}, k;
     for (k in 他的) out[k] = 他的[k];
     for (k in 我的) if (k !== 'said') out[k] = 我的[k];
@@ -14190,6 +14364,8 @@ function syncTake(col, inc) {
   Object.keys(inc).forEach(function (id) {
     /* 記的是雲端本來那一份，不是併過的。 */
     SYNC.last[pre + id] = 雲[pre + id];
+    /* 從這一刻起 SYNC.last 就是雲端真正的樣子，fly 記的舊 base 用完了。 */
+    delete SYNC.fly[pre + id];
   });
   if (!hit) return;
   SYNC.hold = 1;
@@ -15240,7 +15416,7 @@ var PAGE_TITLE = {
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
   pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
   person: '角色', who: '挑角色', battle: '交作業', story: '故事',
-  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', tclose: '結案',
   rs: '名單', events: '紀錄'
 };
 function pageTitle(page) {
@@ -15254,7 +15430,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher', rspw: 'researcher'
 };
 function allowed(u, page) {
@@ -15745,11 +15921,15 @@ function sideBar() {
        那一格因此不叫「審核」——審核是頁面裡兩個切換的其中一個，
        同一個詞當兩種範圍會讓「審核（5）」點進去變成「審核（4）」。
        叫它頁面真正在講的事：有幾件在等你。 */
-    var wait = radar(u.classId).length + exitQueue(u.classId).length;
+    var wait = radar(u.classId).length;
+    var waitExit = exitQueue(u.classId).length;
+    /* 結案獨立一格，放在最下面（第三個元素 'low'）：一學期一次的事，
+       不跟一週好幾次的審核擺在一起（2026-09-30，老師們會按錯）。 */
     nav = [
       ['radar', '等你的' + (wait ? '（' + wait + '）' : '')],
       ['ms', '發派任務'],
-      ['classeco', RULES.SOLO ? '每一位' : '各組進度']
+      ['classeco', RULES.SOLO ? '每一位' : '各組進度'],
+      ['tclose', '結案' + (waitExit ? '（' + waitExit + '）' : ''), 'low']
     ];
   } else {
     var t = myTeam();
@@ -15775,7 +15955,7 @@ function sideBar() {
   var items = nav.map(function (n) {
     var on = S.page === n[0];
     var ic = ICONS[n[0]];
-    return '<a class="' + (on ? 'on' : '') + '" data-go="' + n[0] + '">' +
+    return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
       esc(n[1]) + '</a>';
   }).join('');
@@ -16133,6 +16313,25 @@ var ACTS = {
     var t = myTeam();
     actCancelExit(t.teamId);
     render(); say('收回來了。');
+  },
+
+  /* 老師確認一組完成之前先問一次（見 70-teacher.js 的 PAGES.tclose）。 */
+  closeconf: function (id) { DRAFT.closeConf = id; render(); },
+  closeno: function () { DRAFT.closeConf = null; render(); },
+
+  /* 老師刪掉派出去的任務（見 40-db.js 的 actWithdrawMs）：先問一次，再做。 */
+  msdel: function (id) { DRAFT.msDel = id; render(); },
+  msdelno: function () { DRAFT.msDel = null; render(); },
+  msdelyes: function (id) {
+    DRAFT.msDel = null;
+    var r = actWithdrawMs(id, S.who);
+    if (r.err) { render(); return say(r.err); }
+    render(); say('刪掉了。學生那邊看不到了，紀錄還留著。');
+  },
+  msrestore: function (id) {
+    var r = actRestoreMs(id, S.who);
+    if (r.err) { render(); return say(r.err); }
+    render(); say('放回去了。');
   },
 
   /* 老師開放／關掉學生那邊「我們做完了」的入口（見 63-pack.js）。 */
@@ -18952,7 +19151,7 @@ function msStepLegend(m, sel, act) {
 PAGES.commit = function () {
   var t = myTeam();
   var m = msOf(S.p.id);
-  if (!m) return '<div class="card">找不到這一個任務。</div>';
+  if (!m || m.withdrawnAt) return '<div class="card">找不到這一個任務。</div>' + btn('回廊道', 'go:home', 'ghost');
   /* 他自己拆的那幾件。第一次進來用老師寫的分段當起點——
      老師沒寫就是一張白紙，那時候拆的人是他。 */
   if (!DRAFT.plan) {
@@ -21464,7 +21663,7 @@ PAGES.pack = function () {
   var rows = runsFor(t.teamId).slice().reverse();
   /* 重新想過的那幾趟也是紀錄——它們確實發生過，只是沒有判定。 */
   where('Runs', function (r) { return r.teamId === t.teamId && r.state === 'rethought'; })
-    .forEach(function (r) { rows.push({ ms: msOf(r.msId), run: r }); });
+    .forEach(function (r) { if (runLive(r)) rows.push({ ms: msOf(r.msId), run: r }); });
 
   var H = [head('任務清單', '老師派過的每一件事', '')];
 
@@ -22186,7 +22385,7 @@ function feedOf(classId, limit) {
   });
 
   /* 老師派的 */
-  where('Milestones', function (m) { return m.classId === classId; })
+  where('Milestones', function (m) { return m.classId === classId && !m.withdrawnAt; })
     .forEach(function (m) { out.push({ at: m.at, kind: 'pub', ms: m }); });
 
   out.sort(function (a, b) { return b.at - a.at; });
@@ -24157,33 +24356,7 @@ PAGES.radar = function () {
 
      RULES.NEGOTIATE 關著的話連那一行都不出現，而且不管 DRAFT 記著什麼
      都退回「審核」——不然關掉之前停在那一格的人會落在一個空白頁。 */
-  var tq = DRAFT.tq === 'exit' ? 'exit'
-    : ((DRAFT.tq === 'ask' && RULES.NEGOTIATE) ? 'ask' : 'rev');
-  H.push('<div class="segs">');
-  /* 這一格對老師叫「結案」，不叫「出口」，也不叫「完成專案」。
-
-     出口是學生那一邊的東西：廊道盡頭一扇門，開了他才走得上去。
-     老師這一邊做的不是開門，是判斷「這一組整個專案結束了沒」——
-     那是一學期一次、看一整條路的決定。
-
-     ── 2026-09-23：「完成專案」改名「結案」──
-
-     老師在找「有沒有人交東西」的時候，「完成專案」四個字讀起來
-     太像「有人完成了一件事」，會被當成審核的同義詞點進去，
-     點進去才發現問錯格——那裡問的是整個專案，不是一件任務。
-     「結案」不跟「審核」共用「完成」這個字，兩格才分得開。
-
-     老師端其餘的字都是白話（審核、退回、收下），只有這一格用了世界觀
-     的詞，而老師沒有走過那條廊道，那個詞對他不指任何東西。
-
-     門還留在說明裡：那是他按下去之後學生會看到的事，講出來他才知道
-     自己剛剛做了什麼。 */
-  [['rev', '審核', rows.length], ['exit', '結案', out.length]].forEach(function (g) {
-    H.push('<button class="seg' + (tq === g[0] ? ' on' : '') +
-      '" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'tq:' + g[0] })) +
-      '\'>' + esc(g[1]) + (g[2] ? '（' + g[2] + '）' : '') + '</button>');
-  });
-  H.push('</div>');
+  var tq = (DRAFT.tq === 'ask' && RULES.NEGOTIATE) ? 'ask' : 'rev';
 
   if (tq === 'ask') {
     /* 他們剛說要花幾天。
@@ -24215,62 +24388,6 @@ PAGES.radar = function () {
     return H.join('');
   }
 
-  if (tq === 'exit') {
-    /* 全班每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
-       所以他要能主動開，不是只能回應。
-
-       有說的排在前面：那是一個訊號，不是一道關卡。 */
-    var mine = teamsUnder(u.classId, u.userId).slice().sort(function (a, b) {
-      return (b.exitAsk || 0) - (a.exitAsk || 0);
-    });
-    H.push(head('結案', '你確認了，他們才結束得了', ''));
-
-    /* 開放／關掉學生那邊「我們做完了」的入口。
-       2026-09-23：不少學生把那顆鍵當成一般的「交作業」按下去——
-       它整學期都在，可是一學期裡大半時間根本還沒到結案的時候。
-       開學就先關著，真的要進入結案階段再開，學生那邊那張卡才會
-       出現（見 63-pack.js）。已經說過、或已經回過「現在還不是時候」
-       的不受這個開關影響，那是已經在走的流程。 */
-    var kl0 = classOf(u);
-    H.push('<div class="card">');
-    H.push('<div class="eyebrow">學生那邊看不看得到「我們做完了」</div>');
-    H.push('<p class="dim">' + (kl0.exitOpen
-      ? '開著。學生任務清單最下面看得到那顆鍵。'
-      : '關著。學生那邊還沒有這個選項，不會誤按到。') + '</p>');
-    H.push(btn(kl0.exitOpen ? '關掉' : '開放結案', 'exitopenset:' + (kl0.exitOpen ? 0 : 1),
-      kl0.exitOpen ? 'ghost' : ''));
-    H.push('</div>');
-
-    mine.forEach(function (t) {
-      var acc = accuracyOf(t.teamId);
-      H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
-      if (t.exitAsk) H.push('<div class="eyebrow lit">他們說做完了</div>');
-      H.push('<h2>' + esc(t.project || '（還沒定）') + '</h2>');
-      H.push('<p class="dim">' + esc(t.name) + '　·　走完 ' +
-        depthOf(t.teamId) + ' 個任務</p>');
-      if (acc.total) H.push(accBar(acc));
-
-      if (t.leftAt) {
-        H.push('<p class="dim">他們走出去了。</p>');
-      } else if (t.exitOk) {
-        /* 確認了但還沒走。走出去那一下是他們自己按的——
-           走出去該是他們的動作，不是老師代勞的。 */
-        H.push('<p class="dim">確認過了。門開著，等他們自己走上去。</p>');
-        H.push(btn('取消確認', 'openexit:' + t.teamId + ',0', 'ghost'));
-      } else {
-        H.push('<div class="row">');
-        /* 鍵上寫的是這個決定叫什麼，說明那一行才講它在學生那邊長什麼樣
-           ——鍵要短到一眼讀完，而「門」不是老師要做的事。 */
-        H.push(btn('確認他們完成了', 'openexit:' + t.teamId + ',1', 'big'));
-        /* 「現在還不是時候」只對有說過的那幾組出現——沒說過的組
-           沒有東西要回。 */
-        if (t.exitAsk) H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
-        H.push('</div>');
-      }
-      H.push('</div>');
-    });
-    return H.join('');
-  }
 
   /* 說明句拿掉：清單本來就照等最久排。 */
   H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '沒有等你的', ''));
@@ -24304,7 +24421,7 @@ PAGES.radar = function () {
        沒有人在那裡等他。 */
     H.push(out.length
       ? '<p class="dim">這裡沒有要看的。有 ' + out.length +
-        ' 組說他們做完了，在「結案」那一格。</p>'
+        ' 組說他們做完了，在左邊最下面的「結案」。</p>'
       : '<p class="dim">沒有人在等你。去發一個任務——寫要交什麼就好。</p>');
     H.push('<div class="row">');
     H.push(btn('去發一個任務', 'go:ms', 'big'));
@@ -24341,6 +24458,86 @@ PAGES.radar = function () {
 
   /* 底下本來還有一塊「全班現在」，是各組進度的縮小版——
      而各組進度就在側欄第三格。同一件事說兩遍，先出現的是雜訊。 */
+  return H.join('');
+};
+
+/* ---------- 結案 ----------
+
+   2026-09-30：本來這一格是審核頁最上面的分頁（審核｜結案），兩顆並排在
+   老師每次進來第一眼看到的位置，老師們也會按錯。搬到左邊側欄最下面，
+   跟上面三格（等你的、發派任務、各組進度）隔開——結案是一學期一次的事，
+   不該跟一週好幾次的審核擺在同一排。 */
+PAGES.tclose = function () {
+  var u = me();
+  var H = [];
+    /* 全班每一組都在，不是只有「說了做完了」的那幾組——門是他開的，
+       所以他要能主動開，不是只能回應。
+
+       有說的排在前面：那是一個訊號，不是一道關卡。 */
+    var mine = teamsUnder(u.classId, u.userId).slice().sort(function (a, b) {
+      return (b.exitAsk || 0) - (a.exitAsk || 0);
+    });
+    H.push(head('結案', '整個專案完成了，才在這裡確認', ''));
+    /* 2026-09-30：老師們會按錯，因為這一頁沒有講清楚它確認的是什麼。
+       它確認的是「這一組整個專案結束了」，不是「收下一件作業」——
+       收作業在左邊「等你的」。這一張卡放在最上面，先講這一件事。 */
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">先看這個</div>');
+    H.push('<p>這裡確認的是<b>整個專案已經完成</b>，不是收下一件作業。</p>');
+    H.push('<p class="dim">要收作業，請到左邊「等你的」。只有這一組的整個專案真的做完了，才按下面的「確認整個專案已完成」。按了之後，他們那邊廊道盡頭的出口就會打開，他們就可以結束專案。</p>');
+    H.push('</div>');
+
+    /* 開放／關掉學生那邊「我們做完了」的入口。
+       2026-09-23：不少學生把那顆鍵當成一般的「交作業」按下去——
+       它整學期都在，可是一學期裡大半時間根本還沒到結案的時候。
+       開學就先關著，真的要進入結案階段再開，學生那邊那張卡才會
+       出現（見 63-pack.js）。已經說過、或已經回過「現在還不是時候」
+       的不受這個開關影響，那是已經在走的流程。 */
+    var kl0 = classOf(u);
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">學生那邊看不看得到「我們做完了」</div>');
+    H.push('<p class="dim">' + (kl0.exitOpen
+      ? '開著。學生任務清單最下面看得到那顆鍵。'
+      : '關著。學生那邊還沒有這個選項，不會誤按到。') + '</p>');
+    H.push(btn(kl0.exitOpen ? '關掉' : '開放結案', 'exitopenset:' + (kl0.exitOpen ? 0 : 1),
+      kl0.exitOpen ? 'ghost' : ''));
+    H.push('</div>');
+
+    mine.forEach(function (t) {
+      var acc = accuracyOf(t.teamId);
+      H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
+      if (t.exitAsk) H.push('<div class="eyebrow lit">他們說整個專案做完了</div>');
+      H.push('<h2>' + esc(t.project || '（還沒定）') + '</h2>');
+      H.push('<p class="dim">' + esc(t.name) + '　·　走完 ' +
+        depthOf(t.teamId) + ' 個任務</p>');
+      if (acc.total) H.push(accBar(acc));
+
+      if (t.leftAt) {
+        H.push('<p class="dim">他們走出去了。</p>');
+      } else if (t.exitOk) {
+        /* 確認了但還沒走。走出去那一下是他們自己按的——
+           走出去該是他們的動作，不是老師代勞的。 */
+        H.push('<p class="dim">確認過了。門開著，等他們自己走上去。</p>');
+        H.push(btn('取消確認', 'openexit:' + t.teamId + ',0', 'ghost'));
+      } else {
+        H.push('<div class="row">');
+        /* 鍵上寫的是這個決定叫什麼，說明那一行才講它在學生那邊長什麼樣
+           ——鍵要短到一眼讀完，而「門」不是老師要做的事。 */
+        /* 確認要問一次：這一顆按下去，學生那邊廊道盡頭的門就開了。 */
+        if (DRAFT.closeConf === t.teamId) {
+          H.push('<p class="dim">確定「' + esc(t.name) + '」的<b>整個專案</b>已經完成了嗎？按下去，他們那邊的出口就會打開。</p>');
+          H.push(btn('對，整個專案完成了', 'openexit:' + t.teamId + ',1', 'big'));
+          H.push(btn('先不要', 'closeno', 'ghost'));
+        } else {
+          H.push(btn('確認整個專案已完成', 'closeconf:' + t.teamId, 'big'));
+        }
+        /* 「現在還不是時候」只對有說過的那幾組出現——沒說過的組
+           沒有東西要回。 */
+        if (t.exitAsk) H.push(btn('現在還不是時候', 'denyexit:' + t.teamId, 'ghost'));
+        H.push('</div>');
+      }
+      H.push('</div>');
+    });
   return H.join('');
 };
 
@@ -24682,10 +24879,12 @@ PAGES.ms = function () {
 
      誰派的印在那一列上。要不要跟人家的錯開，是他看得到之後
      自己會做的判斷——這一頁的工作是讓他做得成那個判斷。 */
-  var list = where('Milestones', function (m) {
+  var all = where('Milestones', function (m) {
     return m.classId === u.classId;
   })
     .sort(function (a, b) { return b.at - a.at; });
+  var list = all.filter(function (m) { return !m.withdrawnAt; });
+  var gone = all.filter(function (m) { return !!m.withdrawnAt; });
   var teams = teamsUnder(u.classId, u.userId);
   var to = DRAFT.to || [];
 
@@ -24799,6 +24998,14 @@ PAGES.ms = function () {
         esc(dueSay(m)) + (di.past ? '　過了' : '') + '</span>');
     }
     H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
+    /* 刪掉：兩步。按一下先問，因為學生那邊會馬上少一件。 */
+    if (DRAFT.msDel === m.msId) {
+      H.push('<p class="dim msr-ask">學生那邊會不見，他們已經承諾、交出去的紀錄還在，隨時可以放回來。確定嗎？</p>');
+      H.push(btn('對，刪掉', 'msdelyes:' + m.msId, ''));
+      H.push(btn('先不要', 'msdelno', 'ghost'));
+    } else {
+      H.push(btn('刪掉這一件', 'msdel:' + m.msId, 'ghost'));
+    }
     /* 這裡本來還有一行「甲 6→6　乙 3→9　丙 7→7　丁 5→5」——每一組
        承諾幾天、實際幾天。拿掉了，兩個理由：
 
@@ -24831,6 +25038,20 @@ PAGES.ms = function () {
     H.push('</div>');
   });
   H.push('</div></div>');
+
+  /* 刪掉的：還在這裡，放得回去。學生那邊看不到它們。 */
+  if (gone.length) {
+    H.push('<div class="card"><div class="eyebrow">刪掉的（學生看不到）</div><div class="rec-list">');
+    gone.forEach(function (m) {
+      var got2 = where('Runs', function (r) { return r.msId === m.msId; }).length;
+      H.push('<div class="msr">');
+      H.push('<b>' + esc(m.title) + '</b>');
+      H.push('<span class="msr-n">' + got2 + ' 筆紀錄還留著</span>');
+      H.push(btn('放回去', 'msrestore:' + m.msId, 'ghost'));
+      H.push('</div>');
+    });
+    H.push('</div></div>');
+  }
   return H.join('');
 };
 
