@@ -160,6 +160,18 @@ function freshAutoReload() {
   location.reload();
 }
 
+/* 分頁開太久也換，不管有沒有新版。
+
+   checkFresh 只在「伺服器有更新的版本」時才換。可是舊分頁的問題不只是
+   程式碼舊——放了幾天的分頁，本機那份資料也是幾天前的，一被叫醒就拿著
+   舊資料動作。所以開超過四小時、又閒著、又在休息的頁，就換一次
+   （見 freshSafeToReload 的條件）。手機從鎖屏醒來的那一刻也檢查一次，
+   那正是「醒來的第一下動作拿著舊資料」發生的時候。 */
+var SYNC_LOADED = Date.now();
+var SYNC_MAX_AGE = 4 * 3600000;
+function tabTooOld() { return Date.now() - SYNC_LOADED > SYNC_MAX_AGE; }
+function tabAgeCheck() { if (tabTooOld() && freshSafeToReload()) freshAutoReload(); }
+
 function checkFresh() {
   if (typeof fetch !== 'function' || typeof BUILD_AT === 'undefined') return;
   if (typeof location === 'undefined') return;
@@ -180,7 +192,12 @@ function checkFresh() {
 function checkFreshStart() {
   if (typeof setInterval !== 'function') return;
   checkFresh();
-  setInterval(checkFresh, SYNC_FRESH_MS);
+  setInterval(function () { checkFresh(); tabAgeCheck(); }, SYNC_FRESH_MS);
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) { checkFresh(); tabAgeCheck(); }
+    });
+  }
 }
 
 function syncTrouble(e) {

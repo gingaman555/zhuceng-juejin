@@ -286,6 +286,14 @@ const 節 = t => console.log('\n' + t + '\n' + '─'.repeat(50));
   A.document.activeElement = null;
   ok(A.freshSafeToReload() === true, '都放開之後又可以換');
 
+  節('10c · 分頁開太久（四小時）就算舊，不管有沒有新版');
+  ok(A.tabTooOld() === false, '剛開的分頁不算舊');
+  A.SYNC_LOADED = Date.now() - 5 * 3600000;
+  ok(A.tabTooOld() === true, '開了五小時算舊');
+  A.S.page = 'commit';
+  ok(A.freshSafeToReload() === false, '舊了也一樣：在寫到一半的頁不換');
+  A.SYNC_LOADED = Date.now();
+
   節('11 · 用量');
   console.log('   交易 ' + 交易次數 + ' 次、批次 ' + 批次次數 + ' 次');
   ok(交易次數 > 0, '更新有走交易（讀雲端再寫）');
