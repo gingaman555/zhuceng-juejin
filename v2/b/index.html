@@ -127,6 +127,10 @@ img{display:block}
 .tn-list{margin:0 0 14px}
 .tn-t{margin:0 0 8px;color:var(--gold);line-height:1.4}
 .tn-box .btn{display:block;width:100%;margin-top:10px}
+/* 小一號的按鈕：放在一列資訊旁邊、不該搶過那一列的（例如「刪掉這一件」）。
+   字還是 22px，只有內距與寬度縮小。 */
+/* 三個 class：跟 .btn.ghost（兩個）打成平手的話，排在後面的 ghost 會贏，小按鈕就縮不下去。 */
+.btn.sm,.btn.ghost.sm,.btn.big.sm{display:inline-block;width:auto;flex:0 0 auto;min-width:0;min-height:0;padding:3px 14px}
 /* 標題與清單列的標題折行時平均折，不要最後一行只剩一個字（「一句／話」）。
    不支援的舊瀏覽器就照舊折，沒有損失。 */
 h1,h2,.rq-t b,.tk-h b,.rec-t{text-wrap:balance}
@@ -5752,7 +5756,9 @@ button.side-head{
   .nav a.on{border-top-color:var(--gold);background:var(--panel2)}
   .nav a .dot{width:8px;height:8px;flex:0 0 8px}
   /* 結案：窄一點、靠右、左邊一條線隔開，不跟前三格擠成一樣寬。 */
-  .nav a.low{flex:0 0 auto;margin-top:0;border-top:3px solid transparent;border-left:1px solid var(--line);padding:11px 14px;opacity:.85}
+  /* 跟旁邊隔開 14px 的空隙：手指落在縫上什麼都不會發生。本來緊貼著「各組進度」，
+     又在最容易點到的最右邊（2026-09-30 用 375 寬量到，兩格之間 0px）。 */
+  .nav a.low{flex:0 0 62px;margin-top:0;margin-left:14px;border-top:3px solid transparent;border-left:1px solid var(--line);padding:11px 6px;opacity:.85}
 
   /* 底下那一列會蓋住內容，把位置留出來 */
   /* 22px 的字貼螢幕邊要留 22px，不然每一行都像被切到。 */
@@ -5773,6 +5779,7 @@ button.side-head{
   /* ---------- 按鈕：一顆一行，不要擠成兩個字一行 ---------- */
   .btn{font-size:22px;padding:14px 18px}
   .btn.big{font-size:22px;padding:16px 22px;width:100%}
+  .btn.sm,.btn.ghost.sm,.btn.big.sm{width:auto;min-width:0;padding:3px 14px}
   .row{gap:8px}
   .row .btn{flex:1 1 auto;min-width:132px}
 
@@ -6003,7 +6010,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790754913709;
+var BUILD_AT = 1790755350307;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -8957,6 +8964,12 @@ var ICONS = {
   ms: ['..+#........', '..+#####+...', '..+#*###*+..', '..+#####*+..',
        '..+####*+...', '..+##*+.....', '..+#........', '..+#........',
        '..+#........', '..+#........', '.+++++......', '............'],
+
+  /* 已派任務：一張有三行的清單。發派任務是一面旗（要開始一件新的），
+     這裡是一張紙（已經派出去的那一疊），兩個一眼分得開。 */
+  mslist: ['............', '.+++++++++++', '.+#*#######+', '.+#+#+++++#+',
+           '.+#########+', '.+#+#+++++#+', '.+#########+', '.+#+#+++++#+',
+           '.+#########+', '.+#########+', '.+++++++++++', '............'],
 
   /* 各組進度：幾條往下的線 */
   classeco: ['............', '.+#+.+#+.+#+', '.+#+.+#+.+#+', '.+#+.+#+.+#+',
@@ -16327,7 +16340,7 @@ function sideBar() {
      變成「背包裡的幾樣東西」。 */
   var items = nav.map(function (n) {
     var on = S.page === n[0];
-    var ic = ICONS[n[0]] || (n[0] === 'mslist' ? ICONS.ms : null);
+    var ic = ICONS[n[0]];
     return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
       esc(navLabel(n[1])) + '</a>';
@@ -16725,7 +16738,10 @@ var ACTS = {
   },
 
   /* 老師開放／關掉學生那邊「我們做完了」的入口（見 63-pack.js）。 */
+  exitopenask: function () { DRAFT.exitOpenConf = true; render(); },
+  exitopenno: function () { DRAFT.exitOpenConf = false; render(); },
   exitopenset: function (v) {
+    DRAFT.exitOpenConf = false;
     var u = me();
     var r = actSetExitOpen(u.classId, S.who, String(v) === '1');
     if (!r) return say('這個班不是你的。');
@@ -25056,8 +25072,20 @@ PAGES.tclose = function () {
     H.push('<p class="dim">' + (kl0.exitOpen
       ? '開著。學生任務清單最下面看得到那顆鍵。'
       : '關著。學生那邊還沒有這個選項，不會誤按到。') + '</p>');
-    H.push(btn(kl0.exitOpen ? '關掉' : '開放結案', 'exitopenset:' + (kl0.exitOpen ? 0 : 1),
-      kl0.exitOpen ? 'ghost' : ''));
+    /* 開放結案要先問一次。
+
+       2026-09-30 用手機寬度量結案頁：第一顆鍵就是「開放結案」，按一下直接
+       生效——全班學生的任務清單最下面立刻出現「我們做完了」那顆鍵，
+       而那正是 9/23 學生大量誤按的原因。關掉不用問（那是收回，安全）。 */
+    if (kl0.exitOpen) {
+      H.push(btn('關掉', 'exitopenset:0', 'ghost'));
+    } else if (DRAFT.exitOpenConf) {
+      H.push('<p class="dim">確定嗎？學生的任務清單最下面會出現「我們做完了」那顆鍵，他們可能會誤按。還沒到結案的時候，先不要開。</p>');
+      H.push(btn('對，開放', 'exitopenset:1', 'sm'));
+      H.push(btn('先不要', 'exitopenno', 'ghost sm'));
+    } else {
+      H.push(btn('開放結案', 'exitopenask', 'ghost'));
+    }
     H.push('</div>');
 
     mine.forEach(function (t) {
@@ -25089,7 +25117,9 @@ PAGES.tclose = function () {
           H.push(btn('對，整個專案完成了', 'openexit:' + t.teamId + ',1', 'big'));
           H.push(btn('先不要', 'closeno', 'ghost'));
         } else {
-          H.push(btn('確認整個專案已完成', 'closeconf:' + t.teamId, 'big'));
+          /* 第一步是安靜的鍵，真正動手的是確認那一步（上面那顆大鍵）。
+             本來六組各一顆金色大鍵一路排下去，手機上捲動的時候很容易點到。 */
+          H.push(btn('確認整個專案已完成', 'closeconf:' + t.teamId, 'ghost'));
         }
         /* 「現在還不是時候」只對有說過的那幾組出現——沒說過的組
            沒有東西要回。 */
@@ -25578,10 +25608,10 @@ function msRow(m, u) {
   if (DRAFT.msDel === m.msId) {
     H.push('<p class="dim msr-ask">' + (mine ? '' : '這是' + (by ? esc(by.name) : '別人') + '派的。') +
       '學生那邊會不見，他們已經承諾、交出去的紀錄還在，隨時可以放回來。確定嗎？</p>');
-    H.push(btn('對，刪掉', 'msdelyes:' + m.msId, ''));
-    H.push(btn('先不要', 'msdelno', 'ghost'));
+    H.push(btn('對，刪掉', 'msdelyes:' + m.msId, 'sm'));
+    H.push(btn('先不要', 'msdelno', 'ghost sm'));
   } else {
-    H.push(btn('刪掉這一件', 'msdel:' + m.msId, 'ghost'));
+    H.push(btn('刪掉這一件', 'msdel:' + m.msId, 'ghost sm'));
   }
   H.push('</div>');
   return H.join('');
@@ -25640,7 +25670,7 @@ PAGES.mslist = function () {
       H.push('<div class="msr"><b>' + esc(m.title) + '</b>' +
         (by ? '<span class="msr-by">' + esc(by) + '</span>' : '') +
         '<span class="msr-n">' + esc(who) + ' 刪的　·　' + n + ' 筆紀錄還留著</span>' +
-        btn('放回去', 'msrestore:' + m.msId, 'ghost') + '</div>');
+        btn('放回去', 'msrestore:' + m.msId, 'ghost sm') + '</div>');
     });
     H.push('</div></div>');
   }

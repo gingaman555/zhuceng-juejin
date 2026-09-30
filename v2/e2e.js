@@ -841,6 +841,11 @@ be('原本那位變成別人，寫著他的名字', mlB.indexOf(tea.name + ' 派
 as(tea);
 const sbT = sideBar();
 be('左邊導覽有「已派任務」、在「發派任務」後面', sbT.indexOf('data-go="mslist"') > sbT.indexOf('data-go="ms"') && sbT.indexOf('data-go="ms"') > 0, true);
+be('發派任務與已派任務各有自己的圖示，不是同一張', !!ICONS.ms && !!ICONS.mslist && JSON.stringify(ICONS.ms) !== JSON.stringify(ICONS.mslist), true);
+be('每一張圖示都是 12×12', ICONS.mslist.length === 12 && ICONS.mslist.every(r => r.length === 12), true);
+{ const sb3 = sideBar(); const ic = k => { const i = sb3.indexOf('data-go="' + k + '"'); return sb3.slice(i, sb3.indexOf('</a>', i)); };
+  be('左邊導覽上兩格畫出來的圖不一樣', ic('ms').replace(/data-go="ms"/, '') !== ic('mslist').replace(/data-go="mslist"/, ''), true); }
+be('刪掉這一件的鍵是小的', PAGES.mslist().indexOf('btn ghost sm') >= 0, true);
 be('學生進不了已派任務頁', allowed(stu[0], 'mslist'), false);
 be('研究者也進不了', allowed(rsU, 'mslist'), false);
 DB.Users.push({ userId: 'UTC', account: 'tc_t', name: '還沒派的老師', role: 'teacher', classId: kl.classId });
@@ -853,6 +858,36 @@ const domT = document.getElementById; document.getElementById = (id) => id === '
 ACTS.publish(); document.getElementById = domT;
 be('按「派出去」之後直接進已派任務頁', S.page, 'mslist');
 be('剛派的那一件在「你派的」裡', PAGES.mslist().indexOf('派完去看的那一件') >= 0, true);
+
+/* ══ 結案的誤按：手機上量出來的（2026-09-30）══ */
+H('結案入口的誤按：開放結案要問一次、每組第一步是安靜的鍵');
+as(tea); S.page = 'tclose'; DRAFT = {};
+const klX = classOf(tea); const 原本開著 = !!klX.exitOpen; klX.exitOpen = false;
+const t0 = PAGES.tclose();
+be('關著的時候，一開始只有「開放結案」的第一步，沒有直接生效的鍵', t0.indexOf('exitopenask') >= 0 && t0.indexOf('exitopenset:1') < 0, true);
+be('按了「開放結案」的第一步，還沒開', !klX.exitOpen, true);
+ACTS.exitopenask();
+const t1 = PAGES.tclose();
+be('問了之後才出現「對，開放」', t1.indexOf('exitopenset:1') >= 0 && t1.indexOf('對，開放') >= 0, true);
+be('問的那一句講清楚後果（學生會看到那顆鍵）', t1.indexOf('我們做完了') >= 0, true);
+be('有「先不要」', t1.indexOf('exitopenno') >= 0, true);
+ACTS.exitopenno();
+be('先不要：回到第一步，還是沒開', !klX.exitOpen && PAGES.tclose().indexOf('exitopenset:1') < 0, true);
+ACTS.exitopenask(); ACTS.exitopenset('1');
+be('確認之後才開', !!klX.exitOpen, true);
+be('開了之後，問的狀態清掉了（不會停在「確定嗎」）', !DRAFT.exitOpenConf, true);
+const t2 = PAGES.tclose();
+be('開著的時候「關掉」一下就行（收回是安全的）', t2.indexOf('exitopenset:0') >= 0, true);
+klX.exitOpen = 原本開著;
+/* 每一組的第一步是安靜的鍵，確認那一步才是大鍵 */
+DRAFT = {};
+const tc = PAGES.tclose();
+const firstStep = tc.slice(tc.indexOf('closeconf:') - 80, tc.indexOf('closeconf:') + 20);
+be('每組「確認整個專案已完成」的第一步是 ghost 鍵，不是金色大鍵', firstStep.indexOf('btn ghost') >= 0 && firstStep.indexOf('btn big') < 0, true);
+DRAFT.closeConf = tm.teamId;
+const tcc = PAGES.tclose();
+be('確認那一步才是大鍵', tcc.slice(tcc.indexOf('openexit:' + tm.teamId + ',1') - 80, tcc.indexOf('openexit:' + tm.teamId + ',1')).indexOf('btn big') >= 0, true);
+DRAFT = {};
 
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');

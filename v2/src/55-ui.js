@@ -685,7 +685,7 @@ function sideBar() {
      變成「背包裡的幾樣東西」。 */
   var items = nav.map(function (n) {
     var on = S.page === n[0];
-    var ic = ICONS[n[0]] || (n[0] === 'mslist' ? ICONS.ms : null);
+    var ic = ICONS[n[0]];
     return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
       esc(navLabel(n[1])) + '</a>';
@@ -1083,7 +1083,10 @@ var ACTS = {
   },
 
   /* 老師開放／關掉學生那邊「我們做完了」的入口（見 63-pack.js）。 */
+  exitopenask: function () { DRAFT.exitOpenConf = true; render(); },
+  exitopenno: function () { DRAFT.exitOpenConf = false; render(); },
   exitopenset: function (v) {
+    DRAFT.exitOpenConf = false;
     var u = me();
     var r = actSetExitOpen(u.classId, S.who, String(v) === '1');
     if (!r) return say('這個班不是你的。');

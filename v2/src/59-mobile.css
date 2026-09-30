@@ -41,7 +41,9 @@
   .nav a.on{border-top-color:var(--gold);background:var(--panel2)}
   .nav a .dot{width:8px;height:8px;flex:0 0 8px}
   /* 結案：窄一點、靠右、左邊一條線隔開，不跟前三格擠成一樣寬。 */
-  .nav a.low{flex:0 0 auto;margin-top:0;border-top:3px solid transparent;border-left:1px solid var(--line);padding:11px 14px;opacity:.85}
+  /* 跟旁邊隔開 14px 的空隙：手指落在縫上什麼都不會發生。本來緊貼著「各組進度」，
+     又在最容易點到的最右邊（2026-09-30 用 375 寬量到，兩格之間 0px）。 */
+  .nav a.low{flex:0 0 62px;margin-top:0;margin-left:14px;border-top:3px solid transparent;border-left:1px solid var(--line);padding:11px 6px;opacity:.85}
 
   /* 底下那一列會蓋住內容，把位置留出來 */
   /* 22px 的字貼螢幕邊要留 22px，不然每一行都像被切到。 */
@@ -62,6 +64,7 @@
   /* ---------- 按鈕：一顆一行，不要擠成兩個字一行 ---------- */
   .btn{font-size:22px;padding:14px 18px}
   .btn.big{font-size:22px;padding:16px 22px;width:100%}
+  .btn.sm,.btn.ghost.sm,.btn.big.sm{width:auto;min-width:0;padding:3px 14px}
   .row{gap:8px}
   .row .btn{flex:1 1 auto;min-width:132px}
 

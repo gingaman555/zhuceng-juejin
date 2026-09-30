@@ -223,8 +223,20 @@ PAGES.tclose = function () {
     H.push('<p class="dim">' + (kl0.exitOpen
       ? '開著。學生任務清單最下面看得到那顆鍵。'
       : '關著。學生那邊還沒有這個選項，不會誤按到。') + '</p>');
-    H.push(btn(kl0.exitOpen ? '關掉' : '開放結案', 'exitopenset:' + (kl0.exitOpen ? 0 : 1),
-      kl0.exitOpen ? 'ghost' : ''));
+    /* 開放結案要先問一次。
+
+       2026-09-30 用手機寬度量結案頁：第一顆鍵就是「開放結案」，按一下直接
+       生效——全班學生的任務清單最下面立刻出現「我們做完了」那顆鍵，
+       而那正是 9/23 學生大量誤按的原因。關掉不用問（那是收回，安全）。 */
+    if (kl0.exitOpen) {
+      H.push(btn('關掉', 'exitopenset:0', 'ghost'));
+    } else if (DRAFT.exitOpenConf) {
+      H.push('<p class="dim">確定嗎？學生的任務清單最下面會出現「我們做完了」那顆鍵，他們可能會誤按。還沒到結案的時候，先不要開。</p>');
+      H.push(btn('對，開放', 'exitopenset:1', 'sm'));
+      H.push(btn('先不要', 'exitopenno', 'ghost sm'));
+    } else {
+      H.push(btn('開放結案', 'exitopenask', 'ghost'));
+    }
     H.push('</div>');
 
     mine.forEach(function (t) {
@@ -256,7 +268,9 @@ PAGES.tclose = function () {
           H.push(btn('對，整個專案完成了', 'openexit:' + t.teamId + ',1', 'big'));
           H.push(btn('先不要', 'closeno', 'ghost'));
         } else {
-          H.push(btn('確認整個專案已完成', 'closeconf:' + t.teamId, 'big'));
+          /* 第一步是安靜的鍵，真正動手的是確認那一步（上面那顆大鍵）。
+             本來六組各一顆金色大鍵一路排下去，手機上捲動的時候很容易點到。 */
+          H.push(btn('確認整個專案已完成', 'closeconf:' + t.teamId, 'ghost'));
         }
         /* 「現在還不是時候」只對有說過的那幾組出現——沒說過的組
            沒有東西要回。 */
@@ -745,10 +759,10 @@ function msRow(m, u) {
   if (DRAFT.msDel === m.msId) {
     H.push('<p class="dim msr-ask">' + (mine ? '' : '這是' + (by ? esc(by.name) : '別人') + '派的。') +
       '學生那邊會不見，他們已經承諾、交出去的紀錄還在，隨時可以放回來。確定嗎？</p>');
-    H.push(btn('對，刪掉', 'msdelyes:' + m.msId, ''));
-    H.push(btn('先不要', 'msdelno', 'ghost'));
+    H.push(btn('對，刪掉', 'msdelyes:' + m.msId, 'sm'));
+    H.push(btn('先不要', 'msdelno', 'ghost sm'));
   } else {
-    H.push(btn('刪掉這一件', 'msdel:' + m.msId, 'ghost'));
+    H.push(btn('刪掉這一件', 'msdel:' + m.msId, 'ghost sm'));
   }
   H.push('</div>');
   return H.join('');
@@ -807,7 +821,7 @@ PAGES.mslist = function () {
       H.push('<div class="msr"><b>' + esc(m.title) + '</b>' +
         (by ? '<span class="msr-by">' + esc(by) + '</span>' : '') +
         '<span class="msr-n">' + esc(who) + ' 刪的　·　' + n + ' 筆紀錄還留著</span>' +
-        btn('放回去', 'msrestore:' + m.msId, 'ghost') + '</div>');
+        btn('放回去', 'msrestore:' + m.msId, 'ghost sm') + '</div>');
     });
     H.push('</div></div>');
   }

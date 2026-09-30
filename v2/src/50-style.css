@@ -115,6 +115,10 @@ img{display:block}
 .tn-list{margin:0 0 14px}
 .tn-t{margin:0 0 8px;color:var(--gold);line-height:1.4}
 .tn-box .btn{display:block;width:100%;margin-top:10px}
+/* 小一號的按鈕：放在一列資訊旁邊、不該搶過那一列的（例如「刪掉這一件」）。
+   字還是 22px，只有內距與寬度縮小。 */
+/* 三個 class：跟 .btn.ghost（兩個）打成平手的話，排在後面的 ghost 會贏，小按鈕就縮不下去。 */
+.btn.sm,.btn.ghost.sm,.btn.big.sm{display:inline-block;width:auto;flex:0 0 auto;min-width:0;min-height:0;padding:3px 14px}
 /* 標題與清單列的標題折行時平均折，不要最後一行只剩一個字（「一句／話」）。
    不支援的舊瀏覽器就照舊折，沒有損失。 */
 h1,h2,.rq-t b,.tk-h b,.rec-t{text-wrap:balance}
