@@ -428,10 +428,18 @@ function syncFlat() {
    這一支要跟 syncPush 底下判斷「刪掉了」那一段用同一個標準——
    不然學生的裝置會把「我推不動 Classes」誤判成「Classes 被我刪掉了」，
    對雲端發一筆刪除。 */
-function syncPushable(col) {
+function syncPushable(col, deleting) {
   if (col !== 'Classes') return true;
   var u = (typeof me === 'function') ? me() : null;
-  return !!(u && u.role === 'teacher');
+  if (u && u.role === 'teacher') return true;
+  /* 研究者只推得動「刪掉」，推不動改。
+
+     2026-09-30：研究者頁「清掉測試資料」把演練班刪了三次，雲端那一筆一直還在——
+     刪除也被這裡擋了（本機刪掉、雲端沒動，下一次快照又把它拉回來）。
+     研究者從來不改班名，所以「改」照樣不推（不會蓋掉老師剛改的班名）；
+     「刪」放行，而且只有它自己刪掉的才會走到這裡（學生裝置仍然不行，
+     見上面那段：學生推不動 Classes，不能被誤判成「刪掉了」）。 */
+  return !!(deleting && u && u.role === 'researcher');
 }
 
 /* ---------- 一筆之內，只寫「我改過的那幾格」 ----------
@@ -496,7 +504,7 @@ function syncPush() {
     if (SYNC.last[p] !== now[p]) jobs.push([p, now[p], SYNC.last[p]]);
   });
   Object.keys(SYNC.last).forEach(function (p) {
-    if (!syncPushable(p.slice(0, p.indexOf('/')))) return;
+    if (!syncPushable(p.slice(0, p.indexOf('/')), true)) return;
     if (!(p in now)) jobs.push([p, null, SYNC.last[p]]);
   });
   if (!jobs.length) return;
