@@ -547,6 +547,80 @@ be('動態沒有它', feedOf(kl.classId, 50).some(f => f.ms && f.ms.msId === 'MN
 be('不進審核清單', radar(kl.classId).some(x => x.ms && x.ms.msId === 'MN1'), false);
 DB.Milestones = DB.Milestones.filter(m => m.msId !== 'MN1');
 
+/* ══ 老師派的任務可以同時做（2026-09-30）══
+
+   首頁上主要的動作只有一個，其他老師派的任務直接列在下面，每一件一顆鍵；
+   兩件以上還沒開始的，可以一次開（一件一件接著說幾天）。 */
+H('同時做：首頁直接列出其他任務，可以一次開好幾件');
+as(stu[0]);
+const rowsBefore = runsFor(tm.teamId);
+S.page = 'home'; S.p = {}; DRAFT = {};
+const nxH = nextThing(tm.teamId);
+const otherFresh = runsFor(tm.teamId).filter(x => x.run.state === 'fresh');
+const homeHtml = PAGES.home();
+if (nxH.kind === 'doing' && otherFresh.length) {
+  be('手上有事，首頁直接有「也可以同時做」', homeHtml.indexOf('也可以同時做') >= 0, true);
+  be('每一件還沒開始的，首頁各有一顆「開始」鍵', otherFresh.every(x => homeHtml.indexOf('go:commit:' + x.ms.msId) >= 0), true);
+} else {
+  ok('（這一組目前沒有「手上有事又有新任務」的狀況，略過首頁斷言）');
+}
+be('舊的「老師又派了 N 個」橫幅沒有了', homeHtml.indexOf('老師又派了') >= 0, false);
+
+/* 一組乾淨的隊：沒有在做的事，老師派過好幾件 → 首頁大鍵一件、其餘列在下面、可以一次開 */
+DB.Teams.push({ teamId: 'GP1', classId: kl.classId, name: '並行測試組', project: '並行', joinCode: 'PPPPPP' });
+DB.Users.push({ userId: 'UP1', account: 'par1', name: '並行', role: 'student', classId: kl.classId, teamId: 'GP1', hero: 'adv' });
+const upar = find('Users', u => u.userId === 'UP1');
+as(upar); S.page = 'home'; S.p = {}; DRAFT = {};
+const nxP2 = nextThing('GP1');
+be('沒有在做的事：首頁推「有任務發來了」', nxP2.kind, 'commit');
+const freshIds = runsFor('GP1').filter(x => x.run.state === 'fresh').map(x => x.ms.msId);
+const htmlP2 = PAGES.home();
+be('老師派了不只一件', freshIds.length >= 2, true);
+be('大鍵是第一件', htmlP2.indexOf('go:commit:' + nxP2.row.ms.msId) >= 0, true);
+be('其餘每一件各有一顆鍵', freshIds.filter(id => id !== nxP2.row.ms.msId).every(id => htmlP2.indexOf('go:commit:' + id) >= 0), true);
+be('有「一次開 N 件」', htmlP2.indexOf('commitall') >= 0 && htmlP2.indexOf('一次開這 ' + freshIds.length + ' 件') >= 0, true);
+
+ACTS.commitall();
+be('一次開：先進第一件的承諾頁', S.page === 'commit' && S.p.id === freshIds[0], true);
+be('記著要接力的隊伍', S.queue.length === freshIds.length && S.queueN === freshIds.length, true);
+be('承諾頁告訴他這是第幾件', PAGES.commit().indexOf('一次開 ' + freshIds.length + ' 件：這是第 1 件') >= 0, true);
+let 步 = 0;
+while (S.page === 'commit' && 步++ < freshIds.length + 3) {
+  DRAFT.sure = 'mid'; DRAFT.est = 2; DRAFT.plan = DRAFT.plan || [];
+  ACTS.commit(S.p.id);
+}
+be('每一件都各自承諾了', runsFor('GP1').filter(x => x.run.state === 'running').length, freshIds.length);
+be('每一件的 Run 各自一筆', freshIds.every(id => where('Runs', r => r.teamId === 'GP1' && r.msId === id).length === 1), true);
+be('全部說完之後回到首頁', S.page, 'home');
+be('接力的隊伍散掉了', !S.queue, true);
+const 各 = where('Runs', r => r.teamId === 'GP1' && r.state === 'running');
+be('每一件的編號是固定的（組、任務、第幾次）', 各.every(r => r.runId === 'R_GP1_' + r.msId + '_1'), true);
+
+/* 同時有好幾件在做：燈看最晚的那一件，不是只看第一件 */
+各.forEach(r => { r.committedAt = Date.now(); });
+be('都沒逾時：不暗', stallOf('GP1').level, 0);
+各[各.length - 1].committedAt = Date.now() - 10 * 86400000;
+be('最後一件逾時很久：整個廊道暗（不是只看第一件）', stallOf('GP1').level, 2);
+const nxDo = nextThing('GP1');
+const htmlDo = PAGES.home();
+be('同時有好幾件在做：首頁大鍵一件、其餘的「交出去」各一顆', 各.filter(r => r.runId !== nxDo.row.run.runId).every(r => htmlDo.indexOf('go:battle:' + r.runId) >= 0), true);
+S.page = 'pack'; S.p = {};
+be('任務清單那一頁也有同一張卡', PAGES.pack().indexOf('也可以同時做') >= 0, true);
+
+/* 手上已經有一件在做，老師還有別件沒開：首頁大鍵是手上那件，別件各一顆「開始」 */
+DB.Teams.push({ teamId: 'GP2', classId: kl.classId, name: '並行測試組二', project: '並行二', joinCode: 'QQQQQQ' });
+DB.Users.push({ userId: 'UP2', account: 'par2', name: '並行二', role: 'student', classId: kl.classId, teamId: 'GP2', hero: 'adv' });
+as(find('Users', u => u.userId === 'UP2')); S.page = 'home'; S.p = {}; DRAFT = {};
+const ids2 = runsFor('GP2').filter(x => x.run.state === 'fresh').map(x => x.ms.msId);
+actCommit('GP2', ids2[0], 2, [], [], 'wild', 'mid');
+const nx2 = nextThing('GP2'), html2 = PAGES.home();
+be('手上有一件在做', nx2.kind, 'doing');
+be('其餘每一件各有一顆「開始」', ids2.slice(1).every(id => html2.indexOf('go:commit:' + id) >= 0), true);
+be('沒有把手上那一件再列一次', html2.indexOf('go:commit:' + ids2[0]) >= 0, false);
+be('剩下兩件以上，還是可以一次開', html2.indexOf('一次開這 ' + (ids2.length - 1) + ' 件') >= 0, true);
+ACTS.commitall();
+be('一次開只包含還沒開始的', S.queue.length, ids2.length - 1);
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

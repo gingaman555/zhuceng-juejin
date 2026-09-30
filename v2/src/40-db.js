@@ -423,14 +423,17 @@ function lastPush(runId) {
    那個數字是他自己說的，不是我規定的期限；而且系統不用問任何人
    就知道今天是幾號。他不開，它也在走。 */
 function stallOf(teamId) {
-  var cur = runsFor(teamId).filter(function (x) { return x.run.state === 'running'; })[0];
-  if (!cur) return { level: 0, days: 0 };
-  var est = cur.run.est || 1;
-  var gone = daysBetween(cur.run.committedAt, now());
-  var over = gone - est;
-  if (over >= RULES.band(est) + 1) return { level: 2, days: over };
-  if (over > 0) return { level: 1, days: over };
-  return { level: 0, days: 0 };
+  /* 同時可以有好幾件在做（見 60-student.js 的 parallelCard），
+     畫面暗多少看最晚的那一件——只看第一件的話，第二件拖很久也不會暗。 */
+  var worst = { level: 0, days: 0 };
+  runsFor(teamId).forEach(function (x) {
+    if (x.run.state !== 'running') return;
+    var est = x.run.est || 1;
+    var over = daysBetween(x.run.committedAt, now()) - est;
+    var lv = over >= RULES.band(est) + 1 ? 2 : (over > 0 ? 1 : 0);
+    if (lv > worst.level || (lv === worst.level && over > worst.days && lv > 0)) worst = { level: lv, days: over };
+  });
+  return worst;
 }
 
 /* 深度＝完成過幾個任務。沒有終點。 */

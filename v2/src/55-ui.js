@@ -43,6 +43,9 @@ function go(page, p) {
      從廊道點進去的回廊道，從圖鑑點進去的回圖鑑。 */
   if (page !== S.page) S.prev = S.page;
   S.page = page; S.p = p || {}; S.flash = null; DRAFT = {};
+  /* 「一次開好幾件」的隊伍（見 ACTS.commitall）只在承諾頁之間接力，
+     離開承諾頁就散了。 */
+  if (page !== 'commit') { S.queue = null; S.queueN = 0; }
   setTimeout(function () {
     S.wipe = 0;
     var w = document.querySelector('.wrap');
@@ -1104,6 +1107,21 @@ var ACTS = {
       ? (DRAFT.est != null ? Number(DRAFT.est) : (pl0.length ? planDays(pl0) : RULES.EST_DEFAULT))
       : estToDays(DRAFT.estN, estU0);
     actCommit(t.teamId, msId, est0, DRAFT.flags || [], pl0, zone, DRAFT.sure, estU0, DRAFT.estN);
+    /* 一次開好幾件：這一件說完，直接接著說下一件，最後一件才回廊道出發。
+       隊伍裡已經開了、或老師剛收回的，跳過。 */
+    if (S.queue && S.queue.length) {
+      var 剩 = S.queue.filter(function (id) {
+        var mm = msOf(id);
+        return id !== msId && mm && !mm.withdrawnAt && !mm.notice && !runOf(t.teamId, id);
+      });
+      if (剩.length) {
+        var 總 = S.queueN, 已 = 總 - 剩.length;
+        go('commit', { id: 剩[0] });
+        S.queue = 剩; S.queueN = 總;
+        render();
+        return say('第 ' + 已 + ' 件說好了。接著說下一件（共 ' + 總 + ' 件）。');
+      }
+    }
     go('home');
     /* 出發那一下：白光掃過廊道，角色從坐著變成走。
        旗子放在 S 上（go 會清掉 DRAFT），畫完就收——
@@ -1131,6 +1149,19 @@ var ACTS = {
       });
     }, 1320);
     say('出發。');
+  },
+
+  /* 一次開好幾件老師派的：一件一件說幾天（見 60-student.js 的 parallelCard）。
+     不是替他們一次填掉——每一件要說幾天，是那一件自己的事，
+     所以每一件走完整的承諾頁，只是不必每一件都先回廊道再找下一顆鍵。 */
+  commitall: function () {
+    var t = myTeam(); if (!t) return;
+    var ids = runsFor(t.teamId).filter(function (x) { return x.run.state === 'fresh'; })
+      .map(function (x) { return x.ms.msId; });
+    if (!ids.length) return say('沒有還沒開始的任務。');
+    go('commit', { id: ids[0] });
+    S.queue = ids; S.queueN = ids.length;
+    render();
   },
 
   /* 老師勾了那一張，點掉。看過就是看過了，不用留在首頁上。 */

@@ -637,20 +637,14 @@ function actionCard(t, next, st) {
        （2026-09-23 踩過，原本這句是「有人在等這一件」才配得上「他」）。 */
     H.push('<p class="waiting">有任務發來了。</p>');
     H.push(btn('去看看', 'go:commit:' + row.ms.msId, 'big'));
+    H.push(parallelCard(t, next));
 
   } else if (next.kind === 'doing') {
     H.push(doingCard(t, row, st));
-    /* 老師又派了幾個。原本是一句灰字，量出來的樣子是「完全看不到，
-       連知道都不知道」——手上這一趟做完才輪到它們沒變，但學生要
-       查得到那幾件叫什麼名字，不是只知道一個數字。借老師端「剛承諾」
-       那顆通知banner同一種樣式（見 70-teacher.js 的 asknote），
-       點下去帶去任務清單，那幾件已經在裡面（狀態「還沒說幾天」）。 */
-    if (next.more) {
-      H.push('<button class="asknote pressable" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'go:pack' })) + '\'>' +
-        '<b>老師又派了 ' + next.more + ' 個</b>' +
-        '<i>可以先開始，不用等手上這一趟做完</i></button>');
-    }
+    /* 老師派的其他幾件，直接列在這裡，每一件一顆鍵（見 parallelCard）。
+       本來這裡只有一顆「老師又派了 N 個」的橫幅，要點進任務清單才找得到——
+       9/29 量到第二件全班只有 4 組開始。 */
+    H.push(parallelCard(t, next));
 
   } else if (next.kind === 'stamped') {
     H.push(btn('看準不準', 'go:stamp:' + row.run.runId, 'big'));
@@ -878,6 +872,8 @@ PAGES.commit = function () {
   var t = myTeam();
   var m = msOf(S.p.id);
   if (!m || m.withdrawnAt || m.notice) return '<div class="card">找不到這一個任務。</div>' + btn('回廊道', 'go:home', 'ghost');
+  var 隊 = (S.queue && S.queue.length && S.queue.indexOf(m.msId) >= 0)
+    ? '<p class="dim">一次開 ' + S.queueN + ' 件：這是第 ' + (S.queueN - S.queue.length + 1) + ' 件。每一件自己說幾天。</p>' : '';
   /* 他自己拆的那幾件。第一次進來用老師寫的分段當起點——
      老師沒寫就是一張白紙，那時候拆的人是他。 */
   if (!DRAFT.plan) {
@@ -939,6 +935,7 @@ PAGES.commit = function () {
      是來決定要花幾天的。標題是任務名、副標是老師寫的注意事項，
      那兩行才是他要讀的東西。 */
   var H = [head('接下委託', m.title, m.note)];
+  if (隊) H.push(隊);
 
   /* ── 委託人 ──
 
@@ -1658,6 +1655,50 @@ PAGES.exit = function () {
 /* 紀錄那一頁併進任務清單了：兩頁幾乎是同一份資料。
    下面那一支 logRow 留著——任務清單在用。 */
 /* 一列一趟。牠在最左邊，資訊在右邊，點開才看細節。 */
+/* ---------- 老師派的任務，可以同時做 ----------
+
+   2026-09-30：首頁只推一件事（nextThing），手上有事就不遞新的——
+   結果老師派了兩件，第二件按不到。9/29 第一版只在任務清單裡補了一區，
+   學生還是要先找到任務清單。要的是「進行中也能開別件、老師派的可以
+   一次開好幾件」，所以不藏在別頁，直接列在首頁主要動作的下面：
+   每一件老師派的、還沒做完的，各自一顆鍵。
+
+   一件一顆：還沒說幾天的「開始」，已經在做的「交出去」。每一件走自己的
+   承諾頁、自己的判定，互不影響（資料層本來就不擋，見 actCommit）。
+   首頁上主要的動作仍然只有一個（大的那顆），這裡都是次要的鍵。
+
+   兩件以上還沒說幾天的時候多一顆「一次開這 N 件」：一件一件接著說幾天，
+   每一件還是自己說、自己按（見 55-ui.js 的 commitall）。不是替他們
+   一次填掉——每一件要說幾天，是那一件自己的事。
+
+   nx 是 nextThing 的結果：只有「在做」和「有任務發來了」這兩種狀態才列，
+   其他狀態（等看判定、被退回、等老師）該先處理眼前那一件。 */
+function parallelRows(t, nx) {
+  if (!nx || (nx.kind !== 'doing' && nx.kind !== 'commit')) return [];
+  var 主 = nx.row ? (nx.row.run.runId || nx.row.ms.msId) : '';
+  return runsFor(t.teamId).filter(function (x) {
+    var 身分 = x.run.runId || x.ms.msId;
+    if (身分 === 主) return false;
+    return x.run.state === 'fresh' || x.run.state === 'running';
+  });
+}
+function parallelCard(t, nx) {
+  var 別件 = parallelRows(t, nx);
+  if (!別件.length) return '';
+  var H = ['<div class="card"><div class="eyebrow">也可以同時做</div>'];
+  別件.forEach(function (x) {
+    H.push(x.run.state === 'fresh'
+      ? btn('開始：' + x.ms.title, 'go:commit:' + x.ms.msId, 'ghost')
+      : btn('交出去：' + x.ms.title, 'go:battle:' + x.run.runId, 'ghost'));
+  });
+  /* 還沒說幾天的（含首頁上大鍵那一件）兩件以上，才有「一次開」。 */
+  var 沒開 = 別件.filter(function (x) { return x.run.state === 'fresh'; }).length +
+    (nx.kind === 'commit' ? 1 : 0);
+  if (沒開 >= 2) H.push(btn('一次開這 ' + 沒開 + ' 件，一件一件說幾天', 'commitall', 'ghost'));
+  H.push('</div>');
+  return H.join('');
+}
+
 function logRow(m, r, t) {
   if (!m) return '';
   var open = DRAFT.lg === r.runId;
