@@ -277,6 +277,31 @@ const 節 = t => console.log('\n' + t + '\n' + '─'.repeat(50));
   ok(擋住 && 被擋次數 === 前 + 1, '舊版那種 { j } 的整筆寫入被擋下');
   ok(前 === 0, '上面每一節新版自己的寫入，一次都沒有被規則擋到（都帶 v）');
 
+  節('9b · 組別的專案名稱、學生的組別：不會被同一筆上別的改動蓋掉');
+  /* 9/30 事件紀錄：改專案名稱 215 次，204 次「原本」是空的——名字存了又不見。
+     組別（Teams）與使用者（Users）也是整筆存的，同一組的人各改各的欄位就會互相蓋。 */
+  const tA = A.DB.Teams.filter(t => t.teamId === 'GC1')[0];
+  B.DB.Users.push({ userId: 'UC1', account: 'cc1', name: '登入的人', role: 'student', classId: 'CC1', teamId: '', hero: 'adv' });
+  A.DB.Users.push(JSON.parse(JSON.stringify(B.DB.Users.filter(u => u.userId === 'UC1')[0])));
+  A.save(); B.save(); await 等();
+  收(A); 收(B); await 等();
+  const tB = B.DB.Teams.filter(t => t.teamId === 'GC1')[0];
+  tA.project = '我們的專案名稱';                 /* A：隊員取了專案名稱 */
+  A.save(); await 等();
+  tB.blurb = '一句話';                           /* B（還沒收到）：另一位隊員寫了一句話 */
+  B.save(); await 等();
+  const tc = 雲的('Teams', 'GC1');
+  ok(tc.project === '我們的專案名稱' && tc.blurb === '一句話', '專案名稱與另一位隊員寫的話都在，沒有互相蓋掉');
+  const uA = A.DB.Users.filter(u => u.userId === 'UC1')[0], uB = B.DB.Users.filter(u => u.userId === 'UC1')[0];
+  uA.teamId = 'GC1';                             /* A：他加入了這一組 */
+  A.save(); await 等();
+  uB.lastLogin = Date.now(); uB.hero = 'mage';   /* B（還沒收到）：他在另一台登入、挑了角色 */
+  B.save(); await 等();
+  const uc = 雲的('Users', 'UC1');
+  ok(uc.teamId === 'GC1' && uc.hero === 'mage' && uc.lastLogin > 0, '加入的組別還在，另一台的登入與角色也在（不會再「加入了又掉出來」）');
+  收(A); 收(B); await 等();
+  ok(A.DB.Users.filter(u => u.userId === 'UC1')[0].teamId === 'GC1' && B.DB.Users.filter(u => u.userId === 'UC1')[0].teamId === 'GC1', '兩台最後都看到他在這一組');
+
   節('10a · 資料庫拒絕的分頁（舊版）：立刻換成請重新打開，而且不再推送');
   const C = 開一台();
   收(C); await 等();
