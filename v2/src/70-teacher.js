@@ -97,7 +97,7 @@ PAGES.radar = function () {
       H.push('<button class="rq" data-act="run" data-p=\'' +
         esc(JSON.stringify({ a: 'go:askest:' + x.run.runId })) + '\'>');
       H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b>');
-      H.push('<em>' + esc(x.team.name) + '　·　他們說 ' + esc(estSay(x.run)) + '</em></span>');
+      H.push('<em>' + esc(x.team.name) + (teamMemberNames(x.team.teamId) ? '（' + esc(teamMemberNames(x.team.teamId)) + '）' : '') + '　·　他們說 ' + esc(estSay(x.run)) + '</em></span>');
       H.push('<span class="rq-d">' + (x.days ? '第 ' + (x.days + 1) + ' 天' : '今天') +
         '</span>');
       H.push('</button>');
@@ -167,7 +167,7 @@ PAGES.radar = function () {
        三位老師共用一個佇列，所以「這一件本來是誰的事」要看得到：
        看得到才有得商量，看不到就會兩個人都以為對方會看。 */
     var rby = x.ms.mentorId && x.ms.mentorId !== u.userId ? userOf(x.ms.mentorId) : null;
-    H.push('<em>' + esc(x.team.name) +
+    H.push('<em>' + esc(x.team.name) + (teamMemberNames(x.team.teamId) ? '（' + esc(teamMemberNames(x.team.teamId)) + '）' : '') +
       (rby ? '　·　' + esc(rby.name) + ' 派的' : '') + '</em></span>');
     H.push('<span class="rq-d">等 ' + x.waited + ' 天</span>');
     H.push('</button>');
@@ -184,6 +184,13 @@ PAGES.radar = function () {
    老師每次進來第一眼看到的位置，老師們也會按錯。搬到左邊側欄最下面，
    跟上面三格（等你的、發派任務、各組進度）隔開——結案是一學期一次的事，
    不該跟一週好幾次的審核擺在同一排。 */
+/* 這一組有哪幾位（學生），用、分開。已經合併走的舊帳號不算。 */
+function teamMemberNames(teamId) {
+  return where('Users', function (u) {
+    return u.role === 'student' && !u.mergedInto && inTeam(u, teamId);
+  }).map(function (u) { return u.name; }).join('、');
+}
+
 PAGES.tclose = function () {
   var u = me();
   var H = [];
@@ -225,8 +232,11 @@ PAGES.tclose = function () {
       H.push('<div class="card exitq' + (t.exitAsk ? ' said' : '') + '">');
       if (t.exitAsk) H.push('<div class="eyebrow lit">他們說整個專案做完了</div>');
       H.push('<h2>' + esc(t.project || '（還沒定）') + '</h2>');
-      H.push('<p class="dim">' + esc(t.name) + '　·　走完 ' +
-        depthOf(t.teamId) + ' 個任務</p>');
+      /* 組員的名字接在後面：老師不會用專案名稱或組名認人，
+         認的是「這一組是哪幾位」（發派任務那一頁也是這樣，見 PAGES.ms）。 */
+      var 組員 = teamMemberNames(t.teamId);
+      H.push('<p><b>' + esc(t.name) + '</b>' + (組員 ? '　' + esc(組員) : '') + '</p>');
+      H.push('<p class="dim">走完 ' + depthOf(t.teamId) + ' 個任務</p>');
       if (acc.total) H.push(accBar(acc));
 
       if (t.leftAt) {
@@ -242,7 +252,7 @@ PAGES.tclose = function () {
            ——鍵要短到一眼讀完，而「門」不是老師要做的事。 */
         /* 確認要問一次：這一顆按下去，學生那邊廊道盡頭的門就開了。 */
         if (DRAFT.closeConf === t.teamId) {
-          H.push('<p class="dim">確定「' + esc(t.name) + '」的整個專案已經完成了嗎？按下去，他們那邊的出口就會打開。</p>');
+          H.push('<p class="dim">確定「' + esc(t.name) + (組員 ? '（' + esc(組員) + '）' : '') + '」的整個專案已經完成了嗎？按下去，他們那邊的出口就會打開。</p>');
           H.push(btn('對，整個專案完成了', 'openexit:' + t.teamId + ',1', 'big'));
           H.push(btn('先不要', 'closeno', 'ghost'));
         } else {
@@ -285,6 +295,9 @@ PAGES.review = function () {
 
   /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
   var H = [head('審核', t.name + '　·　' + m.title, '')];
+  /* 老師認的是「這一組是哪幾位」，不是組名。 */
+  var 組員名 = teamMemberNames(t.teamId);
+  if (組員名) H.push('<p class="dim">' + esc(組員名) + '</p>');
 
   /* ── 要這件事的那一位 ──
 

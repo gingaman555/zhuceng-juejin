@@ -532,6 +532,18 @@ DRAFT.closeConf = tm.teamId;
 be('問了之後才有「對，整個專案完成了」', PAGES.tclose().indexOf('對，整個專案完成了') >= 0, true);
 be('結案頁開頭講清楚：確認的是整個專案，不是收作業', htmlC.indexOf('整個專案已經完成') >= 0 && htmlC.indexOf('不是收下一件作業') >= 0, true);
 be('學生進不了老師的結案頁', allowed(stu[0], 'tclose'), false);
+/* 老師認的是「這一組是哪幾位」：等你的清單與審核頁也寫組員名字 */
+as(tea); S.page = 'radar'; S.p = {}; DRAFT = {};
+const 名 = stu.filter(u => u.teamId === tm.teamId).map(u => u.name);
+be('等你的清單每一列寫著組員名字', radar(kl.classId).filter(x => x.team.teamId === tm.teamId).length > 0 && 名.every(n => PAGES.radar().indexOf(n) >= 0), true);
+const rvR = radar(kl.classId).filter(x => x.team.teamId === tm.teamId)[0];
+S.page = 'review'; S.p = { id: rvR.run.runId };
+be('審核頁標題下面寫著組員名字', 名.every(n => PAGES.review().indexOf(n) >= 0), true);
+be('結案頁把組別名放正常字級（不是淡色小字）', htmlC.indexOf('<p><b>') >= 0, true);
+be('結案頁每一組旁邊寫著組員的名字', tm && stu.filter(u => u.teamId === tm.teamId).every(u => htmlC.indexOf(u.name) >= 0), true);
+DRAFT.closeConf = tm.teamId;
+be('確認的那一句也寫著是哪幾位', stu.filter(u => u.teamId === tm.teamId).every(u => PAGES.tclose().indexOf(u.name) >= 0), true);
+DRAFT.closeConf = null;
 
 /* ══ 系統通知：只給還開著舊版分頁的人看，新版當它不存在 ══ */
 H('系統通知（notice）新版看不到');
@@ -736,6 +748,26 @@ const dT = actResearcherDeleteEmptyTeams(rsU.userId);
 be('空組刪得掉', dT.n >= 1 && !teamOf('GE1'), true);
 be('真的班的帳號、組別一筆都沒少', DB.Users.filter(u => u.classId === kl.classId).length + '/' + tm.teamId, 真班人數 + '/' + tm.teamId);
 be('留下事件', DB.Events.slice(-2).map(e => e.kind).join(','), 'deleteaccount,deleteteams');
+
+/* ══ 連點與重複儲存（2026-09-30，事件紀錄：連續同一個動作 28 組、挑角色 87 次是同一個）══ */
+H('連點擋一下、挑同一個角色不重複寫');
+be('第一下放行', actGuard('hero:mage', 1000), true);
+be('0.8 秒內的第二下擋掉', actGuard('hero:mage', 1500), false);
+be('不同的動作不受影響', actGuard('hero:knight', 1500), true);
+be('過了 0.8 秒又放行', actGuard('hero:mage', 2000), true);
+be('會存資料的動作都在名單上', ['hero', 'rename', 'askexit', 'commit', 'jointeam', 'approve', 'reject'].every(n => ACT_ONCE[n]), true);
+be('加減鍵與導覽不在名單上（本來就要連按）', !ACT_ONCE.go && !ACT_ONCE.pland && !ACT_ONCE.plandu, true);
+as(stu[0]); ACTS.hero('mage');                     /* 先確定現在是 mage */
+const heroN = () => DB.Events.filter(e => e.kind === 'hero' && e.teamId === stu[0].teamId).length;
+const hero0 = stu[0].hero, ev0 = heroN();
+ACTS.hero(hero0); ACTS.hero(hero0);
+be('選跟現在一樣的角色（連按兩次）：不多記事件', heroN() - ev0, 0);
+const evH = DB.Events.length;
+ACTS.hero(hero0 === 'mage' ? 'knight' : 'mage');
+be('換成別的角色：記一筆', DB.Events.length - evH, 1);
+const evH2 = DB.Events.length, cur = stu[0].hero;
+ACTS.hero(cur);
+be('再選同一個：不再記', DB.Events.length - evH2, 0);
 
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');

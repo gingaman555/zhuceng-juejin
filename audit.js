@@ -88,6 +88,17 @@ const parse = d => { try { return JSON.parse(d.fields.j.stringValue); } catch (e
   const 有人 = {}; 學生.forEach(u => { if (u.teamId) 有人[u.teamId] = (有人[u.teamId] || 0) + 1; });
   const 測試 = D.Users.filter(u => /^drill_|^wed_s|^ra_stu/.test(u.account || '')).length + D.Classes.filter(c => /測試|演練/.test(c.name)).length;
 
+  /* 專案名稱掉了：組現在沒有專案名稱，可是隊員取過（事件紀錄有）。
+     2026-09-30 量到：改名 215 次有 204 次「原本」是空的，26 組沒有名稱。
+     找回用 node restore-names.js。 */
+  const 用戶 = {}; D.Users.forEach(u => { 用戶[u.userId] = u; });
+  const 最後名 = {};
+  D.Events.slice().sort((a, b) => a.at - b.at).forEach(e => {
+    if (e.kind !== 'rename' || !e.name) return;
+    const u = 用戶[e.by]; if (u && u.teamId) 最後名[u.teamId] = e.name;
+  });
+  隊.forEach(t => { if (!t.project && 最後名[t.teamId]) 壞.push('專案名稱掉了　' + t.name + '（隊員取過「' + 最後名[t.teamId] + '」）'); });
+
   console.log('── 要人看的數字 ──');
   班.forEach(c => console.log('  班名　' + c.name));
   console.log('  組數 ' + 隊.length + '　沒有成員 ' + 隊.filter(t => !有人[t.teamId]).length + '　只有 1 人 ' + 隊.filter(t => 有人[t.teamId] === 1).length);

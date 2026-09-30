@@ -713,11 +713,28 @@ document.addEventListener('change', function (ev) {
 });
 
 /* 動作字串：「名稱」或「名稱:參數」 */
+/* 連點擋一下。
+
+   9/30 事件紀錄：一分鐘內同一個人連續做同一個動作 3 次以上，有 28 組
+   （改名 9、挑角色 8、結案 5……）——按了不確定有沒有反應，又按一次。
+   會存資料的這幾個動作，同一個動作（連參數）在 0.8 秒內的第二下不再執行。
+   導覽、加減鍵這類本來就要連按的不在名單上。 */
+var ACT_ONCE = { hero: 1, rename: 1, teamrename: 1, askexit: 1, commit: 1, publish: 1,
+  approve: 1, reject: 1, mkteam: 1, jointeam: 1, reg: 1, login: 1, renameclass: 1,
+  msdelyes: 1, rsdelyes: 1, rsaccyes: 1, rspw: 1 };
+var ACT_LAST = {};
+function actGuard(key, t) {
+  t = t || Date.now();
+  if (ACT_LAST[key] && t - ACT_LAST[key] < 800) return false;
+  ACT_LAST[key] = t;
+  return true;
+}
 function runAct(str) {
   var i = String(str || '').indexOf(':');
   var name = i < 0 ? str : str.slice(0, i);
   var arg = i < 0 ? '' : str.slice(i + 1);
   var f = ACTS[name];
+  if (f && ACT_ONCE[name] && !actGuard(name + ':' + arg)) return;
   if (f) f(arg);
 }
 
@@ -1266,9 +1283,17 @@ var ACTS = {
   hero: function (k) {
     var u = me();
     if (!u || !HEROES[k]) return;
-    u.hero = k;
-    save();
-    logEvent('hero', { teamId: u.teamId, hero: k });
+    /* 選的是同一個就不用再存、再記一筆。
+
+       9/30 事件紀錄：挑角色 193 次，87 次是連續選同一個，最多一位選了 13 次
+       同一個——每一次都寫一筆資料、都推一次雲端，而推的是他整個帳號
+       （見 41-sync.js 的 SYNC_V 那一段：舊版整筆覆蓋的時候，這種無意義的
+       寫入正是把別人剛改的欄位蓋掉的機會）。沒變就不寫。 */
+    if (u.hero !== k) {
+      u.hero = k;
+      save();
+      logEvent('hero', { teamId: u.teamId, hero: k });
+    }
     /* 第一次挑完角色，先看兩頁故事再進廊道。
 
        量過的問題：全新的學生前三個動作（認領自己、挑角色、取專案名）
