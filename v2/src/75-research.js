@@ -85,6 +85,26 @@ PAGES.rs = function () {
 
   H.push(classPicker());
 
+  /* 誰用的是新版（課堂上叫大家重新整理時，有一個數字可以看）。
+     u.build 是新版登入之後自己寫的（見 41-sync.js 的 reportBuild）；
+     還開著舊版分頁的人寫不進去，所以永遠停在舊的或空的。 */
+  var 學生們 = rsUsers().filter(function (u) { return u.role === 'student' && !u.mergedInto && (!rsClassId() || inClass(u, rsClassId())); });
+  var 最新 = 0; 學生們.forEach(function (u) { if ((u.build || 0) > 最新) 最新 = u.build; });
+  if (最新) {
+    var 新 = 學生們.filter(function (u) { return u.build === 最新; });
+    var 舊 = 學生們.filter(function (u) { return u.build !== 最新; })
+      .sort(function (a, b) { return (b.lastLogin || 0) - (a.lastLogin || 0); });
+    H.push('<div class="card">');
+    H.push('<div class="eyebrow">用的是不是新版</div>');
+    H.push('<p><b>' + 新.length + '</b> 人是最新版　·　<b>' + 舊.length + '</b> 人還沒回報最新版</p>');
+    H.push('<p class="dim">還沒回報＝還開著舊分頁，或是新版部署之後還沒開過。上課時請他們把分頁關掉重開。</p>');
+    if (舊.length) {
+      H.push('<p class="dim">' + 舊.slice(0, 20).map(function (u) { return esc(u.name); }).join('、') +
+        (舊.length > 20 ? '……' : '') + '</p>');
+    }
+    H.push('</div>');
+  }
+
   /* 班級 */
   H.push('<div class="card">');
   H.push('<div class="eyebrow">班級　' + rsClasses().length + ' 個</div>');

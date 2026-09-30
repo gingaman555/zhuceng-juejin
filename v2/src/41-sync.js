@@ -37,7 +37,7 @@
    都沒有 firebase 這個東西。那時候這一整層安靜地什麼都不做，
    localStorage 還是照舊——單機那條路一步都沒有變。 */
 
-var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, fly: {}, denied: 0, blocked: 0 };
+var SYNC = { on: 0, db: null, last: null, first: {}, hold: 0, err: '', stale: 0, staleAt: 0, fly: {}, denied: 0, blocked: 0, blockWhy: '' };
 
 /* 每一張表的主鍵。
 
@@ -172,6 +172,48 @@ var SYNC_MAX_AGE = 4 * 3600000;
 function tabTooOld() { return Date.now() - SYNC_LOADED > SYNC_MAX_AGE; }
 function tabAgeCheck() { if (tabTooOld() && freshSafeToReload()) freshAutoReload(); }
 
+/* ---------- 過期太久的分頁，不讓它繼續用 ----------
+
+   2026-09-30：新版偵測到伺服器有更新的版本，本來只亮一條小提示，閒著才自己
+   重新整理。可是停在承諾／交作業這種「寫到一半」的頁面的人，那條提示可以
+   一直放著不理——而舊版的分頁，正是把班名、交件蓋回去的來源。
+
+   偵測到新版超過一刻鐘（SYNC_LOCK_MS），而且沒有任何還沒送到雲端的東西
+   （fly 空、上一批沒有失敗）、游標也不在輸入框裡，就整頁換成「請重新打開」
+   （blockedHtml('stale')）。有沒送出的東西就先不鎖——鎖了會把它丟掉，
+   等它送出去再鎖。
+
+   只管得到「有這一段程式的分頁」（9/30 之後開的）。更早的舊版分頁碰不到，
+   那些靠資料庫擋寫入（firestore.rules）加上提示（notice-oldtab.js）。 */
+var SYNC_LOCK_MS = 15 * 60000;
+function staleLock() {
+  if (!SYNC.stale || SYNC.blocked) return;
+  if (Date.now() - (SYNC.staleAt || Date.now()) < SYNC_LOCK_MS) return;
+  if (SYNC.err) return;
+  for (var k in SYNC.fly) if (Object.prototype.hasOwnProperty.call(SYNC.fly, k)) return;
+  if (typeof document !== 'undefined') {
+    var a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) return;
+  }
+  SYNC.blocked = 1; SYNC.blockWhy = 'stale';
+  if (typeof render === 'function') render();
+}
+
+/* ---------- 這個人現在用的是哪一版 ----------
+
+   2026-09-30：舊版分頁的人自己看不出來，老師與研究者也看不出來。新版在登入
+   之後把自己的版本記號寫在使用者那一筆（u.build），研究者頁的名單上就看得到
+   「新版幾人、還沒回報幾人」——課堂上叫大家重新整理時有一個數字可以看。
+   每次部署版本記號會變，所以每個人每次部署後第一次開會寫一次。 */
+function reportBuild() {
+  if (typeof BUILD_AT === 'undefined' || typeof me !== 'function') return;
+  var u = me();
+  if (!u || u._d || u.role === 'researcher') return;
+  if (u.build === BUILD_AT) return;
+  u.build = BUILD_AT;
+  save();
+}
+
 function checkFresh() {
   if (typeof fetch !== 'function' || typeof BUILD_AT === 'undefined') return;
   if (typeof location === 'undefined') return;
@@ -182,6 +224,7 @@ function checkFresh() {
       if (m && Number(m[1]) > BUILD_AT) {
         if (!SYNC.stale) {
           SYNC.stale = 1;
+          SYNC.staleAt = Date.now();
           if (typeof render === 'function') render();
         }
         if (freshSafeToReload()) freshAutoReload();
@@ -193,6 +236,7 @@ function checkFreshStart() {
   if (typeof setInterval !== 'function') return;
   checkFresh();
   setInterval(function () { checkFresh(); tabAgeCheck(); }, SYNC_FRESH_MS);
+  setInterval(staleLock, 60000);
   if (typeof document !== 'undefined' && document.addEventListener) {
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) { checkFresh(); tabAgeCheck(); }
@@ -431,10 +475,13 @@ function syncFail(chunk, e) {
 
 /* 整頁換成的那一張。不放任何別的按鈕——這一頁上做的任何事都送不出去。 */
 function blockedHtml() {
+  var stale = SYNC.blockWhy === 'stale';
   return '<div class="main"><div class="wrap"><div class="card">' +
-    '<div class="eyebrow warnx">這個網頁是舊的</div>' +
+    '<div class="eyebrow warnx">' + (stale ? '這個網頁有新版了' : '這個網頁是舊的') + '</div>' +
     '<h1>請把它關掉，重新打開一次</h1>' +
-    '<p class="lead">你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。</p>' +
+    '<p class="lead">' + (stale
+      ? '這一頁太舊了，不能再用。你之前做的事都已經送出去了，重新打開就是最新的。'
+      : '你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。') + '</p>' +
     '<button class="btn big" data-act="run" data-p=\'{"a":"reloadpage"}\'>重新打開</button>' +
     '</div></div></div>';
 }
@@ -694,6 +741,9 @@ function syncStart() {
         } catch (e) {}
       });
       syncTake(col, inc);
+      /* 使用者這張表收完第一次之後，寫上這個人現在用哪一版（見 reportBuild）。
+         不能更早：更早寫的話，第一次快照會把它換掉。 */
+      if (col === 'Users') reportBuild();
       /* 收完再推一次：第一批快照回來之後，本機有而雲端沒有的
          那幾筆就是這一下推上去的。 */
       syncPush();

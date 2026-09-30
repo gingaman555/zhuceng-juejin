@@ -577,6 +577,7 @@ ACTS.login = function () {
   var r = actLogin(acc, pw);
   if (r.err) { DRAFT['lg-acc'] = acc; return say(r.err); }
   signIn(r.user);
+  if (typeof reportBuild === 'function') reportBuild();
 };
 
 ACTS.reg = function () {
