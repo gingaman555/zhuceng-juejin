@@ -735,7 +735,7 @@ document.addEventListener('change', function (ev) {
    會存資料的這幾個動作，同一個動作（連參數）在 0.8 秒內的第二下不再執行。
    導覽、加減鍵這類本來就要連按的不在名單上。 */
 var ACT_ONCE = { hero: 1, rename: 1, teamrename: 1, askexit: 1, commit: 1, publish: 1,
-  approve: 1, reject: 1, mkteam: 1, jointeam: 1, leaveyes: 1, sololeave: 1, solono: 1, reg: 1, login: 1, renameclass: 1,
+  approve: 1, reject: 1, mkteam: 1, jointeam: 1, leaveyes: 1, sololeave: 1, solono: 1, noteok: 1, reg: 1, login: 1, renameclass: 1,
   msdelyes: 1, rsdelyes: 1, rsaccyes: 1, rspw: 1 };
 var ACT_LAST = {};
 function actGuard(key, t) {
@@ -1187,6 +1187,21 @@ var ACTS = {
   },
 
   /* 「這一組只有你一個人」的提醒（見 60-student.js 的 soloAskFor）。 */
+  /* 更新說明：看過就記在這個帳號上，不再出現（見 60-student.js 的 UPDATE_NOTE）。 */
+  noteok: function () {
+    var u = me(); if (!u) return;
+    noteAck(u);
+    taskNoticeTick();
+  },
+  sololater: function () {
+    var u = me(); if (!u) return;
+    var c = DB.Config || (DB.Config = {});
+    c.soloLater = c.soloLater || {};
+    c.soloLater[u.userId] = now();
+    save();
+    SOLO_CONF = false;
+    taskNoticeTick();
+  },
   soloyes: function () { SOLO_CONF = true; taskNoticeTick(); },
   soloback: function () { SOLO_CONF = false; taskNoticeTick(); },
   solono: function () {

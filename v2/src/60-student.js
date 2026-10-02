@@ -1717,8 +1717,10 @@ function taskNoticeHtml(list) {
   list.slice(0, 5).forEach(function (m) { H.push('<p class="tn-t">' + esc(m.title) + '</p>'); });
   if (list.length > 5) H.push('<p class="dim">還有 ' + (list.length - 5) + ' 個</p>');
   H.push('</div>');
+  H.push('<div class="tn-act">');
   H.push(btn('去看看', 'tngo', 'big'));
   H.push(btn('知道了', 'tnok', 'ghost'));
+  H.push('</div>');
   H.push('</div>');
   return H.join('');
 }
@@ -1743,6 +1745,9 @@ var SOLO_ASK_AFTER = 60 * 60000;
 function soloAskFor(u) {
   if (!u || u.role !== 'student' || u._d || RULES.SOLO || !u.teamId) return null;
   if (u.soloOk === u.teamId) return null;
+  /* 「晚點再說」：這台裝置二十四小時內不再問（不寫雲端，只是先關掉）。 */
+  var later = ((DB.Config || {}).soloLater || {})[u.userId];
+  if (later && now() - later < 24 * 3600000) return null;
   if (whyCannotLeave(u)) return null;
   var t = teamOf(u.teamId);
   if (!t) return null;
@@ -1756,35 +1761,102 @@ function soloNoticeHtml(t) {
     H.push('<div class="eyebrow lit">「' + esc(t.name) + '」現在只有你一個人</div>');
     H.push('<h2>是不是之前按錯，自己建了一組？</h2>');
     H.push('<p class="dim">如果你的隊友在別的組，可以離開這一組，再用隊友給你的加入碼加進去。還沒承諾任何任務之前才換得了。</p>');
+    H.push('<div class="tn-act">');
     H.push(btn('是，我要換組', 'soloyes', 'big'));
     H.push(btn('不是，我們就是一個人', 'solono', 'ghost'));
+    H.push(btn('晚點再說', 'sololater', 'ghost'));
+    H.push('</div>');
   } else {
     H.push('<div class="eyebrow lit">確定嗎</div>');
     H.push('<h2>離開「' + esc(t.name) + '」</h2>');
     H.push('<p class="dim">離開之後請跟隊友拿加入碼，輸入就能加進他們那一組。</p>');
+    H.push('<div class="tn-act">');
     H.push(btn('對，離開', 'sololeave', 'big'));
     H.push(btn('先不要', 'soloback', 'ghost'));
+    H.push('</div>');
   }
   H.push('</div>');
   return H.join('');
 }
 
-/* 每次畫完檢查一次：該跳就跳、不該跳的收掉。已經在跳的同一批不重畫。 */
+/* ---------- 更新說明：每位學生看一次 ----------
+
+   2026-10-02：這幾天改了好幾個學生看得到的地方（同時做好幾件、新任務通知、
+   按錯組別可以換、網頁更新時請重新打開），學生沒有任何地方會知道。
+   所以給現在每一位學生一張說明，看完按「知道了」就不再出現。
+
+   「看過」記在使用者那一筆（noteSeen＝這一則的編號，跟著帳號走、不上雲以外的
+   地方），所以換一台裝置也不會再跳。只給這則公告發出去之前註冊的人
+   （createdAt < at）——之後才註冊的人看到的就是這個樣子，不需要被告知「更新了什麼」。
+   下一次要發新的公告：換一個 id、at、items。
+
+   跟其他兩種通知同一個位置、同樣不打斷寫到一半的頁，而且排在最前面：
+   先說有什麼變，後面問他組別的事才讀得懂。 */
+var UPDATE_NOTE = {
+  id: 'n1002',
+  at: Date.parse('2026-10-02T23:59:00+08:00'),
+  title: '專案地下城更新了',
+  items: [
+    ['可以同時做好幾件', '老師派了好幾件任務，不用等做完一件才開下一件。首頁會把其他任務列出來。'],
+    ['新任務會跳出來', '老師派了新的任務，你一打開網頁就會看到通知。'],
+    ['按錯組別可以換', '不小心自己建了一組、隊友在別的組：在還沒承諾任何任務之前，可以離開這一組，再用隊友給你的加入碼加進去。如果你這一組現在只有你一個人，打開網頁時會問你是不是按錯。'],
+    ['網頁更新時請重新打開', '有新版的時候，畫面會請你重新打開。你做的事會先送出去，不會不見。']
+  ]
+};
+function noteFor(u) {
+  if (!u || u.role !== 'student' || u._d) return null;
+  if (u.noteSeen === UPDATE_NOTE.id) return null;
+  if (!u.createdAt || u.createdAt >= UPDATE_NOTE.at) return null;
+  return UPDATE_NOTE;
+}
+function noteReady() {
+  if (taskNoticeReady()) return true;
+  /* 還沒有組的人停在「建立／加入」那一頁，其他頁他進不去。 */
+  if (S.page !== 'myteam') return false;
+  if (typeof SYNC !== 'undefined' && (SYNC.blocked || SYNC.cover)) return false;
+  return true;
+}
+function noteHtml(n) {
+  var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  H.push('<div class="eyebrow lit">看一次就好</div>');
+  H.push('<h2>' + esc(n.title) + '</h2>');
+  H.push('<div class="tn-list">');
+  n.items.forEach(function (x) {
+    H.push('<p class="tn-t">' + esc(x[0]) + '</p><p class="dim tn-d">' + esc(x[1]) + '</p>');
+  });
+  H.push('</div>');
+  H.push('<div class="tn-act">');
+  H.push(btn('知道了', 'noteok', 'big'));
+  H.push('</div>');
+  H.push('</div>');
+  return H.join('');
+}
+function noteAck(u) {
+  u.noteSeen = UPDATE_NOTE.id;
+  save();
+  logEvent('noteseen', { id: UPDATE_NOTE.id });
+}
+
+/* 每次畫完檢查一次：該跳就跳、不該跳的收掉。已經在跳的同一批不重畫。
+   順序：更新說明 → 組別問題 → 新任務。一次只跳一張，關掉之後下一張才出來。 */
 function taskNoticeTick() {
   if (typeof document === 'undefined' || !document.body || !document.body.appendChild) return;
   var u = (typeof me === 'function') ? me() : null;
+  var note = (u && noteReady()) ? noteFor(u) : null;
   var ready = !!(u && taskNoticeReady());
-  var solo = ready ? soloAskFor(u) : null;
-  var list = (ready && !solo) ? taskNoticeFor(u) : [];
+  var solo = (ready && !note) ? soloAskFor(u) : null;
+  var list = (ready && !note && !solo) ? taskNoticeFor(u) : [];
   var old = document.getElementById('task-notice');
-  var key = solo ? 'solo:' + solo.teamId + ':' + (SOLO_CONF ? 1 : 0) : list.map(function (m) { return m.msId; }).join(',');
-  if (old && old.getAttribute && old.getAttribute('data-k') === key && (solo || list.length)) return;
+  var key = note ? 'note:' + note.id
+    : solo ? 'solo:' + solo.teamId + ':' + (SOLO_CONF ? 1 : 0)
+    : list.map(function (m) { return m.msId; }).join(',');
+  if (old && old.getAttribute && old.getAttribute('data-k') === key && (note || solo || list.length)) return;
   if (old && old.parentNode) old.parentNode.removeChild(old);
-  if (!solo && !list.length) return;
+  if (!note && !solo && !list.length) return;
   var d = document.createElement('div');
   d.id = 'task-notice'; d.className = 'tn';
   d.setAttribute('data-k', key);
-  d.innerHTML = solo ? soloNoticeHtml(solo) : taskNoticeHtml(list);
+  d.innerHTML = note ? noteHtml(note) : solo ? soloNoticeHtml(solo) : taskNoticeHtml(list);
   document.body.appendChild(d);
 }
 function taskNoticeAck(u, list) {

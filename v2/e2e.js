@@ -1023,6 +1023,54 @@ DB.Users = DB.Users.filter(u => !/^US\d$/.test(u.userId));
 DB.Teams = DB.Teams.filter(t => [ts1.teamId, ts2.teamId, ts3.teamId].indexOf(t.teamId) < 0);
 DRAFT = {}; SOLO_CONF = false;
 
+/* ══ 更新說明：每位學生看一次，看完就不再出現（2026-10-02）══
+
+   這幾天改了好幾個學生看得到的地方，學生沒有任何地方會知道。
+   一次只跳一張，順序：更新說明 → 組別問題 → 新任務；每一張都有明確的關掉鍵。 */
+H('更新說明：看一次就好、每一張都關得掉');
+let 畫了 = null;
+document.createElement = () => { const o = Object.create(stubEl); o.attrs = {}; o.setAttribute = (k, v) => { o.attrs[k] = v; }; return o; };
+document.body.appendChild = el => { 畫了 = el; };
+DB.Users.push({ userId: 'UN1', account: 'note1', name: '舊生', role: 'student', classId: kl.classId, teamId: '', createdAt: 1000000 });
+const un1 = find('Users', u => u.userId === 'UN1');
+const tn1 = actNewTeam('一個人的組', 'UN1').team; tn1.joinedAt = Date.now() - 2 * 3600000;
+as(un1); S.page = 'home'; DRAFT = {};
+be('現有的學生（公告之前註冊）要看', !!noteFor(un1), true);
+const nh = noteHtml(noteFor(un1));
+be('說明寫了四件更新', ['同時做好幾件', '新任務會跳出來', '按錯組別可以換', '網頁更新時請重新打開'].every(k => nh.indexOf(k) >= 0), true);
+be('只有一顆鍵「知道了」，而且釘在卡片底部（內容長的時候看得到）', nh.indexOf('noteok') >= 0 && nh.indexOf('知道了') >= 0 && nh.indexOf('tn-act') >= 0 && (nh.match(/data-act="run"/g) || []).length === 1, true);
+taskNoticeTick();
+be('剛打開首頁：先跳更新說明（不是組別問題）', 畫了 && 畫了.innerHTML.indexOf('看一次就好') >= 0 && 畫了.innerHTML.indexOf('是不是之前按錯') < 0, true);
+ACTS.noteok();
+be('按「知道了」：記在這個帳號上', un1.noteSeen === UPDATE_NOTE.id, true);
+be('留下事件', DB.Events.slice(-1)[0].kind, 'noteseen');
+be('看過之後不再出現', noteFor(un1), null);
+taskNoticeTick();
+be('關掉之後才輪到下一張（組別問題）', 畫了.innerHTML.indexOf('是不是之前按錯') >= 0 && 畫了.innerHTML.indexOf('看一次就好') < 0, true);
+const sh = soloNoticeHtml(tn1);
+be('組別問題有三個出口：換組、不是、晚點再說', sh.indexOf('soloyes') >= 0 && sh.indexOf('solono') >= 0 && sh.indexOf('sololater') >= 0, true);
+ACTS.sololater();
+be('「晚點再說」：這台裝置先不再問，什麼都沒改', soloAskFor(un1) === null && un1.teamId === tn1.teamId && !un1.soloOk, true);
+be('兩次關掉都不影響使用：還在原本的組、可以照常做事', un1.teamId === tn1.teamId, true);
+const ago = Date.now() - 25 * 3600000;
+DB.Config.soloLater[un1.userId] = ago;
+be('隔了一天會再問一次', !!soloAskFor(un1), true);
+/* 不該看到的 */
+DB.Users.push({ userId: 'UN2', account: 'note2', name: '公告後才註冊', role: 'student', classId: kl.classId, teamId: '', createdAt: UPDATE_NOTE.at + 1 });
+be('公告之後才註冊的人不跳', noteFor(find('Users', u => u.userId === 'UN2')), null);
+be('老師不跳', noteFor(tea), null);
+const un3 = { userId: 'UN3', role: 'student', teamId: '', createdAt: 1000000 };
+S.page = 'myteam';
+be('還沒有組的人停在「建立／加入」那一頁：也看得到', noteFor(un3) !== null && noteReady(), true);
+S.page = 'commit';
+be('寫到一半的頁（承諾）不打斷', noteReady(), false);
+S.page = 'home'; SYNC.cover = 1;
+be('這一頁被蓋住（舊版）時不跳', noteReady(), false);
+SYNC.cover = 0;
+DB.Users = DB.Users.filter(u => !/^UN\d$/.test(u.userId));
+DB.Teams = DB.Teams.filter(t => t.teamId !== tn1.teamId);
+DRAFT = {}; 畫了 = null;
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

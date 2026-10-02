@@ -115,6 +115,10 @@ img{display:block}
 .tn-list{margin:0 0 14px}
 .tn-t{margin:0 0 8px;color:var(--gold);line-height:1.4}
 .tn-box .btn{display:block;width:100%;margin-top:10px}
+.tn-d{margin:0 0 14px;line-height:1.5}
+/* 按鈕列釘在卡片底部：內容比螢幕長的時候（手機、橫放），要按的鍵永遠看得到，
+   不用先捲到最下面才找得到「知道了」。 */
+.tn-act{position:sticky;bottom:-22px;margin:0 -22px -22px;padding:4px 22px 22px;background:var(--panel)}
 /* 小一號的按鈕：放在一列資訊旁邊、不該搶過那一列的（例如「刪掉這一件」）。
    字還是 22px，只有內距與寬度縮小。 */
 /* 三個 class：跟 .btn.ghost（兩個）打成平手的話，排在後面的 ghost 會贏，小按鈕就縮不下去。 */
