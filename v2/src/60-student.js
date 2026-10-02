@@ -1740,6 +1740,11 @@ function taskNoticeHtml(list) {
    跟新任務通知同一套（同一個位置、同樣不打斷寫到一半的頁），而且優先：
    先弄清楚他在哪一組，才有「這一組的任務」可以說。 */
 var SOLO_CONF = false;
+/* 看完更新說明的這一次打開，不再接著跳組別問題或新任務。
+   2026-10-02：一位學生第一次打開，可能連續被三張彈窗擋住（更新說明、組別問題、
+   新任務）。每一張單獨看都合理，疊在一起就是三次打斷——所以更新說明按掉之後，
+   這一次就讓他用；其餘的下一次打開才跳（這一頁重新載入才會歸零）。 */
+var TN_QUIET = false;
 /* 剛建好隊、正在等隊友用代碼加進來的人不該馬上被問「是不是按錯」——那是正常的
    第一步。建立超過一小時還是一個人，才問。 */
 var SOLO_ASK_AFTER = 60 * 60000;
@@ -1835,6 +1840,7 @@ function noteHtml(n) {
   return H.join('');
 }
 function noteAck(u) {
+  TN_QUIET = true;
   u.noteSeen = UPDATE_NOTE.id;
   save();
   logEvent('noteseen', { id: UPDATE_NOTE.id });
@@ -1847,8 +1853,8 @@ function taskNoticeTick() {
   var u = (typeof me === 'function') ? me() : null;
   var note = (u && noteReady()) ? noteFor(u) : null;
   var ready = !!(u && taskNoticeReady());
-  var solo = (ready && !note) ? soloAskFor(u) : null;
-  var list = (ready && !note && !solo) ? taskNoticeFor(u) : [];
+  var solo = (ready && !note && !TN_QUIET) ? soloAskFor(u) : null;
+  var list = (ready && !note && !solo && !TN_QUIET) ? taskNoticeFor(u) : [];
   var old = document.getElementById('task-notice');
   var key = note ? 'note:' + note.id
     : solo ? 'solo:' + solo.teamId + ':' + (SOLO_CONF ? 1 : 0)

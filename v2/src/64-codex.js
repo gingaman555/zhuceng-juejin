@@ -81,10 +81,13 @@ PAGES.codex = function () {
         (石.used ? '照亮過 ' + (石.used / RULES.CRYSTAL.light) + ' 位。' : '')) +
       '</p>');
   }
+  /* 黑影怎麼解鎖，只在這裡說一次。本來每一張還沒遇到的卡都各印一遍
+     「還沒收下過他的委託」「先看到他的名字，真正遇到他要等老師收下一件委託」，
+     六張就是同樣兩句話出現六次（2026-10-02 全站掃重複句量到）。 */
   H.push('<p class="dim cx-lead">' +
     esc('這座地下城裡住著 ' + 共 + ' 位，' + STRATA.length + ' 層各有各的一群。') +
-    esc('每一位有自己的' + (句 ? ' ' + 句 + ' ' : '') + '句話——' +
-      '第一次遇到他跟又走到他面前，他說的不一樣。') +
+    esc('每一位有 ' + (句 || '') + ' 句話，第一次遇到跟再遇到說的不一樣。') +
+    esc('黑影要等老師收下一件委託才會遇到；水晶可以先照亮他的名字。') +
     '</p>');
 
   /* 上面那一排：六層 ＋ 任務之證。一次只看一頁。 */
@@ -142,7 +145,7 @@ PAGES.codex = function () {
       H.push(patTag(c, can ? z.pal : shadePal(z.pal), 'cx-px', 1));
       H.push('<div><b>' + (can ? esc(c.n) : '？？？') + '</b>');
       if (can) H.push('<em>' + esc(c.t) + '</em>');
-      else H.push('<em>還沒收下過他的委託。</em>');
+      else H.push('<em>還沒遇到</em>');
       /* ── 照亮的那一位，說清楚它跟遇過不一樣 ──
 
          這一行不是提醒也不是註腳，它是這一格的內容：他知道有這個人，
@@ -162,7 +165,6 @@ PAGES.codex = function () {
           H.push('<button class="cx-light" data-act="run" data-p=\'' +
             esc(JSON.stringify({ a: 'light:' + c.n })) + '\'>' +
             '放一顆水晶照亮　' + RULES.CRYSTAL.light + ' 顆</button>');
-          H.push('<em class="cx-hint">先看到他的名字。真正遇到他要等老師收下一件委託。</em>');
         } else {
           H.push('<em class="cx-need">照亮要 ' + RULES.CRYSTAL.light +
             ' 顆水晶，還差 ' + (RULES.CRYSTAL.light - 石.left) + ' 顆。</em>');

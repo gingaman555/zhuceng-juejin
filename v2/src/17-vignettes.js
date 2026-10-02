@@ -15,7 +15,7 @@
    它們只是畫，沒有任何資訊，也不是按鈕。 */
 
 var VIG_PAL = {
-  k: '#2A1E12', P: '#E8D8A8', q: '#C9B27A', i: '#6B5538',
+  k: '#2A1E12', S: '#7A7062', P: '#E8D8A8', q: '#C9B27A', i: '#6B5538',
   W: '#8A5A2B', w: '#B07A3C', r: '#B8442E', e: '#E06A4F',
   g: '#F6C86A', F: '#FFF1C2', O: '#E9843F', T: '#C9B98F', t: '#9C8C64',
   R: '#B8442E', D: '#1E1610', '#': '#8A5A2B', '*': '#B07A3C'
@@ -78,6 +78,44 @@ var VIG = {
     'kkkkkkkkDkkkkkkk'
   ]
 };
+
+/* 以下兩張給門口與帳號那幾頁：門（登入）、鑰匙（密碼、救援碼）。 */
+VIG.door = [
+  '....kkkkkkkk....',
+  '..kkSSSSSSSSkk..',
+  '.kSSSwwwwwwSSSk.',
+  '.kSSwwWwwWwwSSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwgwSk.',
+  '.kSwwwWwwWwgwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSSSSSSSSSSSSk.',
+  '..kkkkkkkkkkkk..'
+];
+VIG.key = [
+  '....kkkk....',
+  '...kggggk...',
+  '..kggkkggk..',
+  '..kgk..kgk..',
+  '..kggkkggk..',
+  '...kggggk...',
+  '....kggk....',
+  '....kggk....',
+  '....kggkkk..',
+  '....kgggggk.',
+  '....kggkkk..',
+  '....kggk....',
+  '....kggkkk..',
+  '....kgggggk.',
+  '....kggggk..',
+  '....kkkkk...'
+];
 
 /* 提燈有兩幀：火苗輪流亮、輪流縮（見 17-vignettes 底下 vignette()）。 */
 var VIG_LANTERN = [

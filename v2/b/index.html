@@ -6028,7 +6028,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790922769495;
+var BUILD_AT = 1790923112839;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -9198,7 +9198,7 @@ function stampPx(key, cls) {
    它們只是畫，沒有任何資訊，也不是按鈕。 */
 
 var VIG_PAL = {
-  k: '#2A1E12', P: '#E8D8A8', q: '#C9B27A', i: '#6B5538',
+  k: '#2A1E12', S: '#7A7062', P: '#E8D8A8', q: '#C9B27A', i: '#6B5538',
   W: '#8A5A2B', w: '#B07A3C', r: '#B8442E', e: '#E06A4F',
   g: '#F6C86A', F: '#FFF1C2', O: '#E9843F', T: '#C9B98F', t: '#9C8C64',
   R: '#B8442E', D: '#1E1610', '#': '#8A5A2B', '*': '#B07A3C'
@@ -9261,6 +9261,44 @@ var VIG = {
     'kkkkkkkkDkkkkkkk'
   ]
 };
+
+/* 以下兩張給門口與帳號那幾頁：門（登入）、鑰匙（密碼、救援碼）。 */
+VIG.door = [
+  '....kkkkkkkk....',
+  '..kkSSSSSSSSkk..',
+  '.kSSSwwwwwwSSSk.',
+  '.kSSwwWwwWwwSSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwgwSk.',
+  '.kSwwwWwwWwgwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSwwwWwwWwwwSk.',
+  '.kSSSSSSSSSSSSk.',
+  '..kkkkkkkkkkkk..'
+];
+VIG.key = [
+  '....kkkk....',
+  '...kggggk...',
+  '..kggkkggk..',
+  '..kgk..kgk..',
+  '..kggkkggk..',
+  '...kggggk...',
+  '....kggk....',
+  '....kggk....',
+  '....kggkkk..',
+  '....kgggggk.',
+  '....kggkkk..',
+  '....kggk....',
+  '....kggkkk..',
+  '....kgggggk.',
+  '....kggggk..',
+  '....kkkkk...'
+];
 
 /* 提燈有兩幀：火苗輪流亮、輪流縮（見 17-vignettes 底下 vignette()）。 */
 var VIG_LANTERN = [
@@ -18599,7 +18637,7 @@ PAGES.myteam = function () {
   H.push(btn('加入', 'jointeam', 'big'));
   H.push('</div>');
 
-  H.push('<p class="dim">開始做事之後就不能換——之後每一趟的紀錄都掛在這一隊上。按錯的話，在還沒做任何事之前可以離開重選。</p>');
+  H.push('<p class="dim">開始做事之後就不能換。按錯的話，在還沒做任何事之前可以離開重選。</p>');
   H.push('<div class="row">');
   /* 在好幾個班裡的人，這一頁不是死路：他可能是剛加進這一個班、
      現在想先回去原本那一班。 */
@@ -18882,7 +18920,7 @@ PAGES.me = function () {
     /* 這個帳號是救援碼上線之前註冊的，沒有這組碼——這一格要比
        換密碼那一格顯眼，因為少了它，忘記密碼就真的救不回來了。 */
     H.push('<p class="warn-block">你的帳號還沒有救援碼。' +
-      '一旦忘記密碼，現在唯一的路是重新註冊——組別跟之前的紀錄接不回來。</p>');
+      '忘記密碼的話只能重新註冊，組別和紀錄會接不回來。</p>');
     H.push(btn('產生救援碼', 'genrecov', ''));
   }
   H.push('</div>');
@@ -18928,8 +18966,7 @@ PAGES.pw = function () {
   /* 換完記不記得住，關係到救不救得回來。這句話要在他按下去之前就
      看到——搬到新密碼欄位前面、換上跟建立帳號那一頁一樣的警語樣式，
      這句的後果一樣重，不該因為在哪一頁而看起來比較不起眼。 */
-  H.push('<p class="warn-block">換完要記得。忘記的話，有救援碼才救得回來——' +
-    '沒有救援碼就只能重新註冊，組別跟紀錄接不回來（見「你的資料」）。</p>');
+  H.push('<p class="warn-block">換完要記得。忘記密碼要有救援碼才救得回來（見「你的資料」）。</p>');
   H.push('<div class="eyebrow">新的密碼</div>');
   H.push('<input id="pw-new" type="password" placeholder="' +
     esc(RULES.pwRule()) + '">');
@@ -20862,6 +20899,11 @@ function taskNoticeHtml(list) {
    跟新任務通知同一套（同一個位置、同樣不打斷寫到一半的頁），而且優先：
    先弄清楚他在哪一組，才有「這一組的任務」可以說。 */
 var SOLO_CONF = false;
+/* 看完更新說明的這一次打開，不再接著跳組別問題或新任務。
+   2026-10-02：一位學生第一次打開，可能連續被三張彈窗擋住（更新說明、組別問題、
+   新任務）。每一張單獨看都合理，疊在一起就是三次打斷——所以更新說明按掉之後，
+   這一次就讓他用；其餘的下一次打開才跳（這一頁重新載入才會歸零）。 */
+var TN_QUIET = false;
 /* 剛建好隊、正在等隊友用代碼加進來的人不該馬上被問「是不是按錯」——那是正常的
    第一步。建立超過一小時還是一個人，才問。 */
 var SOLO_ASK_AFTER = 60 * 60000;
@@ -20957,6 +20999,7 @@ function noteHtml(n) {
   return H.join('');
 }
 function noteAck(u) {
+  TN_QUIET = true;
   u.noteSeen = UPDATE_NOTE.id;
   save();
   logEvent('noteseen', { id: UPDATE_NOTE.id });
@@ -20969,8 +21012,8 @@ function taskNoticeTick() {
   var u = (typeof me === 'function') ? me() : null;
   var note = (u && noteReady()) ? noteFor(u) : null;
   var ready = !!(u && taskNoticeReady());
-  var solo = (ready && !note) ? soloAskFor(u) : null;
-  var list = (ready && !note && !solo) ? taskNoticeFor(u) : [];
+  var solo = (ready && !note && !TN_QUIET) ? soloAskFor(u) : null;
+  var list = (ready && !note && !solo && !TN_QUIET) ? taskNoticeFor(u) : [];
   var old = document.getElementById('task-notice');
   var key = note ? 'note:' + note.id
     : solo ? 'solo:' + solo.teamId + ':' + (SOLO_CONF ? 1 : 0)
@@ -22812,8 +22855,7 @@ PAGES.pack = function () {
     /* 有幾件的天數是他本人按的。擋不住代填，所以老實記下來——
        那個比例本身就是一個值得他自己看到的東西。 */
     if (我.own < 我.n) {
-      H.push('<p class="dim">其中 ' + 我.own + ' 件的天數是你自己按的。' +
-        '別人幫你填的那幾件，那個數字不是你說的話。</p>');
+      H.push('<p class="dim">其中 ' + 我.own + ' 件是你自己說的天數，其餘是別人幫你填的，不算你說的。</p>');
     }
     H.push('</div>');
   }
@@ -23055,10 +23097,13 @@ PAGES.codex = function () {
         (石.used ? '照亮過 ' + (石.used / RULES.CRYSTAL.light) + ' 位。' : '')) +
       '</p>');
   }
+  /* 黑影怎麼解鎖，只在這裡說一次。本來每一張還沒遇到的卡都各印一遍
+     「還沒收下過他的委託」「先看到他的名字，真正遇到他要等老師收下一件委託」，
+     六張就是同樣兩句話出現六次（2026-10-02 全站掃重複句量到）。 */
   H.push('<p class="dim cx-lead">' +
     esc('這座地下城裡住著 ' + 共 + ' 位，' + STRATA.length + ' 層各有各的一群。') +
-    esc('每一位有自己的' + (句 ? ' ' + 句 + ' ' : '') + '句話——' +
-      '第一次遇到他跟又走到他面前，他說的不一樣。') +
+    esc('每一位有 ' + (句 || '') + ' 句話，第一次遇到跟再遇到說的不一樣。') +
+    esc('黑影要等老師收下一件委託才會遇到；水晶可以先照亮他的名字。') +
     '</p>');
 
   /* 上面那一排：六層 ＋ 任務之證。一次只看一頁。 */
@@ -23116,7 +23161,7 @@ PAGES.codex = function () {
       H.push(patTag(c, can ? z.pal : shadePal(z.pal), 'cx-px', 1));
       H.push('<div><b>' + (can ? esc(c.n) : '？？？') + '</b>');
       if (can) H.push('<em>' + esc(c.t) + '</em>');
-      else H.push('<em>還沒收下過他的委託。</em>');
+      else H.push('<em>還沒遇到</em>');
       /* ── 照亮的那一位，說清楚它跟遇過不一樣 ──
 
          這一行不是提醒也不是註腳，它是這一格的內容：他知道有這個人，
@@ -23136,7 +23181,6 @@ PAGES.codex = function () {
           H.push('<button class="cx-light" data-act="run" data-p=\'' +
             esc(JSON.stringify({ a: 'light:' + c.n })) + '\'>' +
             '放一顆水晶照亮　' + RULES.CRYSTAL.light + ' 顆</button>');
-          H.push('<em class="cx-hint">先看到他的名字。真正遇到他要等老師收下一件委託。</em>');
         } else {
           H.push('<em class="cx-need">照亮要 ' + RULES.CRYSTAL.light +
             ' 顆水晶，還差 ' + (RULES.CRYSTAL.light - 石.left) + ' 顆。</em>');

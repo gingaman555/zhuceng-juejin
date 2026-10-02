@@ -1046,7 +1046,9 @@ be('按「知道了」：記在這個帳號上', un1.noteSeen === UPDATE_NOTE.id
 be('留下事件', DB.Events.slice(-1)[0].kind, 'noteseen');
 be('看過之後不再出現', noteFor(un1), null);
 taskNoticeTick();
-be('關掉之後才輪到下一張（組別問題）', 畫了.innerHTML.indexOf('是不是之前按錯') >= 0 && 畫了.innerHTML.indexOf('看一次就好') < 0, true);
+be('看完更新說明的這一次打開，不再接著跳別的（一次只打斷一回）', TN_QUIET === true && 畫了.innerHTML.indexOf('是不是之前按錯') < 0, true);
+TN_QUIET = false; taskNoticeTick();
+be('下一次打開（頁面重新載入）才輪到組別問題', 畫了.innerHTML.indexOf('是不是之前按錯') >= 0 && 畫了.innerHTML.indexOf('看一次就好') < 0, true);
 const sh = soloNoticeHtml(tn1);
 be('組別問題有三個出口：換組、不是、晚點再說', sh.indexOf('soloyes') >= 0 && sh.indexOf('solono') >= 0 && sh.indexOf('sololater') >= 0, true);
 ACTS.sololater();
