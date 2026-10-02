@@ -124,7 +124,7 @@ var PAGE_TITLE = {
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
   pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
   person: '角色', who: '挑角色', battle: '交作業', story: '故事',
-  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', tclose: '結案', rsacc: '刪帳號',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', msdetail: '任務詳細', tclose: '結案', rsacc: '刪帳號',
   rs: '名單', events: '紀錄'
 };
 function pageTitle(page) {
@@ -138,7 +138,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', msdetail: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher', rspw: 'researcher', rsacc: 'researcher'
 };
 function allowed(u, page) {
@@ -684,7 +684,8 @@ function sideBar() {
   /* 一個小方點換成像素圖。同一份結構，讀起來從「網站的幾個分頁」
      變成「背包裡的幾樣東西」。 */
   var items = nav.map(function (n) {
-    var on = S.page === n[0];
+    /* 任務詳細是「已派任務」底下那一層，側欄還是亮在已派任務上。 */
+    var on = S.page === n[0] || (n[0] === 'mslist' && S.page === 'msdetail');
     var ic = ICONS[n[0]];
     return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
@@ -1074,7 +1075,9 @@ var ACTS = {
     DRAFT.msDel = null;
     var r = actWithdrawMs(id, S.who);
     if (r.err) { render(); return say(r.err); }
-    render(); say('刪掉了。學生那邊看不到了，紀錄還留著。');
+    /* 在詳細頁刪的：回已派任務，那一件就在「刪掉的」那一區。 */
+    if (S.page === 'msdetail') go('mslist'); else render();
+    say('刪掉了。學生那邊看不到了，紀錄還留著。');
   },
   msrestore: function (id) {
     var r = actRestoreMs(id, S.who);

@@ -33,6 +33,14 @@
      unlock  換到這個職業的那一刻（只有新職業）
    標「草稿，等你改」的是使用者沒填、我先寫的。 */
 
+/* ---------- 總開關 ----------
+
+   2026-10-02：職業與新台詞做完了，但還沒決定哪一天放給學生（建議專案二開始時）。
+   程式先上線，這個開關關著：挑角色頁沒有職業區、不能換、七個職業也不說新的話
+   （剛出發／剛交出去／老師收下了／圖鑑多了一位）。要放出去，把它改成 true、
+   build、deploy。e2e 的職業那一節會自己打開它再關回去。 */
+var JOBS_ON = false;
+
 var JOB_SAY = {
   adv: {  /* 冒險者 */
     m: '接下來就又會是一場大冒險啦!!',
@@ -145,6 +153,7 @@ function jobOpen(u, k) {
    擋五件事：不是自己組的、沒有這個職業、這一組已經換到了、水晶不夠。
    換到之後整組都挑得了；用掉的水晶算在整組身上（見 40-db.js 的 crystalOf）。 */
 function actUnlockJob(teamId, key) {
+  if (!JOBS_ON) return { err: '還沒開放。' };
   var t = teamOf(teamId);
   if (!t) return { err: '找不到這一組。' };
   var who = (typeof S !== 'undefined' && S.who) ? userOf(S.who) : null;
@@ -169,6 +178,7 @@ function actUnlockJob(teamId, key) {
 /* 這個人的職業，在這個時刻會說哪一句。沒有就是沉默（回空字串）。
    跟 heroLine 不同：這裡不退回走路的台詞——「老師收下了」的時候講「又是沒看過的新風景」會很怪。 */
 function heroMoment(u, mode) {
+  if (!JOBS_ON) return '';
   var box = HERO_OS[heroKey(u)] || {};
   var a = box[mode] || [];
   return a.length ? a[Math.floor(Math.random() * a.length)] : '';
@@ -203,6 +213,7 @@ function heroTagSay(u, mode, ms) {
    換到的跟免費的一樣可以點；沒換到的是黑影加價錢，水晶夠才有那一顆鍵，
    按下去先問一次（花的是整組的水晶）。 */
 function jobSection(u) {
+  if (!JOBS_ON) return '';
   var t = u && u.teamId ? teamOf(u.teamId) : null;
   if (!t || !u.hero || !HEROES[u.hero]) return '';
   var left = Math.max(0, crystalOf(t.teamId).left);

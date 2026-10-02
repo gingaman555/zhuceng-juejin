@@ -742,10 +742,15 @@ function msRow(m, u) {
   var done = got.filter(function (r) { return r.state === 'done'; }).length;
   var mine = m.mentorId === u.userId;
   var by = mine ? u : (m.mentorId ? userOf(m.mentorId) : null);
-  var H = ['<div class="msr' + (mine ? ' mine' : '') + '">'];
+  /* 整列是一顆鍵：點進去看這一件的詳細（見 PAGES.msdetail）。
+     2026-10-02：本來每一列右邊有一顆「刪掉這一件」，老師只看得到標題與兩個數字
+     就要決定刪不刪。現在刪除搬進詳細頁——先看內容、看每一組做到哪，再決定。 */
+  var H = ['<button class="msr msr-go' + (mine ? ' mine' : '') + '" data-act="run" data-p=\'' +
+    esc(JSON.stringify({ a: 'go:msdetail:' + m.msId })) + '\'>'];
   H.push('<b>' + esc(m.title) + '</b>');
-  H.push('<span class="msr-by' + (mine ? ' mine' : '') + '">' +
-    (mine ? '你派的' : (by ? esc(by.name) + ' 派的' : '不知道誰派的')) + '</span>');
+  H.push('<span class="msr-by' + (mine ? ' mine' : '') + '"><span>' +
+    (mine ? '你派的' : (by ? esc(by.name) + ' 派的' : '不知道誰派的')) + '</span>' +
+    '<em class="msr-more">看詳細 ›</em></span>');
   /* 發給誰是老師派的時候自己點的：不點就是全班。 */
   H.push('<span class="msr-w">' + (m.teams.length ? m.teams.length + ' 組' : '全班') + '</span>');
   /* 排到哪一天。過了就寫過了——不是警告，是事實。 */
@@ -755,17 +760,120 @@ function msRow(m, u) {
       esc(dueSay(m)) + (di.past ? '　過了' : '') + '</span>');
   }
   H.push('<span class="msr-n">' + got.length + ' 承諾　' + done + ' 走完</span>');
-  /* 刪掉：兩步。學生那邊會馬上少一件；別的老師派的，確認的那一句要講是誰的。 */
-  if (DRAFT.msDel === m.msId) {
-    H.push('<p class="dim msr-ask">' + (mine ? '' : '這是' + (by ? esc(by.name) : '別人') + '派的。') +
-      '學生那邊會不見，他們已經承諾、交出去的紀錄還在，隨時可以放回來。確定嗎？</p>');
+  H.push('</button>');
+  return H.join('');
+}
+
+/* ---------- 一件派出去的任務，點進來看 ----------
+
+   2026-10-02：老師要先看內容、看各組做到哪，再決定要不要刪。所以刪除放在這一頁最下面，
+   不放在清單上。這一頁**只看**：內容（說明、分段）、發給誰、每一組現在的狀況；
+   唯一會動資料的是最下面那一顆「刪掉這一件」（兩步，跟以前同一套動作）。
+
+   每一組的狀況只寫發生了什麼（還沒開始／進行中／交出去了／走完了）與他們自己說的天數、
+   實際天數——跟「各組進度」同一種資訊，不加任何評語。 */
+function msStatusOf(r) {
+  if (!r) return { k: 'none', say: '還沒開始' };
+  var est = '說 ' + estSay(r);
+  if (r.state === 'running') return { k: 'run', say: '進行中，' + est };
+  if (r.state === 'submitted') return { k: 'sub', say: '交出去了，等審核。' + est + '、實際 ' + (r.actual || 0) + ' 天' };
+  if (r.state === 'back') return { k: 'back', say: '退回去改了。' + est };
+  if (r.state === 'done') return { k: 'done', say: '走完了。' + est + '、實際 ' + (r.actual || 0) + ' 天' };
+  return { k: 'run', say: r.state };
+}
+var MS_RANK = { sub: 0, back: 1, run: 2, none: 3, done: 4 };
+PAGES.msdetail = function () {
+  var u = me();
+  var m = S.p && S.p.id ? msOf(S.p.id) : null;
+  var H = [];
+  if (!m || m.classId !== u.classId || m.notice) {
+    H.push(head('已派任務', '找不到這一件', ''));
+    H.push('<div class="card dim">這一件不在你的班上，或已經不存在。</div>');
+    H.push('<div class="row">' + btn('回已派任務', 'go:mslist', 'ghost') + '</div>');
+    return H.join('');
+  }
+  var by = m.mentorId ? userOf(m.mentorId) : null;
+  var mine = m.mentorId === u.userId;
+  var gone = !!m.withdrawnAt;
+  H.push(head('已派任務', m.title, ''));
+
+  /* 誰派的、什麼時候 */
+  H.push('<div class="card">');
+  H.push('<p>' + (mine ? '<b class="msr-by mine">你派的</b>' : '<b>' + (by ? esc(by.name) + ' 派的' : '不知道誰派的') + '</b>') +
+    '　·　派出 ' + esc(fmtDay(m.at)) +
+    (m.due ? '　·　排到 ' + esc(dueSay(m)) + (dueIn(m) && dueIn(m).past ? '（過了）' : '') : '') + '</p>');
+  if (gone) {
+    var who = m.withdrawnBy === u.userId ? '你' : ((userOf(m.withdrawnBy) || {}).name || '有人');
+    H.push('<p class="warnx">這一件已經刪掉了（' + esc(who) + ' 刪的），學生看不到。紀錄還留著。</p>');
+  }
+  H.push('</div>');
+
+  /* 內容 */
+  H.push('<div class="card"><div class="eyebrow lit">內容</div>');
+  H.push(m.note ? '<p class="msd-note">' + esc(m.note) + '</p>' : '<p class="dim">沒有另外寫說明。</p>');
+  if (m.steps && m.steps.length) {
+    H.push('<div class="eyebrow" style="margin-top:14px">分段　' + m.steps.length + ' 段</div>');
+    H.push('<div class="sped">');
+    m.steps.forEach(function (x, i) { H.push('<div class="spr"><i>' + (i + 1) + '</i><b>' + esc(x) + '</b></div>'); });
+    H.push('</div>');
+  } else {
+    H.push('<p class="dim" style="margin-top:10px">沒有分段，學生自己拆。</p>');
+  }
+  H.push('</div>');
+
+  /* 發給誰、各組現在的狀況 */
+  var teams = where('Teams', function (t) {
+    return t.classId === m.classId && !t._d && teamHasMembers(t.teamId) &&
+      (!m.teams.length || m.teams.indexOf(t.teamId) >= 0);
+  });
+  var rows = teams.map(function (t) {
+    var r = runOf(t.teamId, m.msId);
+    var redo = where('Runs', function (x) { return x.teamId === t.teamId && x.msId === m.msId && x.state === 'rethought'; }).length;
+    return { t: t, r: r, st: msStatusOf(r), redo: redo };
+  }).sort(function (a, b) { return MS_RANK[a.st.k] - MS_RANK[b.st.k]; });
+  var cnt = { none: 0, run: 0, sub: 0, back: 0, done: 0 };
+  rows.forEach(function (x) { cnt[x.st.k]++; });
+  H.push('<div class="card"><div class="eyebrow lit">發給　' + (m.teams.length ? '指定 ' + teams.length + ' 組' : '全班 ' + teams.length + ' 組') + '</div>');
+  H.push('<p class="msd-sum">還沒開始 <b>' + cnt.none + '</b>　·　進行中 <b>' + cnt.run + '</b>　·　交出去等審核 <b>' + cnt.sub +
+    '</b>　·　走完 <b>' + cnt.done + '</b>' + (cnt.back ? '　·　退回去改 <b>' + cnt.back + '</b>' : '') + '</p>');
+  if (!rows.length) H.push('<p class="dim">沒有組可以看。</p>');
+  H.push('<div class="rec-list">');
+  rows.forEach(function (x) {
+    H.push('<div class="msd-t ' + x.st.k + '">');
+    H.push('<b>' + esc(x.t.name) + (x.t.project ? '<i>' + esc(x.t.project) + '</i>' : '') + '</b>');
+    H.push('<span class="msd-m">' + esc(teamMemberNames(x.t.teamId)) + '</span>');
+    H.push('<span class="msd-s">' + esc(x.st.say) + (x.redo ? '　（改過 ' + x.redo + ' 次承諾）' : '') + '</span>');
+    if (x.st.k === 'sub' && x.r && x.r.runId) H.push(btn('去審核', 'go:review:' + x.r.runId, 'ghost sm'));
+    H.push('</div>');
+  });
+  H.push('</div></div>');
+
+  /* 刪掉／放回去 */
+  H.push('<div class="card">');
+  if (gone) {
+    H.push('<div class="eyebrow">這一件已經刪掉</div>');
+    H.push('<p class="dim">放回去之後，學生那邊又會看到它。</p>');
+    H.push(btn('放回去', 'msrestore:' + m.msId, 'ghost sm'));
+  } else if (DRAFT.msDel === m.msId) {
+    var n = cnt.run + cnt.sub + cnt.back + cnt.done;
+    H.push('<p class="dim">' + (mine ? '' : '這是' + (by ? esc(by.name) : '別人') + '派的。') +
+      '學生那邊會不見。已有 ' + n + ' 組承諾' + (cnt.sub ? '、' + cnt.sub + ' 組交出去在等你審核' : '') +
+      '，他們的紀錄還在，隨時可以放回來。確定嗎？</p>');
     H.push(btn('對，刪掉', 'msdelyes:' + m.msId, 'sm'));
     H.push(btn('先不要', 'msdelno', 'ghost sm'));
   } else {
+    H.push('<div class="eyebrow">不要這一件了？</div>');
+    H.push('<p class="dim">看完上面的狀況再決定。刪掉之後可以放回來。</p>');
     H.push(btn('刪掉這一件', 'msdel:' + m.msId, 'ghost sm'));
   }
   H.push('</div>');
+  H.push('<div class="row">' + btn('回已派任務', 'go:mslist', 'ghost') + '</div>');
   return H.join('');
+};
+/* 派出的那一天：9/29 */
+function fmtDay(t) {
+  var d = new Date(t || 0);
+  return (d.getMonth() + 1) + '/' + d.getDate();
 }
 
 /* ---------- 已派任務（左邊獨立一格）----------
@@ -821,6 +929,7 @@ PAGES.mslist = function () {
       H.push('<div class="msr"><b>' + esc(m.title) + '</b>' +
         (by ? '<span class="msr-by">' + esc(by) + '</span>' : '') +
         '<span class="msr-n">' + esc(who) + ' 刪的　·　' + n + ' 筆紀錄還留著</span>' +
+        btn('看詳細', 'go:msdetail:' + m.msId, 'ghost sm') +
         btn('放回去', 'msrestore:' + m.msId, 'ghost sm') + '</div>');
     });
     H.push('</div></div>');

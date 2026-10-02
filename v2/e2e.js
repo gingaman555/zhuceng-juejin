@@ -513,9 +513,13 @@ be('放得回去', !!rst.ms && !rst.ms.withdrawnAt, true);
 be('放回去之後學生那邊又有了', runsFor(tm.teamId).some(x => x.ms.msId === msW.msId), true);
 be('放回去之後又算進深度', depthOf(tm.teamId), 深前 + 1);
 DRAFT = {}; htmlMs = PAGES.mslist();
-be('列上有「刪掉這一件」', htmlMs.indexOf('msdel:' + msW.msId) >= 0, true);
-DRAFT.msDel = msW.msId; htmlMs = PAGES.mslist();
-be('按一下先問，不直接刪', htmlMs.indexOf('msdelyes:' + msW.msId) >= 0 && !find('Milestones', m => m.msId === msW.msId).withdrawnAt, true);
+be('列上不再有「刪掉這一件」（要先點進去看詳細）', htmlMs.indexOf('msdel:' + msW.msId) < 0, true);
+be('每一列是一顆可以點的鍵，點下去進詳細頁', htmlMs.indexOf('go:msdetail:' + msW.msId) >= 0, true);
+S.page = 'msdetail'; S.p = { id: msW.msId }; DRAFT = {};
+be('詳細頁最下面才有「刪掉這一件」', PAGES.msdetail().indexOf('msdel:' + msW.msId) >= 0, true);
+DRAFT.msDel = msW.msId;
+be('按一下先問，不直接刪', PAGES.msdetail().indexOf('msdelyes:' + msW.msId) >= 0 && !find('Milestones', m => m.msId === msW.msId).withdrawnAt, true);
+DRAFT = {};
 
 H('結案搬到側欄最下面');
 as(tea); S.page = 'radar'; DRAFT = {};
@@ -831,9 +835,9 @@ const iMine = ml.indexOf('我派的那一件'), iOther = ml.indexOf('別的老�
 be('我派的在「你派的」那張卡裡、別人的在他自己那張卡裡', iMine >= 0 && iMine < iBy && iOther > iBy, true);
 be('我派的那一列寫「你派的」', ml.slice(iMine - 20, iMine + 200).indexOf('你派的') >= 0, true);
 be('別人派的那一列寫他的名字', ml.slice(iOther - 20, iOther + 200).indexOf('另一位老師 派的') >= 0, true);
-DRAFT.msDel = msOther.msId;
-be('刪別人派的，確認那一句講是誰派的', PAGES.mslist().indexOf('這是另一位老師派的') >= 0, true);
-DRAFT = {};
+S.page = 'msdetail'; S.p = { id: msOther.msId }; DRAFT.msDel = msOther.msId;
+be('刪別人派的，確認那一句講是誰派的', PAGES.msdetail().indexOf('這是另一位老師派的') >= 0, true);
+DRAFT = {}; S.page = 'mslist'; S.p = {};
 as(teaB); S.page = 'mslist';
 const mlB = PAGES.mslist(), jO = mlB.indexOf('別的老師派的那一件');
 be('換成另一位老師看：他的那一件是「你派的」', mlB.slice(jO - 20, jO + 200).indexOf('你派的') >= 0, true);
@@ -845,7 +849,9 @@ be('發派任務與已派任務各有自己的圖示，不是同一張', !!ICONS
 be('每一張圖示都是 12×12', ICONS.mslist.length === 12 && ICONS.mslist.every(r => r.length === 12), true);
 { const sb3 = sideBar(); const ic = k => { const i = sb3.indexOf('data-go="' + k + '"'); return sb3.slice(i, sb3.indexOf('</a>', i)); };
   be('左邊導覽上兩格畫出來的圖不一樣', ic('ms').replace(/data-go="ms"/, '') !== ic('mslist').replace(/data-go="mslist"/, ''), true); }
-be('刪掉這一件的鍵是小的', PAGES.mslist().indexOf('btn ghost sm') >= 0, true);
+S.page = 'msdetail'; S.p = { id: msOther.msId };
+be('刪掉這一件的鍵是小的', PAGES.msdetail().indexOf('btn ghost sm') >= 0, true);
+S.page = 'mslist'; S.p = {};
 be('學生進不了已派任務頁', allowed(stu[0], 'mslist'), false);
 be('研究者也進不了', allowed(rsU, 'mslist'), false);
 DB.Users.push({ userId: 'UTC', account: 'tc_t', name: '還沒派的老師', role: 'teacher', classId: kl.classId });
@@ -1091,6 +1097,7 @@ be('沒有這張圖就不畫（不報錯）', vignette('nope'), '');
 
    職業是身分，不是效果：不改判定、不改水晶收入、不改榜。整組共用（一位換了，整組都挑得了）。 */
 H('職業：用水晶換、整組共用、不影響任何會算數的東西');
+JOBS_ON = true;
 DB.Users.push({ userId: 'UJ1', account: 'job1', name: '換職業的人', role: 'student', classId: kl.classId, teamId: '', createdAt: Date.now(), hero: 'adv' });
 DB.Users.push({ userId: 'UJ2', account: 'job2', name: '隊友', role: 'student', classId: kl.classId, teamId: '', createdAt: Date.now(), hero: 'mage' });
 const tj = actNewTeam('職業組', 'UJ1').team; actJoinTeam(tj.joinCode, 'UJ2');
@@ -1156,10 +1163,68 @@ be('沒有台詞的時刻就是沉默（不退回走路的話）', (() => { cons
 be('對話框畫得出他的臉和那一句', hsayHtml(uj1, 'submit').indexOf('hsay-px') >= 0 && hsayHtml(uj1, 'submit').indexOf(HERO_OS.monk.submit[0]) >= 0, true);
 be('一個沒有台詞的職業：整張框都不畫', (() => { const sv = HERO_OS.monk.ok; HERO_OS.monk.ok = []; const r = hsayHtml(uj1, 'ok'); HERO_OS.monk.ok = sv; return r; })(), '');
 be('座右銘七個職業都有', HERO_LIST.concat(JOB_LIST).every(x => x.m && x.m.length), true);
+be('開關關著：職業區不畫、不能換、台詞沉默', (() => { JOBS_ON = false; const w = PAGES.who().indexOf('用水晶換的職業') < 0; const x = !!actUnlockJob(tj.teamId, 'bard').err; const y = heroMoment(uj1, 'start') === ''; JOBS_ON = true; return w && x && y; })(), true);
 /* 清理 */
 DB.Users = DB.Users.filter(u => !/^UJ[0-9]$/.test(u.userId));
 DB.Teams = DB.Teams.filter(t => t.teamId !== tj.teamId);
+JOBS_ON = false;
 DRAFT = {}; S.p = {};
+
+/* ══ 已派任務：點進去看詳細，看完再決定要不要刪（2026-10-02）══ */
+H('已派任務：詳細頁（內容、發給誰、各組現在的狀況），刪除放在最下面');
+as(tea);
+const msDt = DB.Milestones.filter(m => m.classId === kl.classId && !m.notice && !m.withdrawnAt)[0];
+S.page = 'msdetail'; S.p = { id: msDt.msId }; DRAFT = {};
+const dh_d = PAGES.msdetail();
+be('詳細頁寫著任務標題', dh_d.indexOf(esc(msDt.title)) >= 0, true);
+be('寫著誰派的、什麼時候派的', dh_d.indexOf('派出') >= 0 && (dh_d.indexOf('你派的') >= 0 || dh_d.indexOf('派的') >= 0), true);
+be('有「內容」那一區', dh_d.indexOf('內容') >= 0, true);
+be('寫著發給全班幾組或指定幾組', /發給[^<]*(全班|指定)/.test(dh_d), true);
+be('有各組現在的狀況（還沒開始／進行中／交出去等審核／走完）四個數字', ['還沒開始', '進行中', '交出去等審核', '走完'].every(k => dh_d.indexOf(k) >= 0), true);
+be('每一組各一列、寫著組員名字', where('Teams', t => t.classId === kl.classId && !t._d && teamHasMembers(t.teamId)).every(t => dh_d.indexOf(esc(t.name)) >= 0), true);
+be('這一頁本身不會動任何資料（畫它不改 DB）', (() => { const a = JSON.stringify([DB.Milestones, DB.Runs, DB.Teams]); PAGES.msdetail(); return a === JSON.stringify([DB.Milestones, DB.Runs, DB.Teams]); })(), true);
+/* 有說明、有分段的任務 */
+const msN_d = actPublish(kl.classId, { title: '有說明的任務', note: '先看過再說。', steps: ['第一段', '第二段'], teams: [], mentorId: tea.userId, due: 0, dueU: '' });
+S.p = { id: msN_d.msId };
+const dn_d = PAGES.msdetail();
+be('說明整段寫出來', dn_d.indexOf('先看過再說。') >= 0, true);
+be('分段一段一列、有編號', dn_d.indexOf('分段') >= 0 && dn_d.indexOf('第一段') >= 0 && dn_d.indexOf('第二段') >= 0, true);
+/* 指定發給某一組 */
+const msP_d = actPublish(kl.classId, { title: '只發一組', note: '', steps: [], teams: [tm.teamId], mentorId: tea.userId, due: 0, dueU: '' });
+S.p = { id: msP_d.msId };
+be('指定發給一組：寫「指定 1 組」、只列那一組', /指定 1 組/.test(PAGES.msdetail()), true);
+/* 狀況：有人交出去了 → 寫出來，並且有一顆「去審核」 */
+as(stu[0]);
+const rP_d = actCommit(tm.teamId, msP_d.msId, 3, [], [], 'wild', 'mid');
+as(tea);
+be('承諾了：那一組寫「進行中」', PAGES.msdetail().indexOf('進行中，說 3 天') >= 0, true);
+rP_d.state = 'submitted'; rP_d.actual = 4; rP_d.submittedAt = Date.now();
+const dsub_d = PAGES.msdetail();
+be('交出去了：寫「交出去了，等審核」與說的、實際天數', dsub_d.indexOf('交出去了，等審核') >= 0 && dsub_d.indexOf('實際 4 天') >= 0, true);
+be('交出去的那一組有一顆「去審核」', dsub_d.indexOf('go:review:' + rP_d.runId) >= 0, true);
+/* 刪：先看、再問、才刪；在詳細頁刪完回清單 */
+DRAFT = {};
+be('詳細頁沒有直接刪的鍵，只有「刪掉這一件」（先問）', dsub_d.indexOf('msdelyes:') < 0 && dsub_d.indexOf('msdel:' + msP_d.msId) >= 0, true);
+DRAFT.msDel = msP_d.msId;
+const dask_d = PAGES.msdetail();
+be('問的時候寫「已有 1 組承諾、1 組交出去在等你審核」', dask_d.indexOf('已有 1 組承諾') >= 0 && dask_d.indexOf('1 組交出去在等你審核') >= 0, true);
+ACTS.msdelyes(msP_d.msId);
+be('在詳細頁刪掉：任務標成已刪，並回到已派任務那一頁', !!msOf(msP_d.msId).withdrawnAt && S.page === 'mslist', true);
+be('紀錄還留著（那一組的 Run 沒被刪）', !!find('Runs', r => r.runId === rP_d.runId), true);
+S.page = 'msdetail'; S.p = { id: msP_d.msId }; DRAFT = {};
+const dgone_d = PAGES.msdetail();
+be('已刪掉的詳細頁：寫「已經刪掉」、有「放回去」、沒有「刪掉這一件」', dgone_d.indexOf('已經刪掉') >= 0 && dgone_d.indexOf('msrestore:' + msP_d.msId) >= 0 && dgone_d.indexOf('msdel:' + msP_d.msId) < 0, true);
+be('刪掉的那一列有「看詳細」', (S.page = 'mslist', PAGES.mslist().indexOf('go:msdetail:' + msP_d.msId) >= 0), true);
+/* 找不到、別班的、學生 */
+S.page = 'msdetail'; S.p = { id: 'M_nope' };
+be('找不到的任務：寫找不到、不報錯', PAGES.msdetail().indexOf('找不到這一件') >= 0, true);
+S.p = {};
+be('沒有帶編號：也只是找不到', PAGES.msdetail().indexOf('找不到這一件') >= 0, true);
+be('學生進不了詳細頁', allowed(stu[0], 'msdetail'), false);
+be('研究者也進不了', allowed(rsU, 'msdetail'), false);
+be('側欄：在詳細頁時「已派任務」那一格還亮著', (S.page = 'msdetail', /class="[^"]*on[^"]*" data-go="mslist"/.test(sideBar())), true);
+actWithdrawMs(msN_d.msId, tea.userId);
+DRAFT = {}; S.p = {}; S.page = 'home';
 
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
