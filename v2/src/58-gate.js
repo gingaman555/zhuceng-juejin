@@ -531,6 +531,7 @@ PAGES.mkclass = function () {
    這一頁因此把話講在前面。 */
 PAGES.myteam = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(vignette('tent'));
   H.push(head('你的隊伍', '建一隊，或用代碼加入', ''));
 
   H.push('<div class="card">');

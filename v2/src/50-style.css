@@ -116,6 +116,17 @@ img{display:block}
 .tn-t{margin:0 0 8px;color:var(--gold);line-height:1.4}
 .tn-box .btn{display:block;width:100%;margin-top:10px}
 .tn-d{margin:0 0 14px;line-height:1.5}
+/* 通知、門口頁上的小插圖（見 17-vignettes.js）。16 格放大到 88px，置中。
+   提燈是兩幀疊著輪流亮（同 .wf／.wa／.wb 那一套），所以外框要有固定大小。 */
+.vig{display:block;position:relative;width:88px;height:88px;margin:0 auto 8px}
+.vig .px{width:88px;height:88px;object-fit:contain}
+.vig-anim .wf{position:absolute;left:0;top:0}
+.vig-anim .wa{animation:wkA 1.1s steps(1,end) infinite}
+.vig-anim .wb{animation:wkB 1.1s steps(1,end) infinite}
+@media (prefers-reduced-motion:reduce){
+  .vig-anim .wa{animation:none;opacity:1}
+  .vig-anim .wb{animation:none;opacity:0}
+}
 /* 按鈕列釘在卡片底部：內容比螢幕長的時候（手機、橫放），要按的鍵永遠看得到，
    不用先捲到最下面才找得到「知道了」。 */
 .tn-act{position:sticky;bottom:-22px;margin:0 -22px -22px;padding:4px 22px 22px;background:var(--panel)}

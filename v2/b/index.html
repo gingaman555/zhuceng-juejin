@@ -128,6 +128,17 @@ img{display:block}
 .tn-t{margin:0 0 8px;color:var(--gold);line-height:1.4}
 .tn-box .btn{display:block;width:100%;margin-top:10px}
 .tn-d{margin:0 0 14px;line-height:1.5}
+/* 通知、門口頁上的小插圖（見 17-vignettes.js）。16 格放大到 88px，置中。
+   提燈是兩幀疊著輪流亮（同 .wf／.wa／.wb 那一套），所以外框要有固定大小。 */
+.vig{display:block;position:relative;width:88px;height:88px;margin:0 auto 8px}
+.vig .px{width:88px;height:88px;object-fit:contain}
+.vig-anim .wf{position:absolute;left:0;top:0}
+.vig-anim .wa{animation:wkA 1.1s steps(1,end) infinite}
+.vig-anim .wb{animation:wkB 1.1s steps(1,end) infinite}
+@media (prefers-reduced-motion:reduce){
+  .vig-anim .wa{animation:none;opacity:1}
+  .vig-anim .wb{animation:none;opacity:0}
+}
 /* 按鈕列釘在卡片底部：內容比螢幕長的時候（手機、橫放），要按的鍵永遠看得到，
    不用先捲到最下面才找得到「知道了」。 */
 .tn-act{position:sticky;bottom:-22px;margin:0 -22px -22px;padding:4px 22px 22px;background:var(--panel)}
@@ -6017,7 +6028,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790921513163;
+var BUILD_AT = 1790922769495;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -9166,6 +9177,138 @@ var STAMP_PAL = {
 function stampPx(key, cls) {
   var p = STAMP_PX[key]; if (!p) return '';
   return pxTag(p, STAMP_PAL[key], cls || '');
+}
+
+
+/* ===== 17-vignettes.js ===== */
+/* 通知與門口頁上的小插圖。
+
+   2026-10-02：三張通知（更新說明、組別問題、新任務）、建立／加入隊伍頁、
+   「請重新打開」那一頁，本來全是字。這個系統的世界是一座礦坑地下城——
+   學生在廊道上走、有火把、有水晶——所以這幾個「跳出來說話」的地方也該是
+   地下城裡看得到的東西，而不是網頁的對話框：
+
+     委託書　　老師派了新任務（一張蓋著蠟封的羊皮紙）
+     提燈　　　有新版、更新了什麼（一盞點著的提燈：照亮新的地方）
+     路標　　　這一組只有你一個人：是不是走錯岔路了（兩塊指向相反的木牌）
+     營帳　　　建立／加入隊伍（營地上插著旗）
+
+   跟其他像素圖同一套：. 透明，其餘字元由各自的調色盤決定（見 30-art.js 的 pxSvg）。
+   畫得很小（16 格），放大成 88px 顯示——小到沒辦法畫細節，只讓輪廓認得出來。
+   它們只是畫，沒有任何資訊，也不是按鈕。 */
+
+var VIG_PAL = {
+  k: '#2A1E12', P: '#E8D8A8', q: '#C9B27A', i: '#6B5538',
+  W: '#8A5A2B', w: '#B07A3C', r: '#B8442E', e: '#E06A4F',
+  g: '#F6C86A', F: '#FFF1C2', O: '#E9843F', T: '#C9B98F', t: '#9C8C64',
+  R: '#B8442E', D: '#1E1610', '#': '#8A5A2B', '*': '#B07A3C'
+};
+
+var VIG = {
+  /* 委託書：上下兩根卷軸、中間三行字、右下角一枚蠟封 */
+  scroll: [
+    '................',
+    '..kkkkkkkkkkkk..',
+    '.kwwwwwwwwwwwwk.',
+    '.kWWWWWWWWWWWWk.',
+    '..kkkkkkkkkkkk..',
+    '..kPPPPPPPPPPk..',
+    '..kPiiiiiiiPqk..',
+    '..kPPPPPPPPPqk..',
+    '..kPiiiiiiPPqk..',
+    '..kPPPPPPPPPqk..',
+    '..kPiiiiiPPrrk..',
+    '..kPPPPPPPrerk..',
+    '..kqqqqqqqqrrk..',
+    '..kkkkkkkkkkkk..',
+    '.kwwwwwwwwwwwwk.',
+    '..kkkkkkkkkkkk..'
+  ],
+
+  /* 路標：一根柱子、兩塊指向相反方向的木牌 */
+  signpost: [
+    '......kkkk......',
+    '......kWWk......',
+    '..kkkkkWWkkkk...',
+    '..kwwwwWWwwwwk..',
+    '..kwwwwWWwwwwwk.',
+    '..kwwwwWWwwwwk..',
+    '..kkkkkWWkkkk...',
+    '......kWWk......',
+    '...kkkkWWkkkkk..',
+    '..kwwwwWWwwwwk..',
+    '.kwwwwwWWwwwwk..',
+    '..kwwwwWWwwwwk..',
+    '...kkkkWWkkkkk..',
+    '......kWWk......',
+    '......kWWk......',
+    '....kkkkkkkk....'
+  ],
+
+  /* 營帳：一頂帳篷、頂上插一面旗 */
+  tent: [
+    '.......kk.......',
+    '.......kRRk.....',
+    '.......kRRRk....',
+    '.......kRRk.....',
+    '.......kk.......',
+    '......kTTk......',
+    '.....kTTTTk.....',
+    '....kTTkkTTk....',
+    '...kTTTkDkTTTk..',
+    '..kTTTTkDkTTTTk.',
+    '.kTTTTTkDkTTTTTk',
+    'kkkkkkkkDkkkkkkk'
+  ]
+};
+
+/* 提燈有兩幀：火苗輪流亮、輪流縮（見 17-vignettes 底下 vignette()）。 */
+var VIG_LANTERN = [
+  [
+    '....kkkk....',
+    '...k....k...',
+    '..kkkkkkkk..',
+    '.kWWWWWWWWk.',
+    '..kkkkkkkk..',
+    '.kgggFFgggk.',
+    '.kggFOOFggk.',
+    '.kgFOOOOFgk.',
+    '.kgFOOOOFgk.',
+    '.kggFOOFggk.',
+    '.kgggFFgggk.',
+    '..kkkkkkkk..',
+    '.kWWWWWWWWk.',
+    '..kkkkkkkk..'
+  ],
+  [
+    '....kkkk....',
+    '...k....k...',
+    '..kkkkkkkk..',
+    '.kWWWWWWWWk.',
+    '..kkkkkkkk..',
+    '.kggggggggk.',
+    '.kgggFFgggk.',
+    '.kggFOOFggk.',
+    '.kgFOOOOFgk.',
+    '.kggFOOFggk.',
+    '.kgggFFgggk.',
+    '..kkkkkkkk..',
+    '.kWWWWWWWWk.',
+    '..kkkkkkkk..'
+  ]
+];
+
+/* 一張插圖。name：scroll／signpost／tent／lantern。
+   提燈會閃（兩幀疊著輪流顯示，同 .wf／.wa／.wb 那一套）；其餘是一張靜態圖。 */
+function vignette(name) {
+  if (name === 'lantern') {
+    return '<span class="vig vig-anim" aria-hidden="true">' +
+      pxTag(VIG_LANTERN[0], VIG_PAL, 'wf wa') +
+      pxTag(VIG_LANTERN[1], VIG_PAL, 'wf wb') + '</span>';
+  }
+  var px = VIG[name];
+  if (!px) return '';
+  return '<span class="vig" aria-hidden="true">' + pxTag(px, VIG_PAL, '') + '</span>';
 }
 
 
@@ -14700,6 +14843,7 @@ function blockedHtml() {
       ? '這一頁已經開了很久，裡面的資料可能不是最新的。你之前做的事都已經送出去了，重新打開就是最新的。'
       : '你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。');
   return '<div class="main"><div class="wrap"><div class="card">' +
+    vignette('lantern') +
     '<div class="eyebrow warnx">' + 眉 + '</div>' +
     '<h1>請把它關掉，重新打開一次</h1>' +
     '<p class="lead">' + 話 + '</p>' +
@@ -18438,6 +18582,7 @@ PAGES.mkclass = function () {
    這一頁因此把話講在前面。 */
 PAGES.myteam = function () {
   var H = ['<div class="gate"><div class="gate-box">'];
+  H.push(vignette('tent'));
   H.push(head('你的隊伍', '建一隊，或用代碼加入', ''));
 
   H.push('<div class="card">');
@@ -20688,6 +20833,7 @@ function taskNoticeReady() {
 }
 function taskNoticeHtml(list) {
   var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  H.push(vignette('scroll'));
   H.push('<div class="eyebrow lit">老師派了新任務</div>');
   H.push('<h2>' + (list.length === 1 ? '有 1 個新任務' : '有 ' + list.length + ' 個新任務') + '</h2>');
   H.push('<div class="tn-list">');
@@ -20734,6 +20880,7 @@ function soloAskFor(u) {
 }
 function soloNoticeHtml(t) {
   var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  H.push(vignette('signpost'));
   if (!SOLO_CONF) {
     H.push('<div class="eyebrow lit">「' + esc(t.name) + '」現在只有你一個人</div>');
     H.push('<h2>是不是之前按錯，自己建了一組？</h2>');
@@ -20795,6 +20942,7 @@ function noteReady() {
 }
 function noteHtml(n) {
   var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  H.push(vignette('lantern'));
   H.push('<div class="eyebrow lit">看一次就好</div>');
   H.push('<h2>' + esc(n.title) + '</h2>');
   H.push('<div class="tn-list">');

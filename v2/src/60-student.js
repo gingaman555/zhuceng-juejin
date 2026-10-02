@@ -1711,6 +1711,7 @@ function taskNoticeReady() {
 }
 function taskNoticeHtml(list) {
   var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  H.push(vignette('scroll'));
   H.push('<div class="eyebrow lit">老師派了新任務</div>');
   H.push('<h2>' + (list.length === 1 ? '有 1 個新任務' : '有 ' + list.length + ' 個新任務') + '</h2>');
   H.push('<div class="tn-list">');
@@ -1757,6 +1758,7 @@ function soloAskFor(u) {
 }
 function soloNoticeHtml(t) {
   var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  H.push(vignette('signpost'));
   if (!SOLO_CONF) {
     H.push('<div class="eyebrow lit">「' + esc(t.name) + '」現在只有你一個人</div>');
     H.push('<h2>是不是之前按錯，自己建了一組？</h2>');
@@ -1818,6 +1820,7 @@ function noteReady() {
 }
 function noteHtml(n) {
   var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  H.push(vignette('lantern'));
   H.push('<div class="eyebrow lit">看一次就好</div>');
   H.push('<h2>' + esc(n.title) + '</h2>');
   H.push('<div class="tn-list">');

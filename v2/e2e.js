@@ -1071,6 +1071,20 @@ DB.Users = DB.Users.filter(u => !/^UN\d$/.test(u.userId));
 DB.Teams = DB.Teams.filter(t => t.teamId !== tn1.teamId);
 DRAFT = {}; 畫了 = null;
 
+/* ══ 通知與門口頁的小插圖（2026-10-02）══ */
+H('通知上有地下城的圖，不是只有字');
+const 格 = Object.keys(VIG).map(k => VIG[k]).concat(VIG_LANTERN);
+be('每一張圖每一列一樣寬（畫歪了會被擋）', 格.every(g => g.every(r => r.length === g[0].length)), true);
+be('圖裡用到的每個字元都有顏色', 格.every(g => g.join('').split('').every(c => c === '.' || VIG_PAL[c] !== undefined)), true);
+be('更新說明有提燈', noteHtml(UPDATE_NOTE).indexOf('vig-anim') >= 0, true);
+be('新任務有委託書', taskNoticeHtml([{ msId: 'x', title: 't' }]).indexOf('class="vig"') >= 0, true);
+be('組別問題有路標（兩張都有）', soloNoticeHtml({ name: '甲' }).indexOf('class="vig"') >= 0 && (SOLO_CONF = true, soloNoticeHtml({ name: '甲' }).indexOf('class="vig"') >= 0), true);
+SOLO_CONF = false;
+be('建立／加入隊伍那一頁有營帳', PAGES.myteam().indexOf('class="vig"') >= 0, true);
+be('「請重新打開」那一頁有提燈', blockedHtml().indexOf('vig-anim') >= 0, true);
+be('圖不是按鈕、不被讀出來', vignette('scroll').indexOf('aria-hidden="true"') >= 0 && vignette('scroll').indexOf('data-act') < 0, true);
+be('沒有這張圖就不畫（不報錯）', vignette('nope'), '');
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

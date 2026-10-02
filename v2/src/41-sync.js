@@ -582,6 +582,7 @@ function blockedHtml() {
       ? '這一頁已經開了很久，裡面的資料可能不是最新的。你之前做的事都已經送出去了，重新打開就是最新的。'
       : '你在這一頁做的事沒有送到老師那邊。重新打開之後，請再做一次。');
   return '<div class="main"><div class="wrap"><div class="card">' +
+    vignette('lantern') +
     '<div class="eyebrow warnx">' + 眉 + '</div>' +
     '<h1>請把它關掉，重新打開一次</h1>' +
     '<p class="lead">' + 話 + '</p>' +
