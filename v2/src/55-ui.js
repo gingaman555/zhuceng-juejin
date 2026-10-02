@@ -124,7 +124,7 @@ var PAGE_TITLE = {
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
   pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
   person: '角色', who: '挑角色', battle: '交作業', story: '故事',
-  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', msdetail: '任務詳細', runview: '這一組做了什麼', thelp: '怎麼用', tclose: '結案', rsacc: '刪帳號',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', msdetail: '任務詳細', runview: '這一組做了什麼', tclose: '結案', rsacc: '刪帳號',
   rs: '名單', events: '紀錄'
 };
 function pageTitle(page) {
@@ -138,7 +138,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', msdetail: 'teacher', runview: 'teacher', thelp: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', msdetail: 'teacher', runview: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher', rspw: 'researcher', rsacc: 'researcher'
 };
 function allowed(u, page) {
@@ -477,11 +477,7 @@ function topEnd() {
   var stale = nt
     ? '<a class="plain sync-warn' + (nt.kind === 'old' ? ' sync-old' : '') + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'reloadpage' })) + '\'>' + esc(nt.text) + '</a>' : '';
-  /* 老師多一個「怎麼用」：隨時點得到（見 70-teacher.js 的 PAGES.thelp）。 */
-  var u0 = me();
-  var help = (u0 && u0.role === 'teacher')
-    ? '<a class="plain" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:thelp' })) + '\'>怎麼用</a>' : '';
-  return warn + stale + help + '<a class="plain" data-act="run" data-p=\'' +
+  return warn + stale + '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:me' })) + '\'>你的資料</a>' +
     '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'logout' })) + '\'>登出</a>';
@@ -1209,18 +1205,6 @@ var ACTS = {
   jobuse: function (k) { ACTS.hero(k); },
 
   /* 「這一組只有你一個人」的提醒（見 60-student.js 的 soloAskFor）。 */
-  /* 老師第一次登入的簡短說明（見 60-student.js 的 teacherHelpFor）：看過就記在這個帳號上。 */
-  thelpok: function () {
-    var u = me(); if (!u) return;
-    teacherHelpAck(u);
-    taskNoticeTick();
-  },
-  thelpgo: function () {
-    var u = me(); if (!u) return;
-    teacherHelpAck(u);
-    taskNoticeTick();
-    go('thelp');
-  },
   /* 更新說明：看過就記在這個帳號上，不再出現（見 60-student.js 的 UPDATE_NOTE）。 */
   noteok: function () {
     var u = me(); if (!u) return;

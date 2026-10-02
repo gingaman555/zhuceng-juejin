@@ -1851,62 +1851,15 @@ function noteAck(u) {
   logEvent('noteseen', { id: UPDATE_NOTE.id });
 }
 
-/* ---------- 老師第一次登入：看一次就好 ----------
-
-   2026-10-02：陳老師看不懂每一頁在做什麼。老師端本來沒有任何地方說「這個系統是什麼」。
-   第一次打開（或這一則公告之前就有帳號的老師，第一次打開新版）跳一張三句話的說明，
-   「看完整說明」進 PAGES.thelp，「知道了」就關掉；兩種都記在 u.helpSeen，不再出現。
-   不打斷寫到一半的頁：只在老師的「看」的頁（等你的、已派任務、各組進度）才跳。 */
-var THELP_ID = 'h1002';
-var THELP_PAGES = ['radar', 'mslist', 'classeco'];
-function teacherHelpFor(u) {
-  if (!u || u.role !== 'teacher' || u._d) return false;
-  return u.helpSeen !== THELP_ID;
-}
-function teacherHelpReady() {
-  if (typeof SYNC !== 'undefined' && (SYNC.blocked || SYNC.cover)) return false;
-  return THELP_PAGES.indexOf(S.page) >= 0;
-}
-function teacherHelpHtml() {
-  var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
-  H.push(vignette('scroll'));
-  H.push('<div class="eyebrow lit">第一次用？看一次就好</div>');
-  H.push('<h2>老師端怎麼用</h2>');
-  H.push('<div class="tn-list">');
-  H.push('<p class="tn-t">發派任務</p><p class="dim tn-d">寫要他們交什麼，選發給誰。</p>');
-  H.push('<p class="tn-t">等你的</p><p class="dim tn-d">學生交出來的作業在這裡，看完按「收下」或「退回去改」。</p>');
-  H.push('<p class="tn-t">剛說了打算花幾天</p><p class="dim tn-d">學生開始前說的天數。你覺得差很多可以回一句建議，不回也可以。</p>');
-  H.push('</div>');
-  H.push('<div class="tn-act">');
-  H.push(btn('看完整說明', 'thelpgo', 'big'));
-  H.push(btn('知道了', 'thelpok', 'ghost'));
-  H.push('</div>');
-  H.push('</div>');
-  return H.join('');
-}
-function teacherHelpAck(u) {
-  u.helpSeen = THELP_ID;
-  save();
-  logEvent('helpseen', { id: THELP_ID });
-}
-
 /* 每次畫完檢查一次：該跳就跳、不該跳的收掉。已經在跳的同一批不重畫。
    順序：更新說明 → 組別問題 → 新任務。一次只跳一張，關掉之後下一張才出來。
-   老師只有一張：第一次登入的說明。 */
+   老師一張都不跳（2026-10-02 本來有一張「老師端怎麼用」，使用者要求拿掉）。 */
 function taskNoticeTick() {
   if (typeof document === 'undefined' || !document.body || !document.body.appendChild) return;
   var u = (typeof me === 'function') ? me() : null;
   if (u && u.role === 'teacher') {
-    var show = teacherHelpFor(u) && teacherHelpReady();
     var o2 = document.getElementById('task-notice');
-    if (!show) { if (o2 && o2.parentNode) o2.parentNode.removeChild(o2); return; }
-    if (o2 && o2.getAttribute && o2.getAttribute('data-k') === 'thelp') return;
     if (o2 && o2.parentNode) o2.parentNode.removeChild(o2);
-    var d2 = document.createElement('div');
-    d2.id = 'task-notice'; d2.className = 'tn';
-    d2.setAttribute('data-k', 'thelp');
-    d2.innerHTML = teacherHelpHtml();
-    document.body.appendChild(d2);
     return;
   }
   var note = (u && noteReady()) ? noteFor(u) : null;

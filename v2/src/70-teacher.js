@@ -960,40 +960,6 @@ PAGES.mslist = function () {
 
 /* 各組進度那一頁在 62-eco.js——跟學生看的是同一張剖面圖。 */
 
-/* ---------- 怎麼用（老師端）----------
-
-   2026-10-02：陳老師說她看不懂介面在幹嘛、不知道哪一頁是做什麼的，尤其是
-   「花幾天要不要回」。老師端本來沒有任何地方說「這個系統是什麼、我平常要做什麼」，
-   一打開就是結果。這一頁用最白的話把這幾件事講完，一頁看完。
-
-   字都是老師們會在畫面上看到的字（左邊導覽的名字、按鈕上的字），不另外取名。 */
-PAGES.thelp = function () {
-  var H = [head('怎麼用', '一分鐘看完這個系統', '')];
-  H.push('<div class="card tguide"><div class="eyebrow lit">這個系統在做什麼</div>' +
-    '<p>學生做事之前先說「我打算花幾天」，做完交出來，你看過之後「收下」或「退回去改」。</p>' +
-    '<p class="dim">系統只比天數，不評作業好壞。好不好，由你用一句話告訴他們。</p></div>');
-
-  H.push('<div class="card tguide"><div class="eyebrow lit">你平常只會做三件事</div>' +
-    '<p><b>1　派任務</b>　左邊「發派任務」。</p>' +
-    '<p><b>2　收作業</b>　左邊「等你的」。點進去看，再收下或退回。</p>' +
-    '<p><b>3　看進度</b>　左邊「各組進度」。「已派任務」點進去，看每一組做到哪。</p></div>');
-
-  H.push('<div class="card tguide"><div class="eyebrow lit">「剛說了打算花幾天」是什麼</div>' +
-    '<p>學生開始前說的天數。你覺得差很多，點進去回一句：「我覺得會是 N 天，因為……」。</p>' +
-    '<p class="dim">不回也可以。最後幾天由學生決定。</p></div>');
-
-  H.push('<div class="card tguide"><div class="eyebrow lit">收下和退回去改有什麼不同</div>' +
-    '<p><b>收下</b>　這一件走完，他們拿到水晶。可以多給 ' + RULES.CRYSTAL.bonusMin + ' 到 ' + RULES.CRYSTAL.bonusMax +
-    ' 顆，並留一句話。</p>' +
-    '<p><b>退回去改</b>　要寫一句理由，他們改完再交。</p></div>');
-
-  H.push('<div class="card tguide"><div class="eyebrow lit">「結案」是什麼</div>' +
-    '<p>整個專案做完才用。平常不用碰。</p></div>');
-
-  H.push('<div class="row">' + btn('回「等你的」', 'go:radar', 'big') + '</div>');
-  return H.join('');
-};
-
 /* ---------- 這一組做了什麼（唯讀）----------
 
    2026-10-02：老師在「已派任務」點進一件、再點進一組，要能看到他們交了什麼、留了什麼連結。

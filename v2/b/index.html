@@ -6079,7 +6079,7 @@ button.msd-t:hover,button.msd-t:focus-visible{background:var(--panel2)}
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790947579052;
+var BUILD_AT = 1790948116885;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -17317,7 +17317,7 @@ var PAGE_TITLE = {
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
   pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
   person: '角色', who: '挑角色', battle: '交作業', story: '故事',
-  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', msdetail: '任務詳細', runview: '這一組做了什麼', thelp: '怎麼用', tclose: '結案', rsacc: '刪帳號',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', msdetail: '任務詳細', runview: '這一組做了什麼', tclose: '結案', rsacc: '刪帳號',
   rs: '名單', events: '紀錄'
 };
 function pageTitle(page) {
@@ -17331,7 +17331,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', msdetail: 'teacher', runview: 'teacher', thelp: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', msdetail: 'teacher', runview: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher', rspw: 'researcher', rsacc: 'researcher'
 };
 function allowed(u, page) {
@@ -17670,11 +17670,7 @@ function topEnd() {
   var stale = nt
     ? '<a class="plain sync-warn' + (nt.kind === 'old' ? ' sync-old' : '') + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'reloadpage' })) + '\'>' + esc(nt.text) + '</a>' : '';
-  /* 老師多一個「怎麼用」：隨時點得到（見 70-teacher.js 的 PAGES.thelp）。 */
-  var u0 = me();
-  var help = (u0 && u0.role === 'teacher')
-    ? '<a class="plain" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:thelp' })) + '\'>怎麼用</a>' : '';
-  return warn + stale + help + '<a class="plain" data-act="run" data-p=\'' +
+  return warn + stale + '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:me' })) + '\'>你的資料</a>' +
     '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'logout' })) + '\'>登出</a>';
@@ -18402,18 +18398,6 @@ var ACTS = {
   jobuse: function (k) { ACTS.hero(k); },
 
   /* 「這一組只有你一個人」的提醒（見 60-student.js 的 soloAskFor）。 */
-  /* 老師第一次登入的簡短說明（見 60-student.js 的 teacherHelpFor）：看過就記在這個帳號上。 */
-  thelpok: function () {
-    var u = me(); if (!u) return;
-    teacherHelpAck(u);
-    taskNoticeTick();
-  },
-  thelpgo: function () {
-    var u = me(); if (!u) return;
-    teacherHelpAck(u);
-    taskNoticeTick();
-    go('thelp');
-  },
   /* 更新說明：看過就記在這個帳號上，不再出現（見 60-student.js 的 UPDATE_NOTE）。 */
   noteok: function () {
     var u = me(); if (!u) return;
@@ -22204,62 +22188,15 @@ function noteAck(u) {
   logEvent('noteseen', { id: UPDATE_NOTE.id });
 }
 
-/* ---------- 老師第一次登入：看一次就好 ----------
-
-   2026-10-02：陳老師看不懂每一頁在做什麼。老師端本來沒有任何地方說「這個系統是什麼」。
-   第一次打開（或這一則公告之前就有帳號的老師，第一次打開新版）跳一張三句話的說明，
-   「看完整說明」進 PAGES.thelp，「知道了」就關掉；兩種都記在 u.helpSeen，不再出現。
-   不打斷寫到一半的頁：只在老師的「看」的頁（等你的、已派任務、各組進度）才跳。 */
-var THELP_ID = 'h1002';
-var THELP_PAGES = ['radar', 'mslist', 'classeco'];
-function teacherHelpFor(u) {
-  if (!u || u.role !== 'teacher' || u._d) return false;
-  return u.helpSeen !== THELP_ID;
-}
-function teacherHelpReady() {
-  if (typeof SYNC !== 'undefined' && (SYNC.blocked || SYNC.cover)) return false;
-  return THELP_PAGES.indexOf(S.page) >= 0;
-}
-function teacherHelpHtml() {
-  var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
-  H.push(vignette('scroll'));
-  H.push('<div class="eyebrow lit">第一次用？看一次就好</div>');
-  H.push('<h2>老師端怎麼用</h2>');
-  H.push('<div class="tn-list">');
-  H.push('<p class="tn-t">發派任務</p><p class="dim tn-d">寫要他們交什麼，選發給誰。</p>');
-  H.push('<p class="tn-t">等你的</p><p class="dim tn-d">學生交出來的作業在這裡，看完按「收下」或「退回去改」。</p>');
-  H.push('<p class="tn-t">剛說了打算花幾天</p><p class="dim tn-d">學生開始前說的天數。你覺得差很多可以回一句建議，不回也可以。</p>');
-  H.push('</div>');
-  H.push('<div class="tn-act">');
-  H.push(btn('看完整說明', 'thelpgo', 'big'));
-  H.push(btn('知道了', 'thelpok', 'ghost'));
-  H.push('</div>');
-  H.push('</div>');
-  return H.join('');
-}
-function teacherHelpAck(u) {
-  u.helpSeen = THELP_ID;
-  save();
-  logEvent('helpseen', { id: THELP_ID });
-}
-
 /* 每次畫完檢查一次：該跳就跳、不該跳的收掉。已經在跳的同一批不重畫。
    順序：更新說明 → 組別問題 → 新任務。一次只跳一張，關掉之後下一張才出來。
-   老師只有一張：第一次登入的說明。 */
+   老師一張都不跳（2026-10-02 本來有一張「老師端怎麼用」，使用者要求拿掉）。 */
 function taskNoticeTick() {
   if (typeof document === 'undefined' || !document.body || !document.body.appendChild) return;
   var u = (typeof me === 'function') ? me() : null;
   if (u && u.role === 'teacher') {
-    var show = teacherHelpFor(u) && teacherHelpReady();
     var o2 = document.getElementById('task-notice');
-    if (!show) { if (o2 && o2.parentNode) o2.parentNode.removeChild(o2); return; }
-    if (o2 && o2.getAttribute && o2.getAttribute('data-k') === 'thelp') return;
     if (o2 && o2.parentNode) o2.parentNode.removeChild(o2);
-    var d2 = document.createElement('div');
-    d2.id = 'task-notice'; d2.className = 'tn';
-    d2.setAttribute('data-k', 'thelp');
-    d2.innerHTML = teacherHelpHtml();
-    document.body.appendChild(d2);
     return;
   }
   var note = (u && noteReady()) ? noteFor(u) : null;
@@ -27648,40 +27585,6 @@ PAGES.mslist = function () {
 };
 
 /* 各組進度那一頁在 62-eco.js——跟學生看的是同一張剖面圖。 */
-
-/* ---------- 怎麼用（老師端）----------
-
-   2026-10-02：陳老師說她看不懂介面在幹嘛、不知道哪一頁是做什麼的，尤其是
-   「花幾天要不要回」。老師端本來沒有任何地方說「這個系統是什麼、我平常要做什麼」，
-   一打開就是結果。這一頁用最白的話把這幾件事講完，一頁看完。
-
-   字都是老師們會在畫面上看到的字（左邊導覽的名字、按鈕上的字），不另外取名。 */
-PAGES.thelp = function () {
-  var H = [head('怎麼用', '一分鐘看完這個系統', '')];
-  H.push('<div class="card tguide"><div class="eyebrow lit">這個系統在做什麼</div>' +
-    '<p>學生做事之前先說「我打算花幾天」，做完交出來，你看過之後「收下」或「退回去改」。</p>' +
-    '<p class="dim">系統只比天數，不評作業好壞。好不好，由你用一句話告訴他們。</p></div>');
-
-  H.push('<div class="card tguide"><div class="eyebrow lit">你平常只會做三件事</div>' +
-    '<p><b>1　派任務</b>　左邊「發派任務」。</p>' +
-    '<p><b>2　收作業</b>　左邊「等你的」。點進去看，再收下或退回。</p>' +
-    '<p><b>3　看進度</b>　左邊「各組進度」。「已派任務」點進去，看每一組做到哪。</p></div>');
-
-  H.push('<div class="card tguide"><div class="eyebrow lit">「剛說了打算花幾天」是什麼</div>' +
-    '<p>學生開始前說的天數。你覺得差很多，點進去回一句：「我覺得會是 N 天，因為……」。</p>' +
-    '<p class="dim">不回也可以。最後幾天由學生決定。</p></div>');
-
-  H.push('<div class="card tguide"><div class="eyebrow lit">收下和退回去改有什麼不同</div>' +
-    '<p><b>收下</b>　這一件走完，他們拿到水晶。可以多給 ' + RULES.CRYSTAL.bonusMin + ' 到 ' + RULES.CRYSTAL.bonusMax +
-    ' 顆，並留一句話。</p>' +
-    '<p><b>退回去改</b>　要寫一句理由，他們改完再交。</p></div>');
-
-  H.push('<div class="card tguide"><div class="eyebrow lit">「結案」是什麼</div>' +
-    '<p>整個專案做完才用。平常不用碰。</p></div>');
-
-  H.push('<div class="row">' + btn('回「等你的」', 'go:radar', 'big') + '</div>');
-  return H.join('');
-};
 
 /* ---------- 這一組做了什麼（唯讀）----------
 
