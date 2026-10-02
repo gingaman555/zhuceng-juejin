@@ -2746,3 +2746,15 @@ button.msr:active{transform:translateY(1px)}
 .msd-t.sub .msd-s{color:var(--gold2)}
 .msd-t.none .msd-s{color:var(--dim)}
 .msd-t .btn{justify-self:start;margin-top:6px}
+
+/* 老師端「怎麼用」那一頁、以及「他們打算花幾天」頁上的說明卡：段落之間留一點空，字不縮。 */
+.tguide p{margin:0 0 10px;line-height:1.6}
+.tguide p:last-child{margin-bottom:0}
+
+/* 詳細頁上每一組那一列：有東西可看的整列是一顆鍵（見 70-teacher.js 的 PAGES.msdetail／runview） */
+.msd-wrap{border-bottom:2px solid rgba(0,0,0,.16);padding-bottom:4px}
+.msd-wrap:last-child{border-bottom:0}
+button.msd-t{width:100%;text-align:left;background:none;border:0;color:inherit;font:inherit;cursor:pointer;min-height:44px}
+button.msd-t:hover,button.msd-t:focus-visible{background:var(--panel2)}
+.msd-wrap > .btn{margin:0 0 6px}
+.msd-t .msr-more{margin-top:2px}

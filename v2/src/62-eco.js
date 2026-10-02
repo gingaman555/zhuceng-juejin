@@ -453,7 +453,8 @@ PAGES.classeco = function () {
      學生那一邊沒變：他傳自己那一組進去，金邊還是「你在這裡」。 */
   var mine = [];
   var H = [head(RULES.SOLO ? '每一位的進度' : '各組進度', '整個課程　·　' +
-    ecoRows(u.classId).length + (RULES.SOLO ? ' 位' : ' 組'), '')];
+    ecoRows(u.classId).length + (RULES.SOLO ? ' 位' : ' 組'),
+    RULES.SOLO ? '每一位現在走到哪。' : '每一組現在走到哪一層、有沒有東西等你看。')];
 
   /* 那一串是唸出去的：學生用它建帳號。放在最上面，因為開學前兩週
      他每次進來都要唸一次。 */

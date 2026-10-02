@@ -4975,6 +4975,18 @@ button.msr:active{transform:translateY(1px)}
 .msd-t.none .msd-s{color:var(--dim)}
 .msd-t .btn{justify-self:start;margin-top:6px}
 
+/* 老師端「怎麼用」那一頁、以及「他們打算花幾天」頁上的說明卡：段落之間留一點空，字不縮。 */
+.tguide p{margin:0 0 10px;line-height:1.6}
+.tguide p:last-child{margin-bottom:0}
+
+/* 詳細頁上每一組那一列：有東西可看的整列是一顆鍵（見 70-teacher.js 的 PAGES.msdetail／runview） */
+.msd-wrap{border-bottom:2px solid rgba(0,0,0,.16);padding-bottom:4px}
+.msd-wrap:last-child{border-bottom:0}
+button.msd-t{width:100%;text-align:left;background:none;border:0;color:inherit;font:inherit;cursor:pointer;min-height:44px}
+button.msd-t:hover,button.msd-t:focus-visible{background:var(--panel2)}
+.msd-wrap > .btn{margin:0 0 6px}
+.msd-t .msr-more{margin-top:2px}
+
 /* ---------- 交出去的那一場 ----------
 
    排版照寶可夢：牠的名牌在左上、牠站在右上；你站在左下、你的名牌在右下。
@@ -6067,7 +6079,7 @@ button.msr:active{transform:translateY(1px)}
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790946281745;
+var BUILD_AT = 1790947557420;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -9021,6 +9033,7 @@ var EV_SAY = {
   jointeam: function () { return '用代碼加入隊伍'; },
   noteseen: function (e) { return '看過更新說明（' + (e.id || '') + '）'; },
   jobunlock: function (e) { var m = heroMeta(e.job); return '用水晶換了職業「' + (m ? m.n : e.job) + '」'; },
+  helpseen: function () { return '看過老師端怎麼用的說明'; },
   solonot:  function () { return '被問「是不是按錯了組」，回答：不是，就是一個人'; },
   leaveteam: function (e) { return '按錯了，離開隊伍「' + (e.name || '') + '」'; },
   claim:    function () { return '在班級地圖上占了一格'; },
@@ -9392,7 +9405,7 @@ function actResearcherDeleteTestClass(researcherId, classId) {
    只刪學生、不刪老師與研究者；事件紀錄不動。刪完如果他那一組因此沒有人、
    也沒有任何一趟，組別一起刪。 */
 var TRIVIAL_EV = { login: 1, register: 1, joinclass: 1, jointeam: 1, newteam: 1, hero: 1, rename: 1,
-  teamrename: 1, setname: 1, sit: 1, leaveteam: 1, solonot: 1, noteseen: 1, claim: 1, setpw: 1, genrecov: 1, recoverpw: 1, teacherrecov: 1,
+  teamrename: 1, setname: 1, sit: 1, leaveteam: 1, solonot: 1, noteseen: 1, helpseen: 1, claim: 1, setpw: 1, genrecov: 1, recoverpw: 1, teacherrecov: 1,
   blurb: 1, left: 1, researchersetpw: 1 };
 function userTraces(u) {
   var n = { said: 0, plan: 0, merged: 0, events: 0 };
@@ -17304,7 +17317,7 @@ var PAGE_TITLE = {
   stamp: '判定', exit: '結案', eco: '班級地下城', classeco: '班級地下城',
   pack: '故事', codex: '圖鑑', crew: '隊伍', patron: '委託人',
   person: '角色', who: '挑角色', battle: '交作業', story: '故事',
-  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', msdetail: '任務詳細', tclose: '結案', rsacc: '刪帳號',
+  radar: '老師端', review: '審核', askest: '回天數', ms: '派任務', mslist: '已派任務', msdetail: '任務詳細', runview: '這一組做了什麼', thelp: '怎麼用', tclose: '結案', rsacc: '刪帳號',
   rs: '名單', events: '紀錄'
 };
 function pageTitle(page) {
@@ -17318,7 +17331,7 @@ var PAGE_ROLE = {
   battle: 'student',
   exit: 'student', codex: 'student', sign: 'student', who: 'student',
   patron: 'student',
-  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', msdetail: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
+  radar: 'teacher', review: 'teacher', ms: 'teacher', mslist: 'teacher', msdetail: 'teacher', runview: 'teacher', thelp: 'teacher', tclose: 'teacher', classeco: 'teacher', acctrecov: 'teacher', acctmerge: 'teacher',
   rs: 'researcher', events: 'researcher', rspw: 'researcher', rsacc: 'researcher'
 };
 function allowed(u, page) {
@@ -17657,7 +17670,11 @@ function topEnd() {
   var stale = nt
     ? '<a class="plain sync-warn' + (nt.kind === 'old' ? ' sync-old' : '') + '" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'reloadpage' })) + '\'>' + esc(nt.text) + '</a>' : '';
-  return warn + stale + '<a class="plain" data-act="run" data-p=\'' +
+  /* 老師多一個「怎麼用」：隨時點得到（見 70-teacher.js 的 PAGES.thelp）。 */
+  var u0 = me();
+  var help = (u0 && u0.role === 'teacher')
+    ? '<a class="plain" data-act="run" data-p=\'' + esc(JSON.stringify({ a: 'go:thelp' })) + '\'>怎麼用</a>' : '';
+  return warn + stale + help + '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'go:me' })) + '\'>你的資料</a>' +
     '<a class="plain" data-act="run" data-p=\'' +
     esc(JSON.stringify({ a: 'logout' })) + '\'>登出</a>';
@@ -17865,7 +17882,7 @@ function sideBar() {
      變成「背包裡的幾樣東西」。 */
   var items = nav.map(function (n) {
     /* 任務詳細是「已派任務」底下那一層，側欄還是亮在已派任務上。 */
-    var on = S.page === n[0] || (n[0] === 'mslist' && S.page === 'msdetail');
+    var on = S.page === n[0] || (n[0] === 'mslist' && (S.page === 'msdetail' || S.page === 'runview'));
     var ic = ICONS[n[0]];
     return '<a class="' + (on ? 'on' : '') + (n[2] === 'low' ? ' low' : '') + '" data-go="' + n[0] + '">' +
       (ic ? pxTag(ic, on ? ICON_ON : ICON_PAL, 'nic') : '<span class="dot"></span>') +
@@ -18385,6 +18402,18 @@ var ACTS = {
   jobuse: function (k) { ACTS.hero(k); },
 
   /* 「這一組只有你一個人」的提醒（見 60-student.js 的 soloAskFor）。 */
+  /* 老師第一次登入的簡短說明（見 60-student.js 的 teacherHelpFor）：看過就記在這個帳號上。 */
+  thelpok: function () {
+    var u = me(); if (!u) return;
+    teacherHelpAck(u);
+    taskNoticeTick();
+  },
+  thelpgo: function () {
+    var u = me(); if (!u) return;
+    teacherHelpAck(u);
+    taskNoticeTick();
+    go('thelp');
+  },
   /* 更新說明：看過就記在這個帳號上，不再出現（見 60-student.js 的 UPDATE_NOTE）。 */
   noteok: function () {
     var u = me(); if (!u) return;
@@ -22175,11 +22204,64 @@ function noteAck(u) {
   logEvent('noteseen', { id: UPDATE_NOTE.id });
 }
 
+/* ---------- 老師第一次登入：看一次就好 ----------
+
+   2026-10-02：陳老師看不懂每一頁在做什麼。老師端本來沒有任何地方說「這個系統是什麼」。
+   第一次打開（或這一則公告之前就有帳號的老師，第一次打開新版）跳一張三句話的說明，
+   「看完整說明」進 PAGES.thelp，「知道了」就關掉；兩種都記在 u.helpSeen，不再出現。
+   不打斷寫到一半的頁：只在老師的「看」的頁（等你的、已派任務、各組進度）才跳。 */
+var THELP_ID = 'h1002';
+var THELP_PAGES = ['radar', 'mslist', 'classeco'];
+function teacherHelpFor(u) {
+  if (!u || u.role !== 'teacher' || u._d) return false;
+  return u.helpSeen !== THELP_ID;
+}
+function teacherHelpReady() {
+  if (typeof SYNC !== 'undefined' && (SYNC.blocked || SYNC.cover)) return false;
+  return THELP_PAGES.indexOf(S.page) >= 0;
+}
+function teacherHelpHtml() {
+  var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  H.push(vignette('scroll'));
+  H.push('<div class="eyebrow lit">第一次用？看一次就好</div>');
+  H.push('<h2>老師端怎麼用</h2>');
+  H.push('<div class="tn-list">');
+  H.push('<p class="tn-t">發派任務</p><p class="dim tn-d">寫要他們交什麼，選發給誰。</p>');
+  H.push('<p class="tn-t">等你的</p><p class="dim tn-d">學生交出來的作業在這裡，看完按「收下」或「退回去改」。</p>');
+  H.push('<p class="tn-t">剛說了打算花幾天</p><p class="dim tn-d">學生開始前說的天數。你覺得差很多可以回一句建議，不回也可以。</p>');
+  H.push('</div>');
+  H.push('<div class="tn-act">');
+  H.push(btn('看完整說明', 'thelpgo', 'big'));
+  H.push(btn('知道了', 'thelpok', 'ghost'));
+  H.push('</div>');
+  H.push('</div>');
+  return H.join('');
+}
+function teacherHelpAck(u) {
+  u.helpSeen = THELP_ID;
+  save();
+  logEvent('helpseen', { id: THELP_ID });
+}
+
 /* 每次畫完檢查一次：該跳就跳、不該跳的收掉。已經在跳的同一批不重畫。
-   順序：更新說明 → 組別問題 → 新任務。一次只跳一張，關掉之後下一張才出來。 */
+   順序：更新說明 → 組別問題 → 新任務。一次只跳一張，關掉之後下一張才出來。
+   老師只有一張：第一次登入的說明。 */
 function taskNoticeTick() {
   if (typeof document === 'undefined' || !document.body || !document.body.appendChild) return;
   var u = (typeof me === 'function') ? me() : null;
+  if (u && u.role === 'teacher') {
+    var show = teacherHelpFor(u) && teacherHelpReady();
+    var o2 = document.getElementById('task-notice');
+    if (!show) { if (o2 && o2.parentNode) o2.parentNode.removeChild(o2); return; }
+    if (o2 && o2.getAttribute && o2.getAttribute('data-k') === 'thelp') return;
+    if (o2 && o2.parentNode) o2.parentNode.removeChild(o2);
+    var d2 = document.createElement('div');
+    d2.id = 'task-notice'; d2.className = 'tn';
+    d2.setAttribute('data-k', 'thelp');
+    d2.innerHTML = teacherHelpHtml();
+    document.body.appendChild(d2);
+    return;
+  }
   var note = (u && noteReady()) ? noteFor(u) : null;
   var ready = !!(u && taskNoticeReady());
   var solo = (ready && !note && !TN_QUIET) ? soloAskFor(u) : null;
@@ -23916,7 +23998,8 @@ PAGES.classeco = function () {
      學生那一邊沒變：他傳自己那一組進去，金邊還是「你在這裡」。 */
   var mine = [];
   var H = [head(RULES.SOLO ? '每一位的進度' : '各組進度', '整個課程　·　' +
-    ecoRows(u.classId).length + (RULES.SOLO ? ' 位' : ' 組'), '')];
+    ecoRows(u.classId).length + (RULES.SOLO ? ' 位' : ' 組'),
+    RULES.SOLO ? '每一位現在走到哪。' : '每一組現在走到哪一層、有沒有東西等你看。')];
 
   /* 那一串是唸出去的：學生用它建帳號。放在最上面，因為開學前兩週
      他每次進來都要唸一次。 */
@@ -26689,14 +26772,19 @@ PAGES.radar = function () {
 
        回一句是選項不是義務——沒有話要說就按過去，學生那邊什麼都不會
        收到（「我看過但沒意見」對他沒有資訊，只會多一則通知）。 */
-    H.push(head('剛承諾', asks.length ? asks.length + ' 組剛說了天數' : '沒有剛承諾的',
-      ''));
+    H.push(head('他們打算花幾天', asks.length ? asks.length + ' 組剛說了' : '現在沒有', ''));
     /* 這一頁不在分頁上，所以要自己給一條回去的路。 */
     H.push('<div class="row"><button class="btn ghost" data-act="run" data-p=\'' +
-      esc(JSON.stringify({ a: 'tq:rev' })) + '\'>回審核</button></div>');
+      esc(JSON.stringify({ a: 'tq:rev' })) + '\'>回「等你的」</button></div>');
+    /* 這一頁是做什麼的——三句話。陳老師最不懂的就是這一段（2026-10-02）：
+       「花幾天」是什麼、要不要回、回了會怎樣。 */
+    H.push('<div class="card tguide"><div class="eyebrow lit">這一頁是做什麼的</div>' +
+      '<p>學生每做一件事之前，會先自己說「我打算花幾天」。</p>' +
+      '<p>你覺得他們說的明顯太短或太長，可以回一句：「我覺得會是 N 天，因為……」。</p>' +
+      '<p class="dim">最後幾天還是他們決定，你的話只是建議。不回也完全可以，學生不會收到任何東西。</p></div>');
     if (!asks.length) {
       H.push('<div class="card"><p class="dim">' +
-        '他們一說要花幾天，這裡就會出現。你可以回一句，也可以不回。' +
+        '學生一說要花幾天，這裡就會出現。' +
         '</p></div>');
     }
     asks.forEach(function (x) {
@@ -26713,7 +26801,10 @@ PAGES.radar = function () {
 
 
   /* 說明句拿掉：清單本來就照等最久排。 */
-  H.push(head('審核', rows.length ? rows.length + ' 件等你看' : '沒有等你的', ''));
+  /* 2026-10-02：陳老師說「不知道哪一頁是做什麼的」。每一頁標題底下補一句
+     「這一頁是做什麼的」，用他們看得懂的話，不用系統裡的詞。 */
+  H.push(head('等你的', rows.length ? rows.length + ' 件交出來的作業' : '沒有等你的',
+    '學生做完交出來的作業在這裡。點進去看，再按「收下」或「退回去改」。'));
 
   /* ── 有人剛說了天數 ──
 
@@ -26727,8 +26818,8 @@ PAGES.radar = function () {
   if (RULES.NEGOTIATE && asks.length) {
     H.push('<button class="asknote pressable" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'tq:ask' })) + '\'>' +
-      '<b>' + asks.length + ' 組剛說了要花幾天</b>' +
-      '<i>你可以回一句，也可以不回</i></button>');
+      '<b>' + asks.length + ' 組剛說了打算花幾天</b>' +
+      '<i>你覺得天數差很多的話，可以回一句建議。不回也可以。</i></button>');
   }
 
   if (!rows.length) {
@@ -26914,7 +27005,7 @@ PAGES.review = function () {
   }
 
   /* 只留一句，而且是他猜不到的那一句：成果不在系統裡。 */
-  var H = [head('審核', t.name + '　·　' + m.title, '')];
+  var H = [head('審核', t.name + '　·　' + m.title, '這是他們交的成果。看完決定收下，或退回去改（要寫一句理由）。')];
   /* 老師認的是「這一組是哪幾位」，不是組名。 */
   var 組員名 = teamMemberNames(t.teamId);
   if (組員名) H.push('<p class="dim">' + esc(組員名) + '</p>');
@@ -27191,7 +27282,8 @@ PAGES.askest = function () {
   var m = msOf(r.msId), t = teamOf(r.teamId);
   var n = Number(draft('est', r.est));
 
-  var H = [head('回一句', t.name + '　·　' + m.title, '')];
+  var H = [head('回一句建議', t.name + '　·　' + m.title,
+    '你覺得他們說的天數差很多，就告訴他們你的想法。最後幾天還是他們決定。')];
 
   H.push('<div class="card">');
   H.push('<div class="eyebrow">他們說</div>');
@@ -27210,8 +27302,8 @@ PAGES.askest = function () {
   H.push('</div>');
 
   H.push('<div class="row">');
-  H.push(btn('送出去', 'asksend:' + r.runId, 'big'));
-  H.push(btn('沒有話要說', 'askskip:' + r.runId, 'ghost'));
+  H.push(btn('送出建議', 'asksend:' + r.runId, 'big'));
+  H.push(btn('不回，維持他們說的', 'askskip:' + r.runId, 'ghost'));
   H.push(btn('回清單', 'go:radar', 'ghost'));
   H.push('</div>');
   return H.join('');
@@ -27239,7 +27331,8 @@ PAGES.ms = function () {
   var to = DRAFT.to || [];
 
   var H = [];
-  H.push(head('發派任務', '你要他們交什麼', ''));
+  H.push(head('發派任務', '你要他們交什麼',
+    '寫一句話說清楚要交什麼，再選發給誰。派出去之後，學生那邊馬上看得到。'));
 
   /* 「派一個新的」拿掉了：這一頁的標題就是「發派任務／你要他們交什麼」，
      而底下第一個框就是題目——同一件事說三次。 */
@@ -27429,7 +27522,8 @@ PAGES.msdetail = function () {
 
   /* 發給誰、各組現在的狀況 */
   var teams = where('Teams', function (t) {
-    return t.classId === m.classId && !t._d && teamHasMembers(t.teamId) &&
+    /* 示範班的組帶 _d，可是老師看自己班就是看自己班（示範那一邊也要看得到，口試展示會用）。 */
+    return t.classId === m.classId && teamHasMembers(t.teamId) &&
       (!m.teams.length || m.teams.indexOf(t.teamId) >= 0);
   });
   var rows = teams.map(function (t) {
@@ -27445,12 +27539,22 @@ PAGES.msdetail = function () {
   if (!rows.length) H.push('<p class="dim">沒有組可以看。</p>');
   H.push('<div class="rec-list">');
   rows.forEach(function (x) {
-    H.push('<div class="msd-t ' + x.st.k + '">');
-    H.push('<b>' + esc(x.t.name) + (x.t.project ? '<i>' + esc(x.t.project) + '</i>' : '') + '</b>');
-    H.push('<span class="msd-m">' + esc(teamMemberNames(x.t.teamId)) + '</span>');
-    H.push('<span class="msd-s">' + esc(x.st.say) + (x.redo ? '　（改過 ' + x.redo + ' 次承諾）' : '') + '</span>');
-    if (x.st.k === 'sub' && x.r && x.r.runId) H.push(btn('去審核', 'go:review:' + x.r.runId, 'ghost sm'));
-    H.push('</div>');
+    /* 有承諾過的：整列是一顆鍵，點進去看這一組交了什麼、留的連結（見 PAGES.runview）。
+       還沒開始的沒有東西可看，就是一般的一列。 */
+    var go = !!(x.r && x.r.runId);
+    var inner = '<b>' + esc(x.t.name) + (x.t.project ? '<i>' + esc(x.t.project) + '</i>' : '') + '</b>' +
+      '<span class="msd-m">' + esc(teamMemberNames(x.t.teamId)) + '</span>' +
+      '<span class="msd-s">' + esc(x.st.say) + (x.redo ? '　（改過 ' + x.redo + ' 次承諾）' : '') + '</span>' +
+      (go ? '<em class="msr-more">看他們交了什麼 ›</em>' : '');
+    if (go) {
+      H.push('<div class="msd-wrap">');
+      H.push('<button class="msd-t msd-go ' + x.st.k + '" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'go:runview:' + x.r.runId })) + '\'>' + inner + '</button>');
+      if (x.st.k === 'sub') H.push(btn('去審核', 'go:review:' + x.r.runId, 'ghost sm'));
+      H.push('</div>');
+    } else {
+      H.push('<div class="msd-t ' + x.st.k + '">' + inner + '</div>');
+    }
   });
   H.push('</div></div>');
 
@@ -27495,7 +27599,7 @@ PAGES.mslist = function () {
   }).sort(function (a, b) { return b.at - a.at; });
   var live = all.filter(function (m) { return !m.withdrawnAt; });
   var gone = all.filter(function (m) { return !!m.withdrawnAt; });
-  var H = [head('已派任務', '這個班派出去的每一件', '')];
+  var H = [head('已派任務', '這個班派出去的每一件', '點進去看內容、各組做到哪；要刪掉也在裡面。')];
   H.push(btn('發派新任務', 'go:ms', 'big'));
   if (!live.length) H.push('<div class="card dim">還沒有人派過。</div>');
 
@@ -27544,6 +27648,127 @@ PAGES.mslist = function () {
 };
 
 /* 各組進度那一頁在 62-eco.js——跟學生看的是同一張剖面圖。 */
+
+/* ---------- 怎麼用（老師端）----------
+
+   2026-10-02：陳老師說她看不懂介面在幹嘛、不知道哪一頁是做什麼的，尤其是
+   「花幾天要不要回」。老師端本來沒有任何地方說「這個系統是什麼、我平常要做什麼」，
+   一打開就是結果。這一頁用最白的話把這幾件事講完，一頁看完。
+
+   字都是老師們會在畫面上看到的字（左邊導覽的名字、按鈕上的字），不另外取名。 */
+PAGES.thelp = function () {
+  var H = [head('怎麼用', '一分鐘看完這個系統', '')];
+  H.push('<div class="card tguide"><div class="eyebrow lit">這個系統在做什麼</div>' +
+    '<p>學生做事之前先說「我打算花幾天」，做完交出來，你看過之後「收下」或「退回去改」。</p>' +
+    '<p class="dim">系統只比天數，不評作業好壞。好不好，由你用一句話告訴他們。</p></div>');
+
+  H.push('<div class="card tguide"><div class="eyebrow lit">你平常只會做三件事</div>' +
+    '<p><b>1　派任務</b>　左邊「發派任務」。</p>' +
+    '<p><b>2　收作業</b>　左邊「等你的」。點進去看，再收下或退回。</p>' +
+    '<p><b>3　看進度</b>　左邊「各組進度」。「已派任務」點進去，看每一組做到哪。</p></div>');
+
+  H.push('<div class="card tguide"><div class="eyebrow lit">「剛說了打算花幾天」是什麼</div>' +
+    '<p>學生開始前說的天數。你覺得差很多，點進去回一句：「我覺得會是 N 天，因為……」。</p>' +
+    '<p class="dim">不回也可以。最後幾天由學生決定。</p></div>');
+
+  H.push('<div class="card tguide"><div class="eyebrow lit">收下和退回去改有什麼不同</div>' +
+    '<p><b>收下</b>　這一件走完，他們拿到水晶。可以多給 ' + RULES.CRYSTAL.bonusMin + ' 到 ' + RULES.CRYSTAL.bonusMax +
+    ' 顆，並留一句話。</p>' +
+    '<p><b>退回去改</b>　要寫一句理由，他們改完再交。</p></div>');
+
+  H.push('<div class="card tguide"><div class="eyebrow lit">「結案」是什麼</div>' +
+    '<p>整個專案做完才用。平常不用碰。</p></div>');
+
+  H.push('<div class="row">' + btn('回「等你的」', 'go:radar', 'big') + '</div>');
+  return H.join('');
+};
+
+/* ---------- 這一組做了什麼（唯讀）----------
+
+   2026-10-02：老師在「已派任務」點進一件、再點進一組，要能看到他們交了什麼、留了什麼連結。
+   審核那一頁（PAGES.review）只給交出來、還沒處理的；進行中、走完了的看不到。
+   這一頁**只看、不動任何資料**：任何狀態都畫得出來，有什麼寫什麼，沒有就說還沒有。
+
+   系統不解讀學生寫的東西：連結只是把網址變成可以點的，說了什麼原話放上去（見 whereLine）。
+   要收下或退回，在「去審核」那一頁做，這裡沒有那兩顆鍵。 */
+PAGES.runview = function () {
+  var u = me();
+  var r = S.p && S.p.id ? find('Runs', function (x) { return x.runId === S.p.id; }) : null;
+  var m = r ? msOf(r.msId) : null, t = r ? teamOf(r.teamId) : null;
+  if (!r || !m || !t || t.classId !== u.classId) {
+    return head('已派任務', '找不到', '') +
+      '<div class="card dim">找不到這一組的這一趟。</div>' +
+      '<div class="row">' + btn('回已派任務', 'go:mslist', 'ghost') + '</div>';
+  }
+  var st = msStatusOf(r);
+  var H = [head('這一組做了什麼', t.name + '　·　' + m.title, '')];
+  var 組員名 = teamMemberNames(t.teamId);
+  if (組員名) H.push('<p class="dim">' + esc(組員名) + '</p>');
+
+  /* 現在的狀況與時間 */
+  H.push('<div class="card"><div class="eyebrow lit">現在的狀況</div>');
+  H.push('<p>' + esc(st.say) + '</p>');
+  var when = [];
+  if (r.committedAt) when.push('承諾 ' + fmtDay(r.committedAt));
+  if (r.submittedAt) when.push('交出 ' + fmtDay(r.submittedAt));
+  if (r.doneAt) when.push('走完 ' + fmtDay(r.doneAt));
+  if (when.length) H.push('<p class="dim">' + esc(when.join('　·　')) + '</p>');
+  if (r.backs) H.push('<p class="dim">被退回過 ' + r.backs + ' 次。</p>');
+  H.push('</div>');
+
+  /* 他們留的連結。系統不解讀，只是讓網址點得開。 */
+  H.push('<div class="card"><div class="eyebrow lit">他們說東西在這裡</div>');
+  H.push(r.link ? whereLine(r.link, 1) : '<p class="dim">還沒有留連結。</p>');
+  H.push('</div>');
+
+  /* 誰做了什麼：原話。沒寫的寫「還沒說」。 */
+  var mem = where('Users', function (x) { return x.role === 'student' && !x.mergedInto && inTeam(x, r.teamId); });
+  if (mem.length) {
+    var sd = r.said || {};
+    H.push('<div class="card"><div class="eyebrow lit">誰做了什麼</div><div class="saidlist">');
+    mem.forEach(function (x) {
+      H.push('<div class="sd">' + pxTag(heroOf(x).idleA, heroOf(x).pal, 'sd-px') + '<b>' + esc(x.name || '') + '</b>' +
+        '<span' + (sd[x.userId] ? '' : ' class="dim"') + '>' + (sd[x.userId] ? esc(sd[x.userId]) : '還沒說') + '</span></div>');
+    });
+    H.push('</div></div>');
+  }
+
+  /* 他們拆的幾件：說幾天、實際幾天 */
+  var pl = r.plan || [], sp = r.spent || [];
+  if (pl.length) {
+    H.push('<div class="card"><div class="eyebrow lit">他們拆的那幾件　說／實際</div><div class="splist">');
+    pl.forEach(function (x, i) {
+      var got = sp[i] == null ? null : sp[i];
+      H.push('<div class="sp2"><b style="background:' + stepHue(i) + '"></b><i>' + esc(x.n) + '</i>' +
+        '<u class="who">' + esc(shortWho(x.who)) + '</u>' +
+        '<u class="said">說 ' + ((x.dU && x.dU !== 'd' && x.dN != null) ? esc(x.dN + estUnit(x.dU).name) : x.d + ' 天') + '</u>' +
+        '<u class="got' + (got != null && got > x.d ? ' over' : '') + '">' + (got == null ? '—' : got) + '</u></div>');
+    });
+    H.push('</div></div>');
+  }
+
+  /* 他們回報的：原話 */
+  var rep = [];
+  if (r.feel) rep.push('<p><b>他們覺得進展</b>　' + esc(({ good: '順', ok: '普通', bad: '不順' })[r.feel] || '') + '</p>');
+  if (r.scope) rep.push('<p><b>做出來的跟當初說的</b>　' + esc(({ more: '比說的多', same: '差不多', less: '比說的少' })[r.scope] || '') + '</p>');
+  if (r.why) rep.push('<p class="quote"><b>為什麼</b>' + nl(r.why) + '</p>');
+  if (r.hard) rep.push('<p class="quote"><b>他們說卡在哪裡</b>' + nl(r.hard) + '</p>');
+  if (r.pace) rep.push('<p class="quote"><b>他們覺得的進度</b>' + nl(r.pace) + '</p>');
+  if (rep.length) H.push('<div class="card"><div class="eyebrow lit">他們回報的</div>' + rep.join('') + '</div>');
+
+  /* 老師說過的話（收下或退回那一句），署名 */
+  if (r.word) {
+    var wb = r.wordBy ? userOf(r.wordBy) : null;
+    H.push('<div class="card"><div class="eyebrow lit">' + (wb ? esc(wb.name) + ' 說' : '老師說') + '</div>' +
+      '<p class="quote">' + nl(r.word) + '</p></div>');
+  }
+
+  H.push('<div class="row">');
+  if (r.state === 'submitted') H.push(btn('去審核', 'go:review:' + r.runId, 'big'));
+  H.push(btn('回這一件', 'go:msdetail:' + m.msId, 'ghost'));
+  H.push('</div>');
+  return H.join('');
+};
 
 
 /* ===== 75-research.js ===== */

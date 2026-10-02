@@ -1226,6 +1226,81 @@ be('側欄：在詳細頁時「已派任務」那一格還亮著', (S.page = 'ms
 actWithdrawMs(msN_d.msId, tea.userId);
 DRAFT = {}; S.p = {}; S.page = 'home';
 
+/* ══ 老師看不懂每一頁在做什麼：說明、第一次登入的簡短說明、點進一組看交了什麼（2026-10-02）══ */
+H('老師端：每一頁一句話、怎麼用、第一次登入說明、看他們交了什麼');
+as(tea);
+S.page = 'radar'; S.p = {}; DRAFT = {};
+be('「等你的」那一頁標題底下有一句話說這頁是做什麼的', PAGES.radar().indexOf('學生做完交出來的作業在這裡') >= 0, true);
+S.page = 'ms'; be('發派任務有一句話', PAGES.ms().indexOf('寫一句話說清楚要交什麼') >= 0, true);
+S.page = 'mslist'; be('已派任務有一句話', PAGES.mslist().indexOf('點進去看內容') >= 0, true);
+S.page = 'classeco'; be('各組進度有一句話', PAGES.classeco().indexOf('現在走到哪') >= 0, true);
+/* 花幾天要不要回：講清楚 */
+DRAFT = { tq: 'ask' }; S.page = 'radar';
+const 回頁 = PAGES.radar();
+be('「他們打算花幾天」那一頁有「這一頁是做什麼的」', 回頁.indexOf('這一頁是做什麼的') >= 0 && 回頁.indexOf('我打算花幾天') >= 0, true);
+be('說明寫出：回不回都可以、最後幾天由學生決定', 回頁.indexOf('不回也完全可以') >= 0 && 回頁.indexOf('最後幾天還是他們決定') >= 0, true);
+DRAFT = {};
+be('「回一句」那一頁：標題、一句說明、「送出建議」、「不回，維持他們說的」', (() => { const r0 = DB.Runs.filter(r => r.state === 'running')[0]; if (!r0) return true; S.page = 'askest'; S.p = { id: r0.runId }; const h = PAGES.askest(); return h.indexOf('回一句建議') >= 0 && h.indexOf('最後幾天還是他們決定') >= 0 && h.indexOf('送出建議') >= 0 && h.indexOf('不回，維持他們說的') >= 0; })(), true);
+/* 怎麼用 */
+S.page = 'thelp'; S.p = {};
+const th = PAGES.thelp();
+be('「怎麼用」頁：這個系統在做什麼、三件事、花幾天、收下與退回、結案', ['這個系統在做什麼', '你平常只會做三件事', '是什麼', '收下和退回去改有什麼不同', '結案'].every(k => th.indexOf(k) >= 0), true);
+be('寫著三件事的實際名字（發派任務、等你的、各組進度）', ['發派任務', '等你的', '各組進度'].every(k => th.indexOf(k) >= 0), true);
+be('水晶數字從規則來，不是寫死', th.indexOf(RULES.CRYSTAL.bonusMin + ' 到 ' + RULES.CRYSTAL.bonusMax) >= 0, true);
+be('只有老師進得了', allowed(tea, 'thelp') && !allowed(stu[0], 'thelp') && !allowed(rsU, 'thelp'), true);
+be('頂條有「怎麼用」（老師才有）', (as(tea), topEnd().indexOf('go:thelp') >= 0) && (as(stu[0]), topEnd().indexOf('go:thelp') < 0), true);
+as(tea);
+/* 第一次登入說明：看一次就好 */
+delete tea.helpSeen;
+let 畫2 = null;
+document.createElement = () => { const o = Object.create(stubEl); o.attrs = {}; o.setAttribute = (k, v) => { o.attrs[k] = v; }; return o; };
+document.body.appendChild = el => { 畫2 = el; };
+S.page = 'radar'; S.p = {};
+taskNoticeTick();
+be('老師第一次打開「等你的」：跳一張簡短說明（三句話）', 畫2 && 畫2.innerHTML.indexOf('老師端怎麼用') >= 0 && 畫2.innerHTML.indexOf('thelpgo') >= 0 && 畫2.innerHTML.indexOf('thelpok') >= 0, true);
+S.page = 'ms'; 畫2 = null; taskNoticeTick();
+be('寫到一半的頁（發派任務）不跳', 畫2, null);
+S.page = 'radar';
+ACTS.thelpok();
+be('按「知道了」：記在帳號上、事件留下、不再出現', tea.helpSeen === THELP_ID && DB.Events.slice(-1)[0].kind === 'helpseen' && teacherHelpFor(tea) === false, true);
+be('同一位老師不會再跳（換頁再回來也一樣）', (() => { 畫2 = null; S.page = 'classeco'; taskNoticeTick(); S.page = 'radar'; taskNoticeTick(); return 畫2 === null; })(), true);
+delete tea.helpSeen; S.page = 'radar';
+ACTS.thelpgo();
+be('按「看完整說明」：也記看過、並進到「怎麼用」頁', tea.helpSeen === THELP_ID && S.page === 'thelp', true);
+be('學生不會看到老師的說明', teacherHelpFor(stu[0]), false);
+
+/* 點進一組，看他們交了什麼 */
+as(stu[0]);
+const msV = actPublish(kl.classId, { title: '要看連結的任務', note: '', steps: [], teams: [tm.teamId], mentorId: tea.userId, due: 0, dueU: '' });
+const rV = actCommit(tm.teamId, msV.msId, 3, [], [], 'wild', 'mid');
+as(tea); S.page = 'msdetail'; S.p = { id: msV.msId }; DRAFT = {};
+const dV = PAGES.msdetail();
+be('詳細頁上有承諾的那一組：整列可以點，寫「看他們交了什麼」', dV.indexOf('go:runview:' + rV.runId) >= 0 && dV.indexOf('看他們交了什麼') >= 0, true);
+S.page = 'runview'; S.p = { id: rV.runId };
+let vv = PAGES.runview();
+be('這一組做了什麼：寫組名、任務、現在的狀況', vv.indexOf(esc(tm.name)) >= 0 && vv.indexOf('要看連結的任務') >= 0 && vv.indexOf('進行中，說 3 天') >= 0, true);
+be('還沒留連結：寫「還沒有留連結」', vv.indexOf('還沒有留連結') >= 0, true);
+rV.link = 'https://www.notion.so/team/abc123 補充說明在這';
+rV.said = { [stu[0].userId]: '我做了訪談稿' };
+rV.state = 'submitted'; rV.actual = 4; rV.submittedAt = Date.now(); rV.why = '第二個受訪者改期'; rV.feel = 'bad';
+vv = PAGES.runview();
+be('留了連結：寫「他們說東西在這裡」，網址點得開（新分頁）', vv.indexOf('他們說東西在這裡') >= 0 && vv.indexOf('href="https://www.notion.so/team/abc123"') >= 0 && vv.indexOf('target="_blank"') >= 0, true);
+be('連結旁邊的字也原樣放上去（系統不解讀）', vv.indexOf('補充說明在這') >= 0, true);
+be('誰做了什麼：原話放上去', vv.indexOf('我做了訪談稿') >= 0, true);
+be('他們回報的：為什麼與進展（原話）', vv.indexOf('第二個受訪者改期') >= 0 && vv.indexOf('不順') >= 0, true);
+be('交出去了：有「去審核」，沒有收下／退回（這頁唯讀）', vv.indexOf('go:review:' + rV.runId) >= 0 && vv.indexOf('approve') < 0 && vv.indexOf('reject') < 0, true);
+be('這一頁不動任何資料', (() => { const a = JSON.stringify([DB.Runs, DB.Milestones]); PAGES.runview(); return a === JSON.stringify([DB.Runs, DB.Milestones]); })(), true);
+rV.state = 'done'; rV.word = '做得很清楚。'; rV.wordBy = tea.userId; rV.doneAt = Date.now();
+vv = PAGES.runview();
+be('走完了：寫「走完了」、老師說過的話署名放著、不再有「去審核」', vv.indexOf('走完了') >= 0 && vv.indexOf('做得很清楚。') >= 0 && vv.indexOf('go:review:') < 0, true);
+be('有一顆「回這一件」', vv.indexOf('go:msdetail:' + msV.msId) >= 0, true);
+S.p = { id: 'R_nope' };
+be('找不到：寫找不到、不報錯', PAGES.runview().indexOf('找不到') >= 0, true);
+be('學生進不了這一頁', allowed(stu[0], 'runview'), false);
+be('側欄：看這一頁時「已派任務」還亮著', (S.page = 'runview', /class="[^"]*on[^"]*" data-go="mslist"/.test(sideBar())), true);
+actWithdrawMs(msV.msId, tea.userId);
+DRAFT = {}; S.p = {}; S.page = 'home';
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

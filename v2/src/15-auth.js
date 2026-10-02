@@ -157,6 +157,7 @@ var EV_SAY = {
   jointeam: function () { return '用代碼加入隊伍'; },
   noteseen: function (e) { return '看過更新說明（' + (e.id || '') + '）'; },
   jobunlock: function (e) { var m = heroMeta(e.job); return '用水晶換了職業「' + (m ? m.n : e.job) + '」'; },
+  helpseen: function () { return '看過老師端怎麼用的說明'; },
   solonot:  function () { return '被問「是不是按錯了組」，回答：不是，就是一個人'; },
   leaveteam: function (e) { return '按錯了，離開隊伍「' + (e.name || '') + '」'; },
   claim:    function () { return '在班級地圖上占了一格'; },
@@ -528,7 +529,7 @@ function actResearcherDeleteTestClass(researcherId, classId) {
    只刪學生、不刪老師與研究者；事件紀錄不動。刪完如果他那一組因此沒有人、
    也沒有任何一趟，組別一起刪。 */
 var TRIVIAL_EV = { login: 1, register: 1, joinclass: 1, jointeam: 1, newteam: 1, hero: 1, rename: 1,
-  teamrename: 1, setname: 1, sit: 1, leaveteam: 1, solonot: 1, noteseen: 1, claim: 1, setpw: 1, genrecov: 1, recoverpw: 1, teacherrecov: 1,
+  teamrename: 1, setname: 1, sit: 1, leaveteam: 1, solonot: 1, noteseen: 1, helpseen: 1, claim: 1, setpw: 1, genrecov: 1, recoverpw: 1, teacherrecov: 1,
   blurb: 1, left: 1, researchersetpw: 1 };
 function userTraces(u) {
   var n = { said: 0, plan: 0, merged: 0, events: 0 };
