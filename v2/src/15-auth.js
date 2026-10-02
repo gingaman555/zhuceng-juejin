@@ -157,7 +157,7 @@ var EV_SAY = {
   jointeam: function () { return '用代碼加入隊伍'; },
   noteseen: function (e) { return '看過更新說明（' + (e.id || '') + '）'; },
   jobunlock: function (e) { var m = heroMeta(e.job); return '用水晶換了職業「' + (m ? m.n : e.job) + '」'; },
-  helpseen: function () { return '看過老師端怎麼用的說明'; },
+  helpseen: function () { return '看過老師端的第一次說明'; },
   solonot:  function () { return '被問「是不是按錯了組」，回答：不是，就是一個人'; },
   leaveteam: function (e) { return '按錯了，離開隊伍「' + (e.name || '') + '」'; },
   claim:    function () { return '在班級地圖上占了一格'; },

@@ -1205,6 +1205,12 @@ var ACTS = {
   jobuse: function (k) { ACTS.hero(k); },
 
   /* 「這一組只有你一個人」的提醒（見 60-student.js 的 soloAskFor）。 */
+  /* 老師第一次登入的簡短說明（見 60-student.js 的 teacherHelpFor）：看過就記在這個帳號上。 */
+  thelpok: function () {
+    var u = me(); if (!u) return;
+    teacherHelpAck(u);
+    taskNoticeTick();
+  },
   /* 更新說明：看過就記在這個帳號上，不再出現（見 60-student.js 的 UPDATE_NOTE）。 */
   noteok: function () {
     var u = me(); if (!u) return;

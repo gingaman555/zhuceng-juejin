@@ -1227,7 +1227,7 @@ actWithdrawMs(msN_d.msId, tea.userId);
 DRAFT = {}; S.p = {}; S.page = 'home';
 
 /* ══ 老師看不懂每一頁在做什麼：說明、第一次登入的簡短說明、點進一組看交了什麼（2026-10-02）══ */
-H('老師端：每一頁一句話、花幾天的說明、看他們交了什麼（沒有「怎麼用」）');
+H('老師端：每一頁一句話、花幾天的說明、第一次登入說明卡、看他們交了什麼（沒有「怎麼用」頁）');
 as(tea);
 S.page = 'radar'; S.p = {}; DRAFT = {};
 be('「等你的」那一頁標題底下有一句話說這頁是做什麼的', PAGES.radar().indexOf('學生做完交出來的作業在這裡') >= 0, true);
@@ -1241,7 +1241,7 @@ be('「他們打算花幾天」那一頁有「這一頁是做什麼的」', 回�
 be('說明寫出：回不回都可以、最後幾天由學生決定', 回頁.indexOf('不回也完全可以') >= 0 && 回頁.indexOf('最後幾天還是他們決定') >= 0, true);
 DRAFT = {};
 be('「回一句」那一頁：標題、一句說明、「送出建議」、「不回，維持他們說的」', (() => { const r0 = DB.Runs.filter(r => r.state === 'running')[0]; if (!r0) return true; S.page = 'askest'; S.p = { id: r0.runId }; const h = PAGES.askest(); return h.indexOf('回一句建議') >= 0 && h.indexOf('最後幾天還是他們決定') >= 0 && h.indexOf('送出建議') >= 0 && h.indexOf('不回，維持他們說的') >= 0; })(), true);
-/* 「怎麼用」整套拿掉了（2026-10-02，使用者要求）：頂條沒有、沒有那一頁、老師第一次登入也不跳 */
+/* 「怎麼用」（頂條連結與那一頁）拿掉了（2026-10-02，使用者要求）；第一次登入的說明卡留著，只剩「知道了」 */
 be('沒有「怎麼用」那一頁', typeof PAGES.thelp, 'undefined');
 be('頂條沒有「怎麼用」（老師、學生都沒有）', (as(tea), topEnd().indexOf('怎麼用') < 0 && topEnd().indexOf('thelp') < 0) && (as(stu[0]), topEnd().indexOf('怎麼用') < 0), true);
 as(tea);
@@ -1249,7 +1249,16 @@ let 畫2 = null;
 document.createElement = () => { const o = Object.create(stubEl); o.attrs = {}; o.setAttribute = (k, v) => { o.attrs[k] = v; }; return o; };
 document.body.appendChild = el => { 畫2 = el; };
 ['radar', 'mslist', 'classeco'].forEach(p => { S.page = p; S.p = {}; taskNoticeTick(); });
-be('老師打開「看」的頁：不跳任何說明', 畫2, null);
+S.page = 'radar'; S.p = {}; delete tea.helpSeen; 畫2 = null;
+taskNoticeTick();
+be('老師第一次打開「等你的」：跳一張簡短說明，只有「知道了」一顆鍵、沒有「怎麼用」三個字', 畫2 && 畫2.innerHTML.indexOf('老師端先看這三句') >= 0 && 畫2.innerHTML.indexOf('thelpok') >= 0 && 畫2.innerHTML.indexOf('thelpgo') < 0 && 畫2.innerHTML.indexOf('怎麼用') < 0, true);
+S.page = 'ms'; 畫2 = null; taskNoticeTick();
+be('寫到一半的頁（發派任務）不跳', 畫2, null);
+S.page = 'radar';
+ACTS.thelpok();
+be('按「知道了」：記在帳號上、事件留下、不再出現', tea.helpSeen === THELP_ID && DB.Events.slice(-1)[0].kind === 'helpseen' && teacherHelpFor(tea) === false, true);
+be('同一位老師不會再跳（換頁再回來也一樣）', (() => { 畫2 = null; S.page = 'classeco'; taskNoticeTick(); S.page = 'radar'; taskNoticeTick(); return 畫2 === null; })(), true);
+be('學生不會看到老師的說明', teacherHelpFor(stu[0]), false);
 
 /* 點進一組，看他們交了什麼 */
 as(stu[0]);
