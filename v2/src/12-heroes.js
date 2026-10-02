@@ -345,7 +345,11 @@ var HERO_LIST = [
    一個字都不用改。 */
 function heroKey(u) {
   var k = u && u.hero;
-  return HEROES[k] ? k : 'adv';
+  if (!HEROES[k]) return 'adv';
+  /* 要用水晶換的職業（見 12-jobs.js）：這一組還沒換到的，不管帳號上寫什麼，
+     都當冒險者——換過組、資料還沒同步的時候會碰到。 */
+  if (typeof jobOpen === 'function' && !jobOpen(u, k)) return 'adv';
+  return k;
 }
 function heroOf(u) { return HEROES[heroKey(u)]; }
 

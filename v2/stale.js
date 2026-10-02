@@ -277,6 +277,18 @@ const 節 = t => console.log('\n' + t + '\n' + '─'.repeat(50));
   ok(擋住 && 被擋次數 === 前 + 1, '舊版那種 { j } 的整筆寫入被擋下');
   ok(前 === 0, '上面每一節新版自己的寫入，一次都沒有被規則擋到（都帶 v）');
 
+  節('9a · 兩位隊友同時用水晶換不同的職業：兩個都留下來（t.jobs 是物件，一格一格併）');
+  收(A); 收(B); await 等();
+  const jA = A.DB.Teams.filter(t => t.teamId === 'GC1')[0], jB = B.DB.Teams.filter(t => t.teamId === 'GC1')[0];
+  jA.jobs = { ranger: { by: 'UA', at: 1 } };      /* A：換了遊俠 */
+  A.save(); await 等();
+  jB.jobs = { bard: { by: 'UB', at: 2 } };        /* B（還沒收到）：換了吟遊詩人 */
+  B.save(); await 等();
+  const jc = 雲的('Teams', 'GC1');
+  ok(jc.jobs && jc.jobs.ranger && jc.jobs.bard, '遊俠與吟遊詩人都在雲端（沒有掉一個）');
+  收(A); 收(B); await 等();
+  ok(A.jobsOf('GC1').length === 2 && B.jobsOf('GC1').length === 2, '兩台收到之後都看到兩個職業');
+
   節('9b · 組別的專案名稱、學生的組別：不會被同一筆上別的改動蓋掉');
   /* 9/30 事件紀錄：改專案名稱 215 次，204 次「原本」是空的——名字存了又不見。
      組別（Teams）與使用者（Users）也是整筆存的，同一組的人各改各的欄位就會互相蓋。 */

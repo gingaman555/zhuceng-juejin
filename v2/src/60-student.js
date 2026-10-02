@@ -125,6 +125,8 @@ PAGES.home = function () {
     H.push('<div class="crygot">＋' + (RULES.CRYSTAL.base + cb) + ' 顆水晶' +
       (cb ? '<span>' + RULES.CRYSTAL.base + ' 是完成的，' + cb +
         ' 是他多給的</span>' : '') + '</div>');
+    /* 他的職業說一句收下了（見 12-jobs.js）。沒寫台詞的職業就是沉默。 */
+    H.push(hsayHtml(me(), 'ok'));
     H.push(regCard('新拿到', (m ? m.title : '那一趟'), '任務之證已收錄在圖鑑',
       pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
       false));
@@ -138,6 +140,7 @@ PAGES.home = function () {
       if (pm && pm.n) {
         H.push(regCard('新登場', pm.n, '已收錄在圖鑑',
           pxTag(pm.px, (kz || zoneNow(t.teamId)).pal, 'reg-px'), false));
+        H.push(hsayHtml(me(), 'codex'));
       }
     }
     /* 他那一句話擺在最下面，而且是這一整張上唯一的人話。 */
@@ -1491,6 +1494,8 @@ PAGES.stamp = function () {
      那不是懲罰的表情，他只是走得比自己想的遠。 */
   H.push('<div class="stamp-who">' +
     pxTag(r.stamp === 'late' ? HERO.pant : HERO.win, HERO.pal, 'sw-px') + '</div>');
+  /* 剛交出去，他的職業說一句（見 12-jobs.js）。 */
+  H.push(hsayHtml(me(), 'submit'));
   H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push('<dl class="rep stage">');

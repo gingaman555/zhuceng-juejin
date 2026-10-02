@@ -735,7 +735,7 @@ document.addEventListener('change', function (ev) {
    會存資料的這幾個動作，同一個動作（連參數）在 0.8 秒內的第二下不再執行。
    導覽、加減鍵這類本來就要連按的不在名單上。 */
 var ACT_ONCE = { hero: 1, rename: 1, teamrename: 1, askexit: 1, commit: 1, publish: 1,
-  approve: 1, reject: 1, mkteam: 1, jointeam: 1, leaveyes: 1, sololeave: 1, solono: 1, noteok: 1, reg: 1, login: 1, renameclass: 1,
+  approve: 1, reject: 1, mkteam: 1, jointeam: 1, jobyes: 1, leaveyes: 1, sololeave: 1, solono: 1, noteok: 1, reg: 1, login: 1, renameclass: 1,
   msdelyes: 1, rsdelyes: 1, rsaccyes: 1, rspw: 1 };
 var ACT_LAST = {};
 function actGuard(key, t) {
@@ -1184,7 +1184,22 @@ var ACTS = {
       });
     }, 1320);
     say('出發。');
+    /* 角色頭上那塊牌子說一句出發的話（見 12-jobs.js 的 heroTagSay）。 */
+    heroTagSay(me(), 'start', 2600);
   },
+
+  /* 用水晶換職業（見 12-jobs.js）。花的是整組的水晶，所以先問一次。 */
+  jobask: function (k) { DRAFT.jobConf = k; render(); },
+  jobno: function () { DRAFT.jobConf = null; render(); },
+  jobyes: function (k) {
+    var t = myTeam(); if (!t) return;
+    DRAFT.jobConf = null;
+    var r = actUnlockJob(t.teamId, k);
+    if (r.err) { render(); return say(r.err); }
+    go('who', { reveal: k });
+  },
+  /* 剛換到的那一張上的「用這個職業」：挑它，回廊道。 */
+  jobuse: function (k) { ACTS.hero(k); },
 
   /* 「這一組只有你一個人」的提醒（見 60-student.js 的 soloAskFor）。 */
   /* 更新說明：看過就記在這個帳號上，不再出現（見 60-student.js 的 UPDATE_NOTE）。 */
@@ -1351,6 +1366,8 @@ var ACTS = {
   hero: function (k) {
     var u = me();
     if (!u || !HEROES[k]) return;
+    /* 要用水晶換的職業，這一組還沒換到就挑不了（見 12-jobs.js）。 */
+    if (!jobOpen(u, k)) return say('這個職業還沒換到。');
     /* 選的是同一個就不用再存、再記一筆。
 
        9/30 事件紀錄：挑角色 193 次，87 次是連續選同一個，最多一位選了 13 次

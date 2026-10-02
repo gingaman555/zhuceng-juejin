@@ -60,6 +60,17 @@ function feedOf(classId, limit) {
       ms: msOf(r.msId), by: r.askBy ? userOf(r.askBy) : null });
   });
 
+  /* 用水晶換到的職業（見 12-jobs.js）。誰換的寫出來——整組共用，換的人值得被看見。 */
+  Object.keys(teams).forEach(function (id) {
+    var js = teams[id].jobs;
+    if (!js || typeof js !== 'object') return;
+    Object.keys(js).forEach(function (k) {
+      if (HEROES[k] && js[k] && js[k].at) {
+        out.push({ at: js[k].at, kind: 'job', team: teams[id], job: k, by: js[k].by ? userOf(js[k].by) : null });
+      }
+    });
+  });
+
   /* 走出去 */
   Object.keys(teams).forEach(function (id) {
     if (teams[id].leftAt) out.push({ at: teams[id].leftAt, kind: 'left', team: teams[id] });
@@ -117,6 +128,10 @@ function feedRow(f, meId) {
     ic = pxTag(ICONS.radar, ICON_PAL, 'nic');
     /* 不寫談出了什麼（見檔頭）。 */
     act = '跟 ' + (f.by ? f.by.name : '老師') + ' 談過那一趟';
+  } else if (f.kind === 'job') {
+    var jm = heroMeta(f.job);
+    ic = pxTag(HEROES[f.job].idleA, HEROES[f.job].pal, 'nic');
+    act = (f.by ? f.by.name + ' ' : '') + '為隊上換來了職業「' + (jm ? jm.n : '') + '」';
   } else if (f.kind === 'left') {
     ic = pxTag(ICONS.home, ICON_ON, 'nic');
     act = '走出去了';

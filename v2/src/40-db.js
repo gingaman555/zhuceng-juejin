@@ -1968,14 +1968,17 @@ function crystalOf(teamId) {
      它讓「走完一件就點得起一位」成立，而每一組拿到的一樣多，
      所以榜上的排序不受影響。 */
   var 拿過 = RULES.CRYSTAL.start + base + bonus;
-  var 用掉 = litMobs(teamId).length * RULES.CRYSTAL.light;
+  /* 花掉的有兩種：照亮圖鑑上的黑影（一位 light）、換職業（一個 job，見 12-jobs.js）。
+     分開記數，因為圖鑑那一頁要寫「照亮過幾位」。 */
+  var 照亮 = litMobs(teamId).length, 換職 = jobsOf(teamId).length;
+  var 用掉 = 照亮 * RULES.CRYSTAL.light + 換職 * RULES.CRYSTAL.job;
   /* all 是**拿過的總數**，不是手上剩下的。
 
      榜上排的是 all，所以點亮不會讓一組在榜上退步——不然那張榜就會
      變成「不要用它」的壓力，而一個沒有人敢用的用途等於沒有用途。
 
      left 是手上剩下的，那是他要做決定的時候看的數字。 */
-  return { base: base, bonus: bonus, all: 拿過, used: 用掉, left: 拿過 - 用掉 };
+  return { base: base, bonus: bonus, all: 拿過, used: 用掉, left: 拿過 - 用掉, litN: 照亮, jobN: 換職 };
 }
 
 /* ---------- 用水晶照亮的那幾位 ----------

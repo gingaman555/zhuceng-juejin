@@ -468,6 +468,10 @@ function syncIsObj(x) { return !!x && typeof x === 'object' && !Array.isArray(x)
 
 function syncApply(base, mine, theirs) {
   if (syncEq(base, mine)) return theirs;
+  /* 這一格本來沒有、現在兩邊都有了（同時加了一個新的物件欄位）：當成本來是空的、
+     一格一格併。不然後寫的那一邊整個換掉先寫的——2026-10-02 兩位隊友同時用水晶
+     換不同的職業（t.jobs），測出來掉了一個。 */
+  if (base === undefined && syncIsObj(mine) && syncIsObj(theirs)) base = {};
   if (syncIsObj(base) && syncIsObj(mine) && syncIsObj(theirs)) {
     var out = {}, keys = {}, k;
     for (k in theirs) out[k] = theirs[k];

@@ -558,6 +558,23 @@ a.plain:hover{color:var(--gold)}
 .side-head.pressable{padding-right:44px}
 .seat:not(.on) b,.seat:not(.on) i,.seat:not(.on) u{padding-right:26px}
 
+/* ---------- 職業（見 12-jobs.js）---------- */
+/* 沒換到的職業：黑影加價錢。不是按鈕（按鈕在裡面那一顆）。 */
+.p4.lock{cursor:default;opacity:.92}
+.p4.lock:hover{background:inherit;box-shadow:none}
+.p4.lock .btn{margin-top:8px;align-self:flex-start}
+.p4-by{display:block;font-style:normal;font-size:22px;color:var(--gold);margin-top:4px}
+/* 換到職業那一刻的大卡 */
+.jobrev{text-align:center}
+.jobrev-px{display:block;width:132px;height:132px;margin:0 auto 6px}
+.jobrev-px .px{width:132px;height:132px;image-rendering:pixelated}
+.jobrev h2{margin:4px 0 10px}
+.jobrev .btn{display:block;width:100%;margin-top:14px}
+/* 角色說一句話：他的臉＋一個框。收下、交出去、圖鑑多了一位那幾張卡上用。 */
+.hsay{display:flex;align-items:center;gap:12px;margin:10px 0}
+.hsay-px{flex:0 0 66px;width:66px;height:66px;image-rendering:pixelated}
+.hsay-t{margin:0;padding:10px 14px;background:var(--panel2);border:2px solid var(--gold-d);line-height:1.5;overflow-wrap:anywhere}
+
 /* 六個區域的顏色與紋理，一個來源。
 
    這一份存在的理由：自己的廊道跟全班那張剖面圖，同一個深度必須長得
@@ -6028,7 +6045,7 @@ button.side-head{
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790923303135;
+var BUILD_AT = 1790928139079;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -6667,7 +6684,11 @@ var HERO_LIST = [
    一個字都不用改。 */
 function heroKey(u) {
   var k = u && u.hero;
-  return HEROES[k] ? k : 'adv';
+  if (!HEROES[k]) return 'adv';
+  /* 要用水晶換的職業（見 12-jobs.js）：這一組還沒換到的，不管帳號上寫什麼，
+     都當冒險者——換過組、資料還沒同步的時候會碰到。 */
+  if (typeof jobOpen === 'function' && !jobOpen(u, k)) return 'adv';
+  return k;
 }
 function heroOf(u) { return HEROES[heroKey(u)]; }
 
@@ -6738,6 +6759,1062 @@ function heroLine(u, mode) {
   }
   OS_LAST = s;
   return s;
+}
+
+
+/* ===== 12-jobs-art.js ===== */
+/* 三個可以用水晶換的職業的像素圖：遊俠、吟遊詩人、武僧。
+
+   **這個檔是 node art/export.js 產出的，不要直接改。**原始畫法在 v2/art/（用疊層畫的）。
+
+   規矩跟 12-heroes.js 的四個一樣：16×16、光從左上來、輪廓一律近黑、13 個姿勢
+   （站 2、走 2、坐 2、睡、背影、揮擊、衝刺、贏、喘、逃）。剪影各自不同：
+     遊俠　　　弓比頭高、肩上一隻鷹
+     吟遊詩人　帽簷比頭寬、胸前一把琴
+     武僧　　　圓頭、寬袖、下寬上窄、沒有武器
+   怎麼用（解鎖、挑選）見 12-jobs.js。 */
+
+/* ---------- 遊俠 ----------
+   苔綠兜帽斗篷、背長弓，左肩蹲著一隻老鷹（會飛出去）。 */
+HEROES.ranger = {
+  pal: {
+    'k': '#10130E',
+    's': '#E8B98A',
+    'S': '#A8724A',
+    'c': '#5E9B52',
+    'C': '#9ACB7E',
+    't': '#B79C6B',
+    'T': '#D8C28F',
+    'b': '#7A5230',
+    'm': '#9A6B3A',
+    'M': '#C99A5E',
+    'r': '#C8473B',
+    'g': '#EDE6C8',
+    'e': '#6B4A2B',
+    'E': '#9B7448',
+    'w': '#F2F0E6',
+    'y': '#F2C14E',
+    '#': '#F2F5F9',
+    'o': '#6B5A3A',
+    '*': '#F2F5F9'
+  },
+  idleA: [
+    '...........r.m..',
+    '......kkkkkr.gM.',
+    '.kkk.kcCCCck.gM.',
+    'kwwykkcsssck.g.M',
+    'kwkwykcs.sck.g.M',
+    'kEeek.kcSck..g.M',
+    '.kEekkcCCCckkg.M',
+    '..kykcctTtcckg.M',
+    '....kcctTtcckg.M',
+    '.....kcctTcckg.M',
+    '.....kbbbbbbkg.M',
+    '.....kcctTcckgm.',
+    '.....kcc..cckgm.',
+    '......kb..bk.m..',
+    '......kb..bk....',
+    '......kk..kk....'
+  ],
+  idleB: [
+    '.............m..',
+    '...........r.gM.',
+    '......kkkkkr.gM.',
+    '.kkk.kcCCCck.g.M',
+    'kwwwkkcsssck.g.M',
+    'kwkwkkcs.sck.g.M',
+    'kEyek.kcSck..g.M',
+    '.kEekkcCCCckkg.M',
+    '..kykcctTtcckg.M',
+    '....kcctTtcckg.M',
+    '.....kcctTcckg.M',
+    '.....kbbbbbbkgm.',
+    '.....kcctTcckgm.',
+    '.....kcc..cckm..',
+    '......kb..bk....',
+    '......kb..bk....'
+  ],
+  walkA: [
+    '...........r.m..',
+    '......kkkkkr.gM.',
+    '.kkk.kcCCCck.gM.',
+    'kwwykkcsssck.g.M',
+    'kwkwykcs.sck.g.M',
+    'kEeek.kcSck..g.M',
+    '.kEekkcCCCckkg.M',
+    '..kykcctTtcckg.M',
+    '....kcctTtcckg.M',
+    '.....kcctTcckg.M',
+    '.....kbbbbbbkg.M',
+    '....kcctTcckkgm.',
+    '...kcc....cckgm.',
+    '..kbck....kbkm..',
+    '..kbbk....kbbk..',
+    '..kkk......kkk..'
+  ],
+  walkB: [
+    '...........r.m..',
+    '.kkk..kkkkkr.gM.',
+    'kwwwkkcCCCck.gM.',
+    'kwkwkkcsssck.g.M',
+    'kEyekkcs.sck.g.M',
+    '.kEek.kcSck..g.M',
+    '..kykkcCCCckkg.M',
+    '....kcctTtcckg.M',
+    '....kcctTtcckg.M',
+    '.....kcctTcckg.M',
+    '.....kbbbbbbkg.M',
+    '.....kcctTcckgm.',
+    '......kbbbbk.gm.',
+    '......kbbbbk.m..',
+    '......kkkkkk....',
+    '................'
+  ],
+  sitA: [
+    '................',
+    '................',
+    '.............m..',
+    '...........r.gM.',
+    '......kkkkkr.gM.',
+    '.kkk.kcCCCck.g.M',
+    'kwwykkcsssck.g.M',
+    'kwkwykcs.sck.g.M',
+    'kEeek.kcSck..g.M',
+    '.kEekkcCCCckkg.M',
+    '..kykcctTtcckg.M',
+    '....kcctTtcckg.M',
+    '...kbbbbbbbbkg.M',
+    '..kbbcbbbbcbbgm.',
+    '..kkbbbkkbbbkgm.',
+    '....kkk..kkk.m..'
+  ],
+  sitB: [
+    '................',
+    '................',
+    '.............m..',
+    '.............gM.',
+    '...........r.gM.',
+    '......kkkkkr.g.M',
+    '.kkk.kcCCCck.g.M',
+    'kwwwkkcsssck.g.M',
+    'kwkwkkcs.sck.g.M',
+    'kEyek.kcSck..g.M',
+    '.kEekkcCCCckkg.M',
+    '..kykcctTtcckg.M',
+    '...kbbbbbbbbkg.M',
+    '..kbbcbbbbcbbgm.',
+    '..kkbbbkkbbbkgm.',
+    '....kkk..kkk.m..'
+  ],
+  sleep: [
+    '................',
+    '................',
+    '................',
+    '..........zZ....',
+    '........zZ......',
+    '......zZ........',
+    '.........kkkk...',
+    '........kwwEek..',
+    '...kkkk.kEeeek..',
+    '..kcCCck.kkkkk..',
+    '..kcsssckkkkkkk.',
+    '..kcs.sCcccccck.',
+    '..kcSSScccctcck.',
+    '..kbbbbbbbbbbbk.',
+    '...kkkkkkkkkkk..',
+    '.mMMMMMMMMMMMMm.'
+  ],
+  back: [
+    '...........r.m..',
+    '......kkkkk..gM.',
+    '.kkk.kcCCCck.gM.',
+    'kwwwkkcCCCck.g.M',
+    'kwkwkkcCCck..g.M',
+    'kEyek.kkkk...g.M',
+    '.kEekkcccckk.g.M',
+    '..kykccccccckg.M',
+    '...kcccbbccccg.M',
+    '...kccbrbrcckg.M',
+    '...kcc.brb.ckg.M',
+    '....k..kbk..kgm.',
+    '.......kck...gm.',
+    '......kbbbbk.m..',
+    '......kb..bk....',
+    '......kk..kk....'
+  ],
+  swing: [
+    'k.......k.......',
+    'kE...kkEkkr.....',
+    'kEk.wckEkck.....',
+    '.kEkwEkEsck...m.',
+    '..kEyeEksck...Mm',
+    '...kkkkSck...gM.',
+    '...kkcCCCckkg.M.',
+    '...kcctTtcckggMr',
+    '..kccctTtccggkM.',
+    '...kcctTtcckg.M.',
+    '....kbbbbbbk.gM.',
+    '....kcctTcck..Mm',
+    '....kcc..cck..m.',
+    '.....kb..bk.....',
+    '.....kb..bk.....',
+    '.....kk..kk.....'
+  ],
+  dash: [
+    '..........kkk...',
+    '..~~..kkkkwwym..',
+    '.~~~.kcCkEeeegM.',
+    '~~~..kckEEkkkgMk',
+    '.~~~..kkE.ck.gEM',
+    '..~~...kcSck.g.M',
+    '.~~.kkkcCCckkg.M',
+    '~~.kccccctTckg.M',
+    '.~kccccctTtckg.M',
+    '..~kccckbbbkkg.M',
+    '...kcc.kcctTcg.M',
+    '....k..kcctckgkM',
+    '.......ktTkkkgm.',
+    '.....kbk..kbkgm.',
+    '...kbk......kmk.',
+    '..kkk........kk.'
+  ],
+  win: [
+    'k.......k....m..',
+    'kE.....Ek....gM.',
+    'kEk.w.kEk....gM.',
+    '.kEkwEkE...r.g.M',
+    '..kEyeEkkkkrkgsM',
+    '...kkkkCCCckkgkM',
+    '..ksskcsssckkgkM',
+    '..kckkcs.sckcg.M',
+    '..kck.kcSckckg.M',
+    '...kckcCCCckkg.M',
+    '....kcctTtcckg.M',
+    '.....kcctTcckgm.',
+    '.....kbbbbbbkgm.',
+    '......kb..bk.m..',
+    '......kb..bk....',
+    '......kk..kk....'
+  ],
+  pant: [
+    '................',
+    '................',
+    '................',
+    '.............m..',
+    '......kkkkkr.gM.',
+    '.kkk.kcCCCck.gM.',
+    'kwwwkkcsssck.g.M',
+    'kwkwkkcs.sck.g.M',
+    'kEyekkkcSckkkg.M',
+    '.kEekccctTtccgcM',
+    '..kykcktTtkccgkM',
+    '..ksskbbbbbksgkM',
+    '...kk.kcctck.gkM',
+    '.....kcc..cckg.M',
+    '.....kb....bkgm.',
+    '.....kk....kkgm.'
+  ],
+  flee: [
+    '......k.......k.',
+    '......kEkkkr.Ek.',
+    '.....kkEkCwkkmk.',
+    '.....kckEkwEkgM.',
+    '......kckEyeEgM.',
+    '.......kckkkkg.M',
+    '....kkkkcCckkg.M',
+    '...ccckcctTckg.M',
+    '..ccccckcctTkg.M',
+    '.cccccckbbbkkg.M',
+    '..ccc..kcctTcg.M',
+    '...c...kcctckg.M',
+    '.......ktTkk.g.M',
+    '....kbk..kbk.gm.',
+    '...kbk.....kbgm.',
+    '..kkk.......km..'
+  ]
+};
+HEROES.ranger.idle = HEROES.ranger.idleA;
+
+/* ---------- 吟遊詩人 ----------
+   寬簷帽加洋紅長羽毛、青綠外套、胸前橫著一把魯特琴（揮擊是撥出音符）。 */
+HEROES.bard = {
+  pal: {
+    'k': '#12100F',
+    's': '#E8B98A',
+    'S': '#A8724A',
+    'H': '#2B7F78',
+    'h': '#4FB5AB',
+    'c': '#2FA39A',
+    'C': '#7FD8CC',
+    'g': '#F0C45A',
+    'r': '#D9487A',
+    'R': '#F08AAE',
+    'n': '#3B3F6B',
+    'b': '#6B4A2B',
+    'm': '#B8803F',
+    'M': '#E3B66E',
+    'd': '#5A3A1E',
+    '#': '#F2F5F9',
+    'o': '#6B5A3A',
+    '*': '#F2F5F9',
+    '~': '#F08AAE'
+  },
+  idleA: [
+    '...........rrR..',
+    '......kkkkkkRr..',
+    '.....kHhHHHkgr..',
+    '...kkkHHHHHHkkk.',
+    '..kHHHkkkkkkHkkk',
+    '.....ks.ss.kkkmk',
+    '.....kSSSSSkkdmk',
+    '....kkgCCCkkdkkk',
+    '...kccCcckkdkk..',
+    '..kkkkkckkdkkk..',
+    '.kmMMMmkkdkkck..',
+    'kmMkkkMmdkkbbk..',
+    'kmMkgkMmkkncck..',
+    'kmMkkkMm..nnk...',
+    '.kmMMMmk..bbk...',
+    '..kkkkkk..kkk...'
+  ],
+  idleB: [
+    '................',
+    '...........rrR..',
+    '......kkkkkkRr..',
+    '.....kHhHHHkgr..',
+    '...kkkHHHHHHkkk.',
+    '..kHHHkkkkkkHkkk',
+    '.....ks.ss.kkkmk',
+    '.....kSSSSSkkdmk',
+    '....kkgCCCkkdkkk',
+    '...kccCcckkdkk..',
+    '..kkkkkckkdkkk..',
+    '.kmMMMmkkdkkck..',
+    'kmMkkkMmdkkbbk..',
+    'kmMkgkMmkknnk...',
+    'kmMkkkMm..bbk...',
+    '.kmMMMmk..kkk...'
+  ],
+  walkA: [
+    '...........rrR..',
+    '......kkkkkkRr..',
+    '.....kHhHHHkgr..',
+    '...kkkHHHHHHkkk.',
+    '..kHHHkkkkkkHkkk',
+    '.....ks.ss.kkkmk',
+    '.....kSSSSSkkdmk',
+    '....kkgCCCkkdkkk',
+    '...kccCcckkdkk..',
+    '..kkkkkckkdkkk..',
+    '.kmMMMmkkdkkck..',
+    'kmMkkkMmdkkcck..',
+    'kmMkgkMmkknnk...',
+    'kmMkkkMm..knnk..',
+    '.kmMMMmk..kbbk..',
+    '..kkkkk....kkk..'
+  ],
+  walkB: [
+    '...........rrR..',
+    '......kkkkkkRr..',
+    '.....kHhHHHkgr..',
+    '...kkkHHHHHHkkk.',
+    '..kHHHkkkkkkkkmk',
+    '.....ks.ss.kkdmk',
+    '.....kSSSSkkdkkk',
+    '....kkgCCkkdkk..',
+    '..kkkkkckkdkkk..',
+    '.kmMMMmkkdkkck..',
+    'kmMkkkMmdkkcck..',
+    'kmMkgkMmkkbbbk..',
+    'kmMkkkMm..nnk...',
+    '.kmMMMmkbbbbk...',
+    '..kkkkkbbbbbk...',
+    '.....kkkkkkkk...'
+  ],
+  sitA: [
+    '................',
+    '................',
+    '................',
+    '...........rrR..',
+    '......kkkkkkRr..',
+    '.....kHhHHHkgkk.',
+    '...kkkHHHHHHkkmk',
+    '..kHHHkkkkkkkdmk',
+    '.....ks.sskkdkkk',
+    '.....kSSSkkdkk..',
+    '..kkkkkCkkdkk...',
+    '.kmMMMmkkdkkck..',
+    'kmMkkkMmdkkbkk..',
+    'kmMkgkMmkkbnnk..',
+    'kmMkkkMmkbbbkk..',
+    '.kmMMMmk.kkk....'
+  ],
+  sitB: [
+    '................',
+    '................',
+    '................',
+    '................',
+    '...........rrR..',
+    '......kkkkkkRkk.',
+    '.....kHhHHHkkkmk',
+    '...kkkHHHHHkkdmk',
+    '..kHHHkkkkkkdkkk',
+    '.....ks.skkdkk..',
+    '..kkkkkSkkdkk...',
+    '.kmMMMmkkdkkk...',
+    'kmMkkkMmdkkbkk..',
+    'kmMkgkMmkkbnnk..',
+    'kmMkkkMmkbbbkk..',
+    '.kmMMMmk.kkk....'
+  ],
+  sleep: [
+    '................',
+    '................',
+    '................',
+    '..........zZ....',
+    '........zZ......',
+    '......zZ........',
+    '................',
+    '................',
+    '..kkkkkkk.......',
+    '.kHHHhHHHk......',
+    'kHHHkkkkHHkkkkk.',
+    '.kkkcCcckkcccck.',
+    '..kcccgcccccnnk.',
+    '..kmMMmkcccnnbk.',
+    '..kmkgmkbbbbbbk.',
+    '..kkmmkkkkkkkk..'
+  ],
+  back: [
+    '...........rrR..',
+    '......kkkkkkRr..',
+    '.....kHhHHHkr...',
+    '...kkkHHHHHHkkk.',
+    '..kHHHkkkkkkHHHk',
+    '......kSSSSk....',
+    '....kkcccccckk..',
+    '...kccckkkkccck.',
+    '...kcckmmMmkck..',
+    '....kkmmMMmmkk..',
+    '....kkmmMMmmkk..',
+    '....kckmmmmkck..',
+    '.....knkkkknk...',
+    '.....kbb..bbk...',
+    '.....kkk..kkk...',
+    '................'
+  ],
+  swing: [
+    '...........rrR..',
+    '......kkkkkkRrkk',
+    '.....kHhHHHkgrkg',
+    '...kkkHHHHHHkkgk',
+    '..kHHHkkkkkkkgkk',
+    '.....ks.ss.kkkmk',
+    '.....kSSSSSkkdmk',
+    '....kkgCCCkkdkkk',
+    '...kccCcckkdkkkk',
+    '..kkkkkckkdkkRrk',
+    '.kmMMMmkkdkkkk.k',
+    'kmMkkkMmdkkkRk.k',
+    'kmMkgkMmkkkRrk.k',
+    'kmMkkkMm..kkkkk.',
+    '.kmMMMmk..bbk...',
+    '..kkkkkk..kkk...'
+  ],
+  dash: [
+    '................',
+    '..~~....kkkkk...',
+    '.~~~...kHhHHHk..',
+    '~~~..kkkHHHHHkkk',
+    '.~~.kHHHkkkkkHHk',
+    '..~~..ks.ss.k...',
+    '.~~...kSSSSSk...',
+    '~~...kkgCCCgkk..',
+    '.~..kcckkkkCck..',
+    '...kcckmmMmkk...',
+    '...kbkmmMMmmk...',
+    '...kckmmMMmmk...',
+    '....knkmmmmkk...',
+    '...kbbkkkkkkbbk.',
+    '..kbk........kbk',
+    '..kk..........kk'
+  ],
+  win: [
+    '.........rrR....',
+    '........kkkkkRr.',
+    '.......kHhHHHkr.',
+    '......kkHHHHHkk.',
+    '.....kHHkkkkkHHk',
+    '......ks.ss.k...',
+    '.kdk..kSSSSSk...',
+    'kddk.kkgCCCgkk..',
+    'kmmk.kccCcccck..',
+    'kmmMk.kccccck...',
+    '.kmmk.kbbbbbk...',
+    '..kk.kkccnnck...',
+    '.....knn..nnk...',
+    '.....kbb..bbk...',
+    '.....kkk..kkk...',
+    '................'
+  ],
+  pant: [
+    '................',
+    '................',
+    '..........rrR...',
+    '.....kkkkkkRr...',
+    '....kHhHHHkr....',
+    '..kkkHHHHHHkkkk.',
+    '.kHHHkkkkkkHkkmk',
+    '....ks.ss.kkkdmk',
+    '....kSSSSSkkdkkk',
+    '..kkkkgCCkkdkk..',
+    '.kkkkkkckkdkkk..',
+    '.kmMMMmkkdkkssk.',
+    'kmMkkkMmdkkck...',
+    'kmMkgkMmkknk....',
+    'kmMkkkMm.bbk....',
+    '.kmMMMmk.kkk....'
+  ],
+  flee: [
+    '................',
+    '.......kkkkk....',
+    '..rrR.kHhHHHk...',
+    '...rRkkHHHHHkk..',
+    '.....ks.ss.k.kk.',
+    '.....kSSSSSkkkmk',
+    '....kkgCCCgkkdmk',
+    '...kccCccckkdkkk',
+    '..kcccccckkdkk..',
+    '..kkkkkbkkdkk...',
+    '.kmMMMmkkdkk....',
+    'kmMkkkMmdkkk....',
+    'kmMkgkMmkkkbk...',
+    'kmMkkkMm...kbk..',
+    '.kmMMMmk....kk..',
+    '..kkkkk.........'
+  ]
+};
+HEROES.bard.idle = HEROES.bard.idleA;
+
+/* ---------- 武僧 ----------
+   光頭加白頭帶、藏紅僧袍、酒紅腰帶、念珠、赤腳、空手（揮擊是一拳加衝擊波）。 */
+HEROES.monk = {
+  pal: {
+    'k': '#14110C',
+    's': '#E8B98A',
+    'S': '#A8724A',
+    'w': '#F2F0E6',
+    'c': '#E0A030',
+    'C': '#F6D27A',
+    't': '#B87A1E',
+    'b': '#A33A47',
+    'B': '#D86A75',
+    'm': '#8A5A2B',
+    'M': '#C99A5E',
+    'g': '#FFF3D8',
+    'y': '#F2C14E',
+    'u': '#8FD3F2',
+    '#': '#F2F5F9',
+    'o': '#6B5A3A',
+    '*': '#F2F5F9',
+    '~': '#F6D27A'
+  },
+  idleA: [
+    '................',
+    '......kkkkk.....',
+    '.....ksssssk....',
+    '.....kwwwwwkww..',
+    '.....ks.ss.k.ww.',
+    '......ksssk.....',
+    '....kkmmmmmkk...',
+    '...kccCmMmCcck..',
+    '..kcccCkssCccck.',
+    '..kccccksskcccck',
+    '...kccbbbbbbcck.',
+    '....kcctbbtcck..',
+    '....kttttttttk..',
+    '...kttk....kttk.',
+    '...ksk......ksk.',
+    '...kkk......kkk.'
+  ],
+  idleB: [
+    '................',
+    '................',
+    '......kkkkk.....',
+    '.....ksssssk....',
+    '.....kwwwwwkww..',
+    '.....ks.ss.k.ww.',
+    '......ksssk.....',
+    '....kkmmmmmkk...',
+    '...kccCmMmCcck..',
+    '..kcccCkssCccck.',
+    '..kccccksskcccck',
+    '...kccbbbbbbcck.',
+    '....kcctbbtcck..',
+    '...kttk....kttk.',
+    '...ksk......ksk.',
+    '...kkk......kkk.'
+  ],
+  walkA: [
+    '................',
+    '......kkkkk.....',
+    '.....ksssssk....',
+    '.....kwwwwwkww..',
+    '.....ks.ss.k.ww.',
+    '......ksssk.....',
+    '....kkmmmmmkk...',
+    '...kccCmMmCcck..',
+    '..kcccCkssCccck.',
+    '..kccccksskcccck',
+    '...kccbbbbbbcck.',
+    '...kttktbbkttk..',
+    '..kttk.....ksk..',
+    '..ksk......kkk..',
+    '..kkk...........',
+    '................'
+  ],
+  walkB: [
+    '................',
+    '......kkkkk.....',
+    '.....ksssssk....',
+    '.....kwwwwwkww..',
+    '.....ks.ss.k.ww.',
+    '......ksssk.....',
+    '....kkmmmmmkk...',
+    '...kccCmMmCcck..',
+    '..kcccCkssCccck.',
+    '..kccccksskcccck',
+    '...kccbbbbbbcck.',
+    '....kcctbbtcck..',
+    '....kttttttk....',
+    '.....kttkttk....',
+    '.....kskksk.....',
+    '.....kkk.kkk....'
+  ],
+  sitA: [
+    '................',
+    '................',
+    '................',
+    '................',
+    '......kkkkk.....',
+    '.....ksssssk....',
+    '.....kwwwwwkww..',
+    '.....ks.ss.k.ww.',
+    '......ksssk.....',
+    '....kkmmmmmkk...',
+    '...kccCmMmCcck..',
+    '..kcccCkssCccck.',
+    '..kkkttttttttkkk',
+    '..kttttkttkttttk',
+    '..ksskttttttkssk',
+    '...kkkkkkkkkkkk.'
+  ],
+  sitB: [
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '......kkkkk.....',
+    '.....ksssssk....',
+    '.....kwwwwwkww..',
+    '.....ks.ss.k.ww.',
+    '......ksssk.....',
+    '....kkmmmmmkk...',
+    '...kccCmMmCcck..',
+    '..kkkttttttttkk.',
+    '..kttttkttkttttk',
+    '..ksskttttttkssk',
+    '...kkkkkkkkkkkk.'
+  ],
+  sleep: [
+    '................',
+    '................',
+    '................',
+    '..........zZ....',
+    '........zZ......',
+    '......zZ........',
+    '................',
+    '................',
+    '..kkkkk.........',
+    '.kssssSkkkkkkk..',
+    '.kwwwwwkccccccck',
+    '.ks.ssSkcCCCCccc',
+    '..kssskkbbbbbcck',
+    '..kmmmkccccttttk',
+    '...kkkkkkkkkkssk',
+    '..............kk'
+  ],
+  back: [
+    '................',
+    '......kkkkk.....',
+    '.....ksssssk....',
+    '.....kwwwwwkww..',
+    '.....ksssSsk.ww.',
+    '......ksssk.....',
+    '....kkccccckk...',
+    '...kccccccccck..',
+    '..kcccccccccccck',
+    '..kcccccccccccck',
+    '...kccbbBBbbcck.',
+    '....kcctbbtcck..',
+    '....kttttttttk..',
+    '...kttk....kttk.',
+    '...ksk......ksk.',
+    '...kkk......kkk.'
+  ],
+  swing: [
+    '................',
+    '.....kkkkk......',
+    '....ksssssk.....',
+    '....kwwwwwkww...',
+    '....ks.ss.k.ww..',
+    '.....ksssk......',
+    '...kkmmmmmkk.g..',
+    '..kccCmMmCccg.g.',
+    '.kcccCkcccCgckkg',
+    '.kccccksskcgccsg',
+    '..kccbbbbbbgkkkg',
+    '...kcctbbtccg.g.',
+    '...kttttttttkg..',
+    '..kttk....kttk..',
+    '..ksk......ksk..',
+    '..kkk......kkk..'
+  ],
+  dash: [
+    '................',
+    '..~~....kkkkk...',
+    '.~~~...ksssssk..',
+    '~~~...kkwwwwwkww',
+    '.~~..kks.ss.k.ww',
+    '..~~...ksssk....',
+    '.~~..kkmmmmkk...',
+    '~~..kccCmMmCck..',
+    '.~.kcccckkkcckkk',
+    '...kcccckssckssk',
+    '...kccbbbbbbkkkk',
+    '...kcctbbtcck...',
+    '....kttttttk....',
+    '...kttk..kttk...',
+    '..ksk......ksk..',
+    '..kkk......kkk..'
+  ],
+  win: [
+    '.kk..........kk.',
+    '.kck........kck.',
+    '.kck..kkkkk.kck.',
+    '.kcck.ksssk.kcck',
+    '..kck.kwwwk.kck.',
+    '..kck.ks.sskkck.',
+    '...kkkkksskkkk..',
+    '....kccmmmcck...',
+    '...kcccCmMCccck.',
+    '...kcccccccccck.',
+    '....kccbbbbcck..',
+    '.....kcbbbbck...',
+    '....kttttttttk..',
+    '...kttk....kttk.',
+    '...ksk......ksk.',
+    '...kkk......kkk.'
+  ],
+  pant: [
+    '................',
+    '................',
+    '................',
+    '.....kkkkk......',
+    '....ksssssk.....',
+    '....kwwwwwkww.u.',
+    '....ks.ss.k.ww..',
+    '..kkkkssskkk....',
+    '.kccccmmmmcccck.',
+    '.kcccCmMmCcccck.',
+    '.ksskcbbbbcksck.',
+    '..kk.kctbtck.kk.',
+    '....kttttttk....',
+    '...kttk..kttk...',
+    '...ksk....ksk...',
+    '...kkk....kkk...'
+  ],
+  flee: [
+    '................',
+    '......kkkkk.....',
+    '.....ksssssk....',
+    '.....kwwwwwkww..',
+    '......ks.ss.k.u.',
+    '.......ksssk....',
+    '....kkkkmmmkk...',
+    '...cccckmMmcck..',
+    '..ccccccCmcCck..',
+    '.cccccckbbbbck..',
+    '..ccc..kcbbtck..',
+    '...c...kttttk...',
+    '.......kttk.....',
+    '....kttk..ktk...',
+    '...kskk....ksk..',
+    '...kkk......kkk.'
+  ]
+};
+HEROES.monk.idle = HEROES.monk.idleA;
+
+
+
+/* ===== 12-jobs.js ===== */
+/* 可以用水晶換的職業（龍與地下城式的職業）。
+
+   2026-10-02：使用者要更有龍與地下城的職業感，像現有的冒險者、魔法師、忍者、
+   騎士一樣——不關作品主軸，就是加深參與感。新增三個：遊俠、吟遊詩人、武僧，
+   用水晶換（一個 RULES.CRYSTAL.job 顆，見 20-rules.js）。像素圖在
+   12-jobs-art.js（產出的檔案，不要直接改）。
+
+   ── 四條規矩 ──
+
+   一 · 職業是身分，不是效果。不改判定、容差、水晶收入、榜，老師看到的也不讀它。
+        換到的只有一張臉、一句脾氣、一組台詞。
+   二 · 整組共用。水晶是整組的，所以換到的職業也是整組的：一位隊員換了，
+        整組都能挑，每個人自己選。誰換的記在 t.jobs[職業].by。
+   三 · 台詞不評價。跟現有四個一樣：講的是自己的脾氣，不講他做得怎麼樣、
+        走得快不快、該不該加把勁。
+   四 · 認得出來才算數。一個沒換到的職業，在挑角色那一頁是一團黑影加價錢。
+
+   ── 資料怎麼存 ──
+
+   t.jobs 是一個物件，{ 職業: { by, at } }——不是陣列。兩位隊員同時換不同的職業，
+   同步時（41-sync.js 的 syncApply）一格一格併，兩個都留下來；陣列長度變了
+   整個換，會掉一個。同時換的水晶不夠兩個的話，left 會是負的，畫面一律照 0 算
+   （圖鑑的 t.lit 有同樣的問題）。
+
+   ── 台詞 ──
+
+   下面 JOB_SAY 是每個職業在每個時刻說的話。現有四個職業原本的走路、休息、
+   超過天數那幾句留在 12-heroes.js 的 HERO_OS；這裡補的是新的時刻：
+     start   剛出發（按下出發，頭上的牌子說）
+     submit  剛交出去（結果那一頁）
+     ok      老師收下了（首頁那張卡）
+     codex   圖鑑多了一位（首頁那張卡）
+     unlock  換到這個職業的那一刻（只有新職業）
+   標「草稿，等你改」的是使用者沒填、我先寫的。 */
+
+var JOB_SAY = {
+  adv: {  /* 冒險者 */
+    m: '接下來就又會是一場大冒險啦!!',
+    start: ['走囉!開始冒險吧!'],
+    submit: ['交出去啦!接下來等好消息!'],  /* 草稿，等你改 */
+    ok: ['收下啦!又前進了一步!'],  /* 草稿，等你改 */
+    codex: ['又認識一位新朋友!']  /* 草稿，等你改 */
+  },
+  mage: {  /* 魔法師 */
+    m: '知識就是力量。',
+    start: ['又是一場學術之旅。'],
+    submit: ['報告已呈上，靜候回音。'],  /* 草稿，等你改 */
+    ok: ['知識，又添了一頁。'],  /* 草稿，等你改 */
+    codex: ['新的名字，記進筆記。']  /* 草稿，等你改 */
+  },
+  ninja: {  /* 忍者 */
+    m: '忍忍!在下忍者是也!',
+    start: ['開始任務吧!忍忍!'],
+    submit: ['任務送達，是也!'],  /* 草稿，等你改 */
+    ok: ['任務完成，是也!'],  /* 草稿，等你改 */
+    codex: ['新情報入手，是也!']  /* 草稿，等你改 */
+  },
+  knight: {  /* 騎士 */
+    m: '騎士的戒律使我偉大。',
+    start: ['這是新的旅程。'],
+    submit: ['呈交完畢，等待回覆。'],  /* 草稿，等你改 */
+    ok: ['誓約，又完成一條。'],  /* 草稿，等你改 */
+    codex: ['又一位，記入名冊。']  /* 草稿，等你改 */
+  },
+  ranger: {  /* 遊俠 */
+    t: '眼觀八方，處理起任務冷靜又敏銳',
+    m: '多難的任務都難不了我',
+    walk: ['小心，有障礙!!', '看我的飛簷走壁!', '做任務最重要便是眼觀八方!'],
+    rest: ['好好休息才能對突發事件更加應對。'],
+    over: ['路比預想的長，我再看仔細一點。', '地形有變，換個角度再看看。'],  /* 草稿，等你改 */
+    start: ['現在，開始行動。'],
+    submit: ['目標送達，靜觀其變。'],  /* 草稿，等你改 */
+    ok: ['命中。下一個目標。'],  /* 草稿，等你改 */
+    codex: ['新的足跡，記下了。'],  /* 草稿，等你改 */
+    unlock: ['從今天起，由我來探路。']  /* 草稿，等你改 */
+  },
+  bard: {  /* 吟遊詩人 */
+    t: '我，很會唱歌喔~♪♪♪',
+    m: '任務就~交給我吧~~♪♪♪',
+    walk: ['在任務中，我無畏無懼♪♪♪', '那是~重重難關♪♪♪', '喔~這是場不得了的史詩♪♪♪'],
+    rest: ['休息~是為了讓喉嚨更加高昂♪♪'],
+    over: ['樂章還沒完~繼續演奏♪♪♪', '這一段比預想的長~再唱一段♪♪'],  /* 草稿，等你改 */
+    start: ['開始吧~~♪♪♪'],
+    submit: ['這一章，唱完了~♪♪♪'],  /* 草稿，等你改 */
+    ok: ['掌聲響起~♪♪♪'],  /* 草稿，等你改 */
+    codex: ['新角色登場~編進故事♪♪♪'],  /* 草稿，等你改 */
+    unlock: ['各位~今天起由我伴奏♪♪♪']  /* 草稿，等你改 */
+  },
+  monk: {  /* 武僧 */
+    t: '喝!!!!這些都難不了我!',
+    m: '我的完成專案之魂正在熊熊燃燒!',
+    walk: ['一!二!一!二!持續前進!', '一鼓作氣!衝啊!!!', '這也是修行的一部份!'],
+    rest: ['好好休息也是修行的一環!'],
+    over: ['還沒到終點，修行繼續!', '日子過了，腳步不停!'],  /* 草稿，等你改 */
+    start: ['修行!!開始!!'],
+    submit: ['放下了。靜待結果!'],  /* 草稿，等你改 */
+    ok: ['這一關，過了!'],  /* 草稿，等你改 */
+    codex: ['又遇見一位修行者!'],  /* 草稿，等你改 */
+    unlock: ['修行的路，我陪你走!']  /* 草稿，等你改 */
+  }
+
+};
+
+/* 三個新職業，順序就是挑角色那一頁的順序。 */
+var JOB_LIST = [
+  { k: 'ranger', n: '遊俠', t: JOB_SAY.ranger.t, m: JOB_SAY.ranger.m },
+  { k: 'bard', n: '吟遊詩人', t: JOB_SAY.bard.t, m: JOB_SAY.bard.m },
+  { k: 'monk', n: '武僧', t: JOB_SAY.monk.t, m: JOB_SAY.monk.m }
+];
+
+/* 把台詞接到 HERO_OS，把座右銘接到 HERO_LIST。 */
+(function () {
+  HERO_LIST.forEach(function (x) { if (JOB_SAY[x.k]) x.m = JOB_SAY[x.k].m; });
+  Object.keys(JOB_SAY).forEach(function (k) {
+    var s = JOB_SAY[k], box = HERO_OS[k] || (HERO_OS[k] = {});
+    ['walk', 'rest', 'over', 'start', 'submit', 'ok', 'codex', 'unlock'].forEach(function (f) {
+      if (s[f] && s[f].length) box[f] = s[f];
+    });
+  });
+})();
+
+/* 一個職業的名字、脾氣、座右銘（免費的四個與要換的三個都找得到）。 */
+function heroMeta(k) {
+  var m = null;
+  HERO_LIST.concat(JOB_LIST).forEach(function (x) { if (x.k === k) m = x; });
+  return m;
+}
+function isJob(k) {
+  return JOB_LIST.some(function (x) { return x.k === k; });
+}
+/* 這一組換到了哪幾個（照 JOB_LIST 的順序）。 */
+function jobsOf(teamId) {
+  var t = teamId ? teamOf(teamId) : null;
+  if (!t || !t.jobs || typeof t.jobs !== 'object') return [];
+  return JOB_LIST.filter(function (x) { return t.jobs[x.k]; }).map(function (x) { return x.k; });
+}
+/* 這個人現在挑得了這個職業嗎。免費的一律可以；要換的，要這一組已經換到。 */
+function jobOpen(u, k) {
+  if (!isJob(k)) return true;
+  return !!(u && u.teamId && jobsOf(u.teamId).indexOf(k) >= 0);
+}
+
+/* ---------- 換一個職業 ----------
+
+   擋五件事：不是自己組的、沒有這個職業、這一組已經換到了、水晶不夠。
+   換到之後整組都挑得了；用掉的水晶算在整組身上（見 40-db.js 的 crystalOf）。 */
+function actUnlockJob(teamId, key) {
+  var t = teamOf(teamId);
+  if (!t) return { err: '找不到這一組。' };
+  var who = (typeof S !== 'undefined' && S.who) ? userOf(S.who) : null;
+  if (who && who.teamId !== teamId) return { err: '那不是你們這一組。' };
+  if (!isJob(key)) return { err: '沒有這個職業。' };
+  if (jobsOf(teamId).indexOf(key) >= 0) return { err: '已經換到了。' };
+  var o = crystalOf(teamId);
+  if (o.left < RULES.CRYSTAL.job) {
+    return { err: '水晶不夠。還差 ' + (RULES.CRYSTAL.job - Math.max(0, o.left)) + ' 顆。' };
+  }
+  var next = {}, k;
+  if (t.jobs && typeof t.jobs === 'object') for (k in t.jobs) next[k] = t.jobs[k];
+  next[key] = { by: who ? who.userId : '', at: now() };
+  t.jobs = next;
+  save();
+  logEvent('jobunlock', { teamId: teamId, job: key, cost: RULES.CRYSTAL.job });
+  return { job: key };
+}
+
+/* ---------- 說話的時刻 ---------- */
+
+/* 這個人的職業，在這個時刻會說哪一句。沒有就是沉默（回空字串）。
+   跟 heroLine 不同：這裡不退回走路的台詞——「老師收下了」的時候講「又是沒看過的新風景」會很怪。 */
+function heroMoment(u, mode) {
+  var box = HERO_OS[heroKey(u)] || {};
+  var a = box[mode] || [];
+  return a.length ? a[Math.floor(Math.random() * a.length)] : '';
+}
+/* 一張小對話：他的臉＋一句話。 */
+function hsayHtml(u, mode) {
+  var line = heroMoment(u, mode);
+  if (!line) return '';
+  var g = heroOf(u);
+  return '<div class="hsay">' + pxTag(g.idleA, g.pal, 'hsay-px') +
+    '<p class="hsay-t">' + esc(line) + '</p></div>';
+}
+/* 借廊道上角色頭上那塊牌子說一句（說完換回原本的字）。出發那一下用。 */
+function heroTagSay(u, mode, ms) {
+  if (typeof document === 'undefined' || !document.querySelector) return;
+  var line = heroMoment(u, mode);
+  if (!line) return;
+  var tag = document.querySelector('.scn .scn-hero .hero-tag');
+  if (!tag) return;
+  var back = tag.textContent, kls = tag.className;
+  tag.textContent = line;
+  tag.className = kls + ' os';
+  setTimeout(function () {
+    var t2 = document.querySelector('.scn .scn-hero .hero-tag');
+    if (t2 && t2.textContent === line) { t2.textContent = back; t2.className = kls; }
+  }, ms || 2600);
+}
+
+/* ---------- 挑角色那一頁：用水晶換的職業 ----------
+
+   只在「已經挑過角色」之後才畫（見 20-rules.js 的 RULES.CRYSTAL.job）。
+   換到的跟免費的一樣可以點；沒換到的是黑影加價錢，水晶夠才有那一顆鍵，
+   按下去先問一次（花的是整組的水晶）。 */
+function jobSection(u) {
+  var t = u && u.teamId ? teamOf(u.teamId) : null;
+  if (!t || !u.hero || !HEROES[u.hero]) return '';
+  var left = Math.max(0, crystalOf(t.teamId).left);
+  var H = ['<div class="card jobs">'];
+  H.push('<div class="eyebrow lit">用水晶換的職業</div>');
+  H.push('<p class="dim">換到的整組都能挑。手上 ' + left + ' 顆水晶。</p>');
+  H.push('<div class="pick4">');
+  JOB_LIST.forEach(function (x) {
+    var g = HEROES[x.k];
+    if (jobOpen(u, x.k)) {
+      var by = t.jobs && t.jobs[x.k] && t.jobs[x.k].by ? userOf(t.jobs[x.k].by) : null;
+      H.push('<button class="p4' + (u.hero === x.k ? ' on' : '') + '" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'hero:' + x.k })) + '\'>');
+      H.push('<span class="p4-px">' + pxTag(g.walkA, g.pal, 'wf wa') + pxTag(g.walkB, g.pal, 'wf wb') + '</span>');
+      H.push('<span class="p4-t"><b>' + esc(x.n) + '</b><i>' + esc(x.t) + '</i>' +
+        (by ? '<em class="p4-by">' + esc(by.name) + ' 為隊上換來的</em>' : '') + '</span>');
+      H.push('</button>');
+      return;
+    }
+    H.push('<div class="p4 lock">');
+    H.push('<span class="p4-px">' + pxTag(g.idleA, shadePal(g.pal), '') + '</span>');
+    H.push('<span class="p4-t"><b>' + esc(x.n) + '</b><i>' + esc(x.t) + '</i>');
+    if (DRAFT.jobConf === x.k) {
+      H.push('<em class="cx-need">用 ' + RULES.CRYSTAL.job + ' 顆水晶換「' + esc(x.n) + '」？整組都能用。</em>');
+      H.push(btn('對，換', 'jobyes:' + x.k, 'sm'));
+      H.push(btn('先不要', 'jobno', 'ghost sm'));
+    } else if (left >= RULES.CRYSTAL.job) {
+      H.push(btn('用 ' + RULES.CRYSTAL.job + ' 顆水晶換', 'jobask:' + x.k, 'ghost sm'));
+    } else {
+      H.push('<em class="cx-need">要 ' + RULES.CRYSTAL.job + ' 顆水晶，還差 ' + (RULES.CRYSTAL.job - left) + ' 顆。</em>');
+    }
+    H.push('</span></div>');
+  });
+  H.push('</div></div>');
+  return H.join('');
+}
+
+/* 剛換到的那一刻：大圖、開場白、座右銘，一顆「用這個職業」。 */
+function jobReveal(u, k) {
+  var g = HEROES[k], m = heroMeta(k);
+  if (!g || !m || !jobOpen(u, k)) return '';
+  var open = (HERO_OS[k] && HERO_OS[k].unlock && HERO_OS[k].unlock[0]) || '';
+  var H = ['<div class="card jobrev">'];
+  H.push('<div class="eyebrow lit">換到了</div>');
+  H.push('<span class="jobrev-px">' + pxTag(g.win, g.pal, '') + '</span>');
+  H.push('<h2>' + esc(m.n) + '</h2>');
+  if (open) H.push('<p class="quote">' + esc(open) + '</p>');
+  if (m.m) H.push('<p class="dim">' + esc(m.m) + '</p>');
+  H.push(btn('用這個職業', 'jobuse:' + k, 'big'));
+  H.push('</div>');
+  return H.join('');
 }
 
 
@@ -7910,6 +8987,7 @@ var EV_SAY = {
   newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
   jointeam: function () { return '用代碼加入隊伍'; },
   noteseen: function (e) { return '看過更新說明（' + (e.id || '') + '）'; },
+  jobunlock: function (e) { var m = heroMeta(e.job); return '用水晶換了職業「' + (m ? m.n : e.job) + '」'; },
   solonot:  function () { return '被問「是不是按錯了組」，回答：不是，就是一個人'; },
   leaveteam: function (e) { return '按錯了，離開隊伍「' + (e.name || '') + '」'; },
   claim:    function () { return '在班級地圖上占了一格'; },
@@ -11542,7 +12620,34 @@ RULES.CRYSTAL = {
   /* 點亮一位 300：一件收下 100，所以三件換一位。一學期大約八趟
      （100 ＋ 平均 30）≈ 1040，全部拿去點亮是三位左右，
      而遇過的會有七八位。 */
-  light: 300
+  light: 300,
+  /* ---------- 換一個職業要多少水晶 ----------
+
+     2026-10-02：挑角色那一頁本來只有四個（冒險者、魔法師、忍者、騎士），
+     免費。使用者要更有龍與地下城的職業感、加深參與感——不關作品主軸。
+     新增三個要用水晶換的職業（遊俠、吟遊詩人、武僧，見 12-jobs.js），一個 200。
+
+     ── 它是身分，不是效果 ──
+
+     職業**不改任何一個會算數的東西**：判定、容差、水晶收入、榜、老師看到的，
+     都不讀它（check.js 有一條在擋：RULES.judge 與 crystalOf 的收入不准讀職業）。
+     換到的只有一張臉、一句脾氣、一組台詞。所以兩個站都有、而且一樣，
+     不會多出第二個變項。
+
+     ── 整組共用 ──
+
+     水晶是整組的（見 40-db.js 的 crystalOf）。換到的職業也是整組的：一位隊員
+     換了，整組都能挑，每個人自己選。記名（誰換的）留在 t.jobs[職業].by。
+     這樣不會變成「一個人把大家的水晶花在自己身上」。
+
+     ── 200 是進場那一份 ──
+
+     start 也是 200。一組一開始就換得起一個——所以挑角色那一頁的職業區只在
+     「已經挑過角色」之後才畫（見 64-codex.js 的 PAGES.who）：第一次進來的人
+     先挑一個免費的，不在登入的第一分鐘就把整組的起手水晶花掉。
+
+     停止規則照圖鑑那一條：觀察到學生開始為了水晶做事，就把這一層拿掉。 */
+  job: 200
 };
 
 /* ---------- 你有多確定 ----------
@@ -13941,14 +15046,17 @@ function crystalOf(teamId) {
      它讓「走完一件就點得起一位」成立，而每一組拿到的一樣多，
      所以榜上的排序不受影響。 */
   var 拿過 = RULES.CRYSTAL.start + base + bonus;
-  var 用掉 = litMobs(teamId).length * RULES.CRYSTAL.light;
+  /* 花掉的有兩種：照亮圖鑑上的黑影（一位 light）、換職業（一個 job，見 12-jobs.js）。
+     分開記數，因為圖鑑那一頁要寫「照亮過幾位」。 */
+  var 照亮 = litMobs(teamId).length, 換職 = jobsOf(teamId).length;
+  var 用掉 = 照亮 * RULES.CRYSTAL.light + 換職 * RULES.CRYSTAL.job;
   /* all 是**拿過的總數**，不是手上剩下的。
 
      榜上排的是 all，所以點亮不會讓一組在榜上退步——不然那張榜就會
      變成「不要用它」的壓力，而一個沒有人敢用的用途等於沒有用途。
 
      left 是手上剩下的，那是他要做決定的時候看的數字。 */
-  return { base: base, bonus: bonus, all: 拿過, used: 用掉, left: 拿過 - 用掉 };
+  return { base: base, bonus: bonus, all: 拿過, used: 用掉, left: 拿過 - 用掉, litN: 照亮, jobN: 換職 };
 }
 
 /* ---------- 用水晶照亮的那幾位 ----------
@@ -14767,6 +15875,10 @@ function syncIsObj(x) { return !!x && typeof x === 'object' && !Array.isArray(x)
 
 function syncApply(base, mine, theirs) {
   if (syncEq(base, mine)) return theirs;
+  /* 這一格本來沒有、現在兩邊都有了（同時加了一個新的物件欄位）：當成本來是空的、
+     一格一格併。不然後寫的那一邊整個換掉先寫的——2026-10-02 兩位隊友同時用水晶
+     換不同的職業（t.jobs），測出來掉了一個。 */
+  if (base === undefined && syncIsObj(mine) && syncIsObj(theirs)) base = {};
   if (syncIsObj(base) && syncIsObj(mine) && syncIsObj(theirs)) {
     var out = {}, keys = {}, k;
     for (k in theirs) out[k] = theirs[k];
@@ -16770,7 +17882,7 @@ document.addEventListener('change', function (ev) {
    會存資料的這幾個動作，同一個動作（連參數）在 0.8 秒內的第二下不再執行。
    導覽、加減鍵這類本來就要連按的不在名單上。 */
 var ACT_ONCE = { hero: 1, rename: 1, teamrename: 1, askexit: 1, commit: 1, publish: 1,
-  approve: 1, reject: 1, mkteam: 1, jointeam: 1, leaveyes: 1, sololeave: 1, solono: 1, noteok: 1, reg: 1, login: 1, renameclass: 1,
+  approve: 1, reject: 1, mkteam: 1, jointeam: 1, jobyes: 1, leaveyes: 1, sololeave: 1, solono: 1, noteok: 1, reg: 1, login: 1, renameclass: 1,
   msdelyes: 1, rsdelyes: 1, rsaccyes: 1, rspw: 1 };
 var ACT_LAST = {};
 function actGuard(key, t) {
@@ -17219,7 +18331,22 @@ var ACTS = {
       });
     }, 1320);
     say('出發。');
+    /* 角色頭上那塊牌子說一句出發的話（見 12-jobs.js 的 heroTagSay）。 */
+    heroTagSay(me(), 'start', 2600);
   },
+
+  /* 用水晶換職業（見 12-jobs.js）。花的是整組的水晶，所以先問一次。 */
+  jobask: function (k) { DRAFT.jobConf = k; render(); },
+  jobno: function () { DRAFT.jobConf = null; render(); },
+  jobyes: function (k) {
+    var t = myTeam(); if (!t) return;
+    DRAFT.jobConf = null;
+    var r = actUnlockJob(t.teamId, k);
+    if (r.err) { render(); return say(r.err); }
+    go('who', { reveal: k });
+  },
+  /* 剛換到的那一張上的「用這個職業」：挑它，回廊道。 */
+  jobuse: function (k) { ACTS.hero(k); },
 
   /* 「這一組只有你一個人」的提醒（見 60-student.js 的 soloAskFor）。 */
   /* 更新說明：看過就記在這個帳號上，不再出現（見 60-student.js 的 UPDATE_NOTE）。 */
@@ -17386,6 +18513,8 @@ var ACTS = {
   hero: function (k) {
     var u = me();
     if (!u || !HEROES[k]) return;
+    /* 要用水晶換的職業，這一組還沒換到就挑不了（見 12-jobs.js）。 */
+    if (!jobOpen(u, k)) return say('這個職業還沒換到。');
     /* 選的是同一個就不用再存、再記一筆。
 
        9/30 事件紀錄：挑角色 193 次，87 次是連續選同一個，最多一位選了 13 次
@@ -19284,6 +20413,8 @@ PAGES.home = function () {
     H.push('<div class="crygot">＋' + (RULES.CRYSTAL.base + cb) + ' 顆水晶' +
       (cb ? '<span>' + RULES.CRYSTAL.base + ' 是完成的，' + cb +
         ' 是他多給的</span>' : '') + '</div>');
+    /* 他的職業說一句收下了（見 12-jobs.js）。沒寫台詞的職業就是沉默。 */
+    H.push(hsayHtml(me(), 'ok'));
     H.push(regCard('新拿到', (m ? m.title : '那一趟'), '任務之證已收錄在圖鑑',
       pxTag((kk && kk.px) || coreOf(r.runId), (kz || zoneNow(t.teamId)).pal, 'reg-px core'),
       false));
@@ -19297,6 +20428,7 @@ PAGES.home = function () {
       if (pm && pm.n) {
         H.push(regCard('新登場', pm.n, '已收錄在圖鑑',
           pxTag(pm.px, (kz || zoneNow(t.teamId)).pal, 'reg-px'), false));
+        H.push(hsayHtml(me(), 'codex'));
       }
     }
     /* 他那一句話擺在最下面，而且是這一整張上唯一的人話。 */
@@ -20650,6 +21782,8 @@ PAGES.stamp = function () {
      那不是懲罰的表情，他只是走得比自己想的遠。 */
   H.push('<div class="stamp-who">' +
     pxTag(r.stamp === 'late' ? HERO.pant : HERO.win, HERO.pal, 'sw-px') + '</div>');
+  /* 剛交出去，他的職業說一句（見 12-jobs.js）。 */
+  H.push(hsayHtml(me(), 'submit'));
   H.push('<div class="stamp-mark">' + stampPx(s.key) + '</div>');
   H.push('<h1>' + esc(s.name) + '</h1>');
   H.push('<dl class="rep stage">');
@@ -23094,7 +24228,7 @@ PAGES.codex = function () {
   if (石.all) {
     H.push('<p class="dim cx-crystal">' +
       esc('手上 ' + 石.left + ' 顆水晶。' +
-        (石.used ? '照亮過 ' + (石.used / RULES.CRYSTAL.light) + ' 位。' : '')) +
+        (石.litN ? '照亮過 ' + 石.litN + ' 位。' : '')) +
       '</p>');
   }
   /* 黑影怎麼解鎖，只在這裡說一次。本來每一張還沒遇到的卡都各印一遍
@@ -23305,8 +24439,7 @@ PAGES.crew = function () {
   crew.forEach(function (u) {
     var k = heroKey(u);
     var g = HEROES[k];
-    var meta = null;
-    HERO_LIST.forEach(function (x) { if (x.k === k) meta = x; });
+    var meta = heroMeta(k);
     H.push('<div class="crw">');
     H.push('<span class="crw-px">' + pxTag(g.idle, g.pal, 'ch-s') + '</span>');
     H.push('<span class="crw-t"><b>' + esc(u.name || '') + '</b>');
@@ -23391,8 +24524,7 @@ PAGES.person = function () {
   })[0];
   var k = heroKey(mem);
   var g = HEROES[k];
-  var meta = null;
-  HERO_LIST.forEach(function (x) { if (x.k === k) meta = x; });
+  var meta = heroMeta(k);
   var mine = !!(myTeam() && myTeam().teamId === tm.teamId);
 
   var H = [head(meta ? meta.n : '角色',
@@ -23432,6 +24564,8 @@ PAGES.who = function () {
 
   var H = [head('挑一個角色開始冒險',
     '這是你在這場專案旅行中的化身', '')];
+  /* 剛用水晶換到一個職業：先給他看那一張（見 12-jobs.js 的 jobReveal）。 */
+  if (S.p && S.p.reveal) H.push(jobReveal(u, S.p.reveal));
   H.push('<div class="pick4">');
   HERO_LIST.forEach(function (x) {
     var g = HEROES[x.k];
@@ -23448,6 +24582,8 @@ PAGES.who = function () {
     H.push('</button>');
   });
   H.push('</div>');
+  /* 用水晶換的職業（只在已經挑過角色之後才畫，見 12-jobs.js 的 jobSection）。 */
+  H.push(jobSection(u));
   return H.join('');
 };
 
@@ -23515,6 +24651,17 @@ function feedOf(classId, limit) {
       ms: msOf(r.msId), by: r.askBy ? userOf(r.askBy) : null });
   });
 
+  /* 用水晶換到的職業（見 12-jobs.js）。誰換的寫出來——整組共用，換的人值得被看見。 */
+  Object.keys(teams).forEach(function (id) {
+    var js = teams[id].jobs;
+    if (!js || typeof js !== 'object') return;
+    Object.keys(js).forEach(function (k) {
+      if (HEROES[k] && js[k] && js[k].at) {
+        out.push({ at: js[k].at, kind: 'job', team: teams[id], job: k, by: js[k].by ? userOf(js[k].by) : null });
+      }
+    });
+  });
+
   /* 走出去 */
   Object.keys(teams).forEach(function (id) {
     if (teams[id].leftAt) out.push({ at: teams[id].leftAt, kind: 'left', team: teams[id] });
@@ -23572,6 +24719,10 @@ function feedRow(f, meId) {
     ic = pxTag(ICONS.radar, ICON_PAL, 'nic');
     /* 不寫談出了什麼（見檔頭）。 */
     act = '跟 ' + (f.by ? f.by.name : '老師') + ' 談過那一趟';
+  } else if (f.kind === 'job') {
+    var jm = heroMeta(f.job);
+    ic = pxTag(HEROES[f.job].idleA, HEROES[f.job].pal, 'nic');
+    act = (f.by ? f.by.name + ' ' : '') + '為隊上換來了職業「' + (jm ? jm.n : '') + '」';
   } else if (f.kind === 'left') {
     ic = pxTag(ICONS.home, ICON_ON, 'nic');
     act = '走出去了';

@@ -545,3 +545,20 @@ a.plain:hover{color:var(--gold)}
 .rec.pressable{padding-right:33px}
 .side-head.pressable{padding-right:44px}
 .seat:not(.on) b,.seat:not(.on) i,.seat:not(.on) u{padding-right:26px}
+
+/* ---------- 職業（見 12-jobs.js）---------- */
+/* 沒換到的職業：黑影加價錢。不是按鈕（按鈕在裡面那一顆）。 */
+.p4.lock{cursor:default;opacity:.92}
+.p4.lock:hover{background:inherit;box-shadow:none}
+.p4.lock .btn{margin-top:8px;align-self:flex-start}
+.p4-by{display:block;font-style:normal;font-size:22px;color:var(--gold);margin-top:4px}
+/* 換到職業那一刻的大卡 */
+.jobrev{text-align:center}
+.jobrev-px{display:block;width:132px;height:132px;margin:0 auto 6px}
+.jobrev-px .px{width:132px;height:132px;image-rendering:pixelated}
+.jobrev h2{margin:4px 0 10px}
+.jobrev .btn{display:block;width:100%;margin-top:14px}
+/* 角色說一句話：他的臉＋一個框。收下、交出去、圖鑑多了一位那幾張卡上用。 */
+.hsay{display:flex;align-items:center;gap:12px;margin:10px 0}
+.hsay-px{flex:0 0 66px;width:66px;height:66px;image-rendering:pixelated}
+.hsay-t{margin:0;padding:10px 14px;background:var(--panel2);border:2px solid var(--gold-d);line-height:1.5;overflow-wrap:anywhere}

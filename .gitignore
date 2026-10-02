@@ -20,3 +20,4 @@ firebase-debug.log
 
 # 備份含學生姓名與密碼雜湊，不可以進公開的儲存庫
 backups/
+v2/art/sheet_*.png

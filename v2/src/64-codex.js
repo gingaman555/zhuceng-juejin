@@ -78,7 +78,7 @@ PAGES.codex = function () {
   if (石.all) {
     H.push('<p class="dim cx-crystal">' +
       esc('手上 ' + 石.left + ' 顆水晶。' +
-        (石.used ? '照亮過 ' + (石.used / RULES.CRYSTAL.light) + ' 位。' : '')) +
+        (石.litN ? '照亮過 ' + 石.litN + ' 位。' : '')) +
       '</p>');
   }
   /* 黑影怎麼解鎖，只在這裡說一次。本來每一張還沒遇到的卡都各印一遍
@@ -289,8 +289,7 @@ PAGES.crew = function () {
   crew.forEach(function (u) {
     var k = heroKey(u);
     var g = HEROES[k];
-    var meta = null;
-    HERO_LIST.forEach(function (x) { if (x.k === k) meta = x; });
+    var meta = heroMeta(k);
     H.push('<div class="crw">');
     H.push('<span class="crw-px">' + pxTag(g.idle, g.pal, 'ch-s') + '</span>');
     H.push('<span class="crw-t"><b>' + esc(u.name || '') + '</b>');
@@ -375,8 +374,7 @@ PAGES.person = function () {
   })[0];
   var k = heroKey(mem);
   var g = HEROES[k];
-  var meta = null;
-  HERO_LIST.forEach(function (x) { if (x.k === k) meta = x; });
+  var meta = heroMeta(k);
   var mine = !!(myTeam() && myTeam().teamId === tm.teamId);
 
   var H = [head(meta ? meta.n : '角色',
@@ -416,6 +414,8 @@ PAGES.who = function () {
 
   var H = [head('挑一個角色開始冒險',
     '這是你在這場專案旅行中的化身', '')];
+  /* 剛用水晶換到一個職業：先給他看那一張（見 12-jobs.js 的 jobReveal）。 */
+  if (S.p && S.p.reveal) H.push(jobReveal(u, S.p.reveal));
   H.push('<div class="pick4">');
   HERO_LIST.forEach(function (x) {
     var g = HEROES[x.k];
@@ -432,5 +432,7 @@ PAGES.who = function () {
     H.push('</button>');
   });
   H.push('</div>');
+  /* 用水晶換的職業（只在已經挑過角色之後才畫，見 12-jobs.js 的 jobSection）。 */
+  H.push(jobSection(u));
   return H.join('');
 };

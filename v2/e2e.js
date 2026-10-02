@@ -1087,6 +1087,80 @@ be('「請重新打開」那一頁有提燈', blockedHtml().indexOf('vig-anim') 
 be('圖不是按鈕、不被讀出來', vignette('scroll').indexOf('aria-hidden="true"') >= 0 && vignette('scroll').indexOf('data-act') < 0, true);
 be('沒有這張圖就不畫（不報錯）', vignette('nope'), '');
 
+/* ══ 用水晶換的職業：遊俠、吟遊詩人、武僧（2026-10-02）══
+
+   職業是身分，不是效果：不改判定、不改水晶收入、不改榜。整組共用（一位換了，整組都挑得了）。 */
+H('職業：用水晶換、整組共用、不影響任何會算數的東西');
+DB.Users.push({ userId: 'UJ1', account: 'job1', name: '換職業的人', role: 'student', classId: kl.classId, teamId: '', createdAt: Date.now(), hero: 'adv' });
+DB.Users.push({ userId: 'UJ2', account: 'job2', name: '隊友', role: 'student', classId: kl.classId, teamId: '', createdAt: Date.now(), hero: 'mage' });
+const tj = actNewTeam('職業組', 'UJ1').team; actJoinTeam(tj.joinCode, 'UJ2');
+const uj1 = find('Users', u => u.userId === 'UJ1'), uj2 = find('Users', u => u.userId === 'UJ2');
+as(uj1);
+const POSES13 = ['idleA', 'idleB', 'walkA', 'walkB', 'sitA', 'sitB', 'sleep', 'back', 'swing', 'dash', 'win', 'pant', 'flee', 'idle'];
+be('三個新職業的圖都在（13 個姿勢、每列 16 格）', JOB_LIST.every(j => POSES13.every(p => HEROES[j.k][p] && HEROES[j.k][p].length === 16 && HEROES[j.k][p].every(r => r.length === 16))), true);
+be('價格寫在一個地方（RULES.CRYSTAL.job）', RULES.CRYSTAL.job, 200);
+const 換前 = crystalOf(tj.teamId);
+be('一組一開始就有進場的水晶', 換前.left >= RULES.CRYSTAL.job, true);
+be('還沒換到：挑不了（heroKey 當冒險者）', (uj1.hero = 'ranger', heroKey(uj1)), 'adv');
+uj1.hero = 'adv';
+be('還沒換到：ACTS.hero 擋下來', (ACTS.hero('monk'), uj1.hero), 'adv');
+S.page = 'who'; S.p = {}; DRAFT = {};
+const w0 = PAGES.who();
+be('挑角色頁有「用水晶換的職業」，三個黑影都有價錢', w0.indexOf('用水晶換的職業') >= 0 && ['遊俠', '吟遊詩人', '武僧'].every(n => w0.indexOf(n) >= 0) && w0.indexOf('jobask:ranger') >= 0, true);
+be('第一次進來（還沒挑過角色）不畫職業區', (() => { const h = uj1.hero; uj1.hero = ''; const x = PAGES.who().indexOf('用水晶換的職業') < 0; uj1.hero = h; return x; })(), true);
+ACTS.jobask('ranger');
+be('按「換」先問一次：有「對，換」與「先不要」，還沒花水晶', PAGES.who().indexOf('jobyes:ranger') >= 0 && crystalOf(tj.teamId).left === 換前.left, true);
+ACTS.jobno();
+be('先不要：回到原本、沒花水晶', PAGES.who().indexOf('jobyes:') < 0 && crystalOf(tj.teamId).left === 換前.left, true);
+ACTS.jobyes('ranger');
+const 換後 = crystalOf(tj.teamId);
+be('換到了：整組的水晶少一個職業的價錢', 換前.left - 換後.left, RULES.CRYSTAL.job);
+be('榜用的「拿過的總數」沒有變（花水晶不會讓人在榜上退步）', 換前.all, 換後.all);
+be('t.jobs 記著誰換的、什麼時候', !!(tj.jobs.ranger && tj.jobs.ranger.by === 'UJ1' && tj.jobs.ranger.at > 0), true);
+be('留下事件', DB.Events.slice(-1)[0].kind, 'jobunlock');
+be('動態上看得到「誰為隊上換來了」', feedOf(kl.classId, 30).some(f => f.kind === 'job' && f.job === 'ranger'), true);
+be('跳到剛換到的那一張（大圖、開場白、一顆「用這個職業」）', S.page === 'who' && S.p.reveal === 'ranger' && PAGES.who().indexOf('jobuse:ranger') >= 0 && PAGES.who().indexOf('從今天起') >= 0, true);
+be('隊友也挑得了（整組共用）', (as(uj2), ACTS.hero('ranger'), uj2.hero), 'ranger');
+be('隊友畫出來的是遊俠', heroKey(uj2) === 'ranger' && heroOf(uj2) === HEROES.ranger, true);
+as(uj1); ACTS.jobuse('ranger');
+be('「用這個職業」：挑了它、回廊道', uj1.hero === 'ranger' && S.page === 'home', true);
+be('已經換到的不能再換', actUnlockJob(tj.teamId, 'ranger').err ? 1 : 0, 1);
+be('沒有這個職業', actUnlockJob(tj.teamId, 'nope').err ? 1 : 0, 1);
+be('別組的人不能花這一組的水晶', (as(stu[0]), actUnlockJob(tj.teamId, 'bard').err ? 1 : 0), 1);
+as(uj1);
+/* 水晶不夠 */
+const tOld = tj.jobs; tj.lit = ['甲', '乙', '丙', '丁'];
+be('水晶不夠時，錯誤訊息寫還差幾顆', (() => { const r = actUnlockJob(tj.teamId, 'bard'); return !!r.err && /還差 [0-9]+ 顆/.test(r.err); })(), true);
+be('水晶不夠時，挑角色頁寫還差幾顆、不畫那一顆鍵', PAGES.who().indexOf('jobask:bard') < 0 && PAGES.who().indexOf('還差') >= 0, true);
+tj.lit = [];
+/* 同時換 → 負的水晶一律照 0 算 */
+tj.jobs = Object.assign({}, tOld, { bard: { by: 'UJ2', at: 1 }, monk: { by: 'UJ2', at: 2 } });
+be('兩位隊友同時換、水晶其實不夠兩個：畫面照 0 算、不報錯', (() => { const o = crystalOf(tj.teamId); return o.left < 0 && PAGES.who().indexOf('NaN') < 0; })(), true);
+tj.jobs = tOld;
+/* 職業不影響任何會算數的東西 */
+be('判定只吃兩個數字：換職業前後同一組數字判定一樣', (() => { const a = RULES.judge(4, 4); uj1.hero = 'adv'; const b = RULES.judge(4, 4); uj1.hero = 'ranger'; return JSON.stringify(a) === JSON.stringify(b); })(), true);
+be('水晶「拿過的總數」不讀職業', (() => { const a = crystalOf(tj.teamId).all; const j0 = tj.jobs; tj.jobs = {}; const b = crystalOf(tj.teamId).all; tj.jobs = j0; return a === b; })(), true);
+/* 換組之後：新組沒換到的職業，畫成冒險者 */
+as(uj1);
+be('離開原本那一組、新組沒換到：自動當冒險者', (() => { const h = uj1.teamId; uj1.teamId = stu[0].teamId; const k = heroKey(uj1); uj1.teamId = h; return k; })(), 'adv');
+/* 台詞 */
+be('每個職業都有「剛出發」', ['adv', 'mage', 'ninja', 'knight', 'ranger', 'bard', 'monk'].every(k => HERO_OS[k].start && HERO_OS[k].start.length), true);
+be('三個新職業各時刻都有話（走路、休息、超過天數、剛交出去、老師收下了、圖鑑多了一位、解鎖）', JOB_LIST.every(j => ['walk', 'rest', 'over', 'submit', 'ok', 'codex', 'unlock'].every(f => HERO_OS[j.k][f] && HERO_OS[j.k][f].length)), true);
+const 全句 = []; Object.keys(HERO_OS).forEach(k => Object.keys(HERO_OS[k]).forEach(f => (HERO_OS[k][f] || []).forEach(l => 全句.push(l))));
+be('每一句 20 字以內（頭上的牌子很小）', 全句.filter(l => [...l].length > 20).length, 0);
+be('沒有禁用字（分數、死線、對決）', 全句.filter(l => /分數|死線|對決/.test(l)).length, 0);
+be('沒有人用 ♫（系統字型沒有這個字）', 全句.filter(l => l.indexOf('♫') >= 0).length, 0);
+uj1.hero = 'monk'; tj.jobs.monk = { by: 'UJ1', at: 3 };
+be('heroMoment 抽得到那個職業的話', ['start', 'submit', 'ok', 'codex'].every(m => HERO_OS.monk[m].indexOf(heroMoment(uj1, m)) >= 0), true);
+be('沒有台詞的時刻就是沉默（不退回走路的話）', (() => { const sv = HERO_OS.monk.codex; HERO_OS.monk.codex = []; const r = heroMoment(uj1, 'codex'); HERO_OS.monk.codex = sv; return r; })(), '');
+be('對話框畫得出他的臉和那一句', hsayHtml(uj1, 'submit').indexOf('hsay-px') >= 0 && hsayHtml(uj1, 'submit').indexOf(HERO_OS.monk.submit[0]) >= 0, true);
+be('一個沒有台詞的職業：整張框都不畫', (() => { const sv = HERO_OS.monk.ok; HERO_OS.monk.ok = []; const r = hsayHtml(uj1, 'ok'); HERO_OS.monk.ok = sv; return r; })(), '');
+be('座右銘七個職業都有', HERO_LIST.concat(JOB_LIST).every(x => x.m && x.m.length), true);
+/* 清理 */
+DB.Users = DB.Users.filter(u => !/^UJ[0-9]$/.test(u.userId));
+DB.Teams = DB.Teams.filter(t => t.teamId !== tj.teamId);
+DRAFT = {}; S.p = {};
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 
