@@ -155,6 +155,7 @@ var EV_SAY = {
   joinclass:function (e) { return '加進「' + e.klass + '」'; },
   newteam:  function (e) { return '建了隊伍「' + e.name + '」'; },
   jointeam: function () { return '用代碼加入隊伍'; },
+  solonot:  function () { return '被問「是不是按錯了組」，回答：不是，就是一個人'; },
   leaveteam: function (e) { return '按錯了，離開隊伍「' + (e.name || '') + '」'; },
   claim:    function () { return '在班級地圖上占了一格'; },
   hero:     function (e) { return '挑了角色 ' + e.hero; },
@@ -525,7 +526,7 @@ function actResearcherDeleteTestClass(researcherId, classId) {
    只刪學生、不刪老師與研究者；事件紀錄不動。刪完如果他那一組因此沒有人、
    也沒有任何一趟，組別一起刪。 */
 var TRIVIAL_EV = { login: 1, register: 1, joinclass: 1, jointeam: 1, newteam: 1, hero: 1, rename: 1,
-  teamrename: 1, setname: 1, sit: 1, leaveteam: 1, claim: 1, setpw: 1, genrecov: 1, recoverpw: 1, teacherrecov: 1,
+  teamrename: 1, setname: 1, sit: 1, leaveteam: 1, solonot: 1, claim: 1, setpw: 1, genrecov: 1, recoverpw: 1, teacherrecov: 1,
   blurb: 1, left: 1, researchersetpw: 1 };
 function userTraces(u) {
   var n = { said: 0, plan: 0, merged: 0, events: 0 };
@@ -975,8 +976,12 @@ function whyCannotLeave(u) {
   var tid = u.classId ? teamIn(u, u.classId) : '';
   if (!tid) return '你還沒有組';
   if (teamHasRecord(tid)) return '這一組已經有紀錄了，組好就不能換';
+  /* 只看會掛在這一組紀錄上的痕跡（寫過話、被指定過分工、別的帳號併進來）。
+     不看 userTraces 的 events：按過「我們做完了」、改過隊名、挑過角色這些，
+     都不會讓任何紀錄掛在這一組上（2026-10-02 用真實資料量到：楊采霖 9/23 誤按了
+     幾次「我們做完了」，被算成「做過事」，一個人一組、沒有任何紀錄，卻換不了組）。 */
   var n = userTraces(u);
-  if (n.said || n.plan || n.merged || n.events) return '你在這一組做過事了';
+  if (n.said || n.plan || n.merged) return '你在這一組寫過東西了';
   return '';
 }
 function actLeaveTeam(userId) {

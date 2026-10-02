@@ -1722,20 +1722,69 @@ function taskNoticeHtml(list) {
   H.push('</div>');
   return H.join('');
 }
+/* ---------- 這一組只有你一個人：是不是之前按錯了？ ----------
+
+   2026-10-02：10/2 雲端有 7 組只有一位成員，其中 6 組還沒承諾過任何任務——很多是
+   開學第一節手滑按了「建立」、隊友在別的組，之後被「組好了就不能換」擋住。
+   9/30 加了「按錯了？離開這一組」，可是那顆鍵安靜地躺在組別卡上，沒人知道要去找。
+   所以改成主動問：一個人一組、這一組還沒有任何紀錄（離得開的條件，見
+   15-auth.js 的 whyCannotLeave）的時候，剛打開就跳一張問「是不是之前按錯」。
+
+     是，我要換組　→ 再確認一次 → 離開，回到「建立／加入隊伍」那一頁，打隊友的加入碼
+     不是，我們就是一個人　→ 記在使用者那一筆（soloOk＝這一組的編號），不再問
+
+   這一組之後有了隊友、或有了第一趟承諾，條件就不成立，自然不再跳。
+   跟新任務通知同一套（同一個位置、同樣不打斷寫到一半的頁），而且優先：
+   先弄清楚他在哪一組，才有「這一組的任務」可以說。 */
+var SOLO_CONF = false;
+/* 剛建好隊、正在等隊友用代碼加進來的人不該馬上被問「是不是按錯」——那是正常的
+   第一步。建立超過一小時還是一個人，才問。 */
+var SOLO_ASK_AFTER = 60 * 60000;
+function soloAskFor(u) {
+  if (!u || u.role !== 'student' || u._d || RULES.SOLO || !u.teamId) return null;
+  if (u.soloOk === u.teamId) return null;
+  if (whyCannotLeave(u)) return null;
+  var t = teamOf(u.teamId);
+  if (!t) return null;
+  if (t.joinedAt && now() - t.joinedAt < SOLO_ASK_AFTER) return null;
+  var n = where('Users', function (x) { return x.role === 'student' && inTeam(x, t.teamId) && !x.mergedInto; }).length;
+  return n === 1 ? t : null;
+}
+function soloNoticeHtml(t) {
+  var H = ['<div class="tn-box" role="dialog" aria-modal="true">'];
+  if (!SOLO_CONF) {
+    H.push('<div class="eyebrow lit">「' + esc(t.name) + '」現在只有你一個人</div>');
+    H.push('<h2>是不是之前按錯，自己建了一組？</h2>');
+    H.push('<p class="dim">如果你的隊友在別的組，可以離開這一組，再用隊友給你的加入碼加進去。還沒承諾任何任務之前才換得了。</p>');
+    H.push(btn('是，我要換組', 'soloyes', 'big'));
+    H.push(btn('不是，我們就是一個人', 'solono', 'ghost'));
+  } else {
+    H.push('<div class="eyebrow lit">確定嗎</div>');
+    H.push('<h2>離開「' + esc(t.name) + '」</h2>');
+    H.push('<p class="dim">離開之後請跟隊友拿加入碼，輸入就能加進他們那一組。</p>');
+    H.push(btn('對，離開', 'sololeave', 'big'));
+    H.push(btn('先不要', 'soloback', 'ghost'));
+  }
+  H.push('</div>');
+  return H.join('');
+}
+
 /* 每次畫完檢查一次：該跳就跳、不該跳的收掉。已經在跳的同一批不重畫。 */
 function taskNoticeTick() {
   if (typeof document === 'undefined' || !document.body || !document.body.appendChild) return;
   var u = (typeof me === 'function') ? me() : null;
-  var list = (u && taskNoticeReady()) ? taskNoticeFor(u) : [];
+  var ready = !!(u && taskNoticeReady());
+  var solo = ready ? soloAskFor(u) : null;
+  var list = (ready && !solo) ? taskNoticeFor(u) : [];
   var old = document.getElementById('task-notice');
-  var key = list.map(function (m) { return m.msId; }).join(',');
-  if (old && old.getAttribute && old.getAttribute('data-k') === key && list.length) return;
+  var key = solo ? 'solo:' + solo.teamId + ':' + (SOLO_CONF ? 1 : 0) : list.map(function (m) { return m.msId; }).join(',');
+  if (old && old.getAttribute && old.getAttribute('data-k') === key && (solo || list.length)) return;
   if (old && old.parentNode) old.parentNode.removeChild(old);
-  if (!list.length) return;
+  if (!solo && !list.length) return;
   var d = document.createElement('div');
   d.id = 'task-notice'; d.className = 'tn';
   d.setAttribute('data-k', key);
-  d.innerHTML = taskNoticeHtml(list);
+  d.innerHTML = solo ? soloNoticeHtml(solo) : taskNoticeHtml(list);
   document.body.appendChild(d);
 }
 function taskNoticeAck(u, list) {

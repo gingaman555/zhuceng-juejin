@@ -980,6 +980,49 @@ DB.Users = DB.Users.filter(u => !/^UL\d$/.test(u.userId));
 DB.Teams = DB.Teams.filter(t => t.teamId !== nt.team.teamId && t.teamId !== nt2.team.teamId);
 DRAFT = {};
 
+/* ══ 這一組只有你一個人：主動問是不是按錯（2026-10-02）══
+
+   10/2 雲端有 7 組單人組，其中 6 組沒承諾過任何任務。離開鍵躺在組別卡上沒人找得到，
+   所以改成剛打開就問。條件：一個人、這一組建立超過一小時、還沒有任何紀錄、他沒說過「不是」。 */
+H('單人組：主動問是不是之前按錯');
+DB.Users.push({ userId: 'US1', account: 'solo1', name: '單人甲', role: 'student', classId: kl.classId, teamId: '', createdAt: 1000000 });
+DB.Users.push({ userId: 'US2', account: 'solo2', name: '單人乙', role: 'student', classId: kl.classId, teamId: '', createdAt: 1000000 });
+const us1 = find('Users', u => u.userId === 'US1'), us2 = find('Users', u => u.userId === 'US2');
+const ts1 = actNewTeam('單人組一', 'US1').team, ts2 = actNewTeam('單人組二', 'US2').team;
+be('剛建好隊、在等隊友的人不問（這是正常的第一步）', soloAskFor(us1), null);
+ts1.joinedAt = Date.now() - 2 * 3600000; ts2.joinedAt = Date.now() - 2 * 3600000;
+be('建立超過一小時、還是一個人、沒有紀錄 → 問', !!soloAskFor(us1) && soloAskFor(us1).teamId === ts1.teamId, true);
+const 問1 = soloNoticeHtml(ts1);
+be('第一張寫「是不是之前按錯」，有「是，我要換組」與「不是，我們就是一個人」', 問1.indexOf('是不是之前按錯') >= 0 && 問1.indexOf('soloyes') >= 0 && 問1.indexOf('solono') >= 0, true);
+be('第一張還沒有「離開」的鍵（先問、不直接離開）', 問1.indexOf('sololeave') < 0, true);
+as(us1); ACTS.soloyes();
+const 問2 = soloNoticeHtml(ts1);
+be('按「是」之後再確認一次：有「對，離開」與「先不要」', 問2.indexOf('sololeave') >= 0 && 問2.indexOf('soloback') >= 0, true);
+ACTS.soloback();
+be('「先不要」回到第一張', soloNoticeHtml(ts1).indexOf('soloyes') >= 0 && us1.teamId === ts1.teamId, true);
+ACTS.solono();
+be('按「不是，就是一個人」：記在使用者那一筆、不再問', us1.soloOk === ts1.teamId && soloAskFor(us1) === null, true);
+be('留下事件', DB.Events.slice(-1)[0].kind, 'solonot');
+as(us2); ACTS.soloyes(); ACTS.sololeave();
+be('按「對，離開」：沒有組了、回到建立／加入那一頁', us2.teamId === '' && S.page === 'myteam', true);
+be('離開之後可以用隊友的代碼加進去', !actJoinTeam(tm.joinCode, 'US2').err && us2.teamId === tm.teamId, true);
+/* 不該問的 */
+be('有兩個人的組不問', soloAskFor(stu[0]), null);
+DB.Users.push({ userId: 'US3', account: 'solo3', name: '單人丙', role: 'student', classId: kl.classId, teamId: '', createdAt: 1000000 });
+const ts3 = actNewTeam('有紀錄的單人組', 'US3').team; ts3.joinedAt = Date.now() - 2 * 3600000;
+const us3 = find('Users', u => u.userId === 'US3');
+be('（對照）這一組沒有紀錄時會問', !!soloAskFor(us3), true);
+DB.Runs.push({ runId: 'RS3', teamId: ts3.teamId, msId: (DB.Milestones[0] || {}).msId, state: 'running', est: 1, said: {}, flags: [], plan: [], steps: [], committedAt: 1 });
+be('已經有承諾過的單人組不問（換組會讓紀錄找不到人）', soloAskFor(us3), null);
+be('老師不問', soloAskFor(tea), null);
+be('沒有組的人不問', soloAskFor(find('Users', u => u.userId === 'US2' && false) || { role: 'student', teamId: '' }), null);
+taskNoticeTick();
+be('畫面檢查跑完不報錯', true, true);
+DB.Runs = DB.Runs.filter(r => r.runId !== 'RS3');
+DB.Users = DB.Users.filter(u => !/^US\d$/.test(u.userId));
+DB.Teams = DB.Teams.filter(t => [ts1.teamId, ts2.teamId, ts3.teamId].indexOf(t.teamId) < 0);
+DRAFT = {}; SOLO_CONF = false;
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 
