@@ -638,6 +638,21 @@ be('剩下兩件以上，還是可以一次開', html2.indexOf('一次開這 ' +
 ACTS.commitall();
 be('一次開只包含還沒開始的', S.queue.length, ids2.length - 1);
 
+/* 老師把手上那一件退回去改：後面的任務不能因此藏起來（2026-10-04） */
+delete S.queue; delete S.queueN; S.page = 'home'; S.p = {}; DRAFT = {};
+const rBack = runsFor('GP2').filter(x => x.ms.msId === ids2[0])[0].run;
+rBack.state = 'back'; rBack.submittedAt = Date.now(); rBack.word = '再補一張圖。'; rBack.sawStamp = 1;
+const nxBack = nextThing('GP2'), htmlBack = PAGES.home();
+be('被退回：首頁大鍵是處理退回', nxBack.kind, 'back');
+be('被退回的時候，其餘每一件各有一顆「開始」', ids2.slice(1).every(id => htmlBack.indexOf('go:commit:' + id) >= 0), true);
+be('被退回的時候，還是有「也可以同時做」', htmlBack.indexOf('也可以同時做') >= 0, true);
+be('被退回那一件不重複列在下面', htmlBack.indexOf('go:commit:' + ids2[0]) >= 0, false);
+be('被退回的時候，任務清單也有同一張卡', (S.page = 'pack', PAGES.pack().indexOf('也可以同時做') >= 0), true);
+S.page = 'home';
+const rBack2 = actCommit('GP2', ids2[1], 2, [], [], 'wild', 'mid');
+be('被退回的時候可以先開別件（資料層本來就不擋）', !!rBack2 && rBack2.state === 'running', true);
+rBack.state = 'running'; rBack.submittedAt = 0; delete rBack.word;
+
 /* ══ 沒取專案名稱不能擋在做事的前面（2026-09-30）══
 
    9/30 用真實資料量到：42 組裡 26 組沒取名字，13 組已經有任務在做，

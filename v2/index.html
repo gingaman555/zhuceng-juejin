@@ -6079,7 +6079,7 @@ button.msd-t:hover,button.msd-t:focus-visible{background:var(--panel2)}
 <script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
 <script src="/__/firebase/init.js"></script>
 <script>
-var BUILD_AT = 1790948414100;
+var BUILD_AT = 1791117003567;
 
 /* ===== 10-pack.js ===== */
 /* 收藏內容包：40 隻生物、108 種掉落物、24 件戰利品、4 隻守關生物。
@@ -21030,6 +21030,10 @@ function actionCard(t, next, st) {
        接下來要按的那一顆。那一顆說「再打一次」，等於告訴他被退回是
        一場架。他要做的是把東西改好再交一次。 */
     H.push(btn('再交一次', 'go:battle:' + row.run.runId, 'big'));
+    /* 退回的那一件在改的時候，老師派的其他幾件還是看得到、開得了
+       （2026-10-04：本來只有「在做」與「有任務發來了」才列，被退回的組
+       會看不到後面的任務，要等重新交出去才冒出來）。 */
+    H.push(parallelCard(t, next));
 
   } else if (next.kind === 'review') {
     /* 等待本來是一片空白：只寫「等他看」，不知道幾天、
@@ -22292,10 +22296,12 @@ render = function () { _renderBase(); taskNoticeTick(); };
    每一件還是自己說、自己按（見 55-ui.js 的 commitall）。不是替他們
    一次填掉——每一件要說幾天，是那一件自己的事。
 
-   nx 是 nextThing 的結果：只有「在做」和「有任務發來了」這兩種狀態才列，
-   其他狀態（等看判定、被退回、等老師）該先處理眼前那一件。 */
+   nx 是 nextThing 的結果：「在做」、「有任務發來了」、「被退回」這三種狀態才列。
+   被退回是 2026-10-04 補的：退回的那一件要改，不該把後面的任務也藏起來。
+   其他狀態（剛交出去還沒看判定、等老師、結案）不列：那幾種不是在等學生
+   去做事，或是只停幾秒。 */
 function parallelRows(t, nx) {
-  if (!nx || (nx.kind !== 'doing' && nx.kind !== 'commit')) return [];
+  if (!nx || (nx.kind !== 'doing' && nx.kind !== 'commit' && nx.kind !== 'back')) return [];
   var 主 = nx.row ? (nx.row.run.runId || nx.row.ms.msId) : '';
   return runsFor(t.teamId).filter(function (x) {
     var 身分 = x.run.runId || x.ms.msId;
