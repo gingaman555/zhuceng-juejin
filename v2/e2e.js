@@ -1307,6 +1307,155 @@ be('側欄：看這一頁時「已派任務」還亮著', (S.page = 'runview', /
 actWithdrawMs(msV.msId, tea.userId);
 DRAFT = {}; S.p = {}; S.page = 'home';
 
+/* ══ 瀏覽器的上一頁、填到一半的草稿（2026-10-05）══
+
+   有人問「填到一半想回上一頁改」。系統是單頁的，從來沒碰過瀏覽器的歷史紀錄：
+   手機返回、滑回是離開網站。填到一半的東西也只在記憶體，換頁、重新整理就沒了。 */
+H('瀏覽器的上一頁：換頁記一格、返回回到上一頁、兩步驟流程退一步、失效的格跳過');
+const NAVHS = { st: [null], i: 0 };
+let navPopH = null;
+global.history = {
+  get state() { return NAVHS.st[NAVHS.i] || null; },
+  pushState(x) { NAVHS.st.splice(NAVHS.i + 1); NAVHS.st.push(JSON.parse(JSON.stringify(x))); NAVHS.i++; },
+  replaceState(x) { NAVHS.st[NAVHS.i] = JSON.parse(JSON.stringify(x)); },
+  back() { if (NAVHS.i > 0) { NAVHS.i--; navPopH({ state: NAVHS.st[NAVHS.i] }); } }
+};
+global.addEventListener = (k, fn) => { if (k === 'popstate') navPopH = fn; };
+NAV.on = 0;
+DB.Teams.push({ teamId: 'GN1', classId: kl.classId, name: '上一頁測試組', project: '上一頁', joinCode: 'NNNNNN' });
+DB.Users.push({ userId: 'UN1', account: 'nav1', name: '上一頁', role: 'student', classId: kl.classId, teamId: 'GN1', hero: 'adv' });
+const navU = find('Users', u => u.userId === 'UN1');
+as(navU); S.page = 'home'; S.p = {}; DRAFT = {};
+navStart();
+be('開機：第一格記下首頁', NAVHS.st[0] && NAVHS.st[0].page === 'home' && NAVHS.st[0].n === 0, true);
+go('pack');
+be('換到任務清單：多記一格', NAVHS.st.length === 2 && NAVHS.st[1].page === 'pack', true);
+history.back();
+be('按返回：回到首頁', S.page, 'home');
+be('歷史停在第一格', NAVHS.i, 0);
+go('pack'); go('eco');
+be('連換兩頁：記了兩格', NAVHS.st.length, 3);
+history.back();
+be('返回：從班級地下城回任務清單', S.page, 'pack');
+history.back();
+be('再返回：回首頁', S.page, 'home');
+be('第一格再按返回：不是我們管的（離開網站），畫面留在首頁', (history.back(), S.page), 'home');
+
+/* 登入登出：取代那一格，不新增 */
+go('pack');
+const navLen = NAVHS.st.length;
+S.who = null; render();
+be('登出：取代目前那一格，不新增', NAVHS.st.length, navLen);
+be('登出之後門口那一頁', S.page === 'gate' || !!GATE_PAGES[S.page], true);
+history.back();
+be('登出之後按返回：還是門口，看不到上一個人的頁', !!GATE_PAGES[S.page] || S.page === 'gate', true);
+as(navU); S.page = 'home'; S.p = {}; render();
+
+/* 交作業：第 3 題按返回退到第 2 題，不離開那一頁 */
+const navIds = runsFor('GN1').filter(x => x.run.state === 'fresh').map(x => x.ms.msId);
+be('老師派了不只一件（測試前提）', navIds.length >= 2, true);
+const navRun = actCommit('GN1', navIds[0], 2, [], [], 'wild', 'mid');
+go('pack');
+go('battle', { id: navRun.runId });
+const navCnt = NAVHS.st.length;
+S.p = { id: navRun.runId, ph: 'q', q: 2 }; render();
+be('交作業換一題：更新那一格，不新增', NAVHS.st.length, navCnt);
+history.back();
+be('第 3 題按返回：退到第 2 題，沒有離開交作業', S.page === 'battle' && Number(S.p.q) === 1, true);
+be('補了一格：下一次返回還是退一步', NAVHS.i, NAVHS.st.length - 1);
+history.back();
+be('一路返回：退到第 1 題', S.page === 'battle' && Number(S.p.q) === 0, true);
+history.back();
+be('第 1 題再按返回：離開交作業，回到上一頁', S.page, 'pack');
+
+/* 失效的格：已經交出去的交作業頁，返回要跳過 */
+go('battle', { id: navRun.runId });
+navRun.state = 'submitted'; navRun.submittedAt = Date.now();
+go('home');
+history.back();
+be('那一趟已經交出去：返回跳過交作業頁', S.page !== 'battle', true);
+navRun.state = 'running'; navRun.submittedAt = 0;
+
+/* 承諾：第 3 步按返回退到第 2 步 */
+go('commit', { id: navIds[1] });
+ACTS.cmstep(2);
+be('承諾走到第 3 步', Number(S.p.st), 2);
+history.back();
+be('第 3 步按返回：退到第 2 步，沒有離開承諾', S.page === 'commit' && Number(S.p.st) === 1, true);
+history.back();
+be('退到第 1 步', Number(S.p.st), 0);
+history.back();
+be('一路返回：離開承諾頁', S.page !== 'commit', true);
+const navPrev = S.page;
+S.page = 'home'; S.p = {};
+be('老師的頁學生進不去（返回也一樣）', (() => { as(navU); return navRestorable(navU, 'radar', {}); })(), false);
+be('門口那幾頁不記歷史', !!(NAV_KEEP.login || NAV_KEEP.reg || NAV_KEEP.gate), false);
+be('判定、委託人這種過場不記歷史', !!(NAV_KEEP.stamp || NAV_KEEP.ask), false);
+
+H('草稿：換頁、重新打開都帶得回來；交出去之後清掉；門口不存');
+localStorage.removeItem('dungeon.drafts');
+as(navU); S.page = 'home'; S.p = {}; DRAFT = {};
+go('battle', { id: navRun.runId });
+DRAFT.where = 'https://notion.so/abc'; DRAFT.said1 = '我做了訪談稿'; DRAFT.feel = 'ok';
+go('home');
+const navSaved = JSON.parse(localStorage.getItem('dungeon.drafts')).u['UN1'];
+be('離開交作業頁：草稿存起來了', navSaved && navSaved['battle:' + navRun.runId] && navSaved['battle:' + navRun.runId].d.where, 'https://notion.so/abc');
+be('只存這幾個欄位，不存別的', Object.keys(navSaved['battle:' + navRun.runId].d).every(k => DRAFT_PAGES.battle.indexOf(k) >= 0), true);
+go('battle', { id: navRun.runId });
+be('再走進同一趟：寫的字帶回來了', DRAFT.where === 'https://notion.so/abc' && DRAFT.said1 === '我做了訪談稿' && DRAFT.feel === 'ok', true);
+DRAFT.where = ''; DRAFT.said1 = ''; DRAFT.feel = '';
+go('home');
+be('全部清空：那一份草稿也刪掉', !!((JSON.parse(localStorage.getItem('dungeon.drafts')).u['UN1'] || {})['battle:' + navRun.runId]), false);
+
+/* 交出去之後失效 */
+go('battle', { id: navRun.runId });
+DRAFT.where = 'https://x.y'; DRAFT.said1 = '寫了一半';
+go('home');
+navRun.state = 'submitted';
+S.page = 'battle'; S.p = { id: navRun.runId }; DRAFT = {};
+draftEnter();
+be('那一趟已經交出去：草稿不帶回來', DRAFT.where, undefined);
+be('而且那一份被刪掉', !!((JSON.parse(localStorage.getItem('dungeon.drafts')).u['UN1'] || {})['battle:' + navRun.runId]), false);
+navRun.state = 'running';
+
+/* 重新打開網頁：承諾寫到一半，回到那一頁 */
+go('commit', { id: navIds[1] });
+DRAFT.est = 3; DRAFT.sure = 'high';
+S.p = { id: navIds[1], st: 2 };
+draftSave();
+S.page = 'home'; S.p = {}; DRAFT = {};
+draftResume(navU);
+be('重新打開：回到承諾那一頁', S.page === 'commit' && S.p.id === navIds[1] && Number(S.p.st) === 2, true);
+be('寫的天數與把握也帶回來', DRAFT.est === 3 && DRAFT.sure === 'high', true);
+S.page = 'home'; S.p = {}; DRAFT = {};
+const navOld = JSON.parse(localStorage.getItem('dungeon.drafts'));
+navOld.u['UN1']['commit:' + navIds[1]].at = Date.now() - 13 * 3600 * 1000;
+localStorage.setItem('dungeon.drafts', JSON.stringify(navOld));
+draftResume(navU);
+be('超過十二小時：不自動跳回去', S.page, 'home');
+be('老師不會被跳回去', (() => { as(tea); S.page = 'radar'; draftResume(tea); return S.page; })(), 'radar');
+as(navU);
+
+/* 老師：派任務寫到一半 */
+as(tea); S.page = 'radar'; S.p = {}; DRAFT = {};
+go('ms');
+DRAFT.msTitle = '補齊 W5'; DRAFT.msNote = '連結放在 Notion';
+go('mslist');
+go('ms');
+be('老師派任務：離開再回來，寫的字還在', DRAFT.msTitle === '補齊 W5' && DRAFT.msNote === '連結放在 Notion', true);
+DRAFT.msTitle = ''; DRAFT.msNote = ''; DRAFT.steps = []; DRAFT.to = [];
+go('mslist');
+go('ms');
+be('派出去（草稿清空）之後再進來：是空的', draft('msTitle', ''), '');
+
+/* 門口那幾頁一律不存：那裡有密碼 */
+S.who = null; S.page = 'reg'; S.p = {}; DRAFT = { 'rg-pw': 'secret1', 'rg-acc': 'abc' };
+draftSave();
+be('門口不存任何東西', (localStorage.getItem('dungeon.drafts') || '').indexOf('secret1'), -1);
+as(navU); S.page = 'home'; S.p = {}; DRAFT = {};
+NAV.on = 0; delete global.history; delete global.addEventListener;
+localStorage.removeItem('dungeon.drafts');
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

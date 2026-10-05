@@ -31,6 +31,8 @@ function planEstReset() { DRAFT.est = null; }
 
 
 function go(page, p) {
+  /* 離開之前，把這一頁填到一半的存起來（見 79-nav.js）。 */
+  if (typeof draftSave === 'function') draftSave();
   if (typeof stopAnim === 'function') stopAnim();
   if (typeof stopOS === 'function') stopOS();
   /* 換場。render 是直接換掉 innerHTML，所以本來換頁是瞬間的——
@@ -54,6 +56,8 @@ function go(page, p) {
   /* 登入那一頁旁邊走過去的那一位，換頁就忘掉——下次進來重挑一個。
      不清的話它會跟著整個工作階段，「每次」就變成「開一次網頁一次」。 */
   S.gw = null;
+  /* 這一頁以前有存著、而且還有效的草稿，帶回來。 */
+  if (typeof draftEnter === 'function') draftEnter();
   window.scrollTo(0, 0);
   render();
 }
