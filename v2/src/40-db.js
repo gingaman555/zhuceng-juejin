@@ -1909,6 +1909,8 @@ function actReject(runId, word) {
   r.word = word;
   /* 退回那一句更要署名：學生要知道去找誰問。 */
   r.wordBy = (typeof S !== 'undefined' && S.who) || '';
+  /* 退回的是誰，單獨記一欄：退回之後別位老師收下，wordBy 會被換成收下的人。 */
+  r.rejectedBy = r.wordBy;
   r.state = 'back';
   r.backAt = now();
   r.backs = (r.backs || 0) + 1;
@@ -2027,6 +2029,11 @@ function actApprove(runId, word, bonus) {
      會是「系統說的」——而這整個作品立在「系統給資訊，人給承認」上，
      承認要有一個人，不然它就退回成一個自動回覆。 */
   r.wordBy = (typeof S !== 'undefined' && S.who) || '';
+  /* 收下的是誰，單獨記一欄（2026-10-07）。wordBy 是「最後一次寫那句話的人」：
+     A 老師退回、B 老師收下，wordBy 只剩 B；而且收下可以不寫話，學生就看不到是誰。
+     一個班三位老師都審得了任何一件（見 teamsUnder），「誰審的」要分得出來——
+     不管是畫面上、還是匯出給論文分析的資料。 */
+  r.approvedBy = r.wordBy;
   /* 老師給的那幾顆。收下就一定有，最少 1——0 會被讀成負評，
      而「他沒有特別想說什麼」跟「他覺得這份差」是兩件事。 */
   r.bonus = Math.max(RULES.CRYSTAL.bonusMin,

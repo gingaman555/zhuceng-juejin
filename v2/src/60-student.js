@@ -145,6 +145,7 @@ PAGES.home = function () {
     }
     /* 他那一句話擺在最下面，而且是這一整張上唯一的人話。 */
     if (r.word) H.push(wordBlock(r, 'big'));
+    else H.push(reviewLine(r));
     H.push('</div>');
   });
   if (okPend.length) {
@@ -2069,6 +2070,7 @@ function logRow(m, r, t) {
     if (r.hard) H.push('<p class="quote"><b>卡在哪裡</b>' + nl(r.hard) + '</p>');
     if (r.pace) H.push('<p class="quote"><b>你覺得的進度</b>' + nl(r.pace) + '</p>');
     if (r.word) H.push(wordBlock(r, 'tw'));
+    else H.push(reviewLine(r));
     H.push('</div>');
   }
   return H.join('');

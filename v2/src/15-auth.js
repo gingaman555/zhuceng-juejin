@@ -1071,6 +1071,10 @@ function exportRuns(classId) {
     '要徑算幾天', '有沒有改掉',
     '學生本來說幾天', '老師回的天數', '談完之後的天數',
     '被退幾次', '老師的話', '哪一位老師', '水晶加成',
+    /* 誰派的、誰審的（2026-10-07）。「哪一位老師」是最後一次寫那句話的人，
+       退回之後別位老師收下就只剩收下的那一位。三位老師誰都審得了任何一件，
+       分析要看「審的是不是派的那一位」，所以拆成四欄。 */
+    '派的老師', '收下的老師', '退回的老師（最後一次）', '審的是不是派的那一位',
     '承諾時間', '交出去時間', '收下時間', '交出去等了幾天'];
   var rows = [];
   where('Teams', function (t) { return t.classId === classId; }).forEach(function (t) {
@@ -1103,6 +1107,11 @@ function exportRuns(classId) {
              跟「還沒收下所以沒有這一格」不是同一件事。用 || '' 會把
              那兩件事寫成同一格空白。 */
           r.bonus == null ? '' : r.bonus,
+          m && m.mentorId ? saidBy(m.mentorId) : '',
+          saidBy(reviewerOf(r)),
+          (r.backs > 0) ? saidBy(rejecterOf(r)) : '',
+          /* 收下了、而且知道派的是誰才有答案；其餘留空，不猜。 */
+          (m && m.mentorId && reviewerOf(r)) ? (m.mentorId === reviewerOf(r) ? 'Y' : 'N') : '',
           r.committedAt ? new Date(r.committedAt).toISOString() : '',
           r.submittedAt ? new Date(r.submittedAt).toISOString() : '',
           r.doneAt ? new Date(r.doneAt).toISOString() : '',

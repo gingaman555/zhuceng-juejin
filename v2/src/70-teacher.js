@@ -788,7 +788,10 @@ function msStatusOf(r) {
   if (r.state === 'running') return { k: 'run', say: '進行中，' + est };
   if (r.state === 'submitted') return { k: 'sub', say: '交出去了，等審核。' + est + '、實際 ' + (r.actual || 0) + ' 天' };
   if (r.state === 'back') return { k: 'back', say: '退回去改了。' + est };
-  if (r.state === 'done') return { k: 'done', say: '走完了。' + est + '、實際 ' + (r.actual || 0) + ' 天' };
+  if (r.state === 'done') {
+    var rv = saidBy(reviewerOf(r));
+    return { k: 'done', say: '走完了。' + est + '、實際 ' + (r.actual || 0) + ' 天' + (rv ? '　' + rv + ' 收下' : '') };
+  }
   return { k: 'run', say: r.state };
 }
 var MS_RANK = { sub: 0, back: 1, run: 2, none: 3, done: 4 };
@@ -1038,6 +1041,18 @@ PAGES.runview = function () {
     var wb = r.wordBy ? userOf(r.wordBy) : null;
     H.push('<div class="card"><div class="eyebrow lit">' + (wb ? esc(wb.name) + ' 說' : '老師說') + '</div>' +
       '<p class="quote">' + nl(r.word) + '</p></div>');
+  }
+
+  /* 誰派的、誰審的。三位老師誰都審得了任何一件，這裡只寫事實，不下判斷。 */
+  var 派者 = m.mentorId ? userOf(m.mentorId) : null;
+  var 收者 = reviewerOf(r) ? userOf(reviewerOf(r)) : null;
+  var 退者 = (r.backs > 0 && rejecterOf(r)) ? userOf(rejecterOf(r)) : null;
+  if (派者 || 收者 || 退者) {
+    var 行 = [];
+    if (派者) 行.push('派的　' + esc(派者.name));
+    if (退者) 行.push('退回　' + esc(退者.name) + '（共 ' + r.backs + ' 次，最後一次）');
+    if (收者) 行.push('收下　' + esc(收者.name) + (r.doneAt ? '　' + fmtDay(r.doneAt) : ''));
+    H.push('<div class="card"><div class="eyebrow lit">誰派的、誰審的</div><p>' + 行.join('</p><p>') + '</p></div>');
   }
 
   H.push('<div class="row">');

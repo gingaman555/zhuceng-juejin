@@ -258,6 +258,32 @@ function wordBlock(run, cls) {
     (who ? '<b>' + esc(who) + '</b>' : '') + nl(run.word) + '</p>';
 }
 
+/* 誰審的（2026-10-07）。
+
+   一個班三位老師，誰都審得了任何一件，所以「誰收下的」「誰退回的」要看得出來。
+   舊的 Run 沒有 approvedBy／rejectedBy：收下的人退回 wordBy（收下那一刻寫的），
+   退回的人再退回本機讀得到的 reject 事件（沒拉過全班的紀錄就是空的）。 */
+function reviewerOf(r) {
+  if (!r || r.state !== 'done') return '';
+  return r.approvedBy || r.wordBy || '';
+}
+function rejecterOf(r) {
+  if (!r) return '';
+  if (r.rejectedBy) return r.rejectedBy;
+  if (r.state === 'back') return r.wordBy || '';
+  if (!(r.backs > 0) || !DB.Events) return '';
+  var last = '';
+  DB.Events.forEach(function (e) { if (e.kind === 'reject' && e.runId === r.runId) last = e.by || ''; });
+  return last;
+}
+/* 收下的時候老師沒有寫話：學生看不到是誰收的，補一行。有寫話的時候名字已經
+   在那一句話上（wordBlock），不重複。 */
+function reviewLine(r) {
+  if (!r || r.word) return '';
+  var n = saidBy(reviewerOf(r));
+  return n ? '<p class="dim rv-by">' + esc(n) + ' 收下的</p>' : '';
+}
+
 /* 那一趟談過什麼。
 
    兩邊的數字都留著：他一個人的時候說幾天、老師說幾天、最後訂幾天。

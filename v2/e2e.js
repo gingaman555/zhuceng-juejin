@@ -1456,6 +1456,51 @@ as(navU); S.page = 'home'; S.p = {}; DRAFT = {};
 NAV.on = 0; delete global.history; delete global.addEventListener;
 localStorage.removeItem('dungeon.drafts');
 
+/* ══ 看得出來是誰審的（2026-10-07）══
+
+   一個班三位老師，誰都審得了任何一件。收下的人、退回的人各記一欄；
+   收下沒寫話的時候學生也看得到是誰；匯出分得出派的人與審的人。 */
+H('誰審的：A 老師派、B 老師收下；退回的人與收下的人分開記');
+DB.Users.push({ userId: 'UT2', account: 'tea2', name: '第二位老師', role: 'teacher', classId: kl.classId, hero: 'adv' });
+const whoRv_T2 = find('Users', u => u.userId === 'UT2');
+DB.Teams.push({ teamId: 'GR1', classId: kl.classId, name: '誰審的測試組', project: '誰審', joinCode: 'WWWWWW' });
+DB.Users.push({ userId: 'UR1', account: 'rv1', name: '審核測試生', role: 'student', classId: kl.classId, teamId: 'GR1', hero: 'adv' });
+const whoRv_S = find('Users', u => u.userId === 'UR1');
+as(tea);
+const whoRv_Ms = actPublish(kl.classId, { title: '誰審的測試任務', note: '', steps: [], teams: ['GR1'], mentorId: tea.userId, due: 0, dueU: '' });
+as(whoRv_S);
+const whoRv_R = actCommit('GR1', whoRv_Ms.msId, 3, [], [], 'wild', 'mid');
+whoRv_R.actual = 3;
+actSubmit('GR1', whoRv_R.runId, '');
+/* 第一位老師退回，第二位老師收下（沒寫話） */
+as(tea);
+actReject(whoRv_R.runId, '再補一張圖。');
+be('退回：記下退回的是誰', whoRv_R.rejectedBy, tea.userId);
+as(whoRv_S);
+be('改好了再交一次', !!actResend('GR1', whoRv_R.runId, ''), true);
+as(whoRv_T2);
+actApprove(whoRv_R.runId, '', 1);
+be('收下：記下收下的是誰（跟退回的不同一位）', whoRv_R.approvedBy === whoRv_T2.userId && whoRv_R.rejectedBy === tea.userId, true);
+be('沒有寫話：學生看得到是誰收下的', reviewLine(whoRv_R).indexOf('第二位老師') >= 0 && reviewLine(whoRv_R).indexOf('收下') >= 0, true);
+whoRv_R.word = '做得很清楚。';
+be('有寫話：名字在那一句話上，不重複一行', reviewLine(whoRv_R), '');
+whoRv_R.word = '';
+be('rejecterOf／reviewerOf 讀對', rejecterOf(whoRv_R) === tea.userId && reviewerOf(whoRv_R) === whoRv_T2.userId, true);
+as(tea); S.page = 'runview'; S.p = { id: whoRv_R.runId }; DRAFT = {};
+const whoRv_H = PAGES.runview();
+be('老師看這一組：寫了派的、收下的、退回的', whoRv_H.indexOf('誰派的、誰審的') >= 0 && whoRv_H.indexOf('派的　' + tea.name) >= 0 && whoRv_H.indexOf('收下　第二位老師') >= 0 && whoRv_H.indexOf('退回　' + tea.name) >= 0, true);
+be('已派任務詳細頁每一組寫了誰收下的', msStatusOf(whoRv_R).say.indexOf('第二位老師 收下') >= 0, true);
+const whoRv_Csv = exportRuns(kl.classId).split('\n');
+const whoRv_Head = whoRv_Csv[0], whoRv_Row = whoRv_Csv.filter(l => l.indexOf('誰審的測試任務') >= 0)[0] || '';
+be('匯出多了四欄', ['派的老師', '收下的老師', '退回的老師（最後一次）', '審的是不是派的那一位'].every(k => whoRv_Head.indexOf(k) >= 0), true);
+be('匯出：派的、收下的、退回的名字都在，而且標出不是同一位（N）', whoRv_Row.indexOf(tea.name) >= 0 && whoRv_Row.indexOf('第二位老師') >= 0 && /,N,/.test(whoRv_Row), true);
+/* 同一位派、同一位收下 → Y；舊資料沒有 approvedBy 就退回 wordBy */
+const whoRv_Old = { state: 'done', wordBy: tea.userId, backs: 0 };
+be('舊的 Run 沒有 approvedBy：用 wordBy 當收下的人', reviewerOf(whoRv_Old), tea.userId);
+be('還沒收下：沒有「誰收下」', reviewerOf({ state: 'submitted', wordBy: tea.userId }), '');
+actWithdrawMs(whoRv_Ms.msId, tea.userId);
+as(whoRv_S); S.page = 'home'; S.p = {}; DRAFT = {};
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 
