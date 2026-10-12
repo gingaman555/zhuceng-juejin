@@ -24,6 +24,8 @@ PAGES.gate = function () {
      而這個世界裡你的身分是「接委託的人」，三拍剛好就是那一圈：
      接下來、說幾天、走完它。 */
   H.push('<p class="tagline">接下委託，規劃天數，走完專案地下城' + (RULES.SOLO ? ' B' : '') + '！！</p>');
+  /* 從 LINE 之類的 App 點進來的，先說一聲（見 55-ui.js 的 inAppNote）。 */
+  H.push(inAppNote());
 
   /* 進去那兩顆放在第一屏，不要捲。 */
   H.push('<div class="row">');
@@ -144,16 +146,17 @@ PAGES.login = function () {
   H.push('<span class="gate-walk">' +
     pxTag(gw.walkA, gw.pal, 'wf wa') + pxTag(gw.walkB, gw.pal, 'wf wb') + '</span>');
   H.push('</div>');
+  H.push(inAppNote());
   H.push('<div class="card">');
   /* 兩格都接 Enter：打完帳號按 Enter 習慣上是換到下一格，
      這裡的下一格只有密碼，所以兩格都直接送出——不用特別去點那顆鍵。 */
   H.push('<div class="eyebrow">帳號</div>');
   H.push('<input id="lg-acc" value="' + esc(draft('lg-acc')) + '" placeholder="' +
          esc('註冊時取的帳號') +
-         '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.login();}">');
+         '" onkeydown="if(enterKey(event)){event.preventDefault();ACTS.login();}">');
   H.push('<div class="eyebrow">密碼</div>');
   H.push('<input id="lg-pw" type="password" placeholder="' + esc('密碼') +
-         '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.login();}">');
+         '" onkeydown="if(enterKey(event)){event.preventDefault();ACTS.login();}">');
   H.push('</div>');
   H.push('<div class="row">');
   H.push(btn('進去', 'login', 'big'));
@@ -421,7 +424,7 @@ PAGES.reg = function () {
      不同的事，下一個讀的人要猜。 */
   H.push('<div class="eyebrow">再一次</div>');
   H.push('<input id="rg-pw2" type="password" placeholder="' + esc('跟上面那一格一樣') +
-         '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.reg();}">');
+         '" onkeydown="if(enterKey(event)){event.preventDefault();ACTS.reg();}">');
   H.push('</div>');
   H.push('<div class="row">');
   H.push(btn('建立', 'reg', 'big'));
@@ -886,7 +889,7 @@ PAGES.pw = function () {
   H.push('<div class="eyebrow">再一次</div>');
   H.push('<input id="pw-new2" type="password" placeholder="' +
     esc('跟上面那一格一樣') +
-    '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.setpw();}">');
+    '" onkeydown="if(enterKey(event)){event.preventDefault();ACTS.setpw();}">');
   H.push('</div>');
   H.push('<div class="row">');
   H.push(btn('換密碼', 'setpw', 'big'));

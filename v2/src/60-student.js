@@ -1239,7 +1239,7 @@ PAGES.commit = function () {
   H.push('<div class="pl-new">');
   H.push('<input id="pl-add" placeholder="' +
     esc(plan.length ? '再一件' : '例：找到人') +
-    '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.planadd(this.value);}">');
+    '" onkeydown="if(enterKey(event)){event.preventDefault();ACTS.planadd(this.value);}">');
   H.push('<button class="pd" title="' + esc('加一件') +
     '" onclick="ACTS.planadd((document.getElementById(\'pl-add\')||{}).value)">＋</button>');
   H.push('</div>');

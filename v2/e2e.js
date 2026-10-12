@@ -1501,6 +1501,48 @@ be('還沒收下：沒有「誰收下」', reviewerOf({ state: 'submitted', word
 actWithdrawMs(whoRv_Ms.msId, tea.userId);
 as(whoRv_S); S.page = 'home'; S.p = {}; DRAFT = {};
 
+/* ══ 注音選字按 Enter 不算送出、App 內建瀏覽器的提醒（2026-10-12）══ */
+H('注音輸入法：選字中的 Enter 不送出；Safari 的 compositionend 在 keydown 之前');
+IME_END = 0;
+be('一般的 Enter：送出', enterKey({ key: 'Enter' }), true);
+be('不是 Enter：不送', enterKey({ key: 'a' }), false);
+be('選字中（isComposing）的 Enter：不送', enterKey({ key: 'Enter', isComposing: true }), false);
+be('keyCode 229（輸入法處理中）的 Enter：不送', enterKey({ key: 'Enter', keyCode: 229 }), false);
+IME_END = Date.now();
+be('Safari：compositionend 剛發生、isComposing 已經是 false 的 Enter：不送', enterKey({ key: 'Enter', isComposing: false }), false);
+IME_END = Date.now() - 500;
+be('選字結束半秒之後的 Enter：送出', enterKey({ key: 'Enter' }), true);
+IME_END = 0;
+be('沒有事件物件也不會炸', enterKey(null), false);
+const 輸入框們 = ['58-gate.js', '60-student.js', '70-teacher.js'].map(f => fs.readFileSync(path.join(SRC, f), 'utf8')).join('\n');
+be('六個「按 Enter 就送」的輸入框都改用 enterKey', (輸入框們.match(/enterKey\(event\)/g) || []).length, 6);
+be('沒有留下直接看 event.key 的', 輸入框們.indexOf("event.key===\\'Enter\\'"), -1);
+
+H('App 內建的瀏覽器：LINE、Facebook、Instagram 認得出來，一般瀏覽器不說話');
+const uaLine = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari Line/14.5.0';
+const uaLineAnd = 'Mozilla/5.0 (Linux; Android 13; SM-S918B Build/TP1A) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0.0.0 Mobile Safari/537.36 Line/14.0.1';
+const uaSafari = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+const uaChrome = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
+const uaFb = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/440.0.0]';
+const uaIg = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 300.0.0';
+be('iPhone 上的 LINE', inAppBrowser(uaLine), 'LINE');
+be('Android 上的 LINE', inAppBrowser(uaLineAnd), 'LINE');
+be('Facebook', inAppBrowser(uaFb), 'Facebook');
+be('Instagram', inAppBrowser(uaIg), 'Instagram');
+be('iPhone Safari：不是', inAppBrowser(uaSafari), '');
+be('Android Chrome：不是', inAppBrowser(uaChrome), '');
+be('空字串、認不出來：不是', inAppBrowser('') + inAppBrowser('Mozilla/5.0 something'), '');
+global.location = { origin: 'https://boss-fight-816f3.web.app', pathname: '/', href: 'https://boss-fight-816f3.web.app/?demo' };
+const 提醒 = inAppNote(uaLine);
+be('LINE：提醒寫出是在 LINE 裡面開的', 提醒.indexOf('你現在是在 LINE 裡面開的') >= 0, true);
+be('LINE：說了做什麼（貼到 Safari 或 Chrome）', 提醒.indexOf('Safari 或 Chrome') >= 0, true);
+be('LINE：有一顆複製網址的鍵，複製的是網站網址（不帶 ?demo 之類的尾巴）', 提醒.indexOf('data-act="copy"') >= 0 && 提醒.indexOf('data-copy="https://boss-fight-816f3.web.app/"') >= 0 && 提醒.indexOf('複製網址') >= 0, true);
+be('一般瀏覽器：什麼都不畫', inAppNote(uaSafari), '');
+be('沒有主要動作鍵（不搶登入那一顆）', 提醒.indexOf('class="btn big') < 0 && 提醒.indexOf(' big') < 0, true);
+delete global.location;
+S.who = null; S.page = 'gate'; DRAFT = {};
+be('門口、登入頁在一般瀏覽器下沒有這張卡', PAGES.gate().indexOf('class="card inapp"') < 0 && PAGES.login().indexOf('class="card inapp"') < 0, true);
+
 console.log('\n' + '═'.repeat(52));
 console.log(bad ? '有 ' + bad + ' 個地方不對' : '整條流程走完，全部對得上');
 

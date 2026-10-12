@@ -673,7 +673,7 @@ PAGES.ms = function () {
   }
   H.push('<input id="ms-step" placeholder="' +
     esc(sp.length ? '再切一段，按 Enter' : '切一段，按 Enter') +
-    '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ACTS.stepadd(this.value);}">');
+    '" onkeydown="if(enterKey(event)){event.preventDefault();ACTS.stepadd(this.value);}">');
   H.push('<p class="dim">' + (sp.length ? '共 ' + sp.length + ' 段' :
     '不寫的話他們自己拆。') + '</p>');
   /* ── 排到哪一天 ──

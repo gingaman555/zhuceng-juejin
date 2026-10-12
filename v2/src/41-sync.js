@@ -834,7 +834,12 @@ function syncStart() {
   if (!syncReady()) return;
   /* 教室的網路會斷。開著快取，斷線的時候寫得下去、回來自己補送，
      多開幾個分頁也不會打架。開不起來就算了，線上還是能用。 */
-  try { SYNC.db.enablePersistence({ synchronizeTabs: true }); } catch (e) {}
+  try {
+    var pers = SYNC.db.enablePersistence({ synchronizeTabs: true });
+    /* 回傳的是 Promise：App 內建的瀏覽器常常沒有 IndexedDB，失敗是從這裡出來的。
+       失敗了就沒有本機快取，其餘照常運作（本機這一份是我們自己存的）。 */
+    if (pers && typeof pers.catch === 'function') pers.catch(function () {});
+  } catch (e) {}
   SYNC.on = 1;
   SYNC.last = {};
   Object.keys(SYNC_KEY).forEach(function (col) {

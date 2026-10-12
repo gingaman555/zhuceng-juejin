@@ -426,6 +426,59 @@ function flashBar() {
    而且那是一種只有測試才抓得到的錯。讓它自己負責。 */
 function say(m) { S.flash = m; render(); }
 
+/* ---------- 注音／拼音選字按 Enter 不算送出（2026-10-12）----------
+
+   拆件、老師分段那幾個輸入框是「按 Enter 就加一條」。用注音選字的時候 Enter 是
+   「確定這幾個字」，不是「這一條寫完了」：
+
+     · Chrome：選字中的 keydown 是 isComposing（keyCode 229）
+     · Safari（iPhone、Mac）：compositionend 比那一下 keydown 早，keydown 的
+       isComposing 已經是 false——所以只看 isComposing 擋不住，要記下
+       compositionend 剛剛才發生過
+
+   結果是打到一半的詞被切成一條。雲端資料裡沒有看到被切碎的痕跡（學生自己拆的
+   46 件都是 5–8 個字），所以這是預防，不是修一個已經造成損害的東西。 */
+var IME_END = 0;
+function enterKey(ev) {
+  if (!ev || ev.key !== 'Enter') return false;
+  if (ev.isComposing || ev.keyCode === 229) return false;
+  if (Date.now() - IME_END < 120) return false;
+  return true;
+}
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('compositionend', function () { IME_END = Date.now(); }, true);
+}
+
+/* ---------- App 內建的瀏覽器（2026-10-12）----------
+
+   從 LINE、Instagram、Facebook 的聊天室點網址進來，開的是那個 App 自己的小瀏覽器：
+   登入狀態常常留不住（每次都要重新登入）、也比較容易停在舊版。學生最常是從
+   LINE 群組點進來。系統沒辦法替它們修——那是 App 的瀏覽器——能做的是在門口說一聲，
+   給一顆複製網址的鍵，請他貼到 Safari 或 Chrome 去開。
+
+   只看 userAgent 的記號；認不出來就當一般瀏覽器，什麼都不說。 */
+function inAppBrowser(ua) {
+  if (ua == null) ua = (typeof navigator !== 'undefined' && navigator && navigator.userAgent) || '';
+  ua = String(ua);
+  if (/\bLine\//i.test(ua)) return 'LINE';
+  if (/FBAN|FBAV|FB_IAB|FBIOS/.test(ua)) return 'Facebook';
+  if (/Instagram/i.test(ua)) return 'Instagram';
+  if (/MicroMessenger/i.test(ua)) return '微信';
+  if (/KAKAOTALK/i.test(ua)) return 'KakaoTalk';
+  return '';
+}
+function inAppNote(ua) {
+  var n = inAppBrowser(ua);
+  if (!n) return '';
+  var url = '';
+  try { url = location.origin + location.pathname; } catch (e) {}
+  return '<div class="card inapp"><div class="eyebrow lit">你現在是在 ' + esc(n) + ' 裡面開的</div>' +
+    '<p>' + esc(n) + ' 裡面的網頁容易忘記你登入過，也可能不是最新的版本。</p>' +
+    '<p class="dim">複製網址，貼到 Safari 或 Chrome 再打開，會穩很多。</p>' +
+    (url ? '<button class="btn ghost cp" data-act="copy" data-copy="' + esc(url) + '">複製網址</button>' : '') +
+    '</div>';
+}
+
 /* ---------- 複製到剪貼簿 ----------
 
    兩條路：新的 navigator.clipboard（需要 https，本站是），

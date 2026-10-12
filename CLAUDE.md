@@ -137,6 +137,13 @@ boss-fight-b.web.app       專案地下城 B    不分組（RULES.SOLO = 1）
 - **草稿（`DRAFT_PAGES`）**：只存交作業、承諾、老師派任務、回一句建議、老師審核這幾頁的這幾個欄位，存在這一台的 localStorage（`dungeon.drafts`，不上雲、不進匯出）。**門口那幾頁一律不存（有密碼）。** 存的時機：打字（隔 0.5 秒）、換頁前（`go()` 開頭）、分頁被藏起來或關掉（手機切去別的 App）。還原：再走進同一頁（`go()` 結尾的 `draftEnter`）；重新打開網頁時交作業與承諾寫到一半的回到那一頁（`draftResume`，要有寫東西、不超過 12 小時、只有學生）。草稿**會失效**：那一趟已經交出去／已經承諾過／審核過／回過一句，一律不還原並刪掉；全部清空也會刪掉那一份（所以送出成功的動作把 DRAFT 清空，就不會留下）。新增要存的頁：加進 `DRAFT_PAGES`、`draftKey`、`draftHas`、`draftValid`。
 - `e2e.js` 的「瀏覽器的上一頁」「草稿」兩節用模擬的 history 守這些；部署前**沒有真手機可以測滑回**，瀏覽器窗格裡用真的 history 驗過一輪（返回、往前、重新整理後回到交作業頁且字還在）。
 
+## 注音選字按 Enter 與 App 內建瀏覽器（2026-10-12）
+
+- **選字中的 Enter 不算送出（`enterKey`，`55-ui.js`）**：拆件、老師分段、登入、註冊、換密碼那六個「按 Enter 就送」的輸入框，一律用 `enterKey(event)`，不要再直接寫 `event.key==='Enter'`。Chrome 選字中的 keydown 是 `isComposing`／keyCode 229；Safari（iPhone、Mac）的 `compositionend` 比那下 keydown 早、isComposing 已經是 false，所以另外記下 `compositionend` 剛發生（120 毫秒內不算）。雲端資料裡沒看到被切碎的件（學生自己拆的 46 件全是 5–8 字），這是預防，不是修已經造成的損害。
+- **App 內建瀏覽器（`inAppBrowser`／`inAppNote`）**：從 LINE、Facebook、Instagram、微信、KakaoTalk 點進來的，登入狀態常留不住、也比較容易停在舊版。系統修不了那個瀏覽器，所以門口與登入頁多一張卡：說明並給一顆「複製網址」（貼到 Safari 或 Chrome 開）。只看 userAgent 的記號，認不出來就當一般瀏覽器、什麼都不畫。**沒有收任何瀏覽器資料**（不記在帳號上、不進匯出）。
+- Firestore 的 `enablePersistence` 回傳 Promise，App 內建瀏覽器常沒有 IndexedDB：補了 `.catch`，失敗就沒有本機快取、其餘照常。
+- `e2e.js` 的「注音輸入法」「App 內建的瀏覽器」兩節守這些；瀏覽器窗格裡用真的事件順序（compositionend 之後立刻 keydown）驗過。**沒有真的 iPhone 可以測。**
+
 ## 按錯建了組：沒有紀錄之前可以離開重選（2026-09-30）
 
 「組好了就不能換」的理由是歷史（紀錄掛在組上）。學生手滑按了「建立」變成一個人一組、加不進隊友那一組，這個理由在**還沒有任何紀錄**的時候不成立。所以組別卡上多一顆安靜的「按錯了？離開這一組」（`actLeaveTeam`，`15-auth.js`；兩步驟）：
