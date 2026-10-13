@@ -282,3 +282,26 @@
   .sp2{flex-wrap:wrap}
   .sp2 i{flex:1 1 100%;order:-1;margin-bottom:2px}
 }
+
+/* ---------- 準度那一條（accBar，56-viz.js）：窄螢幕改成三列 ----------
+
+   三格並排的時候，375 寬每格扣掉內距只剩 48px——「跟承諾的一樣」「比承諾的早」被擠成
+   兩個字一行、三行高，看起來像直排（2026-10-13 逐頁掃出來的，在學生的任務清單、出口頁、
+   老師的結案頁都有）。窄螢幕上一格一列：圖、數字、說明橫著排，字一律橫的。 */
+@media (max-width: 560px) {
+  .acc{flex-direction:column;gap:8px}
+  .acc-c{display:flex;align-items:center;gap:14px;text-align:left;padding:12px 14px}
+  .acc-c b{flex:0 0 auto}
+  .acc-c i{font-size:33px;line-height:1;min-width:1.4em;text-align:right}
+  .acc-c span{flex:1;min-width:0}
+}
+
+/* ---------- 「你說的把握，跟後來」：窄螢幕上名稱自己一行 ----------
+
+   320 寬量到：名稱（「不太確定」）被兩個數字擠成 47px，一個字一行、四行高。
+   名稱佔整列，次數與「準了幾次」在下面一行，兩段各自不拆開。 */
+@media (max-width: 420px) {
+  .sure-r{grid-template-columns:auto 1fr;gap:2px 14px}
+  .sure-r b{grid-column:1 / -1}
+  .sure-r span,.sure-r i{white-space:nowrap}
+}
