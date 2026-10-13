@@ -51,10 +51,10 @@ function overTags(teamId, run) {
 
    老師要的是「哪一件作業現在有幾組交了」。本來清單只有一長串組名，同一件的排在
    一起但沒有分界，要自己數。這裡每個任務一列：交出幾組／全部幾組，等你看、已收下、
-   進行中、還沒開始各幾組。點一列就只看那一件，再點一次回到全部。
+   進行中、還沒開始各幾組。（本來這裡是一張獨立的概覽加一份清單，兩份都在列任務，
+   還要點來點去；合成一份：一個任務一張卡，組就列在那一張卡裡面。）
 
    數的是組，不是 Run：同一組同一件有兩筆的時候（隊友同時按承諾各建一筆）算一組。 */
-var RADAR_TF = '';
 function taskOverview(u) {
   var teams = teamsUnder(u.classId, u.userId);
   var out = [];
@@ -169,34 +169,6 @@ PAGES.radar = function () {
       '<i>你覺得天數差很多的話，可以回一句建議。不回也可以。</i></button>');
   }
 
-  /* ── 各任務現在交了幾組 ──
-
-     一個任務一列，點一下只看那一件。只有一個任務的時候不用：那一張就是清單本身。 */
-  var ovw = taskOverview(u);
-  if (RADAR_TF && !ovw.some(function (o) { return o.m.msId === RADAR_TF && o.wait > 0; })) RADAR_TF = '';
-  if (ovw.length > 1 || RADAR_TF) {
-    H.push('<div class="card ovw"><div class="eyebrow lit">各任務現在交了幾組</div>');
-    ovw.forEach(function (o) {
-      var parts = [];
-      if (o.wait) parts.push('等你看 ' + o.wait + ' 組');
-      if (o.back) parts.push('退回改 ' + o.back);
-      if (o.done) parts.push('已收下 ' + o.done);
-      if (o.run) parts.push('進行中 ' + o.run);
-      if (o.none) parts.push('還沒開始 ' + o.none);
-      var 交 = o.wait + o.done + o.back;
-      var on = RADAR_TF === o.m.msId;
-      H.push('<button class="rq' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
-        esc(JSON.stringify({ a: 'tf:' + o.m.msId })) + '\'' + (o.wait ? '' : ' disabled') + '>' +
-        '<span class="rq-t"><b>' + esc(o.m.title) + '</b><em>' + esc(parts.join('　·　') || '還沒有人開始') + '</em></span>' +
-        '<span class="rq-d">交出 ' + 交 + '／' + o.total + '</span></button>');
-    });
-    if (RADAR_TF) H.push('<div class="row">' + btn('看全部任務', 'tf:' + RADAR_TF, 'ghost sm') + '</div>');
-    H.push('</div>');
-  }
-  if (RADAR_TF) {
-    rows = rows.filter(function (x) { return x.ms.msId === RADAR_TF; });
-  }
-
   if (!rows.length) {
     H.push('<div class="card">');
     /* 「沒有人在等你」講的是審核這一格，可是它印出來的時候旁邊那一格
@@ -229,30 +201,69 @@ PAGES.radar = function () {
      判定尤其不留：「跟承諾的一樣」是系統對他們預估的判定，
      擺在他打開成果之前，等於先給他一個印象。
      系統判預估、老師判成果，兩個判斷要分開。 */
-  var lastMs = null;
-  var perMs = {};
-  rows.forEach(function (x) { perMs[x.ms.msId] = (perMs[x.ms.msId] || 0) + 1; });
-  var manyMs = Object.keys(perMs).length > 1;
-  rows.forEach(function (x) {
-    /* 同一件的排在一起，每一群前面寫任務名與幾組。 */
-    if (manyMs && x.ms.msId !== lastMs) {
-      H.push('<div class="eyebrow rq-gh">' + esc(x.ms.title) + '　' + perMs[x.ms.msId] + ' 組等你看</div>');
-      lastMs = x.ms.msId;
-    }
+  /* ── 一個任務一張卡（2026-10-13）──
+
+     老師要的是「哪一件作業現在有幾組交了」。卡的標題寫任務名與「交出幾／全部幾組」，
+     底下一行小字是派的人與其他組的狀況（已收下、進行中、還沒開始），再下面才是
+     等你看的那幾組，一組一列。沒有人在等的任務不佔一張卡，併在最後一張安靜的卡裡。
+
+     派的人寫在卡上一次，不再每一列都寫。 */
+  var ovw = taskOverview(u);
+  var byMs = {};
+  rows.forEach(function (x) { (byMs[x.ms.msId] = byMs[x.ms.msId] || []).push(x); });
+  function ovParts(o, withWait) {
+    var p = [];
+    if (withWait && o.wait) p.push('等你看 ' + o.wait + ' 組');
+    if (o.back) p.push('退回改 ' + o.back);
+    if (o.done) p.push('已收下 ' + o.done);
+    if (o.run) p.push('進行中 ' + o.run);
+    if (o.none) p.push('還沒開始 ' + o.none);
+    return p;
+  }
+  var shown = {};
+  ovw.forEach(function (o) {
+    var list = byMs[o.m.msId];
+    if (!list || !list.length) return;
+    shown[o.m.msId] = 1;
+    var 派者 = o.m.mentorId ? (o.m.mentorId === u.userId ? u : userOf(o.m.mentorId)) : null;
+    var meta = [];
+    if (派者) meta.push(派者.userId === u.userId ? '你派的' : esc(派者.name) + ' 派的');
+    meta = meta.concat(ovParts(o, false));
+    H.push('<div class="card rvg">');
+    H.push('<div class="rvg-h"><b>' + esc(o.m.title) + '</b><span>交出 ' + (o.wait + o.done + o.back) + '／' + o.total + '</span></div>');
+    /* 每一段不拆開：窄螢幕上斷行只能斷在『·』，不會把「還沒開始」從中間切開。 */
+    if (meta.length) H.push('<p class="dim rvg-m">' + meta.map(function (x) { return '<span class="rvg-p">' + x + '</span>'; }).join(' · ') + '</p>');
+    /* 一列只回答一個問題：先看哪一組，等了幾天。整列是一顆鈕，點進去才是
+       他真的在讀成果的地方。判定不放在這裡：「跟承諾的一樣」是系統對預估的判定，
+       擺在他打開成果之前等於先給他一個印象——系統判預估、老師判成果，要分開。 */
+    list.forEach(function (x) {
+      H.push('<button class="rq" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'go:review:' + x.run.runId })) + '\'>');
+      H.push('<span class="rq-t"><b>' + esc(x.team.name) + '</b>');
+      var 員 = teamMemberNames(x.team.teamId);
+      if (員) H.push('<em>' + esc(員) + '</em>');
+      H.push('</span><span class="rq-d">等 ' + x.waited + ' 天</span></button>');
+    });
+    H.push('</div>');
+  });
+  /* 清單上有、概覽沒有的（不該發生；退而求其次，照舊列在一起，不要讓人看不到）。 */
+  var orphan = rows.filter(function (x) { return !shown[x.ms.msId] && !ovw.some(function (o) { return o.m.msId === x.ms.msId; }); });
+  orphan.forEach(function (x) {
     H.push('<button class="rq" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:review:' + x.run.runId })) + '\'>');
-    H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b>');
-    /* 這一件是誰派的，接在組名後面——不另外開一格，那一列要回答的
-       還是同一個問題（先看哪一件）。自己派的不寫。
-
-       三位老師共用一個佇列，所以「這一件本來是誰的事」要看得到：
-       看得到才有得商量，看不到就會兩個人都以為對方會看。 */
-    var rby = x.ms.mentorId ? (x.ms.mentorId === u.userId ? u : userOf(x.ms.mentorId)) : null;
-    H.push('<em>' + esc(x.team.name) + (teamMemberNames(x.team.teamId) ? '（' + esc(teamMemberNames(x.team.teamId)) + '）' : '') +
-      (rby ? '　·　' + (rby.userId === u.userId ? '你派的' : esc(rby.name) + ' 派的') : '') + '</em></span>');
-    H.push('<span class="rq-d">等 ' + x.waited + ' 天</span>');
-    H.push('</button>');
+    H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b><em>' + esc(x.team.name) + '</em></span>');
+    H.push('<span class="rq-d">等 ' + x.waited + ' 天</span></button>');
   });
+  /* 沒有人在等你的任務：一行一個，只寫數字，安靜。 */
+  var quiet = ovw.filter(function (o) { return !shown[o.m.msId] && (o.done + o.run + o.back + o.none) > 0; });
+  if (quiet.length) {
+    H.push('<div class="card quiet rvg"><div class="eyebrow">其他任務，沒有人在等你</div>');
+    quiet.forEach(function (o) {
+      H.push('<p class="rvg-q"><b>' + esc(o.m.title) + '</b><span>交出 ' + (o.done + o.back) + '／' + o.total +
+        '　·　' + esc(ovParts(o, false).join('　·　')) + '</span></p>');
+    });
+    H.push('</div>');
+  }
 
   /* 底下本來還有一塊「全班現在」，是各組進度的縮小版——
      而各組進度就在側欄第三格。同一件事說兩遍，先出現的是雜訊。 */

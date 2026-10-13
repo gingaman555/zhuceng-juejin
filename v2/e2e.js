@@ -1547,7 +1547,7 @@ be('門口、登入頁在一般瀏覽器下沒有這張卡', PAGES.gate().indexO
 
    老師按「收下」之後系統自動翻到同一件的下一組，那一頁長得一樣，他以為沒處理。
    改成一律回清單，頂端寫處理了哪一組、還剩幾件；清單上方一個任務一列，看得到幾組交了。 */
-H('按完收下回「等你的」；各任務現在交了幾組；點一列只看那一件');
+H('按完收下回「等你的」；一個任務一張卡，看得到幾組交了');
 DB.Teams.push({ teamId: 'GO1', classId: kl.classId, name: '概覽一組', project: '概覽', joinCode: 'OOOOO1' });
 DB.Teams.push({ teamId: 'GO2', classId: kl.classId, name: '概覽二組', project: '概覽', joinCode: 'OOOOO2' });
 DB.Teams.push({ teamId: 'GO3', classId: kl.classId, name: '概覽三組', project: '概覽', joinCode: 'OOOOO3' });
@@ -1568,26 +1568,20 @@ const ovR2 = ovSubmit('UO2', 'GO2', ovA.msId);   /* 甲：GO2 交了 */
 as(find('Users', u => u.userId === 'UO3'));
 actCommit('GO3', ovA.msId, 2, [], [], 'wild', 'mid');   /* 甲：GO3 進行中 */
 ovSubmit('UO1', 'GO1', ovB.msId);                /* 乙：GO1 交了；GO2 還沒開始 */
-as(tea); S.page = 'radar'; S.p = {}; DRAFT = {}; RADAR_TF = '';
+as(tea); S.page = 'radar'; S.p = {}; DRAFT = {};
 const ovH = PAGES.radar();
-be('清單上方有「各任務現在交了幾組」', ovH.indexOf('各任務現在交了幾組') >= 0, true);
-be('任務甲：2 組等你看、1 組進行中、交出 2／3', ovH.indexOf('概覽任務甲') >= 0 && ovH.indexOf('等你看 2 組') >= 0 && ovH.indexOf('進行中 1') >= 0 && ovH.indexOf('交出 2／3') >= 0, true);
-be('任務乙：1 組等你看、1 組還沒開始、交出 1／2', ovH.indexOf('等你看 1 組') >= 0 && ovH.indexOf('還沒開始 1') >= 0 && ovH.indexOf('交出 1／2') >= 0, true);
-be('清單裡每一群前面寫任務名與幾組', ovH.indexOf('rq-gh') >= 0 && ovH.indexOf('概覽任務甲　2 組等你看') >= 0, true);
-ACTS.tf(ovA.msId);
-const ovF = PAGES.radar();
-be('點任務甲：只剩甲的兩組', ovF.indexOf('go:review:' + ovR1.runId) >= 0 && ovF.indexOf('go:review:' + ovR2.runId) >= 0 && (ovF.match(/go:review:/g) || []).length === 2, true);
-be('只看一件的時候有「看全部任務」', ovF.indexOf('看全部任務') >= 0, true);
-ACTS.tf(ovA.msId);
-be('再點一次回到全部', RADAR_TF, '');
-ACTS.tf(ovA.msId);
+be('沒有另外一張「各任務」概覽卡，也沒有篩選：一個任務一張卡', ovH.indexOf('各任務現在交了幾組') < 0 && ovH.indexOf('看全部任務') < 0 && typeof ACTS.tf === 'undefined', true);
+be('任務甲一張卡：交出 2／3，底下寫進行中 1', ovH.indexOf('概覽任務甲') >= 0 && ovH.indexOf('交出 2／3') >= 0 && ovH.indexOf('進行中 1') >= 0, true);
+be('任務乙一張卡：交出 1／2，底下寫還沒開始 1', ovH.indexOf('概覽任務乙') >= 0 && ovH.indexOf('交出 1／2') >= 0 && ovH.indexOf('還沒開始 1') >= 0, true);
+be('派的人寫在卡上一次，不是每一列都寫', (() => { const i = ovH.indexOf('概覽任務甲'); const j = ovH.indexOf('class="card', i + 5); const card = ovH.slice(i, j < 0 ? undefined : j); return (card.match(/你派的/g) || []).length === 1 && (card.match(/go:review:/g) || []).length === 2; })(), true);
+be('甲的兩組各一列，列上是組名與組員、等幾天', ovH.indexOf('go:review:' + ovR1.runId) >= 0 && ovH.indexOf('go:review:' + ovR2.runId) >= 0 && ovH.indexOf('概覽一組') >= 0 && ovH.indexOf('概覽甲') >= 0, true);
 S.page = 'review'; S.p = { id: ovR1.runId }; DRAFT = { bonus: 0 };
 ACTS.approve(ovR1.runId);
 be('收下之後：回到「等你的」，不是下一組的審核頁', S.page, 'radar');
 be('頂端寫剛剛處理的是哪一組', String(S.flash).indexOf('「概覽一組」') >= 0, true);
 be('頂端寫還剩幾件', /還有 \d+ 件在等你/.test(String(S.flash)), true);
 be('剛剛那件不在清單上了', PAGES.radar().indexOf('go:review:' + ovR1.runId) < 0, true);
-be('收下之後，概覽甲只剩一組等你看、一組已收下', (() => { const h = PAGES.radar(); return h.indexOf('等你看 1 組') >= 0 && h.indexOf('已收下 1') >= 0; })(), true);
+be('收下之後，概覽甲那張卡：交出 2／3、已收下 1，只剩概覽二組一列', (() => { const h = PAGES.radar(); return h.indexOf('已收下 1') >= 0 && h.indexOf('go:review:' + ovR2.runId) >= 0 && h.indexOf('go:review:' + ovR1.runId) < 0; })(), true);
 /* 退回也一樣 */
 S.page = 'review'; S.p = { id: ovR2.runId }; DRAFT = {};
 document.getElementById('gr-word').value = '再補一張圖。';
@@ -1595,7 +1589,6 @@ ACTS.reject(ovR2.runId);
 be('退回之後也回「等你的」', S.page, 'radar');
 be('頂端寫剛剛退回的是哪一組', String(S.flash).indexOf('「概覽二組」') >= 0 && String(S.flash).indexOf('退回去了') >= 0, true);
 document.getElementById('gr-word').value = '';
-RADAR_TF = '';
 actWithdrawMs(ovA.msId, tea.userId); actWithdrawMs(ovB.msId, tea.userId);
 as(find('Users', u => u.userId === 'UO1')); S.page = 'home'; S.p = {}; DRAFT = {};
 

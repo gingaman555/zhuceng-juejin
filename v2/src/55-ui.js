@@ -1435,10 +1435,6 @@ var ACTS = {
   /* 老師那一頁上的審核／出口。跟 tab 分開，不然兩邊會互相蓋掉。 */
   tq: function (k) { DRAFT.tq = k; render(); },
 
-  /* 「等你的」只看某一個任務（見 70-teacher.js 的 taskOverview）。
-     記在 RADAR_TF 不記 DRAFT：收下一件之後會 go('radar')，DRAFT 會被清掉，
-     而老師連著審同一個任務的時候不想每一次都再點一遍。 */
-  tf: function (id) { RADAR_TF = (RADAR_TF === id) ? '' : String(id || ''); render(); },
 
 
 
