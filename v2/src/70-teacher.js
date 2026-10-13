@@ -47,6 +47,42 @@ function overTags(teamId, run) {
    teacherStep 一起退休：它唯一的用途是決定那一條上哪一格亮著。 */
 
 /* ---------- 審核（首頁） ---------- */
+/* ---------- 各任務現在交了幾組（2026-10-13）----------
+
+   老師要的是「哪一件作業現在有幾組交了」。本來清單只有一長串組名，同一件的排在
+   一起但沒有分界，要自己數。這裡每個任務一列：交出幾組／全部幾組，等你看、已收下、
+   進行中、還沒開始各幾組。點一列就只看那一件，再點一次回到全部。
+
+   數的是組，不是 Run：同一組同一件有兩筆的時候（隊友同時按承諾各建一筆）算一組。 */
+var RADAR_TF = '';
+function taskOverview(u) {
+  var teams = teamsUnder(u.classId, u.userId);
+  var out = [];
+  where('Milestones', function (m) {
+    return m.classId === u.classId && !m.withdrawnAt && !m.notice;
+  }).forEach(function (m) {
+    var o = { m: m, total: 0, wait: 0, done: 0, run: 0, back: 0, none: 0 };
+    teams.forEach(function (t) {
+      var mine = msFor(t.teamId).some(function (x) { return x.msId === m.msId; });
+      if (!mine) return;
+      o.total++;
+      var r = runOf(t.teamId, m.msId);
+      if (!r) o.none++;
+      else if (r.state === 'submitted') o.wait++;
+      else if (r.state === 'done') o.done++;
+      else if (r.state === 'back') o.back++;
+      else o.run++;
+    });
+    if (o.total) out.push(o);
+  });
+  /* 還有人在等你的排前面，然後新派的在前。 */
+  out.sort(function (a, b) {
+    if ((b.wait > 0) !== (a.wait > 0)) return b.wait > 0 ? 1 : -1;
+    return (b.m.at || 0) - (a.m.at || 0);
+  });
+  return out;
+}
+
 PAGES.radar = function () {
   var u = me();
   /* 全班。三位老師共用一個課程，而每一位本來就會被問到任何一組的事——
@@ -133,6 +169,34 @@ PAGES.radar = function () {
       '<i>你覺得天數差很多的話，可以回一句建議。不回也可以。</i></button>');
   }
 
+  /* ── 各任務現在交了幾組 ──
+
+     一個任務一列，點一下只看那一件。只有一個任務的時候不用：那一張就是清單本身。 */
+  var ovw = taskOverview(u);
+  if (RADAR_TF && !ovw.some(function (o) { return o.m.msId === RADAR_TF && o.wait > 0; })) RADAR_TF = '';
+  if (ovw.length > 1 || RADAR_TF) {
+    H.push('<div class="card ovw"><div class="eyebrow lit">各任務現在交了幾組</div>');
+    ovw.forEach(function (o) {
+      var parts = [];
+      if (o.wait) parts.push('等你看 ' + o.wait + ' 組');
+      if (o.back) parts.push('退回改 ' + o.back);
+      if (o.done) parts.push('已收下 ' + o.done);
+      if (o.run) parts.push('進行中 ' + o.run);
+      if (o.none) parts.push('還沒開始 ' + o.none);
+      var 交 = o.wait + o.done + o.back;
+      var on = RADAR_TF === o.m.msId;
+      H.push('<button class="rq' + (on ? ' on' : '') + '" data-act="run" data-p=\'' +
+        esc(JSON.stringify({ a: 'tf:' + o.m.msId })) + '\'' + (o.wait ? '' : ' disabled') + '>' +
+        '<span class="rq-t"><b>' + esc(o.m.title) + '</b><em>' + esc(parts.join('　·　') || '還沒有人開始') + '</em></span>' +
+        '<span class="rq-d">交出 ' + 交 + '／' + o.total + '</span></button>');
+    });
+    if (RADAR_TF) H.push('<div class="row">' + btn('看全部任務', 'tf:' + RADAR_TF, 'ghost sm') + '</div>');
+    H.push('</div>');
+  }
+  if (RADAR_TF) {
+    rows = rows.filter(function (x) { return x.ms.msId === RADAR_TF; });
+  }
+
   if (!rows.length) {
     H.push('<div class="card">');
     /* 「沒有人在等你」講的是審核這一格，可是它印出來的時候旁邊那一格
@@ -165,7 +229,16 @@ PAGES.radar = function () {
      判定尤其不留：「跟承諾的一樣」是系統對他們預估的判定，
      擺在他打開成果之前，等於先給他一個印象。
      系統判預估、老師判成果，兩個判斷要分開。 */
+  var lastMs = null;
+  var perMs = {};
+  rows.forEach(function (x) { perMs[x.ms.msId] = (perMs[x.ms.msId] || 0) + 1; });
+  var manyMs = Object.keys(perMs).length > 1;
   rows.forEach(function (x) {
+    /* 同一件的排在一起，每一群前面寫任務名與幾組。 */
+    if (manyMs && x.ms.msId !== lastMs) {
+      H.push('<div class="eyebrow rq-gh">' + esc(x.ms.title) + '　' + perMs[x.ms.msId] + ' 組等你看</div>');
+      lastMs = x.ms.msId;
+    }
     H.push('<button class="rq" data-act="run" data-p=\'' +
       esc(JSON.stringify({ a: 'go:review:' + x.run.runId })) + '\'>');
     H.push('<span class="rq-t"><b>' + esc(x.ms.title) + '</b>');

@@ -1435,6 +1435,11 @@ var ACTS = {
   /* 老師那一頁上的審核／出口。跟 tab 分開，不然兩邊會互相蓋掉。 */
   tq: function (k) { DRAFT.tq = k; render(); },
 
+  /* 「等你的」只看某一個任務（見 70-teacher.js 的 taskOverview）。
+     記在 RADAR_TF 不記 DRAFT：收下一件之後會 go('radar')，DRAFT 會被清掉，
+     而老師連著審同一個任務的時候不想每一次都再點一遍。 */
+  tf: function (id) { RADAR_TF = (RADAR_TF === id) ? '' : String(id || ''); render(); },
+
 
 
   /* 回報：某一件實際花幾天。到頭就停在那裡。 */
@@ -1579,8 +1584,8 @@ var ACTS = {
     var r0 = find('Runs', function (x) { return x.runId === runId; });
     var ms0 = r0 ? r0.msId : null;
     if (!actReject(runId, w.trim())) return say('這一件退不回去。');
-    /* 退回也接著看同一件的下一組（見 nextSame）。 */
-    nextSame(ms0, '退回去了。');
+    /* 退回也一樣：回「等你的」（見 afterReview）。 */
+    afterReview(r0, '退回去了。');
   },
 
   /* 改好了再交一次。判定還是原來那一個——重做不會讓他當初
@@ -1690,24 +1695,25 @@ var ACTS = {
        一場戲（委託人伸手接過去），在老師這一邊只有兩個字。
        把那一位的名字放進去，兩端講的才是同一件事。 */
     var line = (pat0 ? pat0.n + ' 收下了。' : '收下了。') + '你多給了 ' + b + ' 顆。';
-    nextSame(ms0, line);
+    afterReview(r0, line);
   }
 };
 
-/* 同一件委託還有沒有下一組在等。
+/* 審完一件：一律回「等你的」，頂端寫清楚剛剛處理了哪一組、還剩幾件。
 
-   有就直接翻過去，沒有才回清單。他手上剛讀完那一份標準，連著看
-   同一件最快——回一次清單再點一次，等於每一件都要重新進入狀況。 */
-function nextSame(msId, line) {
+   2026-10-13：本來是「同一件委託還有下一組在等，就直接翻到那一組的審核頁」
+   （nextSame），理由是他剛讀完那一份標準，連著看最快。實際上老師按完收下，
+   看到的是一個版面、按鈕、位置都一模一樣的審核頁，只有標題上的組名換了——
+   他以為剛剛那件沒被處理，要按「回審核清單」看到它不見了才相信。收下的資料
+   是對的（那天 18:21–18:35 的 7 次收下全部記下了），是畫面讓人誤會。
+
+   所以改成按完一律回清單。連著審同一件會多點一次，換來的是「按下去的那一件
+   確實不見了」看得到。 */
+function afterReview(r0, line) {
   var u = me();
-  var nx = msId ? radar(u.classId).filter(function (x) {
-    return x.run.msId === msId;
-  })[0] : null;
-  if (nx) {
-    go('review', { id: nx.run.runId });
-    say(line + '　接著看同一件的下一組。');
-  } else {
-    go('radar');
-    say(line);
-  }
+  var t = r0 ? teamOf(r0.teamId) : null;
+  var left = radar(u.classId).length;
+  go('radar');
+  say((t ? '「' + t.name + '」' : '') + line +
+    (left ? '　還有 ' + left + ' 件在等你。' : '　沒有在等你的了。'));
 }
